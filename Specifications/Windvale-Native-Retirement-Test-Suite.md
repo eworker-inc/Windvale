@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 5,053 LF-only bytes with SHA-256
-`edb4419837d222b33102201753e7aa2080e29e9f1ddbfd1635bc6a6544d9a3ba`.
+`60e6fa8684f8481f4fbdbb94d3f9bfd641acdc58e25362bb8b1aa4de2e5f5dcb`.
 The first line is exactly:
 
 ```text
@@ -97,16 +97,16 @@ file. The current plan is:
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
-| `package-format` | `Test-Package-Format` | 21 | `native package format status=Passed result=42 modules=3 builds=4 groups=21 cross-host-images=6` |
+| `package-format` | `Test-Package-Format` | 37 | `native package format status=Passed result=42 modules=4 builds=5 groups=37 cross-host-images=8` |
 
-The version-2 plan therefore contains exactly 53 suites and 3,310 cases. Its
+The version-2 plan therefore contains exactly 53 suites and 3,326 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 14 | 651.2 |
 | 2 | 14 | 1,279 | 592.2 |
-| 3 | 19 | 1,160 | 592.1 |
+| 3 | 19 | 1,176 | 592.1 |
 | 4 | 19 | 857 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a

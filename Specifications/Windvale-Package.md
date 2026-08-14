@@ -121,15 +121,19 @@ endpoints, and the final output record before returning valid views. Returned
 string fields are bounded offset-and-length references into the caller's
 immutable input; directories store only checked fixed-width numeric records.
 
-The readers deliberately do not claim manifest/lock agreement or verify the
-bytes named by digest records. Those checks belong to the next cross-file and
-resource-admission layer.
+`Libraries/Package/Package-Consistency.wv` composes both readers and the portable
+SHA-256 implementation. It requires matching package name, version, root, target,
+license, project, ordered parts, dependency edges, and capability closure, and it
+requires the lock's manifest byte count and digest to identify the supplied
+manifest exactly. It returns a bounded status and collection index without file
+access. Verifying the other resources named by lock digest records remains the
+next resource-admission layer.
 
 The paired `Tools/Native/Build-Wvdb-Query-Package` commands accept an explicit
 manifest, lock, and output path. That publication front door still intentionally
 admits only the exact checked-in WVDB Query manifest and lock identity; replacing
-its specialized admission path with the general readers and adding cross-file
-and locked-resource admission are subsequent implementation slices.
+its specialized admission path with the general consistency core and adding
+locked-resource admission are subsequent implementation slices.
 
 The command verifies the manifest, lock, workspace, compiler WVB, Project 2 file,
 and each source part before compiling to a private candidate. It then verifies the

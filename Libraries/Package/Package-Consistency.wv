@@ -1,0 +1,267 @@
+module Windvaleˉpackageˉconsistency profile portable;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉpackageˉlock as Lock;
+import Windvaleˉpackageˉmanifest as Manifest;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+export enum Windvaleˉpackageˉconsistencyˉstatus {
+    Valid = 0;
+    Invalidˉmanifest = 1201;
+    Invalidˉlock = 1202;
+    Nameˉmismatch = 1203;
+    Versionˉmismatch = 1204;
+    Rootˉmismatch = 1205;
+    Targetˉmismatch = 1206;
+    Licenseˉmismatch = 1207;
+    Projectˉmismatch = 1208;
+    Packageˉidentityˉmismatch = 1209;
+    Partˉcountˉmismatch = 1210;
+    Partˉmismatch = 1211;
+    Dependencyˉcountˉmismatch = 1212;
+    Dependencyˉmismatch = 1213;
+    Capabilityˉcountˉmismatch = 1214;
+    Capabilityˉmismatch = 1215;
+}
+
+export record Windvaleˉpackageˉconsistencyˉresult {
+    Status: Windvaleˉpackageˉconsistencyˉstatus;
+    Index: u32;
+}
+
+fn Consistencyˉspan(
+    Offset: u32,
+    Length: u32
+) -> Packageˉtext.Windvaleˉpackageˉspan {
+    return Packageˉtext.Windvaleˉpackageˉspan(Offset, Length);
+}
+
+fn Consistencyˉequal(
+    Manifestˉinput: bytes,
+    Manifestˉoffset: u32,
+    Manifestˉlength: u32,
+    Lockˉinput: bytes,
+    Lockˉoffset: u32,
+    Lockˉlength: u32
+) -> bool {
+    return Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Manifestˉinput,
+        Consistencyˉspan(Manifestˉoffset, Manifestˉlength),
+        Lockˉinput,
+        Consistencyˉspan(Lockˉoffset, Lockˉlength)
+    );
+}
+
+fn Consistencyˉresult(
+    Status: Windvaleˉpackageˉconsistencyˉstatus,
+    Index: u32
+) -> Windvaleˉpackageˉconsistencyˉresult {
+    return Windvaleˉpackageˉconsistencyˉresult(Status, Index);
+}
+
+export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes
+) -> Windvaleˉpackageˉconsistencyˉresult {
+    let Manifestˉscan: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
+    if Manifestˉscan.Status != Manifest.Windvaleˉpackageˉstatus.Valid {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest, 0u32
+        );
+    }
+    let Lockˉscan: Lock.Windvaleˉlockˉscan =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput);
+    if Lockˉscan.Status != Lock.Windvaleˉlockˉstatus.Valid {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock, 0u32
+        );
+    }
+
+    if !Consistencyˉequal(
+        Manifestˉinput, Manifestˉscan.Nameˉoffset, Manifestˉscan.Nameˉlength,
+        Lockˉinput, Lockˉscan.Nameˉoffset, Lockˉscan.Nameˉlength
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Nameˉmismatch, 0u32
+        );
+    }
+    if !Consistencyˉequal(
+        Manifestˉinput, Manifestˉscan.Versionˉoffset, Manifestˉscan.Versionˉlength,
+        Lockˉinput, Lockˉscan.Versionˉoffset, Lockˉscan.Versionˉlength
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Versionˉmismatch, 0u32
+        );
+    }
+    if !Consistencyˉequal(
+        Manifestˉinput, Manifestˉscan.Rootˉoffset, Manifestˉscan.Rootˉlength,
+        Lockˉinput, Lockˉscan.Rootˉoffset, Lockˉscan.Rootˉlength
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Rootˉmismatch, 0u32
+        );
+    }
+    if !Consistencyˉequal(
+        Manifestˉinput, Manifestˉscan.Targetˉoffset, Manifestˉscan.Targetˉlength,
+        Lockˉinput, Lockˉscan.Targetˉoffset, Lockˉscan.Targetˉlength
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Targetˉmismatch, 0u32
+        );
+    }
+    if !Consistencyˉequal(
+        Manifestˉinput, Manifestˉscan.Licenseˉoffset, Manifestˉscan.Licenseˉlength,
+        Lockˉinput, Lockˉscan.Licenseˉoffset, Lockˉscan.Licenseˉlength
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Licenseˉmismatch, 0u32
+        );
+    }
+    if !Consistencyˉequal(
+        Manifestˉinput, Manifestˉscan.Projectˉoffset, Manifestˉscan.Projectˉlength,
+        Lockˉinput, Lockˉscan.Projectˉpathˉoffset, Lockˉscan.Projectˉpathˉlength
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Projectˉmismatch, 0u32
+        );
+    }
+
+    if Lockˉscan.Packageˉbytes != U64ˉfromˉu32(Bytesˉlength(Manifestˉinput)) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch, 0u32
+        );
+    }
+    let Manifestˉdigest: bytes = Sha256.Foundationˉsha256ˉhex(Manifestˉinput);
+    if !Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Manifestˉdigest,
+        Packageˉtext.Windvaleˉpackageˉwholeˉspan(Manifestˉdigest),
+        Lockˉinput,
+        Consistencyˉspan(
+            Lockˉscan.Packageˉdigestˉoffset,
+            Lockˉscan.Packageˉdigestˉlength
+        )
+    ) {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch, 0u32
+        );
+    }
+
+    if Manifestˉscan.Parts != Lockˉscan.Parts {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Partˉcountˉmismatch, 0u32
+        );
+    }
+    var Partˉindex: u32 = 0u32;
+    while Partˉindex < Manifestˉscan.Parts {
+        let Manifestˉpart: Manifest.Windvaleˉpackageˉpart =
+            Manifest.Windvaleˉpackageˉpartˉat(Manifestˉscan, Partˉindex);
+        let Lockedˉpart: Lock.Windvaleˉlockedˉpart =
+            Lock.Windvaleˉlockedˉpartˉat(Lockˉscan, Partˉindex);
+        if !Manifestˉpart.Found || !Lockedˉpart.Found ||
+            Manifestˉpart.Scope != Lockedˉpart.Scope {
+            return Consistencyˉresult(
+                Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch, Partˉindex
+            );
+        }
+        if !Consistencyˉequal(
+            Manifestˉinput, Manifestˉpart.Nameˉoffset, Manifestˉpart.Nameˉlength,
+            Lockˉinput, Lockedˉpart.Nameˉoffset, Lockedˉpart.Nameˉlength
+        ) || !Consistencyˉequal(
+            Manifestˉinput, Manifestˉpart.Pathˉoffset, Manifestˉpart.Pathˉlength,
+            Lockˉinput, Lockedˉpart.Pathˉoffset, Lockedˉpart.Pathˉlength
+        ) {
+            return Consistencyˉresult(
+                Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch, Partˉindex
+            );
+        }
+        Partˉindex = Partˉindex + 1u32;
+    }
+
+    if Manifestˉscan.Dependencies != Lockˉscan.Dependencies {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉcountˉmismatch, 0u32
+        );
+    }
+    var Dependencyˉindex: u32 = 0u32;
+    while Dependencyˉindex < Manifestˉscan.Dependencies {
+        let Manifestˉdependency: Manifest.Windvaleˉpackageˉdependency =
+            Manifest.Windvaleˉpackageˉdependencyˉat(Manifestˉscan, Dependencyˉindex);
+        let Lockedˉdependency: Lock.Windvaleˉlockedˉdependency =
+            Lock.Windvaleˉlockedˉdependencyˉat(Lockˉscan, Dependencyˉindex);
+        if !Manifestˉdependency.Found || !Lockedˉdependency.Found ||
+            !Consistencyˉequal(
+                Manifestˉinput,
+                Manifestˉdependency.Importerˉoffset,
+                Manifestˉdependency.Importerˉlength,
+                Lockˉinput,
+                Lockedˉdependency.Importerˉoffset,
+                Lockedˉdependency.Importerˉlength
+            ) || !Consistencyˉequal(
+                Manifestˉinput,
+                Manifestˉdependency.Requiredˉoffset,
+                Manifestˉdependency.Requiredˉlength,
+                Lockˉinput,
+                Lockedˉdependency.Requiredˉoffset,
+                Lockedˉdependency.Requiredˉlength
+            ) {
+            return Consistencyˉresult(
+                Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉmismatch,
+                Dependencyˉindex
+            );
+        }
+        Dependencyˉindex = Dependencyˉindex + 1u32;
+    }
+
+    if Manifestˉscan.Capabilities != Lockˉscan.Capabilities {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch, 0u32
+        );
+    }
+    var Capabilityˉindex: u32 = 0u32;
+    while Capabilityˉindex < Manifestˉscan.Capabilities {
+        let Manifestˉcapability: Manifest.Windvaleˉpackageˉcapability =
+            Manifest.Windvaleˉpackageˉcapabilityˉat(Manifestˉscan, Capabilityˉindex);
+        let Lockedˉcapability: Lock.Windvaleˉlockedˉcapability =
+            Lock.Windvaleˉlockedˉcapabilityˉat(Lockˉscan, Capabilityˉindex);
+        if !Manifestˉcapability.Found || !Lockedˉcapability.Found ||
+            !Consistencyˉequal(
+                Manifestˉinput,
+                Manifestˉcapability.Nameˉoffset,
+                Manifestˉcapability.Nameˉlength,
+                Lockˉinput,
+                Lockedˉcapability.Nameˉoffset,
+                Lockedˉcapability.Nameˉlength
+            ) {
+            return Consistencyˉresult(
+                Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉmismatch,
+                Capabilityˉindex
+            );
+        }
+        Capabilityˉindex = Capabilityˉindex + 1u32;
+    }
+    return Consistencyˉresult(
+        Windvaleˉpackageˉconsistencyˉstatus.Valid, 0u32
+    );
+}
+
+export fn Windvaleˉpackageˉconsistencyˉdiagnosticˉcode(
+    Status: Windvaleˉpackageˉconsistencyˉstatus
+) -> text {
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest { return "WVPK1201"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock { return "WVPK1202"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Nameˉmismatch { return "WVPK1203"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Versionˉmismatch { return "WVPK1204"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Rootˉmismatch { return "WVPK1205"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Targetˉmismatch { return "WVPK1206"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Licenseˉmismatch { return "WVPK1207"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Projectˉmismatch { return "WVPK1208"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch { return "WVPK1209"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Partˉcountˉmismatch { return "WVPK1210"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch { return "WVPK1211"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉcountˉmismatch { return "WVPK1212"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉmismatch { return "WVPK1213"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch { return "WVPK1214"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉmismatch { return "WVPK1215"; }
+    return "";
+}

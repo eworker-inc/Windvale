@@ -1,0 +1,8 @@
+windvale-project 2
+root "Tests/Fixtures/Package/Package-Consistency-Self-Test.wv"
+source "Foundation/Sha256.wv"
+source "Libraries/Package/Package-Consistency.wv"
+source "Libraries/Package/Package-Lock.wv"
+source "Libraries/Package/Package-Manifest.wv"
+source "Libraries/Package/Canonical-Package-Text.wv"
+emit wvb

@@ -493,9 +493,11 @@ foreach ($Path in $Paths) {
         Add-Suite 'libraries'
     } elseif ($Path -in @(
         'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
+        'Projects/Libraries/Windvale-Library-Package-Consistency.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Package-Consistency.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj'
     )) {

@@ -1,0 +1,236 @@
+module Windvaleˉpackageˉconsistencyˉselfˉtest profile hosted;
+
+import Windvaleˉpackageˉconsistency as Consistency;
+
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Digest() -> text {
+    return "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+}
+
+fn Manifestˉvalue() -> text {
+    return "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\npart a hosted Applications/A.wv\ncapability console.write_line\n";
+}
+
+fn Part(Name: text, Scope: text, Path: text) -> text {
+    var Value: text = Textˉconcat("part ", Name);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Scope);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 ");
+    Value = Textˉconcat(Value, Path);
+    return Textˉconcat(Value, "\n");
+}
+
+fn Lockˉvalue(
+    Name: text,
+    Version: text,
+    Root: text,
+    License: text,
+    Project: text,
+    Packageˉdigest: text,
+    Packageˉbytes: text,
+    Parts: text,
+    Dependencies: text,
+    Capabilities: text
+) -> text {
+    var Value: text = "windvale-lock 1\nresolver local-source-1\nroot ";
+    Value = Textˉconcat(Value, Name);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Version);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Root);
+    Value = Textˉconcat(Value, "\ntarget hosted-wvb-v1\nlicense ");
+    Value = Textˉconcat(Value, License);
+    Value = Textˉconcat(Value, "\norigin workspace ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 Windvale.wvws\npackage ");
+    Value = Textˉconcat(Value, Packageˉdigest);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Packageˉbytes);
+    Value = Textˉconcat(Value, " Distribution/Example.wvpack\ncompiler ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 Artifacts/Compiler.wvb\nproject ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 ");
+    Value = Textˉconcat(Value, Project);
+    Value = Textˉconcat(Value, "\n");
+    Value = Textˉconcat(Value, Parts);
+    Value = Textˉconcat(Value, Dependencies);
+    Value = Textˉconcat(Value, Capabilities);
+    Value = Textˉconcat(Value, "output ");
+    Value = Textˉconcat(Value, Digest());
+    return Textˉconcat(Value, " 1\n");
+}
+
+fn Verify(
+    Manifestˉtext: text,
+    Lockˉtext: text
+) -> Consistency.Windvaleˉpackageˉconsistencyˉresult {
+    return Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
+        Textˉtoˉutf8(Manifestˉtext), Textˉtoˉutf8(Lockˉtext)
+    );
+}
+
+fn Statusˉis(
+    Manifestˉtext: text,
+    Lockˉtext: text,
+    Expected: Consistency.Windvaleˉpackageˉconsistencyˉstatus
+) -> bool {
+    let Result: Consistency.Windvaleˉpackageˉconsistencyˉresult =
+        Verify(Manifestˉtext, Lockˉtext);
+    return Result.Status == Expected;
+}
+
+fn Validˉlock() -> text {
+    return Lockˉvalue(
+        "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+        "37edb8f8aeb913f4fb378a07160b3598d89868387dbbf66eaf8078efa71279f4",
+        "185", Part("a", "hosted", "Applications/A.wv"), "",
+        "capability console.write_line\n"
+    );
+}
+
+fn Actualˉcase() -> bool {
+    if process.argument_count() != 2u32 { return false; }
+    let Manifestˉinput: bytes = file.read_bytes(process.argument(0u32));
+    let Lockˉinput: bytes = file.read_bytes(process.argument(1u32));
+    let Result: Consistency.Windvaleˉpackageˉconsistencyˉresult =
+        Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
+            Manifestˉinput, Lockˉinput
+        );
+    return Result.Status == Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid;
+}
+
+fn Rejectionˉcases() -> bool {
+    let Manifest: text = Manifestˉvalue();
+    let Partˉa: text = Part("a", "hosted", "Applications/A.wv");
+    let Capability: text = "capability console.write_line\n";
+    let Manifestˉdigest: text =
+        "37edb8f8aeb913f4fb378a07160b3598d89868387dbbf66eaf8078efa71279f4";
+
+    if !Statusˉis(
+        "", Validˉlock(),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest
+    ) { return false; }
+    if !Statusˉis(
+        Manifest, "",
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.other", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Partˉa, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Nameˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "2", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Partˉa, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Versionˉmismatch
+    ) { return false; }
+    let Twoˉparts: text = Textˉconcat(
+        Partˉa, Part("b", "hosted", "Applications/B.wv")
+    );
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "b", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Twoˉparts, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Rootˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "Apache-2.0", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Partˉa, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Licenseˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Other.wvproj",
+            Manifestˉdigest, "185", Partˉa, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Projectˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Digest(), "185", Partˉa, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "184", Partˉa, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Twoˉparts, "", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Partˉcountˉmismatch
+    ) { return false; }
+    let Pathˉmismatch: Consistency.Windvaleˉpackageˉconsistencyˉresult = Verify(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Part("a", "hosted", "Applications/B.wv"),
+            "", Capability
+        )
+    );
+    if Pathˉmismatch.Status !=
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch ||
+        Pathˉmismatch.Index != 0u32 { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Partˉa, "dependency a a\n", Capability
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉcountˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Partˉa, "", ""
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch
+    ) { return false; }
+    return Statusˉis(
+        Manifest,
+        Lockˉvalue(
+            "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
+            Manifestˉdigest, "185", Partˉa, "",
+            "capability diagnostic.write_line\n"
+        ),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉmismatch
+    );
+}
+
+export fn Main() -> i32 {
+    if !Actualˉcase() { return 1; }
+    if !Statusˉis(
+        Manifestˉvalue(), Validˉlock(),
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid
+    ) { return 2; }
+    if !Rejectionˉcases() { return 3; }
+    return 42;
+}

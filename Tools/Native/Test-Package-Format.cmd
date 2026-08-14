@@ -27,6 +27,12 @@ set "LockProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Package-Lo
 set "LockWvb=%TemporaryDirectory%\Lock.wvb"
 set "LockWindowsApplication=%TemporaryDirectory%\Lock.exe"
 set "LockLinuxApplication=%TemporaryDirectory%\Lock.elf"
+set "ConsistencyProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Package-Consistency.wvproj"
+set "ConsistencyWvb=%TemporaryDirectory%\Consistency.wvb"
+set "ConsistencyWindowsApplication=%TemporaryDirectory%\Consistency.exe"
+set "ConsistencyLinuxApplication=%TemporaryDirectory%\Consistency.elf"
+set "Manifest=%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvpack"
+set "Lock=%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvlock"
 
 set "Step=canonical-build"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%CanonicalProject%" "%CanonicalWvb%" >nul
@@ -80,7 +86,23 @@ set "Step=lock-windows-execution"
 "%LockWindowsApplication%" >nul
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 
-echo native package format status=Passed result=42 modules=3 builds=4 groups=21 cross-host-images=6
+set "Step=consistency-build"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%ConsistencyProject%" "%ConsistencyWvb%" >nul
+if errorlevel 1 goto :cleanup
+set "Step=consistency-windows-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%ConsistencyWvb%" "%ConsistencyWindowsApplication%" windows >nul
+if errorlevel 1 goto :cleanup
+set "Step=consistency-linux-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%ConsistencyWvb%" "%ConsistencyLinuxApplication%" linux >nul
+if errorlevel 1 goto :cleanup
+set "Step=consistency-windows-execution"
+"%ConsistencyWindowsApplication%" "%Manifest%" "%Lock%" >nul
+if not "%ERRORLEVEL%"=="42" goto :cleanup
+
+echo native package format status=Passed result=42 modules=4 builds=5 groups=37 cross-host-images=8
 set "Result=0"
 
 :cleanup
