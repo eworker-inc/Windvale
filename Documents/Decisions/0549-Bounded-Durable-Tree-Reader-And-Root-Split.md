@@ -79,6 +79,17 @@ no native coverage gaps. Changed-file planning also passed all 27 general and
 73 native planner cases. This is Windows development feedback; independent
 dual-host conformance remains GitHub-owned.
 
+The first dual-host run passed the repaired lowerer owner and every Windows
+retirement case, then exposed a later Linux-only recovery failure. The shared
+storage host retained a resize request in `rdi` across the platform call;
+Windows preserves that register, while the System V ABI permits the Linux leaf
+to reuse it for the file descriptor. The file was resized correctly but the
+completed response reported the clobbered value as its storage length. The
+host now reloads the immutable validated request before publishing the
+response. The focused 13-case database-storage owner passed in 962.4 seconds,
+including deterministic Windows and Linux image construction; Linux execution
+confirmation remains with the next GitHub run.
+
 ## Consequences
 
 - Windvale Database can now publish and read its first durable multi-page tree

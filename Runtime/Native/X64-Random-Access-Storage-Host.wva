@@ -475,7 +475,10 @@ jump_label Storage_host_mutation_indeterminate
 label Storage_host_resize_complete
 move r8 r13
 add_i32 r8 32
-store_memory_u64 r8 none 1 24 rdi
+# The platform call may clobber rdi under the System V ABI. Reload the
+# immutable requested length before publishing the completed response.
+load_memory_u64 rax r14 none 1 32
+store_memory_u64 r8 none 1 24 rax
 move_u32 eax 1
 store_memory_u32 r8 none 1 44 eax
 jump_label Storage_host_publish
