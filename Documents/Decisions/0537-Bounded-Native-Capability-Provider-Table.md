@@ -72,8 +72,10 @@ work rather than reasons to restore the retired managed path.
   direct ordinal dispatch without runtime string lookup.
 - Networking can later reuse the same binding model with distinct stream,
   listener, datagram, resolver, and clock provider states.
-- The database is still not a native server: main-lowerer/context integration,
-  Windows and Linux random-access leaves, writer-fence lifecycle, real-file
+- [Decision 0540](0540-First-Abi-23-Storage-Call-Lowering.md) now supplies
+  actual-call-only ABI-23 main-lowerer integration. The database is still not a
+  native server: host context/table binding, Windows and Linux random-access
+  leaves, writer-fence lifecycle, real-file
   recovery, fault injection, transactions, networking, typed client APIs, and
   SQL remain open.
 

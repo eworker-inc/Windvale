@@ -85,6 +85,27 @@ verify_target() {
         >/dev/null || return $?
 }
 
+verify_storage_lowering() {
+    local project_path=$1
+    local first_wvb="$temporary_directory/StorageLowering-First.wvb"
+    local second_wvb="$temporary_directory/StorageLowering-Second.wvb"
+    local first_wvo="$temporary_directory/StorageLowering-First.wvo"
+    local second_wvo="$temporary_directory/StorageLowering-Second.wvo"
+    local first_report="$temporary_directory/StorageLowering-First.txt"
+    local second_report="$temporary_directory/StorageLowering-Second.txt"
+
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+    cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+
+    "$lowerer" "$first_wvb" "$first_wvo" >"$first_report" || return $?
+    "$lowerer" "$second_wvb" "$second_wvo" >"$second_report" || return $?
+    grep -q '^native x64 status=Valid abi=23 ' "$first_report" || return 1
+    cmp --silent -- "$first_report" "$second_report" || return 1
+    cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+}
+
 verify_target Nested \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
 verify_target Publication \
@@ -97,5 +118,7 @@ verify_target ProviderCall \
     "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
 verify_target Context9 \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
+verify_storage_lowering \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
 
-echo 'native database storage status=Passed cases=6 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=7 local-results=0 cross-host-images=Verified'

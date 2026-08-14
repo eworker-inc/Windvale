@@ -56,6 +56,9 @@ if errorlevel 1 goto :cleanup
 call :verify_target Context9 ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Execution-Context-9.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_storage_lowering ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Storage-Random-Access.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -64,7 +67,42 @@ for %%R in ("%TemporaryDirectory%") do set "ResolvedTemporaryDirectory=%%~fR"
 echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-storage-" >nul || exit /b 1
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
 if not "%Result%"=="0" exit /b %Result%
-echo native database storage status=Passed cases=6 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=7 local-results=0 cross-host-images=Verified
+exit /b 0
+
+:verify_storage_lowering
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\StorageLowering-First.wvb"
+set "SecondWvb=%TemporaryDirectory%\StorageLowering-Second.wvb"
+set "FirstWvbResource=%FirstWvb:\=/%"
+set "SecondWvbResource=%SecondWvb:\=/%"
+set "FirstWvo=%TemporaryDirectory%\StorageLowering-First.wvo"
+set "SecondWvo=%TemporaryDirectory%\StorageLowering-Second.wvo"
+set "FirstReport=%TemporaryDirectory%\StorageLowering-First.txt"
+set "SecondReport=%TemporaryDirectory%\StorageLowering-Second.txt"
+
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+if errorlevel 1 exit /b 1
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%FirstWvb%" "%SecondWvb%" >nul
+if errorlevel 1 exit /b 1
+
+"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >"%FirstReport%"
+if errorlevel 1 exit /b 1
+"%Lowerer%" "%SecondWvb%" "%SecondWvo%" >"%SecondReport%"
+if errorlevel 1 exit /b 1
+findstr /b /c:"native x64 status=Valid abi=23 " "%FirstReport%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%FirstReport%" "%SecondReport%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%FirstWvo%" "%SecondWvo%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+endlocal
 exit /b 0
 
 :verify_target

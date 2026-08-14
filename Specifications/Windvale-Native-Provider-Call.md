@@ -2,12 +2,13 @@
 
 ## Status and scope
 
-The first x86-64 capability-provider call emission and its separately
-implemented structural verifier are implemented candidates. They define the
-machine boundary that `storage.random_access_v1` will use, but they do not yet
-publish native ABI 23, execution-context version 9, or a storage provider leaf.
-ABI 22 and execution-context version 7 remain the only executable product
-contract.
+The first x86-64 capability-provider call emission, its separately implemented
+structural verifier, and main-lowerer integration are implemented candidates.
+An actual `storage.random_access_v1` call selects native ABI 23 and the planned
+execution-context version 9 boundary; capability declaration alone preserves
+ABI 22 and exact existing output. ABI 23 is not yet an executable hosted product
+contract because Windows/Linux provider leaves and container binding remain
+pending.
 
 The call consumes one ordinal entry from the immutable [`WVPT 1` provider
 table](Windvale-Native-Capability-Provider-Table.md). Generated code never
@@ -35,8 +36,11 @@ No ABI-22 consumer may read offset 128.
 ## Exact x86-64 emission
 
 The current emitter appends exactly 216 bytes for a five-parameter provider
-call. It admits capability ordinals 0 through 31 and physical value slots 0
-through 2,047. Any larger input fails without changing the supplied output.
+call. A bytes-producing capability instruction also owns the ordinary 10-byte
+allocation-budget guard, so the main lowerer measures 226 bytes for the complete
+storage instruction. The emitter admits capability ordinals 0 through 31 and
+physical value slots 0 through 2,047. Any larger input fails without changing
+the supplied output.
 
 The generated sequence:
 
@@ -104,6 +108,12 @@ Linux package is constructed from the same fragment. The test treats emitted
 provider-call bytes as data under ABI 22; it does not claim that ABI 22 executes
 the successor call.
 
-Publication still requires main-lowerer integration, fragment-verifier and host
-admission, Windows and Linux provider leaves, and independent execution on both
-hosts.
+The main lowerer now admits the exact storage signature, emits the verified call,
+and reports ABI 23 only for actual provider use. The focused 449-byte WVB lowers
+to a structurally verified 2,758-byte WVO with SHA-256
+`5eea8f66666a474a096160fbb9cfae49f9af4627bfae61dafc5fc440242d8681`;
+one unchanged ABI-22 control object remains byte-for-byte identical.
+
+Executable publication still requires fragment/host admission, Windows and
+Linux provider leaves, context-9 and provider-table binding, writer fencing,
+and independent execution on both hosts.

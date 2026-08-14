@@ -6,7 +6,7 @@
 - Profile: portable, capability-free action/observation core
 - Source: `Libraries/Database/Storage-Publication.wv` and
   `Libraries/Database/Storage-Recovery.wv`
-- Native provider dependency: not implemented for ABI 22
+- Native provider dependency: ABI-23 lowering implemented; hosted provider not yet bound
 
 ## Boundary
 
@@ -69,6 +69,8 @@ rejection enters `Stopped` and retains its typed provider error.
 The portable core is not a writer fence, capability executor, crash harness,
 path or directory API, transaction manager, page cache, or reclamation
 policy. ABI 22 has no native `storage.random_access_v1` service-table slot;
+ABI-23 lowering now emits the provider call, but the hosted storage leaf and
+writer-fence lifecycle are not yet bound;
 adding one requires a separately versioned native ABI/service contract and
 paired Windows/Linux provider evidence. Whole-file snapshot writes are not an
 acceptable substitute for positioned mutation and flush observations.

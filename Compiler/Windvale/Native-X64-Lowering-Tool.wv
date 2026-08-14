@@ -18,9 +18,22 @@ export fn Main() -> i32 {
     let Summary: Nativeˉx64.Compilerˉnativeˉx64ˉsummary =
         Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(Input);
     if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
-        diagnostic.write_line(
-            Textˉconcat("native x64 status=", Enumˉname(Summary.Status))
+        let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
+            Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
+        var Failureˉreport: text = Textˉconcat(
+            "native x64 status=", Enumˉname(Summary.Status)
         );
+        Failureˉreport = Textˉconcat(Failureˉreport, " plan-status=");
+        Failureˉreport = Textˉconcat(Failureˉreport, Enumˉname(Plan.Status));
+        Failureˉreport = Textˉconcat(Failureˉreport, " function=");
+        Failureˉreport = Textˉconcat(
+            Failureˉreport, U32ˉformat(Plan.Failureˉfunction)
+        );
+        Failureˉreport = Textˉconcat(Failureˉreport, " detail=");
+        Failureˉreport = Textˉconcat(
+            Failureˉreport, U32ˉformat(Plan.Failureˉdetail)
+        );
+        diagnostic.write_line(Failureˉreport);
         return 1;
     }
     file.write_bytes(process.argument(1u32), Summary.Object);

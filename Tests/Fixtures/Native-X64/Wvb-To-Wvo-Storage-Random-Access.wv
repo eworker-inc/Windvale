@@ -1,0 +1,17 @@
+module Wvbˉtoˉwvoˉstorageˉrandomˉaccess profile hosted;
+
+capability storage.random_access_v1;
+
+data Emptyˉpayload: bytes = [];
+
+export fn Main() -> i32 {
+    let Response: bytes = storage.random_access_v1(
+        0u32,
+        0u64,
+        0u64,
+        0u32,
+        Emptyˉpayload
+    );
+    if Bytesˉlength(Response) == 0u32 { return 0; }
+    return 1;
+}

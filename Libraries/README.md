@@ -137,6 +137,7 @@ then maps publication to bounded 64 KiB storage actions and maps reopen evidence
 to exact tail resize/flush actions. Partial, indeterminate, stale-generation, and
 changed-storage observations enter reopen instead of silently retrying. These
 portable modules have no I/O authority and do not claim a capability-bearing
-writer; an ABI 22 native `storage.random_access_v1` provider, writer fence, and
-crash-injection qualification remain open. The focused native owners pin the
+writer; a hosted ABI-23 `storage.random_access_v1` provider, writer fence, and
+crash-injection qualification remain open. ABI-23 lowering now reaches the
+verified five-cell provider call, but no hosted storage leaf is bound yet. The focused native owners pin the
 deterministic WVB, WVO, linked-image, and Windows/Linux hosted artifacts.

@@ -3,6 +3,7 @@ module Windvaleˉcompilerˉbuildˉdriver profile hosted;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉset as Sourceˉset;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
 import Windvaleˉproject as Project;
 
@@ -219,8 +220,12 @@ fn Compilerˉbuildˉdriverˉcompileˉfailure(
     Input: bytes,
     Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary
 ) -> text {
+    let Sourceˉsetˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary =
+        Sourceˉset.Compilerˉvalidateˉsourceˉset(Input);
     let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
         Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     var Report: text = "build status=Compileˉrejected source-status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
     Report = Textˉconcat(Report, " wir-status=");
@@ -231,6 +236,18 @@ fn Compilerˉbuildˉdriverˉcompileˉfailure(
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
     Report = Textˉconcat(Report, " binding-status=");
     Report = Textˉconcat(Report, Enumˉname(Wir.Bindingˉstatus));
+    Report = Textˉconcat(Report, " symbol-status=");
+    Report = Textˉconcat(Report, Enumˉname(Symbols.Status));
+    Report = Textˉconcat(Report, " graph-status=");
+    Report = Textˉconcat(Report, Enumˉname(Symbols.Graphˉstatus));
+    Report = Textˉconcat(Report, " source-set-status=");
+    Report = Textˉconcat(Report, Enumˉname(Sourceˉsetˉsummary.Status));
+    Report = Textˉconcat(Report, " parse-status=");
+    Report = Textˉconcat(Report, Enumˉname(Sourceˉsetˉsummary.Parseˉstatus));
+    Report = Textˉconcat(Report, " body-status=");
+    Report = Textˉconcat(Report, Enumˉname(Sourceˉsetˉsummary.Bodyˉstatus));
+    Report = Textˉconcat(Report, " declaration=");
+    Report = Textˉconcat(Report, Enumˉname(Symbols.Failureˉkind));
     Report = Textˉconcat(Report, " module=");
     Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉmodule));
     Report = Textˉconcat(Report, " related-module=");

@@ -71,11 +71,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 45 suites and 3,206 cases in manifest order. Its
+Omitting `--filter` selects all 52 suites and 3,281 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 45, Passed: 45, Failed: 0, Cases: 3206
+Suites: 52, Passed: 52, Failed: 0, Cases: 3281
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -865,7 +865,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,206-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,281-case coordinator is a fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

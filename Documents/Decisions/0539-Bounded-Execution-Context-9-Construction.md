@@ -64,7 +64,8 @@ contract.
 - ABI-23 integration can distinguish missing provider state from malformed
   context and can keep allocator publication independent.
 - No current ABI-22 artifact, execution path, or recovery constructor changes.
-- Main-lowerer capability analysis/emission, fragment verification, host
+- [Decision 0540](0540-First-Abi-23-Storage-Call-Lowering.md) now supplies
+  main-lowerer capability analysis/emission. Fragment verification, host
   execution, and storage leaves remain open.
 
 ## Reconsideration triggers

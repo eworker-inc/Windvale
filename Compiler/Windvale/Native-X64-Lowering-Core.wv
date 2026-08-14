@@ -64,6 +64,7 @@ export record Compilerˉnativeˉx64ˉsummary {
 
 export record Compilerˉnativeˉx64ˉplan {
     Status: Compilerˉnativeˉx64ˉstatus;
+    Abi: u32;
     Codeˉoffset: u32;
     Functionsˉoffset: u32;
     Functionsˉlimit: u32;
@@ -203,6 +204,7 @@ fn Compilerˉnativeˉx64ˉplanˉfailure(
     let Empty: bytes = Compilerˉnativeˉx64ˉempty(Input);
     return Compilerˉnativeˉx64ˉplan(
         Status,
+        22u32,
         0u32,
         0u32,
         0u32,
@@ -240,6 +242,7 @@ fn Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
     let Empty: bytes = Compilerˉnativeˉx64ˉempty(Input);
     return Compilerˉnativeˉx64ˉplan(
         Status,
+        22u32,
         0u32,
         0u32,
         0u32,
@@ -1197,6 +1200,35 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     }
     if Opcode == 189u8 || Opcode == 190u8 || Opcode == 191u8 { return 1u32; }
     return 0u32;
+}
+
+fn Compilerˉnativeˉx64ˉfunctionˉusesˉprovider(
+    Input: bytes,
+    Section: Compilerˉnativeˉx64ˉsection,
+    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
+) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < Section.Payloadˉlength {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
+        if Opcode == 65u8 {
+            let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Section.Payloadˉoffset + Cursor + 1u32
+            );
+            if Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilityˉkind(
+                Capabilityˉtable,
+                Capabilityˉindex
+            ) == Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() {
+                return true;
+            }
+        }
+        let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+        if Size == 0u32 || Size > Section.Payloadˉlength - Cursor {
+            return false;
+        }
+        Cursor = Cursor + Size;
+    }
+    return false;
 }
 
 fn Compilerˉnativeˉx64ˉinstructionˉmap(
@@ -3499,6 +3531,10 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
             Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() {
             return Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉbytes();
         }
+        if Capabilityˉkind ==
+            Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() {
+            return Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉbytes();
+        }
         return Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();
     }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
@@ -5031,6 +5067,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                 Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilityˉstate =
                 Nativeˉcapabilities.Compilerˉnativeˉx64ˉemitˉcapability(
                     Capabilityˉkind,
+                    Capabilityˉindex,
                     Result,
                     Stackˉtypes,
                     Stackˉslots,
@@ -5948,6 +5985,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
     var Relocationˉlengths: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Expectedˉrelocationˉbytes: u32 = 0u32;
     var Expectedˉmachineˉcodeˉbytes: u32 = 0u32;
+    var Nativeˉabi: u32 = 22u32;
     Functionˉcursor = Functions.Payloadˉoffset + 4u32;
     Functionˉindex = 0u32;
     while Functionˉindex < Functionˉcount {
@@ -5985,6 +6023,13 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
                 Functionˉindex,
                 Machineˉbytes - 2147483648u32
             );
+        }
+        if Compilerˉnativeˉx64ˉfunctionˉusesˉprovider(
+            Input,
+            Measureˉcodeˉsection,
+            Capabilityˉtable
+        ) {
+            Nativeˉabi = 23u32;
         }
         if Expectedˉmachineˉcodeˉbytes > 33554432u32 {
             return Compilerˉnativeˉx64ˉplanˉfailure(
@@ -6056,6 +6101,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
 
     return Compilerˉnativeˉx64ˉplan(
         Compilerˉnativeˉx64ˉstatus.Valid,
+        Nativeˉabi,
         Structure.Codeˉoffset,
         Functions.Payloadˉoffset + 4u32,
         Functionsˉlimit,
@@ -6138,7 +6184,8 @@ export fn Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
         Bytesˉlength(Plan.Typeˉitemˉoffsets) != Plan.Typeˉcount * 4u32 ||
         Bytesˉlength(Plan.Typeˉitemˉcounts) != Plan.Typeˉcount * 4u32 ||
         Bytesˉlength(Plan.Typeˉrecordˉwidths) != Plan.Typeˉcount * 4u32 ||
-        Plan.Capabilityˉcount > 6u32 ||
+        (Plan.Abi != 22u32 && Plan.Abi != 23u32) ||
+        Plan.Capabilityˉcount > 7u32 ||
         Bytesˉlength(Plan.Capabilityˉkinds) != Plan.Capabilityˉcount {
         return Compilerˉnativeˉx64ˉfunctionˉbatchˉfailure(
             Input,
@@ -6361,7 +6408,7 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
         Compilerˉnativeˉx64ˉstatus.Valid,
         Object,
         0,
-        22u32,
+        Plan.Abi,
         Textˉbytes
     );
 }

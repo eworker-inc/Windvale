@@ -24,4 +24,5 @@ source "Compiler/Windvale/Native-X64-Lowering-Staging-Content.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Types.wv"
+source "Compiler/Windvale/Native-X64-Provider-Call.wv"
 emit wvb
