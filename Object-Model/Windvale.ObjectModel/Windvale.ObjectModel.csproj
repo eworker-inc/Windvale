@@ -1,5 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Windvale canonical native object contracts, codec, verifier, and inspector.</Description>
-  </PropertyGroup>
-</Project>

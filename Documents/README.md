@@ -11,6 +11,7 @@ Each kind of information has one primary home. Link to that source instead of co
 | Stable public introduction and working entry points | [Root README](../README.md) | The project's purpose, supported entry points, or top-level navigation changes |
 | Current implemented and qualified state, immediate transfer, and working paths | [Progress](Project/Progress.md) | The measured project state changes |
 | Forward phase gates, sequencing, and next deliverables | [Roadmap](Project/Roadmap.md) | The route, phase gate, or intended order changes |
+| Recovery, baseline, and product tag meanings | [Release names and tags](Project/Release-Names-And-Tags.md) | A release promise or tag convention changes |
 | Current normative behavior and formats | [Specifications](../Specifications/README.md) | A contract changes |
 | Durable component ownership and design boundaries | [Architecture](Architecture/) | An enduring boundary changes |
 | Accepted rationale and consequential choices | [Decisions](Decisions/) | A decision is accepted, superseded, or materially amended |
@@ -23,7 +24,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
-- [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced direct-entry-point inventory, product-surface ledger, and retained recovery owners
+- [Release names and tags](Project/Release-Names-And-Tags.md) — separate recovery archives, qualified baselines, and `v0.y.z` product promises
+- [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced native-only tree and immutable Stage 0 recovery identity
 - [Measured native retirement sharding](Decisions/0550-Measured-Native-Retirement-Sharding.md) — cold four-way host sharding, per-owner timing, exact 52-suite/3,287-case coverage, and unchanged aggregate qualification
 - [Grouped staging and Linux publisher closure](Decisions/0523-Grouped-Staging-And-Linux-Publisher-Closure.md) — bounded multi-value code-chunk admission, exact Linux data/executable modes, existing-destination policy preservation, and coherent publisher-family repinning
 - [Enum-complete native WVO inspector reconstruction](Decisions/0522-Enum-Complete-Native-Wvo-Inspector-Reconstruction.md) — repaired module-specific enum-service composition, explicit Linux executable mode, refreshed paired candidates, and native self-test ownership
@@ -150,7 +152,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Packages, releases, updates, and recovery](Architecture/Packages-Releases-And-Recovery.md) — proposed package/lock/bundle/release split, immutable installation generations, 0.1 gate, and later A/B updates
 - [Compiler bootstrap options](Architecture/Compiler-Bootstrap-Options.md) — bootstrap sequence and representation choices
 - [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination, completed accepted retirement gate, and historical transfer record
-- [Exact compiler Stage 0 recovery](Runbooks/Exact-Compiler-Recovery.md) — clean-checkout reconstruction, identities, and archive provenance
+- [Managed Stage 0 recovery pointer](../Bootstrap/Stage0/README.md) — immutable pre-removal release identity, checksums, and separate-workspace restoration boundary
 - [Seed verification throughput](Architecture/Seed-Verification-Throughput.md) — current focused-development, checkpoint, sharding, and explicit-qualification strategy
 
 ## Contracts and decisions

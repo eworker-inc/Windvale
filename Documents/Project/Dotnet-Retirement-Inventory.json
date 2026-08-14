@@ -1,78 +1,15 @@
 {
-  "format": "windvale-dotnet-retirement-inventory-1",
-  "updated": "2026-08-12",
-  "directManagedEntrypoints": [
-    {
-      "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Windows Stage 0 native compiler seed reconstruction"
-    },
-    {
-      "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.sh",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Linux Stage 0 native compiler seed reconstruction"
-    },
-    {
-      "path": "Tools/Recovery/Rebuild-WebAssembly-Native-Compiler.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "WebAssembly native compiler package reconstruction"
-    },
-    {
-      "path": "Tools/Recovery/Rebuild-WebAssembly-Native-Backend.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "WebAssembly backend package reconstruction"
-    },
-    {
-      "path": "Tools/Recovery/Verify-Managed-Bootstrap.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Windows managed compiler convergence recovery"
-    },
-    {
-      "path": "Tools/Recovery/Verify-Managed-Bootstrap.sh",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Linux managed compiler convergence recovery"
-    },
-    {
-      "path": "Tools/Recovery/Rebuild-Os-Probe.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Windvale OS Stage 0 probe-image reconstruction"
-    },
-    {
-      "path": "Tools/Verify/Verify-Seed.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Windows managed Seed qualification recovery and differential evidence"
-    },
-    {
-      "path": "Tools/Verify/Verify-Seed.sh",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Linux managed Seed qualification recovery and differential evidence"
-    }
-  ]
+  "format": "windvale-dotnet-retirement-inventory-2",
+  "updated": "2026-08-14",
+  "trackedManagedFiles": 0,
+  "directManagedEntrypoints": [],
+  "archive": {
+    "tag": "stage0-recovery-e5a1a7473c57",
+    "releaseUrl": "https://github.com/eworker-inc/Windvale/releases/tag/stage0-recovery-e5a1a7473c57",
+    "commit": "e5a1a7473c57935c5dfcf09b78b18c3c099e70ef",
+    "tree": "9950150f14cd4864b06c853ab6a716fa6e04495a",
+    "sourceBundleSha256": "1830bf95b583267b69229125edb83521733a36f27a4d49fe371534734bcc0892",
+    "supplementalChecksumsSha256": "de18793e13fa4cf429070739708e2e3bebc4cebbd5eacde5832dca9781928267",
+    "restoreDocument": "Bootstrap/Stage0/README.md"
+  }
 }

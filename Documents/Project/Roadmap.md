@@ -35,7 +35,7 @@ Completed migration detail remains available through Decisions 0057, 0178,
 | Seed language, WVB, verifier, runtime, object model, assembler, and linker foundation | Qualified on Windows and Linux. |
 | Windvale-written compiler | Qualified Stage 1/Stage 2 convergence from the committed twelve-module source inventory. |
 | Shared accepted-subset native backend | Qualified interpreter, AOT, baseline-JIT, object, link, package, and execution evidence for its documented profiles. |
-| Normal .NET-free host workflow | Qualified by [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md); Stage 0 is recovery and differential evidence only. |
+| Native-only host repository | Qualified normal workflow under [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md); managed source archived outside `main` under [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md). |
 | Windvale OS vertical proof | Qualified through Probe 40, including protected processes, capability-mediated IPC, services, bounded preemption evidence, and generation-safe non-tail memory objects. |
 | Static WebAssembly playground | The normal browser build and native generation/verification route are .NET-free; WebAssembly remains an interoperability lane rather than a permanent-platform commitment. |
 
@@ -58,6 +58,11 @@ separates affected-owner development checks from complete qualification.
 add content-addressed development checkpoints for the current database path.
 The warm two-case database owner is approximately 71 seconds on the measured
 Windows host. Complete qualification remains cold and explicit.
+
+The managed-source archival audit measured `seed-native-front-door` at 733,980
+ms for one suite/case because that owner reconstructs the broad front-door
+product inventory. It is the first concrete target for separating an ordinary
+identity/admission smoke from deliberate full product reconstruction.
 
 ### Completion gate
 
@@ -135,6 +140,8 @@ policy remain later milestones unless this slice produces a measured need.
 Windvale 0.1 is the first inspectable product release, not the first complete
 operating-system release. Its gate is defined in
 [Packages-Releases-And-Recovery.md](../Architecture/Packages-Releases-And-Recovery.md#recommended-windvale-01-gate).
+Recovery and repository-baseline tags remain separate from product versions as
+defined by [Release-Names-And-Tags.md](Release-Names-And-Tags.md).
 
 The preview requires:
 
@@ -200,7 +207,8 @@ Development and qualification answer different questions.
   qualification claim.
 - Complete dual-host qualification is an explicit workflow dispatch for a
   selected source state.
-- Managed Seed commands are recovery or differential diagnostics only.
+- Managed Stage 0 evidence is restored from its immutable release only for a
+  named recovery, security, or historical differential investigation.
 
 Do not run changed-file, Fast, Development, Standard, and Qualification levels
 sequentially for the same source state.

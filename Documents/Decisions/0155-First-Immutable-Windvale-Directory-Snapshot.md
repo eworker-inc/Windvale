@@ -22,7 +22,7 @@ The required response pressure is already known: the selected guest file must re
 - Add portable [`Directory-Snapshot.wv`](../../Operating-System/Services/Directory-Snapshot.wv) to own verification, lookup, and exact `WVDR 1` construction.
 - Compose storage and transport in [`Directory-Snapshot-Service.wv`](../../Operating-System/Services/Directory-Snapshot-Service.wv). Do not add a snapshot import to the already-qualified directory protocol core; `WVDQ 1` remains provider-format-independent.
 - Retain hosted [`Directory-Snapshot-Bridge.wv`](../../Operating-System/Services/Directory-Snapshot-Bridge.wv) solely for executable differential evidence. It declares only `file.read_bytes` and reads fixed opaque snapshot/request inputs.
-- Retain an independently implemented Stage 0 writer, verifier, and provider oracle in [`Directory-Snapshot.cs`](../../Operating-System/Windvale.Bootstrap/Directory-Snapshot.cs). It is a bootstrap/recovery seam, not the permanent OS provider.
+- Retain an independently implemented Stage 0 writer, verifier, and provider oracle, now preserved by the [managed recovery archive](../../Bootstrap/Stage0/README.md). It is a bootstrap/recovery seam, not the permanent OS provider.
 - Use the canonical two-entry, 3,184-byte fixture specified by `WVDS 1`. Its 3,072-byte `kernel.wv` entry forces the maximum `WVDR 1` response and its `folder` entry proves typed non-file behavior.
 - Do not change the compiler for this slice. Existing Windvale records, enums, bytes, loops, checked ranges, static imports, and hosted input are sufficient.
 - Keep Probe 34 and every firmware identity unchanged. Guest adoption is a separate versioned process/memory/resource slice.

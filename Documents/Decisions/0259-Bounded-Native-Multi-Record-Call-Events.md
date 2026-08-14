@@ -2,7 +2,7 @@
 
 - Date: 2026-08-05
 - Status: Implemented candidate; grouped dual-host qualification pending
-- Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0240](0240-Native-Record-Calls-And-Nonzero-Enums.md), and [Decision 0256](0256-Compact-Native-Record-Liveness.md)
+- Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0240](0240-Bounded-Native-Record-Calls.md), and [Decision 0256](0256-Compact-Native-Record-Liveness.md)
 - Contract: [Windvale-native x86-64 lowering](../../Specifications/Windvale-Native-X64-Lowering.md)
 
 ## Context

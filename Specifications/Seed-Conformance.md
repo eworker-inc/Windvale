@@ -2,7 +2,9 @@
 
 ## Purpose
 
-The Seed conformance suite proves that the compiler, bytecode codec, verifier, reference runtime, object model, and Stage 0 assembler agree on one portable contract. It uses only the pinned .NET SDK and repository source.
+The Seed conformance suite proves that the Windvale compiler, bytecode verifier,
+runtime, object model, assembler, and linker agree on one portable contract. Its
+current owners are native Windows/Linux applications and repository source.
 
 ## Required checks
 
@@ -54,56 +56,43 @@ The Seed conformance suite proves that the compiler, bytecode codec, verifier, r
 
 ## Host verification
 
-The verifier has four explicit levels:
+Ordinary changes use `Tools/Verify/Verify-Changed.ps1`. Its native dependency
+planner selects the affected fixed suites, verification-plan checks,
+WebAssembly owner, or workflow audit and refuses uncovered active boundaries.
+Run it once after a coherent edit rather than running increasingly broad levels
+for the same source state.
 
-- `Fast` builds the solution and runs only tests matching one required case-insensitive displayed-name substring. Optional fail-fast and timing-report output make it an inner-loop tool; it cannot publish a conformance report.
-- `Development` builds the solution, runs every regular Seed test plus the bounded OS in-process suite, and excludes the qualification-only golden cross-host contract. It is the default broad development gate and cannot publish a conformance report.
-- `Standard` builds and runs the complete in-process conformance suite and writes the host report, then stops before native CLI verification.
-- `Qualification` must be selected explicitly. It runs Standard plus the complete native CLI, hosted-boundary, deterministic-artifact, and no-partial-output checks.
+One named native suite can be selected directly with:
 
-The levels are nested alternatives, not a required sequence. One source state uses the narrowest level that establishes the required evidence; a passing broader level is not followed by narrower reruns.
-
-Every test prints its elapsed milliseconds. `--timing-report <path>` writes a separate local JSON timing document; elapsed time is deliberately excluded from the portable conformance contract. The qualification verifier builds once and invokes the resulting `windvale.dll` directly for CLI checks, avoiding repeated project evaluation without bypassing process, argument, exit-code, or native file behavior.
-
-Windows:
-
-```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter <suite-name>
 ```
-
-Linux:
 
 ```sh
-VERIFY_LEVEL=qualification ./Tools/Verify/Verify-Seed.sh
+./Tools/Native/Test-Retirement-Suite.sh --filter <suite-name>
 ```
 
-Standard and Qualification build Release binaries, run the complete suite, and write an ignored JSON report under `artifacts/`. The report separates the portable `contract` evidence from host metadata. Fast deliberately writes no conformance report.
-
-Windows examples:
-
-```powershell
-# Focused iteration
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter 'source symbols' -FailFast
-
-# Focused body-binding iteration
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestFilter 'bodies, locals, and calls' -FailFast
-
-# Complete in-process suite
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Standard
-```
-
-Linux uses the corresponding `VERIFY_LEVEL=fast|development|standard|qualification`, `TEST_FILTER`, `FAIL_FAST=1`, and `TIMING_REPORT_PATH` environment variables. The default is `development` on both hosts.
+The complete fixed manifest, WebAssembly owner, and compiler convergence run on
+both permanent hosts only for an explicitly selected qualification state. GitHub
+shards the native manifest without changing its exact suite inventory or
+aggregate result.
 
 ## Comparing hosts
 
-After collecting a report from Windows and Linux, compare their portable contracts with the test runner:
+Cross-host conformance is established by running the same committed manifests,
+fixed inputs, expected reports, and exact artifact identities on Windows and the
+pinned Debian environment. Portable format versions, normalized outputs, result
+codes, diagnostics, object/link products, and deterministic bytes must agree
+where the contract declares them portable. Host labels, paths, process details,
+and elapsed time are evidence metadata rather than portable values.
 
-```powershell
-dotnet run --project Tests/Windvale.Seed.Tests --configuration Release --no-build -- --compare-reports artifacts/seed-conformance-windows-x64.json artifacts/seed-conformance-linux-x86_64.json
-```
-
-The comparison intentionally ignores operating-system description, architecture label, and installed runtime description. It requires equal module-, object-, assembly-, and link-format versions, complete golden module, source-composition, Foundation-module, compiler-frontend, object, flat-image, and map SHA-256 values, results, and normalized program output. The golden contract covers the portable integer-data example, hosted text example, portable Foundation byte-header example, deterministic transitive nominal source composition, machine-contract, ordinal-byte-span, bounded-decimal, and immutable-byte-construction Foundation modules plus their demos, the Windvale-written compiler syntax, source-set, graph, declaration/signature, and body/local/call artifacts and real-closure reports, Windvale-written hosted `wvdump`, the complete normalized `wvdump` line report for the real integer-data module, the Windvale-written WVO core and its exact 189-byte object, both Stage 0 and Windvale-written encodings of the canonical WVA example, the Windvale linker core plus its canonical hosted WVO scan, and the complete Windvale-written two-object link map. Each host verifier also exercises native source composition, Foundation/compiler composition, assembly, Windvale assembly, Windvale WVO scanning, exact Windvale/Stage 0 image and map equality, no-partial-output and existing-output preservation, independent object/image verification, map-limit rejection, and hosted file adapters.
+Historical managed comparison reports remain in the immutable Stage 0 recovery
+release. They may diagnose an old contract but are not a live oracle for forward
+source or repository layout.
 
 ## Evidence discipline
 
-A Windows pass proves Windows behavior and produces one side of the cross-host contract. A Linux pass proves Linux behavior and supplies the second side. Portable source and a cross-platform target framework are supporting evidence, not substitutes for actually running both reports.
+A Windows pass proves Windows behavior; a Linux pass proves Linux behavior. A
+cross-host qualification claim requires both results from the same exact commit.
+Focused development feedback permits integration but must not be cited as a
+complete conformance or release claim.

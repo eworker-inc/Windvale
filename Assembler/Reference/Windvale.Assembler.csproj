@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Windvale Seed C# reference/recovery WVA parser and canonical WVO encoder.</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="../../Object-Model/Windvale.ObjectModel/Windvale.ObjectModel.csproj" />
-  </ItemGroup>
-</Project>

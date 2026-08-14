@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Windvale Seed verified bytecode reference runtime.</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="../Windvale.Bytecode/Windvale.Bytecode.csproj" />
-  </ItemGroup>
-</Project>

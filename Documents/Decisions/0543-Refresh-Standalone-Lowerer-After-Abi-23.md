@@ -3,7 +3,7 @@
 - Date: 2026-08-13
 - Status: Implemented candidate with focused Windows reconstruction evidence
 - Requires: [Decision 0542](0542-Refresh-Segmented-Wvo-Staging-After-Abi-23.md)
-- Refreshes: [Decision 0497](0497-Native-Wvb-To-Wvo-Application-Reconstruction.md)
+- Refreshes: [Decision 0497](0497-Native-Wvb-To-Wvo-Reconstruction.md)
 - Retains: WVB 1.11, WVO 1.0, and exact ABI-22 `Return-42` output
 
 ## Context

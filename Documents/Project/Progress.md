@@ -30,8 +30,8 @@ changes; refresh the image only when it becomes materially misleading.
 | Seed through assembler and linker | ✅ | Source semantics, WVB, verification, runtime, object, assembly, and link foundations have Windows/Linux evidence. | Preserve their contracts as later products consume them. |
 | Windvale-written compiler | ✅ | The committed twelve-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Add forward semantics only for named consumers; do not widen Stage 0. |
 | Shared accepted-subset native backend | 🔵 | Interpreter, deterministic AOT, baseline JIT, hosted execution, and native object/link/container profiles are qualified for their documented subsets. | Broaden only where the package application, tools, or OS require an unsupported operation or ownership shape. |
-| Normal .NET-free workflow | ✅ | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions with zero normal and nine recovery-only managed entry points. | Decide separately whether the frozen Stage 0 source should leave the live `main` tree. |
-| Development verification | 🎯 | [Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md) makes ordinary GitHub checks affected-owner development feedback and reserves complete qualification for explicit dispatch. Content-addressed checkpoints reduce the measured warm database owner to about 71 seconds. | Measure ordinary dual-host development runs, split remaining repeated construction from behavior, and keep cache state out of qualification. |
+| Native-only repository | 🚧 | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions; [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md) removes all tracked managed source and direct managed entry points from `main`. | Pass one explicit post-archive dual-host qualification, then tag the exact commit as a native-only baseline. |
+| Development verification | 🎯 | [Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md) makes ordinary GitHub checks affected-owner development feedback and reserves complete qualification for explicit dispatch. The warm database owner is about 71 seconds, while the archival audit measured the broad `seed-native-front-door` owner at 733,980 ms. | Split a fast identity/admission smoke from deliberate 97-product reconstruction, then measure ordinary dual-host development runs and keep cache state out of qualification. |
 | Native qualification | ✅ | [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md) qualified 52 suites and 3,287 cases per host in four shards; the complete workflow took about 15 minutes. | Run this gate only for a selected release, promotion, bootstrap, security, ABI, or conformance state. |
 | Package-backed application | 🚧 | Workspace 2, Package 1, Lock 1, native capability-bearing composition, canonical package text, manifest/lock consistency, and exact locked-resource admission have focused implementation evidence. | Complete deterministic bundle/store admission plus hosted WVDB Query execution and denial on both hosts. |
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
@@ -86,13 +86,14 @@ The package/lock/resource work and durable database work should converge on:
 SQL, a registry, a network resolver, broad concurrency, and a database server
 are not required for this slice.
 
-### 3. Prepare a separate Stage 0 archival decision
+### 3. Qualify the native-only repository baseline
 
-The C# source remains live because Decision 0526 deliberately retained it as a
-recovery and differential oracle. Removing it from `main` is now an independent
-repository-maintenance choice, not unfinished .NET retirement. Any archival
-change must preserve the exact release, checksums, restoration procedure, and
-independent copy, then run one explicit dependency audit and qualification gate.
+The archival decision is implemented in the working repository: the immutable
+pre-removal release remains authoritative, the in-tree pointer preserves exact
+checksums and recovery custody, and guards require zero tracked managed files and
+zero direct managed entry points. The remaining step is one explicit complete
+Windows/Linux qualification on the committed post-archive state; ordinary
+per-commit full qualification remains disabled.
 
 ## Working end to end
 
@@ -111,7 +112,7 @@ independent copy, then run one explicit dependency audit and qualification gate.
 
 - [Development roadmap](Roadmap.md) defines the active milestones and gates.
 - [.NET retirement inventory](Dotnet-Retirement-Inventory.md) records the current
-  managed boundary and retained owners.
+  native-only boundary and immutable managed recovery identity.
 - [Qualification evidence](Seed-Verification-Evidence.md) preserves exact runs,
   reports, and artifact identities.
 - [Changelog](../../CHANGELOG.md) summarizes notable implementation changes.

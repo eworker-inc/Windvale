@@ -41,7 +41,6 @@ function Test-Editor-RelevantPath {
 
     return (
         $Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Compiler/Reference/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Specifications/Compiler-Source-Body-Parser.md',

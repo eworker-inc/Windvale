@@ -4,7 +4,6 @@ param()
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $RetirementInventoryVerifier = Join-Path $PSScriptRoot 'Verify-Dotnet-Retirement-Inventory.ps1'
-$Stage0RecoveryArchiveVerifier = Join-Path $PSScriptRoot 'Verify-Stage0-Recovery-Archive.ps1'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
@@ -14,27 +13,23 @@ $Cases = @(
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'website editor'; Paths = @('Tools/Windvale.Playground/Editor/Vite-Config.mjs', 'Tools/Editors/Windvale/package.json'); Scope = 'website'; Editor = $true; Areas = @() },
-    @{ Name = 'website and compiler'; Paths = @('Website/site.js', 'Compiler/Reference/Seed-Compiler.cs'); Scope = 'development'; Editor = $true; Areas = $AllAreas },
-    @{ Name = 'compiler'; Paths = @('Compiler/Reference/Seed-Compiler.cs'); Scope = 'development'; Editor = $true; Areas = @('compiler') },
-    @{ Name = 'compiler and documentation image'; Paths = @('Compiler/Reference/Seed-Compiler.cs', 'Documents/Project/Images/Progress.png'); Scope = 'development'; Editor = $true; Areas = @('compiler') },
-    @{ Name = 'native compiler'; Paths = @('Compiler/Native/X64-Native-Backend.cs'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
-    @{ Name = 'bytecode'; Paths = @('Runtime/Windvale.Bytecode/Module-Codec.cs'); Scope = 'development'; Editor = $false; Areas = @('bytecode') },
-    @{ Name = 'native runtime'; Paths = @('Runtime/Windvale.Native/X64-Native-Executor.cs'); Scope = 'development'; Editor = $false; Areas = @('runtime') },
-    @{ Name = 'runtime'; Paths = @('Runtime/Windvale.Runtime/Reference-Runtime.cs'); Scope = 'development'; Editor = $false; Areas = @('runtime') },
-    @{ Name = 'object model'; Paths = @('Object-Model/Windvale.ObjectModel/Object-Codec.cs'); Scope = 'development'; Editor = $false; Areas = @('object-model') },
-    @{ Name = 'assembler reference'; Paths = @('Assembler/Reference/Assembly-Compiler.cs'); Scope = 'development'; Editor = $false; Areas = @('assembler') },
+    @{ Name = 'website and compiler'; Paths = @('Website/site.js', 'Compiler/Windvale/Source-Lexer-Core.wv'); Scope = 'development'; Editor = $true; Areas = $AllAreas },
+    @{ Name = 'compiler'; Paths = @('Compiler/Windvale/Source-Lexer-Core.wv'); Scope = 'development'; Editor = $true; Areas = @('compiler') },
+    @{ Name = 'compiler and documentation image'; Paths = @('Compiler/Windvale/Source-Lexer-Core.wv', 'Documents/Project/Images/Progress.png'); Scope = 'development'; Editor = $true; Areas = @('compiler') },
+    @{ Name = 'native compiler'; Paths = @('Compiler/Windvale/Native-X64-Lowering-Core.wv'); Scope = 'development'; Editor = $true; Areas = @('compiler') },
+    @{ Name = 'runtime'; Paths = @('Runtime/Windvale/Native-Execution-Context-Core.wv'); Scope = 'development'; Editor = $false; Areas = @('runtime') },
+    @{ Name = 'object model'; Paths = @('Object-Model/Windvale/Wvo-Object-Core.wv'); Scope = 'development'; Editor = $false; Areas = @('object-model') },
     @{ Name = 'assembler Windvale'; Paths = @('Assembler/Windvale/Wva-Assembler-Core.wv'); Scope = 'development'; Editor = $false; Areas = @('assembler') },
-    @{ Name = 'linker reference'; Paths = @('Linker/Reference/Link-Compiler.cs'); Scope = 'development'; Editor = $false; Areas = @('linker') },
     @{ Name = 'linker Windvale'; Paths = @('Linker/Windvale/Wv-Linker-Core.wv'); Scope = 'development'; Editor = $false; Areas = @('linker') },
     @{ Name = 'Foundation'; Paths = @('Foundation/Byte-Ordering.wv'); Scope = 'development'; Editor = $false; Areas = @('foundation') },
     @{ Name = 'database'; Paths = @('Libraries/Database/Wvdb-Reader.wv'); Scope = 'development'; Editor = $false; Areas = @('database') },
     @{ Name = 'database specification'; Paths = @('Specifications/Windvale-Database-Reader.md'); Scope = 'development'; Editor = $false; Areas = @('database') },
     @{ Name = 'Seed example'; Paths = @('Examples/Seed/Sum-Data.wv'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler', 'runtime') },
-    @{ Name = 'project tool'; Paths = @('Tools/Windvale.Project/Project-Parser.cs'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
+    @{ Name = 'project tool'; Paths = @('Tools/Windvale.Project/Project-Manifest-Core.wv'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'project manifest'; Paths = @('Projects/Examples/Windvale-Compiler.wvproj'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'project specification'; Paths = @('Specifications/Windvale-Project.md'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'bytecode specification'; Paths = @('Specifications/Seed-Bytecode.md'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'runtime') },
-    @{ Name = 'test harness'; Paths = @('Tests/Windvale.Seed.Tests/Program.cs'); Scope = 'development'; Editor = $false; Areas = $AllAreas }
+    @{ Name = 'test fixture'; Paths = @('Tests/Native/Wvo-Rejections/Bad-Version.wvo.b64'); Scope = 'development'; Editor = $false; Areas = $AllAreas }
 )
 $NativeCases = @(
     @{
@@ -793,11 +788,11 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'managed compiler recovery source'
+        Name = 'archived managed compiler source'
         Paths = @('Compiler/Reference/Seed-Compiler.cs')
         Suites = @()
-        Gaps = @('managed-compiler-recovery-source')
-        VerifyPlan = $false
+        Gaps = @()
+        VerifyPlan = $true
     },
     @{
         Name = 'WvDump native front-door construction owner'
@@ -1208,7 +1203,7 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
-        Name = 'Stage 0 recovery archive owner'
+        Name = 'removed Stage 0 live recovery owner'
         Paths = @(
             'Documents/Project/Stage0-Recovery-Dependencies.json',
             'Tools/Recovery/New-Stage0-Recovery-Archive.ps1',
@@ -1216,6 +1211,17 @@ $NativeCases = @(
             'Tools/Verify/Verify-Stage0-Recovery-Archive.ps1'
         )
         Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'Stage 0 archival status specifications'
+        Paths = @(
+            'Specifications/Seed-Conformance.md',
+            'Specifications/Windvale-Directory-Service-Ipc.md',
+            'Specifications/Windvale-Directory-Snapshot.md'
+        )
+        Suites = @('os-probe')
         Gaps = @()
         VerifyPlan = $true
     },
@@ -1274,7 +1280,6 @@ $NativeCases = @(
 )
 
 & $RetirementInventoryVerifier -Quiet
-& $Stage0RecoveryArchiveVerifier
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)

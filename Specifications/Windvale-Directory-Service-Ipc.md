@@ -57,7 +57,11 @@ No service header surrounds this value. The maximum reply is 3,096 bytes, leavin
 
 [`Directory-Service-Bridge.wv`](../Operating-System/Services/Directory-Service-Bridge.wv) is a temporary hosted integration adapter. It reads one opaque `ipc:directory-read.wvdq` input through `file.read_bytes`, invokes the separately authorized `filesystem.directory_read_v1` instance only for a valid request, and returns the core-approved bytes. It exists to prove the Windvale service policy against an independent Stage 0 oracle; it is not the Windvale OS provider or permanent host path.
 
-[`Directory-Service-Ipc.cs`](../Operating-System/Windvale.Bootstrap/Directory-Service-Ipc.cs) independently implements construction, parsing, provider invariants, response verification, and hostile-input containment for Stage 0 recovery and differential evidence. [`Bounded-Service-Exchange.cs`](../Operating-System/Windvale.Bootstrap/Bounded-Service-Exchange.cs) is the shared format-blind transport oracle used by both resource and directory protocols.
+The former managed directory codec and format-blind transport oracle are
+preserved in the [immutable Stage 0 recovery archive](../Bootstrap/Stage0/README.md).
+Current construction, parsing, provider invariants, response verification, and
+hostile-input containment are owned by the Windvale implementation and fixed
+native evidence in `main`.
 
 ## Current evidence and limits
 

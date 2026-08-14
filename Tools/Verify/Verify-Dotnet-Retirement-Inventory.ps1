@@ -6,8 +6,6 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $InventoryPath = Join-Path $RepositoryRoot 'Documents/Project/Dotnet-Retirement-Inventory.json'
-$AllowedLanes = @('development', 'verification', 'release', 'recovery')
-$AllowedModes = @('normal', 'recovery')
 
 function Test-DirectManagedInvocation {
     param(
@@ -23,134 +21,98 @@ function Test-DirectManagedInvocation {
 }
 
 if (!(Test-Path -LiteralPath $InventoryPath -PathType Leaf)) {
-    throw "The .NET retirement inventory is missing: $InventoryPath"
+    throw "The .NET archival inventory is missing: $InventoryPath"
 }
 
 $Inventory = Get-Content -Raw -LiteralPath $InventoryPath | ConvertFrom-Json
-if ($Inventory.format -ne 'windvale-dotnet-retirement-inventory-1') {
-    throw "Unsupported .NET retirement inventory format '$($Inventory.format)'."
+if ($Inventory.format -ne 'windvale-dotnet-retirement-inventory-2') {
+    throw "Unsupported .NET archival inventory format '$($Inventory.format)'."
+}
+if ([int]$Inventory.trackedManagedFiles -ne 0) {
+    throw 'The .NET archival inventory must declare zero tracked managed files.'
+}
+if (@($Inventory.directManagedEntrypoints).Count -ne 0) {
+    throw 'The .NET archival inventory must declare zero direct managed entry points.'
 }
 
-$Entries = @($Inventory.directManagedEntrypoints)
-if ($Entries.Count -eq 0) {
-    throw 'The .NET retirement inventory must contain at least one direct managed entry point.'
+$ExpectedArchive = [ordered]@{
+    tag = 'stage0-recovery-e5a1a7473c57'
+    releaseUrl = 'https://github.com/eworker-inc/Windvale/releases/tag/stage0-recovery-e5a1a7473c57'
+    commit = 'e5a1a7473c57935c5dfcf09b78b18c3c099e70ef'
+    tree = '9950150f14cd4864b06c853ab6a716fa6e04495a'
+    sourceBundleSha256 = '1830bf95b583267b69229125edb83521733a36f27a4d49fe371534734bcc0892'
+    supplementalChecksumsSha256 = 'de18793e13fa4cf429070739708e2e3bebc4cebbd5eacde5832dca9781928267'
+    restoreDocument = 'Bootstrap/Stage0/README.md'
+}
+foreach ($Name in $ExpectedArchive.Keys) {
+    if ([string]$Inventory.archive.$Name -cne $ExpectedArchive[$Name]) {
+        throw "The Stage 0 archive field '$Name' differs from the qualified identity."
+    }
 }
 
-$ExpectedPaths = [System.Collections.Generic.List[string]]::new()
-$SeenPaths = [System.Collections.Generic.HashSet[string]]::new(
-    [System.StringComparer]::Ordinal)
-$ModeCounts = @{
-    normal = 0
-    recovery = 0
+$RestorePath = Join-Path $RepositoryRoot ([string]$Inventory.archive.restoreDocument)
+if (!(Test-Path -LiteralPath $RestorePath -PathType Leaf)) {
+    throw "The Stage 0 recovery pointer is missing: $RestorePath"
 }
 
-foreach ($Entry in $Entries) {
-    $Path = [string]$Entry.path
-    if ([string]::IsNullOrWhiteSpace($Path)) {
-        throw 'A .NET retirement inventory entry has no path.'
-    }
-
-    if ($Path -ne $Path.Replace('\', '/')) {
-        throw "Inventory path '$Path' must use forward slashes."
-    }
-
-    if ([System.IO.Path]::IsPathRooted($Path) -or $Path -match '(^|/)\.\.(/|$)') {
-        throw "Inventory path '$Path' must stay relative to the repository root."
-    }
-
-    if (!$SeenPaths.Add($Path)) {
-        throw "Duplicate .NET retirement inventory path '$Path'."
-    }
-
-    $Owner = [string]$Entry.owner
-    if ([string]::IsNullOrWhiteSpace($Owner)) {
-        throw "Inventory path '$Path' has no owner."
-    }
-
-    $Mode = [string]$Entry.mode
-    if ($Mode -notin $AllowedModes) {
-        throw "Inventory path '$Path' has unsupported mode '$Mode'."
-    }
-
-    $Lanes = @($Entry.lanes)
-    if ($Lanes.Count -eq 0) {
-        throw "Inventory path '$Path' has no lane."
-    }
-
-    $SeenLanes = [System.Collections.Generic.HashSet[string]]::new(
-        [System.StringComparer]::Ordinal)
-    foreach ($LaneValue in $Lanes) {
-        $Lane = [string]$LaneValue
-        if ($Lane -notin $AllowedLanes) {
-            throw "Inventory path '$Path' has unsupported lane '$Lane'."
-        }
-
-        if (!$SeenLanes.Add($Lane)) {
-            throw "Inventory path '$Path' repeats lane '$Lane'."
-        }
-    }
-
-    if ($Mode -eq 'recovery' -and ($Lanes.Count -ne 1 -or $Lanes[0] -ne 'recovery')) {
-        throw "Recovery inventory path '$Path' must own only the recovery lane."
-    }
-    if ($Mode -eq 'normal' -and 'recovery' -in $Lanes) {
-        throw "Normal inventory path '$Path' cannot own the recovery lane."
-    }
-
-    $FullPath = Join-Path $RepositoryRoot $Path
-    if (!(Test-Path -LiteralPath $FullPath -PathType Leaf)) {
-        throw "Inventory path '$Path' does not exist."
-    }
-
-    $Content = Get-Content -Raw -LiteralPath $FullPath
-    if (!(Test-DirectManagedInvocation -Content $Content)) {
-        throw "Inventory path '$Path' no longer contains a direct .NET invocation."
-    }
-
-    $ExpectedPaths.Add($Path)
-    $ModeCounts[$Mode]++
+$TrackedPaths = @(git -C $RepositoryRoot ls-files --cached --others --exclude-standard)
+if ($LASTEXITCODE -ne 0) {
+    throw 'Git could not enumerate the repository inventory.'
 }
-
-$CandidateFiles = @(
-    Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot '.github/workflows') -File |
-        Where-Object { $_.Extension -in @('.yml', '.yaml') }
-    Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot 'Tools/Verify') -File |
-        Where-Object { $_.Extension -in @('.ps1', '.sh', '.cmd') }
-    Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot 'Tools/Recovery') -File |
-        Where-Object { $_.Extension -in @('.ps1', '.sh', '.cmd') }
-    Get-Item -LiteralPath (Join-Path $RepositoryRoot 'Website/package.json')
+$TrackedPaths = @(
+    $TrackedPaths | Where-Object {
+        Test-Path -LiteralPath (Join-Path $RepositoryRoot $_) -PathType Leaf
+    }
 )
 
-$DiscoveredPaths = @(
-    foreach ($File in $CandidateFiles) {
-        if ($File.FullName -eq $PSCommandPath) {
+$ManagedExtensions = @('.cs', '.csproj', '.fs', '.fsproj', '.vb', '.vbproj', '.razor', '.sln', '.slnx')
+$ManagedBuildFiles = @(
+    'Directory.Build.props',
+    'Directory.Build.targets',
+    'Directory.Packages.props',
+    'global.json',
+    'NuGet.Config',
+    'packages.lock.json'
+)
+$TrackedManagedPaths = @(
+    $TrackedPaths | Where-Object {
+        [IO.Path]::GetExtension($_) -in $ManagedExtensions -or
+        [IO.Path]::GetFileName($_) -in $ManagedBuildFiles
+    }
+)
+if ($TrackedManagedPaths.Count -ne 0) {
+    throw "Managed source or build metadata returned to main: $($TrackedManagedPaths -join ', ')"
+}
+
+$OperationalPaths = @(
+    $TrackedPaths | Where-Object {
+        $_ -ne 'Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1' -and
+        (
+            $_.StartsWith('.github/workflows/', [StringComparison]::Ordinal) -or
+            $_.StartsWith('Tools/Verify/', [StringComparison]::Ordinal) -or
+            $_.StartsWith('Tools/Recovery/', [StringComparison]::Ordinal) -or
+            [IO.Path]::GetFileName($_) -eq 'package.json'
+        )
+    }
+)
+$DirectManagedPaths = @(
+    foreach ($Path in $OperationalPaths) {
+        $FullPath = Join-Path $RepositoryRoot $Path
+        if (!(Test-Path -LiteralPath $FullPath -PathType Leaf)) {
             continue
         }
-
-        $Content = Get-Content -Raw -LiteralPath $File.FullName
+        $Content = Get-Content -Raw -LiteralPath $FullPath
         if (Test-DirectManagedInvocation -Content $Content) {
-            [System.IO.Path]::GetRelativePath($RepositoryRoot, $File.FullName).Replace('\', '/')
+            $Path
         }
     }
-) | Sort-Object -Unique
-
-$ExpectedPaths = @($ExpectedPaths) | Sort-Object
-$UntrackedPaths = @($DiscoveredPaths | Where-Object { $_ -notin $ExpectedPaths })
-$StalePaths = @($ExpectedPaths | Where-Object { $_ -notin $DiscoveredPaths })
-
-if ($UntrackedPaths.Count -ne 0 -or $StalePaths.Count -ne 0) {
-    $Details = @()
-    if ($UntrackedPaths.Count -ne 0) {
-        $Details += "untracked direct entry points: $($UntrackedPaths -join ', ')"
-    }
-    if ($StalePaths.Count -ne 0) {
-        $Details += "stale inventory entries: $($StalePaths -join ', ')"
-    }
-    throw "The .NET retirement inventory is out of date ($($Details -join '; '))."
+)
+if ($DirectManagedPaths.Count -ne 0) {
+    throw "A direct managed invocation returned to an operational path: $($DirectManagedPaths -join ', ')"
 }
 
 if (!$Quiet) {
     Write-Host (
-        ".NET retirement inventory passed ($($ExpectedPaths.Count) direct entry points; " +
-        "$($ModeCounts.normal) normal, $($ModeCounts.recovery) recovery).")
+        ".NET archival inventory passed (0 tracked managed files; " +
+        "0 direct managed entry points; archive $($Inventory.archive.tag)).")
 }

@@ -2,7 +2,10 @@
 
 The Windvale playground is a static browser application over the experimental Windvale-native WebAssembly pipeline. Monaco remains the local editor. A disposable module worker loads an identity-pinned direct compiler Wasm and scalar interpreter Wasm, compiles one canonical `WVSS 1` source set to WVB, admits the returned bytes as untrusted input, and executes the verified scalar entry point. Source never leaves the browser.
 
-The C# project and reusable engine remain in this directory only as documented Stage 0 recovery and comparison implementations. Normal local startup, browser startup, website verification, and Cloudflare publication do not start Blazor or a .NET runtime. The host contract is defined by [`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md).
+This directory contains only the normal static playground. The retired Blazor
+host and managed comparison engine are available in the immutable Stage 0
+recovery release, not in `main`. The host contract is defined by
+[`Specifications/Browser-Playground.md`](../../Specifications/Browser-Playground.md).
 
 Public playground: <https://windvale.ca/playground/>
 
@@ -65,4 +68,4 @@ node Tools/WebAssembly/Build-Direct-Compiler-Wasm.mjs
 node Tools/WebAssembly/Build-Direct-Compiler-Wasm.mjs --check
 ```
 
-The 88-second artifact-generation operation is a maintainer workflow, not part of browser compilation or website deployment. Reconstructing the pinned segmented generator Wasm still uses the explicit Stage 0 recovery seam. Normal artifact use, website build, deployment, browser compilation, returned-WVB admission, and execution are .NET-free.
+The 88-second artifact-generation operation is a maintainer workflow, not part of browser compilation or website deployment. Historical reconstruction of the pinned segmented generator Wasm starts from the archived Stage 0 release. Normal artifact use, website build, deployment, browser compilation, returned-WVB admission, and execution are .NET-free.

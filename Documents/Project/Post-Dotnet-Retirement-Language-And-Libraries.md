@@ -103,9 +103,9 @@ semantic tests, deterministic fixtures, diagnostics, and editor grammar. If it
 changes WIR or WVB, it must also update the affected format specification,
 independent verifier, interpreter/runtime behavior, and malformed-input coverage.
 A source-only lowering into existing verified operations should not churn an
-unaffected serialized format or backend. The retained C# implementation stays a
-frozen recovery/reference lane and does not receive new language breadth merely to
-preserve parity.
+unaffected serialized format or backend. Historical C# source is available only
+through the immutable Stage 0 release and does not receive new language breadth
+merely to preserve parity.
 
 Native, WebAssembly, and Windvale OS lowering are target profiles, not separate
 source languages. A new feature must be implemented and tested in every target

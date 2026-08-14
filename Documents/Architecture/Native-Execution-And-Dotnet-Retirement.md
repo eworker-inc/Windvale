@@ -15,6 +15,12 @@ Earlier incremental paragraphs retain their then-current open statements as a
 historical transfer record; Decision 0526 and the current retirement inventory
 supersede them for present operational standing.
 
+[Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md)
+subsequently removes managed Stage 0 source, projects, tests, and direct commands
+from `main`. The immutable release remains the supported recovery input. Any
+later paragraph describing a retained or deletion-bound managed owner is
+historical evidence, not current repository ownership.
+
 [Decision 0240](../Decisions/0240-Bounded-Native-Record-Calls.md) now adds nonzero-first enum admission and bounded one-block record parameters, caller-owned returns, and calls. Its focused call-instruction extraction keeps the Windvale tool under the existing native frame bound; multi-block record liveness and the scalar-returning record consumer required by compiler-produced `Nominal-Types.wv` remain the next lowering boundary.
 
 [Decision 0241](../Decisions/0241-Multi-Block-Native-Record-Liveness.md) closes that boundary with fixed-point record-local liveness, block-scoped record-temporary allocation, and scalar-returning record consumers. The exact compiler-produced `Nominal-Types.wv` WVO now agrees across Stage 0, the Windvale adapters, and the direct current-host native package; grouped Windows/Linux qualification and artifact promotion remain pending.

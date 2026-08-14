@@ -3,7 +3,7 @@
 - Status: Accepted current-host candidate
 - Date: 2026-08-10
 - Scope: hosted-verifier application publisher, publisher construction inventory, profile-8 admitter, durable promoter, and role-2 WVB publisher
-- Extends: [Decision 0490](0490-Compiler-Wvb-Verifier-Indexing.md) and [Decision 0492](0492-Hosted-Container-Toolset-Reconstruction.md)
+- Extends: [Decision 0490](0490-Indexed-Compiler-WVB-Verification.md) and [Decision 0492](0492-Hosted-Container-Toolset-Reconstruction.md)
 - Retains: roles 0/1/2, profiles 2/8, publication transaction semantics, frozen Stage 0 recovery evidence, and the pending grouped dual-host retirement gate
 
 ## Context

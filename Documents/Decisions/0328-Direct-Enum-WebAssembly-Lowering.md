@@ -2,7 +2,7 @@
 
 - Date: 2026-08-06
 - Status: Implemented for constants, comparisons, names, calls, and local defaults
-- Advances: [Decision 0325](0325-Static-Descriptor-WebAssembly-Lowering.md)
+- Advances: [Decision 0326](0326-Static-Descriptor-WebAssembly-Lowering.md)
 - Target: `wasm32-browser-v1-experimental`
 
 ## Context

@@ -15,6 +15,9 @@ The following are no longer open project questions:
 - Complete qualification is an explicit selected-state gate rather than a
   per-commit workflow under
   [Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md).
+- Managed Stage 0 source is archived outside `main` under
+  [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md); its
+  exact pre-removal state remains `stage0-recovery-e5a1a7473c57`.
 - Windows and Linux remain permanent hosts, canonical WVB remains the shared
   distribution contract, and Windvale OS remains the vertical integration
   target.
@@ -38,19 +41,6 @@ unfinished work.
   and which must remain cold because identity reconstruction is the evidence?
 - Which artifact families can move to deliberate promotion commits so ordinary
   semantic work does not repin unrelated native applications and documentation?
-
-### Stage 0 live-source archival
-
-- Should the frozen managed implementation be removed from `main` now that the
-  exact recovery release and independent copy exist, or quarantined beneath one
-  explicit `Bootstrap/Stage0` boundary?
-- What minimal in-tree restoration record proves the release identity, checksum,
-  source inventory, supported recovery hosts, and reconstruction command without
-  retaining live managed projects?
-- Which independent oracle cases remain valuable enough to restore on demand,
-  and which duplicate evidence already owned by native fixtures?
-- What one-time native audit and dual-host qualification demonstrate that source
-  removal exposed no hidden build, package, website, test, or OS dependency?
 
 ### Useful package-backed application
 
@@ -141,7 +131,6 @@ dashboard without creating another decision record.
 
 The next decisions should therefore be limited to:
 
-1. the live Stage 0 archival policy, if source removal is selected;
-2. a package bundle/content-store contract when the WVDB Query consumer is ready;
-3. an exact capability approval/binding record for that application; and
-4. the first post-Probe-40 resource-domain and atomic-launch contract.
+1. a package bundle/content-store contract when the WVDB Query consumer is ready;
+2. an exact capability approval/binding record for that application; and
+3. the first post-Probe-40 resource-domain and atomic-launch contract.

@@ -2,7 +2,7 @@
 
 - Status: Implemented with paired Windows/Debian evidence; promotion and grouped qualification pending
 - Date: 2026-08-08
-- Advances: [Decision 0420](0420-Multi-Fragment-Current-Lowerer-Reconstruction.md), [Decision 0414](0414-Native-Hosted-Wvb-Package-Composition.md), and [Decision 0390](0390-Linux-Durable-Multi-Chunk-Publication.md)
+- Advances: [Decision 0420](0420-Multi-Fragment-Current-Lowerer-Reconstruction.md), [Decision 0414](0414-Digest-Bound-Native-Hosted-Container-Composition.md), and [Decision 0390](0390-Reusable-Linux-Durable-Multi-Chunk-Publication.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
 
 ## Context

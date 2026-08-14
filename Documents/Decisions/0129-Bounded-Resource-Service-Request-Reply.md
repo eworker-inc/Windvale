@@ -19,7 +19,7 @@ Moving the complete store, a general filesystem, writable storage, new schedulin
 - Add a capacity-one, format-blind Stage 0 exchange oracle with separate client and service endpoints, directional rights, copied message ownership, deterministic state transitions, peer-exit clearing, and explicit terminal close.
 - Add portable [`Resource-Service-Core.wv`](../../Operating-System/Services/Resource-Service-Core.wv). It owns request parsing, complete `WVRS 1` validation, name lookup, response-limit policy, and response construction.
 - Add hosted [`Resource-Service-Bridge.wv`](../../Operating-System/Services/Resource-Service-Bridge.wv). It declares only `file.read_bytes`, reads the store and request through two opaque names, and returns the response.
-- Retain an independent Stage 0 codec, verifier, handler, and transport oracle in [`Resource-Service-Ipc.cs`](../../Operating-System/Windvale.Bootstrap/Resource-Service-Ipc.cs).
+- Retain an independent Stage 0 codec, verifier, handler, and transport oracle, now preserved by the [managed recovery archive](../../Bootstrap/Stage0/README.md).
 - Keep Probe 32, protected-process version 11, the current syscall and channel records, the boot image, and QEMU identities unchanged. Guest adoption requires its own ABI decision and boot-capability lifetime evidence.
 
 ## Candidate evidence

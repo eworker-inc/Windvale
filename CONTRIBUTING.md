@@ -43,22 +43,14 @@ managed fallback.
 
 Verification levels are alternatives, not a required sequence. Do not run changed-file, Fast, Development, Standard, and Qualification one after another for the same source state. A passing broader tier subsumes narrower tiers, and remains valid until relevant inputs change; committing or pushing is not a reason to repeat it. After a failed check, rerun the narrowest affected selection and use at most one broader final gate if the risk calls for it.
 
-The managed Seed verifier is retained only for a named recovery, security, or
-differential question. When that independent oracle is specifically required,
-select one or more test areas and optionally narrow them by displayed-name
-substring:
+Managed Stage 0 source and its verifier are not present in `main`. A named
+recovery, security, or historical differential investigation must restore the
+exact qualified release in a separate workspace by following
+[`Bootstrap/Stage0/README.md`](Bootstrap/Stage0/README.md). Do not copy that tree
+back into an ordinary contribution or use archived managed evidence as current
+native qualification.
 
-```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Fast -TestArea compiler,runtime -TestFilter '<substring>' -FailFast
-```
-
-The managed areas are `assembler`, `bytecode`, `compiler`, `database`,
-`foundation`, `golden`, `linker`, `object-model`, and `runtime`. Area selections
-form a union; an accompanying filter intersects with that union. Record why the
-managed oracle was needed and do not treat any filtered or managed local result
-as current native qualification.
-
-Testing is proportional to risk. Ordinary edits should not pay for unrelated multi-minute gates: choose the focused native changed-file verifier, and use the managed Development, Standard, or Qualification levels only for a named recovery or differential question. GitHub runs affected native owners on Windows and Linux for ordinary implementation and specification changes. Dispatch the complete independent dual-host Qualification gate only for a release candidate, promotion, security boundary, bootstrap state, ABI change, or deliberate conformance claim; do not duplicate it locally without the same qualification reason. Run separate compiler-bootstrap or OS-boot gates only when the compiler inventory/bootstrap boundary or boot/image/kernel boundary changed, or when making the corresponding qualification claim. Always state which broader checks were not run and why.
+Testing is proportional to risk. Ordinary edits should not pay for unrelated multi-minute gates: choose the focused native changed-file verifier. GitHub runs affected native owners on Windows and Linux for ordinary implementation and specification changes. Dispatch the complete independent dual-host Qualification gate only for a release candidate, promotion, security boundary, bootstrap state, ABI change, or deliberate conformance claim; do not duplicate it locally without the same qualification reason. Run separate compiler-bootstrap or OS-boot gates only when the compiler inventory/bootstrap boundary or boot/image/kernel boundary changed, or when making the corresponding qualification claim. Always state which broader checks were not run and why.
 
 Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require evidence from Windows and real Debian before cross-host qualification is claimed. GitHub-hosted CI is a review gate, not a substitute for the exact cross-host qualification procedure.
 

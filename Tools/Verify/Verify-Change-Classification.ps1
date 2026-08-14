@@ -54,29 +54,29 @@ $Cases = @(
     },
     @{
         Name = 'runtime implementation'
-        Paths = @('Runtime/Windvale.Runtime/Reference-Runtime.cs')
+        Paths = @('Runtime/Windvale/Native-Execution-Context-Core.wv')
         Scope = 'development'
         Editor = $false
     },
     @{
-        Name = 'playground host implementation'
-        Paths = @('Tools/Windvale.Playground/Program.cs')
+        Name = 'native compiler implementation'
+        Paths = @('Compiler/Windvale/Native-X64-Lowering-Core.wv')
         Scope = 'development'
-        Editor = $false
+        Editor = $true
     },
     @{
         Name = 'mixed documentation and compiler implementation'
         Paths = @(
             'README.md',
             'Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png',
-            'Compiler/Reference/Source-Lexer.cs'
+            'Compiler/Windvale/Source-Lexer-Core.wv'
         )
         Scope = 'development'
         Editor = $true
     },
     @{
         Name = 'mixed website and compiler implementation'
-        Paths = @('Website/site.js', 'Compiler/Reference/Source-Lexer.cs')
+        Paths = @('Website/site.js', 'Compiler/Windvale/Source-Lexer-Core.wv')
         Scope = 'development'
         Editor = $true
     },
@@ -87,8 +87,8 @@ $Cases = @(
         Editor = $false
     },
     @{
-        Name = 'homepage build configuration'
-        Paths = @('Directory.Build.props')
+        Name = 'retirement inventory'
+        Paths = @('Documents/Project/Dotnet-Retirement-Inventory.json')
         Scope = 'development'
         Editor = $false
     }

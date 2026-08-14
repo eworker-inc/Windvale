@@ -76,6 +76,6 @@ This fixture is a reproducibility and boundary-pressure value, not a general roo
 
 ## Ownership and current limits
 
-Portable [`Directory-Snapshot.wv`](../Operating-System/Services/Directory-Snapshot.wv) owns the Windvale verifier, lookup, and `WVDR 1` construction. [`Directory-Snapshot-Service.wv`](../Operating-System/Services/Directory-Snapshot-Service.wv) composes that storage policy with the independently qualified directory protocol. The hosted bridge supplies only opaque snapshot and request bytes for differential testing. [`Directory-Snapshot.cs`](../Operating-System/Windvale.Bootstrap/Directory-Snapshot.cs) is the independent Stage 0 writer, verifier, and provider oracle.
+Portable [`Directory-Snapshot.wv`](../Operating-System/Services/Directory-Snapshot.wv) owns the Windvale verifier, lookup, and `WVDR 1` construction. [`Directory-Snapshot-Service.wv`](../Operating-System/Services/Directory-Snapshot-Service.wv) composes that storage policy with the independently qualified directory protocol. The hosted bridge supplies only opaque snapshot and request bytes for differential testing. The former independent Stage 0 writer/verifier is preserved in the [immutable recovery archive](../Bootstrap/Stage0/README.md), not in `main`.
 
 Version 1 has no nested paths, enumeration, timestamps, permissions, ownership, links, mutation, persistence, compression, sparse extents, block allocation, caching, signatures, open handles, or concurrent update protocol. Those concerns require separate contracts rather than unused fields in this page.

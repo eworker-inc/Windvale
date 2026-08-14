@@ -19,7 +19,11 @@ Use `npm --prefix Website run dev:site` or `npm --prefix Website run dev:playgro
 
 The playground can keep several example and scratch tabs open during one visit. Choosing an example opens or focuses its tab, the `+` button creates an independent scratch program, and Compile + Run uses only the active tab. Source and the execution budget remain with each open tab until the page is reloaded; the playground does not persist draft source in browser storage.
 
-The normal website workflow does not invoke the retained C# recovery project. Restarting the combined command after an editor or pinned-package change gives the proxy one consistent static publication; mutable package files revalidate before their identities are accepted.
+The normal website workflow is entirely static and native/WebAssembly-backed;
+the retired managed playground is available only in the immutable Stage 0
+archive. Restarting the combined command after an editor or pinned-package change
+gives the proxy one consistent static publication; mutable package files
+revalidate before their identities are accepted.
 
 Run the complete targeted website gate with:
 

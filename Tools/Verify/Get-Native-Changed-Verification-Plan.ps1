@@ -107,6 +107,40 @@ function Add-Gap {
     $null = $Gaps.Add($Name)
 }
 
+function Test-ArchivedManagedPath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $Extension = [IO.Path]::GetExtension($Path)
+    if ($Extension -in @(
+        '.cs', '.csproj', '.fs', '.fsproj', '.vb', '.vbproj', '.razor', '.sln', '.slnx'
+    )) {
+        return $true
+    }
+
+    return $Path -in @(
+        'Directory.Build.props',
+        'Directory.Build.targets',
+        'Directory.Packages.props',
+        'global.json',
+        'NuGet.Config',
+        'packages.lock.json',
+        'Documents/Project/Stage0-Recovery-Dependencies.json',
+        'Tools/Recovery/New-Stage0-Recovery-Archive.ps1',
+        'Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1',
+        'Tools/Recovery/Rebuild-Native-Compiler-Seed.sh',
+        'Tools/Recovery/Rebuild-Os-Probe.ps1',
+        'Tools/Recovery/Rebuild-WebAssembly-Native-Backend.ps1',
+        'Tools/Recovery/Rebuild-WebAssembly-Native-Compiler.ps1',
+        'Tools/Recovery/Test-Stage0-Recovery-Archive.ps1',
+        'Tools/Recovery/Verify-Managed-Bootstrap.ps1',
+        'Tools/Recovery/Verify-Managed-Bootstrap.sh',
+        'Tools/Verify/Verify-Seed.ps1',
+        'Tools/Verify/Verify-Seed.sh',
+        'Tools/Verify/Verify-Stage0-Recovery-Archive.ps1',
+        'Tools/Windvale.Playground/Properties/launchSettings.json'
+    )
+}
+
 function Require-Full-Database-Storage {
     $script:DatabaseStorageDevelopmentEligible = $false
     Add-Suite 'database-storage'
@@ -417,6 +451,8 @@ foreach ($Path in $Paths) {
         )
     ) {
         continue
+    } elseif (Test-ArchivedManagedPath $Path) {
+        $RunPlanVerification = $true
     } elseif ($Path -in @(
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
@@ -478,18 +514,12 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'seed-native-front-door'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
-            'Verify-Seed.ps1',
-            'Verify-Seed.sh'
-        )) {
-            Add-Suite @('seed', 'seed-native-front-door')
-        } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',
             'Get-Native-Changed-Verification-Plan.ps1',
             'Verify-Changed.ps1',
             'Verify-Change-Classification.ps1',
             'Verify-Dotnet-Retirement-Inventory.ps1',
-            'Verify-Stage0-Recovery-Archive.ps1',
             'Verify-Verification-Plan.ps1'
         )) {
             $RunPlanVerification = $true
@@ -1349,7 +1379,14 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -eq 'Specifications/Seed-CLI.md') {
+        if ($Path -eq 'Specifications/Seed-Conformance.md') {
+            $RunPlanVerification = $true
+        } elseif ($Path -in @(
+            'Specifications/Windvale-Directory-Service-Ipc.md',
+            'Specifications/Windvale-Directory-Snapshot.md'
+        )) {
+            Add-Os-Suite $Path
+        } elseif ($Path -eq 'Specifications/Seed-CLI.md') {
             Add-Suite @('seed', 'wvb-runner-reconstruction')
             Add-Suite 'seed-native-front-door'
             Add-Suite 'seed-native-console-aot'
@@ -1652,8 +1689,6 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('.github/', [StringComparison]::Ordinal)) {
         Add-GitHubQualificationVerification
-    } elseif ($Path -in @('Directory.Build.props', 'global.json', 'Windvale.slnx')) {
-        Add-Gap 'managed-build-closure'
     } else {
         Add-Gap "unmapped:$Path"
     }

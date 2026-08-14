@@ -89,7 +89,7 @@ foreach ($Path in $Paths) {
         Add-Area 'bytecode'
     } elseif ($Path.StartsWith('Runtime/Windvale.Native/', [StringComparison]::Ordinal)) {
         Add-Area 'runtime'
-    } elseif ($Path.StartsWith('Runtime/Windvale.Runtime/', [StringComparison]::Ordinal)) {
+    } elseif ($Path.StartsWith('Runtime/Windvale/', [StringComparison]::Ordinal)) {
         Add-Area 'runtime'
     } elseif ($Path.StartsWith('Object-Model/', [StringComparison]::Ordinal)) {
         Add-Area 'object-model'
@@ -140,9 +140,8 @@ foreach ($Path in $Paths) {
     } elseif (
         $Path.StartsWith('Tests/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Tools/Windvale.Tool/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('.github/', [StringComparison]::Ordinal) -or
-        $Path -in @('Directory.Build.props', 'global.json', 'Windvale.slnx')
+        $Path -eq 'Documents/Project/Dotnet-Retirement-Inventory.json'
     ) {
         Add-AllAreas
     } else {

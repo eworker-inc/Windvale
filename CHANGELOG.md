@@ -8,6 +8,9 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Archived the frozen managed Stage 0 implementation outside `main`, retained its exact qualified release and checksums through a small in-tree recovery pointer, and added a fail-closed guard against tracked managed source or direct managed operational entry points returning.
+- Documented separate tag families for immutable recovery archives, qualified native-only baselines, and `v0.y.z` product releases; `v0.1.0` remains reserved for the first inspectable product preview rather than the .NET-removal checkpoint.
+
 - Added repeated copy-on-write updates to an existing depth-two Windvale Database tree. Portable branch rewrites replace or split any routed leaf while preserving untouched siblings, commit batches enforce unique obsolete-page predecessors, hosted mutation explicitly copies borrowed provider pages, and the Windows fixture covers all five interruption points for both initial and repeated publication without .NET or C#.
 - Added measured four-way Windows/Linux native-retirement sharding without dropping or caching any owner. Manifest version 2 pins every assignment across 52 suites and the corrected 3,287-case inventory, coordinators retain the sequential and focused modes while reporting per-owner timing, and GitHub requires all eight cold shards through the unchanged final gate.
 - Added the first durable multi-page Windvale Database generation: deterministic variable-key leaf splitting, a two-child branch root, a reusable 63-data-page commit batch, and a provider-backed reader with 32-level, snapshot, graph, and inherited-range bounds. The focused native owner now builds, publishes, and reopens the depth-two tree across all five interruption points without .NET or C#, while the lowerer rejection goldens retain ABI-23's structured diagnostics and ordinary-front-door compiler promotion remains explicit.

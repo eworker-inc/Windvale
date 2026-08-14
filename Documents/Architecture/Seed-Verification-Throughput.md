@@ -144,33 +144,31 @@ remain separate independent qualification jobs.
 Sharding reduces wall-clock time, not total evidence or necessarily total hosted
 compute. Rebalance only from repeated dual-host measurements.
 
-## Managed recovery verifier
+## Archived managed evidence
 
-`Tools/Verify/Verify-Seed.ps1` and `.sh` remain explicit Stage 0 recovery and
-differential commands. Their Fast, Development, Standard, and Qualification
-levels describe the frozen managed harness; they are not the normal post-
-retirement workflow.
-
-Use them only for a named recovery drill, security correction, or differential
-question. Select the smallest applicable area/filter and state why managed
-evidence was required. Do not run a managed broader level after a passing native
-development result unless the selected claim specifically needs that independent
-oracle.
+The former managed Fast, Development, Standard, and Qualification harness is
+preserved only in `stage0-recovery-e5a1a7473c57`. It is absent from `main` and
+therefore cannot become an accidental fallback or another step in the ordinary
+verification ladder. A named recovery, security, or historical differential
+investigation restores that exact release in a separate workspace.
 
 ## Next measured optimizations
 
-1. Separate artifact construction from execution inside the WebAssembly owner so
+1. Split the measured 733,980 ms `seed-native-front-door` owner into a fast
+   pinned identity/admission smoke for ordinary boundary checks and deliberate
+   complete product reconstruction for compiler/inventory qualification.
+2. Separate artifact construction from execution inside the WebAssembly owner so
    an engine-only change does not regenerate unchanged WVB and Wasm products.
-2. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
+3. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
    verifier, linker, and hosted-application products only when timing identifies
    them as a development bottleneck.
-3. Replace ad hoc path lists with declarative per-owner dependency manifests when
+4. Replace ad hoc path lists with declarative per-owner dependency manifests when
    that representation can be verified against the current planner without
    losing fail-closed coverage.
-4. Schedule independent development owners concurrently only with explicit CPU
+5. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.
-5. Treat compiler incrementality as a separate optimization: cache parsed
+6. Treat compiler incrementality as a separate optimization: cache parsed
    modules, symbols, WIR, and native objects by complete dependency identity.
 
 The working targets are a repeated affected-owner local run under two minutes
