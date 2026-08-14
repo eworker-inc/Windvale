@@ -49,19 +49,19 @@ $Cases = @(
     @{
         Name = 'source specification'
         Paths = @('Specifications/Seed-Language.md')
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $true
     },
     @{
         Name = 'runtime implementation'
         Paths = @('Runtime/Windvale.Runtime/Reference-Runtime.cs')
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $false
     },
     @{
         Name = 'playground host implementation'
         Paths = @('Tools/Windvale.Playground/Program.cs')
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $false
     },
     @{
@@ -71,25 +71,25 @@ $Cases = @(
             'Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png',
             'Compiler/Reference/Source-Lexer.cs'
         )
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $true
     },
     @{
         Name = 'mixed website and compiler implementation'
         Paths = @('Website/site.js', 'Compiler/Reference/Source-Lexer.cs')
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $true
     },
     @{
         Name = 'unrecognized configuration'
         Paths = @('.github/dependabot.yml')
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $false
     },
     @{
         Name = 'homepage build configuration'
         Paths = @('Directory.Build.props')
-        Scope = 'qualification'
+        Scope = 'development'
         Editor = $false
     }
 )

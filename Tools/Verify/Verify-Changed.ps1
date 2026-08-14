@@ -55,7 +55,7 @@ if ($Paths.Count -eq 0) {
 }
 
 $Plan = & $Planner -ChangedPath $Paths -PassThru
-$NativePlan = if ($Plan.Scope -eq 'qualification') {
+$NativePlan = if ($Plan.Scope -in @('development', 'qualification')) {
     & $NativePlanner -ChangedPath $Paths -PassThru
 } else {
     [pscustomobject]@{
@@ -88,7 +88,7 @@ if ($Plan.Editor) {
 
 if ($Plan.Scope -eq 'website') {
     & $WebsiteVerifier
-} elseif ($Plan.Scope -eq 'qualification') {
+} elseif ($Plan.Scope -in @('development', 'qualification')) {
     if ($NativePlan.Gaps.Count -ne 0) {
         throw (
             'Changed-file verification has uncovered native evidence gaps: ' +

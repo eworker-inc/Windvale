@@ -59,7 +59,7 @@ if ($Paths.Count -eq 0) {
 }
 
 foreach ($Path in $Paths) {
-    if ($Classification.Scope -ne 'qualification') {
+    if ($Classification.Scope -notin @('development', 'qualification')) {
         break
     }
 

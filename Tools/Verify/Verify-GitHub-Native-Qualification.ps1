@@ -59,6 +59,8 @@ $ExpectedJobs = @(
     'classify-changes',
     'lightweight-verifier',
     'website-verifier',
+    'windows-development',
+    'linux-development',
     'windows-native-suite',
     'linux-native-suite',
     'windows-webassembly',
@@ -79,6 +81,24 @@ Assert-Workflow (
         [string[]]$ActualJobs,
         [string[]]$ExpectedJobs)
 ) "The GitHub workflow job order differs: $($ActualJobs -join ', ')."
+
+$DevelopmentJobs = @('windows-development', 'linux-development')
+foreach ($Job in $DevelopmentJobs) {
+    $Block = Get-JobBlock $Job
+    Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
+        "Development job '$Job' does not depend on classification."
+    Assert-Workflow (
+        $Block.Contains("    if: `${{ needs.classify-changes.outputs.scope == 'development' }}")
+    ) "Development job '$Job' does not use the focused-development condition."
+    Assert-Workflow (
+        $Block.Contains(
+            'run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA')
+    ) "Development job '$Job' does not invoke changed-file verification for the classified comparison."
+    Assert-Workflow ($Block -match '(?m)^        uses: actions/setup-node@[0-9a-f]{40} # v[0-9]') `
+        "Development job '$Job' does not pin the Node setup action."
+    Assert-Workflow ($Block -match '(?m)^          node-version: 24$') `
+        "Development job '$Job' does not pin Node.js 24."
+}
 
 $QualificationJobs = @(
     'windows-native-suite',
@@ -137,9 +157,15 @@ foreach ($Line in $Lines | Where-Object { $_ -match '^\s+uses:\s+' }) {
 }
 
 $Gate = Get-JobBlock 'verification-gate'
-foreach ($Job in $QualificationJobs) {
+foreach ($Job in @($DevelopmentJobs; $QualificationJobs)) {
     Assert-Workflow ($Gate -match "(?m)^      - $([regex]::Escape($Job))$") `
         "The verification gate does not depend on '$Job'."
+}
+foreach ($Variable in @('WINDOWS_DEVELOPMENT_RESULT', 'LINUX_DEVELOPMENT_RESULT')) {
+    $SuccessPattern = '(?m)^              test "\$' +
+        [regex]::Escape($Variable) + '" = success$'
+    Assert-Workflow ($Gate -match $SuccessPattern) `
+        "The development branch does not require '$Variable' success."
 }
 foreach ($Variable in @(
     'WINDOWS_NATIVE_RESULT',
@@ -163,4 +189,4 @@ Assert-Workflow (
 ) 'The retirement inventory still contains a normal managed entry point.'
 Assert-Workflow ($InventoryEntries.Count -eq 9) `
     "The retirement inventory contains $($InventoryEntries.Count) entries instead of nine recovery owners."
-Write-Host 'GitHub native qualification workflow verification passed (6 definitions, 12 matrix-expanded native jobs; 0 normal managed entry points).'
+Write-Host 'GitHub native workflow verification passed (2 focused development jobs; 6 qualification definitions, 12 matrix-expanded native jobs; 0 normal managed entry points).'

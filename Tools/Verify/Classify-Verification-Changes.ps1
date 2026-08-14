@@ -162,11 +162,11 @@ if (!$ForceQualification) {
 
                 if (!(Test-LightweightPath $Path)) {
                     if (Test-WebsitePath $Path) {
-                        if ($Scope -ne 'qualification') {
+                        if ($Scope -ne 'development') {
                             $Scope = 'website'
                         }
                     } else {
-                        $Scope = 'qualification'
+                        $Scope = 'development'
                     }
                 }
             }

@@ -56,7 +56,7 @@ jobs:
       - name: Verify change classification rules
         shell: pwsh
         run: |
-          if ('${{ steps.classify.outputs.scope }}' -notin @('lightweight', 'website', 'qualification')) {
+          if ('${{ steps.classify.outputs.scope }}' -notin @('lightweight', 'website', 'development', 'qualification')) {
             throw 'Verification scope classification failed.'
           }
           if ('${{ steps.classify.outputs.editor }}' -notin @('true', 'false')) {
@@ -131,6 +131,56 @@ jobs:
       - name: Verify website
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
+
+  windows-development:
+    name: Windows focused development verification
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'development' }}
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Run affected native owners
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
+
+  linux-development:
+    name: Linux focused development verification
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'development' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Run affected native owners
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
 
   windows-native-suite:
     name: Windows native retirement suite (${{ matrix.shard }}/4)
@@ -300,6 +350,8 @@ jobs:
       - classify-changes
       - lightweight-verifier
       - website-verifier
+      - windows-development
+      - linux-development
       - windows-native-suite
       - linux-native-suite
       - windows-webassembly
@@ -317,6 +369,8 @@ jobs:
           CLASSIFY_RESULT: ${{ needs.classify-changes.result }}
           LIGHTWEIGHT_RESULT: ${{ needs.lightweight-verifier.result }}
           WEBSITE_RESULT: ${{ needs.website-verifier.result }}
+          WINDOWS_DEVELOPMENT_RESULT: ${{ needs.windows-development.result }}
+          LINUX_DEVELOPMENT_RESULT: ${{ needs.linux-development.result }}
           WINDOWS_NATIVE_RESULT: ${{ needs.windows-native-suite.result }}
           LINUX_NATIVE_RESULT: ${{ needs.linux-native-suite.result }}
           WINDOWS_WEBASSEMBLY_RESULT: ${{ needs.windows-webassembly.result }}
@@ -329,6 +383,8 @@ jobs:
             lightweight)
               test "$LIGHTWEIGHT_RESULT" = success
               test "$WEBSITE_RESULT" = skipped
+              test "$WINDOWS_DEVELOPMENT_RESULT" = skipped
+              test "$LINUX_DEVELOPMENT_RESULT" = skipped
               test "$WINDOWS_NATIVE_RESULT" = skipped
               test "$LINUX_NATIVE_RESULT" = skipped
               test "$WINDOWS_WEBASSEMBLY_RESULT" = skipped
@@ -339,6 +395,20 @@ jobs:
             website)
               test "$LIGHTWEIGHT_RESULT" = skipped
               test "$WEBSITE_RESULT" = success
+              test "$WINDOWS_DEVELOPMENT_RESULT" = skipped
+              test "$LINUX_DEVELOPMENT_RESULT" = skipped
+              test "$WINDOWS_NATIVE_RESULT" = skipped
+              test "$LINUX_NATIVE_RESULT" = skipped
+              test "$WINDOWS_WEBASSEMBLY_RESULT" = skipped
+              test "$LINUX_WEBASSEMBLY_RESULT" = skipped
+              test "$WINDOWS_BOOTSTRAP_RESULT" = skipped
+              test "$LINUX_BOOTSTRAP_RESULT" = skipped
+              ;;
+            development)
+              test "$LIGHTWEIGHT_RESULT" = skipped
+              test "$WEBSITE_RESULT" = skipped
+              test "$WINDOWS_DEVELOPMENT_RESULT" = success
+              test "$LINUX_DEVELOPMENT_RESULT" = success
               test "$WINDOWS_NATIVE_RESULT" = skipped
               test "$LINUX_NATIVE_RESULT" = skipped
               test "$WINDOWS_WEBASSEMBLY_RESULT" = skipped
@@ -349,6 +419,8 @@ jobs:
             qualification)
               test "$LIGHTWEIGHT_RESULT" = skipped
               test "$WEBSITE_RESULT" = skipped
+              test "$WINDOWS_DEVELOPMENT_RESULT" = skipped
+              test "$LINUX_DEVELOPMENT_RESULT" = skipped
               test "$WINDOWS_NATIVE_RESULT" = success
               test "$LINUX_NATIVE_RESULT" = success
               test "$WINDOWS_WEBASSEMBLY_RESULT" = success
