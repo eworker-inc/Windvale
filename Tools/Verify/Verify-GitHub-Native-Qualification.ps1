@@ -45,6 +45,12 @@ Assert-Workflow ($Content -notmatch '(?im)Verify-Seed\.(?:ps1|sh)') `
     'The normal GitHub workflow invokes a managed Seed recovery verifier.'
 Assert-Workflow ($Content -notmatch "`t") 'The GitHub workflow contains a tab.'
 Assert-Workflow (
+    $Content.Contains(
+        '  group: verify-${{ github.workflow }}-${{ github.ref }}',
+        [StringComparison]::Ordinal) -and
+    $Content.Contains('  cancel-in-progress: true', [StringComparison]::Ordinal)
+) 'The GitHub workflow does not cancel superseded runs on the same ref.'
+Assert-Workflow (
     ([regex]::Matches($Content, '\$\{\{').Count -eq
         [regex]::Matches($Content, '\}\}').Count)
 ) 'The GitHub workflow has unbalanced expression delimiters.'
@@ -92,12 +98,18 @@ foreach ($Job in $QualificationJobs) {
 }
 
 $ExpectedCommands = @{
-    'windows-native-suite' = 'Tools\Native\Test-Retirement-Suite.cmd'
-    'linux-native-suite' = './Tools/Native/Test-Retirement-Suite.sh'
+    'windows-native-suite' = 'Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}'
+    'linux-native-suite' = './Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}'
     'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1'
     'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1'
     'windows-bootstrap' = 'Tools\Verify\Verify-Bootstrap.cmd'
     'linux-bootstrap' = './Tools/Verify/Verify-Bootstrap.sh'
+}
+
+foreach ($Job in @('windows-native-suite', 'linux-native-suite')) {
+    $Block = Get-JobBlock $Job
+    Assert-Workflow ($Block -match '(?m)^    strategy:\n      fail-fast: false\n      max-parallel: 4\n      matrix:\n        shard: \[1, 2, 3, 4\]$') `
+        "Retirement job '$Job' does not declare the exact four-shard matrix."
 }
 foreach ($Job in $ExpectedCommands.Keys) {
     $Block = Get-JobBlock $Job
@@ -151,4 +163,4 @@ Assert-Workflow (
 ) 'The retirement inventory still contains a normal managed entry point.'
 Assert-Workflow ($InventoryEntries.Count -eq 9) `
     "The retirement inventory contains $($InventoryEntries.Count) entries instead of nine recovery owners."
-Write-Host 'GitHub native qualification workflow verification passed (6 native jobs; 0 normal managed entry points).'
+Write-Host 'GitHub native qualification workflow verification passed (6 definitions, 12 matrix-expanded native jobs; 0 normal managed entry points).'

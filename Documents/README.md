@@ -24,6 +24,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
 - [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced direct-entry-point inventory, product-surface ledger, and retained recovery owners
+- [Measured native retirement sharding](Decisions/0550-Measured-Native-Retirement-Sharding.md) — cold four-way host sharding, per-owner timing, exact 52-suite/3,287-case coverage, and unchanged aggregate qualification
 - [Grouped staging and Linux publisher closure](Decisions/0523-Grouped-Staging-And-Linux-Publisher-Closure.md) — bounded multi-value code-chunk admission, exact Linux data/executable modes, existing-destination policy preservation, and coherent publisher-family repinning
 - [Enum-complete native WVO inspector reconstruction](Decisions/0522-Enum-Complete-Native-Wvo-Inspector-Reconstruction.md) — repaired module-specific enum-service composition, explicit Linux executable mode, refreshed paired candidates, and native self-test ownership
 - [Native WVA and linker execution transfer](Decisions/0521-Native-Wva-And-Linker-Execution-Transfer.md) — independent Windows/Linux ownership of self-test, scanning, semantic rejection and preservation, provider assembly, canonical image/map publication, and undefined-import preservation

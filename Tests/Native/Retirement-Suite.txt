@@ -1,53 +1,53 @@
-windvale-native-retirement-suite 1
-seed|Test-Seed|26|Tests: 26, Passed: 26, Failed: 0
-seed-native-front-door|Test-Seed-Native-Front-Door|1|Tests: 1, Passed: 1, Failed: 0
-seed-native-console-aot|Test-Seed-Native-Console-Aot|1|Tests: 1, Passed: 1, Failed: 0
-compiler-reconstruction|Test-Compiler-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-console-verifier-reconstruction|Test-Console-Verifier-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-console-publisher-reconstruction|Test-Console-Application-Publisher-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
-wvo-publisher-reconstruction|Test-Wvo-Publisher-Reconstruction|2|Tests: 2, Passed: 2, Failed: 0
-baseline-jit|Test-Baseline-Jit|6|Tests: 6, Passed: 6, Failed: 0
-unsafe-wvb|Test-Wvb-Unsafe-Rejections|20|Tests: 20, Passed: 20, Failed: 0
-wvb-containment|Test-Wvb-Containment|1000|Tests: 1000, Passed: 1000, Failed: 0
-wvo-read-only|Test-Wvo-Read-Only-Rejections|13|Tests: 13, Passed: 13, Failed: 0
-wvo-differential|Test-Wvo-Differential|256|Tests: 256, Passed: 256, Failed: 0
-wvo-containment|Test-Wvo-Containment|500|Tests: 500, Passed: 500, Failed: 0
-wvo-hostile-size|Test-Wvo-Hostile-Size|4|Tests: 4, Passed: 4, Failed: 0
-assembler-rejections|Test-Assembler-Rejections|11|Tests: 11, Passed: 11, Failed: 0
-assembler-golden|Test-Assembler-Golden|4|Tests: 4, Passed: 4, Failed: 0
-wva-differential|Test-Wva-Differential|269|Tests: 269, Passed: 269, Failed: 0
-source-containment|Test-Source-Containment|500|Tests: 500, Passed: 500, Failed: 0
-lowerer-rejections|Test-Lowerer-Rejections|2|Tests: 2, Passed: 2, Failed: 0
-linker-rejections|Test-Linker-Rejections|10|Tests: 10, Passed: 10, Failed: 0
-linker-hostile|Test-Linker-Hostile-Inputs|200|Tests: 200, Passed: 200, Failed: 0
-linker-map-limit|Test-Linker-Map-Limit|1|Tests: 1, Passed: 1, Failed: 0
-console-packager-rejections|Test-Console-Packager-Rejections|3|Tests: 3, Passed: 3, Failed: 0
-console-container-hostile|Test-Console-Container-Hostile-Inputs|256|Tests: 256, Passed: 256, Failed: 0
-console-container-mutations|Test-Console-Container-Mutations|19|Tests: 19, Passed: 19, Failed: 0
-hosted-console-container-mutations|Test-Hosted-Console-Container-Mutations|15|Tests: 15, Passed: 15, Failed: 0
-console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|Tests: 2, Passed: 2, Failed: 0
-console-segmented-construction|Test-Console-Application-Segmented-Construction|2|Tests: 2, Passed: 2, Failed: 0
-console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|Tests: 2, Passed: 2, Failed: 0
-console-packager-container-reconstruction|Test-Console-Packager-Container-Reconstruction|4|Tests: 4, Passed: 4, Failed: 0
-publisher-rejections|Test-Publisher-Rejections|4|Tests: 4, Passed: 4, Failed: 0
-hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|15|Tests: 15, Passed: 15, Failed: 0
-uefi-packager|Test-Uefi-Packager|3|Tests: 3, Passed: 3, Failed: 0
-wvo-export-renamer|Test-Wvo-Export-Renamer|4|Tests: 4, Passed: 4, Failed: 0
-os-probe-object|Test-Os-Probe-Object-Producer|11|Tests: 11, Passed: 11, Failed: 0
-os-kernel-target|Test-Os-Kernel-Target|7|Tests: 7, Passed: 7, Failed: 0
-os-process-policy|Test-Os-Process-Policy-Object|2|Tests: 2, Passed: 2, Failed: 0
-os-process-object|Test-Os-Process-Object|2|Tests: 2, Passed: 2, Failed: 0
-os-probe|Test-Os-Probe|4|Tests: 4, Passed: 4, Failed: 0
-aot-chain|Test-Aot-Chain|1|native aot chain status=Passed result=42
-native-u64-lowering|Test-Native-U64-Lowering|1|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified
-database-superblock|Test-Database-Superblock|13|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
-database-durable-commit|Test-Database-Durable-Commit|12|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|13|native database storage status=Passed cases=13 local-results=0 cross-host-images=Verified
-workspace-project2|Test-Workspace-Project2|8|native workspace/project test status=Complete cases=8
-libraries|Test-Libraries|26|native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26
-packages|Test-Wvdb-Query-Package|8|native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8
+windvale-native-retirement-suite 2
+seed|Test-Seed|26|2|Tests: 26, Passed: 26, Failed: 0
+seed-native-front-door|Test-Seed-Native-Front-Door|1|2|Tests: 1, Passed: 1, Failed: 0
+seed-native-console-aot|Test-Seed-Native-Console-Aot|1|2|Tests: 1, Passed: 1, Failed: 0
+compiler-reconstruction|Test-Compiler-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
+segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
+wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
+wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
+wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
+wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
+console-verifier-reconstruction|Test-Console-Verifier-Reconstruction|3|2|Tests: 3, Passed: 3, Failed: 0
+console-publisher-reconstruction|Test-Console-Application-Publisher-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
+wvo-publisher-reconstruction|Test-Wvo-Publisher-Reconstruction|2|2|Tests: 2, Passed: 2, Failed: 0
+baseline-jit|Test-Baseline-Jit|6|2|Tests: 6, Passed: 6, Failed: 0
+unsafe-wvb|Test-Wvb-Unsafe-Rejections|20|3|Tests: 20, Passed: 20, Failed: 0
+wvb-containment|Test-Wvb-Containment|1000|2|Tests: 1000, Passed: 1000, Failed: 0
+wvo-read-only|Test-Wvo-Read-Only-Rejections|13|4|Tests: 13, Passed: 13, Failed: 0
+wvo-differential|Test-Wvo-Differential|256|3|Tests: 256, Passed: 256, Failed: 0
+wvo-containment|Test-Wvo-Containment|500|4|Tests: 500, Passed: 500, Failed: 0
+wvo-hostile-size|Test-Wvo-Hostile-Size|4|3|Tests: 4, Passed: 4, Failed: 0
+assembler-rejections|Test-Assembler-Rejections|11|2|Tests: 11, Passed: 11, Failed: 0
+assembler-golden|Test-Assembler-Golden|4|4|Tests: 4, Passed: 4, Failed: 0
+wva-differential|Test-Wva-Differential|269|3|Tests: 269, Passed: 269, Failed: 0
+source-containment|Test-Source-Containment|500|3|Tests: 500, Passed: 500, Failed: 0
+lowerer-rejections|Test-Lowerer-Rejections|2|3|Tests: 2, Passed: 2, Failed: 0
+linker-rejections|Test-Linker-Rejections|10|4|Tests: 10, Passed: 10, Failed: 0
+linker-hostile|Test-Linker-Hostile-Inputs|200|2|Tests: 200, Passed: 200, Failed: 0
+linker-map-limit|Test-Linker-Map-Limit|1|2|Tests: 1, Passed: 1, Failed: 0
+console-packager-rejections|Test-Console-Packager-Rejections|3|2|Tests: 3, Passed: 3, Failed: 0
+console-container-hostile|Test-Console-Container-Hostile-Inputs|256|4|Tests: 256, Passed: 256, Failed: 0
+console-container-mutations|Test-Console-Container-Mutations|19|3|Tests: 19, Passed: 19, Failed: 0
+hosted-console-container-mutations|Test-Hosted-Console-Container-Mutations|15|2|Tests: 15, Passed: 15, Failed: 0
+console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|3|Tests: 2, Passed: 2, Failed: 0
+console-segmented-construction|Test-Console-Application-Segmented-Construction|2|3|Tests: 2, Passed: 2, Failed: 0
+console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|4|Tests: 2, Passed: 2, Failed: 0
+console-packager-container-reconstruction|Test-Console-Packager-Container-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
+publisher-rejections|Test-Publisher-Rejections|4|3|Tests: 4, Passed: 4, Failed: 0
+hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|15|4|Tests: 15, Passed: 15, Failed: 0
+uefi-packager|Test-Uefi-Packager|3|2|Tests: 3, Passed: 3, Failed: 0
+wvo-export-renamer|Test-Wvo-Export-Renamer|4|4|Tests: 4, Passed: 4, Failed: 0
+os-probe-object|Test-Os-Probe-Object-Producer|11|3|Tests: 11, Passed: 11, Failed: 0
+os-kernel-target|Test-Os-Kernel-Target|7|2|Tests: 7, Passed: 7, Failed: 0
+os-process-policy|Test-Os-Process-Policy-Object|2|3|Tests: 2, Passed: 2, Failed: 0
+os-process-object|Test-Os-Process-Object|2|4|Tests: 2, Passed: 2, Failed: 0
+os-probe|Test-Os-Probe|4|3|Tests: 4, Passed: 4, Failed: 0
+aot-chain|Test-Aot-Chain|1|4|native aot chain status=Passed result=42
+native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified
+database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
+database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
+database-storage|Test-Database-Storage|13|1|native database storage status=Passed cases=13 local-results=0 cross-host-images=Verified
+workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
+libraries|Test-Libraries|26|3|native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26
+packages|Test-Wvdb-Query-Package|8|3|native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8

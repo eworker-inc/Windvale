@@ -2,18 +2,30 @@
 set -uo pipefail
 
 filter=
+shard=
 case $# in
     0)
         ;;
     2)
-        if [[ $1 != --filter || -z $2 ]]; then
-            echo 'Usage: ./Tools/Native/Test-Retirement-Suite.sh [--filter <suite-name>]' >&2
-            exit 64
-        fi
-        filter=$2
+        case $1 in
+            --filter)
+                [[ -n $2 ]] || exit 64
+                filter=$2
+                ;;
+            --shard)
+                case $2 in
+                    1|2|3|4) shard=$2 ;;
+                    *) exit 64 ;;
+                esac
+                ;;
+            *)
+                echo 'Usage: ./Tools/Native/Test-Retirement-Suite.sh [--filter <suite-name>|--shard <1-4>]' >&2
+                exit 64
+                ;;
+        esac
         ;;
     *)
-        echo 'Usage: ./Tools/Native/Test-Retirement-Suite.sh [--filter <suite-name>]' >&2
+        echo 'Usage: ./Tools/Native/Test-Retirement-Suite.sh [--filter <suite-name>|--shard <1-4>]' >&2
         exit 64
         ;;
 esac
@@ -21,7 +33,7 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Retirement-Suite.txt"
-plan_digest=c5e7094b1eea485b39de76a6832e73f0b924429953a3ebb8e469ef76d8f095a7
+plan_digest=bfa747fb520d742b31ccbff9808fe975fbbabab02236a97c0f05c3a8b800492a
 
 check_hash() {
     local path=$1
@@ -37,12 +49,19 @@ if ! check_hash "$plan" "$plan_digest"; then
     exit 1
 fi
 
-while IFS='|' read -r name command cases expected_summary; do
+while IFS='|' read -r name command cases suite_shard expected_summary; do
     owner="$repository_root/Tools/Native/$command.sh"
     if [[ ! -x $owner ]]; then
         echo "Native retirement suite owner is missing or not executable: $owner" >&2
         exit 1
     fi
+    case $suite_shard in
+        1|2|3|4) ;;
+        *)
+            echo "Native retirement suite shard is invalid: $name=$suite_shard" >&2
+            exit 1
+            ;;
+    esac
 done < <(tail -n +2 -- "$plan")
 
 temporary_root=${TMPDIR:-/tmp}
@@ -67,6 +86,7 @@ selected=0
 total_suites=0
 passed_suites=0
 total_cases=0
+total_start=$SECONDS
 
 run_suite() {
     local name=$1
@@ -75,14 +95,16 @@ run_suite() {
     local expected_summary=$4
     local suite_status
     local actual_summary
+    local suite_start=$SECONDS
 
     selected=$((selected + 1))
     total_suites=$((total_suites + 1))
     total_cases=$((total_cases + cases))
     "$repository_root/Tools/Native/$command.sh" > "$suite_output" 2> "$suite_error"
     suite_status=$?
+    local suite_elapsed_ms=$(((SECONDS - suite_start) * 1000))
     if ((suite_status != 0)); then
-        echo "FAIL  suite $name: native command exited $suite_status" >&2
+        echo "FAIL  suite $name: native command exited $suite_status elapsed-ms=$suite_elapsed_ms" >&2
         cat -- "$suite_output" "$suite_error" >&2
         return 1
     fi
@@ -99,28 +121,37 @@ run_suite() {
     fi
     rm -f -- "$suite_output" "$suite_error"
     passed_suites=$((passed_suites + 1))
-    echo "PASS  suite $name cases=$cases"
+    echo "PASS  suite $name cases=$cases elapsed-ms=$suite_elapsed_ms"
 }
 
 IFS= read -r header < "$plan"
-if [[ $header != 'windvale-native-retirement-suite 1' ]]; then
+if [[ $header != 'windvale-native-retirement-suite 2' ]]; then
     echo 'Native retirement suite header differs' >&2
     exit 1
 fi
 
-while IFS='|' read -r name command cases expected_summary; do
+while IFS='|' read -r name command cases suite_shard expected_summary; do
     if [[ -n $filter && $filter != "$name" ]]; then
         continue
     fi
+    if [[ -n $shard && $shard != "$suite_shard" ]]; then
+        continue
+    fi
     if ! run_suite "$name" "$command" "$cases" "$expected_summary"; then
+        echo "Timing: elapsed-ms=$(((SECONDS - total_start) * 1000))" >&2
         echo "Suites: $total_suites, Passed: $passed_suites, Failed: $((total_suites - passed_suites)), Cases: $total_cases" >&2
         exit 1
     fi
 done < <(tail -n +2 -- "$plan")
 
-if [[ -n $filter && $selected -eq 0 ]]; then
-    echo "Unknown native retirement suite: $filter" >&2
+if ((selected == 0)); then
+    if [[ -n $filter ]]; then
+        echo "Unknown native retirement suite: $filter" >&2
+    else
+        echo "Empty native retirement shard: $shard" >&2
+    fi
     exit 64
 fi
 
+echo "Timing: elapsed-ms=$(((SECONDS - total_start) * 1000))"
 echo "Suites: $total_suites, Passed: $passed_suites, Failed: 0, Cases: $total_cases"

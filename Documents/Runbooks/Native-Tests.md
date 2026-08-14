@@ -21,6 +21,20 @@ On Linux x64:
 ./Tools/Native/Test-Retirement-Suite.sh --filter unsafe-wvb
 ```
 
+GitHub qualification runs four digest-bound disjoint shards on each host:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --shard 1
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --shard 1
+```
+
+Use shard values `1` through `4`. The manifest fixes every assignment, and the
+final verification gate requires all four shards on both hosts. The ordinary
+no-argument command remains available as the sequential complete-plan oracle.
+
 The exact filter names and case counts are:
 
 | Filter | Cases |
@@ -78,11 +92,13 @@ The exact filter names and case counts are:
 | `libraries` | 26 |
 | `packages` | 8 |
 
-Omitting `--filter` selects all 52 suites and 3,282 cases in manifest order. Its
-terminal success line is:
+Omitting selection arguments runs all 52 suites and 3,287 cases in manifest
+order. Each owner pass includes `elapsed-ms`, followed by total timing and the
+unchanged semantic terminal summary:
 
 ```text
-Suites: 52, Passed: 52, Failed: 0, Cases: 3282
+Timing: elapsed-ms=<time>
+Suites: 52, Passed: 52, Failed: 0, Cases: 3287
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -872,7 +888,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,282-case coordinator is a fixed native gate, not the complete normal
+The 3,287-case coordinator is a fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

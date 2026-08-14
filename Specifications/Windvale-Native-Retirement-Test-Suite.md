@@ -7,10 +7,13 @@ digest-bound Windows/Linux suite. It owns only cases already transferred to
 native orchestration; it does not reproduce the complete managed Seed, OS,
 golden, differential, randomized, or bootstrap suites.
 
-The suite has two invocation modes:
+The suite has three invocation modes:
 
 - no arguments select the complete ordered plan; and
-- `--filter <suite-name>` selects one exact named suite for a focused check.
+- `--filter <suite-name>` selects one exact named suite for a focused check;
+  and
+- `--shard <1-4>` selects one digest-bound disjoint qualification shard while
+  retaining canonical manifest order within that shard.
 
 The complete invocation is a grouped retirement candidate, not an inner-loop
 default. A coherent edit should run only its owning filter. The complete
@@ -19,22 +22,24 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 4,814 LF-only bytes with SHA-256
-`c5e7094b1eea485b39de76a6832e73f0b924429953a3ebb8e469ef76d8f095a7`.
+`Tests/Native/Retirement-Suite.txt` is 4,918 LF-only bytes with SHA-256
+`bfa747fb520d742b31ccbff9808fe975fbbabab02236a97c0f05c3a8b800492a`.
 The first line is exactly:
 
 ```text
-windvale-native-retirement-suite 1
+windvale-native-retirement-suite 2
 ```
 
-Every remaining nonempty line has four pipe-separated fields:
+Every remaining nonempty line has five pipe-separated fields:
 
 ```text
-suite-name|command-stem|case-count|expected-summary
+suite-name|command-stem|case-count|shard|expected-summary
 ```
 
 The manifest digest, rather than host discovery or a candidate-generated
-inventory, fixes the command order, case count, and accepted terminal summary.
+inventory, fixes the command order, case count, shard, and accepted terminal
+summary. Shards are the canonical decimal values `1` through `4`; every suite
+belongs to exactly one shard.
 Every command stem resolves beneath `Tools/Native` to the host's `.cmd` or `.sh`
 file. The current plan is:
 
@@ -93,7 +98,21 @@ file. The current plan is:
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 
-The version-1 plan therefore contains exactly 52 suites and 3,282 cases.
+The version-2 plan therefore contains exactly 52 suites and 3,287 cases. Its
+balanced shard inventory is:
+
+| Shard | Suites | Cases | Measured slower-host seconds |
+| ---: | ---: | ---: | ---: |
+| 1 | 1 | 13 | 651.2 |
+| 2 | 14 | 1,279 | 592.2 |
+| 3 | 18 | 1,138 | 592.1 |
+| 4 | 19 | 857 | 591.8 |
+
+The timing column is scheduling evidence from GitHub run `31806725202`, not a
+semantic limit. Allocation uses the slower observed Windows/Linux interval for
+each owner and keeps the largest owner alone because it sets the current lower
+bound. Future rebalancing changes the digest-bound plan and requires new
+dual-host evidence.
 
 ## Coordinator contract
 
@@ -105,7 +124,10 @@ plan digest. For every selected entry, the coordinator must then:
 3. require empty standard error;
 4. require the last nonempty standard-output line to equal the manifest summary;
 5. count the manifest-declared cases only after selecting the entry; and
-6. emit `PASS  suite <suite-name> cases=<case-count>` only after all checks pass.
+6. measure the child wall time without placing timing in its semantic summary;
+   and
+7. emit `PASS  suite <suite-name> cases=<case-count> elapsed-ms=<time>` only
+   after all checks pass.
 
 The first child failure stops the suite, reports the captured child channels on
 standard error, and returns `1`. A missing or changed plan also returns `1`.
@@ -115,15 +137,22 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 52, Passed: 52, Failed: 0, Cases: 3282
+Timing: elapsed-ms=<time>
+Suites: 52, Passed: 52, Failed: 0, Cases: 3287
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
 
 ```text
-PASS  suite unsafe-wvb cases=20
+PASS  suite unsafe-wvb cases=20 elapsed-ms=<time>
+Timing: elapsed-ms=<time>
 Suites: 1, Passed: 1, Failed: 0, Cases: 20
 ```
+
+Each shard ends with its selected suite and case totals. GitHub runs all four
+shards independently on each host with matrix fail-fast disabled, so one shard
+failure does not discard evidence from the other shards. The unchanged final
+`Verification gate` requires the aggregate matrix result from both hosts.
 
 The coordinator does not build a managed harness, invoke .NET, discover tests,
 rewrite fixtures, or calculate its own expected values. Changes to a child

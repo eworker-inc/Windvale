@@ -133,9 +133,14 @@ jobs:
         run: pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
 
   windows-native-suite:
-    name: Windows native retirement suite
+    name: Windows native retirement suite (${{ matrix.shard }}/4)
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [1, 2, 3, 4]
     runs-on: windows-latest
     timeout-minutes: 75
     steps:
@@ -166,12 +171,17 @@ jobs:
 
       - name: Run complete native retirement suite
         shell: cmd
-        run: Tools\Native\Test-Retirement-Suite.cmd
+        run: Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}
 
   linux-native-suite:
-    name: Linux native retirement suite
+    name: Linux native retirement suite (${{ matrix.shard }}/4)
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     container:
       image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
@@ -196,7 +206,7 @@ jobs:
 
       - name: Run complete native retirement suite
         shell: bash
-        run: ./Tools/Native/Test-Retirement-Suite.sh
+        run: ./Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}
 
   windows-webassembly:
     name: Windows native WebAssembly

@@ -18,13 +18,21 @@ $RunPlanVerification = $false
 $RunWebAssemblyVerification = $false
 $RunGitHubQualificationVerification = $false
 
+$SuitePlanLines = @(Get-Content -LiteralPath $SuitePlanPath)
+if ($SuitePlanLines.Count -lt 2 -or
+    $SuitePlanLines[0] -ne 'windvale-native-retirement-suite 2') {
+    throw 'The native retirement-suite header differs.'
+}
 $SuiteEntries = @(
-    Get-Content -LiteralPath $SuitePlanPath |
+    $SuitePlanLines |
         Select-Object -Skip 1 |
         ForEach-Object {
-            $Fields = $_ -split '\|', 4
-            if ($Fields.Count -ne 4) {
+            $Fields = $_ -split '\|', 5
+            if ($Fields.Count -ne 5) {
                 throw "Malformed native retirement-suite entry: $_"
+            }
+            if ($Fields[3] -notin @('1', '2', '3', '4')) {
+                throw "Invalid native retirement-suite shard: $_"
             }
             [pscustomobject]@{
                 Name = $Fields[0]

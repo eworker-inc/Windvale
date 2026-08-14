@@ -2,28 +2,46 @@
 setlocal EnableExtensions DisableDelayedExpansion
 
 set "Filter="
+set "Shard="
 if "%~1"=="" goto :arguments_ready
-if not "%~1"=="--filter" goto :usage
-if "%~2"=="" goto :usage
 if not "%~3"=="" goto :usage
+if "%~2"=="" goto :usage
+if /I "%~1"=="--filter" goto :set_filter
+if /I "%~1"=="--shard" goto :set_shard
+goto :usage
+
+:set_filter
 set "Filter=%~2"
+goto :arguments_ready
+
+:set_shard
+set "Shard=%~2"
+if "%Shard%"=="1" goto :arguments_ready
+if "%Shard%"=="2" goto :arguments_ready
+if "%Shard%"=="3" goto :arguments_ready
+if "%Shard%"=="4" goto :arguments_ready
+goto :usage
 
 :arguments_ready
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Retirement-Suite.txt"
-set "PlanDigest=c5e7094b1eea485b39de76a6832e73f0b924429953a3ebb8e469ef76d8f095a7"
+set "PlanDigest=bfa747fb520d742b31ccbff9808fe975fbbabab02236a97c0f05c3a8b800492a"
 certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"%PlanDigest%" >nul
 if errorlevel 1 (
     >&2 echo Native retirement suite plan identity differs
     exit /b 1
 )
+set "PlanHeader="
+for /f "usebackq delims=" %%H in ("%Plan%") do if not defined PlanHeader set "PlanHeader=%%H"
+if not "%PlanHeader%"=="windvale-native-retirement-suite 2" (
+    >&2 echo Native retirement suite plan header differs
+    exit /b 1
+)
 
-for /f "usebackq skip=1 tokens=1,2 delims=|" %%N in ("%Plan%") do (
-    if not exist "%RepositoryRoot%\Tools\Native\%%O.cmd" (
-        >&2 echo Native retirement suite owner is missing: %RepositoryRoot%\Tools\Native\%%O.cmd
-        exit /b 1
-    )
+for /f "usebackq skip=1 tokens=1,2,4 delims=|" %%N in ("%Plan%") do (
+    call :verify_plan_entry "%%N" "%%O" "%%P"
+    if errorlevel 1 exit /b 1
 )
 
 :allocate
@@ -36,31 +54,44 @@ set /a Selected=0
 set /a TotalSuites=0
 set /a PassedSuites=0
 set /a TotalCases=0
+call :read_clock TotalStart
 
-for /f "usebackq skip=1 tokens=1-4 delims=|" %%A in ("%Plan%") do (
-    call :consider_suite "%%A" "%%B" "%%C" "%%D"
+for /f "usebackq skip=1 tokens=1-5 delims=|" %%A in ("%Plan%") do (
+    call :consider_suite "%%A" "%%B" "%%C" "%%D" "%%E"
     if errorlevel 1 goto :failed
 )
 
-if defined Filter if "%Selected%"=="0" (
+if "%Selected%"=="0" (
     call :cleanup
-    >&2 echo Unknown native retirement suite: %Filter%
+    if defined Filter >&2 echo Unknown native retirement suite: %Filter%
+    if defined Shard >&2 echo Empty native retirement shard: %Shard%
     exit /b 64
 )
 
+call :read_clock TotalEnd
+set /a TotalElapsed=TotalEnd-TotalStart
+if %TotalElapsed% LSS 0 set /a TotalElapsed+=8640000
+set /a TotalElapsedMs=TotalElapsed*10
 call :cleanup
+echo Timing: elapsed-ms=%TotalElapsedMs%
 echo Suites: %TotalSuites%, Passed: %PassedSuites%, Failed: 0, Cases: %TotalCases%
 exit /b 0
 
 :consider_suite
 if defined Filter if not "%Filter%"=="%~1" exit /b 0
+if defined Shard if not "%Shard%"=="%~4" exit /b 0
 set /a Selected+=1
 set /a TotalSuites+=1
 set /a TotalCases+=%~3
+call :read_clock SuiteStart
 call "%RepositoryRoot%\Tools\Native\%~2.cmd" > "%SuiteOutput%" 2> "%SuiteError%"
 set "SuiteExit=%ERRORLEVEL%"
+call :read_clock SuiteEnd
+set /a SuiteElapsed=SuiteEnd-SuiteStart
+if %SuiteElapsed% LSS 0 set /a SuiteElapsed+=8640000
+set /a SuiteElapsedMs=SuiteElapsed*10
 if not "%SuiteExit%"=="0" (
-    >&2 echo FAIL  suite %~1: native command exited %SuiteExit%
+    >&2 echo FAIL  suite %~1: native command exited %SuiteExit% elapsed-ms=%SuiteElapsedMs%
     if exist "%SuiteOutput%" type "%SuiteOutput%" >&2
     if exist "%SuiteError%" type "%SuiteError%" >&2
     exit /b 1
@@ -72,20 +103,48 @@ for %%S in ("%SuiteError%") do if not "%%~zS"=="0" (
 )
 set "ActualSummary="
 for /f "usebackq delims=" %%L in ("%SuiteOutput%") do set "ActualSummary=%%L"
-if not "%ActualSummary%"=="%~4" (
+if not "%ActualSummary%"=="%~5" (
     >&2 echo FAIL  suite %~1: summary differs
     type "%SuiteOutput%" >&2
     exit /b 1
 )
 del /f /q "%SuiteOutput%" "%SuiteError%" >nul 2>nul
 set /a PassedSuites+=1
-echo PASS  suite %~1 cases=%~3
+echo PASS  suite %~1 cases=%~3 elapsed-ms=%SuiteElapsedMs%
 exit /b 0
 
 :failed
 set /a FailedSuites=TotalSuites-PassedSuites
+call :read_clock TotalEnd
+set /a TotalElapsed=TotalEnd-TotalStart
+if %TotalElapsed% LSS 0 set /a TotalElapsed+=8640000
+set /a TotalElapsedMs=TotalElapsed*10
 call :cleanup
+>&2 echo Timing: elapsed-ms=%TotalElapsedMs%
 >&2 echo Suites: %TotalSuites%, Passed: %PassedSuites%, Failed: %FailedSuites%, Cases: %TotalCases%
+exit /b 1
+
+:read_clock
+setlocal EnableExtensions DisableDelayedExpansion
+set "Clock=%TIME: =0%"
+set /a ClockHours=1%Clock:~0,2%-100
+set /a ClockMinutes=1%Clock:~3,2%-100
+set /a ClockSeconds=1%Clock:~6,2%-100
+set /a ClockCentiseconds=1%Clock:~9,2%-100
+set /a ClockTicks=ClockHours*360000+ClockMinutes*6000+ClockSeconds*100+ClockCentiseconds
+endlocal & set "%~1=%ClockTicks%"
+exit /b 0
+
+:verify_plan_entry
+if not exist "%RepositoryRoot%\Tools\Native\%~2.cmd" (
+    >&2 echo Native retirement suite owner is missing: %RepositoryRoot%\Tools\Native\%~2.cmd
+    exit /b 1
+)
+if "%~3"=="1" exit /b 0
+if "%~3"=="2" exit /b 0
+if "%~3"=="3" exit /b 0
+if "%~3"=="4" exit /b 0
+>&2 echo Native retirement suite shard is invalid: %~1=%~3
 exit /b 1
 
 :cleanup
@@ -95,5 +154,5 @@ rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Test-Retirement-Suite.cmd [--filter ^<suite-name^>]
+>&2 echo Usage: Tools\Native\Test-Retirement-Suite.cmd [--filter ^<suite-name^>^|--shard ^<1-4^>]
 exit /b 64

@@ -1227,11 +1227,34 @@ $NativeCases = @(
 & $Stage0RecoveryArchiveVerifier
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
-foreach ($Line in Get-Content -LiteralPath $RetirementSuitePlan | Select-Object -Skip 1) {
-    $Fields = $Line -split '\|', 4
-    if ($Fields.Count -ne 4) {
+$RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
+if ($RetirementSuiteLines.Count -ne 53 -or
+    $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
+    throw 'The native retirement-suite header or exact 52-suite inventory differs.'
+}
+$RetirementSuiteCases = 0
+$RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
+foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
+    $Fields = $Line -split '\|', 5
+    if ($Fields.Count -ne 5) {
         throw "Malformed native retirement-suite entry: $Line"
     }
+    $RetirementEntryCases = 0
+    $RetirementEntryShard = 0
+    if (![int]::TryParse($Fields[2], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$RetirementEntryCases) -or
+        $RetirementEntryCases -le 0) {
+        throw "Invalid native retirement-suite case count: $Line"
+    }
+    if (![int]::TryParse($Fields[3], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$RetirementEntryShard) -or
+        $RetirementEntryShard -lt 1 -or $RetirementEntryShard -gt 4) {
+        throw "Invalid native retirement-suite shard: $Line"
+    }
+    $RetirementSuiteCases += $RetirementEntryCases
+    $null = $RetirementSuiteShards.Add($RetirementEntryShard)
     $WindowsOwner = "Tools/Native/$($Fields[1]).cmd"
     $LinuxOwner = "Tools/Native/$($Fields[1]).sh"
     foreach ($Owner in @($WindowsOwner, $LinuxOwner)) {
@@ -1244,6 +1267,28 @@ foreach ($Line in Get-Content -LiteralPath $RetirementSuitePlan | Select-Object 
         $LinuxIndex[0] -notmatch '^100755 ') {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
+}
+if ($RetirementSuiteCases -ne 3287 -or $RetirementSuiteShards.Count -ne 4) {
+    throw 'The native retirement-suite case total or four-shard coverage differs.'
+}
+
+$GitHubVerificationWorkflow = Get-Content -LiteralPath (
+    Join-Path $RepositoryRoot '.github/workflows/verify.yml') -Raw
+$RequiredWorkflowFragments = @(
+    'group: verify-${{ github.workflow }}-${{ github.ref }}',
+    'cancel-in-progress: true',
+    'run: Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}',
+    'run: ./Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}'
+)
+foreach ($Fragment in $RequiredWorkflowFragments) {
+    if (!$GitHubVerificationWorkflow.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "The GitHub verification workflow is missing '$Fragment'."
+    }
+}
+if ([regex]::Matches(
+        $GitHubVerificationWorkflow,
+        [regex]::Escape('shard: [1, 2, 3, 4]')).Count -ne 2) {
+    throw 'The GitHub verification workflow must declare four shards for both hosts.'
 }
 
 $LinuxArtifactIndex = @(git -C $RepositoryRoot ls-files -s -- 'Artifacts/**/*.elf')
