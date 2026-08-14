@@ -1,0 +1,355 @@
+module Nativeˉhostedˉdurableˉstorageˉselfˉtest profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+
+capability storage.random_access_v1;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+const DATABASE_LENGTH: u64 = 4608u64;
+const PAGE_SIZE: u32 = 4096u32;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Providerˉerror(
+    Status: Storage.Storageˉstatus
+) -> Publication.Databaseˉstorageˉproviderˉerror {
+    if Status == Storage.Storageˉstatus.Permissionˉdenied {
+        return Publication.Databaseˉstorageˉproviderˉerror.Permissionˉdenied;
+    }
+    if Status == Storage.Storageˉstatus.Unavailable {
+        return Publication.Databaseˉstorageˉproviderˉerror.Unavailable;
+    }
+    if Status == Storage.Storageˉstatus.Revoked {
+        return Publication.Databaseˉstorageˉproviderˉerror.Revoked;
+    }
+    if Status == Storage.Storageˉstatus.Stale {
+        return Publication.Databaseˉstorageˉproviderˉerror.Stale;
+    }
+    if Status == Storage.Storageˉstatus.Peerˉexited {
+        return Publication.Databaseˉstorageˉproviderˉerror.Peerˉexited;
+    }
+    if Status == Storage.Storageˉstatus.Outsideˉstorage {
+        return Publication.Databaseˉstorageˉproviderˉerror.Outsideˉstorage;
+    }
+    if Status == Storage.Storageˉstatus.Unsupported {
+        return Publication.Databaseˉstorageˉproviderˉerror.Unsupported;
+    }
+    if Status == Storage.Storageˉstatus.Invalidˉrequest {
+        return Publication.Databaseˉstorageˉproviderˉerror.Invalidˉrequest;
+    }
+    return Publication.Databaseˉstorageˉproviderˉerror.Invalidˉresponse;
+}
+
+fn Observation(
+    Result: Storage.Storageˉresult
+) -> Publication.Databaseˉstorageˉobservation {
+    var Kind: Publication.Databaseˉstorageˉobservationˉkind =
+        Publication.Databaseˉstorageˉobservationˉkind.Invalid;
+    var Error: Publication.Databaseˉstorageˉproviderˉerror =
+        Publication.Databaseˉstorageˉproviderˉerror.None;
+    if Result.Status == Storage.Storageˉstatus.Valid {
+        if Result.Completion == Storage.Storageˉcompletion.Completed {
+            Kind = Publication.Databaseˉstorageˉobservationˉkind.Completed;
+        } else if Result.Completion ==
+            Storage.Storageˉcompletion.Indeterminate {
+            Kind = Publication.Databaseˉstorageˉobservationˉkind.Indeterminate;
+        }
+    } else if Result.Status == Storage.Storageˉstatus.Stale {
+        Kind = Publication.Databaseˉstorageˉobservationˉkind.Stale;
+        Error = Publication.Databaseˉstorageˉproviderˉerror.Stale;
+    } else if Result.Status != Storage.Storageˉstatus.Invalidˉresponse {
+        Kind = Publication.Databaseˉstorageˉobservationˉkind.Rejected;
+        Error = Providerˉerror(Result.Status);
+    } else {
+        Error = Publication.Databaseˉstorageˉproviderˉerror.Invalidˉresponse;
+    }
+    return Publication.Databaseˉstorageˉobservation(
+        Kind,
+        Error,
+        Result.Generation,
+        Result.Storageˉlength,
+        Result.Position,
+        Result.Progress
+    );
+}
+
+fn Createˉdatabase(Generation: u64) -> i32 {
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                PAGE_SIZE,
+                0u64,
+                1u64,
+                0u64,
+                NO_PAGE,
+                0u32,
+                Emptyˉbytes()
+            )
+        );
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Bytesˉlength(Root.Bytes) != PAGE_SIZE {
+        return 10;
+    }
+
+    let Pageˉwrite: Storage.Storageˉresult = Storage.Storageˉwriteˉat(
+        Generation,
+        512u64,
+        Root.Bytes
+    );
+    if Pageˉwrite.Status != Storage.Storageˉstatus.Valid ||
+        Pageˉwrite.Completion != Storage.Storageˉcompletion.Completed ||
+        Pageˉwrite.Progress != PAGE_SIZE ||
+        Pageˉwrite.Storageˉlength != DATABASE_LENGTH {
+        return 11;
+    }
+    let Pageˉflush: Storage.Storageˉresult = Storage.Storageˉflush(
+        Generation,
+        Storage.Storageˉflush.Contentˉandˉlength
+    );
+    if Pageˉflush.Status != Storage.Storageˉstatus.Valid ||
+        Pageˉflush.Completion != Storage.Storageˉcompletion.Completed ||
+        Pageˉflush.Storageˉlength != DATABASE_LENGTH {
+        return 12;
+    }
+
+    let Header: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(
+            Superblock.Databaseˉsuperblock(
+                1u64,
+                2u64,
+                1u64,
+                0u64,
+                0u64,
+                NO_PAGE,
+                0u64,
+                1u64,
+                DATABASE_LENGTH,
+                PAGE_SIZE,
+                1u32
+            )
+        );
+    if Header.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
+        Bytesˉlength(Header.Bytes) != 256u32 {
+        return 13;
+    }
+    let Headerˉwrite: Storage.Storageˉresult = Storage.Storageˉwriteˉat(
+        Generation,
+        0u64,
+        Header.Bytes
+    );
+    if Headerˉwrite.Status != Storage.Storageˉstatus.Valid ||
+        Headerˉwrite.Completion != Storage.Storageˉcompletion.Completed ||
+        Headerˉwrite.Progress != 256u32 ||
+        Headerˉwrite.Storageˉlength != DATABASE_LENGTH {
+        return 14;
+    }
+    let Headerˉflush: Storage.Storageˉresult = Storage.Storageˉflush(
+        Generation,
+        Storage.Storageˉflush.Content
+    );
+    if Headerˉflush.Status != Storage.Storageˉstatus.Valid ||
+        Headerˉflush.Completion != Storage.Storageˉcompletion.Completed ||
+        Headerˉflush.Storageˉlength != DATABASE_LENGTH {
+        return 15;
+    }
+    return 0;
+}
+
+fn Recoverˉtail(
+    Selection: Superblock.Databaseˉsuperblockˉselection,
+    Generation: u64,
+    Storageˉlength: u64
+) -> i32 {
+    var State: Recovery.Databaseˉstorageˉrecovery =
+        Recovery.Databaseˉstorageˉrecoveryˉbegin(
+            Selection,
+            Generation,
+            Storageˉlength
+        );
+    if State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.None {
+        return 30;
+    }
+    if State.Stage == Recovery.Databaseˉstorageˉrecoveryˉstage.Ready {
+        return 0;
+    }
+    let Resizeˉaction: Publication.Databaseˉstorageˉaction =
+        Recovery.Databaseˉstorageˉrecoveryˉaction(State);
+    if Resizeˉaction.Kind !=
+            Publication.Databaseˉstorageˉactionˉkind.Resize ||
+        Resizeˉaction.Position != DATABASE_LENGTH {
+        return 31;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Storageˉresize(
+                Resizeˉaction.Generation,
+                Resizeˉaction.Position
+            )
+        )
+    );
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Flushˉtail {
+        return 32;
+    }
+    let Flushˉaction: Publication.Databaseˉstorageˉaction =
+        Recovery.Databaseˉstorageˉrecoveryˉaction(State);
+    if Flushˉaction.Kind !=
+            Publication.Databaseˉstorageˉactionˉkind.Flush ||
+        Flushˉaction.Flushˉscope !=
+            Publication.Databaseˉstorageˉflushˉscope.Contentˉandˉlength {
+        return 33;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Storageˉflush(
+                Flushˉaction.Generation,
+                Storage.Storageˉflush.Contentˉandˉlength
+            )
+        )
+    );
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Ready ||
+        State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.None {
+        return 34;
+    }
+    return 0;
+}
+
+fn Validateˉdatabase(Description: Storage.Storageˉresult) -> i32 {
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        0u64,
+        512u32
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Header.Storageˉlength != Description.Storageˉlength ||
+        Bytesˉlength(Header.Value) != 512u32 {
+        return 20;
+    }
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Bytesˉslice(Header.Value, 0u32, 256u32),
+            Bytesˉslice(Header.Value, 256u32, 256u32),
+            Description.Storageˉlength
+        );
+    if Selection.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First ||
+        Selection.Generation != 1u64 ||
+        Selection.Committedˉlength != DATABASE_LENGTH {
+        return 21;
+    }
+    let Recoveryˉresult: i32 = Recoverˉtail(
+        Selection,
+        Description.Generation,
+        Description.Storageˉlength
+    );
+    if Recoveryˉresult != 0 { return Recoveryˉresult; }
+
+    let Current: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Current.Status != Storage.Storageˉstatus.Valid ||
+        Current.Generation != Description.Generation ||
+        Current.Storageˉlength != DATABASE_LENGTH {
+        return 22;
+    }
+    let Rootˉbytes: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Current.Generation,
+        512u64,
+        PAGE_SIZE
+    );
+    if Rootˉbytes.Status != Storage.Storageˉstatus.Valid ||
+        Bytesˉlength(Rootˉbytes.Value) != PAGE_SIZE {
+        return 23;
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Rootˉbytes.Value);
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Pageˉidentifier != 0u64 ||
+        Root.Generation != 1u64 ||
+        Root.Commitˉsequence != 0u64 ||
+        Root.Previousˉpage != NO_PAGE ||
+        Root.Itemˉcount != 0u32 ||
+        Bytesˉlength(Root.Payload) != 0u32 {
+        return 24;
+    }
+    return 0;
+}
+
+fn Validateˉproviderˉedges(Generation: u64) -> i32 {
+    let Stale: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Generation + 1u64,
+        0u64,
+        1u32
+    );
+    if Stale.Status != Storage.Storageˉstatus.Stale ||
+        Stale.Generation != Generation ||
+        Stale.Storageˉlength != 0u64 ||
+        Stale.Position != 0u64 ||
+        Stale.Progress != 0u32 ||
+        Stale.Completion != Storage.Storageˉcompletion.None ||
+        Bytesˉlength(Stale.Value) != 0u32 {
+        return 40;
+    }
+    let Outside: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Generation,
+        DATABASE_LENGTH + 1u64,
+        1u32
+    );
+    if Outside.Status != Storage.Storageˉstatus.Outsideˉstorage ||
+        Outside.Generation != Generation ||
+        Outside.Storageˉlength != DATABASE_LENGTH ||
+        Outside.Position != DATABASE_LENGTH + 1u64 {
+        return 41;
+    }
+    let Invalidˉvalue: bytes = Emptyˉbytes();
+    let Invalidˉresponse: bytes = storage.random_access_v1(
+        5u32,
+        Generation,
+        0u64,
+        0u32,
+        Invalidˉvalue
+    );
+    let Invalid: Storage.Storageˉresult = Storage.Storageˉdecode(
+        Invalidˉresponse,
+        5u32,
+        Generation,
+        0u64,
+        0u32,
+        Bytesˉlength(Invalidˉvalue)
+    );
+    if Invalid.Status != Storage.Storageˉstatus.Invalidˉrequest ||
+        Invalid.Generation != Generation ||
+        Invalid.Storageˉlength != 0u64 ||
+        Invalid.Position != 0u64 ||
+        Invalid.Progress != 0u32 ||
+        Invalid.Completion != Storage.Storageˉcompletion.None ||
+        Bytesˉlength(Invalid.Value) != 0u32 {
+        return 42;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    var Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return 1;
+    }
+    if Description.Storageˉlength == 0u64 {
+        let Created: i32 = Createˉdatabase(Description.Generation);
+        if Created != 0 { return Created; }
+        Description = Storage.Storageˉdescribe();
+    }
+    let Validated: i32 = Validateˉdatabase(Description);
+    if Validated != 0 { return Validated; }
+    return Validateˉproviderˉedges(Description.Generation);
+}

@@ -1,0 +1,516 @@
+windvale-assembly 1
+
+# Windows x64 leaf for one fixed database object. The hosted container already
+# owns the admitted KERNEL32 import table. This leaf reuses its immutable file
+# tables and resolves only two same-module positioning exports from the already
+# admitted CreateFileW address; it creates no second ambient import boundary.
+symbol local data Storage_windows_name_set_end_of_file in .rodata
+symbol local data Storage_windows_name_set_file_pointer in .rodata
+symbol local data Storage_windows_path in .rodata
+symbol local function Storage_windows_resolve in .text
+symbol export function Storage_platform_close in .text
+symbol export function Storage_platform_flush in .text
+symbol export function Storage_platform_open in .text
+symbol export function Storage_platform_read in .text
+symbol export function Storage_platform_resize in .text
+symbol export function Storage_platform_write in .text
+
+section code .text align 16
+define Storage_windows_resolve
+# Resolve one exact export from the PE image that owns an already admitted
+# function pointer. Bounds are checked against SizeOfImage, name tables are
+# limited to 65,536 entries, and forwarded exports are rejected.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 16
+move r12 r8
+and_i32 r12 -65536
+move r13 r9
+move r14d r10d
+xor r15d r15d
+
+label Storage_windows_resolve_base
+compare_i32 r15d 64
+branch above_equal Storage_windows_resolve_failure
+load_memory_u16 ax r12 none 1 0
+compare_i16 ax 23117
+branch not_equal Storage_windows_resolve_previous
+load_memory_u32 eax r12 none 1 60
+compare_i32 eax 64
+branch below Storage_windows_resolve_previous
+compare_i32 eax 4096
+branch above Storage_windows_resolve_previous
+move rdx r12
+add rdx rax
+load_memory_u32 ecx rdx none 1 0
+compare_i32 ecx 17744
+branch not_equal Storage_windows_resolve_previous
+load_memory_u16 cx rdx none 1 24
+compare_i16 cx 523
+branch not_equal Storage_windows_resolve_previous
+load_memory_u32 edi rdx none 1 80
+compare_i32 edi 4096
+branch below Storage_windows_resolve_failure
+load_memory_u32 eax rdx none 1 136
+load_memory_u32 ecx rdx none 1 140
+test eax eax
+branch equal Storage_windows_resolve_failure
+test ecx ecx
+branch equal Storage_windows_resolve_failure
+store_memory_u32 rsp none 1 0 eax
+add ecx eax
+branch below Storage_windows_resolve_failure
+compare ecx edi
+branch above Storage_windows_resolve_failure
+store_memory_u32 rsp none 1 8 ecx
+move r8 r12
+add r8 rax
+
+load_memory_u32 r10d r8 none 1 20
+load_memory_u32 r15d r8 none 1 24
+test r10d r10d
+branch equal Storage_windows_resolve_failure
+test r15d r15d
+branch equal Storage_windows_resolve_failure
+compare_i32 r10d 65536
+branch above Storage_windows_resolve_failure
+compare_i32 r15d 65536
+branch above Storage_windows_resolve_failure
+
+# Validate and materialize the function, name, and ordinal tables.
+load_memory_u32 eax r8 none 1 28
+move ecx r10d
+shift_left rcx 2
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Storage_windows_resolve_failure
+add rax r12
+move rbx rax
+
+load_memory_u32 eax r8 none 1 32
+move ecx r15d
+shift_left rcx 2
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Storage_windows_resolve_failure
+add rax r12
+move rbp rax
+
+load_memory_u32 eax r8 none 1 36
+move ecx r15d
+shift_left rcx 1
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Storage_windows_resolve_failure
+add rax r12
+move rsi rax
+
+xor r11d r11d
+label Storage_windows_resolve_name
+compare r11d r15d
+branch above_equal Storage_windows_resolve_failure
+load_memory_u32 eax rbp r11 4 0
+move ecx r14d
+add_i32 ecx 1
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Storage_windows_resolve_next
+add rax r12
+move rdx rax
+xor ecx ecx
+
+label Storage_windows_resolve_compare
+compare ecx r14d
+branch above_equal Storage_windows_resolve_terminator
+load_memory_u8 al rdx rcx 1 0
+load_memory_u8 r8b r13 rcx 1 0
+compare al r8b
+branch not_equal Storage_windows_resolve_next
+add_i32 ecx 1
+jump_label Storage_windows_resolve_compare
+
+label Storage_windows_resolve_terminator
+load_memory_u8 al rdx rcx 1 0
+test al al
+branch not_equal Storage_windows_resolve_next
+load_memory_u16 ax rsi r11 2 0
+zero_extend_u16 eax ax
+compare eax r10d
+branch above_equal Storage_windows_resolve_failure
+load_memory_u32 eax rbx rax 4 0
+compare eax edi
+branch above_equal Storage_windows_resolve_failure
+load_memory_u32 ecx rsp none 1 0
+compare eax ecx
+branch below Storage_windows_resolve_found
+load_memory_u32 ecx rsp none 1 8
+compare eax ecx
+branch below Storage_windows_resolve_failure
+
+label Storage_windows_resolve_found
+add rax r12
+jump_label Storage_windows_resolve_complete
+
+label Storage_windows_resolve_next
+add_i32 r11d 1
+jump_label Storage_windows_resolve_name
+
+label Storage_windows_resolve_previous
+subtract_i32 r12 65536
+add_i32 r15d 1
+jump_label Storage_windows_resolve_base
+
+label Storage_windows_resolve_failure
+xor eax eax
+label Storage_windows_resolve_complete
+add_i32 rsp 16
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+define Storage_platform_open
+push rbx
+push r12
+push r13
+subtract_i32 rsp 64
+move r12 r8
+load_memory_u64 rax r12 none 1 65616
+test rax rax
+branch equal Storage_windows_open_failure
+load_memory_u64 r13 rax none 1 96
+test r13 r13
+branch equal Storage_windows_open_failure
+load_memory_u64 rbx r13 none 1 88
+test rbx rbx
+branch equal Storage_windows_open_failure
+
+move r8 rbx
+load_address r9 Storage_windows_name_set_file_pointer
+move_u32 r10d 16
+call Storage_windows_resolve
+test rax rax
+branch equal Storage_windows_open_failure
+store_memory_u64 r12 none 1 65624 rax
+move r8 rbx
+load_address r9 Storage_windows_name_set_end_of_file
+move_u32 r10d 12
+call Storage_windows_resolve
+test rax rax
+branch equal Storage_windows_open_failure
+store_memory_u64 r12 none 1 65632 rax
+
+# CreateFileW(path, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL,
+#             OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL)
+load_address rcx Storage_windows_path
+move_u32 edx 3221225472
+move_u32 r8d 1
+xor r9 r9
+move_u32 eax 4
+store_memory_u64 rsp none 1 32 rax
+move_u32 eax 128
+store_memory_u64 rsp none 1 40 rax
+xor eax eax
+store_memory_u64 rsp none 1 48 rax
+call_register rbx
+compare_i32 rax -1
+branch equal Storage_windows_open_failure
+move rbx rax
+store_memory_u64 r12 none 1 0 rax
+
+# GetFileSizeEx(handle, &length)
+xor eax eax
+store_memory_u64 rsp none 1 56 rax
+move rcx rbx
+move rdx rsp
+add_i32 rdx 56
+load_memory_u64 rax r13 none 1 96
+call_register rax
+test eax eax
+branch equal Storage_windows_open_close_failure
+load_memory_u64 rax rsp none 1 56
+test rax rax
+branch sign Storage_windows_open_close_failure
+store_memory_u64 r12 none 1 8 rax
+xor eax eax
+jump_label Storage_windows_open_complete
+
+label Storage_windows_open_close_failure
+move rcx rbx
+load_memory_u64 rax r13 none 1 112
+call_register rax
+label Storage_windows_open_failure
+move_u32 eax 1
+label Storage_windows_open_complete
+add_i32 rsp 64
+pop r13
+pop r12
+pop rbx
+return
+end define
+
+define Storage_platform_read
+push rbx
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 48
+move r12 r8
+move r13 r9
+move r14 r11
+move r15d r10d
+xor eax eax
+store_memory_u32 r12 none 1 24 eax
+test r13 r13
+branch sign Storage_windows_read_unsupported
+
+load_memory_u64 rcx r12 none 1 0
+move rdx r13
+xor r8 r8
+xor r9d r9d
+load_memory_u64 rax r12 none 1 65624
+call_register rax
+test eax eax
+branch equal Storage_windows_read_failure
+
+label Storage_windows_read_next
+test r15d r15d
+branch equal Storage_windows_read_complete
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rcx r12 none 1 0
+move rdx r14
+move r8d r15d
+move r9 rsp
+add_i32 r9 40
+load_memory_u64 rax r12 none 1 65616
+load_memory_u64 rax rax none 1 96
+load_memory_u64 rax rax none 1 104
+call_register rax
+test eax eax
+branch equal Storage_windows_read_failure
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch equal Storage_windows_read_failure
+compare eax r15d
+branch above Storage_windows_read_failure
+add r14 rax
+subtract r15d eax
+load_memory_u32 ecx r12 none 1 24
+add ecx eax
+store_memory_u32 r12 none 1 24 ecx
+jump_label Storage_windows_read_next
+
+label Storage_windows_read_complete
+xor eax eax
+jump_label Storage_windows_read_return
+label Storage_windows_read_failure
+move_u32 eax 1
+jump_label Storage_windows_read_return
+label Storage_windows_read_unsupported
+move_u32 eax 3
+label Storage_windows_read_return
+add_i32 rsp 48
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+end define
+
+define Storage_platform_write
+push rbx
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 48
+move r12 r8
+move r13 r9
+move r14 r11
+move r15d r10d
+xor eax eax
+store_memory_u32 r12 none 1 24 eax
+test r13 r13
+branch sign Storage_windows_write_unsupported
+move rax r13
+add rax r15
+branch below Storage_windows_write_unsupported
+test rax rax
+branch sign Storage_windows_write_unsupported
+
+load_memory_u64 rcx r12 none 1 0
+move rdx r13
+xor r8 r8
+xor r9d r9d
+load_memory_u64 rax r12 none 1 65624
+call_register rax
+test eax eax
+branch equal Storage_windows_write_rejected
+
+label Storage_windows_write_next
+test r15d r15d
+branch equal Storage_windows_write_complete
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rcx r12 none 1 0
+move rdx r14
+move r8d r15d
+move r9 rsp
+add_i32 r9 40
+load_memory_u64 rax r12 none 1 65616
+load_memory_u64 rax rax none 1 104
+load_memory_u64 rax rax none 1 48
+call_register rax
+test eax eax
+branch equal Storage_windows_write_indeterminate
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch equal Storage_windows_write_indeterminate
+compare eax r15d
+branch above Storage_windows_write_indeterminate
+add r14 rax
+add r13 rax
+subtract r15d eax
+load_memory_u32 ecx r12 none 1 24
+add ecx eax
+store_memory_u32 r12 none 1 24 ecx
+jump_label Storage_windows_write_next
+
+label Storage_windows_write_complete
+load_memory_u64 rax r12 none 1 8
+compare r13 rax
+branch below_equal Storage_windows_write_length_ready
+store_memory_u64 r12 none 1 8 r13
+label Storage_windows_write_length_ready
+xor eax eax
+jump_label Storage_windows_write_return
+label Storage_windows_write_rejected
+move_u32 eax 1
+jump_label Storage_windows_write_return
+label Storage_windows_write_indeterminate
+move_u32 eax 2
+jump_label Storage_windows_write_return
+label Storage_windows_write_unsupported
+move_u32 eax 3
+label Storage_windows_write_return
+add_i32 rsp 48
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+end define
+
+define Storage_platform_resize
+push rbx
+push r12
+push r13
+subtract_i32 rsp 32
+move r12 r8
+move r13 r9
+test r13 r13
+branch sign Storage_windows_resize_unsupported
+load_memory_u64 rcx r12 none 1 0
+move rdx r13
+xor r8 r8
+xor r9d r9d
+load_memory_u64 rax r12 none 1 65624
+call_register rax
+test eax eax
+branch equal Storage_windows_resize_rejected
+load_memory_u64 rcx r12 none 1 0
+load_memory_u64 rax r12 none 1 65632
+call_register rax
+test eax eax
+branch equal Storage_windows_resize_indeterminate
+store_memory_u64 r12 none 1 8 r13
+xor eax eax
+jump_label Storage_windows_resize_return
+label Storage_windows_resize_rejected
+move_u32 eax 1
+jump_label Storage_windows_resize_return
+label Storage_windows_resize_indeterminate
+move_u32 eax 2
+jump_label Storage_windows_resize_return
+label Storage_windows_resize_unsupported
+move_u32 eax 3
+label Storage_windows_resize_return
+add_i32 rsp 32
+pop r13
+pop r12
+pop rbx
+return
+end define
+
+define Storage_platform_flush
+subtract_i32 rsp 40
+load_memory_u64 rcx r8 none 1 0
+load_memory_u64 rax r8 none 1 65616
+load_memory_u64 rax rax none 1 104
+load_memory_u64 rax rax none 1 56
+call_register rax
+test eax eax
+branch equal Storage_windows_flush_indeterminate
+xor eax eax
+jump_label Storage_windows_flush_return
+label Storage_windows_flush_indeterminate
+move_u32 eax 2
+label Storage_windows_flush_return
+add_i32 rsp 40
+return
+end define
+
+define Storage_platform_close
+subtract_i32 rsp 40
+load_memory_u64 rcx r8 none 1 0
+load_memory_u64 rax r8 none 1 65616
+load_memory_u64 rax rax none 1 96
+load_memory_u64 rax rax none 1 112
+call_register rax
+test eax eax
+branch equal Storage_windows_close_failure
+xor eax eax
+jump_label Storage_windows_close_return
+label Storage_windows_close_failure
+move_u32 eax 1
+label Storage_windows_close_return
+add_i32 rsp 40
+return
+end define
+end section
+
+section rodata .rodata align 2
+define Storage_windows_name_set_end_of_file
+bytes 83 101 116 69 110 100 79 102 70 105 108 101 0
+end define
+define Storage_windows_name_set_file_pointer
+bytes 83 101 116 70 105 108 101 80 111 105 110 116 101 114 69 120 0
+end define
+define Storage_windows_path
+bytes 87 0 105 0 110 0 100 0 118 0 97 0 108 0 101 0 45 0 68 0
+bytes 97 0 116 0 97 0 98 0 97 0 115 0 101 0 45 0 83 0 116 0
+bytes 111 0 114 0 97 0 103 0 101 0 46 0 98 0 105 0 110 0 0 0
+end define
+end section

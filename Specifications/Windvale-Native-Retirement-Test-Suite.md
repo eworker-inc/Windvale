@@ -20,7 +20,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 4,812 LF-only bytes with SHA-256
-`95be0c6e94eadefd02d9af5f52e31adc4ff00248c4f68831e31d740aaf49003c`.
+`b3521fc6464dbe09a9cab264b1d19e603b39031ca44f1ca0a5ce81c8c955fa71`.
 The first line is exactly:
 
 ```text
@@ -88,12 +88,12 @@ file. The current plan is:
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
 | `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
-| `database-storage` | `Test-Database-Storage` | 8 | `native database storage status=Passed cases=8 local-results=0 cross-host-images=Verified` |
+| `database-storage` | `Test-Database-Storage` | 9 | `native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 
-The version-1 plan therefore contains exactly 52 suites and 3,277 cases.
+The version-1 plan therefore contains exactly 52 suites and 3,278 cases.
 
 ## Coordinator contract
 

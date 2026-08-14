@@ -147,6 +147,115 @@ verify_storage_lowering() {
         "$windows_application" windows >/dev/null || return $?
 }
 
+verify_host_storage() {
+    local project_path=$1
+    local first_wvb="$temporary_directory/HostStorage-First.wvb"
+    local second_wvb="$temporary_directory/HostStorage-Second.wvb"
+    local first_wvo="$temporary_directory/HostStorage-First.wvo"
+    local second_wvo="$temporary_directory/HostStorage-Second.wvo"
+    local common_first="$temporary_directory/HostStorage-Common-First.wvo"
+    local common_second="$temporary_directory/HostStorage-Common-Second.wvo"
+    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
+    local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
+    local linux_image="$temporary_directory/HostStorage-Linux.bin"
+    local linux_image_prefix="$temporary_directory/HostStorage-Linux-Image"
+    local linux_map="$temporary_directory/HostStorage-Linux.map"
+    local linux_application="$temporary_directory/HostStorage.elf"
+    local windows_image="$temporary_directory/HostStorage-Windows.bin"
+    local windows_image_prefix="$temporary_directory/HostStorage-Windows-Image"
+    local windows_map="$temporary_directory/HostStorage-Windows.map"
+    local windows_application="$temporary_directory/HostStorage.exe"
+    local run_directory="$temporary_directory/HostStorage-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local initial_file="$run_directory/Windvale-Database-Storage.initial"
+
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+    cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+
+    "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
+    "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
+    cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+
+    "$script_directory/Assemble-Wva.sh" \
+        "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
+        "$common_first" >/dev/null || return $?
+    "$script_directory/Assemble-Wva.sh" \
+        "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
+        "$common_second" >/dev/null || return $?
+    cmp --silent -- "$common_first" "$common_second" || return 1
+    "$script_directory/Verify-Wvo.sh" "$common_first" >/dev/null || return $?
+
+    "$script_directory/Assemble-Wva.sh" \
+        "$repository_root/Runtime/Native/Linux-X64-Random-Access-Storage.wva" \
+        "$linux_platform" >/dev/null || return $?
+    "$script_directory/Verify-Wvo.sh" "$linux_platform" >/dev/null || return $?
+    "$script_directory/Assemble-Wva.sh" \
+        "$repository_root/Runtime/Native/Windows-X64-Random-Access-Storage.wva" \
+        "$windows_platform" >/dev/null || return $?
+    "$script_directory/Verify-Wvo.sh" "$windows_platform" >/dev/null || return $?
+
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$linux_image" "$first_wvo" "$common_first" "$linux_platform" \
+        >"$linux_map" || return $?
+    local linux_entry
+    linux_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$linux_map")
+    case "$linux_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+        "$linux_application" linux >/dev/null || return $?
+
+    mkdir -- "$run_directory" || return $?
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host-storage create run returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 4608 ]] || return 1
+    cp -- "$storage_file" "$initial_file" || return $?
+
+    truncate -s 4625 -- "$storage_file" || return $?
+    [[ $(wc -c < "$storage_file") -eq 4625 ]] || return 1
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host-storage recovery run returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 4608 ]] || return 1
+    cmp --silent -- "$initial_file" "$storage_file" || return 1
+
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host-storage stable reopen returned $application_result, expected 0." >&2
+        return 1
+    fi
+    cmp --silent -- "$initial_file" "$storage_file" || return 1
+
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$windows_image" "$first_wvo" "$common_first" "$windows_platform" \
+        >"$windows_map" || return $?
+    local windows_entry
+    windows_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$windows_map")
+    case "$windows_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
+        "$windows_application" windows >/dev/null || return $?
+}
+
 verify_target Nested \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
 verify_target Publication \
@@ -161,5 +270,7 @@ verify_target Context9 \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
 verify_storage_lowering \
     "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
+verify_host_storage \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
 
-echo 'native database storage status=Passed cases=8 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified'

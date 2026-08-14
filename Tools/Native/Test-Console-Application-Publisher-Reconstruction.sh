@@ -95,7 +95,7 @@ check_equal "$test_directory/Console-Application-Publisher.wvb" \
     "$candidate/Console-Application-Publisher.wvb" || fail
 
 check_file "$raw_lowerer" 6500352 \
-    0ea1b8ff4bda963b40bb9fa8d62852530e0fc4945e059be135fc2ee829bfe4ac || fail
+    de7bdb40637208ee05a7987aba0ea88366638e132fb3f7ba5d9730befde316b5 || fail
 "$raw_lowerer" "$test_directory/Console-Application-Publisher.wvb" \
     "$test_directory/Console-Application-Publisher.wvo" \
     >"$test_directory/Lower.out" 2>"$test_directory/Lower.err" || fail

@@ -1,0 +1,536 @@
+windvale-assembly 1
+
+# Platform-neutral ABI-23 owner for one rights-limited mutable storage object.
+# The platform shell opens exactly one configured object before Windvale code
+# runs. Source receives only the target/state pair in WVPT 1; it never receives
+# a path, native handle, or ambient filesystem authority.
+symbol local function Storage_host_provider in .text
+symbol export function Storage_host_entry in .text
+symbol import function Main
+symbol import function Storage_platform_close
+symbol import function Storage_platform_flush
+symbol import function Storage_platform_open
+symbol import function Storage_platform_read
+symbol import function Storage_platform_resize
+symbol import function Storage_platform_write
+
+section code .text align 16
+define Storage_host_entry
+push rbx
+move rbx rdx
+
+# Reserve and probe a 65,920-byte execution-owned frame. The staged fragment is
+# RX, so mutable provider scratch cannot live in its object zero-fill section.
+# Touching each descending page also respects the Windows stack guard contract.
+xor rax rax
+xor ecx ecx
+subtract_i32 rsp 384
+store_memory_u64 rsp none 1 0 rax
+label Storage_host_entry_probe
+compare_i32 ecx 16
+branch above_equal Storage_host_entry_clear_begin
+subtract_i32 rsp 4096
+store_memory_u64 rsp none 1 0 rax
+add_i32 ecx 1
+jump_label Storage_host_entry_probe
+
+# Clear the execution-owned context/table/state frame, retain context-7 bytes,
+# and derive context 9 without exposing platform state through the context.
+label Storage_host_entry_clear_begin
+xor ecx ecx
+label Storage_host_entry_clear
+compare_i32 ecx 65920
+branch above_equal Storage_host_entry_copy
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+jump_label Storage_host_entry_clear
+
+label Storage_host_entry_copy
+xor ecx ecx
+label Storage_host_entry_copy_next
+compare_i32 ecx 112
+branch above_equal Storage_host_entry_context
+load_memory_u64 rax rbx rcx 1 0
+store_memory_u64 rsp rcx 1 32 rax
+add_i32 ecx 8
+jump_label Storage_host_entry_copy_next
+
+label Storage_host_entry_context
+move_u32 eax 9
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 136
+store_memory_u32 rsp none 1 36 eax
+move rax rsp
+add_i32 rax 168
+store_memory_u64 rsp none 1 160 rax
+
+# Exact one-entry WVPT 1 table and canonical storage.random_access_v1 identity.
+move_u32 eax 1414551127
+store_memory_u32 rsp none 1 168 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 172 eax
+move_u32 eax 94
+store_memory_u32 rsp none 1 176 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 180 eax
+store_memory_u32 rsp none 1 184 eax
+move_u32 eax 24
+store_memory_u32 rsp none 1 188 eax
+move_u32 eax 38
+store_memory_u32 rsp none 1 192 eax
+move_u32 eax 56
+store_memory_u32 rsp none 1 200 eax
+move_u32 eax 38
+store_memory_u32 rsp none 1 204 eax
+load_address rax Storage_host_provider
+store_memory_u64 rsp none 1 208 rax
+move rax rsp
+add_i32 rax 272
+store_memory_u64 rsp none 1 216 rax
+move_u32 eax 24
+store_memory_u32 rsp none 1 224 eax
+move_u32 eax 1919906931
+store_memory_u32 rsp none 1 228 eax
+move_u32 eax 778397537
+store_memory_u32 rsp none 1 232 eax
+move_u32 eax 1684955506
+store_memory_u32 rsp none 1 236 eax
+move_u32 eax 1633643887
+store_memory_u32 rsp none 1 240 eax
+move_u32 eax 1936024419
+store_memory_u32 rsp none 1 244 eax
+move_u32 eax 829841267
+store_memory_u32 rsp none 1 248 eax
+move_u32 eax 5
+store_memory_u32 rsp none 1 252 eax
+move_u32 eax 84544005
+store_memory_u32 rsp none 1 256 eax
+move_u32 eax 1542
+store_memory_u16 rsp none 1 260 ax
+
+# Generation 1 is a process-lifetime writer fence. The platform leaf opens one
+# fixed object, acquires its writer lease, and publishes its current length.
+move r8 rsp
+add_i32 r8 272
+move_u32 eax 1
+store_memory_u64 r8 none 1 16 rax
+xor eax eax
+store_memory_u32 r8 none 1 24 eax
+store_memory_u64 r8 none 1 65616 rbx
+call Storage_platform_open
+test eax eax
+branch not_equal Storage_host_entry_open_failure
+
+xor rcx rcx
+move rdx rsp
+add_i32 rdx 32
+move r8 rdx
+xor r9 r9
+call Main
+move rbx rax
+
+move r8 rsp
+add_i32 r8 272
+call Storage_platform_close
+test rbx rbx
+branch not_equal Storage_host_entry_main_failure
+test eax eax
+branch not_equal Storage_host_entry_close_failure
+xor eax eax
+jump_label Storage_host_entry_complete
+
+label Storage_host_entry_main_failure
+move rax rbx
+jump_label Storage_host_entry_complete
+
+label Storage_host_entry_open_failure
+move_u32 eax 70
+jump_label Storage_host_entry_complete
+
+label Storage_host_entry_close_failure
+move_u32 eax 71
+
+label Storage_host_entry_complete
+add_i32 rsp 65920
+pop rbx
+return
+end define
+
+define Storage_host_provider
+# Preserve the generated instruction/call/context budgets in addition to every
+# Windows nonvolatile register used below. The 40-byte frame includes shadow
+# space and keeps both permanent x64 host ABIs aligned at nested calls.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r10
+push r11
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r13 r8
+move r14 r9
+
+test r12 r12
+branch equal Storage_host_provider_abi_failure
+test r13 r13
+branch equal Storage_host_provider_abi_failure
+test r14 r14
+branch equal Storage_host_provider_abi_failure
+compare_i32 edx 5
+branch not_equal Storage_host_provider_abi_failure
+move rax r15
+add_i32 rax 240
+compare r13 rax
+branch not_equal Storage_host_provider_abi_failure
+
+# Capture the request before constructing its response. Generated value cells
+# are immutable, but the provider independently checks every scalar padding
+# byte and the bounded borrowed payload descriptor.
+load_memory_u32 ebx r14 none 1 0
+load_memory_u64 rsi r14 none 1 16
+load_memory_u64 rdi r14 none 1 32
+move_u32 ebp 48
+
+move r8 r13
+add_i32 r8 32
+move_u32 eax 1095980631
+store_memory_u32 r8 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r8 none 1 4 eax
+store_memory_u32 r8 none 1 8 ebx
+xor eax eax
+store_memory_u32 r8 none 1 12 eax
+store_memory_u64 r8 none 1 16 rsi
+store_memory_u64 r8 none 1 24 rax
+store_memory_u64 r8 none 1 32 rdi
+store_memory_u64 r8 none 1 40 rax
+
+load_memory_u32 eax r14 none 1 4
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u64 rax r14 none 1 8
+test rax rax
+branch not_equal Storage_host_invalid_request
+load_memory_u64 rax r14 none 1 24
+test rax rax
+branch not_equal Storage_host_invalid_request
+load_memory_u64 rax r14 none 1 40
+test rax rax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 52
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u64 rax r14 none 1 56
+test rax rax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 ecx r14 none 1 72
+compare_i32 ecx 65536
+branch above Storage_host_invalid_request
+test ecx ecx
+branch equal Storage_host_payload_ready
+load_memory_u64 rax r14 none 1 64
+test rax rax
+branch equal Storage_host_invalid_request
+move rdx rax
+add rdx rcx
+compare rdx rax
+branch below Storage_host_invalid_request
+
+label Storage_host_payload_ready
+compare_i32 ebx 0
+branch equal Storage_host_describe
+compare_i32 ebx 1
+branch equal Storage_host_read_request
+compare_i32 ebx 2
+branch equal Storage_host_write_request
+compare_i32 ebx 3
+branch equal Storage_host_resize_request
+compare_i32 ebx 4
+branch equal Storage_host_flush_request
+jump_label Storage_host_invalid_request
+
+label Storage_host_describe
+test rsi rsi
+branch not_equal Storage_host_invalid_request
+test rdi rdi
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 48
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 72
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u64 rax r13 none 1 16
+store_memory_u64 r8 none 1 16 rax
+load_memory_u64 rax r13 none 1 8
+store_memory_u64 r8 none 1 24 rax
+jump_label Storage_host_publish
+
+label Storage_host_read_request
+test rsi rsi
+branch equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 72
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 48
+compare_i32 eax 65536
+branch above Storage_host_invalid_request
+jump_label Storage_host_generation
+
+label Storage_host_write_request
+test rsi rsi
+branch equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 48
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 ecx r14 none 1 72
+move rax rdi
+add rax rcx
+compare rax rdi
+branch below Storage_host_invalid_request
+jump_label Storage_host_generation
+
+label Storage_host_resize_request
+test rsi rsi
+branch equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 48
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 72
+test eax eax
+branch not_equal Storage_host_invalid_request
+jump_label Storage_host_generation
+
+label Storage_host_flush_request
+test rsi rsi
+branch equal Storage_host_invalid_request
+test rdi rdi
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 72
+test eax eax
+branch not_equal Storage_host_invalid_request
+load_memory_u32 eax r14 none 1 48
+compare_i32 eax 1
+branch equal Storage_host_generation
+compare_i32 eax 2
+branch not_equal Storage_host_invalid_request
+
+label Storage_host_generation
+load_memory_u64 rax r13 none 1 16
+compare rsi rax
+branch not_equal Storage_host_stale
+compare_i32 ebx 1
+branch equal Storage_host_read
+compare_i32 ebx 2
+branch equal Storage_host_write
+compare_i32 ebx 3
+branch equal Storage_host_resize
+jump_label Storage_host_flush
+
+label Storage_host_stale
+move_u32 eax 4
+store_memory_u32 r8 none 1 12 eax
+load_memory_u64 rax r13 none 1 16
+store_memory_u64 r8 none 1 16 rax
+jump_label Storage_host_publish
+
+label Storage_host_read
+load_memory_u64 rax r13 none 1 8
+compare rdi rax
+branch above Storage_host_outside
+store_memory_u64 r8 none 1 24 rax
+subtract rax rdi
+load_memory_u32 ecx r14 none 1 48
+move rdx rcx
+compare rax rdx
+branch below Storage_host_read_count_ready
+move rax rdx
+label Storage_host_read_count_ready
+test eax eax
+branch equal Storage_host_publish
+xor ecx ecx
+store_memory_u32 r13 none 1 24 ecx
+move r8 r13
+move r9 rdi
+move r10d eax
+move r11 r13
+add_i32 r11 80
+call Storage_platform_read
+test eax eax
+branch equal Storage_host_read_success
+compare_i32 eax 3
+branch equal Storage_host_unsupported
+jump_label Storage_host_rejected
+label Storage_host_read_success
+move r8 r13
+add_i32 r8 32
+load_memory_u32 eax r13 none 1 24
+store_memory_u32 r8 none 1 40 eax
+add_i32 eax 48
+move ebp eax
+load_memory_u64 rax r13 none 1 8
+store_memory_u64 r8 none 1 24 rax
+jump_label Storage_host_publish
+
+label Storage_host_outside
+move_u32 ecx 6
+store_memory_u32 r8 none 1 12 ecx
+store_memory_u64 r8 none 1 24 rax
+jump_label Storage_host_publish
+
+label Storage_host_rejected
+move r8 r13
+add_i32 r8 32
+move_u32 eax 2
+store_memory_u32 r8 none 1 12 eax
+xor eax eax
+store_memory_u64 r8 none 1 24 rax
+jump_label Storage_host_publish
+
+label Storage_host_unsupported
+move r8 r13
+add_i32 r8 32
+move_u32 eax 7
+store_memory_u32 r8 none 1 12 eax
+xor eax eax
+store_memory_u64 r8 none 1 24 rax
+jump_label Storage_host_publish
+
+label Storage_host_write
+xor eax eax
+store_memory_u32 r13 none 1 24 eax
+load_memory_u32 r10d r14 none 1 72
+test r10d r10d
+branch not_equal Storage_host_write_dispatch
+load_memory_u64 rax r13 none 1 8
+compare rdi rax
+branch below_equal Storage_host_write_complete
+move r8 r13
+move r9 rdi
+call Storage_platform_resize
+test eax eax
+branch equal Storage_host_write_complete
+compare_i32 eax 1
+branch equal Storage_host_rejected
+compare_i32 eax 3
+branch equal Storage_host_unsupported
+jump_label Storage_host_mutation_indeterminate
+
+label Storage_host_write_dispatch
+move r8 r13
+move r9 rdi
+load_memory_u64 r11 r14 none 1 64
+call Storage_platform_write
+test eax eax
+branch equal Storage_host_write_dispatched
+compare_i32 eax 1
+branch equal Storage_host_rejected
+compare_i32 eax 3
+branch equal Storage_host_unsupported
+jump_label Storage_host_mutation_indeterminate
+label Storage_host_write_dispatched
+load_memory_u32 eax r13 none 1 24
+load_memory_u32 ecx r14 none 1 72
+compare eax ecx
+branch not_equal Storage_host_mutation_indeterminate
+
+label Storage_host_write_complete
+move r8 r13
+add_i32 r8 32
+load_memory_u64 rax r13 none 1 8
+store_memory_u64 r8 none 1 24 rax
+load_memory_u32 eax r13 none 1 24
+store_memory_u32 r8 none 1 40 eax
+move_u32 eax 1
+store_memory_u32 r8 none 1 44 eax
+jump_label Storage_host_publish
+
+label Storage_host_resize
+move r8 r13
+move r9 rdi
+call Storage_platform_resize
+test eax eax
+branch equal Storage_host_resize_complete
+compare_i32 eax 1
+branch equal Storage_host_rejected
+compare_i32 eax 3
+branch equal Storage_host_unsupported
+jump_label Storage_host_mutation_indeterminate
+label Storage_host_resize_complete
+move r8 r13
+add_i32 r8 32
+store_memory_u64 r8 none 1 24 rdi
+move_u32 eax 1
+store_memory_u32 r8 none 1 44 eax
+jump_label Storage_host_publish
+
+label Storage_host_flush
+move r8 r13
+load_memory_u32 r9d r14 none 1 48
+call Storage_platform_flush
+test eax eax
+branch equal Storage_host_flush_complete
+compare_i32 eax 1
+branch equal Storage_host_rejected
+compare_i32 eax 3
+branch equal Storage_host_unsupported
+jump_label Storage_host_mutation_indeterminate
+label Storage_host_flush_complete
+move r8 r13
+add_i32 r8 32
+load_memory_u64 rax r13 none 1 8
+store_memory_u64 r8 none 1 24 rax
+move_u32 eax 1
+store_memory_u32 r8 none 1 44 eax
+jump_label Storage_host_publish
+
+label Storage_host_mutation_indeterminate
+move r8 r13
+add_i32 r8 32
+xor eax eax
+store_memory_u64 r8 none 1 24 rax
+store_memory_u32 r8 none 1 40 eax
+move_u32 eax 3
+store_memory_u32 r8 none 1 44 eax
+jump_label Storage_host_publish
+
+label Storage_host_invalid_request
+move r8 r13
+add_i32 r8 32
+move_u32 eax 8
+store_memory_u32 r8 none 1 12 eax
+xor eax eax
+store_memory_u64 r8 none 1 24 rax
+store_memory_u32 r8 none 1 40 eax
+store_memory_u32 r8 none 1 44 eax
+
+label Storage_host_publish
+store_memory_u64 r12 none 1 0 r8
+store_memory_u32 r12 none 1 8 ebp
+xor eax eax
+store_memory_u32 r12 none 1 12 eax
+jump_label Storage_host_provider_complete
+
+label Storage_host_provider_abi_failure
+move_u32 eax 1
+
+label Storage_host_provider_complete
+add_i32 rsp 40
+pop r15
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section

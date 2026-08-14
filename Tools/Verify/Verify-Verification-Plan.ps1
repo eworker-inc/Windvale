@@ -1031,7 +1031,11 @@ $NativeCases = @(
             'Libraries/Database/Storage-Publication.wv',
             'Libraries/Database/Storage-Recovery.wv',
             'Tests/Fixtures/Database/Database-Storage-Publication-Self-Test.wv',
-            'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv'
+            'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv',
+            'Runtime/Native/X64-Random-Access-Storage-Host.wva',
+            'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
+            'Runtime/Native/Linux-X64-Random-Access-Storage.wva'
         )
         Suites = @('database-storage', 'libraries')
         Gaps = @()
@@ -1043,7 +1047,8 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Storage-Publication.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Storage-Recovery.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
-            'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj'
+            'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj'
         )
         Suites = @('database-storage', 'workspace-project2', 'libraries')
         Gaps = @()

@@ -1,6 +1,6 @@
 # Random-access storage capability
 
-- Status: Semantic and portable-library contract implemented; native describe execution implemented candidate; real provider I/O and crash-recovery qualification pending
+- Status: Semantic and portable-library contract implemented; focused native Windows provider execution and restart recovery implemented candidate; independent Linux execution and ordinary configurable binding pending
 - Capability identity: `storage.random_access_v1`
 - Source library: `Libraries/Platform/Storage/Random-Access-Storage.wv`
 - Native binding contract: [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md)
@@ -88,6 +88,13 @@ fence, not a claim that arbitrary host programs cannot modify the file. A
 production database deployment must control the backing object and exclude
 non-cooperating writers.
 
+The focused native provider binds one fixed `Windvale-Database-Storage.bin`
+object in the process working directory before calling Windvale `Main`.
+Windows denies other writers and deleters while permitting readers. Linux uses
+one nonblocking exclusive `flock`, which remains advisory against
+non-cooperating native programs. The fixed name is test-shell policy, not a
+source path API or the eventual configurable database-server launcher.
+
 ## Mutation outcomes
 
 Mutation results use one of four completion values:
@@ -173,6 +180,32 @@ path. Both are required. The binding accepts an existing ordinary non-link,
 non-device file. It does not create a missing file or follow an admitted
 reparse-point binding.
 
+## Focused native provider
+
+`Runtime/Native/X64-Random-Access-Storage-Host.wva` derives context 9, constructs
+the exact one-entry `WVPT 1` table, revalidates all five argument cells, and
+serializes every `WVSA 1` result from page-probed execution-owned scratch. The
+scratch is not stored in the RX application fragment and survives exactly until
+`Main` returns. Stale generation, outside-storage reads, malformed requests,
+unsupported signed host positions, rejected operations, exact completion, and
+indeterminate mutations remain distinct.
+
+The Linux leaf owns `openat`, `flock`, `lseek`, `pread64`, `pwrite64`,
+`ftruncate`, `fsync`, and `close`. The Windows leaf reuses the hosted
+container's already admitted file-function tables. It resolves only
+`SetFilePointerEx` and `SetEndOfFile` from the same bounded PE image that owns
+the admitted `CreateFileW` address; PE headers, image ranges, export tables,
+name counts, exact names, ordinals, and forwarded exports are checked before a
+resolved address can be called.
+
+The focused Windvale program creates a `WVPG 1` root page, durably flushes its
+length, publishes a `WVDS 1` superblock, reopens the object, and validates both
+formats. The host test extends the closed file from 4,608 to 4,625 bytes to
+model an unpublished tail. A second native process selects the committed
+superblock, resizes and flushes back to 4,608 bytes, and a third process proves
+byte-stable reopen. This is deterministic restart recovery evidence, not a
+power-loss or arbitrary hardware-failure claim.
+
 ## Excluded claims and next contracts
 
 The native [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md) constructor
@@ -180,13 +213,11 @@ binds the exact capability identity and signature to opaque rights-limited
 target/state pairs without changing ABI 22. The [native provider-call
 candidate](Windvale-Native-Provider-Call.md) emits and independently admits the
 exact five-cell x64 call, and an actual storage instruction now selects ABI 23.
-A focused host probe derives context 9, constructs one exact table, executes a
-describe-only provider, and validates its complete response without host I/O.
-
-This implemented candidate does not execute real Windows or Linux provider I/O,
-validate power-loss recovery, provide a Windvale OS or WebAssembly provider, or
-supply a page cache, WAL, transactions, concurrent readers, mutation identities,
-or provider restart. Durable page, commit, publication, and tail-repair formats
-now exist separately; the next slice must replace the describe probe with one
-pre-opened rights-limited file instance and connect it to real Windows/Linux
-provider observations.
+A focused host now executes every version-1 operation on Windows and constructs
+the equivalent Linux application. Independent Linux execution remains required
+before cross-host conformance is claimed. The candidate does not provide an
+ordinary configurable container binding, Windvale OS or WebAssembly provider,
+power-loss rig, page cache, WAL, transactions, concurrent clients, durable
+mutation identities, or service restart. The next database slice can build on
+this real single-object executor without widening it into ambient filesystem
+authority.

@@ -59,6 +59,9 @@ if errorlevel 1 goto :cleanup
 call :verify_storage_lowering ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Storage-Random-Access.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_storage ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -67,7 +70,146 @@ for %%R in ("%TemporaryDirectory%") do set "ResolvedTemporaryDirectory=%%~fR"
 echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-storage-" >nul || exit /b 1
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
 if not "%Result%"=="0" exit /b %Result%
-echo native database storage status=Passed cases=8 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified
+exit /b 0
+
+:verify_host_storage
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\HostStorage-First.wvb"
+set "SecondWvb=%TemporaryDirectory%\HostStorage-Second.wvb"
+set "FirstWvbResource=%FirstWvb:\=/%"
+set "SecondWvbResource=%SecondWvb:\=/%"
+set "FirstWvo=%TemporaryDirectory%\HostStorage-First.wvo"
+set "SecondWvo=%TemporaryDirectory%\HostStorage-Second.wvo"
+set "CommonFirst=%TemporaryDirectory%\HostStorage-Common-First.wvo"
+set "CommonSecond=%TemporaryDirectory%\HostStorage-Common-Second.wvo"
+set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
+set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
+set "WindowsImage=%TemporaryDirectory%\HostStorage-Windows.bin"
+set "WindowsImagePrefix=%TemporaryDirectory%\HostStorage-Windows-Image"
+set "WindowsMap=%TemporaryDirectory%\HostStorage-Windows.map"
+set "WindowsApplication=%TemporaryDirectory%\HostStorage.exe"
+set "LinuxImage=%TemporaryDirectory%\HostStorage-Linux.bin"
+set "LinuxImagePrefix=%TemporaryDirectory%\HostStorage-Linux-Image"
+set "LinuxMap=%TemporaryDirectory%\HostStorage-Linux.map"
+set "LinuxApplication=%TemporaryDirectory%\HostStorage.elf"
+set "RunDirectory=%TemporaryDirectory%\HostStorage-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "InitialFile=%RunDirectory%\Windvale-Database-Storage.initial"
+
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+if errorlevel 1 exit /b 1
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%FirstWvb%" "%SecondWvb%" >nul
+if errorlevel 1 exit /b 1
+
+"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+"%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%FirstWvo%" "%SecondWvo%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Host.wva" ^
+    "%CommonFirst%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Host.wva" ^
+    "%CommonSecond%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%CommonFirst%" "%CommonSecond%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%CommonFirst%" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Runtime\Native\Windows-X64-Random-Access-Storage.wva" ^
+    "%WindowsPlatform%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%WindowsPlatform%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Runtime\Native\Linux-X64-Random-Access-Storage.wva" ^
+    "%LinuxPlatform%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%LinuxPlatform%" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+    "%CommonFirst%" "%WindowsPlatform%" >"%WindowsMap%"
+if errorlevel 1 exit /b 1
+set "WindowsEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
+if not defined WindowsEntry exit /b 1
+echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+    "%WindowsApplication%" windows >nul
+if errorlevel 1 exit /b 1
+
+mkdir "%RunDirectory%" || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host-storage create run returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="4608" exit /b 1
+copy /b "%StorageFile%" "%InitialFile%" >nul
+if errorlevel 1 exit /b 1
+
+fsutil file seteof "%StorageFile%" 4625 >nul
+if errorlevel 1 exit /b 1
+for %%F in ("%StorageFile%") do if not "%%~zF"=="4625" exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host-storage recovery run returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="4608" exit /b 1
+fc /b "%InitialFile%" "%StorageFile%" >nul
+if errorlevel 1 exit /b 1
+
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host-storage stable reopen returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+fc /b "%InitialFile%" "%StorageFile%" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
+    "%CommonFirst%" "%LinuxPlatform%" >"%LinuxMap%"
+if errorlevel 1 exit /b 1
+set "LinuxEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
+if not defined LinuxEntry exit /b 1
+echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
+    "%LinuxApplication%" linux >nul
+if errorlevel 1 exit /b 1
+endlocal
 exit /b 0
 
 :verify_storage_lowering

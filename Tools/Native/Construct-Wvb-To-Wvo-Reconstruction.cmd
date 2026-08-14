@@ -85,11 +85,11 @@ if errorlevel 1 goto :cleanup
     >"%TemporaryDirectory%\Return-42.txt" 2>"%TemporaryDirectory%\Return-42.err"
 if errorlevel 1 goto :cleanup
 
-call :verify_file "%LowererWvb%" 457041 15a91a965860c4a36ae114651e87b82e5cd31869f4852040bb428f19f9d0382a "WVB-to-WVO tool WVB"
+call :verify_file "%LowererWvb%" 457219 d5b17c84889dab959bd992083a06325149f746d2ff611445df1fb7f0102680b4 "WVB-to-WVO tool WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 6498816 8e4656c9f478c6aecd58d7e3e5fda2a44d420562a5dc9d359795b15494922a89 "Windows WVB-to-WVO application"
+call :verify_file "%WindowsApplication%" 6499840 a8041f1053fa04598a762998d7820ffc0b704b92494d3ae87ebb8d95ac94450e "Windows WVB-to-WVO application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 6500352 0ea1b8ff4bda963b40bb9fa8d62852530e0fc4945e059be135fc2ee829bfe4ac "Linux WVB-to-WVO application"
+call :verify_file "%LinuxApplication%" 6500352 de7bdb40637208ee05a7987aba0ea88366638e132fb3f7ba5d9730befde316b5 "Linux WVB-to-WVO application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ReturnWvb%" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 "Return-42 WVB"
 if errorlevel 1 goto :cleanup

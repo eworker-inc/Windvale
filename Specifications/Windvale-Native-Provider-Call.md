@@ -3,19 +3,20 @@
 ## Status and scope
 
 The first x86-64 capability-provider call emission, its separately implemented
-structural verifier, main-lowerer integration, and focused describe execution
-are implemented candidates. An actual `storage.random_access_v1` call selects
-native ABI 23 and execution-context version 9; capability declaration alone
-preserves ABI 22 and exact existing output. ABI 23 is not yet an executable
-hosted product contract because real Windows/Linux provider leaves, exact
-capability admission, and ordinary container binding remain pending.
+structural verifier, main-lowerer integration, and focused host-backed storage
+execution are implemented candidates. An actual `storage.random_access_v1`
+call selects native ABI 23 and execution-context version 9; capability
+declaration alone preserves ABI 22 and exact existing output. Windows executes
+all version-1 operations and restart tail recovery. The equivalent Linux image
+is constructed; independent Linux execution and ordinary configurable
+container binding remain pending before this becomes a hosted product contract.
 
 The call consumes one ordinal entry from the immutable [`WVPT 1` provider
 table](Windvale-Native-Capability-Provider-Table.md). Generated code never
 searches an identity, opens a path, obtains a host handle, or retains a provider
 target or state address after the call.
 
-## Planned context boundary
+## Context boundary
 
 The successor context is version 9 and is append-only over version 7 plus the
 version-8 allocator reservation from Decision 0151:
@@ -29,9 +30,11 @@ version-8 allocator reservation from Decision 0151:
 
 The candidate size is 136 bytes. The separate [`WVXQ/WVXR 2`
 constructor](Windvale-Native-Execution-Context-9-Construction.md) now validates
-the pointer-presence relationship and exact initial bytes. Host table-lifetime
-and WVB-identity agreement remain required before this becomes executable ABI.
-No ABI-22 consumer may read offset 128.
+the pointer-presence relationship and exact initial bytes. The focused host
+owns the context, table, provider target/state, and scratch for the complete
+`Main` call. Ordinary container metadata still needs to bind the same exact WVB
+identity before ABI 23 becomes a general executable profile. No ABI-22 consumer
+may read offset 128.
 
 ## Exact x86-64 emission
 
@@ -114,10 +117,15 @@ to a structurally verified 2,758-byte WVO with SHA-256
 `5eea8f66666a474a096160fbb9cfae49f9af4627bfae61dafc5fc440242d8681`;
 one unchanged ABI-22 control object remains byte-for-byte identical.
 
-The focused execution probe now constructs an exact context-9 prefix and
-one-entry table, calls a no-I/O describe provider through the emitted sequence,
-and validates every fixed `WVSA 1` field in generated Windvale code. Its Windows
-package returns zero and its Linux package is constructed from the same native
-image. Executable product publication still requires fragment/host admission,
-real Windows and Linux provider leaves, writer fencing, and independent
-execution on both hosts.
+The focused host now constructs the exact context-9 prefix and one-entry table,
+opens one rights-limited object behind a process-lifetime writer fence, and
+executes describe, positioned reads and writes, resize, both flush classes,
+stale generation, outside-storage, and invalid-request results through the
+emitted call. Its Windvale fixture writes and validates `WVPG 1` and `WVDS 1`,
+repairs one deterministic unpublished tail after process restart, and proves a
+byte-stable third reopen on Windows. The current 122,569-byte WVB lowers to a
+verified 2,417,628-byte WVO. The Windows package executes with result zero; the
+Linux package is built from the same WVB, common provider, and Linux syscall
+leaf. Independent Linux execution, general fragment/WVB admission, and a
+configurable launcher binding remain required before cross-host product
+publication is claimed.

@@ -240,6 +240,14 @@ The new nested-record fixture compiled in 0.067 to 0.071 seconds. Its native
 lowering took 0.047 to 0.110 seconds. The database publication and recovery
 fixtures each compiled and lowered in approximately 2.9 to 3.3 seconds.
 
+Decision 0544's first coherent nine-case native database-storage owner passed
+on Windows in 658.777 seconds. Its cached development path built the composed
+host fixture in 3.270 seconds, lowered it in 3.501 seconds, and executed each
+create/recover/reopen process in less than one second. Most owner time remained
+in reconstruction and paired hosted packaging rather than database semantics,
+which makes this owner a concrete first consumer of the cache and checkpoint
+work below.
+
 The WebAssembly owner originally ran the multi-billion-instruction compiler
 verifier through Node's default WebAssembly tier and remained incomplete at the
 local 1,204-second command ceiling. Running that same verifier with

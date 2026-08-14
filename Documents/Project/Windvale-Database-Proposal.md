@@ -1,7 +1,7 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Active implementation proposal; the bounded reader, hosted page seams, checked storage geometry, mutable storage-resource contract, `WVDS 1` superblock, `WVPG 1` page envelope, `WVCR 1` commit record, and portable publication planner are implemented candidates, but no tree-node format, capability-bearing writer, transaction engine, server contract, SQL grammar, or product name is accepted by this document
+- Status: Active implementation proposal; the bounded reader, hosted page seams, checked storage geometry, mutable storage-resource contract, `WVDS 1` superblock, `WVPG 1` page envelope, `WVCR 1` commit record, portable publication planner, and focused native capability-bearing writer/restart recovery are implemented candidates, but no tree-node format, transaction engine, server contract, SQL grammar, or product name is accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -11,8 +11,9 @@
 This document explores adding a database to Windvale without claiming that the
 current language, runtime, libraries, or operating system can already support a
 complete durable database server. The native backend now executes the durable
-superblock, physical-page, compact-log, and publication-planning core, but the
-capability-bearing writer and service boundaries remain absent.
+superblock, physical-page, compact-log, publication-planning core, and one
+focused rights-limited storage writer/recovery shell, but the transaction and
+service boundaries remain absent.
 This proposal identifies what should be learned
 from EWDB, where a Windvale database would belong, which prerequisites are
 missing, and the smallest useful implementation sequence.
@@ -170,8 +171,9 @@ capability, concurrency, and resource-accounting rules.
 
 ## Windvale readiness
 
-Windvale can now exercise bounded format algorithms and one hosted mutable
-storage resource. A recoverable database writer is not ready.
+Windvale can now execute bounded durable formats over one hosted mutable
+storage object and repair one unpublished tail after restart. A transactional
+database writer and server are not ready.
 
 | Candidate work | Current readiness | Boundary |
 | --- | --- | --- |
@@ -180,13 +182,13 @@ storage resource. A recoverable database writer is not ready.
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
 | Rights-limited hosted snapshot lookup | Implemented candidate | [`Readˉonlyˉwvdb`](../../Libraries/Platform/Database/Read-Only-Wvdb.wv) composes the immutable directory provider and portable reader, assembles at most six chunks, and distinguishes provider failures from invalid database bytes. Independent Linux qualification remains pending. |
 | Checked page identity and byte-range arithmetic | Implemented candidate | [`Windvaleˉdatabaseˉstorageˉgeometry`](../../Specifications/Database-Storage-Geometry.md) computes zero-based `u64` page ranges, widens `u32` page size explicitly, and returns typed invalid-size, overflow, or outside-storage outcomes without I/O authority. |
-| Pre-opened mutable storage object | Semantic contract and ABI-23 lowering implemented; host leaf pending | [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md) defines one object with `u64` generation/positions/length, exact 64 KiB reads, positioned writes, resize, typed mutation completion, and two flush classes. The main native lowerer now emits its verified five-cell provider call without changing ABI-22 controls. The frozen Stage 0 adapter remains historical evidence; the Windows/Linux provider is pending. |
+| Pre-opened mutable storage object | Focused native Windows execution implemented; Linux image constructed | [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md) defines one object with `u64` generation/positions/length, exact 64 KiB reads, positioned writes, resize, typed mutation completion, and two flush classes. The ABI-23 host derives one exact `WVPT 1` binding, owns the writer fence and page-probed response scratch, executes every operation on Windows, and builds the equivalent Linux syscall application. The fixed test-shell name is not yet an ordinary configurable server binding. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
 | Durable superblock and recovery selection | Implemented candidate | [`WVDS 1`](../../Specifications/Windvale-Database-Durable-Superblock.md) defines two checksummed 256-byte slots, checked committed length, generation selection, conflict rejection, and unpublished-tail reporting. It is the publication target and performs no I/O. |
 | Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
 | Portable storage publication and reopen policy | Implemented candidate | The [storage recovery contract](../../Specifications/Windvale-Database-Storage-Recovery.md) maps publication to bounded 64 KiB actions and maps fresh superblock evidence plus an unpublished tail to exact resize and content-and-length flush actions. Uncertain mutations require reopen and are never silently replayed. |
-| Capability-bearing mutation and crash recovery | ABI-23 lowering implemented; host I/O pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds exact admitted capability ordinals to opaque rights-limited target/state pairs, the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) emits and independently admits the exact five-cell x64 call, [`WVXQ/WVXR 2`](../../Specifications/Windvale-Native-Execution-Context-9-Construction.md) constructs its append-only context, and [Decision 0540](../Decisions/0540-First-Abi-23-Storage-Call-Lowering.md) integrates actual storage calls into the main lowerer while preserving exact ABI-22 controls. Fragment/host admission, Windows/Linux random-access leaves, writer fence, I/O executor, crash injection, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
+| Capability-bearing mutation and crash recovery | Focused native Windows restart recovery implemented; cross-host qualification pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds the exact storage target/state, and the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) preserves all ABI-23 budgets while returning strict `WVSA 1`. A Windvale fixture publishes `WVPG 1` plus `WVDS 1`; after the closed file gains a deterministic 17-byte unpublished tail, a second native process selects the committed slot, resizes and flushes to 4,608 bytes, and a third proves byte identity. General fragment/WVB admission, independent Linux execution, configurable server binding, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
@@ -309,13 +311,15 @@ does not claim a persistent mutation identity across provider restart. Add one
 only with a query/recovery contract that makes retries safer than storage-based
 recovery.
 
-Implemented-candidate [Decision 0541](../Decisions/0541-First-Abi-23-Storage-Describe-Execution.md)
-now executes `Describe` through the generated ABI-23 provider call. Its
-execution-owned provider reports a fixed 4 KiB object and performs no file I/O;
-it proves context/table/call/response composition without claiming a product
-binding. The ordinary hosted packager still lacks exact WVB-to-provider
-admission, and the complete typed storage library exposes a separate native
-lowering gap. Both remain required before real file-backed operations.
+Implemented-candidate [Decision 0544](../Decisions/0544-First-Native-Durable-Storage-Provider.md)
+now executes every version-1 operation through the generated ABI-23 provider
+call. Its execution-owned provider opens one fixed object behind a writer
+fence, publishes a durable empty database, repairs one deterministic
+unpublished tail after restart, and proves a stable third reopen on Windows.
+The Linux application is constructed from its syscall leaf pending independent
+execution. The ordinary hosted packager still lacks exact WVB-to-provider
+admission and configurable binding, so this remains a focused shell rather than
+a product launcher.
 
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
@@ -492,15 +496,15 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decisions 0534 through 0540 now supply the dual superblock, immutable page
+Decisions 0534 through 0544 now supply the dual superblock, immutable page
 envelope, compact commit record, portable publication actions, exact reopen/tail-
 repair policy, bounded native capability-provider table, and exact five-cell x64
 provider-call emission with separate structural admission, exact append-only
-context-9 construction, and actual-call-only ABI-23 lowering. The next database
-decision should admit ABI-23 through the fragment verifier and host executor,
-then implement Windows and Linux providers for one pre-opened
-`storage.random_access_v1` object. That slice must establish a writer fence and
-inject process or power failure at every write, resize, and flush boundary.
-Recovery must prove page-before-superblock ordering and exact tail repair with
-real provider observations before any transaction queue, network listener, or
-SQL execution path is added.
+context-9 construction, actual-call-only ABI-23 lowering, and one real
+Windows/Linux provider pair. The next database decision should independently
+execute the Linux leaf, admit the exact ABI-23 fragment/binding in the ordinary
+container, and add deterministic failure points at every write, resize, and
+flush boundary. Recovery must prove page-before-superblock ordering for every
+interruption. The first bounded tree-node payload and single-writer transaction
+executor can then consume that evidence before any network listener or SQL
+execution path is added.

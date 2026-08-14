@@ -1182,7 +1182,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Capabilityˉkinds,
                 Capabilityˉindex
             );
-            if Capabilityˉkind == 0u8 || U32ˉfromˉu8(Capabilityˉkind) > 6u32 {
+            if Capabilityˉkind == 0u8 || U32ˉfromˉu8(Capabilityˉkind) > 7u32 {
                 return Invalid(Input);
             }
             var Capabilityˉparameters: u32 = 1u32;
@@ -1193,6 +1193,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             if Capabilityˉkind ==
                 Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() {
                 Capabilityˉparameters = 2u32;
+            }
+            if Capabilityˉkind ==
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() {
+                Capabilityˉparameters = 5u32;
             }
             if Depth < Capabilityˉparameters {
                 return Invalid(Input);
@@ -1212,7 +1216,9 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Capabilityˉkind ==
                     Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉkind() ||
                 Capabilityˉkind ==
-                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() {
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() ||
+                Capabilityˉkind ==
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() {
                 Stackˉrecords = Pushˉscalar(Stackˉrecords);
                 Depth = Depth + 1u32;
             }

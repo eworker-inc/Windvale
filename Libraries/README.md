@@ -134,10 +134,13 @@ selector. The connected [durable commit contract](../Specifications/Windvale-Dat
 adds `WVPG 1` page bytes, `WVCR 1` commit linkage, and the exact append/flush/
 inactive-slot/flush planner. The [storage recovery contract](../Specifications/Windvale-Database-Storage-Recovery.md)
 then maps publication to bounded 64 KiB storage actions and maps reopen evidence
-to exact tail resize/flush actions. Partial, indeterminate, stale-generation, and
-changed-storage observations enter reopen instead of silently retrying. These
-portable modules have no I/O authority and do not claim a capability-bearing
-writer; a hosted ABI-23 `storage.random_access_v1` provider, writer fence, and
-crash-injection qualification remain open. ABI-23 lowering now reaches the
-verified five-cell provider call, but no hosted storage leaf is bound yet. The focused native owners pin the
-deterministic WVB, WVO, linked-image, and Windows/Linux hosted artifacts.
+to exact tail resize/flush actions. Partial, indeterminate, stale-generation,
+and changed-storage observations enter reopen instead of silently retrying.
+These portable modules have no I/O authority. The focused ABI-23 host now binds
+one rights-limited `storage.random_access_v1` object, a process-lifetime writer
+fence, and exact Windows/Linux leaves. Windows executes create, publish,
+reopen, deterministic tail repair, and byte-stable reopen; the equivalent Linux
+application is constructed pending independent execution. This remains a fixed
+test shell, not the configurable database-server binding. The focused native
+owners pin the deterministic WVB, WVO, linked-image, and Windows/Linux hosted
+artifacts.
