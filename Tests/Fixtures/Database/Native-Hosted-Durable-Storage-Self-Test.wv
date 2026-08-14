@@ -5,9 +5,11 @@ import Durableˉstorageˉexecutor as Executor;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉsingleˉleafˉupsert as Leaf;
 import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
 import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
 capability storage.random_access_v1;
 
@@ -176,8 +178,22 @@ fn Validateˉcommittedˉpages(Current: Storage.Storageˉresult) -> i32 {
         Root.Commitˉsequence != 1u64 ||
         Root.Previousˉpage != 0u64 ||
         Root.Itemˉcount != 1u32 ||
-        Bytesˉlength(Root.Payload) != 1u32 ||
-        Bytesˉreadˉu8(Root.Payload, 0u32) != 42u8 {
+        Bytesˉlength(Root.Payload) != 48u32 {
+        return 26;
+    }
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Root.Payload);
+    let Lookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(
+            Root.Payload,
+            Bytesˉfromˉu32ˉlittle(7u32)
+        );
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
+        Node.Entryˉcount != 1u32 ||
+        Lookup.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !Lookup.Found || Bytesˉlength(Lookup.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(Lookup.Value, 0u32) != 42 {
         return 26;
     }
     let Logˉbytes: Storage.Storageˉresult = Storage.Storageˉreadˉat(
@@ -377,15 +393,32 @@ fn Interruptˉcommit(
         Selection.Tailˉbytes != 0u64 {
         return 52;
     }
-    let Transaction: Single.Databaseˉsingleˉwriterˉcommit =
-        Single.Databaseˉsingleˉwriterˉcommitˉbegin(
+    let Rootˉbytes: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        512u64,
+        PAGE_SIZE
+    );
+    if Rootˉbytes.Status != Storage.Storageˉstatus.Valid ||
+        Bytesˉlength(Rootˉbytes.Value) != PAGE_SIZE {
+        return 53;
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Rootˉbytes.Value);
+    let Upsert: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
             Selection,
-            1u32,
-            Bytesˉfromˉu8(42u8)
+            Root,
+            Bytesˉfromˉu32ˉlittle(7u32),
+            Bytesˉfromˉi32ˉlittle(42)
         );
+    if Upsert.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Valid {
+        return 54;
+    }
+    let Transaction: Single.Databaseˉsingleˉwriterˉcommit =
+        Upsert.Transaction;
     if Transaction.Error !=
         Single.Databaseˉsingleˉwriterˉcommitˉerror.Valid {
-        return 53;
+        return 55;
     }
     let Initial: Publication.Databaseˉstorageˉpublication =
         Publication.Databaseˉstorageˉpublicationˉbegin(
@@ -399,7 +432,7 @@ fn Interruptˉcommit(
     if Initial.Status !=
             Publication.Databaseˉstorageˉpublicationˉstatus.Active ||
         Initial.Error != Publication.Databaseˉstorageˉpublicationˉerror.None {
-        return 54;
+        return 56;
     }
     let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
         Executor.Databaseˉstorageˉpublicationˉexecute(
@@ -407,20 +440,20 @@ fn Interruptˉcommit(
             Maximumˉactions
         );
     if Execution.Actions != Maximumˉactions {
-        return 55;
+        return 57;
     }
     if Maximumˉactions < 4u32 {
         if Execution.State.Status !=
                 Publication.Databaseˉstorageˉpublicationˉstatus.Active ||
             Execution.State.Error !=
                 Publication.Databaseˉstorageˉpublicationˉerror.None {
-            return 56;
+            return 58;
         }
     } else if Execution.State.Status !=
             Publication.Databaseˉstorageˉpublicationˉstatus.Committed ||
         Execution.State.Error !=
             Publication.Databaseˉstorageˉpublicationˉerror.None {
-        return 57;
+        return 59;
     }
     return Interruptionˉresult(Maximumˉactions);
 }
@@ -448,7 +481,7 @@ export fn Main() -> i32 {
         Description = Storage.Storageˉdescribe();
         if Description.Status != Storage.Storageˉstatus.Valid ||
             Description.Storageˉlength != DATABASE_LENGTH {
-            return 58;
+            return 60;
         }
         return Interruptˉcommit(Description, Maximumˉactions);
     }

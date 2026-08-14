@@ -188,7 +188,8 @@ key/value engine, transactional database process, and server are not ready.
 | Durable superblock and recovery selection | Implemented candidate | [`WVDS 1`](../../Specifications/Windvale-Database-Durable-Superblock.md) defines two checksummed 256-byte slots, checked committed length, generation selection, conflict rejection, and unpublished-tail reporting. It is the publication target and performs no I/O. |
 | Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
 | Portable storage publication and reopen policy | Implemented candidate | The [storage recovery contract](../../Specifications/Windvale-Database-Storage-Recovery.md) maps publication to bounded 64 KiB actions and maps fresh superblock evidence plus an unpublished tail to exact resize and content-and-length flush actions. Uncertain mutations require reopen and are never silently replayed. |
-| Native single-writer transaction | Focused Windows implementation; cross-host qualification pending | The [single-writer transaction](../../Specifications/Windvale-Database-Single-Writer-Transaction.md) constructs one root page, one compact log page, the inactive superblock, and a typed publication plan without I/O authority. Its hosted executor performs the four exact storage actions and preserves provider completion semantics. It is append-only, root-depth-one, and carries an opaque root payload rather than a tree-node format. |
+| Native single-writer transaction | Focused Windows implementation; cross-host qualification pending | The [single-writer transaction](../../Specifications/Windvale-Database-Single-Writer-Transaction.md) constructs one root page, one compact log page, the inactive superblock, and a typed publication plan without I/O authority. Its hosted executor performs the four exact storage actions and preserves provider completion semantics. The builder remains payload-agnostic; the `WVTN 1` composition below supplies the first structured root. |
+| Durable variable-key root leaf | Focused Windows implementation; branch growth pending | [`WVTN 1`](../../Specifications/Windvale-Database-Tree-Node.md) defines packed ordered byte keys, byte values, `u64` branch children, lookup, replacement, and page-size-aware upsert. The composition validates the selected current root and publishes a new root plus log without modifying the old page. The native crash fixture now validates key `7` and value `42` after restart. Leaf split, branch traversal, global range proofs, and reclamation remain unimplemented. |
 | Capability-bearing mutation and crash recovery | Focused native Windows restart recovery implemented; cross-host qualification pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds the exact storage target/state, and the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) preserves all ABI-23 budgets while returning strict `WVSA 1`. Native processes now repair an unpublished tail and interrupt the first transaction after zero through four completed actions; every restart selects and validates only the old 4,608-byte or new 12,800-byte generation before a stable reopen. General fragment/WVB admission, independent Linux execution, configurable server binding, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
@@ -335,6 +336,12 @@ superblock construction, one hosted action executor, and process restart after
 zero through four publication actions. It remains a bounded storage-kernel
 slice rather than a server or general transaction API.
 
+[Decision 0548](../Decisions/0548-First-Durable-Tree-Node-And-Upsert.md) replaces
+the opaque test payload with `WVTN 1`: variable byte keys and values, strict
+ordering, lookup, replacement, insertion, and two-generation copy-on-write
+composition. A full root leaf remains a typed stop until split propagation is
+implemented.
+
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
 content, write one checksummed alternate superblock/root record, then flush
@@ -406,15 +413,14 @@ Build a single-process, single-writer ordered key/value kernel with:
 - deterministic compaction or obsolete-page reclamation; and
 - fault injection before and after every durable transition.
 
-The storage substrate and first one-commit Stage 3 vertical slice are
+The storage substrate and first root-leaf Stage 3 vertical slice are
 implemented. `WVDS 1` supplies dual checksummed root records and deterministic
 recovery selection. `WVPG 1`, `WVCR 1`, and the pure publication planner add
 immutable page/log bytes and an executable durable-before-publish sequence.
-The hosted executor now consumes that sequence through the storage capability,
-repairs an unpublished tail, and restarts after every one of the four
-publication actions. The transaction still carries an opaque root payload; it
-does not encode tree nodes, insert keys, reclaim pages, or manage concurrent
-transactions.
+`WVTN 1` now adds variable-key leaf lookup, replacement, and insertion, and the
+hosted executor publishes that structured root through every four-action crash
+boundary. The engine does not yet split a full leaf, traverse or mutate branch
+pages, reclaim pages, or manage concurrent transactions.
 
 This milestone needs no general query language, network protocol, or graph
 layer.
@@ -513,15 +519,12 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decisions 0534 through 0544 now supply the dual superblock, immutable page
-envelope, compact commit record, portable publication actions, exact reopen/tail-
-repair policy, bounded native capability-provider table, and exact five-cell x64
-provider-call emission with separate structural admission, exact append-only
-context-9 construction, actual-call-only ABI-23 lowering, and one real
-Windows/Linux provider pair. The next database decision should independently
-execute the Linux leaf, admit the exact ABI-23 fragment/binding in the ordinary
-container, and add deterministic failure points at every write, resize, and
-flush boundary. Recovery must prove page-before-superblock ordering for every
-interruption. The first bounded tree-node payload and single-writer transaction
-executor can then consume that evidence before any network listener or SQL
-execution path is added.
+Decisions 0534 through 0548 now supply the dual superblock, immutable page and
+tree-node envelopes, compact commit record, portable publication/recovery
+actions, exact ABI-23 storage call, one real provider pair, root-leaf lookup and
+upsert, and deterministic interruption after every publication action. The next
+database decision should add a bounded provider-backed tree reader, global
+child/range validation, leaf split, and branch-root creation in one multi-page
+copy-on-write commit. Independent Linux execution and ordinary configurable
+ABI-23 binding remain parallel qualification work. Catalog, network listener,
+and SQL execution should wait until multi-page lookup and growth are real.

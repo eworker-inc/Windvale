@@ -435,6 +435,8 @@ if ((development == 0)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
     verify_target SingleWriter \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
+    verify_target TreeNode \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
     verify_target ProviderTable \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
     verify_target ProviderCall \
@@ -451,4 +453,4 @@ if ((development == 1)); then
     echo "native database storage development status=Passed cases=1 local-results=0 tools=$tool_checkpoint"
     exit 0
 fi
-echo 'native database storage status=Passed cases=10 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=11 local-results=0 cross-host-images=Verified'

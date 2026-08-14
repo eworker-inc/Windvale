@@ -65,9 +65,10 @@ commit-log page has a positive sequence, exactly one item, and an exact
 against the page and selected superblock; page-envelope admission alone does
 not promote arbitrary 256-byte payload bytes into a commit.
 
-The envelope deliberately does not define root, branch, or leaf payload
-schemas yet. Those node codecs require their own key-ordering, fanout, child,
-size, and malformed-input contracts.
+The envelope does not interpret root, branch, or leaf payload bytes. The
+separate [`WVTN 1`](Windvale-Database-Tree-Node.md) contract now defines the
+first variable-key leaf and branch payload shape, while `WVPG 1` continues to
+own physical identity, generation, checksums, and zero padding.
 
 ## `WVCR 1` compact commit record
 

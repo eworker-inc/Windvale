@@ -58,10 +58,11 @@ superblock, allocated page identities, target generation, target sequence,
 target length, and the validated commit-publication state. Every expected
 failure is a typed result. No partial result is publishable.
 
-The current slice accepts only a root-depth-one database. The root payload is
-opaque to the transaction builder but must fit the selected `WVPG 1` page
-envelope and agree with its item count. Tree-node and row formats require
-separate contracts.
+The transaction builder continues to treat its root payload as opaque and
+requires only that it fit the selected `WVPG 1` envelope and agree with its
+item count. The separate [`WVTN 1`](Windvale-Database-Tree-Node.md) composition
+now supplies the first root-depth-one variable-key leaf upsert. Branch splits,
+rows, and catalogs remain separate contracts.
 
 ## Hosted execution
 
@@ -133,10 +134,10 @@ claimed.
 
 ## Exclusions and next contracts
 
-This version has no delete, update-in-place, page reclamation, general
-tree-node payload, key comparison, row encoding, catalog, schema, transaction
+This version has no delete, update-in-place, page reclamation, branch split,
+multi-page tree traversal, row encoding, catalog, schema, transaction
 isolation, concurrent reader lifetime, group commit, authentication, network
 listener, client protocol, SQL parser, query planner, or operator execution.
 It does not claim hardware power-loss qualification. The next storage-kernel
-step is a bounded leaf/root node format and copy-on-write key insertion over
-this publication boundary.
+step is bounded provider-backed tree reading followed by leaf split and branch
+root creation over this publication boundary.

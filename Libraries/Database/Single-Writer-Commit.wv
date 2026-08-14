@@ -76,6 +76,17 @@ fn Databaseˉsingleˉwriterˉfailure(
     );
 }
 
+export fn Databaseˉsingleˉwriterˉcommitˉreject(
+    Error: Databaseˉsingleˉwriterˉcommitˉerror
+) -> Databaseˉsingleˉwriterˉcommit {
+    if Error == Databaseˉsingleˉwriterˉcommitˉerror.Valid {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉcurrent
+        );
+    }
+    return Databaseˉsingleˉwriterˉfailure(Error);
+}
+
 export fn Databaseˉsingleˉwriterˉcommitˉbegin(
     Current: Superblock.Databaseˉsuperblockˉselection,
     Rootˉitemˉcount: u32,

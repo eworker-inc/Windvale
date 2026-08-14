@@ -1,0 +1,611 @@
+module Databaseˉtreeˉnodeˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉsingleˉleafˉupsert as Leaf;
+import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Withˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 1u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu8(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu32ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Withˉu64(Input: bytes, Offset: u32, Value: u64) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 8u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu64ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Value(Value: i32) -> bytes {
+    return Bytesˉfromˉi32ˉlittle(Value);
+}
+
+fn Current(
+    Slot: Superblock.Databaseˉsuperblockˉslot,
+    Generation: u64,
+    Sequence: u64,
+    Rootˉpage: u64,
+    Logˉpage: u64,
+    Earliest: u64,
+    Pageˉcount: u64,
+    Length: u64,
+    Tail: u64
+) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Slot,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉlength,
+        Tail,
+        1u64,
+        2u64,
+        Generation,
+        Sequence,
+        Rootˉpage,
+        Logˉpage,
+        Earliest,
+        Pageˉcount,
+        Length,
+        4096u32,
+        1u32
+    );
+}
+
+fn Initialˉcurrent() -> Superblock.Databaseˉsuperblockˉselection {
+    return Current(
+        Superblock.Databaseˉsuperblockˉslot.First,
+        1u64,
+        0u64,
+        0u64,
+        NO_PAGE,
+        0u64,
+        1u64,
+        4608u64,
+        0u64
+    );
+}
+
+fn Initialˉroot() -> Page.Databaseˉdurableˉpageˉresult {
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            4096u32,
+            0u64,
+            1u64,
+            0u64,
+            NO_PAGE,
+            0u32,
+            Emptyˉbytes()
+        )
+    );
+}
+
+fn Firstˉupsert() -> Leaf.Databaseˉsingleˉleafˉupsert {
+    return Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+        Initialˉcurrent(),
+        Initialˉroot(),
+        Key(2u8),
+        Value(20)
+    );
+}
+
+fn Validˉleafˉbytes() -> bytes {
+    let First: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Emptyˉbytes(),
+            Key(2u8),
+            Value(20),
+            3968u32
+        );
+    if First.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Emptyˉbytes();
+    }
+    let Second: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            First.Bytes,
+            Key(1u8),
+            Value(10),
+            3968u32
+        );
+    if Second.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Emptyˉbytes();
+    }
+    let Third: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Second.Bytes,
+            Key(3u8),
+            Emptyˉbytes(),
+            3968u32
+        );
+    return Third.Bytes;
+}
+
+fn Decodeˉerror(Input: bytes) -> Tree.Databaseˉtreeˉnodeˉerror {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Input);
+    return Result.Error;
+}
+
+fn Upsertˉerror(
+    Input: bytes,
+    Keyˉbytes: bytes,
+    Valueˉbytes: bytes,
+    Maximumˉpayload: u32
+) -> Tree.Databaseˉtreeˉnodeˉerror {
+    let Result: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Input,
+            Keyˉbytes,
+            Valueˉbytes,
+            Maximumˉpayload
+        );
+    return Result.Error;
+}
+
+fn Keyˉordering() -> i32 {
+    let One: bytes = Key(1u8);
+    let Oneˉzero: bytes = Bytesˉconcat(One, Key(0u8));
+    let Oneˉtwo: bytes = Bytesˉconcat(One, Key(2u8));
+    let Oneˉmaximum: bytes = Bytesˉconcat(One, Key(255u8));
+    if Tree.Databaseˉtreeˉkeyˉcompare(One, One) !=
+            Tree.Databaseˉtreeˉkeyˉorder.Equal ||
+        Tree.Databaseˉtreeˉkeyˉcompare(One, Oneˉzero) !=
+            Tree.Databaseˉtreeˉkeyˉorder.Less ||
+        Tree.Databaseˉtreeˉkeyˉcompare(Oneˉzero, One) !=
+            Tree.Databaseˉtreeˉkeyˉorder.Greater ||
+        Tree.Databaseˉtreeˉkeyˉcompare(Oneˉtwo, Oneˉmaximum) !=
+            Tree.Databaseˉtreeˉkeyˉorder.Less {
+        return 1;
+    }
+    return 0;
+}
+
+fn Leafˉoperations() -> i32 {
+    let Bytes: bytes = Validˉleafˉbytes();
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Bytes);
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
+        Node.Entryˉcount != 3u32 ||
+        Bytesˉlength(Bytes) != 67u32 {
+        return 1;
+    }
+    let First: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Bytes, Key(1u8));
+    let Second: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Bytes, Key(2u8));
+    let Third: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Bytes, Key(3u8));
+    let Missing: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Bytes, Key(4u8));
+    if First.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !First.Found || !Bytesˉequal(First.Value, Value(10)) ||
+        Second.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !Second.Found || !Bytesˉequal(Second.Value, Value(20)) ||
+        Third.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !Third.Found || Bytesˉlength(Third.Value) != 0u32 ||
+        Missing.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Missing.Found {
+        return 2;
+    }
+    let Replacement: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Bytes,
+            Key(2u8),
+            Value(21),
+            3968u32
+        );
+    if Replacement.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !Replacement.Replaced || Replacement.Entryˉcount != 3u32 {
+        return 3;
+    }
+    let Replaced: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(
+            Replacement.Bytes,
+            Key(2u8)
+        );
+    if !Replaced.Found || !Bytesˉequal(Replaced.Value, Value(21)) {
+        return 4;
+    }
+    let Deterministic: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Bytes,
+            Key(2u8),
+            Value(21),
+            3968u32
+        );
+    if !Bytesˉequal(Replacement.Bytes, Deterministic.Bytes) {
+        return 5;
+    }
+    return 0;
+}
+
+fn Branchˉbytes() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1314149975u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(49u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(2u64));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(1u64));
+    return Bytesˉconcat(Result, Key(5u8));
+}
+
+fn Branchˉvalidation() -> i32 {
+    let Bytes: bytes = Branchˉbytes();
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Bytes);
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+        Node.Entryˉcount != 1u32 || Node.Rightmostˉchild != 2u64 {
+        return 1;
+    }
+    let Reserved: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Withˉu32(Bytes, 36u32, 1u32));
+    if Reserved.Error !=
+        Tree.Databaseˉtreeˉnodeˉerror.Invalidˉentryˉreserved {
+        return 2;
+    }
+    let Child: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Withˉu64(Bytes, 40u32, NO_PAGE));
+    if Child.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild {
+        return 3;
+    }
+    let Rightmost: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Withˉu64(Bytes, 24u32, NO_PAGE));
+    if Rightmost.Error !=
+        Tree.Databaseˉtreeˉnodeˉerror.Invalidˉrightmostˉchild {
+        return 4;
+    }
+    return 0;
+}
+
+fn Malformedˉheader() -> i32 {
+    let Bytes: bytes = Validˉleafˉbytes();
+    if Decodeˉerror(Emptyˉbytes()) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength ||
+        Decodeˉerror(Withˉu32(Bytes, 0u32, 0u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉmagic ||
+        Decodeˉerror(Withˉu32(Bytes, 4u32, 2u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Unsupportedˉversion ||
+        Decodeˉerror(Withˉu32(Bytes, 8u32, 31u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉheaderˉsize ||
+        Decodeˉerror(Withˉu32(Bytes, 12u32, 3u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind ||
+        Decodeˉerror(Withˉu32(Bytes, 16u32, 4097u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount ||
+        Decodeˉerror(Withˉu32(Bytes, 20u32, 61u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉusedˉlength ||
+        Decodeˉerror(Withˉu64(Bytes, 24u32, 0u64)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉrightmostˉchild {
+        return 1;
+    }
+    return 0;
+}
+
+fn Malformedˉentries() -> i32 {
+    let Bytes: bytes = Validˉleafˉbytes();
+    if Decodeˉerror(Withˉu32(Bytes, 32u32, 0u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength ||
+        Decodeˉerror(Withˉu32(Bytes, 36u32, 61441u32)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉvalueˉlength ||
+        Decodeˉerror(Withˉu8(Bytes, 53u32, 1u8)) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉorder {
+        return 1;
+    }
+    let Short: bytes = Bytesˉslice(
+        Bytes,
+        0u32,
+        Bytesˉlength(Bytes) - 1u32
+    );
+    if Decodeˉerror(
+        Withˉu32(Short, 20u32, Bytesˉlength(Short))
+    ) != Tree.Databaseˉtreeˉnodeˉerror.Truncatedˉentry {
+        return 2;
+    }
+    let Extended: bytes = Bytesˉconcat(Bytes, Key(0u8));
+    if Decodeˉerror(
+        Withˉu32(Extended, 20u32, Bytesˉlength(Extended))
+    ) != Tree.Databaseˉtreeˉnodeˉerror.Trailingˉbytes {
+        return 3;
+    }
+    return 0;
+}
+
+fn Limits() -> i32 {
+    let Emptyˉlookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Emptyˉbytes(), Key(1u8));
+    if Emptyˉlookup.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength ||
+        Upsertˉerror(
+            Emptyˉbytes(), Emptyˉbytes(), Key(1u8), 3968u32
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength ||
+        Upsertˉerror(
+            Emptyˉbytes(), Zeroes(4097u32), Key(1u8), 3968u32
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength ||
+        Upsertˉerror(
+            Emptyˉbytes(), Key(1u8), Zeroes(61441u32), 65408u32
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉvalueˉlength ||
+        Upsertˉerror(
+            Emptyˉbytes(), Key(1u8), Key(1u8), 31u32
+        ) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉmaximumˉpayload ||
+        Upsertˉerror(
+            Emptyˉbytes(), Key(1u8), Key(1u8), 65409u32
+        ) !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉmaximumˉpayload ||
+        Upsertˉerror(
+            Emptyˉbytes(), Key(1u8), Key(1u8), 41u32
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Full {
+        return 1;
+    }
+    return 0;
+}
+
+fn Firstˉcomposition() -> i32 {
+    let Result: Leaf.Databaseˉsingleˉleafˉupsert = Firstˉupsert();
+    if Result.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Valid ||
+        Result.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Result.Replaced || Result.Entryˉcount != 1u32 ||
+        Result.Transaction.Error !=
+            Single.Databaseˉsingleˉwriterˉcommitˉerror.Valid ||
+        Result.Transaction.Rootˉpage != 1u64 ||
+        Result.Transaction.Logˉpage != 2u64 ||
+        Result.Transaction.Targetˉgeneration != 2u64 ||
+        Result.Transaction.Targetˉsequence != 1u64 ||
+        Result.Transaction.Targetˉlength != 12800u64 {
+        return 1;
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Transaction.Pages, 0u32, 4096u32)
+        );
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Itemˉcount != 1u32 || Root.Previousˉpage != 0u64 {
+        return 2;
+    }
+    let Lookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Root.Payload, Key(2u8));
+    if !Lookup.Found || !Bytesˉequal(Lookup.Value, Value(20)) {
+        return 3;
+    }
+    let Second: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.Second,
+                2u64,
+                1u64,
+                1u64,
+                2u64,
+                1u64,
+                3u64,
+                12800u64,
+                0u64
+            ),
+            Root,
+            Key(1u8),
+            Value(10)
+        );
+    if Second.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Valid ||
+        Second.Replaced || Second.Entryˉcount != 2u32 ||
+        Second.Transaction.Rootˉpage != 3u64 ||
+        Second.Transaction.Logˉpage != 4u64 ||
+        Second.Transaction.Targetˉgeneration != 3u64 ||
+        Second.Transaction.Targetˉsequence != 2u64 ||
+        Second.Transaction.Targetˉlength != 20992u64 {
+        return 4;
+    }
+    let Secondˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Second.Transaction.Pages, 0u32, 4096u32)
+        );
+    let Firstˉlookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Secondˉroot.Payload, Key(1u8));
+    let Preserved: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Secondˉroot.Payload, Key(2u8));
+    if Secondˉroot.Itemˉcount != 2u32 || !Firstˉlookup.Found ||
+        !Bytesˉequal(Firstˉlookup.Value, Value(10)) ||
+        !Preserved.Found || !Bytesˉequal(Preserved.Value, Value(20)) {
+        return 5;
+    }
+    let Duplicate: Leaf.Databaseˉsingleˉleafˉupsert = Firstˉupsert();
+    if !Bytesˉequal(
+        Result.Transaction.Pages,
+        Duplicate.Transaction.Pages
+    ) || !Bytesˉequal(
+        Result.Transaction.Superblock,
+        Duplicate.Transaction.Superblock
+    ) {
+        return 6;
+    }
+    return 0;
+}
+
+fn Invalidˉcomposition() -> i32 {
+    let Tail: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.First,
+                1u64, 0u64, 0u64, NO_PAGE, 0u64, 1u64, 4608u64, 1u64
+            ),
+            Initialˉroot(),
+            Key(1u8),
+            Value(1)
+        );
+    if Tail.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉcurrent {
+        return 1;
+    }
+    let Mismatch: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.First,
+                1u64, 0u64, 1u64, NO_PAGE, 0u64, 1u64, 4608u64, 0u64
+            ),
+            Initialˉroot(),
+            Key(1u8),
+            Value(1)
+        );
+    if Mismatch.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Rootˉmismatch {
+        return 2;
+    }
+    let Invalidˉroot: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Initialˉcurrent(),
+            Page.Databaseˉdurableˉpageˉdecode(Emptyˉbytes()),
+            Key(1u8),
+            Value(1)
+        );
+    if Invalidˉroot.Error !=
+        Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉrootˉpage {
+        return 3;
+    }
+    let Badˉpayload: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                4096u32,
+                0u64,
+                1u64,
+                0u64,
+                NO_PAGE,
+                1u32,
+                Key(1u8)
+            )
+        );
+    let Invalidˉnode: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Initialˉcurrent(),
+            Badˉpayload,
+            Key(1u8),
+            Value(1)
+        );
+    if Invalidˉnode.Error !=
+            Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode ||
+        Invalidˉnode.Nodeˉerror !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength {
+        return 4;
+    }
+    let Laterˉemptyˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                4096u32,
+                1u64,
+                2u64,
+                1u64,
+                0u64,
+                0u32,
+                Emptyˉbytes()
+            )
+        );
+    let Laterˉempty: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.Second,
+                2u64, 1u64, 1u64, 2u64, 1u64, 3u64, 12800u64, 0u64
+            ),
+            Laterˉemptyˉroot,
+            Key(1u8),
+            Value(1)
+        );
+    if Laterˉempty.Error !=
+            Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode ||
+        Laterˉempty.Nodeˉerror !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength {
+        return 5;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Ordering: i32 = Keyˉordering();
+    if Ordering != 0 { return 10 + Ordering; }
+    let Leafˉresult: i32 = Leafˉoperations();
+    if Leafˉresult != 0 { return 20 + Leafˉresult; }
+    let Branch: i32 = Branchˉvalidation();
+    if Branch != 0 { return 30 + Branch; }
+    let Header: i32 = Malformedˉheader();
+    if Header != 0 { return 40 + Header; }
+    let Entries: i32 = Malformedˉentries();
+    if Entries != 0 { return 50 + Entries; }
+    let Limitˉresult: i32 = Limits();
+    if Limitˉresult != 0 { return 60 + Limitˉresult; }
+    let Composition: i32 = Firstˉcomposition();
+    if Composition != 0 { return 70 + Composition; }
+    let Invalid: i32 = Invalidˉcomposition();
+    if Invalid != 0 { return 80 + Invalid; }
+    return 0;
+}

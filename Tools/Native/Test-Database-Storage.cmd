@@ -83,6 +83,9 @@ if errorlevel 1 goto :cleanup
 call :verify_target SingleWriter ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Writer-Commit.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target TreeNode ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target ProviderTable ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
 if errorlevel 1 goto :cleanup
@@ -114,7 +117,7 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed cases=1 local-results=0 tools=%ToolCheckpoint%
     exit /b 0
 )
-echo native database storage status=Passed cases=10 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=11 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage

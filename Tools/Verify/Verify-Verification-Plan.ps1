@@ -1031,10 +1031,13 @@ $NativeCases = @(
             'Libraries/Database/Storage-Publication.wv',
             'Libraries/Database/Storage-Recovery.wv',
             'Libraries/Database/Single-Writer-Commit.wv',
+            'Libraries/Database/Single-Leaf-Upsert.wv',
+            'Libraries/Database/Tree-Node.wv',
             'Libraries/Platform/Database/Durable-Storage-Executor.wv',
             'Tests/Fixtures/Database/Database-Storage-Publication-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv',
             'Runtime/Native/X64-Random-Access-Storage-Host.wva',
             'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
@@ -1050,10 +1053,13 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Storage-Publication.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Storage-Recovery.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Single-Writer-Commit.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Single-Leaf-Upsert.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Storage-Executor.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj'
         )
         Suites = @('database-storage', 'workspace-project2', 'libraries')

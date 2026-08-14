@@ -451,6 +451,8 @@ foreach ($Path in $Paths) {
         if ($Path.Contains('Storage-Publication', [StringComparison]::Ordinal) -or
             $Path.Contains('Storage-Recovery', [StringComparison]::Ordinal) -or
             $Path.Contains('Single-Writer-Commit', [StringComparison]::Ordinal) -or
+            $Path.Contains('Single-Leaf-Upsert', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Capability-Provider-Table', [StringComparison]::Ordinal)) {
             Add-Suite 'database-storage'
@@ -477,6 +479,7 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Publication-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Recovery-', [StringComparison]::Ordinal) -or
         $Path -eq 'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv' -or
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Tests/Fixtures/Database/Native-Capability-Provider-Table-Self-Test.wv' -or
@@ -488,6 +491,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj' -or
@@ -517,6 +521,8 @@ foreach ($Path in $Paths) {
         if ($Path.Contains('Storage-Publication', [StringComparison]::Ordinal) -or
             $Path.Contains('Storage-Recovery', [StringComparison]::Ordinal) -or
             $Path.Contains('Single-Writer-Commit', [StringComparison]::Ordinal) -or
+            $Path.Contains('Single-Leaf-Upsert', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Hosted-Durable-Storage', [StringComparison]::Ordinal) -or
             $Path.Contains('Database-Host-Storage', [StringComparison]::Ordinal)) {
@@ -1455,6 +1461,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
         'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj',
         'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj',

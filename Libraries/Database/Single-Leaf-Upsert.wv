@@ -1,0 +1,136 @@
+module Windvaleˉdatabaseˉsingleˉleafˉupsert profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+export enum Databaseˉsingleˉleafˉupsertˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Invalidˉrootˉpage = 2;
+    Rootˉmismatch = 3;
+    Invalidˉnode = 4;
+    Invalidˉcommit = 5;
+}
+
+export record Databaseˉsingleˉleafˉupsert {
+    Error: Databaseˉsingleˉleafˉupsertˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Replaced: bool;
+    Entryˉcount: u32;
+    Transaction: Single.Databaseˉsingleˉwriterˉcommit;
+}
+
+fn Databaseˉsingleˉleafˉfailure(
+    Error: Databaseˉsingleˉleafˉupsertˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror
+) -> Databaseˉsingleˉleafˉupsert {
+    return Databaseˉsingleˉleafˉupsert(
+        Error,
+        Nodeˉerror,
+        false,
+        0u32,
+        Single.Databaseˉsingleˉwriterˉcommitˉreject(
+            Single.Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉrootˉpage
+        )
+    );
+}
+
+export fn Databaseˉsingleˉleafˉupsertˉbegin(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Root: Page.Databaseˉdurableˉpageˉresult,
+    Key: bytes,
+    Value: bytes
+) -> Databaseˉsingleˉleafˉupsert {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 ||
+        Current.Rootˉdepth != 1u32 {
+        return Databaseˉsingleˉleafˉfailure(
+            Databaseˉsingleˉleafˉupsertˉerror.Invalidˉcurrent,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root {
+        return Databaseˉsingleˉleafˉfailure(
+            Databaseˉsingleˉleafˉupsertˉerror.Invalidˉrootˉpage,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Root.Pageˉsize != Current.Pageˉsize ||
+        Root.Pageˉidentifier != Current.Rootˉpage ||
+        Root.Generation != Current.Generation ||
+        Root.Commitˉsequence != Current.Committedˉsequence {
+        return Databaseˉsingleˉleafˉfailure(
+            Databaseˉsingleˉleafˉupsertˉerror.Rootˉmismatch,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Root.Itemˉcount == 0u32 {
+        if Current.Generation != 1u64 ||
+            Current.Committedˉsequence != 0u64 ||
+            Current.Rootˉpage != 0u64 ||
+            Bytesˉlength(Root.Payload) != 0u32 {
+            return Databaseˉsingleˉleafˉfailure(
+                Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength
+            );
+        }
+    } else {
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Root.Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉsingleˉleafˉfailure(
+                Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode,
+                Node.Error
+            );
+        }
+        if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf {
+            return Databaseˉsingleˉleafˉfailure(
+                Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind
+            );
+        }
+        if Node.Entryˉcount != Root.Itemˉcount {
+            return Databaseˉsingleˉleafˉfailure(
+                Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount
+            );
+        }
+    }
+    let Upsert: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Root.Payload,
+            Key,
+            Value,
+            Root.Pageˉsize - 128u32
+        );
+    if Upsert.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉsingleˉleafˉfailure(
+            Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode,
+            Upsert.Error
+        );
+    }
+    let Transaction: Single.Databaseˉsingleˉwriterˉcommit =
+        Single.Databaseˉsingleˉwriterˉcommitˉbegin(
+            Current,
+            Upsert.Entryˉcount,
+            Upsert.Bytes
+        );
+    if Transaction.Error !=
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Valid {
+        return Databaseˉsingleˉleafˉfailure(
+            Databaseˉsingleˉleafˉupsertˉerror.Invalidˉcommit,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    return Databaseˉsingleˉleafˉupsert(
+        Databaseˉsingleˉleafˉupsertˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Upsert.Replaced,
+        Upsert.Entryˉcount,
+        Transaction
+    );
+}

@@ -1,0 +1,504 @@
+module Windvaleˉdatabaseˉtreeˉnode profile portable;
+
+const DATABASE_TREE_NODE_MAGIC: u32 = 1314149975u32;
+const DATABASE_TREE_NODE_VERSION: u32 = 1u32;
+const DATABASE_TREE_NODE_HEADER_BYTES: u32 = 32u32;
+const DATABASE_TREE_NODE_MAXIMUM_BYTES: u32 = 65408u32;
+const DATABASE_TREE_NODE_MAXIMUM_ENTRIES: u32 = 4096u32;
+const DATABASE_TREE_NODE_MAXIMUM_KEY_BYTES: u32 = 4096u32;
+const DATABASE_TREE_NODE_MAXIMUM_VALUE_BYTES: u32 = 61440u32;
+const DATABASE_TREE_NODE_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉtreeˉnodeˉkind {
+    Leaf = 1;
+    Branch = 2;
+}
+
+export enum Databaseˉtreeˉkeyˉorder {
+    Less = 0;
+    Equal = 1;
+    Greater = 2;
+}
+
+export enum Databaseˉtreeˉnodeˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheaderˉsize = 4;
+    Invalidˉkind = 5;
+    Invalidˉcount = 6;
+    Invalidˉusedˉlength = 7;
+    Invalidˉrightmostˉchild = 8;
+    Truncatedˉentry = 9;
+    Invalidˉkeyˉlength = 10;
+    Invalidˉvalueˉlength = 11;
+    Invalidˉentryˉreserved = 12;
+    Invalidˉchild = 13;
+    Invalidˉorder = 14;
+    Trailingˉbytes = 15;
+    Invalidˉmaximumˉpayload = 16;
+    Full = 17;
+}
+
+export record Databaseˉtreeˉnodeˉresult {
+    Error: Databaseˉtreeˉnodeˉerror;
+    Kind: Databaseˉtreeˉnodeˉkind;
+    Entryˉcount: u32;
+    Rightmostˉchild: u64;
+    Bytes: bytes;
+}
+
+export record Databaseˉtreeˉleafˉlookupˉresult {
+    Error: Databaseˉtreeˉnodeˉerror;
+    Found: bool;
+    Value: bytes;
+}
+
+export record Databaseˉtreeˉleafˉupsertˉresult {
+    Error: Databaseˉtreeˉnodeˉerror;
+    Replaced: bool;
+    Entryˉcount: u32;
+    Bytes: bytes;
+}
+
+fn Databaseˉtreeˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉtreeˉnodeˉfailure(
+    Error: Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtreeˉnodeˉresult {
+    return Databaseˉtreeˉnodeˉresult(
+        Error,
+        Databaseˉtreeˉnodeˉkind.Leaf,
+        0u32,
+        DATABASE_TREE_NODE_NO_PAGE,
+        Databaseˉtreeˉempty()
+    );
+}
+
+fn Databaseˉtreeˉlookupˉfailure(
+    Error: Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtreeˉleafˉlookupˉresult {
+    return Databaseˉtreeˉleafˉlookupˉresult(
+        Error,
+        false,
+        Databaseˉtreeˉempty()
+    );
+}
+
+fn Databaseˉtreeˉupsertˉfailure(
+    Error: Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtreeˉleafˉupsertˉresult {
+    return Databaseˉtreeˉleafˉupsertˉresult(
+        Error,
+        false,
+        0u32,
+        Databaseˉtreeˉempty()
+    );
+}
+
+export fn Databaseˉtreeˉkeyˉcompare(
+    Left: bytes,
+    Right: bytes
+) -> Databaseˉtreeˉkeyˉorder {
+    let Leftˉlength: u32 = Bytesˉlength(Left);
+    let Rightˉlength: u32 = Bytesˉlength(Right);
+    var Limit: u32 = Leftˉlength;
+    if Rightˉlength < Limit { Limit = Rightˉlength; }
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let Leftˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Index));
+        let Rightˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Index));
+        if Leftˉbyte < Rightˉbyte {
+            return Databaseˉtreeˉkeyˉorder.Less;
+        }
+        if Leftˉbyte > Rightˉbyte {
+            return Databaseˉtreeˉkeyˉorder.Greater;
+        }
+        Index = Index + 1u32;
+    }
+    if Leftˉlength < Rightˉlength {
+        return Databaseˉtreeˉkeyˉorder.Less;
+    }
+    if Leftˉlength > Rightˉlength {
+        return Databaseˉtreeˉkeyˉorder.Greater;
+    }
+    return Databaseˉtreeˉkeyˉorder.Equal;
+}
+
+fn Databaseˉtreeˉnodeˉkindˉfromˉu32(
+    Value: u32
+) -> Databaseˉtreeˉnodeˉkind {
+    if Value == 2u32 { return Databaseˉtreeˉnodeˉkind.Branch; }
+    return Databaseˉtreeˉnodeˉkind.Leaf;
+}
+
+export fn Databaseˉtreeˉnodeˉdecode(
+    Input: bytes
+) -> Databaseˉtreeˉnodeˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TREE_NODE_HEADER_BYTES ||
+        Total > DATABASE_TREE_NODE_MAXIMUM_BYTES {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TREE_NODE_MAGIC {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TREE_NODE_VERSION {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+        DATABASE_TREE_NODE_HEADER_BYTES {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉheaderˉsize
+        );
+    }
+    let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Rawˉkind != 1u32 && Rawˉkind != 2u32 {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉkind
+        );
+    }
+    let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Entryˉcount > DATABASE_TREE_NODE_MAXIMUM_ENTRIES ||
+        Rawˉkind == 2u32 && Entryˉcount == 0u32 {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉcount
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != Total {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉusedˉlength
+        );
+    }
+    let Rightmostˉchild: u64 = Bytesˉreadˉu64ˉlittle(Input, 24u32);
+    if Rawˉkind == 1u32 && Rightmostˉchild != DATABASE_TREE_NODE_NO_PAGE ||
+        Rawˉkind == 2u32 && Rightmostˉchild == DATABASE_TREE_NODE_NO_PAGE {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉrightmostˉchild
+        );
+    }
+
+    var Cursor: u32 = DATABASE_TREE_NODE_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Previousˉkey: bytes = Databaseˉtreeˉempty();
+    while Index < Entryˉcount {
+        var Entryˉheader: u32 = 8u32;
+        if Rawˉkind == 2u32 { Entryˉheader = 16u32; }
+        if Cursor > Total - Entryˉheader {
+            return Databaseˉtreeˉnodeˉfailure(
+                Databaseˉtreeˉnodeˉerror.Truncatedˉentry
+            );
+        }
+        let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Keyˉlength == 0u32 ||
+            Keyˉlength > DATABASE_TREE_NODE_MAXIMUM_KEY_BYTES {
+            return Databaseˉtreeˉnodeˉfailure(
+                Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength
+            );
+        }
+        var Valueˉlength: u32 = 0u32;
+        if Rawˉkind == 1u32 {
+            Valueˉlength = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+            if Valueˉlength > DATABASE_TREE_NODE_MAXIMUM_VALUE_BYTES {
+                return Databaseˉtreeˉnodeˉfailure(
+                    Databaseˉtreeˉnodeˉerror.Invalidˉvalueˉlength
+                );
+            }
+        } else {
+            if Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 0u32 {
+                return Databaseˉtreeˉnodeˉfailure(
+                    Databaseˉtreeˉnodeˉerror.Invalidˉentryˉreserved
+                );
+            }
+            if Bytesˉreadˉu64ˉlittle(Input, Cursor + 8u32) ==
+                DATABASE_TREE_NODE_NO_PAGE {
+                return Databaseˉtreeˉnodeˉfailure(
+                    Databaseˉtreeˉnodeˉerror.Invalidˉchild
+                );
+            }
+        }
+        let Contentˉoffset: u32 = Cursor + Entryˉheader;
+        let Remaining: u32 = Total - Contentˉoffset;
+        if Keyˉlength > Remaining ||
+            Valueˉlength > Remaining - Keyˉlength {
+            return Databaseˉtreeˉnodeˉfailure(
+                Databaseˉtreeˉnodeˉerror.Truncatedˉentry
+            );
+        }
+        let Key: bytes = Bytesˉslice(Input, Contentˉoffset, Keyˉlength);
+        if Index > 0u32 && Databaseˉtreeˉkeyˉcompare(
+            Previousˉkey,
+            Key
+        ) != Databaseˉtreeˉkeyˉorder.Less {
+            return Databaseˉtreeˉnodeˉfailure(
+                Databaseˉtreeˉnodeˉerror.Invalidˉorder
+            );
+        }
+        Previousˉkey = Key;
+        Cursor = Contentˉoffset + Keyˉlength + Valueˉlength;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total {
+        return Databaseˉtreeˉnodeˉfailure(
+            Databaseˉtreeˉnodeˉerror.Trailingˉbytes
+        );
+    }
+    return Databaseˉtreeˉnodeˉresult(
+        Databaseˉtreeˉnodeˉerror.Valid,
+        Databaseˉtreeˉnodeˉkindˉfromˉu32(Rawˉkind),
+        Entryˉcount,
+        Rightmostˉchild,
+        Input
+    );
+}
+
+fn Databaseˉtreeˉleafˉentry(Key: bytes, Value: bytes) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Key));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Value))
+    );
+    Result = Bytesˉconcat(Result, Key);
+    return Bytesˉconcat(Result, Value);
+}
+
+fn Databaseˉtreeˉleafˉbytes(Entryˉcount: u32, Body: bytes) -> bytes {
+    let Usedˉlength: u32 = DATABASE_TREE_NODE_HEADER_BYTES +
+        Bytesˉlength(Body);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_MAGIC);
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_VERSION)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_HEADER_BYTES)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Entryˉcount)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Usedˉlength)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu64ˉlittle(DATABASE_TREE_NODE_NO_PAGE)
+    );
+    return Bytesˉconcat(Result, Body);
+}
+
+export fn Databaseˉtreeˉleafˉlookup(
+    Input: bytes,
+    Key: bytes
+) -> Databaseˉtreeˉleafˉlookupˉresult {
+    let Keyˉlength: u32 = Bytesˉlength(Key);
+    if Keyˉlength == 0u32 ||
+        Keyˉlength > DATABASE_TREE_NODE_MAXIMUM_KEY_BYTES {
+        return Databaseˉtreeˉlookupˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength
+        );
+    }
+    if Bytesˉlength(Input) == 0u32 {
+        return Databaseˉtreeˉlookupˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉlength
+        );
+    }
+    let Node: Databaseˉtreeˉnodeˉresult =
+        Databaseˉtreeˉnodeˉdecode(Input);
+    if Node.Error != Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉtreeˉlookupˉfailure(Node.Error);
+    }
+    if Node.Kind != Databaseˉtreeˉnodeˉkind.Leaf {
+        return Databaseˉtreeˉlookupˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉkind
+        );
+    }
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = DATABASE_TREE_NODE_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    while Index < Node.Entryˉcount {
+        let Candidateˉkeyˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Candidateˉvalueˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Candidateˉkey: bytes = Bytesˉslice(
+            Input,
+            Cursor + 8u32,
+            Candidateˉkeyˉlength
+        );
+        let Order: Databaseˉtreeˉkeyˉorder =
+            Databaseˉtreeˉkeyˉcompare(Key, Candidateˉkey);
+        if Order == Databaseˉtreeˉkeyˉorder.Equal {
+            return Databaseˉtreeˉleafˉlookupˉresult(
+                Databaseˉtreeˉnodeˉerror.Valid,
+                true,
+                Bytesˉslice(
+                    Input,
+                    Cursor + 8u32 + Candidateˉkeyˉlength,
+                    Candidateˉvalueˉlength
+                )
+            );
+        }
+        if Order == Databaseˉtreeˉkeyˉorder.Less {
+            return Databaseˉtreeˉleafˉlookupˉresult(
+                Databaseˉtreeˉnodeˉerror.Valid,
+                false,
+                Databaseˉtreeˉempty()
+            );
+        }
+        Cursor = Cursor + 8u32 + Candidateˉkeyˉlength +
+            Candidateˉvalueˉlength;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total {
+        return Databaseˉtreeˉlookupˉfailure(
+            Databaseˉtreeˉnodeˉerror.Trailingˉbytes
+        );
+    }
+    return Databaseˉtreeˉleafˉlookupˉresult(
+        Databaseˉtreeˉnodeˉerror.Valid,
+        false,
+        Databaseˉtreeˉempty()
+    );
+}
+
+export fn Databaseˉtreeˉleafˉupsert(
+    Input: bytes,
+    Key: bytes,
+    Value: bytes,
+    Maximumˉpayload: u32
+) -> Databaseˉtreeˉleafˉupsertˉresult {
+    if Maximumˉpayload < DATABASE_TREE_NODE_HEADER_BYTES ||
+        Maximumˉpayload > DATABASE_TREE_NODE_MAXIMUM_BYTES {
+        return Databaseˉtreeˉupsertˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉmaximumˉpayload
+        );
+    }
+    let Keyˉlength: u32 = Bytesˉlength(Key);
+    if Keyˉlength == 0u32 ||
+        Keyˉlength > DATABASE_TREE_NODE_MAXIMUM_KEY_BYTES {
+        return Databaseˉtreeˉupsertˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength
+        );
+    }
+    if Bytesˉlength(Value) > DATABASE_TREE_NODE_MAXIMUM_VALUE_BYTES {
+        return Databaseˉtreeˉupsertˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉvalueˉlength
+        );
+    }
+
+    var Entryˉcount: u32 = 0u32;
+    var Body: bytes = Databaseˉtreeˉempty();
+    if Bytesˉlength(Input) != 0u32 {
+        let Node: Databaseˉtreeˉnodeˉresult =
+            Databaseˉtreeˉnodeˉdecode(Input);
+        if Node.Error != Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtreeˉupsertˉfailure(Node.Error);
+        }
+        if Node.Kind != Databaseˉtreeˉnodeˉkind.Leaf {
+            return Databaseˉtreeˉupsertˉfailure(
+                Databaseˉtreeˉnodeˉerror.Invalidˉkind
+            );
+        }
+        if Bytesˉlength(Input) > Maximumˉpayload {
+            return Databaseˉtreeˉupsertˉfailure(
+                Databaseˉtreeˉnodeˉerror.Full
+            );
+        }
+        Entryˉcount = Node.Entryˉcount;
+        Body = Bytesˉslice(
+            Input,
+            DATABASE_TREE_NODE_HEADER_BYTES,
+            Bytesˉlength(Input) - DATABASE_TREE_NODE_HEADER_BYTES
+        );
+    }
+
+    let Newˉentry: bytes = Databaseˉtreeˉleafˉentry(Key, Value);
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Replaced: bool = false;
+    var Insertˉoffset: u32 = Bytesˉlength(Body);
+    var Oldˉend: u32 = Insertˉoffset;
+    while Index < Entryˉcount {
+        let Candidateˉkeyˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Body, Cursor);
+        let Candidateˉvalueˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Body, Cursor + 4u32);
+        let Candidateˉkey: bytes = Bytesˉslice(
+            Body,
+            Cursor + 8u32,
+            Candidateˉkeyˉlength
+        );
+        let Order: Databaseˉtreeˉkeyˉorder =
+            Databaseˉtreeˉkeyˉcompare(Key, Candidateˉkey);
+        if Order == Databaseˉtreeˉkeyˉorder.Equal {
+            Replaced = true;
+            Insertˉoffset = Cursor;
+            Oldˉend = Cursor + 8u32 + Candidateˉkeyˉlength +
+                Candidateˉvalueˉlength;
+            Index = Entryˉcount;
+        } else if Order == Databaseˉtreeˉkeyˉorder.Less {
+            Insertˉoffset = Cursor;
+            Oldˉend = Cursor;
+            Index = Entryˉcount;
+        } else {
+            Cursor = Cursor + 8u32 + Candidateˉkeyˉlength +
+                Candidateˉvalueˉlength;
+            Index = Index + 1u32;
+        }
+    }
+    if !Replaced && Entryˉcount == DATABASE_TREE_NODE_MAXIMUM_ENTRIES {
+        return Databaseˉtreeˉupsertˉfailure(
+            Databaseˉtreeˉnodeˉerror.Full
+        );
+    }
+    let Prefix: bytes = Bytesˉslice(Body, 0u32, Insertˉoffset);
+    let Suffix: bytes = Bytesˉslice(
+        Body,
+        Oldˉend,
+        Bytesˉlength(Body) - Oldˉend
+    );
+    let Newˉbody: bytes = Bytesˉconcat(
+        Bytesˉconcat(Prefix, Newˉentry),
+        Suffix
+    );
+    if Bytesˉlength(Newˉbody) >
+        Maximumˉpayload - DATABASE_TREE_NODE_HEADER_BYTES {
+        return Databaseˉtreeˉupsertˉfailure(
+            Databaseˉtreeˉnodeˉerror.Full
+        );
+    }
+    var Newˉcount: u32 = Entryˉcount;
+    if !Replaced { Newˉcount = Newˉcount + 1u32; }
+    let Resultˉbytes: bytes =
+        Databaseˉtreeˉleafˉbytes(Newˉcount, Newˉbody);
+    let Validation: Databaseˉtreeˉnodeˉresult =
+        Databaseˉtreeˉnodeˉdecode(Resultˉbytes);
+    if Validation.Error != Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉtreeˉupsertˉfailure(Validation.Error);
+    }
+    if Validation.Entryˉcount != Newˉcount {
+        return Databaseˉtreeˉupsertˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉcount
+        );
+    }
+    return Databaseˉtreeˉleafˉupsertˉresult(
+        Databaseˉtreeˉnodeˉerror.Valid,
+        Replaced,
+        Newˉcount,
+        Resultˉbytes
+    );
+}

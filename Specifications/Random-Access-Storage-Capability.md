@@ -226,8 +226,10 @@ formats. The host test first models and repairs an unpublished tail. It then
 executes the [single-writer transaction](Windvale-Database-Single-Writer-Transaction.md)
 with process termination after zero through four publication actions. Each
 fresh process selects and validates only the old 4,608-byte or new 12,800-byte
-generation and finishes with a stable reopen. This is deterministic restart
-recovery evidence, not a power-loss or arbitrary hardware-failure claim.
+generation, decodes the new [`WVTN 1`](Windvale-Database-Tree-Node.md) root,
+requires key `u32(7)` to map to value `i32(42)`, and finishes with a stable
+reopen. This is deterministic restart recovery evidence, not a power-loss or
+arbitrary hardware-failure claim.
 
 ## Excluded claims and next contracts
 
