@@ -37,12 +37,12 @@ fail() {
     exit 1
 }
 
-check_file "$candidate/Wvb-To-Wvo.wvb" 446292 \
-    cd7f69d18d8a2bb34bb7e1db9577fcda6702c507af3cc77e34ed549c4cfb3a44 || fail
-check_file "$candidate/Wvb-To-Wvo.exe" 6357504 \
-    783d4b49a9ad0df0113a7ffe199ccb4dff208ef6a8edac716ef7a508fcf668ab || fail
-check_file "$candidate/Wvb-To-Wvo.elf" 6356992 \
-    9c6bf30c8b344c6f2d195d059cc4fc69f36db15b25285121e028978dafc9f18b || fail
+check_file "$candidate/Wvb-To-Wvo.wvb" 457041 \
+    15a91a965860c4a36ae114651e87b82e5cd31869f4852040bb428f19f9d0382a || fail
+check_file "$candidate/Wvb-To-Wvo.exe" 6498816 \
+    8e4656c9f478c6aecd58d7e3e5fda2a44d420562a5dc9d359795b15494922a89 || fail
+check_file "$candidate/Wvb-To-Wvo.elf" 6500352 \
+    0ea1b8ff4bda963b40bb9fa8d62852530e0fc4945e059be135fc2ee829bfe4ac || fail
 check_file "$candidate/Return-42.wvb" 174 \
     7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 || fail
 check_file "$candidate/Return-42.wvo" 479 \
