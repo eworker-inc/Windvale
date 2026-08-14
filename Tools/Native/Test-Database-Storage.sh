@@ -40,6 +40,13 @@ project_checkpoint_host_tree_reader=NotRun
 application_checkpoint_host_storage=NotRun
 application_checkpoint_host_tree_reader=NotRun
 project_wvb_checkpoint=NotRun
+portable_project_checkpoints=
+portable_application_checkpoints=
+if ((development == 1)); then
+    development_start=$SECONDS
+    tools_start=$SECONDS
+    echo 'START native database storage development phase=tools'
+fi
 
 verify_file() {
     local path=$1 expected_size=$2 expected_digest=$3
@@ -165,6 +172,11 @@ else
         6 "$lowerer_wvb" "$lowerer" >/dev/null || exit $?
 fi
 
+if ((development == 1)); then
+    tools_elapsed_ms=$(((SECONDS - tools_start) * 1000))
+    echo "PASS  native database storage development phase=tools elapsed-ms=$tools_elapsed_ms tool=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
+fi
+
 if ((prepare_only == 1)); then
     echo "native database storage development tools status=Passed checkpoint=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
     exit 0
@@ -181,19 +193,33 @@ verify_target() {
     local map="$temporary_directory/$label.map"
     local linux_application="$temporary_directory/$label.elf"
     local windows_application="$temporary_directory/$label.exe"
-
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-    if ((development == 0)); then
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    local project_checkpoint=Rebuilt
+    local linux_application_checkpoint=Rebuilt
+    local target_start=$SECONDS
+    if ((development == 1)); then
+        echo "START native database storage development target=$label"
     fi
 
-    "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-    if ((development == 0)); then
+    if ((development == 1)); then
+        local project_cache_report="$temporary_directory/$label-Project-Cache.txt"
+        "$script_directory/Build-Cached-Project-Object.sh" \
+            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+            > "$project_cache_report" || return $?
+        project_checkpoint=$(sed -n \
+            's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
+            "$project_cache_report")
+        [[ $project_checkpoint == Created || $project_checkpoint == Hit ]] || return 1
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
         "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
-    "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    if ((development == 0)); then
+        "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    fi
 
     "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || return $?
     local entry_offset
@@ -203,9 +229,21 @@ verify_target() {
     esac
     cp -- "$image" "$image_prefix.chunk-0" || return $?
 
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$image_prefix" 1 "$entry_offset" "$linux_application" linux \
-        >/dev/null || return $?
+    if ((development == 1)); then
+        local linux_application_cache_report="$temporary_directory/$label-Linux-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$image_prefix" 1 "$entry_offset" "$linux_application" linux \
+            > "$linux_application_cache_report" || return $?
+        linux_application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$linux_application_cache_report")
+        [[ $linux_application_checkpoint == Created ||
+            $linux_application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$image_prefix" 1 "$entry_offset" "$linux_application" linux \
+            >/dev/null || return $?
+    fi
     "$linux_application" >/dev/null
     local application_result=$?
     if [[ $application_result -ne 0 ]]; then
@@ -213,9 +251,16 @@ verify_target() {
         return 1
     fi
 
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$image_prefix" 1 "$entry_offset" "$windows_application" windows \
-        >/dev/null || return $?
+    if ((development == 1)); then
+        local target_elapsed_ms=$(((SECONDS - target_start) * 1000))
+        echo "PASS  native database storage development target=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint host=linux-$linux_application_checkpoint"
+        portable_project_checkpoints+="$label:$project_checkpoint,"
+        portable_application_checkpoints+="$label:linux-$linux_application_checkpoint,"
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$image_prefix" 1 "$entry_offset" "$windows_application" windows \
+            >/dev/null || return $?
+    fi
 }
 
 verify_storage_lowering() {
@@ -351,7 +396,9 @@ verify_host_storage() {
         "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
-    "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    if ((development == 0)); then
+        "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    fi
 
     "$script_directory/Assemble-Wva.sh" \
         "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
@@ -639,6 +686,7 @@ verify_host_tree_reader_update_interruption() {
 }
 
 if ((development == 1)); then
+    portable_start=$SECONDS
     verify_target TreeNode \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || {
             echo 'The native database storage development tree-node stage failed.' >&2
@@ -669,6 +717,8 @@ if ((development == 1)); then
             echo 'The native database storage development depth-three stage failed.' >&2
             exit 1
         }
+    portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
+    echo "PASS  native database storage development phase=portable-targets elapsed-ms=$portable_elapsed_ms"
 else
     verify_target Nested \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
@@ -699,11 +749,21 @@ else
     verify_storage_lowering \
         "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
 fi
+if ((development == 1)); then
+    host_storage_start=$SECONDS
+    echo 'START native database storage development phase=host-storage'
+fi
 verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || {
         echo 'The native database storage host-storage stage failed.' >&2
         exit 1
     }
+if ((development == 1)); then
+    host_storage_elapsed_ms=$(((SECONDS - host_storage_start) * 1000))
+    echo "PASS  native database storage development phase=host-storage elapsed-ms=$host_storage_elapsed_ms"
+    host_tree_reader_start=$SECONDS
+    echo 'START native database storage development phase=host-tree-reader'
+fi
 verify_host_tree_reader \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || {
         echo 'The native database storage tree-update stage failed.' >&2
@@ -711,7 +771,11 @@ verify_host_tree_reader \
     }
 
 if ((development == 1)); then
-    echo "native database storage development status=Passed cases=8 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
+    host_tree_reader_elapsed_ms=$(((SECONDS - host_tree_reader_start) * 1000))
+    echo "PASS  native database storage development phase=host-tree-reader elapsed-ms=$host_tree_reader_elapsed_ms"
+    development_elapsed_ms=$(((SECONDS - development_start) * 1000))
+    echo "native database storage development timing tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed cases=8 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
     exit 0
 fi
 echo 'native database storage status=Passed cases=17 local-results=0 cross-host-images=Verified'

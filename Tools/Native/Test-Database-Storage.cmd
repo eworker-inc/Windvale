@@ -34,6 +34,11 @@ set "ProjectCheckpointHostTreeReader=NotRun"
 set "ApplicationCheckpointHostStorage=NotRun"
 set "ApplicationCheckpointHostTreeReader=NotRun"
 set "ProjectWvbCheckpoint=NotRun"
+set "PortableProjectCheckpoints="
+set "PortableApplicationCheckpoints="
+if "%Development%"=="1" call :read_clock DevelopmentStart
+if "%Development%"=="1" call :read_clock ToolsStart
+if "%Development%"=="1" echo START native database storage development phase=tools
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Wvb.cmd" ^
@@ -66,12 +71,17 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
 )
 
+if "%Development%"=="1" call :read_clock ToolsEnd
+if "%Development%"=="1" call :elapsed_milliseconds ToolsStart ToolsEnd ToolsElapsedMs
+if "%Development%"=="1" echo PASS  native database storage development phase=tools elapsed-ms=%ToolsElapsedMs% tool=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint%
+
 if "%PrepareOnly%"=="1" (
     set "Result=0"
     goto :cleanup
 )
 
 if "%Development%"=="1" (
+    call :read_clock PortableStart
     call :verify_target TreeNode ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
     if errorlevel 1 (
@@ -108,18 +118,33 @@ if "%Development%"=="1" (
         >&2 echo The native database storage development depth-three stage failed.
         goto :cleanup
     )
+    call :read_clock PortableEnd
+    call :elapsed_milliseconds PortableStart PortableEnd PortableElapsedMs
+    call echo PASS  native database storage development phase=portable-targets elapsed-ms=%%PortableElapsedMs%%
+    call :read_clock HostStorageStart
+    echo START native database storage development phase=host-storage
     call :verify_host_storage ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
     if errorlevel 1 (
         >&2 echo The native database storage development host-storage stage failed.
         goto :cleanup
     )
+    call :read_clock HostStorageEnd
+    call :elapsed_milliseconds HostStorageStart HostStorageEnd HostStorageElapsedMs
+    call echo PASS  native database storage development phase=host-storage elapsed-ms=%%HostStorageElapsedMs%%
+    call :read_clock HostTreeReaderStart
+    echo START native database storage development phase=host-tree-reader
     call :verify_host_tree_reader ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
     if errorlevel 1 (
         >&2 echo The native database storage development tree-update stage failed.
         goto :cleanup
     )
+    call :read_clock HostTreeReaderEnd
+    call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderElapsedMs
+    call echo PASS  native database storage development phase=host-tree-reader elapsed-ms=%%HostTreeReaderElapsedMs%%
+    call :read_clock DevelopmentEnd
+    call :elapsed_milliseconds DevelopmentStart DevelopmentEnd DevelopmentElapsedMs
     set "Result=0"
     goto :cleanup
 )
@@ -185,7 +210,8 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development status=Passed cases=8 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
+    echo native database storage development timing tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% total-ms=%DevelopmentElapsedMs%
+    echo native database storage development status=Passed cases=8 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
     exit /b 0
 )
 echo native database storage status=Passed cases=17 local-results=0 cross-host-images=Verified
@@ -250,8 +276,10 @@ if "%Development%"=="1" (
     fc /b "%FirstWvo%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
 )
-call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
-if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
+    if errorlevel 1 exit /b 1
+)
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
     "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Host.wva" ^
@@ -889,22 +917,40 @@ set "ImagePrefix=%TemporaryDirectory%\%~1-Image"
 set "Map=%TemporaryDirectory%\%~1.map"
 set "WindowsApplication=%TemporaryDirectory%\%~1.exe"
 set "LinuxApplication=%TemporaryDirectory%\%~1.elf"
+set "ProjectCheckpoint=Rebuilt"
+set "WindowsApplicationCheckpoint=Rebuilt"
+set "LinuxApplicationCheckpoint=Rebuilt"
+if "%Development%"=="1" set "LinuxApplicationCheckpoint=NotRun"
+if "%Development%"=="1" call :read_clock TargetStart
+if "%Development%"=="1" echo START native database storage development target=%Label%
 
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-if errorlevel 1 exit /b 1
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-if errorlevel 1 exit /b 1
-fc /b "%FirstWvb%" "%SecondWvb%" >nul
-if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+        >"%TemporaryDirectory%\%~1-Project-Cache.txt"
+    if errorlevel 1 exit /b 1
+    set "ProjectCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\%~1-Project-Cache.txt"') do set "ProjectCheckpoint=%%S"
+    if not defined ProjectCheckpoint exit /b 1
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvb%" "%SecondWvb%" >nul
+    if errorlevel 1 exit /b 1
 
-"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-if errorlevel 1 exit /b 1
-"%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
-if errorlevel 1 exit /b 1
-fc /b "%FirstWvo%" "%SecondWvo%" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
-if errorlevel 1 exit /b 1
+    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+    if errorlevel 1 exit /b 1
+    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvo%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+)
+if not "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
+    if errorlevel 1 exit /b 1
+)
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
     "%Image%" "%FirstWvo%" >"%Map%"
@@ -916,17 +962,57 @@ echo(%EntryOffset%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%Image%" "%ImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
 
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows >nul
-if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows ^
+        >"%TemporaryDirectory%\%~1-Windows-Application-Cache.txt"
+    if errorlevel 1 exit /b 1
+    set "WindowsApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\%~1-Windows-Application-Cache.txt"') do set "WindowsApplicationCheckpoint=%%S"
+    if not defined WindowsApplicationCheckpoint exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows >nul
+    if errorlevel 1 exit /b 1
+)
 "%WindowsApplication%" >nul
 if not "%ERRORLEVEL%"=="0" (
     >&2 echo The %Label% database-storage case did not return 0.
     exit /b 1
 )
 
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
+    if errorlevel 1 exit /b 1
+)
+if "%Development%"=="1" (
+    call :read_clock TargetEnd
+    call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
+    call echo PASS  native database storage development target=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% host=windows-%WindowsApplicationCheckpoint%
+    endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%WindowsApplicationCheckpoint%,"
+    exit /b 0
+)
 endlocal
+exit /b 0
+
+:read_clock
+setlocal EnableExtensions DisableDelayedExpansion
+set "Clock=%TIME: =0%"
+set /a ClockHours=1%Clock:~0,2%-100
+set /a ClockMinutes=1%Clock:~3,2%-100
+set /a ClockSeconds=1%Clock:~6,2%-100
+set /a ClockCentiseconds=1%Clock:~9,2%-100
+set /a ClockTicks=ClockHours*360000+ClockMinutes*6000+ClockSeconds*100+ClockCentiseconds
+endlocal & set "%~1=%ClockTicks%"
+exit /b 0
+
+:elapsed_milliseconds
+setlocal EnableExtensions DisableDelayedExpansion
+call set "ElapsedStart=%%%~1%%"
+call set "ElapsedEnd=%%%~2%%"
+set /a ElapsedTicks=ElapsedEnd-ElapsedStart
+if %ElapsedTicks% LSS 0 set /a ElapsedTicks+=8640000
+set /a ElapsedMs=ElapsedTicks*10
+endlocal & set "%~3=%ElapsedMs%"
 exit /b 0

@@ -6,8 +6,9 @@ Current post-retirement verification architecture. It incorporates
 [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md),
 [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md),
 [Decisions 0553 through 0555](../Decisions/0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md),
+[Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md),
 and
-[Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md).
+[Decision 0559](../Decisions/0559-Checkpoint-Portable-Database-Development-Targets.md).
 
 Historical managed-suite optimization measurements remain in the dated
 decisions, qualification evidence, and Git history. They do not define the
@@ -170,9 +171,18 @@ regenerating a product. Compared with the last recorded 1,619,500 ms complete
 construction-and-engine command, that is a 98.17% development-path reduction;
 the complete cold owner remains unchanged for explicit qualification.
 
-1. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
-   verifier, linker, and hosted-application products only when timing identifies
-   them as a development bottleneck.
+The database development owner now checkpoints the six portable tree projects
+and their current-host applications, reports live target/phase progress, and
+does not repeat project-object admission already performed by the checkpoint.
+The measured all-hit Windows owner fell from 402,638 ms to 135,670 ms, a 66.30%
+reduction. Its 71,880 ms portable phase plus 54,690 ms of host-storage and
+tree-reader behavior still leave the total 15,670 ms above the two-minute
+working target. The complete owner remains cold, reconstructs both target
+containers, and retains independent reproducibility and admission evidence.
+
+1. Close the database owner's measured 15,670 ms local gap by batching repeated
+   dependency admission/link work or using bounded independent execution; retain
+   one structural admission per consumed cached product and every behavioral case.
 2. Replace ad hoc path lists with declarative per-owner dependency manifests when
    that representation can be verified against the current planner without
    losing fail-closed coverage.

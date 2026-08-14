@@ -56,8 +56,11 @@ not dominate implementation.
 separates affected-owner development checks from complete qualification.
 [Decisions 0553 through 0555](../Decisions/0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md)
 add content-addressed development checkpoints for the current database path.
-The warm two-case database owner is approximately 71 seconds on the measured
-Windows host. Complete qualification remains cold and explicit.
+[Decision 0559](../Decisions/0559-Checkpoint-Portable-Database-Development-Targets.md)
+extends those checkpoints across all six portable tree targets. The measured
+all-hit eight-case Windows owner is 135,670 ms, down from 402,638 ms, and now
+reports live target plus phase progress. Complete qualification remains cold
+and explicit.
 
 The managed-source archival audit measured the old `seed-native-front-door` at
 733,980 ms because it reconstructed 105 artifacts. The ordinary owner now binds
@@ -85,6 +88,20 @@ remains cold, cache-independent explicit qualification evidence.
 
 These are workflow targets, not semantic limits. A security or malformed-input
 owner may remain slower when its complete boundary cannot be divided honestly.
+
+### Current gate audit
+
+| Gate | Standing | Remaining evidence or work |
+| --- | :---: | --- |
+| Repeated affected owner under two minutes | 🚧 | The database owner is 135,670 ms; close the measured 15,670 ms gap without dropping admission or behavior. |
+| Ordinary pull-request feedback under five minutes | 🚧 | Measure a clean small-change Windows/Linux run; the first development workflow covered a 453-path remote catch-up and is not a representative steady-state sample. |
+| Phase timings and declared dependency closure | 🚧 | Expensive front-door, WebAssembly, and database owners report timings; replace remaining ad hoc owner path closures only where the planner can verify the declaration. |
+| Cache hits revalidate identities and behavior | ✅ | Implemented checkpoints validate manifests, sizes, digests, structural admission where required, and rerun affected behavior. |
+| Complete qualification is explicit only | ✅ | Decision 0557 reserves the cold dual-host matrix for deliberate qualification points. |
+
+Milestone 1 is therefore not closed: two gates are complete, one has a measured
+15.67-second local gap, and two require a clean workflow measurement or bounded
+dependency-closure work.
 
 ## Milestone 2: useful package-backed application
 
