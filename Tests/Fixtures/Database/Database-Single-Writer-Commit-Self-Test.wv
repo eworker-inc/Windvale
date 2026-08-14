@@ -1,0 +1,327 @@
+module Databaseˉsingleˉwriterˉcommitˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Current(
+    Status: Superblock.Databaseˉsuperblockˉselectionˉstatus,
+    Tailˉbytes: u64,
+    Generation: u64,
+    Sequence: u64,
+    Pageˉcount: u64,
+    Committedˉlength: u64,
+    Rootˉdepth: u32
+) -> Superblock.Databaseˉsuperblockˉselection {
+    var Commitˉlog: u64 = NO_PAGE;
+    var Earliestˉsequence: u64 = 0u64;
+    if Sequence != 0u64 {
+        Commitˉlog = 0u64;
+        Earliestˉsequence = 1u64;
+    }
+    return Superblock.Databaseˉsuperblockˉselection(
+        Status,
+        Superblock.Databaseˉsuperblockˉslot.First,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉlength,
+        Tailˉbytes,
+        1u64,
+        2u64,
+        Generation,
+        Sequence,
+        0u64,
+        Commitˉlog,
+        Earliestˉsequence,
+        Pageˉcount,
+        Committedˉlength,
+        4096u32,
+        Rootˉdepth
+    );
+}
+
+fn Validˉcurrent() -> Superblock.Databaseˉsuperblockˉselection {
+    return Current(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        0u64,
+        1u64,
+        0u64,
+        1u64,
+        4608u64,
+        1u32
+    );
+}
+
+fn Validˉresult() -> Single.Databaseˉsingleˉwriterˉcommit {
+    return Single.Databaseˉsingleˉwriterˉcommitˉbegin(
+        Validˉcurrent(),
+        1u32,
+        Bytesˉfromˉu8(42u8)
+    );
+}
+
+fn Validˉplan() -> i32 {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit = Validˉresult();
+    if Result.Error != Single.Databaseˉsingleˉwriterˉcommitˉerror.Valid ||
+        Result.Rootˉpage != 1u64 ||
+        Result.Logˉpage != 2u64 ||
+        Result.Targetˉgeneration != 2u64 ||
+        Result.Targetˉsequence != 1u64 ||
+        Result.Targetˉlength != 12800u64 ||
+        Bytesˉlength(Result.Pages) != 8192u32 ||
+        Bytesˉlength(Result.Superblock) != 256u32 ||
+        Result.Publication.Error !=
+            Publication.Databaseˉcommitˉpublicationˉerror.Valid ||
+        Result.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        Result.Publication.Targetˉslot !=
+            Superblock.Databaseˉsuperblockˉslot.Second ||
+        Result.Publication.Position != 4608u64 ||
+        Result.Publication.Length != 8192u64 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Validˉroot() -> i32 {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit = Validˉresult();
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, 0u32, 4096u32)
+        );
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Pageˉidentifier != 1u64 ||
+        Root.Generation != 2u64 ||
+        Root.Commitˉsequence != 1u64 ||
+        Root.Previousˉpage != 0u64 ||
+        Root.Itemˉcount != 1u32 ||
+        !Bytesˉequal(Root.Payload, Bytesˉfromˉu8(42u8)) {
+        return 1;
+    }
+    return 0;
+}
+
+fn Validˉlog() -> i32 {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit = Validˉresult();
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, 4096u32, 4096u32)
+        );
+    if Log.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Log.Kind != Page.Databaseˉdurableˉpageˉkind.Commitˉlog ||
+        Log.Pageˉidentifier != 2u64 ||
+        Log.Generation != 2u64 ||
+        Log.Commitˉsequence != 1u64 ||
+        Log.Previousˉpage != NO_PAGE ||
+        Log.Itemˉcount != 1u32 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Validˉlogˉpayload() -> bytes {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit = Validˉresult();
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, 4096u32, 4096u32)
+        );
+    if Log.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Emptyˉbytes();
+    }
+    return Log.Payload;
+}
+
+fn Validˉrecord() -> i32 {
+    let Record: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉdecode(Validˉlogˉpayload());
+    if Record.Error != Commit.Databaseˉcommitˉrecordˉerror.Valid ||
+        Record.Generation != 2u64 ||
+        Record.Committedˉsequence != 1u64 ||
+        Record.Previousˉgeneration != 1u64 ||
+        Record.Previousˉsequence != 0u64 ||
+        Record.Rootˉpage != 1u64 ||
+        Record.Previousˉlogˉpage != NO_PAGE ||
+        Record.Logˉpage != 2u64 ||
+        Record.Firstˉallocatedˉpage != 1u64 ||
+        Record.Allocatedˉpageˉcount != 2u64 ||
+        Record.Pageˉcount != 3u64 ||
+        Record.Committedˉlength != 12800u64 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Validˉtarget() -> i32 {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit = Validˉresult();
+    let Target: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉdecode(Result.Superblock);
+    if Target.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
+        Target.Generation != 2u64 ||
+        Target.Committedˉsequence != 1u64 ||
+        Target.Rootˉpage != 1u64 ||
+        Target.Commitˉlogˉhead != 2u64 ||
+        Target.Earliestˉretainedˉsequence != 1u64 ||
+        Target.Pageˉcount != 3u64 ||
+        Target.Committedˉlength != 12800u64 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Validˉdeterministic() -> i32 {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit = Validˉresult();
+    let Second: Single.Databaseˉsingleˉwriterˉcommit =
+        Validˉresult();
+    if Second.Error != Single.Databaseˉsingleˉwriterˉcommitˉerror.Valid ||
+        !Bytesˉequal(Result.Pages, Second.Pages) ||
+        !Bytesˉequal(Result.Superblock, Second.Superblock) {
+        return 1;
+    }
+    return 0;
+}
+
+fn Errorˉis(
+    Currentˉselection: Superblock.Databaseˉsuperblockˉselection,
+    Itemˉcount: u32,
+    Payload: bytes,
+    Expected: Single.Databaseˉsingleˉwriterˉcommitˉerror
+) -> bool {
+    let Result: Single.Databaseˉsingleˉwriterˉcommit =
+        Single.Databaseˉsingleˉwriterˉcommitˉbegin(
+            Currentˉselection,
+            Itemˉcount,
+            Payload
+        );
+    return Result.Error == Expected;
+}
+
+fn Invalidˉcommit() -> i32 {
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Noˉvalidˉsuperblock,
+            0u64, 1u64, 0u64, 1u64, 4608u64, 1u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉcurrent
+    ) { return 1; }
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            1u64, 1u64, 0u64, 1u64, 4608u64, 1u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Unpublishedˉtail
+    ) { return 2; }
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            0u64, 1u64, 0u64, 1u64, 4608u64, 2u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Unsupportedˉrootˉdepth
+    ) { return 3; }
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            0u64, U64_MAXIMUM, 1u64, 1u64, 4608u64, 1u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Generationˉexhausted
+    ) { return 4; }
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            0u64, 1u64, U64_MAXIMUM, 1u64, 4608u64, 1u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Sequenceˉexhausted
+    ) { return 5; }
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            0u64, 1u64, 0u64, U64_MAXIMUM, 4608u64, 1u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Pageˉidentifierˉexhausted
+    ) { return 6; }
+    if !Errorˉis(
+        Current(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            0u64, 1u64, 0u64, 1u64, U64_MAXIMUM, 1u32
+        ),
+        0u32,
+        Emptyˉbytes(),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Storageˉlengthˉoverflow
+    ) { return 7; }
+    if !Errorˉis(
+        Validˉcurrent(),
+        1u32,
+        Zeroes(3969u32),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉrootˉpage
+    ) { return 8; }
+    if !Errorˉis(
+        Validˉcurrent(),
+        0u32,
+        Bytesˉfromˉu8(1u8),
+        Single.Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉrootˉpage
+    ) { return 9; }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    if Validˉplan() != 0 { return 1; }
+    if Validˉroot() != 0 { return 2; }
+    if Validˉlog() != 0 { return 3; }
+    if Validˉrecord() != 0 { return 4; }
+    if Validˉtarget() != 0 { return 5; }
+    if Validˉdeterministic() != 0 { return 6; }
+    let Invalid: i32 = Invalidˉcommit();
+    if Invalid != 0 { return 20 + Invalid; }
+    return 0;
+}

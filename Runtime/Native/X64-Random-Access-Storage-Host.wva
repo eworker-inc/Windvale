@@ -129,6 +129,17 @@ xor r9 r9
 call Main
 move rbx rax
 
+# The focused interruption harness reserves results 90 through 94. Returning
+# one skips the provider's explicit close and lets process teardown release the
+# native handle, modeling a stop after zero through four completed publication
+# actions. These values are test-shell policy, not part of WVSA 1 or a product
+# application ABI.
+compare_i32 ebx 90
+branch below Storage_host_entry_close
+compare_i32 ebx 94
+branch below_equal Storage_host_entry_complete
+
+label Storage_host_entry_close
 move r8 rsp
 add_i32 r8 272
 call Storage_platform_close

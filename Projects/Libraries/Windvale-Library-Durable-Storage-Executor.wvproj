@@ -1,6 +1,5 @@
 windvale-project 2
-root "Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv"
-source "Libraries/Platform/Database/Durable-Storage-Executor.wv"
+root "Libraries/Platform/Database/Durable-Storage-Executor.wv"
 source "Foundation/Byte-Construction.wv"
 source "Foundation/Sha256-Compression.wv"
 source "Foundation/Sha256-Streaming.wv"
@@ -9,7 +8,6 @@ source "Libraries/Database/Commit-Publication.wv"
 source "Libraries/Database/Durable-Commit-Record.wv"
 source "Libraries/Database/Durable-Page.wv"
 source "Libraries/Database/Durable-Superblock.wv"
-source "Libraries/Database/Single-Writer-Commit.wv"
 source "Libraries/Database/Storage-Publication.wv"
 source "Libraries/Database/Storage-Recovery.wv"
 emit wvb

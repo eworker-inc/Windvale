@@ -270,6 +270,36 @@ verify_storage_lowering() {
         "$windows_application" windows >/dev/null || return $?
 }
 
+verify_host_storage_interruption() {
+    local application=$1 initial=$2 step=$3 scenario_root=$4
+    local scenario_directory="$scenario_root/HostStorage-Interruption-$step"
+    local scenario_storage="$scenario_directory/Windvale-Database-Storage.bin"
+    mkdir -- "$scenario_directory" || return $?
+    cp -- "$initial" "$scenario_storage" || return $?
+    truncate -s $((4609 + step)) -- "$scenario_storage" || return $?
+
+    (cd -- "$scenario_directory" && "$application" >/dev/null)
+    local application_result=$?
+    local expected_result=$((90 + step))
+    if [[ $application_result -ne $expected_result ]]; then
+        echo "The native host-storage interruption $step returned $application_result, expected $expected_result." >&2
+        return 1
+    fi
+    (cd -- "$scenario_directory" && "$application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host-storage restart $step returned $application_result, expected 0." >&2
+        return 1
+    fi
+    local scenario_bytes
+    scenario_bytes=$(wc -c < "$scenario_storage") || return 1
+    if ((step <= 2 && scenario_bytes != 4608)); then return 1; fi
+    if ((step == 3 && scenario_bytes != 4608 && scenario_bytes != 12800)); then
+        return 1
+    fi
+    if ((step == 4 && scenario_bytes != 12800)); then return 1; fi
+}
+
 verify_host_storage() {
     local project_path=$1
     local first_wvb="$temporary_directory/HostStorage-First.wvb"
@@ -293,12 +323,16 @@ verify_host_storage() {
     local initial_file="$run_directory/Windvale-Database-Storage.initial"
 
     "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-    cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    if ((development == 0)); then
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    fi
 
     "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-    "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-    cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    if ((development == 0)); then
+        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
+        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    fi
     "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
 
     "$script_directory/Assemble-Wva.sh" \
@@ -365,6 +399,13 @@ verify_host_storage() {
     fi
     cmp --silent -- "$initial_file" "$storage_file" || return 1
 
+    local step
+    for step in 0 1 2 3 4; do
+        verify_host_storage_interruption \
+            "$linux_application" "$initial_file" "$step" "$temporary_directory" \
+            || return $?
+    done
+
     if ((development == 1)); then
         return 0
     fi
@@ -392,6 +433,8 @@ if ((development == 0)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
     verify_target Recovery \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
+    verify_target SingleWriter \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
     verify_target ProviderTable \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
     verify_target ProviderCall \
@@ -408,4 +451,4 @@ if ((development == 1)); then
     echo "native database storage development status=Passed cases=1 local-results=0 tools=$tool_checkpoint"
     exit 0
 fi
-echo 'native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=10 local-results=0 cross-host-images=Verified'

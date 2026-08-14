@@ -96,7 +96,7 @@ non-cooperating native programs. The fixed name is test-shell policy, not a
 source path API or the eventual configurable database-server launcher.
 
 The focused owner has two evidence boundaries. Its no-argument form is the
-clean nine-case owner and ignores local caches. `--development` is an explicit
+clean ten-case owner and ignores local caches. `--development` is an explicit
 non-qualification lane that uses the target-scoped [native tool
 checkpoint](Windvale-Native-Tool-Checkpoint.md), assembles and verifies both
 platform leaves, and executes the Windows create, tail-repair, and stable-reopen
@@ -125,6 +125,19 @@ retry an indeterminate mutation.
 Version 1 does not yet carry a durable mutation identity or query-by-mutation
 operation. A database must recover its logical state from checksummed on-disk
 records after an indeterminate result.
+
+### Borrowed response values
+
+The capability response is stored in one provider-owned scratch buffer. Typed
+scalar fields decoded from a response are copied values. A successful read's
+`Storage_result.Value` is a borrowed view into that response and remains valid
+only until the next call to the same bound `storage.random_access_v1`
+capability, including a describe, write, resize, or flush call.
+
+Callers must decode, validate, or copy a read payload before issuing another
+storage call. Retaining multiple read results does not retain multiple provider
+snapshots. This lifetime is intentionally narrower than the whole `Main`
+execution lifetime of the scratch allocation itself.
 
 ## Flush classes
 
@@ -194,7 +207,8 @@ reparse-point binding.
 the exact one-entry `WVPT 1` table, revalidates all five argument cells, and
 serializes every `WVSA 1` result from page-probed execution-owned scratch. The
 scratch is not stored in the RX application fragment and survives exactly until
-`Main` returns. Stale generation, outside-storage reads, malformed requests,
+`Main` returns, but every storage call may overwrite its contents. Stale
+generation, outside-storage reads, malformed requests,
 unsupported signed host positions, rejected operations, exact completion, and
 indeterminate mutations remain distinct.
 
@@ -208,11 +222,12 @@ resolved address can be called.
 
 The focused Windvale program creates a `WVPG 1` root page, durably flushes its
 length, publishes a `WVDS 1` superblock, reopens the object, and validates both
-formats. The host test extends the closed file from 4,608 to 4,625 bytes to
-model an unpublished tail. A second native process selects the committed
-superblock, resizes and flushes back to 4,608 bytes, and a third process proves
-byte-stable reopen. This is deterministic restart recovery evidence, not a
-power-loss or arbitrary hardware-failure claim.
+formats. The host test first models and repairs an unpublished tail. It then
+executes the [single-writer transaction](Windvale-Database-Single-Writer-Transaction.md)
+with process termination after zero through four publication actions. Each
+fresh process selects and validates only the old 4,608-byte or new 12,800-byte
+generation and finishes with a stable reopen. This is deterministic restart
+recovery evidence, not a power-loss or arbitrary hardware-failure claim.
 
 ## Excluded claims and next contracts
 
@@ -221,9 +236,10 @@ binds the exact capability identity and signature to opaque rights-limited
 target/state pairs without changing ABI 22. The [native provider-call
 candidate](Windvale-Native-Provider-Call.md) emits and independently admits the
 exact five-cell x64 call, and an actual storage instruction now selects ABI 23.
-A focused host now executes every version-1 operation on Windows and constructs
-the equivalent Linux application. Independent Linux execution remains required
-before cross-host conformance is claimed. The candidate does not provide an
+A focused host now executes every version-1 operation and one complete
+single-writer commit on Windows and constructs the equivalent Linux
+application. Independent Linux execution remains required before cross-host
+conformance is claimed. The candidate does not provide an
 ordinary configurable container binding, Windvale OS or WebAssembly provider,
 power-loss rig, page cache, WAL, transactions, concurrent clients, durable
 mutation identities, or service restart. The next database slice can build on

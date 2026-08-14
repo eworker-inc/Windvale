@@ -1,0 +1,255 @@
+module Windvaleˉdatabaseˉsingleˉwriterˉcommit profile portable;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+const SINGLE_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉsingleˉwriterˉcommitˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Unpublishedˉtail = 2;
+    Unsupportedˉrootˉdepth = 3;
+    Generationˉexhausted = 4;
+    Sequenceˉexhausted = 5;
+    Pageˉidentifierˉexhausted = 6;
+    Storageˉlengthˉoverflow = 7;
+    Invalidˉrootˉpage = 8;
+    Invalidˉcommitˉrecord = 9;
+    Invalidˉlogˉpage = 10;
+    Invalidˉtargetˉsuperblock = 11;
+    Invalidˉpublication = 12;
+    Invalidˉpageˉbytes = 13;
+}
+
+export record Databaseˉsingleˉwriterˉcommit {
+    Error: Databaseˉsingleˉwriterˉcommitˉerror;
+    Publication: Publication.Databaseˉcommitˉpublication;
+    Pages: bytes;
+    Superblock: bytes;
+    Rootˉpage: u64;
+    Logˉpage: u64;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+}
+
+fn Databaseˉsingleˉwriterˉemptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉsingleˉwriterˉinvalidˉpublication()
+    -> Publication.Databaseˉcommitˉpublication {
+    return Publication.Databaseˉcommitˉpublication(
+        Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉstate,
+        Publication.Databaseˉcommitˉpublicationˉstage.Invalid,
+        Superblock.Databaseˉsuperblockˉslot.None,
+        0u64,
+        0u64,
+        Publication.Databaseˉcommitˉpublicationˉflushˉscope.None,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+fn Databaseˉsingleˉwriterˉfailure(
+    Error: Databaseˉsingleˉwriterˉcommitˉerror
+) -> Databaseˉsingleˉwriterˉcommit {
+    return Databaseˉsingleˉwriterˉcommit(
+        Error,
+        Databaseˉsingleˉwriterˉinvalidˉpublication(),
+        Databaseˉsingleˉwriterˉemptyˉbytes(),
+        Databaseˉsingleˉwriterˉemptyˉbytes(),
+        0u64,
+        SINGLE_WRITER_NO_PAGE,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+export fn Databaseˉsingleˉwriterˉcommitˉbegin(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Rootˉitemˉcount: u32,
+    Rootˉpayload: bytes
+) -> Databaseˉsingleˉwriterˉcommit {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Slot != Superblock.Databaseˉsuperblockˉslot.First &&
+        Current.Slot != Superblock.Databaseˉsuperblockˉslot.Second {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉcurrent
+        );
+    }
+    if Current.Tailˉbytes != 0u64 {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Unpublishedˉtail
+        );
+    }
+    if Current.Rootˉdepth != 1u32 {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Unsupportedˉrootˉdepth
+        );
+    }
+    if Current.Generation == U64_MAXIMUM {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Generationˉexhausted
+        );
+    }
+    if Current.Committedˉsequence == U64_MAXIMUM {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Sequenceˉexhausted
+        );
+    }
+    if Current.Pageˉcount > U64_MAXIMUM - 2u64 {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Pageˉidentifierˉexhausted
+        );
+    }
+    let Appendedˉbytes: u64 = U64ˉfromˉu32(Current.Pageˉsize) * 2u64;
+    if Current.Committedˉlength > U64_MAXIMUM - Appendedˉbytes {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Storageˉlengthˉoverflow
+        );
+    }
+
+    let Targetˉgeneration: u64 = Current.Generation + 1u64;
+    let Targetˉsequence: u64 = Current.Committedˉsequence + 1u64;
+    let Rootˉpage: u64 = Current.Pageˉcount;
+    let Logˉpage: u64 = Rootˉpage + 1u64;
+    let Targetˉpageˉcount: u64 = Current.Pageˉcount + 2u64;
+    let Targetˉlength: u64 = Current.Committedˉlength + Appendedˉbytes;
+
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                Current.Pageˉsize,
+                Rootˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Rootˉpage,
+                Rootˉitemˉcount,
+                Rootˉpayload
+            )
+        );
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉrootˉpage
+        );
+    }
+
+    let Record: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉencode(
+            Commit.Databaseˉcommitˉrecord(
+                Current.Databaseˉidentityˉhigh,
+                Current.Databaseˉidentityˉlow,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Generation,
+                Current.Committedˉsequence,
+                Rootˉpage,
+                Current.Commitˉlogˉhead,
+                Logˉpage,
+                Current.Pageˉcount,
+                2u64,
+                Targetˉpageˉcount,
+                Targetˉlength,
+                Current.Pageˉsize,
+                1u32
+            )
+        );
+    if Record.Error != Commit.Databaseˉcommitˉrecordˉerror.Valid {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉcommitˉrecord
+        );
+    }
+
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Commitˉlog,
+                Current.Pageˉsize,
+                Logˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Commitˉlogˉhead,
+                1u32,
+                Record.Bytes
+            )
+        );
+    if Log.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉlogˉpage
+        );
+    }
+
+    var Earliestˉretainedˉsequence: u64 =
+        Current.Earliestˉretainedˉsequence;
+    if Current.Committedˉsequence == 0u64 {
+        Earliestˉretainedˉsequence = 1u64;
+    }
+    let Target: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(
+            Superblock.Databaseˉsuperblock(
+                Current.Databaseˉidentityˉhigh,
+                Current.Databaseˉidentityˉlow,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Rootˉpage,
+                Logˉpage,
+                Earliestˉretainedˉsequence,
+                Targetˉpageˉcount,
+                Targetˉlength,
+                Current.Pageˉsize,
+                1u32
+            )
+        );
+    if Target.Error != Superblock.Databaseˉsuperblockˉerror.Valid {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉtargetˉsuperblock
+        );
+    }
+
+    let Publicationˉstate: Publication.Databaseˉcommitˉpublication =
+        Publication.Databaseˉcommitˉpublicationˉbegin(
+            Current,
+            Target,
+            Record,
+            Log
+        );
+    if Publicationˉstate.Error !=
+            Publication.Databaseˉcommitˉpublicationˉerror.Valid ||
+        Publicationˉstate.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉpublication
+        );
+    }
+
+    let Pages: bytes = Bytesˉconcat(Root.Bytes, Log.Bytes);
+    if Bytesˉlength(Pages) != Current.Pageˉsize * 2u32 {
+        return Databaseˉsingleˉwriterˉfailure(
+            Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉpageˉbytes
+        );
+    }
+    return Databaseˉsingleˉwriterˉcommit(
+        Databaseˉsingleˉwriterˉcommitˉerror.Valid,
+        Publicationˉstate,
+        Pages,
+        Target.Bytes,
+        Rootˉpage,
+        Logˉpage,
+        Targetˉgeneration,
+        Targetˉsequence,
+        Targetˉlength
+    );
+}

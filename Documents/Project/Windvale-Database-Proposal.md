@@ -171,9 +171,9 @@ capability, concurrency, and resource-accounting rules.
 
 ## Windvale readiness
 
-Windvale can now execute bounded durable formats over one hosted mutable
-storage object and repair one unpublished tail after restart. A transactional
-database writer and server are not ready.
+Windvale can now execute one bounded single-writer transaction over a hosted
+mutable storage object and recover at every publication boundary. A general
+key/value engine, transactional database process, and server are not ready.
 
 | Candidate work | Current readiness | Boundary |
 | --- | --- | --- |
@@ -188,7 +188,8 @@ database writer and server are not ready.
 | Durable superblock and recovery selection | Implemented candidate | [`WVDS 1`](../../Specifications/Windvale-Database-Durable-Superblock.md) defines two checksummed 256-byte slots, checked committed length, generation selection, conflict rejection, and unpublished-tail reporting. It is the publication target and performs no I/O. |
 | Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
 | Portable storage publication and reopen policy | Implemented candidate | The [storage recovery contract](../../Specifications/Windvale-Database-Storage-Recovery.md) maps publication to bounded 64 KiB actions and maps fresh superblock evidence plus an unpublished tail to exact resize and content-and-length flush actions. Uncertain mutations require reopen and are never silently replayed. |
-| Capability-bearing mutation and crash recovery | Focused native Windows restart recovery implemented; cross-host qualification pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds the exact storage target/state, and the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) preserves all ABI-23 budgets while returning strict `WVSA 1`. A Windvale fixture publishes `WVPG 1` plus `WVDS 1`; after the closed file gains a deterministic 17-byte unpublished tail, a second native process selects the committed slot, resizes and flushes to 4,608 bytes, and a third proves byte identity. General fragment/WVB admission, independent Linux execution, configurable server binding, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
+| Native single-writer transaction | Focused Windows implementation; cross-host qualification pending | The [single-writer transaction](../../Specifications/Windvale-Database-Single-Writer-Transaction.md) constructs one root page, one compact log page, the inactive superblock, and a typed publication plan without I/O authority. Its hosted executor performs the four exact storage actions and preserves provider completion semantics. It is append-only, root-depth-one, and carries an opaque root payload rather than a tree-node format. |
+| Capability-bearing mutation and crash recovery | Focused native Windows restart recovery implemented; cross-host qualification pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds the exact storage target/state, and the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) preserves all ABI-23 budgets while returning strict `WVSA 1`. Native processes now repair an unpublished tail and interrupt the first transaction after zero through four completed actions; every restart selects and validates only the old 4,608-byte or new 12,800-byte generation before a stable reopen. General fragment/WVB admission, independent Linux execution, configurable server binding, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
@@ -255,19 +256,20 @@ The first writable database milestone requires at least:
 1. payload variants and typed recoverable results for expected storage and
    provider outcomes; the reader and first mutable storage library now exercise
    this part;
-2. bounded immutable sequences and uniquely owned builders are now present;
-   deterministic maps or page tables, exact allocation charges, and consuming
-   database publication remain required;
+2. bounded immutable sequences and uniquely owned builders are now present,
+   and one focused executor consumes bounded database publication;
+   deterministic maps or page tables and exact allocation charges remain
+   required;
 3. scoped capability-resource ownership with explicit close, stale-generation,
    and provider-loss behavior; the current binding supplies generation/loss
    results and launcher-owned teardown, while source-scoped typed close remains;
 4. `i64` and `u64` support, including the canonical WVB 1.11 binary codecs, through the
    selected compiler, verifier, interpreter, native ABI, and backend profile;
 5. a rights-limited storage capability with exact random-access reads,
-   positioned writes, partial-progress reporting, flush classes, fencing, and
-   bounded requests is now implemented; durable mutation identity and recovery
-   remain, while atomic root publication should occur inside the first object
-   and native replacement/directory durability stay separate;
+   positioned writes, partial-progress reporting, flush classes, fencing,
+   bounded requests, and one root-publication recovery path is now implemented;
+   durable mutation identity and broader recovery policies remain, while native
+   replacement and directory durability stay separate;
 6. monotonic time for deadlines and measurements without making wall-clock time
    part of database ordering;
 7. structured tasks, bounded channels, cancellation, synchronization, and
@@ -326,6 +328,12 @@ adds a non-qualification cached development lane for that composed lifecycle.
 It reduced the measured Windows feedback loop from 658.777 seconds for the
 clean nine-case owner to 100.179 seconds while keeping clean reconstruction and
 cross-target construction as the final owner boundary.
+
+[Decision 0547](../Decisions/0547-First-Native-Single-Writer-Transaction.md)
+adds the first consuming transaction over that provider: portable root/log/
+superblock construction, one hosted action executor, and process restart after
+zero through four publication actions. It remains a bounded storage-kernel
+slice rather than a server or general transaction API.
 
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
@@ -398,12 +406,15 @@ Build a single-process, single-writer ordered key/value kernel with:
 - deterministic compaction or obsolete-page reclamation; and
 - fault injection before and after every durable transition.
 
-The first two Stage 3 sub-slices are implemented. `WVDS 1` supplies dual
-checksummed root records and deterministic recovery selection. `WVPG 1`,
-`WVCR 1`, and the pure publication planner add immutable page/log bytes and an
-executable durable-before-publish state sequence. They do not yet consume the
-storage capability, inject crashes, truncate an unpublished tail, encode tree
-nodes, or execute a transaction.
+The storage substrate and first one-commit Stage 3 vertical slice are
+implemented. `WVDS 1` supplies dual checksummed root records and deterministic
+recovery selection. `WVPG 1`, `WVCR 1`, and the pure publication planner add
+immutable page/log bytes and an executable durable-before-publish sequence.
+The hosted executor now consumes that sequence through the storage capability,
+repairs an unpublished tail, and restarts after every one of the four
+publication actions. The transaction still carries an opaque root payload; it
+does not encode tree nodes, insert keys, reclaim pages, or manage concurrent
+transactions.
 
 This milestone needs no general query language, network protocol, or graph
 layer.

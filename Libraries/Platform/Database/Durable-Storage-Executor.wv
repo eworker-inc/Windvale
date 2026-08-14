@@ -1,0 +1,181 @@
+module Durableˉstorageˉexecutor profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+
+capability storage.random_access_v1;
+
+export record Databaseˉstorageˉpublicationˉexecution {
+    State: Publication.Databaseˉstorageˉpublication;
+    Actions: u32;
+}
+
+export record Databaseˉstorageˉrecoveryˉexecution {
+    State: Recovery.Databaseˉstorageˉrecovery;
+    Actions: u32;
+}
+
+fn Databaseˉstorageˉproviderˉerror(
+    Status: Storage.Storageˉstatus
+) -> Publication.Databaseˉstorageˉproviderˉerror {
+    if Status == Storage.Storageˉstatus.Permissionˉdenied {
+        return Publication.Databaseˉstorageˉproviderˉerror.Permissionˉdenied;
+    }
+    if Status == Storage.Storageˉstatus.Unavailable {
+        return Publication.Databaseˉstorageˉproviderˉerror.Unavailable;
+    }
+    if Status == Storage.Storageˉstatus.Revoked {
+        return Publication.Databaseˉstorageˉproviderˉerror.Revoked;
+    }
+    if Status == Storage.Storageˉstatus.Stale {
+        return Publication.Databaseˉstorageˉproviderˉerror.Stale;
+    }
+    if Status == Storage.Storageˉstatus.Peerˉexited {
+        return Publication.Databaseˉstorageˉproviderˉerror.Peerˉexited;
+    }
+    if Status == Storage.Storageˉstatus.Outsideˉstorage {
+        return Publication.Databaseˉstorageˉproviderˉerror.Outsideˉstorage;
+    }
+    if Status == Storage.Storageˉstatus.Unsupported {
+        return Publication.Databaseˉstorageˉproviderˉerror.Unsupported;
+    }
+    if Status == Storage.Storageˉstatus.Invalidˉrequest {
+        return Publication.Databaseˉstorageˉproviderˉerror.Invalidˉrequest;
+    }
+    return Publication.Databaseˉstorageˉproviderˉerror.Invalidˉresponse;
+}
+
+export fn Databaseˉstorageˉobservation(
+    Result: Storage.Storageˉresult
+) -> Publication.Databaseˉstorageˉobservation {
+    var Kind: Publication.Databaseˉstorageˉobservationˉkind =
+        Publication.Databaseˉstorageˉobservationˉkind.Invalid;
+    var Error: Publication.Databaseˉstorageˉproviderˉerror =
+        Publication.Databaseˉstorageˉproviderˉerror.None;
+    if Result.Status == Storage.Storageˉstatus.Valid {
+        if Result.Completion == Storage.Storageˉcompletion.Completed {
+            Kind = Publication.Databaseˉstorageˉobservationˉkind.Completed;
+        } else if Result.Completion == Storage.Storageˉcompletion.Partial {
+            Kind = Publication.Databaseˉstorageˉobservationˉkind.Partial;
+        } else if Result.Completion ==
+            Storage.Storageˉcompletion.Indeterminate {
+            Kind = Publication.Databaseˉstorageˉobservationˉkind.Indeterminate;
+        }
+    } else if Result.Status == Storage.Storageˉstatus.Stale {
+        Kind = Publication.Databaseˉstorageˉobservationˉkind.Stale;
+        Error = Publication.Databaseˉstorageˉproviderˉerror.Stale;
+    } else if Result.Status != Storage.Storageˉstatus.Invalidˉresponse {
+        Kind = Publication.Databaseˉstorageˉobservationˉkind.Rejected;
+        Error = Databaseˉstorageˉproviderˉerror(Result.Status);
+    } else {
+        Error = Publication.Databaseˉstorageˉproviderˉerror.Invalidˉresponse;
+    }
+    return Publication.Databaseˉstorageˉobservation(
+        Kind,
+        Error,
+        Result.Generation,
+        Result.Storageˉlength,
+        Result.Position,
+        Result.Progress
+    );
+}
+
+fn Databaseˉstorageˉinvalidˉobservation(
+    Position: u64
+) -> Publication.Databaseˉstorageˉobservation {
+    return Publication.Databaseˉstorageˉobservation(
+        Publication.Databaseˉstorageˉobservationˉkind.Invalid,
+        Publication.Databaseˉstorageˉproviderˉerror.Invalidˉresponse,
+        0u64,
+        0u64,
+        Position,
+        0u32
+    );
+}
+
+export fn Databaseˉstorageˉexecuteˉaction(
+    Action: Publication.Databaseˉstorageˉaction
+) -> Publication.Databaseˉstorageˉobservation {
+    if Action.Kind == Publication.Databaseˉstorageˉactionˉkind.Write {
+        return Databaseˉstorageˉobservation(
+            Storage.Storageˉwriteˉat(
+                Action.Generation,
+                Action.Position,
+                Action.Value
+            )
+        );
+    }
+    if Action.Kind == Publication.Databaseˉstorageˉactionˉkind.Resize {
+        return Databaseˉstorageˉobservation(
+            Storage.Storageˉresize(Action.Generation, Action.Position)
+        );
+    }
+    if Action.Kind == Publication.Databaseˉstorageˉactionˉkind.Flush {
+        if Action.Flushˉscope ==
+            Publication.Databaseˉstorageˉflushˉscope.Content {
+            return Databaseˉstorageˉobservation(
+                Storage.Storageˉflush(
+                    Action.Generation,
+                    Storage.Storageˉflush.Content
+                )
+            );
+        }
+        if Action.Flushˉscope ==
+            Publication.Databaseˉstorageˉflushˉscope.Contentˉandˉlength {
+            return Databaseˉstorageˉobservation(
+                Storage.Storageˉflush(
+                    Action.Generation,
+                    Storage.Storageˉflush.Contentˉandˉlength
+                )
+            );
+        }
+    }
+    return Databaseˉstorageˉinvalidˉobservation(Action.Position);
+}
+
+export fn Databaseˉstorageˉpublicationˉexecute(
+    Initial: Publication.Databaseˉstorageˉpublication,
+    Maximumˉactions: u32
+) -> Databaseˉstorageˉpublicationˉexecution {
+    var State: Publication.Databaseˉstorageˉpublication = Initial;
+    var Actions: u32 = 0u32;
+    while Actions < Maximumˉactions {
+        if State.Status !=
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+            return Databaseˉstorageˉpublicationˉexecution(State, Actions);
+        }
+        let Action: Publication.Databaseˉstorageˉaction =
+            Publication.Databaseˉstorageˉpublicationˉaction(State);
+        State = Publication.Databaseˉstorageˉpublicationˉaccept(
+            State,
+            Databaseˉstorageˉexecuteˉaction(Action)
+        );
+        Actions = Actions + 1u32;
+    }
+    return Databaseˉstorageˉpublicationˉexecution(State, Actions);
+}
+
+export fn Databaseˉstorageˉrecoveryˉexecute(
+    Initial: Recovery.Databaseˉstorageˉrecovery,
+    Maximumˉactions: u32
+) -> Databaseˉstorageˉrecoveryˉexecution {
+    var State: Recovery.Databaseˉstorageˉrecovery = Initial;
+    var Actions: u32 = 0u32;
+    while Actions < Maximumˉactions {
+        if State.Stage == Recovery.Databaseˉstorageˉrecoveryˉstage.Ready ||
+            State.Stage == Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen ||
+            State.Stage == Recovery.Databaseˉstorageˉrecoveryˉstage.Stopped ||
+            State.Stage == Recovery.Databaseˉstorageˉrecoveryˉstage.Invalid {
+            return Databaseˉstorageˉrecoveryˉexecution(State, Actions);
+        }
+        let Action: Publication.Databaseˉstorageˉaction =
+            Recovery.Databaseˉstorageˉrecoveryˉaction(State);
+        State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+            State,
+            Databaseˉstorageˉexecuteˉaction(Action)
+        );
+        Actions = Actions + 1u32;
+    }
+    return Databaseˉstorageˉrecoveryˉexecution(State, Actions);
+}

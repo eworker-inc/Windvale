@@ -80,6 +80,9 @@ if errorlevel 1 goto :cleanup
 call :verify_target Recovery ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Recovery.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target SingleWriter ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Writer-Commit.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target ProviderTable ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
 if errorlevel 1 goto :cleanup
@@ -111,7 +114,7 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed cases=1 local-results=0 tools=%ToolCheckpoint%
     exit /b 0
 )
-echo native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=10 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage
@@ -242,6 +245,12 @@ if not "%ApplicationResult%"=="0" (
 fc /b "%InitialFile%" "%StorageFile%" >nul
 if errorlevel 1 exit /b 1
 
+for %%S in (0 1 2 3 4) do (
+    call :verify_host_storage_interruption ^
+        "%WindowsApplication%" "%InitialFile%" %%S
+    if errorlevel 1 exit /b 1
+)
+
 if "%Development%"=="1" (
     endlocal
     exit /b 0
@@ -261,6 +270,43 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
     "%LinuxApplication%" linux >nul
 if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_storage_interruption
+setlocal EnableExtensions DisableDelayedExpansion
+set "Application=%~f1"
+set "Initial=%~f2"
+set "Step=%~3"
+set "ScenarioDirectory=%TemporaryDirectory%\HostStorage-Interruption-%Step%"
+set "ScenarioStorage=%ScenarioDirectory%\Windvale-Database-Storage.bin"
+mkdir "%ScenarioDirectory%" || exit /b 1
+copy /b "%Initial%" "%ScenarioStorage%" >nul || exit /b 1
+set /a MarkerLength=4609+Step
+fsutil file seteof "%ScenarioStorage%" %MarkerLength% >nul || exit /b 1
+
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+set /a ExpectedResult=90+Step
+if not "%ApplicationResult%"=="%ExpectedResult%" (
+    >&2 echo The native host-storage interruption %Step% returned %ApplicationResult%, expected %ExpectedResult%.
+    exit /b 1
+)
+
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host-storage restart %Step% returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%ScenarioStorage%") do set "ScenarioBytes=%%~zF"
+if %Step% LEQ 2 if not "%ScenarioBytes%"=="4608" exit /b 1
+if "%Step%"=="3" if not "%ScenarioBytes%"=="4608" if not "%ScenarioBytes%"=="12800" exit /b 1
+if "%Step%"=="4" if not "%ScenarioBytes%"=="12800" exit /b 1
 endlocal
 exit /b 0
 
