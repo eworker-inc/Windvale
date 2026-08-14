@@ -1,0 +1,141 @@
+module Nativeˉexecutionˉcontextˉv9ˉselfˉtest profile portable;
+
+import Runtimeˉnativeˉexecutionˉcontextˉv9 as Context;
+
+enum Contextˉtestˉmarker {
+    Valid = 0;
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Appendˉu64(Input: bytes, Value: u64) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu64ˉlittle(Value));
+}
+
+fn Request() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1364743767u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 144u32);
+    Result = Appendˉu32(Result, 32u32);
+    Result = Appendˉu64(Result, 1000u64);
+    Result = Appendˉu64(Result, 2000u64);
+    Result = Appendˉu64(Result, 0u64);
+    Result = Appendˉu64(Result, 3000u64);
+    Result = Appendˉu32(Result, 2097152u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu64(Result, 4000u64);
+    Result = Appendˉu32(Result, 134217728u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu64(Result, 0u64);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu64(Result, 0u64);
+    Result = Appendˉu64(Result, 0u64);
+    Result = Appendˉu64(Result, 0u64);
+    Result = Appendˉu64(Result, 0u64);
+    Result = Appendˉu64(Result, 0u64);
+    return Appendˉu64(Result, 5000u64);
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+        )
+    );
+}
+
+fn Replaceˉu64(Input: bytes, Offset: u32, Value: u64) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu64ˉlittle(Value),
+            Bytesˉslice(Input, Offset + 8u32, Bytesˉlength(Input) - Offset - 8u32)
+        )
+    );
+}
+
+fn Bytesˉareˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Rejected(Input: bytes, Status: u32, Failureˉoffset: u32) -> bool {
+    let Result: bytes = Context.Nativeˉexecutionˉcontextˉv9ˉbuild(Input);
+    return Bytesˉlength(Result) == 32u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 0u32) == 1381520983u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 4u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 8u32) == 32u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 12u32) == Status &&
+        Bytesˉreadˉu32ˉlittle(Result, 16u32) == Failureˉoffset &&
+        Bytesˉreadˉu32ˉlittle(Result, 20u32) == 0u32 &&
+        Bytesˉreadˉu64ˉlittle(Result, 24u32) == 0u64;
+}
+
+fn Envelopeˉtests(Input: bytes) -> i32 {
+    if !Rejected(Bytesˉslice(Input, 0u32, 143u32), 1u32, 143u32) { return 2; }
+    if !Rejected(Replaceˉu32(Input, 0u32, 0u32), 2u32, 0u32) { return 3; }
+    if !Rejected(Replaceˉu32(Input, 4u32, 1u32), 3u32, 4u32) { return 4; }
+    if !Rejected(Replaceˉu32(Input, 8u32, 143u32), 1u32, 8u32) { return 5; }
+    if !Rejected(Replaceˉu32(Input, 12u32, 64u32), 4u32, 12u32) { return 6; }
+    if !Rejected(Replaceˉu32(Input, 76u32, 1u32), 4u32, 76u32) { return 7; }
+    return 0;
+}
+
+fn Resourceˉtests(Input: bytes) -> i32 {
+    if !Rejected(Replaceˉu64(Input, 16u32, 0u64), 5u32, 16u32) { return 8; }
+    if !Rejected(Replaceˉu64(Input, 32u32, 1u64), 6u32, 32u32) { return 9; }
+    if !Rejected(Replaceˉu32(Input, 48u32, 1u32), 7u32, 40u32) { return 10; }
+    if !Rejected(Replaceˉu32(Input, 64u32, 1u32), 8u32, 56u32) { return 11; }
+    if !Rejected(Replaceˉu64(Input, 80u32, 1u64), 9u32, 80u32) { return 12; }
+    if !Rejected(Replaceˉu64(Input, 96u32, 1u64), 10u32, 96u32) { return 13; }
+    return 0;
+}
+
+fn Successorˉtests(Input: bytes) -> i32 {
+    if !Rejected(Replaceˉu64(Input, 120u32, 1u64), 11u32, 120u32) { return 14; }
+    if !Rejected(Replaceˉu64(Input, 128u32, 1u64), 11u32, 128u32) { return 15; }
+    if !Rejected(Replaceˉu64(Input, 136u32, 0u64), 12u32, 136u32) { return 16; }
+    if !Rejected(Replaceˉu32(Input, 12u32, 0u32), 12u32, 136u32) { return 17; }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Marker: Contextˉtestˉmarker = Contextˉtestˉmarker.Valid;
+    if Marker != Contextˉtestˉmarker.Valid { return 19; }
+    let Input: bytes = Request();
+    let Result: bytes = Context.Nativeˉexecutionˉcontextˉv9ˉbuild(Input);
+    if Bytesˉlength(Input) != 144u32 || Bytesˉlength(Result) != 168u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 0u32) != 1381520983u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 4u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 20u32) != 136u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 32u32) != 9u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 36u32) != 136u32 ||
+        Bytesˉreadˉu64ˉlittle(Result, 160u32) != 5000u64 {
+        return 1;
+    }
+    if !Bytesˉareˉequal(
+        Result,
+        Context.Nativeˉexecutionˉcontextˉv9ˉbuild(Input)
+    ) { return 18; }
+    let Envelope: i32 = Envelopeˉtests(Input);
+    if Envelope != 0 { return Envelope; }
+    let Resources: i32 = Resourceˉtests(Input);
+    if Resources != 0 { return Resources; }
+    return Successorˉtests(Input);
+}

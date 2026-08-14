@@ -71,8 +71,10 @@ does not execute that sequence as an ABI-22 capability call.
   another capability-specific service-table slot.
 - Networking and other stateful providers can reuse the ordinal/state boundary;
   additional argument shapes still require explicit contracts and verification.
-- Context 9 construction, ABI-23 object identity, fragment-verifier integration,
-  random-access provider leaves, and real-file recovery remain open.
+- [Decision 0539](0539-Bounded-Execution-Context-9-Construction.md) now owns
+  exact candidate context construction. ABI-23 object identity,
+  fragment-verifier/host integration, random-access provider leaves, and
+  real-file recovery remain open.
 
 ## Reconsideration triggers
 

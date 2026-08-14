@@ -186,7 +186,7 @@ storage resource. A recoverable database writer is not ready.
 | Durable superblock and recovery selection | Implemented candidate | [`WVDS 1`](../../Specifications/Windvale-Database-Durable-Superblock.md) defines two checksummed 256-byte slots, checked committed length, generation selection, conflict rejection, and unpublished-tail reporting. It is the publication target and performs no I/O. |
 | Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
 | Portable storage publication and reopen policy | Implemented candidate | The [storage recovery contract](../../Specifications/Windvale-Database-Storage-Recovery.md) maps publication to bounded 64 KiB actions and maps fresh superblock evidence plus an unpublished tail to exact resize and content-and-length flush actions. Uncertain mutations require reopen and are never silently replayed. |
-| Capability-bearing mutation and crash recovery | Binding and call emission implemented; I/O pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds exact admitted capability ordinals to opaque rights-limited target/state pairs, and the [provider-call candidate](../../Specifications/Windvale-Native-Provider-Call.md) emits and independently admits the exact five-cell x64 call. Context-9/ABI-23 main-lowerer integration, Windows/Linux random-access leaves, writer fence, I/O executor, crash injection, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
+| Capability-bearing mutation and crash recovery | Binding, call emission, and context construction implemented; I/O pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds exact admitted capability ordinals to opaque rights-limited target/state pairs, the [provider-call candidate](../../Specifications/Windvale-Native-Provider-Call.md) emits and independently admits the exact five-cell x64 call, and [`WVXQ/WVXR 2`](../../Specifications/Windvale-Native-Execution-Context-9-Construction.md) constructs its append-only context. ABI-23 main-lowerer/host integration, Windows/Linux random-access leaves, writer fence, I/O executor, crash injection, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
@@ -484,12 +484,13 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decisions 0534 through 0538 now supply the dual superblock, immutable page
+Decisions 0534 through 0539 now supply the dual superblock, immutable page
 envelope, compact commit record, portable publication actions, exact reopen/tail-
 repair policy, bounded native capability-provider table, and exact five-cell x64
-provider-call emission with separate structural admission. The next database
-decision should publish the append-only context-9/ABI-23 integration and
-implement Windows and Linux providers for one pre-opened
+provider-call emission with separate structural admission, and exact append-only
+context-9 construction. The next database decision should publish ABI-23 through
+the main lowerer, fragment verifier, and host executor, then implement Windows
+and Linux providers for one pre-opened
 `storage.random_access_v1` object. That slice must establish a writer fence and
 inject process or power failure at every write, resize, and flush boundary.
 Recovery must prove page-before-superblock ordering and exact tail repair with

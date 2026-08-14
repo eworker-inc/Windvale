@@ -26,9 +26,11 @@ version-8 allocator reservation from Decision 0151:
 | 120 | 8 | allocator-leaf pointer | Retains the version-8 reservation; zero until that provider is integrated |
 | 128 | 8 | capability-provider table pointer | Nonzero when any call uses `WVPT 1`; otherwise zero |
 
-The candidate size is 136 bytes. A later context constructor must validate the
-pointer-presence relationship, table lifetime, and exact WVB identity agreement
-before this becomes executable ABI. No ABI-22 consumer may read offset 128.
+The candidate size is 136 bytes. The separate [`WVXQ/WVXR 2`
+constructor](Windvale-Native-Execution-Context-9-Construction.md) now validates
+the pointer-presence relationship and exact initial bytes. Host table-lifetime
+and WVB-identity agreement remain required before this becomes executable ABI.
+No ABI-22 consumer may read offset 128.
 
 ## Exact x86-64 emission
 
@@ -102,6 +104,6 @@ Linux package is constructed from the same fragment. The test treats emitted
 provider-call bytes as data under ABI 22; it does not claim that ABI 22 executes
 the successor call.
 
-Publication still requires main-lowerer integration, a version-9 context
-constructor, fragment-verifier admission, Windows and Linux provider leaves,
-and independent execution on both hosts.
+Publication still requires main-lowerer integration, fragment-verifier and host
+admission, Windows and Linux provider leaves, and independent execution on both
+hosts.

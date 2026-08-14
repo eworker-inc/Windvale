@@ -60,6 +60,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Storage publication execution and reopen/tail-repair planning](Windvale-Database-Storage-Recovery.md)
 - [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)
 - [Native capability-provider call](Windvale-Native-Provider-Call.md)
+- [Native execution-context version 9 construction](Windvale-Native-Execution-Context-9-Construction.md)
 
 ## Assembly, objects, and linking
 

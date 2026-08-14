@@ -1,0 +1,4 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Execution-Context-9-Bridge.wv"
+source "Runtime/Windvale/Native-Execution-Context-9-Core.wv"
+emit wvb

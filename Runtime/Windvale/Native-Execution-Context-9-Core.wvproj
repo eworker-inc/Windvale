@@ -1,0 +1,3 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Execution-Context-9-Core.wv"
+emit wvb

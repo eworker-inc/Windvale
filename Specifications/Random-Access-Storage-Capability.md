@@ -179,11 +179,13 @@ The native [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md) constructor
 now binds the exact capability identity and signature to opaque rights-limited
 target/state pairs without changing ABI 22. The separate [native provider-call
 candidate](Windvale-Native-Provider-Call.md) now emits and independently admits
-the exact five-cell x64 call, but the ABI-22 main lowerer does not invoke it.
+the exact five-cell x64 call. The [context-9 constructor
+candidate](Windvale-Native-Execution-Context-9-Construction.md) owns its provider
+pointer, but the ABI-22 main lowerer and host executor do not invoke it.
 
 This implemented candidate does not independently execute Linux provider I/O,
 validate power-loss recovery, provide a Windvale OS or WebAssembly provider, or
 supply a page cache, WAL, transactions, concurrent readers, mutation identities,
 or provider restart. Durable page, commit, publication, and tail-repair formats
-now exist separately; the next slice must publish context 9/ABI 23 and connect
-them to real Windows/Linux provider observations.
+now exist separately; the next slice must publish ABI 23 through the main
+lowerer/host boundary and connect it to real Windows/Linux provider observations.

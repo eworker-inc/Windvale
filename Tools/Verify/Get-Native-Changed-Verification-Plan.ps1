@@ -477,6 +477,7 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Tests/Fixtures/Database/Native-Capability-Provider-Table-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-X64-Provider-Call-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Execution-Context-9-Self-Test.wv' -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Database-Storage-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj' -or
@@ -484,13 +485,15 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Native-Hosted-Snapshot-Page.wvproj' -or
         $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Specifications/Read-Only-Directory-Capability.md',
             'Specifications/Random-Access-Storage-Capability.md',
             'Specifications/Windvale-Native-Capability-Provider-Table.md',
-            'Specifications/Windvale-Native-Provider-Call.md'
+            'Specifications/Windvale-Native-Provider-Call.md',
+            'Specifications/Windvale-Native-Execution-Context-9-Construction.md'
         )) {
         Add-Suite 'libraries'
         if ($Path.Contains('Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal)) {
@@ -538,7 +541,11 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-Capability-Provider-Table-Core.wvproj',
         'Runtime/Windvale/Native-Capability-Provider-Table-Bridge.wv',
         'Runtime/Windvale/Native-Capability-Provider-Table.wvproj',
-        'Compiler/Windvale/Native-X64-Provider-Call.wv'
+        'Compiler/Windvale/Native-X64-Provider-Call.wv',
+        'Runtime/Windvale/Native-Execution-Context-9-Core.wv',
+        'Runtime/Windvale/Native-Execution-Context-9-Core.wvproj',
+        'Runtime/Windvale/Native-Execution-Context-9-Bridge.wv',
+        'Runtime/Windvale/Native-Execution-Context-9.wvproj'
     )) {
         Add-Suite 'database-storage'
     } elseif ($Path -in @(
@@ -1432,7 +1439,8 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
         'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj',
-        'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj'
+        'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj'
     )) {
         Add-Suite 'database-storage'
     } elseif ($Path -in @(

@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Native-Execution-Context-9-Self-Test.wv"
+source "Runtime/Windvale/Native-Execution-Context-9-Core.wv"
+emit wvb

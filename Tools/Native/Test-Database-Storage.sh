@@ -95,5 +95,7 @@ verify_target ProviderTable \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
 verify_target ProviderCall \
     "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
+verify_target Context9 \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
 
-echo 'native database storage status=Passed cases=5 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=6 local-results=0 cross-host-images=Verified'
