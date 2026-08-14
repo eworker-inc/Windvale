@@ -75,7 +75,7 @@ Omitting `--filter` selects all 52 suites and 3,281 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 52, Passed: 52, Failed: 0, Cases: 3281
+Suites: 52, Passed: 52, Failed: 0, Cases: 3282
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved

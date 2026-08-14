@@ -67,7 +67,7 @@ for %%R in ("%TemporaryDirectory%") do set "ResolvedTemporaryDirectory=%%~fR"
 echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-storage-" >nul || exit /b 1
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
 if not "%Result%"=="0" exit /b %Result%
-echo native database storage status=Passed cases=7 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=8 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_storage_lowering
@@ -82,6 +82,13 @@ set "FirstWvo=%TemporaryDirectory%\StorageLowering-First.wvo"
 set "SecondWvo=%TemporaryDirectory%\StorageLowering-Second.wvo"
 set "FirstReport=%TemporaryDirectory%\StorageLowering-First.txt"
 set "SecondReport=%TemporaryDirectory%\StorageLowering-Second.txt"
+set "FirstBridge=%TemporaryDirectory%\StorageLowering-Bridge-First.wvo"
+set "SecondBridge=%TemporaryDirectory%\StorageLowering-Bridge-Second.wvo"
+set "Image=%TemporaryDirectory%\StorageLowering.bin"
+set "ImagePrefix=%TemporaryDirectory%\StorageLowering-Image"
+set "Map=%TemporaryDirectory%\StorageLowering.map"
+set "WindowsApplication=%TemporaryDirectory%\StorageLowering.exe"
+set "LinuxApplication=%TemporaryDirectory%\StorageLowering.elf"
 
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
 if errorlevel 1 exit /b 1
@@ -101,6 +108,42 @@ if errorlevel 1 exit /b 1
 fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 exit /b 1
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Describe-Probe.wva" ^
+    "%FirstBridge%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Describe-Probe.wva" ^
+    "%SecondBridge%" >nul
+if errorlevel 1 exit /b 1
+fc /b "%FirstBridge%" "%SecondBridge%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstBridge%" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_describe_probe_entry "%Image%" "%FirstWvo%" "%FirstBridge%" >"%Map%"
+if errorlevel 1 exit /b 1
+set "EntryOffset="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_describe_probe_entry address=" "%Map%"') do set "EntryOffset=%%E"
+if not defined EntryOffset exit /b 1
+echo(%EntryOffset%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%Image%" "%ImagePrefix%.chunk-0" >nul
+if errorlevel 1 exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows >nul
+if errorlevel 1 exit /b 1
+"%WindowsApplication%" >nul
+if not "%ERRORLEVEL%"=="0" (
+    >&2 echo The ABI-23 storage describe execution did not return 0.
+    exit /b 1
+)
+
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
 if errorlevel 1 exit /b 1
 endlocal
 exit /b 0

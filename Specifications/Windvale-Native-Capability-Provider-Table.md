@@ -139,8 +139,10 @@ typed arguments again before host I/O and return one independently checked
 The binding table does not weaken the storage contract: no native path or handle
 is supplied by generated code, stale generations cannot mutate, partial writes
 report exact progress, and uncertainty after mutation becomes `Indeterminate`.
-The generated call emission now has an implemented structural candidate. Main
-lowerer/context integration, Windows and Linux provider leaves, open/lock
+The generated call emission, main-lowerer selection, and one describe-only
+execution probe are implemented candidates. The probe constructs the exact
+identity and target/state pair in execution-owned memory and performs no host
+I/O. Product capability admission, Windows and Linux file providers, open/lock
 lifecycle, flush implementation, and process/power-failure evidence remain the
 next implementation boundary.
 
@@ -156,5 +158,6 @@ The test covers a selected stateful provider beside an unselected fixed-service
 identity, exact output offsets and copied signatures, deterministic repeated
 construction, the maximum 32-entry mask, and malformed size, magic, version,
 count, mask, layout, reserved, name, order, signature-type, target, and state
-cases. Independent Linux execution and the later call ABI/provider leaves remain
-qualification requirements.
+cases. An eighth case executes the exact storage call against the bounded
+describe probe on Windows and constructs its Linux package. Independent Linux
+execution and real platform provider leaves remain qualification requirements.

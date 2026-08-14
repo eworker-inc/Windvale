@@ -309,6 +309,14 @@ does not claim a persistent mutation identity across provider restart. Add one
 only with a query/recovery contract that makes retries safer than storage-based
 recovery.
 
+Implemented-candidate [Decision 0541](../Decisions/0541-First-Abi-23-Storage-Describe-Execution.md)
+now executes `Describe` through the generated ABI-23 provider call. Its
+execution-owned provider reports a fixed 4 KiB object and performs no file I/O;
+it proves context/table/call/response composition without claiming a product
+binding. The ordinary hosted packager still lacks exact WVB-to-provider
+admission, and the complete typed storage library exposes a separate native
+lowering gap. Both remain required before real file-backed operations.
+
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
 content, write one checksummed alternate superblock/root record, then flush

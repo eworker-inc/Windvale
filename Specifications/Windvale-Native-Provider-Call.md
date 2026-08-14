@@ -3,12 +3,12 @@
 ## Status and scope
 
 The first x86-64 capability-provider call emission, its separately implemented
-structural verifier, and main-lowerer integration are implemented candidates.
-An actual `storage.random_access_v1` call selects native ABI 23 and the planned
-execution-context version 9 boundary; capability declaration alone preserves
-ABI 22 and exact existing output. ABI 23 is not yet an executable hosted product
-contract because Windows/Linux provider leaves and container binding remain
-pending.
+structural verifier, main-lowerer integration, and focused describe execution
+are implemented candidates. An actual `storage.random_access_v1` call selects
+native ABI 23 and execution-context version 9; capability declaration alone
+preserves ABI 22 and exact existing output. ABI 23 is not yet an executable
+hosted product contract because real Windows/Linux provider leaves, exact
+capability admission, and ordinary container binding remain pending.
 
 The call consumes one ordinal entry from the immutable [`WVPT 1` provider
 table](Windvale-Native-Capability-Provider-Table.md). Generated code never
@@ -114,6 +114,10 @@ to a structurally verified 2,758-byte WVO with SHA-256
 `5eea8f66666a474a096160fbb9cfae49f9af4627bfae61dafc5fc440242d8681`;
 one unchanged ABI-22 control object remains byte-for-byte identical.
 
-Executable publication still requires fragment/host admission, Windows and
-Linux provider leaves, context-9 and provider-table binding, writer fencing,
-and independent execution on both hosts.
+The focused execution probe now constructs an exact context-9 prefix and
+one-entry table, calls a no-I/O describe provider through the emitted sequence,
+and validates every fixed `WVSA 1` field in generated Windvale code. Its Windows
+package returns zero and its Linux package is constructed from the same native
+image. Executable product publication still requires fragment/host admission,
+real Windows and Linux provider leaves, writer fencing, and independent
+execution on both hosts.

@@ -1,6 +1,6 @@
 # Random-access storage capability
 
-- Status: Semantic and portable-library contract implemented; native provider-table binding implemented candidate; native provider execution and crash-recovery qualification pending
+- Status: Semantic and portable-library contract implemented; native describe execution implemented candidate; real provider I/O and crash-recovery qualification pending
 - Capability identity: `storage.random_access_v1`
 - Source library: `Libraries/Platform/Storage/Random-Access-Storage.wv`
 - Native binding contract: [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md)
@@ -176,16 +176,17 @@ reparse-point binding.
 ## Excluded claims and next contracts
 
 The native [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md) constructor
-now binds the exact capability identity and signature to opaque rights-limited
-target/state pairs without changing ABI 22. The separate [native provider-call
-candidate](Windvale-Native-Provider-Call.md) now emits and independently admits
-the exact five-cell x64 call. The [context-9 constructor
-candidate](Windvale-Native-Execution-Context-9-Construction.md) owns its provider
-pointer, but the ABI-22 main lowerer and host executor do not invoke it.
+binds the exact capability identity and signature to opaque rights-limited
+target/state pairs without changing ABI 22. The [native provider-call
+candidate](Windvale-Native-Provider-Call.md) emits and independently admits the
+exact five-cell x64 call, and an actual storage instruction now selects ABI 23.
+A focused host probe derives context 9, constructs one exact table, executes a
+describe-only provider, and validates its complete response without host I/O.
 
-This implemented candidate does not independently execute Linux provider I/O,
+This implemented candidate does not execute real Windows or Linux provider I/O,
 validate power-loss recovery, provide a Windvale OS or WebAssembly provider, or
 supply a page cache, WAL, transactions, concurrent readers, mutation identities,
 or provider restart. Durable page, commit, publication, and tail-repair formats
-now exist separately; the next slice must publish ABI 23 through the main
-lowerer/host boundary and connect it to real Windows/Linux provider observations.
+now exist separately; the next slice must replace the describe probe with one
+pre-opened rights-limited file instance and connect it to real Windows/Linux
+provider observations.

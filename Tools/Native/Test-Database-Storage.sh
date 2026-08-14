@@ -93,6 +93,13 @@ verify_storage_lowering() {
     local second_wvo="$temporary_directory/StorageLowering-Second.wvo"
     local first_report="$temporary_directory/StorageLowering-First.txt"
     local second_report="$temporary_directory/StorageLowering-Second.txt"
+    local first_bridge="$temporary_directory/StorageLowering-Bridge-First.wvo"
+    local second_bridge="$temporary_directory/StorageLowering-Bridge-Second.wvo"
+    local image="$temporary_directory/StorageLowering.bin"
+    local image_prefix="$temporary_directory/StorageLowering-Image"
+    local map="$temporary_directory/StorageLowering.map"
+    local linux_application="$temporary_directory/StorageLowering.elf"
+    local windows_application="$temporary_directory/StorageLowering.exe"
 
     "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
     "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
@@ -104,6 +111,40 @@ verify_storage_lowering() {
     cmp --silent -- "$first_report" "$second_report" || return 1
     cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+
+    "$script_directory/Assemble-Wva.sh" \
+        "$repository_root/Runtime/Native/X64-Random-Access-Storage-Describe-Probe.wva" \
+        "$first_bridge" >/dev/null || return $?
+    "$script_directory/Assemble-Wva.sh" \
+        "$repository_root/Runtime/Native/X64-Random-Access-Storage-Describe-Probe.wva" \
+        "$second_bridge" >/dev/null || return $?
+    cmp --silent -- "$first_bridge" "$second_bridge" || return 1
+    "$script_directory/Verify-Wvo.sh" "$first_bridge" >/dev/null || return $?
+
+    "$script_directory/Link-Wvo.sh" 0 Storage_describe_probe_entry \
+        "$image" "$first_wvo" "$first_bridge" >"$map" || return $?
+    local entry_offset
+    entry_offset=$(sed -n \
+        's/^entry name=Storage_describe_probe_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$map")
+    case "$entry_offset" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$image" "$image_prefix.chunk-0" || return $?
+
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$image_prefix" 1 "$entry_offset" \
+        "$linux_application" linux >/dev/null || return $?
+    "$linux_application" >/dev/null
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The ABI-23 storage describe execution returned $application_result, expected 0." >&2
+        return 1
+    fi
+
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$image_prefix" 1 "$entry_offset" \
+        "$windows_application" windows >/dev/null || return $?
 }
 
 verify_target Nested \
@@ -121,4 +162,4 @@ verify_target Context9 \
 verify_storage_lowering \
     "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
 
-echo 'native database storage status=Passed cases=7 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=8 local-results=0 cross-host-images=Verified'

@@ -4,6 +4,10 @@ capability storage.random_access_v1;
 
 data Emptyˉpayload: bytes = [];
 
+enum Storageˉprobeˉstatus {
+    Valid = 0;
+}
+
 export fn Main() -> i32 {
     let Response: bytes = storage.random_access_v1(
         0u32,
@@ -12,6 +16,18 @@ export fn Main() -> i32 {
         0u32,
         Emptyˉpayload
     );
-    if Bytesˉlength(Response) == 0u32 { return 0; }
-    return 1;
+    if Bytesˉlength(Response) != 48u32 { return 1; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1095980631u32 { return 2; }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return 3; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != 0u32 { return 4; }
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return 5; }
+    if Bytesˉreadˉu32ˉlittle(Response, 16u32) != 1u32 { return 6; }
+    if Bytesˉreadˉu32ˉlittle(Response, 20u32) != 0u32 { return 7; }
+    if Bytesˉreadˉu32ˉlittle(Response, 24u32) != 4096u32 { return 8; }
+    if Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 { return 9; }
+    if Bytesˉreadˉu32ˉlittle(Response, 32u32) != 0u32 { return 10; }
+    if Bytesˉreadˉu32ˉlittle(Response, 36u32) != 0u32 { return 11; }
+    if Bytesˉreadˉu32ˉlittle(Response, 40u32) != 0u32 { return 12; }
+    if Bytesˉreadˉu32ˉlittle(Response, 44u32) != 0u32 { return 13; }
+    return 0;
 }

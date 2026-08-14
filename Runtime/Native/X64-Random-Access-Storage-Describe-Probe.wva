@@ -1,0 +1,179 @@
+windvale-assembly 1
+
+# Platform-neutral x64 ABI-23 execution probe. The bridge derives one exact
+# context-9 instance from the admitted context-7 host input, constructs an
+# execution-owned one-entry WVPT 1 table, and invokes the linked Windvale Main.
+# The local provider owns only a fixed 4 KiB describe result; it performs no
+# host I/O and grants no path, file, or ambient storage authority.
+symbol local function Storage_describe_probe_provider in .text
+symbol export function Storage_describe_probe_entry in .text
+symbol import function Main
+
+section code .text align 16
+define Storage_describe_probe_entry
+# Keep 32 bytes of Windows shadow space, a 136-byte context, a 96-byte provider
+# table, and one 48-byte response. A 328-byte frame aligns both host ABIs.
+subtract_i32 rsp 328
+move r8 rdx
+
+# Clear every execution-owned byte before copying the retained context fields.
+xor rax rax
+xor ecx ecx
+label Storage_probe_clear
+compare_i32 ecx 328
+branch above_equal Storage_probe_copy_context
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+jump_label Storage_probe_clear
+
+label Storage_probe_copy_context
+xor ecx ecx
+label Storage_probe_copy_context_next
+compare_i32 ecx 112
+branch above_equal Storage_probe_context_ready
+load_memory_u64 rax r8 rcx 1 0
+store_memory_u64 rsp rcx 1 32 rax
+add_i32 ecx 8
+jump_label Storage_probe_copy_context_next
+
+label Storage_probe_context_ready
+# Context 9 retains bytes 0..111, updates version/size, keeps the allocator
+# reservation zero, and binds the provider table at context offset 128.
+move_u32 eax 9
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 136
+store_memory_u32 rsp none 1 36 eax
+move rax rsp
+add_i32 rax 168
+store_memory_u64 rsp none 1 160 rax
+
+# WVPT 1 header at stack offset 168: one selected 24-byte entry and the exact
+# 38-byte storage.random_access_v1 identity stream.
+move_u32 eax 1414551127
+store_memory_u32 rsp none 1 168 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 172 eax
+move_u32 eax 94
+store_memory_u32 rsp none 1 176 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 180 eax
+store_memory_u32 rsp none 1 184 eax
+move_u32 eax 24
+store_memory_u32 rsp none 1 188 eax
+move_u32 eax 38
+store_memory_u32 rsp none 1 192 eax
+
+# Entry zero identifies its trailing bytes and owns a nonzero target/state pair.
+move_u32 eax 56
+store_memory_u32 rsp none 1 200 eax
+move_u32 eax 38
+store_memory_u32 rsp none 1 204 eax
+load_address rax Storage_describe_probe_provider
+store_memory_u64 rsp none 1 208 rax
+move rax rsp
+add_i32 rax 264
+store_memory_u64 rsp none 1 216 rax
+
+# u32 name length, 24 name bytes, u32 parameter count, five parameter types,
+# and the bytes return type. The final u16 is types bytes, bytes -> bytes.
+move_u32 eax 24
+store_memory_u32 rsp none 1 224 eax
+move_u32 eax 1919906931
+store_memory_u32 rsp none 1 228 eax
+move_u32 eax 778397537
+store_memory_u32 rsp none 1 232 eax
+move_u32 eax 1684955506
+store_memory_u32 rsp none 1 236 eax
+move_u32 eax 1633643887
+store_memory_u32 rsp none 1 240 eax
+move_u32 eax 1936024419
+store_memory_u32 rsp none 1 244 eax
+move_u32 eax 829841267
+store_memory_u32 rsp none 1 248 eax
+move_u32 eax 5
+store_memory_u32 rsp none 1 252 eax
+move_u32 eax 84544005
+store_memory_u32 rsp none 1 256 eax
+move_u32 eax 1542
+store_memory_u16 rsp none 1 260 ax
+
+# Invoke the linked parameterless Windvale entry with the derived context.
+xor rcx rcx
+move rdx rsp
+add_i32 rdx 32
+move r8 rdx
+xor r9 r9
+call Main
+add_i32 rsp 328
+return
+end define
+
+define Storage_describe_probe_provider
+# The generated provider-call boundary supplies one nonzero state pointer, five
+# complete argument cells, and one caller-owned result descriptor.
+test r8 r8
+branch equal Storage_probe_provider_failure
+test r9 r9
+branch equal Storage_probe_provider_failure
+test rcx rcx
+branch equal Storage_probe_provider_failure
+compare_i32 edx 5
+branch not_equal Storage_probe_provider_failure
+
+# Admit only describe(0, 0, 0, 0, empty). Scalar cell padding and the empty
+# payload descriptor metadata must also be zero.
+load_memory_u64 rax r9 none 1 0
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 8
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 16
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 24
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 32
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 40
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 48
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 56
+test rax rax
+branch not_equal Storage_probe_provider_failure
+load_memory_u64 rax r9 none 1 72
+test rax rax
+branch not_equal Storage_probe_provider_failure
+
+# Publish the complete 48-byte WVSA 1 describe response in provider-owned state.
+move_u32 eax 1095980631
+store_memory_u32 r8 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r8 none 1 4 eax
+xor rax rax
+store_memory_u64 r8 none 1 8 rax
+move_u32 eax 1
+store_memory_u64 r8 none 1 16 rax
+move_u32 eax 4096
+store_memory_u64 r8 none 1 24 rax
+xor rax rax
+store_memory_u64 r8 none 1 32 rax
+store_memory_u64 r8 none 1 40 rax
+
+store_memory_u64 rcx none 1 0 r8
+move_u32 eax 48
+store_memory_u32 rcx none 1 8 eax
+xor eax eax
+store_memory_u32 rcx none 1 12 eax
+return
+
+label Storage_probe_provider_failure
+move_u32 eax 1
+return
+end define
+end section
