@@ -1,7 +1,7 @@
 # Decision 0550: Measured native retirement sharding
 
 - Date: 2026-08-14
-- Status: Implemented candidate pending dual-host workflow evidence
+- Status: Implemented
 - Refines: [native retirement test suite](../../Specifications/Windvale-Native-Retirement-Test-Suite.md)
 - Preserves: cold owner execution, exact case inventory, fail-fast owner behavior,
   focused filters, and the sequential complete-plan oracle
@@ -60,6 +60,25 @@ The measured owner total is 2,427.3 seconds and the largest shard is 651.2
 seconds. Ignoring runner setup and queueing, the expected retirement critical
 path falls by about 73%, from 36–40 minutes to roughly 11 minutes. The first
 dual-host matrix run, not this projection, determines the accepted result.
+
+## Qualification evidence
+
+[GitHub run `31811812391`](https://github.com/eworker-inc/Windvale/actions/runs/31811812391)
+qualified commit `b3b03472` on both hosts. Every matrix entry passed, each host
+reported 52 suites and 3,287 cases, both bootstrap and both WebAssembly jobs
+passed, and the aggregate Verification gate passed.
+
+| Host | Shard execution seconds, 1–4 | Critical execution | Previous sequential execution | Reduction |
+| --- | --- | ---: | ---: | ---: |
+| Windows | 832.8, 679.3, 682.9, 688.2 | 832.8 | 2,374 | 64.9% |
+| Linux | 566, 589, 516, 410 | 589 | 2,186 | 73.1% |
+
+Including checkout, host preparation, post-job work, initial classification,
+and the final aggregate gate, the complete workflow took 910 seconds from
+creation to completion. The preceding unsharded run took 2,415 seconds, so the
+observed end-to-end reduction is 62.3%. Windows database storage remains the
+largest indivisible owner and therefore the next critical-path optimization
+target; no owner was skipped or served from a qualification cache.
 
 ## Consequences
 
