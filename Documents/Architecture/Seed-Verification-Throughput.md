@@ -162,18 +162,24 @@ admits all six WVB modules in 13,900 ms on the same Windows host. The complete
 wall-clock reduction for ordinary front-door feedback without deleting the
 reconstruction evidence.
 
-1. Separate artifact construction from execution inside the WebAssembly owner so
-   an engine-only change does not regenerate unchanged WVB and Wasm products.
-2. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
+The WebAssembly owner is now split as well. The checked-in playground package
+binds its direct compiler and scalar interpreter WVB/Wasm identities plus the
+referenced native compiler, backend, and segmented-backend packages. Its
+package-and-core engine checkpoint passes in 29,674 ms on Windows without
+regenerating a product. Compared with the last recorded 1,619,500 ms complete
+construction-and-engine command, that is a 98.17% development-path reduction;
+the complete cold owner remains unchanged for explicit qualification.
+
+1. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
    verifier, linker, and hosted-application products only when timing identifies
    them as a development bottleneck.
-3. Replace ad hoc path lists with declarative per-owner dependency manifests when
+2. Replace ad hoc path lists with declarative per-owner dependency manifests when
    that representation can be verified against the current planner without
    losing fail-closed coverage.
-4. Schedule independent development owners concurrently only with explicit CPU
+3. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.
-5. Treat compiler incrementality as a separate optimization: cache parsed
+4. Treat compiler incrementality as a separate optimization: cache parsed
    modules, symbols, WIR, and native objects by complete dependency identity.
 
 The working targets are a repeated affected-owner local run under two minutes

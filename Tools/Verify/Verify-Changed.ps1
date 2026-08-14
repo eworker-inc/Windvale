@@ -14,6 +14,7 @@ $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $PlanVerifier = Join-Path $PSScriptRoot 'Verify-Verification-Plan.ps1'
+$WebAssemblyEngineVerifier = Join-Path $PSScriptRoot 'Verify-WebAssembly-Engine.ps1'
 $WebAssemblyVerifier = Join-Path $PSScriptRoot 'Verify-WebAssembly.ps1'
 $GitHubQualificationVerifier = Join-Path $PSScriptRoot 'Verify-GitHub-Native-Qualification.ps1'
 $WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
@@ -62,6 +63,7 @@ $NativePlan = if ($Plan.Scope -in @('development', 'qualification')) {
         Suites = @()
         Gaps = @()
         RunPlanVerification = $false
+        RunWebAssemblyEngineVerification = $false
         RunWebAssemblyVerification = $false
         RunGitHubQualificationVerification = $false
         ChangedCount = $Paths.Count
@@ -163,6 +165,22 @@ if ($Plan.Scope -eq 'website') {
             $Stopwatch.Stop()
             $Timings.Add([pscustomobject]@{
                 name = $Suite
+                elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
+            })
+        }
+    }
+
+    if ($NativePlan.RunWebAssemblyEngineVerification) {
+        $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
+        try {
+            & $WebAssemblyEngineVerifier
+        } catch {
+            $Failures.Add('webassembly-engine')
+            if (!$NoFailFast) { throw }
+        } finally {
+            $Stopwatch.Stop()
+            $Timings.Add([pscustomobject]@{
+                name = 'webassembly-engine'
                 elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
             })
         }

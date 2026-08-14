@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added a 29,674 ms pinned WebAssembly engine checkpoint that reuses the checked-in browser package instead of repeating the last recorded 1,619,500 ms WVB/Wasm construction path. Complete cold reconstruction and the broad engine matrix remain the explicit qualification owner.
 - Split the 733,980 ms Seed native front-door owner into a 13,900 ms pinned identity/admission smoke and a separately named complete reconstruction owner. Ordinary feedback still checks all 18 artifact identities and admits all six WVB modules, while explicit qualification retains the 105-artifact, 185-assertion reconstruction.
 - Archived the frozen managed Stage 0 implementation outside `main`, retained its exact qualified release and checksums through a small in-tree recovery pointer, and added a fail-closed guard against tracked managed source or direct managed operational entry points returning.
 - Documented separate tag families for immutable recovery archives, qualified native-only baselines, and `v0.y.z` product releases; `v0.1.0` remains reserved for the first inspectable product preview rather than the .NET-removal checkpoint.

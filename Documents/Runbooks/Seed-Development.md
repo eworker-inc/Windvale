@@ -154,7 +154,9 @@ Use the focused owner selected by `Verify-Changed.ps1`:
 
 - OS image, boot, firmware, or kernel-seam changes use the mapped OS suite and
   the relevant live boot gate when that claim is made;
-- WebAssembly generator, ABI, engine, or fixture changes use
+- pinned browser-package or development engine changes use
+  `Tools/Verify/Verify-WebAssembly-Engine.ps1`, while generator, ABI, broad
+  fixture, compiler/backend package, or qualification changes use the complete
   `Tools/Verify/Verify-WebAssembly.ps1`; and
 - static site, playground, function, or browser packaging changes use
   `Tools/Verify/Verify-Website.ps1`.

@@ -65,6 +65,11 @@ all 18 pinned front-door identities and admits all six WVB modules in 13,900 ms
 on the same Windows host. The full 185-assertion reconstruction remains a
 separately named explicit-qualification owner.
 
+The WebAssembly development engine checkpoint now consumes the pinned browser
+package directly and completes in 29,674 ms on the measured Windows host. The
+last recorded complete construction-and-engine owner took 1,619,500 ms and
+remains cold, cache-independent explicit qualification evidence.
+
 ### Completion gate
 
 1. A repeated affected-owner local run normally completes within two minutes

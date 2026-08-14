@@ -16,6 +16,7 @@ $Gaps = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $RunPlanVerification = $false
 $RunWebAssemblyVerification = $false
+$RunWebAssemblyEngineVerification = $false
 $RunGitHubQualificationVerification = $false
 $DatabaseStorageDevelopmentEligible = $true
 $DatabaseDevelopmentPaths = [System.Collections.Generic.HashSet[string]]::new(
@@ -148,6 +149,13 @@ function Require-Full-Database-Storage {
 
 function Add-WebAssemblyVerification {
     $script:RunWebAssemblyVerification = $true
+    $script:RunWebAssemblyEngineVerification = $false
+}
+
+function Add-WebAssemblyEngineVerification {
+    if (!$script:RunWebAssemblyVerification) {
+        $script:RunWebAssemblyEngineVerification = $true
+    }
 }
 
 function Add-GitHubQualificationVerification {
@@ -489,6 +497,16 @@ foreach ($Path in $Paths) {
         'Tools/Recovery/Verify-Managed-Bootstrap.sh'
     )) {
         $RunPlanVerification = $true
+    } elseif ($Path -in @(
+        'Tools/Verify/Verify-WebAssembly-Engine.ps1',
+        'Tools/Website/Verify-WebAssembly-Playground-Package.mjs',
+        'Tools/Website/Verify-WebAssembly-Compiler-Core.mjs',
+        'Tools/Windvale.Playground/wwwroot/js/windvale-compiler-core.js'
+    ) -or
+        $Path.StartsWith(
+            'Artifacts/WebAssembly-Playground/',
+            [StringComparison]::Ordinal)) {
+        Add-WebAssemblyEngineVerification
     } elseif ($Path -in @(
         'Tools/Verify/Verify-WebAssembly.ps1',
         'Tools/Verify/Verify-WebAssembly-Engine.mjs'
@@ -1702,6 +1720,7 @@ if (!$Quiet) {
     Write-Host "Native suites: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
     Write-Host "Plan verification: $($RunPlanVerification.ToString().ToLowerInvariant())"
+    Write-Host "WebAssembly engine verification: $($RunWebAssemblyEngineVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
     Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
     Write-Host "Database storage development checkpoint: $((
@@ -1713,6 +1732,7 @@ if ($PassThru) {
         Suites = $OrderedSuites
         Gaps = $OrderedGaps
         RunPlanVerification = $RunPlanVerification
+        RunWebAssemblyEngineVerification = $RunWebAssemblyEngineVerification
         RunWebAssemblyVerification = $RunWebAssemblyVerification
         RunGitHubQualificationVerification = $RunGitHubQualificationVerification
         UseDatabaseStorageDevelopment = (

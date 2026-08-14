@@ -58,16 +58,22 @@ the qualified native Project 1 front door before invoking the paired host audit.
 All three paths formerly classified with the `seed-native-console-aot` gap now
 select this lane; no gap with that name remains in the native planner.
 
-The complete WebAssembly generation-and-verification owner remains a distinct
-long-running command rather than a fixed retirement-coordinator suite.
-WebAssembly backend sources, tools, fixtures, project manifests, exact native
-packages, verifier scripts, and their specification select one explicit
-`RunWebAssemblyVerification` owner. The changed-file front door dispatches
-`Verify-WebAssembly.ps1` once after any selected fixed suites pass. The command
-selects the paired native `.cmd` or `.sh` source-build and compiler-bootstrap
-front doors for the current host, and never substitutes a managed or unfiltered
-fallback. No `webassembly-native-verification` gap remains in the native
-planner.
+WebAssembly has separate development-engine and complete-construction owners.
+The `RunWebAssemblyEngineVerification` owner validates the checked-in browser
+package and every referenced package identity, instantiates the pinned direct
+compiler and interpreter Wasm, and exercises portable compilation, verification,
+execution, capability denial/grant, and bounded-output behavior. It never
+regenerates WVB or Wasm. Changes to that owner or the pinned playground package
+select `Verify-WebAssembly-Engine.ps1`.
+
+WebAssembly backend sources, generation tools, broad fixtures, project
+manifests, exact native compiler/backend packages, the complete engine matrix,
+and their specification select `RunWebAssemblyVerification`. The changed-file
+front door dispatches `Verify-WebAssembly.ps1`, which reconstructs the complete
+product set through the paired native host front doors and then executes the
+broad engine and probe matrix. Complete construction subsumes the engine
+checkpoint, so the planner never runs both for one source state. No managed or
+unfiltered fallback is permitted.
 
 The main GitHub workflow and its focused static verifier select one explicit
 `RunGitHubQualificationVerification` owner. That owner requires the exact six
@@ -100,7 +106,8 @@ contain `Console`.
 ## Dispatch contract
 
 For lightweight and website changes, `Verify-Changed.ps1` retains the existing
-whitespace, editor, and website behavior. For qualification-scoped changes it:
+whitespace, editor, and website behavior. For development or qualification-scoped
+changes it:
 
 1. computes the native plan before mutation or test execution;
 2. refuses any nonempty gap set without invoking .NET;
@@ -108,7 +115,8 @@ whitespace, editor, and website behavior. For qualification-scoped changes it:
 4. runs the focused GitHub workflow verifier when selected;
 5. invokes each selected suite through `Test-Retirement-Suite.cmd --filter` on
    Windows or the paired `.sh` coordinator on non-Windows hosts;
-6. invokes the distinct long-running WebAssembly verifier once when selected;
+6. invokes either the pinned WebAssembly engine checkpoint or the complete
+   construction-and-engine owner when selected, never both;
 7. stops at the first failure unless `-NoFailFast` is explicit; and
 8. optionally writes `windvale-native-changed-verification-timing-1` JSON.
 

@@ -963,8 +963,25 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'WebAssembly engine checkpoint owner'
+        Paths = @(
+            'Tools/Verify/Verify-WebAssembly-Engine.ps1',
+            'Tools/Website/Verify-WebAssembly-Playground-Package.mjs',
+            'Tools/Website/Verify-WebAssembly-Compiler-Core.mjs',
+            'Tools/Windvale.Playground/wwwroot/js/windvale-compiler-core.js',
+            'Artifacts/WebAssembly-Playground/Manifest.json',
+            'Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm',
+            'Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
+        VerifyWebAssemblyEngine = $true
+    },
+    @{
         Name = 'WebAssembly standalone native owner'
         Paths = @(
+            'Tools/Verify/Verify-WebAssembly-Engine.ps1',
             'Tools/Verify/Verify-WebAssembly.ps1',
             'Tools/Verify/Verify-WebAssembly-Engine.mjs',
             'Tools/WebAssembly/Build-Compiler-Wvb.mjs',
@@ -1401,6 +1418,12 @@ foreach ($Case in $NativeCases) {
     } else {
         $false
     }
+    $ExpectedWebAssemblyEngineVerification = if (
+        $Case.ContainsKey('VerifyWebAssemblyEngine')) {
+        $Case.VerifyWebAssemblyEngine
+    } else {
+        $false
+    }
     $ExpectedGitHubVerification = if ($Case.ContainsKey('VerifyGitHub')) {
         $Case.VerifyGitHub
     } else {
@@ -1417,6 +1440,8 @@ foreach ($Case in $NativeCases) {
             [string[]]@($Plan.Gaps),
             [string[]]$Case.Gaps)) -or
         $Plan.RunPlanVerification -ne $Case.VerifyPlan -or
+        $Plan.RunWebAssemblyEngineVerification -ne
+            $ExpectedWebAssemblyEngineVerification -or
         $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification -or
         $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification -or
         $DatabaseDevelopmentDiffers
@@ -1424,10 +1449,12 @@ foreach ($Case in $NativeCases) {
         throw (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
             "gaps=[$($Case.Gaps -join ', ')], verify-plan=$($Case.VerifyPlan), " +
+            "verify-webassembly-engine=$ExpectedWebAssemblyEngineVerification, " +
             "verify-webassembly=$ExpectedWebAssemblyVerification, " +
             "verify-github=$ExpectedGitHubVerification; found " +
             "suites=[$($Plan.Suites -join ', ')], gaps=[$($Plan.Gaps -join ', ')], " +
             "verify-plan=$($Plan.RunPlanVerification), " +
+            "verify-webassembly-engine=$($Plan.RunWebAssemblyEngineVerification), " +
             "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
             "verify-github=$($Plan.RunGitHubQualificationVerification), " +
             "database-development=$($Plan.UseDatabaseStorageDevelopment)."
