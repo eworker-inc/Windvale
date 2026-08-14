@@ -67,6 +67,9 @@ if "%Development%"=="1" (
     call :verify_host_storage ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
     if errorlevel 1 goto :cleanup
+    call :verify_host_tree_reader ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
+    if errorlevel 1 goto :cleanup
     set "Result=0"
     goto :cleanup
 )
@@ -86,6 +89,9 @@ if errorlevel 1 goto :cleanup
 call :verify_target TreeNode ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target RootSplit ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target ProviderTable ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
 if errorlevel 1 goto :cleanup
@@ -101,6 +107,9 @@ if errorlevel 1 goto :cleanup
 call :verify_host_storage ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_tree_reader ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -114,10 +123,10 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development status=Passed cases=1 local-results=0 tools=%ToolCheckpoint%
+    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint%
     exit /b 0
 )
-echo native database storage status=Passed cases=11 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=13 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage
@@ -273,6 +282,149 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
     "%LinuxApplication%" linux >nul
 if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_tree_reader
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\HostTreeReader-First.wvb"
+set "SecondWvb=%TemporaryDirectory%\HostTreeReader-Second.wvb"
+set "FirstWvbResource=%FirstWvb:\=/%"
+set "SecondWvbResource=%SecondWvb:\=/%"
+set "FirstWvo=%TemporaryDirectory%\HostTreeReader-First.wvo"
+set "SecondWvo=%TemporaryDirectory%\HostTreeReader-Second.wvo"
+set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
+set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
+set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
+set "WindowsImage=%TemporaryDirectory%\HostTreeReader-Windows.bin"
+set "WindowsImagePrefix=%TemporaryDirectory%\HostTreeReader-Windows-Image"
+set "WindowsMap=%TemporaryDirectory%\HostTreeReader-Windows.map"
+set "WindowsApplication=%TemporaryDirectory%\HostTreeReader.exe"
+set "LinuxImage=%TemporaryDirectory%\HostTreeReader-Linux.bin"
+set "LinuxImagePrefix=%TemporaryDirectory%\HostTreeReader-Linux-Image"
+set "LinuxMap=%TemporaryDirectory%\HostTreeReader-Linux.map"
+set "LinuxApplication=%TemporaryDirectory%\HostTreeReader.elf"
+set "InitialFile=%TemporaryDirectory%\HostStorage-Run\Windvale-Database-Storage.initial"
+set "RunDirectory=%TemporaryDirectory%\HostTreeReader-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvb%" "%SecondWvb%" >nul
+    if errorlevel 1 exit /b 1
+)
+"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvo%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+)
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+if not exist "%Common%" exit /b 1
+if not exist "%WindowsPlatform%" exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if errorlevel 1 exit /b 1
+set "WindowsEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
+if not defined WindowsEntry exit /b 1
+echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+    "%WindowsApplication%" windows >nul
+if errorlevel 1 exit /b 1
+
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%InitialFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-reader publication returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="20992" exit /b 1
+copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-reader stable reopen returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
+for %%S in (0 1 2 3 4) do (
+    call :verify_host_tree_reader_interruption ^
+        "%WindowsApplication%" "%InitialFile%" %%S
+    if errorlevel 1 exit /b 1
+)
+
+if "%Development%"=="1" (
+    endlocal
+    exit /b 0
+)
+if not exist "%LinuxPlatform%" exit /b 1
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
+    "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
+if errorlevel 1 exit /b 1
+set "LinuxEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
+if not defined LinuxEntry exit /b 1
+echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
+    "%LinuxApplication%" linux >nul
+if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_tree_reader_interruption
+setlocal EnableExtensions DisableDelayedExpansion
+set "Application=%~f1"
+set "Initial=%~f2"
+set "Step=%~3"
+set "ScenarioDirectory=%TemporaryDirectory%\HostTreeReader-Interruption-%Step%"
+set "ScenarioStorage=%ScenarioDirectory%\Windvale-Database-Storage.bin"
+mkdir "%ScenarioDirectory%" || exit /b 1
+copy /b "%Initial%" "%ScenarioStorage%" >nul || exit /b 1
+set /a MarkerLength=4609+Step
+fsutil file seteof "%ScenarioStorage%" %MarkerLength% >nul || exit /b 1
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+set /a ExpectedResult=100+Step
+if not "%ApplicationResult%"=="%ExpectedResult%" (
+    >&2 echo The native host tree-reader interruption %Step% returned %ApplicationResult%, expected %ExpectedResult%.
+    exit /b 1
+)
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-reader restart %Step% returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="20992" exit /b 1
 endlocal
 exit /b 0
 

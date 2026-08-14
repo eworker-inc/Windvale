@@ -43,7 +43,11 @@ library_projects=(
 for project in "${library_projects[@]}"; do
     "$script_directory/Build-Wvb.sh" \
         "$repository_root/Projects/Libraries/$project.wvproj" \
-        "$temporary_directory/$project.wvb" >/dev/null || exit $?
+        "$temporary_directory/$project.wvb" >/dev/null || {
+            status=$?
+            echo "Native library project failed: $project" >&2
+            exit "$status"
+        }
 done
 
 "$script_directory/Build-Wvb.sh" \

@@ -130,14 +130,14 @@ run_case() {
 run_case \
     'malformed' \
     "$invalid" \
-    '6dc739ce9e8c752efe41fbede32d6c373ea33e1c22159faf86772a4cc94ff323' || {
+    'cb4866cce34d859dabe8d8823f7ad391daed579cdcd61fd6ecbd4e5c324d78dc' || {
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     }
 run_case \
     'unsupported-function' \
     "$unsupported" \
-    'fc854d5370fe6da10243d8e28663f932baa4d7c30402488f5193d0a3dad77ded' || {
+    '0e5a4dc04f822ab0afe79fe48d5126ffbdc825a2abe47f7b7a0bfd67b12830e5' || {
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     }

@@ -70,8 +70,15 @@ The exact filter names and case counts are:
 | `os-process-object` | 2 |
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
+| `native-u64-lowering` | 1 |
+| `database-superblock` | 13 |
+| `database-durable-commit` | 12 |
+| `database-storage` | 13 |
+| `workspace-project2` | 8 |
+| `libraries` | 26 |
+| `packages` | 8 |
 
-Omitting `--filter` selects all 52 suites and 3,281 cases in manifest order. Its
+Omitting `--filter` selects all 52 suites and 3,282 cases in manifest order. Its
 terminal success line is:
 
 ```text
@@ -865,7 +872,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,281-case coordinator is a fixed native gate, not the complete normal
+The 3,282-case coordinator is a fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

@@ -1,0 +1,378 @@
+module Durableˉtreeˉreader profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+const DATABASE_TREE_READER_HEADER_BYTES: u64 = 512u64;
+const DATABASE_TREE_READER_MAXIMUM_DEPTH: u32 = 32u32;
+
+export enum Databaseˉdurableˉtreeˉlookupˉstatus {
+    Found = 0;
+    Missing = 1;
+    Invalidˉcurrent = 2;
+    Invalidˉkey = 3;
+    Unsupportedˉdepth = 4;
+    Pageˉfailure = 5;
+    Invalidˉdurableˉpage = 6;
+    Invalidˉnode = 7;
+    Invalidˉgraph = 8;
+    Changedˉsnapshot = 9;
+}
+
+export record Databaseˉdurableˉtreeˉlookupˉresult {
+    Status: Databaseˉdurableˉtreeˉlookupˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Storageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Pageˉvisits: u32;
+    Pageˉidentifier: u64;
+    Value: bytes;
+}
+
+fn Databaseˉdurableˉtreeˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉtreeˉfailure(
+    Status: Databaseˉdurableˉtreeˉlookupˉstatus,
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus,
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror,
+    Storageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Pageˉvisits: u32,
+    Pageˉidentifier: u64
+) -> Databaseˉdurableˉtreeˉlookupˉresult {
+    return Databaseˉdurableˉtreeˉlookupˉresult(
+        Status,
+        Readˉstatus,
+        Readˉerror,
+        Storageˉerror,
+        Pageˉerror,
+        Nodeˉerror,
+        Pageˉvisits,
+        Pageˉidentifier,
+        Databaseˉdurableˉtreeˉempty()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉoutcome(
+    Status: Databaseˉdurableˉtreeˉlookupˉstatus,
+    Pageˉvisits: u32,
+    Pageˉidentifier: u64,
+    Value: bytes
+) -> Databaseˉdurableˉtreeˉlookupˉresult {
+    return Databaseˉdurableˉtreeˉlookupˉresult(
+        Status,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Pageˉvisits,
+        Pageˉidentifier,
+        Value
+    );
+}
+
+export fn Databaseˉdurableˉtreeˉlookup(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Key: bytes
+) -> Databaseˉdurableˉtreeˉlookupˉresult {
+    if Current.Status !=
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid {
+        return Databaseˉdurableˉtreeˉfailure(
+            Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉcurrent,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            0u32,
+            Current.Rootˉpage
+        );
+    }
+    if Bytesˉlength(Key) == 0u32 || Bytesˉlength(Key) > 4096u32 {
+        return Databaseˉdurableˉtreeˉfailure(
+            Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉkey,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength,
+            0u32,
+            Current.Rootˉpage
+        );
+    }
+    if Current.Rootˉdepth == 0u32 ||
+        Current.Rootˉdepth > DATABASE_TREE_READER_MAXIMUM_DEPTH {
+        return Databaseˉdurableˉtreeˉfailure(
+            Databaseˉdurableˉtreeˉlookupˉstatus.Unsupportedˉdepth,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            0u32,
+            Current.Rootˉpage
+        );
+    }
+
+    var Pageˉidentifier: u64 = Current.Rootˉpage;
+    var Remainingˉdepth: u32 = Current.Rootˉdepth;
+    var Visits: u32 = 0u32;
+    var Hasˉlower: bool = false;
+    var Lower: bytes = Databaseˉdurableˉtreeˉempty();
+    var Hasˉupper: bool = false;
+    var Upper: bytes = Databaseˉdurableˉtreeˉempty();
+    var Providerˉgeneration: u64 = 0u64;
+    var Providerˉlength: u64 = 0u64;
+    while Remainingˉdepth > 0u32 {
+        if Pageˉidentifier >= Current.Pageˉcount {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉgraph,
+                Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+                Pageˉreader.Databaseˉpageˉerror.None,
+                Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        let Read: Pageˉreader.Databaseˉpageˉreadˉresult =
+            Pageˉreader.Databaseˉstorageˉreadˉpage(
+                DATABASE_TREE_READER_HEADER_BYTES,
+                Current.Pageˉsize,
+                Pageˉidentifier
+            );
+        Visits = Visits + 1u32;
+        if Read.Status != Pageˉreader.Databaseˉpageˉreadˉstatus.Valid {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Pageˉfailure,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        if Visits == 1u32 {
+            Providerˉgeneration = Read.Generation;
+            Providerˉlength = Read.Storageˉlength;
+            if Providerˉlength < Current.Committedˉlength {
+                return Databaseˉdurableˉtreeˉfailure(
+                    Databaseˉdurableˉtreeˉlookupˉstatus.Changedˉsnapshot,
+                    Read.Status,
+                    Read.Pageˉerror,
+                    Read.Storageˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    Visits,
+                    Pageˉidentifier
+                );
+            }
+        } else if Read.Generation != Providerˉgeneration ||
+            Read.Storageˉlength != Providerˉlength {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Changedˉsnapshot,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        let Durable: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Read.Value);
+        if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉdurableˉpage,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Durable.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        if Durable.Pageˉidentifier != Pageˉidentifier ||
+            Durable.Pageˉsize != Current.Pageˉsize ||
+            Durable.Generation > Current.Generation ||
+            Durable.Commitˉsequence > Current.Committedˉsequence ||
+            Visits == 1u32 &&
+                (Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+                Durable.Generation != Current.Generation ||
+                Durable.Commitˉsequence != Current.Committedˉsequence) ||
+            Visits > 1u32 && Remainingˉdepth == 1u32 &&
+                Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+            Visits > 1u32 && Remainingˉdepth > 1u32 &&
+                Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Branch {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉgraph,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        if Visits == 1u32 && Remainingˉdepth == 1u32 &&
+            Durable.Itemˉcount == 0u32 &&
+            Bytesˉlength(Durable.Payload) == 0u32 {
+            if Current.Generation == 1u64 &&
+                Current.Committedˉsequence == 0u64 &&
+                Current.Rootˉpage == 0u64 {
+                return Databaseˉdurableˉtreeˉoutcome(
+                    Databaseˉdurableˉtreeˉlookupˉstatus.Missing,
+                    Visits,
+                    Pageˉidentifier,
+                    Databaseˉdurableˉtreeˉempty()
+                );
+            }
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉnode,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Durable.Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Node.Entryˉcount != Durable.Itemˉcount {
+            var Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Node.Error;
+            if Node.Error == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Nodeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount;
+            }
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉnode,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Nodeˉerror,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        if Remainingˉdepth == 1u32 {
+            let Rangeˉerror: Tree.Databaseˉtreeˉnodeˉerror =
+                Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+                    Durable.Payload,
+                    Hasˉlower,
+                    Lower,
+                    Hasˉupper,
+                    Upper
+                );
+            if Rangeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉdurableˉtreeˉfailure(
+                    Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉgraph,
+                    Read.Status,
+                    Read.Pageˉerror,
+                    Read.Storageˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Rangeˉerror,
+                    Visits,
+                    Pageˉidentifier
+                );
+            }
+            let Lookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+                Tree.Databaseˉtreeˉleafˉlookup(Durable.Payload, Key);
+            if Lookup.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉdurableˉtreeˉfailure(
+                    Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉnode,
+                    Read.Status,
+                    Read.Pageˉerror,
+                    Read.Storageˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Lookup.Error,
+                    Visits,
+                    Pageˉidentifier
+                );
+            }
+            if Lookup.Found {
+                return Databaseˉdurableˉtreeˉoutcome(
+                    Databaseˉdurableˉtreeˉlookupˉstatus.Found,
+                    Visits,
+                    Pageˉidentifier,
+                    Lookup.Value
+                );
+            }
+            return Databaseˉdurableˉtreeˉoutcome(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Missing,
+                Visits,
+                Pageˉidentifier,
+                Databaseˉdurableˉtreeˉempty()
+            );
+        }
+        let Route: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+            Tree.Databaseˉtreeˉbranchˉroute(
+                Durable.Payload,
+                Key,
+                Hasˉlower,
+                Lower,
+                Hasˉupper,
+                Upper
+            );
+        if Route.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉgraph,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Route.Error,
+                Visits,
+                Pageˉidentifier
+            );
+        }
+        if Route.Child >= Pageˉidentifier ||
+            Route.Child >= Current.Pageˉcount {
+            return Databaseˉdurableˉtreeˉfailure(
+                Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉgraph,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild,
+                Visits,
+                Route.Child
+            );
+        }
+        Pageˉidentifier = Route.Child;
+        Hasˉlower = Route.Hasˉlower;
+        Lower = Route.Lower;
+        Hasˉupper = Route.Hasˉupper;
+        Upper = Route.Upper;
+        Remainingˉdepth = Remainingˉdepth - 1u32;
+    }
+    return Databaseˉdurableˉtreeˉfailure(
+        Databaseˉdurableˉtreeˉlookupˉstatus.Unsupportedˉdepth,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Visits,
+        Pageˉidentifier
+    );
+}

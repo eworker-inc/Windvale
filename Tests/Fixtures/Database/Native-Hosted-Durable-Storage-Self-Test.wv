@@ -2,6 +2,7 @@ module Nativeˉhostedˉdurableˉstorageˉselfˉtest profile hosted;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉstorageˉexecutor as Executor;
+import Durableˉtreeˉreader as Reader;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -134,7 +135,10 @@ fn Recoverˉtail(
     return 0;
 }
 
-fn Validateˉinitialˉroot(Current: Storage.Storageˉresult) -> i32 {
+fn Validateˉinitialˉroot(
+    Current: Storage.Storageˉresult,
+    Selection: Superblock.Databaseˉsuperblockˉselection
+) -> i32 {
     let Rootˉbytes: Storage.Storageˉresult = Storage.Storageˉreadˉat(
         Current.Generation,
         512u64,
@@ -156,10 +160,22 @@ fn Validateˉinitialˉroot(Current: Storage.Storageˉresult) -> i32 {
         Bytesˉlength(Root.Payload) != 0u32 {
         return 24;
     }
+    let Missing: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(
+            Selection,
+            Bytesˉfromˉu32ˉlittle(7u32)
+        );
+    if Missing.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Missing ||
+        Missing.Pageˉvisits != 1u32 {
+        return 24;
+    }
     return 0;
 }
 
-fn Validateˉcommittedˉpages(Current: Storage.Storageˉresult) -> i32 {
+fn Validateˉcommittedˉpages(
+    Current: Storage.Storageˉresult,
+    Selection: Superblock.Databaseˉsuperblockˉselection
+) -> i32 {
     let Rootˉbytes: Storage.Storageˉresult = Storage.Storageˉreadˉat(
         Current.Generation,
         4608u64,
@@ -194,6 +210,28 @@ fn Validateˉcommittedˉpages(Current: Storage.Storageˉresult) -> i32 {
         Lookup.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
         !Lookup.Found || Bytesˉlength(Lookup.Value) != 4u32 ||
         Bytesˉreadˉi32ˉlittle(Lookup.Value, 0u32) != 42 {
+        return 26;
+    }
+    let Readˉfound: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(
+            Selection,
+            Bytesˉfromˉu32ˉlittle(7u32)
+        );
+    if Readˉfound.Status !=
+            Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
+        Readˉfound.Pageˉvisits != 1u32 ||
+        Bytesˉlength(Readˉfound.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(Readˉfound.Value, 0u32) != 42 {
+        return 26;
+    }
+    let Readˉmissing: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(
+            Selection,
+            Bytesˉfromˉu32ˉlittle(8u32)
+        );
+    if Readˉmissing.Status !=
+            Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Missing ||
+        Readˉmissing.Pageˉvisits != 1u32 {
         return 26;
     }
     let Logˉbytes: Storage.Storageˉresult = Storage.Storageˉreadˉat(
@@ -295,9 +333,9 @@ fn Validateˉdatabase(Description: Storage.Storageˉresult) -> i32 {
         return 22;
     }
     if Selection.Generation == 1u64 {
-        return Validateˉinitialˉroot(Current);
+        return Validateˉinitialˉroot(Current, Selection);
     }
-    return Validateˉcommittedˉpages(Current);
+    return Validateˉcommittedˉpages(Current, Selection);
 }
 
 fn Validateˉproviderˉedges(Generation: u64, Storageˉlength: u64) -> i32 {

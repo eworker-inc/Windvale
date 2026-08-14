@@ -33,9 +33,9 @@ if errorlevel 1 goto :failed
 call :decode_fixture "Tests\Native\Wvo\Return-42.wvo.b64" "%Sentinel%" "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5" "destination sentinel"
 if errorlevel 1 goto :failed
 
-call :run_case "malformed" "%Invalid%" "6dc739ce9e8c752efe41fbede32d6c373ea33e1c22159faf86772a4cc94ff323"
+call :run_case "malformed" "%Invalid%" "cb4866cce34d859dabe8d8823f7ad391daed579cdcd61fd6ecbd4e5c324d78dc"
 if errorlevel 1 goto :failed
-call :run_case "unsupported-function" "%Unsupported%" "fc854d5370fe6da10243d8e28663f932baa4d7c30402488f5193d0a3dad77ded"
+call :run_case "unsupported-function" "%Unsupported%" "0e5a4dc04f822ab0afe79fe48d5126ffbdc825a2abe47f7b7a0bfd67b12830e5"
 if errorlevel 1 goto :failed
 
 call :cleanup

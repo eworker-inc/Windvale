@@ -313,22 +313,180 @@ fn Branchˉvalidation() -> i32 {
         Node.Entryˉcount != 1u32 || Node.Rightmostˉchild != 2u64 {
         return 1;
     }
+    let Encoded: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Key(5u8),
+            1u64,
+            2u64,
+            3968u32
+        );
+    if Encoded.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !Bytesˉequal(Encoded.Bytes, Bytes) {
+        return 2;
+    }
     let Reserved: Tree.Databaseˉtreeˉnodeˉresult =
         Tree.Databaseˉtreeˉnodeˉdecode(Withˉu32(Bytes, 36u32, 1u32));
     if Reserved.Error !=
         Tree.Databaseˉtreeˉnodeˉerror.Invalidˉentryˉreserved {
-        return 2;
+        return 3;
     }
     let Child: Tree.Databaseˉtreeˉnodeˉresult =
         Tree.Databaseˉtreeˉnodeˉdecode(Withˉu64(Bytes, 40u32, NO_PAGE));
     if Child.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild {
-        return 3;
+        return 4;
     }
     let Rightmost: Tree.Databaseˉtreeˉnodeˉresult =
         Tree.Databaseˉtreeˉnodeˉdecode(Withˉu64(Bytes, 24u32, NO_PAGE));
     if Rightmost.Error !=
         Tree.Databaseˉtreeˉnodeˉerror.Invalidˉrightmostˉchild {
+        return 5;
+    }
+    return 0;
+}
+
+fn Splitˉandˉroute() -> i32 {
+    let First: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Emptyˉbytes(),
+            Key(1u8),
+            Value(10),
+            60u32
+        );
+    let Third: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            First.Bytes,
+            Key(3u8),
+            Value(30),
+            60u32
+        );
+    let Full: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Third.Bytes,
+            Key(2u8),
+            Value(20),
+            60u32
+        );
+    if First.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Third.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Full.Error != Tree.Databaseˉtreeˉnodeˉerror.Full {
+        return 1;
+    }
+    let Split: Tree.Databaseˉtreeˉleafˉsplitˉresult =
+        Tree.Databaseˉtreeˉleafˉsplitˉupsert(
+            Third.Bytes,
+            Key(2u8),
+            Value(20),
+            60u32
+        );
+    if Split.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Split.Replaced || Split.Leftˉentryˉcount != 1u32 ||
+        Split.Rightˉentryˉcount != 2u32 ||
+        !Bytesˉequal(Split.Separator, Key(2u8)) ||
+        Bytesˉlength(Split.Left) > 60u32 ||
+        Bytesˉlength(Split.Right) > 60u32 {
+        return 2;
+    }
+    let Leftˉlookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Split.Left, Key(1u8));
+    let Rightˉlookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Split.Right, Key(3u8));
+    if !Leftˉlookup.Found ||
+        !Bytesˉequal(Leftˉlookup.Value, Value(10)) ||
+        !Rightˉlookup.Found ||
+        !Bytesˉequal(Rightˉlookup.Value, Value(30)) {
+        return 3;
+    }
+    let Branch: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Split.Separator,
+            10u64,
+            11u64,
+            60u32
+        );
+    let Leftˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Branch.Bytes,
+            Key(1u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Equalˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Branch.Bytes,
+            Key(2u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    if Leftˉroute.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Leftˉroute.Child != 10u64 || Leftˉroute.Hasˉlower ||
+        !Leftˉroute.Hasˉupper ||
+        !Bytesˉequal(Leftˉroute.Upper, Key(2u8)) ||
+        Equalˉroute.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Equalˉroute.Child != 11u64 || !Equalˉroute.Hasˉlower ||
+        Equalˉroute.Hasˉupper ||
+        !Bytesˉequal(Equalˉroute.Lower, Key(2u8)) {
         return 4;
+    }
+    if Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+            Split.Left,
+            false,
+            Emptyˉbytes(),
+            true,
+            Split.Separator
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+            Split.Right,
+            true,
+            Split.Separator,
+            false,
+            Emptyˉbytes()
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return 5;
+    }
+    let Invalidˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Branch.Bytes,
+            Key(1u8),
+            true,
+            Key(2u8),
+            false,
+            Emptyˉbytes()
+        );
+    if Invalidˉroute.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉrange ||
+        Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+            Split.Left,
+            true,
+            Key(2u8),
+            false,
+            Emptyˉbytes()
+        ) != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉrange {
+        return 6;
+    }
+    let Deterministic: Tree.Databaseˉtreeˉleafˉsplitˉresult =
+        Tree.Databaseˉtreeˉleafˉsplitˉupsert(
+            Third.Bytes,
+            Key(2u8),
+            Value(20),
+            60u32
+        );
+    if !Bytesˉequal(Split.Left, Deterministic.Left) ||
+        !Bytesˉequal(Split.Right, Deterministic.Right) ||
+        !Bytesˉequal(Split.Separator, Deterministic.Separator) {
+        return 7;
+    }
+    let Oversized: Tree.Databaseˉtreeˉleafˉsplitˉresult =
+        Tree.Databaseˉtreeˉleafˉsplitˉupsert(
+            First.Bytes,
+            Key(1u8),
+            Zeroes(53u32),
+            60u32
+        );
+    if Oversized.Error != Tree.Databaseˉtreeˉnodeˉerror.Full {
+        return 8;
     }
     return 0;
 }
@@ -603,9 +761,11 @@ export fn Main() -> i32 {
     if Entries != 0 { return 50 + Entries; }
     let Limitˉresult: i32 = Limits();
     if Limitˉresult != 0 { return 60 + Limitˉresult; }
+    let Splitˉresult: i32 = Splitˉandˉroute();
+    if Splitˉresult != 0 { return 70 + Splitˉresult; }
     let Composition: i32 = Firstˉcomposition();
-    if Composition != 0 { return 70 + Composition; }
+    if Composition != 0 { return 80 + Composition; }
     let Invalid: i32 = Invalidˉcomposition();
-    if Invalid != 0 { return 80 + Invalid; }
+    if Invalid != 0 { return 90 + Invalid; }
     return 0;
 }

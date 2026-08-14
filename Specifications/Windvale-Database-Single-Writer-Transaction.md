@@ -3,7 +3,8 @@
 ## Status
 
 - Version: single-writer transaction 1
-- Portable builder: `Libraries/Database/Single-Writer-Commit.wv`
+- Portable builders: `Libraries/Database/Single-Writer-Commit.wv` and
+  `Libraries/Database/Commit-Batch.wv`
 - Hosted executor: `Libraries/Platform/Database/Durable-Storage-Executor.wv`
 - Durable formats: `WVDS 1`, `WVPG 1`, and `WVCR 1`
 - Storage capability: `storage.random_access_v1`
@@ -21,9 +22,10 @@ storage object.
 
 The builder is portable and has no I/O authority. The executor is hosted and
 declares exactly `storage.random_access_v1`. Neither layer receives a native
-path or host handle. This slice is one transaction over one storage object,
-not a database server, SQL engine, general B+tree, page cache, or concurrent
-transaction manager.
+path or host handle. This slice is one transaction over one storage object. The
+original builder owns one root plus one log; the bounded batch owns up to 63
+data pages plus one log without changing publication order. Neither is a
+database server, SQL engine, page cache, or concurrent transaction manager.
 
 ## Builder contract
 
@@ -58,11 +60,23 @@ superblock, allocated page identities, target generation, target sequence,
 target length, and the validated commit-publication state. Every expected
 failure is a typed result. No partial result is publishable.
 
-The transaction builder continues to treat its root payload as opaque and
+The original transaction builder continues to treat its root payload as opaque and
 requires only that it fit the selected `WVPG 1` envelope and agree with its
 item count. The separate [`WVTN 1`](Windvale-Database-Tree-Node.md) composition
-now supplies the first root-depth-one variable-key leaf upsert. Branch splits,
-rows, and catalogs remain separate contracts.
+now supplies the first root-depth-one variable-key leaf upsert. The bounded
+batch and root-split composition supply the first depth-two generation; rows,
+catalogs, and general split propagation remain separate contracts.
+
+## Bounded multi-page builder
+
+`Databaseˉcommitˉbatchˉbegin` accepts 1 through 63 complete consecutive data
+pages, exactly one of which is the new root, and produces one following log
+page. It validates every `WVPG 1` identity, target generation, target sequence,
+and kind before constructing the `WVCR 1` record or target `WVDS 1`
+superblock. The returned append remains one contiguous byte value, so the
+hosted executor still dispatches exactly four durable actions. The first
+consumer appends left leaf, right leaf, branch root, and log as defined by
+[tree reading and root split](Windvale-Database-Tree-Reading-And-Root-Split.md).
 
 ## Hosted execution
 
@@ -134,10 +148,10 @@ claimed.
 
 ## Exclusions and next contracts
 
-This version has no delete, update-in-place, page reclamation, branch split,
-multi-page tree traversal, row encoding, catalog, schema, transaction
+This version has no delete, update-in-place, page reclamation, general branch
+split propagation, range scan, row encoding, catalog, schema, transaction
 isolation, concurrent reader lifetime, group commit, authentication, network
 listener, client protocol, SQL parser, query planner, or operator execution.
 It does not claim hardware power-loss qualification. The next storage-kernel
-step is bounded provider-backed tree reading followed by leaf split and branch
-root creation over this publication boundary.
+step is general depth-two mutation and child split propagation with explicit
+obsolete-page ownership.

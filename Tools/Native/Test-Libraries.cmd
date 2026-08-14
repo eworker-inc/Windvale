@@ -34,7 +34,10 @@ for %%P in (
     call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Libraries\%%P.wvproj" ^
         "%TemporaryDirectory%\%%P.wvb" >nul
-    if errorlevel 1 goto :cleanup
+    if errorlevel 1 (
+        >&2 echo Native library project failed: %%P
+        goto :cleanup
+    )
 )
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^

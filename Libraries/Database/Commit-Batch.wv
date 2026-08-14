@@ -1,0 +1,351 @@
+module Windvaleˉdatabaseˉcommitˉbatch profile portable;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+const DATABASE_COMMIT_BATCH_NO_PAGE: u64 = 18446744073709551615u64;
+const DATABASE_COMMIT_BATCH_MAXIMUM_DATA_PAGES: u32 = 63u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉcommitˉbatchˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Unpublishedˉtail = 2;
+    Invalidˉrootˉdepth = 3;
+    Invalidˉdataˉpageˉcount = 4;
+    Generationˉexhausted = 5;
+    Sequenceˉexhausted = 6;
+    Pageˉidentifierˉexhausted = 7;
+    Storageˉlengthˉoverflow = 8;
+    Invalidˉpageˉbytes = 9;
+    Invalidˉdataˉpage = 10;
+    Rootˉpageˉmissing = 11;
+    Invalidˉcommitˉrecord = 12;
+    Invalidˉlogˉpage = 13;
+    Invalidˉtargetˉsuperblock = 14;
+    Invalidˉpublication = 15;
+}
+
+export record Databaseˉcommitˉbatch {
+    Error: Databaseˉcommitˉbatchˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Failedˉpageˉindex: u32;
+    Publication: Publication.Databaseˉcommitˉpublication;
+    Pages: bytes;
+    Superblock: bytes;
+    Rootˉpage: u64;
+    Logˉpage: u64;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+}
+
+fn Databaseˉcommitˉbatchˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉcommitˉbatchˉinvalidˉpublication()
+    -> Publication.Databaseˉcommitˉpublication {
+    return Publication.Databaseˉcommitˉpublication(
+        Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉstate,
+        Publication.Databaseˉcommitˉpublicationˉstage.Invalid,
+        Superblock.Databaseˉsuperblockˉslot.None,
+        0u64,
+        0u64,
+        Publication.Databaseˉcommitˉpublicationˉflushˉscope.None,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+fn Databaseˉcommitˉbatchˉfailure(
+    Error: Databaseˉcommitˉbatchˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Failedˉpageˉindex: u32
+) -> Databaseˉcommitˉbatch {
+    return Databaseˉcommitˉbatch(
+        Error,
+        Pageˉerror,
+        Failedˉpageˉindex,
+        Databaseˉcommitˉbatchˉinvalidˉpublication(),
+        Databaseˉcommitˉbatchˉempty(),
+        Databaseˉcommitˉbatchˉempty(),
+        0u64,
+        DATABASE_COMMIT_BATCH_NO_PAGE,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+export fn Databaseˉcommitˉbatchˉreject(
+    Error: Databaseˉcommitˉbatchˉerror
+) -> Databaseˉcommitˉbatch {
+    if Error == Databaseˉcommitˉbatchˉerror.Valid {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉcurrent,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    return Databaseˉcommitˉbatchˉfailure(
+        Error,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        0u32
+    );
+}
+
+export fn Databaseˉcommitˉbatchˉbegin(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Rootˉpage: u64,
+    Rootˉdepth: u32,
+    Dataˉpageˉcount: u32,
+    Dataˉpages: bytes
+) -> Databaseˉcommitˉbatch {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Slot != Superblock.Databaseˉsuperblockˉslot.First &&
+        Current.Slot != Superblock.Databaseˉsuperblockˉslot.Second {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉcurrent,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    if Current.Tailˉbytes != 0u64 {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Unpublishedˉtail,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    if Rootˉdepth == 0u32 || Rootˉdepth > 128u32 {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉrootˉdepth,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    if Dataˉpageˉcount == 0u32 ||
+        Dataˉpageˉcount > DATABASE_COMMIT_BATCH_MAXIMUM_DATA_PAGES {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpageˉcount,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    if Current.Generation == U64_MAXIMUM {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Generationˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    if Current.Committedˉsequence == U64_MAXIMUM {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Sequenceˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    let Allocatedˉpageˉcount: u64 =
+        U64ˉfromˉu32(Dataˉpageˉcount) + 1u64;
+    if Current.Pageˉcount > U64_MAXIMUM - Allocatedˉpageˉcount {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    let Appendedˉbytes: u64 =
+        U64ˉfromˉu32(Current.Pageˉsize) * Allocatedˉpageˉcount;
+    if Current.Committedˉlength > U64_MAXIMUM - Appendedˉbytes {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Storageˉlengthˉoverflow,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    let Expectedˉdataˉbytes: u32 =
+        Current.Pageˉsize * Dataˉpageˉcount;
+    if Bytesˉlength(Dataˉpages) != Expectedˉdataˉbytes {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉpageˉbytes,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+
+    let Targetˉgeneration: u64 = Current.Generation + 1u64;
+    let Targetˉsequence: u64 = Current.Committedˉsequence + 1u64;
+    let Dataˉend: u64 =
+        Current.Pageˉcount + U64ˉfromˉu32(Dataˉpageˉcount);
+    if Rootˉpage < Current.Pageˉcount || Rootˉpage >= Dataˉend {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Rootˉpageˉmissing,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    var Index: u32 = 0u32;
+    while Index < Dataˉpageˉcount {
+        let Bytes: bytes = Bytesˉslice(
+            Dataˉpages,
+            Index * Current.Pageˉsize,
+            Current.Pageˉsize
+        );
+        let Dataˉpage: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Bytes);
+        if Dataˉpage.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉcommitˉbatchˉfailure(
+                Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage,
+                Dataˉpage.Error,
+                Index
+            );
+        }
+        let Expectedˉidentifier: u64 =
+            Current.Pageˉcount + U64ˉfromˉu32(Index);
+        if Dataˉpage.Pageˉidentifier != Expectedˉidentifier ||
+            Dataˉpage.Generation != Targetˉgeneration ||
+            Dataˉpage.Commitˉsequence != Targetˉsequence ||
+            Expectedˉidentifier == Rootˉpage &&
+                Dataˉpage.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+            Expectedˉidentifier != Rootˉpage &&
+                (Dataˉpage.Kind == Page.Databaseˉdurableˉpageˉkind.Root ||
+                Dataˉpage.Kind ==
+                    Page.Databaseˉdurableˉpageˉkind.Commitˉlog) {
+            return Databaseˉcommitˉbatchˉfailure(
+                Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage,
+                Page.Databaseˉdurableˉpageˉerror.Invalidˉpageˉidentifier,
+                Index
+            );
+        }
+        Index = Index + 1u32;
+    }
+
+    let Logˉpage: u64 = Dataˉend;
+    let Targetˉpageˉcount: u64 =
+        Current.Pageˉcount + Allocatedˉpageˉcount;
+    let Targetˉlength: u64 = Current.Committedˉlength + Appendedˉbytes;
+    let Record: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉencode(
+            Commit.Databaseˉcommitˉrecord(
+                Current.Databaseˉidentityˉhigh,
+                Current.Databaseˉidentityˉlow,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Generation,
+                Current.Committedˉsequence,
+                Rootˉpage,
+                Current.Commitˉlogˉhead,
+                Logˉpage,
+                Current.Pageˉcount,
+                Allocatedˉpageˉcount,
+                Targetˉpageˉcount,
+                Targetˉlength,
+                Current.Pageˉsize,
+                Rootˉdepth
+            )
+        );
+    if Record.Error != Commit.Databaseˉcommitˉrecordˉerror.Valid {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉcommitˉrecord,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Commitˉlog,
+                Current.Pageˉsize,
+                Logˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Commitˉlogˉhead,
+                1u32,
+                Record.Bytes
+            )
+        );
+    if Log.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉlogˉpage,
+            Log.Error,
+            Dataˉpageˉcount
+        );
+    }
+    var Earliestˉretainedˉsequence: u64 =
+        Current.Earliestˉretainedˉsequence;
+    if Current.Committedˉsequence == 0u64 {
+        Earliestˉretainedˉsequence = 1u64;
+    }
+    let Target: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(
+            Superblock.Databaseˉsuperblock(
+                Current.Databaseˉidentityˉhigh,
+                Current.Databaseˉidentityˉlow,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Rootˉpage,
+                Logˉpage,
+                Earliestˉretainedˉsequence,
+                Targetˉpageˉcount,
+                Targetˉlength,
+                Current.Pageˉsize,
+                Rootˉdepth
+            )
+        );
+    if Target.Error != Superblock.Databaseˉsuperblockˉerror.Valid {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉtargetˉsuperblock,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    let Publicationˉstate: Publication.Databaseˉcommitˉpublication =
+        Publication.Databaseˉcommitˉpublicationˉbegin(
+            Current,
+            Target,
+            Record,
+            Log
+        );
+    if Publicationˉstate.Error !=
+            Publication.Databaseˉcommitˉpublicationˉerror.Valid ||
+        Publicationˉstate.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉpublication,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    let Pages: bytes = Bytesˉconcat(Dataˉpages, Log.Bytes);
+    if Bytesˉlength(Pages) !=
+        Current.Pageˉsize * (Dataˉpageˉcount + 1u32) {
+        return Databaseˉcommitˉbatchˉfailure(
+            Databaseˉcommitˉbatchˉerror.Invalidˉpageˉbytes,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            0u32
+        );
+    }
+    return Databaseˉcommitˉbatch(
+        Databaseˉcommitˉbatchˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        0u32,
+        Publicationˉstate,
+        Pages,
+        Target.Bytes,
+        Rootˉpage,
+        Logˉpage,
+        Targetˉgeneration,
+        Targetˉsequence,
+        Targetˉlength
+    );
+}

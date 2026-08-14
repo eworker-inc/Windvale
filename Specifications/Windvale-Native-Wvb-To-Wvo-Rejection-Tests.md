@@ -31,8 +31,8 @@ The ordered cases are:
 
 | Case | Complete diagnostic | Report SHA-256 |
 | --- | --- | --- |
-| `malformed` | `native x64 status=Invalidˉwvb` plus LF | `6dc739ce9e8c752efe41fbede32d6c373ea33e1c22159faf86772a4cc94ff323` |
-| `unsupported-function` | `native x64 status=Unsupportedˉfunction` plus LF | `fc854d5370fe6da10243d8e28663f932baa4d7c30402488f5193d0a3dad77ded` |
+| `malformed` | `native x64 status=Invalidˉwvb plan-status=Invalidˉwvb function=4294967295 detail=4294967295` plus LF | `cb4866cce34d859dabe8d8823f7ad391daed579cdcd61fd6ecbd4e5c324d78dc` |
+| `unsupported-function` | `native x64 status=Unsupportedˉfunction plan-status=Unsupportedˉfunction function=4294967295 detail=4294967295` plus LF | `0e5a4dc04f822ab0afe79fe48d5126ffbdc825a2abe47f7b7a0bfd67b12830e5` |
 
 For each case the coordinator must:
 

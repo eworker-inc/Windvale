@@ -36,6 +36,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
 - [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and implemented read-only plus first durable-storage candidates
+- [Bounded durable tree reader and root split](Decisions/0549-Bounded-Durable-Tree-Reader-And-Root-Split.md) — provider-backed depth-bounded lookup, global graph/range proofs, reusable multi-page commit construction, and the first two-leaf branch-root generation
 - [Nested records and database storage recovery](Decisions/0536-Nested-Records-And-Database-Storage-Recovery.md) — compiler and native-lowering support for structured immutable values, bounded publication actions, and reopen/tail-repair policy without uncertain mutation replay
 - [Accepted product-direction set](Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) — stewardship and recovery, followed by linked language, runtime/toolchain, OS, browser, and product-lifecycle decisions 0179 through 0183
 - [First timer-preemption proof](Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md) — cross-host-qualified HPET/local-APIC mechanics and bounded three-root preemption evidence

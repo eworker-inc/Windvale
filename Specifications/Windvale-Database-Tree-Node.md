@@ -3,9 +3,11 @@
 ## Status
 
 - Format: `WVTN 1`
-- Portable codec and leaf operations: `Libraries/Database/Tree-Node.wv`
-- Durable composition: `Libraries/Database/Single-Leaf-Upsert.wv`
+- Portable codec, routing, and leaf split: `Libraries/Database/Tree-Node.wv`
+- Durable compositions: `Libraries/Database/Single-Leaf-Upsert.wv` and
+  `Libraries/Database/Root-Split-Upsert.wv`
 - Physical envelope: `WVPG 1`
+- Hosted reader: `Libraries/Platform/Database/Durable-Tree-Reader.wv`
 - Evidence: portable native execution and focused Windows interruption/restart;
   independent Linux execution pending
 
@@ -22,10 +24,11 @@ interpret text, numbers, nulls, rows, or collation. Callers must provide one
 canonical key encoding whose unsigned bytewise order is the intended index
 order.
 
-The implemented mutation is one root-leaf copy-on-write upsert. Branch nodes
-are decoded and locally validated so their durable shape is reserved, but
-branch lookup, split propagation, merge, and reclamation are not yet
-implemented.
+The implemented mutations are one root-leaf copy-on-write upsert and the first
+full-root transition to two leaves beneath a branch root. Provider-backed
+lookup traverses that depth-two shape with global range and graph proofs.
+General non-root split propagation, branch rewrite, merge, and reclamation are
+not yet implemented.
 
 ## Header
 
@@ -84,10 +87,10 @@ the child to its left:
 
 The header owns the rightmost child. Every child is different from the no-page
 sentinel, separator keys are nonempty and strictly increasing, and the complete
-entry sequence consumes the declared used length exactly. Global child bounds,
-generation visibility, acyclicity, separator ranges, and reachability require
-the future tree reader because they depend on the selected database and other
-pages.
+entry sequence consumes the declared used length exactly. The hosted durable
+reader supplies global child bounds, generation visibility, acyclicity,
+separator ranges, and routed reachability because those proofs depend on the
+selected database and other pages.
 
 ## Portable APIs
 
@@ -97,6 +100,15 @@ Databaseˉtreeˉnodeˉdecode(Input) -> Databaseˉtreeˉnodeˉresult
 Databaseˉtreeˉleafˉlookup(Input, Key) -> Databaseˉtreeˉleafˉlookupˉresult
 Databaseˉtreeˉleafˉupsert(Input, Key, Value, Maximum_payload)
     -> Databaseˉtreeˉleafˉupsertˉresult
+Databaseˉtreeˉleafˉsplitˉupsert(Input, Key, Value, Maximum_payload)
+    -> Databaseˉtreeˉleafˉsplitˉresult
+Databaseˉtreeˉbranchˉtwoˉchildren(Separator, Left, Right, Maximum_payload)
+    -> Databaseˉtreeˉnodeˉresult
+Databaseˉtreeˉbranchˉroute(Input, Key, Has_lower, Lower, Has_upper, Upper)
+    -> Databaseˉtreeˉbranchˉrouteˉresult
+Databaseˉtreeˉleafˉrangeˉvalidate(
+    Input, Has_lower, Lower, Has_upper, Upper
+) -> Databaseˉtreeˉnodeˉerror
 ```
 
 All expected failures are typed. Decode rejects malformed headers, lengths,
@@ -104,6 +116,13 @@ counts, children, reservations, entry truncation, oversized keys or values,
 noncanonical ordering, and trailing bytes. Upsert additionally distinguishes
 an invalid payload ceiling from a full page. It never silently drops an entry
 or changes the requested key.
+
+Split-upsert evaluates every contiguous boundary whose two nonempty encoded
+leaves fit the selected payload ceiling. It minimizes encoded byte imbalance
+and uses the earliest boundary as the deterministic tie break. The separator
+is an owned copy of the first right-leaf key. Branch routing treats inherited
+bounds as lower-inclusive and upper-exclusive, copies returned bounds, and
+routes separator equality to the right child.
 
 A successful lookup value is a borrowed slice of the caller-supplied immutable
 node bytes. Its lifetime is therefore the input's lifetime. When the input came
@@ -129,25 +148,33 @@ target superblock, and returns the existing four-action durable publication.
 The old root is never modified. Equal inputs produce equal node, page, log, and
 superblock bytes.
 
+When ordinary root-leaf upsert returns `Full`, the separate root-split
+composition can append a left leaf, right leaf, and branch root through the
+bounded commit batch. The new root has depth two, every new data page links the
+old root as its predecessor, and the old generation remains immutable. The
+complete provider-backed traversal and publication contract is defined by
+[tree reading and root split](Windvale-Database-Tree-Reading-And-Root-Split.md).
+
 ## Verification
 
 The native portable fixture covers prefix and unsigned-byte ordering, insertion
 before/between/after existing keys, empty values, replacement, missing and
 found lookup, deterministic output, exact payload capacity, key/value/count
 limits, every header field, truncated entries, duplicate order, trailing bytes,
-branch reserved/child rules, root-selection mismatch, invalid root payload,
-and two consecutive durable generations.
+branch reserved/child rules, inherited ranges, separator equality, every legal
+split boundary, deterministic byte balance, root-selection mismatch, invalid
+root payload, and two consecutive durable generations.
 
-The focused Windows host uses the same composition to publish key `u32(7)` and
-value `i32(42)`. It terminates after zero through four storage actions. Every
-restart selects only a fully valid old or new generation; a new generation must
-decode `WVTN 1` and return the exact value before the commit log is read. The
-equivalent Linux image is constructed pending independent execution.
+The focused Windows hosts publish both a depth-one key `u32(7)` / value
+`i32(42)` generation and a depth-two three-key generation. They terminate
+after zero through four storage actions. Every restart selects only a fully
+valid old or new generation; the depth-two reader reaches either child in two
+page visits and returns the exact value. Equivalent Linux images are
+constructed pending independent execution.
 
 ## Next contracts
 
-The next tree milestone is a bounded reader over provider-loaded pages followed
-by leaf split and branch-root creation. It must add global child/range proofs,
-bounded depth and page visits, immutable page ownership, and crash tests for a
-multi-page allocation. Delete, merge, reclamation, snapshots, concurrent
-readers, catalog typing, SQL, and network service behavior remain later layers.
+The next tree milestone is general depth-two upsert and child split propagation
+with obsolete-page ownership. Delete, merge, reclamation, pinned concurrent
+snapshots, catalog typing, SQL, and network service behavior remain later
+layers.

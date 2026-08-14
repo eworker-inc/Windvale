@@ -1,0 +1,284 @@
+module Databaseˉrootˉsplitˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Record;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉrootˉsplitˉupsert as Split;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+const PAGE_SIZE: u32 = 4096u32;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64,
+        1u64,
+        2u64,
+        2u64,
+        1u64,
+        1u64,
+        2u64,
+        1u64,
+        3u64,
+        12800u64,
+        PAGE_SIZE,
+        1u32
+    );
+}
+
+fn Rootˉpayload() -> bytes {
+    let First: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Emptyˉbytes(),
+            Key(1u8),
+            Zeroes(1700u32),
+            3968u32
+        );
+    let Third: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            First.Bytes,
+            Key(3u8),
+            Zeroes(1700u32),
+            3968u32
+        );
+    return Third.Bytes;
+}
+
+fn Rootˉpage() -> Page.Databaseˉdurableˉpageˉresult {
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            PAGE_SIZE,
+            1u64,
+            2u64,
+            1u64,
+            0u64,
+            2u32,
+            Rootˉpayload()
+        )
+    );
+}
+
+fn Build() -> Split.Databaseˉrootˉsplitˉupsert {
+    return Split.Databaseˉrootˉsplitˉupsertˉbegin(
+        Current(),
+        Rootˉpage(),
+        Key(2u8),
+        Zeroes(600u32)
+    );
+}
+
+fn Composition() -> i32 {
+    let Result: Split.Databaseˉrootˉsplitˉupsert = Build();
+    if Result.Error != Split.Databaseˉrootˉsplitˉupsertˉerror.Valid ||
+        Result.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Result.Replaced || Result.Leftˉentryˉcount != 1u32 ||
+        Result.Rightˉentryˉcount != 2u32 || Result.Leftˉpage != 3u64 ||
+        Result.Rightˉpage != 4u64 || Result.Rootˉpage != 5u64 ||
+        Result.Commit.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid ||
+        Result.Commit.Rootˉpage != 5u64 || Result.Commit.Logˉpage != 6u64 ||
+        Result.Commit.Targetˉgeneration != 3u64 ||
+        Result.Commit.Targetˉsequence != 2u64 ||
+        Result.Commit.Targetˉlength != 29184u64 ||
+        Bytesˉlength(Result.Commit.Pages) != 16384u32 ||
+        Bytesˉlength(Result.Commit.Superblock) != 256u32 {
+        return 1;
+    }
+    let Left: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, 0u32, PAGE_SIZE)
+        );
+    let Right: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE, PAGE_SIZE)
+        );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 2u32, PAGE_SIZE)
+        );
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 3u32, PAGE_SIZE)
+        );
+    if Left.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Left.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+        Left.Pageˉidentifier != 3u64 || Left.Previousˉpage != 1u64 ||
+        Right.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Right.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+        Right.Pageˉidentifier != 4u64 || Right.Previousˉpage != 1u64 ||
+        Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Pageˉidentifier != 5u64 || Root.Previousˉpage != 1u64 ||
+        Log.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Log.Kind != Page.Databaseˉdurableˉpageˉkind.Commitˉlog ||
+        Log.Pageˉidentifier != 6u64 || Log.Previousˉpage != 2u64 {
+        return 2;
+    }
+    let Branch: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Root.Payload);
+    let Leftˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload,
+            Key(1u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Rightˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload,
+            Key(2u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    if Branch.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Branch.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+        Branch.Entryˉcount != 1u32 ||
+        Leftˉroute.Child != 3u64 || Rightˉroute.Child != 4u64 {
+        return 3;
+    }
+    let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Left.Payload, Key(1u8));
+    let Two: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Right.Payload, Key(2u8));
+    let Three: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Right.Payload, Key(3u8));
+    if !One.Found || Bytesˉlength(One.Value) != 1700u32 ||
+        !Two.Found || Bytesˉlength(Two.Value) != 600u32 ||
+        !Three.Found || Bytesˉlength(Three.Value) != 1700u32 {
+        return 4;
+    }
+    let Commitˉrecord: Record.Databaseˉcommitˉrecordˉresult =
+        Record.Databaseˉcommitˉrecordˉdecode(Log.Payload);
+    let Target: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉdecode(Result.Commit.Superblock);
+    if Commitˉrecord.Error != Record.Databaseˉcommitˉrecordˉerror.Valid ||
+        Commitˉrecord.Firstˉallocatedˉpage != 3u64 ||
+        Commitˉrecord.Allocatedˉpageˉcount != 4u64 ||
+        Commitˉrecord.Pageˉcount != 7u64 ||
+        Commitˉrecord.Rootˉpage != 5u64 ||
+        Commitˉrecord.Logˉpage != 6u64 ||
+        Commitˉrecord.Rootˉdepth != 2u32 ||
+        Target.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
+        Target.Rootˉpage != 5u64 || Target.Commitˉlogˉhead != 6u64 ||
+        Target.Pageˉcount != 7u64 || Target.Rootˉdepth != 2u32 {
+        return 5;
+    }
+    if Result.Commit.Publication.Position != 12800u64 ||
+        Result.Commit.Publication.Length != 16384u64 ||
+        Result.Commit.Publication.Targetˉlength != 29184u64 {
+        return 6;
+    }
+    let Repeat: Split.Databaseˉrootˉsplitˉupsert = Build();
+    if !Bytesˉequal(Result.Commit.Pages, Repeat.Commit.Pages) ||
+        !Bytesˉequal(Result.Commit.Superblock, Repeat.Commit.Superblock) {
+        return 7;
+    }
+    return 0;
+}
+
+fn Rejections() -> i32 {
+    let Notˉrequired: Split.Databaseˉrootˉsplitˉupsert =
+        Split.Databaseˉrootˉsplitˉupsertˉbegin(
+            Current(),
+            Rootˉpage(),
+            Key(2u8),
+            Bytesˉfromˉu8(2u8)
+        );
+    if Notˉrequired.Error !=
+        Split.Databaseˉrootˉsplitˉupsertˉerror.Splitˉnotˉrequired {
+        return 1;
+    }
+    let Invalidˉroot: Split.Databaseˉrootˉsplitˉupsert =
+        Split.Databaseˉrootˉsplitˉupsertˉbegin(
+            Current(),
+            Page.Databaseˉdurableˉpageˉdecode(Emptyˉbytes()),
+            Key(2u8),
+            Zeroes(600u32)
+        );
+    if Invalidˉroot.Error !=
+        Split.Databaseˉrootˉsplitˉupsertˉerror.Invalidˉrootˉpage {
+        return 2;
+    }
+    let Built: Split.Databaseˉrootˉsplitˉupsert = Build();
+    let Badˉbytes: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current(),
+            5u64,
+            2u32,
+            3u32,
+            Bytesˉslice(Built.Commit.Pages, 0u32, PAGE_SIZE * 3u32 - 1u32)
+        );
+    if Badˉbytes.Error !=
+        Batch.Databaseˉcommitˉbatchˉerror.Invalidˉpageˉbytes {
+        return 3;
+    }
+    let Missingˉroot: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current(),
+            7u64,
+            2u32,
+            3u32,
+            Bytesˉslice(Built.Commit.Pages, 0u32, PAGE_SIZE * 3u32)
+        );
+    if Missingˉroot.Error !=
+        Batch.Databaseˉcommitˉbatchˉerror.Rootˉpageˉmissing {
+        return 4;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Composed: i32 = Composition();
+    if Composed != 0 { return 10 + Composed; }
+    let Rejected: i32 = Rejections();
+    if Rejected != 0 { return 20 + Rejected; }
+    return 0;
+}

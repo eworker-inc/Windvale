@@ -1,0 +1,286 @@
+module Windvaleˉdatabaseˉrootˉsplitˉupsert profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉrootˉsplitˉupsertˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Invalidˉrootˉpage = 2;
+    Rootˉmismatch = 3;
+    Invalidˉnode = 4;
+    Splitˉnotˉrequired = 5;
+    Generationˉexhausted = 6;
+    Sequenceˉexhausted = 7;
+    Pageˉidentifierˉexhausted = 8;
+    Invalidˉleftˉpage = 9;
+    Invalidˉrightˉpage = 10;
+    Invalidˉbranchˉpage = 11;
+    Invalidˉcommit = 12;
+}
+
+export record Databaseˉrootˉsplitˉupsert {
+    Error: Databaseˉrootˉsplitˉupsertˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Replaced: bool;
+    Leftˉentryˉcount: u32;
+    Rightˉentryˉcount: u32;
+    Leftˉpage: u64;
+    Rightˉpage: u64;
+    Rootˉpage: u64;
+    Commit: Batch.Databaseˉcommitˉbatch;
+}
+
+fn Databaseˉrootˉsplitˉfailure(
+    Error: Databaseˉrootˉsplitˉupsertˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Commitˉerror: Batch.Databaseˉcommitˉbatchˉerror
+) -> Databaseˉrootˉsplitˉupsert {
+    return Databaseˉrootˉsplitˉupsert(
+        Error,
+        Nodeˉerror,
+        false,
+        0u32,
+        0u32,
+        0u64,
+        0u64,
+        0u64,
+        Batch.Databaseˉcommitˉbatchˉreject(Commitˉerror)
+    );
+}
+
+export fn Databaseˉrootˉsplitˉupsertˉbegin(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Root: Page.Databaseˉdurableˉpageˉresult,
+    Key: bytes,
+    Value: bytes
+) -> Databaseˉrootˉsplitˉupsert {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 ||
+        Current.Rootˉdepth != 1u32 {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉcurrent,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉcurrent
+        );
+    }
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉrootˉpage,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Root.Pageˉsize != Current.Pageˉsize ||
+        Root.Pageˉidentifier != Current.Rootˉpage ||
+        Root.Generation != Current.Generation ||
+        Root.Commitˉsequence != Current.Committedˉsequence {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Rootˉmismatch,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Root.Payload);
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Node.Error,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Node.Entryˉcount == 0u32 ||
+        Node.Entryˉcount != Root.Itemˉcount {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Maximumˉpayload: u32 = Root.Pageˉsize - 128u32;
+    let Ordinary: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Root.Payload,
+            Key,
+            Value,
+            Maximumˉpayload
+        );
+    if Ordinary.Error == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Splitˉnotˉrequired,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Ordinary.Error != Tree.Databaseˉtreeˉnodeˉerror.Full {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Ordinary.Error,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Split: Tree.Databaseˉtreeˉleafˉsplitˉresult =
+        Tree.Databaseˉtreeˉleafˉsplitˉupsert(
+            Root.Payload,
+            Key,
+            Value,
+            Maximumˉpayload
+        );
+    if Split.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Split.Error,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Current.Generation == U64_MAXIMUM {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Generationˉexhausted,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Generationˉexhausted
+        );
+    }
+    if Current.Committedˉsequence == U64_MAXIMUM {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Sequenceˉexhausted,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Sequenceˉexhausted
+        );
+    }
+    if Current.Pageˉcount > U64_MAXIMUM - 4u64 {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Pageˉidentifierˉexhausted,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+        );
+    }
+    let Targetˉgeneration: u64 = Current.Generation + 1u64;
+    let Targetˉsequence: u64 = Current.Committedˉsequence + 1u64;
+    let Leftˉpage: u64 = Current.Pageˉcount;
+    let Rightˉpage: u64 = Leftˉpage + 1u64;
+    let Rootˉpage: u64 = Rightˉpage + 1u64;
+    let Branch: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Split.Separator,
+            Leftˉpage,
+            Rightˉpage,
+            Maximumˉpayload
+        );
+    if Branch.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Branch.Error,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Left: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Leaf,
+                Current.Pageˉsize,
+                Leftˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Rootˉpage,
+                Split.Leftˉentryˉcount,
+                Split.Left
+            )
+        );
+    if Left.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉleftˉpage,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Right: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Leaf,
+                Current.Pageˉsize,
+                Rightˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Rootˉpage,
+                Split.Rightˉentryˉcount,
+                Split.Right
+            )
+        );
+    if Right.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉrightˉpage,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Branchˉpage: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                Current.Pageˉsize,
+                Rootˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Current.Rootˉpage,
+                Branch.Entryˉcount,
+                Branch.Bytes
+            )
+        );
+    if Branchˉpage.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉrootˉsplitˉfailure(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉbranchˉpage,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Dataˉpages: bytes = Bytesˉconcat(
+        Bytesˉconcat(Left.Bytes, Right.Bytes),
+        Branchˉpage.Bytes
+    );
+    let Commitˉresult: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current,
+            Rootˉpage,
+            2u32,
+            3u32,
+            Dataˉpages
+        );
+    if Commitˉresult.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid {
+        return Databaseˉrootˉsplitˉupsert(
+            Databaseˉrootˉsplitˉupsertˉerror.Invalidˉcommit,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            false,
+            0u32,
+            0u32,
+            0u64,
+            0u64,
+            0u64,
+            Commitˉresult
+        );
+    }
+    return Databaseˉrootˉsplitˉupsert(
+        Databaseˉrootˉsplitˉupsertˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Split.Replaced,
+        Split.Leftˉentryˉcount,
+        Split.Rightˉentryˉcount,
+        Leftˉpage,
+        Rightˉpage,
+        Rootˉpage,
+        Commitˉresult
+    );
+}

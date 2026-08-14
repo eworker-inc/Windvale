@@ -60,6 +60,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Storage publication execution and reopen/tail-repair planning](Windvale-Database-Storage-Recovery.md)
 - [Native single-writer transaction and bounded hosted executor](Windvale-Database-Single-Writer-Transaction.md)
 - [Durable variable-key tree node and root-leaf copy-on-write upsert](Windvale-Database-Tree-Node.md)
+- [Bounded provider-backed tree reading and first branch-root split](Windvale-Database-Tree-Reading-And-Root-Split.md)
 - [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)
 - [Native capability-provider call](Windvale-Native-Provider-Call.md)
 - [Native execution-context version 9 construction](Windvale-Native-Execution-Context-9-Construction.md)

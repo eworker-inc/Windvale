@@ -426,6 +426,123 @@ verify_host_storage() {
         "$windows_application" windows >/dev/null || return $?
 }
 
+verify_host_tree_reader() {
+    local project_path=$1
+    local first_wvb="$temporary_directory/HostTreeReader-First.wvb"
+    local second_wvb="$temporary_directory/HostTreeReader-Second.wvb"
+    local first_wvo="$temporary_directory/HostTreeReader-First.wvo"
+    local second_wvo="$temporary_directory/HostTreeReader-Second.wvo"
+    local common="$temporary_directory/HostStorage-Common-First.wvo"
+    local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
+    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
+    local linux_image="$temporary_directory/HostTreeReader-Linux.bin"
+    local linux_image_prefix="$temporary_directory/HostTreeReader-Linux-Image"
+    local linux_map="$temporary_directory/HostTreeReader-Linux.map"
+    local linux_application="$temporary_directory/HostTreeReader.elf"
+    local windows_image="$temporary_directory/HostTreeReader-Windows.bin"
+    local windows_image_prefix="$temporary_directory/HostTreeReader-Windows-Image"
+    local windows_map="$temporary_directory/HostTreeReader-Windows.map"
+    local windows_application="$temporary_directory/HostTreeReader.exe"
+    local initial_file="$temporary_directory/HostStorage-Run/Windvale-Database-Storage.initial"
+    local run_directory="$temporary_directory/HostTreeReader-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local committed_file="$run_directory/Windvale-Database-Storage.committed"
+
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+    if ((development == 0)); then
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    fi
+    "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
+    if ((development == 0)); then
+        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
+        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    fi
+    "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    [[ -f $common && -f $linux_platform ]] || return 1
+
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+        >"$linux_map" || return $?
+    local linux_entry
+    linux_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$linux_map")
+    case "$linux_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+        "$linux_application" linux >/dev/null || return $?
+
+    mkdir -- "$run_directory" || return $?
+    cp -- "$initial_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host tree-reader publication returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 20992 ]] || return 1
+    cp -- "$storage_file" "$committed_file" || return $?
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host tree-reader stable reopen returned $application_result, expected 0." >&2
+        return 1
+    fi
+    cmp --silent -- "$committed_file" "$storage_file" || return 1
+    local step
+    for step in 0 1 2 3 4; do
+        verify_host_tree_reader_interruption \
+            "$linux_application" "$initial_file" "$step" "$temporary_directory" \
+            || return $?
+    done
+
+    if ((development == 1)); then
+        return 0
+    fi
+    [[ -f $windows_platform ]] || return 1
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$windows_image" "$first_wvo" "$common" "$windows_platform" \
+        >"$windows_map" || return $?
+    local windows_entry
+    windows_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$windows_map")
+    case "$windows_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
+        "$windows_application" windows >/dev/null || return $?
+}
+
+verify_host_tree_reader_interruption() {
+    local application=$1 initial=$2 step=$3 scenario_root=$4
+    local scenario_directory="$scenario_root/HostTreeReader-Interruption-$step"
+    local scenario_storage="$scenario_directory/Windvale-Database-Storage.bin"
+    mkdir -- "$scenario_directory" || return $?
+    cp -- "$initial" "$scenario_storage" || return $?
+    truncate -s $((4609 + step)) -- "$scenario_storage" || return $?
+    (cd -- "$scenario_directory" && "$application" >/dev/null)
+    local application_result=$?
+    local expected_result=$((100 + step))
+    if [[ $application_result -ne $expected_result ]]; then
+        echo "The native host tree-reader interruption $step returned $application_result, expected $expected_result." >&2
+        return 1
+    fi
+    (cd -- "$scenario_directory" && "$application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host tree-reader restart $step returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$scenario_storage") -eq 20992 ]] || return 1
+}
+
 if ((development == 0)); then
     verify_target Nested \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
@@ -437,6 +554,8 @@ if ((development == 0)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
     verify_target TreeNode \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
+    verify_target RootSplit \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
     verify_target ProviderTable \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
     verify_target ProviderCall \
@@ -448,9 +567,11 @@ if ((development == 0)); then
 fi
 verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
+verify_host_tree_reader \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
 
 if ((development == 1)); then
-    echo "native database storage development status=Passed cases=1 local-results=0 tools=$tool_checkpoint"
+    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint"
     exit 0
 fi
-echo 'native database storage status=Passed cases=11 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=13 local-results=0 cross-host-images=Verified'
