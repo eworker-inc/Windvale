@@ -4,9 +4,11 @@
 
 - Format: `WVTN 1`
 - Portable codec, routing, and leaf split: `Libraries/Database/Tree-Node.wv`
+- Portable internal split: `Libraries/Database/Tree-Branch-Split.wv`
 - Durable compositions: `Libraries/Database/Single-Leaf-Upsert.wv`,
   `Libraries/Database/Root-Split-Upsert.wv`, and
-  `Libraries/Database/Depth-Two-Upsert.wv`
+  `Libraries/Database/Depth-Two-Upsert.wv`, plus
+  `Libraries/Database/Depth-Three-Root-Growth.wv`
 - Physical envelope: `WVPG 1`
 - Hosted reader: `Libraries/Platform/Database/Durable-Tree-Reader.wv`
 - Evidence: portable native execution and focused Windows interruption/restart;
@@ -26,11 +28,12 @@ canonical key encoding whose unsigned bytewise order is the intended index
 order.
 
 The implemented mutations are root-leaf copy-on-write upsert, the first
-full-root transition to two leaves beneath a branch root, and repeated
-depth-two updates that replace or split any routed leaf while preserving
-untouched children. Provider-backed lookup traverses that depth-two shape with
-global range and graph proofs. Depth-three root growth, internal-branch split
-propagation, merge, and reclamation are not yet implemented.
+full-root transition to two leaves beneath a branch root, repeated depth-two
+updates that replace or split any routed leaf while preserving untouched
+children, and the first full-branch transition to a depth-three root.
+Provider-backed lookup retains global range and graph proofs. Repeated updates
+inside an existing depth-three tree, multi-level split cascading, merge, and
+reclamation are not yet implemented.
 
 ## Header
 
@@ -103,7 +106,7 @@ Databaseˉtreeˉleafˉlookup(Input, Key) -> Databaseˉtreeˉleafˉlookupˉresult
 Databaseˉtreeˉleafˉupsert(Input, Key, Value, Maximum_payload)
     -> Databaseˉtreeˉleafˉupsertˉresult
 Databaseˉtreeˉleafˉsplitˉupsert(Input, Key, Value, Maximum_payload)
-    -> Databaseˉtreeˉleafˉsplitˉresult
+    -> Databaseˉtreeˉnodeˉsplitˉresult
 Databaseˉtreeˉbranchˉtwoˉchildren(Separator, Left, Right, Maximum_payload)
     -> Databaseˉtreeˉnodeˉresult
 Databaseˉtreeˉbranchˉroute(Input, Key, Has_lower, Lower, Has_upper, Upper)
@@ -113,6 +116,9 @@ Databaseˉtreeˉbranchˉreplaceˉchild(Input, Old_child, New_child, Maximum_payl
 Databaseˉtreeˉbranchˉsplitˉchild(
     Input, Old_child, Separator, Left_child, Right_child, Maximum_payload
 ) -> Databaseˉtreeˉbranchˉupdateˉresult
+Databaseˉtreeˉbranchˉsplitˉpropagate(
+    Input, Old_child, Separator, Left_child, Right_child, Maximum_payload
+) -> Databaseˉtreeˉnodeˉsplitˉresult
 Databaseˉtreeˉleafˉrangeˉvalidate(
     Input, Has_lower, Lower, Has_upper, Upper
 ) -> Databaseˉtreeˉnodeˉerror
@@ -133,6 +139,13 @@ routes separator equality to the right child. Branch replacement and split
 rewrite exactly one matching entry child or rightmost child, preserve every
 untouched separator and child, and reject missing, duplicate, colliding,
 noncanonical, or full results.
+
+The separate internal split operation applies the same child replacement to a
+full branch, considers every legal interior separator, and promotes the one
+that minimizes encoded-byte imbalance with the earliest candidate as tie
+break. Both canonical nonempty child branches are decoded again before return.
+The exact durable composition is defined by [depth-three root
+growth](Windvale-Database-Depth-Three-Root-Growth.md).
 
 A successful lookup value is a borrowed slice of the caller-supplied immutable
 node bytes. Its lifetime is therefore the input's lifetime. When the input came
@@ -172,6 +185,12 @@ and the root, or splits one routed leaf and inserts its separator into the
 replacement root. The replacement leaf owns the old leaf, the replacement root
 owns the old root, and a newly created right leaf has no predecessor.
 
+When both the routed leaf and depth-two root overflow, the [depth-three root
+growth composition](Windvale-Database-Depth-Three-Root-Growth.md) splits the
+leaf, splits the branch root, and promotes one separator into a new root. It
+allocates five data pages plus one log while retaining the same publication and
+recovery protocol.
+
 ## Verification
 
 The native portable fixture covers prefix and unsigned-byte ordering, insertion
@@ -179,10 +198,11 @@ before/between/after existing keys, empty values, replacement, missing and
 found lookup, deterministic output, exact payload capacity, key/value/count
 limits, every header field, truncated entries, duplicate order, trailing bytes,
 branch reserved/child rules, inherited ranges, separator equality, every legal
-split boundary, deterministic byte balance, root-selection mismatch, invalid
+leaf and branch split boundary, deterministic byte balance, root-selection mismatch, invalid
 root payload, branch replacement and split at entry and rightmost children,
 collision and branch-full rejection, owned page copies, obsolete-page
-uniqueness, and three consecutive durable generations.
+uniqueness, three consecutive durable generations, and the first depth-three
+root generation.
 
 The focused Windows hosts publish a depth-one key `u32(7)` / value `i32(42)`
 generation, a depth-two three-key generation, and a repeated routed update.
@@ -194,7 +214,7 @@ execution.
 
 ## Next contracts
 
-After the compiler/tooling performance milestone, the next tree milestone is
-depth-three root growth and internal split propagation. Delete, merge,
-reclamation, pinned concurrent snapshots, catalog typing, SQL, and network
-service behavior remain later layers.
+The next tree milestone is updating an already depth-three generation and
+cascading a split from a non-root internal branch. Delete, merge, reclamation,
+pinned concurrent snapshots, catalog typing, SQL, and network service behavior
+remain later layers.

@@ -62,6 +62,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Durable variable-key tree node and root-leaf copy-on-write upsert](Windvale-Database-Tree-Node.md)
 - [Bounded provider-backed tree reading and first branch-root split](Windvale-Database-Tree-Reading-And-Root-Split.md)
 - [Repeated depth-two upsert and obsolete-page ownership](Windvale-Database-Depth-Two-Upsert.md)
+- [Depth-three root growth and deterministic internal branch split](Windvale-Database-Depth-Three-Root-Growth.md)
 - [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)
 - [Native capability-provider call](Windvale-Native-Provider-Call.md)
 - [Native execution-context version 9 construction](Windvale-Native-Execution-Context-9-Construction.md)

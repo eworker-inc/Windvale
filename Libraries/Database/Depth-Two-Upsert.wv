@@ -221,7 +221,7 @@ export fn Databaseˉdepthˉtwoˉupsertˉbegin(
         Leftˉentryˉcount = Ordinary.Entryˉcount;
         Leftˉpayload = Ordinary.Bytes;
     } else if Ordinary.Error == Tree.Databaseˉtreeˉnodeˉerror.Full {
-        let Splitˉresult: Tree.Databaseˉtreeˉleafˉsplitˉresult =
+        let Splitˉresult: Tree.Databaseˉtreeˉnodeˉsplitˉresult =
             Tree.Databaseˉtreeˉleafˉsplitˉupsert(
                 Child.Payload,
                 Key,

@@ -638,7 +638,38 @@ verify_host_tree_reader_update_interruption() {
     [[ $(wc -c < "$scenario_storage") -eq 33280 ]] || return 1
 }
 
-if ((development == 0)); then
+if ((development == 1)); then
+    verify_target TreeNode \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || {
+            echo 'The native database storage development tree-node stage failed.' >&2
+            exit 1
+        }
+    verify_target SingleLeaf \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || {
+            echo 'The native database storage development single-leaf stage failed.' >&2
+            exit 1
+        }
+    verify_target BranchSplit \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || {
+            echo 'The native database storage development branch-split stage failed.' >&2
+            exit 1
+        }
+    verify_target RootSplit \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || {
+            echo 'The native database storage development root-split stage failed.' >&2
+            exit 1
+        }
+    verify_target DepthTwo \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || {
+            echo 'The native database storage development depth-two stage failed.' >&2
+            exit 1
+        }
+    verify_target DepthThree \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || {
+            echo 'The native database storage development depth-three stage failed.' >&2
+            exit 1
+        }
+else
     verify_target Nested \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
     verify_target Publication \
@@ -649,10 +680,16 @@ if ((development == 0)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
     verify_target TreeNode \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
+    verify_target SingleLeaf \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || exit $?
+    verify_target BranchSplit \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || exit $?
     verify_target RootSplit \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
     verify_target DepthTwo \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || exit $?
+    verify_target DepthThree \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || exit $?
     verify_target ProviderTable \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
     verify_target ProviderCall \
@@ -674,7 +711,7 @@ verify_host_tree_reader \
     }
 
 if ((development == 1)); then
-    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
+    echo "native database storage development status=Passed cases=8 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
     exit 0
 fi
-echo 'native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=17 local-results=0 cross-host-images=Verified'

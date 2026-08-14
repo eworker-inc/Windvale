@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 5,053 LF-only bytes with SHA-256
-`60e6fa8684f8481f4fbdbb94d3f9bfd641acdc58e25362bb8b1aa4de2e5f5dcb`.
+`5636dc34c8724080f06d92d88d13486a6c15a0625cf99ad15b2ddb1176e93136`.
 The first line is exactly:
 
 ```text
@@ -63,7 +63,7 @@ file. The current plan is:
 | `wvo-read-only` | `Test-Wvo-Read-Only-Rejections` | 13 | `Tests: 13, Passed: 13, Failed: 0` |
 | `wvo-differential` | `Test-Wvo-Differential` | 256 | `Tests: 256, Passed: 256, Failed: 0` |
 | `wvo-containment` | `Test-Wvo-Containment` | 500 | `Tests: 500, Passed: 500, Failed: 0` |
-| `wvo-hostile-size` | `Test-Wvo-Hostile-Size` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
+| `wvo-hostile-size` | `Test-Wvo-Hostile-Size` | 5 | `Tests: 5, Passed: 5, Failed: 0` |
 | `assembler-rejections` | `Test-Assembler-Rejections` | 11 | `Tests: 11, Passed: 11, Failed: 0` |
 | `assembler-golden` | `Test-Assembler-Golden` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `wva-differential` | `Test-Wva-Differential` | 269 | `Tests: 269, Passed: 269, Failed: 0` |
@@ -93,25 +93,26 @@ file. The current plan is:
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
 | `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
-| `database-storage` | `Test-Database-Storage` | 14 | `native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified` |
+| `database-storage` | `Test-Database-Storage` | 17 | `native database storage status=Passed cases=17 local-results=0 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 37 | `native package format status=Passed result=42 modules=4 builds=5 groups=37 cross-host-images=8` |
 
-The version-2 plan therefore contains exactly 53 suites and 3,326 cases. Its
+The version-2 plan therefore contains exactly 53 suites and 3,329 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
-| 1 | 1 | 14 | 651.2 |
+| 1 | 1 | 17 | 651.2 |
 | 2 | 14 | 1,279 | 592.2 |
 | 3 | 19 | 1,176 | 592.1 |
 | 4 | 19 | 857 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
-semantic limit. The shard-3 timing predates the `package-format` owner and will
-be refreshed after the expanded plan completes qualification. Allocation uses
+semantic limit. The shard-1 timing predates the three new tree-growth cases and
+the shard-3 timing predates the `package-format` owner; both will be refreshed
+after the expanded plan completes qualification. Allocation uses
 the slower observed Windows/Linux interval for each measured owner and keeps
 the largest owner alone because it sets the current lower bound. Future
 rebalancing changes the digest-bound plan and requires new
@@ -141,7 +142,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 52, Passed: 52, Failed: 0, Cases: 3289
+Suites: 53, Passed: 53, Failed: 0, Cases: 3329
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

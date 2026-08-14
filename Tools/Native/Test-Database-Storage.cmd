@@ -72,6 +72,42 @@ if "%PrepareOnly%"=="1" (
 )
 
 if "%Development%"=="1" (
+    call :verify_target TreeNode ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development tree-node stage failed.
+        goto :cleanup
+    )
+    call :verify_target SingleLeaf ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development single-leaf stage failed.
+        goto :cleanup
+    )
+    call :verify_target BranchSplit ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Branch-Split.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development branch-split stage failed.
+        goto :cleanup
+    )
+    call :verify_target RootSplit ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development root-split stage failed.
+        goto :cleanup
+    )
+    call :verify_target DepthTwo ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development depth-two stage failed.
+        goto :cleanup
+    )
+    call :verify_target DepthThree ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development depth-three stage failed.
+        goto :cleanup
+    )
     call :verify_host_storage ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
     if errorlevel 1 (
@@ -103,11 +139,20 @@ if errorlevel 1 goto :cleanup
 call :verify_target TreeNode ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target SingleLeaf ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target BranchSplit ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Branch-Split.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target RootSplit ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target DepthTwo ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target DepthThree ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target ProviderTable ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
@@ -140,10 +185,10 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
+    echo native database storage development status=Passed cases=8 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
     exit /b 0
 )
-echo native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=17 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage

@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Branch-Split-Self-Test.wv"
+source "Libraries/Database/Tree-Branch-Split.wv"
+source "Libraries/Database/Tree-Node.wv"
+emit wvb

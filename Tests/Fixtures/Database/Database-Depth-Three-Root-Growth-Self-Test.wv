@@ -1,0 +1,438 @@
+module Databaseˉdepthˉthreeˉgrowthˉtest profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdepthˉthreeˉrootˉgrowth as Growth;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Record;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(Value), Zeroes(1000u32));
+}
+
+fn Current(Rootˉdepth: u32) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64,
+        1u64,
+        2u64,
+        3u64,
+        2u64,
+        14u64,
+        7u64,
+        1u64,
+        15u64,
+        61952u64,
+        PAGE_SIZE,
+        Rootˉdepth
+    );
+}
+
+fn Fullˉbranch() -> bytes {
+    let First: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Key(3u8),
+            10u64,
+            11u64,
+            MAXIMUM_PAYLOAD
+        );
+    let Second: Tree.Databaseˉtreeˉbranchˉupdateˉresult =
+        Tree.Databaseˉtreeˉbranchˉsplitˉchild(
+            First.Bytes,
+            11u64,
+            Key(5u8),
+            12u64,
+            13u64,
+            MAXIMUM_PAYLOAD
+        );
+    let Third: Tree.Databaseˉtreeˉbranchˉupdateˉresult =
+        Tree.Databaseˉtreeˉbranchˉsplitˉchild(
+            Second.Bytes,
+            13u64,
+            Key(7u8),
+            8u64,
+            9u64,
+            MAXIMUM_PAYLOAD
+        );
+    return Third.Bytes;
+}
+
+fn Shallowˉbranch() -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Key(7u8),
+            8u64,
+            9u64,
+            MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Rootˉpage(Payload: bytes) -> Page.Databaseˉdurableˉpageˉresult {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            PAGE_SIZE,
+            14u64,
+            3u64,
+            2u64,
+            5u64,
+            Node.Entryˉcount,
+            Payload
+        )
+    );
+}
+
+fn Leafˉpayload(Firstˉkey: bytes, Secondˉkey: bytes) -> bytes {
+    let First: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Emptyˉbytes(),
+            Firstˉkey,
+            Zeroes(500u32),
+            MAXIMUM_PAYLOAD
+        );
+    if Bytesˉlength(Secondˉkey) == 0u32 { return First.Bytes; }
+    let Second: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            First.Bytes,
+            Secondˉkey,
+            Zeroes(500u32),
+            MAXIMUM_PAYLOAD
+        );
+    return Second.Bytes;
+}
+
+fn Leafˉpage(
+    Pageˉidentifier: u64,
+    Payload: bytes
+) -> Page.Databaseˉdurableˉpageˉresult {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            PAGE_SIZE,
+            Pageˉidentifier,
+            3u64,
+            2u64,
+            4u64,
+            Node.Entryˉcount,
+            Payload
+        )
+    );
+}
+
+fn Validˉgrowth() -> i32 {
+    let Root: Page.Databaseˉdurableˉpageˉresult = Rootˉpage(Fullˉbranch());
+    let Child: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        9u64,
+        Leafˉpayload(Key(8u8), Key(10u8))
+    );
+    let Result: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Root,
+            Child,
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if Result.Error !=
+            Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Valid ||
+        Result.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Result.Replaced || Result.Leftˉleafˉpage != 15u64 ||
+        Result.Rightˉleafˉpage != 16u64 ||
+        Result.Leftˉbranchˉpage != 17u64 ||
+        Result.Rightˉbranchˉpage != 18u64 || Result.Rootˉpage != 19u64 ||
+        Result.Obsoleteˉrootˉpage != 14u64 ||
+        Result.Obsoleteˉleafˉpage != 9u64 ||
+        Result.Commit.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid {
+        return 1;
+    }
+    if Result.Commit.Logˉpage != 20u64 ||
+        Result.Commit.Targetˉgeneration != 4u64 ||
+        Result.Commit.Targetˉsequence != 3u64 ||
+        Result.Commit.Targetˉlength != 86528u64 ||
+        Bytesˉlength(Result.Commit.Pages) != PAGE_SIZE * 6u32 {
+        return 2;
+    }
+    let Leftˉleaf: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, 0u32, PAGE_SIZE)
+        );
+    let Rightˉleaf: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE, PAGE_SIZE)
+        );
+    let Leftˉbranch: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 2u32, PAGE_SIZE)
+        );
+    let Rightˉbranch: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 3u32, PAGE_SIZE)
+        );
+    let Newˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 4u32, PAGE_SIZE)
+        );
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 5u32, PAGE_SIZE)
+        );
+    if Leftˉleaf.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Leftˉleaf.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+        Leftˉleaf.Previousˉpage != 9u64 ||
+        Rightˉleaf.Previousˉpage != NO_PAGE ||
+        Leftˉbranch.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Leftˉbranch.Previousˉpage != 14u64 ||
+        Rightˉbranch.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Rightˉbranch.Previousˉpage != NO_PAGE ||
+        Newˉroot.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Newˉroot.Previousˉpage != NO_PAGE ||
+        Log.Kind != Page.Databaseˉdurableˉpageˉkind.Commitˉlog ||
+        Log.Previousˉpage != 7u64 {
+        return 3;
+    }
+    let Rootˉleft: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(4u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Rootˉright: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(5u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Leftˉlow: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Leftˉbranch.Payload,
+            Key(2u8),
+            false,
+            Emptyˉbytes(),
+            true,
+            Key(5u8)
+        );
+    let Leftˉhigh: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Leftˉbranch.Payload,
+            Key(4u8),
+            false,
+            Emptyˉbytes(),
+            true,
+            Key(5u8)
+        );
+    let Rightˉlow: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Rightˉbranch.Payload,
+            Key(6u8),
+            true,
+            Key(5u8),
+            false,
+            Emptyˉbytes()
+        );
+    let Rightˉmiddle: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Rightˉbranch.Payload,
+            Key(8u8),
+            true,
+            Key(5u8),
+            false,
+            Emptyˉbytes()
+        );
+    let Rightˉhigh: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Rightˉbranch.Payload,
+            Key(10u8),
+            true,
+            Key(5u8),
+            false,
+            Emptyˉbytes()
+        );
+    if Rootˉleft.Child != 17u64 || Rootˉright.Child != 18u64 ||
+        Leftˉlow.Child != 10u64 || Leftˉhigh.Child != 12u64 ||
+        Rightˉlow.Child != 8u64 || Rightˉmiddle.Child != 15u64 ||
+        Rightˉhigh.Child != 16u64 {
+        return 4;
+    }
+    let Eight: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leftˉleaf.Payload, Key(8u8));
+    let Nine: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Rightˉleaf.Payload, Key(9u8));
+    let Ten: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Rightˉleaf.Payload, Key(10u8));
+    if !Eight.Found || !Nine.Found || !Ten.Found ||
+        Bytesˉlength(Eight.Value) != 500u32 ||
+        Bytesˉlength(Nine.Value) != 500u32 ||
+        Bytesˉlength(Ten.Value) != 500u32 {
+        return 5;
+    }
+    let Commitˉrecord: Record.Databaseˉcommitˉrecordˉresult =
+        Record.Databaseˉcommitˉrecordˉdecode(Log.Payload);
+    if Commitˉrecord.Error != Record.Databaseˉcommitˉrecordˉerror.Valid ||
+        Commitˉrecord.Firstˉallocatedˉpage != 15u64 ||
+        Commitˉrecord.Allocatedˉpageˉcount != 6u64 ||
+        Commitˉrecord.Rootˉpage != 19u64 ||
+        Commitˉrecord.Logˉpage != 20u64 ||
+        Commitˉrecord.Pageˉcount != 21u64 ||
+        Commitˉrecord.Rootˉdepth != 3u32 {
+        return 6;
+    }
+    let Repeat: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Root,
+            Child,
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if !Bytesˉequal(Result.Commit.Pages, Repeat.Commit.Pages) ||
+        !Bytesˉequal(Result.Commit.Superblock, Repeat.Commit.Superblock) {
+        return 7;
+    }
+    return 0;
+}
+
+fn Rejections() -> i32 {
+    let Fullˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Rootˉpage(Fullˉbranch());
+    let Fullˉleaf: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        9u64,
+        Leafˉpayload(Key(8u8), Key(10u8))
+    );
+    let Ordinaryˉleaf: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        9u64,
+        Leafˉpayload(Key(8u8), Emptyˉbytes())
+    );
+    let Leafˉnotˉfull: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Fullˉroot,
+            Ordinaryˉleaf,
+            Key(9u8),
+            Zeroes(1u32)
+        );
+    if Leafˉnotˉfull.Error != Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Leafˉsplitˉnotˉrequired {
+        return 1;
+    }
+    let Rootˉnotˉfull: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Rootˉpage(Shallowˉbranch()),
+            Fullˉleaf,
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if Rootˉnotˉfull.Error != Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Rootˉsplitˉnotˉrequired {
+        return 2;
+    }
+    let Wrongˉchild: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Fullˉroot,
+            Leafˉpage(8u64, Fullˉleaf.Payload),
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if Wrongˉchild.Error !=
+            Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Childˉmismatch {
+        return 3;
+    }
+    let Badˉrange: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Fullˉroot,
+            Leafˉpage(9u64, Leafˉpayload(Key(6u8), Emptyˉbytes())),
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if Badˉrange.Error !=
+            Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Invalidˉrange {
+        return 4;
+    }
+    let Wrongˉdepth: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(3u32),
+            Fullˉroot,
+            Fullˉleaf,
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if Wrongˉdepth.Error !=
+            Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Invalidˉcurrent {
+        return 5;
+    }
+    let Malformedˉroot: Growth.Databaseˉdepthˉthreeˉrootˉgrowth =
+        Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉbegin(
+            Current(2u32),
+            Page.Databaseˉdurableˉpageˉdecode(Emptyˉbytes()),
+            Fullˉleaf,
+            Key(9u8),
+            Zeroes(500u32)
+        );
+    if Malformedˉroot.Error !=
+            Growth.Databaseˉdepthˉthreeˉrootˉgrowthˉerror.Invalidˉrootˉpage {
+        return 6;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Valid: i32 = Validˉgrowth();
+    if Valid != 0 { return 10 + Valid; }
+    let Invalid: i32 = Rejections();
+    if Invalid != 0 { return 30 + Invalid; }
+    return 0;
+}

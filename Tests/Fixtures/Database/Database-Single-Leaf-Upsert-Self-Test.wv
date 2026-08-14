@@ -1,0 +1,288 @@
+module Databaseˉleafˉtest profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉsingleˉleafˉupsert as Leaf;
+import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Value(Value: i32) -> bytes {
+    return Bytesˉfromˉi32ˉlittle(Value);
+}
+
+fn Current(
+    Slot: Superblock.Databaseˉsuperblockˉslot,
+    Generation: u64,
+    Sequence: u64,
+    Rootˉpage: u64,
+    Logˉpage: u64,
+    Earliest: u64,
+    Pageˉcount: u64,
+    Length: u64,
+    Tail: u64
+) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Slot,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉlength,
+        Tail,
+        1u64,
+        2u64,
+        Generation,
+        Sequence,
+        Rootˉpage,
+        Logˉpage,
+        Earliest,
+        Pageˉcount,
+        Length,
+        4096u32,
+        1u32
+    );
+}
+
+fn Initialˉcurrent() -> Superblock.Databaseˉsuperblockˉselection {
+    return Current(
+        Superblock.Databaseˉsuperblockˉslot.First,
+        1u64,
+        0u64,
+        0u64,
+        NO_PAGE,
+        0u64,
+        1u64,
+        4608u64,
+        0u64
+    );
+}
+
+fn Initialˉroot() -> Page.Databaseˉdurableˉpageˉresult {
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            4096u32,
+            0u64,
+            1u64,
+            0u64,
+            NO_PAGE,
+            0u32,
+            Emptyˉbytes()
+        )
+    );
+}
+
+fn Firstˉupsert() -> Leaf.Databaseˉsingleˉleafˉupsert {
+    return Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+        Initialˉcurrent(),
+        Initialˉroot(),
+        Key(2u8),
+        Value(20)
+    );
+}
+
+fn Firstˉcomposition() -> i32 {
+    let Result: Leaf.Databaseˉsingleˉleafˉupsert = Firstˉupsert();
+    if Result.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Valid ||
+        Result.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Result.Replaced || Result.Entryˉcount != 1u32 ||
+        Result.Transaction.Error !=
+            Single.Databaseˉsingleˉwriterˉcommitˉerror.Valid ||
+        Result.Transaction.Rootˉpage != 1u64 ||
+        Result.Transaction.Logˉpage != 2u64 ||
+        Result.Transaction.Targetˉgeneration != 2u64 ||
+        Result.Transaction.Targetˉsequence != 1u64 ||
+        Result.Transaction.Targetˉlength != 12800u64 {
+        return 1;
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Transaction.Pages, 0u32, 4096u32)
+        );
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Itemˉcount != 1u32 || Root.Previousˉpage != 0u64 {
+        return 2;
+    }
+    let Lookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Root.Payload, Key(2u8));
+    if !Lookup.Found || !Bytesˉequal(Lookup.Value, Value(20)) {
+        return 3;
+    }
+    let Second: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.Second,
+                2u64,
+                1u64,
+                1u64,
+                2u64,
+                1u64,
+                3u64,
+                12800u64,
+                0u64
+            ),
+            Root,
+            Key(1u8),
+            Value(10)
+        );
+    if Second.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Valid ||
+        Second.Replaced || Second.Entryˉcount != 2u32 ||
+        Second.Transaction.Rootˉpage != 3u64 ||
+        Second.Transaction.Logˉpage != 4u64 ||
+        Second.Transaction.Targetˉgeneration != 3u64 ||
+        Second.Transaction.Targetˉsequence != 2u64 ||
+        Second.Transaction.Targetˉlength != 20992u64 {
+        return 4;
+    }
+    let Secondˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Second.Transaction.Pages, 0u32, 4096u32)
+        );
+    let Firstˉlookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Secondˉroot.Payload, Key(1u8));
+    let Preserved: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Secondˉroot.Payload, Key(2u8));
+    if Secondˉroot.Itemˉcount != 2u32 || !Firstˉlookup.Found ||
+        !Bytesˉequal(Firstˉlookup.Value, Value(10)) ||
+        !Preserved.Found || !Bytesˉequal(Preserved.Value, Value(20)) {
+        return 5;
+    }
+    let Duplicate: Leaf.Databaseˉsingleˉleafˉupsert = Firstˉupsert();
+    if !Bytesˉequal(
+        Result.Transaction.Pages,
+        Duplicate.Transaction.Pages
+    ) || !Bytesˉequal(
+        Result.Transaction.Superblock,
+        Duplicate.Transaction.Superblock
+    ) {
+        return 6;
+    }
+    return 0;
+}
+
+fn Invalidˉcomposition() -> i32 {
+    let Tail: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.First,
+                1u64, 0u64, 0u64, NO_PAGE, 0u64, 1u64, 4608u64, 1u64
+            ),
+            Initialˉroot(),
+            Key(1u8),
+            Value(1)
+        );
+    if Tail.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉcurrent {
+        return 1;
+    }
+    let Mismatch: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.First,
+                1u64, 0u64, 1u64, NO_PAGE, 0u64, 1u64, 4608u64, 0u64
+            ),
+            Initialˉroot(),
+            Key(1u8),
+            Value(1)
+        );
+    if Mismatch.Error != Leaf.Databaseˉsingleˉleafˉupsertˉerror.Rootˉmismatch {
+        return 2;
+    }
+    let Invalidˉroot: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Initialˉcurrent(),
+            Page.Databaseˉdurableˉpageˉdecode(Emptyˉbytes()),
+            Key(1u8),
+            Value(1)
+        );
+    if Invalidˉroot.Error !=
+        Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉrootˉpage {
+        return 3;
+    }
+    let Badˉpayload: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                4096u32,
+                0u64,
+                1u64,
+                0u64,
+                NO_PAGE,
+                1u32,
+                Key(1u8)
+            )
+        );
+    let Invalidˉnode: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Initialˉcurrent(),
+            Badˉpayload,
+            Key(1u8),
+            Value(1)
+        );
+    if Invalidˉnode.Error !=
+            Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode ||
+        Invalidˉnode.Nodeˉerror !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength {
+        return 4;
+    }
+    let Laterˉemptyˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                4096u32,
+                1u64,
+                2u64,
+                1u64,
+                0u64,
+                0u32,
+                Emptyˉbytes()
+            )
+        );
+    let Laterˉempty: Leaf.Databaseˉsingleˉleafˉupsert =
+        Leaf.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current(
+                Superblock.Databaseˉsuperblockˉslot.Second,
+                2u64, 1u64, 1u64, 2u64, 1u64, 3u64, 12800u64, 0u64
+            ),
+            Laterˉemptyˉroot,
+            Key(1u8),
+            Value(1)
+        );
+    if Laterˉempty.Error !=
+            Leaf.Databaseˉsingleˉleafˉupsertˉerror.Invalidˉnode ||
+        Laterˉempty.Nodeˉerror !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength {
+        return 5;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Composition: i32 = Firstˉcomposition();
+    if Composition != 0 { return 10 + Composition; }
+    let Invalid: i32 = Invalidˉcomposition();
+    if Invalid != 0 { return 20 + Invalid; }
+    return 0;
+}

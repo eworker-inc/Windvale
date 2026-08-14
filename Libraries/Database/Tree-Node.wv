@@ -73,7 +73,7 @@ export record Databaseˉtreeˉbranchˉrouteˉresult {
     Upper: bytes;
 }
 
-export record Databaseˉtreeˉleafˉsplitˉresult {
+export record Databaseˉtreeˉnodeˉsplitˉresult {
     Error: Databaseˉtreeˉnodeˉerror;
     Replaced: bool;
     Leftˉentryˉcount: u32;
@@ -149,8 +149,8 @@ fn Databaseˉtreeˉrouteˉfailure(
 
 fn Databaseˉtreeˉsplitˉfailure(
     Error: Databaseˉtreeˉnodeˉerror
-) -> Databaseˉtreeˉleafˉsplitˉresult {
-    return Databaseˉtreeˉleafˉsplitˉresult(
+) -> Databaseˉtreeˉnodeˉsplitˉresult {
+    return Databaseˉtreeˉnodeˉsplitˉresult(
         Error,
         false,
         0u32,
@@ -1112,7 +1112,7 @@ export fn Databaseˉtreeˉleafˉsplitˉupsert(
     Key: bytes,
     Value: bytes,
     Maximumˉpayload: u32
-) -> Databaseˉtreeˉleafˉsplitˉresult {
+) -> Databaseˉtreeˉnodeˉsplitˉresult {
     if Maximumˉpayload < DATABASE_TREE_NODE_HEADER_BYTES ||
         Maximumˉpayload > DATABASE_TREE_NODE_MAXIMUM_BYTES {
         return Databaseˉtreeˉsplitˉfailure(
@@ -1296,7 +1296,7 @@ export fn Databaseˉtreeˉleafˉsplitˉupsert(
     if Rightˉvalidation != Databaseˉtreeˉnodeˉerror.Valid {
         return Databaseˉtreeˉsplitˉfailure(Rightˉvalidation);
     }
-    return Databaseˉtreeˉleafˉsplitˉresult(
+    return Databaseˉtreeˉnodeˉsplitˉresult(
         Databaseˉtreeˉnodeˉerror.Valid,
         Replaced,
         Leftˉcount,

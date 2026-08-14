@@ -60,7 +60,9 @@ transaction allocates:
 The branch operation supports any selected entry child and the rightmost
 child. It preserves canonical separator order, inherited ranges, and all
 unselected children. A root that cannot hold the additional separator returns
-`Branch_full`; depth-three root creation is a later contract.
+  `Branch_full`; the separate [depth-three root-growth
+  contract](Windvale-Database-Depth-Three-Root-Growth.md) consumes that exact
+  boundary only when both the leaf and root overflow.
 
 ## Obsolete-page ownership
 
@@ -105,7 +107,9 @@ that recovery sequence.
 
 ## Exclusions
 
-This milestone does not implement depth-three root growth, arbitrary internal
-branch splitting, delete, merge, page reclamation or reuse, snapshot pins,
-concurrent writers, group commit, range cursors, catalogs, row codecs, SQL,
-networking, authentication, or server lifecycle.
+This milestone does not itself implement root growth. Its successor implements
+the first depth-two-to-depth-three transition, but neither contract updates an
+existing depth-three tree or cascades a split from a non-root internal branch.
+Delete, merge, page reclamation or reuse, snapshot pins, concurrent writers,
+group commit, range cursors, catalogs, row codecs, SQL, networking,
+authentication, and server lifecycle remain excluded.

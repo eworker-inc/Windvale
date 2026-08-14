@@ -1,7 +1,7 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Active implementation proposal; the bounded reader, hosted page seams, checked storage geometry, mutable storage-resource contract, `WVDS 1` superblock, `WVPG 1` page envelope, `WVCR 1` commit record, `WVTN 1` tree node, single-writer publication, depth-two lookup, root split, and repeated routed-leaf update are implemented candidates, but no general transaction engine, server contract, SQL grammar, or product name is accepted by this document
+- Status: Active implementation proposal; the bounded reader, hosted page seams, checked storage geometry, mutable storage-resource contract, `WVDS 1` superblock, `WVPG 1` page envelope, `WVCR 1` commit record, `WVTN 1` tree node, single-writer publication, repeated depth-two updates, deterministic internal branch split, and first depth-three root growth are implemented candidates, but no general transaction engine, server contract, SQL grammar, or product name is accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -12,8 +12,9 @@ This document explores adding a database to Windvale without claiming that the
 current language, runtime, libraries, or operating system can already support a
 complete durable database server. The native backend now executes the durable
 superblock, physical-page, compact-log, publication-planning core, one
-rights-limited storage writer/recovery shell, and the first depth-two tree
-generation. General transaction and service boundaries remain absent.
+  rights-limited storage writer/recovery shell, repeated depth-two updates, and
+  the first depth-three root generation. General transaction and service
+  boundaries remain absent.
 This proposal identifies what should be learned
 from EWDB, where a Windvale database would belong, which prerequisites are
 missing, and the smallest useful implementation sequence.
@@ -189,7 +190,7 @@ key/value engine, transactional database process, and server are not ready.
 | Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
 | Portable storage publication and reopen policy | Implemented candidate | The [storage recovery contract](../../Specifications/Windvale-Database-Storage-Recovery.md) maps publication to bounded 64 KiB actions and maps fresh superblock evidence plus an unpublished tail to exact resize and content-and-length flush actions. Uncertain mutations require reopen and are never silently replayed. |
 | Native single-writer transaction | Focused Windows implementation; cross-host qualification pending | The [single-writer transaction](../../Specifications/Windvale-Database-Single-Writer-Transaction.md) constructs one root page, one compact log page, the inactive superblock, and a typed publication plan without I/O authority. Its hosted executor performs the four exact storage actions and preserves provider completion semantics. The builder remains payload-agnostic; the `WVTN 1` composition below supplies the first structured root. |
-| Durable variable-key tree | Focused Windows repeated depth-two implementation; deeper propagation pending | [`WVTN 1`](../../Specifications/Windvale-Database-Tree-Node.md) defines packed ordered byte keys, byte values, `u64` branch children, lookup, replacement, page-size-aware upsert, deterministic leaf split, and branch routing. The hosted reader proves stable provider identity, descending child identities, selected generation visibility, and inherited key ranges. The [depth-two transaction](../../Specifications/Windvale-Database-Depth-Two-Upsert.md) replaces or splits any routed leaf, preserves untouched siblings, rewrites the root, and assigns unique obsolete-page predecessors. Depth-three growth and reclamation remain unimplemented. |
+| Durable variable-key tree | Focused Windows first depth-three implementation; repeated deeper updates pending | [`WVTN 1`](../../Specifications/Windvale-Database-Tree-Node.md) defines packed ordered byte keys, byte values, `u64` branch children, lookup, replacement, page-size-aware upsert, deterministic leaf split, and branch routing. The hosted reader proves stable provider identity, descending child identities, selected generation visibility, and inherited key ranges. The [depth-two transaction](../../Specifications/Windvale-Database-Depth-Two-Upsert.md) replaces or splits any routed leaf and assigns unique obsolete-page predecessors. The [depth-three transaction](../../Specifications/Windvale-Database-Depth-Three-Root-Growth.md) splits a full root branch, promotes one deterministic separator, publishes five data pages plus one log, and preserves the four-action protocol. Updates inside an existing depth-three tree and reclamation remain unimplemented. |
 | Capability-bearing mutation and crash recovery | Focused native Windows repeated restart recovery implemented; cross-host qualification pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds the exact storage target/state, and the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) preserves all ABI-23 budgets while returning strict `WVSA 1`. Native processes repair unpublished tails and interrupt either the initial root split or repeated depth-two update after zero through four completed actions; every restart selects and validates only the 4,608-byte bootstrap, 20,992-byte first depth-two, or 33,280-byte repeated-update generation before a stable reopen. General fragment/WVB admission, independent Linux execution, configurable server binding, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
@@ -345,7 +346,10 @@ leaf split, a reusable multi-page commit batch, and the first branch-root
 generation. [Decision 0551](../Decisions/0551-General-Depth-Two-Upsert-And-Obsolete-Ownership.md)
 then adds repeated routed-leaf replacement, leaf split propagation into the
 root, explicit borrowed-page copying, and unique obsolete-page ownership.
-Depth-three root growth and reclamation remain future engine work.
+[Decision 0556](../Decisions/0556-Depth-Three-Root-Growth-And-Internal-Branch-Split.md)
+adds deterministic full-branch splitting and the first depth-three root without
+changing any durable format or publication action. Repeated depth-three updates
+and reclamation remain future engine work.
 
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
@@ -418,16 +422,17 @@ Build a single-process, single-writer ordered key/value kernel with:
 - deterministic compaction or obsolete-page reclamation; and
 - fault injection before and after every durable transition.
 
-The storage substrate and first depth-two Stage 3 vertical slice are
+The storage substrate through the first depth-three Stage 3 vertical slice is
 implemented. `WVDS 1` supplies dual checksummed root records and deterministic
 recovery selection. `WVPG 1`, `WVCR 1`, and the pure publication planner add
 immutable page/log bytes and an executable durable-before-publish sequence.
 `WVTN 1` now adds variable-key leaf lookup, replacement, and insertion, and the
 hosted executor publishes that structured root through every four-action crash
-boundary. It now splits one full root leaf, publishes a two-leaf branch root,
-and performs bounded provider-backed point lookup. The engine does not yet
-propagate a non-root split, rewrite an existing branch, reclaim pages, or manage
-concurrent transactions.
+boundary. It splits one full root leaf, repeatedly rewrites the depth-two tree,
+and now splits a full branch root into two branches beneath a new depth-three
+root. The engine does not yet update an existing depth-three generation,
+cascade a non-root internal split, reclaim pages, or manage concurrent
+transactions.
 
 This milestone needs no general query language, network protocol, or graph
 layer.
@@ -526,14 +531,15 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decisions 0534 through 0551 now supply the dual superblock, immutable page and
+Decisions 0534 through 0556 now supply the dual superblock, immutable page and
 tree-node envelopes, compact commit record, portable publication/recovery
 actions, exact ABI-23 storage call, one real provider pair, root-leaf lookup and
-upsert, repeated depth-two replacement and split propagation, and deterministic
-interruption after every publication action. The next measured work should
-reduce compiler/lowerer/tool latency and generated-code size before database
-breadth resumes. A later database decision should add depth-three root growth
-and internal split propagation without changing the four-action publish
-protocol. Independent Linux execution and ordinary configurable ABI-23 binding
-remain parallel qualification work. Catalog, network listener, and SQL
-execution should continue to consume rather than bypass the storage kernel.
+upsert, repeated depth-two replacement, deterministic internal splitting, first
+depth-three root growth, and interruption after every hosted publication
+action. The next measured work should reduce the 402.638-second eight-case
+compiler/lowerer/link/package loop before database breadth resumes. A later
+database decision should update an existing depth-three generation and cascade
+a split from a non-root internal branch. Independent Linux execution and
+ordinary configurable ABI-23 binding remain parallel qualification work.
+Catalog, network listener, and SQL execution should continue to consume rather
+than bypass the storage kernel.
