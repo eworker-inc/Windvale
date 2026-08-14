@@ -47,6 +47,12 @@ if errorlevel 1 goto :cleanup
 call :verify_target Recovery ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Recovery.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target ProviderTable ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target ProviderCall ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Provider-Call.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -55,7 +61,7 @@ for %%R in ("%TemporaryDirectory%") do set "ResolvedTemporaryDirectory=%%~fR"
 echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-storage-" >nul || exit /b 1
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
 if not "%Result%"=="0" exit /b %Result%
-echo native database storage status=Passed cases=3 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=5 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_target

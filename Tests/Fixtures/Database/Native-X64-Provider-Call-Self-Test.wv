@@ -1,0 +1,137 @@
+module Nativeˉx64ˉproviderˉcallˉselfˉtest profile portable;
+
+import Compilerˉnativeˉx64ˉproviderˉcall as Providerˉcall;
+import Toolsˉnativeˉx64ˉproviderˉcallˉverification as Verification;
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu8(Value),
+            Bytesˉslice(Input, Offset + 1u32, Bytesˉlength(Input) - Offset - 1u32)
+        )
+    );
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+        )
+    );
+}
+
+fn Bytesˉareˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Emit() -> Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission {
+    return Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
+        Bytesˉfromˉu32ˉlittle(287454020u32),
+        1u32,
+        2u32,
+        3u32,
+        4u32,
+        5u32,
+        6u32,
+        7u32,
+        1024u32
+    );
+}
+
+fn Verify(Input: bytes) -> bool {
+    let Result: Verification.Nativeˉx64ˉproviderˉcallˉverification =
+        Verification.Nativeˉx64ˉproviderˉcallˉverify(
+            Input,
+            4u32,
+            1u32,
+            2u32,
+            3u32,
+            4u32,
+            5u32,
+            6u32,
+            7u32,
+            1024u32
+        );
+    return Result.Valid && Result.Consumedˉbytes == 216u32;
+}
+
+fn Primaryˉtests() -> i32 {
+    let First: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission = Emit();
+    if !First.Valid || Bytesˉlength(First.Result) != 220u32 {
+        return 1;
+    }
+    if !Verify(First.Result) { return 2; }
+    let Second: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission = Emit();
+    if !Second.Valid || !Bytesˉareˉequal(First.Result, Second.Result) {
+        return 3;
+    }
+    return 0;
+}
+
+fn Boundˉtests() -> i32 {
+    let Prefix: bytes = Bytesˉfromˉu32ˉlittle(287454020u32);
+    let Maximum: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission =
+        Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
+            Prefix,
+            31u32,
+            2047u32,
+            2046u32,
+            2045u32,
+            2044u32,
+            2043u32,
+            2042u32,
+            0u32
+        );
+    if !Maximum.Valid { return 4; }
+    let Maximumˉverification: Verification.Nativeˉx64ˉproviderˉcallˉverification =
+        Verification.Nativeˉx64ˉproviderˉcallˉverify(
+            Maximum.Result,
+            4u32,
+            31u32,
+            2047u32,
+            2046u32,
+            2045u32,
+            2044u32,
+            2043u32,
+            2042u32,
+            0u32
+        );
+    if !Maximumˉverification.Valid { return 5; }
+    let Invalid: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission =
+        Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
+            Prefix, 32u32, 2u32, 3u32, 4u32, 5u32, 6u32, 7u32, 0u32
+        );
+    if Invalid.Valid || !Bytesˉareˉequal(Invalid.Result, Prefix) { return 6; }
+    return 0;
+}
+
+fn Mutationˉtests() -> i32 {
+    let Emission: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission = Emit();
+    if !Emission.Valid { return 7; }
+    if Verify(Replaceˉu8(Emission.Result, 4u32, 0u8)) { return 8; }
+    if Verify(Replaceˉu32(Emission.Result, 14u32, 0u32)) { return 9; }
+    if Verify(Replaceˉu32(Emission.Result, 33u32, 0u32)) { return 10; }
+    if Verify(Replaceˉu8(Emission.Result, 212u32, 0u8)) { return 11; }
+    if Verify(Bytesˉslice(Emission.Result, 0u32, 219u32)) { return 12; }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Primary: i32 = Primaryˉtests();
+    if Primary != 0 { return Primary; }
+    let Bounds: i32 = Boundˉtests();
+    if Bounds != 0 { return Bounds; }
+    return Mutationˉtests();
+}

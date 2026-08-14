@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Native-X64-Provider-Call-Self-Test.wv"
+source "Compiler/Windvale/Native-X64-Provider-Call.wv"
+source "Tools/Windvale.Verify/Native-X64-Provider-Call-Verification.wv"
+emit wvb

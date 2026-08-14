@@ -449,7 +449,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'database-durable-commit'
         }
         if ($Path.Contains('Storage-Publication', [StringComparison]::Ordinal) -or
-            $Path.Contains('Storage-Recovery', [StringComparison]::Ordinal)) {
+            $Path.Contains('Storage-Recovery', [StringComparison]::Ordinal) -or
+            $Path.Contains('Native-Capability-Provider-Table', [StringComparison]::Ordinal)) {
             Add-Suite 'database-storage'
         }
     } elseif ($Path -eq 'Specifications/Windvale-Native-Random-Containment-Tests.md') {
@@ -474,16 +475,22 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Publication-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Recovery-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Capability-Provider-Table-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-X64-Provider-Call-Self-Test.wv' -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Database-Storage-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Native-Hosted-Snapshot-Page.wvproj' -or
         $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Specifications/Read-Only-Directory-Capability.md',
-            'Specifications/Random-Access-Storage-Capability.md'
+            'Specifications/Random-Access-Storage-Capability.md',
+            'Specifications/Windvale-Native-Capability-Provider-Table.md',
+            'Specifications/Windvale-Native-Provider-Call.md'
         )) {
         Add-Suite 'libraries'
         if ($Path.Contains('Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal)) {
@@ -526,6 +533,14 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
         Add-WebAssemblyVerification
+    } elseif ($Path -in @(
+        'Runtime/Windvale/Native-Capability-Provider-Table-Core.wv',
+        'Runtime/Windvale/Native-Capability-Provider-Table-Core.wvproj',
+        'Runtime/Windvale/Native-Capability-Provider-Table-Bridge.wv',
+        'Runtime/Windvale/Native-Capability-Provider-Table.wvproj',
+        'Compiler/Windvale/Native-X64-Provider-Call.wv'
+    )) {
+        Add-Suite 'database-storage'
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Core.wv',
         'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
@@ -1145,6 +1160,9 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv') {
         Add-Suite 'console-verifier-reconstruction'
     } elseif ($Path -eq
+        'Tools/Windvale.Verify/Native-X64-Provider-Call-Verification.wv') {
+        Add-Suite 'database-storage'
+    } elseif ($Path -eq
         'Tools/Windvale.Publish/Console-Application-Publisher.wv') {
         Add-Suite 'console-publisher-reconstruction'
     } elseif ($Path.StartsWith('Tools/Windvale.Publish/', [StringComparison]::Ordinal) -or
@@ -1412,7 +1430,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
-        'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj'
+        'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj',
+        'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj'
     )) {
         Add-Suite 'database-storage'
     } elseif ($Path -in @(

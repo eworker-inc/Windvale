@@ -58,6 +58,8 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Durable dual-superblock record and recovery selection](Windvale-Database-Durable-Superblock.md)
 - [Durable pages, compact commit record, and publication planner](Windvale-Database-Durable-Commit.md)
 - [Storage publication execution and reopen/tail-repair planning](Windvale-Database-Storage-Recovery.md)
+- [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)
+- [Native capability-provider call](Windvale-Native-Provider-Call.md)
 
 ## Assembly, objects, and linking
 

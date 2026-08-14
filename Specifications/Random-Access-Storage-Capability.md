@@ -1,9 +1,10 @@
 # Random-access storage capability
 
-- Status: Implemented candidate in the Stage 0 reference runtime and launcher; independent Linux and crash-recovery qualification pending
+- Status: Semantic and portable-library contract implemented; native provider-table binding implemented candidate; native provider execution and crash-recovery qualification pending
 - Capability identity: `storage.random_access_v1`
 - Source library: `Libraries/Platform/Storage/Random-Access-Storage.wv`
-- Runtime contract: `Runtime/Windvale.Runtime/Random-Access-Storage.cs`
+- Native binding contract: [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md)
+- Historical Stage 0 oracle: `Runtime/Windvale.Runtime/Random-Access-Storage.cs`
 
 ## Purpose and boundary
 
@@ -47,8 +48,8 @@ refer to the same bound object.
 - A read maximum or write value is at most 65,536 bytes.
 - Every position-plus-length calculation is checked before provider dispatch.
 - A provider may return `Unsupported` before mutation when its backing store
-  cannot represent a valid `u64` request. The shared .NET adapter is limited by
-  its signed 64-bit native file positions.
+  cannot represent a valid `u64` request. The frozen Stage 0 oracle was limited
+  by its signed 64-bit native file positions.
 - Version 1 binds one storage instance per runtime context.
 
 ## Operations
@@ -73,13 +74,13 @@ exact value. A different generation returns `Stale` and the provider's current
 nonzero generation without performing I/O. `Revoked`, `Peerˉexited`, and
 `Unavailable` remain distinct typed outcomes.
 
-Generation is a fencing value within the bound provider lifetime. The Stage 0
-launcher binds one object for one process run, holds one whole-file writer
-lease, uses generation `1`, and disposes the binding after execution. It does
-not claim a persistent cross-restart mutation identity. A restartable service
-must allocate a new generation before it can implement this contract.
+Generation is a fencing value within the bound provider lifetime. The historical
+Stage 0 launcher bound one object for one process run, held one whole-file writer
+lease, used generation `1`, and disposed the binding after execution. It did not
+claim a persistent cross-restart mutation identity. A restartable service must
+allocate a new generation before it can implement this contract.
 
-The Windows/Linux reference adapter opens the file for read/write, permits
+The frozen Windows/Linux reference adapter opened the file for read/write, permitted
 other readers, requests a whole-file lock, and retains the handle through
 runtime teardown. Linux file locks are advisory against non-cooperating native
 processes; therefore version 1's Stage 0 binding is a Windvale/provider writer
@@ -123,9 +124,9 @@ resizing a single-file database object.
 Neither class publishes a path, flushes a parent directory, provides atomic
 replacement, or defines behavior for hardware that falsely acknowledges
 stable writes. Those guarantees require separate provider evidence and a
-separate capability. The Stage 0 Windows/Linux adapter implements both classes
-with `.NET FileStream.Flush(flushToDisk: true)` over an already-open existing
-ordinary file; it makes no directory-publication claim.
+  separate capability. The historical Stage 0 Windows/Linux adapter implemented
+  both classes with a stable-file flush over an already-open existing ordinary
+  file; it made no directory-publication claim and is not the forward provider.
 
 ## Response envelope
 
@@ -157,9 +158,9 @@ wrong generation, malformed completion, or payload mismatch traps as
 `WVR3031`. The Windvale library independently validates the envelope and
 returns `Invalidˉresponse` if bytes reach it through another host.
 
-## Stage 0 launcher binding
+## Historical Stage 0 launcher binding
 
-The reference launcher syntax is:
+The retired reference launcher syntax was:
 
 ```text
 windvale run Application.wvb \
@@ -174,12 +175,15 @@ reparse-point binding.
 
 ## Excluded claims and next contracts
 
-This implemented candidate does not qualify Linux independently, validate
-power-loss recovery, accept a durable WVDB format, provide a Windvale OS or
-WebAssembly provider, or supply page cache, WAL, transactions, concurrent
-readers, commit publication, mutation identities, or provider restart.
+The native [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md) constructor
+now binds the exact capability identity and signature to opaque rights-limited
+target/state pairs without changing ABI 22. The separate [native provider-call
+candidate](Windvale-Native-Provider-Call.md) now emits and independently admits
+the exact five-cell x64 call, but the ABI-22 main lowerer does not invoke it.
 
-The next database slice should compose this capability with checked storage
-geometry to read and validate one page by `u64` identity. The next durability
-slice should define a two-superblock commit/recovery protocol inside the one
-storage object before adding a writer.
+This implemented candidate does not independently execute Linux provider I/O,
+validate power-loss recovery, provide a Windvale OS or WebAssembly provider, or
+supply a page cache, WAL, transactions, concurrent readers, mutation identities,
+or provider restart. Durable page, commit, publication, and tail-repair formats
+now exist separately; the next slice must publish context 9/ABI 23 and connect
+them to real Windows/Linux provider observations.

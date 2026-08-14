@@ -1,0 +1,141 @@
+module Toolsˉnativeˉx64ˉproviderˉcallˉverification profile portable;
+
+export record Nativeˉx64ˉproviderˉcallˉverification {
+    Valid: bool;
+    Consumedˉbytes: u32;
+    Failureˉoffset: u32;
+}
+
+fn Failure(Offset: u32) -> Nativeˉx64ˉproviderˉcallˉverification {
+    return Nativeˉx64ˉproviderˉcallˉverification(false, 0u32, Offset);
+}
+
+fn Byteˉequals(Input: bytes, Offset: u32, Value: u8) -> bool {
+    return Bytesˉreadˉu8(Input, Offset) == Value;
+}
+
+fn U32ˉequals(Input: bytes, Offset: u32, Value: u32) -> bool {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset) == Value;
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    return 4294967295u32 - (Origin - Target) + 1u32;
+}
+
+fn Verifyˉcell(
+    Input: bytes,
+    Offset: u32,
+    Source: u32,
+    Target: u32
+) -> u32 {
+    if !Byteˉequals(Input, Offset, 72u8) ||
+        !Byteˉequals(Input, Offset + 1u32, 139u8) ||
+        !Byteˉequals(Input, Offset + 2u32, 148u8) ||
+        !Byteˉequals(Input, Offset + 3u32, 36u8) ||
+        !U32ˉequals(Input, Offset + 4u32, 80u32 + Source * 16u32) ||
+        !Byteˉequals(Input, Offset + 8u32, 72u8) ||
+        !Byteˉequals(Input, Offset + 9u32, 137u8) ||
+        !Byteˉequals(Input, Offset + 10u32, 148u8) ||
+        !Byteˉequals(Input, Offset + 11u32, 36u8) ||
+        !U32ˉequals(Input, Offset + 12u32, Target * 16u32) ||
+        !Byteˉequals(Input, Offset + 16u32, 72u8) ||
+        !Byteˉequals(Input, Offset + 17u32, 139u8) ||
+        !Byteˉequals(Input, Offset + 18u32, 148u8) ||
+        !Byteˉequals(Input, Offset + 19u32, 36u8) ||
+        !U32ˉequals(Input, Offset + 20u32, 88u32 + Source * 16u32) ||
+        !Byteˉequals(Input, Offset + 24u32, 72u8) ||
+        !Byteˉequals(Input, Offset + 25u32, 137u8) ||
+        !Byteˉequals(Input, Offset + 26u32, 148u8) ||
+        !Byteˉequals(Input, Offset + 27u32, 36u8) ||
+        !U32ˉequals(Input, Offset + 28u32, 8u32 + Target * 16u32) {
+        return Offset;
+    }
+    return Offset + 32u32;
+}
+
+export fn Nativeˉx64ˉproviderˉcallˉverify(
+    Input: bytes,
+    Offset: u32,
+    Capabilityˉindex: u32,
+    Firstˉsource: u32,
+    Secondˉsource: u32,
+    Thirdˉsource: u32,
+    Fourthˉsource: u32,
+    Fifthˉsource: u32,
+    Resultˉtarget: u32,
+    Failureˉtarget: u32
+) -> Nativeˉx64ˉproviderˉcallˉverification {
+    let Total: u32 = Bytesˉlength(Input);
+    if Capabilityˉindex >= 32u32 ||
+        Firstˉsource >= 2048u32 || Secondˉsource >= 2048u32 ||
+        Thirdˉsource >= 2048u32 || Fourthˉsource >= 2048u32 ||
+        Fifthˉsource >= 2048u32 || Resultˉtarget >= 2048u32 {
+        return Failure(Offset);
+    }
+    if Offset > Total || 216u32 > Total - Offset { return Failure(Offset); }
+    let Entryˉoffset: u32 = 32u32 + Capabilityˉindex * 24u32;
+    if !Byteˉequals(Input, Offset, 73u8) ||
+        !Byteˉequals(Input, Offset + 1u32, 139u8) ||
+        !Byteˉequals(Input, Offset + 2u32, 151u8) ||
+        !U32ˉequals(Input, Offset + 3u32, 128u32) ||
+        !Byteˉequals(Input, Offset + 7u32, 72u8) ||
+        !Byteˉequals(Input, Offset + 8u32, 139u8) ||
+        !Byteˉequals(Input, Offset + 9u32, 130u8) ||
+        !U32ˉequals(Input, Offset + 10u32, Entryˉoffset + 8u32) ||
+        !Byteˉequals(Input, Offset + 14u32, 76u8) ||
+        !Byteˉequals(Input, Offset + 15u32, 139u8) ||
+        !Byteˉequals(Input, Offset + 16u32, 130u8) ||
+        !U32ˉequals(Input, Offset + 17u32, Entryˉoffset + 16u32) ||
+        !Byteˉequals(Input, Offset + 21u32, 72u8) ||
+        !Byteˉequals(Input, Offset + 22u32, 131u8) ||
+        !Byteˉequals(Input, Offset + 23u32, 236u8) ||
+        !Byteˉequals(Input, Offset + 24u32, 80u8) {
+        return Failure(Offset);
+    }
+    var Cursor: u32 = Offset + 25u32;
+    let Firstˉnext: u32 = Verifyˉcell(Input, Cursor, Firstˉsource, 0u32);
+    if Firstˉnext == Cursor { return Failure(Cursor); }
+    Cursor = Firstˉnext;
+    let Secondˉnext: u32 = Verifyˉcell(Input, Cursor, Secondˉsource, 1u32);
+    if Secondˉnext == Cursor { return Failure(Cursor); }
+    Cursor = Secondˉnext;
+    let Thirdˉnext: u32 = Verifyˉcell(Input, Cursor, Thirdˉsource, 2u32);
+    if Thirdˉnext == Cursor { return Failure(Cursor); }
+    Cursor = Thirdˉnext;
+    let Fourthˉnext: u32 = Verifyˉcell(Input, Cursor, Fourthˉsource, 3u32);
+    if Fourthˉnext == Cursor { return Failure(Cursor); }
+    Cursor = Fourthˉnext;
+    let Fifthˉnext: u32 = Verifyˉcell(Input, Cursor, Fifthˉsource, 4u32);
+    if Fifthˉnext == Cursor { return Failure(Cursor); }
+    Cursor = Fifthˉnext;
+    if !Byteˉequals(Input, Cursor, 76u8) ||
+        !Byteˉequals(Input, Cursor + 1u32, 141u8) ||
+        !Byteˉequals(Input, Cursor + 2u32, 12u8) ||
+        !Byteˉequals(Input, Cursor + 3u32, 36u8) ||
+        !Byteˉequals(Input, Cursor + 4u32, 72u8) ||
+        !Byteˉequals(Input, Cursor + 5u32, 141u8) ||
+        !Byteˉequals(Input, Cursor + 6u32, 140u8) ||
+        !Byteˉequals(Input, Cursor + 7u32, 36u8) ||
+        !U32ˉequals(Input, Cursor + 8u32, 80u32 + Resultˉtarget * 16u32) ||
+        !Byteˉequals(Input, Cursor + 12u32, 186u8) ||
+        !U32ˉequals(Input, Cursor + 13u32, 5u32) ||
+        !Byteˉequals(Input, Cursor + 17u32, 255u8) ||
+        !Byteˉequals(Input, Cursor + 18u32, 208u8) ||
+        !Byteˉequals(Input, Cursor + 19u32, 72u8) ||
+        !Byteˉequals(Input, Cursor + 20u32, 131u8) ||
+        !Byteˉequals(Input, Cursor + 21u32, 196u8) ||
+        !Byteˉequals(Input, Cursor + 22u32, 80u8) ||
+        !Byteˉequals(Input, Cursor + 23u32, 133u8) ||
+        !Byteˉequals(Input, Cursor + 24u32, 192u8) ||
+        !Byteˉequals(Input, Cursor + 25u32, 15u8) ||
+        !Byteˉequals(Input, Cursor + 26u32, 133u8) ||
+        !U32ˉequals(
+            Input,
+            Cursor + 27u32,
+            Relativeˉu32(Failureˉtarget, Cursor + 31u32)
+        ) {
+        return Failure(Cursor);
+    }
+    return Nativeˉx64ˉproviderˉcallˉverification(true, 216u32, Offset + 216u32);
+}

@@ -1,0 +1,4 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Capability-Provider-Table-Bridge.wv"
+source "Runtime/Windvale/Native-Capability-Provider-Table-Core.wv"
+emit wvb

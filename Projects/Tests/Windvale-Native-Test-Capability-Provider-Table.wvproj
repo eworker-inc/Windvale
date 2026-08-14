@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Native-Capability-Provider-Table-Self-Test.wv"
+source "Runtime/Windvale/Native-Capability-Provider-Table-Core.wv"
+emit wvb

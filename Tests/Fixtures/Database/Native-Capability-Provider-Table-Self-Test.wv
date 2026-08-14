@@ -1,0 +1,264 @@
+module Nativeˉcapabilityˉproviderˉtableˉselfˉtest profile portable;
+
+import Runtimeˉnativeˉcapabilityˉproviderˉtable as Providerˉtable;
+
+enum Providerˉtableˉtestˉmarker {
+    Valid = 0;
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Identity(Name: text, Parameters: bytes, Return: u8) -> bytes {
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉbytes));
+    Result = Bytesˉconcat(Result, Nameˉbytes);
+    Result = Appendˉu32(Result, Bytesˉlength(Parameters));
+    Result = Bytesˉconcat(Result, Parameters);
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Return));
+}
+
+fn Entry(Identityˉlength: u32, Target: u64, State: u64) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Identityˉlength);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Target));
+    return Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(State));
+}
+
+fn Request(
+    First: bytes,
+    Second: bytes,
+    Mask: u32,
+    Firstˉtarget: u64,
+    Firstˉstate: u64,
+    Secondˉtarget: u64,
+    Secondˉstate: u64
+) -> bytes {
+    let Identityˉbytes: u32 = Bytesˉlength(First) + Bytesˉlength(Second);
+    let Total: u32 = 80u32 + Identityˉbytes;
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1364219479u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, Mask);
+    Result = Appendˉu32(Result, 24u32);
+    Result = Appendˉu32(Result, Identityˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(
+        Result,
+        Entry(Bytesˉlength(First), Firstˉtarget, Firstˉstate)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Entry(Bytesˉlength(Second), Secondˉtarget, Secondˉstate)
+    );
+    Result = Bytesˉconcat(Result, First);
+    return Bytesˉconcat(Result, Second);
+}
+
+fn Indexedˉidentity(Index: u32) -> bytes {
+    var Name: bytes = Textˉtoˉutf8("test.p");
+    Name = Bytesˉconcat(
+        Name,
+        Bytesˉslice(Bytesˉfromˉu32ˉlittle(48u32 + Index / 10u32), 0u32, 1u32)
+    );
+    Name = Bytesˉconcat(
+        Name,
+        Bytesˉslice(Bytesˉfromˉu32ˉlittle(48u32 + Index % 10u32), 0u32, 1u32)
+    );
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Name));
+    Result = Bytesˉconcat(Result, Name);
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+}
+
+fn Maximumˉrequest() -> bytes {
+    var Entries: bytes = Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+    var Identities: bytes = Entries;
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let Current: bytes = Indexedˉidentity(Index);
+        Entries = Bytesˉconcat(
+            Entries,
+            Entry(Bytesˉlength(Current), 1u64 + U64ˉfromˉu32(Index), 2u64)
+        );
+        Identities = Bytesˉconcat(Identities, Current);
+        Index = Index + 1u32;
+    }
+    let Total: u32 = 32u32 + Bytesˉlength(Entries) + Bytesˉlength(Identities);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1364219479u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, 32u32);
+    Result = Appendˉu32(Result, 4294967295u32);
+    Result = Appendˉu32(Result, 24u32);
+    Result = Appendˉu32(Result, Bytesˉlength(Identities));
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(Result, Entries);
+    return Bytesˉconcat(Result, Identities);
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+        )
+    );
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu8(Value),
+            Bytesˉslice(Input, Offset + 1u32, Bytesˉlength(Input) - Offset - 1u32)
+        )
+    );
+}
+
+fn Bytesˉareˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Rejected(Input: bytes, Status: u32, Failureˉoffset: u32) -> bool {
+    let Result: bytes =
+        Providerˉtable.Nativeˉcapabilityˉproviderˉtableˉbuild(Input);
+    return Bytesˉlength(Result) == 32u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 0u32) == 1380996695u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 4u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 8u32) == 32u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 12u32) == Status &&
+        Bytesˉreadˉu32ˉlittle(Result, 16u32) == Failureˉoffset &&
+        Bytesˉreadˉu32ˉlittle(Result, 20u32) == 0u32 &&
+        Bytesˉreadˉu64ˉlittle(Result, 24u32) == 0u64;
+}
+
+export fn Main() -> i32 {
+    let Marker: Providerˉtableˉtestˉmarker = Providerˉtableˉtestˉmarker.Valid;
+    if Marker != Providerˉtableˉtestˉmarker.Valid { return 17; }
+    let Console: bytes = Identity(
+        "console.write_line",
+        Bytesˉfromˉu8(3u8),
+        0u8
+    );
+    var Storageˉparameters: bytes = Bytesˉfromˉu8(5u8);
+    Storageˉparameters = Bytesˉconcat(Storageˉparameters, Bytesˉfromˉu8(10u8));
+    Storageˉparameters = Bytesˉconcat(Storageˉparameters, Bytesˉfromˉu8(10u8));
+    Storageˉparameters = Bytesˉconcat(Storageˉparameters, Bytesˉfromˉu8(5u8));
+    Storageˉparameters = Bytesˉconcat(Storageˉparameters, Bytesˉfromˉu8(6u8));
+    let Storage: bytes = Identity(
+        "storage.random_access_v1",
+        Storageˉparameters,
+        6u8
+    );
+    let Input: bytes = Request(
+        Console, Storage, 2u32,
+        0u64, 0u64, 1229782938247303441u64, 2459565876494606882u64
+    );
+    let Result: bytes =
+        Providerˉtable.Nativeˉcapabilityˉproviderˉtableˉbuild(Input);
+    let Tableˉbytes: u32 = 80u32 + Bytesˉlength(Console) + Bytesˉlength(Storage);
+    if Bytesˉlength(Result) != 32u32 + Tableˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Result, 0u32) != 1380996695u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 20u32) != Tableˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Result, 32u32) != 1414551127u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 40u32) != Tableˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Result, 44u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 48u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 52u32) != 24u32 {
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Result, 64u32) != 80u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 68u32) != Bytesˉlength(Console) ||
+        Bytesˉreadˉu64ˉlittle(Result, 72u32) != 0u64 ||
+        Bytesˉreadˉu64ˉlittle(Result, 80u32) != 0u64 ||
+        Bytesˉreadˉu32ˉlittle(Result, 88u32) != 80u32 + Bytesˉlength(Console) ||
+        Bytesˉreadˉu32ˉlittle(Result, 92u32) != Bytesˉlength(Storage) ||
+        Bytesˉreadˉu64ˉlittle(Result, 96u32) != 1229782938247303441u64 ||
+        Bytesˉreadˉu64ˉlittle(Result, 104u32) != 2459565876494606882u64 {
+        return 2;
+    }
+    let Identityˉoutput: u32 = 32u32 + 80u32;
+    if !Bytesˉareˉequal(
+            Bytesˉslice(Result, Identityˉoutput, Bytesˉlength(Console)),
+            Console
+        ) ||
+        !Bytesˉareˉequal(
+            Bytesˉslice(
+                Result,
+                Identityˉoutput + Bytesˉlength(Console),
+                Bytesˉlength(Storage)
+            ),
+            Storage
+        ) {
+        return 3;
+    }
+    if !Bytesˉareˉequal(
+        Providerˉtable.Nativeˉcapabilityˉproviderˉtableˉbuild(Input),
+        Result
+    ) {
+        return 4;
+    }
+    if !Rejected(
+        Bytesˉslice(Input, 0u32, Bytesˉlength(Input) - 1u32),
+        1u32,
+        8u32
+    ) { return 5; }
+    if !Rejected(Replaceˉu32(Input, 0u32, 0u32), 2u32, 0u32) { return 6; }
+    if !Rejected(Replaceˉu32(Input, 4u32, 2u32), 3u32, 4u32) { return 7; }
+    if !Rejected(Replaceˉu32(Input, 12u32, 0u32), 4u32, 12u32) { return 8; }
+    if !Rejected(Replaceˉu32(Input, 16u32, 4u32), 5u32, 16u32) { return 9; }
+    if !Rejected(Replaceˉu32(Input, 20u32, 16u32), 6u32, 20u32) { return 10; }
+    if !Rejected(Replaceˉu32(Input, 36u32, 1u32), 6u32, 36u32) { return 11; }
+    if !Rejected(Replaceˉu8(Input, 84u32, 67u8), 7u32, 80u32) { return 12; }
+    let Reordered: bytes = Request(
+        Storage, Console, 1u32,
+        1229782938247303441u64, 2459565876494606882u64, 0u64, 0u64
+    );
+    if !Rejected(
+        Reordered,
+        8u32,
+        80u32 + Bytesˉlength(Storage)
+    ) { return 13; }
+    if !Rejected(
+        Request(Console, Storage, 2u32, 0u64, 0u64, 0u64, 1u64),
+        9u32,
+        64u32
+    ) { return 14; }
+    if !Rejected(
+        Request(Console, Storage, 2u32, 0u64, 0u64, 1u64, 0u64),
+        9u32,
+        72u32
+    ) { return 15; }
+    let Storageˉinputˉoffset: u32 = 80u32 + Bytesˉlength(Console);
+    let Storageˉtypeˉoffset: u32 = Storageˉinputˉoffset + 4u32 + 24u32 + 4u32;
+    if !Rejected(
+        Replaceˉu8(Input, Storageˉtypeˉoffset, 0u8),
+        7u32,
+        Storageˉinputˉoffset
+    ) { return 16; }
+    if !Rejected(Replaceˉu32(Input, 12u32, 33u32), 4u32, 12u32) {
+        return 18;
+    }
+    let Maximum: bytes =
+        Providerˉtable.Nativeˉcapabilityˉproviderˉtableˉbuild(Maximumˉrequest());
+    if Bytesˉreadˉu32ˉlittle(Maximum, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Maximum, 44u32) != 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Maximum, 48u32) != 4294967295u32 {
+        return 19;
+    }
+    return 0;
+}

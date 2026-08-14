@@ -1,0 +1,103 @@
+module Compilerˉnativeˉx64ˉproviderˉcall profile portable;
+
+export record Compilerˉnativeˉx64ˉproviderˉcallˉemission {
+    Valid: bool;
+    Result: bytes;
+}
+
+fn Appendˉu8(Input: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    return 4294967295u32 - (Origin - Target) + 1u32;
+}
+
+fn Appendˉfour(
+    Input: bytes,
+    A: u8,
+    B: u8,
+    C: u8,
+    D: u8
+) -> bytes {
+    var Result: bytes = Appendˉu8(Input, A);
+    Result = Appendˉu8(Result, B);
+    Result = Appendˉu8(Result, C);
+    return Appendˉu8(Result, D);
+}
+
+fn Copyˉcell(Input: bytes, Source: u32, Target: u32) -> bytes {
+    var Result: bytes = Appendˉfour(Input, 72u8, 139u8, 148u8, 36u8);
+    Result = Appendˉu32(Result, 80u32 + Source * 16u32);
+    Result = Appendˉfour(Result, 72u8, 137u8, 148u8, 36u8);
+    Result = Appendˉu32(Result, Target * 16u32);
+    Result = Appendˉfour(Result, 72u8, 139u8, 148u8, 36u8);
+    Result = Appendˉu32(Result, 88u32 + Source * 16u32);
+    Result = Appendˉfour(Result, 72u8, 137u8, 148u8, 36u8);
+    return Appendˉu32(Result, 8u32 + Target * 16u32);
+}
+
+export fn Compilerˉnativeˉx64ˉproviderˉcallˉbytes() -> u32 {
+    return 216u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉproviderˉcall(
+    Input: bytes,
+    Capabilityˉindex: u32,
+    Firstˉsource: u32,
+    Secondˉsource: u32,
+    Thirdˉsource: u32,
+    Fourthˉsource: u32,
+    Fifthˉsource: u32,
+    Resultˉtarget: u32,
+    Failureˉtarget: u32
+) -> Compilerˉnativeˉx64ˉproviderˉcallˉemission {
+    if Capabilityˉindex >= 32u32 ||
+        Firstˉsource >= 2048u32 || Secondˉsource >= 2048u32 ||
+        Thirdˉsource >= 2048u32 || Fourthˉsource >= 2048u32 ||
+        Fifthˉsource >= 2048u32 || Resultˉtarget >= 2048u32 {
+        return Compilerˉnativeˉx64ˉproviderˉcallˉemission(false, Input);
+    }
+
+    let Entryˉoffset: u32 = 32u32 + Capabilityˉindex * 24u32;
+    var Result: bytes = Appendˉu8(Input, 73u8);
+    Result = Appendˉu8(Result, 139u8);
+    Result = Appendˉu8(Result, 151u8);
+    Result = Appendˉu32(Result, 128u32);
+    Result = Appendˉu8(Result, 72u8);
+    Result = Appendˉu8(Result, 139u8);
+    Result = Appendˉu8(Result, 130u8);
+    Result = Appendˉu32(Result, Entryˉoffset + 8u32);
+    Result = Appendˉu8(Result, 76u8);
+    Result = Appendˉu8(Result, 139u8);
+    Result = Appendˉu8(Result, 130u8);
+    Result = Appendˉu32(Result, Entryˉoffset + 16u32);
+    Result = Appendˉfour(Result, 72u8, 131u8, 236u8, 80u8);
+    Result = Copyˉcell(Result, Firstˉsource, 0u32);
+    Result = Copyˉcell(Result, Secondˉsource, 1u32);
+    Result = Copyˉcell(Result, Thirdˉsource, 2u32);
+    Result = Copyˉcell(Result, Fourthˉsource, 3u32);
+    Result = Copyˉcell(Result, Fifthˉsource, 4u32);
+    Result = Appendˉfour(Result, 76u8, 141u8, 12u8, 36u8);
+    Result = Appendˉfour(Result, 72u8, 141u8, 140u8, 36u8);
+    Result = Appendˉu32(Result, 80u32 + Resultˉtarget * 16u32);
+    Result = Appendˉu8(Result, 186u8);
+    Result = Appendˉu32(Result, 5u32);
+    Result = Appendˉu8(Result, 255u8);
+    Result = Appendˉu8(Result, 208u8);
+    Result = Appendˉfour(Result, 72u8, 131u8, 196u8, 80u8);
+    Result = Appendˉu8(Result, 133u8);
+    Result = Appendˉu8(Result, 192u8);
+    Result = Appendˉu8(Result, 15u8);
+    Result = Appendˉu8(Result, 133u8);
+    Result = Appendˉu32(
+        Result,
+        Relativeˉu32(Failureˉtarget, Bytesˉlength(Result) + 4u32)
+    );
+    return Compilerˉnativeˉx64ˉproviderˉcallˉemission(true, Result);
+}

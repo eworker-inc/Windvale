@@ -91,5 +91,9 @@ verify_target Publication \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
 verify_target Recovery \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
+verify_target ProviderTable \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
+verify_target ProviderCall \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
 
-echo 'native database storage status=Passed cases=3 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=5 local-results=0 cross-host-images=Verified'

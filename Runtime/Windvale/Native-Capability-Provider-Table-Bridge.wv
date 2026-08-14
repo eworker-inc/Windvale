@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉcapabilityˉproviderˉtableˉbridge profile portable;
+
+import Runtimeˉnativeˉcapabilityˉproviderˉtable as Providerˉtable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Providerˉtable.Nativeˉcapabilityˉproviderˉtableˉbuild(Input);
+}
