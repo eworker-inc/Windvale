@@ -45,7 +45,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :cleanup
 fc /b "%FirstWvb%" "%SecondWvb%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%FirstWvb%" 106620 a5ba2df3660676d3bcb1e2024c30849080ed2e641ff2264a240f2b8868dac693 "database-durable-commit WVB"
+call :verify "%FirstWvb%" 107155 1a026edee89222585e5c6b7a7367fca807846d5cfdd58010fc85d872f7f2973c "database-durable-commit WVB"
 if errorlevel 1 goto :cleanup
 
 "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
@@ -56,7 +56,7 @@ fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%FirstWvo%" 1988856 7fd7e95e26cad8bf9bf94b33f841c4a178f776428e4b9974eb3fb47dc0c7a7b0 "database-durable-commit WVO"
+call :verify "%FirstWvo%" 2001802 2abe19205e0f1e64afb7d49931697ab7f96646e315adf76531f52c50ddff14b5 "database-durable-commit WVO"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
@@ -65,7 +65,7 @@ if errorlevel 1 goto :cleanup
 set "EntryOffset="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%Map%"') do set "EntryOffset=%%E"
 if not "%EntryOffset%"=="151017" goto :cleanup
-call :verify "%Image%" 1985396 9dea673ea1ea54d1b4abe5c8bab6e1f68d40545086f4cb389949bcd02705eb00 "database-durable-commit image"
+call :verify "%Image%" 1998308 60da45fe57c3d1614024588be4c22044f4057fa04512693d82df47f90aebfbe1 "database-durable-commit image"
 if errorlevel 1 goto :cleanup
 copy /b "%Image%" "%ImagePrefix%.chunk-0" >nul
 if errorlevel 1 goto :cleanup
@@ -73,7 +73,7 @@ if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows >nul
 if errorlevel 1 goto :cleanup
-call :verify "%WindowsApplication%" 2006528 eff2d4643ea070df6c5867a3301ab495d776b81cae976de6939a5bf3cbda895f "database-durable-commit Windows application"
+call :verify "%WindowsApplication%" 2019328 36d24784407890f07b1a279276d52c7f979e6cb06340cc5ae08baa4f37cd286f "database-durable-commit Windows application"
 if errorlevel 1 goto :cleanup
 for %%C in (A B C D E F G H I J K L) do (
     call :run_case %%C
@@ -83,7 +83,7 @@ for %%C in (A B C D E F G H I J K L) do (
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
 if errorlevel 1 goto :cleanup
-call :verify "%LinuxApplication%" 2007040 db27ac7755bd29931c1a298e42ee288c9a061216213a4067a1fc688c788065ed "database-durable-commit Linux application"
+call :verify "%LinuxApplication%" 2019328 965b4a1fb73b6aaf33aec2478443329b6759a6b20c93e3e3f83067476b81125d "database-durable-commit Linux application"
 if errorlevel 1 goto :cleanup
 
 set "Result=0"

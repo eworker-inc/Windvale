@@ -119,6 +119,8 @@ fn Composition() -> i32 {
         Result.Replaced || Result.Leftˉentryˉcount != 1u32 ||
         Result.Rightˉentryˉcount != 2u32 || Result.Leftˉpage != 3u64 ||
         Result.Rightˉpage != 4u64 || Result.Rootˉpage != 5u64 ||
+        Result.Obsoleteˉpageˉcount != 1u32 ||
+        Result.Obsoleteˉrootˉpage != 1u64 ||
         Result.Commit.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid ||
         Result.Commit.Rootˉpage != 5u64 || Result.Commit.Logˉpage != 6u64 ||
         Result.Commit.Targetˉgeneration != 3u64 ||
@@ -146,10 +148,10 @@ fn Composition() -> i32 {
         );
     if Left.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
         Left.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
-        Left.Pageˉidentifier != 3u64 || Left.Previousˉpage != 1u64 ||
+        Left.Pageˉidentifier != 3u64 || Left.Previousˉpage != NO_PAGE ||
         Right.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
         Right.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
-        Right.Pageˉidentifier != 4u64 || Right.Previousˉpage != 1u64 ||
+        Right.Pageˉidentifier != 4u64 || Right.Previousˉpage != NO_PAGE ||
         Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
         Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
         Root.Pageˉidentifier != 5u64 || Root.Previousˉpage != 1u64 ||

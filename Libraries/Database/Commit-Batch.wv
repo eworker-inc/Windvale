@@ -26,6 +26,8 @@ export enum Databaseˉcommitˉbatchˉerror {
     Invalidˉlogˉpage = 13;
     Invalidˉtargetˉsuperblock = 14;
     Invalidˉpublication = 15;
+    Invalidˉobsoleteˉpage = 16;
+    Duplicateˉobsoleteˉpage = 17;
 }
 
 export record Databaseˉcommitˉbatch {
@@ -100,6 +102,29 @@ export fn Databaseˉcommitˉbatchˉreject(
         Page.Databaseˉdurableˉpageˉerror.Valid,
         0u32
     );
+}
+
+fn Databaseˉcommitˉbatchˉobsoleteˉpageˉisˉduplicate(
+    Dataˉpages: bytes,
+    Pageˉsize: u32,
+    Limit: u32,
+    Obsoleteˉpage: u64
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let Previousˉbytes: bytes = Bytesˉslice(
+            Dataˉpages,
+            Index * Pageˉsize,
+            Pageˉsize
+        );
+        let Previousˉdataˉpage: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Previousˉbytes);
+        if Previousˉdataˉpage.Previousˉpage == Obsoleteˉpage {
+            return true;
+        }
+        Index = Index + 1u32;
+    }
+    return false;
 }
 
 export fn Databaseˉcommitˉbatchˉbegin(
@@ -224,6 +249,27 @@ export fn Databaseˉcommitˉbatchˉbegin(
             return Databaseˉcommitˉbatchˉfailure(
                 Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage,
                 Page.Databaseˉdurableˉpageˉerror.Invalidˉpageˉidentifier,
+                Index
+            );
+        }
+        if Dataˉpage.Previousˉpage != DATABASE_COMMIT_BATCH_NO_PAGE &&
+            Dataˉpage.Previousˉpage >= Current.Pageˉcount {
+            return Databaseˉcommitˉbatchˉfailure(
+                Databaseˉcommitˉbatchˉerror.Invalidˉobsoleteˉpage,
+                Page.Databaseˉdurableˉpageˉerror.Invalidˉpreviousˉpage,
+                Index
+            );
+        }
+        if Dataˉpage.Previousˉpage != DATABASE_COMMIT_BATCH_NO_PAGE &&
+            Databaseˉcommitˉbatchˉobsoleteˉpageˉisˉduplicate(
+                Dataˉpages,
+                Current.Pageˉsize,
+                Index,
+                Dataˉpage.Previousˉpage
+            ) {
+            return Databaseˉcommitˉbatchˉfailure(
+                Databaseˉcommitˉbatchˉerror.Duplicateˉobsoleteˉpage,
+                Page.Databaseˉdurableˉpageˉerror.Invalidˉpreviousˉpage,
                 Index
             );
         }

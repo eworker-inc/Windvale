@@ -1,0 +1,630 @@
+module Databaseˉdepthˉtwoˉupsertˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdepthˉtwoˉupsert as Upsert;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Record;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Value(Value: i32) -> bytes {
+    return Bytesˉfromˉi32ˉlittle(Value);
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64,
+        1u64,
+        2u64,
+        3u64,
+        2u64,
+        5u64,
+        6u64,
+        1u64,
+        7u64,
+        29184u64,
+        PAGE_SIZE,
+        2u32
+    );
+}
+
+fn Afterˉordinary() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.First,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64,
+        1u64,
+        2u64,
+        4u64,
+        3u64,
+        8u64,
+        9u64,
+        1u64,
+        10u64,
+        41472u64,
+        PAGE_SIZE,
+        2u32
+    );
+}
+
+fn Oneˉentry(Keyˉbytes: bytes, Valueˉbytes: bytes) -> bytes {
+    let Result: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Emptyˉbytes(),
+            Keyˉbytes,
+            Valueˉbytes,
+            MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Twoˉentries(
+    Firstˉkey: bytes,
+    Firstˉvalue: bytes,
+    Secondˉkey: bytes,
+    Secondˉvalue: bytes
+) -> bytes {
+    let First: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Emptyˉbytes(),
+            Firstˉkey,
+            Firstˉvalue,
+            MAXIMUM_PAYLOAD
+        );
+    let Second: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            First.Bytes,
+            Secondˉkey,
+            Secondˉvalue,
+            MAXIMUM_PAYLOAD
+        );
+    return Second.Bytes;
+}
+
+fn Leafˉpage(
+    Pageˉidentifier: u64,
+    Generation: u64,
+    Sequence: u64,
+    Previousˉpage: u64,
+    Payload: bytes
+) -> Page.Databaseˉdurableˉpageˉresult {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            PAGE_SIZE,
+            Pageˉidentifier,
+            Generation,
+            Sequence,
+            Previousˉpage,
+            Node.Entryˉcount,
+            Payload
+        )
+    );
+}
+
+fn Rootˉpage(
+    Separator: bytes,
+    Leftˉpage: u64,
+    Rightˉpage: u64
+) -> Page.Databaseˉdurableˉpageˉresult {
+    let Branch: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Separator,
+            Leftˉpage,
+            Rightˉpage,
+            MAXIMUM_PAYLOAD
+        );
+    return Page.Databaseˉdurableˉpageˉencode(
+        Page.Databaseˉdurableˉpage(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            PAGE_SIZE,
+            5u64,
+            3u64,
+            2u64,
+            1u64,
+            Branch.Entryˉcount,
+            Branch.Bytes
+        )
+    );
+}
+
+fn Ordinaryˉupdates() -> i32 {
+    let Left: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        3u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(1u8), Value(11))
+    );
+    let Right: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        4u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(5u8), Value(55))
+    );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Rootˉpage(Key(5u8), 3u64, 4u64);
+    let First: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current(),
+            Root,
+            Left,
+            Key(2u8),
+            Value(22)
+        );
+    if First.Error != Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Valid ||
+        First.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        First.Replaced || First.Split || First.Branchˉentryˉcount != 1u32 ||
+        First.Leftˉentryˉcount != 2u32 ||
+        First.Rightˉentryˉcount != 0u32 || First.Leftˉpage != 7u64 ||
+        First.Rightˉpage != NO_PAGE || First.Rootˉpage != 8u64 ||
+        First.Obsoleteˉpageˉcount != 2u32 ||
+        First.Obsoleteˉrootˉpage != 5u64 ||
+        First.Obsoleteˉleafˉpage != 3u64 ||
+        First.Commit.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid ||
+        First.Commit.Logˉpage != 9u64 ||
+        First.Commit.Targetˉgeneration != 4u64 ||
+        First.Commit.Targetˉsequence != 3u64 ||
+        First.Commit.Targetˉlength != 41472u64 ||
+        Bytesˉlength(First.Commit.Pages) != PAGE_SIZE * 3u32 {
+        return 1;
+    }
+    let Newˉleft: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(First.Commit.Pages, 0u32, PAGE_SIZE)
+        );
+    let Newˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(First.Commit.Pages, PAGE_SIZE, PAGE_SIZE)
+        );
+    let Log: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(First.Commit.Pages, PAGE_SIZE * 2u32, PAGE_SIZE)
+        );
+    if Newˉleft.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Newˉleft.Pageˉidentifier != 7u64 ||
+        Newˉleft.Previousˉpage != 3u64 ||
+        Newˉroot.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Newˉroot.Pageˉidentifier != 8u64 ||
+        Newˉroot.Previousˉpage != 5u64 ||
+        Log.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Log.Pageˉidentifier != 9u64 || Log.Previousˉpage != 6u64 {
+        return 2;
+    }
+    let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Newˉleft.Payload, Key(1u8));
+    let Two: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Newˉleft.Payload, Key(2u8));
+    let Routeˉleft: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(2u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Routeˉright: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(5u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    if !One.Found || Bytesˉreadˉi32ˉlittle(One.Value, 0u32) != 11 ||
+        !Two.Found || Bytesˉreadˉi32ˉlittle(Two.Value, 0u32) != 22 ||
+        Routeˉleft.Child != 7u64 || Routeˉright.Child != 4u64 {
+        return 3;
+    }
+    let Commitˉrecord: Record.Databaseˉcommitˉrecordˉresult =
+        Record.Databaseˉcommitˉrecordˉdecode(Log.Payload);
+    if Commitˉrecord.Error != Record.Databaseˉcommitˉrecordˉerror.Valid ||
+        Commitˉrecord.Firstˉallocatedˉpage != 7u64 ||
+        Commitˉrecord.Allocatedˉpageˉcount != 3u64 ||
+        Commitˉrecord.Rootˉpage != 8u64 ||
+        Commitˉrecord.Logˉpage != 9u64 ||
+        Commitˉrecord.Pageˉcount != 10u64 ||
+        Commitˉrecord.Rootˉdepth != 2u32 {
+        return 4;
+    }
+    let Second: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Afterˉordinary(),
+            Newˉroot,
+            Right,
+            Key(6u8),
+            Value(66)
+        );
+    if Second.Error != Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Valid ||
+        Second.Split || Second.Leftˉpage != 10u64 ||
+        Second.Rootˉpage != 11u64 || Second.Commit.Logˉpage != 12u64 ||
+        Second.Obsoleteˉrootˉpage != 8u64 ||
+        Second.Obsoleteˉleafˉpage != 4u64 ||
+        Second.Commit.Targetˉgeneration != 5u64 ||
+        Second.Commit.Targetˉsequence != 4u64 ||
+        Second.Commit.Targetˉlength != 53760u64 {
+        return 5;
+    }
+    let Secondˉleaf: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Second.Commit.Pages, 0u32, PAGE_SIZE)
+        );
+    let Secondˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Second.Commit.Pages, PAGE_SIZE, PAGE_SIZE)
+        );
+    let Secondˉrouteˉleft: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Secondˉroot.Payload,
+            Key(2u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Secondˉrouteˉright: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Secondˉroot.Payload,
+            Key(6u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Six: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Secondˉleaf.Payload, Key(6u8));
+    if Secondˉleaf.Previousˉpage != 4u64 ||
+        Secondˉroot.Previousˉpage != 8u64 ||
+        Secondˉrouteˉleft.Child != 7u64 ||
+        Secondˉrouteˉright.Child != 10u64 ||
+        !Six.Found || Bytesˉreadˉi32ˉlittle(Six.Value, 0u32) != 66 {
+        return 6;
+    }
+    return 0;
+}
+
+fn Splitˉleftˉchild() -> i32 {
+    let Left: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        3u64,
+        3u64,
+        2u64,
+        1u64,
+        Twoˉentries(
+            Key(1u8),
+            Zeroes(1700u32),
+            Key(3u8),
+            Zeroes(1700u32)
+        )
+    );
+    let Right: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        4u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(9u8), Value(99))
+    );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Rootˉpage(Key(9u8), 3u64, 4u64);
+    let Result: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current(),
+            Root,
+            Left,
+            Key(2u8),
+            Zeroes(600u32)
+        );
+    if Result.Error != Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Valid ||
+        !Result.Split || Result.Replaced ||
+        Result.Branchˉentryˉcount != 2u32 ||
+        Result.Leftˉentryˉcount != 1u32 ||
+        Result.Rightˉentryˉcount != 2u32 ||
+        Result.Leftˉpage != 7u64 || Result.Rightˉpage != 8u64 ||
+        Result.Rootˉpage != 9u64 || Result.Commit.Logˉpage != 10u64 ||
+        Result.Commit.Targetˉlength != 45568u64 ||
+        Result.Obsoleteˉrootˉpage != 5u64 ||
+        Result.Obsoleteˉleafˉpage != 3u64 ||
+        Bytesˉlength(Result.Commit.Pages) != PAGE_SIZE * 4u32 {
+        return 1;
+    }
+    let Newˉleft: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, 0u32, PAGE_SIZE)
+        );
+    let Newˉright: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE, PAGE_SIZE)
+        );
+    let Newˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 2u32, PAGE_SIZE)
+        );
+    if Newˉleft.Previousˉpage != 3u64 ||
+        Newˉright.Previousˉpage != NO_PAGE ||
+        Newˉroot.Previousˉpage != 5u64 {
+        return 2;
+    }
+    let Oneˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(1u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Twoˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(2u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Nineˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(9u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    if Oneˉroute.Child != 7u64 || Twoˉroute.Child != 8u64 ||
+        Nineˉroute.Child != 4u64 {
+        return 3;
+    }
+    let Repeat: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current(),
+            Root,
+            Left,
+            Key(2u8),
+            Zeroes(600u32)
+        );
+    if !Bytesˉequal(Result.Commit.Pages, Repeat.Commit.Pages) ||
+        !Bytesˉequal(Result.Commit.Superblock, Repeat.Commit.Superblock) {
+        return 4;
+    }
+    return 0;
+}
+
+fn Splitˉrightmostˉchild() -> i32 {
+    let Left: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        3u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(1u8), Value(11))
+    );
+    let Right: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        4u64,
+        3u64,
+        2u64,
+        1u64,
+        Twoˉentries(
+            Key(5u8),
+            Zeroes(1700u32),
+            Key(7u8),
+            Zeroes(1700u32)
+        )
+    );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Rootˉpage(Key(5u8), 3u64, 4u64);
+    let Result: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current(),
+            Root,
+            Right,
+            Key(6u8),
+            Zeroes(600u32)
+        );
+    if Result.Error != Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Valid ||
+        !Result.Split || Result.Branchˉentryˉcount != 2u32 ||
+        Result.Obsoleteˉleafˉpage != 4u64 {
+        return 1;
+    }
+    let Newˉroot: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Commit.Pages, PAGE_SIZE * 2u32, PAGE_SIZE)
+        );
+    let Oneˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(1u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Fiveˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(5u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Sixˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Newˉroot.Payload,
+            Key(6u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    if Oneˉroute.Child != 3u64 || Fiveˉroute.Child != 7u64 ||
+        Sixˉroute.Child != 8u64 {
+        return 2;
+    }
+    return 0;
+}
+
+fn Rejections() -> i32 {
+    let Left: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        3u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(1u8), Value(11))
+    );
+    let Right: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        4u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(5u8), Value(55))
+    );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Rootˉpage(Key(5u8), 3u64, 4u64);
+    let Wrongˉchild: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current(),
+            Root,
+            Right,
+            Key(2u8),
+            Value(22)
+        );
+    if Wrongˉchild.Error !=
+        Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Childˉmismatch {
+        return 1;
+    }
+    let Badˉrangeˉleaf: Page.Databaseˉdurableˉpageˉresult = Leafˉpage(
+        3u64,
+        3u64,
+        2u64,
+        1u64,
+        Oneˉentry(Key(5u8), Value(55))
+    );
+    let Badˉrange: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current(),
+            Root,
+            Badˉrangeˉleaf,
+            Key(2u8),
+            Value(22)
+        );
+    if Badˉrange.Error !=
+        Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Invalidˉrange {
+        return 2;
+    }
+    let Collision: Tree.Databaseˉtreeˉbranchˉupdateˉresult =
+        Tree.Databaseˉtreeˉbranchˉreplaceˉchild(
+            Root.Payload,
+            3u64,
+            4u64,
+            MAXIMUM_PAYLOAD
+        );
+    if Collision.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild {
+        return 3;
+    }
+    let Full: Tree.Databaseˉtreeˉbranchˉupdateˉresult =
+        Tree.Databaseˉtreeˉbranchˉsplitˉchild(
+            Root.Payload,
+            3u64,
+            Key(2u8),
+            7u64,
+            8u64,
+            Bytesˉlength(Root.Payload)
+        );
+    if Full.Error != Tree.Databaseˉtreeˉnodeˉerror.Full {
+        return 4;
+    }
+    return 0;
+}
+
+fn Ownedˉpageˉcopies() -> i32 {
+    let Original: Page.Databaseˉdurableˉpageˉresult =
+        Rootˉpage(Key(5u8), 3u64, 4u64);
+    let Copy: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉownedˉcopy(Original);
+    if Copy.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Copy.Kind != Original.Kind || Copy.Pageˉsize != Original.Pageˉsize ||
+        Copy.Pageˉidentifier != Original.Pageˉidentifier ||
+        Copy.Generation != Original.Generation ||
+        Copy.Commitˉsequence != Original.Commitˉsequence ||
+        Copy.Previousˉpage != Original.Previousˉpage ||
+        Copy.Itemˉcount != Original.Itemˉcount ||
+        !Bytesˉequal(Copy.Payload, Original.Payload) ||
+        !Bytesˉequal(Copy.Bytes, Original.Bytes) {
+        return 1;
+    }
+    let Invalid: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉownedˉcopy(
+            Page.Databaseˉdurableˉpageˉdecode(Emptyˉbytes())
+        );
+    if Invalid.Error != Page.Databaseˉdurableˉpageˉerror.Invalidˉlength {
+        return 2;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Ordinary: i32 = Ordinaryˉupdates();
+    if Ordinary != 0 { return 10 + Ordinary; }
+    let Leftˉsplit: i32 = Splitˉleftˉchild();
+    if Leftˉsplit != 0 { return 30 + Leftˉsplit; }
+    let Rightˉsplit: i32 = Splitˉrightmostˉchild();
+    if Rightˉsplit != 0 { return 50 + Rightˉsplit; }
+    let Rejected: i32 = Rejections();
+    if Rejected != 0 { return 70 + Rejected; }
+    let Owned: i32 = Ownedˉpageˉcopies();
+    if Owned != 0 { return 90 + Owned; }
+    return 0;
+}

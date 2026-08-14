@@ -4,8 +4,9 @@
 
 - Format: `WVTN 1`
 - Portable codec, routing, and leaf split: `Libraries/Database/Tree-Node.wv`
-- Durable compositions: `Libraries/Database/Single-Leaf-Upsert.wv` and
-  `Libraries/Database/Root-Split-Upsert.wv`
+- Durable compositions: `Libraries/Database/Single-Leaf-Upsert.wv`,
+  `Libraries/Database/Root-Split-Upsert.wv`, and
+  `Libraries/Database/Depth-Two-Upsert.wv`
 - Physical envelope: `WVPG 1`
 - Hosted reader: `Libraries/Platform/Database/Durable-Tree-Reader.wv`
 - Evidence: portable native execution and focused Windows interruption/restart;
@@ -24,11 +25,12 @@ interpret text, numbers, nulls, rows, or collation. Callers must provide one
 canonical key encoding whose unsigned bytewise order is the intended index
 order.
 
-The implemented mutations are one root-leaf copy-on-write upsert and the first
-full-root transition to two leaves beneath a branch root. Provider-backed
-lookup traverses that depth-two shape with global range and graph proofs.
-General non-root split propagation, branch rewrite, merge, and reclamation are
-not yet implemented.
+The implemented mutations are root-leaf copy-on-write upsert, the first
+full-root transition to two leaves beneath a branch root, and repeated
+depth-two updates that replace or split any routed leaf while preserving
+untouched children. Provider-backed lookup traverses that depth-two shape with
+global range and graph proofs. Depth-three root growth, internal-branch split
+propagation, merge, and reclamation are not yet implemented.
 
 ## Header
 
@@ -106,6 +108,11 @@ Databaseˉtreeˉbranchˉtwoˉchildren(Separator, Left, Right, Maximum_payload)
     -> Databaseˉtreeˉnodeˉresult
 Databaseˉtreeˉbranchˉroute(Input, Key, Has_lower, Lower, Has_upper, Upper)
     -> Databaseˉtreeˉbranchˉrouteˉresult
+Databaseˉtreeˉbranchˉreplaceˉchild(Input, Old_child, New_child, Maximum_payload)
+    -> Databaseˉtreeˉbranchˉupdateˉresult
+Databaseˉtreeˉbranchˉsplitˉchild(
+    Input, Old_child, Separator, Left_child, Right_child, Maximum_payload
+) -> Databaseˉtreeˉbranchˉupdateˉresult
 Databaseˉtreeˉleafˉrangeˉvalidate(
     Input, Has_lower, Lower, Has_upper, Upper
 ) -> Databaseˉtreeˉnodeˉerror
@@ -122,7 +129,10 @@ leaves fit the selected payload ceiling. It minimizes encoded byte imbalance
 and uses the earliest boundary as the deterministic tie break. The separator
 is an owned copy of the first right-leaf key. Branch routing treats inherited
 bounds as lower-inclusive and upper-exclusive, copies returned bounds, and
-routes separator equality to the right child.
+routes separator equality to the right child. Branch replacement and split
+rewrite exactly one matching entry child or rightmost child, preserve every
+untouched separator and child, and reject missing, duplicate, colliding,
+noncanonical, or full results.
 
 A successful lookup value is a borrowed slice of the caller-supplied immutable
 node bytes. Its lifetime is therefore the input's lifetime. When the input came
@@ -150,10 +160,17 @@ superblock bytes.
 
 When ordinary root-leaf upsert returns `Full`, the separate root-split
 composition can append a left leaf, right leaf, and branch root through the
-bounded commit batch. The new root has depth two, every new data page links the
-old root as its predecessor, and the old generation remains immutable. The
-complete provider-backed traversal and publication contract is defined by
-[tree reading and root split](Windvale-Database-Tree-Reading-And-Root-Split.md).
+bounded commit batch. The new root has depth two and owns the old root as its
+predecessor; the two new leaves have no predecessor because neither replaces a
+committed leaf. The old generation remains immutable. The complete
+provider-backed traversal and publication contract is defined by [tree reading
+and root split](Windvale-Database-Tree-Reading-And-Root-Split.md).
+
+Once depth two exists, the [depth-two upsert
+composition](Windvale-Database-Depth-Two-Upsert.md) replaces one routed leaf
+and the root, or splits one routed leaf and inserts its separator into the
+replacement root. The replacement leaf owns the old leaf, the replacement root
+owns the old root, and a newly created right leaf has no predecessor.
 
 ## Verification
 
@@ -163,18 +180,21 @@ found lookup, deterministic output, exact payload capacity, key/value/count
 limits, every header field, truncated entries, duplicate order, trailing bytes,
 branch reserved/child rules, inherited ranges, separator equality, every legal
 split boundary, deterministic byte balance, root-selection mismatch, invalid
-root payload, and two consecutive durable generations.
+root payload, branch replacement and split at entry and rightmost children,
+collision and branch-full rejection, owned page copies, obsolete-page
+uniqueness, and three consecutive durable generations.
 
-The focused Windows hosts publish both a depth-one key `u32(7)` / value
-`i32(42)` generation and a depth-two three-key generation. They terminate
-after zero through four storage actions. Every restart selects only a fully
-valid old or new generation; the depth-two reader reaches either child in two
-page visits and returns the exact value. Equivalent Linux images are
-constructed pending independent execution.
+The focused Windows hosts publish a depth-one key `u32(7)` / value `i32(42)`
+generation, a depth-two three-key generation, and a repeated routed update.
+They terminate after zero through four storage actions during either
+publication. Every restart selects only a fully valid old or new generation;
+the depth-two reader reaches either child in two page visits and returns the
+exact value. Equivalent Linux images are constructed pending independent
+execution.
 
 ## Next contracts
 
-The next tree milestone is general depth-two upsert and child split propagation
-with obsolete-page ownership. Delete, merge, reclamation, pinned concurrent
-snapshots, catalog typing, SQL, and network service behavior remain later
-layers.
+After the compiler/tooling performance milestone, the next tree milestone is
+depth-three root growth and internal split propagation. Delete, merge,
+reclamation, pinned concurrent snapshots, catalog typing, SQL, and network
+service behavior remain later layers.

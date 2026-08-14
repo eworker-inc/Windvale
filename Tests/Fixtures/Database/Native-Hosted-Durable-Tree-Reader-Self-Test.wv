@@ -4,6 +4,7 @@ import Randomˉaccessˉstorage as Storage;
 import Durableˉstorageˉexecutor as Executor;
 import Durableˉtreeˉreader as Reader;
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdepthˉtwoˉupsert as Upsert;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉpublication as Publication;
@@ -14,7 +15,9 @@ capability storage.random_access_v1;
 
 const INITIAL_LENGTH: u64 = 4608u64;
 const COMMITTED_LENGTH: u64 = 20992u64;
+const UPDATED_LENGTH: u64 = 33280u64;
 const PAGE_SIZE: u32 = 4096u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
 
 fn Emptyˉbytes() -> bytes {
     let Unit: bytes = Bytesˉfromˉu8(0u8);
@@ -108,7 +111,7 @@ fn Publishˉdepthˉtwo(
                 1u64,
                 2u64,
                 1u64,
-                0u64,
+                NO_PAGE,
                 1u32,
                 Leftˉnode
             )
@@ -121,7 +124,7 @@ fn Publishˉdepthˉtwo(
                 2u64,
                 2u64,
                 1u64,
-                0u64,
+                NO_PAGE,
                 2u32,
                 Rightˉnode
             )
@@ -198,6 +201,94 @@ fn Publishˉdepthˉtwo(
     return 0;
 }
 
+fn Readˉpage(
+    Description: Storage.Storageˉresult,
+    Pageˉidentifier: u64
+) -> Page.Databaseˉdurableˉpageˉresult {
+    let Read: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        512u64 + Pageˉidentifier * U64ˉfromˉu32(PAGE_SIZE),
+        PAGE_SIZE
+    );
+    if Read.Status != Storage.Storageˉstatus.Valid ||
+        Bytesˉlength(Read.Value) != PAGE_SIZE {
+        return Page.Databaseˉdurableˉpageˉdecode(Emptyˉbytes());
+    }
+    return Page.Databaseˉdurableˉpageˉdecode(Read.Value);
+}
+
+fn Publishˉdepthˉtwoˉupdate(
+    Description: Storage.Storageˉresult,
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Maximumˉactions: u32
+) -> i32 {
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉownedˉcopy(
+            Readˉpage(Description, Current.Rootˉpage)
+        );
+    let Child: Page.Databaseˉdurableˉpageˉresult =
+        Readˉpage(Description, 2u64);
+    let Transaction: Upsert.Databaseˉdepthˉtwoˉupsert =
+        Upsert.Databaseˉdepthˉtwoˉupsertˉbegin(
+            Current,
+            Root,
+            Child,
+            Key(4u8),
+            Value(40)
+        );
+    if Transaction.Error !=
+            Upsert.Databaseˉdepthˉtwoˉupsertˉerror.Valid ||
+        Transaction.Split || Transaction.Replaced ||
+        Transaction.Leftˉpage != 5u64 ||
+        Transaction.Rightˉpage != NO_PAGE ||
+        Transaction.Rootˉpage != 6u64 ||
+        Transaction.Obsoleteˉpageˉcount != 2u32 ||
+        Transaction.Obsoleteˉrootˉpage != 3u64 ||
+        Transaction.Obsoleteˉleafˉpage != 2u64 ||
+        Transaction.Commit.Error !=
+            Batch.Databaseˉcommitˉbatchˉerror.Valid ||
+        Transaction.Commit.Logˉpage != 7u64 ||
+        Transaction.Commit.Targetˉlength != UPDATED_LENGTH {
+        return 40;
+    }
+    let Initial: Publication.Databaseˉstorageˉpublication =
+        Publication.Databaseˉstorageˉpublicationˉbegin(
+            Transaction.Commit.Publication,
+            Description.Generation,
+            Current.Tailˉbytes,
+            Description.Storageˉlength,
+            Transaction.Commit.Pages,
+            Transaction.Commit.Superblock
+        );
+    if Initial.Status !=
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active ||
+        Initial.Error != Publication.Databaseˉstorageˉpublicationˉerror.None {
+        return 41;
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(
+            Initial,
+            Maximumˉactions
+        );
+    if Execution.Actions != Maximumˉactions {
+        return 42;
+    }
+    if Maximumˉactions < 4u32 {
+        if Execution.State.Status !=
+                Publication.Databaseˉstorageˉpublicationˉstatus.Active ||
+            Execution.State.Error !=
+                Publication.Databaseˉstorageˉpublicationˉerror.None {
+            return 43;
+        }
+    } else if Execution.State.Status !=
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed ||
+        Execution.State.Error !=
+            Publication.Databaseˉstorageˉpublicationˉerror.None {
+        return 44;
+    }
+    return 0;
+}
+
 fn Recoverˉtail(
     Description: Storage.Storageˉresult,
     Current: Superblock.Databaseˉsuperblockˉselection
@@ -226,6 +317,10 @@ fn Markerˉactions(Storageˉlength: u64) -> u32 {
     if Storageˉlength == 4610u64 { return 1u32; }
     if Storageˉlength == 4611u64 { return 2u32; }
     if Storageˉlength == 4612u64 { return 3u32; }
+    if Storageˉlength == 20993u64 { return 0u32; }
+    if Storageˉlength == 20994u64 { return 1u32; }
+    if Storageˉlength == 20995u64 { return 2u32; }
+    if Storageˉlength == 20996u64 { return 3u32; }
     return 4u32;
 }
 
@@ -235,6 +330,14 @@ fn Interruptionˉresult(Actions: u32) -> i32 {
     if Actions == 2u32 { return 102; }
     if Actions == 3u32 { return 103; }
     return 104;
+}
+
+fn Updateˉinterruptionˉresult(Actions: u32) -> i32 {
+    if Actions == 0u32 { return 110; }
+    if Actions == 1u32 { return 111; }
+    if Actions == 2u32 { return 112; }
+    if Actions == 3u32 { return 113; }
+    return 114;
 }
 
 fn Validateˉlookup(
@@ -309,6 +412,87 @@ fn Validateˉlookup(
     return 0;
 }
 
+fn Validateˉupdatedˉlookup(
+    Description: Storage.Storageˉresult,
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> i32 {
+    let One: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(1u8));
+    if One.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
+        One.Pageˉvisits != 2u32 || One.Pageˉidentifier != 1u64 ||
+        Bytesˉlength(One.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(One.Value, 0u32) != 10 {
+        return 60;
+    }
+    let Two: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(2u8));
+    if Two.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
+        Two.Pageˉvisits != 2u32 || Two.Pageˉidentifier != 5u64 ||
+        Bytesˉlength(Two.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(Two.Value, 0u32) != 20 {
+        return 61;
+    }
+    let Three: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(3u8));
+    if Three.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
+        Three.Pageˉvisits != 2u32 || Three.Pageˉidentifier != 5u64 ||
+        Bytesˉlength(Three.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(Three.Value, 0u32) != 30 {
+        return 62;
+    }
+    let Four: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(4u8));
+    if Four.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
+        Four.Pageˉvisits != 2u32 || Four.Pageˉidentifier != 5u64 ||
+        Bytesˉlength(Four.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(Four.Value, 0u32) != 40 {
+        return 63;
+    }
+    let Missing: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(8u8));
+    if Missing.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Missing ||
+        Missing.Pageˉvisits != 2u32 || Missing.Pageˉidentifier != 5u64 {
+        return 64;
+    }
+    let Leaf: Page.Databaseˉdurableˉpageˉresult =
+        Readˉpage(Description, 5u64);
+    if Leaf.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Leaf.Previousˉpage != 2u64 {
+        return 65;
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Readˉpage(Description, 6u64);
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Previousˉpage != 3u64 {
+        return 66;
+    }
+    let Leftˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload,
+            Key(1u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    let Rightˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload,
+            Key(4u8),
+            false,
+            Emptyˉbytes(),
+            false,
+            Emptyˉbytes()
+        );
+    if Leftˉroute.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Leftˉroute.Child != 1u64 ||
+        Rightˉroute.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Rightˉroute.Child != 5u64 {
+        return 67;
+    }
+    return 0;
+}
+
 export fn Main() -> i32 {
     var Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
     if Description.Status != Storage.Storageˉstatus.Valid ||
@@ -341,6 +525,29 @@ export fn Main() -> i32 {
         if Interrupted != 0 { return Interrupted; }
         return Interruptionˉresult(Maximumˉactions);
     }
+    if Description.Storageˉlength >= 20993u64 &&
+        Description.Storageˉlength <= 20997u64 {
+        let Maximumˉupdateˉactions: u32 =
+            Markerˉactions(Description.Storageˉlength);
+        let Updateˉrecovered: i32 = Recoverˉtail(Description, Current);
+        if Updateˉrecovered != 0 { return Updateˉrecovered; }
+        Description = Storage.Storageˉdescribe();
+        Current = Selectˉcurrent(Description);
+        if Description.Storageˉlength != COMMITTED_LENGTH ||
+            Current.Status !=
+                Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+            Current.Generation != 2u64 ||
+            Current.Committedˉsequence != 1u64 {
+            return 6;
+        }
+        let Updateˉinterrupted: i32 = Publishˉdepthˉtwoˉupdate(
+            Description,
+            Current,
+            Maximumˉupdateˉactions
+        );
+        if Updateˉinterrupted != 0 { return Updateˉinterrupted; }
+        return Updateˉinterruptionˉresult(Maximumˉupdateˉactions);
+    }
     if Current.Tailˉbytes != 0u64 {
         let Tailˉrecovered: i32 = Recoverˉtail(Description, Current);
         if Tailˉrecovered != 0 { return Tailˉrecovered; }
@@ -361,16 +568,46 @@ export fn Main() -> i32 {
         if Published != 0 { return Published; }
         Description = Storage.Storageˉdescribe();
         Current = Selectˉcurrent(Description);
+        if Description.Storageˉlength != COMMITTED_LENGTH ||
+            Current.Status !=
+                Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+            Current.Generation != 2u64 ||
+            Current.Committedˉsequence != 1u64 {
+            return 4;
+        }
+        return Validateˉlookup(Current);
     }
-    if Description.Storageˉlength != COMMITTED_LENGTH ||
+    if Description.Storageˉlength == COMMITTED_LENGTH {
+        if Current.Status !=
+                Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+            Current.Generation != 2u64 ||
+            Current.Committedˉsequence != 1u64 ||
+            Current.Rootˉpage != 3u64 || Current.Commitˉlogˉhead != 4u64 ||
+            Current.Pageˉcount != 5u64 ||
+            Current.Committedˉlength != COMMITTED_LENGTH ||
+            Current.Rootˉdepth != 2u32 || Current.Tailˉbytes != 0u64 {
+            return 4;
+        }
+        let Beforeˉupdate: i32 = Validateˉlookup(Current);
+        if Beforeˉupdate != 0 { return Beforeˉupdate; }
+        let Updated: i32 = Publishˉdepthˉtwoˉupdate(
+            Description,
+            Current,
+            4u32
+        );
+        if Updated != 0 { return Updated; }
+        Description = Storage.Storageˉdescribe();
+        Current = Selectˉcurrent(Description);
+    }
+    if Description.Storageˉlength != UPDATED_LENGTH ||
         Current.Status !=
             Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
-        Current.Generation != 2u64 || Current.Committedˉsequence != 1u64 ||
-        Current.Rootˉpage != 3u64 || Current.Commitˉlogˉhead != 4u64 ||
-        Current.Pageˉcount != 5u64 ||
-        Current.Committedˉlength != COMMITTED_LENGTH ||
+        Current.Generation != 3u64 || Current.Committedˉsequence != 2u64 ||
+        Current.Rootˉpage != 6u64 || Current.Commitˉlogˉhead != 7u64 ||
+        Current.Pageˉcount != 8u64 ||
+        Current.Committedˉlength != UPDATED_LENGTH ||
         Current.Rootˉdepth != 2u32 || Current.Tailˉbytes != 0u64 {
-        return 4;
+        return 7;
     }
-    return Validateˉlookup(Current);
+    return Validateˉupdatedˉlookup(Description, Current);
 }

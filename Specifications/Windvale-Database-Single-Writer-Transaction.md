@@ -65,7 +65,9 @@ requires only that it fit the selected `WVPG 1` envelope and agree with its
 item count. The separate [`WVTN 1`](Windvale-Database-Tree-Node.md) composition
 now supplies the first root-depth-one variable-key leaf upsert. The bounded
 batch and root-split composition supply the first depth-two generation; rows,
-catalogs, and general split propagation remain separate contracts.
+catalogs, and deeper split propagation remain separate contracts. The
+[depth-two upsert successor](Windvale-Database-Depth-Two-Upsert.md) reuses the
+same batch and publication state for repeated routed-leaf updates.
 
 ## Bounded multi-page builder
 
@@ -148,10 +150,11 @@ claimed.
 
 ## Exclusions and next contracts
 
-This version has no delete, update-in-place, page reclamation, general branch
-split propagation, range scan, row encoding, catalog, schema, transaction
+This base version has no delete, update-in-place, page reclamation, range scan,
+row encoding, catalog, schema, transaction
 isolation, concurrent reader lifetime, group commit, authentication, network
 listener, client protocol, SQL parser, query planner, or operator execution.
-It does not claim hardware power-loss qualification. The next storage-kernel
-step is general depth-two mutation and child split propagation with explicit
-obsolete-page ownership.
+It does not claim hardware power-loss qualification. The successor depth-two
+contract implements routed-leaf mutation, root branch rewrite, and explicit
+obsolete-page ownership; depth-three root growth and internal split propagation
+remain future storage-kernel work.

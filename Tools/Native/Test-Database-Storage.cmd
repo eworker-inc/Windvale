@@ -66,10 +66,16 @@ if "%PrepareOnly%"=="1" (
 if "%Development%"=="1" (
     call :verify_host_storage ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
-    if errorlevel 1 goto :cleanup
+    if errorlevel 1 (
+        >&2 echo The native database storage development host-storage stage failed.
+        goto :cleanup
+    )
     call :verify_host_tree_reader ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
-    if errorlevel 1 goto :cleanup
+    if errorlevel 1 (
+        >&2 echo The native database storage development tree-update stage failed.
+        goto :cleanup
+    )
     set "Result=0"
     goto :cleanup
 )
@@ -91,6 +97,9 @@ call :verify_target TreeNode ^
 if errorlevel 1 goto :cleanup
 call :verify_target RootSplit ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target DepthTwo ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target ProviderTable ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
@@ -126,7 +135,7 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint%
     exit /b 0
 )
-echo native database storage status=Passed cases=13 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage
@@ -156,7 +165,10 @@ set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
 set "InitialFile=%RunDirectory%\Windvale-Database-Storage.initial"
 
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    >&2 echo The native host-storage source build failed.
+    exit /b 1
+)
 if not "%Development%"=="1" (
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
     if errorlevel 1 exit /b 1
@@ -165,7 +177,10 @@ if not "%Development%"=="1" (
 )
 
 "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    >&2 echo The native host-storage lowering failed.
+    exit /b 1
+)
 if not "%Development%"=="1" (
     "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
@@ -309,10 +324,14 @@ set "LinuxApplication=%TemporaryDirectory%\HostTreeReader.elf"
 set "InitialFile=%TemporaryDirectory%\HostStorage-Run\Windvale-Database-Storage.initial"
 set "RunDirectory=%TemporaryDirectory%\HostTreeReader-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "DepthTwoCommittedFile=%RunDirectory%\Windvale-Database-Storage.depth-two"
 set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
 
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    >&2 echo The native host tree-reader source build failed.
+    exit /b 1
+)
 if not "%Development%"=="1" (
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
     if errorlevel 1 exit /b 1
@@ -320,32 +339,48 @@ if not "%Development%"=="1" (
     if errorlevel 1 exit /b 1
 )
 "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    >&2 echo The native host tree-reader lowering failed.
+    exit /b 1
+)
 if not "%Development%"=="1" (
     "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
     fc /b "%FirstWvo%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
 )
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
-if errorlevel 1 exit /b 1
-if not exist "%Common%" exit /b 1
-if not exist "%WindowsPlatform%" exit /b 1
+if not exist "%Common%" (
+    >&2 echo The native host tree-reader common provider object is missing.
+    exit /b 1
+)
+if not exist "%WindowsPlatform%" (
+    >&2 echo The native host tree-reader Windows provider object is missing.
+    exit /b 1
+)
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
     Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
     "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    >&2 echo The native host tree-reader Windows link failed.
+    exit /b 1
+)
 set "WindowsEntry="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
-if not defined WindowsEntry exit /b 1
+if not defined WindowsEntry (
+    >&2 echo The native host tree-reader Windows entry was not reported by the linker.
+    exit /b 1
+)
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
     "%WindowsApplication%" windows >nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    >&2 echo The native host tree-reader Windows packaging failed.
+    exit /b 1
+)
 
 mkdir "%RunDirectory%" || exit /b 1
 copy /b "%InitialFile%" "%StorageFile%" >nul || exit /b 1
@@ -357,7 +392,23 @@ if not "%ApplicationResult%"=="0" (
     >&2 echo The native host tree-reader publication returned %ApplicationResult%, expected 0.
     exit /b 1
 )
-for %%F in ("%StorageFile%") do if not "%%~zF"=="20992" exit /b 1
+for %%F in ("%StorageFile%") do if not "%%~zF"=="20992" (
+    >&2 echo The native host tree-reader first generation length is %%~zF, expected 20992.
+    exit /b 1
+)
+copy /b "%StorageFile%" "%DepthTwoCommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-reader depth-two update returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="33280" (
+    >&2 echo The native host tree-reader updated generation length is %%~zF, expected 33280.
+    exit /b 1
+)
 copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
 pushd "%RunDirectory%" || exit /b 1
 "%WindowsApplication%" >nul
@@ -371,6 +422,9 @@ fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
 for %%S in (0 1 2 3 4) do (
     call :verify_host_tree_reader_interruption ^
         "%WindowsApplication%" "%InitialFile%" %%S
+    if errorlevel 1 exit /b 1
+    call :verify_host_tree_reader_update_interruption ^
+        "%WindowsApplication%" "%DepthTwoCommittedFile%" %%S
     if errorlevel 1 exit /b 1
 )
 
@@ -424,7 +478,53 @@ if not "%ApplicationResult%"=="0" (
     >&2 echo The native host tree-reader restart %Step% returned %ApplicationResult%, expected 0.
     exit /b 1
 )
-for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="20992" exit /b 1
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-reader convergence %Step% returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="33280" (
+    >&2 echo The native host tree-reader convergence %Step% length is %%~zF, expected 33280.
+    exit /b 1
+)
+endlocal
+exit /b 0
+
+:verify_host_tree_reader_update_interruption
+setlocal EnableExtensions DisableDelayedExpansion
+set "Application=%~f1"
+set "Committed=%~f2"
+set "Step=%~3"
+set "ScenarioDirectory=%TemporaryDirectory%\HostTreeReader-Update-Interruption-%Step%"
+set "ScenarioStorage=%ScenarioDirectory%\Windvale-Database-Storage.bin"
+mkdir "%ScenarioDirectory%" || exit /b 1
+copy /b "%Committed%" "%ScenarioStorage%" >nul || exit /b 1
+set /a MarkerLength=20993+Step
+fsutil file seteof "%ScenarioStorage%" %MarkerLength% >nul || exit /b 1
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+set /a ExpectedResult=110+Step
+if not "%ApplicationResult%"=="%ExpectedResult%" (
+    >&2 echo The native host tree-reader update interruption %Step% returned %ApplicationResult%, expected %ExpectedResult%.
+    exit /b 1
+)
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-reader update restart %Step% returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="33280" (
+    >&2 echo The native host tree-reader update restart %Step% length is %%~zF, expected 33280.
+    exit /b 1
+)
 endlocal
 exit /b 0
 

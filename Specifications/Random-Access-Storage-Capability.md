@@ -231,6 +231,12 @@ requires key `u32(7)` to map to value `i32(42)`, and finishes with a stable
 reopen. This is deterministic restart recovery evidence, not a power-loss or
 arbitrary hardware-failure claim.
 
+The successor [depth-two transaction](Windvale-Database-Depth-Two-Upsert.md)
+uses the same capability and four-action protocol to publish a 33,280-byte
+repeated-update generation. It copies the borrowed root before reading the
+routed child and covers all five interruption boundaries for both the initial
+root split and repeated update.
+
 ## Excluded claims and next contracts
 
 The native [`WVPT 1`](Windvale-Native-Capability-Provider-Table.md) constructor

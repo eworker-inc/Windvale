@@ -32,6 +32,8 @@ export record Databaseˉrootˉsplitˉupsert {
     Leftˉpage: u64;
     Rightˉpage: u64;
     Rootˉpage: u64;
+    Obsoleteˉpageˉcount: u32;
+    Obsoleteˉrootˉpage: u64;
     Commit: Batch.Databaseˉcommitˉbatch;
 }
 
@@ -49,6 +51,8 @@ fn Databaseˉrootˉsplitˉfailure(
         0u64,
         0u64,
         0u64,
+        0u32,
+        U64_MAXIMUM,
         Batch.Databaseˉcommitˉbatchˉreject(Commitˉerror)
     );
 }
@@ -195,7 +199,7 @@ export fn Databaseˉrootˉsplitˉupsertˉbegin(
                 Leftˉpage,
                 Targetˉgeneration,
                 Targetˉsequence,
-                Current.Rootˉpage,
+                U64_MAXIMUM,
                 Split.Leftˉentryˉcount,
                 Split.Left
             )
@@ -215,7 +219,7 @@ export fn Databaseˉrootˉsplitˉupsertˉbegin(
                 Rightˉpage,
                 Targetˉgeneration,
                 Targetˉsequence,
-                Current.Rootˉpage,
+                U64_MAXIMUM,
                 Split.Rightˉentryˉcount,
                 Split.Right
             )
@@ -269,6 +273,8 @@ export fn Databaseˉrootˉsplitˉupsertˉbegin(
             0u64,
             0u64,
             0u64,
+            0u32,
+            U64_MAXIMUM,
             Commitˉresult
         );
     }
@@ -281,6 +287,8 @@ export fn Databaseˉrootˉsplitˉupsertˉbegin(
         Leftˉpage,
         Rightˉpage,
         Rootˉpage,
+        1u32,
+        Current.Rootˉpage,
         Commitˉresult
     );
 }

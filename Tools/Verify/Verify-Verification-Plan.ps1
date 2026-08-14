@@ -1018,7 +1018,7 @@ $NativeCases = @(
             'Libraries/Database/Commit-Publication.wv',
             'Tests/Fixtures/Database/Database-Durable-Commit-Self-Test.wv'
         )
-        Suites = @('database-durable-commit', 'libraries')
+        Suites = @('database-durable-commit', 'database-storage', 'libraries')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1028,7 +1028,12 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Durable-Page.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj'
         )
-        Suites = @('database-durable-commit', 'workspace-project2', 'libraries')
+        Suites = @(
+            'database-durable-commit',
+            'database-storage',
+            'workspace-project2',
+            'libraries'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1041,6 +1046,7 @@ $NativeCases = @(
             'Libraries/Database/Single-Leaf-Upsert.wv',
             'Libraries/Database/Commit-Batch.wv',
             'Libraries/Database/Root-Split-Upsert.wv',
+            'Libraries/Database/Depth-Two-Upsert.wv',
             'Libraries/Database/Tree-Node.wv',
             'Libraries/Platform/Database/Durable-Storage-Executor.wv',
             'Libraries/Platform/Database/Durable-Tree-Reader.wv',
@@ -1049,6 +1055,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Root-Split-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Depth-Two-Upsert-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Reader-Self-Test.wv',
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
@@ -1069,6 +1076,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Single-Leaf-Upsert.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Commit-Batch.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Root-Split-Upsert.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Depth-Two-Upsert.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Storage-Executor.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Tree-Reader.wvproj',
@@ -1077,6 +1085,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj'
         )
@@ -1268,7 +1277,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3287 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3288 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

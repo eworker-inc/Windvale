@@ -19,6 +19,8 @@ export record Databaseˉsingleˉleafˉupsert {
     Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
     Replaced: bool;
     Entryˉcount: u32;
+    Obsoleteˉpageˉcount: u32;
+    Obsoleteˉrootˉpage: u64;
     Transaction: Single.Databaseˉsingleˉwriterˉcommit;
 }
 
@@ -31,6 +33,8 @@ fn Databaseˉsingleˉleafˉfailure(
         Nodeˉerror,
         false,
         0u32,
+        0u32,
+        18446744073709551615u64,
         Single.Databaseˉsingleˉwriterˉcommitˉreject(
             Single.Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉrootˉpage
         )
@@ -131,6 +135,8 @@ export fn Databaseˉsingleˉleafˉupsertˉbegin(
         Tree.Databaseˉtreeˉnodeˉerror.Valid,
         Upsert.Replaced,
         Upsert.Entryˉcount,
+        1u32,
+        Current.Rootˉpage,
         Transaction
     );
 }

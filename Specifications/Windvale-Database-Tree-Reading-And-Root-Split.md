@@ -7,6 +7,8 @@
 - Portable owners: `Libraries/Database/Tree-Node.wv`,
   `Commit-Batch.wv`, and `Root-Split-Upsert.wv`
 - Hosted owner: `Libraries/Platform/Database/Durable-Tree-Reader.wv`
+- Successor mutation contract:
+  [depth-two upsert](Windvale-Database-Depth-Two-Upsert.md)
 - Storage authority: one pre-bound `storage.random_access_v1` instance
 - Evidence: portable native execution and focused Windows provider/restart
   execution; independent Linux execution pending
@@ -21,9 +23,11 @@ format. Every logical node remains `WVTN 1`, every physical page remains
 alternate `WVDS 1` superblock.
 
 The reader owns storage access and global graph validation. The portable split
-and commit modules own deterministic bytes but have no I/O authority. The
-current mutation is deliberately one root split, not general split propagation,
-merge, delete, reclamation, or concurrent transaction processing.
+and commit modules own deterministic bytes but have no I/O authority. This
+contract's mutation is deliberately one root split. The successor depth-two
+contract generalizes routed leaf replacement and split propagation;
+internal-branch splitting, merge, delete, reclamation, and concurrent
+transaction processing remain separate.
 
 ## Bounded durable lookup
 
@@ -132,9 +136,11 @@ One successful transaction appends, in order:
    names the right child; and
 4. the commit-log page produced by the batch.
 
-All three data pages link `Previous_page` to the old root. The new superblock
-has depth two and names the branch root. The old generation remains immutable,
-and equal inputs produce equal split, page, log, and superblock bytes.
+The branch root links `Previous_page` to the old root. Both new leaves use the
+no-page predecessor because neither replaces an existing committed leaf. The
+new superblock has depth two and names the branch root. The old generation
+remains immutable, and equal inputs produce equal split, page, log, and
+superblock bytes.
 
 ## Verification
 
@@ -155,10 +161,11 @@ requires independent execution before cross-host conformance is claimed.
 
 ## Exclusions and next contracts
 
-The reader has no page cache and performs at most one read per tree level.
-There is no general non-root split propagation, branch rewrite, delete, merge,
-overflow value, sibling scan, range cursor, page reclamation, snapshot pin,
-concurrent writer, group commit, row/catalog codec, SQL layer, network listener,
-or server lifecycle. The next storage-kernel milestone should make depth-two
-upsert and split propagation general while defining obsolete-page ownership;
-catalog and SQL work should consume that engine contract rather than bypass it.
+The reader has no page cache and performs at most one read per tree level. The
+[successor depth-two contract](Windvale-Database-Depth-Two-Upsert.md) now owns
+general routed-leaf replacement, split propagation into the root, and
+obsolete-page ownership. There is still no internal-branch split or
+depth-three growth, delete, merge, overflow value, sibling scan, range cursor,
+page reclamation, snapshot pin, concurrent writer, group commit, row/catalog
+codec, SQL layer, network listener, or server lifecycle. Catalog and SQL work
+should consume the engine contract rather than bypass it.

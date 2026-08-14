@@ -388,3 +388,20 @@ export fn Databaseˉdurableˉpageˉdecode(
         Input
     );
 }
+
+export fn Databaseˉdurableˉpageˉownedˉcopy(
+    Input: Databaseˉdurableˉpageˉresult
+) -> Databaseˉdurableˉpageˉresult {
+    if Input.Error != Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉpageˉfailure(Input.Error);
+    }
+    let Length: u32 = Bytesˉlength(Input.Bytes);
+    if !Databaseˉdurableˉpageˉsizeˉisˉvalid(Length) {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉlength
+        );
+    }
+    let Prefixed: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input.Bytes);
+    let Owned: bytes = Bytesˉslice(Prefixed, 1u32, Length);
+    return Databaseˉdurableˉpageˉdecode(Owned);
+}

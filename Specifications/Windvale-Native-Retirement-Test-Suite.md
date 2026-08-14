@@ -93,17 +93,17 @@ file. The current plan is:
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
 | `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
-| `database-storage` | `Test-Database-Storage` | 13 | `native database storage status=Passed cases=13 local-results=0 cross-host-images=Verified` |
+| `database-storage` | `Test-Database-Storage` | 14 | `native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 
-The version-2 plan therefore contains exactly 52 suites and 3,287 cases. Its
+The version-2 plan therefore contains exactly 52 suites and 3,288 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
-| 1 | 1 | 13 | 651.2 |
+| 1 | 1 | 14 | 651.2 |
 | 2 | 14 | 1,279 | 592.2 |
 | 3 | 18 | 1,138 | 592.1 |
 | 4 | 19 | 857 | 591.8 |
@@ -138,7 +138,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 52, Passed: 52, Failed: 0, Cases: 3287
+Suites: 52, Passed: 52, Failed: 0, Cases: 3288
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
