@@ -1108,6 +1108,8 @@ $NativeCases = @(
             'Tools/Native/Build-Cached-Hosted-Application.sh',
             'Tools/Native/Build-Cached-Project-Object.cmd',
             'Tools/Native/Build-Cached-Project-Object.sh',
+            'Tools/Native/Build-Cached-Project-Wvb.cmd',
+            'Tools/Native/Build-Cached-Project-Wvb.sh',
             'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
             'Tools/Native/Get-Native-Project-Cache-Key.mjs'
         )

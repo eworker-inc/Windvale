@@ -39,6 +39,7 @@ project_checkpoint_host_storage=NotRun
 project_checkpoint_host_tree_reader=NotRun
 application_checkpoint_host_storage=NotRun
 application_checkpoint_host_tree_reader=NotRun
+project_wvb_checkpoint=NotRun
 
 verify_file() {
     local path=$1 expected_size=$2 expected_digest=$3
@@ -138,9 +139,14 @@ prepare_cached_build_driver() {
 }
 
 if ((development == 1)); then
-    "$script_directory/Build-Wvb.sh" \
+    project_wvb_report="$temporary_directory/Build-Driver-Wvb-Cache.txt"
+    "$script_directory/Build-Cached-Project-Wvb.sh" \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
-        "$build_driver_wvb" >/dev/null || exit $?
+        "$build_driver_wvb" > "$project_wvb_report" || exit $?
+    project_wvb_checkpoint=$(sed -n \
+        's/^native project wvb cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
+        "$project_wvb_report")
+    [[ $project_wvb_checkpoint == Created || $project_wvb_checkpoint == Hit ]] || exit 1
     prepare_cached_build_driver "$build_driver_wvb" || exit $?
     lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
     verify_file "$lowerer" 6500352 \
@@ -160,7 +166,7 @@ else
 fi
 
 if ((prepare_only == 1)); then
-    echo "native database storage development tools status=Passed checkpoint=$tool_checkpoint"
+    echo "native database storage development tools status=Passed checkpoint=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
     exit 0
 fi
 
@@ -668,7 +674,7 @@ verify_host_tree_reader \
     }
 
 if ((development == 1)); then
-    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
+    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
     exit 0
 fi
 echo 'native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified'

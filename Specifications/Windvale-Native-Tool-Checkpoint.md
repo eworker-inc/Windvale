@@ -1,7 +1,7 @@
 # Windvale native tool checkpoint 1
 
-Status: Implemented local-development contract under Decisions 0546, 0553, and
-0554.
+Status: Implemented local-development contract under Decisions 0546, 0553,
+0554, and 0555.
 
 ## Purpose and boundary
 
@@ -26,6 +26,10 @@ Hosted-application checkpoint 1 extends the same boundary to one exact
 image-mode hosted publication. It reuses deterministic container composition,
 not linking or application behavior. The current-host executable is still run
 through every selected database lifecycle and recovery scenario.
+
+Project-WVB checkpoint 1 reuses one exact source-built WVB before the existing
+build-driver application checkpoint is derived. It does not replace ordinary
+source construction or compiler qualification.
 
 ## Version-1 key
 
@@ -144,6 +148,35 @@ application, constructs and compares the complete expected record, copies the
 application to a fresh owner path, and compares the copy byte for byte. Linux
 also requires executable mode on both the checkpoint and materialized copy.
 
+## Project-WVB key and record
+
+`Build-Cached-Project-Wvb` invokes the existing
+`Get-Native-Project-Cache-Key.mjs` framing with namespace `project-wvb-v1`.
+After the format, namespace, workspace, project identity and bytes, and declared
+root/source closure, the ordered producers are:
+
+1. exact current-host `Build-Wvb` launcher;
+2. exact native-front-door `SHA256SUMS` inventory;
+3. exact current-host native build-driver application; and
+4. exact current-host native WVB publisher application.
+
+The resulting lowercase 64-hex key names
+`project-wvb-v1/<host-family>/<key>`. The WVB checkpoint record contains exactly
+four ASCII lines:
+
+```text
+windvale-native-project-wvb-checkpoint 1
+key <64-lowercase-hex>
+wvb-bytes <canonical-positive-decimal>
+wvb-sha256 <64-lowercase-hex>
+```
+
+The record is at most 1,024 bytes. The WVB is nonempty and at most 67,108,864
+bytes. Every hit rejects links, recomputes the size and digest, compares the
+complete expected record, materializes a fresh byte-identical copy, and invokes
+the current native `Verify-Wvb` front door. The verifier remains a current
+admission boundary rather than key material.
+
 ## Publication and use
 
 On a miss, the owner packages into a newly allocated sibling directory, hashes
@@ -156,8 +189,9 @@ define eviction or automatic partial-directory cleanup.
 the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
 run the composed host-storage lifecycle. It obtains the two large host-storage
-project objects through `Build-Cached-Project-Object` and the two current-host
-executables through `Build-Cached-Hosted-Application`. `Verify-Changed.ps1`
+project objects through `Build-Cached-Project-Object`, the build-driver input
+through `Build-Cached-Project-Wvb`, and the two current-host executables through
+`Build-Cached-Hosted-Application`. `Verify-Changed.ps1`
 selects that development owner only when every selected database-storage
 boundary is eligible. Compiler, lowerer, specialized provider, nested-record,
 and other broad changes mark the full database-storage owner mandatory. The
@@ -201,3 +235,16 @@ the same warm host even though its packaged build-driver application is a hit.
 It still reconstructs the build-driver input WVB from source before deriving
 the existing application-checkpoint key. That source-keyed WVB is the next
 measured checkpoint boundary.
+
+After implementing that boundary, first creation takes 78.894 seconds and a
+validated preparation hit takes 9.417 seconds. The complete warm two-case owner
+takes 71.048 seconds. Reordered producer inputs yield a different key. An
+isolated cached WVB with one appended byte is rejected before the existing
+packaged application checkpoint is consulted and is not repaired. Linux script
+syntax is checked locally; independent Linux creation, hit, corruption
+rejection, and execution remain paired-host evidence.
+
+The complete change-aware front door, including classification and 101 planner
+contract cases, passes in 73.531 seconds versus the preceding 141.120-second
+measurement. These remain host development diagnostics rather than portable
+timing or qualification claims.

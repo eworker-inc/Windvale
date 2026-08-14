@@ -315,6 +315,18 @@ percent less than the clean 1,111.135-second owner. Preparing the build driver
 alone still takes 70.704 seconds because its input WVB is rebuilt from source
 before the packaged application checkpoint is accepted.
 
+Decision 0555 implements that boundary. A warm source/producer-keyed WVB hit
+rehashes and rematerializes the product, runs native WVB verification, and
+accepts the existing packaged driver in 9.417 seconds rather than 70.704
+seconds. The complete two-case database owner falls again from 125.757 seconds
+to 71.048 seconds. The remaining measured 61.6 seconds consists of fresh
+linking and repeated database-process execution rather than compiler or hosted
+container construction.
+
+The complete change-aware front door now takes 73.531 seconds including 101
+planner contract cases, down from 141.120 seconds after Decision 0554. This is
+a further 47.9 percent developer-facing reduction or 1.92 times speedup.
+
 The complete change-aware front door takes 141.120 seconds including
 classification and planner verification, down from 197.4 seconds before the
 application checkpoint. This 28.5 percent end-to-end reduction is the relevant
@@ -325,8 +337,8 @@ Changed-file planning uses that fast owner only for its declared database and
 checkpoint boundaries. A compiler, lowerer, specialized provider, nested-record,
 or other broad dependency forces the complete owner. GitHub retirement shards
 and qualification remain cold. Hosted-container construction is now reused;
-a source-keyed build-driver WVB checkpoint is the next optimization, followed
-by measurement of fresh linking and repeated process startup.
+the build-driver WVB checkpoint is now implemented. Fresh linking and repeated
+process startup are the next measured boundaries.
 
 The next throughput work should preserve that evidence boundary while reducing
 repeated work:

@@ -177,6 +177,7 @@ function Add-Native-Tool-Suite {
     if ($Stem -in @(
         'Build-Cached-Hosted-Application',
         'Build-Cached-Project-Object',
+        'Build-Cached-Project-Wvb',
         'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Test-Database-Storage'

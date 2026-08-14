@@ -33,12 +33,16 @@ set "ProjectCheckpointHostStorage=NotRun"
 set "ProjectCheckpointHostTreeReader=NotRun"
 set "ApplicationCheckpointHostStorage=NotRun"
 set "ApplicationCheckpointHostTreeReader=NotRun"
+set "ProjectWvbCheckpoint=NotRun"
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
-        "%BuildDriverWvb%" >nul
+        "%BuildDriverWvb%" >"%TemporaryDirectory%\Build-Driver-Wvb-Cache.txt"
     if errorlevel 1 goto :cleanup
+    set "ProjectWvbCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project wvb cache status=" "%TemporaryDirectory%\Build-Driver-Wvb-Cache.txt"') do set "ProjectWvbCheckpoint=%%S"
+    if not defined ProjectWvbCheckpoint goto :cleanup
     call :prepare_cached_build_driver "%BuildDriverWvb%"
     if errorlevel 1 goto :cleanup
     set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
@@ -132,11 +136,11 @@ echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-st
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
 if not "%Result%"=="0" exit /b %Result%
 if "%PrepareOnly%"=="1" (
-    echo native database storage development tools status=Passed checkpoint=%ToolCheckpoint%
+    echo native database storage development tools status=Passed checkpoint=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint%
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
+    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
     exit /b 0
 )
 echo native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified
