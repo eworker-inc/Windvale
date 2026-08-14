@@ -31,6 +31,8 @@ set "WorkspaceResource=%WorkspacePath:\=/%"
 set "Result=1"
 set "ProjectCheckpointHostStorage=NotRun"
 set "ProjectCheckpointHostTreeReader=NotRun"
+set "ApplicationCheckpointHostStorage=NotRun"
+set "ApplicationCheckpointHostTreeReader=NotRun"
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
@@ -134,7 +136,7 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%
+    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
     exit /b 0
 )
 echo native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified
@@ -166,6 +168,7 @@ set "RunDirectory=%TemporaryDirectory%\HostStorage-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
 set "InitialFile=%RunDirectory%\Windvale-Database-Storage.initial"
 set "HostStorageCheckpoint=Rebuilt"
+set "HostStorageApplicationCheckpoint=Rebuilt"
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
@@ -239,10 +242,20 @@ if not defined WindowsEntry exit /b 1
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
-    "%WindowsApplication%" windows >nul
-if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >"%TemporaryDirectory%\HostStorage-Application-Cache.txt"
+    if errorlevel 1 exit /b 1
+    set "HostStorageApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostStorage-Application-Cache.txt"') do set "HostStorageApplicationCheckpoint=%%S"
+    if not defined HostStorageApplicationCheckpoint exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >nul
+    if errorlevel 1 exit /b 1
+)
 
 mkdir "%RunDirectory%" || exit /b 1
 pushd "%RunDirectory%" || exit /b 1
@@ -290,7 +303,7 @@ for %%S in (0 1 2 3 4) do (
 )
 
 if "%Development%"=="1" (
-    endlocal & set "ProjectCheckpointHostStorage=%HostStorageCheckpoint%"
+    endlocal & set "ProjectCheckpointHostStorage=%HostStorageCheckpoint%" & set "ApplicationCheckpointHostStorage=%HostStorageApplicationCheckpoint%"
     exit /b 0
 )
 
@@ -338,6 +351,7 @@ set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
 set "DepthTwoCommittedFile=%RunDirectory%\Windvale-Database-Storage.depth-two"
 set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
 set "HostTreeReaderCheckpoint=Rebuilt"
+set "HostTreeReaderApplicationCheckpoint=Rebuilt"
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
@@ -395,12 +409,25 @@ if not defined WindowsEntry (
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
-    "%WindowsApplication%" windows >nul
-if errorlevel 1 (
-    >&2 echo The native host tree-reader Windows packaging failed.
-    exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >"%TemporaryDirectory%\HostTreeReader-Application-Cache.txt"
+    if errorlevel 1 (
+        >&2 echo The native host tree-reader Windows application checkpoint failed.
+        exit /b 1
+    )
+    set "HostTreeReaderApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostTreeReader-Application-Cache.txt"') do set "HostTreeReaderApplicationCheckpoint=%%S"
+    if not defined HostTreeReaderApplicationCheckpoint exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >nul
+    if errorlevel 1 (
+        >&2 echo The native host tree-reader Windows packaging failed.
+        exit /b 1
+    )
 )
 
 mkdir "%RunDirectory%" || exit /b 1
@@ -450,7 +477,7 @@ for %%S in (0 1 2 3 4) do (
 )
 
 if "%Development%"=="1" (
-    endlocal & set "ProjectCheckpointHostTreeReader=%HostTreeReaderCheckpoint%"
+    endlocal & set "ProjectCheckpointHostTreeReader=%HostTreeReaderCheckpoint%" & set "ApplicationCheckpointHostTreeReader=%HostTreeReaderApplicationCheckpoint%"
     exit /b 0
 )
 if not exist "%LinuxPlatform%" exit /b 1

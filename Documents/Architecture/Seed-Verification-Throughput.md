@@ -305,20 +305,33 @@ owner, or 5.8 times faster. Artifact reuse accounts for 34.065 seconds of the
 development difference; selecting the bounded two-case development owner
 accounts for most of the total gain.
 
+Decision 0554 checkpoints the next deterministic boundary without caching
+behavior. Its key covers the exact WVB, linked fragments, entry, profile,
+target, packaging driver, 72-artifact toolset, enum family, services, and
+startup object. A warm hit rehashes and rematerializes both applications, then
+reruns every database execution and recovery scenario in 125.757 seconds. That
+is 34.1 percent less than Decision 0553's 190.863-second warm path and 88.7
+percent less than the clean 1,111.135-second owner. The remaining warm path is
+fresh linking plus repeated process and recovery execution.
+
+The complete change-aware front door takes 141.120 seconds including
+classification and planner verification, down from 197.4 seconds before the
+application checkpoint. This 28.5 percent end-to-end reduction is the relevant
+developer-facing comparison; the direct 125.757-second owner isolates cache
+and database execution cost.
+
 Changed-file planning uses that fast owner only for its declared database and
 checkpoint boundaries. A compiler, lowerer, specialized provider, nested-record,
 or other broad dependency forces the complete owner. GitHub retirement shards
-and qualification remain cold. The next measured warm costs are linking,
-hosted-container packaging, and repeated process startup; caching a validated
-host application bundle can remove construction while continuing to execute
-every database recovery scenario.
+and qualification remain cold. Hosted-container construction is now reused;
+the next measured warm costs are linking and repeated process startup.
 
 The next throughput work should preserve that evidence boundary while reducing
 repeated work:
 
 1. Extend the implemented content-addressed project-object cache to
-   reconstructed compilers, lowerers, verifiers, hosted applications, and
-   WebAssembly modules. Every cache key
+   reconstructed compilers, lowerers, verifiers, additional hosted
+   applications, and WebAssembly modules. Every cache key
    must include all input digests, the producing tool identity, target/profile,
    and relevant options; every hit must revalidate the recorded output digest.
 2. Write an immutable checkpoint manifest after each verification phase. A

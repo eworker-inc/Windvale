@@ -175,7 +175,9 @@ function Add-Native-Tool-Suite {
     param([Parameter(Mandatory)][string]$Path)
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
     if ($Stem -in @(
+        'Build-Cached-Hosted-Application',
         'Build-Cached-Project-Object',
+        'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Test-Database-Storage'
     )) {

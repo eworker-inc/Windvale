@@ -37,6 +37,8 @@ lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
 project_checkpoint_host_storage=NotRun
 project_checkpoint_host_tree_reader=NotRun
+application_checkpoint_host_storage=NotRun
+application_checkpoint_host_tree_reader=NotRun
 
 verify_file() {
     local path=$1 expected_size=$2 expected_digest=$3
@@ -324,6 +326,7 @@ verify_host_storage() {
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
     local initial_file="$run_directory/Windvale-Database-Storage.initial"
     local host_storage_checkpoint=Rebuilt
+    local host_storage_application_checkpoint=Rebuilt
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/HostStorage-Cache.txt"
@@ -375,9 +378,21 @@ verify_host_storage() {
         ''|*[!0-9]*) return 1 ;;
     esac
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
-        "$linux_application" linux >/dev/null || return $?
+    if ((development == 1)); then
+        local application_cache_report="$temporary_directory/HostStorage-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux > "$application_cache_report" || return $?
+        host_storage_application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$application_cache_report")
+        [[ $host_storage_application_checkpoint == Created ||
+            $host_storage_application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux >/dev/null || return $?
+    fi
 
     mkdir -- "$run_directory" || return $?
     (cd -- "$run_directory" && "$linux_application" >/dev/null)
@@ -417,6 +432,7 @@ verify_host_storage() {
 
     if ((development == 1)); then
         project_checkpoint_host_storage=$host_storage_checkpoint
+        application_checkpoint_host_storage=$host_storage_application_checkpoint
         return 0
     fi
 
@@ -459,6 +475,7 @@ verify_host_tree_reader() {
     local depth_two_committed_file="$run_directory/Windvale-Database-Storage.depth-two"
     local committed_file="$run_directory/Windvale-Database-Storage.committed"
     local host_tree_reader_checkpoint=Rebuilt
+    local host_tree_reader_application_checkpoint=Rebuilt
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/HostTreeReader-Cache.txt"
@@ -490,9 +507,21 @@ verify_host_tree_reader() {
         ''|*[!0-9]*) return 1 ;;
     esac
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
-        "$linux_application" linux >/dev/null || return $?
+    if ((development == 1)); then
+        local application_cache_report="$temporary_directory/HostTreeReader-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux > "$application_cache_report" || return $?
+        host_tree_reader_application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$application_cache_report")
+        [[ $host_tree_reader_application_checkpoint == Created ||
+            $host_tree_reader_application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux >/dev/null || return $?
+    fi
 
     mkdir -- "$run_directory" || return $?
     cp -- "$initial_file" "$storage_file" || return $?
@@ -531,6 +560,7 @@ verify_host_tree_reader() {
 
     if ((development == 1)); then
         project_checkpoint_host_tree_reader=$host_tree_reader_checkpoint
+        application_checkpoint_host_tree_reader=$host_tree_reader_application_checkpoint
         return 0
     fi
     [[ -f $windows_platform ]] || return 1
@@ -638,7 +668,7 @@ verify_host_tree_reader \
     }
 
 if ((development == 1)); then
-    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader"
+    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
     exit 0
 fi
 echo 'native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified'

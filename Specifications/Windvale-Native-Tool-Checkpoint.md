@@ -1,6 +1,7 @@
 # Windvale native tool checkpoint 1
 
-Status: Implemented local-development contract under Decisions 0546 and 0553.
+Status: Implemented local-development contract under Decisions 0546, 0553, and
+0554.
 
 ## Purpose and boundary
 
@@ -20,6 +21,11 @@ Project-object checkpoint 1 extends that boundary to one exact Project 2 source
 closure and its WVB and WVO products. It remains development-only. It never
 replaces the clean duplicate-output, paired-target, malformed-input, or
 qualification owners.
+
+Hosted-application checkpoint 1 extends the same boundary to one exact
+image-mode hosted publication. It reuses deterministic container composition,
+not linking or application behavior. The current-host executable is still run
+through every selected database lifecycle and recovery scenario.
 
 ## Version-1 key
 
@@ -99,6 +105,45 @@ products to fresh owner output paths, compares both copies byte for byte, and
 runs complete structural WVO admission. A corrupt existing entry fails closed
 and is not silently repaired.
 
+## Hosted-application key and record
+
+`Get-Native-Hosted-Application-Cache-Key.mjs` derives a length-framed SHA-256
+key from these ordered fields:
+
+1. format `windvale-native-hosted-application-cache-key 1` and namespace
+   `hosted-application-v1`;
+2. current host family, selected target, profile, fragment count, and canonical
+   unsigned entry;
+3. exact input WVB and each native-image fragment in index order;
+4. exact current-host `Package-Hosted-Wvb` driver;
+5. exact hosted-toolset inventory plus all 72 inventory-verified artifacts;
+6. exact enum-request WVB and paired applications;
+7. the nine exact target service leaves; and
+8. the exact target startup WVO.
+
+Inputs must be canonical ordinary non-link files. Each input is nonempty and at
+most 67,108,864 bytes. Image mode accepts one through eight fragments, every
+nonfinal fragment is exactly 4 MiB, and every fragment is at most 4 MiB. The
+lowercase 64-hex key names
+`hosted-application-v1/<host-family>/<key>`; the target remains key material and
+is also recorded explicitly.
+
+The hosted-application `Checkpoint.txt` contains exactly five ASCII lines:
+
+```text
+windvale-native-hosted-application-checkpoint 1
+key <64-lowercase-hex>
+target <windows|linux>
+application-bytes <canonical-positive-decimal>
+application-sha256 <64-lowercase-hex>
+```
+
+The record is at most 1,024 bytes and the application is greater than zero and
+at most 67,108,864 bytes. Every hit rejects linked cache state, rehashes the
+application, constructs and compares the complete expected record, copies the
+application to a fresh owner path, and compares the copy byte for byte. Linux
+also requires executable mode on both the checkpoint and materialized copy.
+
 ## Publication and use
 
 On a miss, the owner packages into a newly allocated sibling directory, hashes
@@ -111,7 +156,8 @@ define eviction or automatic partial-directory cleanup.
 the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
 run the composed host-storage lifecycle. It obtains the two large host-storage
-project objects through `Build-Cached-Project-Object`. `Verify-Changed.ps1`
+project objects through `Build-Cached-Project-Object` and the two current-host
+executables through `Build-Cached-Hosted-Application`. `Verify-Changed.ps1`
 selects that development owner only when every selected database-storage
 boundary is eligible. Compiler, lowerer, specialized provider, nested-record,
 and other broad changes mark the full database-storage owner mandatory. The
@@ -135,3 +181,17 @@ wall time than the clean owner, or 5.8 times faster. The project-object reuse
 itself saved 34.065 seconds between those two development runs; the larger gain
 comes from selecting the bounded development owner instead of the complete
 qualification owner. These are host diagnostics, not portable timing claims.
+
+Adding hosted-application checkpoints reduced the next warm two-case run from
+190.863 seconds to 125.757 seconds. Both application entries were fully
+rehashed and materialized, then all real database behaviors passed. Changing
+one fragment byte and changing only the target produced distinct keys. An
+isolated entry with one appended application byte was rejected with exit 1
+before execution and was not repaired. Linux script syntax is checked locally;
+independent Linux creation, hit, corruption rejection, mode preservation, and
+execution remain paired-host evidence.
+
+The complete change-aware front door, including classification and 100 planner
+contract cases, passed in 141.120 seconds versus the preceding 197.4-second
+measurement. The 15.363-second difference from the direct warm owner is
+planner and wrapper overhead rather than database behavior.

@@ -1104,8 +1104,11 @@ $NativeCases = @(
         Name = 'native tool checkpoint owner'
         Paths = @(
             'Specifications/Windvale-Native-Tool-Checkpoint.md',
+            'Tools/Native/Build-Cached-Hosted-Application.cmd',
+            'Tools/Native/Build-Cached-Hosted-Application.sh',
             'Tools/Native/Build-Cached-Project-Object.cmd',
             'Tools/Native/Build-Cached-Project-Object.sh',
+            'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
             'Tools/Native/Get-Native-Project-Cache-Key.mjs'
         )
         Suites = @('database-storage')
