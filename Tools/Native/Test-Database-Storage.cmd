@@ -29,6 +29,8 @@ set "Lowerer=%TemporaryDirectory%\Lowerer.exe"
 set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%WorkspacePath:\=/%"
 set "Result=1"
+set "ProjectCheckpointHostStorage=NotRun"
+set "ProjectCheckpointHostTreeReader=NotRun"
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
@@ -132,7 +134,7 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint%
+    echo native database storage development status=Passed cases=2 local-results=0 tools=%ToolCheckpoint% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%
     exit /b 0
 )
 echo native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified
@@ -163,25 +165,34 @@ set "LinuxApplication=%TemporaryDirectory%\HostStorage.elf"
 set "RunDirectory=%TemporaryDirectory%\HostStorage-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
 set "InitialFile=%RunDirectory%\Windvale-Database-Storage.initial"
+set "HostStorageCheckpoint=Rebuilt"
 
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-if errorlevel 1 (
-    >&2 echo The native host-storage source build failed.
-    exit /b 1
-)
-if not "%Development%"=="1" (
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+        >"%TemporaryDirectory%\HostStorage-Cache.txt"
+    if errorlevel 1 (
+        >&2 echo The native host-storage project-object checkpoint failed.
+        exit /b 1
+    )
+    set "HostStorageCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostStorage-Cache.txt"') do set "HostStorageCheckpoint=%%S"
+    if not defined HostStorageCheckpoint exit /b 1
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    if errorlevel 1 (
+        >&2 echo The native host-storage source build failed.
+        exit /b 1
+    )
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
     if errorlevel 1 exit /b 1
     fc /b "%FirstWvb%" "%SecondWvb%" >nul
     if errorlevel 1 exit /b 1
-)
-
-"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-if errorlevel 1 (
-    >&2 echo The native host-storage lowering failed.
-    exit /b 1
-)
-if not "%Development%"=="1" (
+    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+    if errorlevel 1 (
+        >&2 echo The native host-storage lowering failed.
+        exit /b 1
+    )
     "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
     fc /b "%FirstWvo%" "%SecondWvo%" >nul
@@ -279,7 +290,7 @@ for %%S in (0 1 2 3 4) do (
 )
 
 if "%Development%"=="1" (
-    endlocal
+    endlocal & set "ProjectCheckpointHostStorage=%HostStorageCheckpoint%"
     exit /b 0
 )
 
@@ -326,24 +337,34 @@ set "RunDirectory=%TemporaryDirectory%\HostTreeReader-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
 set "DepthTwoCommittedFile=%RunDirectory%\Windvale-Database-Storage.depth-two"
 set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+set "HostTreeReaderCheckpoint=Rebuilt"
 
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-if errorlevel 1 (
-    >&2 echo The native host tree-reader source build failed.
-    exit /b 1
-)
-if not "%Development%"=="1" (
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+        >"%TemporaryDirectory%\HostTreeReader-Cache.txt"
+    if errorlevel 1 (
+        >&2 echo The native host tree-reader project-object checkpoint failed.
+        exit /b 1
+    )
+    set "HostTreeReaderCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostTreeReader-Cache.txt"') do set "HostTreeReaderCheckpoint=%%S"
+    if not defined HostTreeReaderCheckpoint exit /b 1
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    if errorlevel 1 (
+        >&2 echo The native host tree-reader source build failed.
+        exit /b 1
+    )
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
     if errorlevel 1 exit /b 1
     fc /b "%FirstWvb%" "%SecondWvb%" >nul
     if errorlevel 1 exit /b 1
-)
-"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-if errorlevel 1 (
-    >&2 echo The native host tree-reader lowering failed.
-    exit /b 1
-)
-if not "%Development%"=="1" (
+    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+    if errorlevel 1 (
+        >&2 echo The native host tree-reader lowering failed.
+        exit /b 1
+    )
     "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
     fc /b "%FirstWvo%" "%SecondWvo%" >nul
@@ -429,7 +450,7 @@ for %%S in (0 1 2 3 4) do (
 )
 
 if "%Development%"=="1" (
-    endlocal
+    endlocal & set "ProjectCheckpointHostTreeReader=%HostTreeReaderCheckpoint%"
     exit /b 0
 )
 if not exist "%LinuxPlatform%" exit /b 1

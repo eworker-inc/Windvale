@@ -294,11 +294,31 @@ digests reduces repeated admission cost, while content-addressed compiler and
 hosted-container products remain necessary to attack the two dominant
 reconstruction paths.
 
+Decision 0553 implements the first source-closure checkpoint for the dominant
+database path. The clean fourteen-case owner remains 1,111.135 seconds and does
+not consult the cache. Creating exact WVB/WVO entries for both composed
+database projects and executing their real recovery scenarios took 224.928
+seconds. The next hit rehashed both products, compared their manifests and
+materialized bytes, structurally admitted both WVOs, and reran the behavioral
+scenarios in 190.863 seconds. That is 82.8 percent less wall time than the clean
+owner, or 5.8 times faster. Artifact reuse accounts for 34.065 seconds of the
+development difference; selecting the bounded two-case development owner
+accounts for most of the total gain.
+
+Changed-file planning uses that fast owner only for its declared database and
+checkpoint boundaries. A compiler, lowerer, specialized provider, nested-record,
+or other broad dependency forces the complete owner. GitHub retirement shards
+and qualification remain cold. The next measured warm costs are linking,
+hosted-container packaging, and repeated process startup; caching a validated
+host application bundle can remove construction while continuing to execute
+every database recovery scenario.
+
 The next throughput work should preserve that evidence boundary while reducing
 repeated work:
 
-1. Add a content-addressed local artifact cache for reconstructed compilers,
-   lowerers, verifiers, WVBs, WVOs, and WebAssembly modules. Every cache key
+1. Extend the implemented content-addressed project-object cache to
+   reconstructed compilers, lowerers, verifiers, hosted applications, and
+   WebAssembly modules. Every cache key
    must include all input digests, the producing tool identity, target/profile,
    and relevant options; every hit must revalidate the recorded output digest.
 2. Write an immutable checkpoint manifest after each verification phase. A

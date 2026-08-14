@@ -141,7 +141,18 @@ if ($Plan.Scope -eq 'website') {
     foreach ($Suite in $NativePlan.Suites) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         try {
-            & $Coordinator --filter $Suite
+            if ($Suite -eq 'database-storage' -and
+                $NativePlan.UseDatabaseStorageDevelopment) {
+                $DevelopmentOwner = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.sh'
+                }
+                Write-Host 'Native suite database-storage mode=development-checkpoint'
+                & $DevelopmentOwner --development
+            } else {
+                & $Coordinator --filter $Suite
+            }
             if ($LASTEXITCODE -ne 0) {
                 throw "Native suite '$Suite' exited $LASTEXITCODE."
             }

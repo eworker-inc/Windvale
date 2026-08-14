@@ -35,6 +35,8 @@ build_driver="$temporary_directory/Build-Driver.elf"
 lowerer_wvb="$temporary_directory/Lowerer.wvb"
 lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
+project_checkpoint_host_storage=NotRun
+project_checkpoint_host_tree_reader=NotRun
 
 verify_file() {
     local path=$1 expected_size=$2 expected_digest=$3
@@ -321,15 +323,22 @@ verify_host_storage() {
     local run_directory="$temporary_directory/HostStorage-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
     local initial_file="$run_directory/Windvale-Database-Storage.initial"
+    local host_storage_checkpoint=Rebuilt
 
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-    if ((development == 0)); then
+    if ((development == 1)); then
+        local cache_report="$temporary_directory/HostStorage-Cache.txt"
+        "$script_directory/Build-Cached-Project-Object.sh" \
+            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+            > "$cache_report" || return $?
+        host_storage_checkpoint=$(sed -n \
+            's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
+            "$cache_report")
+        [[ $host_storage_checkpoint == Created || $host_storage_checkpoint == Hit ]] || return 1
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
         "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
         cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-    fi
-
-    "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-    if ((development == 0)); then
+        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
         "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
@@ -407,6 +416,7 @@ verify_host_storage() {
     done
 
     if ((development == 1)); then
+        project_checkpoint_host_storage=$host_storage_checkpoint
         return 0
     fi
 
@@ -448,14 +458,22 @@ verify_host_tree_reader() {
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
     local depth_two_committed_file="$run_directory/Windvale-Database-Storage.depth-two"
     local committed_file="$run_directory/Windvale-Database-Storage.committed"
+    local host_tree_reader_checkpoint=Rebuilt
 
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-    if ((development == 0)); then
+    if ((development == 1)); then
+        local cache_report="$temporary_directory/HostTreeReader-Cache.txt"
+        "$script_directory/Build-Cached-Project-Object.sh" \
+            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+            > "$cache_report" || return $?
+        host_tree_reader_checkpoint=$(sed -n \
+            's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
+            "$cache_report")
+        [[ $host_tree_reader_checkpoint == Created || $host_tree_reader_checkpoint == Hit ]] || return 1
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
         "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
         cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-    fi
-    "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-    if ((development == 0)); then
+        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
         "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
@@ -512,6 +530,7 @@ verify_host_tree_reader() {
     done
 
     if ((development == 1)); then
+        project_checkpoint_host_tree_reader=$host_tree_reader_checkpoint
         return 0
     fi
     [[ -f $windows_platform ]] || return 1
@@ -619,7 +638,7 @@ verify_host_tree_reader \
     }
 
 if ((development == 1)); then
-    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint"
+    echo "native database storage development status=Passed cases=2 local-results=0 tools=$tool_checkpoint projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader"
     exit 0
 fi
 echo 'native database storage status=Passed cases=14 local-results=0 cross-host-images=Verified'

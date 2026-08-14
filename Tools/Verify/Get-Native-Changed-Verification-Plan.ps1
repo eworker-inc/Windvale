@@ -17,6 +17,33 @@ $Gaps = [System.Collections.Generic.HashSet[string]]::new(
 $RunPlanVerification = $false
 $RunWebAssemblyVerification = $false
 $RunGitHubQualificationVerification = $false
+$DatabaseStorageDevelopmentEligible = $true
+$DatabaseDevelopmentPaths = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$DatabaseDevelopmentProjects = @(
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj'
+)
+foreach ($ProjectPath in $DatabaseDevelopmentProjects) {
+    $null = $DatabaseDevelopmentPaths.Add($ProjectPath)
+    $ProjectAbsolute = Join-Path $RepositoryRoot $ProjectPath
+    if (!(Test-Path -LiteralPath $ProjectAbsolute -PathType Leaf)) {
+        $DatabaseStorageDevelopmentEligible = $false
+        continue
+    }
+    foreach ($Line in Get-Content -LiteralPath $ProjectAbsolute) {
+        if ($Line -match '^(?:root|source) "([^"\r\n]+)"$') {
+            $null = $DatabaseDevelopmentPaths.Add($Matches[1])
+        }
+    }
+}
+foreach ($RuntimePath in @(
+    'Runtime/Native/X64-Random-Access-Storage-Host.wva',
+    'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
+    'Runtime/Native/Linux-X64-Random-Access-Storage.wva'
+)) {
+    $null = $DatabaseDevelopmentPaths.Add($RuntimePath)
+}
 
 $SuitePlanLines = @(Get-Content -LiteralPath $SuitePlanPath)
 if ($SuitePlanLines.Count -lt 2 -or
@@ -63,6 +90,11 @@ function Add-Suite {
 function Add-Gap {
     param([Parameter(Mandatory)][string]$Name)
     $null = $Gaps.Add($Name)
+}
+
+function Require-Full-Database-Storage {
+    $script:DatabaseStorageDevelopmentEligible = $false
+    Add-Suite 'database-storage'
 }
 
 function Add-WebAssemblyVerification {
@@ -142,6 +174,14 @@ function Add-Os-Suite {
 function Add-Native-Tool-Suite {
     param([Parameter(Mandatory)][string]$Path)
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
+    if ($Stem -in @(
+        'Build-Cached-Project-Object',
+        'Get-Native-Project-Cache-Key',
+        'Test-Database-Storage'
+    )) {
+        Add-Suite 'database-storage'
+        return
+    }
     if ($SuiteByCommand.ContainsKey($Stem)) {
         Add-Suite $SuiteByCommand[$Stem]
         return
@@ -468,7 +508,11 @@ foreach ($Path in $Paths) {
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Capability-Provider-Table', [StringComparison]::Ordinal)) {
-            Add-Suite 'database-storage'
+            if ($DatabaseDevelopmentPaths.Contains($Path)) {
+                Add-Suite 'database-storage'
+            } else {
+                Require-Full-Database-Storage
+            }
         }
     } elseif ($Path -eq 'Specifications/Windvale-Native-Random-Containment-Tests.md') {
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
@@ -551,7 +595,11 @@ foreach ($Path in $Paths) {
             $Path.Contains('Host-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Hosted-Durable-Storage', [StringComparison]::Ordinal) -or
             $Path.Contains('Database-Host-Storage', [StringComparison]::Ordinal)) {
-            Add-Suite 'database-storage'
+            if ($DatabaseDevelopmentPaths.Contains($Path)) {
+                Add-Suite 'database-storage'
+            } else {
+                Require-Full-Database-Storage
+            }
         }
         if ($Path -in @(
             'Libraries/Database/Wvdb-Reader.wv',
@@ -626,7 +674,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'native-u64-lowering'
         Add-Suite 'database-superblock'
         Add-Suite 'database-durable-commit'
-        Add-Suite 'database-storage'
+        Require-Full-Database-Storage
         Add-Suite 'segmented-compiler-toolset-reconstruction'
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
@@ -728,7 +776,7 @@ foreach ($Path in $Paths) {
             'Compiler/Windvale/Source-Symbols-Core.wv',
             'Compiler/Windvale/Source-Wir-Core.wv'
         )) {
-            Add-Suite 'database-storage'
+            Require-Full-Database-Storage
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
@@ -1213,7 +1261,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'console-verifier-reconstruction'
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Native-X64-Provider-Call-Verification.wv') {
-        Add-Suite 'database-storage'
+        Require-Full-Database-Storage
     } elseif ($Path -eq
         'Tools/Windvale.Publish/Console-Application-Publisher.wv') {
         Add-Suite 'console-publisher-reconstruction'
@@ -1243,7 +1291,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-U64.wv') {
         Add-Suite 'native-u64-lowering'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Nested-Record-Fields.wv') {
-        Add-Suite 'database-storage'
+        Require-Full-Database-Storage
     } elseif ($Path -eq 'Tests/Native/Plan.txt' -or
         $Path.StartsWith('Tests/Native/Malformed-Wvb/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
@@ -1358,6 +1406,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'publisher-rejections'
         } elseif ($Path -eq 'Specifications/Windvale-Native-X64-Lowering.md') {
             Add-Compiler-Suites
+            $script:DatabaseStorageDevelopmentEligible = $false
             Add-Suite @('native-u64-lowering', 'database-storage', 'wvb-to-wvo-reconstruction')
         } elseif ($Path -in @(
             'Specifications/Seed-Language.md',
@@ -1366,7 +1415,7 @@ foreach ($Path in $Paths) {
             'Specifications/Compiler-Source-Wir.md'
         )) {
             Add-Compiler-Suites
-            Add-Suite 'database-storage'
+            Require-Full-Database-Storage
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
             Add-Suite 'uefi-packager'
         } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {
@@ -1498,7 +1547,14 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj',
         'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj'
     )) {
-        Add-Suite 'database-storage'
+        if ($Path -in @(
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj'
+        )) {
+            Add-Suite 'database-storage'
+        } else {
+            Require-Full-Database-Storage
+        }
     } elseif ($Path -in @(
         'Projects/Linker/Windvale-Console-Application-Packager.wvproj',
         'Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj'
@@ -1564,6 +1620,9 @@ if (!$Quiet) {
     Write-Host "Plan verification: $($RunPlanVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
     Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
+    Write-Host "Database storage development checkpoint: $((
+        $SelectedSuites.Contains('database-storage') -and
+        $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
 }
 if ($PassThru) {
     [pscustomobject]@{
@@ -1572,6 +1631,9 @@ if ($PassThru) {
         RunPlanVerification = $RunPlanVerification
         RunWebAssemblyVerification = $RunWebAssemblyVerification
         RunGitHubQualificationVerification = $RunGitHubQualificationVerification
+        UseDatabaseStorageDevelopment = (
+            $SelectedSuites.Contains('database-storage') -and
+            $DatabaseStorageDevelopmentEligible)
         ChangedCount = $Paths.Count
     }
 }

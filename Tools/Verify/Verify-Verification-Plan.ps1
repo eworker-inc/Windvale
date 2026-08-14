@@ -386,6 +386,7 @@ $NativeCases = @(
         )
         Gaps = @()
         VerifyPlan = $false
+        DatabaseDevelopment = $false
     },
     @{
         Name = 'segmented compiler linker closure'
@@ -1101,10 +1102,16 @@ $NativeCases = @(
     },
     @{
         Name = 'native tool checkpoint owner'
-        Paths = @('Specifications/Windvale-Native-Tool-Checkpoint.md')
+        Paths = @(
+            'Specifications/Windvale-Native-Tool-Checkpoint.md',
+            'Tools/Native/Build-Cached-Project-Object.cmd',
+            'Tools/Native/Build-Cached-Project-Object.sh',
+            'Tools/Native/Get-Native-Project-Cache-Key.mjs'
+        )
         Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
+        DatabaseDevelopment = $true
     },
     @{
         Name = 'nested record database owner'
@@ -1346,6 +1353,9 @@ foreach ($Case in $NativeCases) {
     } else {
         $false
     }
+    $DatabaseDevelopmentDiffers = (
+        $Case.ContainsKey('DatabaseDevelopment') -and
+        $Plan.UseDatabaseStorageDevelopment -ne $Case.DatabaseDevelopment)
     if (
         !([System.Linq.Enumerable]::SequenceEqual(
             [string[]]@($Plan.Suites),
@@ -1355,7 +1365,8 @@ foreach ($Case in $NativeCases) {
             [string[]]$Case.Gaps)) -or
         $Plan.RunPlanVerification -ne $Case.VerifyPlan -or
         $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification -or
-        $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification
+        $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification -or
+        $DatabaseDevelopmentDiffers
     ) {
         throw (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
@@ -1365,7 +1376,8 @@ foreach ($Case in $NativeCases) {
             "suites=[$($Plan.Suites -join ', ')], gaps=[$($Plan.Gaps -join ', ')], " +
             "verify-plan=$($Plan.RunPlanVerification), " +
             "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
-            "verify-github=$($Plan.RunGitHubQualificationVerification)."
+            "verify-github=$($Plan.RunGitHubQualificationVerification), " +
+            "database-development=$($Plan.UseDatabaseStorageDevelopment)."
         )
     }
 }
