@@ -54,7 +54,7 @@ if errorlevel 1 goto :cleanup
 if errorlevel 1 goto :cleanup
 fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 goto :cleanup
 call :verify "%FirstWvo%" 2001802 2abe19205e0f1e64afb7d49931697ab7f96646e315adf76531f52c50ddff14b5 "database-durable-commit WVO"
 if errorlevel 1 goto :cleanup

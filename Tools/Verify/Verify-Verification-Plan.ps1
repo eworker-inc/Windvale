@@ -536,6 +536,7 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Test-Wvo-Inspector-Reconstruction.cmd',
             'Tools/Native/Construct-Wvo-Inspector-Reconstruction.cmd',
+            'Tools/Native/Check-Wvo.cmd',
             'Artifacts/Native-Wvo-Object-Candidate/Manifest.json',
             'Linker/Startup/Windows-X64-Hosted-Inspector.wva',
             'Linker/Startup/Linux-X64-Hosted-Inspector.wva',
@@ -546,7 +547,12 @@ $NativeCases = @(
             'seed-native-front-door',
             'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction'
+            'console-verifier-reconstruction',
+            'wvo-read-only',
+            'wvo-differential',
+            'wvo-containment',
+            'wvo-hostile-size',
+            'publisher-rejections'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1277,7 +1283,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3288 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3289 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

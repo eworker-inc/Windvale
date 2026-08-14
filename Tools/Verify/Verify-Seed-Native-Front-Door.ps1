@@ -216,8 +216,8 @@ function Invoke-ExactWvoReadOnlyExecution([string]$ObjectPath) {
         Get-FileHash -Algorithm SHA256 -LiteralPath $NativeWvoApplication
     ).Hash.ToLowerInvariant()
     if (
-        $ApplicationInformation.Length -ne 606720 -or
-        $ApplicationDigest -ne '8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1'
+        $ApplicationInformation.Length -ne 1037312 -or
+        $ApplicationDigest -ne '5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03'
     ) {
         throw 'The Windows native WVO inspector application identity is invalid.'
     }
@@ -1306,11 +1306,11 @@ Invoke-ExactInspect $WvDumpCoreModule @('profile=hosted', 'section name=capabili
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Object-Model/Windvale-Wvo-Object.wvproj') `
     $WvoCoreModule `
-    61008 `
-    'a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db' `
-    'build status=Published verification=compiler-aligned functions=42 code-bytes=51298 module-bytes=61008'
+    73322 `
+    '40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070' `
+    'build status=Published verification=compiler-aligned functions=64 code-bytes=60229 module-bytes=73322'
 Invoke-ExactVerify $WvoCoreModule
-Invoke-ExactInspect $WvoCoreModule @('profile=hosted', 'section name=capabilities offset=51 bytes=145 count=5', 'section name=exports offset=59468 bytes=17 count=1', 'section name=types offset=59493 bytes=1515 count=13', 'opcode=bytes\.concat', 'opcode=bytes\.from_u16_little', 'opcode=bytes\.from_i32_little', 'opcode=text\.to_utf8', '__WvM1F0', 'file\.read_bytes', 'Object\\u02C9sha256', 'name="__WvM2F0" parameters=1 result=bytes') @('file\.write_bytes')
+Invoke-ExactInspect $WvoCoreModule @('profile=hosted', 'section name=capabilities offset=51 bytes=145 count=5', 'section name=exports offset=71410 bytes=17 count=1', 'section name=types offset=71435 bytes=1887 count=17', 'opcode=bytes\.concat', 'opcode=bytes\.from_u16_little', 'opcode=bytes\.from_i32_little', 'opcode=text\.to_utf8', '__WvM1F0', '__WvM2F0', '__WvM3F0', '__WvM4F0', '__WvM5F0', 'file\.read_bytes', 'Object\\u02C9sha256') @('file\.write_bytes')
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Assembler/Windvale-Wva-Assembler.wvproj') `

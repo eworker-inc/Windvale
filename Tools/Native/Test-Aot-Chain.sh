@@ -59,7 +59,7 @@ check_hash "$wvb" \
 
 "$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" "$wvb" "$wvo" \
     >/dev/null || exit $?
-"$repository_root/Tools/Native/Verify-Wvo.sh" "$wvo" >/dev/null || exit $?
+"$repository_root/Tools/Native/Check-Wvo.sh" "$wvo" >/dev/null || exit $?
 check_hash "$wvo" \
     '0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5' \
     'WVO' || exit $?

@@ -42,7 +42,7 @@ if errorlevel 1 (
 "%Target%" "%Input%" "%Output%"
 if errorlevel 1 goto :failure
 if not exist "%Output%" goto :failure
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Output%" >nul 2>&1
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%Output%" >nul 2>&1
 if errorlevel 1 goto :failure
 exit /b 0
 

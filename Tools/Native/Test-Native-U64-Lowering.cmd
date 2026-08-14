@@ -47,7 +47,7 @@ if errorlevel 1 goto :cleanup
 
 "%Lowerer%" "%TargetWvb%" "%TargetWvo%" >nul
 if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%TargetWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%TargetWvo%" >nul
 if errorlevel 1 goto :cleanup
 call :verify "%TargetWvo%" 12032 08e2fe2f0813237b4b75938a411cd1e1ea20af9e3373b6ae0ebe71842b559fdd "u64 WVO"
 if errorlevel 1 goto :cleanup
@@ -82,7 +82,7 @@ if errorlevel 1 goto :cleanup
 
 "%Lowerer%" "%PageWvb%" "%PageWvo%" >nul
 if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%PageWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%PageWvo%" >nul
 if errorlevel 1 goto :cleanup
 call :verify "%PageWvo%" 74228 1f652d116e9cd59f1e033831fc6b8c227d23c91a19a4b3e027e1fabb35880558 "native database-page WVO"
 if errorlevel 1 goto :cleanup

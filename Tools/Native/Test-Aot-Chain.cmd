@@ -29,7 +29,7 @@ if errorlevel 1 (
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >nul
 if errorlevel 1 goto :failed
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Wvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%Wvo%" >nul
 if errorlevel 1 goto :failed
 certutil -hashfile "%Wvo%" SHA256 | findstr /I /C:"0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5" >nul
 if errorlevel 1 (

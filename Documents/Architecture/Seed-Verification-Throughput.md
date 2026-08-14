@@ -274,6 +274,26 @@ monolithic owner such as the current WebAssembly script must still restart from
 its beginning after an internal failure, although direct probes may diagnose a
 late failure against already-built immutable artifacts.
 
+Decision 0552 removes another avoidable inner-loop cost without weakening the
+report contract. Native WVO `check` performs complete structural admission but
+does not calculate a digest that the caller discards; `verify` and `inspect`
+continue to hash the same admitted in-memory snapshot. On the measured Windows
+host, the digest-bound `Check-Wvo.cmd` path reduced a 2,484,162-byte WVO from a
+7.048-second `verify` median to 1.488 seconds and admitted a valid 4,078,324-byte
+WVO in 3.767 seconds. The report path now uses bounded streaming SHA-256 and
+completed that near-limit object in 14.457 seconds, where the previous one-shot
+reporter exhausted its value arena. Database, native-u64, AOT-chain, and
+OS-kernel lowering callers switch only where they previously discarded the
+report.
+
+The settled Decision 0552 change-aware run passed 20 selected owners and 1,860
+cases in 2,701.451 seconds. Database storage fell from the preceding
+1,226.890-second run to 1,110.670 seconds, while the native front door still
+used 737.220 seconds. That is a useful but bounded gain: avoiding unused WVO
+digests reduces repeated admission cost, while content-addressed compiler and
+hosted-container products remain necessary to attack the two dominant
+reconstruction paths.
+
 The next throughput work should preserve that evidence boundary while reducing
 repeated work:
 

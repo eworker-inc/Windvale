@@ -1,6 +1,6 @@
 module Wvoˉobjectˉcore profile hosted;
 
-import Foundationˉsha256 as Sha256;
+import Foundationˉsha256ˉstreaming as Sha256;
 import Wvoˉobjectˉverification as Verification;
 
 capability console.write_line;
@@ -243,7 +243,33 @@ fn Relocationˉkindˉname(Value: u32) -> text {
 }
 
 fn Objectˉsha256(Input: bytes) -> text {
-    return Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Input));
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Input);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Input);
+    let Digest: bytes = Sha256.Foundationˉsha256ˉfinishˉraw(State);
+    if Bytesˉlength(Digest) != 32u32 { return ""; }
+
+    var Output: bytes = Bytesˉslice(Digest, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Digest, Index));
+        var High: u32 = Value >> 4u32;
+        var Low: u32 = Value & 15u32;
+        if High < 10u32 { High = High + 48u32; }
+        else { High = High + 87u32; }
+        if Low < 10u32 { Low = Low + 48u32; }
+        else { Low = Low + 87u32; }
+        Output = Bytesˉconcat(
+            Output,
+            Bytesˉslice(Bytesˉfromˉu32ˉlittle(High), 0u32, 1u32)
+        );
+        Output = Bytesˉconcat(
+            Output,
+            Bytesˉslice(Bytesˉfromˉu32ˉlittle(Low), 0u32, 1u32)
+        );
+        Index = Index + 1u32;
+    }
+    return Textˉfromˉutf8(Output);
 }
 
 fn Reportˉverifiedˉobject(Input: bytes) -> i32 {
@@ -325,25 +351,24 @@ fn Reportˉobjectˉinspection(Input: bytes) -> i32 {
 
 fn Runˉobjectˉcommand() -> i32 {
     if process.argument_count() != 2u32 {
-        diagnostic.write_line("Usage: wvo-object-core <verify|inspect> <object.wvo>");
+        diagnostic.write_line("Usage: wvo-object-core <check|verify|inspect> <object.wvo>");
         return 64;
     }
     let Command: bytes = Textˉtoˉutf8(process.argument(0u32));
+    let Check: bool = Byteˉvaluesˉareˉequal(Command, Textˉtoˉutf8("check"));
     let Verify: bool = Byteˉvaluesˉareˉequal(Command, Textˉtoˉutf8("verify"));
     let Inspect: bool = Byteˉvaluesˉareˉequal(Command, Textˉtoˉutf8("inspect"));
-    if !Verify {
-        if !Inspect {
-            diagnostic.write_line("Usage: wvo-object-core <verify|inspect> <object.wvo>");
-            return 64;
-        }
+    if !Check && !Verify && !Inspect {
+        diagnostic.write_line("Usage: wvo-object-core <check|verify|inspect> <object.wvo>");
+        return 64;
     }
-
     let Input: bytes = file.read_bytes(process.argument(1u32));
     let Result: Verification.Wvoˉinspection = Verification.Inspectˉobject(Input);
     if Result.Status != Verification.Wvoˉstatus.Valid {
         diagnostic.write_line(Textˉconcat("object status=", Describeˉinspection(Result)));
         return 2;
     }
+    if Check { return 0; }
     if Verify {
         return Reportˉverifiedˉobject(Input);
     }

@@ -79,7 +79,7 @@ cmp -s -- "$first_wvo" "$second_wvo" || {
     echo 'The database-superblock WVO is not deterministic.' >&2
     exit 1
 }
-"$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || exit $?
 verify_file "$first_wvo" 1098332 \
     c126573f46f5f7a85422fcc6b37a6751b05d58b43f75380206641612a6aee352 \
     'database-superblock WVO' || exit $?

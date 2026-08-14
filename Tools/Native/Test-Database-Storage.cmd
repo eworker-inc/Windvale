@@ -187,7 +187,7 @@ if not "%Development%"=="1" (
     fc /b "%FirstWvo%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
 )
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 exit /b 1
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
@@ -202,20 +202,20 @@ if not "%Development%"=="1" (
     fc /b "%CommonFirst%" "%CommonSecond%" >nul
     if errorlevel 1 exit /b 1
 )
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%CommonFirst%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%CommonFirst%" >nul
 if errorlevel 1 exit /b 1
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
     "%RepositoryRoot%\Runtime\Native\Windows-X64-Random-Access-Storage.wva" ^
     "%WindowsPlatform%" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%WindowsPlatform%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%WindowsPlatform%" >nul
 if errorlevel 1 exit /b 1
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
     "%RepositoryRoot%\Runtime\Native\Linux-X64-Random-Access-Storage.wva" ^
     "%LinuxPlatform%" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%LinuxPlatform%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%LinuxPlatform%" >nul
 if errorlevel 1 exit /b 1
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
@@ -735,7 +735,7 @@ fc /b "%FirstReport%" "%SecondReport%" >nul
 if errorlevel 1 exit /b 1
 fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 exit /b 1
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
@@ -748,7 +748,7 @@ call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
 if errorlevel 1 exit /b 1
 fc /b "%FirstBridge%" "%SecondBridge%" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstBridge%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstBridge%" >nul
 if errorlevel 1 exit /b 1
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
@@ -806,7 +806,7 @@ if errorlevel 1 exit /b 1
 if errorlevel 1 exit /b 1
 fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 exit /b 1
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^

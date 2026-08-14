@@ -92,13 +92,13 @@ The exact filter names and case counts are:
 | `libraries` | 26 |
 | `packages` | 8 |
 
-Omitting selection arguments runs all 52 suites and 3,288 cases in manifest
+Omitting selection arguments runs all 52 suites and 3,289 cases in manifest
 order. Each owner pass includes `elapsed-ms`, followed by total timing and the
 unchanged semantic terminal summary:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 52, Passed: 52, Failed: 0, Cases: 3288
+Suites: 52, Passed: 52, Failed: 0, Cases: 3289
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -888,7 +888,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,288-case coordinator is a fixed native gate, not the complete normal
+The 3,289-case coordinator is a fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

@@ -33,14 +33,14 @@ fail() {
     exit 1
 }
 
-check_file "$candidate/Wvo-Object.wvb" 61008 \
-    a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db || fail
-check_file "$candidate/Wvo-Object.wvo" 591723 \
-    f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c || fail
-check_file "$candidate/Wvo-Object.exe" 606720 \
-    8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1 || fail
-check_file "$candidate/Wvo-Object.elf" 606208 \
-    f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 || fail
+check_file "$candidate/Wvo-Object.wvb" 73322 \
+    40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070 || fail
+check_file "$candidate/Wvo-Object.wvo" 1022822 \
+    bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae || fail
+check_file "$candidate/Wvo-Object.exe" 1037312 \
+    5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03 || fail
+check_file "$candidate/Wvo-Object.elf" 1036288 \
+    fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840 || fail
 [[ -x $candidate/Wvo-Object.elf ]] || fail
 pass 'candidate inventory'
 
@@ -82,11 +82,16 @@ pass 'exact paired reconstruction'
 [[ ! -s $test_directory/Self-Test.out ]] || fail
 [[ ! -s $test_directory/Self-Test.err ]] || fail
 
+"$candidate/Wvo-Object.elf" check "$candidate/Wvo-Object.wvo" \
+    >"$test_directory/Check.out" 2>"$test_directory/Check.err" || fail
+[[ ! -s $test_directory/Check.out ]] || fail
+[[ ! -s $test_directory/Check.err ]] || fail
+
 "$candidate/Wvo-Object.elf" verify "$candidate/Wvo-Object.wvo" \
     >"$test_directory/Verify.out" 2>"$test_directory/Verify.err" || fail
 printf '%s\n' \
     'Verified object: X86ˉ64' \
-    'SHA-256: f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c' \
+    'SHA-256: bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae' \
     >"$test_directory/Verify.expected" || fail
 check_equal "$test_directory/Verify.out" "$test_directory/Verify.expected" || fail
 [[ ! -s $test_directory/Verify.err ]] || fail
@@ -102,8 +107,8 @@ fi
 printf '%s\n' 'native hosted verifier publisher application status=Rejected' \
     >"$test_directory/Isolation.expected" || fail
 check_equal "$test_directory/Isolation.err" "$test_directory/Isolation.expected" || fail
-check_file "$candidate/Wvo-Object.wvo" 591723 \
-    f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c || fail
+check_file "$candidate/Wvo-Object.wvo" 1022822 \
+    bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae || fail
 pass 'current-host compatibility and profile isolation'
 
 echo "Tests: $tests, Passed: $passed, Failed: 0"

@@ -154,8 +154,9 @@ check_hash "$input" "$input_digest" || fail 'input identity differs'
 
 run_read_only verify Verify-Wvo.sh || fail 'verify failed'
 run_read_only inspect Inspect-Wvo.sh || fail 'inspect failed'
+run_read_only check Check-Wvo.sh || fail 'check failed'
 run_linker || fail 'link failed'
 run_publisher || fail 'publish failed'
-((total == 4)) || fail 'case count differs'
+((total == 5)) || fail 'case count differs'
 
 echo "Tests: $total, Passed: $passed, Failed: 0"

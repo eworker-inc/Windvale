@@ -1,42 +1,42 @@
 {
-  "format": "windvale-native-wvo-object-candidate-3",
+  "format": "windvale-native-wvo-object-candidate-4",
   "status": "candidate",
   "sourceDecision": "0222",
   "provenanceDecision": "0308",
-  "constructionDecision": "0522",
+  "constructionDecision": "0552",
   "qualification": "pending",
-  "construction": "windvale-native-profile-6-enum-complete-reconstruction",
+  "construction": "windvale-native-profile-6-bounded-reporting-reconstruction",
   "artifacts": [
     {
       "name": "wvo-object-wvb",
       "path": "Wvo-Object.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 61008,
-      "sha256": "a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db",
+      "bytes": 73322,
+      "sha256": "40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070",
       "sourceProject": "Windvale-Wvo-Object.wvproj"
     },
     {
       "name": "wvo-object-native-object",
       "path": "Wvo-Object.wvo",
       "target": "x86-64-wvo-abi-22",
-      "bytes": 591723,
-      "sha256": "f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c",
+      "bytes": 1022822,
+      "sha256": "bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae",
       "sourceWvb": "Wvo-Object.wvb"
     },
     {
       "name": "windows-x64-wvo-object",
       "path": "Wvo-Object.exe",
       "target": "windows-x64-wvo-inspector-v1",
-      "bytes": 606720,
-      "sha256": "8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1",
+      "bytes": 1037312,
+      "sha256": "5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03",
       "sourceWvo": "Wvo-Object.wvo"
     },
     {
       "name": "linux-x64-wvo-object",
       "path": "Wvo-Object.elf",
       "target": "linux-x64-wvo-inspector-v1",
-      "bytes": 606208,
-      "sha256": "f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1",
+      "bytes": 1036288,
+      "sha256": "fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840",
       "sourceWvo": "Wvo-Object.wvo"
     }
   ]

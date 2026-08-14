@@ -2,7 +2,7 @@
 set -uo pipefail
 
 if [[ $# -ne 1 ]]; then
-    echo 'Usage: ./Tools/Native/Inspect-Wvo.sh <object.wvo>' >&2
+    echo 'Usage: ./Tools/Native/Check-Wvo.sh <object.wvo>' >&2
     exit 64
 fi
 
@@ -19,8 +19,8 @@ fi
 input_directory=$(CDPATH= cd -- "$(dirname -- "$1")" && pwd -P) || exit 1
 input_path="$input_directory/$(basename -- "$1")"
 if [[ $input_path != *.wvo ]]; then
-    echo 'The native WVO inspector input must use the .wvo extension.' >&2
+    echo 'The native WVO checker input must use the .wvo extension.' >&2
     exit 64
 fi
 
-"$artifact_root/Wvo-Object.elf" inspect "$input_path"
+"$artifact_root/Wvo-Object.elf" check "$input_path"

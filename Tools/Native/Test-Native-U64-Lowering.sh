@@ -70,7 +70,7 @@ verify_file "$target_wvb" 1493 \
     'u64 WVB' || exit $?
 
 "$lowerer" "$target_wvb" "$target_wvo" >/dev/null || exit $?
-"$script_directory/Verify-Wvo.sh" "$target_wvo" >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$target_wvo" >/dev/null || exit $?
 verify_file "$target_wvo" 12032 \
     08e2fe2f0813237b4b75938a411cd1e1ea20af9e3373b6ae0ebe71842b559fdd \
     'u64 WVO' || exit $?
@@ -109,7 +109,7 @@ verify_file "$page_fixture" 17 \
     'native database-page fixture' || exit $?
 
 "$lowerer" "$page_wvb" "$page_wvo" >/dev/null || exit $?
-"$script_directory/Verify-Wvo.sh" "$page_wvo" >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$page_wvo" >/dev/null || exit $?
 verify_file "$page_wvo" 74228 \
     1f652d116e9cd59f1e033831fc6b8c227d23c91a19a4b3e027e1fabb35880558 \
     'native database-page WVO' || exit $?

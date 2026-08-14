@@ -4,11 +4,12 @@
 
 `Object-Model/Windvale/Wvo-Object-Core.wv` owns the Windvale-written WVO 1.0 read-only command and report shell. `Object-Model/Windvale/Wvo-Object-Verification.wv` owns its shared portable reader and complete bounded validator. The shell constructs the canonical representative object for an internal deterministic self-test and emits the same successful verification and inspection reports as the independent C# Stage 0 oracle.
 
-`Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉordering` and `Foundationˉsha256`. The current candidate WVB is 61,008 bytes with SHA-256 `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`. It is a source candidate pending the final grouped Windows/Linux retirement gate; this identity is not a cross-host qualification claim.
+`Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉconstruction`, `Foundationˉbyteˉordering`, and the compression plus streaming SHA-256 modules. The current candidate WVB is 73,322 bytes with SHA-256 `40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070`. It is a source candidate pending independent execution of this descendant on both hosts; this identity is not a cross-host qualification claim.
 
 Decision 0519 makes that manifest the normal broad-script build contract and
-requires independent native verification plus exact inspection of its
-42-function, 51,298-code-byte product. Inspection binds the five read-only
+requires independent native verification plus exact inspection. Decision
+0552 advances the source product to 64 functions and 60,229 code bytes while
+retaining the same five read-only
 capabilities and rejects `file.write_bytes`. The old duplicated managed source
 list omitted `Wvo-Object-Verification.wv` and was no longer a current-product
 contract. Hosted verification/inspection behavior, malformed inputs, and WVO
@@ -68,11 +69,12 @@ The zero relocation field is intentional. Layout and relocation application belo
 With no arguments, `Main` runs deterministic construction, validation, formatting, quoting, and SHA-256 self-tests without reading or writing a file. The ordinary forms are:
 
 ```text
+wvo-object-core check <object.wvo>
 wvo-object-core verify <object.wvo>
 wvo-object-core inspect <object.wvo>
 ```
 
-Both forms read one bounded object snapshot and completely verify it before success output. `verify` prints the architecture and SHA-256 digest. `inspect` additionally prints every section, symbol, and relocation in canonical order. Invalid WVO returns 2 with a deterministic structural status; invalid command or argument count returns 64.
+All three forms read one bounded object snapshot and completely verify it before success. `check` emits no success output and does not calculate a digest; it is intended for build and test paths that need structural admission only. `verify` prints the architecture and SHA-256 digest of the same admitted in-memory snapshot. `inspect` additionally prints every section, symbol, and relocation in canonical order. Reporting uses the bounded streaming SHA-256 implementation, so a valid near-limit WVO does not exhaust the hosted value arena merely to print its identity. Invalid WVO returns 2 with a deterministic structural status; invalid command or argument count returns 64.
 
 The module declares exactly `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `process.argument`, and `process.argument_count`. It has no file-write capability. Path interpretation and native file failures remain in the host adapter; WVO meaning remains host-independent.
 
@@ -87,3 +89,8 @@ complete leaf-plus-metadata service, so deterministic construction, formatting,
 quoting, and enum-name checks execute without Stage 0. Capability refusal and
 invalid or missing hosted resources remain adapter-boundary contracts rather
 than WVO-core semantics.
+
+Decision 0552 adds digest-bound `Check-Wvo.cmd` and `Check-Wvo.sh` launchers and
+moves only callers that discarded verification output to the structural-only
+form. Report-bearing callers retain `verify`, so the printed digest continues
+to describe the exact admitted snapshot rather than a second host-side read.

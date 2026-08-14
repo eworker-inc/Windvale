@@ -61,28 +61,28 @@ set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Object-Model/Windvale-Wvo-Object.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvb%" 61008 a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db "WVO inspector WVB"
+call :verify_file "%Wvb%" 73322 40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070 "WVO inspector WVB"
 if errorlevel 1 goto :cleanup
 
 "%HostedTools%\wvhostenumrequest.exe" "%Wvb%" "%EnumRequest%" >"%TemporaryDirectory%\Enum-Request.out" 2>"%TemporaryDirectory%\Enum-Request.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%EnumRequest%" 945 7129a003ae3d0e795f5aea61e4e8d8f25ba4fb93180f2538bea9f04a3c0bdab6 "WVO inspector enum request"
+call :verify_file "%EnumRequest%" 977 cde0a8ba677b86e4c2bb4bb02a3d52df40e1c1d5412315aff7ffbec3b3f581d1 "WVO inspector enum request"
 if errorlevel 1 goto :cleanup
 "%HostedTools%\wvhostenumservice.exe" "%EnumRequest%" "%EnumService%" >"%TemporaryDirectory%\Enum-Service.out" 2>"%TemporaryDirectory%\Enum-Service.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%EnumService%" 1244 577ffaee02e64b0956f73d5ca44d65afa262cf476ae5eee86a899ffc575788d1 "WVO inspector enum service"
+call :verify_file "%EnumService%" 1276 6403fa2c4343df14093ae9f63a7518b1c1e966b1d28eaace00a0ceffcb587f40 "WVO inspector enum service"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >"%TemporaryDirectory%\Lower.out" 2>"%TemporaryDirectory%\Lower.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvo%" 591723 f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c "WVO inspector native object"
+call :verify_file "%Wvo%" 1022822 bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae "WVO inspector native object"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Fragment%" "%Wvo%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :cleanup
 findstr /b /c:"entry name=Main address=82280" "%TemporaryDirectory%\Link.out" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%Fragment%" 587529 f318ee573b149aac169b67369e90dbacc6451fc129022bfb4e62b2ceff9cfba4 "WVO inspector linked fragment"
+call :verify_file "%Fragment%" 1017780 1410b92ebc614f17cbf6e8a1147cb2cd448ae687a3b776e8d4ec3eb96a434854 "WVO inspector linked fragment"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%StartupRoot%\Windows-X64-Hosted-Inspector.wva" "%WindowsStartup%" >"%TemporaryDirectory%\Windows-Assemble.out" 2>"%TemporaryDirectory%\Windows-Assemble.err"
@@ -96,12 +96,12 @@ if errorlevel 1 goto :cleanup
 
 call :construct_target windows 1 "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin" "%WindowsStartup%" "%WindowsApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 606720 8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1 "Windows WVO inspector application"
+call :verify_file "%WindowsApplication%" 1037312 5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03 "Windows WVO inspector application"
 if errorlevel 1 goto :cleanup
 
 call :construct_target linux 2 "%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin" "%LinuxStartup%" "%LinuxApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 606208 f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 "Linux WVO inspector application"
+call :verify_file "%LinuxApplication%" 1036288 fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840 "Linux WVO inspector application"
 if errorlevel 1 goto :cleanup
 
 echo native WVO inspector reconstruction status=Complete artifacts=4

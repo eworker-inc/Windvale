@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 4,918 LF-only bytes with SHA-256
-`bfa747fb520d742b31ccbff9808fe975fbbabab02236a97c0f05c3a8b800492a`.
+`6749ed673cdb4fcecd71a6100da807ad0b07c36fbc03334cd30f2d1f8f93a3ca`.
 The first line is exactly:
 
 ```text
@@ -98,7 +98,7 @@ file. The current plan is:
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 
-The version-2 plan therefore contains exactly 52 suites and 3,288 cases. Its
+The version-2 plan therefore contains exactly 52 suites and 3,289 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
@@ -138,7 +138,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 52, Passed: 52, Failed: 0, Cases: 3288
+Suites: 52, Passed: 52, Failed: 0, Cases: 3289
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

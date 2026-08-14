@@ -81,34 +81,34 @@ linux_startup="$temporary_directory/Linux-Startup.wvo"
 
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Object-Model/Windvale-Wvo-Object.wvproj" "$wvb" \
     >"$temporary_directory/Build.out" 2>"$temporary_directory/Build.err" || exit $?
-verify_file "$wvb" 61008 \
-    a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db \
+verify_file "$wvb" 73322 \
+    40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070 \
     'WVO inspector WVB' || exit 1
 
 "$hosted_tools/wvhostenumrequest.elf" "$wvb" "$enum_request" \
     >"$temporary_directory/Enum-Request.out" \
     2>"$temporary_directory/Enum-Request.err" || exit $?
-verify_file "$enum_request" 945 \
-    7129a003ae3d0e795f5aea61e4e8d8f25ba4fb93180f2538bea9f04a3c0bdab6 \
+verify_file "$enum_request" 977 \
+    cde0a8ba677b86e4c2bb4bb02a3d52df40e1c1d5412315aff7ffbec3b3f581d1 \
     'WVO inspector enum request' || exit 1
 "$hosted_tools/wvhostenumservice.elf" "$enum_request" "$enum_service" \
     >"$temporary_directory/Enum-Service.out" \
     2>"$temporary_directory/Enum-Service.err" || exit $?
-verify_file "$enum_service" 1244 \
-    577ffaee02e64b0956f73d5ca44d65afa262cf476ae5eee86a899ffc575788d1 \
+verify_file "$enum_service" 1276 \
+    6403fa2c4343df14093ae9f63a7518b1c1e966b1d28eaace00a0ceffcb587f40 \
     'WVO inspector enum service' || exit 1
 
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$wvb" "$wvo" \
     >"$temporary_directory/Lower.out" 2>"$temporary_directory/Lower.err" || exit $?
-verify_file "$wvo" 591723 \
-    f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c \
+verify_file "$wvo" 1022822 \
+    bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae \
     'WVO inspector native object' || exit 1
 
 "$script_directory/Link-Wvo.sh" 0 Main "$fragment" "$wvo" \
     >"$temporary_directory/Link.out" 2>"$temporary_directory/Link.err" || exit $?
 grep -Fx 'entry name=Main address=82280' "$temporary_directory/Link.out" >/dev/null || exit 1
-verify_file "$fragment" 587529 \
-    f318ee573b149aac169b67369e90dbacc6451fc129022bfb4e62b2ceff9cfba4 \
+verify_file "$fragment" 1017780 \
+    1410b92ebc614f17cbf6e8a1147cb2cd448ae687a3b776e8d4ec3eb96a434854 \
     'WVO inspector linked fragment' || exit 1
 
 "$script_directory/Assemble-Wva.sh" \
@@ -175,8 +175,8 @@ construct_target windows 1 \
     "$service_root/Native-X64-Windows-File-Input-Service.bin" \
     "$service_root/Native-X64-Windows-Diagnostic-Output-Service.bin" \
     "$windows_startup" "$windows_application" || exit 1
-verify_file "$windows_application" 606720 \
-    8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1 \
+verify_file "$windows_application" 1037312 \
+    5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03 \
     'Windows WVO inspector application' || exit 1
 
 construct_target linux 2 \
@@ -185,8 +185,8 @@ construct_target linux 2 \
     "$service_root/Native-X64-Linux-Diagnostic-Output-Service.bin" \
     "$linux_startup" "$linux_application" || exit 1
 chmod +x "$linux_application" || exit 1
-verify_file "$linux_application" 606208 \
-    f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 \
+verify_file "$linux_application" 1036288 \
+    fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840 \
     'Linux WVO inspector application' || exit 1
 [[ -x $linux_application ]] || {
     echo 'The Linux WVO inspector application is not executable.' >&2

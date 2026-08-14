@@ -4,7 +4,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 if "%~1"=="" goto :usage
 if not "%~2"=="" goto :usage
 if /I not "%~x1"==".wvo" (
-    >&2 echo The native WVO inspector input must use the .wvo extension.
+    >&2 echo The native WVO checker input must use the .wvo extension.
     exit /b 64
 )
 
@@ -18,9 +18,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
-"%Inspector%" inspect "%~f1"
+"%Inspector%" check "%~f1"
 exit /b %ERRORLEVEL%
 
 :usage
->&2 echo Usage: Tools\Native\Inspect-Wvo.cmd ^<object.wvo^>
+>&2 echo Usage: Tools\Native\Check-Wvo.cmd ^<object.wvo^>
 exit /b 64

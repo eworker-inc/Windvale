@@ -94,6 +94,7 @@ run_case() {
     fi
     run_launcher "$name" Verify-Wvo.sh "$input_digest" "$report_digest" || return 1
     run_launcher "$name" Inspect-Wvo.sh "$input_digest" "$report_digest" || return 1
+    run_launcher "$name" Check-Wvo.sh "$input_digest" "$report_digest" || return 1
     rm -f -- "$input" "$decode_error"
     passed=$((passed + 1))
     echo "PASS  $name"

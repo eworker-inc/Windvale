@@ -237,7 +237,7 @@ function Add-Native-Tool-Suite {
         )
     } elseif ($Stem -match 'Rename-Wvo') {
         Add-Suite @('lowerer-rejections', 'wvo-export-renamer', 'aot-chain')
-    } elseif ($Stem -match 'Verify-Wvo|Inspect-Wvo') {
+    } elseif ($Stem -match 'Check-Wvo|Verify-Wvo|Inspect-Wvo') {
         Add-Object-Suites
         Add-Suite 'wvo-inspector-reconstruction'
     } elseif ($Stem -match 'Publish-Wvo') {

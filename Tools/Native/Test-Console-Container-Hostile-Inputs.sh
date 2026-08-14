@@ -133,7 +133,7 @@ run_case() {
         "$input" "$destination" > "$run_output" 2> "$run_error"
     run_status=$?
     if ((run_status != 1)); then
-        echo "FAIL  $name: native console publisher exit differs" >&2
+        echo "FAIL  $name: native console publisher exit differs expected=1 actual=$run_status" >&2
         return 1
     fi
     if [[ -s $run_output ]]; then

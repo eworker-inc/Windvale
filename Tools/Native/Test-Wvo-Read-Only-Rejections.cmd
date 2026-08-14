@@ -73,6 +73,8 @@ call :run_launcher "%~1" "Verify-Wvo.cmd" "%~3" "%~4"
 if errorlevel 1 exit /b 1
 call :run_launcher "%~1" "Inspect-Wvo.cmd" "%~3" "%~4"
 if errorlevel 1 exit /b 1
+call :run_launcher "%~1" "Check-Wvo.cmd" "%~3" "%~4"
+if errorlevel 1 exit /b 1
 del /f /q "%Input%" "%DecodeOutput%" "%DecodeError%" >nul 2>nul
 set /a Passed+=1
 echo PASS  %~1

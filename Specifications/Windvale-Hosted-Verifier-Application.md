@@ -170,7 +170,7 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 
 `windows-x64-wvb-runner-v1` uses metadata profile `5`. The current source reconstruction candidate is 1,094,656 bytes with SHA-256 `28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c`.
 
-`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current enum-complete source candidate is 606,720 bytes with SHA-256 `8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1`.
+`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current bounded-reporting source candidate is 1,037,312 bytes with SHA-256 `5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03`.
 
 `windows-x64-console-application-verifier-v1` uses metadata profile `7` and
 two immutable input snapshots. Its current native reconstruction candidate is
@@ -191,7 +191,7 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 
 `linux-x64-wvb-runner-v1` uses metadata profile `5`. The Decision 0510 current source reconstruction candidate is 1,093,632 bytes with SHA-256 `a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d`.
 
-`linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current enum-complete source candidate is 606,208 bytes with SHA-256 `f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1`.
+`linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current bounded-reporting source candidate is 1,036,288 bytes with SHA-256 `fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840`.
 
 `linux-x64-console-application-verifier-v1` uses metadata profile `7` and two
 immutable input snapshots. Its current native cross-target reconstruction
@@ -236,7 +236,7 @@ The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e966
 
 The current source-built runner WVB is 121,593 bytes with SHA-256 `e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097`. Its exact current native object is 1,078,577 bytes with SHA-256 `7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16651002106d`.
 
-The WVO inspector candidate is 61,008 bytes with SHA-256 `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`.
+The WVO inspector candidate is 73,322 bytes with SHA-256 `40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070`.
 
 The verifier writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical verifier-fragment services; they add only the startup-internal UTF-8 service. The WVB and WVO inspector writers require the same entry and capabilities plus the exact eleven-service read-only fragment, and the WVO writer additionally binds the canonical module identity. The runner writers require the same entry and capabilities plus its exact eight-service source fragment, and retain the same qualified startup-internal UTF-8 leaf in the fixed nine-service application bundle. All four profiles construct the outer application, parse it independently, and atomically publish it only after every profile, manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 

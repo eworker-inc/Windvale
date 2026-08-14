@@ -41,10 +41,11 @@ and standard error; the Windvale command body is not entered past the failed
 read.
 
 `Tools/Native/Test-Wvo-Hostile-Size.cmd` and `.sh` require this exact behavior
-through four digest-bound public launchers:
+through five digest-bound public launchers:
 
 | Case | Launcher | Stage 0 provenance | Additional preservation |
 | --- | --- | --- | --- |
+| `check` | `Check-Wvo` | `WVO1001` | input |
 | `verify` | `Verify-Wvo` | `WVO1001` | input |
 | `inspect` | `Inspect-Wvo` | `WVO1001` | input |
 | `link` | `Link-Wvo` | `WVL1002` | input and existing output |
@@ -59,7 +60,7 @@ applicable file byte-for-byte. Publication must leave no `.wvpublish-*` file.
 Success ends with:
 
 ```text
-Tests: 4, Passed: 4, Failed: 0
+Tests: 5, Passed: 5, Failed: 0
 ```
 
 ## Boundary

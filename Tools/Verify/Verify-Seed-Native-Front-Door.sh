@@ -241,8 +241,8 @@ exact_wvo_read_only_execution() {
     OBJECT_PATH=$1
     APPLICATION_BYTES=$(wc -c < "$NATIVE_WVO_APPLICATION" | tr -d ' ')
     APPLICATION_SHA256=$(sha256sum "$NATIVE_WVO_APPLICATION" | awk '{print $1}')
-    if [ "$APPLICATION_BYTES" != 606208 ] || \
-        [ "$APPLICATION_SHA256" != 'f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1' ]; then
+    if [ "$APPLICATION_BYTES" != 1036288 ] || \
+        [ "$APPLICATION_SHA256" != 'fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840' ]; then
         echo 'The Linux native WVO inspector application identity is invalid.' >&2
         exit 1
     fi
@@ -1438,12 +1438,12 @@ exact_inspect "$WVDUMP_CORE_MODULE" 'profile=hosted' 'section name=capabilities 
 exact_build \
     "$REPOSITORY_ROOT/Projects/Object-Model/Windvale-Wvo-Object.wvproj" \
     "$WVO_CORE_MODULE" \
-    61008 \
-    a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db \
-    0000ee50 \
-    'build status=Published verification=compiler-aligned functions=42 code-bytes=51298 module-bytes=61008'
+    73322 \
+    40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070 \
+    00011e6a \
+    'build status=Published verification=compiler-aligned functions=64 code-bytes=60229 module-bytes=73322'
 exact_verify "$WVO_CORE_MODULE"
-exact_inspect_without "$WVO_CORE_MODULE" 'file.write_bytes' 'profile=hosted' 'section name=capabilities offset=51 bytes=145 count=5' 'section name=exports offset=59468 bytes=17 count=1' 'section name=types offset=59493 bytes=1515 count=13' 'opcode=bytes.concat' 'opcode=bytes.from_u16_little' 'opcode=bytes.from_i32_little' 'opcode=text.to_utf8' '__WvM1F0' 'file.read_bytes' 'Object\u02C9sha256' 'name="__WvM2F0" parameters=1 result=bytes'
+exact_inspect_without "$WVO_CORE_MODULE" 'file.write_bytes' 'profile=hosted' 'section name=capabilities offset=51 bytes=145 count=5' 'section name=exports offset=71410 bytes=17 count=1' 'section name=types offset=71435 bytes=1887 count=17' 'opcode=bytes.concat' 'opcode=bytes.from_u16_little' 'opcode=bytes.from_i32_little' 'opcode=text.to_utf8' '__WvM1F0' '__WvM2F0' '__WvM3F0' '__WvM4F0' '__WvM5F0' 'file.read_bytes' 'Object\u02C9sha256'
 
 exact_build \
     "$REPOSITORY_ROOT/Projects/Assembler/Windvale-Wva-Assembler.wvproj" \

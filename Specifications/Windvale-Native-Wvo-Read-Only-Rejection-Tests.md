@@ -3,7 +3,7 @@
 ## Status and scope
 
 This fixed contract exercises every stable WVO 1.0 rejection family through
-both digest-bound read-only launchers. It transfers deterministic malformed-input
+all three digest-bound read-only launchers. It transfers deterministic malformed-input
 reports without adding another object parser or deriving expectations from the
 managed implementation at test time.
 
@@ -40,9 +40,10 @@ encoding, and terminator.
 For each case the coordinator must:
 
 1. decode and verify the complete fixed input identity;
-2. invoke `Verify-Wvo.cmd` / `.sh` and `Inspect-Wvo.cmd` / `.sh` independently;
+2. invoke `Check-Wvo.cmd` / `.sh`, `Verify-Wvo.cmd` / `.sh`, and
+   `Inspect-Wvo.cmd` / `.sh` independently;
 3. require exit `2`, empty standard output, and the same complete report identity
-   from both public launchers;
+   from all three public launchers;
 4. recheck that each read-only command left the input byte-for-byte unchanged;
 5. remove only its named decoded input, reports, and temporary directory.
 

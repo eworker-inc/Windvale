@@ -54,7 +54,7 @@ if errorlevel 1 goto :cleanup
 if errorlevel 1 goto :cleanup
 fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 goto :cleanup
 call :verify "%FirstWvo%" 1098332 c126573f46f5f7a85422fcc6b37a6751b05d58b43f75380206641612a6aee352 "database-superblock WVO"
 if errorlevel 1 goto :cleanup

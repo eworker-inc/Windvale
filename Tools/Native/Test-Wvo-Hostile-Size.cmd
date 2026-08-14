@@ -56,12 +56,14 @@ call :run_read_only "verify" "Verify-Wvo.cmd"
 if errorlevel 1 goto :failed
 call :run_read_only "inspect" "Inspect-Wvo.cmd"
 if errorlevel 1 goto :failed
+call :run_read_only "check" "Check-Wvo.cmd"
+if errorlevel 1 goto :failed
 call :run_linker
 if errorlevel 1 goto :failed
 call :run_publisher
 if errorlevel 1 goto :failed
 
-if not "%Total%"=="4" (
+if not "%Total%"=="5" (
     >&2 echo FAIL  wvo-hostile-size: case count differs
     goto :failed
 )

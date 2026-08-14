@@ -50,7 +50,7 @@ fi
 "$target" "$input" "$output"
 status=$?
 if [[ $status -ne 0 || ! -f $output ]] ||
-    ! "$script_directory/Verify-Wvo.sh" "$output" >/dev/null 2>&1; then
+    ! "$script_directory/Check-Wvo.sh" "$output" >/dev/null 2>&1; then
     rm -f -- "$output"
     echo 'The OS kernel target rejected the module or produced an invalid object.' >&2
     exit 1

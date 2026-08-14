@@ -183,7 +183,7 @@ verify_target() {
         "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
-    "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
 
     "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || return $?
     local entry_offset
@@ -233,7 +233,7 @@ verify_storage_lowering() {
     grep -q '^native x64 status=Valid abi=23 ' "$first_report" || return 1
     cmp --silent -- "$first_report" "$second_report" || return 1
     cmp --silent -- "$first_wvo" "$second_wvo" || return 1
-    "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
 
     "$script_directory/Assemble-Wva.sh" \
         "$repository_root/Runtime/Native/X64-Random-Access-Storage-Describe-Probe.wva" \
@@ -242,7 +242,7 @@ verify_storage_lowering() {
         "$repository_root/Runtime/Native/X64-Random-Access-Storage-Describe-Probe.wva" \
         "$second_bridge" >/dev/null || return $?
     cmp --silent -- "$first_bridge" "$second_bridge" || return 1
-    "$script_directory/Verify-Wvo.sh" "$first_bridge" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$first_bridge" >/dev/null || return $?
 
     "$script_directory/Link-Wvo.sh" 0 Storage_describe_probe_entry \
         "$image" "$first_wvo" "$first_bridge" >"$map" || return $?
@@ -333,7 +333,7 @@ verify_host_storage() {
         "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
-    "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
 
     "$script_directory/Assemble-Wva.sh" \
         "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
@@ -344,16 +344,16 @@ verify_host_storage() {
             "$common_second" >/dev/null || return $?
         cmp --silent -- "$common_first" "$common_second" || return 1
     fi
-    "$script_directory/Verify-Wvo.sh" "$common_first" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$common_first" >/dev/null || return $?
 
     "$script_directory/Assemble-Wva.sh" \
         "$repository_root/Runtime/Native/Linux-X64-Random-Access-Storage.wva" \
         "$linux_platform" >/dev/null || return $?
-    "$script_directory/Verify-Wvo.sh" "$linux_platform" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$linux_platform" >/dev/null || return $?
     "$script_directory/Assemble-Wva.sh" \
         "$repository_root/Runtime/Native/Windows-X64-Random-Access-Storage.wva" \
         "$windows_platform" >/dev/null || return $?
-    "$script_directory/Verify-Wvo.sh" "$windows_platform" >/dev/null || return $?
+    "$script_directory/Check-Wvo.sh" "$windows_platform" >/dev/null || return $?
 
     "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
         "$linux_image" "$first_wvo" "$common_first" "$linux_platform" \

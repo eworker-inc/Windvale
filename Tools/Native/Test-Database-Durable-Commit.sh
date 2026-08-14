@@ -79,7 +79,7 @@ cmp -s -- "$first_wvo" "$second_wvo" || {
     echo 'The database-durable-commit WVO is not deterministic.' >&2
     exit 1
 }
-"$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || exit $?
 verify_file "$first_wvo" 2001802 \
     2abe19205e0f1e64afb7d49931697ab7f96646e315adf76531f52c50ddff14b5 \
     'database-durable-commit WVO' || exit $?

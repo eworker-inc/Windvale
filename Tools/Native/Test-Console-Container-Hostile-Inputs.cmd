@@ -118,7 +118,7 @@ if errorlevel 1 (
 call "%RepositoryRoot%\Tools\Native\Publish-Console.cmd" "%Input%" "%Destination%" > "%RunOutput%" 2> "%RunError%"
 set "RunExit=%ERRORLEVEL%"
 if not "%RunExit%"=="1" (
-    >&2 echo FAIL  %~1: native console publisher exit differs
+    >&2 echo FAIL  %~1: native console publisher exit differs expected=1 actual=%RunExit%
     exit /b 1
 )
 for %%S in ("%RunOutput%") do if not "%%~zS"=="0" (
