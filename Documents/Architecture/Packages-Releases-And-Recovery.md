@@ -116,7 +116,7 @@ Windvale OS, a public package registry, automatic network updates, WebAssembly p
 3. Add an independently verified content-addressed local store and deterministic package bundle.
 4. Bind selected package parts and approved capabilities into the clean-spawn launch plan.
 5. Produce an unsigned local package flow on Windows and Linux, then add signed release envelopes and offline verification.
-6. Complete the Decision 0057 normal-path retirement and exact Stage 0 recovery evidence, then qualify the 0.1 checklist from one source state.
+6. Preserve the completed Decision 0057 normal-path retirement and exact Stage 0 recovery identity, then qualify the 0.1 checklist from one deliberately selected source state.
 7. Add installed generations and application rollback before a network package client.
 8. Add Windvale OS A/B system updates only after writable filesystem, durability, boot selection, civil time or signed freshness, key custody, and local recovery evidence exist.
 

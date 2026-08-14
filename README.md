@@ -17,7 +17,7 @@ At its center is a **new programming language**, together with its compiler, por
 Windvale Seed is experimental and not production-stable. This README is the stable public overview; changing implementation detail belongs in the documents that own it:
 
 - [Progress dashboard](Documents/Project/Progress.md) — authoritative current implementation and qualification snapshot
-- [Development roadmap](Documents/Project/Roadmap.md) — forward phase gates, sequencing, and next deliverables
+- [Development roadmap](Documents/Project/Roadmap.md) — forward product and workflow milestones, sequencing, and completion gates
 - [Seed implementation](Documents/Architecture/Seed-Implementation.md) — component ownership and implemented boundaries
 - [Specification index](Specifications/README.md) — current language, format, runtime, native, and OS contracts
 - [Qualification evidence](Documents/Project/Seed-Verification-Evidence.md) — exact completed cross-host runs and artifact identities
@@ -33,7 +33,12 @@ Portable Sum-Data.wv -> the same canonical WVB -> Windows, Linux, and Windvale O
 Portable Function-Only.wv -> the same canonical WVB -> Windows, Linux, and Windvale OS
 ```
 
-The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. Windvale-written compiler and native-tool paths are already real, while broader backend transfer, runtime services, and Windvale OS remain active milestones. C# and .NET stay as the explicit bootstrap and recovery path until the documented native-retirement gate is qualified on Windows and Linux, but forward C# source-language expansion is frozen at exact qualified WVB 1.11 baseline `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`. The ordinary project source-to-WVB build now uses the pinned native build driver and publisher without loading .NET; the remaining commands still identify their Stage 0 role explicitly.
+The Windvale-written compiler and native tools now own the accepted normal
+Windows and Linux build, verification, inspection, execution, assembly, link,
+packaging, WebAssembly, OS-image, and bootstrap paths. Decision 0526 qualified
+all eight .NET-retirement conditions. The frozen C# implementation remains in
+the repository only as a Stage 0 recovery and differential oracle; forward
+language semantics belong exclusively in `Compiler/Windvale`.
 
 ## Browser playground
 
@@ -61,8 +66,8 @@ Requirements:
 
 - Windows x64 with the inbox command processor, or Linux x64 with Bash and
   `sha256sum`, for ordinary native source-to-WVB build, verification, and inspection
-- .NET SDK 10.0.302 or a compatible later patch in the same feature band for
-  the retained Stage 0 runtime execution, tests, packaging, and recovery tools
+- .NET SDK 10.0.302 or a compatible later patch in the same feature band only
+  when deliberately invoking the retained Stage 0 recovery or differential tools
 
 The repository pins the SDK in `global.json` and uses no external NuGet packages.
 
@@ -94,10 +99,16 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Execution remains on the retained Stage 0 route for now:
+Execute through the ordinary native runner on Windows:
 
-```powershell
-dotnet run --project Tools/Windvale.Tool -- run Artifacts/Sum-Data.wvb
+```bat
+Tools\Native\Run-Wvb.cmd Artifacts\Sum-Data.wvb
+```
+
+Or on Linux:
+
+```sh
+./Tools/Native/Run-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
 The result is `Result: 29`.
@@ -155,7 +166,7 @@ export fn Main() -> i32 {
 - Platform scope, authority level, required capabilities, and optional capabilities remain separate metadata dimensions; a requirement never grants authority by itself.
 - The durable [Windvale OS architecture](Documents/Architecture/Windvale-Os-Architecture.md) uses a small capability-oriented kernel written primarily in `.wv`, a bounded `.wva` machine layer, and isolated Windvale services.
 - [Proposed next integrated defaults](Documents/Decisions/0198-Next-Integrated-Architecture-Defaults.md) connect the next resource-domain, process, console, network, trust, package, and language contracts for product review without claiming implementation.
-- C# and .NET remain recoverable Stage 0 until the documented native-retirement gate is qualified on Windows and Linux; the C# source compiler becomes feature-frozen at the next qualified WVB 1.11 baseline.
+- C# and .NET are retired from the accepted normal workflow; their frozen WVB 1.11 Stage 0 source and qualified release remain recovery and differential evidence only.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
 
 ## Documentation

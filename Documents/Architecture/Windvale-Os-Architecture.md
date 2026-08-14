@@ -283,7 +283,7 @@ Recovery, retry, restart, and resumable-exception policies must be added deliber
 | Kernel policy, state, validation, and diagnostics | System-profile Windvale (`.wv`) | C# may temporarily emit or independently verify a bounded object behind a named seam |
 | Privileged entry, register frames, context switch, and architecture instructions | WVA (`.wva`) | A bounded C# machine-code emitter may remain only until WVA can express and verify the exact shape |
 | WVB decoder and semantic verifier | Windvale, AOT for the first trusted boot component | C# remains the reference oracle and current host implementation |
-| Interpreter, baseline JIT, AOT orchestration, and runtime | Windvale outside the kernel, except minimal trusted admission enforcement | C#/.NET remains Stage 0 until the native-retirement gate passes |
+| Interpreter, baseline JIT, AOT orchestration, and runtime | Windvale outside the kernel, except minimal trusted admission enforcement | C#/.NET is frozen recovery/differential evidence after the completed retirement gate |
 | Kernel and low-level driver machine code | Shared Windvale native backend, deterministic AOT | Stage 0 may build, link, package, and independently inspect it |
 | Files, packages, network, shell, GUI, and most device policy | Isolated Windvale services | Minimal boot adapters may temporarily remain with the kernel |
 | VM lifecycle, firmware, virtual devices, graphics, and compute policy | Isolated Windvale VMM and device/accelerator services | External host providers or imported bounded device components may remain explicit transitional dependencies |

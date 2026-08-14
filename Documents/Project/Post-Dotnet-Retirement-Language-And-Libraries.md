@@ -2,7 +2,7 @@
 
 > Status: Active next-stage product proposal after Decision 0526's completed
 > .NET retirement. This document does not itself add source syntax, WVB behavior,
-> packages, capability interfaces, or a new numbered roadmap phase. A focused
+> packages, capability interfaces, or a new roadmap milestone. A focused
 > decision and measured consumer evidence remain required before any individual
 > contract is accepted or implemented.
 
@@ -17,11 +17,10 @@ path to prove a small, coherent set of application and library contracts.
 
 Package, library, and application work may now proceed through the qualified
 native path when a direct consumer exists; it must not widen the frozen C#
-compiler. The next numbered roadmap phase remains the boot and minimal-kernel
-work. This proposal is a parallel product lane, not a replacement for that work:
-its output is a useful cross-host
-application/library/package path, while Phase 11 continues to establish Windvale OS
-mechanisms.
+compiler. The active roadmap makes this useful package-backed application
+Milestone 2 while a separate Windvale OS launch/service milestone continues the
+kernel path. The two outcomes may share contracts without turning either into a
+prerequisite for every step of the other.
 
 The intended first outcome is one useful application that:
 

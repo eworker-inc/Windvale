@@ -132,7 +132,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native fixed-service and publication build/inspection transfer](Decisions/0513-Native-Fixed-Service-And-Publication-Build-Inspection-Transfer.md) — component-local fixed-service, enum-metadata, and publication projects, two genuine service-bundle aggregates, and twenty-three more managed calls removed from each broad Seed script
 - [Native runtime-table build and inspection transfer](Decisions/0514-Native-Runtime-Table-Build-And-Inspection-Transfer.md) — component-local runtime-table, execution-context, entry, and byte-result-admission projects, exact native build/inspection, and twenty-four more managed calls removed from each broad Seed script
 - [Native hosted-construction build and inspection transfer](Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md) — exact metadata, startup, hosted-container, runtime-header, and publication-lifetime construction, nine native inspections, and twenty-one more managed calls removed from each broad Seed script
-- [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
+- [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — normal native WebAssembly playground, bounded compiler/interpreter profiles, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 
 ## Architecture
@@ -149,9 +149,9 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Identity, time, entropy, and trust](Architecture/Identity-Time-Entropy-And-Trust.md) — proposed provider separation, key custody, pinned mutual identity, authorization, trust generations, and secure-stream prerequisites
 - [Packages, releases, updates, and recovery](Architecture/Packages-Releases-And-Recovery.md) — proposed package/lock/bundle/release split, immutable installation generations, 0.1 gate, and later A/B updates
 - [Compiler bootstrap options](Architecture/Compiler-Bootstrap-Options.md) — bootstrap sequence and representation choices
-- [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination and retirement gate
+- [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination, completed accepted retirement gate, and historical transfer record
 - [Exact compiler Stage 0 recovery](Runbooks/Exact-Compiler-Recovery.md) — clean-checkout reconstruction, identities, and archive provenance
-- [Seed verification throughput](Architecture/Seed-Verification-Throughput.md) — performance evidence and verification strategy
+- [Seed verification throughput](Architecture/Seed-Verification-Throughput.md) — current focused-development, checkpoint, sharding, and explicit-qualification strategy
 
 ## Contracts and decisions
 

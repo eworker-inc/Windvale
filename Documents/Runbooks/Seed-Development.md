@@ -73,13 +73,13 @@ Choose the gate that protects the changed boundary:
 | One implementation area or focused fix | Native `Verify-Changed.ps1` |
 | Coherent cross-area development batch | Native `Verify-Changed.ps1` after the batch settles |
 | Explicit Stage 0 differential diagnosis | Filtered managed `Fast` run |
-| Final retirement candidate | One fetched, settled cross-host retirement/Qualification gate |
+| Release, promotion, bootstrap, security, ABI, or conformance candidate | One explicit cold native dual-host Qualification gate |
 | Compiler inventory or project change | Native `Verify-Bootstrap.cmd` or `.sh` once for the final candidate |
 | OS boot, image, firmware, or kernel-seam change | Focused OS tests and the relevant live boot gate |
 
 The no-argument managed recovery verifier defaults to `Development`. Request its
-complete Qualification tier explicitly on Windows only when the final retirement
-gate or a named diagnosis requires it:
+complete Qualification tier explicitly only when a named recovery or
+differential diagnosis requires that complete frozen oracle:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
@@ -110,16 +110,17 @@ native Windows and Linux artifacts, assembler/object/linker routes, malformed
 inputs, exact identities, and Windvale-written versus Stage 0 agreement; it is
 not a normal acceptance path.
 
-The retirement candidate workflow is:
+The post-retirement workflow is:
 
 1. Use native `Verify-Changed.ps1` once after each coherent slice settles.
 2. Commit and push that unchanged slice without rerunning a passing check.
 3. Close named native gaps one at a time; use managed Fast only for an explicit
    differential question.
-4. After all slices settle, fetch and reconcile latest once, then run the complete
-   Windows/Linux retirement and Qualification gate once on the exact candidate.
-5. Use managed Standard or Qualification outside that end gate only to diagnose a
-   failure that focused native evidence cannot explain.
+4. For a release, promotion, bootstrap, security, ABI, or conformance claim,
+   dispatch the complete cold Windows/Linux native Qualification gate once on the
+   exact candidate.
+5. Use managed Standard or Qualification only to diagnose a named recovery or
+   differential failure that focused native evidence cannot explain.
 
 Do not run each tier sequentially against the same source state. A successful
 managed `Standard` already subsumes its Fast and Development suites. A successful
@@ -127,13 +128,18 @@ single-host `Qualification` is useful diagnostic evidence, but it is not a
 cross-host qualification claim; that claim requires the paired Windows and
 Debian results.
 
-Fast and changed-file runs are development feedback, not qualification evidence. GitHub runs the independent dual-host Qualification gate for implementation and specification changes. Do not duplicate that gate locally merely because a commit or push follows. Record which broader checks were not run and why.
+Fast and changed-file runs are development feedback, not qualification evidence.
+GitHub runs affected native owners on Windows and Linux for ordinary
+implementation and specification changes. Complete dual-host Qualification is
+an explicit workflow dispatch, not a per-commit gate. Do not duplicate either
+path locally merely because a commit or push follows. Record which broader
+checks were not run and why.
 
-The native GitHub Qualification gate runs six independent jobs in parallel:
-the complete fixed retirement suite, the complete WebAssembly owner, and native
-compiler self-convergence on Windows and Linux. The required `Verification
-gate` joins those results. Treat one workflow run as the broad gate; diagnose or
-rerun only its failed owner rather than manually repeating passing siblings.
+The native GitHub Qualification gate runs all four retirement shards on each
+host plus the complete WebAssembly owner and native compiler convergence on
+Windows and Linux. The required `Verification gate` joins those results. Treat
+one dispatched workflow run as the broad gate; diagnose its failed owner and
+dispatch the replacement source state only after the correction settles.
 
 ### Qualification follow-ups
 
