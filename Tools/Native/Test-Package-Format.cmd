@@ -33,6 +33,10 @@ set "ConsistencyWindowsApplication=%TemporaryDirectory%\Consistency.exe"
 set "ConsistencyLinuxApplication=%TemporaryDirectory%\Consistency.elf"
 set "Manifest=%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvpack"
 set "Lock=%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvlock"
+set "AdmissionProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Package-Resource-Admission.wvproj"
+set "AdmissionWvb=%TemporaryDirectory%\Admission.wvb"
+set "AdmissionWindowsApplication=%TemporaryDirectory%\Admission.exe"
+set "AdmissionLinuxApplication=%TemporaryDirectory%\Admission.elf"
 
 set "Step=canonical-build"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%CanonicalProject%" "%CanonicalWvb%" >nul
@@ -102,7 +106,23 @@ set "Step=consistency-windows-execution"
 "%ConsistencyWindowsApplication%" "%Manifest%" "%Lock%" >nul
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 
-echo native package format status=Passed result=42 modules=4 builds=5 groups=37 cross-host-images=8
+set "Step=admission-build"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%AdmissionProject%" "%AdmissionWvb%" >nul
+if errorlevel 1 goto :cleanup
+set "Step=admission-windows-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%AdmissionWvb%" "%AdmissionWindowsApplication%" windows >nul
+if errorlevel 1 goto :cleanup
+set "Step=admission-linux-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%AdmissionWvb%" "%AdmissionLinuxApplication%" linux >nul
+if errorlevel 1 goto :cleanup
+set "Step=admission-windows-execution"
+"%AdmissionWindowsApplication%" "%RepositoryRoot%" >nul
+if not "%ERRORLEVEL%"=="42" goto :cleanup
+
+echo native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10
 set "Result=0"
 
 :cleanup

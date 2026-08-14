@@ -1363,7 +1363,7 @@ once after the edit settles. Its planner selects the affected native owners and
 refuses uncovered gaps. Reuse passing results while their inputs remain
 unchanged; do not run changed-file, Fast, Development, Standard, and
 Qualification levels sequentially for the same state. Under
-[Decision 0556](../Decisions/0556-Separate-Development-Verification-From-Qualification.md),
+[Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md),
 GitHub runs only the affected native owners on Windows and Linux for ordinary
 implementation and specification changes. Dispatch the six independent native
 qualification profiles explicitly for a selected release, promotion, security,

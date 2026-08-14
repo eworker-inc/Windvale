@@ -1,0 +1,188 @@
+module Windvaleˉpackageˉresourceˉadmission profile portable;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉpackageˉlock as Lock;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+export enum Windvaleˉpackageˉresourceˉkind {
+    Origin = 1;
+    Manifest = 2;
+    Compiler = 3;
+    Project = 4;
+    Part = 5;
+    Output = 6;
+}
+
+export enum Windvaleˉpackageˉresourceˉstatus {
+    Valid = 0;
+    Invalidˉlock = 1301;
+    Invalidˉindex = 1302;
+    Pathˉmismatch = 1303;
+    Byteˉcountˉmismatch = 1304;
+    Digestˉmismatch = 1305;
+}
+
+export record Windvaleˉpackageˉresourceˉresult {
+    Status: Windvaleˉpackageˉresourceˉstatus;
+    Kind: Windvaleˉpackageˉresourceˉkind;
+    Index: u32;
+}
+
+record Windvaleˉpackageˉlockedˉresource {
+    Found: bool;
+    Digestˉoffset: u32;
+    Digestˉlength: u32;
+    Bytes: u64;
+    Pathˉoffset: u32;
+    Pathˉlength: u32;
+}
+
+fn Admissionˉresult(
+    Status: Windvaleˉpackageˉresourceˉstatus,
+    Kind: Windvaleˉpackageˉresourceˉkind,
+    Index: u32
+) -> Windvaleˉpackageˉresourceˉresult {
+    return Windvaleˉpackageˉresourceˉresult(Status, Kind, Index);
+}
+
+fn Missingˉresource() -> Windvaleˉpackageˉlockedˉresource {
+    return Windvaleˉpackageˉlockedˉresource(
+        false, 0u32, 0u32, 0u64, 0u32, 0u32
+    );
+}
+
+fn Fixedˉresource(
+    Digestˉoffset: u32,
+    Digestˉlength: u32,
+    Bytes: u64,
+    Pathˉoffset: u32,
+    Pathˉlength: u32
+) -> Windvaleˉpackageˉlockedˉresource {
+    return Windvaleˉpackageˉlockedˉresource(
+        true, Digestˉoffset, Digestˉlength, Bytes, Pathˉoffset, Pathˉlength
+    );
+}
+
+fn Selectˉresource(
+    Scan: Lock.Windvaleˉlockˉscan,
+    Kind: Windvaleˉpackageˉresourceˉkind,
+    Index: u32
+) -> Windvaleˉpackageˉlockedˉresource {
+    if Kind == Windvaleˉpackageˉresourceˉkind.Part {
+        let Part: Lock.Windvaleˉlockedˉpart =
+            Lock.Windvaleˉlockedˉpartˉat(Scan, Index);
+        if !Part.Found { return Missingˉresource(); }
+        return Fixedˉresource(
+            Part.Digestˉoffset, Part.Digestˉlength, Part.Bytes,
+            Part.Pathˉoffset, Part.Pathˉlength
+        );
+    }
+    if Index != 0u32 { return Missingˉresource(); }
+    if Kind == Windvaleˉpackageˉresourceˉkind.Origin {
+        return Fixedˉresource(
+            Scan.Originˉdigestˉoffset, Scan.Originˉdigestˉlength,
+            Scan.Originˉbytes, Scan.Originˉpathˉoffset, Scan.Originˉpathˉlength
+        );
+    }
+    if Kind == Windvaleˉpackageˉresourceˉkind.Manifest {
+        return Fixedˉresource(
+            Scan.Packageˉdigestˉoffset, Scan.Packageˉdigestˉlength,
+            Scan.Packageˉbytes, Scan.Packageˉpathˉoffset, Scan.Packageˉpathˉlength
+        );
+    }
+    if Kind == Windvaleˉpackageˉresourceˉkind.Compiler {
+        return Fixedˉresource(
+            Scan.Compilerˉdigestˉoffset, Scan.Compilerˉdigestˉlength,
+            Scan.Compilerˉbytes, Scan.Compilerˉpathˉoffset, Scan.Compilerˉpathˉlength
+        );
+    }
+    if Kind == Windvaleˉpackageˉresourceˉkind.Project {
+        return Fixedˉresource(
+            Scan.Projectˉdigestˉoffset, Scan.Projectˉdigestˉlength,
+            Scan.Projectˉbytes, Scan.Projectˉpathˉoffset, Scan.Projectˉpathˉlength
+        );
+    }
+    if Kind == Windvaleˉpackageˉresourceˉkind.Output {
+        return Fixedˉresource(
+            Scan.Outputˉdigestˉoffset, Scan.Outputˉdigestˉlength,
+            Scan.Outputˉbytes, 0u32, 0u32
+        );
+    }
+    return Missingˉresource();
+}
+
+export fn Windvaleˉpackageˉverifyˉlockedˉresource(
+    Lockˉinput: bytes,
+    Kind: Windvaleˉpackageˉresourceˉkind,
+    Index: u32,
+    Path: bytes,
+    Resource: bytes
+) -> Windvaleˉpackageˉresourceˉresult {
+    let Scan: Lock.Windvaleˉlockˉscan =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput);
+    if Scan.Status != Lock.Windvaleˉlockˉstatus.Valid {
+        return Admissionˉresult(
+            Windvaleˉpackageˉresourceˉstatus.Invalidˉlock, Kind, Index
+        );
+    }
+    let Expected: Windvaleˉpackageˉlockedˉresource =
+        Selectˉresource(Scan, Kind, Index);
+    if !Expected.Found {
+        return Admissionˉresult(
+            Windvaleˉpackageˉresourceˉstatus.Invalidˉindex, Kind, Index
+        );
+    }
+
+    if Kind == Windvaleˉpackageˉresourceˉkind.Output {
+        if Bytesˉlength(Path) != 0u32 {
+            return Admissionˉresult(
+                Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch, Kind, Index
+            );
+        }
+    } else {
+        if !Packageˉtext.Windvaleˉpackageˉspansˉequal(
+            Path,
+            Packageˉtext.Windvaleˉpackageˉwholeˉspan(Path),
+            Lockˉinput,
+            Packageˉtext.Windvaleˉpackageˉspan(
+                Expected.Pathˉoffset, Expected.Pathˉlength
+            )
+        ) {
+            return Admissionˉresult(
+                Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch, Kind, Index
+            );
+        }
+    }
+    if U64ˉfromˉu32(Bytesˉlength(Resource)) != Expected.Bytes {
+        return Admissionˉresult(
+            Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch, Kind, Index
+        );
+    }
+    let Digest: bytes = Sha256.Foundationˉsha256ˉhex(Resource);
+    if !Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Digest,
+        Packageˉtext.Windvaleˉpackageˉwholeˉspan(Digest),
+        Lockˉinput,
+        Packageˉtext.Windvaleˉpackageˉspan(
+            Expected.Digestˉoffset, Expected.Digestˉlength
+        )
+    ) {
+        return Admissionˉresult(
+            Windvaleˉpackageˉresourceˉstatus.Digestˉmismatch, Kind, Index
+        );
+    }
+    return Admissionˉresult(
+        Windvaleˉpackageˉresourceˉstatus.Valid, Kind, Index
+    );
+}
+
+export fn Windvaleˉpackageˉresourceˉdiagnosticˉcode(
+    Status: Windvaleˉpackageˉresourceˉstatus
+) -> text {
+    if Status == Windvaleˉpackageˉresourceˉstatus.Invalidˉlock { return "WVPK1301"; }
+    if Status == Windvaleˉpackageˉresourceˉstatus.Invalidˉindex { return "WVPK1302"; }
+    if Status == Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch { return "WVPK1303"; }
+    if Status == Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch { return "WVPK1304"; }
+    if Status == Windvaleˉpackageˉresourceˉstatus.Digestˉmismatch { return "WVPK1305"; }
+    return "";
+}

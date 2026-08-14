@@ -1,4 +1,4 @@
-# Decision 0556: Separate development verification from qualification
+# Decision 0557: Separate development verification from qualification
 
 - Status: Implemented
 - Date: 2026-08-14

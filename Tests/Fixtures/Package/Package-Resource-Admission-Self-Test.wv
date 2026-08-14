@@ -1,0 +1,186 @@
+module Windvaleˉpackageˉresourceˉadmissionˉselfˉtest profile hosted;
+
+import Windvaleˉpackageˉresourceˉadmission as Admission;
+
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Digest() -> text {
+    return "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+}
+
+fn Smallˉlock() -> text {
+    let Hash: text = Digest();
+    var Value: text = "windvale-lock 1\nresolver local-source-1\nroot windvale.example 1 a\ntarget hosted-wvb-v1\nlicense MIT\norigin workspace ";
+    Value = Textˉconcat(Value, Hash);
+    Value = Textˉconcat(Value, " 3 Windvale.wvws\npackage ");
+    Value = Textˉconcat(Value, Hash);
+    Value = Textˉconcat(Value, " 3 Distribution/Example.wvpack\ncompiler ");
+    Value = Textˉconcat(Value, Hash);
+    Value = Textˉconcat(Value, " 3 Artifacts/Compiler.wvb\nproject ");
+    Value = Textˉconcat(Value, Hash);
+    Value = Textˉconcat(Value, " 3 Projects/Example.wvproj\npart a hosted ");
+    Value = Textˉconcat(Value, Hash);
+    Value = Textˉconcat(Value, " 3 Applications/A.wv\noutput ");
+    Value = Textˉconcat(Value, Hash);
+    return Textˉconcat(Value, " 3\n");
+}
+
+fn Statusˉis(
+    Lockˉinput: bytes,
+    Kind: Admission.Windvaleˉpackageˉresourceˉkind,
+    Index: u32,
+    Path: text,
+    Resource: text,
+    Expected: Admission.Windvaleˉpackageˉresourceˉstatus
+) -> bool {
+    let Result: Admission.Windvaleˉpackageˉresourceˉresult =
+        Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
+            Lockˉinput, Kind, Index,
+            Textˉtoˉutf8(Path), Textˉtoˉutf8(Resource)
+        );
+    return Result.Status == Expected && Result.Kind == Kind && Result.Index == Index;
+}
+
+fn Actualˉpath(Root: text, Relative: text) -> text {
+    return Textˉconcat(Root, Textˉconcat("/", Relative));
+}
+
+fn Actualˉresource(
+    Root: text,
+    Lockˉinput: bytes,
+    Kind: Admission.Windvaleˉpackageˉresourceˉkind,
+    Index: u32,
+    Relative: text
+) -> bool {
+    let Resource: bytes = file.read_bytes(Actualˉpath(Root, Relative));
+    let Result: Admission.Windvaleˉpackageˉresourceˉresult =
+        Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
+            Lockˉinput, Kind, Index, Textˉtoˉutf8(Relative), Resource
+        );
+    return Result.Status == Admission.Windvaleˉpackageˉresourceˉstatus.Valid;
+}
+
+fn Actualˉcases() -> bool {
+    if process.argument_count() != 1u32 { return false; }
+    let Root: text = process.argument(0u32);
+    let Lockˉinput: bytes = file.read_bytes(
+        Actualˉpath(
+            Root,
+            "Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvlock"
+        )
+    );
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Origin,
+        0u32, "Windvale.wvws"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
+        0u32,
+        "Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
+        0u32, "Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
+        0u32, "Projects/Applications/Windvale-Wvdb-Query.wvproj"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        0u32, "Applications/Database/Wvdb-Query.wv"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        1u32, "Foundation/Decimal-Parsing.wv"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        2u32, "Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        3u32, "Libraries/Platform/Database/Read-Only-Wvdb.wv"
+    ) { return false; }
+    return Actualˉresource(
+        Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        4u32, "Libraries/Database/Wvdb-Reader.wv"
+    );
+}
+
+fn Validˉsmallˉcases() -> bool {
+    let Lockˉinput: bytes = Textˉtoˉutf8(Smallˉlock());
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Origin,
+        0u32, "Windvale.wvws", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
+        0u32, "Distribution/Example.wvpack", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
+        0u32, "Artifacts/Compiler.wvb", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
+        0u32, "Projects/Example.wvproj", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        0u32, "Applications/A.wv", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+    ) { return false; }
+    return Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Output,
+        0u32, "", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+    );
+}
+
+fn Rejectionˉcases() -> bool {
+    let Lockˉinput: bytes = Textˉtoˉutf8(Smallˉlock());
+    if !Statusˉis(
+        Textˉtoˉutf8(""), Admission.Windvaleˉpackageˉresourceˉkind.Origin,
+        0u32, "Windvale.wvws", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉlock
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
+        1u32, "Projects/Example.wvproj", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉindex
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        1u32, "Applications/A.wv", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉindex
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
+        0u32, "Distribution/Other.wvpack", "abc",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch
+    ) { return false; }
+    if !Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
+        0u32, "Artifacts/Compiler.wvb", "ab",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+    ) { return false; }
+    return Statusˉis(
+        Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Output,
+        0u32, "", "abd",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Digestˉmismatch
+    );
+}
+
+export fn Main() -> i32 {
+    if !Actualˉcases() { return 1; }
+    if !Validˉsmallˉcases() { return 2; }
+    if !Rejectionˉcases() { return 3; }
+    return 42;
+}

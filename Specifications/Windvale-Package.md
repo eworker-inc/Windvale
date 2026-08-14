@@ -126,14 +126,21 @@ SHA-256 implementation. It requires matching package name, version, root, target
 license, project, ordered parts, dependency edges, and capability closure, and it
 requires the lock's manifest byte count and digest to identify the supplied
 manifest exactly. It returns a bounded status and collection index without file
-access. Verifying the other resources named by lock digest records remains the
-next resource-admission layer.
+access.
+
+`Libraries/Package/Package-Resource-Admission.wv` verifies one selected lock
+resource at a time. Origin, manifest, compiler, project, and part resources must
+match their exact locked path, byte count, and SHA-256; the output has no source
+path but must match its locked byte count and SHA-256. A part index or nonzero
+fixed-resource index outside the lock is rejected before path or content checks.
+Host shells retain responsibility for acquiring the named bytes without path
+aliasing and for withholding publication until every required resource passes.
 
 The paired `Tools/Native/Build-Wvdb-Query-Package` commands accept an explicit
 manifest, lock, and output path. That publication front door still intentionally
 admits only the exact checked-in WVDB Query manifest and lock identity; replacing
-its specialized admission path with the general consistency core and adding
-locked-resource admission are subsequent implementation slices.
+its specialized admission path with the general consistency and resource cores
+is a subsequent implementation slice.
 
 The command verifies the manifest, lock, workspace, compiler WVB, Project 2 file,
 and each source part before compiling to a private candidate. It then verifies the

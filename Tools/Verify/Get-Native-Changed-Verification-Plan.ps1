@@ -511,10 +511,12 @@ foreach ($Path in $Paths) {
         'Projects/Libraries/Windvale-Library-Package-Consistency.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
+        'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Consistency.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
-        'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj'
+        'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
     )) {
         Add-Suite 'package-format'
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
