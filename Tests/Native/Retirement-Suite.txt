@@ -51,4 +51,4 @@ database-storage|Test-Database-Storage|14|1|native database storage status=Passe
 workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|26|3|native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26
 packages|Test-Wvdb-Query-Package|8|3|native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8
-package-format|Test-Package-Format|13|3|native package format status=Passed result=42 modules=2 builds=3 groups=13 cross-host-images=4
+package-format|Test-Package-Format|21|3|native package format status=Passed result=42 modules=3 builds=4 groups=21 cross-host-images=6

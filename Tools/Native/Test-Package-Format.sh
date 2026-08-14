@@ -33,6 +33,10 @@ first="$temporary_directory/First.wvb"
 second="$temporary_directory/Second.wvb"
 windows_application="$temporary_directory/Package-Format.exe"
 linux_application="$temporary_directory/Package-Format.elf"
+lock_project="$repository_root/Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj"
+lock_wvb="$temporary_directory/Lock.wvb"
+lock_windows_application="$temporary_directory/Lock.exe"
+lock_linux_application="$temporary_directory/Lock.elf"
 
 "$script_directory/Build-Wvb.sh" "$canonical_project" "$canonical_wvb" >/dev/null || exit $?
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
@@ -53,4 +57,12 @@ cmp --silent "$first" "$second" || exit 1
 "$linux_application" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
-echo 'native package format status=Passed result=42 modules=2 builds=3 groups=13 cross-host-images=4'
+"$script_directory/Build-Wvb.sh" "$lock_project" "$lock_wvb" >/dev/null || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 6 \
+    "$lock_wvb" "$lock_windows_application" windows >/dev/null || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 6 \
+    "$lock_wvb" "$lock_linux_application" linux >/dev/null || exit $?
+"$lock_linux_application" >/dev/null
+[[ $? -eq 42 ]] || exit 1
+
+echo 'native package format status=Passed result=42 modules=3 builds=4 groups=21 cross-host-images=6'

@@ -99,6 +99,12 @@ manifest. The origin, manifest, compiler, project, and source part records pin t
 complete build input by both byte count and SHA-256. `output` pins the sole
 published WVB identity.
 
+A Lock 1 file contains at most 64 parts, 256 dependency edges, and 64
+capabilities. Part identifiers and source paths are unique, every dependency
+endpoint names a locked part, and `output` is the final record. Readers reject a
+collection before appending beyond its bound and reject any record after
+`output`.
+
 Resolution is complete before compilation. Once the checked-in resources exist,
 the package build performs no network lookup and must not choose an alternate
 source, compiler, version, target, or capability set.
@@ -107,18 +113,23 @@ source, compiler, version, target, or capability set.
 
 `Libraries/Package/Canonical-Package-Text.wv` and
 `Libraries/Package/Package-Manifest.wv` provide the portable native-owned strict
-text and general Package 1 manifest readers. The manifest reader validates the
-fixed records, ordering, collection limits, identifiers, scopes, paths, unique
-ordered keys, root reference, and dependency endpoints before returning a valid
-view. Returned string fields are bounded offset-and-length references into the
-caller's immutable input; the directory stores only checked fixed-width numeric
-records.
+text and general Package 1 manifest readers. `Libraries/Package/Package-Lock.wv`
+provides the matching general `local-source-1` Lock 1 reader. The readers validate
+fixed records, ordering, collection limits, identifiers, scopes, paths, digests,
+canonical byte counts, unique ordered keys, root references, dependency
+endpoints, and the final output record before returning valid views. Returned
+string fields are bounded offset-and-length references into the caller's
+immutable input; directories store only checked fixed-width numeric records.
+
+The readers deliberately do not claim manifest/lock agreement or verify the
+bytes named by digest records. Those checks belong to the next cross-file and
+resource-admission layer.
 
 The paired `Tools/Native/Build-Wvdb-Query-Package` commands accept an explicit
 manifest, lock, and output path. That publication front door still intentionally
 admits only the exact checked-in WVDB Query manifest and lock identity; replacing
-its specialized admission path with the general readers and adding a general
-Lock 1 reader are subsequent implementation slices.
+its specialized admission path with the general readers and adding cross-file
+and locked-resource admission are subsequent implementation slices.
 
 The command verifies the manifest, lock, workspace, compiler WVB, Project 2 file,
 and each source part before compiling to a private candidate. It then verifies the

@@ -1,0 +1,137 @@
+module Windvaleˉpackageˉlockˉselfˉtest profile portable;
+
+import Windvaleˉpackageˉlock as Lock;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+fn Digest() -> text {
+    return "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+}
+
+fn Actualˉlock() -> text {
+    return "windvale-lock 1\nresolver local-source-1\nroot windvale.wvdb-query 0.1.0 application\ntarget hosted-wvb-v1\nlicense LicenseRef-Windvale-Community-Source-1.0\norigin workspace 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 21 Windvale.wvws\npackage 835f573302377fdd38e4c3d51fa9106397beba0b9813f99bfc3143d08a156406 866 Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack\ncompiler 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 914746 Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb\nproject 86570daa0dac6410dc8a64947901a3fc955db24afe3589bc70986f96abb8f49a 270 Projects/Applications/Windvale-Wvdb-Query.wvproj\npart application hosted 1159c10ae4b565e382c57cdf1dcc07311da961fede5e73bb950bca80c9c1a77b 2721 Applications/Database/Wvdb-Query.wv\npart decimal-parsing portable 797eb31da7e7a8c93e0d082bf910bc6d8e7988bcfad757a87c979075912e668a 1276 Foundation/Decimal-Parsing.wv\npart read-only-directory hosted 4c6ecc745b0755b0242c7127c391d27408a7694f91d634c55eeb512746393c81 6565 Libraries/Platform/Filesystem/Read-Only-Directory.wv\npart read-only-wvdb hosted 7b3bd45397878e5468d979a2fb437feb4d72d5d8bbad21c832bcf3f280c018cb 9084 Libraries/Platform/Database/Read-Only-Wvdb.wv\npart wvdb-reader portable ad6fd38dafdab57793aead612dd050817f65f22179d11b0f3dbab6654ac909c2 11213 Libraries/Database/Wvdb-Reader.wv\ndependency application decimal-parsing\ndependency application read-only-wvdb\ndependency read-only-wvdb read-only-directory\ndependency read-only-wvdb wvdb-reader\ncapability console.write_line\ncapability diagnostic.write_line\ncapability filesystem.directory_read_v1\ncapability process.argument\ncapability process.argument_count\noutput 063a23023d2baedbf21503ae43d4c3eac13a0e77bf87d0b41182518bf88f53f8 25763\n";
+}
+
+fn Referenceˉequals(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Span: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(Offset, Length);
+    return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Span, Expected);
+}
+
+fn Validˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8(Actualˉlock());
+    let Scan: Lock.Windvaleˉlockˉscan = Lock.Windvaleˉpackageˉscanˉlock(Input);
+    if Scan.Status != Lock.Windvaleˉlockˉstatus.Valid ||
+        Scan.Parts != 5u32 || Scan.Dependencies != 4u32 || Scan.Capabilities != 5u32 ||
+        Scan.Packageˉbytes != 866u64 || Scan.Outputˉbytes != 25763u64 {
+        return false;
+    }
+    if !Referenceˉequals(Input, Scan.Nameˉoffset, Scan.Nameˉlength, "windvale.wvdb-query") ||
+        !Referenceˉequals(Input, Scan.Rootˉoffset, Scan.Rootˉlength, "application") ||
+        !Referenceˉequals(
+            Input, Scan.Projectˉpathˉoffset, Scan.Projectˉpathˉlength,
+            "Projects/Applications/Windvale-Wvdb-Query.wvproj"
+        ) {
+        return false;
+    }
+    let Last: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(Scan, 4u32);
+    if !Last.Found || Last.Scope != 1u32 || Last.Bytes != 11213u64 ||
+        !Referenceˉequals(Input, Last.Nameˉoffset, Last.Nameˉlength, "wvdb-reader") {
+        return false;
+    }
+    let Missing: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(Scan, 5u32);
+    return !Missing.Found;
+}
+
+fn Fixed(Root: text) -> text {
+    var Value: text = "windvale-lock 1\nresolver local-source-1\nroot windvale.example 1 ";
+    Value = Textˉconcat(Value, Root);
+    Value = Textˉconcat(Value, "\ntarget hosted-wvb-v1\nlicense MIT\norigin workspace ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 Windvale.wvws\npackage ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 Distribution/Example.wvpack\ncompiler ");
+    Value = Textˉconcat(Value, Digest());
+    Value = Textˉconcat(Value, " 1 Artifacts/Compiler.wvb\nproject ");
+    Value = Textˉconcat(Value, Digest());
+    return Textˉconcat(Value, " 1 Projects/Example.wvproj\n");
+}
+
+fn Minimal(Partˉrecords: text, Tail: text, Root: text) -> text {
+    return Textˉconcat(Textˉconcat(Fixed(Root), Partˉrecords), Tail);
+}
+
+fn Statusˉis(Inputˉtext: text, Expected: Lock.Windvaleˉlockˉstatus) -> bool {
+    let Input: bytes = Textˉtoˉutf8(Inputˉtext);
+    let Scan: Lock.Windvaleˉlockˉscan = Lock.Windvaleˉpackageˉscanˉlock(Input);
+    return Scan.Status == Expected;
+}
+
+fn Rejectionˉcases() -> bool {
+    let Validˉpart: text = Textˉconcat(
+        "part a hosted ",
+        Textˉconcat(Digest(), " 1 Applications/A.wv\n")
+    );
+    let Validˉoutput: text = Textˉconcat(
+        "output ", Textˉconcat(Digest(), " 1\n")
+    );
+    let Invalidˉdigestˉpart: text =
+        "part a hosted 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeF 1 Applications/A.wv\n";
+    if !Statusˉis(
+        Minimal(Invalidˉdigestˉpart, Validˉoutput, "a"),
+        Lock.Windvaleˉlockˉstatus.Invalidˉdigest
+    ) { return false; }
+    let Leadingˉzeroˉpart: text = Textˉconcat(
+        "part a hosted ",
+        Textˉconcat(Digest(), " 01 Applications/A.wv\n")
+    );
+    if !Statusˉis(
+        Minimal(Leadingˉzeroˉpart, Validˉoutput, "a"),
+        Lock.Windvaleˉlockˉstatus.Invalidˉdecimal
+    ) { return false; }
+    if !Statusˉis(
+        Minimal(Validˉpart, Validˉoutput, "missing"),
+        Lock.Windvaleˉlockˉstatus.Unknownˉpart
+    ) { return false; }
+    if !Statusˉis(
+        Minimal(Validˉpart, "", "a"),
+        Lock.Windvaleˉlockˉstatus.Missingˉrecord
+    ) { return false; }
+    let Afterˉoutput: text = Textˉconcat(Validˉoutput, "capability console.write_line\n");
+    if !Statusˉis(
+        Minimal(Validˉpart, Afterˉoutput, "a"),
+        Lock.Windvaleˉlockˉstatus.Invalidˉorder
+    ) { return false; }
+    let Duplicateˉpaths: text = Textˉconcat(
+        Validˉpart,
+        Textˉconcat("part b hosted ", Textˉconcat(Digest(), " 1 Applications/A.wv\n"))
+    );
+    if !Statusˉis(
+        Minimal(Duplicateˉpaths, Validˉoutput, "a"),
+        Lock.Windvaleˉlockˉstatus.Invalidˉrecord
+    ) { return false; }
+    let Unordered: text = Textˉconcat(
+        "part b hosted ",
+        Textˉconcat(
+            Digest(),
+            Textˉconcat(
+                " 1 Applications/B.wv\npart a hosted ",
+                Textˉconcat(Digest(), " 1 Applications/A.wv\n")
+            )
+        )
+    );
+    return Statusˉis(
+        Minimal(Unordered, Validˉoutput, "a"),
+        Lock.Windvaleˉlockˉstatus.Invalidˉorder
+    );
+}
+
+export fn Main() -> i32 {
+    if !Validˉcase() { return 1; }
+    if !Rejectionˉcases() { return 2; }
+    return 42;
+}

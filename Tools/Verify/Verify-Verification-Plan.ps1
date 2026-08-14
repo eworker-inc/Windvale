@@ -1163,8 +1163,12 @@ $NativeCases = @(
         Name = 'portable package-format owner'
         Paths = @(
             'Libraries/Package/Package-Manifest.wv',
+            'Libraries/Package/Package-Lock.wv',
             'Tests/Fixtures/Package/Package-Manifest-Self-Test.wv',
-            'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj'
+            'Tests/Fixtures/Package/Package-Lock-Self-Test.wv',
+            'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj'
         )
         Suites = @('package-format')
         Gaps = @()
@@ -1306,7 +1310,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3302 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3310 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

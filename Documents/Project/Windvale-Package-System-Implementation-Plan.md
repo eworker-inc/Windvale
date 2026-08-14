@@ -38,7 +38,7 @@ or authority grant.
 
 | Needed boundary | Current repository evidence | Readiness |
 | --- | --- | --- |
-| Source package and exact lock | Package 1, Lock 1, WVDB Query manifest, lock, eight-case native package owner, canonical text reader, and general Package 1 manifest reader | General manifest admission has started; Lock 1 and cross-file verification remain specialized to one digest-pinned package |
+| Source package and exact lock | Package 1, Lock 1, WVDB Query manifest and lock, canonical text reader, general manifest and lock readers, and a 21-case native package-format owner | Both individual formats have general admission; cross-file and locked-resource verification remain specialized to one digest-pinned package |
 | Cross-component source build | Workspace 1 and Project 2 native front door | Implemented candidate |
 | Compiler data and call support | Native `u64` values, nested records, byte concatenation, execution context 9, capability-provider table, and provider-call lowering | Enough language/backend surface for bounded package parsers and bundle geometry; the merged baseline still requires its dual-host qualification result |
 | SHA-256 | `Foundation/Sha256.wv`, compression core, streaming core, native streaming evidence | Reusable, but the current portable streaming state is capped at 64 MiB and tracks a `u32` total |
@@ -97,21 +97,23 @@ Development, integration, and promotion are separate gates:
   result from the exact source state, reproducible byte identities, and all named
   security and recovery evidence. No local focused result substitutes for it.
 
-The first implementation increment now owns strict canonical package text and a
-general Package 1 manifest reader in portable Windvale source. Its focused test
-compiles with the native build driver, rejects malformed content, agrees with the
-managed recovery oracle, lowers through the native backend, and returns the same
-success value from a native hosted Windows executable. This is development
-evidence only; Linux and the general Lock 1 consistency layer remain in Slice 1.
+The first two implementation increments now own strict canonical package text and
+general Package 1 manifest and Lock 1 readers in portable Windvale source. Their
+focused tests compile with the native build driver, reject malformed content,
+lower through the native backend, and are packaged as both Windows and Linux
+hosted executables. Local execution is development evidence only; independent
+Linux execution and the cross-file consistency layer remain in Slice 1.
 
 ## Confirmed missing boundaries
 
 ### General package and lock admission
 
 The current package shell accepts only the exact checked-in WVDB Query manifest
-and lock identities. A reusable strict text reader and general Package 1 manifest
-reader now exist, but there is no general Lock 1 parser, cross-file consistency
-verifier, resolver model, or second package.
+and lock identities. Reusable strict text, Package 1 manifest, and Lock 1 readers
+now exist, but there is no cross-file consistency verifier, locked-resource
+admission core, resolver model, or second package. The next increment must also
+prove that one Project 2 consumer can compose the manifest reader, lock reader,
+and SHA-256 identity implementation; independent library builds are not enough.
 
 ### Large streaming identity
 

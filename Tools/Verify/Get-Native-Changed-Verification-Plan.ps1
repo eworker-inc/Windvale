@@ -494,8 +494,10 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
+        'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
-        'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj'
+        'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj'
     )) {
         Add-Suite 'package-format'
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {

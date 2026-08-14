@@ -1,0 +1,730 @@
+module Windvaleˉpackageˉlock profile portable;
+
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+export enum Windvaleˉlockˉstatus {
+    Valid = 0;
+    Invalidˉtext = 1101;
+    Invalidˉheader = 1102;
+    Invalidˉrecord = 1103;
+    Invalidˉorder = 1104;
+    Invalidˉidentifier = 1105;
+    Invalidˉpath = 1106;
+    Invalidˉscope = 1107;
+    Invalidˉdigest = 1108;
+    Invalidˉdecimal = 1109;
+    Collectionˉlimit = 1110;
+    Missingˉrecord = 1111;
+    Unknownˉpart = 1112;
+}
+
+export record Windvaleˉlockedˉpart {
+    Found: bool;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Scope: u32;
+    Digestˉoffset: u32;
+    Digestˉlength: u32;
+    Bytes: u64;
+    Pathˉoffset: u32;
+    Pathˉlength: u32;
+}
+
+export record Windvaleˉlockedˉdependency {
+    Found: bool;
+    Importerˉoffset: u32;
+    Importerˉlength: u32;
+    Requiredˉoffset: u32;
+    Requiredˉlength: u32;
+}
+
+export record Windvaleˉlockedˉcapability {
+    Found: bool;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+}
+
+export record Windvaleˉlockˉscan {
+    Status: Windvaleˉlockˉstatus;
+    Resolverˉoffset: u32;
+    Resolverˉlength: u32;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Versionˉoffset: u32;
+    Versionˉlength: u32;
+    Rootˉoffset: u32;
+    Rootˉlength: u32;
+    Targetˉoffset: u32;
+    Targetˉlength: u32;
+    Licenseˉoffset: u32;
+    Licenseˉlength: u32;
+    Originˉdigestˉoffset: u32;
+    Originˉdigestˉlength: u32;
+    Originˉbytes: u64;
+    Originˉpathˉoffset: u32;
+    Originˉpathˉlength: u32;
+    Packageˉdigestˉoffset: u32;
+    Packageˉdigestˉlength: u32;
+    Packageˉbytes: u64;
+    Packageˉpathˉoffset: u32;
+    Packageˉpathˉlength: u32;
+    Compilerˉdigestˉoffset: u32;
+    Compilerˉdigestˉlength: u32;
+    Compilerˉbytes: u64;
+    Compilerˉpathˉoffset: u32;
+    Compilerˉpathˉlength: u32;
+    Projectˉdigestˉoffset: u32;
+    Projectˉdigestˉlength: u32;
+    Projectˉbytes: u64;
+    Projectˉpathˉoffset: u32;
+    Projectˉpathˉlength: u32;
+    Parts: u32;
+    Dependencies: u32;
+    Capabilities: u32;
+    Directory: bytes;
+    Outputˉdigestˉoffset: u32;
+    Outputˉdigestˉlength: u32;
+    Outputˉbytes: u64;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+fn Emptyˉbytes() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Failure(
+    Status: Windvaleˉlockˉstatus,
+    Line: u32,
+    Column: u32
+) -> Windvaleˉlockˉscan {
+    return Windvaleˉlockˉscan(
+        Status,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u64, 0u32, 0u32,
+        0u32, 0u32, 0u64, 0u32, 0u32,
+        0u32, 0u32, 0u64, 0u32, 0u32,
+        0u32, 0u32, 0u64, 0u32, 0u32,
+        0u32, 0u32, 0u32, Emptyˉbytes(),
+        0u32, 0u32, 0u64,
+        Line, Column
+    );
+}
+
+fn Tokenˉspan(
+    Input: bytes,
+    Line: Packageˉtext.Windvaleˉpackageˉline,
+    Index: u32
+) -> Packageˉtext.Windvaleˉpackageˉspan {
+    return Packageˉtext.Windvaleˉpackageˉtokenˉspan(
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, Index)
+    );
+}
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Appendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Appendˉspan(
+    Value: bytes,
+    Span: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    var Result: bytes = Appendˉu32(Value, Span.Offset);
+    return Appendˉu32(Result, Span.Length);
+}
+
+fn Readˉspan(
+    Directory: bytes,
+    Offset: u32
+) -> Packageˉtext.Windvaleˉpackageˉspan {
+    let Spanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Offset);
+    let Spanˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32);
+    return Packageˉtext.Windvaleˉpackageˉspan(Spanˉoffset, Spanˉlength);
+}
+
+fn Appendˉpart(
+    Directory: bytes,
+    Name: Packageˉtext.Windvaleˉpackageˉspan,
+    Scope: u32,
+    Digest: Packageˉtext.Windvaleˉpackageˉspan,
+    Byteˉcount: u64,
+    Path: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    var Result: bytes = Appendˉspan(Directory, Name);
+    Result = Appendˉu32(Result, Scope);
+    Result = Appendˉspan(Result, Digest);
+    Result = Appendˉu64(Result, Byteˉcount);
+    return Appendˉspan(Result, Path);
+}
+
+fn Appendˉdependency(
+    Directory: bytes,
+    Importer: Packageˉtext.Windvaleˉpackageˉspan,
+    Required: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    return Appendˉspan(Appendˉspan(Directory, Importer), Required);
+}
+
+fn Appendˉcapability(
+    Directory: bytes,
+    Name: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    return Appendˉspan(Directory, Name);
+}
+
+export fn Windvaleˉlockedˉpartˉat(
+    Scan: Windvaleˉlockˉscan,
+    Index: u32
+) -> Windvaleˉlockedˉpart {
+    if Scan.Status != Windvaleˉlockˉstatus.Valid || Index >= Scan.Parts {
+        return Windvaleˉlockedˉpart(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32
+        );
+    }
+    let Offset: u32 = Index * 36u32;
+    if Offset > Bytesˉlength(Scan.Directory) ||
+        Bytesˉlength(Scan.Directory) - Offset < 36u32 {
+        return Windvaleˉlockedˉpart(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32
+        );
+    }
+    let Name: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset);
+    let Digest: Packageˉtext.Windvaleˉpackageˉspan =
+        Readˉspan(Scan.Directory, Offset + 12u32);
+    let Path: Packageˉtext.Windvaleˉpackageˉspan =
+        Readˉspan(Scan.Directory, Offset + 28u32);
+    return Windvaleˉlockedˉpart(
+        true,
+        Name.Offset,
+        Name.Length,
+        Bytesˉreadˉu32ˉlittle(Scan.Directory, Offset + 8u32),
+        Digest.Offset,
+        Digest.Length,
+        Bytesˉreadˉu64ˉlittle(Scan.Directory, Offset + 20u32),
+        Path.Offset,
+        Path.Length
+    );
+}
+
+export fn Windvaleˉlockedˉdependencyˉat(
+    Scan: Windvaleˉlockˉscan,
+    Index: u32
+) -> Windvaleˉlockedˉdependency {
+    if Scan.Status != Windvaleˉlockˉstatus.Valid || Index >= Scan.Dependencies {
+        return Windvaleˉlockedˉdependency(false, 0u32, 0u32, 0u32, 0u32);
+    }
+    let Offset: u32 = Scan.Parts * 36u32 + Index * 16u32;
+    if Offset > Bytesˉlength(Scan.Directory) ||
+        Bytesˉlength(Scan.Directory) - Offset < 16u32 {
+        return Windvaleˉlockedˉdependency(false, 0u32, 0u32, 0u32, 0u32);
+    }
+    let Importer: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset);
+    let Required: Packageˉtext.Windvaleˉpackageˉspan =
+        Readˉspan(Scan.Directory, Offset + 8u32);
+    return Windvaleˉlockedˉdependency(
+        true, Importer.Offset, Importer.Length, Required.Offset, Required.Length
+    );
+}
+
+export fn Windvaleˉlockedˉcapabilityˉat(
+    Scan: Windvaleˉlockˉscan,
+    Index: u32
+) -> Windvaleˉlockedˉcapability {
+    if Scan.Status != Windvaleˉlockˉstatus.Valid || Index >= Scan.Capabilities {
+        return Windvaleˉlockedˉcapability(false, 0u32, 0u32);
+    }
+    let Offset: u32 = Scan.Parts * 36u32 + Scan.Dependencies * 16u32 + Index * 8u32;
+    if Offset > Bytesˉlength(Scan.Directory) ||
+        Bytesˉlength(Scan.Directory) - Offset < 8u32 {
+        return Windvaleˉlockedˉcapability(false, 0u32, 0u32);
+    }
+    let Name: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset);
+    return Windvaleˉlockedˉcapability(true, Name.Offset, Name.Length);
+}
+
+fn Partˉexists(
+    Input: bytes,
+    Scan: Windvaleˉlockˉscan,
+    Name: Packageˉtext.Windvaleˉpackageˉspan
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Scan.Parts {
+        let Part: Windvaleˉlockedˉpart = Windvaleˉlockedˉpartˉat(Scan, Index);
+        if !Part.Found { return false; }
+        let Partˉname: Packageˉtext.Windvaleˉpackageˉspan =
+            Packageˉtext.Windvaleˉpackageˉspan(Part.Nameˉoffset, Part.Nameˉlength);
+        if Packageˉtext.Windvaleˉpackageˉspansˉequal(
+            Input, Partˉname, Input, Name
+        ) { return true; }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
+    let Document: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(Input);
+    if !Document.Valid {
+        return Failure(
+            Windvaleˉlockˉstatus.Invalidˉtext,
+            Document.Failureˉline,
+            Document.Failureˉcolumn
+        );
+    }
+
+    let Header: Packageˉtext.Windvaleˉpackageˉline =
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Input, 0u32);
+    let Headerˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Header);
+    if !Headerˉtokens.Valid || Headerˉtokens.Count != 2u32 {
+        return Failure(Windvaleˉlockˉstatus.Invalidˉheader, 1u32, 1u32);
+    }
+    if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Tokenˉspan(Input, Header, 0u32), "windvale-lock"
+    ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Tokenˉspan(Input, Header, 1u32), "1"
+    ) {
+        return Failure(Windvaleˉlockˉstatus.Invalidˉheader, 1u32, 1u32);
+    }
+
+    let Empty: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    var Resolver: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Name: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Version: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Root: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Target: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var License: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Originˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Originˉbytes: u64 = 0u64;
+    var Originˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Packageˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Packageˉbytes: u64 = 0u64;
+    var Packageˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Compilerˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Compilerˉbytes: u64 = 0u64;
+    var Compilerˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Projectˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Projectˉbytes: u64 = 0u64;
+    var Projectˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Outputˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Outputˉbytes: u64 = 0u64;
+    var Outputˉfound: bool = false;
+    var Parts: u32 = 0u32;
+    var Dependencies: u32 = 0u32;
+    var Capabilities: u32 = 0u32;
+    var Directory: bytes = Emptyˉbytes();
+    var Cursor: u32 = Header.Nextˉoffset;
+    var Lineˉnumber: u32 = 1u32;
+    var Phase: u32 = 0u32;
+    var Previousˉpart: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Previousˉimporter: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Previousˉrequired: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+    var Previousˉcapability: Packageˉtext.Windvaleˉpackageˉspan = Empty;
+
+    while Cursor < Bytesˉlength(Input) {
+        Lineˉnumber = Lineˉnumber + 1u32;
+        let Line: Packageˉtext.Windvaleˉpackageˉline =
+            Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+        Cursor = Line.Nextˉoffset;
+        let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
+            Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+        if !Tokens.Valid {
+            return Failure(
+                Windvaleˉlockˉstatus.Invalidˉrecord,
+                Lineˉnumber,
+                Tokens.Failureˉcolumn
+            );
+        }
+        let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 0u32);
+
+        if Lineˉnumber <= 9u32 {
+            if Lineˉnumber == 2u32 {
+                if Tokens.Count != 2u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Kind, "resolver"
+                ) {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                }
+                let Resolverˉvalue: Packageˉtext.Windvaleˉpackageˉspan =
+                    Tokenˉspan(Input, Line, 1u32);
+                if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Resolverˉvalue, "local-source-1"
+                ) {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 10u32);
+                }
+                Resolver = Resolverˉvalue;
+            } else {
+                if Lineˉnumber == 3u32 {
+                    if Tokens.Count != 4u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                        Input, Kind, "root"
+                    ) {
+                        return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                    let Rootˉname: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(Input, Line, 1u32);
+                    let Rootˉversion: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(Input, Line, 2u32);
+                    let Rootˉpart: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(Input, Line, 3u32);
+                    if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Rootˉname) ||
+                        !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Rootˉversion) ||
+                        !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Rootˉpart) {
+                        return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
+                    }
+                    Name = Rootˉname;
+                    Version = Rootˉversion;
+                    Root = Rootˉpart;
+                } else {
+                    if Lineˉnumber == 4u32 || Lineˉnumber == 5u32 {
+                        if Tokens.Count != 2u32 {
+                            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                        }
+                        let Fixedˉvalue: Packageˉtext.Windvaleˉpackageˉspan =
+                            Tokenˉspan(Input, Line, 1u32);
+                        if Lineˉnumber == 4u32 {
+                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "target") {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                            }
+                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                                Input, Fixedˉvalue, "hosted-wvb-v1"
+                            ) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 8u32);
+                            }
+                            Target = Fixedˉvalue;
+                        } else {
+                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "license") {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                            }
+                            if !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Fixedˉvalue) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 9u32);
+                            }
+                            License = Fixedˉvalue;
+                        }
+                    } else {
+                        if Lineˉnumber == 6u32 {
+                            if Tokens.Count != 5u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                                Input, Kind, "origin"
+                            ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                                Input, Tokenˉspan(Input, Line, 1u32), "workspace"
+                            ) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                            }
+                            let Fixedˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 2u32);
+                            let Fixedˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 3u32);
+                            let Fixedˉpath: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 4u32);
+                            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Fixedˉdigest) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+                            }
+                            let Fixedˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
+                                Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Fixedˉdecimal);
+                            if !Fixedˉnumber.Valid {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                            }
+                            if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Fixedˉpath) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
+                            }
+                            Originˉdigest = Fixedˉdigest;
+                            Originˉbytes = Fixedˉnumber.Value;
+                            Originˉpath = Fixedˉpath;
+                        } else {
+                            if Tokens.Count != 4u32 {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                            }
+                            var Expectedˉkind: text = "package";
+                            if Lineˉnumber == 8u32 { Expectedˉkind = "compiler"; }
+                            if Lineˉnumber == 9u32 { Expectedˉkind = "project"; }
+                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                                Input, Kind, Expectedˉkind
+                            ) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                            }
+                            let Resourceˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 1u32);
+                            let Resourceˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 2u32);
+                            let Resourceˉpath: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 3u32);
+                            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Resourceˉdigest) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+                            }
+                            let Resourceˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
+                                Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Resourceˉdecimal);
+                            if !Resourceˉnumber.Valid {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                            }
+                            if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Resourceˉpath) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
+                            }
+                            if Lineˉnumber == 7u32 {
+                                Packageˉdigest = Resourceˉdigest;
+                                Packageˉbytes = Resourceˉnumber.Value;
+                                Packageˉpath = Resourceˉpath;
+                            }
+                            if Lineˉnumber == 8u32 {
+                                Compilerˉdigest = Resourceˉdigest;
+                                Compilerˉbytes = Resourceˉnumber.Value;
+                                Compilerˉpath = Resourceˉpath;
+                            }
+                            if Lineˉnumber == 9u32 {
+                                Projectˉdigest = Resourceˉdigest;
+                                Projectˉbytes = Resourceˉnumber.Value;
+                                Projectˉpath = Resourceˉpath;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "part") {
+                if Phase != 0u32 {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                }
+                if Tokens.Count != 6u32 {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                }
+                if Parts >= 64u32 {
+                    return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+                }
+                let Partˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+                let Scopeˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
+                let Partˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 3u32);
+                let Partˉdecimal: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 4u32);
+                let Partˉpath: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 5u32);
+                let Scope: u32 = Packageˉtext.Windvaleˉpackageˉscope(Input, Scopeˉspan);
+                if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Partˉname) {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
+                }
+                if Scope == 0u32 {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉscope, Lineˉnumber, 1u32);
+                }
+                if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Partˉdigest) {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+                }
+                let Partˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
+                    Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Partˉdecimal);
+                if !Partˉnumber.Valid {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                }
+                if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Partˉpath) {
+                    return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
+                }
+                if Parts > 0u32 {
+                    if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                        Input, Previousˉpart, Input, Partˉname
+                    ) >= 0 {
+                        return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                }
+                Directory = Appendˉpart(
+                    Directory, Partˉname, Scope, Partˉdigest, Partˉnumber.Value, Partˉpath
+                );
+                Previousˉpart = Partˉname;
+                Parts = Parts + 1u32;
+            } else {
+                if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Kind, "dependency"
+                ) {
+                    if Phase > 1u32 || Parts == 0u32 {
+                        return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                    Phase = 1u32;
+                    if Tokens.Count != 3u32 {
+                        return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                    }
+                    if Dependencies >= 256u32 {
+                        return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+                    }
+                    let Importer: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+                    let Required: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
+                    if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Importer) ||
+                        !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Required) {
+                        return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
+                    }
+                    if Dependencies > 0u32 {
+                        let Importerˉorder: i32 = Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                            Input, Previousˉimporter, Input, Importer
+                        );
+                        if Importerˉorder > 0 {
+                            return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                        }
+                        if Importerˉorder == 0 {
+                            if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                                Input, Previousˉrequired, Input, Required
+                            ) >= 0 {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                            }
+                        }
+                    }
+                    Directory = Appendˉdependency(Directory, Importer, Required);
+                    Previousˉimporter = Importer;
+                    Previousˉrequired = Required;
+                    Dependencies = Dependencies + 1u32;
+                } else {
+                    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                        Input, Kind, "capability"
+                    ) {
+                        if Phase > 2u32 || Parts == 0u32 {
+                            return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                        }
+                        Phase = 2u32;
+                        if Tokens.Count != 2u32 {
+                            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                        }
+                        if Capabilities >= 64u32 {
+                            return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+                        }
+                        let Capability: Packageˉtext.Windvaleˉpackageˉspan =
+                            Tokenˉspan(Input, Line, 1u32);
+                        if !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(Input, Capability) {
+                            return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
+                        }
+                        if Capabilities > 0u32 {
+                            if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                                Input, Previousˉcapability, Input, Capability
+                            ) >= 0 {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                            }
+                        }
+                        Directory = Appendˉcapability(Directory, Capability);
+                        Previousˉcapability = Capability;
+                        Capabilities = Capabilities + 1u32;
+                    } else {
+                        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                            Input, Kind, "output"
+                        ) {
+                            if Phase > 2u32 || Parts == 0u32 {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                            }
+                            Phase = 3u32;
+                            if Tokens.Count != 3u32 {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                            }
+                            let Finalˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 1u32);
+                            let Finalˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
+                                Tokenˉspan(Input, Line, 2u32);
+                            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Finalˉdigest) {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+                            }
+                            let Finalˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
+                                Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Finalˉdecimal);
+                            if !Finalˉnumber.Valid {
+                                return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                            }
+                            Outputˉdigest = Finalˉdigest;
+                            Outputˉbytes = Finalˉnumber.Value;
+                            Outputˉfound = true;
+                        } else {
+                            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if Lineˉnumber < 10u32 || Parts == 0u32 || !Outputˉfound {
+        return Failure(Windvaleˉlockˉstatus.Missingˉrecord, Lineˉnumber + 1u32, 1u32);
+    }
+    let Candidate: Windvaleˉlockˉscan = Windvaleˉlockˉscan(
+        Windvaleˉlockˉstatus.Valid,
+        Resolver.Offset, Resolver.Length,
+        Name.Offset, Name.Length,
+        Version.Offset, Version.Length,
+        Root.Offset, Root.Length,
+        Target.Offset, Target.Length,
+        License.Offset, License.Length,
+        Originˉdigest.Offset, Originˉdigest.Length, Originˉbytes,
+        Originˉpath.Offset, Originˉpath.Length,
+        Packageˉdigest.Offset, Packageˉdigest.Length, Packageˉbytes,
+        Packageˉpath.Offset, Packageˉpath.Length,
+        Compilerˉdigest.Offset, Compilerˉdigest.Length, Compilerˉbytes,
+        Compilerˉpath.Offset, Compilerˉpath.Length,
+        Projectˉdigest.Offset, Projectˉdigest.Length, Projectˉbytes,
+        Projectˉpath.Offset, Projectˉpath.Length,
+        Parts, Dependencies, Capabilities, Directory,
+        Outputˉdigest.Offset, Outputˉdigest.Length, Outputˉbytes,
+        Lineˉnumber, 1u32
+    );
+
+    var Pathˉindex: u32 = 0u32;
+    while Pathˉindex < Parts {
+        let Checkedˉpart: Windvaleˉlockedˉpart =
+            Windvaleˉlockedˉpartˉat(Candidate, Pathˉindex);
+        let Checkedˉpath: Packageˉtext.Windvaleˉpackageˉspan =
+            Packageˉtext.Windvaleˉpackageˉspan(
+                Checkedˉpart.Pathˉoffset, Checkedˉpart.Pathˉlength
+            );
+        var Otherˉpathˉindex: u32 = Pathˉindex + 1u32;
+        while Otherˉpathˉindex < Parts {
+            let Otherˉpart: Windvaleˉlockedˉpart =
+                Windvaleˉlockedˉpartˉat(Candidate, Otherˉpathˉindex);
+            let Otherˉpath: Packageˉtext.Windvaleˉpackageˉspan =
+                Packageˉtext.Windvaleˉpackageˉspan(
+                    Otherˉpart.Pathˉoffset, Otherˉpart.Pathˉlength
+                );
+            if !Checkedˉpart.Found || !Otherˉpart.Found ||
+                Packageˉtext.Windvaleˉpackageˉspansˉequal(
+                    Input, Checkedˉpath, Input, Otherˉpath
+                ) {
+                return Failure(
+                    Windvaleˉlockˉstatus.Invalidˉrecord,
+                    10u32 + Otherˉpathˉindex,
+                    1u32
+                );
+            }
+            Otherˉpathˉindex = Otherˉpathˉindex + 1u32;
+        }
+        Pathˉindex = Pathˉindex + 1u32;
+    }
+    if !Partˉexists(Input, Candidate, Root) {
+        return Failure(Windvaleˉlockˉstatus.Unknownˉpart, 3u32, 1u32);
+    }
+    var Dependencyˉindex: u32 = 0u32;
+    while Dependencyˉindex < Dependencies {
+        let Dependency: Windvaleˉlockedˉdependency =
+            Windvaleˉlockedˉdependencyˉat(Candidate, Dependencyˉindex);
+        let Verifiedˉimporter: Packageˉtext.Windvaleˉpackageˉspan =
+            Packageˉtext.Windvaleˉpackageˉspan(
+                Dependency.Importerˉoffset, Dependency.Importerˉlength
+            );
+        let Verifiedˉrequired: Packageˉtext.Windvaleˉpackageˉspan =
+            Packageˉtext.Windvaleˉpackageˉspan(
+                Dependency.Requiredˉoffset, Dependency.Requiredˉlength
+            );
+        if !Dependency.Found || !Partˉexists(Input, Candidate, Verifiedˉimporter) ||
+            !Partˉexists(Input, Candidate, Verifiedˉrequired) {
+            return Failure(
+                Windvaleˉlockˉstatus.Unknownˉpart,
+                10u32 + Parts + Dependencyˉindex,
+                1u32
+            );
+        }
+        Dependencyˉindex = Dependencyˉindex + 1u32;
+    }
+    return Candidate;
+}
+
+export fn Windvaleˉlockˉdiagnosticˉcode(Status: Windvaleˉlockˉstatus) -> text {
+    if Status == Windvaleˉlockˉstatus.Invalidˉtext { return "WVPK1101"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉheader { return "WVPK1102"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉrecord { return "WVPK1103"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉorder { return "WVPK1104"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉidentifier { return "WVPK1105"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉpath { return "WVPK1106"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉscope { return "WVPK1107"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉdigest { return "WVPK1108"; }
+    if Status == Windvaleˉlockˉstatus.Invalidˉdecimal { return "WVPK1109"; }
+    if Status == Windvaleˉlockˉstatus.Collectionˉlimit { return "WVPK1110"; }
+    if Status == Windvaleˉlockˉstatus.Missingˉrecord { return "WVPK1111"; }
+    if Status == Windvaleˉlockˉstatus.Unknownˉpart { return "WVPK1112"; }
+    return "";
+}

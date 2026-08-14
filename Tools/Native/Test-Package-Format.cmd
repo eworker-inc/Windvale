@@ -23,6 +23,10 @@ set "First=%TemporaryDirectory%\First.wvb"
 set "Second=%TemporaryDirectory%\Second.wvb"
 set "WindowsApplication=%TemporaryDirectory%\Package-Format.exe"
 set "LinuxApplication=%TemporaryDirectory%\Package-Format.elf"
+set "LockProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Package-Lock.wvproj"
+set "LockWvb=%TemporaryDirectory%\Lock.wvb"
+set "LockWindowsApplication=%TemporaryDirectory%\Lock.exe"
+set "LockLinuxApplication=%TemporaryDirectory%\Lock.elf"
 
 set "Step=canonical-build"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%CanonicalProject%" "%CanonicalWvb%" >nul
@@ -61,7 +65,22 @@ set "Step=windows-execution"
 "%WindowsApplication%" >nul
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 
-echo native package format status=Passed result=42 modules=2 builds=3 groups=13 cross-host-images=4
+set "Step=lock-build"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%LockProject%" "%LockWvb%" >nul
+if errorlevel 1 goto :cleanup
+set "Step=lock-windows-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%LockWvb%" "%LockWindowsApplication%" windows >nul
+if errorlevel 1 goto :cleanup
+set "Step=lock-linux-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%LockWvb%" "%LockLinuxApplication%" linux >nul
+if errorlevel 1 goto :cleanup
+set "Step=lock-windows-execution"
+"%LockWindowsApplication%" >nul
+if not "%ERRORLEVEL%"=="42" goto :cleanup
+
+echo native package format status=Passed result=42 modules=3 builds=4 groups=21 cross-host-images=6
 set "Result=0"
 
 :cleanup
