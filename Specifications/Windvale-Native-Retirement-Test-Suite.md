@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 4,918 LF-only bytes with SHA-256
-`6749ed673cdb4fcecd71a6100da807ad0b07c36fbc03334cd30f2d1f8f93a3ca`.
+`Tests/Native/Retirement-Suite.txt` is 5,053 LF-only bytes with SHA-256
+`ea274ead00e1b5dc2dc9ee42fc91bf8f1bd164d4c93f462b284384267298b857`.
 The first line is exactly:
 
 ```text
@@ -97,21 +97,24 @@ file. The current plan is:
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
+| `package-format` | `Test-Package-Format` | 13 | `native package format status=Passed result=42 modules=2 builds=3 groups=13 cross-host-images=4` |
 
-The version-2 plan therefore contains exactly 52 suites and 3,289 cases. Its
+The version-2 plan therefore contains exactly 53 suites and 3,302 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 14 | 651.2 |
 | 2 | 14 | 1,279 | 592.2 |
-| 3 | 18 | 1,138 | 592.1 |
+| 3 | 19 | 1,152 | 592.1 |
 | 4 | 19 | 857 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
-semantic limit. Allocation uses the slower observed Windows/Linux interval for
-each owner and keeps the largest owner alone because it sets the current lower
-bound. Future rebalancing changes the digest-bound plan and requires new
+semantic limit. The shard-3 timing predates the `package-format` owner and will
+be refreshed after the expanded plan completes qualification. Allocation uses
+the slower observed Windows/Linux interval for each measured owner and keeps
+the largest owner alone because it sets the current lower bound. Future
+rebalancing changes the digest-bound plan and requires new
 dual-host evidence.
 
 ## Coordinator contract
