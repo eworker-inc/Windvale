@@ -195,3 +195,9 @@ The complete change-aware front door, including classification and 100 planner
 contract cases, passed in 141.120 seconds versus the preceding 197.4-second
 measurement. The 15.363-second difference from the direct warm owner is
 planner and wrapper overhead rather than database behavior.
+
+The separate `--prepare-development-tools` measurement takes 70.704 seconds on
+the same warm host even though its packaged build-driver application is a hit.
+It still reconstructs the build-driver input WVB from source before deriving
+the existing application-checkpoint key. That source-keyed WVB is the next
+measured checkpoint boundary.

@@ -58,9 +58,10 @@ shards, and qualification remain cache-independent.
 - The complete inventory is validated and hashed in one Node.js process. Node
   remains a development-only framing dependency and defines no product
   semantics.
-- Fresh linking and repeated process/recovery execution now dominate the warm
-  path. Link-product reuse or scenario batching requires separate measurement
-  and a new boundary.
+- Preparing the cached build driver still rebuilds its input WVB from source
+  and takes 70.704 seconds, 56.2 percent of the warm owner. A source-keyed WVB
+  checkpoint is the next measured boundary; linking and process/recovery
+  execution remain after it.
 
 ## Reconsideration triggers
 

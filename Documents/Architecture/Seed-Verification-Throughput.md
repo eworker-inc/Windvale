@@ -311,8 +311,9 @@ target, packaging driver, 72-artifact toolset, enum family, services, and
 startup object. A warm hit rehashes and rematerializes both applications, then
 reruns every database execution and recovery scenario in 125.757 seconds. That
 is 34.1 percent less than Decision 0553's 190.863-second warm path and 88.7
-percent less than the clean 1,111.135-second owner. The remaining warm path is
-fresh linking plus repeated process and recovery execution.
+percent less than the clean 1,111.135-second owner. Preparing the build driver
+alone still takes 70.704 seconds because its input WVB is rebuilt from source
+before the packaged application checkpoint is accepted.
 
 The complete change-aware front door takes 141.120 seconds including
 classification and planner verification, down from 197.4 seconds before the
@@ -324,7 +325,8 @@ Changed-file planning uses that fast owner only for its declared database and
 checkpoint boundaries. A compiler, lowerer, specialized provider, nested-record,
 or other broad dependency forces the complete owner. GitHub retirement shards
 and qualification remain cold. Hosted-container construction is now reused;
-the next measured warm costs are linking and repeated process startup.
+a source-keyed build-driver WVB checkpoint is the next optimization, followed
+by measurement of fresh linking and repeated process startup.
 
 The next throughput work should preserve that evidence boundary while reducing
 repeated work:
