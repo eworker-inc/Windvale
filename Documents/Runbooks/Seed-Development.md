@@ -49,6 +49,10 @@ Tools\Native\Test-Retirement-Suite.cmd --filter seed-native-front-door
 ./Tools/Native/Test-Retirement-Suite.sh --filter seed-native-front-door
 ```
 
+This fast owner checks all pinned front-door identities and current-host WVB
+admission. Use `seed-native-front-door-reconstruction` only for an explicit
+product-reconstruction investigation or the complete qualification gate.
+
 Do not run the complete manifest locally merely because a commit or push is
 next.
 

@@ -41,6 +41,7 @@ The exact filter names and case counts are:
 | --- | ---: |
 | `seed` | 26 |
 | `seed-native-front-door` | 1 |
+| `seed-native-front-door-reconstruction` | 1 |
 | `seed-native-console-aot` | 1 |
 | `compiler-reconstruction` | 3 |
 | `segmented-compiler-toolset-reconstruction` | 3 |
@@ -91,15 +92,15 @@ The exact filter names and case counts are:
 | `workspace-project2` | 8 |
 | `libraries` | 26 |
 | `packages` | 8 |
-| `package-format` | 37 |
+| `package-format` | 58 |
 
-Omitting selection arguments runs all 53 suites and 3,329 cases in manifest
+Omitting selection arguments runs all 54 suites and 3,351 cases in manifest
 order. Each owner pass includes `elapsed-ms`, followed by total timing and the
 unchanged semantic terminal summary:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 53, Passed: 53, Failed: 0, Cases: 3329
+Suites: 54, Passed: 54, Failed: 0, Cases: 3351
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -107,6 +108,25 @@ for the final grouped retirement candidate unless the coordinator boundary
 itself changes. The plan identity, child summaries, exit/channel behavior, and
 failure rules are defined by the
 [native retirement test-suite contract](../../Specifications/Windvale-Native-Retirement-Test-Suite.md).
+
+The ordinary front-door owner is intentionally small:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter seed-native-front-door
+```
+
+It validates the pinned manifest and checksum inventory, all 18 artifact
+identities, and current-host admission of all six WVB modules. It does not build
+the product family. The complete 105-artifact and 185-assertion reconstruction
+remains available only when that evidence is actually required:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter seed-native-front-door-reconstruction
+```
+
+Use the corresponding `.sh` commands on Linux. The reconstruction owner remains
+part of explicit complete qualification; do not run it after an unchanged smoke
+result merely because a commit or push is next.
 
 The bounded baseline-JIT owner can be selected directly:
 
@@ -864,38 +884,20 @@ did not change. Run only the affected scenario during the inner loop. User-fault
 and service-fault still need native image construction; all five scenarios
 belong to the final OS qualification gate.
 
-To reconstruct an image through the explicit recovery boundary, use:
-
-```powershell
-pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
-    -OutputPath <new-probe.efi> `
-    -Scenario normal
-```
-
-Stage 0 produces eleven reviewed Probe 40 WVOs. Before invoking it, the recovery
-command assembles the init-service, directory-service, boot-resource, and
-scenario-selected client WVA objects through the current host's digest-bound
-native assembler. It passes that exact four-object directory into Stage 0 for
-checked process-image composition. The command then assembles the top-level
-memory-object, timer, and kernel shims natively, admits all seven exact hashes,
-restores the reviewed fourteen-object order, invokes the digest-bound native
-linker, parses its canonical entry address, and invokes the digest-bound native
-UEFI packager. It refuses an existing destination and removes its private WVA,
-object, linked-payload, and EFI-candidate paths. It is provenance and
-differential infrastructure, not the normal boot path; remaining source
-compilation, native lowering, three inner links, and other object/scenario
-production still require .NET. Managed WVA assembly, top-level linking, and
-UEFI packaging are retained only as recovery/differential implementations.
+The managed Probe 40 reconstruction commands are not present in `main`. A named
+historical recovery or differential investigation restores the immutable
+`stage0-recovery-e5a1a7473c57` release in a separate workspace; it does not add a
+managed recovery step to the native development path.
 
 ## Current boundary
 
-The 3,329-case coordinator is a fixed native gate, not the complete normal
-repository verifier. It covers the transferred result, runtime-failure,
+The 3,351-case coordinator is the complete native retirement plan, not an
+inner-loop repository verifier. It covers result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
-console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining
-complete unsafe, arbitrary-source/WVB randomized, representative WVA, golden,
-OS, or bootstrap suites. Continue to select one appropriate Stage 0 verifier
-for changes outside these transferred fixtures.
+console/UEFI packager, publisher, OS, package, database, and AOT-chain contracts.
+WebAssembly and compiler convergence remain separate explicit qualification
+owners. During development, use the changed-file planner or one named native
+filter; uncovered maintained paths fail closed instead of selecting Stage 0.
 
 Before running a filter, review its child command, fixtures, and expected
 summary against the changed behavior; update them first if the contract changed.

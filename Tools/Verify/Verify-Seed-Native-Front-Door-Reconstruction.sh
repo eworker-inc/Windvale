@@ -2,7 +2,7 @@
 set -eu
 
 if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
-    echo 'Usage: Tools/Verify/Verify-Seed-Native-Front-Door.sh <output-directory>' >&2
+    echo 'Usage: Tools/Verify/Verify-Seed-Native-Front-Door-Reconstruction.sh <output-directory>' >&2
     exit 64
 fi
 
@@ -1506,4 +1506,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=105 cases=185'
+echo 'native Seed front-door reconstruction status=Complete artifacts=105 cases=185'

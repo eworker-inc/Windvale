@@ -459,7 +459,9 @@ foreach ($Path in $Paths) {
         'Specifications/README.md',
         'Specifications/Windvale-Native-Changed-Verification.md',
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
-        'Tests/Native/Retirement-Suite.txt'
+        'Tests/Native/Retirement-Suite.txt',
+        'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
+        'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
     )) {
         $RunPlanVerification = $true
     } elseif ($Path -in @(
@@ -509,10 +511,10 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'seed-native-console-aot'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
-            'Verify-Seed-Native-Front-Door.ps1',
-            'Verify-Seed-Native-Front-Door.sh'
+            'Verify-Seed-Native-Front-Door-Reconstruction.ps1',
+            'Verify-Seed-Native-Front-Door-Reconstruction.sh'
         )) {
-            Add-Suite 'seed-native-front-door'
+            Add-Suite 'seed-native-front-door-reconstruction'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',

@@ -26,7 +26,7 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,234-case coordinator
+Unknown input must never select every suite. The complete 3,351-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
 The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace
@@ -37,12 +37,19 @@ application, its exact Package 1 / Lock 1 metadata, Project 2 input, locked libr
 parts, native package front doors, deterministic output identity, capability
 inspection, negative admission, and failed-output preservation.
 
-The `seed-native-front-door` lane owns the exact native Project 1 build,
-publication, verification, inspection, execution, assembly, object, and linker
-report audit formerly reachable only after a broad managed gate. Every path
-previously classified with the `seed-native-front-door` evidence gap now selects
-this focused native lane, including changes to the paired host audit scripts.
-No `seed-native-front-door` gap remains in the native planner.
+The `seed-native-front-door` lane is the ordinary pinned identity and admission
+smoke. It binds the exact manifest and checksum-inventory identities, hashes all
+18 Windows/Linux/WVB artifacts, and admits all six WVB modules through the
+current-host verifier. Every maintained source path previously classified with
+the `seed-native-front-door` evidence gap selects this fast lane. It does not
+reconstruct products.
+
+The separate `seed-native-front-door-reconstruction` lane retains the complete
+105-artifact, 185-assertion Project 1 build, publication, verification,
+inspection, execution, assembly, object, and linker audit. Changes to that owner
+select it directly, and explicit complete qualification includes it through the
+digest-bound retirement plan. Ordinary source changes do not run it merely to
+reprove unchanged pinned artifacts.
 
 The `seed-native-console-aot` lane owns the standalone canonical `Sum-Data`
 source-to-WVB, WVB-to-WVO, WVO admission, flat-link, paired version-1 console

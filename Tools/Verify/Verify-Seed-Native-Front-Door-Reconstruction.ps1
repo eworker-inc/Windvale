@@ -1370,4 +1370,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=105 cases=185'
+Write-Output 'native Seed front-door reconstruction status=Complete artifacts=105 cases=185'

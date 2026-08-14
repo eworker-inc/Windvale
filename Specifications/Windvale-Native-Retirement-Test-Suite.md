@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 5,054 LF-only bytes with SHA-256
-`749e0639ae524396d86bdf6a2edeab1d56c49128b3a1b2db1983bc889d7328be`.
+`Tests/Native/Retirement-Suite.txt` is 5,170 LF-only bytes with SHA-256
+`6378bb2d59fdd4d816bd319d013403d5d701ca4bce2fb440fff3f382935a05d7`.
 The first line is exactly:
 
 ```text
@@ -47,6 +47,7 @@ file. The current plan is:
 | --- | --- | ---: | --- |
 | `seed` | `Test-Seed` | 26 | `Tests: 26, Passed: 26, Failed: 0` |
 | `seed-native-front-door` | `Test-Seed-Native-Front-Door` | 1 | `Tests: 1, Passed: 1, Failed: 0` |
+| `seed-native-front-door-reconstruction` | `Test-Seed-Native-Front-Door-Reconstruction` | 1 | `Tests: 1, Passed: 1, Failed: 0` |
 | `seed-native-console-aot` | `Test-Seed-Native-Console-Aot` | 1 | `Tests: 1, Passed: 1, Failed: 0` |
 | `compiler-reconstruction` | `Test-Compiler-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `segmented-compiler-toolset-reconstruction` | `Test-Segmented-Compiler-Toolset-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
@@ -99,13 +100,13 @@ file. The current plan is:
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 58 | `native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10` |
 
-The version-2 plan therefore contains exactly 53 suites and 3,350 cases. Its
+The version-2 plan therefore contains exactly 54 suites and 3,351 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 17 | 651.2 |
-| 2 | 14 | 1,279 | 592.2 |
+| 2 | 15 | 1,280 | 592.2 |
 | 3 | 19 | 1,197 | 592.1 |
 | 4 | 19 | 857 | 591.8 |
 

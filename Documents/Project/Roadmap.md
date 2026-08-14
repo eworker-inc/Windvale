@@ -59,10 +59,11 @@ add content-addressed development checkpoints for the current database path.
 The warm two-case database owner is approximately 71 seconds on the measured
 Windows host. Complete qualification remains cold and explicit.
 
-The managed-source archival audit measured `seed-native-front-door` at 733,980
-ms for one suite/case because that owner reconstructs the broad front-door
-product inventory. It is the first concrete target for separating an ordinary
-identity/admission smoke from deliberate full product reconstruction.
+The managed-source archival audit measured the old `seed-native-front-door` at
+733,980 ms because it reconstructed 105 artifacts. The ordinary owner now binds
+all 18 pinned front-door identities and admits all six WVB modules in 13,900 ms
+on the same Windows host. The full 185-assertion reconstruction remains a
+separately named explicit-qualification owner.
 
 ### Completion gate
 

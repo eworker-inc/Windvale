@@ -33,10 +33,10 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
-        Name = 'Seed native front-door qualification smoke'
+        Name = 'Seed native front-door source owners'
         Paths = @(
-            'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
-            'Tools/Verify/Verify-Seed-Native-Front-Door.sh',
+            'Tools/Native/Test-Seed-Native-Front-Door.cmd',
+            'Tools/Native/Test-Seed-Native-Front-Door.sh',
             'Examples/Seed/Hello-Windvale.wvproj',
             'Examples/Foundation/Read-Wvb-Header.wvproj',
             'Foundation/Machine-Contracts.wvproj',
@@ -53,14 +53,34 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'Seed native front-door audit owner'
+        Name = 'Seed native front-door smoke owner'
         Paths = @(
-            'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
-            'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
+            'Tools/Native/Test-Seed-Native-Front-Door.cmd',
+            'Tools/Native/Test-Seed-Native-Front-Door.sh'
         )
         Suites = @('seed-native-front-door')
         Gaps = @()
         VerifyPlan = $false
+    },
+    @{
+        Name = 'Seed native front-door reconstruction owner'
+        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Front-Door-Reconstruction.ps1',
+            'Tools/Verify/Verify-Seed-Native-Front-Door-Reconstruction.sh'
+        )
+        Suites = @('seed-native-front-door-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'superseded Seed native front-door reconstruction names'
+        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
+            'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
     },
     @{
         Name = 'Seed native Foundation source transfer'
@@ -1283,9 +1303,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 54 -or
+if ($RetirementSuiteLines.Count -ne 55 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 53-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 54-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1323,7 +1343,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3350 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3351 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

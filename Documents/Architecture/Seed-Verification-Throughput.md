@@ -154,21 +154,26 @@ investigation restores that exact release in a separate workspace.
 
 ## Next measured optimizations
 
-1. Split the measured 733,980 ms `seed-native-front-door` owner into a fast
-   pinned identity/admission smoke for ordinary boundary checks and deliberate
-   complete product reconstruction for compiler/inventory qualification.
-2. Separate artifact construction from execution inside the WebAssembly owner so
+The measured 733,980 ms `seed-native-front-door` owner is now split. The ordinary
+owner validates the pinned manifest and inventory, hashes all 18 artifacts, and
+admits all six WVB modules in 13,900 ms on the same Windows host. The complete
+105-artifact, 185-assertion audit remains the explicitly named
+`seed-native-front-door-reconstruction` qualification owner. This is a 98.11%
+wall-clock reduction for ordinary front-door feedback without deleting the
+reconstruction evidence.
+
+1. Separate artifact construction from execution inside the WebAssembly owner so
    an engine-only change does not regenerate unchanged WVB and Wasm products.
-3. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
+2. Extend exact checkpoints to other repeatedly reconstructed compiler, lowerer,
    verifier, linker, and hosted-application products only when timing identifies
    them as a development bottleneck.
-4. Replace ad hoc path lists with declarative per-owner dependency manifests when
+3. Replace ad hoc path lists with declarative per-owner dependency manifests when
    that representation can be verified against the current planner without
    losing fail-closed coverage.
-5. Schedule independent development owners concurrently only with explicit CPU
+4. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.
-6. Treat compiler incrementality as a separate optimization: cache parsed
+5. Treat compiler incrementality as a separate optimization: cache parsed
    modules, symbols, WIR, and native objects by complete dependency identity.
 
 The working targets are a repeated affected-owner local run under two minutes
