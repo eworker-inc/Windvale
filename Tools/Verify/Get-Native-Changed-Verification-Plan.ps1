@@ -291,6 +291,8 @@ function Add-Native-Tool-Suite {
         )
     } elseif ($Stem -eq 'Build-Wvdb-Query-Package') {
         Add-Suite 'packages'
+    } elseif ($Stem -eq 'Test-Package-Format') {
+        Add-Suite 'package-format'
     } elseif ($Stem -eq 'Run-Wvb') {
         Add-Bytecode-Suites
         Add-Suite 'wvb-runner-reconstruction'
@@ -486,6 +488,13 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv') {
         Add-Bytecode-Suites
         Add-Suite 'libraries'
+    } elseif ($Path -in @(
+        'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
+        'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj'
+    )) {
+        Add-Suite 'package-format'
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
         Add-Suite @('workspace-project2', 'libraries')
         if ($Path.Contains('Durable-Superblock', [StringComparison]::Ordinal)) {
@@ -516,14 +525,18 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -eq 'Specifications/Windvale-Native-Random-Containment-Tests.md') {
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
+    } elseif ($Path.StartsWith('Libraries/Package/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tests/Fixtures/Package/', [StringComparison]::Ordinal)) {
+        Add-Suite 'package-format'
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal) -or
-        $Path -eq 'Specifications/Windvale-Package.md') {
+        $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
         Add-Suite 'packages'
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
+    } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
+        Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Windvale.wvws' -or
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {

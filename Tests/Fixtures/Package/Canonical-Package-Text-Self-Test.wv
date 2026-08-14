@@ -1,0 +1,191 @@
+module Windvaleˉpackageˉtextˉselfˉtest profile portable;
+
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+data INVALID_UTF8_DOCUMENT: bytes = [255, 10];
+
+fn Spanˉof(Value: text) -> Packageˉtext.Windvaleˉpackageˉspan {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    return Packageˉtext.Windvaleˉpackageˉwholeˉspan(Encoded);
+}
+
+fn Documentˉcases() -> bool {
+    let Valid: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(
+            Textˉtoˉutf8("windvale-package 1\nname windvale.example\n")
+        );
+    if !Valid.Valid || Valid.Lines != 2u32 { return false; }
+    let Missingˉfeed: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(
+            Textˉtoˉutf8("windvale-package 1")
+        );
+    if Missingˉfeed.Valid { return false; }
+    let Blankˉline: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(
+            Textˉtoˉutf8("windvale-package 1\n\n")
+        );
+    if Blankˉline.Valid { return false; }
+    let Carriageˉreturn: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(
+            Textˉtoˉutf8("windvale-package 1\r\n")
+        );
+    if Carriageˉreturn.Valid { return false; }
+    let Invalidˉutf8: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(INVALID_UTF8_DOCUMENT);
+    if Invalidˉutf8.Valid { return false; }
+    return true;
+}
+
+fn Tokenˉcases() -> bool {
+    let Input: bytes = Textˉtoˉutf8("part application hosted Application/Main.wv\n");
+    let Line: Packageˉtext.Windvaleˉpackageˉline =
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Input, 0u32);
+    let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    if !Tokens.Valid || Tokens.Count != 4u32 { return false; }
+    let Third: Packageˉtext.Windvaleˉpackageˉtoken =
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, 2u32);
+    if !Third.Found { return false; }
+    if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input,
+        Packageˉtext.Windvaleˉpackageˉtokenˉspan(Third),
+        "hosted"
+    ) { return false; }
+
+    let Repeated: bytes = Textˉtoˉutf8("part  application hosted Application/Main.wv\n");
+    let Repeatedˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(
+        Repeated,
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Repeated, 0u32)
+    );
+    if Repeatedˉtokens.Valid { return false; }
+    let Leading: bytes = Textˉtoˉutf8(" part application hosted Application/Main.wv\n");
+    let Leadingˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(
+        Leading,
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Leading, 0u32)
+    );
+    if Leadingˉtokens.Valid { return false; }
+    return true;
+}
+
+fn Identifierˉcases() -> bool {
+    let Package: bytes = Textˉtoˉutf8("windvale.compiler-tools");
+    if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(
+        Package, Spanˉof("windvale.compiler-tools")
+    ) { return false; }
+    let Upper: bytes = Textˉtoˉutf8("Windvale.compiler");
+    if Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(
+        Upper, Spanˉof("Windvale.compiler")
+    ) { return false; }
+    let Emptyˉcomponent: bytes = Textˉtoˉutf8("windvale..compiler");
+    if Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(
+        Emptyˉcomponent, Spanˉof("windvale..compiler")
+    ) { return false; }
+
+    let Capability: bytes = Textˉtoˉutf8("filesystem.directory_read_v1");
+    if !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(
+        Capability, Spanˉof("filesystem.directory_read_v1")
+    ) { return false; }
+    return true;
+}
+
+fn Pathˉcases() -> bool {
+    let Valid: bytes = Textˉtoˉutf8("Libraries/Package/Canonical-Package-Text.wv");
+    if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(
+        Valid, Spanˉof("Libraries/Package/Canonical-Package-Text.wv")
+    ) { return false; }
+    let Escape: bytes = Textˉtoˉutf8("Libraries/../Package.wv");
+    if Packageˉtext.Windvaleˉpackageˉpathˉvalid(
+        Escape, Spanˉof("Libraries/../Package.wv")
+    ) { return false; }
+    let Absolute: bytes = Textˉtoˉutf8("/Libraries/Package.wv");
+    if Packageˉtext.Windvaleˉpackageˉpathˉvalid(
+        Absolute, Spanˉof("/Libraries/Package.wv")
+    ) { return false; }
+    let Backslash: bytes = Textˉtoˉutf8("Libraries\\Package.wv");
+    if Packageˉtext.Windvaleˉpackageˉpathˉvalid(
+        Backslash, Spanˉof("Libraries\\Package.wv")
+    ) { return false; }
+    return true;
+}
+
+fn Digestˉandˉdecimalˉcases() -> bool {
+    let Digest: bytes = Textˉtoˉutf8(
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    );
+    if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Digest, Spanˉof(
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    )) { return false; }
+    let Upperˉdigest: bytes = Textˉtoˉutf8(
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeF"
+    );
+    if Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Upperˉdigest, Spanˉof(
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeF"
+    )) { return false; }
+
+    let Maximum: bytes = Textˉtoˉutf8("18446744073709551615");
+    let Parsed: Packageˉtext.Windvaleˉpackageˉdecimal =
+        Packageˉtext.Windvaleˉpackageˉdecimalˉparse(
+            Maximum, Spanˉof("18446744073709551615")
+        );
+    if !Parsed.Valid || Parsed.Value != 18446744073709551615u64 { return false; }
+    let Overflow: bytes = Textˉtoˉutf8("18446744073709551616");
+    let Overflowˉresult: Packageˉtext.Windvaleˉpackageˉdecimal =
+        Packageˉtext.Windvaleˉpackageˉdecimalˉparse(
+        Overflow, Spanˉof("18446744073709551616")
+    );
+    if Overflowˉresult.Valid { return false; }
+    let Leadingˉzero: bytes = Textˉtoˉutf8("01");
+    let Leadingˉzeroˉresult: Packageˉtext.Windvaleˉpackageˉdecimal =
+        Packageˉtext.Windvaleˉpackageˉdecimalˉparse(
+        Leadingˉzero, Spanˉof("01")
+    );
+    if Leadingˉzeroˉresult.Valid { return false; }
+    return true;
+}
+
+fn Orderingˉandˉscopeˉcases() -> bool {
+    let Left: bytes = Textˉtoˉutf8("alpha");
+    let Right: bytes = Textˉtoˉutf8("beta");
+    if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+        Left, Spanˉof("alpha"), Right, Spanˉof("beta")
+    ) >= 0 { return false; }
+    if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+        Right, Spanˉof("beta"), Left, Spanˉof("alpha")
+    ) <= 0 { return false; }
+    if !Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Left, Spanˉof("alpha"), Left, Spanˉof("alpha")
+    ) { return false; }
+    let Outside: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(4u32, 2u32);
+    if Packageˉtext.Windvaleˉpackageˉspanˉvalid(Left, Outside) ||
+        Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Left, Outside, "aa") {
+        return false;
+    }
+    let Forgedˉline: Packageˉtext.Windvaleˉpackageˉline =
+        Packageˉtext.Windvaleˉpackageˉline(true, 4u32, 2u32, 7u32, 1u32);
+    let Forgedˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Left, Forgedˉline);
+    if Forgedˉtokens.Valid { return false; }
+
+    let Hosted: bytes = Textˉtoˉutf8("hosted");
+    if Packageˉtext.Windvaleˉpackageˉscope(Hosted, Spanˉof("hosted")) != 2u32 {
+        return false;
+    }
+    let Invalid: bytes = Textˉtoˉutf8("host");
+    if Packageˉtext.Windvaleˉpackageˉscope(Invalid, Spanˉof("host")) != 0u32 {
+        return false;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if !Documentˉcases() { return 1; }
+    if !Tokenˉcases() { return 2; }
+    if !Identifierˉcases() { return 3; }
+    if !Pathˉcases() { return 4; }
+    if !Digestˉandˉdecimalˉcases() { return 5; }
+    if !Orderingˉandˉscopeˉcases() { return 6; }
+    return 42;
+}

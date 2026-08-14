@@ -1,0 +1,95 @@
+module Windvaleˉpackageˉmanifestˉselfˉtest profile portable;
+
+import Windvaleˉpackageˉmanifest as Manifest;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+fn Validˉmanifest() -> text {
+    return "windvale-package 1\nname windvale.wvdb-query\nversion 0.1.0\nlicense LicenseRef-Windvale-Community-Source-1.0\nroot application\ntarget hosted-wvb-v1\nproject Projects/Applications/Windvale-Wvdb-Query.wvproj\npart application hosted Applications/Database/Wvdb-Query.wv\npart decimal-parsing portable Foundation/Decimal-Parsing.wv\npart read-only-directory hosted Libraries/Platform/Filesystem/Read-Only-Directory.wv\npart read-only-wvdb hosted Libraries/Platform/Database/Read-Only-Wvdb.wv\npart wvdb-reader portable Libraries/Database/Wvdb-Reader.wv\ndependency application decimal-parsing\ndependency application read-only-wvdb\ndependency read-only-wvdb read-only-directory\ndependency read-only-wvdb wvdb-reader\ncapability console.write_line\ncapability diagnostic.write_line\ncapability filesystem.directory_read_v1\ncapability process.argument\ncapability process.argument_count\n";
+}
+
+fn Referenceˉequals(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Span: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(Offset, Length);
+    return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Span, Expected);
+}
+
+fn Validˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8(Validˉmanifest());
+    let Scan: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Input);
+    if Scan.Status != Manifest.Windvaleˉpackageˉstatus.Valid ||
+        Scan.Parts != 5u32 || Scan.Dependencies != 4u32 || Scan.Capabilities != 5u32 {
+        return false;
+    }
+    if !Referenceˉequals(Input, Scan.Nameˉoffset, Scan.Nameˉlength, "windvale.wvdb-query") ||
+        !Referenceˉequals(Input, Scan.Rootˉoffset, Scan.Rootˉlength, "application") ||
+        !Referenceˉequals(Input, Scan.Targetˉoffset, Scan.Targetˉlength, "hosted-wvb-v1") {
+        return false;
+    }
+    let First: Manifest.Windvaleˉpackageˉpart =
+        Manifest.Windvaleˉpackageˉpartˉat(Scan, 0u32);
+    if !First.Found || First.Scope != 2u32 ||
+        !Referenceˉequals(Input, First.Nameˉoffset, First.Nameˉlength, "application") ||
+        !Referenceˉequals(
+            Input, First.Pathˉoffset, First.Pathˉlength,
+            "Applications/Database/Wvdb-Query.wv"
+        ) {
+        return false;
+    }
+    let Lastˉcapability: Manifest.Windvaleˉpackageˉcapability =
+        Manifest.Windvaleˉpackageˉcapabilityˉat(Scan, 4u32);
+    if !Lastˉcapability.Found || !Referenceˉequals(
+        Input,
+        Lastˉcapability.Nameˉoffset,
+        Lastˉcapability.Nameˉlength,
+        "process.argument_count"
+    ) {
+        return false;
+    }
+    let Missing: Manifest.Windvaleˉpackageˉpart =
+        Manifest.Windvaleˉpackageˉpartˉat(Scan, 5u32);
+    return !Missing.Found;
+}
+
+fn Statusˉis(Inputˉtext: text, Expected: Manifest.Windvaleˉpackageˉstatus) -> bool {
+    let Input: bytes = Textˉtoˉutf8(Inputˉtext);
+    let Scan: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Input);
+    return Scan.Status == Expected;
+}
+
+fn Rejectionˉcases() -> bool {
+    let Unknownˉroot: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot missing\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\npart application hosted Applications/Example.wv\n";
+    if !Statusˉis(Unknownˉroot, Manifest.Windvaleˉpackageˉstatus.Unknownˉpart) {
+        return false;
+    }
+    let Unordered: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\npart b hosted Applications/B.wv\npart a hosted Applications/A.wv\n";
+    if !Statusˉis(Unordered, Manifest.Windvaleˉpackageˉstatus.Invalidˉorder) {
+        return false;
+    }
+    let Duplicateˉpath: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\npart a hosted Applications/Shared.wv\npart b hosted Applications/Shared.wv\n";
+    if !Statusˉis(Duplicateˉpath, Manifest.Windvaleˉpackageˉstatus.Invalidˉrecord) {
+        return false;
+    }
+    let Unknownˉedge: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\npart a hosted Applications/A.wv\ndependency a missing\n";
+    if !Statusˉis(Unknownˉedge, Manifest.Windvaleˉpackageˉstatus.Unknownˉpart) {
+        return false;
+    }
+    let Repeatedˉspace: text = "windvale-package 1\nname  windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\npart a hosted Applications/A.wv\n";
+    if !Statusˉis(Repeatedˉspace, Manifest.Windvaleˉpackageˉstatus.Invalidˉrecord) {
+        return false;
+    }
+    let Escapingˉpath: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject ../Example.wvproj\npart a hosted Applications/A.wv\n";
+    return Statusˉis(Escapingˉpath, Manifest.Windvaleˉpackageˉstatus.Invalidˉpath);
+}
+
+export fn Main() -> i32 {
+    if !Validˉcase() { return 1; }
+    if !Rejectionˉcases() { return 2; }
+    return 42;
+}

@@ -1,0 +1,446 @@
+module Windvaleˉpackageˉtext profile portable;
+
+export record Windvaleˉpackageˉspan {
+    Offset: u32;
+    Length: u32;
+}
+
+export record Windvaleˉpackageˉline {
+    Valid: bool;
+    Offset: u32;
+    Length: u32;
+    Nextˉoffset: u32;
+    Failureˉcolumn: u32;
+}
+
+export record Windvaleˉpackageˉtokens {
+    Valid: bool;
+    Count: u32;
+    Failureˉcolumn: u32;
+}
+
+export record Windvaleˉpackageˉtoken {
+    Found: bool;
+    Offset: u32;
+    Length: u32;
+}
+
+export record Windvaleˉpackageˉdecimal {
+    Valid: bool;
+    Value: u64;
+}
+
+export record Windvaleˉpackageˉdocument {
+    Valid: bool;
+    Lines: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+export fn Windvaleˉpackageˉemptyˉspan() -> Windvaleˉpackageˉspan {
+    return Windvaleˉpackageˉspan(0u32, 0u32);
+}
+
+export fn Windvaleˉpackageˉwholeˉspan(Input: bytes) -> Windvaleˉpackageˉspan {
+    return Windvaleˉpackageˉspan(0u32, Bytesˉlength(Input));
+}
+
+export fn Windvaleˉpackageˉspanˉvalid(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    if Span.Offset > Total { return false; }
+    return Span.Length <= Total - Span.Offset;
+}
+
+export fn Windvaleˉpackageˉreadˉline(
+    Input: bytes,
+    Start: u32
+) -> Windvaleˉpackageˉline {
+    let Total: u32 = Bytesˉlength(Input);
+    if Start >= Total {
+        return Windvaleˉpackageˉline(false, Start, 0u32, Start, 1u32);
+    }
+
+    var Cursor: u32 = Start;
+    while Cursor < Total {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Value == 10u32 {
+            let Length: u32 = Cursor - Start;
+            if Length == 0u32 {
+                return Windvaleˉpackageˉline(false, Start, 0u32, Cursor + 1u32, 1u32);
+            }
+            return Windvaleˉpackageˉline(true, Start, Length, Cursor + 1u32, Length + 1u32);
+        }
+        if Value == 13u32 || Value == 0u32 || Value == 127u32 {
+            return Windvaleˉpackageˉline(false, Start, 0u32, Cursor + 1u32, Cursor - Start + 1u32);
+        }
+        if Value < 32u32 {
+            return Windvaleˉpackageˉline(false, Start, 0u32, Cursor + 1u32, Cursor - Start + 1u32);
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Windvaleˉpackageˉline(false, Start, 0u32, Total, Total - Start + 1u32);
+}
+
+export fn Windvaleˉpackageˉscanˉdocument(Input: bytes) -> Windvaleˉpackageˉdocument {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 || Total > 65536u32 {
+        return Windvaleˉpackageˉdocument(false, 0u32, 1u32, 1u32);
+    }
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Windvaleˉpackageˉdocument(false, 0u32, 1u32, 1u32);
+    }
+    if Total >= 3u32 {
+        if Bytesˉreadˉu8(Input, 0u32) == 239u8 &&
+            Bytesˉreadˉu8(Input, 1u32) == 187u8 &&
+            Bytesˉreadˉu8(Input, 2u32) == 191u8 {
+            return Windvaleˉpackageˉdocument(false, 0u32, 1u32, 1u32);
+        }
+    }
+    if Bytesˉreadˉu8(Input, Total - 1u32) != 10u8 {
+        return Windvaleˉpackageˉdocument(false, 0u32, 1u32, Total + 1u32);
+    }
+
+    var Cursor: u32 = 0u32;
+    var Lines: u32 = 0u32;
+    while Cursor < Total {
+        let Line: Windvaleˉpackageˉline = Windvaleˉpackageˉreadˉline(Input, Cursor);
+        Lines = Lines + 1u32;
+        if !Line.Valid {
+            return Windvaleˉpackageˉdocument(false, Lines, Lines, Line.Failureˉcolumn);
+        }
+        Cursor = Line.Nextˉoffset;
+    }
+    return Windvaleˉpackageˉdocument(true, Lines, Lines, 1u32);
+}
+
+export fn Windvaleˉpackageˉscanˉtokens(
+    Input: bytes,
+    Line: Windvaleˉpackageˉline
+) -> Windvaleˉpackageˉtokens {
+    let Span: Windvaleˉpackageˉspan = Windvaleˉpackageˉspan(Line.Offset, Line.Length);
+    if !Line.Valid || Line.Length == 0u32 ||
+        !Windvaleˉpackageˉspanˉvalid(Input, Span) {
+        return Windvaleˉpackageˉtokens(false, 0u32, 1u32);
+    }
+    let End: u32 = Line.Offset + Line.Length;
+    if Bytesˉreadˉu8(Input, Line.Offset) == 32u8 {
+        return Windvaleˉpackageˉtokens(false, 0u32, 1u32);
+    }
+    if Bytesˉreadˉu8(Input, End - 1u32) == 32u8 {
+        return Windvaleˉpackageˉtokens(false, 0u32, Line.Length);
+    }
+
+    var Count: u32 = 1u32;
+    var Cursor: u32 = Line.Offset;
+    var Previousˉspace: bool = false;
+    while Cursor < End {
+        let Space: bool = Bytesˉreadˉu8(Input, Cursor) == 32u8;
+        if Space {
+            if Previousˉspace {
+                return Windvaleˉpackageˉtokens(
+                    false, 0u32, Cursor - Line.Offset + 1u32
+                );
+            }
+            Count = Count + 1u32;
+        }
+        Previousˉspace = Space;
+        Cursor = Cursor + 1u32;
+    }
+    return Windvaleˉpackageˉtokens(true, Count, Line.Length + 1u32);
+}
+
+export fn Windvaleˉpackageˉtokenˉat(
+    Input: bytes,
+    Line: Windvaleˉpackageˉline,
+    Index: u32
+) -> Windvaleˉpackageˉtoken {
+    let Tokens: Windvaleˉpackageˉtokens = Windvaleˉpackageˉscanˉtokens(Input, Line);
+    if !Tokens.Valid || Index >= Tokens.Count {
+        return Windvaleˉpackageˉtoken(false, 0u32, 0u32);
+    }
+
+    let End: u32 = Line.Offset + Line.Length;
+    var Current: u32 = 0u32;
+    var Start: u32 = Line.Offset;
+    var Cursor: u32 = Line.Offset;
+    while Cursor <= End {
+        var Boundary: bool = Cursor == End;
+        if !Boundary {
+            Boundary = Bytesˉreadˉu8(Input, Cursor) == 32u8;
+        }
+        if Boundary {
+            if Current == Index {
+                return Windvaleˉpackageˉtoken(true, Start, Cursor - Start);
+            }
+            Current = Current + 1u32;
+            Start = Cursor + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Windvaleˉpackageˉtoken(false, 0u32, 0u32);
+}
+
+export fn Windvaleˉpackageˉtokenˉspan(
+    Token: Windvaleˉpackageˉtoken
+) -> Windvaleˉpackageˉspan {
+    if !Token.Found { return Windvaleˉpackageˉemptyˉspan(); }
+    return Windvaleˉpackageˉspan(Token.Offset, Token.Length);
+}
+
+export fn Windvaleˉpackageˉspanˉequalsˉtext(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan,
+    Expected: text
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) { return false; }
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Span.Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        if Bytesˉreadˉu8(Input, Span.Offset + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉspansˉequal(
+    Left: bytes,
+    Leftˉspan: Windvaleˉpackageˉspan,
+    Right: bytes,
+    Rightˉspan: Windvaleˉpackageˉspan
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Left, Leftˉspan) ||
+        !Windvaleˉpackageˉspanˉvalid(Right, Rightˉspan) {
+        return false;
+    }
+    if Leftˉspan.Length != Rightˉspan.Length { return false; }
+    var Index: u32 = 0u32;
+    while Index < Leftˉspan.Length {
+        if Bytesˉreadˉu8(Left, Leftˉspan.Offset + Index) !=
+            Bytesˉreadˉu8(Right, Rightˉspan.Offset + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉspanˉcompare(
+    Left: bytes,
+    Leftˉspan: Windvaleˉpackageˉspan,
+    Right: bytes,
+    Rightˉspan: Windvaleˉpackageˉspan
+) -> i32 {
+    if !Windvaleˉpackageˉspanˉvalid(Left, Leftˉspan) ||
+        !Windvaleˉpackageˉspanˉvalid(Right, Rightˉspan) {
+        return 0;
+    }
+    var Common: u32 = Leftˉspan.Length;
+    if Rightˉspan.Length < Common { Common = Rightˉspan.Length; }
+    var Index: u32 = 0u32;
+    while Index < Common {
+        let Leftˉvalue: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Left, Leftˉspan.Offset + Index)
+        );
+        let Rightˉvalue: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Right, Rightˉspan.Offset + Index)
+        );
+        if Leftˉvalue < Rightˉvalue { return -1; }
+        if Leftˉvalue > Rightˉvalue { return 1; }
+        Index = Index + 1u32;
+    }
+    if Leftˉspan.Length < Rightˉspan.Length { return -1; }
+    if Leftˉspan.Length > Rightˉspan.Length { return 1; }
+    return 0;
+}
+
+export fn Windvaleˉpackageˉasciiˉlowerˉalphanumeric(Value: u8) -> bool {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 97u32 && Character <= 122u32 { return true; }
+    return Character >= 48u32 && Character <= 57u32;
+}
+
+export fn Windvaleˉpackageˉasciiˉalphanumeric(Value: u8) -> bool {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Windvaleˉpackageˉasciiˉlowerˉalphanumeric(Value) { return true; }
+    return Character >= 65u32 && Character <= 90u32;
+}
+
+export fn Windvaleˉpackageˉpackageˉidentifierˉvalid(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) { return false; }
+    if Span.Length == 0u32 || Span.Length > 255u32 { return false; }
+    if !Windvaleˉpackageˉasciiˉlowerˉalphanumeric(
+        Bytesˉreadˉu8(Input, Span.Offset)
+    ) { return false; }
+    if !Windvaleˉpackageˉasciiˉlowerˉalphanumeric(
+        Bytesˉreadˉu8(Input, Span.Offset + Span.Length - 1u32)
+    ) { return false; }
+
+    var Previousˉdot: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        let Value: u8 = Bytesˉreadˉu8(Input, Span.Offset + Index);
+        var Valid: bool = Windvaleˉpackageˉasciiˉlowerˉalphanumeric(Value);
+        if Value == 45u8 || Value == 46u8 { Valid = true; }
+        if !Valid { return false; }
+        let Dot: bool = Value == 46u8;
+        if Dot && Previousˉdot { return false; }
+        Previousˉdot = Dot;
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉidentifierˉvalid(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) { return false; }
+    if Span.Length == 0u32 || Span.Length > 255u32 { return false; }
+    if !Windvaleˉpackageˉasciiˉalphanumeric(Bytesˉreadˉu8(Input, Span.Offset)) {
+        return false;
+    }
+    if !Windvaleˉpackageˉasciiˉalphanumeric(
+        Bytesˉreadˉu8(Input, Span.Offset + Span.Length - 1u32)
+    ) { return false; }
+
+    var Previousˉdot: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        let Value: u8 = Bytesˉreadˉu8(Input, Span.Offset + Index);
+        var Valid: bool = Windvaleˉpackageˉasciiˉalphanumeric(Value);
+        if Value == 45u8 || Value == 46u8 || Value == 95u8 { Valid = true; }
+        if !Valid { return false; }
+        let Dot: bool = Value == 46u8;
+        if Dot && Previousˉdot { return false; }
+        Previousˉdot = Dot;
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉasciiˉtokenˉvalid(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) { return false; }
+    if Span.Length == 0u32 || Span.Length > 255u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Span.Offset + Index));
+        if Value < 33u32 || Value > 126u32 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉpathˉvalid(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) { return false; }
+    if Span.Length == 0u32 || Span.Length > 4096u32 { return false; }
+    var Segmentˉstart: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor <= Span.Length {
+        var Boundary: bool = Cursor == Span.Length;
+        if !Boundary {
+            Boundary = Bytesˉreadˉu8(Input, Span.Offset + Cursor) == 47u8;
+        }
+        if Boundary {
+            let Segmentˉlength: u32 = Cursor - Segmentˉstart;
+            if Segmentˉlength == 0u32 { return false; }
+            let First: u32 = Span.Offset + Segmentˉstart;
+            let Last: u32 = First + Segmentˉlength - 1u32;
+            if !Windvaleˉpackageˉasciiˉalphanumeric(Bytesˉreadˉu8(Input, First)) {
+                return false;
+            }
+            if !Windvaleˉpackageˉasciiˉalphanumeric(Bytesˉreadˉu8(Input, Last)) {
+                return false;
+            }
+            var Index: u32 = 0u32;
+            while Index < Segmentˉlength {
+                let Value: u8 = Bytesˉreadˉu8(Input, First + Index);
+                var Valid: bool = Windvaleˉpackageˉasciiˉalphanumeric(Value);
+                if Value == 45u8 || Value == 46u8 || Value == 95u8 { Valid = true; }
+                if !Valid { return false; }
+                Index = Index + 1u32;
+            }
+            Segmentˉstart = Cursor + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉdigestˉvalid(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> bool {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) { return false; }
+    if Span.Length != 64u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Span.Offset + Index));
+        var Valid: bool = Value >= 48u32 && Value <= 57u32;
+        if Value >= 97u32 && Value <= 102u32 { Valid = true; }
+        if !Valid { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Windvaleˉpackageˉdecimalˉparse(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> Windvaleˉpackageˉdecimal {
+    if !Windvaleˉpackageˉspanˉvalid(Input, Span) {
+        return Windvaleˉpackageˉdecimal(false, 0u64);
+    }
+    if Span.Length == 0u32 || Span.Length > 20u32 {
+        return Windvaleˉpackageˉdecimal(false, 0u64);
+    }
+    if Span.Length > 1u32 {
+        if Bytesˉreadˉu8(Input, Span.Offset) == 48u8 {
+            return Windvaleˉpackageˉdecimal(false, 0u64);
+        }
+    }
+
+    var Value: u64 = 0u64;
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Span.Offset + Index));
+        if Character < 48u32 || Character > 57u32 {
+            return Windvaleˉpackageˉdecimal(false, 0u64);
+        }
+        let Digit: u64 = U64ˉfromˉu32(Character - 48u32);
+        if Value > 1844674407370955161u64 {
+            return Windvaleˉpackageˉdecimal(false, 0u64);
+        }
+        if Value == 1844674407370955161u64 && Digit > 5u64 {
+            return Windvaleˉpackageˉdecimal(false, 0u64);
+        }
+        Value = Value * 10u64 + Digit;
+        Index = Index + 1u32;
+    }
+    return Windvaleˉpackageˉdecimal(true, Value);
+}
+
+export fn Windvaleˉpackageˉscope(
+    Input: bytes,
+    Span: Windvaleˉpackageˉspan
+) -> u32 {
+    if Windvaleˉpackageˉspanˉequalsˉtext(Input, Span, "portable") { return 1u32; }
+    if Windvaleˉpackageˉspanˉequalsˉtext(Input, Span, "hosted") { return 2u32; }
+    if Windvaleˉpackageˉspanˉequalsˉtext(Input, Span, "system") { return 3u32; }
+    return 0u32;
+}

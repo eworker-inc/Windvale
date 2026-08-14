@@ -60,6 +60,10 @@ capability records by capability identifier. The capability list is the complete
 transitive requirement approved by the application root; it does not authorize or
 bind a provider.
 
+A Package 1 manifest contains at most 64 parts, 256 dependency edges, and 64
+capabilities. A reader must reject a collection before appending an entry beyond
+its limit and must not partially accept an over-limit manifest.
+
 Package 1 currently selects one Project 2 source build and the target
 `hosted-wvb-v1`. It does not select binary dependencies, optional capabilities,
 resources, architecture-specific derivatives, feature variants, or build actions.
@@ -101,10 +105,20 @@ source, compiler, version, target, or capability set.
 
 ## Implemented native front door
 
+`Libraries/Package/Canonical-Package-Text.wv` and
+`Libraries/Package/Package-Manifest.wv` provide the portable native-owned strict
+text and general Package 1 manifest readers. The manifest reader validates the
+fixed records, ordering, collection limits, identifiers, scopes, paths, unique
+ordered keys, root reference, and dependency endpoints before returning a valid
+view. Returned string fields are bounded offset-and-length references into the
+caller's immutable input; the directory stores only checked fixed-width numeric
+records.
+
 The paired `Tools/Native/Build-Wvdb-Query-Package` commands accept an explicit
-manifest, lock, and output path. The initial implementation intentionally admits
-only the exact checked-in WVDB Query manifest and lock identity; it is not a
-general Package 1 parser or resolver.
+manifest, lock, and output path. That publication front door still intentionally
+admits only the exact checked-in WVDB Query manifest and lock identity; replacing
+its specialized admission path with the general readers and adding a general
+Lock 1 reader are subsequent implementation slices.
 
 The command verifies the manifest, lock, workspace, compiler WVB, Project 2 file,
 and each source part before compiling to a private candidate. It then verifies the

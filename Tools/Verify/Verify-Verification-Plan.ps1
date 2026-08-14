@@ -1150,7 +1150,18 @@ $NativeCases = @(
             'Projects/Applications/Windvale-Wvdb-Query.wvproj',
             'Specifications/Windvale-Package.md'
         )
-        Suites = @('workspace-project2', 'packages')
+        Suites = @('workspace-project2', 'packages', 'package-format')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'portable package-format owner'
+        Paths = @(
+            'Libraries/Package/Package-Manifest.wv',
+            'Tests/Fixtures/Package/Package-Manifest-Self-Test.wv',
+            'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj'
+        )
+        Suites = @('package-format')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1250,9 +1261,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 53 -or
+if ($RetirementSuiteLines.Count -ne 54 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 52-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 53-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1290,7 +1301,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3289 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3302 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

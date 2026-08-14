@@ -1,0 +1,3 @@
+windvale-project 2
+root "Libraries/Package/Canonical-Package-Text.wv"
+emit wvb
