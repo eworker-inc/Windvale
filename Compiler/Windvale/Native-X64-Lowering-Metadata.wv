@@ -1,0 +1,380 @@
+module Compilerˉnativeˉx64ˉloweringˉmetadata profile portable;
+
+export record Compilerˉnativeˉx64ˉmetadata {
+    Valid: bool;
+    Present: bool;
+    Requiredˉcount: u32;
+    Requiredˉranks: bytes;
+    Optionalˉcount: u32;
+    Optionalˉranks: bytes;
+}
+
+record Compilerˉnativeˉx64ˉmetadataˉstring {
+    Valid: bool;
+    Offset: u32;
+    Length: u32;
+    Nextˉoffset: u32;
+}
+
+record Compilerˉnativeˉx64ˉmetadataˉrequirements {
+    Valid: bool;
+    Count: u32;
+    Ranks: bytes;
+    Nextˉoffset: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉmetadata {
+    return Compilerˉnativeˉx64ˉmetadata(
+        false, false, 0u32, Empty(Input), 0u32, Empty(Input)
+    );
+}
+
+fn Invalidˉstring() -> Compilerˉnativeˉx64ˉmetadataˉstring {
+    return Compilerˉnativeˉx64ˉmetadataˉstring(false, 0u32, 0u32, 0u32);
+}
+
+fn Invalidˉrequirements(Input: bytes)
+    -> Compilerˉnativeˉx64ˉmetadataˉrequirements {
+    return Compilerˉnativeˉx64ˉmetadataˉrequirements(
+        false, 0u32, Empty(Input), 0u32
+    );
+}
+
+fn Readˉstring(Input: bytes, Cursor: u32, Limit: u32)
+    -> Compilerˉnativeˉx64ˉmetadataˉstring {
+    if Cursor > Limit { return Invalidˉstring(); }
+    if Limit - Cursor < 4u32 { return Invalidˉstring(); }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    let Offset: u32 = Cursor + 4u32;
+    if Length == 0u32 || Length > 255u32 { return Invalidˉstring(); }
+    if Length > Limit - Offset { return Invalidˉstring(); }
+    return Compilerˉnativeˉx64ˉmetadataˉstring(
+        true, Offset, Length, Offset + Length
+    );
+}
+
+fn Spanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Spanˉisˉbefore(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    var Compared: u32 = Leftˉlength;
+    if Rightˉlength < Compared { Compared = Rightˉlength; }
+    var Index: u32 = 0u32;
+    while Index < Compared {
+        let Left: u8 = Bytesˉreadˉu8(Input, Leftˉoffset + Index);
+        let Right: u8 = Bytesˉreadˉu8(Input, Rightˉoffset + Index);
+        let Leftˉnumber: u32 = U32ˉfromˉu8(Left);
+        let Rightˉnumber: u32 = U32ˉfromˉu8(Right);
+        if Leftˉnumber < Rightˉnumber { return true; }
+        if Leftˉnumber > Rightˉnumber { return false; }
+        Index = Index + 1u32;
+    }
+    return Leftˉlength < Rightˉlength;
+}
+
+fn Platformˉidentityˉisˉvalid(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> bool {
+    var Startˉofˉsegment: bool = true;
+    var Valid: bool = true;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Value: u8 = Bytesˉreadˉu8(Input, Offset + Index);
+        let Number: u32 = U32ˉfromˉu8(Value);
+        if Valid {
+            if Value == 46u8 {
+                if Startˉofˉsegment { Valid = false; }
+                Startˉofˉsegment = true;
+            } else {
+                if Startˉofˉsegment {
+                    if (Number < 97u32 || Number > 122u32) && Value != 95u8 {
+                        Valid = false;
+                    }
+                    Startˉofˉsegment = false;
+                } else {
+                    let Letter: bool = Number >= 97u32 && Number <= 122u32;
+                    let Digit: bool = Number >= 48u32 && Number <= 57u32;
+                    if !Letter && !Digit && Value != 95u8 { Valid = false; }
+                }
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return Valid && !Startˉofˉsegment;
+}
+
+fn Capabilityˉrank(Input: bytes, Offset: u32, Length: u32) -> u8 {
+    if Spanˉequalsˉtext(Input, Offset, Length, "console.write") { return 1u8; }
+    if Spanˉequalsˉtext(Input, Offset, Length, "console.write_line") { return 2u8; }
+    if Spanˉequalsˉtext(Input, Offset, Length, "diagnostic.write_line") { return 3u8; }
+    if Spanˉequalsˉtext(Input, Offset, Length, "file.read_bytes") { return 4u8; }
+    if Spanˉequalsˉtext(Input, Offset, Length, "file.write_bytes") { return 5u8; }
+    if Spanˉequalsˉtext(
+        Input, Offset, Length, "filesystem.directory_read_v1"
+    ) { return 6u8; }
+    if Spanˉequalsˉtext(Input, Offset, Length, "process.argument") { return 7u8; }
+    if Spanˉequalsˉtext(Input, Offset, Length, "process.argument_count") { return 8u8; }
+    if Spanˉequalsˉtext(
+        Input, Offset, Length, "storage.random_access_v1"
+    ) { return 9u8; }
+    return 0u8;
+}
+
+fn Readˉrequirements(Input: bytes, Cursor: u32, Limit: u32)
+    -> Compilerˉnativeˉx64ˉmetadataˉrequirements {
+    let Invalidˉresult: Compilerˉnativeˉx64ˉmetadataˉrequirements =
+        Invalidˉrequirements(Input);
+    if Cursor > Limit { return Invalidˉresult; }
+    if Limit - Cursor < 4u32 { return Invalidˉresult; }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    if Count > 32u32 { return Invalidˉresult; }
+    var Current: u32 = Cursor + 4u32;
+    var Ranks: bytes = Empty(Input);
+    var Previous: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Name: Compilerˉnativeˉx64ˉmetadataˉstring =
+            Readˉstring(Input, Current, Limit);
+        if !Name.Valid { return Invalidˉresult; }
+        let Rank: u8 = Capabilityˉrank(Input, Name.Offset, Name.Length);
+        let Numericˉrank: u32 = U32ˉfromˉu8(Rank);
+        if Rank == 0u8 || Numericˉrank <= Previous { return Invalidˉresult; }
+        Current = Name.Nextˉoffset;
+        if Limit - Current < 4u32 { return Invalidˉresult; }
+        if Bytesˉreadˉu32ˉlittle(Input, Current) != 1u32 {
+            return Invalidˉresult;
+        }
+        Current = Current + 4u32;
+        Ranks = Bytesˉconcat(Ranks, Bytesˉfromˉu8(Rank));
+        Previous = Numericˉrank;
+        Index = Index + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉmetadataˉrequirements(
+        true, Count, Ranks, Current
+    );
+}
+
+fn Requirementsˉoverlap(
+    Required: Compilerˉnativeˉx64ˉmetadataˉrequirements,
+    Optional: Compilerˉnativeˉx64ˉmetadataˉrequirements
+) -> bool {
+    var Overlap: bool = false;
+    var Requiredˉindex: u32 = 0u32;
+    while Requiredˉindex < Required.Count {
+        let Requiredˉrank: u8 = Bytesˉreadˉu8(Required.Ranks, Requiredˉindex);
+        var Optionalˉindex: u32 = 0u32;
+        while Optionalˉindex < Optional.Count {
+            let Optionalˉrank: u8 =
+                Bytesˉreadˉu8(Optional.Ranks, Optionalˉindex);
+            if Requiredˉrank == Optionalˉrank { Overlap = true; }
+            Optionalˉindex = Optionalˉindex + 1u32;
+        }
+        Requiredˉindex = Requiredˉindex + 1u32;
+    }
+    return Overlap;
+}
+
+fn Capabilitiesˉmatch(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Metadata: Compilerˉnativeˉx64ˉmetadata
+) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total || Length > Total - Offset || Length < 4u32 { return false; }
+    let Limit: u32 = Offset + Length;
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Count != Metadata.Requiredˉcount { return false; }
+    var Cursor: u32 = Offset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Name: Compilerˉnativeˉx64ˉmetadataˉstring =
+            Readˉstring(Input, Cursor, Limit);
+        if !Name.Valid { return false; }
+        let Rank: u8 = Capabilityˉrank(Input, Name.Offset, Name.Length);
+        if Rank == 0u8 { return false; }
+        if Rank != Bytesˉreadˉu8(Metadata.Requiredˉranks, Index) {
+            return false;
+        }
+        Cursor = Name.Nextˉoffset;
+        if Limit - Cursor < 5u32 { return false; }
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Parameters > 5u32 { return false; }
+        if Parameters + 5u32 > Limit - Cursor { return false; }
+        Cursor = Cursor + Parameters + 5u32;
+        Index = Index + 1u32;
+    }
+    return Cursor == Limit;
+}
+
+export fn Compilerˉnativeˉx64ˉmetadataˉread(
+    Input: bytes,
+    Cursor: u32,
+    Limit: u32,
+    Profile: u8
+) -> Compilerˉnativeˉx64ˉmetadata {
+    let Invalidˉresult: Compilerˉnativeˉx64ˉmetadata = Invalid(Input);
+    let Total: u32 = Bytesˉlength(Input);
+    if Limit > Total || Cursor >= Limit { return Invalidˉresult; }
+    let Presence: u8 = Bytesˉreadˉu8(Input, Cursor);
+    var Current: u32 = Cursor + 1u32;
+    if Presence == 0u8 {
+        if Current != Limit { return Invalidˉresult; }
+        return Compilerˉnativeˉx64ˉmetadata(
+            true, false, 0u32, Empty(Input), 0u32, Empty(Input)
+        );
+    }
+    if Presence != 1u8 { return Invalidˉresult; }
+    if Limit - Current < 6u32 { return Invalidˉresult; }
+    if Bytesˉreadˉu8(Input, Current) != 1u8 { return Invalidˉresult; }
+    Current = Current + 1u32;
+    let Authority: u8 = Bytesˉreadˉu8(Input, Current);
+    let Authorityˉnumber: u32 = U32ˉfromˉu8(Authority);
+    if Authorityˉnumber < 1u32 || Authorityˉnumber > 4u32 {
+        return Invalidˉresult;
+    }
+    Current = Current + 1u32;
+    let Platformˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Current);
+    if Platformˉcount == 0u32 || Platformˉcount > 32u32 {
+        return Invalidˉresult;
+    }
+    Current = Current + 4u32;
+    var Previousˉoffset: u32 = 0u32;
+    var Previousˉlength: u32 = 0u32;
+    var Platformˉindex: u32 = 0u32;
+    while Platformˉindex < Platformˉcount {
+        let Platform: Compilerˉnativeˉx64ˉmetadataˉstring =
+            Readˉstring(Input, Current, Limit);
+        if !Platform.Valid { return Invalidˉresult; }
+        if !Platformˉidentityˉisˉvalid(Input, Platform.Offset, Platform.Length) {
+            return Invalidˉresult;
+        }
+        if Platformˉindex != 0u32 {
+            if !Spanˉisˉbefore(
+                Input,
+                Previousˉoffset,
+                Previousˉlength,
+                Platform.Offset,
+                Platform.Length
+            ) { return Invalidˉresult; }
+        }
+        Previousˉoffset = Platform.Offset;
+        Previousˉlength = Platform.Length;
+        Current = Platform.Nextˉoffset;
+        Platformˉindex = Platformˉindex + 1u32;
+    }
+    let Required: Compilerˉnativeˉx64ˉmetadataˉrequirements =
+        Readˉrequirements(Input, Current, Limit);
+    if !Required.Valid { return Invalidˉresult; }
+    let Optional: Compilerˉnativeˉx64ˉmetadataˉrequirements =
+        Readˉrequirements(Input, Required.Nextˉoffset, Limit);
+    if !Optional.Valid || Optional.Nextˉoffset != Limit {
+        return Invalidˉresult;
+    }
+    if Requirementsˉoverlap(Required, Optional) { return Invalidˉresult; }
+    var Expectedˉprofile: u8 = 1u8;
+    if Authority == 4u8 {
+        Expectedˉprofile = 3u8;
+    } else {
+        if Required.Count != 0u32 || Optional.Count != 0u32 {
+            Expectedˉprofile = 2u8;
+        }
+    }
+    if Profile != Expectedˉprofile { return Invalidˉresult; }
+    return Compilerˉnativeˉx64ˉmetadata(
+        true,
+        true,
+        Required.Count,
+        Required.Ranks,
+        Optional.Count,
+        Optional.Ranks
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉmetadataˉnormalize(Input: bytes) -> bytes {
+    let Invalid: bytes = Empty(Input);
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 20u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 826431063u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu8(Input, 12u32) != 1u8 ||
+        Bytesˉreadˉu8(Input, 13u32) != 0u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, 14u32) != 0u32 {
+        return Invalid;
+    }
+    let Moduleˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Moduleˉlength < 6u32 || Moduleˉlength > Total - 20u32 {
+        return Invalid;
+    }
+    let Moduleˉend: u32 = 20u32 + Moduleˉlength;
+    let Profile: u8 = Bytesˉreadˉu8(Input, 20u32);
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 21u32);
+    if Nameˉlength > Moduleˉlength - 6u32 { return Invalid; }
+    let Metadataˉoffset: u32 = 25u32 + Nameˉlength;
+    let Metadata: Compilerˉnativeˉx64ˉmetadata =
+        Compilerˉnativeˉx64ˉmetadataˉread(
+            Input, Metadataˉoffset, Moduleˉend, Profile
+        );
+    if !Metadata.Valid { return Invalid; }
+    if !Metadata.Present { return Input; }
+    if Moduleˉend > Total || Total - Moduleˉend < 12u32 { return Invalid; }
+    if Bytesˉreadˉu8(Input, Moduleˉend) != 2u8 ||
+        Bytesˉreadˉu8(Input, Moduleˉend + 1u32) != 0u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, Moduleˉend + 2u32) != 0u32 {
+        return Invalid;
+    }
+    let Capabilityˉlength: u32 =
+        Bytesˉreadˉu32ˉlittle(Input, Moduleˉend + 4u32);
+    let Capabilityˉoffset: u32 = Moduleˉend + 8u32;
+    if Capabilityˉlength > Total - Capabilityˉoffset { return Invalid; }
+    if !Capabilitiesˉmatch(
+        Input, Capabilityˉoffset, Capabilityˉlength, Metadata
+    ) { return Invalid; }
+
+    let Normalizedˉmoduleˉlength: u32 = Metadataˉoffset - 20u32 + 1u32;
+    var Result: bytes = Bytesˉslice(Input, 0u32, 16u32);
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Normalizedˉmoduleˉlength)
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉslice(Input, 20u32, Metadataˉoffset - 20u32)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    return Bytesˉconcat(
+        Result, Bytesˉslice(Input, Moduleˉend, Total - Moduleˉend)
+    );
+}

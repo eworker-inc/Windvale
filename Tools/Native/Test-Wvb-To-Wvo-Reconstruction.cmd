@@ -7,15 +7,19 @@ set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate"
 set /a Tests=0
 set /a Passed=0
 
-call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 501344 4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746
+call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 517402 7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.exe" 7275520 d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f
+call :check_file "%Candidate%\Wvb-To-Wvo.exe" 7452672 3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.elf" 7274496 328640d04a2cdff6d1fe943b076554933a7538652185e0e1002fcc4cacbd3579
+call :check_file "%Candidate%\Wvb-To-Wvo.elf" 7454720 3b7f8d7df100656b69de6570b29fb12ba0315411da5929a1144eff84f6636474
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Return-42.wvb" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Return-42.wvo" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
+if errorlevel 1 goto :failed
+call :check_file "%Candidate%\Metadata.wvb" 369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa
+if errorlevel 1 goto :failed
+call :check_file "%Candidate%\Metadata.wvo" 1151 6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d
 if errorlevel 1 goto :failed
 call :pass "candidate inventory"
 
@@ -29,7 +33,7 @@ mkdir "%TestDirectory%" || goto :failed
 call "%RepositoryRoot%\Tools\Native\Construct-Wvb-To-Wvo-Reconstruction.cmd" "%TestDirectory%" ^
     >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
 if errorlevel 1 goto :failed
->"%TestDirectory%\Expected.out" echo native WVB-to-WVO reconstruction status=Complete artifacts=5
+>"%TestDirectory%\Expected.out" echo native WVB-to-WVO reconstruction status=Complete artifacts=7
 fc /b "%TestDirectory%\Construct.out" "%TestDirectory%\Expected.out" >nul
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Construct.err") do if not "%%~zF"=="0" goto :failed
@@ -47,6 +51,12 @@ if errorlevel 1 goto :failed
 call :check_equal "%TestDirectory%\Return-42.wvo" "%Candidate%\Return-42.wvo"
 if errorlevel 1 goto :failed
 call :pass "current-host Return-42 lowering"
+
+call :check_equal "%TestDirectory%\Metadata.wvb" "%Candidate%\Metadata.wvb"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Metadata.wvo" "%Candidate%\Metadata.wvo"
+if errorlevel 1 goto :failed
+call :pass "current-host independent-metadata lowering"
 
 call :cleanup
 echo Tests: %Tests%, Passed: %Passed%, Failed: 0

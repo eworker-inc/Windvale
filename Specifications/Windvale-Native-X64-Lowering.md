@@ -29,15 +29,26 @@ The status vocabulary is:
 
 ## Accepted WVB subset
 
-The core accepts exactly:
+The shared lowering core accepts exactly:
 
-- WVB 1.11 with seven canonical sections, an explicit absent-metadata byte, no trailing bytes, and a valid Seed module identifier;
+- WVB 1.11 with seven canonical sections, no trailing bytes, a valid Seed module identifier, and the retained absent-metadata byte;
 - portable profile with no capabilities, or hosted profile with canonically ordered declarations drawn from the six exact generic service signatures `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`, plus the exact ABI-23 `filesystem.directory_read_v1(text,u32,u32)->bytes` provider signature when selected by an application; generic service calls retain ABI 22 and the provider call selects ABI 23;
 - zero through 128 canonical nominal declarations with at most 64 records, 64 enums, and 64 variants; every encodable variant has declaration index below 64, one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; and zero through 256 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
 - one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes` at any ordinal and every other function non-exported;
 - parameterless `Main() -> i32` or `Main() -> bytes`, zero through 64 `i32`, `bool`, `text`, `u8`, `u32`, `u64`, `bytes`, admitted enum, admitted record, or admitted variant helper parameters and those same primitive or nominal helper returns, declared locals using those seven primitive types plus admitted enum, record, or variant identities, fewer than 2,048 combined parameters and declared locals per function, a declared maximum stack depth from one through 1,024, at most 131,072 code bytes and 32,768 decoded instructions per function, adjacent exact code ranges, and no unclaimed function-section bytes; record/variant-bearing functions retain the narrower 1,024-basic-block, 8,192-instruction, 1,024-declared-record-local, 256-produced-record-value-per-block, and immutable-record-parameter limits;
 - one control-flow graph per function of at most 8,192 instructions drawn from the existing scalar, descriptor, enum, record, call, and control families plus `variant.create`, `variant.is_case`, and `variant.payload`; every variant instruction names an admitted declaration and case, consumes the exact case payload shape, and preserves its nominal identity; every data, enum, record, variant, direct-call, or capability operation names an in-range declaration and consumes and produces its exact typed stack shape; and
 - instruction-aligned forward or backward targets, empty stacks at every block edge, complete fixed-point reachability from entry, valid typed local uses and stack effects, an exact declared maximum depth, and a combined local/value frame of at most 2,048 ABI cells. Locals retain WVB's zero-initialized entry semantics.
+
+The paired WVB-to-WVO application additionally admits independent metadata
+encoding version 1 before invoking this core. Its bounded application adapter
+requires one through 32 strictly ordered lowercase platform scopes, a valid
+authority whose derived profile agrees with the retained profile byte,
+independently ordered catalog/version-1 required and optional capability sets
+with no overlap, and a required set exactly equal to the executable
+Capabilities section. It then reconstructs an in-memory absent-marker Module
+view for the unchanged core. The reader validates optional-only metadata, but a
+hosted optional-only module remains unsupported because the core still requires
+at least one executable capability.
 
 Every read is preceded by a checked range or exact payload-size test. Unknown versions, reordered/truncated/extended sections, inconsistent lengths, alternate function metadata, unknown opcodes, malformed capability ranges or signatures, invalid local/data/type/case/call indices, wrong payload or descriptor shapes, mismatched nominal identities, malformed branch targets, unreachable control blocks, record-backed temporaries live across block edges, cyclic containment, flattened backings wider than 64 ABI cells, and mismatched maximum-stack declarations fail closed. Forward, backward, self-recursive, mutually recursive, and cyclic call edges share the same exact signature checks. Every function entry consumes the shared call-depth budget before its frame executes, and every emitted WVB instruction, including every nominal or capability operation, backward jump, and call, consumes the shared instruction budget before its operation. Recursion and nonterminating cycles therefore reach `WVR3004` or `WVR3011` rather than escaping resource accounting. Mutable record parameters, mutable or other data declarations, other capability declarations and calls, recursive/variant payloads, and broader nominal identities remain outside the subset.
 
@@ -400,11 +411,12 @@ remain deferred.
 The Windows native source front door and retained segmented toolset reconstruct
 the current lowerer generation and paired applications. The accepted subset,
 including checked `u64`, bounded variants, nested immutable records, and ABI-23
-provider calls, now builds as a 501,344-byte WVB at SHA-256
-`4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746`.
-The same native segmented path reconstructs its 7,275,520-byte Windows and
-7,274,496-byte Linux applications exactly after rebuilding and repinning the
-embedded staging producer. The fixed Return-42 WVB/WVO pair remains unchanged.
+provider calls, now builds as a 517,402-byte WVB at SHA-256
+`7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2`.
+The same native segmented path reconstructs its 7,452,672-byte Windows and
+7,454,720-byte Linux applications exactly. The fixed Return-42 WVB/WVO pair
+remains unchanged, and the 369-byte independent-metadata fixture lowers to an
+exact 1,151-byte WVO.
 The earlier Decision 0497 identities remain historical evidence rather than
 identities for the current source generation. This current-host reconstruction
 is not complete-backend transfer, a non-circular bootstrap, independent Linux
@@ -446,7 +458,7 @@ It reads the input once, calls the portable core in memory, writes exactly once 
 
 The existing shared-backend conformance case compiles the Windvale modules once and compares produced WVO bytes with Stage 0 across constants, checked arithmetic, nested expressions, all admitted scalar shapes and comparisons, boolean negation, both conditional routes, forward and backward jumps, loops, early returns, bounded calls, mixed scalar arguments in all four register positions, mixed stack arguments after position four, typed scalar and descriptor returns, general call order, recursion, and canonical static data. The combined arithmetic oracle is exactly 1,871 code bytes and a 1,944-byte WVO. The retained nested-control oracle is exactly 4,835 code bytes and a 4,908-byte WVO. The metered loop oracle is exactly 1,665 code bytes and a 1,738-byte WVO; native execution succeeds at its exact 157-instruction requirement and reaches `WVR3011` at 156. The parameterless call oracle is exactly 795 code bytes and a 902-byte WVO, with exact shared instruction and two-entry depth boundaries retained by Stage 0 execution. The four-parameter mixed-scalar oracle is exactly 2,581 code bytes and a 2,688-byte WVO. The existing three-function `Add -> Build -> Main` fixture additionally calls both lower ordinals through control flow and returns 42. A verifier-approved `Alpha, Main, Zeta` oracle combines a real forward edge with same-signature forward/back mutual recursion; it returns 42 at exact call depth five, reaches `WVR3004` at four, and produces Stage 0's exact 4,350-byte `.text` and 4,491-byte WVO. Canonical 493-byte `Sum-Data.wv` combines one `[i32]` declaration, `data.length`, a bounds-checked load, backward control, and a scalar call; it produces the exact 3,088-byte `.text`, 16-byte `.rodata`, one relocation, and 3,288-byte WVO emitted by Stage 0. Canonical compiler-produced `Function-Only.wv` returns 6 through `u32` loop state and checked addition, a `u8` argument/comparison, and a Boolean helper result; the memory adapter, hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO. A small source-defined `Byte() -> u8` and `Count() -> u32` vector returns 42 while exercising every `u32` and `u8` comparison across true and false routes; it reproduces Stage 0's exact 5,263-byte `.text` and 5,404-byte WVO through the hosted lowerer. The same test executes every retained input through the hosted lowering shell as native x86-64; exercises memory and hosted adapters over malformed stack, invalid-local, invalid-data, invalid-branch, unreachable control, out-of-range call target, and mismatched-parameter-type streams; and verifies that truncated input leaves a sentinel output unchanged. The same generated tool fragment is host-neutral; current-host evidence is not a Windows/Linux qualification claim.
 
-The mixed-scalar call code and WVO SHA-256 identities remain `1a0a541d2bd59378b4fa6df53248c3c359e909a0b7446198ebb1a58ca5a79721` and `cb7d2c74edb7aa3443e1e23cf0d762d4c15b79c39ea4f363531b2ec80633c13f`. Existing retained oracle objects remain byte-identical. The current hosted tool is the exact 501,344-byte WVB at SHA-256 `4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746` and reproduces through the pinned native source front door.
+The mixed-scalar call code and WVO SHA-256 identities remain `1a0a541d2bd59378b4fa6df53248c3c359e909a0b7446198ebb1a58ca5a79721` and `cb7d2c74edb7aa3443e1e23cf0d762d4c15b79c39ea4f363531b2ec80633c13f`. Existing retained oracle objects remain byte-identical. The current hosted tool is the exact 517,402-byte WVB at SHA-256 `7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2` and reproduces through the pinned native source front door.
 
 The accepted variant subset is deliberately finite: no recursive variant,
 variant-valued payload, mutable payload, or declaration index beyond the

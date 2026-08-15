@@ -1,0 +1,11 @@
+module Wvbˉtoˉwvoˉmetadata;
+
+platform linux, windows;
+authority application;
+requires capability process.argument_count version 1;
+optional capability file.read_bytes version 1;
+
+export fn Main() -> i32 {
+    if process.argument_count() == 0u32 { return 42; }
+    return 1;
+}

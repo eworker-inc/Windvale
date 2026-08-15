@@ -4,7 +4,7 @@
 
 `WVHN 1` packages the canonical Windvale-written `Compilerˉnativeˉx64ˉloweringˉtool` as paired Windows x64 and Linux x64 command-line applications. It lowers only the exact metered scalar/control/direct-call and bounded static-data subset defined by the [Windvale-native x86-64 lowering contract](Windvale-Native-X64-Lowering.md). Decision 0304 pins exact candidate artifacts, fixed vectors, and digest-bound launchers; Decision 0308 composes those launchers with native atomic WVO publication; and Decision 0497 reconstructs the current WVB and both target applications through the retained segmented native toolset. This remains neither the complete native backend nor an ordinary front door until independent Linux reconstruction and execution, the grouped Windows/Linux gate, and promotion succeed.
 
-The portable core owns WVB admission, control and type verification, ABI-22 selection, branch/call measurement and patching, and canonical WVO 1.0 construction. The application adds no second selector, object writer, or target-specific lowering logic.
+The portable core owns absent-metadata WVB admission, control and type verification, ABI-22 selection, branch/call measurement and patching, and canonical WVO 1.0 construction. The application owns one bounded independent-metadata admission adapter that validates and normalizes the Module envelope before invoking the unchanged core; it adds no second selector, object writer, or target-specific lowering logic.
 
 ## Construction contract
 
@@ -52,15 +52,16 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 501,344 | `4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746` |
-| Windows WVB-to-WVO tool | 7,275,520 | `d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f` |
-| Linux WVB-to-WVO tool | 7,274,496 | `328640d04a2cdff6d1fe943b076554933a7538652185e0e1002fcc4cacbd3579` |
+| WVB-to-WVO tool WVB | 517,402 | `7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2` |
+| Windows WVB-to-WVO tool | 7,452,672 | `3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89` |
+| Linux WVB-to-WVO tool | 7,454,720 | `3b7f8d7df100656b69de6570b29fb12ba0315411da5929a1144eff84f6636474` |
 
 These pinned candidate applications include Decision 0419's parameterless
 `Main() -> bytes` contract and Decision 0423's compiler-scale admission work.
-Decision 0561 uses the current Windows native source front door plus the
+Decision 0561 established the prior generation. Decision 0571 uses the current
+Windows native source front door plus the
 retained segmented staging, linking, transport, and hosted-packaging toolset to
-reconstruct this exact 501,344-byte WVB and both exact target applications in a
+reconstruct this exact 517,402-byte WVB and both exact target applications in a
 separate output directory. The constructed Windows application then reproduces
 the fixed WVO below. This removes Stage 0 as the only constructor of the current
 candidate generation, but it consumes an already retained native toolset and
@@ -77,6 +78,25 @@ current candidate applications.
 | --- | ---: | --- |
 | Return-42 WVB | 174 | `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31` |
 | Return-42 WVO | 479 | `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5` |
+
+Decision 0571 also fixes the first independent-metadata vector:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Metadata WVB | 369 | `94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa` |
+| Metadata WVO | 1,151 | `6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d` |
+
+The vector declares `linux` and `windows`, application authority, required
+`process.argument_count` version 1, and optional `file.read_bytes` version 1.
+The application adapter independently validates the complete metadata envelope
+and proves that required metadata exactly matches executable capabilities before
+constructing an in-memory absent-marker view for the unchanged shared core. The
+reader validates optional-only metadata, but this candidate still rejects a
+hosted module without an executable capability. The normal compiler-aligned
+verifier, WVB inspector, and direct shared-core consumers still admit only
+absent metadata; their coordinated migration remains the next prerequisite
+before ordinary project builds or repository package migration use this
+surface.
 
 The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime. Decision 0228 adds exact Stage 0 WVO agreement for the existing three-function `Add -> Build -> Main` fixture. Decision 0231 adds the canonical 493-byte `Sum-Data.wv` differential vector with exact `.text`, `.rodata`, data symbol, and relative relocation. Decision 0232 adds arbitrary exported-Main order plus bounded forward, recursive, and cyclic scalar calls under the existing instruction and call-depth budgets. Decision 0233 adds the compiler-produced `Function-Only.wv` vector with `u8`/`u32` locals and operations plus a Boolean helper return; the Windvale memory adapter, hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO. Decision 0234 expands the separate `u8`/`u32` helper-return vector across all eight bounded comparisons and reproduces its exact 5,263-byte `.text` and 5,404-byte WVO through the hosted lowerer. Decisions 0235 through 0240 add exact descriptor, dynamic text/bytes, enum, direct-record, and record-call agreement. Decision 0241 adds the complete compiler-produced `Nominal-Types.wv` vector with multi-block record liveness and a scalar-returning record consumer; its 22,404-byte WVO is reproduced by the Windvale adapters and the direct current-host native package. None of those extensions changes the fixed return-42 vector.
 

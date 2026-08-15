@@ -1,6 +1,7 @@
 module Compilerˉnativeˉx64ˉloweringˉtool profile hosted;
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -15,11 +16,15 @@ export fn Main() -> i32 {
         return 2;
     }
     let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Normalized: bytes =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉnormalize(Input);
+    var Loweringˉinput: bytes = Input;
+    if Bytesˉlength(Normalized) != 0u32 { Loweringˉinput = Normalized; }
     let Summary: Nativeˉx64.Compilerˉnativeˉx64ˉsummary =
-        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(Input);
+        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(Loweringˉinput);
     if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
         let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
-            Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
+            Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Loweringˉinput);
         var Failureˉreport: text = Textˉconcat(
             "native x64 status=", Enumˉname(Summary.Status)
         );

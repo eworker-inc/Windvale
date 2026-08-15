@@ -30,6 +30,9 @@ set "WindowsApplication=%OutputRoot%\Wvb-To-Wvo.exe"
 set "LinuxApplication=%OutputRoot%\Wvb-To-Wvo.elf"
 set "ReturnWvb=%OutputRoot%\Return-42.wvb"
 set "ReturnWvo=%OutputRoot%\Return-42.wvo"
+set "MetadataWvb=%OutputRoot%\Metadata.wvb"
+set "MetadataWvo=%OutputRoot%\Metadata.wvo"
+set "MetadataTestWvb=%TemporaryDirectory%\Metadata-Self-Test.wvb"
 set "ObjectPrefix=%TemporaryDirectory%\Object"
 set "ObjectManifest=%TemporaryDirectory%\Object.wvop"
 set "ImagePrefix=%TemporaryDirectory%\Image"
@@ -41,6 +44,32 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" ^
     "%LowererWvb%" >"%TemporaryDirectory%\Build-Lowerer.txt" 2>"%TemporaryDirectory%\Build-Lowerer.err"
 if errorlevel 1 goto :cleanup
+"%RepositoryRoot%\Artifacts\Native-Compiler-Seed\windows-x64\wvcompiler.exe" ^
+    "%RepositoryRoot%\Tests\Fixtures\Native-X64\Wvb-To-Wvo-Metadata.wv" ^
+    "%MetadataWvb%" >"%TemporaryDirectory%\Build-Metadata.txt" ^
+    2>"%TemporaryDirectory%\Build-Metadata.err"
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Lowering-Metadata.wvproj" ^
+    "%MetadataTestWvb%" >"%TemporaryDirectory%\Build-Metadata-Test.txt" ^
+    2>"%TemporaryDirectory%\Build-Metadata-Test.err"
+if errorlevel 1 (
+    type "%TemporaryDirectory%\Build-Metadata-Test.txt" >&2
+    type "%TemporaryDirectory%\Build-Metadata-Test.err" >&2
+    goto :cleanup
+)
+call "%RepositoryRoot%\Tools\Native\Run-Wvb.cmd" "%MetadataTestWvb%" ^
+    >"%TemporaryDirectory%\Run-Metadata-Test.txt" 2>"%TemporaryDirectory%\Run-Metadata-Test.err"
+if errorlevel 1 (
+    type "%TemporaryDirectory%\Run-Metadata-Test.txt" >&2
+    type "%TemporaryDirectory%\Run-Metadata-Test.err" >&2
+    goto :cleanup
+)
+set "MetadataTestResult="
+for /f "usebackq delims=" %%L in ("%TemporaryDirectory%\Run-Metadata-Test.txt") do (
+    if "%%L"=="Result: 0" set "MetadataTestResult=Valid"
+)
+if not defined MetadataTestResult goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" ^
     "%ReturnWvb%" >"%TemporaryDirectory%\Build-Return-42.txt" 2>"%TemporaryDirectory%\Build-Return-42.err"
@@ -84,19 +113,26 @@ if errorlevel 1 goto :cleanup
 "%WindowsApplication%" "%ReturnWvb%" "%ReturnWvo%" ^
     >"%TemporaryDirectory%\Return-42.txt" 2>"%TemporaryDirectory%\Return-42.err"
 if errorlevel 1 goto :cleanup
+"%WindowsApplication%" "%MetadataWvb%" "%MetadataWvo%" ^
+    >"%TemporaryDirectory%\Metadata.txt" 2>"%TemporaryDirectory%\Metadata.err"
+if errorlevel 1 goto :cleanup
 
-call :verify_file "%LowererWvb%" 501344 4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746 "WVB-to-WVO tool WVB"
+call :verify_file "%LowererWvb%" 517402 7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2 "WVB-to-WVO tool WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 7275520 d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f "Windows WVB-to-WVO application"
+call :verify_file "%WindowsApplication%" 7452672 3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89 "Windows WVB-to-WVO application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 7274496 328640d04a2cdff6d1fe943b076554933a7538652185e0e1002fcc4cacbd3579 "Linux WVB-to-WVO application"
+call :verify_file "%LinuxApplication%" 7454720 3b7f8d7df100656b69de6570b29fb12ba0315411da5929a1144eff84f6636474 "Linux WVB-to-WVO application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ReturnWvb%" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 "Return-42 WVB"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ReturnWvo%" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5 "Return-42 WVO"
 if errorlevel 1 goto :cleanup
+call :verify_file "%MetadataWvb%" 369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa "metadata WVB"
+if errorlevel 1 goto :cleanup
+call :verify_file "%MetadataWvo%" 1151 6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d "metadata WVO"
+if errorlevel 1 goto :cleanup
 
-echo native WVB-to-WVO reconstruction status=Complete artifacts=5
+echo native WVB-to-WVO reconstruction status=Complete artifacts=7
 set "Result=0"
 goto :cleanup
 

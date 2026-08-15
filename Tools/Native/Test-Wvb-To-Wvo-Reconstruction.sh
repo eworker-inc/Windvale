@@ -37,16 +37,20 @@ fail() {
     exit 1
 }
 
-check_file "$candidate/Wvb-To-Wvo.wvb" 501344 \
-    4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746 || fail
-check_file "$candidate/Wvb-To-Wvo.exe" 7275520 \
-    d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f || fail
-check_file "$candidate/Wvb-To-Wvo.elf" 7274496 \
-    328640d04a2cdff6d1fe943b076554933a7538652185e0e1002fcc4cacbd3579 || fail
+check_file "$candidate/Wvb-To-Wvo.wvb" 517402 \
+    7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2 || fail
+check_file "$candidate/Wvb-To-Wvo.exe" 7452672 \
+    3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89 || fail
+check_file "$candidate/Wvb-To-Wvo.elf" 7454720 \
+    3b7f8d7df100656b69de6570b29fb12ba0315411da5929a1144eff84f6636474 || fail
 check_file "$candidate/Return-42.wvb" 174 \
     7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 || fail
 check_file "$candidate/Return-42.wvo" 479 \
     0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5 || fail
+check_file "$candidate/Metadata.wvb" 369 \
+    94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa || fail
+check_file "$candidate/Metadata.wvo" 1151 \
+    6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d || fail
 pass 'candidate inventory'
 
 if "$script_directory/Construct-Wvb-To-Wvo-Reconstruction.sh" >/dev/null 2>&1; then
@@ -72,7 +76,7 @@ trap cleanup EXIT
 
 "$script_directory/Construct-Wvb-To-Wvo-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
-printf '%s\n' 'native WVB-to-WVO reconstruction status=Complete artifacts=5' \
+printf '%s\n' 'native WVB-to-WVO reconstruction status=Complete artifacts=7' \
     >"$test_directory/Expected.out" || fail
 check_equal "$test_directory/Construct.out" "$test_directory/Expected.out" || fail
 [[ ! -s $test_directory/Construct.err ]] || fail
@@ -85,5 +89,9 @@ pass 'native paired lowerer reconstruction'
 check_equal "$test_directory/Return-42.wvb" "$candidate/Return-42.wvb" || fail
 check_equal "$test_directory/Return-42.wvo" "$candidate/Return-42.wvo" || fail
 pass 'current-host Return-42 lowering'
+
+check_equal "$test_directory/Metadata.wvb" "$candidate/Metadata.wvb" || fail
+check_equal "$test_directory/Metadata.wvo" "$candidate/Metadata.wvo" || fail
+pass 'current-host independent-metadata lowering'
 
 echo "Tests: $tests, Passed: $passed, Failed: 0"

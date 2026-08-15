@@ -66,8 +66,8 @@ echo 'native wvdb query step=build-current-lowerer'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$work/Lowerer.wvb" || exit $?
-verify_file "$work/Lowerer.wvb" 501344 \
-    4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746 \
+verify_file "$work/Lowerer.wvb" 517402 \
+    7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2 \
     'variant-capable lowerer WVB' || exit 1
 
 echo 'native wvdb query step=package-current-lowerer'

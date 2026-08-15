@@ -55,7 +55,7 @@ if "%Development%"=="1" (
     call :prepare_cached_build_driver "%BuildDriverWvb%"
     if errorlevel 1 goto :cleanup
     set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
-    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7275520 d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f
+    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7452672 3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89
     if errorlevel 1 goto :cleanup
 ) else (
     call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^

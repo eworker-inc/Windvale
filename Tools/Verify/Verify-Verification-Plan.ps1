@@ -456,8 +456,13 @@ $NativeCases = @(
             'Tools/Native/Test-Wvb-To-Wvo-Reconstruction.cmd',
             'Tools/Native/Construct-Wvb-To-Wvo-Reconstruction.cmd',
             'Artifacts/Native-Wvb-To-Wvo-Candidate/Manifest.json',
+            'Compiler/Windvale/Native-X64-Lowering-Metadata.wv',
+            'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
             'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj',
+            'Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj',
             'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj',
+            'Tests/Fixtures/Native-X64/Native-X64-Lowering-Metadata-Self-Test.wv',
+            'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Metadata.wv',
             'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv',
             'Specifications/Windvale-Native-Wvb-To-Wvo.md'
         )
@@ -468,7 +473,8 @@ $NativeCases = @(
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction'
+            'wvo-publisher-reconstruction',
+            'lowerer-rejections'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1707,7 +1713,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3543 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3544 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

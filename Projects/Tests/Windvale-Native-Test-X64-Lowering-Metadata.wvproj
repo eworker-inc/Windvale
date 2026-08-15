@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Native-X64/Native-X64-Lowering-Metadata-Self-Test.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Metadata.wv"
+emit wvb

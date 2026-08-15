@@ -1,0 +1,165 @@
+module Nativeˉx64ˉloweringˉmetadataˉselfˉtest profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
+
+fn String(Value: text) -> bytes {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Encoded)), Encoded
+    );
+}
+
+fn Requirements(
+    Count: u32,
+    First: text,
+    Firstˉversion: u32,
+    Second: text,
+    Secondˉversion: u32
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Count);
+    if Count >= 1u32 {
+        Result = Bytesˉconcat(Result, String(First));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Firstˉversion));
+    }
+    if Count >= 2u32 {
+        Result = Bytesˉconcat(Result, String(Second));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Secondˉversion));
+    }
+    return Result;
+}
+
+fn Platforms(Count: u32, First: text, Second: text) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Count);
+    if Count >= 1u32 { Result = Bytesˉconcat(Result, String(First)); }
+    if Count >= 2u32 { Result = Bytesˉconcat(Result, String(Second)); }
+    return Result;
+}
+
+fn Envelope(
+    Version: u8,
+    Authority: u8,
+    Platformˉentries: bytes,
+    Required: bytes,
+    Optional: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(1u8);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Version));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Authority));
+    Result = Bytesˉconcat(Result, Platformˉentries);
+    Result = Bytesˉconcat(Result, Required);
+    return Bytesˉconcat(Result, Optional);
+}
+
+fn Isˉvalid(Input: bytes, Profile: u8) -> bool {
+    let Result: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Input, 0u32, Bytesˉlength(Input), Profile
+        );
+    return Result.Valid;
+}
+
+export fn Main() -> i32 {
+    let Emptyˉrequirements: bytes = Requirements(0u32, "", 0u32, "", 0u32);
+    let Required: bytes = Requirements(
+        1u32, "process.argument_count", 1u32, "", 0u32
+    );
+    let Optional: bytes = Requirements(
+        1u32, "file.read_bytes", 1u32, "", 0u32
+    );
+    let Valid: bytes = Envelope(
+        1u8,
+        2u8,
+        Platforms(2u32, "linux", "windows"),
+        Required,
+        Optional
+    );
+    let Validˉresult: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Valid, 0u32, Bytesˉlength(Valid), 2u8
+        );
+    if !Validˉresult.Valid || !Validˉresult.Present { return 1; }
+    if Validˉresult.Requiredˉcount != 1u32 ||
+        Validˉresult.Optionalˉcount != 1u32 { return 2; }
+    if Bytesˉreadˉu8(Validˉresult.Requiredˉranks, 0u32) != 8u8 {
+        return 3;
+    }
+    if Bytesˉreadˉu8(Validˉresult.Optionalˉranks, 0u32) != 4u8 {
+        return 4;
+    }
+    let Absent: bytes = Bytesˉfromˉu8(0u8);
+    if !Isˉvalid(Absent, 1u8) { return 5; }
+    let Optionalˉonly: bytes = Envelope(
+        1u8,
+        1u8,
+        Platforms(1u32, "windvale", ""),
+        Emptyˉrequirements,
+        Optional
+    );
+    if !Isˉvalid(Optionalˉonly, 2u8) { return 6; }
+    if Isˉvalid(Bytesˉfromˉu8(2u8), 1u8) { return 7; }
+    if Isˉvalid(
+        Envelope(
+            2u8, 2u8, Platforms(1u32, "linux", ""), Required, Optional
+        ),
+        2u8
+    ) { return 8; }
+    if Isˉvalid(
+        Envelope(
+            1u8, 0u8, Platforms(1u32, "linux", ""), Required, Optional
+        ),
+        2u8
+    ) { return 9; }
+    if Isˉvalid(
+        Envelope(
+            1u8, 2u8, Platforms(2u32, "windows", "linux"), Required, Optional
+        ),
+        2u8
+    ) { return 10; }
+    if Isˉvalid(
+        Envelope(
+            1u8,
+            2u8,
+            Platforms(1u32, "linux", ""),
+            Requirements(
+                2u32,
+                "process.argument_count",
+                1u32,
+                "file.read_bytes",
+                1u32
+            ),
+            Emptyˉrequirements
+        ),
+        2u8
+    ) { return 11; }
+    if Isˉvalid(
+        Envelope(
+            1u8,
+            2u8,
+            Platforms(1u32, "linux", ""),
+            Requirements(1u32, "process.argument_count", 2u32, "", 0u32),
+            Emptyˉrequirements
+        ),
+        2u8
+    ) { return 12; }
+    if Isˉvalid(
+        Envelope(
+            1u8,
+            2u8,
+            Platforms(1u32, "linux", ""),
+            Required,
+            Requirements(1u32, "process.argument_count", 1u32, "", 0u32)
+        ),
+        2u8
+    ) { return 13; }
+    if Isˉvalid(Optionalˉonly, 1u8) { return 14; }
+    if Isˉvalid(
+        Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8)), 2u8
+    ) { return 15; }
+    if Isˉvalid(
+        Envelope(
+            1u8, 2u8, Platforms(0u32, "", ""), Required, Optional
+        ),
+        2u8
+    ) { return 16; }
+    return 0;
+}

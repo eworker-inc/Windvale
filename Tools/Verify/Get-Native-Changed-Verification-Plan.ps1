@@ -492,6 +492,8 @@ foreach ($Path in $Paths) {
         continue
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
+    } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
+        Add-Suite @('wvb-to-wvo-reconstruction', 'lowerer-rejections')
     } elseif ($Path -in @(
         '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
@@ -1595,6 +1597,11 @@ foreach ($Path in $Paths) {
         Add-Suite 'baseline-jit'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv') {
         Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path -in @(
+        'Tests/Fixtures/Native-X64/Native-X64-Lowering-Metadata-Self-Test.wv',
+        'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Metadata.wv'
+    )) {
+        Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-U64.wv') {
         Add-Suite 'native-u64-lowering'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Nested-Record-Fields.wv') {
@@ -1838,7 +1845,9 @@ foreach ($Path in $Paths) {
         Add-Hosted-Publisher-Suites
         Add-Suite 'console-verifier-reconstruction'
     } elseif ($Path -in @(
+        'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj',
         'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj',
         'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj',
         'Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj'
     )) {
@@ -1846,7 +1855,10 @@ foreach ($Path in $Paths) {
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction'
         )
-    } elseif ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj') {
+    } elseif ($Path -in @(
+        'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
+        'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj'
+    )) {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
@@ -1858,6 +1870,10 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj') {
         Add-Suite 'libraries'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {
+        Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj'
+    )) {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-U64.wvproj') {
         Add-Suite 'native-u64-lowering'

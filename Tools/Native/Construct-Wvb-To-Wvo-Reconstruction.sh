@@ -35,6 +35,9 @@ windows_application="$output_root/Wvb-To-Wvo.exe"
 linux_application="$output_root/Wvb-To-Wvo.elf"
 return_wvb="$output_root/Return-42.wvb"
 return_wvo="$output_root/Return-42.wvo"
+metadata_wvb="$output_root/Metadata.wvb"
+metadata_wvo="$output_root/Metadata.wvo"
+metadata_test_wvb="$temporary_directory/Metadata-Self-Test.wvb"
 object_prefix="$temporary_directory/Object"
 object_manifest="$temporary_directory/Object.wvop"
 image_prefix="$temporary_directory/Image"
@@ -47,9 +50,20 @@ canonical_manifest="$temporary_directory/Canonical.wvli"
     "$lowerer_wvb" \
     >"$temporary_directory/Build-Lowerer.txt" 2>"$temporary_directory/Build-Lowerer.err" || exit $?
 "$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj" \
+    "$metadata_test_wvb" \
+    >"$temporary_directory/Build-Metadata-Test.txt" 2>"$temporary_directory/Build-Metadata-Test.err" || exit $?
+"$script_directory/Run-Wvb.sh" "$metadata_test_wvb" \
+    >"$temporary_directory/Run-Metadata-Test.txt" 2>"$temporary_directory/Run-Metadata-Test.err" || exit $?
+grep -Fx 'Result: 0' "$temporary_directory/Run-Metadata-Test.txt" >/dev/null || exit 1
+"$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" \
     "$return_wvb" \
     >"$temporary_directory/Build-Return-42.txt" 2>"$temporary_directory/Build-Return-42.err" || exit $?
+"$repository_root/Artifacts/Native-Compiler-Seed/linux-x64/wvcompiler.elf" \
+    "$repository_root/Tests/Fixtures/Native-X64/Wvb-To-Wvo-Metadata.wv" \
+    "$metadata_wvb" \
+    >"$temporary_directory/Build-Metadata.txt" 2>"$temporary_directory/Build-Metadata.err" || exit $?
 
 "$script_directory/Stage-Compiler-Wvb.sh" \
     "$lowerer_wvb" "$object_prefix" "$object_manifest" \
@@ -87,6 +101,8 @@ if [[ ! -x $linux_application ]]; then
 fi
 "$linux_application" "$return_wvb" "$return_wvo" \
     >"$temporary_directory/Return-42.txt" 2>"$temporary_directory/Return-42.err" || exit $?
+"$linux_application" "$metadata_wvb" "$metadata_wvo" \
+    >"$temporary_directory/Metadata.txt" 2>"$temporary_directory/Metadata.err" || exit $?
 
 verify_file() {
     local path=$1
@@ -110,14 +126,14 @@ verify_file() {
     fi
 }
 
-verify_file "$lowerer_wvb" 501344 \
-    4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746 \
+verify_file "$lowerer_wvb" 517402 \
+    7c13511653c4d256607121678fed441a5c847e34e510723b90f6a51c2f8d12d2 \
     'WVB-to-WVO tool WVB' || exit 1
-verify_file "$windows_application" 7275520 \
-    d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f \
+verify_file "$windows_application" 7452672 \
+    3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89 \
     'Windows WVB-to-WVO application' || exit 1
-verify_file "$linux_application" 7274496 \
-    328640d04a2cdff6d1fe943b076554933a7538652185e0e1002fcc4cacbd3579 \
+verify_file "$linux_application" 7454720 \
+    3b7f8d7df100656b69de6570b29fb12ba0315411da5929a1144eff84f6636474 \
     'Linux WVB-to-WVO application' || exit 1
 verify_file "$return_wvb" 174 \
     7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 \
@@ -125,5 +141,11 @@ verify_file "$return_wvb" 174 \
 verify_file "$return_wvo" 479 \
     0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5 \
     'Return-42 WVO' || exit 1
+verify_file "$metadata_wvb" 369 \
+    94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa \
+    'metadata WVB' || exit 1
+verify_file "$metadata_wvo" 1151 \
+    6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d \
+    'metadata WVO' || exit 1
 
-echo 'native WVB-to-WVO reconstruction status=Complete artifacts=5'
+echo 'native WVB-to-WVO reconstruction status=Complete artifacts=7'

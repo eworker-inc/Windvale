@@ -48,7 +48,7 @@ if errorlevel 1 goto :failed
 call :check_equal "%TestDirectory%\Console-Application-Publisher.wvb" "%Candidate%\Console-Application-Publisher.wvb"
 if errorlevel 1 goto :failed
 
-call :check_file "%RawLowerer%" 7275520 d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f
+call :check_file "%RawLowerer%" 7452672 3fca02ec3b28b030075eeef26e21ea334a5899f434c39998ac1c4bbca05f3c89
 if errorlevel 1 goto :failed
 "%RawLowerer%" "%TestDirectory%\Console-Application-Publisher.wvb" ^
     "%TestDirectory%\Console-Application-Publisher.wvo" ^
