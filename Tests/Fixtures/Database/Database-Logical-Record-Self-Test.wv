@@ -1,0 +1,383 @@
+module Databaseˉlogicalˉrecordˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu32ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Withˉu64(Input: bytes, Offset: u32, Value: u64) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 8u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu64ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Keyˉdecodeˉerror(Input: bytes) -> Logical.Databaseˉlogicalˉerror {
+    let Result: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Input);
+    return Result.Error;
+}
+
+fn Keyˉencodeˉerror(
+    Kind: Logical.Databaseˉlogicalˉkeyˉkind,
+    Collection: u64,
+    Identity: bytes
+) -> Logical.Databaseˉlogicalˉerror {
+    let Result: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(Kind, Collection, Identity);
+    return Result.Error;
+}
+
+fn Recordˉdecodeˉerror(Input: bytes) -> Logical.Databaseˉlogicalˉerror {
+    let Result: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉdecode(Input);
+    return Result.Error;
+}
+
+fn Recordˉencodeˉerror(
+    Schema: u64,
+    Payload: bytes
+) -> Logical.Databaseˉlogicalˉerror {
+    let Result: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(Schema, Payload);
+    return Result.Error;
+}
+
+fn Keyˉcontract() -> i32 {
+    let Identity: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(65u8),
+        Bytesˉfromˉu8(66u8)
+    );
+    let Encoded: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Record,
+            7u64,
+            Identity
+        );
+    if Encoded.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 34u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1380669015u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 12u32) != 2u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 16u32) != 7u64 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 24u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 28u32) != 0u32 {
+        return 1;
+    }
+    let Decoded: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Encoded.Bytes);
+    let Deterministic: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Record,
+            7u64,
+            Identity
+        );
+    if Decoded.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Decoded.Kind != Logical.Databaseˉlogicalˉkeyˉkind.Record ||
+        Decoded.Collection != 7u64 ||
+        !Bytesˉequal(Decoded.Identity, Identity) ||
+        !Bytesˉequal(Decoded.Bytes, Encoded.Bytes) ||
+        !Bytesˉequal(Deterministic.Bytes, Encoded.Bytes) {
+        return 2;
+    }
+    let Collection: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉcollectionˉkey(7u64);
+    let Collectionˉdecoded: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Collection.Bytes);
+    if Collection.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Collection.Bytes) != 32u32 ||
+        Collectionˉdecoded.Kind !=
+            Logical.Databaseˉlogicalˉkeyˉkind.Collection ||
+        Collectionˉdecoded.Collection != 7u64 ||
+        Bytesˉlength(Collectionˉdecoded.Identity) != 0u32 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Recordˉcontract() -> i32 {
+    let Payload: bytes = Bytesˉfromˉi32ˉlittle(42);
+    let Encoded: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(9u64, Payload);
+    if Encoded.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 36u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1146246743u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 12u32) != 0u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 16u32) != 9u64 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 24u32) != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 28u32) != 0u32 {
+        return 1;
+    }
+    let Decoded: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉdecode(Encoded.Bytes);
+    let Deterministic: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(9u64, Payload);
+    if Decoded.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Decoded.Schema != 9u64 ||
+        !Bytesˉequal(Decoded.Payload, Payload) ||
+        !Bytesˉequal(Decoded.Bytes, Encoded.Bytes) ||
+        !Bytesˉequal(Deterministic.Bytes, Encoded.Bytes) {
+        return 2;
+    }
+    let Empty: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(10u64, Emptyˉbytes());
+    if Empty.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Empty.Bytes) != 32u32 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Preparedˉoperations() -> i32 {
+    let Identity: bytes = Bytesˉfromˉu8(3u8);
+    let Payload: bytes = Bytesˉfromˉu8(4u8);
+    let Get: Logical.Databaseˉlogicalˉget =
+        Logical.Databaseˉlogicalˉgetˉprepare(11u64, Identity);
+    let Put: Logical.Databaseˉlogicalˉput =
+        Logical.Databaseˉlogicalˉputˉprepare(
+            11u64,
+            Identity,
+            12u64,
+            Payload
+        );
+    if Get.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Put.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        !Bytesˉequal(Get.Key, Put.Key) {
+        return 1;
+    }
+    let Key: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Put.Key);
+    let Value: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉdecode(Put.Value);
+    if Key.Collection != 11u64 ||
+        !Bytesˉequal(Key.Identity, Identity) ||
+        Value.Schema != 12u64 ||
+        !Bytesˉequal(Value.Payload, Payload) {
+        return 2;
+    }
+    let Invalidˉget: Logical.Databaseˉlogicalˉget =
+        Logical.Databaseˉlogicalˉgetˉprepare(0u64, Identity);
+    let Invalidˉput: Logical.Databaseˉlogicalˉput =
+        Logical.Databaseˉlogicalˉputˉprepare(
+            11u64,
+            Identity,
+            0u64,
+            Payload
+        );
+    if Invalidˉget.Error !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉcollection ||
+        Bytesˉlength(Invalidˉget.Key) != 0u32 ||
+        Invalidˉput.Error !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉschema ||
+        Bytesˉlength(Invalidˉput.Key) != 0u32 ||
+        Bytesˉlength(Invalidˉput.Value) != 0u32 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Keyˉrejections() -> i32 {
+    let Identity: bytes = Bytesˉfromˉu8(1u8);
+    let Valid: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Record,
+            2u64,
+            Identity
+        );
+    if Keyˉdecodeˉerror(Emptyˉbytes()) !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉlength ||
+        Keyˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 0u32, 0u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉmagic ||
+        Keyˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 4u32, 2u32)
+        ) != Logical.Databaseˉlogicalˉerror.Unsupportedˉversion ||
+        Keyˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 8u32, 28u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉheaderˉsize ||
+        Keyˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 12u32, 3u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉkind ||
+        Keyˉdecodeˉerror(
+            Withˉu64(Valid.Bytes, 16u32, 0u64)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉcollection ||
+        Keyˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 28u32, 1u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉreserved {
+        return 1;
+    }
+    let Truncated: bytes = Bytesˉslice(
+        Valid.Bytes,
+        0u32,
+        Bytesˉlength(Valid.Bytes) - 1u32
+    );
+    let Trailing: bytes = Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8));
+    if Keyˉdecodeˉerror(Truncated) !=
+            Logical.Databaseˉlogicalˉerror.Truncated ||
+        Keyˉdecodeˉerror(Trailing) !=
+            Logical.Databaseˉlogicalˉerror.Trailingˉbytes ||
+        Keyˉencodeˉerror(
+            Logical.Databaseˉlogicalˉkeyˉkind.Record,
+            2u64,
+            Emptyˉbytes()
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉidentityˉlength ||
+        Keyˉencodeˉerror(
+            Logical.Databaseˉlogicalˉkeyˉkind.Collection,
+            2u64,
+            Identity
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉidentityˉlength {
+        return 2;
+    }
+    let Maximum: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Record,
+            2u64,
+            Zeroes(4064u32)
+        );
+    let Oversized: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Record,
+            2u64,
+            Zeroes(4065u32)
+        );
+    if Maximum.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Maximum.Bytes) != 4096u32 ||
+        Oversized.Error !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉidentityˉlength {
+        return 3;
+    }
+    return 0;
+}
+
+fn Recordˉrejections() -> i32 {
+    let Valid: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(
+            3u64,
+            Bytesˉfromˉu8(1u8)
+        );
+    if Recordˉdecodeˉerror(Emptyˉbytes()) !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉlength ||
+        Recordˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 0u32, 0u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉmagic ||
+        Recordˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 4u32, 2u32)
+        ) != Logical.Databaseˉlogicalˉerror.Unsupportedˉversion ||
+        Recordˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 8u32, 28u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉheaderˉsize ||
+        Recordˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 12u32, 1u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉflags ||
+        Recordˉdecodeˉerror(
+            Withˉu64(Valid.Bytes, 16u32, 0u64)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉschema ||
+        Recordˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 28u32, 1u32)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉreserved {
+        return 1;
+    }
+    let Truncated: bytes = Bytesˉslice(
+        Valid.Bytes,
+        0u32,
+        Bytesˉlength(Valid.Bytes) - 1u32
+    );
+    let Trailing: bytes = Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8));
+    if Recordˉdecodeˉerror(Truncated) !=
+            Logical.Databaseˉlogicalˉerror.Truncated ||
+        Recordˉdecodeˉerror(Trailing) !=
+            Logical.Databaseˉlogicalˉerror.Trailingˉbytes ||
+        Recordˉencodeˉerror(
+            0u64,
+            Emptyˉbytes()
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉschema {
+        return 2;
+    }
+    let Maximum: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(
+            3u64,
+            Zeroes(61408u32)
+        );
+    let Oversized: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(
+            3u64,
+            Zeroes(61409u32)
+        );
+    if Maximum.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Maximum.Bytes) != 61440u32 ||
+        Oversized.Error !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉpayloadˉlength {
+        return 3;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Keyˉresult: i32 = Keyˉcontract();
+    if Keyˉresult != 0 { return 10 + Keyˉresult; }
+    let Recordˉresult: i32 = Recordˉcontract();
+    if Recordˉresult != 0 { return 20 + Recordˉresult; }
+    let Preparedˉresult: i32 = Preparedˉoperations();
+    if Preparedˉresult != 0 { return 30 + Preparedˉresult; }
+    let Keyˉrejectionˉresult: i32 = Keyˉrejections();
+    if Keyˉrejectionˉresult != 0 { return 40 + Keyˉrejectionˉresult; }
+    let Recordˉrejectionˉresult: i32 = Recordˉrejections();
+    if Recordˉrejectionˉresult != 0 {
+        return 50 + Recordˉrejectionˉresult;
+    }
+    return 0;
+}

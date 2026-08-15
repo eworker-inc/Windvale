@@ -1,0 +1,410 @@
+module Windvaleˉdatabaseˉlogicalˉrecord profile portable;
+
+const DATABASE_LOGICAL_KEY_MAGIC: u32 = 1380669015u32;
+const DATABASE_LOGICAL_RECORD_MAGIC: u32 = 1146246743u32;
+const DATABASE_LOGICAL_VERSION: u32 = 1u32;
+const DATABASE_LOGICAL_HEADER_BYTES: u32 = 32u32;
+const DATABASE_LOGICAL_MAXIMUM_KEY_BYTES: u32 = 4096u32;
+const DATABASE_LOGICAL_MAXIMUM_IDENTITY_BYTES: u32 = 4064u32;
+const DATABASE_LOGICAL_MAXIMUM_VALUE_BYTES: u32 = 61440u32;
+const DATABASE_LOGICAL_MAXIMUM_PAYLOAD_BYTES: u32 = 61408u32;
+
+export enum Databaseˉlogicalˉkeyˉkind {
+    Collection = 1;
+    Record = 2;
+}
+
+export enum Databaseˉlogicalˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheaderˉsize = 4;
+    Invalidˉkind = 5;
+    Invalidˉcollection = 6;
+    Invalidˉidentityˉlength = 7;
+    Invalidˉreserved = 8;
+    Invalidˉflags = 9;
+    Invalidˉschema = 10;
+    Invalidˉpayloadˉlength = 11;
+    Truncated = 12;
+    Trailingˉbytes = 13;
+}
+
+export record Databaseˉlogicalˉkeyˉresult {
+    Error: Databaseˉlogicalˉerror;
+    Kind: Databaseˉlogicalˉkeyˉkind;
+    Collection: u64;
+    Identity: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉlogicalˉrecordˉresult {
+    Error: Databaseˉlogicalˉerror;
+    Schema: u64;
+    Payload: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉlogicalˉget {
+    Error: Databaseˉlogicalˉerror;
+    Key: bytes;
+}
+
+export record Databaseˉlogicalˉput {
+    Error: Databaseˉlogicalˉerror;
+    Key: bytes;
+    Value: bytes;
+}
+
+fn Databaseˉlogicalˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉlogicalˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return Databaseˉlogicalˉempty(); }
+    let Owned: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Owned, 1u32, Length);
+}
+
+fn Databaseˉlogicalˉkeyˉfailure(
+    Error: Databaseˉlogicalˉerror
+) -> Databaseˉlogicalˉkeyˉresult {
+    return Databaseˉlogicalˉkeyˉresult(
+        Error,
+        Databaseˉlogicalˉkeyˉkind.Collection,
+        0u64,
+        Databaseˉlogicalˉempty(),
+        Databaseˉlogicalˉempty()
+    );
+}
+
+fn Databaseˉlogicalˉrecordˉfailure(
+    Error: Databaseˉlogicalˉerror
+) -> Databaseˉlogicalˉrecordˉresult {
+    return Databaseˉlogicalˉrecordˉresult(
+        Error,
+        0u64,
+        Databaseˉlogicalˉempty(),
+        Databaseˉlogicalˉempty()
+    );
+}
+
+fn Databaseˉlogicalˉgetˉfailure(
+    Error: Databaseˉlogicalˉerror
+) -> Databaseˉlogicalˉget {
+    return Databaseˉlogicalˉget(Error, Databaseˉlogicalˉempty());
+}
+
+fn Databaseˉlogicalˉputˉfailure(
+    Error: Databaseˉlogicalˉerror
+) -> Databaseˉlogicalˉput {
+    return Databaseˉlogicalˉput(
+        Error,
+        Databaseˉlogicalˉempty(),
+        Databaseˉlogicalˉempty()
+    );
+}
+
+fn Databaseˉlogicalˉkindˉfromˉu32(
+    Value: u32
+) -> Databaseˉlogicalˉkeyˉkind {
+    if Value == 2u32 { return Databaseˉlogicalˉkeyˉkind.Record; }
+    return Databaseˉlogicalˉkeyˉkind.Collection;
+}
+
+export fn Databaseˉlogicalˉkeyˉencode(
+    Kind: Databaseˉlogicalˉkeyˉkind,
+    Collection: u64,
+    Identity: bytes
+) -> Databaseˉlogicalˉkeyˉresult {
+    if Collection == 0u64 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉcollection
+        );
+    }
+    let Identityˉlength: u32 = Bytesˉlength(Identity);
+    if Identityˉlength > DATABASE_LOGICAL_MAXIMUM_IDENTITY_BYTES ||
+        Kind == Databaseˉlogicalˉkeyˉkind.Record &&
+            Identityˉlength == 0u32 ||
+        Kind == Databaseˉlogicalˉkeyˉkind.Collection &&
+            Identityˉlength != 0u32 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉidentityˉlength
+        );
+    }
+    var Rawˉkind: u32 = 1u32;
+    if Kind == Databaseˉlogicalˉkeyˉkind.Record { Rawˉkind = 2u32; }
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_KEY_MAGIC);
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_VERSION)
+    );
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_HEADER_BYTES)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Rawˉkind));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Collection));
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(Identityˉlength)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Identity);
+    return Databaseˉlogicalˉkeyˉresult(
+        Databaseˉlogicalˉerror.Valid,
+        Kind,
+        Collection,
+        Databaseˉlogicalˉcopy(Identity),
+        Encoded
+    );
+}
+
+export fn Databaseˉlogicalˉkeyˉdecode(
+    Input: bytes
+) -> Databaseˉlogicalˉkeyˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_LOGICAL_HEADER_BYTES ||
+        Total > DATABASE_LOGICAL_MAXIMUM_KEY_BYTES {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_LOGICAL_KEY_MAGIC {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_LOGICAL_VERSION {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+        DATABASE_LOGICAL_HEADER_BYTES {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉheaderˉsize
+        );
+    }
+    let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Rawˉkind != 1u32 && Rawˉkind != 2u32 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉkind
+        );
+    }
+    let Collection: u64 = Bytesˉreadˉu64ˉlittle(Input, 16u32);
+    if Collection == 0u64 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉcollection
+        );
+    }
+    let Identityˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Identityˉlength > DATABASE_LOGICAL_MAXIMUM_IDENTITY_BYTES ||
+        Rawˉkind == 2u32 && Identityˉlength == 0u32 ||
+        Rawˉkind == 1u32 && Identityˉlength != 0u32 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉidentityˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉreserved
+        );
+    }
+    let Expected: u32 = DATABASE_LOGICAL_HEADER_BYTES + Identityˉlength;
+    if Total < Expected {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Truncated
+        );
+    }
+    if Total > Expected {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Trailingˉbytes
+        );
+    }
+    let Kind: Databaseˉlogicalˉkeyˉkind =
+        Databaseˉlogicalˉkindˉfromˉu32(Rawˉkind);
+    return Databaseˉlogicalˉkeyˉresult(
+        Databaseˉlogicalˉerror.Valid,
+        Kind,
+        Collection,
+        Databaseˉlogicalˉcopy(
+            Bytesˉslice(
+                Input,
+                DATABASE_LOGICAL_HEADER_BYTES,
+                Identityˉlength
+            )
+        ),
+        Databaseˉlogicalˉcopy(Input)
+    );
+}
+
+export fn Databaseˉlogicalˉrecordˉencode(
+    Schema: u64,
+    Payload: bytes
+) -> Databaseˉlogicalˉrecordˉresult {
+    if Schema == 0u64 {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉschema
+        );
+    }
+    let Payloadˉlength: u32 = Bytesˉlength(Payload);
+    if Payloadˉlength > DATABASE_LOGICAL_MAXIMUM_PAYLOAD_BYTES {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉpayloadˉlength
+        );
+    }
+    var Encoded: bytes =
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_RECORD_MAGIC);
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_VERSION)
+    );
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_HEADER_BYTES)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Schema));
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(Payloadˉlength)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Payload);
+    return Databaseˉlogicalˉrecordˉresult(
+        Databaseˉlogicalˉerror.Valid,
+        Schema,
+        Databaseˉlogicalˉcopy(Payload),
+        Encoded
+    );
+}
+
+export fn Databaseˉlogicalˉrecordˉdecode(
+    Input: bytes
+) -> Databaseˉlogicalˉrecordˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_LOGICAL_HEADER_BYTES ||
+        Total > DATABASE_LOGICAL_MAXIMUM_VALUE_BYTES {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_LOGICAL_RECORD_MAGIC {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_LOGICAL_VERSION {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+        DATABASE_LOGICAL_HEADER_BYTES {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉheaderˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉflags
+        );
+    }
+    let Schema: u64 = Bytesˉreadˉu64ˉlittle(Input, 16u32);
+    if Schema == 0u64 {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉschema
+        );
+    }
+    let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Payloadˉlength > DATABASE_LOGICAL_MAXIMUM_PAYLOAD_BYTES {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉpayloadˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉreserved
+        );
+    }
+    let Expected: u32 = DATABASE_LOGICAL_HEADER_BYTES + Payloadˉlength;
+    if Total < Expected {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Truncated
+        );
+    }
+    if Total > Expected {
+        return Databaseˉlogicalˉrecordˉfailure(
+            Databaseˉlogicalˉerror.Trailingˉbytes
+        );
+    }
+    return Databaseˉlogicalˉrecordˉresult(
+        Databaseˉlogicalˉerror.Valid,
+        Schema,
+        Databaseˉlogicalˉcopy(
+            Bytesˉslice(
+                Input,
+                DATABASE_LOGICAL_HEADER_BYTES,
+                Payloadˉlength
+            )
+        ),
+        Databaseˉlogicalˉcopy(Input)
+    );
+}
+
+export fn Databaseˉlogicalˉcollectionˉkey(
+    Collection: u64
+) -> Databaseˉlogicalˉkeyˉresult {
+    return Databaseˉlogicalˉkeyˉencode(
+        Databaseˉlogicalˉkeyˉkind.Collection,
+        Collection,
+        Databaseˉlogicalˉempty()
+    );
+}
+
+export fn Databaseˉlogicalˉgetˉprepare(
+    Collection: u64,
+    Identity: bytes
+) -> Databaseˉlogicalˉget {
+    let Key: Databaseˉlogicalˉkeyˉresult =
+        Databaseˉlogicalˉkeyˉencode(
+            Databaseˉlogicalˉkeyˉkind.Record,
+            Collection,
+            Identity
+        );
+    if Key.Error != Databaseˉlogicalˉerror.Valid {
+        return Databaseˉlogicalˉgetˉfailure(Key.Error);
+    }
+    return Databaseˉlogicalˉget(Databaseˉlogicalˉerror.Valid, Key.Bytes);
+}
+
+export fn Databaseˉlogicalˉputˉprepare(
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes
+) -> Databaseˉlogicalˉput {
+    let Key: Databaseˉlogicalˉkeyˉresult =
+        Databaseˉlogicalˉkeyˉencode(
+            Databaseˉlogicalˉkeyˉkind.Record,
+            Collection,
+            Identity
+        );
+    if Key.Error != Databaseˉlogicalˉerror.Valid {
+        return Databaseˉlogicalˉputˉfailure(Key.Error);
+    }
+    let Value: Databaseˉlogicalˉrecordˉresult =
+        Databaseˉlogicalˉrecordˉencode(Schema, Payload);
+    if Value.Error != Databaseˉlogicalˉerror.Valid {
+        return Databaseˉlogicalˉputˉfailure(Value.Error);
+    }
+    return Databaseˉlogicalˉput(
+        Databaseˉlogicalˉerror.Valid,
+        Key.Bytes,
+        Value.Bytes
+    );
+}
