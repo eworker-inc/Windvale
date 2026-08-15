@@ -7,8 +7,9 @@ first Windvale preview release-signing and offline-verification boundary under
 [Decision 0563](../Documents/Decisions/0563-First-Release-Envelope-And-Key-Policy.md).
 Its thirteen-case envelope-format core passes on Windows and Linux in Verify run
 31883543587. Decision 0566 expands that owner to sixteen cases for protected-key
-custody; paired evidence for the expansion, official key generation, final
-release-state qualification, and `v0.1.0` publication remain separate gates.
+custody, passing on both hosts in Verify run 31888902259. Official key
+generation, final release-state qualification, and `v0.1.0` publication remain
+separate gates.
 
 The format is deliberately smaller than The Update Framework. It is a bounded
 offline release envelope with one pinned root and one delegated release key; it

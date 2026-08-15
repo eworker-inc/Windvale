@@ -65,6 +65,10 @@ operator session.
 - Existing envelope, root-policy, manifest, signature, and verifier formats do
   not change.
 
+The expanded sixteen-case owner passed on Windows and Linux in Verify run
+31888902259 at implementation commit
+`41ac658a72d5848d0891af082a9cd03a9b6c8390`.
+
 ## Reconsideration triggers
 
 Reconsider for hardware-backed or threshold custody, password-manager or
