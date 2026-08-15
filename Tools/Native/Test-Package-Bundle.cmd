@@ -50,7 +50,7 @@ for %%C in (First Second) do (
         "%RepositoryRoot%\LICENSE.md" ^
         "%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvprov" ^
         "%Work%\%%C.wvbundle" || goto :cleanup
-    call :verify_file "%Work%\%%C.wvbundle" 43995 48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d "WVDB Query Bundle 1 candidate" || goto :cleanup
+    call :verify_file "%Work%\%%C.wvbundle" 43725 3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 "WVDB Query Bundle 1 candidate" || goto :cleanup
     "%Work%\Verifier.exe" "%Work%\%%C.wvbundle" || goto :cleanup
 )
 fc /b "%Work%\First.wvbundle" "%Work%\Second.wvbundle" >nul || goto :cleanup
@@ -58,18 +58,18 @@ fc /b "%Work%\First.wvbundle" "%Work%\Second.wvbundle" >nul || goto :cleanup
 echo native package bundle step=publish-immutable-store item=7/7 attempts=2
 pwsh -NoProfile -File "%RepositoryRoot%\Tools\Package\Publish-Admitted-Bundle.ps1" ^
     "%Work%\First.wvbundle" ^
-    48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d ^
+    3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 ^
     "%Work%\Store" >"%Work%\First-Publish.txt" || goto :cleanup
-findstr /x /c:"package store status=Published bundle=48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d objects=5 created=6 existing=0" "%Work%\First-Publish.txt" >nul || goto :cleanup
+findstr /x /c:"package store status=Published bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 created=6 existing=0" "%Work%\First-Publish.txt" >nul || goto :cleanup
 type "%Work%\First-Publish.txt"
 pwsh -NoProfile -File "%RepositoryRoot%\Tools\Package\Publish-Admitted-Bundle.ps1" ^
     "%Work%\First.wvbundle" ^
-    48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d ^
+    3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 ^
     "%Work%\Store" >"%Work%\Second-Publish.txt" || goto :cleanup
-findstr /x /c:"package store status=Published bundle=48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d objects=5 created=0 existing=6" "%Work%\Second-Publish.txt" >nul || goto :cleanup
+findstr /x /c:"package store status=Published bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 created=0 existing=6" "%Work%\Second-Publish.txt" >nul || goto :cleanup
 type "%Work%\Second-Publish.txt"
 
-echo native package bundle status=Passed cases=7 bundle=48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d objects=5 idempotent=Verified
+echo native package bundle status=Passed cases=7 bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 idempotent=Verified
 set "Result=0"
 
 :cleanup

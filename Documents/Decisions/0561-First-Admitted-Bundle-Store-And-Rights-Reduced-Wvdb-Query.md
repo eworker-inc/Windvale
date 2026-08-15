@@ -66,7 +66,7 @@ application proof.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Locked WVDB Query WVB | 26,294 | `61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2` |
-| WVDB Query Bundle 1 | 43,995 | `48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d` |
+| WVDB Query Bundle 1 | 43,725 | `3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474` |
 | Variant-capable lowerer core WVB | 499,757 | `abd640dc79f2065caf3e2e5818a3388fe531fb6f25b22dd4c8d8369fd31895c8` |
 | Variant-capable lowerer tool WVB | 501,344 | `4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746` |
 | Windows WVB-to-WVO tool | 7,275,520 | `d41ba4a438156bf3cd0e886ab59fcf5ff0b7474f2dfee4307a2ff60c5972225f` |

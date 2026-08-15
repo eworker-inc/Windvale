@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 5,508 LF-only bytes with SHA-256
-`0002d3e2661e80478790c5794e75727133e060913ac66c90fd9ff8770270b577`.
+`c64f20933c54adf09454867c79ad73d0fdb9e2c97ece4360ce47dfa036abb8ee`.
 The first line is exactly:
 
 ```text
@@ -99,7 +99,7 @@ file. The current plan is:
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 58 | `native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10` |
-| `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d objects=5 idempotent=Verified` |
+| `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 idempotent=Verified` |
 | `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 cross-host-images=Verified` |
 
 The version-2 plan therefore contains exactly 56 suites and 3,363 cases. Its
