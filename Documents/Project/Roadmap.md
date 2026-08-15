@@ -43,7 +43,7 @@ Completion means that later work preserves the named contract. It does not
 mean that every future language feature, optimizer, package service, database
 operation, device, or operating-system mechanism already exists.
 
-## Milestone 1: predictable development feedback
+## Milestone 1: predictable development feedback — complete
 
 ### Outcome
 
@@ -57,10 +57,11 @@ separates affected-owner development checks from complete qualification.
 [Decisions 0553 through 0555](../Decisions/0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md)
 add content-addressed development checkpoints for the current database path.
 [Decision 0559](../Decisions/0559-Checkpoint-Portable-Database-Development-Targets.md)
-extends those checkpoints across all six portable tree targets. The measured
-all-hit eight-case Windows owner is 135,670 ms, down from 402,638 ms, and now
-reports live target plus phase progress. Complete qualification remains cold
-and explicit.
+extends those checkpoints across all six portable tree targets.
+[Decision 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md)
+adds exact linked-image/map checkpoints. The measured direct all-hit eight-case
+Windows owner is 87,800 ms, down from 402,638 ms, and reports live target plus
+phase progress. Complete qualification remains cold and explicit.
 
 The managed-source archival audit measured the old `seed-native-front-door` at
 733,980 ms because it reconstructed 105 artifacts. The ordinary owner now binds
@@ -72,6 +73,20 @@ The WebAssembly development engine checkpoint now consumes the pinned browser
 package directly and completes in 29,674 ms on the measured Windows host. The
 last recorded complete construction-and-engine owner took 1,619,500 ms and
 remains cold, cache-independent explicit qualification evidence.
+
+One canonical declaration now records the source, producer, and artifact
+closures for those three measured owners plus all five database checkpoint
+families. Its verifier rejects missing, linked, noncanonical, duplicate,
+unsorted, planner-gapped, or owner-disconnected entries.
+
+GitHub [Verify run 31852544894, attempt 2](https://github.com/eworker-inc/Windvale/actions/runs/31852544894/attempts/2)
+restored the separately populated Windows and Linux checkpoint directories and
+passed the same 12-path affected-owner plan. The complete Windows development
+job took 1 minute 42 seconds and Linux took 1 minute 15 seconds, including
+checkout, Node setup, cache restoration, planner/workflow checks, all eight
+behaviors, and post-job cleanup. The affected-owner steps took 66 and 49 seconds;
+their database owners reported 57,870 and 43,000 ms respectively. Qualification
+jobs remained skipped.
 
 ### Completion gate
 
@@ -91,17 +106,17 @@ owner may remain slower when its complete boundary cannot be divided honestly.
 
 ### Current gate audit
 
-| Gate | Standing | Remaining evidence or work |
+| Gate | Standing | Evidence |
 | --- | :---: | --- |
-| Repeated affected owner under two minutes | 🚧 | The database owner is 135,670 ms; close the measured 15,670 ms gap without dropping admission or behavior. |
-| Ordinary pull-request feedback under five minutes | 🚧 | Measure a clean small-change Windows/Linux run; the first development workflow covered a 453-path remote catch-up and is not a representative steady-state sample. |
-| Phase timings and declared dependency closure | 🚧 | Expensive front-door, WebAssembly, and database owners report timings; replace remaining ad hoc owner path closures only where the planner can verify the declaration. |
+| Repeated affected owner under two minutes | ✅ | The direct all-hit Windows database owner passes all eight behaviors in 87,800 ms; the coherent changed-file invocation reports 89,530 ms. |
+| Ordinary pull-request feedback under five minutes | ✅ | The exact warm dual-host workflow takes 1m42s on Windows and 1m15s on Linux end to end. |
+| Phase timings and declared dependency closure | ✅ | The measured owners report phases; the canonical 33-entry declaration verifies three owner closures and five checkpoint families against the planner. |
 | Cache hits revalidate identities and behavior | ✅ | Implemented checkpoints validate manifests, sizes, digests, structural admission where required, and rerun affected behavior. |
 | Complete qualification is explicit only | ✅ | Decision 0557 reserves the cold dual-host matrix for deliberate qualification points. |
 
-Milestone 1 is therefore not closed: two gates are complete, one has a measured
-15.67-second local gap, and two require a clean workflow measurement or bounded
-dependency-closure work.
+Milestone 1 is closed. Ordinary development now has a measured bounded path;
+Milestone 2 is the active product milestone. Full qualification remains a
+separate future selection and was not spent to close this workflow milestone.
 
 ## Milestone 2: useful package-backed application
 

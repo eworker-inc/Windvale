@@ -1,7 +1,7 @@
 # Windvale native tool checkpoint 1
 
 Status: Implemented local-development contract under Decisions 0546, 0553,
-0554, and 0555.
+0554, 0555, 0559, and 0560.
 
 ## Purpose and boundary
 
@@ -30,6 +30,11 @@ through every selected database lifecycle and recovery scenario.
 Project-WVB checkpoint 1 reuses one exact source-built WVB before the existing
 build-driver application checkpoint is derived. It does not replace ordinary
 source construction or compiler qualification.
+
+Linked-image checkpoint 1 reuses the deterministic flat image and link map for
+one exact WVO, base address, entry symbol, current-host linker front door, and
+current-host linker. The current-host application is still repackaged or
+revalidated and executed through every selected behavior.
 
 ## Version-1 key
 
@@ -177,6 +182,43 @@ complete expected record, materializes a fresh byte-identical copy, and invokes
 the current native `Verify-Wvb` front door. The verifier remains a current
 admission boundary rather than key material.
 
+## Linked-image key and record
+
+`Get-Native-Linked-Image-Cache-Key.mjs` derives a length-framed SHA-256 key
+from these ordered fields:
+
+1. format `windvale-native-linked-image-cache-key 1`, namespace
+   `linked-image-v1`, and current host family;
+2. canonical unsigned base address and bounded entry-symbol identity;
+3. exact input WVO bytes;
+4. exact current-host `Link-Wvo` front door; and
+5. exact current-host native linker application.
+
+The WVO, front door, and linker must be nonempty ordinary files no larger than
+67,108,864 bytes. Repository-owned producers retain canonical non-link path
+requirements. Windows-generated temporary inputs may arrive through an 8.3
+alias; the key helper rejects a linked final file, resolves the alias, and reads
+the canonical target. The lowercase 64-hex key names
+`linked-image-v1/<host-family>/<key>`.
+
+The linked-image `Checkpoint.txt` contains exactly seven ASCII lines:
+
+```text
+windvale-native-linked-image-checkpoint 1
+key <64-lowercase-hex>
+entry-offset <canonical-unsigned-decimal>
+image-bytes <canonical-positive-decimal>
+image-sha256 <64-lowercase-hex>
+map-bytes <canonical-positive-decimal>
+map-sha256 <64-lowercase-hex>
+```
+
+The record is at most 1,024 bytes. The flat image and map are nonempty and no
+larger than 67,108,864 bytes. Every hit rejects linked cache state, parses the
+exact requested entry from the map, rehashes both products, reconstructs and
+compares the complete record, materializes fresh copies, and compares both
+copies byte for byte.
+
 ## Publication and use
 
 On a miss, the owner packages into a newly allocated sibling directory, hashes
@@ -188,15 +230,16 @@ define eviction or automatic partial-directory cleanup.
 `Test-Database-Storage.cmd --prepare-development-tools` and its shell peer build
 the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
-run the composed host-storage lifecycle. It obtains the two large host-storage
-project objects through `Build-Cached-Project-Object`, the build-driver input
-through `Build-Cached-Project-Wvb`, and the two current-host executables through
+run all eight selected database behaviors. It obtains the project objects
+through `Build-Cached-Project-Object`, the build-driver input through
+`Build-Cached-Project-Wvb`, all six portable linked images through
+`Build-Cached-Linked-Image`, and current-host executables through
 `Build-Cached-Hosted-Application`. `Verify-Changed.ps1`
 selects that development owner only when every selected database-storage
 boundary is eligible. Compiler, lowerer, specialized provider, nested-record,
 and other broad changes mark the full database-storage owner mandatory. The
 no-argument owner does not consult the cache and retains complete
-reconstruction, duplicate-output, paired-target, and fourteen-case evidence.
+reconstruction, duplicate-output, paired-target, and seventeen-case evidence.
 
 ## Implemented evidence
 
@@ -248,3 +291,25 @@ The complete change-aware front door, including classification and 101 planner
 contract cases, passes in 73.531 seconds versus the preceding 141.120-second
 measurement. These remain host development diagnostics rather than portable
 timing or qualification claims.
+
+After adding linked-image checkpoints, cache population for all six portable
+targets took 130.240 seconds and the next direct all-hit eight-case Windows
+owner took 87.800 seconds. Tool preparation took 9.190 seconds, the six
+portable behaviors took 24.290 seconds, host storage took 28.570 seconds, and
+the host tree reader took 25.660 seconds. A subsequent coherent changed-file
+gate passed the current 79 native planner cases, GitHub workflow policy, and all
+eight database behaviors; its database owner took 89.530 seconds. The direct
+all-hit result is 78.19 percent below the earlier 402.638-second measurement.
+
+The development workflow may preserve this external cache between ordinary
+GitHub run attempts under a versioned host-specific key. Qualification jobs do
+not bind `WINDVALE_NATIVE_CACHE_ROOT` and do not invoke the cache action. Cache
+restoration changes construction cost only: every hit still revalidates its
+record and every selected behavior still executes.
+
+GitHub Verify run 31852544894 first populated both host caches, then exact
+attempt 2 restored them. The complete Windows development job passed in 1m42s
+with a 57,870 ms database owner; Linux passed in 1m15s with a 43,000 ms database
+owner. Every reported tool, project, link, and current-host application was a
+validated `Hit`, and all eight behaviors passed. The selected development scope
+skipped every qualification job.

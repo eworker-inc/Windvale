@@ -8,7 +8,7 @@ Current post-retirement verification architecture. It incorporates
 [Decisions 0553 through 0555](../Decisions/0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md),
 [Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md),
 and
-[Decision 0559](../Decisions/0559-Checkpoint-Portable-Database-Development-Targets.md).
+[Decisions 0559 and 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md).
 
 Historical managed-suite optimization measurements remain in the dated
 decisions, qualification evidence, and Git history. They do not define the
@@ -76,6 +76,9 @@ The `Verify` workflow classifies the exact base/head comparison.
   scope according to changed paths.
 - Development scope runs the affected native owners on Windows and Linux. These
   jobs do not create a conformance or qualification claim.
+- Development jobs may restore a versioned host-specific checkpoint directory.
+  Each run attempt writes a new immutable cache key and may restore an earlier
+  key by prefix; qualification jobs never bind or restore that directory.
 - Manual `workflow_dispatch` selects complete qualification.
 - An empty path set, missing base, unresolved comparison, or explicit
   qualification request fails closed to qualification rather than guessing.
@@ -122,7 +125,8 @@ cold.
 Implemented database-path checkpoints currently cover:
 
 - source-built project WVB products;
-- lowered WVO project objects; and
+- lowered WVO project objects;
+- flat linked images plus their exact link maps; and
 - packaged hosted applications with their producer closure.
 
 On the measured Windows host, the warm two-case database path fell from the
@@ -171,25 +175,36 @@ regenerating a product. Compared with the last recorded 1,619,500 ms complete
 construction-and-engine command, that is a 98.17% development-path reduction;
 the complete cold owner remains unchanged for explicit qualification.
 
-The database development owner now checkpoints the six portable tree projects
-and their current-host applications, reports live target/phase progress, and
-does not repeat project-object admission already performed by the checkpoint.
-The measured all-hit Windows owner fell from 402,638 ms to 135,670 ms, a 66.30%
-reduction. Its 71,880 ms portable phase plus 54,690 ms of host-storage and
-tree-reader behavior still leave the total 15,670 ms above the two-minute
-working target. The complete owner remains cold, reconstructs both target
+The database development owner now checkpoints the six portable tree projects,
+their linked images, and their current-host applications. It reports live
+target/phase progress and does not repeat project-object admission already
+performed by the checkpoint. The direct all-hit Windows owner takes 87,800 ms:
+9,190 ms for tools, 24,290 ms for the six portable behaviors, 28,570 ms for
+host storage, and 25,660 ms for the host tree reader. That is a 78.19% reduction
+from 402,638 ms and crosses the two-minute working target without removing any
+of the eight selected behaviors. A subsequent complete changed-file invocation
+reported 89,530 ms for the same owner after also passing planner and workflow
+policy checks. The complete owner remains cold, reconstructs both target
 containers, and retains independent reproducibility and admission evidence.
 
-1. Close the database owner's measured 15,670 ms local gap by batching repeated
-   dependency admission/link work or using bounded independent execution; retain
-   one structural admission per consumed cached product and every behavioral case.
-2. Replace ad hoc path lists with declarative per-owner dependency manifests when
-   that representation can be verified against the current planner without
-   losing fail-closed coverage.
-3. Schedule independent development owners concurrently only with explicit CPU
+`Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
+producer, and artifact closures for the measured front-door, WebAssembly, and
+database owners plus all five database checkpoint families. Its verifier
+requires canonical ordering, ordinary repository files, complete closure kinds,
+the exact checkpoint-family set, no planner gaps, and selection of the declared
+owner.
+
+GitHub Verify run 31852544894 first populated separate host caches, then exact
+attempt 2 restored both. The complete development jobs passed in 1m42s on
+Windows and 1m15s on Linux, including checkout, runtime setup, restore, planner
+and workflow checks, all eight database behaviors, and cleanup. The selected
+scope skipped qualification. This closes the five-minute ordinary-feedback
+target without turning a cached development result into qualification evidence.
+
+1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.
-4. Treat compiler incrementality as a separate optimization: cache parsed
+2. Treat compiler incrementality as a separate optimization: cache parsed
    modules, symbols, WIR, and native objects by complete dependency identity.
 
 The working targets are a repeated affected-owner local run under two minutes
