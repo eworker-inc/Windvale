@@ -39,6 +39,8 @@ library_projects=(
     Windvale-Library-Random-Access-Database-Page
     Windvale-Library-Native-Hosted-Snapshot-Page
     Windvale-Library-Read-Only-Wvdb
+    Windvale-Library-Model-Protocol
+    Windvale-Library-Scripted-Model-Provider
 )
 for project in "${library_projects[@]}"; do
     "$script_directory/Build-Wvb.sh" \
@@ -70,6 +72,7 @@ conformance_projects=(
     Windvale-Native-Test-Database-Durable-Commit
     Windvale-Native-Test-Native-Hosted-Snapshot-Page
     Windvale-Native-Test-Database-Reader
+    Windvale-Native-Test-Model-Protocol
 )
 for project in "${conformance_projects[@]}"; do
     "$script_directory/Build-Wvb.sh" \
@@ -92,4 +95,4 @@ for project in "${negative_projects[@]}"; do
     [[ ! -e "$temporary_directory/$project.wvb" ]] || exit 1
 done
 
-echo 'native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26'
+echo 'native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29'

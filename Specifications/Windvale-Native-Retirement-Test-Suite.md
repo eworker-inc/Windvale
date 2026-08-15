@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 6,856 LF-only bytes with SHA-256
-`a07fcf4506f8fd80d436c2f1a0bbbdd542c98f73d7f9cafd1e19c8211582b13e`.
+`fb518e1444cd9b30bb1c92592200ce853ee5aacee6c8d389937a5855c92650d6`.
 The first line is exactly:
 
 ```text
@@ -98,7 +98,7 @@ file. The current plan is:
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
 | `database-storage` | `Test-Database-Storage` | 20 | `native database storage status=Passed cases=20 local-results=0 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
-| `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
+| `libraries` | `Test-Libraries` | 29 | `native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29` |
 | `packages` | `Test-Wvdb-Query-Package` | 11 | `native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11` |
 | `package-format` | `Test-Package-Format` | 82 | `native package format status=Passed result=42 modules=6 builds=7 groups=82 cross-host-images=12` |
 | `installation-activation` | `Test-Installation-Activation` | 16 | `native installation activation status=Passed cases=16 records=3 current=5cb7a15cb4f585d3aca474c4acdb35f55e6b6a4660aeee1d568db719f62742d3` |
@@ -110,14 +110,14 @@ file. The current plan is:
 | `offline-package-stage` | `Test-Offline-Package-Stage` | 8 | `native offline package stage status=Passed cases=8 packages=2 policy-records=8 generations=2 published=1 artifacts=14 deterministic=Verified tamper=Rejected` |
 | `wvdb-approval` | `Test-Wvdb-Approval-Records` | 13 | `native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1` |
 
-The version-2 plan therefore contains exactly 64 suites and 3,480 cases. Its
+The version-2 plan therefore contains exactly 64 suites and 3,483 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 20 | 651.2 |
 | 2 | 16 | 1,282 | 592.2 |
-| 3 | 24 | 1,273 | 592.1 |
+| 3 | 24 | 1,276 | 592.1 |
 | 4 | 23 | 905 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a

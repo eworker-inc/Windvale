@@ -1,0 +1,900 @@
+module Windvaleˉmodelˉprotocol profile portable;
+
+const MODEL_MESSAGE_MAGIC: u32 = 1296914007u32;
+const MODEL_REQUEST_MAGIC: u32 = 1364022871u32;
+const MODEL_CATALOG_MAGIC: u32 = 1129141847u32;
+const MODEL_GENERATION_MAGIC: u32 = 1196250711u32;
+const MODEL_PROTOCOL_VERSION: u32 = 1u32;
+const MODEL_MAXIMUM_MESSAGES: u32 = 32u32;
+const MODEL_MAXIMUM_MESSAGE_BYTES: u32 = 3072u32;
+const MODEL_MAXIMUM_MESSAGE_SET_BYTES: u32 = 16384u32;
+const MODEL_MAXIMUM_MODEL_BYTES: u32 = 256u32;
+const MODEL_MAXIMUM_DIAGNOSTIC_BYTES: u32 = 1024u32;
+const MODEL_MAXIMUM_CONTINUATION_BYTES: u32 = 1024u32;
+const MODEL_MAXIMUM_CATALOG_ENTRIES: u32 = 128u32;
+const MODEL_MAXIMUM_CATALOG_BYTES: u32 = 65536u32;
+
+export enum Modelˉcodecˉstatus {
+    Valid = 0;
+    Invalidˉenvelope = 1;
+    Invalidˉtext = 2;
+    Invalidˉvalue = 3;
+    Collectionˉlimit = 4;
+    Sizeˉlimit = 5;
+}
+
+export enum Modelˉstatus {
+    Valid = 0;
+    Invalidˉrequest = 1;
+    Unavailable = 2;
+    Unauthorized = 3;
+    Rateˉlimited = 4;
+    Unsupported = 5;
+    Providerˉerror = 6;
+    Cancelled = 7;
+}
+
+export enum Modelˉoperation {
+    None = 0;
+    Catalog = 1;
+    Generate = 2;
+}
+
+export enum Modelˉrole {
+    None = 0;
+    System = 1;
+    User = 2;
+    Assistant = 3;
+}
+
+export enum Modelˉcompletion {
+    None = 0;
+    Complete = 1;
+    Lengthˉlimit = 2;
+    Contentˉfilter = 3;
+}
+
+export enum Modelˉlifecycle {
+    Stable = 1;
+    Mutableˉalias = 2;
+    Deprecated = 3;
+}
+
+export record Modelˉencoded {
+    Status: Modelˉcodecˉstatus;
+    Count: u32;
+    Bytes: bytes;
+}
+
+export record Modelˉmessage {
+    Found: bool;
+    Role: Modelˉrole;
+    Contentˉoffset: u32;
+    Contentˉlength: u32;
+}
+
+export record Modelˉrequest {
+    Status: Modelˉcodecˉstatus;
+    Operation: Modelˉoperation;
+    Requestˉidentity: u64;
+    Providerˉgeneration: u64;
+    Limit: u32;
+    Modelˉoffset: u32;
+    Modelˉlength: u32;
+    Payloadˉoffset: u32;
+    Payloadˉlength: u32;
+    Bytes: bytes;
+}
+
+export record Modelˉcatalog {
+    Codecˉstatus: Modelˉcodecˉstatus;
+    Status: Modelˉstatus;
+    Requestˉidentity: u64;
+    Providerˉgeneration: u64;
+    Entries: u32;
+    Entriesˉoffset: u32;
+    Entriesˉlength: u32;
+    Continuationˉoffset: u32;
+    Continuationˉlength: u32;
+    Diagnosticˉoffset: u32;
+    Diagnosticˉlength: u32;
+    Bytes: bytes;
+}
+
+export record Modelˉcatalogˉentry {
+    Found: bool;
+    Identifierˉoffset: u32;
+    Identifierˉlength: u32;
+    Displayˉoffset: u32;
+    Displayˉlength: u32;
+    Features: u32;
+    Lifecycle: Modelˉlifecycle;
+}
+
+export record Modelˉgeneration {
+    Codecˉstatus: Modelˉcodecˉstatus;
+    Status: Modelˉstatus;
+    Requestˉidentity: u64;
+    Providerˉgeneration: u64;
+    Completion: Modelˉcompletion;
+    Inputˉtokens: u64;
+    Outputˉtokens: u64;
+    Modelˉoffset: u32;
+    Modelˉlength: u32;
+    Textˉoffset: u32;
+    Textˉlength: u32;
+    Diagnosticˉoffset: u32;
+    Diagnosticˉlength: u32;
+    Bytes: bytes;
+}
+
+fn Modelˉemptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Modelˉencodedˉfailure(Status: Modelˉcodecˉstatus) -> Modelˉencoded {
+    return Modelˉencoded(Status, 0u32, Modelˉemptyˉbytes());
+}
+
+fn Modelˉappendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Modelˉappendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Modelˉtextˉisˉvalid(
+    Value: bytes,
+    Allowˉempty: bool,
+    Maximum: u32
+) -> bool {
+    let Length: u32 = Bytesˉlength(Value);
+    if Length > Maximum { return false; }
+    if !Allowˉempty && Length == 0u32 { return false; }
+    if !Textˉutf8ˉisˉvalid(Value) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Byte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index));
+        if Byte == 0u32 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Modelˉroleˉfromˉu32(Value: u32) -> Modelˉrole {
+    if Value == 1u32 { return Modelˉrole.System; }
+    if Value == 2u32 { return Modelˉrole.User; }
+    if Value == 3u32 { return Modelˉrole.Assistant; }
+    return Modelˉrole.None;
+}
+
+fn Modelˉroleˉtoˉu32(Value: Modelˉrole) -> u32 {
+    if Value == Modelˉrole.System { return 1u32; }
+    if Value == Modelˉrole.User { return 2u32; }
+    if Value == Modelˉrole.Assistant { return 3u32; }
+    return 0u32;
+}
+
+fn Modelˉstatusˉfromˉu32(Value: u32) -> Modelˉstatus {
+    if Value == 0u32 { return Modelˉstatus.Valid; }
+    if Value == 1u32 { return Modelˉstatus.Invalidˉrequest; }
+    if Value == 2u32 { return Modelˉstatus.Unavailable; }
+    if Value == 3u32 { return Modelˉstatus.Unauthorized; }
+    if Value == 4u32 { return Modelˉstatus.Rateˉlimited; }
+    if Value == 5u32 { return Modelˉstatus.Unsupported; }
+    if Value == 6u32 { return Modelˉstatus.Providerˉerror; }
+    return Modelˉstatus.Cancelled;
+}
+
+fn Modelˉstatusˉtoˉu32(Value: Modelˉstatus) -> u32 {
+    if Value == Modelˉstatus.Valid { return 0u32; }
+    if Value == Modelˉstatus.Invalidˉrequest { return 1u32; }
+    if Value == Modelˉstatus.Unavailable { return 2u32; }
+    if Value == Modelˉstatus.Unauthorized { return 3u32; }
+    if Value == Modelˉstatus.Rateˉlimited { return 4u32; }
+    if Value == Modelˉstatus.Unsupported { return 5u32; }
+    if Value == Modelˉstatus.Providerˉerror { return 6u32; }
+    return 7u32;
+}
+
+fn Modelˉcompletionˉfromˉu32(Value: u32) -> Modelˉcompletion {
+    if Value == 1u32 { return Modelˉcompletion.Complete; }
+    if Value == 2u32 { return Modelˉcompletion.Lengthˉlimit; }
+    if Value == 3u32 { return Modelˉcompletion.Contentˉfilter; }
+    return Modelˉcompletion.None;
+}
+
+fn Modelˉcompletionˉtoˉu32(Value: Modelˉcompletion) -> u32 {
+    if Value == Modelˉcompletion.Complete { return 1u32; }
+    if Value == Modelˉcompletion.Lengthˉlimit { return 2u32; }
+    if Value == Modelˉcompletion.Contentˉfilter { return 3u32; }
+    return 0u32;
+}
+
+fn Modelˉlifecycleˉfromˉu32(Value: u32) -> Modelˉlifecycle {
+    if Value == 2u32 { return Modelˉlifecycle.Mutableˉalias; }
+    if Value == 3u32 { return Modelˉlifecycle.Deprecated; }
+    return Modelˉlifecycle.Stable;
+}
+
+fn Modelˉlifecycleˉtoˉu32(Value: Modelˉlifecycle) -> u32 {
+    if Value == Modelˉlifecycle.Mutableˉalias { return 2u32; }
+    if Value == Modelˉlifecycle.Deprecated { return 3u32; }
+    return 1u32;
+}
+
+fn Modelˉoperationˉtoˉu32(Value: Modelˉoperation) -> u32 {
+    if Value == Modelˉoperation.Catalog { return 1u32; }
+    if Value == Modelˉoperation.Generate { return 2u32; }
+    return 0u32;
+}
+
+export fn Modelˉmessagesˉempty() -> bytes {
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(MODEL_MESSAGE_MAGIC);
+    Value = Modelˉappendˉu32(Value, MODEL_PROTOCOL_VERSION);
+    Value = Modelˉappendˉu32(Value, 16u32);
+    return Modelˉappendˉu32(Value, 0u32);
+}
+
+export fn Modelˉmessagesˉisˉvalid(Value: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Value);
+    if Total < 16u32 || Total > MODEL_MAXIMUM_MESSAGE_SET_BYTES { return false; }
+    if Bytesˉreadˉu32ˉlittle(Value, 0u32) != MODEL_MESSAGE_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != MODEL_PROTOCOL_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != Total {
+        return false;
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    if Count > MODEL_MAXIMUM_MESSAGES { return false; }
+    var Offset: u32 = 16u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Offset > Total || Total - Offset < 8u32 { return false; }
+        let Role: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset);
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset + 4u32);
+        if Role < 1u32 || Role > 3u32 || Length == 0u32 ||
+            Length > MODEL_MAXIMUM_MESSAGE_BYTES { return false; }
+        Offset = Offset + 8u32;
+        if Offset > Total || Length > Total - Offset { return false; }
+        if !Modelˉtextˉisˉvalid(Bytesˉslice(Value, Offset, Length), false, MODEL_MAXIMUM_MESSAGE_BYTES) {
+            return false;
+        }
+        Offset = Offset + Length;
+        Index = Index + 1u32;
+    }
+    return Offset == Total;
+}
+
+export fn Modelˉmessagesˉappend(
+    Value: bytes,
+    Role: Modelˉrole,
+    Content: text
+) -> Modelˉencoded {
+    if !Modelˉmessagesˉisˉvalid(Value) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉenvelope);
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    if Count >= MODEL_MAXIMUM_MESSAGES {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Collectionˉlimit);
+    }
+    let Contentˉbytes: bytes = Textˉtoˉutf8(Content);
+    let Contentˉlength: u32 = Bytesˉlength(Contentˉbytes);
+    if Contentˉlength == 0u32 || Contentˉlength > MODEL_MAXIMUM_MESSAGE_BYTES {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Sizeˉlimit);
+    }
+    if Role == Modelˉrole.None {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    let Total: u32 = Bytesˉlength(Value);
+    if Total > MODEL_MAXIMUM_MESSAGE_SET_BYTES - 8u32 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Sizeˉlimit);
+    }
+    if Contentˉlength > MODEL_MAXIMUM_MESSAGE_SET_BYTES - Total - 8u32 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Sizeˉlimit);
+    }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(MODEL_MESSAGE_MAGIC);
+    Result = Modelˉappendˉu32(Result, MODEL_PROTOCOL_VERSION);
+    Result = Modelˉappendˉu32(Result, Total + 8u32 + Contentˉlength);
+    Result = Modelˉappendˉu32(Result, Count + 1u32);
+    Result = Bytesˉconcat(Result, Bytesˉslice(Value, 16u32, Total - 16u32));
+    Result = Modelˉappendˉu32(Result, Modelˉroleˉtoˉu32(Role));
+    Result = Modelˉappendˉu32(Result, Contentˉlength);
+    Result = Bytesˉconcat(Result, Contentˉbytes);
+    return Modelˉencoded(Modelˉcodecˉstatus.Valid, Count + 1u32, Result);
+}
+
+export fn Modelˉmessagesˉappendˉbytes(
+    Value: bytes,
+    Role: Modelˉrole,
+    Content: text
+) -> bytes {
+    if !Modelˉmessagesˉisˉvalid(Value) { return Modelˉemptyˉbytes(); }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    if Count >= MODEL_MAXIMUM_MESSAGES || Role == Modelˉrole.None {
+        return Modelˉemptyˉbytes();
+    }
+    let Contentˉbytes: bytes = Textˉtoˉutf8(Content);
+    let Contentˉlength: u32 = Bytesˉlength(Contentˉbytes);
+    let Total: u32 = Bytesˉlength(Value);
+    if Contentˉlength == 0u32 || Contentˉlength > MODEL_MAXIMUM_MESSAGE_BYTES ||
+        Total > MODEL_MAXIMUM_MESSAGE_SET_BYTES - 8u32 {
+        return Modelˉemptyˉbytes();
+    }
+    if Contentˉlength > MODEL_MAXIMUM_MESSAGE_SET_BYTES - Total - 8u32 {
+        return Modelˉemptyˉbytes();
+    }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(MODEL_MESSAGE_MAGIC);
+    Result = Modelˉappendˉu32(Result, MODEL_PROTOCOL_VERSION);
+    Result = Modelˉappendˉu32(Result, Total + 8u32 + Contentˉlength);
+    Result = Modelˉappendˉu32(Result, Count + 1u32);
+    Result = Bytesˉconcat(Result, Bytesˉslice(Value, 16u32, Total - 16u32));
+    Result = Modelˉappendˉu32(Result, Modelˉroleˉtoˉu32(Role));
+    Result = Modelˉappendˉu32(Result, Contentˉlength);
+    return Bytesˉconcat(Result, Contentˉbytes);
+}
+
+export fn Modelˉmessageˉat(Value: bytes, Requested: u32) -> Modelˉmessage {
+    if !Modelˉmessagesˉisˉvalid(Value) {
+        return Modelˉmessage(false, Modelˉrole.None, 0u32, 0u32);
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    if Requested >= Count {
+        return Modelˉmessage(false, Modelˉrole.None, 0u32, 0u32);
+    }
+    var Offset: u32 = 16u32;
+    var Index: u32 = 0u32;
+    while Index < Requested {
+        Offset = Offset + 8u32 + Bytesˉreadˉu32ˉlittle(Value, Offset + 4u32);
+        Index = Index + 1u32;
+    }
+    let Role: Modelˉrole = Modelˉroleˉfromˉu32(
+        Bytesˉreadˉu32ˉlittle(Value, Offset)
+    );
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset + 4u32);
+    return Modelˉmessage(true, Role, Offset + 8u32, Length);
+}
+
+fn Modelˉrequestˉencode(
+    Operation: Modelˉoperation,
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Limit: u32,
+    Model: bytes,
+    Payload: bytes
+) -> bytes {
+    let Modelˉlength: u32 = Bytesˉlength(Model);
+    let Payloadˉlength: u32 = Bytesˉlength(Payload);
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(MODEL_REQUEST_MAGIC);
+    Value = Modelˉappendˉu32(Value, MODEL_PROTOCOL_VERSION);
+    Value = Modelˉappendˉu32(Value, 48u32 + Modelˉlength + Payloadˉlength);
+    Value = Modelˉappendˉu32(Value, Modelˉoperationˉtoˉu32(Operation));
+    Value = Modelˉappendˉu64(Value, Requestˉidentity);
+    Value = Modelˉappendˉu64(Value, Providerˉgeneration);
+    Value = Modelˉappendˉu32(Value, Limit);
+    Value = Modelˉappendˉu32(Value, Modelˉlength);
+    Value = Modelˉappendˉu32(Value, Payloadˉlength);
+    Value = Modelˉappendˉu32(Value, 0u32);
+    Value = Bytesˉconcat(Value, Model);
+    return Bytesˉconcat(Value, Payload);
+}
+
+export fn Modelˉcatalogˉrequest(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Pageˉsize: u32,
+    Continuation: bytes
+) -> Modelˉencoded {
+    let Length: u32 = Bytesˉlength(Continuation);
+    if Pageˉsize == 0u32 || Pageˉsize > MODEL_MAXIMUM_CATALOG_ENTRIES {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    if Length > MODEL_MAXIMUM_CONTINUATION_BYTES {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Sizeˉlimit);
+    }
+    if Length > 0u32 && Providerˉgeneration == 0u64 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        1u32,
+        Modelˉrequestˉencode(
+            Modelˉoperation.Catalog,
+            Requestˉidentity,
+            Providerˉgeneration,
+            Pageˉsize,
+            Modelˉemptyˉbytes(),
+            Continuation
+        )
+    );
+}
+
+export fn Modelˉgenerationˉrequest(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Model: text,
+    Messages: bytes,
+    Maximumˉoutputˉtokens: u32
+) -> Modelˉencoded {
+    let Modelˉbytes: bytes = Textˉtoˉutf8(Model);
+    if Providerˉgeneration == 0u64 || Maximumˉoutputˉtokens == 0u32 ||
+        Maximumˉoutputˉtokens > 4096u32 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    if !Modelˉtextˉisˉvalid(Modelˉbytes, false, MODEL_MAXIMUM_MODEL_BYTES) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉtext);
+    }
+    if !Modelˉmessagesˉisˉvalid(Messages) ||
+        Bytesˉreadˉu32ˉlittle(Messages, 12u32) == 0u32 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉenvelope);
+    }
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        Bytesˉreadˉu32ˉlittle(Messages, 12u32),
+        Modelˉrequestˉencode(
+            Modelˉoperation.Generate,
+            Requestˉidentity,
+            Providerˉgeneration,
+            Maximumˉoutputˉtokens,
+            Modelˉbytes,
+            Messages
+        )
+    );
+}
+
+fn Modelˉrequestˉfailure(Value: bytes) -> Modelˉrequest {
+    return Modelˉrequest(
+        Modelˉcodecˉstatus.Invalidˉenvelope,
+        Modelˉoperation.None,
+        0u64, 0u64, 0u32, 0u32, 0u32, 0u32, 0u32, Value
+    );
+}
+
+export fn Modelˉrequestˉdecode(Value: bytes) -> Modelˉrequest {
+    let Total: u32 = Bytesˉlength(Value);
+    let Invalid: Modelˉrequest = Modelˉrequestˉfailure(Value);
+    if Total < 48u32 || Total > 17472u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Value, 0u32) != MODEL_REQUEST_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != MODEL_PROTOCOL_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != Total ||
+        Bytesˉreadˉu32ˉlittle(Value, 44u32) != 0u32 {
+        return Invalid;
+    }
+    let Rawˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    let Requestˉidentity: u64 = Bytesˉreadˉu64ˉlittle(Value, 16u32);
+    let Providerˉgeneration: u64 = Bytesˉreadˉu64ˉlittle(Value, 24u32);
+    let Limit: u32 = Bytesˉreadˉu32ˉlittle(Value, 32u32);
+    let Modelˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 36u32);
+    let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 40u32);
+    if Modelˉlength > Total - 48u32 ||
+        Payloadˉlength != Total - 48u32 - Modelˉlength {
+        return Invalid;
+    }
+    let Modelˉbytes: bytes = Bytesˉslice(Value, 48u32, Modelˉlength);
+    let Payload: bytes = Bytesˉslice(Value, 48u32 + Modelˉlength, Payloadˉlength);
+    var Operation: Modelˉoperation = Modelˉoperation.None;
+    if Rawˉoperation == 1u32 {
+        if Limit == 0u32 || Limit > MODEL_MAXIMUM_CATALOG_ENTRIES ||
+            Modelˉlength != 0u32 || Payloadˉlength > MODEL_MAXIMUM_CONTINUATION_BYTES ||
+            (Payloadˉlength > 0u32 && Providerˉgeneration == 0u64) {
+            return Invalid;
+        }
+        Operation = Modelˉoperation.Catalog;
+    } else if Rawˉoperation == 2u32 {
+        if Providerˉgeneration == 0u64 || Limit == 0u32 || Limit > 4096u32 ||
+            !Modelˉtextˉisˉvalid(Modelˉbytes, false, MODEL_MAXIMUM_MODEL_BYTES) ||
+            !Modelˉmessagesˉisˉvalid(Payload) ||
+            Bytesˉreadˉu32ˉlittle(Payload, 12u32) == 0u32 {
+            return Invalid;
+        }
+        Operation = Modelˉoperation.Generate;
+    } else { return Invalid; }
+    return Modelˉrequest(
+        Modelˉcodecˉstatus.Valid,
+        Operation,
+        Requestˉidentity,
+        Providerˉgeneration,
+        Limit,
+        48u32,
+        Modelˉlength,
+        48u32 + Modelˉlength,
+        Payloadˉlength,
+        Value
+    );
+}
+
+fn Modelˉcatalogˉheader(
+    Status: Modelˉstatus,
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Entries: u32,
+    Continuationˉlength: u32,
+    Diagnosticˉlength: u32,
+    Payloadˉlength: u32
+) -> bytes {
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(MODEL_CATALOG_MAGIC);
+    Value = Modelˉappendˉu32(Value, MODEL_PROTOCOL_VERSION);
+    Value = Modelˉappendˉu32(Value, 48u32 + Payloadˉlength);
+    Value = Modelˉappendˉu32(Value, Modelˉstatusˉtoˉu32(Status));
+    Value = Modelˉappendˉu64(Value, Requestˉidentity);
+    Value = Modelˉappendˉu64(Value, Providerˉgeneration);
+    Value = Modelˉappendˉu32(Value, Entries);
+    Value = Modelˉappendˉu32(Value, Continuationˉlength);
+    Value = Modelˉappendˉu32(Value, Diagnosticˉlength);
+    return Modelˉappendˉu32(Value, 0u32);
+}
+
+export fn Modelˉcatalogˉempty(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64
+) -> Modelˉencoded {
+    if Providerˉgeneration == 0u64 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        0u32,
+        Modelˉcatalogˉheader(
+            Modelˉstatus.Valid, Requestˉidentity, Providerˉgeneration,
+            0u32, 0u32, 0u32, 0u32
+        )
+    );
+}
+
+export fn Modelˉcatalogˉemptyˉbytes(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64
+) -> bytes {
+    let Encoded: Modelˉencoded = Modelˉcatalogˉempty(
+        Requestˉidentity, Providerˉgeneration
+    );
+    return Encoded.Bytes;
+}
+
+export fn Modelˉcatalogˉfailure(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Status: Modelˉstatus,
+    Diagnostic: text
+) -> Modelˉencoded {
+    let Diagnosticˉbytes: bytes = Textˉtoˉutf8(Diagnostic);
+    let Length: u32 = Bytesˉlength(Diagnosticˉbytes);
+    if Status == Modelˉstatus.Valid ||
+        !Modelˉtextˉisˉvalid(Diagnosticˉbytes, true, MODEL_MAXIMUM_DIAGNOSTIC_BYTES) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        0u32,
+        Bytesˉconcat(
+            Modelˉcatalogˉheader(
+                Status, Requestˉidentity, Providerˉgeneration,
+                0u32, 0u32, Length, Length
+            ),
+            Diagnosticˉbytes
+        )
+    );
+}
+
+export fn Modelˉcatalogˉappend(
+    Value: bytes,
+    Identifier: text,
+    Display: text,
+    Features: u32,
+    Lifecycle: Modelˉlifecycle
+) -> Modelˉencoded {
+    let Catalog: Modelˉcatalog = Modelˉcatalogˉdecode(Value);
+    if Catalog.Codecˉstatus != Modelˉcodecˉstatus.Valid ||
+        Catalog.Status != Modelˉstatus.Valid || Catalog.Continuationˉlength != 0u32 {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉenvelope);
+    }
+    if Catalog.Entries >= MODEL_MAXIMUM_CATALOG_ENTRIES {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Collectionˉlimit);
+    }
+    let Identifierˉbytes: bytes = Textˉtoˉutf8(Identifier);
+    let Displayˉbytes: bytes = Textˉtoˉutf8(Display);
+    let Identifierˉlength: u32 = Bytesˉlength(Identifierˉbytes);
+    let Displayˉlength: u32 = Bytesˉlength(Displayˉbytes);
+    if !Modelˉtextˉisˉvalid(Identifierˉbytes, false, MODEL_MAXIMUM_MODEL_BYTES) ||
+        !Modelˉtextˉisˉvalid(Displayˉbytes, true, MODEL_MAXIMUM_MODEL_BYTES) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉtext);
+    }
+    let Entryˉlength: u32 = 20u32 + Identifierˉlength + Displayˉlength;
+    if Entryˉlength > MODEL_MAXIMUM_CATALOG_BYTES - Bytesˉlength(Value) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Sizeˉlimit);
+    }
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Entryˉlength);
+    Entry = Modelˉappendˉu32(Entry, Identifierˉlength);
+    Entry = Modelˉappendˉu32(Entry, Displayˉlength);
+    Entry = Modelˉappendˉu32(Entry, Features);
+    Entry = Modelˉappendˉu32(Entry, Modelˉlifecycleˉtoˉu32(Lifecycle));
+    Entry = Bytesˉconcat(Entry, Identifierˉbytes);
+    Entry = Bytesˉconcat(Entry, Displayˉbytes);
+    let Entries: bytes = Bytesˉconcat(
+        Bytesˉslice(Value, Catalog.Entriesˉoffset, Catalog.Entriesˉlength),
+        Entry
+    );
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        Catalog.Entries + 1u32,
+        Bytesˉconcat(
+            Modelˉcatalogˉheader(
+                Modelˉstatus.Valid,
+                Catalog.Requestˉidentity,
+                Catalog.Providerˉgeneration,
+                Catalog.Entries + 1u32,
+                0u32, 0u32, Bytesˉlength(Entries)
+            ),
+            Entries
+        )
+    );
+}
+
+export fn Modelˉcatalogˉappendˉbytes(
+    Value: bytes,
+    Identifier: text,
+    Display: text,
+    Features: u32,
+    Lifecycle: Modelˉlifecycle
+) -> bytes {
+    let Encoded: Modelˉencoded = Modelˉcatalogˉappend(
+        Value, Identifier, Display, Features, Lifecycle
+    );
+    return Encoded.Bytes;
+}
+
+fn Modelˉcatalogˉinvalid(Value: bytes) -> Modelˉcatalog {
+    return Modelˉcatalog(
+        Modelˉcodecˉstatus.Invalidˉenvelope,
+        Modelˉstatus.Providerˉerror,
+        0u64, 0u64, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Value
+    );
+}
+
+export fn Modelˉcatalogˉdecode(Value: bytes) -> Modelˉcatalog {
+    let Total: u32 = Bytesˉlength(Value);
+    let Invalid: Modelˉcatalog = Modelˉcatalogˉinvalid(Value);
+    if Total < 48u32 || Total > MODEL_MAXIMUM_CATALOG_BYTES { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Value, 0u32) != MODEL_CATALOG_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != MODEL_PROTOCOL_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != Total ||
+        Bytesˉreadˉu32ˉlittle(Value, 44u32) != 0u32 {
+        return Invalid;
+    }
+    let Rawˉstatus: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    let Requestˉidentity: u64 = Bytesˉreadˉu64ˉlittle(Value, 16u32);
+    let Providerˉgeneration: u64 = Bytesˉreadˉu64ˉlittle(Value, 24u32);
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Value, 32u32);
+    let Continuationˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 36u32);
+    let Diagnosticˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 40u32);
+    if Rawˉstatus > 7u32 || Entries > MODEL_MAXIMUM_CATALOG_ENTRIES ||
+        Continuationˉlength > MODEL_MAXIMUM_CONTINUATION_BYTES ||
+        Diagnosticˉlength > MODEL_MAXIMUM_DIAGNOSTIC_BYTES ||
+        Continuationˉlength > Total - 48u32 ||
+        Diagnosticˉlength > Total - 48u32 - Continuationˉlength {
+        return Invalid;
+    }
+    let Entriesˉlength: u32 = Total - 48u32 - Continuationˉlength - Diagnosticˉlength;
+    var Offset: u32 = 48u32;
+    var Index: u32 = 0u32;
+    while Index < Entries {
+        if Offset > 48u32 + Entriesˉlength ||
+            48u32 + Entriesˉlength - Offset < 20u32 { return Invalid; }
+        let Entryˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset);
+        let Identifierˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset + 4u32);
+        let Displayˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset + 8u32);
+        let Lifecycle: u32 = Bytesˉreadˉu32ˉlittle(Value, Offset + 16u32);
+        if Entryˉlength < 20u32 || Entryˉlength > 48u32 + Entriesˉlength - Offset ||
+            Identifierˉlength > Entryˉlength - 20u32 ||
+            Displayˉlength != Entryˉlength - 20u32 - Identifierˉlength ||
+            Lifecycle < 1u32 || Lifecycle > 3u32 {
+            return Invalid;
+        }
+        if !Modelˉtextˉisˉvalid(
+            Bytesˉslice(Value, Offset + 20u32, Identifierˉlength),
+            false, MODEL_MAXIMUM_MODEL_BYTES
+        ) || !Modelˉtextˉisˉvalid(
+            Bytesˉslice(Value, Offset + 20u32 + Identifierˉlength, Displayˉlength),
+            true, MODEL_MAXIMUM_MODEL_BYTES
+        ) { return Invalid; }
+        Offset = Offset + Entryˉlength;
+        Index = Index + 1u32;
+    }
+    if Offset != 48u32 + Entriesˉlength { return Invalid; }
+    let Status: Modelˉstatus = Modelˉstatusˉfromˉu32(Rawˉstatus);
+    let Continuationˉoffset: u32 = 48u32 + Entriesˉlength;
+    let Diagnosticˉoffset: u32 = Continuationˉoffset + Continuationˉlength;
+    if !Modelˉtextˉisˉvalid(
+        Bytesˉslice(Value, Diagnosticˉoffset, Diagnosticˉlength),
+        true, MODEL_MAXIMUM_DIAGNOSTIC_BYTES
+    ) { return Invalid; }
+    if Status == Modelˉstatus.Valid {
+        if Providerˉgeneration == 0u64 || Diagnosticˉlength != 0u32 {
+            return Invalid;
+        }
+    } else if Entries != 0u32 || Continuationˉlength != 0u32 {
+        return Invalid;
+    }
+    return Modelˉcatalog(
+        Modelˉcodecˉstatus.Valid, Status, Requestˉidentity,
+        Providerˉgeneration, Entries, 48u32, Entriesˉlength,
+        Continuationˉoffset, Continuationˉlength,
+        Diagnosticˉoffset, Diagnosticˉlength, Value
+    );
+}
+
+export fn Modelˉcatalogˉentryˉat(
+    Catalog: Modelˉcatalog,
+    Requested: u32
+) -> Modelˉcatalogˉentry {
+    if Catalog.Codecˉstatus != Modelˉcodecˉstatus.Valid ||
+        Catalog.Status != Modelˉstatus.Valid || Requested >= Catalog.Entries {
+        return Modelˉcatalogˉentry(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, Modelˉlifecycle.Stable
+        );
+    }
+    var Offset: u32 = Catalog.Entriesˉoffset;
+    var Index: u32 = 0u32;
+    while Index < Requested {
+        Offset = Offset + Bytesˉreadˉu32ˉlittle(Catalog.Bytes, Offset);
+        Index = Index + 1u32;
+    }
+    let Identifierˉlength: u32 = Bytesˉreadˉu32ˉlittle(Catalog.Bytes, Offset + 4u32);
+    let Displayˉlength: u32 = Bytesˉreadˉu32ˉlittle(Catalog.Bytes, Offset + 8u32);
+    return Modelˉcatalogˉentry(
+        true,
+        Offset + 20u32,
+        Identifierˉlength,
+        Offset + 20u32 + Identifierˉlength,
+        Displayˉlength,
+        Bytesˉreadˉu32ˉlittle(Catalog.Bytes, Offset + 12u32),
+        Modelˉlifecycleˉfromˉu32(
+            Bytesˉreadˉu32ˉlittle(Catalog.Bytes, Offset + 16u32)
+        )
+    );
+}
+
+fn Modelˉgenerationˉencode(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Status: Modelˉstatus,
+    Completion: Modelˉcompletion,
+    Model: bytes,
+    Text: bytes,
+    Diagnostic: bytes,
+    Inputˉtokens: u64,
+    Outputˉtokens: u64
+) -> bytes {
+    let Modelˉlength: u32 = Bytesˉlength(Model);
+    let Textˉlength: u32 = Bytesˉlength(Text);
+    let Diagnosticˉlength: u32 = Bytesˉlength(Diagnostic);
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(MODEL_GENERATION_MAGIC);
+    Value = Modelˉappendˉu32(Value, MODEL_PROTOCOL_VERSION);
+    Value = Modelˉappendˉu32(Value, 64u32 + Modelˉlength + Textˉlength + Diagnosticˉlength);
+    Value = Modelˉappendˉu32(Value, Modelˉstatusˉtoˉu32(Status));
+    Value = Modelˉappendˉu64(Value, Requestˉidentity);
+    Value = Modelˉappendˉu64(Value, Providerˉgeneration);
+    Value = Modelˉappendˉu32(Value, Modelˉcompletionˉtoˉu32(Completion));
+    Value = Modelˉappendˉu32(Value, Modelˉlength);
+    Value = Modelˉappendˉu32(Value, Textˉlength);
+    Value = Modelˉappendˉu32(Value, Diagnosticˉlength);
+    Value = Modelˉappendˉu64(Value, Inputˉtokens);
+    Value = Modelˉappendˉu64(Value, Outputˉtokens);
+    Value = Bytesˉconcat(Value, Model);
+    Value = Bytesˉconcat(Value, Text);
+    return Bytesˉconcat(Value, Diagnostic);
+}
+
+export fn Modelˉgenerationˉsuccess(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Completion: Modelˉcompletion,
+    Model: text,
+    Text: text,
+    Inputˉtokens: u64,
+    Outputˉtokens: u64
+) -> Modelˉencoded {
+    let Modelˉbytes: bytes = Textˉtoˉutf8(Model);
+    let Textˉbytes: bytes = Textˉtoˉutf8(Text);
+    if Providerˉgeneration == 0u64 || Completion == Modelˉcompletion.None ||
+        !Modelˉtextˉisˉvalid(Modelˉbytes, false, MODEL_MAXIMUM_MODEL_BYTES) ||
+        !Modelˉtextˉisˉvalid(Textˉbytes, true, MODEL_MAXIMUM_MESSAGE_SET_BYTES) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        1u32,
+        Modelˉgenerationˉencode(
+            Requestˉidentity, Providerˉgeneration, Modelˉstatus.Valid,
+            Completion, Modelˉbytes, Textˉbytes, Modelˉemptyˉbytes(),
+            Inputˉtokens, Outputˉtokens
+        )
+    );
+}
+
+export fn Modelˉgenerationˉfailure(
+    Requestˉidentity: u64,
+    Providerˉgeneration: u64,
+    Status: Modelˉstatus,
+    Diagnostic: text
+) -> Modelˉencoded {
+    let Diagnosticˉbytes: bytes = Textˉtoˉutf8(Diagnostic);
+    if Status == Modelˉstatus.Valid || !Modelˉtextˉisˉvalid(
+        Diagnosticˉbytes, true, MODEL_MAXIMUM_DIAGNOSTIC_BYTES
+    ) {
+        return Modelˉencodedˉfailure(Modelˉcodecˉstatus.Invalidˉvalue);
+    }
+    return Modelˉencoded(
+        Modelˉcodecˉstatus.Valid,
+        0u32,
+        Modelˉgenerationˉencode(
+            Requestˉidentity, Providerˉgeneration, Status,
+            Modelˉcompletion.None, Modelˉemptyˉbytes(),
+            Modelˉemptyˉbytes(), Diagnosticˉbytes, 0u64, 0u64
+        )
+    );
+}
+
+fn Modelˉgenerationˉinvalid(Value: bytes) -> Modelˉgeneration {
+    return Modelˉgeneration(
+        Modelˉcodecˉstatus.Invalidˉenvelope,
+        Modelˉstatus.Providerˉerror,
+        0u64, 0u64, Modelˉcompletion.None, 0u64, 0u64,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Value
+    );
+}
+
+export fn Modelˉgenerationˉdecode(Value: bytes) -> Modelˉgeneration {
+    let Total: u32 = Bytesˉlength(Value);
+    let Invalid: Modelˉgeneration = Modelˉgenerationˉinvalid(Value);
+    if Total < 64u32 || Total > 17728u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Value, 0u32) != MODEL_GENERATION_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != MODEL_PROTOCOL_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != Total {
+        return Invalid;
+    }
+    let Rawˉstatus: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    let Requestˉidentity: u64 = Bytesˉreadˉu64ˉlittle(Value, 16u32);
+    let Providerˉgeneration: u64 = Bytesˉreadˉu64ˉlittle(Value, 24u32);
+    let Rawˉcompletion: u32 = Bytesˉreadˉu32ˉlittle(Value, 32u32);
+    let Modelˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 36u32);
+    let Textˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 40u32);
+    let Diagnosticˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 44u32);
+    let Inputˉtokens: u64 = Bytesˉreadˉu64ˉlittle(Value, 48u32);
+    let Outputˉtokens: u64 = Bytesˉreadˉu64ˉlittle(Value, 56u32);
+    if Rawˉstatus > 7u32 || Rawˉcompletion > 3u32 ||
+        Modelˉlength > Total - 64u32 ||
+        Textˉlength > Total - 64u32 - Modelˉlength ||
+        Diagnosticˉlength != Total - 64u32 - Modelˉlength - Textˉlength {
+        return Invalid;
+    }
+    let Modelˉoffset: u32 = 64u32;
+    let Textˉoffset: u32 = Modelˉoffset + Modelˉlength;
+    let Diagnosticˉoffset: u32 = Textˉoffset + Textˉlength;
+    if !Modelˉtextˉisˉvalid(
+        Bytesˉslice(Value, Modelˉoffset, Modelˉlength), true, MODEL_MAXIMUM_MODEL_BYTES
+    ) || !Modelˉtextˉisˉvalid(
+        Bytesˉslice(Value, Textˉoffset, Textˉlength), true, MODEL_MAXIMUM_MESSAGE_SET_BYTES
+    ) || !Modelˉtextˉisˉvalid(
+        Bytesˉslice(Value, Diagnosticˉoffset, Diagnosticˉlength), true,
+        MODEL_MAXIMUM_DIAGNOSTIC_BYTES
+    ) { return Invalid; }
+    let Status: Modelˉstatus = Modelˉstatusˉfromˉu32(Rawˉstatus);
+    let Completion: Modelˉcompletion = Modelˉcompletionˉfromˉu32(Rawˉcompletion);
+    if Status == Modelˉstatus.Valid {
+        if Providerˉgeneration == 0u64 || Completion == Modelˉcompletion.None ||
+            Modelˉlength == 0u32 || Diagnosticˉlength != 0u32 {
+            return Invalid;
+        }
+    } else if Completion != Modelˉcompletion.None || Modelˉlength != 0u32 ||
+        Textˉlength != 0u32 || Inputˉtokens != 0u64 || Outputˉtokens != 0u64 {
+        return Invalid;
+    }
+    return Modelˉgeneration(
+        Modelˉcodecˉstatus.Valid, Status, Requestˉidentity,
+        Providerˉgeneration, Completion, Inputˉtokens, Outputˉtokens,
+        Modelˉoffset, Modelˉlength, Textˉoffset, Textˉlength,
+        Diagnosticˉoffset, Diagnosticˉlength, Value
+    );
+}

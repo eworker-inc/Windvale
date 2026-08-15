@@ -1,8 +1,9 @@
 # Windvale external model provider library proposal
 
-> Status: Proposed library and provider-boundary direction. This document does
-> not define an accepted serialized format, public capability, provider adapter,
-> credential mechanism, or implementation claim. The provider survey is a
+> Status: Model slices 0 and 1 are implemented candidates under
+> [Decision 0573](../Decisions/0573-First-Provider-Neutral-Model-Protocol.md).
+> Live capability, network, credential, and provider-adapter slices remain
+> proposals. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
 
@@ -46,6 +47,20 @@ one real API as integration evidence, but it would remain an oracle outside the
 portable contract. Production live adapters wait for the shared networking and
 credential boundaries rather than introducing a model-specific `post(url)` or
 `download(url)` host call.
+
+## Implemented checkpoint
+
+The repository now contains the exact capability-free
+[`WVMM/WVMQ/WVMC/WVMG 1` contract](../../Specifications/Windvale-Model-Protocol.md),
+portable encoder/decoder and validation code, a deterministic scripted provider,
+Project 2 library manifests, and a provider-neutral accepted/rejected corpus.
+The focused native library owner builds both libraries and the corpus project
+deterministically.
+
+This checkpoint is intentionally not a live adapter. It does not define or
+invoke `model.catalog_v1` or `model.inference_v1`, contact OpenAI, Anthropic, or
+Google, read an API key, parse provider JSON, or claim HTTPS/cancellation
+evidence. Those remain slices 2 through 5 below.
 
 ## Current external API landscape
 
@@ -170,11 +185,11 @@ tiers, regions, cache rules, and tool charges. A later cost owner can combine
 reported usage with a versioned admitted pricing snapshot and currency; the
 inference adapter must not invent a cost when the provider did not report one.
 
-Candidate corpus bounds, to be measured before acceptance, are 64 messages,
-64 KiB of UTF-8 per text part, 1 MiB aggregate request text, 256 UTF-8 bytes per
-model identifier, 256 catalog entries per page, 1 MiB normalized output, and a
-4 MiB total provider envelope. These fit current value ceilings but are not yet
-contract promises.
+Decision 0573 measured and froze a smaller first corpus: 32 messages, 3,072
+UTF-8 bytes per message, 16 KiB per message set, 256 bytes per model identifier,
+128 catalog entries, 1,024-byte continuation and diagnostic values, and a 64
+KiB catalog envelope. The exact cross-field rules are owned by the specification;
+larger candidate limits are no longer implied.
 
 ## Candidate capability seam
 
@@ -298,6 +313,8 @@ expectations. An adapter never silently sends the prompt to another provider.
 
 ### Model slice 0: decision and corpus
 
+Status: implemented candidate under Decision 0573.
+
 Freeze only the version-1 records, operation identities, candidate limits,
 canonical envelopes, statuses, completion evidence, and one-provider binding
 rule. Create hand-authored provider-independent accepted and rejected cases.
@@ -308,6 +325,8 @@ rejection from invalid adapter output, and known-not-sent from indeterminate
 submission without contacting a public API.
 
 ### Model slice 1: portable protocol library
+
+Status: implemented candidate with native source-compilation ownership.
 
 Implement capability-free encoders, decoders, validators, typed records, catalog
 admission, and inference-result admission under `Libraries/Models/`. Add a
@@ -322,6 +341,9 @@ entropy, JSON parser, or model quality is required.
 
 ### Model slice 2: hosted byte-envelope seam
 
+Status: deferred; the required native `bytes -> bytes` provider call is not
+implemented.
+
 Add the two candidate capability identities, the verified `bytes -> bytes`
 native call shape, a scripted rights-limited host provider, and the typed
 `Libraries/Platform/Models/` facade. Provider state and response scratch remain
@@ -333,6 +355,8 @@ revocation, stale generation, and provider loss execute without any public
 network access.
 
 ### Model slice 3: optional external reference oracle
+
+Status: deferred; no repository credential is read and no live API is called.
 
 A build-restricted Node reference tool may translate the canonical envelopes to
 one real provider using the host's HTTPS and JSON implementation. This can
@@ -346,6 +370,9 @@ continue to pass offline when the provider is unavailable or changes.
 
 ### Model slice 4: production hosted adapter
 
+Status: deferred pending shared networking, trust, cancellation, and secret
+custody.
+
 After the shared networking plan reaches its secure HTTP gate and production
 secret custody exists, implement one provider adapter end to end. OpenAI is a
 reasonable first candidate because the current Responses and Models APIs cover
@@ -358,6 +385,9 @@ revocation, and indeterminate-submission cases. An opt-in live call is smoke
 evidence only.
 
 ### Model slice 5: adapter plurality
+
+Status: deferred pending one qualified live adapter and multi-instance binding
+semantics.
 
 Implement Anthropic and Google against the same accepted corpus, then add one
 non-frontier provider such as Mistral, Cohere, xAI, Groq, a cloud broker, or a

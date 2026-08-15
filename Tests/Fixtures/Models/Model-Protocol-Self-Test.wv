@@ -1,0 +1,267 @@
+module Windvaleˉmodelˉprotocolˉselfˉtest profile portable;
+
+import Windvaleˉmodelˉprotocol as Protocol;
+import Windvaleˉscriptedˉmodelˉprovider as Scripted;
+
+fn Testˉbytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Bytesˉlength(Right) != Length { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Spanˉequalsˉtext(
+    Value: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    return Testˉbytesˉequal(
+        Bytesˉslice(Value, Offset, Length),
+        Textˉtoˉutf8(Expected)
+    );
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+    return Bytesˉconcat(
+        Result,
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Messagesˉcase() -> i32 {
+    let Empty: bytes = Protocol.Modelˉmessagesˉempty();
+    if !Protocol.Modelˉmessagesˉisˉvalid(Empty) { return 11; }
+    let System: bytes = Protocol.Modelˉmessagesˉappendˉbytes(
+        Empty, Protocol.Modelˉrole.System, "Answer briefly."
+    );
+    let User: bytes = Protocol.Modelˉmessagesˉappendˉbytes(
+        System, Protocol.Modelˉrole.User, "Hello, model."
+    );
+    if !Protocol.Modelˉmessagesˉisˉvalid(System) ||
+        !Protocol.Modelˉmessagesˉisˉvalid(User) ||
+        Bytesˉreadˉu32ˉlittle(User, 12u32) != 2u32 {
+        return 12;
+    }
+    let Message: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(User, 1u32);
+    if !Message.Found || Message.Role != Protocol.Modelˉrole.User ||
+        !Spanˉequalsˉtext(
+            User, Message.Contentˉoffset, Message.Contentˉlength, "Hello, model."
+        ) {
+        return 13;
+    }
+    let Missing: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(User, 2u32);
+    if Missing.Found { return 14; }
+    return 42;
+}
+
+fn Messageˉrejectionˉcase() -> bool {
+    let Empty: bytes = Protocol.Modelˉmessagesˉempty();
+    let Emptyˉcontent: Protocol.Modelˉencoded = Protocol.Modelˉmessagesˉappend(
+        Empty, Protocol.Modelˉrole.User, ""
+    );
+    let Noˉrole: Protocol.Modelˉencoded = Protocol.Modelˉmessagesˉappend(
+        Empty, Protocol.Modelˉrole.None, "hello"
+    );
+    if Emptyˉcontent.Status != Protocol.Modelˉcodecˉstatus.Sizeˉlimit ||
+        Noˉrole.Status != Protocol.Modelˉcodecˉstatus.Invalidˉvalue {
+        return false;
+    }
+    let Truncated: bytes = Bytesˉslice(Empty, 0u32, 15u32);
+    if Protocol.Modelˉmessagesˉisˉvalid(Truncated) { return false; }
+    return !Protocol.Modelˉmessagesˉisˉvalid(Replaceˉu32(Empty, 0u32, 0u32));
+}
+
+fn Catalogˉrequestˉcase() -> bool {
+    let Empty: bytes = Bytesˉslice(Protocol.Modelˉmessagesˉempty(), 0u32, 0u32);
+    let Encoded: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        91u64, 0u64, 16u32, Empty
+    );
+    let Request: Protocol.Modelˉrequest = Protocol.Modelˉrequestˉdecode(Encoded.Bytes);
+    return Encoded.Status == Protocol.Modelˉcodecˉstatus.Valid &&
+        Request.Status == Protocol.Modelˉcodecˉstatus.Valid &&
+        Request.Operation == Protocol.Modelˉoperation.Catalog &&
+        Request.Requestˉidentity == 91u64 && Request.Providerˉgeneration == 0u64 &&
+        Request.Limit == 16u32 && Request.Modelˉlength == 0u32 &&
+        Request.Payloadˉlength == 0u32;
+}
+
+fn Requestˉrejectionˉcase() -> bool {
+    let Token: bytes = Textˉtoˉutf8("next");
+    let Missingˉgeneration: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        1u64, 0u64, 8u32, Token
+    );
+    if Missingˉgeneration.Status != Protocol.Modelˉcodecˉstatus.Invalidˉvalue {
+        return false;
+    }
+    let Catalog: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        1u64, 0u64, 8u32, Bytesˉslice(Token, 0u32, 0u32)
+    );
+    let Mutated: bytes = Replaceˉu32(Catalog.Bytes, 44u32, 1u32);
+    let Decoded: Protocol.Modelˉrequest = Protocol.Modelˉrequestˉdecode(Mutated);
+    return Decoded.Status == Protocol.Modelˉcodecˉstatus.Invalidˉenvelope;
+}
+
+fn Catalogˉresponseˉcase() -> bool {
+    let Empty: bytes = Bytesˉslice(Protocol.Modelˉmessagesˉempty(), 0u32, 0u32);
+    let Request: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        92u64, 0u64, 16u32, Empty
+    );
+    let Response: bytes = Scripted.Scriptedˉmodelˉrespond(Request.Bytes);
+    let Catalog: Protocol.Modelˉcatalog = Protocol.Modelˉcatalogˉdecode(Response);
+    if Catalog.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Catalog.Status != Protocol.Modelˉstatus.Valid ||
+        Catalog.Requestˉidentity != 92u64 || Catalog.Providerˉgeneration != 1u64 ||
+        Catalog.Entries != 2u32 {
+        return false;
+    }
+    let First: Protocol.Modelˉcatalogˉentry = Protocol.Modelˉcatalogˉentryˉat(
+        Catalog, 0u32
+    );
+    let Current: Protocol.Modelˉcatalogˉentry = Protocol.Modelˉcatalogˉentryˉat(
+        Catalog, 1u32
+    );
+    if !First.Found || First.Lifecycle != Protocol.Modelˉlifecycle.Stable ||
+        First.Features != 3u32 || !Spanˉequalsˉtext(
+            Response, First.Identifierˉoffset, First.Identifierˉlength, "scripted/text-1"
+        ) {
+        return false;
+    }
+    return Current.Found && Current.Lifecycle == Protocol.Modelˉlifecycle.Mutableˉalias &&
+        Spanˉequalsˉtext(
+            Response, Current.Identifierˉoffset, Current.Identifierˉlength, "scripted/current"
+        );
+}
+
+fn Staleˉcatalogˉcase() -> bool {
+    let Empty: bytes = Bytesˉslice(Protocol.Modelˉmessagesˉempty(), 0u32, 0u32);
+    let Request: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        93u64, 2u64, 16u32, Empty
+    );
+    let Catalog: Protocol.Modelˉcatalog = Protocol.Modelˉcatalogˉdecode(
+        Scripted.Scriptedˉmodelˉrespond(Request.Bytes)
+    );
+    return Catalog.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Catalog.Status == Protocol.Modelˉstatus.Unavailable && Catalog.Entries == 0u32 &&
+        Catalog.Diagnosticˉlength > 0u32;
+}
+
+fn Generationˉrequest() -> Protocol.Modelˉencoded {
+    let Empty: bytes = Protocol.Modelˉmessagesˉempty();
+    let User: bytes = Protocol.Modelˉmessagesˉappendˉbytes(
+        Empty, Protocol.Modelˉrole.User, "What is available today?"
+    );
+    return Protocol.Modelˉgenerationˉrequest(
+        94u64, 1u64, "scripted/current", User, 128u32
+    );
+}
+
+fn Generationˉresponseˉcase() -> bool {
+    let Request: Protocol.Modelˉencoded = Generationˉrequest();
+    let Decodedˉrequest: Protocol.Modelˉrequest = Protocol.Modelˉrequestˉdecode(
+        Request.Bytes
+    );
+    if Decodedˉrequest.Status != Protocol.Modelˉcodecˉstatus.Valid ||
+        Decodedˉrequest.Operation != Protocol.Modelˉoperation.Generate ||
+        Decodedˉrequest.Providerˉgeneration != 1u64 ||
+        !Spanˉequalsˉtext(
+            Request.Bytes, Decodedˉrequest.Modelˉoffset,
+            Decodedˉrequest.Modelˉlength, "scripted/current"
+        ) {
+        return false;
+    }
+    let Response: bytes = Scripted.Scriptedˉmodelˉrespond(Request.Bytes);
+    let Generation: Protocol.Modelˉgeneration = Protocol.Modelˉgenerationˉdecode(Response);
+    return Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Generation.Status == Protocol.Modelˉstatus.Valid &&
+        Generation.Completion == Protocol.Modelˉcompletion.Complete &&
+        Generation.Requestˉidentity == 94u64 && Generation.Providerˉgeneration == 1u64 &&
+        Generation.Inputˉtokens == 7u64 && Generation.Outputˉtokens == 3u64 &&
+        Spanˉequalsˉtext(
+            Response, Generation.Modelˉoffset, Generation.Modelˉlength, "scripted/text-1"
+        ) && Spanˉequalsˉtext(
+            Response, Generation.Textˉoffset, Generation.Textˉlength,
+            "scripted model response"
+        );
+}
+
+fn Generationˉfailureˉcase() -> bool {
+    let Failure: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+        95u64, 1u64, Protocol.Modelˉstatus.Rateˉlimited, "retry later"
+    );
+    let Decoded: Protocol.Modelˉgeneration = Protocol.Modelˉgenerationˉdecode(
+        Failure.Bytes
+    );
+    if Decoded.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Decoded.Status != Protocol.Modelˉstatus.Rateˉlimited ||
+        Decoded.Completion != Protocol.Modelˉcompletion.None ||
+        !Spanˉequalsˉtext(
+            Failure.Bytes, Decoded.Diagnosticˉoffset, Decoded.Diagnosticˉlength, "retry later"
+        ) {
+        return false;
+    }
+    let Success: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉsuccess(
+        96u64, 1u64, Protocol.Modelˉcompletion.Complete,
+        "scripted/text-1", "ok", 1u64, 1u64
+    );
+    let Mutated: bytes = Replaceˉu32(Success.Bytes, 32u32, 0u32);
+    let Mutatedˉgeneration: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Mutated);
+    return Mutatedˉgeneration.Codecˉstatus ==
+        Protocol.Modelˉcodecˉstatus.Invalidˉenvelope;
+}
+
+fn Unsupportedˉmodelˉcase() -> bool {
+    let Response: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+        97u64, 1u64, Protocol.Modelˉstatus.Unsupported,
+        "model is not in the admitted catalog"
+    );
+    let Generation: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Response.Bytes);
+    return Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Generation.Status == Protocol.Modelˉstatus.Unsupported;
+}
+
+fn Completionˉcase() -> bool {
+    let Limited: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉsuccess(
+        98u64, 1u64, Protocol.Modelˉcompletion.Lengthˉlimit,
+        "scripted/text-1", "partial", 4u64, 2u64
+    );
+    let Limitedˉresult: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Limited.Bytes);
+    if Limitedˉresult.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Limitedˉresult.Completion != Protocol.Modelˉcompletion.Lengthˉlimit {
+        return false;
+    }
+    let Filtered: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉsuccess(
+        99u64, 1u64, Protocol.Modelˉcompletion.Contentˉfilter,
+        "scripted/text-1", "", 4u64, 0u64
+    );
+    let Filteredˉresult: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Filtered.Bytes);
+    return Filteredˉresult.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Filteredˉresult.Completion == Protocol.Modelˉcompletion.Contentˉfilter;
+}
+
+export fn Main() -> i32 {
+    let Messagesˉresult: i32 = Messagesˉcase();
+    if Messagesˉresult != 42 { return Messagesˉresult; }
+    if !Messageˉrejectionˉcase() { return 2; }
+    if !Catalogˉrequestˉcase() { return 3; }
+    if !Requestˉrejectionˉcase() { return 4; }
+    if !Catalogˉresponseˉcase() { return 5; }
+    if !Staleˉcatalogˉcase() { return 6; }
+    if !Generationˉresponseˉcase() { return 7; }
+    if !Generationˉfailureˉcase() { return 8; }
+    if !Unsupportedˉmodelˉcase() { return 9; }
+    if !Completionˉcase() { return 10; }
+    return 42;
+}

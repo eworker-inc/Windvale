@@ -1,0 +1,84 @@
+module Windvaleˉscriptedˉmodelˉprovider profile portable;
+
+import Windvaleˉmodelˉprotocol as Protocol;
+
+const SCRIPTED_PROVIDER_GENERATION: u64 = 1u64;
+
+fn Catalogˉresponse(Request: Protocol.Modelˉrequest) -> bytes {
+    if Request.Limit < 2u32 {
+        let Pageˉfailure: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉfailure(
+            Request.Requestˉidentity,
+            SCRIPTED_PROVIDER_GENERATION,
+            Protocol.Modelˉstatus.Invalidˉrequest,
+            "scripted catalog page size must be at least two"
+        );
+        return Pageˉfailure.Bytes;
+    }
+    if Request.Providerˉgeneration != 0u64 &&
+        Request.Providerˉgeneration != SCRIPTED_PROVIDER_GENERATION {
+        let Failure: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉfailure(
+            Request.Requestˉidentity,
+            SCRIPTED_PROVIDER_GENERATION,
+            Protocol.Modelˉstatus.Unavailable,
+            "catalog generation changed"
+        );
+        return Failure.Bytes;
+    }
+    let Empty: bytes = Protocol.Modelˉcatalogˉemptyˉbytes(
+        Request.Requestˉidentity,
+        SCRIPTED_PROVIDER_GENERATION
+    );
+    let Stable: bytes = Protocol.Modelˉcatalogˉappendˉbytes(
+        Empty,
+        "scripted/text-1",
+        "Scripted Text 1",
+        3u32,
+        Protocol.Modelˉlifecycle.Stable
+    );
+    return Protocol.Modelˉcatalogˉappendˉbytes(
+        Stable,
+        "scripted/current",
+        "Scripted Current",
+        3u32,
+        Protocol.Modelˉlifecycle.Mutableˉalias
+    );
+}
+
+fn Generationˉresponse(Request: Protocol.Modelˉrequest) -> bytes {
+    if Request.Providerˉgeneration != SCRIPTED_PROVIDER_GENERATION {
+        let Failure: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+            Request.Requestˉidentity,
+            SCRIPTED_PROVIDER_GENERATION,
+            Protocol.Modelˉstatus.Unavailable,
+            "catalog generation changed"
+        );
+        return Failure.Bytes;
+    }
+    let Result: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉsuccess(
+        Request.Requestˉidentity,
+        SCRIPTED_PROVIDER_GENERATION,
+        Protocol.Modelˉcompletion.Complete,
+        "scripted/text-1",
+        "scripted model response",
+        7u64,
+        3u64
+    );
+    return Result.Bytes;
+}
+
+export fn Scriptedˉmodelˉrespond(Value: bytes) -> bytes {
+    let Request: Protocol.Modelˉrequest = Protocol.Modelˉrequestˉdecode(Value);
+    if Request.Status != Protocol.Modelˉcodecˉstatus.Valid {
+        let Failure: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+            0u64,
+            SCRIPTED_PROVIDER_GENERATION,
+            Protocol.Modelˉstatus.Invalidˉrequest,
+            "invalid model request envelope"
+        );
+        return Failure.Bytes;
+    }
+    if Request.Operation == Protocol.Modelˉoperation.Catalog {
+        return Catalogˉresponse(Request);
+    }
+    return Generationˉresponse(Request);
+}

@@ -90,7 +90,7 @@ The exact filter names and case counts are:
 | `database-durable-commit` | 12 |
 | `database-storage` | 17 |
 | `workspace-project2` | 8 |
-| `libraries` | 26 |
+| `libraries` | 29 |
 | `packages` | 8 |
 | `package-format` | 58 |
 

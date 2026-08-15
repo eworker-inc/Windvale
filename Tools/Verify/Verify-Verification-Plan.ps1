@@ -1100,6 +1100,21 @@ $NativeCases = @(
         VerifyGitHub = $true
     },
     @{
+        Name = 'model protocol owner'
+        Paths = @(
+            'Libraries/Models/Model-Protocol.wv',
+            'Libraries/Models/Scripted-Model-Provider.wv',
+            'Tests/Fixtures/Models/Model-Protocol-Self-Test.wv',
+            'Projects/Libraries/Windvale-Library-Model-Protocol.wvproj',
+            'Projects/Libraries/Windvale-Library-Scripted-Model-Provider.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj',
+            'Specifications/Windvale-Model-Protocol.md'
+        )
+        Suites = @('workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'database library owner'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @('libraries', 'packages')
@@ -1610,7 +1625,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3480 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3483 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

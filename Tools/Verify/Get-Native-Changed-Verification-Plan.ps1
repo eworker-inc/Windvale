@@ -731,6 +731,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'workspace-project2'
     } elseif ($Path.StartsWith('Libraries/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Libraries/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tests/Fixtures/Models/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Page-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Superblock-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Durable-Commit-', [StringComparison]::Ordinal) -or
@@ -773,6 +774,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Native-Hosted-Snapshot-Page.wvproj' -or
+        $Path -eq 'Specifications/Windvale-Model-Protocol.md' -or
         $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Specifications/Read-Only-Directory-Capability.md',
@@ -1791,6 +1793,8 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj') {
+        Add-Suite 'libraries'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-U64.wvproj') {

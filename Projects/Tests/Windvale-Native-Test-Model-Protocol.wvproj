@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Models/Model-Protocol-Self-Test.wv"
+source "Libraries/Models/Model-Protocol.wv"
+source "Libraries/Models/Scripted-Model-Provider.wv"
+emit wvb
