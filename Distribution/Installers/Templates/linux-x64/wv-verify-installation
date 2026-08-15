@@ -21,7 +21,7 @@ header=$(sed -n '1p' "$manifest")
 version_record=$(sed -n '2p' "$manifest")
 target_record=$(sed -n '3p' "$manifest")
 [ "$header" = 'windvale-installer-payload 1' ] || { echo 'Invalid payload header.' >&2; exit 1; }
-printf '%s\n' "$version_record" | grep -Eq '^version [0-9]+\.[0-9]+\.[0-9]+-dev\.[0-9]+$' || {
+printf '%s\n' "$version_record" | grep -Eq '@@GREP_VERSION_PATTERN@@' || {
     echo 'Invalid payload version.' >&2
     exit 1
 }

@@ -29,10 +29,10 @@ foreach ($ProtectedRoot in @($DriveRoot, $UserRoot, $LocalApplicationData)) {
 }
 
 $RecordPath = Join-Path $InstallRoot "installations/$Generation.txt"
-$ExpectedRecord = "windvale-development-installation 1`nversion $Version`ntarget $Target`ngeneration $Generation`npayload $Payload`n"
+$ExpectedRecord = "@@INSTALLATION_RECORD@@`nversion $Version`ntarget $Target`ngeneration $Generation`npayload $Payload`n"
 if (!(Test-Path -LiteralPath $RecordPath -PathType Leaf) -or
     [IO.File]::ReadAllText($RecordPath).Replace("`r`n", "`n") -ne $ExpectedRecord) {
-    throw 'The exact Windvale development installation record is absent.'
+    throw 'The exact @@INSTALLATION_DESCRIPTION@@ record is absent.'
 }
 
 $BinRoot = Join-Path $InstallRoot 'bin'

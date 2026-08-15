@@ -563,10 +563,20 @@ foreach ($Path in $Paths) {
             Add-Gap "verification:$([IO.Path]::GetFileName($Path))"
         }
     } elseif ($Path.StartsWith('Tools/Native/', [StringComparison]::Ordinal)) {
-        Add-Native-Tool-Suite $Path
+        if ([IO.Path]::GetFileName($Path) -in @(
+            'Test-Development-Installers.cmd',
+            'Test-Development-Installers.sh'
+        )) {
+            Add-Suite 'installers'
+        } else {
+            Add-Native-Tool-Suite $Path
+        }
     } elseif ($Path.StartsWith('Tools/Release/', [StringComparison]::Ordinal)) {
-        if ($Path -eq 'Tools/Release/Build-Development-Installers.mjs') {
-            Add-Suite 'development-installers'
+        if ($Path -in @(
+            'Tools/Release/Build-Development-Installers.mjs',
+            'Tools/Release/Build-Installers.mjs'
+        )) {
+            Add-Suite 'installers'
         } elseif ($Path -in @(
             'Tools/Release/Create-Release-Envelope.mjs',
             'Tools/Release/Verify-Release-Envelope.mjs'
@@ -579,7 +589,7 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal) -or
         $Path -eq 'LICENSE.md') {
-        Add-Suite 'development-installers'
+        Add-Suite 'installers'
     } elseif ($Path.StartsWith('Distribution/Releases/', [StringComparison]::Ordinal)) {
         Add-Suite 'release-envelope'
     } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal) -or
@@ -1377,7 +1387,7 @@ foreach ($Path in $Paths) {
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
-            'development-installers'
+            'installers'
         )
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Front-Door/',
@@ -1386,7 +1396,7 @@ foreach ($Path in $Paths) {
             'wvb-runner-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
-            'development-installers'
+            'installers'
         )
     } elseif ($Path -in @(
         'Artifacts/Native-Aot-Composition-Probe/Return-42.exe',
@@ -1468,8 +1478,11 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         if ($Path -eq 'Specifications/Seed-Conformance.md') {
             $RunPlanVerification = $true
-        } elseif ($Path -eq 'Specifications/Windvale-Development-Installer.md') {
-            Add-Suite 'development-installers'
+        } elseif ($Path -in @(
+            'Specifications/Windvale-Development-Installer.md',
+            'Specifications/Windvale-Installer.md'
+        )) {
+            Add-Suite 'installers'
         } elseif ($Path -eq 'Specifications/Windvale-Release-Envelope.md') {
             Add-Suite 'release-envelope'
         } elseif ($Path -eq 'Specifications/Windvale-Capability-Approval-And-Launch.md') {

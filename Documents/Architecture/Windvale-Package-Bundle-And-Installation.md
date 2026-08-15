@@ -6,8 +6,8 @@ This document defines the broader deterministic package bundle, immutable host
 store, installation generation, activation, rollback, and capability-aware
 launch transaction. Decision 0561 implements Bundle 1 and bounded immutable
 publication for the single exact WVDB Query Package 1 / Lock 1 application.
-Decision 0562 implements a separate unsigned native-tool development installer
-with one payload-derived per-user generation. General activation, approvals,
+Decisions 0562 and 0565 implement separate development/stable native-tool
+installer artifacts with one payload-derived per-user generation. General activation, approvals,
 rollback, self-update, repair, and garbage collection remain proposed.
 
 The design composes with [release discovery 1](Windvale-Release-Discovery.md): a

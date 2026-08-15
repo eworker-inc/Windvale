@@ -126,7 +126,7 @@ done
 echo 'windvale installer step=record-installation item=4/5'
 mkdir -p -- "$install_root/installations"
 printf '%s\n' \
-    'windvale-development-installation 1' \
+    '@@INSTALLATION_RECORD@@' \
     "version $version" \
     "target $target" \
     "generation $generation" \

@@ -92,7 +92,9 @@ artifacts required by
 [`Windvale-Release-Envelope.md`](../../Specifications/Windvale-Release-Envelope.md):
 
 - deterministic source archive for the selected revision/tree;
-- qualified Windows and Linux installers;
+- qualified `windvale-0.1.0-windows-x64.zip` and
+  `windvale-0.1.0-linux-x64.tar.gz` stable installers from the explicit release
+  installer input (never the `0.1.0-dev.1` artifacts);
 - exact WVDB Query Bundle 1;
 - one canonical bundle of the approval and two launch records;
 - license inventory;
@@ -148,7 +150,8 @@ release signature alone is insufficient.
 Only after the owner accepts the root identity, the envelope is reproducible,
 offline verification passes, and final qualification is green:
 
-1. create a signed annotated `v0.1.0` tag at the selected commit;
+1. create a signed annotated `v0.1.0` tag at the selected commit using the
+   project's configured Git signing identity;
 2. push the immutable tag to both remotes;
 3. publish release assets and notes against that exact tag;
 4. publish root-key identity, manifest identity, and verification instructions
@@ -158,3 +161,8 @@ offline verification passes, and final qualification is green:
 Never move or reuse `v0.1.0`. A packaging correction uses a new version and
 sequence. If the key or selected state is uncertain, stop publication rather
 than weakening the gate.
+
+The Ed25519 release-envelope key is not automatically a Git tag-signing key.
+Confirm the independent Git signing identity and public verification path before
+tagging; do not export or convert the envelope private key merely to satisfy
+`git tag -s`.

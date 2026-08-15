@@ -3,7 +3,8 @@
 - Status: Qualified and implemented
 - Date: 2026-08-15
 - Advances: Milestone 3, Decisions 0183 and 0561
-- Contract: [Windvale development installer 1](../../Specifications/Windvale-Development-Installer.md)
+- Contract: [Windvale installer 1](../../Specifications/Windvale-Installer.md)
+- Advanced by: [Decision 0565](0565-First-Stable-Preview-Installers.md)
 - Evidence: [paired-host Verify run 31881681424](https://github.com/eworker-inc/Windvale/actions/runs/31881681424)
 
 ## Context

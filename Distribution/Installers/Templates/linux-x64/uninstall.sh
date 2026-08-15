@@ -29,13 +29,13 @@ case "$home_root/" in "$install_root/"*) echo 'Refusing to remove a broad filesy
 case "$data_home/" in "$install_root/"*) echo 'Refusing to remove a broad filesystem root.' >&2; exit 1 ;; esac
 record=$install_root/installations/$generation.txt
 expected_record=$(printf '%s\n' \
-    'windvale-development-installation 1' \
+    '@@INSTALLATION_RECORD@@' \
     "version $version" \
     "target $target" \
     "generation $generation" \
     "payload $payload")
 [ -f "$record" ] && [ "$(cat -- "$record")" = "$expected_record" ] || {
-    echo 'The exact Windvale development installation record is absent.' >&2
+    echo 'The exact @@INSTALLATION_DESCRIPTION@@ record is absent.' >&2
     exit 1
 }
 

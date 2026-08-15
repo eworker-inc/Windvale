@@ -121,7 +121,8 @@ Important preview limits include:
 - Release Envelope 1: 4,096 artifacts, 256 MiB per artifact, 512 MiB total,
   8 MiB manifest/input metadata, 1,024-byte/32-segment paths, and 8,192 complete
   inventory entries;
-- development installer: exactly two targets and seven native tools per target;
+- Installer 1: exactly two channels, two targets per channel, and seven native
+  tools per target;
 - Bundle 1 implementation: 4 MiB in memory, with the larger format boundary not
   admitted by this implementation;
 - WVB/WVO and native tools: the exact bounds owned by their format and

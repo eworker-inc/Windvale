@@ -486,7 +486,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
-            'development-installers'
+            'installers'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1302,9 +1302,10 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'development installer owner'
+        Name = 'installer owner'
         Paths = @(
             'Distribution/Installers/Windvale-Development-Installer.json',
+            'Distribution/Installers/Windvale-Release-Installer.json',
             'Distribution/Installers/Templates/windows-x64/Install-Windvale.ps1',
             'Distribution/Installers/Templates/windows-x64/Uninstall-Windvale.ps1',
             'Distribution/Installers/Templates/windows-x64/wv.cmd',
@@ -1313,13 +1314,13 @@ $NativeCases = @(
             'Distribution/Installers/Templates/linux-x64/uninstall.sh',
             'Distribution/Installers/Templates/linux-x64/wv',
             'Distribution/Installers/Templates/linux-x64/wv-verify-installation',
-            'Tools/Release/Build-Development-Installers.mjs',
-            'Tools/Native/Test-Development-Installers.cmd',
-            'Tools/Native/Test-Development-Installers.sh',
-            'Specifications/Windvale-Development-Installer.md',
+            'Tools/Release/Build-Installers.mjs',
+            'Tools/Native/Test-Installers.cmd',
+            'Tools/Native/Test-Installers.sh',
+            'Specifications/Windvale-Installer.md',
             'LICENSE.md'
         )
-        Suites = @('development-installers')
+        Suites = @('installers')
         Gaps = @()
         VerifyPlan = $false
     },

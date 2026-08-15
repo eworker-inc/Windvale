@@ -30,7 +30,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Project manifest](Windvale-Project.md)
 - [Package manifest and deterministic lock](Windvale-Package.md)
 - [Package bundle version 1](Windvale-Package-Bundle.md)
-- [Development installer version 1](Windvale-Development-Installer.md)
+- [Installer version 1](Windvale-Installer.md)
 - [Release envelope version 1](Windvale-Release-Envelope.md)
 - [Capability approval and launch records version 1](Windvale-Capability-Approval-And-Launch.md)
 - [Native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md)

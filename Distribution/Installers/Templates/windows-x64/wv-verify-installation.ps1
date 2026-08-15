@@ -39,7 +39,7 @@ $Lines = [IO.File]::ReadAllLines($ManifestPath)
 if ($Lines.Count -lt 4 -or $Lines[0] -ne 'windvale-installer-payload 1') {
     throw 'The payload manifest header is invalid.'
 }
-if ($Lines[1] -notmatch '^version ([0-9]+\.[0-9]+\.[0-9]+-dev\.[0-9]+)$') {
+if ($Lines[1] -notmatch '@@POWERSHELL_VERSION_PATTERN@@') {
     throw 'The payload version record is invalid.'
 }
 if ($Lines[2] -ne "target $ExpectedTarget") {

@@ -5,13 +5,13 @@ import { fileURLToPath } from "node:url";
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, "../..");
-const INPUT_PATH = path.join(
+const DEFAULT_INPUT_PATH = path.join(
     REPOSITORY_ROOT,
     "Distribution/Installers/Windvale-Development-Installer.json",
 );
 const SAFE_RELATIVE_PATH = /^[A-Za-z0-9._/-]+$/;
 const SHA256 = /^[0-9a-f]{64}$/;
-const VERSION = /^0\.[0-9]+\.[0-9]+-dev\.[0-9]+$/;
+const VERSION = /^0\.[0-9]+\.[0-9]+(?:-dev\.[0-9]+)?$/;
 const ARCHIVE_ROOT = /^windvale-[a-z0-9.-]+-(?:windows|linux)-x64$/;
 const DOS_DATE_1980_01_01 = 0x0021;
 
@@ -121,15 +121,30 @@ function Replaceˉtokens(Bytes, Values, LineEnding = "lf") {
     return Textˉbytes(Text, LineEnding);
 }
 
-function Versionˉtext(VersionValue, Target) {
+function Versionˉtext(VersionValue, Channel, Target) {
     return Textˉbytes(
         `Windvale ${VersionValue}\n` +
-        `Channel development\n` +
+        `Channel ${Channel}\n` +
         `Target ${Target}\n`,
     );
 }
 
-function Readmeˉtext(VersionValue, Target) {
+function Readmeˉtext(VersionValue, Channel, Target) {
+    if (Channel === "stable") {
+        return Textˉbytes(
+            `Windvale ${VersionValue} installer (${Target})\n` +
+            "\n" +
+            "This is the installable Windvale v0.1.0 product preview.\n" +
+            "Verify the archive through its signed release envelope before installation.\n" +
+            "This preview carries no automatic update client.\n" +
+            "\n" +
+            "Installed commands:\n" +
+            "  wv, wvbuild, wvasm, wvlink, wvrun, wvdump, wvverify, wvpublish\n" +
+            "\n" +
+            "Use `wv version`, `wv tools`, and `wv doctor` for local inspection.\n" +
+            "The native tools remain separate commands so their full argument lists are preserved.\n",
+        );
+    }
     return Textˉbytes(
         `Windvale ${VersionValue} development installer (${Target})\n` +
         "\n" +
@@ -160,17 +175,31 @@ function Payloadˉmanifest(VersionValue, Target, Files) {
     return Textˉbytes(`${Lines.join("\n")}\n`);
 }
 
-function Loadˉinput() {
-    const Input = JSON.parse(Readˉcanonicalˉtext(INPUT_PATH));
-    if (Input.format !== "windvale-development-installer-input-1" ||
-        !VERSION.test(Input.version ?? "") || Input.channel !== "development" ||
+function Resolveˉinputˉpath(Value) {
+    if (Value === undefined) return DEFAULT_INPUT_PATH;
+    const Relative = Assertˉordinaryˉrelativeˉpath(Value, "installer input path");
+    if (!Relative.startsWith("Distribution/Installers/") ||
+        !Relative.endsWith(".json")) {
+        Fail("The installer input must be repository distribution metadata.");
+    }
+    return path.join(REPOSITORY_ROOT, ...Relative.split("/"));
+}
+
+function Loadˉinput(InputPath) {
+    const Input = JSON.parse(Readˉcanonicalˉtext(Resolveˉinputˉpath(InputPath)));
+    const IsDevelopment = Input.channel === "development" &&
+        /-dev\.[0-9]+$/.test(Input.version ?? "");
+    const IsStable = Input.channel === "stable" &&
+        !String(Input.version ?? "").includes("-");
+    if (Input.format !== "windvale-installer-input-1" ||
+        !VERSION.test(Input.version ?? "") || (!IsDevelopment && !IsStable) ||
         !Array.isArray(Input.sharedFiles) || !Array.isArray(Input.targets) ||
         Input.targets.length !== 2) {
-        Fail("The development installer input envelope is invalid.");
+        Fail("The installer input envelope is invalid.");
     }
     const TargetIds = Input.targets.map(Target => Target.id).sort();
     if (TargetIds.join("|") !== "linux-x64|windows-x64") {
-        Fail("The development installer target set is invalid.");
+        Fail("The installer target set is invalid.");
     }
     return Input;
 }
@@ -180,7 +209,7 @@ function Buildˉtarget(Input, Target) {
         !Array.isArray(Target.files) || Target.files.length !== 7 ||
         !Assertˉordinaryˉrelativeˉpath(Target.archive, "archive name") ||
         !["zip-store-1", "tar-gzip-store-1"].includes(Target.archiveFormat)) {
-        Fail(`Invalid development installer target: ${Target.id}`);
+        Fail(`Invalid installer target: ${Target.id}`);
     }
 
     const PayloadFiles = [];
@@ -192,12 +221,12 @@ function Buildˉtarget(Input, Target) {
     }
     Addˉpayloadˉfile(PayloadFiles, {
         path: "README.txt",
-        bytes: Readmeˉtext(Input.version, Target.id),
+        bytes: Readmeˉtext(Input.version, Input.channel, Target.id),
         mode: 0o644,
     });
     Addˉpayloadˉfile(PayloadFiles, {
         path: "VERSION",
-        bytes: Versionˉtext(Input.version, Target.id),
+        bytes: Versionˉtext(Input.version, Input.channel, Target.id),
         mode: 0o644,
     });
     if (Target.id === "windows-x64") {
@@ -208,7 +237,14 @@ function Buildˉtarget(Input, Target) {
         });
         Addˉpayloadˉfile(PayloadFiles, {
             path: "bin/wv-verify-installation.ps1",
-            bytes: Readˉtemplate(Target.id, "wv-verify-installation.ps1"),
+            bytes: Replaceˉtokens(
+                Readˉtemplate(Target.id, "wv-verify-installation.ps1"),
+                {
+                    POWERSHELL_VERSION_PATTERN: Input.channel === "development" ?
+                        "^version ([0-9]+\\.[0-9]+\\.[0-9]+-dev\\.[0-9]+)$" :
+                        "^version ([0-9]+\\.[0-9]+\\.[0-9]+)$",
+                },
+            ),
             mode: 0o755,
         });
     } else {
@@ -219,7 +255,14 @@ function Buildˉtarget(Input, Target) {
         });
         Addˉpayloadˉfile(PayloadFiles, {
             path: "bin/wv-verify-installation",
-            bytes: Readˉtemplate(Target.id, "wv-verify-installation"),
+            bytes: Replaceˉtokens(
+                Readˉtemplate(Target.id, "wv-verify-installation"),
+                {
+                    GREP_VERSION_PATTERN: Input.channel === "development" ?
+                        "^version [0-9]+\\.[0-9]+\\.[0-9]+-dev\\.[0-9]+$" :
+                        "^version [0-9]+\\.[0-9]+\\.[0-9]+$",
+                },
+            ),
             mode: 0o755,
         });
     }
@@ -232,6 +275,10 @@ function Buildˉtarget(Input, Target) {
         TARGET: Target.id,
         PAYLOAD_SHA256: PayloadSha256,
         GENERATION: Generation,
+        INSTALLATION_RECORD: Input.channel === "development" ?
+            "windvale-development-installation 1" : "windvale-installation 1",
+        INSTALLATION_DESCRIPTION: Input.channel === "development" ?
+            "Windvale development installation" : "Windvale installation",
     };
     const ArchiveFiles = [...PayloadFiles, {
         path: "Payload-Manifest.txt",
@@ -273,7 +320,7 @@ function Buildˉtarget(Input, Target) {
         (Target.expectedArchiveSha256 !== ArchiveSha256 ||
          Target.expectedArchiveBytes !== ArchiveBytes.length ||
          Target.expectedPayloadSha256 !== PayloadSha256)) {
-        Fail(`Pinned development installer identity changed: ${Target.id}`);
+        Fail(`Pinned installer identity changed: ${Target.id}`);
     }
     return {
         target: Target,
@@ -429,7 +476,7 @@ function Gzipˉstored(Value) {
 function Findˉtarget(Input, ArtifactPath) {
     const Name = path.basename(ArtifactPath);
     const Target = Input.targets.find(Current => Current.archive === Name);
-    if (!Target) Fail(`Unknown development installer artifact: ${Name}`);
+    if (!Target) Fail(`Unknown installer artifact: ${Name}`);
     return Target;
 }
 
@@ -438,7 +485,7 @@ function Verifyˉartifact(Input, ArtifactPath) {
     const Built = Buildˉtarget(Input, Target);
     const Observed = fs.readFileSync(ArtifactPath);
     if (!Observed.equals(Built.archiveBytes)) {
-        Fail(`Development installer artifact differs: ${Target.id}`);
+        Fail(`Installer artifact differs: ${Target.id}`);
     }
     return Built;
 }
@@ -467,7 +514,7 @@ function Extractˉverified(Built, OutputPath) {
 
 function Printˉidentity(Built) {
     process.stdout.write(
-        `development installer artifact target=${Built.target.id} ` +
+        `installer artifact target=${Built.target.id} ` +
         `bytes=${Built.archiveBytes.length} sha256=${Built.archiveSha256} ` +
         `payload=${Built.payloadSha256} generation=${Built.generation}\n`,
     );
@@ -475,14 +522,14 @@ function Printˉidentity(Built) {
 
 const [Command, ...Arguments] = process.argv.slice(2);
 try {
-    if (Command === "build" && Arguments.length === 1) {
-        process.stdout.write("development installer step=load-input item=1/4\n");
-        const Input = Loadˉinput();
+    if (Command === "build" && (Arguments.length === 1 || Arguments.length === 2)) {
+        process.stdout.write("installer step=load-input item=1/4\n");
+        const Input = Loadˉinput(Arguments[1]);
         const OutputRoot = Assertˉemptyˉoutputˉdirectory(Arguments[0]);
         const BuiltTargets = [];
         for (let Index = 0; Index < Input.targets.length; Index++) {
             process.stdout.write(
-                `development installer step=construct target=${Input.targets[Index].id} ` +
+                `installer step=construct channel=${Input.channel} target=${Input.targets[Index].id} ` +
                 `item=${Index + 2}/4\n`,
             );
             const Built = Buildˉtarget(Input, Input.targets[Index]);
@@ -493,23 +540,24 @@ try {
             );
             BuiltTargets.push(Built);
         }
-        process.stdout.write("development installer step=report item=4/4\n");
+        process.stdout.write("installer step=report item=4/4\n");
         for (const Built of BuiltTargets) Printˉidentity(Built);
-        process.stdout.write("development installer build status=Complete artifacts=2\n");
-    } else if (Command === "verify" && Arguments.length === 1) {
-        const Input = Loadˉinput();
+        process.stdout.write(`installer build status=Complete channel=${Input.channel} artifacts=2\n`);
+    } else if (Command === "verify" && (Arguments.length === 1 || Arguments.length === 2)) {
+        const Input = Loadˉinput(Arguments[1]);
         const Built = Verifyˉartifact(Input, Arguments[0]);
         Printˉidentity(Built);
-        process.stdout.write(`development installer verify status=Valid target=${Built.target.id}\n`);
-    } else if (Command === "extract" && Arguments.length === 2) {
-        const Input = Loadˉinput();
+        process.stdout.write(`installer verify status=Valid channel=${Input.channel} target=${Built.target.id}\n`);
+    } else if (Command === "extract" && (Arguments.length === 2 || Arguments.length === 3)) {
+        const Input = Loadˉinput(Arguments[2]);
         const Built = Verifyˉartifact(Input, Arguments[0]);
         Extractˉverified(Built, Arguments[1]);
-        process.stdout.write(`development installer extract status=Complete target=${Built.target.id}\n`);
+        process.stdout.write(`installer extract status=Complete channel=${Input.channel} target=${Built.target.id}\n`);
     } else {
         process.stderr.write(
-            "Usage: node Build-Development-Installers.mjs " +
-            "<build output-directory|verify artifact|extract artifact output-directory>\n",
+            "Usage: node Build-Installers.mjs " +
+            "<build output-directory [input]|verify artifact [input]|" +
+            "extract artifact output-directory [input]>\n",
         );
         process.exitCode = 64;
     }

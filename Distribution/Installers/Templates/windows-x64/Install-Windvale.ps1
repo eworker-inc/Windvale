@@ -102,7 +102,7 @@ foreach ($Command in $Commands) {
 Write-Output 'windvale installer step=record-installation item=4/5'
 $InstallationsRoot = Join-Path $InstallRoot 'installations'
 New-Item -ItemType Directory -Path $InstallationsRoot -Force | Out-Null
-$Record = "windvale-development-installation 1`nversion $Version`ntarget $Target`ngeneration $Generation`npayload $Payload`n"
+$Record = "@@INSTALLATION_RECORD@@`nversion $Version`ntarget $Target`ngeneration $Generation`npayload $Payload`n"
 [IO.File]::WriteAllText(
     (Join-Path $InstallationsRoot "$Generation.txt"),
     $Record,
