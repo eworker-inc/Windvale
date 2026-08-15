@@ -1,10 +1,31 @@
 # Windvale changelog
 
-Windvale has not issued a stable release. Development history and qualification evidence are recorded in Git, `Documents/Decisions/`, and `Documents/Project/Seed-Verification-Evidence.md`.
+Windvale published its first signed experimental preview, `v0.1.0`, on 15 August 2026. Development history and qualification evidence are recorded in Git, `Documents/Decisions/`, and `Documents/Project/Seed-Verification-Evidence.md`.
 
-Once releases begin, Windvale will use `v0.y.z` tags while public contracts remain experimental. A `0.y` change may revise an experimental contract without backward compatibility, but release notes must identify affected formats and migration expectations. A future `1.0.0` release requires an explicit stability and support decision.
+Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` change may revise an experimental contract without backward compatibility, but release notes must identify affected formats and migration expectations. A future `1.0.0` release requires an explicit stability and support decision.
 
 ## Unreleased
+
+No unreleased product changes are recorded after `v0.1.0` yet.
+
+## 0.1.0 — 2026-08-15
+
+### Released
+
+- Published signed Windows x64 and Linux x64 per-user installers with the `wv`
+  front door, compiler, assembler, linker, runtime, verifier, publisher, and core
+  inspection tools.
+- Published Release Envelope 1 with the authenticated public root, bounded
+  `0.1.x` release delegation, signed manifest, public keys, offline verifier,
+  source/provenance/license inventory, Stage 0 recovery references, installer and
+  WVDB Query assets, and exact qualification reports.
+- Qualified exact commit `c1d350949207c7ee6f82ed2c399b748e188bf949`
+  independently on Windows and Linux in GitHub run 31889107326 before signing
+  tag `v0.1.0` and publishing the immutable preview assets.
+- Closed Milestones 1 through 3: bounded development feedback, the package-backed
+  WVDB Query application, and the first inspectable Windvale product preview.
+
+## Development history through 0.1.0
 
 ### Changed
 

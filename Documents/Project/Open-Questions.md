@@ -1,6 +1,7 @@
 # Windvale open questions
 
-> Status: Active unresolved choices after the completed .NET retirement gate.
+> Status: Active unresolved choices after completed Milestones 1 through 3 and
+> the signed `v0.1.0` preview.
 > Detailed recommendations live in architecture documents; this file lists only
 > questions that can change the active roadmap or its next bounded slices.
 
@@ -21,17 +22,33 @@ The following are no longer open project questions:
 - Windows and Linux remain permanent hosts, canonical WVB remains the shared
   distribution contract, and Windvale OS remains the vertical integration
   target.
+- Milestone 1 established affected-owner feedback within the two-minute local
+  and five-minute pull-request targets while keeping complete qualification an
+  explicit promotion gate.
+- Milestone 2 established the first admitted Bundle 1, bounded immutable store,
+  package-backed WVDB Query application, and rights-reduced success/denial path.
+- Milestone 3 established the official 0.1 root/release delegation, signed
+  Release Envelope 1, offline verifier, Windows/Linux installers, and exact-state
+  qualification published as `v0.1.0`.
 
 Historical documents that predate those decisions must not present them as
 unfinished work.
 
 ## Immediate roadmap questions
 
-### Development feedback
+### Milestone 4 selection
 
-- After representative Windows and Linux runs, can ordinary pull-request
-  verification meet the five-minute target with affected owners on both hosts,
-  or should one host run during iteration and the second run at merge readiness?
+- Is the primary next user an installer/tool user, a Windvale OS developer, or
+  an application/database user?
+- Should Milestone 4 close the offline generation-and-rollback lifecycle,
+  complete OS-1 composition, or prove one bounded durable application workload?
+- Does the selected gate produce `v0.2.0`, a development checkpoint, or evidence
+  deliberately combined with a later product track?
+- Which dependencies are explicitly excluded so networking, new language
+  semantics, or broader host authority cannot silently expand the gate?
+
+### Development verification maintenance
+
 - Which remaining expensive owner spends most of its time reconstructing
   immutable products rather than exercising changed behavior?
 - Can the 1,600-line changed-path planner be replaced by declarative per-owner
@@ -42,7 +59,7 @@ unfinished work.
 - Which artifact families can move to deliberate promotion commits so ordinary
   semantic work does not repin unrelated native applications and documentation?
 
-### Useful package-backed application
+### Durable application and database
 
 - How much repeated depth-three update, reclamation, and restart recovery does
   the application actually need before broader database work should wait?
@@ -80,14 +97,14 @@ The durable direction is in
 [Packages-Releases-And-Recovery.md](../Architecture/Packages-Releases-And-Recovery.md).
 The active questions are:
 
-- Which bundle encoding and maximum sizes can be independently admitted before
-  extraction without requiring compression or a registry?
-- Which protected offline locations, custodians, backup failure domains, and
-  independent authenticated channel will the project owner accept for the first
-  official root identity?
 - When a second preview is prepared, is one replacement release key beneath a
   new root-signed policy sufficient, or does operational experience justify a
   threshold/root-rotation successor contract?
+- Which two real packages are sufficient to prove a general offline resolver,
+  generation inventory, activation recovery, and rollback without adding a
+  registry?
+- Which exact launcher boundary binds a selected generation and its approvals
+  without giving the package client ambient process or filesystem authority?
 
 ## Later architecture questions
 
@@ -118,6 +135,8 @@ implementation checkpoints, fixture additions, artifact refreshes, and timing
 measurements should update code, specifications, the changelog, or the progress
 dashboard without creating another decision record.
 
-The next decision should therefore be limited to the first post-Probe-40
-resource-domain and atomic-launch contract, unless release-ceremony experience
-demonstrates that Release Envelope 1 needs a genuine successor policy.
+The next decision should define the selected Milestone 4 outcome and its finite
+gate. If OS-1 is selected, limit the following semantic decision to the first
+post-Probe-40 resource-domain and atomic-launch contract. If the offline package
+lifecycle is selected, decide Generation 1 and Activation 1 transaction semantics
+before adding commands or network retrieval.

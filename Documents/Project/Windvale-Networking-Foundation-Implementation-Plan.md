@@ -219,8 +219,10 @@ and cryptographic vectors.
 
 ## Immediate recommendation
 
-Continue the offline package slices now. In parallel sequence—not as a competing
-installer implementation—start network slice 1, then slice 2. Do not add a
-synchronous `download(url)` host call or package-specific HTTPS capability. The
-first real online package request should arrive only after the common operation
-model, secure-stream boundary, and shared HTTP framing exist.
+The `v0.1.0` offline installer and release subset is complete. Do not make
+networking the next milestone automatically. If a selected product requires
+online retrieval, start network slice 1 and then slice 2 as shared infrastructure,
+not as a competing package-client implementation. Do not add a synchronous
+`download(url)` host call or package-specific HTTPS capability. The first real
+online package request should arrive only after the common operation model,
+secure-stream boundary, and shared HTTP framing exist.

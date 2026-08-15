@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2; [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md) implements its admitted Bundle 1 and bounded immutable publication; Decisions [0562](../Decisions/0562-First-Deterministic-Development-Installers.md) and [0565](../Decisions/0565-First-Stable-Preview-Installers.md) implement deterministic development/stable per-user native-tool installer candidates; and Decisions [0563](../Decisions/0563-First-Release-Envelope-And-Key-Policy.md) and [0564](../Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md) implement candidate release-signing/offline-verification and exact WVDB approval/launch records. No official trust root or signed product envelope, general resolver, updater, multi-generation activation/rollback manager, or Windvale OS A/B installation contract exists yet.
+Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2; [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md) implements its admitted Bundle 1 and bounded immutable publication; Decisions [0562](../Decisions/0562-First-Deterministic-Development-Installers.md) and [0565](../Decisions/0565-First-Stable-Preview-Installers.md) implement deterministic development/stable per-user native-tool installers; and Decisions [0563](../Decisions/0563-First-Release-Envelope-And-Key-Policy.md), [0564](../Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md), and [0566](../Decisions/0566-Passphrase-Protected-Release-Key-Custody.md) own the release-signing, offline-verification, approval, launch, and protected-key contracts used by the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). The 0.1 gate is complete. A general resolver, updater, multi-generation activation/rollback manager, and Windvale OS A/B installation contract do not exist yet.
 
 ## Recommendation
 
@@ -101,9 +101,11 @@ The boot-selection mutation must distinguish rejection, completed switch, exact 
 
 Rollback for security-sensitive releases is policy, not an unconditional feature. A signed minimum-version or revoked-generation rule may prevent returning to a known-vulnerable version, but it requires trustworthy persistent state and a separately qualified recovery ceremony.
 
-## Recommended Windvale 0.1 gate
+## Achieved Windvale 0.1 gate
 
-Windvale 0.1 should be the first inspectable product release, not the first OS release. Recommended required evidence is:
+Windvale 0.1 is the first inspectable product release, not the first OS release.
+The signed `v0.1.0` preview completed this gate on 15 August 2026 with the
+following evidence:
 
 1. the normal Windows and Linux build, verify, inspect, and run path is .NET-free under the complete Decision 0057 retirement gate;
 2. the archived Stage 0 recovery bundle reconstructs the exact native compiler/toolchain lineage from pinned inputs;
@@ -115,16 +117,16 @@ Windvale 0.1 should be the first inspectable product release, not the first OS r
 
 Windvale OS, a public package registry, automatic network updates, WebAssembly permanence, ARM64, broad hardware, a desktop, and 1.0 compatibility are not 0.1 requirements. If completing package v1 would delay a useful preview excessively, publish a clearly labeled development snapshot rather than weaken the 0.1 meaning.
 
-## Implementation sequence
+## Implementation standing and remaining sequence
 
-1. Keep Workspace 1 and Project 2 limited to deterministic source-build input; do not turn either into a package format.
-2. Generalize the implemented Package 1 / Lock 1 pilot only when a second real package requires resolution beyond its exact local-source graph.
-3. Add an independently verified content-addressed local store and deterministic package bundle.
-4. Bind selected package parts and approved capabilities into the clean-spawn launch plan.
-5. Promote the implemented unsigned local application and native-tool installer flows on Windows and Linux, then add signed release envelopes and offline release verification.
-6. Preserve the completed Decision 0057 normal-path retirement and exact Stage 0 recovery identity, then qualify the 0.1 checklist from one deliberately selected source state.
-7. Add installed generations and application rollback before a network package client.
-8. Add Windvale OS A/B system updates only after writable filesystem, durability, boot selection, civil time or signed freshness, key custody, and local recovery evidence exist.
+1. ✅ Keep Workspace 1 and Project 2 as deterministic source-build inputs rather than package formats.
+2. 🔵 Retain the exact Package 1 / Lock 1 pilot; generalize it only when a second real package requires resolution beyond the local-source graph.
+3. ✅ Implement the bounded independently verified content-addressed store and deterministic bundle required by Milestone 2.
+4. 🔵 Bind exact approved capabilities through the 0.1 launch records; a general clean-spawn launcher remains future work.
+5. ✅ Publish deterministic Windows/Linux installers plus the signed release envelope and offline verification evidence.
+6. ✅ Preserve Decision 0057 retirement and Stage 0 recovery, then qualify and publish the exact `v0.1.0` state.
+7. ○ Add installed generations, activation recovery, and application rollback before a network package client.
+8. ○ Add Windvale OS A/B system updates only after writable filesystem, durability, boot selection, civil time or signed freshness, key custody, and local recovery evidence exist.
 
 ## Deliberately open details
 

@@ -1,10 +1,10 @@
 # Post-.NET-retirement language and library stage
 
-> Status: Active next-stage product proposal after Decision 0526's completed
-> .NET retirement. This document does not itself add source syntax, WVB behavior,
-> packages, capability interfaces, or a new roadmap milestone. A focused
-> decision and measured consumer evidence remain required before any individual
-> contract is accepted or implemented.
+> Status: The first package/application foundation is complete under Milestone 2.
+> The remaining language and library items are consumer-driven future proposals;
+> this document does not itself add source syntax, WVB behavior, packages,
+> capability interfaces, or a new roadmap milestone. A focused decision and
+> measured consumer remain required before any individual contract is accepted.
 
 ## Purpose
 
@@ -20,8 +20,9 @@ native path when a direct consumer exists; it must not widen the frozen C#
 compiler. The roadmap closed this useful package-backed application as
 Milestone 2 while parallel track OS-1 continues the Windvale OS launch/service
 path. The two outcomes may share contracts without turning either into a
-prerequisite for every step of the other. The active 0.1 product release work is
-Milestone 3 and does not require OS-1 completion.
+prerequisite for every step of the other. Milestone 3 and the signed `v0.1.0`
+preview are also complete; future language/library breadth should be selected by
+Milestone 4 or another named consumer rather than attached retroactively to 0.1.
 
 The intended first outcome is one useful application that:
 
@@ -50,7 +51,8 @@ and exposes its exact capability closure for inspection. The bounded Bundle 1,
 immutable store publication, paired native applications, directory-provider
 binding, successful reads, and denied/unavailable cases pass on Windows and
 Linux in Verify runs 31872089188 and 31872429140. The complete outcome above is
-therefore closed; installer and release-envelope work belongs to Milestone 3.
+therefore closed. The installer and release-envelope outcome subsequently closed
+under Milestone 3.
 
 ## Keep the library model simple
 

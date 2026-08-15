@@ -2,16 +2,30 @@
 
 ## Status
 
-- Date: 2026-08-14
-- Status: Active implementation; focused package-format development started from merged commit `ce30152b`, while independent dual-host qualification remains a promotion gate
+- Date: 2026-08-15
+- Status: Rebaselined after the signed `v0.1.0` preview; the bounded bootstrap and release subset is complete, while the general package lifecycle remains proposed or partial
 - Product direction: [packages, releases, updates, and recovery](../Architecture/Packages-Releases-And-Recovery.md)
 - Official-source proposal: [hybrid Windvale endpoint and immutable GitHub archive](Windvale-Package-Source-Proposal.md)
 - Proposed formats and transactions: [release discovery](../Architecture/Windvale-Release-Discovery.md) and [bundle and installation](../Architecture/Windvale-Package-Bundle-And-Installation.md)
 
 This plan turns the accepted package direction and first WVDB Query source package
-into an ordered implementation path for the one-time native `wv` bootstrap. It
-does not claim that proposed release, bundle, store, generation, signature,
-network, launch, or update contracts are implemented.
+into an ordered implementation path beyond the one-time native `wv` bootstrap.
+The signed `v0.1.0` preview implements a bounded installer, Bundle 1/store,
+approval/launch-record, release-envelope, and offline-verification subset. It does
+not complete the general resolver, streaming admission, semantic store service,
+generation activation/rollback, online source, or self-updating client.
+
+| Slice | Standing after `v0.1.0` |
+| --- | :---: |
+| 1. General Package 1 and Lock 1 parser | 🔵 Partial |
+| 2. Bundle 1 writer and read-only verifier | ✅ Bounded subset complete |
+| 3. Streaming Bundle 1 admission | ○ Open |
+| 4. Offline signature and release metadata | 🔵 Release Envelope 1 subset complete |
+| 5. Immutable local object store | 🔵 Milestone 2 subset complete |
+| 6. Generations, approvals, activation, and rollback | 🔵 Approval/launch records only |
+| 7. Native launcher and `wv` client bootstrap | 🔵 Installer/bootstrap subset complete |
+| 8. Official network source | ○ Open |
+| 9. SDK release and qualification | 🔵 `v0.1.0` release subset complete |
 
 ## End-state requirements
 
@@ -48,7 +62,7 @@ or authority grant.
 | Immutable resource semantics | Foundation resource store and read-only directory snapshot library | Reusable for package resources and tests |
 | Random-access storage semantics | `storage.random_access_v1`, execution context 9, ABI-23 provider calls, Windows/Linux storage leaves, and durable database recovery | Focused native provider exists; it owns one fixed database object and is not a package-store or general launcher binding |
 | Hosted CLI basics | Process arguments, console/diagnostic output, whole-file read/write, native tool packaging | Enough for the first parser/verifier tools |
-| Capability metadata | WVB capability catalog, root transitive approval, Package 1 complete capability closure | Requirements exist; typed installed approval objects and launch binding do not |
+| Capability metadata | WVB capability catalog, root transitive approval, Package 1 complete capability closure, one canonical installed approval, and target-specific launch records | The exact WVDB path is implemented; general dynamic launcher binding, revocation, and generation policy remain open |
 | Useful second package | Existing complete native `wvdump` / WVB inspector project | Ready to exercise a general Package 1 parser without creating a duplicate application |
 
 The merged durable-database and compiler batch now provides valuable `u64`,
@@ -57,32 +71,23 @@ writer-fencing, and recovery evidence. The package store should reuse those
 semantic lessons and shared primitives, not depend on the WVDB format or make the
 database a bootstrap prerequisite.
 
-## Readiness decision
+## Readiness decision after `v0.1.0`
 
-The repository has enough compiler and portable-library surface to implement the
-offline package foundation now. Slice 1 began from the latest merged baseline
-without waiting for the unrelated broad verification backlog. Slice 2 may follow
-after the general Lock 1 and cross-file contracts are complete. Slice 3 may build
-directly on the new `u64` lowering and random-access provider work, but still has
-to implement the large streaming SHA-256 contract described below.
+The repository now has enough qualified compiler, portable-library, installer,
+bundle, immutable-publication, capability-record, and signing surface to begin a
+general **offline** package lifecycle without waiting for networking. The signed
+`v0.1.0` preview proves a working per-user bootstrap and offline release verifier;
+it must not be described as a general package manager or updater.
 
-The repository does not yet have enough complete libraries and host services to
-claim a working installer, online updater, or installed application launcher.
-Slices 4 through 8 contain required implementation, not integration of facilities
-that already exist. In particular, there is no release-signature verifier,
-package-store mutation service, civil time, secure network client, or dynamic
-capability-aware process launcher.
+The most coherent next package boundary is Slice 6 plus the remaining offline
+parts of Slices 1, 5, and 7: admit two real packages, construct immutable
+generations, switch activation durably, recover interruption, and roll back.
+Slice 3 is required when real bundle sizes exceed the bounded in-memory profile.
+Slice 8 remains separate until shared time, resolver, secure-stream, and HTTP
+contracts exist. There is still no general dynamic capability-aware launcher,
+online updater, or self-updating client.
 
-At the start of this implementation, GitHub Verify run
-[`31828399859`](https://github.com/eworker-inc/Windvale/actions/runs/31828399859)
-for merged commit `ce30152b` passed both native bootstrap jobs, both WebAssembly
-jobs, and every completed Linux retirement shard, but failed the Windows shard-4
-`wvo-export-renamer` owner. That failure does not identify a package-language
-feature requirement and does not block focused development. It does block using
-that commit as release or cross-host qualification evidence until corrected or
-explained by a passing descendant.
-
-## Verification policy while the broad gate is being repaired
+## Verification policy
 
 Development, integration, and promotion are separate gates:
 
@@ -181,6 +186,9 @@ formats in one command or hide semantic parsing in host scripts.
 
 ### Slice 1: general Package 1 and Lock 1 parser
 
+Standing: **partial**. The WVDB package/lock and portable parsing/admission cores
+are real; the second general package and non-specialized resolver shell remain.
+
 Development prerequisite: a pinned merged baseline and passing focused native
 package-format evidence. No additional compiler or database feature is required.
 The independent dual-host Qualification result remains mandatory before the
@@ -217,6 +225,8 @@ owner with no uncovered specification path.
 
 ### Slice 2: Bundle 1 writer and read-only verifier
 
+Standing: **bounded subset complete** under Decision 0561.
+
 Decision 0561 implements the bounded in-memory portion of this slice. Distinct
 Windvale-written writer and verifier tools produce and admit the exact WVDB Query
 bundle, and the permanent owner pins its identity and malformed-input self-test.
@@ -239,6 +249,8 @@ corrupt-blob, wrong-target, and hostile-executable reports.
 
 ### Slice 3: streaming Bundle 1 admission
 
+Standing: **open**.
+
 Add chunked read and SHA-256 with `u64` total geometry. The source core receives
 bounded immutable chunks and explicit positions; the host adapter cannot choose
 semantic offsets. Exercise chunk sizes one, 63, 64, 65, 3,072, and 65,536; short
@@ -250,6 +262,9 @@ small in-memory oracle and never requires complete bundle bytes in one Windvale
 `bytes` value.
 
 ### Slice 4: offline signature and release metadata
+
+Standing: **Release Envelope 1 subset complete** for `v0.1.0`; portable
+SHA-512/Ed25519 and the broader Root/Channel/Release discovery model remain open.
 
 Implement SHA-512 and Ed25519 verification as capability-free portable code with
 RFC 8032 test vectors plus an independent host-library differential oracle used
@@ -266,6 +281,9 @@ Exit gate: one completely offline directory authenticates an exact Release and
 the two package bundles on Windows and Linux without network or ambient trust.
 
 ### Slice 5: immutable local object store
+
+Standing: **Milestone 2 subset complete**; the semantic service, durable
+generation store, and crash matrix remain open.
 
 Decision 0561 also implements the Milestone 2 publication subset: an already
 admitted bundle publishes digest-derived blobs and the bundle through private
@@ -289,6 +307,9 @@ inventory on Windows and Linux, with host paths absent from portable evidence.
 
 ### Slice 6: generations, approvals, activation, and rollback
 
+Standing: **partial**. Exact approval and target launch records exist; generation
+construction, activation recovery, revocation, and rollback do not.
+
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,
 diagnostic, process arguments, whole-file read for the inspector, and the
@@ -303,6 +324,10 @@ change, denial, revocation, unavailable provider, corrupt generation, and
 deterministic reachability pass on both hosts.
 
 ### Slice 7: native launcher and `wv` client bootstrap
+
+Standing: **installer/bootstrap subset complete**. The installed `wv` front door
+and tools exist; the general package, generation, run, update, and recovery client
+commands below remain future work.
 
 Build one minimal platform launcher and one package-client application per host.
 The launcher embeds or pins the initial Root and client identity, selects the
@@ -336,6 +361,8 @@ application data.
 
 ### Slice 8: official network source
 
+Standing: **open** and deliberately independent of the next offline lifecycle.
+
 Add qualified civil time, resolver, secure connection, HTTP retrieval, TLS trust,
 bounded redirects, and streaming download behind explicit package-manager host
 services. Deploy signed metadata at `packages.windvale.ca/v1`; publish exact
@@ -353,6 +380,10 @@ official source on Windows and Linux, while an offline archive reproduces the sa
 objects and generation without GitHub API access.
 
 ### Slice 9: SDK release and qualification
+
+Standing: **`v0.1.0` release subset complete**. The signed preview carries the
+base native tools and evidence; general independently installable SDK bundles and
+the full package-system objective remain open.
 
 Package the compiler, assembler, linker, verifier, inspector, runner, and required
 libraries as exact independently inspectable bundles plus an SDK root package.

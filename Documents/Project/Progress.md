@@ -39,7 +39,7 @@ rebaseline.
 | Native-only repository | ✅ | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions; [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md) removes all tracked managed source and direct managed entry points from `main`; final [Qualification run 31889107326](https://github.com/eworker-inc/Windvale/actions/runs/31889107326) passed on the post-archive `v0.1.0` state. | Preserve the qualified boundary; create a separate baseline tag only if it adds value beyond the exact signed product tag. |
 | Development verification | ✅ | Milestone 1 is complete under [Decision 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md): front-door feedback takes 13,900 ms, the pinned WebAssembly engine path takes 29,674 ms, and the all-hit database owner fell from 402,638 ms to 87,800 ms with all eight behaviors. Exact warm [GitHub run 31852544894, attempt 2](https://github.com/eworker-inc/Windvale/actions/runs/31852544894/attempts/2) passes end to end in 1m42s on Windows and 1m15s on Linux; three owner closures and five checkpoint families are machine-checked. | Preserve the bounded path and add another checkpoint or owner only from new measured product pressure. |
 | Native qualification | ✅ | [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md) qualified 52 suites and 3,287 cases per host in four shards; the complete workflow took about 15 minutes. | Run this gate only for a selected release, promotion, bootstrap, security, ABI, or conformance state. |
-| Package-backed application | ✅ | Milestone 2 is complete under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md). Paired [Bundle 1/store run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) and [capability run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) retain the exact WVB, bundle, package, application, capability, success, denial, and offline-rebuild evidence. | Preserve these results while their declared inputs remain unchanged; use the completed package path as an installer and release-envelope consumer in Milestone 3. |
+| Package-backed application | ✅ | Milestone 2 is complete under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md). Paired [Bundle 1/store run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) and [capability run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) retain the exact WVB, bundle, package, application, capability, success, denial, and offline-rebuild evidence. | Preserve these results while their declared inputs remain unchanged; do not reopen the completed 0.1 release gate. |
 | Development/stable installers | ✅ | [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) retains the paired exact `0.1.0-dev.1` archives. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) pins separate `0.1.0` Windows/Linux archives, now published in the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve their exact checksums; packaging corrections receive a new version rather than replacing published assets. |
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
 | Windvale OS | 🔵 | OS-1 owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption, and generation-safe non-tail memory objects; the current native candidate also gates its fixed three-process path through exact ResourceDomain1 process/page/endpoint accounting and terminal zero charge. | Advance the fixed accounting gate into one atomic dynamic launch/supervision slice before broad shell, networking, or driver work. |
@@ -63,11 +63,11 @@ rebaseline.
 The later 52-suite/3,287-case plan is forward native coverage added after the
 retirement release. It does not reopen the completed dependency gate.
 
-## Current dependency-based work
+## Completed milestones and active work
 
-### 1. Milestone 2 complete: package-backed host application
+### Milestone 2 complete: package-backed host application
 
-The active product slice is WVDB Query from
+The completed product slice is WVDB Query from
 [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md).
 The completed manifest/lock closure and offline locked rebuild remain credited.
 The completed package path contains:
@@ -88,7 +88,7 @@ feature belongs in it.
 SQL, a registry, a network resolver, broad concurrency, and a database server
 are not required for this slice.
 
-### 2. Milestone 3 complete: Windvale 0.1 preview
+### Milestone 3 complete: Windvale 0.1 preview
 
 The signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0)
 was published on 15 August 2026 from exact commit
@@ -104,6 +104,15 @@ WVDB Query remains a separate example/application package; database servers and
 other applications remain separate packages or projects. Milestone 3 is closed.
 
 OS-1 is not a prerequisite for `v0.1.0`.
+
+### Next product milestone: selection pending
+
+The roadmap intentionally does not assign Milestone 4 yet. The bounded choices
+are completing OS-1 composition, completing an offline generation-and-rollback
+package lifecycle, or selecting one consumer-driven durable database increment.
+Networking remains an enabling track unless one of those selected outcomes
+requires it. Define one finite gate before promoting any candidate into the
+numbered product sequence.
 
 ### Independent promotion checkpoint: native-only repository baseline
 

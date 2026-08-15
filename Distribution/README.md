@@ -24,16 +24,18 @@ admits Bundle 1 and immutable local publication for that exact application.
 `Installers/` selects the exact native inputs for both the retained
 `0.1.0-dev.1` development artifacts and separate `0.1.0` stable Windows/Linux
 artifacts under Decisions 0562 and 0565. Generated archives are caller-owned
-release outputs and are not checked into this tree. A stable label is not an
-authenticity claim: only an owner-signed Release Envelope 1 and exact-state
-qualification may promote these bytes into the official product release.
+release outputs and are not checked into this tree. The owner-signed Release
+Envelope 1 and exact-state qualification promoted these bytes into the official
+[`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0).
+A version label by itself remains insufficient evidence of authenticity.
 
 `Releases/` freezes the non-secret input policy for Release Envelope 1. The
-creator and independent offline verifier are implemented, but generated public
-roots, signatures, manifests, and release artifacts remain external ceremony
-outputs. No official root or product envelope exists until the project owner
-accepts custody and publishes it. General resolver, registry, updater, rollback,
-and package-manager contracts remain outside Installer 1.
+creator and independent offline verifier are implemented. The project owner
+completed protected key custody and published the authenticated public root,
+signatures, manifest, keys, and product artifacts as external `v0.1.0` release
+outputs. Those generated outputs and all private keys remain outside this tree.
+General resolver, registry, updater, rollback, and package-manager contracts
+remain outside Installer 1.
 
 Package metadata does not grant capabilities. A launcher or service manager must
 still approve and bind each required rights-limited provider independently.
