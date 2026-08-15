@@ -129,10 +129,22 @@ Implemented database-path checkpoints currently cover:
 - flat linked images plus their exact link maps; and
 - packaged hosted applications with their producer closure.
 
+The database development owner additionally selects one exact target when the
+changed paths resolve to one maintained test-project closure. Shared, ambiguous,
+multi-target, and database-tool inputs fail closed to all fifteen targets.
+Hosted selections retain their dependency closure rather than reusing passing
+scenario output. Every progress record names its step, current item, requested
+target, elapsed time, and checkpoint outcome.
+
 On the measured Windows host, the warm two-case database path fell from the
 1,111-second clean fourteen-case owner to about 71 seconds. The complete
 change-aware front door, including planner contracts, fell to about 74 seconds.
 These are diagnostic host measurements, not portable pass thresholds.
+
+After the owner grew to fifteen targets, the measured all-hit Windows lifecycle
+selection runs the `engine` closure in 85,390 ms: tool validation, host storage,
+host tree reader, and engine. An independent logical-record selection completes
+in 11,860 ms. Qualification remains cold and ignores this selection.
 
 ## Qualification sharding
 

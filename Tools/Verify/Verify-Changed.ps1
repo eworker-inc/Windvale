@@ -150,8 +150,11 @@ if ($Plan.Scope -eq 'website') {
                 } else {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.sh'
                 }
-                Write-Host 'Native suite database-storage mode=development-checkpoint'
-                & $DevelopmentOwner --development
+                $DatabaseTarget = $NativePlan.DatabaseStorageDevelopmentTarget
+                Write-Host (
+                    'Native suite database-storage mode=development-checkpoint ' +
+                    "target=$DatabaseTarget")
+                & $DevelopmentOwner --development-target $DatabaseTarget
             } else {
                 & $Coordinator --filter $Suite
             }

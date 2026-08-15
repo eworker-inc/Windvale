@@ -16,6 +16,8 @@ values, and returns:
 - native retirement-suite names in the canonical manifest order;
 - sorted, stable names for every uncovered evidence boundary;
 - whether verification-plan and managed-entry inventory checks are required; and
+- the database development target when exactly one declared test-project closure
+  owns all affected database inputs, otherwise `all`; and
 - the normalized changed-path count.
 
 Maintained Windvale compiler, bytecode, Foundation, object, assembler, linker,
@@ -103,6 +105,14 @@ the lane. Only `Package-Console` and `Publish-Console` are console consumers of
 this publisher; other tools do not select the lane merely because their names
 contain `Console`.
 
+The `database-storage` development lane derives target ownership from the root
+and source entries of its fifteen maintained test projects. One exact target is
+returned only when the changed database inputs resolve to one closure. Shared
+sources, multiple targets, cache or database-owner tooling, and otherwise
+ambiguous maintained database inputs select `all`. Hosted targets retain their
+behavioral prerequisites: the tree reader consumes host-storage output, and the
+engine and tree writer consume the reader's committed depth-two output.
+
 ## Dispatch contract
 
 For lightweight and website changes, `Verify-Changed.ps1` retains the existing
@@ -114,7 +124,8 @@ changes it:
 3. runs the planner/inventory verifier when selected;
 4. runs the focused GitHub workflow verifier when selected;
 5. invokes each selected suite through `Test-Retirement-Suite.cmd --filter` on
-   Windows or the paired `.sh` coordinator on non-Windows hosts;
+   Windows or the paired `.sh` coordinator on non-Windows hosts, except that an
+   eligible `database-storage` suite receives its exact development target;
 6. invokes either the pinned WebAssembly engine checkpoint or the complete
    construction-and-engine owner when selected, never both;
 7. stops at the first failure unless `-NoFailFast` is explicit; and

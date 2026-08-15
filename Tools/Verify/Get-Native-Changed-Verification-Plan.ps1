@@ -19,8 +19,65 @@ $RunWebAssemblyVerification = $false
 $RunWebAssemblyEngineVerification = $false
 $RunGitHubQualificationVerification = $false
 $DatabaseStorageDevelopmentEligible = $true
+$DatabaseDevelopmentRequiresAllTargets = $false
+$SelectedDatabaseDevelopmentTargets = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
 $DatabaseDevelopmentPaths = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
+$DatabaseDevelopmentTargetProjects = [ordered]@{
+    'tree-node' = 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj'
+    'logical-record' = 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj'
+    'collection-catalog' = 'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj'
+    'bootstrap' = 'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj'
+    'single-leaf' = 'Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj'
+    'branch-split' = 'Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj'
+    'root-split' = 'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj'
+    'depth-two' = 'Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj'
+    'depth-three' = 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj'
+    'depth-three-upsert' = 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj'
+    'tree-path-upsert' = 'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj'
+    'host-storage' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj'
+    'host-tree-reader' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj'
+    'engine' = 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj'
+    'host-tree-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
+}
+$DatabaseDevelopmentTargetsByPath = @{}
+foreach ($TargetEntry in $DatabaseDevelopmentTargetProjects.GetEnumerator()) {
+    $TargetPaths = @($TargetEntry.Value)
+    $TargetProjectAbsolute = Join-Path $RepositoryRoot $TargetEntry.Value
+    if (!(Test-Path -LiteralPath $TargetProjectAbsolute -PathType Leaf)) {
+        $DatabaseStorageDevelopmentEligible = $false
+        continue
+    }
+    $TargetPaths += @(
+        Get-Content -LiteralPath $TargetProjectAbsolute |
+            ForEach-Object {
+                if ($_ -match '^(?:root|source) "([^"\r\n]+)"$') {
+                    $Matches[1]
+                }
+            }
+    )
+    foreach ($TargetPath in $TargetPaths) {
+        if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TargetPath)) {
+            $DatabaseDevelopmentTargetsByPath[$TargetPath] =
+                [System.Collections.Generic.HashSet[string]]::new(
+                    [StringComparer]::Ordinal)
+        }
+        $null = $DatabaseDevelopmentTargetsByPath[$TargetPath].Add($TargetEntry.Key)
+    }
+}
+$DatabaseDevelopmentContractTargets = @{
+    'Specifications/Windvale-Database-Bootstrap.md' = @('bootstrap', 'engine')
+    'Specifications/Windvale-Database-Collection-Catalog.md' = @('collection-catalog')
+    'Specifications/Windvale-Database-Logical-Records.md' = @('logical-record')
+    'Specifications/Windvale-Database-Tree-Node.md' = @('tree-node')
+    'Specifications/Windvale-Database-Depth-Two-Upsert.md' = @('depth-two')
+    'Specifications/Windvale-Database-Depth-Three-Root-Growth.md' = @('depth-three')
+    'Specifications/Windvale-Database-Depth-Three-Upsert.md' = @('depth-three-upsert')
+    'Specifications/Windvale-Database-Tree-Path-Upsert.md' = @('tree-path-upsert')
+    'Specifications/Windvale-Database-Engine-Lifecycle.md' = @('engine')
+    'Specifications/Windvale-Database-Hosted-Tree-Writer.md' = @('host-tree-writer')
+}
 $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Collection-Catalog.wvproj',
@@ -270,6 +327,7 @@ function Add-Native-Tool-Suite {
         'Get-Native-Project-Cache-Key',
         'Test-Database-Storage'
     )) {
+        $script:DatabaseDevelopmentRequiresAllTargets = $true
         Add-Suite 'database-storage'
         return
     }
@@ -479,6 +537,17 @@ if ($Paths.Count -eq 0) {
 }
 
 foreach ($Path in $Paths) {
+    if ($DatabaseDevelopmentTargetsByPath.ContainsKey($Path)) {
+        foreach ($DatabaseTarget in $DatabaseDevelopmentTargetsByPath[$Path]) {
+            $null = $SelectedDatabaseDevelopmentTargets.Add($DatabaseTarget)
+        }
+    } elseif ($DatabaseDevelopmentContractTargets.ContainsKey($Path)) {
+        foreach ($DatabaseTarget in $DatabaseDevelopmentContractTargets[$Path]) {
+            $null = $SelectedDatabaseDevelopmentTargets.Add($DatabaseTarget)
+        }
+    } elseif ($DatabaseDevelopmentPaths.Contains($Path)) {
+        $DatabaseDevelopmentRequiresAllTargets = $true
+    }
     $IsDocumentationImage = (
         $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
         [IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
@@ -2008,6 +2077,14 @@ foreach ($Path in $Paths) {
 
 $OrderedSuites = @($SuiteEntries.Name | Where-Object { $SelectedSuites.Contains($_) })
 $OrderedGaps = @($Gaps | Sort-Object)
+$DatabaseDevelopmentTarget = 'all'
+if (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 1) {
+    $DatabaseDevelopmentTarget = @(
+        $DatabaseDevelopmentTargetProjects.Keys |
+            Where-Object { $SelectedDatabaseDevelopmentTargets.Contains($_) }
+    )[0]
+}
 if (!$Quiet) {
     Write-Host "Native suites: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
@@ -2018,6 +2095,7 @@ if (!$Quiet) {
     Write-Host "Database storage development checkpoint: $((
         $SelectedSuites.Contains('database-storage') -and
         $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
+    Write-Host "Database storage development target: $DatabaseDevelopmentTarget"
 }
 if ($PassThru) {
     [pscustomobject]@{
@@ -2030,6 +2108,7 @@ if ($PassThru) {
         UseDatabaseStorageDevelopment = (
             $SelectedSuites.Contains('database-storage') -and
             $DatabaseStorageDevelopmentEligible)
+        DatabaseStorageDevelopmentTarget = $DatabaseDevelopmentTarget
         ChangedCount = $Paths.Count
     }
 }

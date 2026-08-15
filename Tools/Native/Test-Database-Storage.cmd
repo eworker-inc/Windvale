@@ -3,16 +3,41 @@ setlocal EnableExtensions DisableDelayedExpansion
 
 set "Development=0"
 set "PrepareOnly=0"
+set "DevelopmentTarget=all"
 if "%~1"=="" goto :arguments_ready
-if not "%~2"=="" goto :usage
-if /I "%~1"=="--development" set "Development=1"
+if /I "%~1"=="--development" (
+    if not "%~2"=="" goto :usage
+    set "Development=1"
+)
+if /I "%~1"=="--development-target" (
+    if "%~2"=="" goto :usage
+    if not "%~3"=="" goto :usage
+    set "Development=1"
+    set "DevelopmentTarget=%~2"
+)
 if /I "%~1"=="--prepare-development-tools" (
+    if not "%~2"=="" goto :usage
     set "Development=1"
     set "PrepareOnly=1"
 )
 if "%Development%"=="0" goto :usage
 
 :arguments_ready
+
+set "SelectedCases=15"
+if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
+for %%T in (
+    tree-node logical-record collection-catalog bootstrap single-leaf
+    branch-split root-split depth-two depth-three depth-three-upsert
+    tree-path-upsert host-storage
+) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
+if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="engine" set "SelectedCases=3"
+if /I "%DevelopmentTarget%"=="host-tree-writer" set "SelectedCases=3"
+if not defined SelectedCases goto :usage
+if "%PrepareOnly%"=="1" set "SelectedCases=0"
+set /a ProgressTotal=SelectedCases+1
+set "ProgressCurrent=1"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -42,7 +67,7 @@ set "PortableProjectCheckpoints="
 set "PortableApplicationCheckpoints="
 if "%Development%"=="1" call :read_clock DevelopmentStart
 if "%Development%"=="1" call :read_clock ToolsStart
-if "%Development%"=="1" echo START native database storage development phase=tools
+if "%Development%"=="1" echo START native database storage development step=tools item=%ProgressCurrent%/%ProgressTotal% target=%DevelopmentTarget%
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Wvb.cmd" ^
@@ -77,7 +102,7 @@ if "%Development%"=="1" (
 
 if "%Development%"=="1" call :read_clock ToolsEnd
 if "%Development%"=="1" call :elapsed_milliseconds ToolsStart ToolsEnd ToolsElapsedMs
-if "%Development%"=="1" echo PASS  native database storage development phase=tools elapsed-ms=%ToolsElapsedMs% tool=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint%
+if "%Development%"=="1" echo PASS  native database storage development step=tools item=%ProgressCurrent%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%ToolsElapsedMs% tool=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint%
 
 if "%PrepareOnly%"=="1" (
     set "Result=0"
@@ -86,119 +111,36 @@ if "%PrepareOnly%"=="1" (
 
 if "%Development%"=="1" (
     call :read_clock PortableStart
-    call :verify_target TreeNode ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development tree-node stage failed.
-        goto :cleanup
-    )
-    call :verify_target LogicalRecord ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Logical-Record.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development logical-record stage failed.
-        goto :cleanup
-    )
-    call :verify_target CollectionCatalog ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Collection-Catalog.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development collection-catalog stage failed.
-        goto :cleanup
-    )
-    call :verify_target Bootstrap ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Bootstrap.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development bootstrap stage failed.
-        goto :cleanup
-    )
-    call :verify_target SingleLeaf ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development single-leaf stage failed.
-        goto :cleanup
-    )
-    call :verify_target BranchSplit ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Branch-Split.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development branch-split stage failed.
-        goto :cleanup
-    )
-    call :verify_target RootSplit ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development root-split stage failed.
-        goto :cleanup
-    )
-    call :verify_target DepthTwo ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development depth-two stage failed.
-        goto :cleanup
-    )
-    call :verify_target DepthThree ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development depth-three stage failed.
-        goto :cleanup
-    )
-    call :verify_target DepthThreeUpsert ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development depth-three-upsert stage failed.
-        goto :cleanup
-    )
-    call :verify_target TreePathUpsert ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development tree-path-upsert stage failed.
-        goto :cleanup
-    )
+    call :verify_development_target TreeNode tree-node "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target LogicalRecord logical-record "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Logical-Record.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target CollectionCatalog collection-catalog "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Collection-Catalog.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target Bootstrap bootstrap "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Bootstrap.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target SingleLeaf single-leaf "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target BranchSplit branch-split "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Branch-Split.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target RootSplit root-split "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target DepthTwo depth-two "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target DepthThree depth-three "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target DepthThreeUpsert depth-three-upsert "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target TreePathUpsert tree-path-upsert "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj"
+    if errorlevel 1 goto :cleanup
     call :read_clock PortableEnd
     call :elapsed_milliseconds PortableStart PortableEnd PortableElapsedMs
-    call echo PASS  native database storage development phase=portable-targets elapsed-ms=%%PortableElapsedMs%%
-    call :read_clock HostStorageStart
-    echo START native database storage development phase=host-storage
-    call :verify_host_storage ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development host-storage stage failed.
-        goto :cleanup
-    )
-    call :read_clock HostStorageEnd
-    call :elapsed_milliseconds HostStorageStart HostStorageEnd HostStorageElapsedMs
-    call echo PASS  native database storage development phase=host-storage elapsed-ms=%%HostStorageElapsedMs%%
-    call :read_clock HostTreeReaderStart
-    echo START native database storage development phase=host-tree-reader
-    call :verify_host_tree_reader ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development tree-update stage failed.
-        goto :cleanup
-    )
-    call :read_clock HostTreeReaderEnd
-    call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderElapsedMs
-    call echo PASS  native database storage development phase=host-tree-reader elapsed-ms=%%HostTreeReaderElapsedMs%%
-    call :read_clock EngineStart
-    echo START native database storage development phase=engine
-    call :verify_host_engine ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Engine.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development engine stage failed.
-        goto :cleanup
-    )
-    call :read_clock EngineEnd
-    call :elapsed_milliseconds EngineStart EngineEnd EngineElapsedMs
-    call echo PASS  native database storage development phase=engine elapsed-ms=%%EngineElapsedMs%%
-    call :read_clock HostTreeWriterStart
-    echo START native database storage development phase=host-tree-writer
-    call :verify_host_tree_writer ^
-        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
-    if errorlevel 1 (
-        >&2 echo The native database storage development host-tree-writer stage failed.
-        goto :cleanup
-    )
-    call :read_clock HostTreeWriterEnd
-    call :elapsed_milliseconds HostTreeWriterStart HostTreeWriterEnd HostTreeWriterElapsedMs
-    call echo PASS  native database storage development phase=host-tree-writer elapsed-ms=%%HostTreeWriterElapsedMs%%
+    set "HostStorageElapsedMs=0"
+    set "HostTreeReaderElapsedMs=0"
+    set "EngineElapsedMs=0"
+    set "HostTreeWriterElapsedMs=0"
+    call :verify_development_host_targets
+    if errorlevel 1 goto :cleanup
     call :read_clock DevelopmentEnd
     call :elapsed_milliseconds DevelopmentStart DevelopmentEnd DevelopmentElapsedMs
     set "Result=0"
@@ -287,11 +229,85 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development timing tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed cases=15 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
+    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
+    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
 echo native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified
+exit /b 0
+
+:verify_development_target
+if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" exit /b 0
+set /a ProgressCurrent+=1
+call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_target "%~1" "%~3"
+if errorlevel 1 (
+    >&2 echo The native database storage development %~2 stage failed.
+    exit /b 1
+)
+exit /b 0
+
+:verify_development_host_targets
+if /I "%DevelopmentTarget%"=="all" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="host-storage" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="host-tree-reader" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="engine" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_storage
+exit /b 0
+
+:development_run_host_storage
+set /a ProgressCurrent+=1
+call :read_clock HostStorageStart
+call echo START native database storage development step=host-storage item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_host_storage "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development host-storage stage failed.
+    exit /b 1
+)
+call :read_clock HostStorageEnd
+call :elapsed_milliseconds HostStorageStart HostStorageEnd HostStorageElapsedMs
+call echo PASS  native database storage development step=host-storage item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostStorageElapsedMs%% project=%%ProjectCheckpointHostStorage%% application=%%ApplicationCheckpointHostStorage%%
+if /I "%DevelopmentTarget%"=="host-storage" exit /b 0
+
+set /a ProgressCurrent+=1
+call :read_clock HostTreeReaderStart
+call echo START native database storage development step=host-tree-reader item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_host_tree_reader "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development host-tree-reader stage failed.
+    exit /b 1
+)
+call :read_clock HostTreeReaderEnd
+call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderElapsedMs
+call echo PASS  native database storage development step=host-tree-reader item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeReaderElapsedMs%% project=%%ProjectCheckpointHostTreeReader%% application=%%ApplicationCheckpointHostTreeReader%%
+if /I "%DevelopmentTarget%"=="host-tree-reader" exit /b 0
+if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_tree_writer
+
+set /a ProgressCurrent+=1
+call :read_clock EngineStart
+call echo START native database storage development step=engine item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_host_engine "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Engine.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development engine stage failed.
+    exit /b 1
+)
+call :read_clock EngineEnd
+call :elapsed_milliseconds EngineStart EngineEnd EngineElapsedMs
+call echo PASS  native database storage development step=engine item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%EngineElapsedMs%% project=%%ProjectCheckpointEngine%% application=%%ApplicationCheckpointEngine%%
+if /I "%DevelopmentTarget%"=="engine" exit /b 0
+
+:development_run_host_tree_writer
+set /a ProgressCurrent+=1
+call :read_clock HostTreeWriterStart
+call echo START native database storage development step=host-tree-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_host_tree_writer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development host-tree-writer stage failed.
+    exit /b 1
+)
+call :read_clock HostTreeWriterEnd
+call :elapsed_milliseconds HostTreeWriterStart HostTreeWriterEnd HostTreeWriterElapsedMs
+call echo PASS  native database storage development step=host-tree-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeWriterElapsedMs%% project=%%ProjectCheckpointHostTreeWriter%% application=%%ApplicationCheckpointHostTreeWriter%%
 exit /b 0
 
 :verify_host_storage
@@ -1223,7 +1239,7 @@ endlocal & set "%~2=%LocalDigest%"
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--prepare-development-tools]
+>&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--development-target ^<target^>^|--prepare-development-tools]
 exit /b 64
 
 :verify_storage_lowering
@@ -1326,7 +1342,6 @@ set "WindowsApplicationCheckpoint=Rebuilt"
 set "LinuxApplicationCheckpoint=Rebuilt"
 if "%Development%"=="1" set "LinuxApplicationCheckpoint=NotRun"
 if "%Development%"=="1" call :read_clock TargetStart
-if "%Development%"=="1" echo START native database storage development target=%Label%
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
@@ -1403,7 +1418,7 @@ if not "%Development%"=="1" (
 if "%Development%"=="1" (
     call :read_clock TargetEnd
     call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
-    call echo PASS  native database storage development target=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=%LinkCheckpoint% host=windows-%WindowsApplicationCheckpoint%
+    call echo PASS  native database storage development step=portable-target item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% case=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=%LinkCheckpoint% application=windows-%WindowsApplicationCheckpoint%
     endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%/link-%LinkCheckpoint%," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%WindowsApplicationCheckpoint%,"
     exit /b 0
 )

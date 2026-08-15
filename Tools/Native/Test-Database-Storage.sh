@@ -3,15 +3,43 @@ set -uo pipefail
 
 development=0
 prepare_only=0
+development_target=all
 if [[ $# -eq 1 && $1 == --development ]]; then
     development=1
+elif [[ $# -eq 2 && $1 == --development-target ]]; then
+    development=1
+    development_target=$2
 elif [[ $# -eq 1 && $1 == --prepare-development-tools ]]; then
     development=1
     prepare_only=1
 elif [[ $# -ne 0 ]]; then
-    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--prepare-development-tools]' >&2
+    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--development-target <target>|--prepare-development-tools]' >&2
     exit 64
 fi
+
+case "$development_target" in
+    all)
+        selected_cases=15
+        ;;
+    tree-node|logical-record|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
+        selected_cases=1
+        ;;
+    host-tree-reader)
+        selected_cases=2
+        ;;
+    engine|host-tree-writer)
+        selected_cases=3
+        ;;
+    *)
+        echo "Unknown database development target: $development_target" >&2
+        exit 64
+        ;;
+esac
+if ((prepare_only == 1)); then
+    selected_cases=0
+fi
+progress_total=$((selected_cases + 1))
+progress_current=1
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
@@ -49,7 +77,7 @@ portable_application_checkpoints=
 if ((development == 1)); then
     development_start=$SECONDS
     tools_start=$SECONDS
-    echo 'START native database storage development phase=tools'
+    echo "START native database storage development step=tools item=$progress_current/$progress_total target=$development_target"
 fi
 
 verify_file() {
@@ -178,7 +206,7 @@ fi
 
 if ((development == 1)); then
     tools_elapsed_ms=$(((SECONDS - tools_start) * 1000))
-    echo "PASS  native database storage development phase=tools elapsed-ms=$tools_elapsed_ms tool=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
+    echo "PASS  native database storage development step=tools item=$progress_current/$progress_total target=$development_target elapsed-ms=$tools_elapsed_ms tool=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
 fi
 
 if ((prepare_only == 1)); then
@@ -201,9 +229,6 @@ verify_target() {
     local link_checkpoint=Rebuilt
     local linux_application_checkpoint=Rebuilt
     local target_start=$SECONDS
-    if ((development == 1)); then
-        echo "START native database storage development target=$label"
-    fi
 
     if ((development == 1)); then
         local project_cache_report="$temporary_directory/$label-Project-Cache.txt"
@@ -268,7 +293,7 @@ verify_target() {
 
     if ((development == 1)); then
         local target_elapsed_ms=$(((SECONDS - target_start) * 1000))
-        echo "PASS  native database storage development target=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint host=linux-$linux_application_checkpoint"
+        echo "PASS  native database storage development step=portable-target item=$progress_current/$progress_total target=$development_target case=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint application=linux-$linux_application_checkpoint"
         portable_project_checkpoints+="$label:$project_checkpoint/link-$link_checkpoint,"
         portable_application_checkpoints+="$label:linux-$linux_application_checkpoint,"
     else
@@ -982,154 +1007,155 @@ verify_host_tree_writer_interruption() {
     [[ $(wc -c < "$scenario_storage") -eq 33280 ]] || return 1
 }
 
-if ((development == 1)); then
-    portable_start=$SECONDS
-    verify_target TreeNode \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || {
-            echo 'The native database storage development tree-node stage failed.' >&2
-            exit 1
-        }
-    verify_target LogicalRecord \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || {
-            echo 'The native database storage development logical-record stage failed.' >&2
-            exit 1
-        }
-    verify_target CollectionCatalog \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj" || {
-            echo 'The native database storage development collection-catalog stage failed.' >&2
-            exit 1
-        }
-    verify_target Bootstrap \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj" || {
-            echo 'The native database storage development bootstrap stage failed.' >&2
-            exit 1
-        }
-    verify_target SingleLeaf \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || {
-            echo 'The native database storage development single-leaf stage failed.' >&2
-            exit 1
-        }
-    verify_target BranchSplit \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || {
-            echo 'The native database storage development branch-split stage failed.' >&2
-            exit 1
-        }
-    verify_target RootSplit \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || {
-            echo 'The native database storage development root-split stage failed.' >&2
-            exit 1
-        }
-    verify_target DepthTwo \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || {
-            echo 'The native database storage development depth-two stage failed.' >&2
-            exit 1
-        }
-    verify_target DepthThree \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || {
-            echo 'The native database storage development depth-three stage failed.' >&2
-            exit 1
-        }
-    verify_target DepthThreeUpsert \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || {
-            echo 'The native database storage development depth-three-upsert stage failed.' >&2
-            exit 1
-        }
-    verify_target TreePathUpsert \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || {
-            echo 'The native database storage development tree-path-upsert stage failed.' >&2
-            exit 1
-        }
-    portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
-    echo "PASS  native database storage development phase=portable-targets elapsed-ms=$portable_elapsed_ms"
-else
-    verify_target Nested \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
-    verify_target Publication \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
-    verify_target Recovery \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
-    verify_target SingleWriter \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
-    verify_target TreeNode \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
-    verify_target LogicalRecord \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
-    verify_target CollectionCatalog \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj" || exit $?
-    verify_target Bootstrap \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj" || exit $?
-    verify_target SingleLeaf \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || exit $?
-    verify_target BranchSplit \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || exit $?
-    verify_target RootSplit \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
-    verify_target DepthTwo \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || exit $?
-    verify_target DepthThree \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || exit $?
-    verify_target DepthThreeUpsert \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
-    verify_target TreePathUpsert \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || exit $?
-    verify_target ProviderTable \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
-    verify_target ProviderCall \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
-    verify_target Context9 \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
-    verify_storage_lowering \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
-fi
-if ((development == 1)); then
+verify_development_target() {
+    local label=$1 target=$2 project=$3
+    if [[ $development_target != all && $development_target != "$target" ]]; then
+        return 0
+    fi
+    progress_current=$((progress_current + 1))
+    echo "START native database storage development step=$target item=$progress_current/$progress_total target=$development_target"
+    verify_target "$label" "$project" || {
+        echo "The native database storage development $target stage failed." >&2
+        return 1
+    }
+}
+
+verify_development_host_targets() {
+    host_storage_elapsed_ms=0
+    host_tree_reader_elapsed_ms=0
+    engine_elapsed_ms=0
+    host_tree_writer_elapsed_ms=0
+    case "$development_target" in
+        all|host-storage|host-tree-reader|engine|host-tree-writer) ;;
+        *) return 0 ;;
+    esac
+
+    progress_current=$((progress_current + 1))
     host_storage_start=$SECONDS
-    echo 'START native database storage development phase=host-storage'
-fi
-verify_host_storage \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || {
-        echo 'The native database storage host-storage stage failed.' >&2
-        exit 1
-    }
-if ((development == 1)); then
+    echo "START native database storage development step=host-storage item=$progress_current/$progress_total target=$development_target"
+    verify_host_storage \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || {
+            echo 'The native database storage development host-storage stage failed.' >&2
+            return 1
+        }
     host_storage_elapsed_ms=$(((SECONDS - host_storage_start) * 1000))
-    echo "PASS  native database storage development phase=host-storage elapsed-ms=$host_storage_elapsed_ms"
+    echo "PASS  native database storage development step=host-storage item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_storage_elapsed_ms project=$project_checkpoint_host_storage application=$application_checkpoint_host_storage"
+    [[ $development_target != host-storage ]] || return 0
+
+    progress_current=$((progress_current + 1))
     host_tree_reader_start=$SECONDS
-    echo 'START native database storage development phase=host-tree-reader'
-fi
-verify_host_tree_reader \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || {
-        echo 'The native database storage tree-update stage failed.' >&2
-        exit 1
-    }
-if ((development == 1)); then
+    echo "START native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target"
+    verify_host_tree_reader \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || {
+            echo 'The native database storage development host-tree-reader stage failed.' >&2
+            return 1
+        }
     host_tree_reader_elapsed_ms=$(((SECONDS - host_tree_reader_start) * 1000))
-    echo "PASS  native database storage development phase=host-tree-reader elapsed-ms=$host_tree_reader_elapsed_ms"
-    engine_start=$SECONDS
-    echo 'START native database storage development phase=engine'
-fi
-verify_host_engine \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || {
-        echo 'The native database storage engine stage failed.' >&2
-        exit 1
-    }
-if ((development == 1)); then
-    engine_elapsed_ms=$(((SECONDS - engine_start) * 1000))
-    echo "PASS  native database storage development phase=engine elapsed-ms=$engine_elapsed_ms"
+    echo "PASS  native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_reader_elapsed_ms project=$project_checkpoint_host_tree_reader application=$application_checkpoint_host_tree_reader"
+    [[ $development_target != host-tree-reader ]] || return 0
+
+    if [[ $development_target != host-tree-writer ]]; then
+        progress_current=$((progress_current + 1))
+        engine_start=$SECONDS
+        echo "START native database storage development step=engine item=$progress_current/$progress_total target=$development_target"
+        verify_host_engine \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || {
+                echo 'The native database storage development engine stage failed.' >&2
+                return 1
+            }
+        engine_elapsed_ms=$(((SECONDS - engine_start) * 1000))
+        echo "PASS  native database storage development step=engine item=$progress_current/$progress_total target=$development_target elapsed-ms=$engine_elapsed_ms project=$project_checkpoint_engine application=$application_checkpoint_engine"
+        [[ $development_target != engine ]] || return 0
+    fi
+
+    progress_current=$((progress_current + 1))
     host_tree_writer_start=$SECONDS
-    echo 'START native database storage development phase=host-tree-writer'
-fi
-verify_host_tree_writer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || {
-        echo 'The native database storage host-tree-writer stage failed.' >&2
-        exit 1
-    }
+    echo "START native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target"
+    verify_host_tree_writer \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || {
+            echo 'The native database storage development host-tree-writer stage failed.' >&2
+            return 1
+        }
+    host_tree_writer_elapsed_ms=$(((SECONDS - host_tree_writer_start) * 1000))
+    echo "PASS  native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_writer_elapsed_ms project=$project_checkpoint_host_tree_writer application=$application_checkpoint_host_tree_writer"
+}
 
 if ((development == 1)); then
-    host_tree_writer_elapsed_ms=$(((SECONDS - host_tree_writer_start) * 1000))
-    echo "PASS  native database storage development phase=host-tree-writer elapsed-ms=$host_tree_writer_elapsed_ms"
+    portable_start=$SECONDS
+    verify_development_target TreeNode tree-node \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
+    verify_development_target LogicalRecord logical-record \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
+    verify_development_target CollectionCatalog collection-catalog \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj" || exit $?
+    verify_development_target Bootstrap bootstrap \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj" || exit $?
+    verify_development_target SingleLeaf single-leaf \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || exit $?
+    verify_development_target BranchSplit branch-split \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || exit $?
+    verify_development_target RootSplit root-split \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
+    verify_development_target DepthTwo depth-two \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || exit $?
+    verify_development_target DepthThree depth-three \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || exit $?
+    verify_development_target DepthThreeUpsert depth-three-upsert \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
+    verify_development_target TreePathUpsert tree-path-upsert \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || exit $?
+    portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
+    verify_development_host_targets || exit $?
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
-    echo "native database storage development timing tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed cases=15 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
+    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
     exit 0
 fi
+
+verify_target Nested \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
+verify_target Publication \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
+verify_target Recovery \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
+verify_target SingleWriter \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
+verify_target TreeNode \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
+verify_target LogicalRecord \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
+verify_target CollectionCatalog \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj" || exit $?
+verify_target Bootstrap \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj" || exit $?
+verify_target SingleLeaf \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || exit $?
+verify_target BranchSplit \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || exit $?
+verify_target RootSplit \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
+verify_target DepthTwo \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || exit $?
+verify_target DepthThree \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || exit $?
+verify_target DepthThreeUpsert \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
+verify_target TreePathUpsert \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || exit $?
+verify_target ProviderTable \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
+verify_target ProviderCall \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
+verify_target Context9 \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
+verify_storage_lowering \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
+verify_host_storage \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
+verify_host_tree_reader \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
+verify_host_engine \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || exit $?
+verify_host_tree_writer \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || exit $?
 echo 'native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified'

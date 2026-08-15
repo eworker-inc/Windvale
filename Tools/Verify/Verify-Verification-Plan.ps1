@@ -1170,6 +1170,24 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'focused database lifecycle owner'
+        Paths = @('Libraries/Platform/Database/Durable-Database-Lifecycle.wv')
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'engine'
+    },
+    @{
+        Name = 'focused database logical-record owner'
+        Paths = @('Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv')
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'logical-record'
+    },
+    @{
         Name = 'native lowerer rejection specification owner'
         Paths = @('Specifications/Windvale-Native-Wvb-To-Wvo-Rejection-Tests.md')
         Suites = @('lowerer-rejections')
@@ -1850,6 +1868,13 @@ foreach ($Case in $NativeCases) {
     $DatabaseDevelopmentDiffers = (
         $Case.ContainsKey('DatabaseDevelopment') -and
         $Plan.UseDatabaseStorageDevelopment -ne $Case.DatabaseDevelopment)
+    $ExpectedDatabaseTarget = if ($Case.ContainsKey('DatabaseTarget')) {
+        $Case.DatabaseTarget
+    } else {
+        'all'
+    }
+    $DatabaseTargetDiffers = (
+        $Plan.DatabaseStorageDevelopmentTarget -ne $ExpectedDatabaseTarget)
     if (
         !([System.Linq.Enumerable]::SequenceEqual(
             [string[]]@($Plan.Suites),
@@ -1862,7 +1887,8 @@ foreach ($Case in $NativeCases) {
             $ExpectedWebAssemblyEngineVerification -or
         $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification -or
         $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification -or
-        $DatabaseDevelopmentDiffers
+        $DatabaseDevelopmentDiffers -or
+        $DatabaseTargetDiffers
     ) {
         throw (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
@@ -1875,7 +1901,8 @@ foreach ($Case in $NativeCases) {
             "verify-webassembly-engine=$($Plan.RunWebAssemblyEngineVerification), " +
             "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
             "verify-github=$($Plan.RunGitHubQualificationVerification), " +
-            "database-development=$($Plan.UseDatabaseStorageDevelopment)."
+            "database-development=$($Plan.UseDatabaseStorageDevelopment), " +
+            "database-target=$($Plan.DatabaseStorageDevelopmentTarget)."
         )
     }
 }
