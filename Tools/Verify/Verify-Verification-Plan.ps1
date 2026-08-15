@@ -1433,6 +1433,8 @@ $GitHubVerificationWorkflow = Get-Content -LiteralPath (
 $RequiredWorkflowFragments = @(
     'group: verify-${{ github.workflow }}-${{ github.ref }}',
     'cancel-in-progress: true',
+    'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
+    'git diff --check HEAD^ HEAD --',
     'run: Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}',
     'run: ./Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}'
 )

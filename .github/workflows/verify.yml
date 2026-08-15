@@ -234,7 +234,12 @@ jobs:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
         run: |
-          git diff --check $env:BASE_SHA $env:HEAD_SHA --
+          if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or
+              [string]::IsNullOrWhiteSpace($env:HEAD_SHA)) {
+            git diff --check HEAD^ HEAD --
+          } else {
+            git diff --check $env:BASE_SHA $env:HEAD_SHA --
+          }
           if ($LASTEXITCODE -ne 0) { throw 'Changed-file whitespace verification failed.' }
 
       - name: Run complete native retirement suite
