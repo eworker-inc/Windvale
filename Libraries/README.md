@@ -9,6 +9,9 @@ adds the offline hosted facade and exact native provider binding.
 [Decision 0585](../Documents/Decisions/0585-Catchable-Model-Provider-Lifecycle-Results.md)
 adds catchable revoked, stale, peer-exited, and submission-indeterminate results
 while retaining ABI failure for an untrustworthy bridge call.
+[Decision 0587](../Documents/Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md)
+adds the shared capability-free operation, virtual deadline, cancellation,
+bounded wait-batch, reserved close, and teardown core required before networking.
 
 This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) defines the durable platform/capability direction; [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) implements the first bounded capability-bearing static-library slice; [Decision 0153](../Documents/Decisions/0153-First-Versioned-Read-Only-Directory-Capability.md) implements the first rights-limited read-only directory operation; [Decision 0210](../Documents/Decisions/0210-First-Hosted-Wvdb-Snapshot-Consumer.md) composes that operation with the experimental portable database reader; [Decision 0211](../Documents/Decisions/0211-U64-Database-Storage-Geometry.md) adds format-neutral checked `u64` page geometry; [Decision 0212](../Documents/Decisions/0212-First-Preopened-Random-Access-Storage.md) adds the first pre-opened mutable `u64` storage resource; [Decision 0529](../Documents/Decisions/0529-Native-Capability-Bearing-Library-Composition.md) makes these capability-bearing compositions native-owned build inputs; [Decisions 0534](../Documents/Decisions/0534-First-Durable-Database-Superblock.md), [0535](../Documents/Decisions/0535-First-Durable-Database-Commit.md), and [0536](../Documents/Decisions/0536-Nested-Records-And-Database-Storage-Recovery.md) establish the first durable database metadata, publication, and reopen-repair slices; [Decision 0549](../Documents/Decisions/0549-Bounded-Durable-Tree-Reader-And-Root-Split.md) adds provider-backed depth-bounded lookup plus the first multi-page root split; [Decision 0551](../Documents/Decisions/0551-General-Depth-Two-Upsert-And-Obsolete-Ownership.md) adds repeated routed-leaf replacement, split propagation, and unique obsolete-page ownership; [Decision 0556](../Documents/Decisions/0556-Depth-Three-Root-Growth-And-Internal-Branch-Split.md) adds deterministic internal branch splitting and the first depth-three root; [Decision 0568](../Documents/Decisions/0568-Existing-Depth-Three-Upsert-And-Bounded-Cascade.md) adds updates inside an existing depth-three generation with one bounded internal split cascade; [Decision 0569](../Documents/Decisions/0569-Bounded-Owned-Tree-Path-Upsert.md) generalizes that transaction to an owned path of depth two through eight; [Decision 0572](../Documents/Decisions/0572-Provider-Driven-Durable-Tree-Writer.md) composes provider traversal, owned-path mutation, publication, and restart recovery; and [Decision 0575](../Documents/Decisions/0575-Single-Writer-Database-Engine-Lifecycle.md) adds the shared exact open/recovery state for separate read and write projections.
 
@@ -24,7 +27,7 @@ WVB linking remain later contracts.
 
 ## Layers
 
-- `Foundation/` contains deterministic capability-free algorithms and values. `Foundation/Resources/Resource-Store.wv` owns portable `WVRS 1` validation and lookup.
+- `Foundation/` contains deterministic capability-free algorithms and values. `Foundation/Resources/Resource-Store.wv` owns portable `WVRS 1` validation and lookup. `Foundation/Operations/Bounded-Operation-Core.wv` owns generation-bound operations, virtual monotonic deadlines, exact terminal results, and a bounded event queue whose normal traffic cannot consume its cancellation and teardown reservations.
 - `Database/` contains reusable capability-free database algorithms. `Storage-Geometry.wv` owns checked zero-based `u64` page-range arithmetic, `Storage-Page.wv` owns immutable read plans and exact response admission, `Durable-Superblock.wv` owns `WVDS 1` encoding and dual-slot recovery selection, `Durable-Page.wv` owns `WVPG 1` physical pages plus explicit borrowed-to-owned copying, `Durable-Commit-Record.wv` owns `WVCR 1` commit linkage, `Commit-Publication.wv` owns the durable-before-publish state machine, `Commit-Batch.wv` validates and publishes up to 63 immutable data pages plus one log page with unique committed predecessors, `Storage-Publication.wv` maps that state to bounded storage actions, `Storage-Recovery.wv` selects and repairs an unpublished tail without uncertain mutation replay, `Tree-Node.wv` owns canonical `WVTN 1` leaf/branch operations, `Tree-Branch-Split.wv` owns deterministic full-branch split propagation, `Root-Split-Upsert.wv` owns the first leaf split and branch-root transaction, `Depth-Two-Upsert.wv` owns repeated routed-leaf replacement and split propagation, `Depth-Three-Root-Growth.wv` owns the first height increase, `Depth-Three-Upsert.wv` owns updates and one bounded split cascade inside depth three, `Tree-Path-Upsert.wv` owns bounded depth-two-through-eight path validation and split propagation, and `Wvdb-Reader.wv` remains the bounded experimental snapshot reader.
 - `Models/` contains the capability-free `WVMM 1`, `WVMQ 1`, `WVMC 1`, and
   `WVMG 1` model protocol plus a deterministic scripted provider. Its status
@@ -76,6 +79,7 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Durable-Tree-Writer` | `Durableˉtreeˉwriter` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Native-Hosted-Snapshot-Page` | `Nativeˉhostedˉsnapshotˉpage` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Wvdb` | `Readˉonlyˉwvdb` | hosted / `filesystem.directory_read_v1` |
+| `Windvale-Library-Bounded-Operation-Core` | `Windvaleˉboundedˉoperationˉcore` | portable / none |
 | `Windvale-Library-Model-Protocol` | `Windvaleˉmodelˉprotocol` | portable / none |
 | `Windvale-Library-Scripted-Model-Provider` | `Windvaleˉscriptedˉmodelˉprovider` | portable / none |
 | `Windvale-Library-Bound-Model-Provider` | `Boundˉmodelˉprovider` | hosted / `model.catalog_v1`, `model.inference_v1` |
@@ -88,7 +92,9 @@ cases. Newer durable-composition manifests that require the current nested-
 record/storage compiler closure are owned by `Test-Database-Storage`, which
 reconstructs that compiler natively before building them. Promoting that
 verified compiler generation into the ordinary front door is a separate
-product-identity milestone. Both suites avoid .NET and C#.
+product-identity milestone. The bounded operation core uses that current
+nested-record closure and has its own deterministic native owner,
+`Test-Bounded-Operation-Core`. All three suites avoid .NET and C#.
 
 ## Module names and local namespaces
 

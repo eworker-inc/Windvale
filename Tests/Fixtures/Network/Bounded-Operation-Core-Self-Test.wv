@@ -1,0 +1,388 @@
+module Windvaleˉboundedˉoperationˉcoreˉselfˉtest profile portable;
+
+import Windvaleˉboundedˉoperationˉcore as Operation;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+fn Clockˉat(Tick: u64) -> Operation.Operationˉclock {
+    return Operation.Operationˉclockˉcreate(1u64, Tick);
+}
+
+fn Beginˉat(
+    Identity: u64,
+    Tick: u64,
+    Deadline: u64,
+    Limit: u64,
+    Mutating: bool
+) -> Operation.Operationˉstate {
+    return Operation.Operationˉbegin(
+        7u64, 3u64, Identity, 1u64, Clockˉat(Tick), Deadline, Limit, Mutating
+    );
+}
+
+fn Advance(
+    State: Operation.Operationˉstate,
+    Tick: u64,
+    Kind: Operation.Operationˉeventˉkind,
+    Value: u64
+) -> Operation.Operationˉtransition {
+    return Operation.Operationˉadvance(
+        State,
+        Clockˉat(Tick),
+        Operation.Operationˉeventˉcreate(Kind, State, Value)
+    );
+}
+
+fn Clockˉcase() -> i32 {
+    let Invalid: Operation.Operationˉclock =
+        Operation.Operationˉclockˉcreate(0u64, 0u64);
+    if Invalid.Error != Operation.Operationˉerror.Invalidˉgeneration {
+        return 11;
+    }
+    let Initial: Operation.Operationˉclock = Clockˉat(9u64);
+    let Advanced: Operation.Operationˉclock =
+        Operation.Operationˉclockˉadvance(Initial, 4u64);
+    if Advanced.Error != Operation.Operationˉerror.Valid ||
+        Advanced.Tick != 13u64 {
+        return 12;
+    }
+    let Maximum: Operation.Operationˉclock = Clockˉat(U64_MAXIMUM);
+    let Overflow: Operation.Operationˉclock =
+        Operation.Operationˉclockˉadvance(Maximum, 1u64);
+    if Overflow.Error != Operation.Operationˉerror.Arithmeticˉoverflow {
+        return 13;
+    }
+    return 42;
+}
+
+fn Immediateˉcase() -> i32 {
+    let Rejected: Operation.Operationˉstate = Operation.Operationˉreject(
+        7u64, 3u64, 1u64, 1u64, Clockˉat(10u64), 20u64
+    );
+    if Rejected.Error != Operation.Operationˉerror.Valid || Rejected.Accepted ||
+        Rejected.Phase != Operation.Operationˉphase.Terminal ||
+        Rejected.Outcome != Operation.Operationˉoutcome.Rejected ||
+        Rejected.Cause != Operation.Operationˉcause.Immediateˉrejection {
+        return 21;
+    }
+    let Expired: Operation.Operationˉstate = Beginˉat(
+        2u64, 10u64, 10u64, 4u64, false
+    );
+    if Expired.Accepted ||
+        Expired.Outcome != Operation.Operationˉoutcome.Timedˉout ||
+        Expired.Cause != Operation.Operationˉcause.Deadline {
+        return 22;
+    }
+    let State: Operation.Operationˉstate = Beginˉat(
+        3u64, 10u64, 20u64, 4u64, false
+    );
+    let Completed: Operation.Operationˉtransition = Advance(
+        State, 10u64, Operation.Operationˉeventˉkind.Complete, 4u64
+    );
+    if !Completed.Applied ||
+        Completed.State.Outcome != Operation.Operationˉoutcome.Completed ||
+        Completed.State.Cause != Operation.Operationˉcause.Completion ||
+        Completed.State.Progress != 4u64 {
+        return 23;
+    }
+    return 42;
+}
+
+fn Queuedˉcompletionˉcase() -> bool {
+    let State: Operation.Operationˉstate = Beginˉat(
+        4u64, 0u64, 100u64, 8u64, false
+    );
+    let Dispatched: Operation.Operationˉtransition = Advance(
+        State, 1u64, Operation.Operationˉeventˉkind.Dispatch, 0u64
+    );
+    if !Dispatched.Applied ||
+        Dispatched.State.Phase != Operation.Operationˉphase.Dispatched {
+        return false;
+    }
+    let Completed: Operation.Operationˉtransition = Advance(
+        Dispatched.State, 2u64, Operation.Operationˉeventˉkind.Complete, 6u64
+    );
+    return Completed.Applied &&
+        Completed.State.Outcome == Operation.Operationˉoutcome.Completed &&
+        Completed.State.Progress == 6u64;
+}
+
+fn Progressˉcase() -> bool {
+    let State: Operation.Operationˉstate = Beginˉat(
+        5u64, 0u64, 100u64, 8u64, false
+    );
+    let Dispatched: Operation.Operationˉtransition = Advance(
+        State, 1u64, Operation.Operationˉeventˉkind.Dispatch, 0u64
+    );
+    let Partial: Operation.Operationˉtransition = Advance(
+        Dispatched.State, 2u64, Operation.Operationˉeventˉkind.Progress, 3u64
+    );
+    if !Partial.Applied || Partial.State.Progress != 3u64 {
+        return false;
+    }
+    let Repeated: Operation.Operationˉtransition = Advance(
+        Partial.State, 3u64, Operation.Operationˉeventˉkind.Progress, 3u64
+    );
+    let Excess: Operation.Operationˉtransition = Advance(
+        Partial.State, 3u64, Operation.Operationˉeventˉkind.Progress, 9u64
+    );
+    return !Repeated.Applied &&
+        Repeated.Error == Operation.Operationˉerror.Invalidˉevent &&
+        !Excess.Applied && Excess.Error == Operation.Operationˉerror.Invalidˉevent;
+}
+
+fn Cancellationˉraceˉcase() -> bool {
+    let Queued: Operation.Operationˉstate = Beginˉat(
+        6u64, 0u64, 100u64, 8u64, true
+    );
+    let Beforeˉdispatch: Operation.Operationˉtransition = Advance(
+        Queued, 1u64, Operation.Operationˉeventˉkind.Cancel, 0u64
+    );
+    if Beforeˉdispatch.State.Outcome != Operation.Operationˉoutcome.Cancelled ||
+        Beforeˉdispatch.State.Cause != Operation.Operationˉcause.Cancellation {
+        return false;
+    }
+    let Active: Operation.Operationˉtransition = Advance(
+        Beginˉat(7u64, 0u64, 100u64, 8u64, true),
+        1u64,
+        Operation.Operationˉeventˉkind.Dispatch,
+        0u64
+    );
+    let Afterˉdispatch: Operation.Operationˉtransition = Advance(
+        Active.State, 2u64, Operation.Operationˉeventˉkind.Cancel, 0u64
+    );
+    if Afterˉdispatch.State.Outcome !=
+            Operation.Operationˉoutcome.Submissionˉindeterminate ||
+        Afterˉdispatch.State.Cause != Operation.Operationˉcause.Cancellation {
+        return false;
+    }
+    let Complete: Operation.Operationˉtransition = Advance(
+        Beginˉat(8u64, 0u64, 100u64, 8u64, false),
+        1u64,
+        Operation.Operationˉeventˉkind.Complete,
+        1u64
+    );
+    let Lateˉcancel: Operation.Operationˉtransition = Advance(
+        Complete.State, 2u64, Operation.Operationˉeventˉkind.Cancel, 0u64
+    );
+    return !Lateˉcancel.Applied &&
+        Lateˉcancel.State.Outcome == Operation.Operationˉoutcome.Completed;
+}
+
+fn Deadlineˉraceˉcase() -> bool {
+    let Before: Operation.Operationˉtransition = Advance(
+        Beginˉat(9u64, 0u64, 10u64, 4u64, false),
+        9u64,
+        Operation.Operationˉeventˉkind.Complete,
+        4u64
+    );
+    let At: Operation.Operationˉtransition = Advance(
+        Beginˉat(10u64, 0u64, 10u64, 4u64, false),
+        10u64,
+        Operation.Operationˉeventˉkind.Complete,
+        4u64
+    );
+    let Mutatingˉactive: Operation.Operationˉtransition = Advance(
+        Beginˉat(16u64, 0u64, 10u64, 4u64, true),
+        1u64,
+        Operation.Operationˉeventˉkind.Dispatch,
+        0u64
+    );
+    let Mutatingˉat: Operation.Operationˉtransition = Advance(
+        Mutatingˉactive.State,
+        10u64,
+        Operation.Operationˉeventˉkind.Complete,
+        4u64
+    );
+    return Before.State.Outcome == Operation.Operationˉoutcome.Completed &&
+        At.State.Outcome == Operation.Operationˉoutcome.Timedˉout &&
+        At.State.Cause == Operation.Operationˉcause.Deadline &&
+        At.State.Progress == 0u64 &&
+        Mutatingˉat.State.Outcome ==
+            Operation.Operationˉoutcome.Submissionˉindeterminate &&
+        Mutatingˉat.State.Cause == Operation.Operationˉcause.Deadline;
+}
+
+fn Generationˉcase() -> bool {
+    let State: Operation.Operationˉstate = Beginˉat(
+        11u64, 0u64, 100u64, 4u64, false
+    );
+    let Wrong: Operation.Operationˉevent = Operation.Operationˉevent(
+        Operation.Operationˉeventˉkind.Complete,
+        State.Providerˉidentity,
+        State.Providerˉgeneration + 1u64,
+        State.Operationˉidentity,
+        State.Operationˉgeneration,
+        4u64
+    );
+    let Ignored: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State, Clockˉat(1u64), Wrong
+    );
+    if Ignored.Applied ||
+        Ignored.Error != Operation.Operationˉerror.Invalidˉgeneration ||
+        Ignored.State.Phase != Operation.Operationˉphase.Queued {
+        return false;
+    }
+    let Restarted: Operation.Operationˉtransition = Advance(
+        State,
+        2u64,
+        Operation.Operationˉeventˉkind.Providerˉrestart,
+        State.Providerˉgeneration + 1u64
+    );
+    return Restarted.State.Outcome == Operation.Operationˉoutcome.Stale &&
+        Restarted.State.Cause == Operation.Operationˉcause.Providerˉrestart;
+}
+
+fn Providerˉlossˉcase() -> bool {
+    let Readˉactive: Operation.Operationˉtransition = Advance(
+        Beginˉat(12u64, 0u64, 100u64, 4u64, false),
+        1u64,
+        Operation.Operationˉeventˉkind.Dispatch,
+        0u64
+    );
+    let Readˉloss: Operation.Operationˉtransition = Advance(
+        Readˉactive.State,
+        2u64,
+        Operation.Operationˉeventˉkind.Providerˉloss,
+        0u64
+    );
+    let Writeˉactive: Operation.Operationˉtransition = Advance(
+        Beginˉat(13u64, 0u64, 100u64, 4u64, true),
+        1u64,
+        Operation.Operationˉeventˉkind.Dispatch,
+        0u64
+    );
+    let Writeˉloss: Operation.Operationˉtransition = Advance(
+        Writeˉactive.State,
+        2u64,
+        Operation.Operationˉeventˉkind.Providerˉloss,
+        0u64
+    );
+    return Readˉloss.State.Outcome ==
+            Operation.Operationˉoutcome.Providerˉlost &&
+        Readˉloss.State.Cause == Operation.Operationˉcause.Providerˉloss &&
+        Writeˉloss.State.Outcome ==
+            Operation.Operationˉoutcome.Submissionˉindeterminate &&
+        Writeˉloss.State.Cause == Operation.Operationˉcause.Providerˉloss;
+}
+
+fn Queueˉcase() -> bool {
+    let State: Operation.Operationˉstate = Beginˉat(
+        14u64, 0u64, 100u64, 8u64, false
+    );
+    let Empty: Operation.Operationˉeventˉqueue =
+        Operation.Operationˉqueueˉcreate(7u64, 3u64, 4u32);
+    let First: Operation.Operationˉenqueue = Operation.Operationˉqueueˉenqueue(
+        Empty,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Dispatch, State, 0u64
+        )
+    );
+    let Second: Operation.Operationˉenqueue = Operation.Operationˉqueueˉenqueue(
+        First.Queue,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Progress, State, 2u64
+        )
+    );
+    let Full: Operation.Operationˉenqueue = Operation.Operationˉqueueˉenqueue(
+        Second.Queue,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Complete, State, 2u64
+        )
+    );
+    if Full.Accepted || Full.Error != Operation.Operationˉerror.Queueˉfull {
+        return false;
+    }
+    let Cancel: Operation.Operationˉenqueue = Operation.Operationˉqueueˉenqueue(
+        Second.Queue,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Cancel, State, 0u64
+        )
+    );
+    let Duplicate: Operation.Operationˉenqueue = Operation.Operationˉqueueˉenqueue(
+        Cancel.Queue,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Cancel, State, 0u64
+        )
+    );
+    if !Cancel.Accepted || Duplicate.Error !=
+        Operation.Operationˉerror.Duplicateˉcancellation {
+        return false;
+    }
+    let Closed: Operation.Operationˉenqueue =
+        Operation.Operationˉqueueˉclose(Cancel.Queue, 4u64);
+    if !Closed.Accepted || !Closed.Queue.Closed || Closed.Queue.Count != 4u32 {
+        return false;
+    }
+    let Afterˉclose: Operation.Operationˉenqueue =
+        Operation.Operationˉqueueˉenqueue(
+            Closed.Queue,
+            Operation.Operationˉeventˉcreate(
+                Operation.Operationˉeventˉkind.Complete, State, 2u64
+            )
+        );
+    return !Afterˉclose.Accepted &&
+        Afterˉclose.Error == Operation.Operationˉerror.Queueˉclosed;
+}
+
+fn Waitˉandˉteardownˉcase() -> bool {
+    let State: Operation.Operationˉstate = Beginˉat(
+        15u64, 0u64, 100u64, 8u64, true
+    );
+    let Queue: Operation.Operationˉeventˉqueue =
+        Operation.Operationˉqueueˉcreate(7u64, 3u64, 4u32);
+    let Cancel: Operation.Operationˉenqueue = Operation.Operationˉqueueˉenqueue(
+        Queue,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Cancel, State, 0u64
+        )
+    );
+    let Closed: Operation.Operationˉenqueue =
+        Operation.Operationˉqueueˉclose(Cancel.Queue, 4u64);
+    let Batch: Operation.Operationˉwaitˉbatch =
+        Operation.Operationˉqueueˉwait(Closed.Queue, 1u32);
+    let First: Operation.Operationˉevent =
+        Operation.Operationˉwaitˉeventˉat(Batch.Events, Batch.Count, 0u32);
+    if Batch.Status != Operation.Operationˉwaitˉstatus.Ready ||
+        First.Kind != Operation.Operationˉeventˉkind.Cancel {
+        return false;
+    }
+    let Last: Operation.Operationˉwaitˉbatch =
+        Operation.Operationˉqueueˉwait(Batch.Remaining, 1u32);
+    let Teardown: Operation.Operationˉevent =
+        Operation.Operationˉwaitˉeventˉat(Last.Events, Last.Count, 0u32);
+    if Teardown.Kind != Operation.Operationˉeventˉkind.Teardown ||
+        Teardown.Value != 4u64 {
+        return false;
+    }
+    let Woken: Operation.Operationˉwaitˉbatch =
+        Operation.Operationˉqueueˉwait(Last.Remaining, 1u32);
+    if Woken.Status != Operation.Operationˉwaitˉstatus.Closed {
+        return false;
+    }
+    let Active: Operation.Operationˉtransition = Advance(
+        State, 1u64, Operation.Operationˉeventˉkind.Dispatch, 0u64
+    );
+    let Result: Operation.Operationˉtransition = Operation.Operationˉteardown(
+        Active.State, Clockˉat(2u64), 4u64
+    );
+    return Result.State.Outcome ==
+            Operation.Operationˉoutcome.Submissionˉindeterminate &&
+        Result.State.Cause == Operation.Operationˉcause.Teardown;
+}
+
+export fn Main() -> i32 {
+    let Clockˉresult: i32 = Clockˉcase();
+    if Clockˉresult != 42 { return Clockˉresult; }
+    let Immediateˉresult: i32 = Immediateˉcase();
+    if Immediateˉresult != 42 { return Immediateˉresult; }
+    if !Queuedˉcompletionˉcase() { return 3; }
+    if !Progressˉcase() { return 4; }
+    if !Cancellationˉraceˉcase() { return 5; }
+    if !Deadlineˉraceˉcase() { return 6; }
+    if !Generationˉcase() { return 7; }
+    if !Providerˉlossˉcase() { return 8; }
+    if !Queueˉcase() { return 9; }
+    if !Waitˉandˉteardownˉcase() { return 10; }
+    return 42;
+}

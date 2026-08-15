@@ -2,8 +2,10 @@
 
 ## Status
 
-- Date: 2026-08-14
-- Status: Active design for implementation; no network capability is claimed as implemented
+- Date: 2026-08-15
+- Status: Active implementation; slice 1 is implemented under
+  [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
+  and no network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
 - First package consumer: [package-system implementation plan](Windvale-Package-System-Implementation-Plan.md)
@@ -54,7 +56,8 @@ The merged compiler and runtime are sufficient now for:
   call and generation model.
 
 The current product runtime is not sufficient for a real network client without
-new work. It lacks a common wait/cancellation contract, monotonic timer provider,
+new work. It now has the capability-free operation/wait/cancellation semantics,
+but lacks a native wait and monotonic timer provider,
 secure entropy provider, resolver/connect provider, secure-stream provider,
 streaming HTTP body service, host adapters, civil-time/trust policy, and dynamic
 launcher binding. Those are implementation slices below, not reasons to redesign
@@ -132,6 +135,8 @@ TCP, TLS, HTTP, or package protocol parser.
 
 ### Network slice 1: operation, deadline, and cancellation core
 
+Status: implemented candidate under [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
+
 Specify the common operation identity, generation, completion, monotonic deadline,
 cancellation, wait-batch, and teardown records. Implement a capability-free model
 with a virtual clock and bounded event queue.
@@ -139,6 +144,10 @@ with a virtual clock and bounded event queue.
 Exit gate: deterministic tests cover immediate completion, queued completion,
 partial progress, cancellation races, deadline races, stale generations, provider
 restart, queue exhaustion, reserved close capacity, and complete teardown.
+
+The focused native owner now covers all ten groups, including immediate
+rejection and persistent closed-wait evidence. Native timer and blocking-wait
+providers remain slice 4 work; this slice is the capability-free semantic core.
 
 ### Network slice 2: address, endpoint, and authority model
 

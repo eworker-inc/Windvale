@@ -5,6 +5,8 @@
 > and the offline portion of slice 2 is implemented under
 > [Decision 0583](../Decisions/0583-First-Native-Bound-Model-Provider.md) and
 > [Decision 0585](../Decisions/0585-Catchable-Model-Provider-Lifecycle-Results.md).
+> Shared network slice 1 is implemented under
+> [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
 > Live network, credential, and provider-adapter slices remain proposals. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
@@ -316,7 +318,7 @@ expectations. An adapter never silently sends the prompt to another provider.
 | Rights-limited provider state | [`Windvale-Native-Capability-Provider-Table`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) | Partially ready; one provider per capability identity is practical. |
 | Native provider invocation | [`Windvale-Native-Provider-Call`](../../Specifications/Windvale-Native-Provider-Call.md) | Implemented for exact one-cell catalog and inference calls. |
 | JSON request and hostile-response codec | Windvale has deterministic JSON-style text quoting, not a general JSON value/parser contract | Not ready; provider JSON belongs first in the host adapter and needs bounded parsing. |
-| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The [networking foundation plan](Windvale-Networking-Foundation-Implementation-Plan.md) defines ordered slices through secure HTTP retrieval | Designed, not implemented. |
+| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The [bounded operation core](../../Specifications/Bounded-Operation-Core.md) implements virtual deadline/cancellation semantics; the [networking foundation plan](Windvale-Networking-Foundation-Implementation-Plan.md) retains the native timer, authority, stream, secure-transport, and HTTP slices | Slice 1 implemented; no live transport yet. |
 | Production API-key custody | Identity/trust architecture exists; no production key store or secret provider is implemented | Not ready. |
 | Multiple simultaneous provider instances | Typed capability values and nominal provider signatures are future work | Not ready; use separate launches first. |
 | Streaming and concurrent inference | General structured tasks, cancellation, channels, and concurrent provider calls are absent or proposed | Not ready and outside version 1. |
@@ -448,10 +450,11 @@ A numbered decision is required before accepting:
 
 ## Immediate recommendation
 
-Continue from the implemented protocol, offline hosted seam, and catchable
-bridge-lifecycle results. The next useful shared infrastructure is secure
-networking, credential custody, deadlines/cancellation, and bounded hostile
-JSON parsing.
+Continue from the implemented protocol, offline hosted seam, catchable
+bridge-lifecycle results, and bounded operation/deadline/cancellation core. The
+next useful shared infrastructure is slice 2's strict network authority model,
+then native timer/stream/secure-transport providers, credential custody, and
+bounded hostile JSON parsing.
 Treat a live reference adapter as optional integration evidence. Do not describe
 Windvale as able to contact external models until secure HTTP, credential, and
 live-adapter gates have actually passed.

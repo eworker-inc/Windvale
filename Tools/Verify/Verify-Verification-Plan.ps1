@@ -1163,6 +1163,21 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'bounded operation core owner'
+        Paths = @(
+            'Libraries/Foundation/Operations/Bounded-Operation-Core.wv',
+            'Projects/Libraries/Windvale-Library-Bounded-Operation-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Bounded-Operation-Core.wvproj',
+            'Tests/Fixtures/Network/Bounded-Operation-Core-Self-Test.wv',
+            'Tools/Native/Test-Bounded-Operation-Core.cmd',
+            'Tools/Native/Test-Bounded-Operation-Core.sh',
+            'Specifications/Bounded-Operation-Core.md'
+        )
+        Suites = @('operation-core')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'database library owner'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @('libraries', 'packages')
@@ -1743,9 +1758,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 70 -or
+if ($RetirementSuiteLines.Count -ne 71 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 69-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 70-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1783,7 +1798,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3557 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3567 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

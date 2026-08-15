@@ -1,0 +1,821 @@
+module Windvaleˉboundedˉoperationˉcore profile portable;
+
+const OPERATION_EVENT_BYTES: u32 = 48u32;
+const OPERATION_MINIMUM_QUEUE_CAPACITY: u32 = 3u32;
+const OPERATION_MAXIMUM_QUEUE_CAPACITY: u32 = 64u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Operationˉerror {
+    Valid = 0;
+    Invalidˉidentity = 1;
+    Invalidˉgeneration = 2;
+    Invalidˉdeadline = 3;
+    Invalidˉlimit = 4;
+    Invalidˉstate = 5;
+    Invalidˉevent = 6;
+    Invalidˉclock = 7;
+    Arithmeticˉoverflow = 8;
+    Queueˉfull = 9;
+    Duplicateˉcancellation = 10;
+    Queueˉclosed = 11;
+    Empty = 12;
+}
+
+export enum Operationˉphase {
+    Invalid = 0;
+    Queued = 1;
+    Dispatched = 2;
+    Terminal = 3;
+}
+
+export enum Operationˉoutcome {
+    None = 0;
+    Completed = 1;
+    Rejected = 2;
+    Cancelled = 3;
+    Timedˉout = 4;
+    Providerˉlost = 5;
+    Stale = 6;
+    Submissionˉindeterminate = 7;
+    Tornˉdown = 8;
+}
+
+export enum Operationˉcause {
+    None = 0;
+    Immediateˉrejection = 1;
+    Completion = 2;
+    Rejection = 3;
+    Cancellation = 4;
+    Deadline = 5;
+    Providerˉloss = 6;
+    Providerˉrestart = 7;
+    Teardown = 8;
+}
+
+export enum Operationˉeventˉkind {
+    None = 0;
+    Dispatch = 1;
+    Progress = 2;
+    Complete = 3;
+    Reject = 4;
+    Cancel = 5;
+    Providerˉloss = 6;
+    Providerˉrestart = 7;
+    Teardown = 8;
+}
+
+export enum Operationˉwaitˉstatus {
+    Ready = 0;
+    Empty = 1;
+    Closed = 2;
+    Invalid = 3;
+}
+
+export record Operationˉclock {
+    Error: Operationˉerror;
+    Generation: u64;
+    Tick: u64;
+}
+
+export record Operationˉstate {
+    Error: Operationˉerror;
+    Accepted: bool;
+    Phase: Operationˉphase;
+    Outcome: Operationˉoutcome;
+    Cause: Operationˉcause;
+    Providerˉidentity: u64;
+    Providerˉgeneration: u64;
+    Operationˉidentity: u64;
+    Operationˉgeneration: u64;
+    Clockˉgeneration: u64;
+    Deadline: u64;
+    Progress: u64;
+    Progressˉlimit: u64;
+    Mutating: bool;
+}
+
+export record Operationˉevent {
+    Kind: Operationˉeventˉkind;
+    Providerˉidentity: u64;
+    Providerˉgeneration: u64;
+    Operationˉidentity: u64;
+    Operationˉgeneration: u64;
+    Value: u64;
+}
+
+export record Operationˉtransition {
+    Error: Operationˉerror;
+    Applied: bool;
+    State: Operationˉstate;
+}
+
+export record Operationˉeventˉqueue {
+    Error: Operationˉerror;
+    Providerˉidentity: u64;
+    Providerˉgeneration: u64;
+    Capacity: u32;
+    Count: u32;
+    Cancellationˉcount: u32;
+    Closed: bool;
+    Events: bytes;
+}
+
+export record Operationˉenqueue {
+    Error: Operationˉerror;
+    Accepted: bool;
+    Queue: Operationˉeventˉqueue;
+}
+
+export record Operationˉwaitˉbatch {
+    Status: Operationˉwaitˉstatus;
+    Count: u32;
+    Events: bytes;
+    Remaining: Operationˉeventˉqueue;
+}
+
+fn Operationˉemptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Operationˉinvalidˉstate(Error: Operationˉerror) -> Operationˉstate {
+    return Operationˉstate(
+        Error, false, Operationˉphase.Invalid, Operationˉoutcome.None,
+        Operationˉcause.None,
+        0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, false
+    );
+}
+
+fn Operationˉstateˉwith(
+    State: Operationˉstate,
+    Phase: Operationˉphase,
+    Outcome: Operationˉoutcome,
+    Cause: Operationˉcause,
+    Progress: u64
+) -> Operationˉstate {
+    return Operationˉstate(
+        Operationˉerror.Valid,
+        State.Accepted,
+        Phase,
+        Outcome,
+        Cause,
+        State.Providerˉidentity,
+        State.Providerˉgeneration,
+        State.Operationˉidentity,
+        State.Operationˉgeneration,
+        State.Clockˉgeneration,
+        State.Deadline,
+        Progress,
+        State.Progressˉlimit,
+        State.Mutating
+    );
+}
+
+fn Operationˉterminal(
+    State: Operationˉstate,
+    Outcome: Operationˉoutcome,
+    Cause: Operationˉcause,
+    Progress: u64
+) -> Operationˉtransition {
+    return Operationˉtransition(
+        Operationˉerror.Valid,
+        true,
+        Operationˉstateˉwith(
+            State, Operationˉphase.Terminal, Outcome, Cause, Progress
+        )
+    );
+}
+
+fn Operationˉtransitionˉfailure(
+    State: Operationˉstate,
+    Error: Operationˉerror
+) -> Operationˉtransition {
+    return Operationˉtransition(Error, false, State);
+}
+
+export fn Operationˉclockˉcreate(
+    Generation: u64,
+    Initialˉtick: u64
+) -> Operationˉclock {
+    if Generation == 0u64 {
+        return Operationˉclock(Operationˉerror.Invalidˉgeneration, 0u64, 0u64);
+    }
+    return Operationˉclock(Operationˉerror.Valid, Generation, Initialˉtick);
+}
+
+export fn Operationˉclockˉadvance(
+    Clock: Operationˉclock,
+    Delta: u64
+) -> Operationˉclock {
+    if Clock.Error != Operationˉerror.Valid || Clock.Generation == 0u64 {
+        return Operationˉclock(Operationˉerror.Invalidˉclock, 0u64, 0u64);
+    }
+    if Delta > U64_MAXIMUM - Clock.Tick {
+        return Operationˉclock(
+            Operationˉerror.Arithmeticˉoverflow,
+            Clock.Generation,
+            Clock.Tick
+        );
+    }
+    return Operationˉclock(
+        Operationˉerror.Valid,
+        Clock.Generation,
+        Clock.Tick + Delta
+    );
+}
+
+export fn Operationˉbegin(
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operationˉclock,
+    Deadline: u64,
+    Progressˉlimit: u64,
+    Mutating: bool
+) -> Operationˉstate {
+    if Providerˉidentity == 0u64 || Operationˉidentity == 0u64 {
+        return Operationˉinvalidˉstate(Operationˉerror.Invalidˉidentity);
+    }
+    if Providerˉgeneration == 0u64 || Operationˉgeneration == 0u64 {
+        return Operationˉinvalidˉstate(Operationˉerror.Invalidˉgeneration);
+    }
+    if Clock.Error != Operationˉerror.Valid || Clock.Generation == 0u64 {
+        return Operationˉinvalidˉstate(Operationˉerror.Invalidˉclock);
+    }
+    if Deadline <= Clock.Tick {
+        return Operationˉstate(
+            Operationˉerror.Valid,
+            false,
+            Operationˉphase.Terminal,
+            Operationˉoutcome.Timedˉout,
+            Operationˉcause.Deadline,
+            Providerˉidentity,
+            Providerˉgeneration,
+            Operationˉidentity,
+            Operationˉgeneration,
+            Clock.Generation,
+            Deadline,
+            0u64,
+            Progressˉlimit,
+            Mutating
+        );
+    }
+    return Operationˉstate(
+        Operationˉerror.Valid,
+        true,
+        Operationˉphase.Queued,
+        Operationˉoutcome.None,
+        Operationˉcause.None,
+        Providerˉidentity,
+        Providerˉgeneration,
+        Operationˉidentity,
+        Operationˉgeneration,
+        Clock.Generation,
+        Deadline,
+        0u64,
+        Progressˉlimit,
+        Mutating
+    );
+}
+
+export fn Operationˉreject(
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operationˉclock,
+    Deadline: u64
+) -> Operationˉstate {
+    let State: Operationˉstate = Operationˉbegin(
+        Providerˉidentity,
+        Providerˉgeneration,
+        Operationˉidentity,
+        Operationˉgeneration,
+        Clock,
+        Deadline,
+        0u64,
+        false
+    );
+    if State.Error != Operationˉerror.Valid || !State.Accepted { return State; }
+    return Operationˉstate(
+        Operationˉerror.Valid,
+        false,
+        Operationˉphase.Terminal,
+        Operationˉoutcome.Rejected,
+        Operationˉcause.Immediateˉrejection,
+        State.Providerˉidentity,
+        State.Providerˉgeneration,
+        State.Operationˉidentity,
+        State.Operationˉgeneration,
+        State.Clockˉgeneration,
+        State.Deadline,
+        0u64,
+        0u64,
+        false
+    );
+}
+
+export fn Operationˉeventˉcreate(
+    Kind: Operationˉeventˉkind,
+    State: Operationˉstate,
+    Value: u64
+) -> Operationˉevent {
+    return Operationˉevent(
+        Kind,
+        State.Providerˉidentity,
+        State.Providerˉgeneration,
+        State.Operationˉidentity,
+        State.Operationˉgeneration,
+        Value
+    );
+}
+
+fn Operationˉeventˉisˉvalid(Event: Operationˉevent) -> bool {
+    if Event.Kind == Operationˉeventˉkind.None ||
+        Event.Providerˉidentity == 0u64 || Event.Providerˉgeneration == 0u64 {
+        return false;
+    }
+    if Event.Kind == Operationˉeventˉkind.Teardown {
+        return Event.Operationˉidentity == 0u64 &&
+            Event.Operationˉgeneration == 0u64 && Event.Value != 0u64;
+    }
+    if Event.Operationˉidentity == 0u64 || Event.Operationˉgeneration == 0u64 {
+        return false;
+    }
+    if Event.Kind == Operationˉeventˉkind.Progress ||
+        Event.Kind == Operationˉeventˉkind.Complete {
+        return true;
+    }
+    if Event.Kind == Operationˉeventˉkind.Providerˉrestart {
+        return Event.Value != 0u64 && Event.Value != Event.Providerˉgeneration;
+    }
+    return Event.Value == 0u64;
+}
+
+export fn Operationˉadvance(
+    State: Operationˉstate,
+    Clock: Operationˉclock,
+    Event: Operationˉevent
+) -> Operationˉtransition {
+    if State.Error != Operationˉerror.Valid || !State.Accepted ||
+        State.Phase == Operationˉphase.Invalid {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉstate);
+    }
+    if State.Phase == Operationˉphase.Terminal {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉstate);
+    }
+    if Clock.Error != Operationˉerror.Valid ||
+        Clock.Generation != State.Clockˉgeneration {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉclock);
+    }
+    if !Operationˉeventˉisˉvalid(Event) ||
+        Event.Kind == Operationˉeventˉkind.Teardown {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉevent);
+    }
+    if Event.Providerˉidentity != State.Providerˉidentity ||
+        Event.Operationˉidentity != State.Operationˉidentity {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉidentity);
+    }
+    if Event.Providerˉgeneration != State.Providerˉgeneration ||
+        Event.Operationˉgeneration != State.Operationˉgeneration {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉgeneration);
+    }
+    if Clock.Tick >= State.Deadline {
+        if State.Phase == Operationˉphase.Dispatched && State.Mutating {
+            return Operationˉterminal(
+                State,
+                Operationˉoutcome.Submissionˉindeterminate,
+                Operationˉcause.Deadline,
+                State.Progress
+            );
+        }
+        return Operationˉterminal(
+            State,
+            Operationˉoutcome.Timedˉout,
+            Operationˉcause.Deadline,
+            State.Progress
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Dispatch {
+        if State.Phase != Operationˉphase.Queued {
+            return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉevent);
+        }
+        return Operationˉtransition(
+            Operationˉerror.Valid,
+            true,
+            Operationˉstateˉwith(
+                State, Operationˉphase.Dispatched, Operationˉoutcome.None,
+                Operationˉcause.None, 0u64
+            )
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Progress {
+        if State.Phase != Operationˉphase.Dispatched ||
+            Event.Value <= State.Progress || Event.Value > State.Progressˉlimit {
+            return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉevent);
+        }
+        return Operationˉtransition(
+            Operationˉerror.Valid,
+            true,
+            Operationˉstateˉwith(
+                State, Operationˉphase.Dispatched, Operationˉoutcome.None,
+                Operationˉcause.None, Event.Value
+            )
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Complete {
+        if Event.Value < State.Progress || Event.Value > State.Progressˉlimit {
+            return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉevent);
+        }
+        return Operationˉterminal(
+            State, Operationˉoutcome.Completed,
+            Operationˉcause.Completion, Event.Value
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Reject {
+        if State.Phase != Operationˉphase.Queued {
+            return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉevent);
+        }
+        return Operationˉterminal(
+            State, Operationˉoutcome.Rejected, Operationˉcause.Rejection, 0u64
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Cancel {
+        if State.Phase == Operationˉphase.Dispatched && State.Mutating {
+            return Operationˉterminal(
+                State, Operationˉoutcome.Submissionˉindeterminate,
+                Operationˉcause.Cancellation, State.Progress
+            );
+        }
+        return Operationˉterminal(
+            State, Operationˉoutcome.Cancelled,
+            Operationˉcause.Cancellation, State.Progress
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Providerˉloss {
+        if State.Phase == Operationˉphase.Dispatched && State.Mutating {
+            return Operationˉterminal(
+                State, Operationˉoutcome.Submissionˉindeterminate,
+                Operationˉcause.Providerˉloss, State.Progress
+            );
+        }
+        return Operationˉterminal(
+            State, Operationˉoutcome.Providerˉlost,
+            Operationˉcause.Providerˉloss, State.Progress
+        );
+    }
+    if Event.Kind == Operationˉeventˉkind.Providerˉrestart {
+        if State.Phase == Operationˉphase.Dispatched && State.Mutating {
+            return Operationˉterminal(
+                State, Operationˉoutcome.Submissionˉindeterminate,
+                Operationˉcause.Providerˉrestart, State.Progress
+            );
+        }
+        return Operationˉterminal(
+            State, Operationˉoutcome.Stale,
+            Operationˉcause.Providerˉrestart, State.Progress
+        );
+    }
+    return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉevent);
+}
+
+export fn Operationˉteardown(
+    State: Operationˉstate,
+    Clock: Operationˉclock,
+    Newˉproviderˉgeneration: u64
+) -> Operationˉtransition {
+    if State.Error != Operationˉerror.Valid || !State.Accepted ||
+        State.Phase == Operationˉphase.Invalid ||
+        State.Phase == Operationˉphase.Terminal {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉstate);
+    }
+    if Clock.Error != Operationˉerror.Valid ||
+        Clock.Generation != State.Clockˉgeneration {
+        return Operationˉtransitionˉfailure(State, Operationˉerror.Invalidˉclock);
+    }
+    if Newˉproviderˉgeneration == 0u64 ||
+        Newˉproviderˉgeneration == State.Providerˉgeneration {
+        return Operationˉtransitionˉfailure(
+            State, Operationˉerror.Invalidˉgeneration
+        );
+    }
+    if Clock.Tick >= State.Deadline {
+        if State.Phase == Operationˉphase.Dispatched && State.Mutating {
+            return Operationˉterminal(
+                State, Operationˉoutcome.Submissionˉindeterminate,
+                Operationˉcause.Deadline, State.Progress
+            );
+        }
+        return Operationˉterminal(
+            State, Operationˉoutcome.Timedˉout,
+            Operationˉcause.Deadline, State.Progress
+        );
+    }
+    if State.Phase == Operationˉphase.Dispatched && State.Mutating {
+        return Operationˉterminal(
+            State, Operationˉoutcome.Submissionˉindeterminate,
+            Operationˉcause.Teardown, State.Progress
+        );
+    }
+    return Operationˉterminal(
+        State, Operationˉoutcome.Tornˉdown,
+        Operationˉcause.Teardown, State.Progress
+    );
+}
+
+fn Operationˉappendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Operationˉeventˉkindˉtoˉu32(Value: Operationˉeventˉkind) -> u32 {
+    if Value == Operationˉeventˉkind.Dispatch { return 1u32; }
+    if Value == Operationˉeventˉkind.Progress { return 2u32; }
+    if Value == Operationˉeventˉkind.Complete { return 3u32; }
+    if Value == Operationˉeventˉkind.Reject { return 4u32; }
+    if Value == Operationˉeventˉkind.Cancel { return 5u32; }
+    if Value == Operationˉeventˉkind.Providerˉloss { return 6u32; }
+    if Value == Operationˉeventˉkind.Providerˉrestart { return 7u32; }
+    if Value == Operationˉeventˉkind.Teardown { return 8u32; }
+    return 0u32;
+}
+
+fn Operationˉeventˉencode(Event: Operationˉevent) -> bytes {
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(
+        Operationˉeventˉkindˉtoˉu32(Event.Kind)
+    );
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Operationˉappendˉu64(Value, Event.Providerˉidentity);
+    Value = Operationˉappendˉu64(Value, Event.Providerˉgeneration);
+    Value = Operationˉappendˉu64(Value, Event.Operationˉidentity);
+    Value = Operationˉappendˉu64(Value, Event.Operationˉgeneration);
+    return Operationˉappendˉu64(Value, Event.Value);
+}
+
+fn Operationˉeventˉkindˉfromˉu32(Value: u32) -> Operationˉeventˉkind {
+    if Value == 1u32 { return Operationˉeventˉkind.Dispatch; }
+    if Value == 2u32 { return Operationˉeventˉkind.Progress; }
+    if Value == 3u32 { return Operationˉeventˉkind.Complete; }
+    if Value == 4u32 { return Operationˉeventˉkind.Reject; }
+    if Value == 5u32 { return Operationˉeventˉkind.Cancel; }
+    if Value == 6u32 { return Operationˉeventˉkind.Providerˉloss; }
+    if Value == 7u32 { return Operationˉeventˉkind.Providerˉrestart; }
+    if Value == 8u32 { return Operationˉeventˉkind.Teardown; }
+    return Operationˉeventˉkind.None;
+}
+
+fn Operationˉeventˉdecode(Value: bytes, Offset: u32) -> Operationˉevent {
+    return Operationˉevent(
+        Operationˉeventˉkindˉfromˉu32(Bytesˉreadˉu32ˉlittle(Value, Offset)),
+        Bytesˉreadˉu64ˉlittle(Value, Offset + 8u32),
+        Bytesˉreadˉu64ˉlittle(Value, Offset + 16u32),
+        Bytesˉreadˉu64ˉlittle(Value, Offset + 24u32),
+        Bytesˉreadˉu64ˉlittle(Value, Offset + 32u32),
+        Bytesˉreadˉu64ˉlittle(Value, Offset + 40u32)
+    );
+}
+
+fn Operationˉqueueˉisˉvalid(Queue: Operationˉeventˉqueue) -> bool {
+    if Queue.Error != Operationˉerror.Valid || Queue.Providerˉidentity == 0u64 ||
+        Queue.Providerˉgeneration == 0u64 ||
+        Queue.Capacity < OPERATION_MINIMUM_QUEUE_CAPACITY ||
+        Queue.Capacity > OPERATION_MAXIMUM_QUEUE_CAPACITY ||
+        Queue.Count > Queue.Capacity || Queue.Cancellationˉcount > 1u32 ||
+        Bytesˉlength(Queue.Events) != Queue.Count * OPERATION_EVENT_BYTES {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    var Cancellationˉcount: u32 = 0u32;
+    var Teardownˉcount: u32 = 0u32;
+    while Index < Queue.Count {
+        let Offset: u32 = Index * OPERATION_EVENT_BYTES;
+        if Bytesˉreadˉu32ˉlittle(Queue.Events, Offset + 4u32) != 0u32 {
+            return false;
+        }
+        let Event: Operationˉevent = Operationˉeventˉdecode(
+            Queue.Events, Offset
+        );
+        if !Operationˉeventˉisˉvalid(Event) ||
+            Event.Providerˉidentity != Queue.Providerˉidentity ||
+            Event.Providerˉgeneration != Queue.Providerˉgeneration {
+            return false;
+        }
+        if Event.Kind == Operationˉeventˉkind.Cancel {
+            Cancellationˉcount = Cancellationˉcount + 1u32;
+        }
+        if Event.Kind == Operationˉeventˉkind.Teardown {
+            Teardownˉcount = Teardownˉcount + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if Cancellationˉcount != Queue.Cancellationˉcount ||
+        Cancellationˉcount > 1u32 || Teardownˉcount > 1u32 {
+        return false;
+    }
+    if Queue.Closed { return Teardownˉcount <= 1u32; }
+    return Teardownˉcount == 0u32;
+}
+
+fn Operationˉinvalidˉqueue(Error: Operationˉerror) -> Operationˉeventˉqueue {
+    return Operationˉeventˉqueue(
+        Error, 0u64, 0u64, 0u32, 0u32, 0u32, false, Operationˉemptyˉbytes()
+    );
+}
+
+export fn Operationˉqueueˉcreate(
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Capacity: u32
+) -> Operationˉeventˉqueue {
+    if Providerˉidentity == 0u64 {
+        return Operationˉinvalidˉqueue(Operationˉerror.Invalidˉidentity);
+    }
+    if Providerˉgeneration == 0u64 {
+        return Operationˉinvalidˉqueue(Operationˉerror.Invalidˉgeneration);
+    }
+    if Capacity < OPERATION_MINIMUM_QUEUE_CAPACITY ||
+        Capacity > OPERATION_MAXIMUM_QUEUE_CAPACITY {
+        return Operationˉinvalidˉqueue(Operationˉerror.Invalidˉlimit);
+    }
+    return Operationˉeventˉqueue(
+        Operationˉerror.Valid,
+        Providerˉidentity,
+        Providerˉgeneration,
+        Capacity,
+        0u32,
+        0u32,
+        false,
+        Operationˉemptyˉbytes()
+    );
+}
+
+fn Operationˉenqueueˉfailure(
+    Queue: Operationˉeventˉqueue,
+    Error: Operationˉerror
+) -> Operationˉenqueue {
+    return Operationˉenqueue(Error, false, Queue);
+}
+
+export fn Operationˉqueueˉenqueue(
+    Queue: Operationˉeventˉqueue,
+    Event: Operationˉevent
+) -> Operationˉenqueue {
+    if !Operationˉqueueˉisˉvalid(Queue) {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Invalidˉstate);
+    }
+    if Queue.Closed {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Queueˉclosed);
+    }
+    if !Operationˉeventˉisˉvalid(Event) ||
+        Event.Kind == Operationˉeventˉkind.Teardown {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Invalidˉevent);
+    }
+    if Event.Providerˉidentity != Queue.Providerˉidentity {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Invalidˉidentity);
+    }
+    if Event.Providerˉgeneration != Queue.Providerˉgeneration {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Invalidˉgeneration);
+    }
+    let Isˉcancellation: bool = Event.Kind == Operationˉeventˉkind.Cancel;
+    if Isˉcancellation && Queue.Cancellationˉcount != 0u32 {
+        return Operationˉenqueueˉfailure(
+            Queue, Operationˉerror.Duplicateˉcancellation
+        );
+    }
+    if Isˉcancellation {
+        if Queue.Count >= Queue.Capacity - 1u32 {
+            return Operationˉenqueueˉfailure(Queue, Operationˉerror.Queueˉfull);
+        }
+    } else if Queue.Count >= Queue.Capacity - 2u32 {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Queueˉfull);
+    }
+    var Cancellationˉcount: u32 = Queue.Cancellationˉcount;
+    if Isˉcancellation {
+        Cancellationˉcount = Cancellationˉcount + 1u32;
+    }
+    let Next: Operationˉeventˉqueue = Operationˉeventˉqueue(
+        Operationˉerror.Valid,
+        Queue.Providerˉidentity,
+        Queue.Providerˉgeneration,
+        Queue.Capacity,
+        Queue.Count + 1u32,
+        Cancellationˉcount,
+        false,
+        Bytesˉconcat(Queue.Events, Operationˉeventˉencode(Event))
+    );
+    return Operationˉenqueue(Operationˉerror.Valid, true, Next);
+}
+
+export fn Operationˉqueueˉclose(
+    Queue: Operationˉeventˉqueue,
+    Newˉproviderˉgeneration: u64
+) -> Operationˉenqueue {
+    if !Operationˉqueueˉisˉvalid(Queue) {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Invalidˉstate);
+    }
+    if Queue.Closed {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Queueˉclosed);
+    }
+    if Newˉproviderˉgeneration == 0u64 ||
+        Newˉproviderˉgeneration == Queue.Providerˉgeneration {
+        return Operationˉenqueueˉfailure(
+            Queue, Operationˉerror.Invalidˉgeneration
+        );
+    }
+    if Queue.Count >= Queue.Capacity {
+        return Operationˉenqueueˉfailure(Queue, Operationˉerror.Queueˉfull);
+    }
+    let Event: Operationˉevent = Operationˉevent(
+        Operationˉeventˉkind.Teardown,
+        Queue.Providerˉidentity,
+        Queue.Providerˉgeneration,
+        0u64,
+        0u64,
+        Newˉproviderˉgeneration
+    );
+    let Next: Operationˉeventˉqueue = Operationˉeventˉqueue(
+        Operationˉerror.Valid,
+        Queue.Providerˉidentity,
+        Queue.Providerˉgeneration,
+        Queue.Capacity,
+        Queue.Count + 1u32,
+        Queue.Cancellationˉcount,
+        true,
+        Bytesˉconcat(Queue.Events, Operationˉeventˉencode(Event))
+    );
+    return Operationˉenqueue(Operationˉerror.Valid, true, Next);
+}
+
+fn Operationˉcountˉcancellations(Value: bytes, Count: u32) -> u32 {
+    var Result: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Operationˉeventˉkindˉfromˉu32(
+            Bytesˉreadˉu32ˉlittle(Value, Index * OPERATION_EVENT_BYTES)
+        ) == Operationˉeventˉkind.Cancel {
+            Result = Result + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Operationˉqueueˉwait(
+    Queue: Operationˉeventˉqueue,
+    Maximum: u32
+) -> Operationˉwaitˉbatch {
+    if !Operationˉqueueˉisˉvalid(Queue) || Maximum == 0u32 || Maximum > 64u32 {
+        return Operationˉwaitˉbatch(
+            Operationˉwaitˉstatus.Invalid,
+            0u32,
+            Operationˉemptyˉbytes(),
+            Queue
+        );
+    }
+    if Queue.Count == 0u32 {
+        var Status: Operationˉwaitˉstatus = Operationˉwaitˉstatus.Empty;
+        if Queue.Closed { Status = Operationˉwaitˉstatus.Closed; }
+        return Operationˉwaitˉbatch(
+            Status, 0u32, Operationˉemptyˉbytes(), Queue
+        );
+    }
+    var Count: u32 = Queue.Count;
+    if Count > Maximum { Count = Maximum; }
+    let Takenˉbytes: u32 = Count * OPERATION_EVENT_BYTES;
+    let Remainingˉcount: u32 = Queue.Count - Count;
+    let Remainingˉevents: bytes = Bytesˉslice(
+        Queue.Events,
+        Takenˉbytes,
+        Remainingˉcount * OPERATION_EVENT_BYTES
+    );
+    let Remaining: Operationˉeventˉqueue = Operationˉeventˉqueue(
+        Operationˉerror.Valid,
+        Queue.Providerˉidentity,
+        Queue.Providerˉgeneration,
+        Queue.Capacity,
+        Remainingˉcount,
+        Operationˉcountˉcancellations(Remainingˉevents, Remainingˉcount),
+        Queue.Closed,
+        Remainingˉevents
+    );
+    return Operationˉwaitˉbatch(
+        Operationˉwaitˉstatus.Ready,
+        Count,
+        Bytesˉslice(Queue.Events, 0u32, Takenˉbytes),
+        Remaining
+    );
+}
+
+export fn Operationˉwaitˉeventˉat(
+    Events: bytes,
+    Count: u32,
+    Index: u32
+) -> Operationˉevent {
+    if Count == 0u32 || Count > 64u32 || Index >= Count ||
+        Bytesˉlength(Events) != Count * OPERATION_EVENT_BYTES {
+        return Operationˉevent(
+            Operationˉeventˉkind.None, 0u64, 0u64, 0u64, 0u64, 0u64
+        );
+    }
+    return Operationˉeventˉdecode(Events, Index * OPERATION_EVENT_BYTES);
+}

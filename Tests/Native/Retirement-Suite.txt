@@ -49,6 +49,7 @@ os-probe|Test-Os-Probe|4|3|Tests: 4, Passed: 4, Failed: 0
 aot-chain|Test-Aot-Chain|1|4|native aot chain status=Passed result=42
 native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified
 model-provider|Test-Model-Provider|11|4|native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
+operation-core|Test-Bounded-Operation-Core|10|4|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
 database-storage|Test-Database-Storage|24|1|native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified

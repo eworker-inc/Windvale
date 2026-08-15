@@ -760,6 +760,14 @@ foreach ($Path in $Paths) {
             Add-Suite 'wvb-to-wvo-reconstruction'
         }
     } elseif ($Path -in @(
+        'Libraries/Foundation/Operations/Bounded-Operation-Core.wv',
+        'Projects/Libraries/Windvale-Library-Bounded-Operation-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Bounded-Operation-Core.wvproj',
+        'Tests/Fixtures/Network/Bounded-Operation-Core-Self-Test.wv',
+        'Specifications/Bounded-Operation-Core.md'
+    )) {
+        Add-Suite 'operation-core'
+    } elseif ($Path -in @(
         'Libraries/Platform/Models/Bound-Model-Provider.wv',
         'Projects/Libraries/Windvale-Library-Bound-Model-Provider.wvproj',
         'Projects/Tests/Windvale-Native-Test-Hosted-Model-Provider.wvproj',

@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 7,788 LF-only bytes with SHA-256
-`88699564389f8baada1823d0b0e2630d276e28f9bd0c98f23395fb6ba9926190`.
+`Tests/Native/Retirement-Suite.txt` is 7,927 LF-only bytes with SHA-256
+`0d95c1e910ad8e98eb262f5f8fba74324b86d733561ae4fcbffc1c3c7d5e3352`.
 The first line is exactly:
 
 ```text
@@ -163,7 +163,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 69, Passed: 69, Failed: 0, Cases: 3557
+Suites: 70, Passed: 70, Failed: 0, Cases: 3567
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
