@@ -1,0 +1,16 @@
+windvale-lock 1
+resolver local-source-1
+root windvale.wvb-inspector 0.1.0 inspector
+target hosted-wvb-v1
+license LicenseRef-Windvale-Community-Source-1.0
+origin workspace 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 21 Windvale.wvws
+package a58441a48b0e11c4062e77b0176934952c1de238c78d04ba88ca9ca61e0a41b6 412 Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack
+compiler 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 914746 Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb
+project 1583142d2fa4acbaa67b5518b676bef670d4c370c1d6164f4096d66474b28e51 71 Projects/Examples/Windvale-Wvb-Inspector.wvproj
+part inspector hosted 46b169b652d5966e7c203c29b4494966895a616489b3ba6b88ec799c13c873ad 63924 Examples/Foundation/Wv-Dump-Core.wv
+capability console.write_line
+capability diagnostic.write_line
+capability file.read_bytes
+capability process.argument
+capability process.argument_count
+output 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 76527

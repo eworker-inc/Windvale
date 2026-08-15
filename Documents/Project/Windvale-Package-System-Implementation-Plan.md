@@ -17,7 +17,7 @@ generation activation/rollback, online source, or self-updating client.
 
 | Slice | Standing after `v0.1.0` |
 | --- | :---: |
-| 1. General Package 1 and Lock 1 parser | 🔵 Partial |
+| 1. General Package 1 and Lock 1 parser | 🔵 Two real packages; general resolver shell open |
 | 2. Bundle 1 writer and read-only verifier | ✅ Bounded subset complete |
 | 3. Streaming Bundle 1 admission | ○ Open |
 | 4. Offline signature and release metadata | 🔵 Release Envelope 1 subset complete |
@@ -52,7 +52,7 @@ or authority grant.
 
 | Needed boundary | Current repository evidence | Readiness |
 | --- | --- | --- |
-| Source package and exact lock | Package 1, Lock 1, WVDB Query manifest and lock, canonical text reader, general manifest and lock readers, cross-file consistency and resource-admission cores, and a 58-case native package-format owner | All current lock resource kinds have general byte admission; the publication shell remains specialized to one digest-pinned package |
+| Source package and exact lock | Package 1, Lock 1, exact WVDB Query and WVB inspector pairs, canonical readers, cross-file consistency and resource admission, and an 82-case native package-format owner | Both real packages and their locked resources pass the portable cores; their publication shells remain separately digest-pinned |
 | Cross-component source build | Workspace 1 and Project 2 native front door | Implemented candidate |
 | Compiler data and call support | Native `u64` values, nested records, byte concatenation, execution context 9, capability-provider table, and provider-call lowering | Enough language/backend surface for bounded package parsers and bundle geometry; the merged baseline still requires its dual-host qualification result |
 | SHA-256 | `Foundation/Sha256.wv`, compression core, streaming core, native streaming evidence | Reusable, but the current portable streaming state is capped at 64 MiB and tracks a `u32` total |
@@ -63,7 +63,7 @@ or authority grant.
 | Random-access storage semantics | `storage.random_access_v1`, execution context 9, ABI-23 provider calls, Windows/Linux storage leaves, and durable database recovery | Focused native provider exists; it owns one fixed database object and is not a package-store or general launcher binding |
 | Hosted CLI basics | Process arguments, console/diagnostic output, whole-file read/write, native tool packaging | Enough for the first parser/verifier tools |
 | Capability metadata | WVB capability catalog, root transitive approval, Package 1 complete capability closure, one canonical installed approval, and target-specific launch records | The exact WVDB path is implemented; general dynamic launcher binding, revocation, and generation policy remain open |
-| Useful second package | Existing complete native `wvdump` / WVB inspector project | Ready to exercise a general Package 1 parser without creating a duplicate application |
+| Useful second package | Exact `windvale.wvb-inspector` manifest, lock, provenance, and 76,527-byte WVB | Implemented candidate with a distinct five-capability closure; approval/launch and general resolution remain |
 
 The merged durable-database and compiler batch now provides valuable `u64`,
 nested-record, byte-concatenation, provider-table, positioned-storage, flush,
@@ -106,21 +106,21 @@ The first four implementation increments now own strict canonical package text,
 general Package 1 manifest and Lock 1 readers, and their cross-file consistency
 and locked-resource admission cores in portable Windvale source. Focused tests
 compile with the native build driver, reject malformed and mismatched content,
-verify the real WVDB Query pair and all nine of its locked inputs, lower through
+verify both real manifest/lock pairs and all fourteen locked inputs, lower through
 the native backend, and are packaged as both Windows and Linux hosted executables.
-Local execution is development evidence only; independent Linux execution and a
-second real package remain in Slice 1.
+Both digest-pinned package shells reconstruct deterministic WVB output; replacing
+them with one general resolver shell remains in Slice 1.
 
 ## Confirmed missing boundaries
 
 ### General package and lock admission
 
-The current package shell accepts only the exact checked-in WVDB Query manifest
-and lock identities. Reusable strict text, Package 1 manifest, and Lock 1 readers
-now exist together with cross-file consistency and locked-resource admission
-cores. Their consumers check the actual WVDB Query pair and all nine locked input
-resources. There is still no general resolver shell or second package, and the
-publication command has not yet migrated from its digest-pinned specialization.
+The current package shells accept the exact checked-in WVDB Query and WVB
+inspector manifest/lock identities. Reusable strict text, Package 1 manifest, and
+Lock 1 readers exist with cross-file consistency and locked-resource admission
+cores, and their owner checks both pairs and all fourteen inputs. There is still
+no general resolver shell; publication has not migrated from two digest-pinned
+specializations.
 
 ### Large streaming identity
 
@@ -186,8 +186,9 @@ formats in one command or hide semantic parsing in host scripts.
 
 ### Slice 1: general Package 1 and Lock 1 parser
 
-Standing: **partial**. The WVDB package/lock and portable parsing/admission cores
-are real; the second general package and non-specialized resolver shell remain.
+Standing: **partial**. Both real package/lock pairs and the portable
+parsing/admission cores are implemented candidates; the non-specialized resolver
+shell remains.
 
 Development prerequisite: a pinned merged baseline and passing focused native
 package-format evidence. No additional compiler or database feature is required.

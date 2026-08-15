@@ -17,6 +17,9 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   flushed and reread private candidates, atomic replacement, explicit stale and
   indeterminate outcomes, bounded interruption recovery, and rollback
   publication without changing the `v0.1.0` installers.
+- Added `windvale.wvb-inspector` as the second real Package 1 / Lock 1 candidate,
+  with exact provenance, deterministic 76,527-byte WVB output, all locked-input
+  admission, and a distinct five-capability whole-file-read closure.
 
 ## 0.1.0 — 2026-08-15
 

@@ -364,7 +364,7 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
-    } elseif ($Stem -eq 'Build-Wvdb-Query-Package') {
+    } elseif ($Stem -in @('Build-Wvdb-Query-Package', 'Build-Wvb-Inspector-Package')) {
         Add-Suite 'packages'
     } elseif ($Stem -eq 'Test-Package-Format') {
         Add-Suite 'package-format'
@@ -677,6 +677,8 @@ foreach ($Path in $Paths) {
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
+    } elseif ($Path.StartsWith('Distribution/Applications/Wvb-Inspector/', [StringComparison]::Ordinal)) {
+        Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Specifications/Windvale-Installation-Generation.md') {

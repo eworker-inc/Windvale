@@ -1,0 +1,9 @@
+windvale-provenance 1
+package windvale.wvb-inspector 0.1.0
+target hosted-wvb-v1
+manifest-sha256 a58441a48b0e11c4062e77b0176934952c1de238c78d04ba88ca9ca61e0a41b6
+lock-sha256 eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1
+compiler-sha256 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6
+output-sha256 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753
+builder native-source-front-door
+resolver local-source-1

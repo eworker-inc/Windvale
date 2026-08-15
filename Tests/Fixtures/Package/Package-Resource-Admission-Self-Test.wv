@@ -104,9 +104,37 @@ fn Actualˉcases() -> bool {
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         3u32, "Libraries/Platform/Database/Read-Only-Wvdb.wv"
     ) { return false; }
-    return Actualˉresource(
+    if !Actualˉresource(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         4u32, "Libraries/Database/Wvdb-Reader.wv"
+    ) { return false; }
+
+    let Inspectorˉlock: bytes = file.read_bytes(
+        Actualˉpath(
+            Root,
+            "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvlock"
+        )
+    );
+    if !Actualˉresource(
+        Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Origin,
+        0u32, "Windvale.wvws"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
+        0u32,
+        "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
+        0u32, "Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb"
+    ) { return false; }
+    if !Actualˉresource(
+        Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Project,
+        0u32, "Projects/Examples/Windvale-Wvb-Inspector.wvproj"
+    ) { return false; }
+    return Actualˉresource(
+        Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Part,
+        0u32, "Examples/Foundation/Wv-Dump-Core.wv"
     );
 }
 

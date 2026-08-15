@@ -10,6 +10,8 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 manifest="$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack"
 lock="$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvlock"
+inspector_manifest="$repository_root/Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack"
+inspector_lock="$repository_root/Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvlock"
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-wvdb-package-test.XXXXXXXX") || exit 1
 cleanup() {
@@ -36,6 +38,17 @@ first_digest_line=$(sha256sum -- "$temporary_directory/First.wvb") || exit 1
 first_sha256=${first_digest_line%% *}
 [[ $first_bytes -eq 26294 && $first_sha256 == 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 ]] || exit 1
 
+"$script_directory/Build-Wvb-Inspector-Package.sh" \
+    "$inspector_manifest" "$inspector_lock" "$temporary_directory/Inspector-First.wvb" >/dev/null || exit $?
+"$script_directory/Build-Wvb-Inspector-Package.sh" \
+    "$inspector_manifest" "$inspector_lock" "$temporary_directory/Inspector-Second.wvb" >/dev/null || exit $?
+cmp --silent "$temporary_directory/Inspector-First.wvb" \
+    "$temporary_directory/Inspector-Second.wvb" || exit 1
+inspector_bytes=$(wc -c < "$temporary_directory/Inspector-First.wvb") || exit 1
+inspector_digest_line=$(sha256sum -- "$temporary_directory/Inspector-First.wvb") || exit 1
+inspector_sha256=${inspector_digest_line%% *}
+[[ $inspector_bytes -eq 76527 && $inspector_sha256 == 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 ]] || exit 1
+
 "$script_directory/Inspect-Wvb.sh" "$temporary_directory/First.wvb" >"$temporary_directory/Inspect.txt" || exit $?
 capability_count=$(grep -c '^capability index=' "$temporary_directory/Inspect.txt") || exit 1
 [[ $capability_count -eq 5 ]] || exit 1
@@ -46,6 +59,22 @@ for capability in \
     process.argument \
     process.argument_count; do
     grep '^capability index=' "$temporary_directory/Inspect.txt" | \
+        grep -F "name=\"$capability\"" >/dev/null || exit 1
+done
+
+"$script_directory/Inspect-Wvb.sh" \
+    "$temporary_directory/Inspector-First.wvb" \
+    >"$temporary_directory/Inspector-Inspect.txt" || exit $?
+inspector_capability_count=$(grep -c '^capability index=' \
+    "$temporary_directory/Inspector-Inspect.txt") || exit 1
+[[ $inspector_capability_count -eq 5 ]] || exit 1
+for capability in \
+    console.write_line \
+    diagnostic.write_line \
+    file.read_bytes \
+    process.argument \
+    process.argument_count; do
+    grep '^capability index=' "$temporary_directory/Inspector-Inspect.txt" | \
         grep -F "name=\"$capability\"" >/dev/null || exit 1
 done
 
@@ -74,4 +103,4 @@ if "$script_directory/Build-Wvdb-Query-Package.sh" \
 fi
 [[ ! -e $temporary_directory/Alias.wvb ]] || exit 1
 
-echo 'native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8'
+echo 'native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11'

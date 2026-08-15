@@ -1,0 +1,13 @@
+windvale-package 1
+name windvale.wvb-inspector
+version 0.1.0
+license LicenseRef-Windvale-Community-Source-1.0
+root inspector
+target hosted-wvb-v1
+project Projects/Examples/Windvale-Wvb-Inspector.wvproj
+part inspector hosted Examples/Foundation/Wv-Dump-Core.wv
+capability console.write_line
+capability diagnostic.write_line
+capability file.read_bytes
+capability process.argument
+capability process.argument_count

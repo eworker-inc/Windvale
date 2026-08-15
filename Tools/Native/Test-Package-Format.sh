@@ -43,6 +43,8 @@ consistency_windows_application="$temporary_directory/Consistency.exe"
 consistency_linux_application="$temporary_directory/Consistency.elf"
 manifest="$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack"
 lock="$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvlock"
+inspector_manifest="$repository_root/Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack"
+inspector_lock="$repository_root/Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvlock"
 admission_project="$repository_root/Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj"
 admission_wvb="$temporary_directory/Admission.wvb"
 admission_windows_application="$temporary_directory/Admission.exe"
@@ -86,6 +88,8 @@ cmp --silent "$first" "$second" || exit 1
     "$consistency_wvb" "$consistency_linux_application" linux >/dev/null || exit $?
 "$consistency_linux_application" "$manifest" "$lock" >/dev/null
 [[ $? -eq 42 ]] || exit 1
+"$consistency_linux_application" "$inspector_manifest" "$inspector_lock" >/dev/null
+[[ $? -eq 42 ]] || exit 1
 
 "$script_directory/Build-Wvb.sh" "$admission_project" "$admission_wvb" >/dev/null || exit $?
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
@@ -103,4 +107,4 @@ cmp --silent "$first" "$second" || exit 1
 "$generation_linux_application" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
-echo 'native package format status=Passed result=42 modules=6 builds=7 groups=76 cross-host-images=12'
+echo 'native package format status=Passed result=42 modules=6 builds=7 groups=82 cross-host-images=12'

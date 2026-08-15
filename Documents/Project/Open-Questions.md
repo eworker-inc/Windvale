@@ -41,8 +41,6 @@ unfinished work.
 
 ### Milestone 4 offline lifecycle
 
-- Which second real package provides the smallest distinct resolver, approval,
-  and command-dispatch pressure alongside WVDB Query?
 - How should command dispatch validate the active record on every launch without
   making ordinary tool startup unreasonably expensive?
 - Should the first command dispatcher reread and validate both canonical records

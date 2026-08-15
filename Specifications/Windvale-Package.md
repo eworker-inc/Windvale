@@ -3,9 +3,9 @@
 ## Status and purpose
 
 Package 1 (`.wvpack`) and Lock 1 (`.wvlock`) define the first native-owned local
-source-package contract. The implemented instance packages the WVDB Query
-application and its reusable portable and hosted libraries. It builds the same
-canonical WVB from exact checked-in inputs on Windows and Linux without .NET.
+source-package contract. The implemented instances package the WVDB Query
+application with its reusable libraries and the independent WVB inspector. Each
+builds the same canonical WVB from exact checked-in inputs on Windows and Linux.
 
 This contract is separate from Workspace 1 and Project 2. A project selects source
 inputs for one compilation. A package names parts, dependency edges, target scope,
@@ -16,8 +16,9 @@ Decision 0561 separately implements the bounded Bundle 1 and immutable-publicati
 subset used by WVDB Query. Decisions 0563 through 0566 implement the first signed
 offline release and installer custody path. Generation 1 / Activation 1 now define
 and implement the portable installed-state parser/planner under Decision 0568.
-A general resolver, registry, streaming store service, runtime WVB linker, online
-updater, and durable host activation adapter are not implemented by Package 1.
+A general resolver, registry, streaming store service, runtime WVB linker, and
+online updater are not implemented by Package 1. Decision 0568's separate host
+adapter now publishes and recovers exact caller-validated Activation 1 bytes.
 
 ## Text and naming rules
 
@@ -140,11 +141,12 @@ fixed-resource index outside the lock is rejected before path or content checks.
 Host shells retain responsibility for acquiring the named bytes without path
 aliasing and for withholding publication until every required resource passes.
 
-The paired `Tools/Native/Build-Wvdb-Query-Package` commands accept an explicit
-manifest, lock, and output path. That publication front door still intentionally
-admits only the exact checked-in WVDB Query manifest and lock identity; replacing
-its specialized admission path with the general consistency and resource cores
-is a subsequent implementation slice.
+The paired `Tools/Native/Build-Wvdb-Query-Package` and
+`Build-Wvb-Inspector-Package` commands accept an explicit manifest, lock, and
+output path. Each publication front door still intentionally admits only its
+exact checked-in manifest and lock identity; replacing those specialized shells
+with one general consistency/resource-admission consumer remains a subsequent
+implementation slice.
 
 The command verifies the manifest, lock, workspace, compiler WVB, Project 2 file,
 and each source part before compiling to a private candidate. It then verifies the
@@ -158,10 +160,12 @@ name, target, byte count, and SHA-256 identity.
 
 ## Qualification boundary
 
-`Test-Wvdb-Query-Package` performs two independent builds, compares their bytes,
-inspects the exact five-capability closure, rejects a modified lock, rejects a
-missing lock, rejects a copied manifest at an alternate identity, and proves that
-failed admission preserves an existing output.
+`Test-Wvdb-Query-Package` performs two independent builds of each real package,
+compares both output pairs, and inspects their distinct exact five-capability
+closures. It also rejects a modified lock, a missing lock, and a copied manifest
+at an alternate identity while proving failed admission preserves existing
+output. The package-format owner admits both real manifest/lock pairs and every
+locked input resource through the portable cores.
 
 This qualifies deterministic local build, inspection, locked-input rejection, and
 publication behavior. Decision 0561's separate Bundle 1 and WVDB Query owners now

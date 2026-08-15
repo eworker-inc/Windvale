@@ -1301,6 +1301,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'WVB inspector package owner'
+        Paths = @(
+            'Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack',
+            'Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvlock',
+            'Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvprov',
+            'Tools/Native/Build-Wvb-Inspector-Package.cmd',
+            'Tools/Native/Build-Wvb-Inspector-Package.sh'
+        )
+        Suites = @('packages', 'package-format')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Bundle 1 and immutable store owner'
         Paths = @(
             'Libraries/Package/Package-Bundle-Writer.wv',
@@ -1547,7 +1560,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3442 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3451 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 
