@@ -136,6 +136,28 @@ caller. A later installed launcher will resolve those paths beneath the durable
 object store and add revocation observation without changing the portable
 Generation 1 grammar.
 
+## Activation planning adapter
+
+`Tools/Windvale.Package/Installation-Activation-Planner-Tool.wv` exposes the
+portable activation and rollback planners to the Windows/Linux host lifecycle.
+It accepts one canonical Activation 1 record, an `activate` or `rollback`
+request, the requested identity or `none`, and explicit availability of both
+referenced generations. It emits no record when the transition is invalid,
+unavailable, lacks a previous generation, or exhausts the serial.
+
+A successful result is a canonical five-line `windvale-activation-plan 1`
+report. The serial is represented by exact `serial-low` and `serial-high` `u32`
+limbs because the current native AOT subset deliberately does not admit
+`U64ˉformat`. The host joins those limbs as one unsigned `u64`, serializes the
+decimal field without policy choices, and passes the constructed Activation 1
+record back through the same Windvale parser/planner before publication.
+
+The composed lifecycle owner publishes a one-package initial generation and the
+two-package target generation, proves pre-publication interruption recovery,
+activates the target at serial 2, and rolls back at serial 3. Command resolution
+observes only complete public states, and both immutable generations retain
+their original byte identities.
+
 ## Host generation publication
 
 `Tools/Package/Publish-Installation-Generation.mjs` implements the bounded

@@ -1,6 +1,6 @@
 # Decision 0576: Verified active-command dispatch
 
-- Status: Implemented locally; paired-host evidence pending
+- Status: Implemented and paired-host verified in GitHub run `31904886608`
 - Date: 2026-08-15
 - Advances: Milestone 4 and Decision 0568
 - Depends on: Decision 0574

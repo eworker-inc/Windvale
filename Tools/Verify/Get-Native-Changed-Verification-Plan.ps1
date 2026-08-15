@@ -615,10 +615,14 @@ foreach ($Path in $Paths) {
             'Publish-Installation-Activation.mjs',
             'Verify-Installation-Activation-Publisher.mjs'
         )) {
-            Add-Suite 'installation-activation'
+            Add-Suite @('installation-activation', 'offline-generation-lifecycle')
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Publish-Installation-Generation.mjs') {
-            Add-Suite @('installation-generation-publication', 'offline-package-stage')
+            Add-Suite @(
+                'offline-generation-lifecycle',
+                'installation-generation-publication',
+                'offline-package-stage'
+            )
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Verify-Installation-Generation-Publisher.mjs') {
             Add-Suite 'installation-generation-publication'
@@ -630,6 +634,11 @@ foreach ($Path in $Paths) {
             'Verify-Installation-Command-Dispatcher.mjs'
         )) {
             Add-Suite 'installation-command-dispatch'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
+            'Verify-Installation-Activation-Planner.mjs',
+            'Verify-Offline-Generation-Lifecycle.mjs'
+        )) {
+            Add-Suite 'offline-generation-lifecycle'
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Create-Offline-Package-Stage-Input.mjs') {
             Add-Suite 'offline-package-stage'
@@ -639,7 +648,14 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -eq
             'Installation-Command-Resolver-Tool.wv') {
-            Add-Suite @('package-format', 'installation-command-resolution')
+            Add-Suite @(
+                'package-format',
+                'offline-generation-lifecycle',
+                'installation-command-resolution'
+            )
+        } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Installation-Activation-Planner-Tool.wv') {
+            Add-Suite 'offline-generation-lifecycle'
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Installation-Generation-Verifier-Tool.wv') {
             Add-Suite @('package-format', 'offline-package-stage')
@@ -661,6 +677,7 @@ foreach ($Path in $Paths) {
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
+        'Projects/Tools/Windvale-Installation-Activation-Planner.wvproj',
         'Projects/Tools/Windvale-Installation-Command-Resolver.wvproj',
         'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
@@ -674,7 +691,9 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj') {
             Add-Suite 'offline-package-stage'
         } elseif ($Path -eq 'Projects/Tools/Windvale-Installation-Command-Resolver.wvproj') {
-            Add-Suite 'installation-command-resolution'
+            Add-Suite @('offline-generation-lifecycle', 'installation-command-resolution')
+        } elseif ($Path -eq 'Projects/Tools/Windvale-Installation-Activation-Planner.wvproj') {
+            Add-Suite 'offline-generation-lifecycle'
         }
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
         Add-Suite @('workspace-project2', 'libraries')
@@ -737,6 +756,7 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'package-format',
             'installation-activation',
+            'offline-generation-lifecycle',
             'installation-command-dispatch',
             'installation-command-resolution',
             'installation-generation-publication',

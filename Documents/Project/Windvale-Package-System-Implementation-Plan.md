@@ -326,7 +326,11 @@ inactive, wrong-target, and unknown selections. GitHub run `31903569891` supplie
 paired-host selection evidence. The bounded host dispatcher additionally
 reverifies the exact bundle, approval, launch, target, and host executable before
 locally executing both real commands, with seven pre-execution rejection cases.
-Paired-host dispatch, composed activation recovery, and revocation remain open.
+Dispatch passed both hosts in GitHub run `31904886608`. The Windvale activation
+planner and host adapters now locally compose initial activation, interrupted
+update recovery, expanded-generation activation, command observation, and
+serial-incrementing rollback while retaining both immutable generations.
+Paired-host lifecycle evidence and revocation remain open.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,

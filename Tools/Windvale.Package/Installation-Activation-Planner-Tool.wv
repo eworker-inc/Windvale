@@ -1,0 +1,157 @@
+module Windvaleˉinstallationˉactivationˉplannerˉtool profile hosted;
+
+import Windvaleˉinstallationˉgeneration as Generation;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Spanˉtext(Input: bytes, Offset: u32, Length: u32) -> text {
+    return Textˉfromˉutf8(Bytesˉslice(Input, Offset, Length));
+}
+
+fn Textˉis(Value: text, Expected: text) -> bool {
+    let Input: bytes = Textˉtoˉutf8(Value);
+    return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input,
+        Packageˉtext.Windvaleˉpackageˉwholeˉspan(Input),
+        Expected
+    );
+}
+
+fn Availabilityˉvalid(Value: text) -> bool {
+    return Textˉis(Value, "present") || Textˉis(Value, "missing");
+}
+
+fn Statusˉtext(Status: Generation.Windvaleˉtransitionˉstatus) -> text {
+    if Status == Generation.Windvaleˉtransitionˉstatus.Invalidˉactivation {
+        return "Invalid-activation";
+    }
+    if Status == Generation.Windvaleˉtransitionˉstatus.Invalidˉrequestedˉgeneration {
+        return "Invalid-requested-generation";
+    }
+    if Status == Generation.Windvaleˉtransitionˉstatus.Currentˉgenerationˉmissing {
+        return "Current-generation-missing";
+    }
+    if Status == Generation.Windvaleˉtransitionˉstatus.Requestedˉgenerationˉmissing {
+        return "Requested-generation-missing";
+    }
+    if Status == Generation.Windvaleˉtransitionˉstatus.Previousˉgenerationˉmissing {
+        return "Previous-generation-missing";
+    }
+    if Status == Generation.Windvaleˉtransitionˉstatus.Noˉpreviousˉgeneration {
+        return "No-previous-generation";
+    }
+    if Status == Generation.Windvaleˉtransitionˉstatus.Serialˉexhausted {
+        return "Serial-exhausted";
+    }
+    return "Unknown";
+}
+
+fn Currentˉtext(
+    Activationˉinput: bytes,
+    Requestedˉinput: bytes,
+    Plan: Generation.Windvaleˉactivationˉplan
+) -> text {
+    if Plan.Currentˉfromˉrequested {
+        return Spanˉtext(Requestedˉinput, Plan.Currentˉoffset, Plan.Currentˉlength);
+    }
+    return Spanˉtext(Activationˉinput, Plan.Currentˉoffset, Plan.Currentˉlength);
+}
+
+fn Emitˉrecord(
+    Activationˉinput: bytes,
+    Requestedˉinput: bytes,
+    Plan: Generation.Windvaleˉactivationˉplan
+) -> i32 {
+    let Serialˉbytes: bytes = Bytesˉfromˉu64ˉlittle(Plan.Serial);
+    console.write_line("windvale-activation-plan 1");
+    console.write_line(
+        Textˉconcat(
+            "serial-low ",
+            U32ˉformat(Bytesˉreadˉu32ˉlittle(Serialˉbytes, 0u32))
+        )
+    );
+    console.write_line(
+        Textˉconcat(
+            "serial-high ",
+            U32ˉformat(Bytesˉreadˉu32ˉlittle(Serialˉbytes, 4u32))
+        )
+    );
+    console.write_line(
+        Textˉconcat("current ", Currentˉtext(Activationˉinput, Requestedˉinput, Plan))
+    );
+    if Plan.Previousˉnone {
+        console.write_line("previous none");
+    } else {
+        console.write_line(
+            Textˉconcat(
+                "previous ",
+                Spanˉtext(
+                    Activationˉinput,
+                    Plan.Previousˉoffset,
+                    Plan.Previousˉlength
+                )
+            )
+        );
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 5u32 {
+        diagnostic.write_line(
+            Textˉconcat(
+                "Usage: wvactivation-plan <activate|rollback> <Activation-1.txt> ",
+                "<requested-generation|none> <present|missing> <present|missing>"
+            )
+        );
+        return 64;
+    }
+    let Currentˉavailability: text = process.argument(3u32);
+    let Otherˉavailability: text = process.argument(4u32);
+    if !Availabilityˉvalid(Currentˉavailability) ||
+        !Availabilityˉvalid(Otherˉavailability) {
+        diagnostic.write_line("activation plan status=Invalid-availability");
+        return 1;
+    }
+    let Activationˉinput: bytes = file.read_bytes(process.argument(1u32));
+    let Activation: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(Activationˉinput);
+    let Mode: text = process.argument(0u32);
+    let Requestedˉtext: text = process.argument(2u32);
+    let Requestedˉinput: bytes = Textˉtoˉutf8(Requestedˉtext);
+    var Plan: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉrollback(Activation, false, false);
+    if Textˉis(Mode, "activate") {
+        Plan = Generation.Windvaleˉactivationˉplanˉactivate(
+            Activationˉinput,
+            Activation,
+            Requestedˉinput,
+            Packageˉtext.Windvaleˉpackageˉwholeˉspan(Requestedˉinput),
+            Textˉis(Currentˉavailability, "present"),
+            Textˉis(Otherˉavailability, "present")
+        );
+    } else {
+        if !Textˉis(Mode, "rollback") || !Textˉis(Requestedˉtext, "none") {
+            diagnostic.write_line("activation plan status=Invalid-mode");
+            return 1;
+        }
+        Plan = Generation.Windvaleˉactivationˉplanˉrollback(
+            Activation,
+            Textˉis(Currentˉavailability, "present"),
+            Textˉis(Otherˉavailability, "present")
+        );
+    }
+    if Plan.Status != Generation.Windvaleˉtransitionˉstatus.Ready &&
+        Plan.Status != Generation.Windvaleˉtransitionˉstatus.Unchanged {
+        diagnostic.write_line(
+            Textˉconcat("activation plan status=", Statusˉtext(Plan.Status))
+        );
+        return 1;
+    }
+    return Emitˉrecord(Activationˉinput, Requestedˉinput, Plan);
+}
