@@ -20,6 +20,13 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 - Added `windvale.wvb-inspector` as the second real Package 1 / Lock 1 candidate,
   with exact provenance, deterministic 76,527-byte WVB output, all locked-input
   admission, and a distinct five-capability whole-file-read closure.
+- Completed Milestone 4 without publishing `v0.2.0`: one signed deterministic
+  offline stage admits both real packages, active-generation dispatch executes
+  their exact commands, serial-2 update and serial-3 rollback retain immutable
+  generations, and state-first recoverable uninstall removes only package-owned
+  state while preserving application data and unrelated files. The final 27-case
+  lifecycle and 13-case uninstall owners pass on Windows and Linux in GitHub run
+  `31906316540`.
 
 ## 0.1.0 — 2026-08-15
 

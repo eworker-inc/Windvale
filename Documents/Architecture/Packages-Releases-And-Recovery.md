@@ -125,7 +125,7 @@ Windvale OS, a public package registry, automatic network updates, WebAssembly p
 4. 🔵 Bind exact approved capabilities through the 0.1 launch records; a general clean-spawn launcher remains future work.
 5. ✅ Publish deterministic Windows/Linux installers plus the signed release envelope and offline verification evidence.
 6. ✅ Preserve Decision 0057 retirement and Stage 0 recovery, then qualify and publish the exact `v0.1.0` state.
-7. 🔵 Installed generations, activation recovery, application rollback, and recoverable data-preserving uninstall are implemented locally; final paired-host evidence remains before closing Milestone 4.
+7. ✅ Installed generations, activation recovery, application rollback, and recoverable data-preserving uninstall pass both hosts in run `31906316540`; Milestone 4 is closed without publishing `v0.2.0`.
 8. ○ Add Windvale OS A/B system updates only after writable filesystem, durability, boot selection, civil time or signed freshness, key custody, and local recovery evidence exist.
 
 ## Deliberately open details

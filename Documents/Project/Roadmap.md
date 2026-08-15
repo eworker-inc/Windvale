@@ -1,14 +1,15 @@
 # Windvale development roadmap
 
-> Status: Active dependency-based forward plan, rebaselined after completed
-> Milestones 1 through 3 and the signed `v0.1.0` preview on 15 August 2026.
+> Status: Active dependency-based forward plan after completed Milestones 1
+> through 4 and the signed `v0.1.0` preview on 15 August 2026.
 
 ## Current planning boundary
 
-Preserve the completed 0.1 product path while implementing Milestone 4's offline
-package lifecycle. OS-1 continues as an independent launch-and-service track;
-database work may also advance independently. Neither becomes a package-lifecycle
-dependency merely because the work overlaps in time.
+Preserve the completed 0.1 product path and Milestone 4 offline lifecycle while
+selecting the next product milestone deliberately. OS-1 continues as an
+independent launch-and-service track; database work may also advance
+independently. Neither became a package-lifecycle dependency merely because the
+work overlapped in time.
 
 Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
@@ -134,7 +135,7 @@ deliberate selection for later releases and promotions.
 | Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
 | Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
-| Milestone 4: offline package lifecycle | 🎯 Current | Every selected behavior is implemented locally: two-package admission, immutable generations, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall. Paired-host evidence for the final composition and uninstall remains before closure. |
+| Milestone 4: offline package lifecycle | ✅ Complete | Two-package admission, immutable generations, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall pass on Windows and Linux in run `31906316540`. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
 The completed 0.1 product path was:
@@ -145,7 +146,7 @@ A completed focused gate remains complete while its relevant inputs and contract
 stay unchanged. Later integrated evidence may consume that result; commits and
 pushes do not by themselves require it to be rerun.
 
-## Milestone 4: offline package lifecycle — active
+## Milestone 4: offline package lifecycle — complete
 
 [Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
 selects installer/tool users as the primary audience and an offline
@@ -157,7 +158,7 @@ milestone checkpoint and does not publish `v0.2.0`.
 
 | Choice | Advantages | Costs and risks | Standing |
 | --- | --- | --- | --- |
-| **Offline package lifecycle — selected** | Makes installation maintainable; gives `wv install`, generations, recovery, and rollback a real product boundary; reuses the completed 0.1 trust and installer work; remains testable without public infrastructure. | Requires generalizing the bounded package/store path and designing durable activation carefully; does not by itself advance Windvale OS. | Current Milestone 4. |
+| **Offline package lifecycle — selected** | Makes installation maintainable; gives `wv install`, generations, recovery, and rollback a real product boundary; reuses the completed 0.1 trust and installer work; remains testable without public infrastructure. | Requires generalizing the bounded package/store path and designing durable activation carefully; does not by itself advance Windvale OS. | Completed Milestone 4. |
 | Complete OS-1 composition | Advances Windvale's defining vertical-integration goal and closes already-started launch, provider, and supervision contracts. | Larger integration/debugging surface and less immediate value to installer users. | Continue as parallel OS-1 work. |
 | Durable application/database increment | Produces another useful workload and can select the smallest necessary language/library improvements. | Can become an open-ended database project without a sharply bounded user scenario. | Continue independently when a named workload supplies the gate. |
 
@@ -175,7 +176,7 @@ milestone checkpoint and does not publish `v0.2.0`.
 6. Denied, unavailable, corrupt, stale, overflow, and indeterminate cases fail
    explicitly; uninstall preserves separately owned application data.
 
-### Current slice
+### Completion evidence
 
 The portable Windvale implementation parses bounded Generation 1 and Activation
 1 records, validates ordered package/command closure, and plans idempotent
@@ -198,15 +199,18 @@ selection revisions is complete in GitHub run `31903569891`. The bounded host
 dispatcher now locally executes both real commands only after reverifying their
 bundle, approval, launch, target, and host identities and rejecting seven unsafe
 or invalid selections. Dispatch passed both hosts in GitHub run `31904886608`.
-The composed lifecycle now locally publishes one- and two-package generations,
+The composed lifecycle publishes one- and two-package generations,
 recovers an interrupted update without changing the old activation, activates
 the expanded generation, and rolls back at serial 3 while retaining both
 immutable records. It then durably uninstalls only package-owned state while
 preserving application data, unrelated files, and the installation root. A
 separate 13-case owner covers interrupted-uninstall recovery and five safety
-rejections. Paired-host final lifecycle and uninstall reports remain before the
-milestone closes. Signed revocation/minimum-version policy belongs to the later
-security/update boundary and is not silently approximated by this offline gate.
+rejections. Exact implementation commit `df2d15dad0434182b74ad7ae357b4596d4aef82d`
+passed both owners on Windows and Linux in GitHub run `31906316540`; the focused
+jobs took 1 minute 11 seconds and 38 seconds respectively, and the aggregate gate
+passed. Milestone 4 is closed without a `v0.2.0` tag or release. Signed
+revocation/minimum-version policy belongs to the later security/update boundary
+and is not silently approximated by this offline gate.
 
 ## Milestone 2: package-backed host application — complete
 

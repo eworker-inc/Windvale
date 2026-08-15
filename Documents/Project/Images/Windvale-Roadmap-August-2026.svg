@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title description">
   <title id="title">Windvale milestone progress on 15 August 2026</title>
-  <desc id="description">Milestones 1, 2, and 3 are complete, the signed Windvale 0.1 preview is published, Milestone 4 is the active offline package lifecycle, and OS-1 and durable application work continue independently.</desc>
+  <desc id="description">Milestones 1 through 4 are complete, the signed Windvale 0.1 preview is published, the offline package lifecycle passes Windows and Linux, and OS-1 and durable application work continue independently.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#06121d"/><stop offset="1" stop-color="#0b2132"/></linearGradient>
     <linearGradient id="focus" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#12334b"/><stop offset="1" stop-color="#10283b"/></linearGradient>
@@ -43,12 +43,12 @@
       <text x="70" y="88" fill="#9db7c9" font-size="14">Portability complete · resource, provider, and supervision foundations partial · atomic launch open</text>
       <text x="1140" y="63" text-anchor="end" fill="#75cfff" font-size="14" font-weight="700">INDEPENDENT OF v0.1.0</text>
     </g>
-    <text x="48" y="492" fill="#f4b860" font-size="15" font-weight="700" letter-spacing="1.5">MILESTONE 4 · ACTIVE</text>
-    <text x="1232" y="492" text-anchor="end" fill="#9db7c9" font-size="13">Offline lifecycle selected · no v0.2.0 release assigned</text>
+    <text x="48" y="492" fill="#59d98e" font-size="15" font-weight="700" letter-spacing="1.5">MILESTONE 4 · COMPLETE</text>
+    <text x="1232" y="492" text-anchor="end" fill="#9db7c9" font-size="13">Paired Windows + Linux evidence · no v0.2.0 release assigned</text>
     <g filter="url(#shadow)">
       <g transform="translate(48 520)">
-        <rect width="368" height="142" rx="16" fill="#10283a" stroke="#f4b860"/><text x="24" y="34" fill="#f4b860" font-size="13" font-weight="700">CURRENT MILESTONE</text>
-        <text x="24" y="65" fill="#f5f9fc" font-size="19" font-weight="600">Offline package lifecycle</text><text x="24" y="92" fill="#9db7c9" font-size="13">Install · generations · recovery · rollback</text><text x="24" y="118" fill="#9db7c9" font-size="13">No registry or networking prerequisite</text>
+        <rect width="368" height="142" rx="16" fill="#10283a" stroke="#59d98e"/><text x="24" y="34" fill="#59d98e" font-size="13" font-weight="700">COMPLETED MILESTONE</text>
+        <text x="24" y="65" fill="#f5f9fc" font-size="19" font-weight="600">Offline package lifecycle</text><text x="24" y="92" fill="#9db7c9" font-size="13">Two packages · activation · recovery · rollback</text><text x="24" y="118" fill="#9db7c9" font-size="13">Safe uninstall · no networking prerequisite</text>
       </g>
       <g transform="translate(456 520)">
         <rect width="368" height="142" rx="16" fill="#10283a" stroke="#8299a8"/><text x="24" y="34" fill="#aab9c3" font-size="13" font-weight="700">PARALLEL TRACK</text>

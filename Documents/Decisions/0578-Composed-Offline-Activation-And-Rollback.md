@@ -1,6 +1,6 @@
 # Decision 0578: Composed offline activation and rollback
 
-- Status: Implemented locally; paired-host evidence pending
+- Status: Implemented; paired-host evidence passed in GitHub run `31906316540`
 - Date: 2026-08-15
 - Advances: Milestone 4 and Decision 0568
 - Depends on: Decisions 0574 and 0576
@@ -52,7 +52,11 @@ publisher/recovery adapter, and active-command resolver. The focused owner:
 - Recovery never promotes a private candidate or guesses whether publication
   occurred.
 - Rollback changes only Activation 1 and retains both generations.
-- Revocation and uninstall remain the last open lifecycle boundaries.
+- Recoverable uninstall is completed by Decision 0580. Signed revocation and
+  minimum-version policy remain a separate future security/update boundary.
+
+GitHub run `31906316540` passed the 27-case composed lifecycle owner on Windows
+and Linux at exact implementation commit `df2d15dad0434182b74ad7ae357b4596d4aef82d`.
 
 ## Reconsideration triggers
 

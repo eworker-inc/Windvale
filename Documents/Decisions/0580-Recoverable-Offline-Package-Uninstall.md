@@ -1,6 +1,6 @@
 # Decision 0580: Recoverable offline package uninstall
 
-- Status: Implemented locally; paired-host evidence pending
+- Status: Implemented; paired-host evidence passed in GitHub run `31906316540`
 - Date: 2026-08-15
 - Advances: Milestone 4 and Decision 0568
 - Depends on: Decisions 0561 and 0578
@@ -62,8 +62,8 @@ preserved and rejected.
 The focused owner covers 13 complete, interrupted, empty, linked, malformed,
 unknown-inventory, preservation, and repeat cases. The composed lifecycle adds
 uninstall and preservation after serial-3 rollback, for 27 total planner and
-lifecycle cases. Both reports require paired Windows/Linux evidence before the
-milestone closes.
+lifecycle cases. GitHub run `31906316540` passed both reports on Windows and
+Linux at exact implementation commit `df2d15dad0434182b74ad7ae357b4596d4aef82d`.
 
 ## Reconsideration triggers
 

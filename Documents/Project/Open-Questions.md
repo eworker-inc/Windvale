@@ -1,6 +1,6 @@
 # Windvale open questions
 
-> Status: Active unresolved choices after completed Milestones 1 through 3 and
+> Status: Active unresolved choices after completed Milestones 1 through 4 and
 > the signed `v0.1.0` preview.
 > Detailed recommendations live in architecture documents; this file lists only
 > questions that can change the active roadmap or its next bounded slices.
@@ -31,21 +31,15 @@ The following are no longer open project questions:
   Release Envelope 1, offline verifier, Windows/Linux installers, and exact-state
   qualification published as `v0.1.0`.
 - [Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
-  selects the offline package lifecycle as Milestone 4 without assigning a
-  `v0.2.0` release; OS-1 and database work remain independent.
+  selected the offline package lifecycle as Milestone 4 without assigning a
+  `v0.2.0` release. Decisions 0578 and 0580 close its paired activation,
+  rollback, and safe-uninstall evidence in GitHub run `31906316540`; OS-1 and
+  database work remain independent.
 
 Historical documents that predate those decisions must not present them as
 unfinished work.
 
 ## Immediate roadmap questions
-
-### Milestone 4 offline lifecycle
-
-- The selected local implementation is complete. Does the paired Windows/Linux
-  lifecycle and uninstall evidence agree before the milestone is closed?
-- Which later product milestone should own signed revocation/minimum-version
-  policy and a native installed package-client UI? Neither is required to label
-  this bounded offline lifecycle complete.
 
 ### Development verification maintenance
 

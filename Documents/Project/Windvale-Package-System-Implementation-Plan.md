@@ -3,7 +3,7 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Milestone 4 implementation complete locally after the signed `v0.1.0` preview; final paired-host lifecycle and uninstall evidence pending
+- Status: Milestone 4 complete after the signed `v0.1.0` preview; the broader package-system plan remains active
 - Product direction: [packages, releases, updates, and recovery](../Architecture/Packages-Releases-And-Recovery.md)
 - Official-source proposal: [hybrid Windvale endpoint and immutable GitHub archive](Windvale-Package-Source-Proposal.md)
 - Proposed formats and transactions: [release discovery](../Architecture/Windvale-Release-Discovery.md) and [bundle and installation](../Architecture/Windvale-Package-Bundle-And-Installation.md)
@@ -286,8 +286,8 @@ The signed stage now closes the two exact bundles, approvals, provenance,
 Windows/Linux launch and Generation 1 records, shared canonical license, and
 verifier into one deterministic 14-artifact directory using ephemeral test
 keys. The 12-artifact package/policy stage passed both hosts in run 31901902766;
-paired-host evidence for generation validation and immutable publication remains
-before this exit gate closes.
+generation validation and immutable publication passed both hosts in run
+`31903569891`; final lifecycle/uninstall composition passed in run `31906316540`.
 
 ### Slice 5: immutable local object store
 
@@ -316,7 +316,7 @@ inventory on Windows and Linux, with host paths absent from portable evidence.
 
 ### Slice 6: generations, approvals, activation, and rollback
 
-Standing: **implemented locally; paired-host closure pending**. Exact approval and target launch records exist. Decision
+Standing: **Milestone 4 bounded profile complete**. Exact approval and target launch records exist. Decision
 0568 adds portable Generation 1 / Activation 1 parsing, package/command closure,
 and pure activation/rollback planning. The signed stage now carries exact
 target-specific generation records and the host adapter immutably publishes an
@@ -332,9 +332,9 @@ update recovery, expanded-generation activation, command observation, and
 serial-incrementing rollback while retaining both immutable generations.
 Decision 0580 then quarantines and removes only exact package-owned state through
 a recoverable transaction while preserving application data and unrelated root
-entries. Paired-host lifecycle/uninstall evidence remains. Signed revocation and
-minimum-version policy are a later security/update boundary, not an approximation
-inside this milestone.
+entries. GitHub run `31906316540` passes the 27-case lifecycle and 13-case
+uninstall owners on both hosts. Signed revocation and minimum-version policy are
+a later security/update boundary, not an approximation inside this milestone.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,
