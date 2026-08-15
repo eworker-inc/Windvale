@@ -21,15 +21,20 @@ a new serialized format or access to the retained operational release keys.
 
 Admit a `stage` channel in the existing release-envelope creator and independent
 verifier. A stage contains at least two named package targets, the shared
-license and offline verifier, and exactly one package, approval, provenance,
-Windows launch, and Linux launch artifact for every package target. Reject an
-`all` package target, missing policy closure, extra roles, duplicate targets,
-or mixed preview package forms.
+license and offline verifier, exact Windows/Linux Generation 1 records, and
+exactly one package, approval, provenance, Windows launch, and Linux launch
+artifact for every package target. Reject an `all` package target, missing
+policy or generation closure, extra roles, duplicate targets, or mixed preview
+package forms.
 
 Construct the first stage from the exact admitted WVDB Query and WVB Inspector
-bundles and their checked-in policy records. Sign permanent tests with fresh
+bundles and their checked-in policy records. Its generation records explicitly
+bind `wvdump` to the inspector root and `wvquery` to the WVDB application root;
+their launch identities differ by target. Sign permanent tests with fresh
 ephemeral root and release keys, build the directory twice, compare every byte,
-verify the complete inventory, and reject a tampered real bundle.
+verify the complete inventory and both generation records through the portable
+Windvale parser, publish the current-host generation immutably, and reject a
+tampered real bundle.
 
 Keep the published single-package preview profile backward compatible. The
 stage uses version text `0.1.0` only as the current artifact compatibility line;
@@ -38,8 +43,8 @@ trust-root transition.
 
 ## Consequences
 
-- Milestone 4 gains one deterministic, signed, network-free input directory for
-  generation construction on both permanent hosts.
+- Milestone 4 gains one deterministic, signed, network-free input directory
+  carrying exact generation construction for both permanent hosts.
 - Operational release private keys are neither needed nor exercised by normal
   development tests.
 - Passing the stage owner proves authenticated package and policy inventory; it

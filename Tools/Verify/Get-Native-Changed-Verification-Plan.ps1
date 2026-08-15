@@ -611,13 +611,24 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'installation-activation'
         } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Publish-Installation-Generation.mjs') {
+            Add-Suite @('installation-generation-publication', 'offline-package-stage')
+        } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Verify-Installation-Generation-Publisher.mjs') {
+            Add-Suite 'installation-generation-publication'
+        } elseif ([IO.Path]::GetFileName($Path) -eq
             'Create-Offline-Package-Stage-Input.mjs') {
             Add-Suite 'offline-package-stage'
         } else {
             Add-Suite 'package-bundle'
         }
     } elseif ($Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
-        Add-Suite @('package-bundle', 'offline-package-stage')
+        if ([IO.Path]::GetFileName($Path) -eq
+            'Installation-Generation-Verifier-Tool.wv') {
+            Add-Suite @('package-format', 'offline-package-stage')
+        } else {
+            Add-Suite @('package-bundle', 'offline-package-stage')
+        }
     } elseif ($Path.StartsWith('Tools/Windvale.Project/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
         Add-Suite 'workspace-project2'
@@ -633,6 +644,7 @@ foreach ($Path in $Paths) {
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
+        'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
         'Projects/Tests/Windvale-Native-Test-Installation-Generation.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Consistency.wvproj',
@@ -641,6 +653,9 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
     )) {
         Add-Suite 'package-format'
+        if ($Path -eq 'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj') {
+            Add-Suite 'offline-package-stage'
+        }
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
         Add-Suite @('workspace-project2', 'libraries')
         if ($Path.Contains('Durable-Superblock', [StringComparison]::Ordinal)) {
@@ -697,7 +712,12 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Specifications/Windvale-Installation-Generation.md') {
-        Add-Suite @('package-format', 'installation-activation')
+        Add-Suite @(
+            'package-format',
+            'installation-activation',
+            'installation-generation-publication',
+            'offline-package-stage'
+        )
     } elseif ($Path -eq 'Specifications/Windvale-Package-Bundle.md' -or
         $Path -in @(
             'Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj',

@@ -283,9 +283,11 @@ release mismatch, and signature domain separation.
 Exit gate: one completely offline directory authenticates an exact Release and
 the two package bundles on Windows and Linux without network or ambient trust.
 The signed stage now closes the two exact bundles, approvals, provenance,
-Windows/Linux launch records, shared canonical license, and verifier into one
-deterministic 12-artifact directory using ephemeral test keys. Local Windows
-evidence passes; paired-host evidence remains before this exit gate closes.
+Windows/Linux launch and Generation 1 records, shared canonical license, and
+verifier into one deterministic 14-artifact directory using ephemeral test
+keys. The 12-artifact package/policy stage passed both hosts in run 31901902766;
+paired-host evidence for generation validation and immutable publication remains
+before this exit gate closes.
 
 ### Slice 5: immutable local object store
 
@@ -316,8 +318,10 @@ inventory on Windows and Linux, with host paths absent from portable evidence.
 
 Standing: **partial**. Exact approval and target launch records exist. Decision
 0568 adds portable Generation 1 / Activation 1 parsing, package/command closure,
-and pure activation/rollback planning. Durable host construction/publication,
-interrupted activation recovery, command dispatch, and revocation remain open.
+and pure activation/rollback planning. The signed stage now carries exact
+target-specific generation records and the host adapter immutably publishes an
+already validated record. Paired-host generation evidence, composed activation
+recovery, command dispatch, and revocation remain open.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,

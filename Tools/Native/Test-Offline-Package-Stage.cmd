@@ -14,12 +14,13 @@ set "ReleaseVerifier=%RepositoryRoot%\Tools\Release\Verify-Release-Envelope.mjs"
 set "ApprovalVerifier=%RepositoryRoot%\Tools\Release\Verify-Wvdb-Approval-Records.mjs"
 set "StageTool=%RepositoryRoot%\Tools\Package\Create-Offline-Package-Stage-Input.mjs"
 set "FixtureTool=%RepositoryRoot%\Tools\Native\Create-Release-Envelope-Fixture.mjs"
+set "GenerationPublisher=%RepositoryRoot%\Tools\Package\Publish-Installation-Generation.mjs"
 
 :allocate
 set "Work=%TEMP%\windvale-offline-package-stage-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
-for %%D in (Stage-Input Root-Key Release-Key Policy First Second Tampered) do mkdir "%Work%\%%D" || goto :cleanup
+for %%D in (Stage-Input Root-Key Release-Key Policy First Second Tampered Installed) do mkdir "%Work%\%%D" || goto :cleanup
 set "Result=1"
 
 echo native offline package stage step=build-tools item=1/8
@@ -31,8 +32,13 @@ call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
 call :verify_file "%Work%\Verifier.wvb" 284561 a4f381e9e2dec1c7f415aeb9be24973a971e337b7aff861ed3f84f8b1d7e29fb "bundle verifier WVB" || goto :cleanup
+call "%Native%\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Generation-Verifier.wvproj" ^
+    "%Work%\Generation-Verifier.wvb" || goto :cleanup
+call :verify_file "%Work%\Generation-Verifier.wvb" 42364 2beb02ba0ea13b1552a0c3bf9b92bebe438ac65b2eb49000a4fc1762ed8f7e9f "generation verifier WVB" || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" windows || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" windows || goto :cleanup
+call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Generation-Verifier.wvb" "%Work%\Generation-Verifier.exe" windows || goto :cleanup
 
 echo native offline package stage step=build-packages item=2/8 packages=2
 call "%Native%\Build-Wvdb-Query-Package.cmd" ^
@@ -94,6 +100,17 @@ node "%ReleaseVerifier%" verify "%Work%\Root-Key\root-public.pem" "%Work%\First"
 findstr /c:"release verify status=Valid version=0.1.0 channel=stage" "%Work%\Verify.txt" >nul || goto :cleanup
 findstr /c:"artifact package windvale.wvb-inspector a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 92781" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
 findstr /c:"artifact package windvale.wvdb-query 3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 43725" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact generation linux-x64 a8e0aebbd379c892fae1d310531dc8903c89eb0405cbb00d03fbc5c0f8db8b56 726" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact generation windows-x64 8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c 728" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+"%Work%\Generation-Verifier.exe" "%Work%\First\Artifacts\Generations\Generation-1.windows-x64.txt" >"%Work%\Generation-Windows.txt" || goto :cleanup
+findstr /c:"generation status=Valid target=windows-x64 packages=2 commands=2" "%Work%\Generation-Windows.txt" >nul || goto :cleanup
+"%Work%\Generation-Verifier.exe" "%Work%\First\Artifacts\Generations\Generation-1.linux-x64.txt" >"%Work%\Generation-Linux.txt" || goto :cleanup
+findstr /c:"generation status=Valid target=linux-x64 packages=2 commands=2" "%Work%\Generation-Linux.txt" >nul || goto :cleanup
+node "%GenerationPublisher%" publish "%Work%\Installed" ^
+    "%Work%\First\Artifacts\Generations\Generation-1.windows-x64.txt" ^
+    8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c >nul || goto :cleanup
+node "%GenerationPublisher%" verify "%Work%\Installed" ^
+    8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c >nul || goto :cleanup
 
 echo native offline package stage step=reject-package-tamper item=8/8
 node "%FixtureTool%" copy "%Work%\First" "%Work%\Tampered" >nul || goto :cleanup
@@ -101,7 +118,7 @@ node "%FixtureTool%" copy "%Work%\First" "%Work%\Tampered" >nul || goto :cleanup
 node "%ReleaseVerifier%" verify "%Work%\Root-Key\root-public.pem" "%Work%\Tampered" >nul 2>nul
 if not errorlevel 1 goto :cleanup
 
-echo native offline package stage status=Passed cases=8 packages=2 policy-records=8 artifacts=12 deterministic=Verified tamper=Rejected
+echo native offline package stage status=Passed cases=8 packages=2 policy-records=8 generations=2 published=1 artifacts=14 deterministic=Verified tamper=Rejected
 set "Result=0"
 
 :cleanup

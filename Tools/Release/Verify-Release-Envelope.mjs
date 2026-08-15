@@ -283,10 +283,17 @@ function Readˉmanifest(ReleaseRoot, Policy, MinimumSequence) {
     } else {
         if (Packages.length < 2 || Packages.some(Artifact => Artifact.target === "all") ||
             !RoleTargets.has("license|all") || !RoleTargets.has("verifier|all") ||
-            Artifacts.length !== 2 + Packages.length * 5) {
+            !RoleTargets.has("generation|windows-x64") ||
+            !RoleTargets.has("generation|linux-x64") ||
+            Artifacts.length !== 4 + Packages.length * 5) {
             Fail("Offline stage profile structure differs.");
         }
-        const Allowed = new Set(["license|all", "verifier|all"]);
+        const Allowed = new Set([
+            "generation|linux-x64",
+            "generation|windows-x64",
+            "license|all",
+            "verifier|all",
+        ]);
         for (const Package of Packages) {
             for (const Role of [
                 "package",

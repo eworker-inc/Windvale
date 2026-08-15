@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tools/Windvale.Package/Installation-Generation-Verifier-Tool.wv"
+source "Libraries/Package/Installation-Generation.wv"
+source "Libraries/Package/Canonical-Package-Text.wv"
+emit wvb

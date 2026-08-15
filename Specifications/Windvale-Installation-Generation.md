@@ -87,6 +87,22 @@ plans idempotent activation and rollback transitions. It performs no I/O and
 does not claim durable publication. Host lifecycle adapters must consume its
 semantic result rather than implement a second record grammar.
 
+## Host generation publication
+
+`Tools/Package/Publish-Installation-Generation.mjs` implements the bounded
+Windows/Linux filesystem adapter for an already validated Generation 1 record.
+It hashes the caller-supplied bytes, publishes them beneath
+`generations/<generation-sha256>/Generation-1.txt` through a private sibling,
+flushes and rereads before rename, never rewrites an existing generation, and
+admits no extra inventory. Exact repeat publication is idempotent. Recovery
+removes at most one complete digest-named unreferenced candidate and preserves
+malformed or ambiguous candidates for inspection.
+
+This host adapter deliberately does not parse Generation 1. The caller must
+first consume the portable Windvale semantic result. The offline-stage owner
+does that through the Windvale-written generation verifier before publishing
+the signed target record.
+
 ## Host activation publication
 
 `Tools/Package/Publish-Installation-Activation.mjs` implements the first

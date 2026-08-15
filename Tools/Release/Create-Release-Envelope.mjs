@@ -483,10 +483,17 @@ function Assertˉreleaseˉprofile(Artifacts, Channel) {
     if (Channel !== "stage" || Packages.length < 2 ||
         Packages.some(Artifact => Artifact.target === "all") ||
         !Observed.has("license|all") || !Observed.has("verifier|all") ||
-        Artifacts.length !== 2 + Packages.length * 5) {
+        !Observed.has("generation|windows-x64") ||
+        !Observed.has("generation|linux-x64") ||
+        Artifacts.length !== 4 + Packages.length * 5) {
         Fail("Offline stage profile structure differs.");
     }
-    const Allowed = new Set(["license|all", "verifier|all"]);
+    const Allowed = new Set([
+        "generation|linux-x64",
+        "generation|windows-x64",
+        "license|all",
+        "verifier|all",
+    ]);
     for (const Package of Packages) {
         for (const Role of [
             "package",

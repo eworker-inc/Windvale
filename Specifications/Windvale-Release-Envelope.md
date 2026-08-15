@@ -183,8 +183,9 @@ changing Release Manifest 1 syntax.
 The `stage` channel is a signed, offline development package set. It is not a
 published release, a version promotion, or an instruction to update an
 installed stable channel. Its profile contains exactly `license|all`,
-`verifier|all`, and, for every one of at least two named package targets,
-exactly one artifact in each of these roles:
+`verifier|all`, `generation|windows-x64`, `generation|linux-x64`, and, for
+every one of at least two named package targets, exactly one artifact in each
+of these roles:
 
 - `package`;
 - `approval`;
@@ -192,10 +193,13 @@ exactly one artifact in each of these roles:
 - `launch-windows-x64`; and
 - `launch-linux-x64`.
 
-No other role/target pair is admitted in the stage profile. This closes each
-package's bundle and policy inventory for an offline lifecycle demonstration
-while leaving installer, source archive, recovery, qualification, public
-discovery, and release promotion under their existing independent gates.
+No other role/target pair is admitted in the stage profile. The two Generation
+1 records bind the target-specific installed command names, package roots,
+approvals, and launches rather than asking a host to guess them. This closes
+each package's bundle and policy inventory for an offline lifecycle
+demonstration while leaving installer, source archive, recovery,
+qualification, public discovery, and release promotion under their existing
+independent gates.
 
 The release-manifest signature uses the same six-record signature format with
 kind `release-manifest` and the delegated release-key identity.

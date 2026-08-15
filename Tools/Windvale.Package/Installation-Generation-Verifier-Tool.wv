@@ -1,0 +1,44 @@
+module Windvaleˉinstallationˉgenerationˉverifierˉtool profile hosted;
+
+import Windvaleˉinstallationˉgeneration as Generation;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Targetˉtext(
+    Input: bytes,
+    Scan: Generation.Windvaleˉgenerationˉscan
+) -> text {
+    return Textˉfromˉutf8(
+        Bytesˉslice(Input, Scan.Targetˉoffset, Scan.Targetˉlength)
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: wvgeneration-verify <Generation-1.txt>");
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Scan: Generation.Windvaleˉgenerationˉscan =
+        Generation.Windvaleˉgenerationˉscanˉrecord(Input);
+    if Scan.Status != Generation.Windvaleˉgenerationˉstatus.Valid {
+        var Failure: text = "generation status=Invalid failure-line=";
+        Failure = Textˉconcat(Failure, U32ˉformat(Scan.Failureˉline));
+        Failure = Textˉconcat(Failure, " failure-column=");
+        diagnostic.write_line(
+            Textˉconcat(Failure, U32ˉformat(Scan.Failureˉcolumn))
+        );
+        return 1;
+    }
+    var Report: text = "generation status=Valid target=";
+    Report = Textˉconcat(Report, Targetˉtext(Input, Scan));
+    Report = Textˉconcat(Report, " packages=");
+    Report = Textˉconcat(Report, U32ˉformat(Scan.Packages));
+    Report = Textˉconcat(Report, " commands=");
+    console.write_line(Textˉconcat(Report, U32ˉformat(Scan.Commands)));
+    return 0;
+}

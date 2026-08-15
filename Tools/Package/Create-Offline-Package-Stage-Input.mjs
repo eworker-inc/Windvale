@@ -6,6 +6,28 @@ import { fileURLToPath } from "node:url";
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, "../..");
 const GIT_ID = /^[0-9a-f]{40}$/;
+const PACKAGE_IDENTITIES = [
+    "package windvale.wvb-inspector 0.1.0 " +
+        "a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 " +
+        "eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1",
+    "package windvale.wvdb-query 0.1.0 " +
+        "3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 " +
+        "ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618",
+];
+const APPROVAL_IDENTITIES = {
+    inspector: "32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f",
+    wvdb: "3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71",
+};
+const LAUNCH_IDENTITIES = {
+    "windows-x64": {
+        inspector: "eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b",
+        wvdb: "95d1a64007f487e57aec77f7466d091cc54247dcbec2f8534b5870e36715b0b3",
+    },
+    "linux-x64": {
+        inspector: "f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b",
+        wvdb: "b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5",
+    },
+};
 
 const FILES = [
     ["approval", "windvale.wvb-inspector", "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvapproval", "Policy/Windvale-Wvb-Inspector.wvapproval"],
@@ -60,6 +82,18 @@ function Addˉartifact(Artifacts, Sources, Role, Target, RelativePath, Bytes) {
     });
 }
 
+function Generationˉrecord(Target) {
+    const Launches = LAUNCH_IDENTITIES[Target];
+    const Lines = [
+        "windvale-generation 1",
+        `target ${Target}`,
+        ...PACKAGE_IDENTITIES,
+        `command wvdump windvale.wvb-inspector inspector ${APPROVAL_IDENTITIES.inspector} ${Launches.inspector}`,
+        `command wvquery windvale.wvdb-query application ${APPROVAL_IDENTITIES.wvdb} ${Launches.wvdb}`,
+    ];
+    return Buffer.from(`${Lines.join("\n")}\n`, "utf8");
+}
+
 function Createˉinput(WvdbBundlePath, InspectorBundlePath, Revision, Tree, OutputPath) {
     if (!GIT_ID.test(Revision) || !GIT_ID.test(Tree)) Fail("Stage Git identity differs.");
     const Output = Emptyˉdirectory(OutputPath);
@@ -104,6 +138,17 @@ function Createˉinput(WvdbBundlePath, InspectorBundlePath, Revision, Tree, Outp
     }
     Addˉartifact(Artifacts, Sources, "license", "all", "LICENSE.md", License);
 
+    for (const Target of ["linux-x64", "windows-x64"]) {
+        Addˉartifact(
+            Artifacts,
+            Sources,
+            "generation",
+            Target,
+            `Generations/Generation-1.${Target}.txt`,
+            Generationˉrecord(Target),
+        );
+    }
+
     for (const [Role, Target, Source, Destination] of FILES) {
         Addˉartifact(
             Artifacts,
@@ -145,7 +190,7 @@ function Createˉinput(WvdbBundlePath, InspectorBundlePath, Revision, Tree, Outp
         { flag: "wx", encoding: "utf8", mode: 0o644 },
     );
     process.stdout.write(
-        `offline stage input status=Created packages=2 policy-records=8 artifacts=${Artifacts.length}\n`,
+        `offline stage input status=Created packages=2 policy-records=8 generations=2 artifacts=${Artifacts.length}\n`,
     );
 }
 

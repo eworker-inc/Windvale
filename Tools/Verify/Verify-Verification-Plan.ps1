@@ -1301,13 +1301,20 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Installation-Generation.wvproj',
             'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
             'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
+            'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Consistency.wvproj',
             'Projects/Tests/Windvale-Native-Test-Installation-Generation.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
         )
-        Suites = @('package-format', 'installation-activation', 'package-bundle')
+        Suites = @(
+            'package-format',
+            'installation-activation',
+            'installation-generation-publication',
+            'package-bundle',
+            'offline-package-stage'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1351,6 +1358,24 @@ $NativeCases = @(
             'Tools/Native/Test-Installation-Activation.sh'
         )
         Suites = @('installation-activation')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'installation generation publication owner'
+        Paths = @(
+            'Tools/Package/Publish-Installation-Generation.mjs',
+            'Tools/Package/Verify-Installation-Generation-Publisher.mjs',
+            'Tools/Native/Test-Installation-Generation-Publication.cmd',
+            'Tools/Native/Test-Installation-Generation-Publication.sh',
+            'Tools/Windvale.Package/Installation-Generation-Verifier-Tool.wv',
+            'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj'
+        )
+        Suites = @(
+            'package-format',
+            'installation-generation-publication',
+            'offline-package-stage'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1545,9 +1570,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 64 -or
+if ($RetirementSuiteLines.Count -ne 65 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 63-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 64-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1585,7 +1610,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3472 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3480 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 
