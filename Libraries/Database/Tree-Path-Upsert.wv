@@ -1,0 +1,859 @@
+module Windvaleˉdatabaseˉtreeˉpathˉupsert profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtreeˉbranchˉsplit as Branchˉsplit;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TREE_PATH_UPSERT_NO_PAGE: u64 = 18446744073709551615u64;
+const DATABASE_TREE_PATH_UPSERT_MINIMUM_DEPTH: u32 = 2u32;
+const DATABASE_TREE_PATH_UPSERT_MAXIMUM_DEPTH: u32 = 8u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉtreeˉpathˉupsertˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Unsupportedˉdepth = 2;
+    Invalidˉpathˉlength = 3;
+    Invalidˉpage = 4;
+    Pathˉmismatch = 5;
+    Invalidˉnode = 6;
+    Invalidˉroute = 7;
+    Invalidˉrange = 8;
+    Invalidˉupsert = 9;
+    Invalidˉbranchˉupdate = 10;
+    Generationˉexhausted = 11;
+    Sequenceˉexhausted = 12;
+    Pageˉidentifierˉexhausted = 13;
+    Invalidˉoutputˉpage = 14;
+    Invalidˉnewˉroot = 15;
+    Invalidˉcommit = 16;
+}
+
+export record Databaseˉtreeˉpathˉupsert {
+    Error: Databaseˉtreeˉpathˉupsertˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Replaced: bool;
+    Splitˉlevels: u32;
+    Rootˉsplit: bool;
+    Inputˉdepth: u32;
+    Rootˉdepth: u32;
+    Dataˉpageˉcount: u32;
+    Firstˉpage: u64;
+    Rootˉpage: u64;
+    Obsoleteˉpageˉcount: u32;
+    Obsoleteˉpages: bytes;
+    Commit: Batch.Databaseˉcommitˉbatch;
+}
+
+record Databaseˉtreeˉpathˉselection {
+    Error: Databaseˉtreeˉpathˉupsertˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Kind: Page.Databaseˉdurableˉpageˉkind;
+    Pageˉidentifier: u64;
+    Itemˉcount: u32;
+    Payload: bytes;
+    Hasˉlower: bool;
+    Lower: bytes;
+    Hasˉupper: bool;
+    Upper: bytes;
+    Selectedˉchild: u64;
+}
+
+fn Databaseˉtreeˉpathˉupsertˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉtreeˉpathˉselectionˉfailure(
+    Error: Databaseˉtreeˉpathˉupsertˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtreeˉpathˉselection {
+    return Databaseˉtreeˉpathˉselection(
+        Error,
+        Pageˉerror,
+        Nodeˉerror,
+        Page.Databaseˉdurableˉpageˉkind.Root,
+        DATABASE_TREE_PATH_UPSERT_NO_PAGE,
+        0u32,
+        Databaseˉtreeˉpathˉupsertˉempty(),
+        false,
+        Databaseˉtreeˉpathˉupsertˉempty(),
+        false,
+        Databaseˉtreeˉpathˉupsertˉempty(),
+        DATABASE_TREE_PATH_UPSERT_NO_PAGE
+    );
+}
+
+fn Databaseˉtreeˉpathˉupsertˉfailure(
+    Error: Databaseˉtreeˉpathˉupsertˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Commitˉerror: Batch.Databaseˉcommitˉbatchˉerror
+) -> Databaseˉtreeˉpathˉupsert {
+    return Databaseˉtreeˉpathˉupsert(
+        Error,
+        Pageˉerror,
+        Nodeˉerror,
+        false,
+        0u32,
+        false,
+        0u32,
+        0u32,
+        0u32,
+        DATABASE_TREE_PATH_UPSERT_NO_PAGE,
+        DATABASE_TREE_PATH_UPSERT_NO_PAGE,
+        0u32,
+        Databaseˉtreeˉpathˉupsertˉempty(),
+        Batch.Databaseˉcommitˉbatchˉreject(Commitˉerror)
+    );
+}
+
+fn Databaseˉtreeˉpathˉselect(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Path: bytes,
+    Key: bytes,
+    Targetˉlevel: u32
+) -> Databaseˉtreeˉpathˉselection {
+    var Expectedˉpage: u64 = Current.Rootˉpage;
+    var Hasˉlower: bool = false;
+    var Lower: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+    var Hasˉupper: bool = false;
+    var Upper: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+    var Level: u32 = 0u32;
+    while Level <= Targetˉlevel {
+        let Offset: u32 = Level * Current.Pageˉsize;
+        let Pageˉbytes: bytes = Bytesˉslice(Path, Offset, Current.Pageˉsize);
+        let Durable: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Pageˉbytes);
+        if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉtreeˉpathˉselectionˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉpage,
+                Durable.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid
+            );
+        }
+        if Durable.Pageˉsize != Current.Pageˉsize ||
+            Durable.Pageˉidentifier != Expectedˉpage {
+            return Databaseˉtreeˉpathˉselectionˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild
+            );
+        }
+        if Level == 0u32 {
+            if Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+                Durable.Generation != Current.Generation ||
+                Durable.Commitˉsequence != Current.Committedˉsequence {
+                return Databaseˉtreeˉpathˉselectionˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind
+                );
+            }
+        } else {
+            if Durable.Generation > Current.Generation ||
+                Durable.Commitˉsequence > Current.Committedˉsequence {
+                return Databaseˉtreeˉpathˉselectionˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild
+                );
+            }
+        }
+
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Durable.Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtreeˉpathˉselectionˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Node.Error
+            );
+        }
+        let Isˉleaf: bool = Level + 1u32 == Current.Rootˉdepth;
+        if Isˉleaf {
+            if Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+                Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
+                Node.Entryˉcount == 0u32 ||
+                Node.Entryˉcount != Durable.Itemˉcount {
+                return Databaseˉtreeˉpathˉselectionˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount
+                );
+            }
+            let Rangeˉerror: Tree.Databaseˉtreeˉnodeˉerror =
+                Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+                    Durable.Payload,
+                    Hasˉlower,
+                    Lower,
+                    Hasˉupper,
+                    Upper
+                );
+            if Rangeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉtreeˉpathˉselectionˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Invalidˉrange,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Rangeˉerror
+                );
+            }
+            return Databaseˉtreeˉpathˉselection(
+                Databaseˉtreeˉpathˉupsertˉerror.Valid,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Durable.Kind,
+                Durable.Pageˉidentifier,
+                Durable.Itemˉcount,
+                Durable.Payload,
+                Hasˉlower,
+                Lower,
+                Hasˉupper,
+                Upper,
+                DATABASE_TREE_PATH_UPSERT_NO_PAGE
+            );
+        }
+        if Level == 0u32 {
+            if Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root {
+                return Databaseˉtreeˉpathˉselectionˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind
+                );
+            }
+        } else if Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Branch {
+            return Databaseˉtreeˉpathˉselectionˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind
+            );
+        }
+        if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+            Node.Entryˉcount != Durable.Itemˉcount {
+            return Databaseˉtreeˉpathˉselectionˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind
+            );
+        }
+        let Route: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+            Tree.Databaseˉtreeˉbranchˉroute(
+                Durable.Payload,
+                Key,
+                Hasˉlower,
+                Lower,
+                Hasˉupper,
+                Upper
+            );
+        if Route.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Route.Child >= Durable.Pageˉidentifier ||
+            Route.Child >= Current.Pageˉcount {
+            var Routeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Route.Error;
+            if Routeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Routeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild;
+            }
+            return Databaseˉtreeˉpathˉselectionˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉroute,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Routeˉerror
+            );
+        }
+        if Level == Targetˉlevel {
+            return Databaseˉtreeˉpathˉselection(
+                Databaseˉtreeˉpathˉupsertˉerror.Valid,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Durable.Kind,
+                Durable.Pageˉidentifier,
+                Durable.Itemˉcount,
+                Durable.Payload,
+                Hasˉlower,
+                Lower,
+                Hasˉupper,
+                Upper,
+                Route.Child
+            );
+        }
+        Expectedˉpage = Route.Child;
+        Hasˉlower = Route.Hasˉlower;
+        Lower = Route.Lower;
+        Hasˉupper = Route.Hasˉupper;
+        Upper = Route.Upper;
+        Level = Level + 1u32;
+    }
+    return Databaseˉtreeˉpathˉselectionˉfailure(
+        Databaseˉtreeˉpathˉupsertˉerror.Invalidˉroute,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild
+    );
+}
+
+fn Databaseˉtreeˉpathˉbranchˉrangeˉvalidate(
+    Input: bytes,
+    Key: bytes,
+    Hasˉlower: bool,
+    Lower: bytes,
+    Hasˉupper: bool,
+    Upper: bytes
+) -> Tree.Databaseˉtreeˉnodeˉerror {
+    let Route: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Input,
+            Key,
+            Hasˉlower,
+            Lower,
+            Hasˉupper,
+            Upper
+        );
+    return Route.Error;
+}
+
+export fn Databaseˉtreeˉpathˉupsertˉbegin(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Path: bytes,
+    Key: bytes,
+    Value: bytes
+) -> Databaseˉtreeˉpathˉupsert {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Invalidˉcurrent,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉcurrent
+        );
+    }
+    if Current.Rootˉdepth < DATABASE_TREE_PATH_UPSERT_MINIMUM_DEPTH ||
+        Current.Rootˉdepth > DATABASE_TREE_PATH_UPSERT_MAXIMUM_DEPTH {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Unsupportedˉdepth,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉrootˉdepth
+        );
+    }
+    let Expectedˉpathˉlength: u32 =
+        Current.Rootˉdepth * Current.Pageˉsize;
+    if Bytesˉlength(Path) != Expectedˉpathˉlength {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Invalidˉpathˉlength,
+            Page.Databaseˉdurableˉpageˉerror.Invalidˉlength,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    let Leafˉselection: Databaseˉtreeˉpathˉselection =
+        Databaseˉtreeˉpathˉselect(
+            Current,
+            Path,
+            Key,
+            Current.Rootˉdepth - 1u32
+        );
+    if Leafˉselection.Error != Databaseˉtreeˉpathˉupsertˉerror.Valid {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Leafˉselection.Error,
+            Leafˉselection.Pageˉerror,
+            Leafˉselection.Nodeˉerror,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Current.Generation == U64_MAXIMUM {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Generationˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Generationˉexhausted
+        );
+    }
+    if Current.Committedˉsequence == U64_MAXIMUM {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Sequenceˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Sequenceˉexhausted
+        );
+    }
+    let Targetˉgeneration: u64 = Current.Generation + 1u64;
+    let Targetˉsequence: u64 = Current.Committedˉsequence + 1u64;
+    let Maximumˉpayload: u32 = Current.Pageˉsize - 128u32;
+
+    let Ordinaryˉleaf: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Leafˉselection.Payload,
+            Key,
+            Value,
+            Maximumˉpayload
+        );
+    var Didˉsplit: bool = false;
+    var Replaced: bool = false;
+    var Leftˉentryˉcount: u32 = 0u32;
+    var Rightˉentryˉcount: u32 = 0u32;
+    var Leftˉpayload: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+    var Rightˉpayload: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+    var Separator: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+    var Splitˉlevels: u32 = 0u32;
+    if Ordinaryˉleaf.Error == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        Replaced = Ordinaryˉleaf.Replaced;
+        Leftˉentryˉcount = Ordinaryˉleaf.Entryˉcount;
+        Leftˉpayload = Ordinaryˉleaf.Bytes;
+    } else if Ordinaryˉleaf.Error == Tree.Databaseˉtreeˉnodeˉerror.Full {
+        let Splitˉleaf: Tree.Databaseˉtreeˉnodeˉsplitˉresult =
+            Tree.Databaseˉtreeˉleafˉsplitˉupsert(
+                Leafˉselection.Payload,
+                Key,
+                Value,
+                Maximumˉpayload
+            );
+        if Splitˉleaf.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉupsert,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Splitˉleaf.Error,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        Didˉsplit = true;
+        Splitˉlevels = 1u32;
+        Replaced = Splitˉleaf.Replaced;
+        Leftˉentryˉcount = Splitˉleaf.Leftˉentryˉcount;
+        Rightˉentryˉcount = Splitˉleaf.Rightˉentryˉcount;
+        Leftˉpayload = Splitˉleaf.Left;
+        Rightˉpayload = Splitˉleaf.Right;
+        Separator = Splitˉleaf.Separator;
+    } else {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Invalidˉupsert,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Ordinaryˉleaf.Error,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+
+    let Leftˉleafˉupperˉpresent: bool = Didˉsplit || Leafˉselection.Hasˉupper;
+    var Leftˉleafˉupper: bytes = Leafˉselection.Upper;
+    if Didˉsplit { Leftˉleafˉupper = Separator; }
+    let Leftˉleafˉrange: Tree.Databaseˉtreeˉnodeˉerror =
+        Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+            Leftˉpayload,
+            Leafˉselection.Hasˉlower,
+            Leafˉselection.Lower,
+            Leftˉleafˉupperˉpresent,
+            Leftˉleafˉupper
+        );
+    if Leftˉleafˉrange != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Invalidˉrange,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Leftˉleafˉrange,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    if Didˉsplit {
+        let Rightˉleafˉrange: Tree.Databaseˉtreeˉnodeˉerror =
+            Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+                Rightˉpayload,
+                true,
+                Separator,
+                Leafˉselection.Hasˉupper,
+                Leafˉselection.Upper
+            );
+        if Rightˉleafˉrange != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉrange,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Rightˉleafˉrange,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+    }
+
+    var Nextˉpage: u64 = Current.Pageˉcount;
+    let Firstˉpage: u64 = Nextˉpage;
+    var Dataˉpages: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+    var Dataˉpageˉcount: u32 = 0u32;
+    var Obsoleteˉpages: bytes = Bytesˉfromˉu64ˉlittle(
+        Leafˉselection.Pageˉidentifier
+    );
+    var Obsoleteˉpageˉcount: u32 = 1u32;
+    if Nextˉpage == U64_MAXIMUM {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Pageˉidentifierˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+        );
+    }
+    let Leftˉleafˉpage: u64 = Nextˉpage;
+    let Encodedˉleftˉleaf: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Leaf,
+                Current.Pageˉsize,
+                Leftˉleafˉpage,
+                Targetˉgeneration,
+                Targetˉsequence,
+                Leafˉselection.Pageˉidentifier,
+                Leftˉentryˉcount,
+                Leftˉpayload
+            )
+        );
+    if Encodedˉleftˉleaf.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Invalidˉoutputˉpage,
+            Encodedˉleftˉleaf.Error,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+        );
+    }
+    Dataˉpages = Bytesˉconcat(Dataˉpages, Encodedˉleftˉleaf.Bytes);
+    Dataˉpageˉcount = Dataˉpageˉcount + 1u32;
+    Nextˉpage = Nextˉpage + 1u64;
+    var Leftˉchild: u64 = Leftˉleafˉpage;
+    var Rightˉchild: u64 = DATABASE_TREE_PATH_UPSERT_NO_PAGE;
+    if Didˉsplit {
+        if Nextˉpage == U64_MAXIMUM {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Pageˉidentifierˉexhausted,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+            );
+        }
+        Rightˉchild = Nextˉpage;
+        let Encodedˉrightˉleaf: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉencode(
+                Page.Databaseˉdurableˉpage(
+                    Page.Databaseˉdurableˉpageˉkind.Leaf,
+                    Current.Pageˉsize,
+                    Rightˉchild,
+                    Targetˉgeneration,
+                    Targetˉsequence,
+                    DATABASE_TREE_PATH_UPSERT_NO_PAGE,
+                    Rightˉentryˉcount,
+                    Rightˉpayload
+                )
+            );
+        if Encodedˉrightˉleaf.Error !=
+                Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉoutputˉpage,
+                Encodedˉrightˉleaf.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        Dataˉpages = Bytesˉconcat(Dataˉpages, Encodedˉrightˉleaf.Bytes);
+        Dataˉpageˉcount = Dataˉpageˉcount + 1u32;
+        Nextˉpage = Nextˉpage + 1u64;
+    }
+
+    var Remainingˉparents: u32 = Current.Rootˉdepth - 1u32;
+    while Remainingˉparents > 0u32 {
+        let Parentˉlevel: u32 = Remainingˉparents - 1u32;
+        let Parent: Databaseˉtreeˉpathˉselection =
+            Databaseˉtreeˉpathˉselect(Current, Path, Key, Parentˉlevel);
+        if Parent.Error != Databaseˉtreeˉpathˉupsertˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Parent.Error,
+                Parent.Pageˉerror,
+                Parent.Nodeˉerror,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        Obsoleteˉpages = Bytesˉconcat(
+            Obsoleteˉpages,
+            Bytesˉfromˉu64ˉlittle(Parent.Pageˉidentifier)
+        );
+        Obsoleteˉpageˉcount = Obsoleteˉpageˉcount + 1u32;
+
+        var Parentˉupdate: Tree.Databaseˉtreeˉbranchˉupdateˉresult =
+            Tree.Databaseˉtreeˉbranchˉreplaceˉchild(
+                Parent.Payload,
+                Parent.Selectedˉchild,
+                Leftˉchild,
+                Maximumˉpayload
+            );
+        if Didˉsplit {
+            Parentˉupdate = Tree.Databaseˉtreeˉbranchˉsplitˉchild(
+                Parent.Payload,
+                Parent.Selectedˉchild,
+                Separator,
+                Leftˉchild,
+                Rightˉchild,
+                Maximumˉpayload
+            );
+        }
+        var Parentˉdidˉsplit: bool = false;
+        var Parentˉleftˉcount: u32 = 0u32;
+        var Parentˉrightˉcount: u32 = 0u32;
+        var Parentˉleftˉpayload: bytes =
+            Databaseˉtreeˉpathˉupsertˉempty();
+        var Parentˉrightˉpayload: bytes =
+            Databaseˉtreeˉpathˉupsertˉempty();
+        var Parentˉseparator: bytes = Databaseˉtreeˉpathˉupsertˉempty();
+        if Parentˉupdate.Error == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            Parentˉleftˉcount = Parentˉupdate.Entryˉcount;
+            Parentˉleftˉpayload = Parentˉupdate.Bytes;
+        } else if Didˉsplit &&
+            Parentˉupdate.Error == Tree.Databaseˉtreeˉnodeˉerror.Full {
+            let Parentˉsplit: Tree.Databaseˉtreeˉnodeˉsplitˉresult =
+                Branchˉsplit.Databaseˉtreeˉbranchˉsplitˉpropagate(
+                    Parent.Payload,
+                    Parent.Selectedˉchild,
+                    Separator,
+                    Leftˉchild,
+                    Rightˉchild,
+                    Maximumˉpayload
+                );
+            if Parentˉsplit.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉtreeˉpathˉupsertˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Invalidˉbranchˉupdate,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Parentˉsplit.Error,
+                    Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+                );
+            }
+            Parentˉdidˉsplit = true;
+            Splitˉlevels = Splitˉlevels + 1u32;
+            Parentˉleftˉcount = Parentˉsplit.Leftˉentryˉcount;
+            Parentˉrightˉcount = Parentˉsplit.Rightˉentryˉcount;
+            Parentˉleftˉpayload = Parentˉsplit.Left;
+            Parentˉrightˉpayload = Parentˉsplit.Right;
+            Parentˉseparator = Parentˉsplit.Separator;
+        } else {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉbranchˉupdate,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Parentˉupdate.Error,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+
+        let Parentˉleftˉupperˉpresent: bool =
+            Parentˉdidˉsplit || Parent.Hasˉupper;
+        var Parentˉleftˉupper: bytes = Parent.Upper;
+        if Parentˉdidˉsplit { Parentˉleftˉupper = Parentˉseparator; }
+        let Parentˉleftˉrange: Tree.Databaseˉtreeˉnodeˉerror =
+            Databaseˉtreeˉpathˉbranchˉrangeˉvalidate(
+                Parentˉleftˉpayload,
+                Key,
+                Parent.Hasˉlower,
+                Parent.Lower,
+                Parentˉleftˉupperˉpresent,
+                Parentˉleftˉupper
+            );
+        if Parentˉleftˉrange != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉrange,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Parentˉleftˉrange,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        if Parentˉdidˉsplit {
+            let Parentˉrightˉrange: Tree.Databaseˉtreeˉnodeˉerror =
+                Databaseˉtreeˉpathˉbranchˉrangeˉvalidate(
+                    Parentˉrightˉpayload,
+                    Key,
+                    true,
+                    Parentˉseparator,
+                    Parent.Hasˉupper,
+                    Parent.Upper
+                );
+            if Parentˉrightˉrange != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉtreeˉpathˉupsertˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Invalidˉrange,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Parentˉrightˉrange,
+                    Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+                );
+            }
+        }
+
+        if Nextˉpage == U64_MAXIMUM {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Pageˉidentifierˉexhausted,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+            );
+        }
+        let Parentˉleftˉpage: u64 = Nextˉpage;
+        var Parentˉleftˉkind: Page.Databaseˉdurableˉpageˉkind =
+            Page.Databaseˉdurableˉpageˉkind.Branch;
+        if Parentˉlevel == 0u32 && !Parentˉdidˉsplit {
+            Parentˉleftˉkind = Page.Databaseˉdurableˉpageˉkind.Root;
+        }
+        let Encodedˉparentˉleft: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉencode(
+                Page.Databaseˉdurableˉpage(
+                    Parentˉleftˉkind,
+                    Current.Pageˉsize,
+                    Parentˉleftˉpage,
+                    Targetˉgeneration,
+                    Targetˉsequence,
+                    Parent.Pageˉidentifier,
+                    Parentˉleftˉcount,
+                    Parentˉleftˉpayload
+                )
+            );
+        if Encodedˉparentˉleft.Error !=
+                Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉoutputˉpage,
+                Encodedˉparentˉleft.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        Dataˉpages = Bytesˉconcat(Dataˉpages, Encodedˉparentˉleft.Bytes);
+        Dataˉpageˉcount = Dataˉpageˉcount + 1u32;
+        Nextˉpage = Nextˉpage + 1u64;
+        Leftˉchild = Parentˉleftˉpage;
+        Rightˉchild = DATABASE_TREE_PATH_UPSERT_NO_PAGE;
+        if Parentˉdidˉsplit {
+            if Nextˉpage == U64_MAXIMUM {
+                return Databaseˉtreeˉpathˉupsertˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Pageˉidentifierˉexhausted,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+                );
+            }
+            Rightˉchild = Nextˉpage;
+            let Encodedˉparentˉright: Page.Databaseˉdurableˉpageˉresult =
+                Page.Databaseˉdurableˉpageˉencode(
+                    Page.Databaseˉdurableˉpage(
+                        Page.Databaseˉdurableˉpageˉkind.Branch,
+                        Current.Pageˉsize,
+                        Rightˉchild,
+                        Targetˉgeneration,
+                        Targetˉsequence,
+                        DATABASE_TREE_PATH_UPSERT_NO_PAGE,
+                        Parentˉrightˉcount,
+                        Parentˉrightˉpayload
+                    )
+                );
+            if Encodedˉparentˉright.Error !=
+                    Page.Databaseˉdurableˉpageˉerror.Valid {
+                return Databaseˉtreeˉpathˉupsertˉfailure(
+                    Databaseˉtreeˉpathˉupsertˉerror.Invalidˉoutputˉpage,
+                    Encodedˉparentˉright.Error,
+                    Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+                );
+            }
+            Dataˉpages = Bytesˉconcat(
+                Dataˉpages,
+                Encodedˉparentˉright.Bytes
+            );
+            Dataˉpageˉcount = Dataˉpageˉcount + 1u32;
+            Nextˉpage = Nextˉpage + 1u64;
+        }
+        Didˉsplit = Parentˉdidˉsplit;
+        Separator = Parentˉseparator;
+        Remainingˉparents = Remainingˉparents - 1u32;
+    }
+
+    var Rootˉpage: u64 = Leftˉchild;
+    var Rootˉdepth: u32 = Current.Rootˉdepth;
+    var Rootˉsplit: bool = false;
+    if Didˉsplit {
+        if Nextˉpage == U64_MAXIMUM {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Pageˉidentifierˉexhausted,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+            );
+        }
+        let Newˉrootˉnode: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+                Separator,
+                Leftˉchild,
+                Rightˉchild,
+                Maximumˉpayload
+            );
+        if Newˉrootˉnode.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnewˉroot,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Newˉrootˉnode.Error,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        Rootˉpage = Nextˉpage;
+        Rootˉdepth = Current.Rootˉdepth + 1u32;
+        Rootˉsplit = true;
+        let Encodedˉnewˉroot: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉencode(
+                Page.Databaseˉdurableˉpage(
+                    Page.Databaseˉdurableˉpageˉkind.Root,
+                    Current.Pageˉsize,
+                    Rootˉpage,
+                    Targetˉgeneration,
+                    Targetˉsequence,
+                    DATABASE_TREE_PATH_UPSERT_NO_PAGE,
+                    Newˉrootˉnode.Entryˉcount,
+                    Newˉrootˉnode.Bytes
+                )
+            );
+        if Encodedˉnewˉroot.Error !=
+                Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉtreeˉpathˉupsertˉfailure(
+                Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnewˉroot,
+                Encodedˉnewˉroot.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpage
+            );
+        }
+        Dataˉpages = Bytesˉconcat(Dataˉpages, Encodedˉnewˉroot.Bytes);
+        Dataˉpageˉcount = Dataˉpageˉcount + 1u32;
+        Nextˉpage = Nextˉpage + 1u64;
+    }
+    if Nextˉpage == U64_MAXIMUM {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Pageˉidentifierˉexhausted,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Batch.Databaseˉcommitˉbatchˉerror.Pageˉidentifierˉexhausted
+        );
+    }
+    let Commit: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current,
+            Rootˉpage,
+            Rootˉdepth,
+            Dataˉpageˉcount,
+            Dataˉpages
+        );
+    if Commit.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid {
+        return Databaseˉtreeˉpathˉupsertˉfailure(
+            Databaseˉtreeˉpathˉupsertˉerror.Invalidˉcommit,
+            Commit.Pageˉerror,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Commit.Error
+        );
+    }
+    return Databaseˉtreeˉpathˉupsert(
+        Databaseˉtreeˉpathˉupsertˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Replaced,
+        Splitˉlevels,
+        Rootˉsplit,
+        Current.Rootˉdepth,
+        Rootˉdepth,
+        Dataˉpageˉcount,
+        Firstˉpage,
+        Rootˉpage,
+        Obsoleteˉpageˉcount,
+        Obsoleteˉpages,
+        Commit
+    );
+}
