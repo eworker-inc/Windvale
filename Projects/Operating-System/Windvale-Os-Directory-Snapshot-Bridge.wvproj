@@ -1,0 +1,6 @@
+windvale-project 2
+root "Operating-System/Services/Directory-Snapshot-Bridge.wv"
+source "Operating-System/Services/Directory-Service-Core.wv"
+source "Operating-System/Services/Directory-Snapshot.wv"
+source "Operating-System/Services/Directory-Snapshot-Service.wv"
+emit wvb

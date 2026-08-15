@@ -10,17 +10,27 @@ The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`E
 
 ## Artifact construction
 
-The builder compiles the selected system-profile Hello source; portable admission, process-policy, init/resource service, directory service, exact `Tests/Fixtures/Source-Wvb/Function-Only.wv`, and retained-native modules; hosted `Bytecode-Interpreter.wv`; and the kernel/service/client WVA shims. Portable modules pass through canonical WVB, mandatory verification, ABI-22 native selection and fragment verification, and WVO. Stage 0 rewrites only verified link-facing symbols.
+`Tools/Native/Build-Os-Probe.cmd` is the current construction owner. It builds the kernel markers, WVB admission policy, native WVB probe, process policy, and process object through pinned native front doors; assembles the memory-object, timer, and kernel shims through the native WVA assembler; produces the remaining bounded OS objects through the native Probe object producer; links the base-zero payload; and packages the UEFI application. Every intermediate with a retained identity is checked before publication.
 
-The existing Stage 0 and Windvale-written compilers must emit byte-identical canonical WVB for `Function-Only.wv`, and those bytes must equal the embedded admission identity. The portable process policy is an 18,763-byte canonical WVB with SHA-256 `907d89aae0575d05306d4111c87f52f5a684085576a19d6425968ebe83afa3f4`; its 129,310-byte ABI-22 WVO has SHA-256 `483ba9c752862fa739dea5fb9c40ce747e3210797d39bc73ac3f8d22084f669a`. Probe 40 changes no source-language semantics or ABI-22 backend behavior; it extends the Windvale policy, WVA, and OS composition.
+The canonical 816-byte `Function-Only.wv` WVB remains the embedded admission identity. Current construction builds the 4,071-byte admission WVB, lowers it to a verified 20,316-byte WVO, and uses the verified export renamer to publish the 20,337-byte link-facing object. The process-policy owner publishes the current 129,310-byte ABI-22 WVO at SHA-256 `35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678`. Probe 40 changes no source-language semantics or ABI-22 backend behavior; it extends Windvale policy, WVA, and OS composition.
 
 The separate directory service is a 473-byte WVB with SHA-256 `33b0e425bd6e2a1cd6ae8f95d4645748a6031b93684a9b1ac4d0e56e8408bef7`. Its WVA entry, exact preemption probe, and ABI-22 object link to a 3,911-byte image with SHA-256 `f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb`. The machine seam pins and revalidates that complete image and exact preemption-function bytes before publication.
 
-Stage 0 creates the loader, fixed-page memory leaf, exception, paging, admission bridge, process machine, retained bridge, x64 byte adapter, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. The separately assembled 2,538-byte memory-object WVA has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; the retained 1,202-byte timer WVA has SHA-256 `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`. Every immutable object is independently verified before machine publication. The linker reconstructs the base-zero image and passes verified code and read-only data to UEFI application writer 3.
+The native Probe object and process-object producers create the loader, fixed-page memory leaf, exception, paging, admission bridge, process machine, retained bridge/support, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. The separately assembled 2,538-byte memory-object WVA has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; the retained 1,202-byte timer WVA has SHA-256 `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`. The immutable Stage 0 recovery release preserves the former construction path and historical differential provenance; it is not invoked by ordinary `main` construction.
 
 The linked kernel payload fits the fixed 768 KiB supervisor RX window. Init and the directory service each fit two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
-Probe-40 qualified image identities are:
+Current native `main` image identities are:
+
+| Scenario | EFI bytes | SHA-256 | Expected host code |
+| --- | ---: | --- | ---: |
+| `normal` | 683,008 | `080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9` | 0 |
+| `invalid-opcode` | 683,008 | `8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734` | 3 |
+| `general-protection` | 683,008 | `47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b` | 3 |
+
+The current native builder does not construct `user-fault` or `service-fault`; changes to their retained source seams are therefore an explicit changed-file verification gap rather than falsely covered by the normal probe owner.
+
+The historically qualified Probe-40 image identities at implementation commit `c4008e75db061df375eb323d75a818863aee553f` are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
@@ -30,7 +40,7 @@ Probe-40 qualified image identities are:
 | `user-fault` | 682,496 | `2dc3bbbb6d413499394840d2466c53a206142c6d62e1c7cdab6c490eb38507ad` | 0 |
 | `service-fault` | 667,648 | `bf39b8f503c9eaab0437f58dec89a3eb9b011ea1b7d3affe4c9187f2a7ab128d` | 0 |
 
-All five identities are deterministic in the focused Windows suite and pass pinned Windows QEMU 11.0/Q35/TCG with exact transcripts and exit results. The Windows/Linux qualification gate is recorded above; no Debian QEMU execution is claimed.
+All five historical identities were deterministic in the focused Windows suite and passed pinned Windows QEMU 11.0/Q35/TCG with exact transcripts and exit results. The Windows/Linux qualification gate is recorded above; no Debian QEMU execution is claimed. Current native construction and live verification cover the three scenarios in the first table.
 
 ## Firmware exit and kernel entry
 
@@ -102,12 +112,15 @@ The user-fault case inserts `user-fault=contained` before `status=pass`. The ser
 From the repository root:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario normal
-pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario invalid-opcode
-pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario general-protection
-pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario user-fault
-pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 -Scenario service-fault
+$efi = Join-Path $env:TEMP 'Windvale-Probe40-normal.efi'
+Tools\Native\Build-Os-Probe.cmd $efi normal
+pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
+    -EfiPath $efi `
+    -ExpectedEfiSha256 080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 `
+    -Scenario normal
 ```
+
+Use a fresh output path and the identity from the current-native table for `invalid-opcode` or `general-protection`. Verification of a retained `user-fault` or `service-fault` EFI requires an independently supplied, identity-pinned historical artifact; `Build-Os-Probe.cmd` intentionally rejects those scenario names.
 
 The harness preflights pinned QEMU/OVMF, creates run-private media and variable state, launches `pc-q35-11.0,accel=tcg` with one CPU and 128 MiB, captures serial, validates scenario output and exit code, and rechecks input identities. Default timeout is 60 seconds. Temporary artifacts are deleted unless `-KeepRunDirectory` is supplied.
 
@@ -115,4 +128,4 @@ Harness diagnostics remain `WVOS3001` build failure, `WVOS3002` start failure, `
 
 ## Deliberate non-claims
 
-Probe 40 does not authenticate firmware CRCs, own general physical memory, coalesce or scatter allocations, load arbitrary WVB, provide complete in-guest verification, publish executable memory, JIT, provide a public timer/time API, prioritize, handle delayed/lost/wrapped ticks, enter idle, guarantee general wake latency, schedule multiple threads, discover or publicly create endpoints, supervise or restart services, transfer capabilities, accept arbitrary stores or snapshots in its bounded guest seam, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network/devices, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Its three memory objects, four-tick timer sequence, and one-thread-per-process dispatcher remain fixed internal evidence. Stage 0 machine emitters remain explicit replacement seams.
+Probe 40 does not authenticate firmware CRCs, own general physical memory, coalesce or scatter allocations, load arbitrary WVB, provide complete in-guest verification, publish executable memory, JIT, provide a public timer/time API, prioritize, handle delayed/lost/wrapped ticks, enter idle, guarantee general wake latency, schedule multiple threads, discover or publicly create endpoints, supervise or restart services, transfer capabilities, accept arbitrary stores or snapshots in its bounded guest seam, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network/devices, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Its three memory objects, four-tick timer sequence, and one-thread-per-process dispatcher remain fixed internal evidence. The recovery release preserves the replaced Stage 0 emitters for historical reconstruction only.

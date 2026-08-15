@@ -1,0 +1,83 @@
+module Osˉresourceˉserviceˉselfˉtest profile portable;
+
+import Resourceˉservice as Resourceˉservice;
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Empty() -> bytes {
+    let Value: bytes = Textˉtoˉutf8("");
+    return Bytesˉslice(Value, 0u32, 0u32);
+}
+
+fn Buildˉrequest(Name: text, Maximumˉbytes: u32) -> bytes {
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
+    var Result: bytes = Empty();
+    Result = Appendˉu32(Result, 1364350551u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32 + Bytesˉlength(Nameˉbytes));
+    Result = Appendˉu32(Result, 7u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Maximumˉbytes);
+    Result = Appendˉu32(Result, Bytesˉlength(Nameˉbytes));
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Nameˉbytes);
+}
+
+fn Buildˉstore() -> bytes {
+    let Name: bytes = Textˉtoˉutf8("a");
+    let Value: bytes = Bytesˉconcat(Bytesˉfromˉu8(7u8), Bytesˉfromˉu8(8u8));
+    let Digest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Value));
+    var Result: bytes = Empty();
+    Result = Appendˉu32(Result, 1397904983u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 131u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 96u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 3u32);
+    Result = Appendˉu32(Result, 7u32);
+    Result = Appendˉu32(Result, 128u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 129u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(Result, Digest);
+    Result = Bytesˉconcat(Result, Name);
+    return Bytesˉconcat(Result, Value);
+}
+
+export fn Main() -> i32 {
+    let Store: bytes = Buildˉstore();
+    let Success: bytes = Resourceˉservice.Resourceˉserviceˉhandle(
+        Store, Buildˉrequest("a", 2u32)
+    );
+    if Bytesˉlength(Success) != 114u32 { return 1; }
+    if Bytesˉreadˉu32ˉlittle(Success, 16u32) != 0u32 { return 2; }
+    if Bytesˉreadˉu32ˉlittle(Success, 28u32) != 1u32 { return 3; }
+    if Bytesˉreadˉu32ˉlittle(Success, 32u32) != 3u32 { return 4; }
+    if Bytesˉreadˉu32ˉlittle(Success, 36u32) != 7u32 { return 5; }
+    if Bytesˉreadˉu32ˉlittle(Success, 40u32) != 2u32 { return 6; }
+    if Bytesˉreadˉu8(Success, 112u32) != 7u8 { return 7; }
+    if Bytesˉreadˉu8(Success, 113u32) != 8u8 { return 8; }
+
+    let Limited: bytes = Resourceˉservice.Resourceˉserviceˉhandle(
+        Store, Buildˉrequest("a", 1u32)
+    );
+    if Bytesˉreadˉu32ˉlittle(Limited, 16u32) != 3u32 { return 9; }
+    let Missing: bytes = Resourceˉservice.Resourceˉserviceˉhandle(
+        Store, Buildˉrequest("b", 2u32)
+    );
+    if Bytesˉreadˉu32ˉlittle(Missing, 16u32) != 2u32 { return 10; }
+    let Malformed: bytes = Resourceˉservice.Resourceˉserviceˉhandle(Store, Empty());
+    if Bytesˉreadˉu32ˉlittle(Malformed, 16u32) != 1u32 { return 11; }
+    let Invalidˉstore: bytes = Resourceˉservice.Resourceˉserviceˉhandle(
+        Empty(), Buildˉrequest("a", 2u32)
+    );
+    if Bytesˉreadˉu32ˉlittle(Invalidˉstore, 16u32) != 4u32 { return 12; }
+    return 42;
+}

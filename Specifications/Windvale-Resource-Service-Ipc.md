@@ -76,7 +76,7 @@ A malformed request may produce request identifier zero when no valid nonzero id
 
 ## Transport ownership and lifecycle
 
-The shared Stage 0 `Boundedˉserviceˉexchange` is a format-blind oracle for the intended bounded transport. It owns one copied message and two generation-1 endpoints. Decision 0154 extracts the mechanism from its original resource-named owner so the resource and directory protocols demonstrably share the same boundary:
+The format-blind `Boundedˉserviceˉexchange` preserved in the immutable Stage 0 recovery archive is the historical qualification oracle for the intended bounded transport. It owns one copied message and two generation-1 endpoints. Decision 0154 extracted the mechanism from its original resource-named owner so the resource and directory protocols demonstrably shared the same boundary:
 
 - client endpoint `0x00010000`: `send-request` and `receive-reply`;
 - service endpoint `0x00010001`: `receive-request` and `send-reply`.
@@ -95,11 +95,11 @@ Probe 34's `WVCHAN03` adopts the terminal boundary in the guest. Client exit or 
 
 [`Resource-Service-Core.wv`](../Operating-System/Services/Resource-Service-Core.wv) parses `WVRQ 1`, invokes the complete portable `WVRS 1` validator and lookup, applies the requested inline-data ceiling, and constructs canonical `WVRY 1`. It never returns a resource from a partially validated store.
 
-[`Resource-Service-Bridge.wv`](../Operating-System/Services/Resource-Service-Bridge.wv) is the hosted integration adapter. It declares only `file.read_bytes`, reads opaque inputs `boot:resources.wvrs` and `ipc:resource-request.wvrq`, and returns the response bytes. The OS suite sends the request through the bounded exchange, runs this service through the reference runtime, sends its output back through the exchange, and verifies exact byte agreement with the independent Stage 0 handler for success, malformed request, missing name, response limit, and invalid store.
+[`Resource-Service-Bridge.wv`](../Operating-System/Services/Resource-Service-Bridge.wv) is the hosted integration adapter. It declares only `file.read_bytes`, reads opaque inputs `boot:resources.wvrs` and `ipc:resource-request.wvrq`, and returns the response bytes. Explicit Project 2 manifests compile the portable core, hosted bridge, and store-backed service through the native front door. The `os-services` retirement owner executes the portable core against success, malformed request, missing name, response-limit, and invalid-store cases. The former managed differential oracle remains historical recovery evidence, not a live dependency in `main`.
 
 ## Implementation evidence and limits
 
-The focused OS suite proves deterministic construction, the exact one-page response boundary, the first oversized resource result, strict request and response verification, canonical failure envelopes, 512 deterministic hostile request/response inputs, transport authorization and lifecycle, peer-exit cleanup, capability denial, missing inputs, and one live lookup of `boot:main.configuration` returning identifier `3`, kind `opaque-bytes`, attributes `7`, and bytes `[3,5,8,13]`.
+Current native evidence is owned by `Tools/Native/Test-Os-Services`: it compiles all eight maintained OS service modules and executes separate resource and directory contract WVBs. The resource test verifies canonical success metadata and bytes, missing-name, response-limit, malformed-request, and invalid-store envelopes. The broader hostile-input, transport-lifecycle, and guest evidence cited by Decisions 0129 through 0159 is retained as historical qualification evidence; it is not presented as a currently reconstructed Stage 0 differential suite.
 
 Probe 34 uses `WVPROC13` and `WVCHAN03` with the retained checked one-page user-buffer copy rules and synchronous wait/wake behavior. Request sources are RX, destinations are registered RW/NX windows, and endpoint rights remain directional. In each client generation, the init WVA seam validates the exact bounded three-entry store profile, compares the requested opaque name against directory entries, selects metadata and bytes dynamically, and constructs the response in its RW/NX data page. The response is no longer fixed WVA read-only data.
 

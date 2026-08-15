@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended next architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted clean-spawn, service-manager, process-role, and resource-domain direction in [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). Windvale OS does not yet implement a flat resource domain, dynamic process creation, a launch transaction, service supervision, restart policy, or a public process ABI.
+Recommended next architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted clean-spawn, service-manager, process-role, and resource-domain direction in [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). A portable [resource-domain policy 1](../../Specifications/Windvale-Os-Resource-Domain-Policy.md) candidate implements the first atomic accounting model, but Windvale OS does not yet integrate that domain into Probe 40 or implement dynamic process creation, a launch transaction, service supervision, restart policy, or a public process ABI.
 
 ## Recommendation
 

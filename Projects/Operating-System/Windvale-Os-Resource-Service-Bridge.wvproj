@@ -1,0 +1,5 @@
+windvale-project 2
+root "Operating-System/Services/Resource-Service-Bridge.wv"
+source "Operating-System/Services/Resource-Service-Core.wv"
+source "Libraries/Foundation/Resources/Resource-Store.wv"
+emit wvb

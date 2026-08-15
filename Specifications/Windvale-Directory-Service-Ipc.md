@@ -55,7 +55,7 @@ No service header surrounds this value. The maximum reply is 3,096 bytes, leavin
 
 [`Directory-Service-Core.wv`](../Operating-System/Services/Directory-Service-Core.wv) owns request parsing, name and checked-range validation, typed local rejection, and defense-in-depth `WVDR 1` validation. Structurally invalid requests and provider responses produce an empty service result so they cannot enter the bounded reply transition.
 
-[`Directory-Service-Bridge.wv`](../Operating-System/Services/Directory-Service-Bridge.wv) is a temporary hosted integration adapter. It reads one opaque `ipc:directory-read.wvdq` input through `file.read_bytes`, invokes the separately authorized `filesystem.directory_read_v1` instance only for a valid request, and returns the core-approved bytes. It exists to prove the Windvale service policy against an independent Stage 0 oracle; it is not the Windvale OS provider or permanent host path.
+[`Directory-Service-Bridge.wv`](../Operating-System/Services/Directory-Service-Bridge.wv) is a temporary hosted integration adapter. It reads one opaque `ipc:directory-read.wvdq` input through `file.read_bytes`, invokes the separately authorized `filesystem.directory_read_v1` instance only for a valid request, and returns the core-approved bytes. It is a bounded hosted adapter, not the Windvale OS provider or a permanent host path.
 
 The former managed directory codec and format-blind transport oracle are
 preserved in the [immutable Stage 0 recovery archive](../Bootstrap/Stage0/README.md).
@@ -65,7 +65,7 @@ native evidence in `main`.
 
 ## Current evidence and limits
 
-The Windows focused OS suite proves deterministic WVDQ construction, the 283-byte request edge, exact 3,096-byte WVDR success, zero-length end reads, invalid offsets, missing and non-file entries, invalid name/limit non-invocation, malformed request no-reply behavior, malformed response rejection, provider invariant failure, 512 deterministic hostile request/response inputs, peer-exit cleanup, capability denial, missing request input, repeatable WVB construction, and byte-identical Windvale/Stage 0 results.
+The cross-host `os-services` retirement owner compiles the directory core, hosted bridge, snapshot verifier, snapshot service, and hosted snapshot bridge through explicit Project 2 manifests. Its portable behavior WVB verifies a successful exact chunk, missing name, invalid offset, invalid name and limit non-invocation, and malformed snapshot rejection. The former managed differential, 512-input containment, and transport-lifecycle results are preserved as historical qualification evidence in the recovery release rather than claimed as live `main` tests.
 
 [Decision 0159](../Documents/Decisions/0159-First-Guest-Directory-Service.md) adopts this contract in cross-host-qualified Probe 35. Init receives the one-page [`WVDS 1`](Windvale-Directory-Snapshot.md) provider and a dedicated RW/NX response page; each rebuilt client receives its own response page, sends the exact 37-byte request for `kernel.wv`, receives the maximal 3,096-byte reply, and validates all 3,072 bytes. Exact implementation commit `a797e31dbe404267622f409b6c45da9b680ec8b5` passes all 37 OS tests on Windows and digest-pinned Debian plus all four Windows pinned-QEMU scenarios. Live malformed-message/service-loss injection remains pending. This protocol adds no enumeration, nested paths, open handles, links, mutation, persistence, block storage, caching, concurrency, cancellation, transferable capability, or service discovery.
 

@@ -881,6 +881,45 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'protected process specification'
+        Paths = @('Specifications/Windvale-Protected-Process.md')
+        Suites = @('os-process-policy', 'os-process-object', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'OS service source and project ownership'
+        Paths = @(
+            'Operating-System/Services/Resource-Service-Core.wv',
+            'Projects/Operating-System/Windvale-Os-Directory-Snapshot-Service.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Resource-Service.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Directory-Service-Self-Test.wv'
+        )
+        Suites = @('os-services')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'OS resource-domain policy ownership'
+        Paths = @(
+            'Operating-System/Kernel/Resource-Domain-Policy.wv',
+            'Projects/Operating-System/Windvale-Os-Resource-Domain-Policy.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Resource-Domain.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Resource-Domain-Self-Test.wv',
+            'Specifications/Windvale-Os-Resource-Domain-Policy.md'
+        )
+        Suites = @('os-resource-domain')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'unconstructed OS process fault scenario'
+        Paths = @('Operating-System/Kernel/Hello-Service-Fault.wv')
+        Suites = @()
+        Gaps = @('os-process-fault-scenario-construction')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'OS Probe memory producer artifacts'
         Paths = @(
             'Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/Manifest.json',
@@ -1321,7 +1360,7 @@ $NativeCases = @(
             'Specifications/Windvale-Directory-Service-Ipc.md',
             'Specifications/Windvale-Directory-Snapshot.md'
         )
-        Suites = @('os-probe')
+        Suites = @('os-services')
         Gaps = @()
         VerifyPlan = $true
     },
@@ -1384,9 +1423,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 57 -or
+if ($RetirementSuiteLines.Count -ne 59 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 56-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 58-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1424,7 +1463,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3363 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3375 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

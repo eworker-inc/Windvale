@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Resource-Service-Self-Test.wv"
+source "Operating-System/Services/Resource-Service-Core.wv"
+source "Libraries/Foundation/Resources/Resource-Store.wv"
+emit wvb

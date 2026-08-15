@@ -1,0 +1,87 @@
+module Osˉdirectoryˉserviceˉselfˉtest profile portable;
+
+import Directoryˉservice as Directoryˉservice;
+import Directoryˉsnapshot as Directoryˉsnapshot;
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Empty() -> bytes {
+    let Value: bytes = Textˉtoˉutf8("");
+    return Bytesˉslice(Value, 0u32, 0u32);
+}
+
+fn Buildˉrequest(Name: text, Offset: u32, Maximumˉbytes: u32) -> bytes {
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
+    var Result: bytes = Empty();
+    Result = Appendˉu32(Result, 1363433047u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 28u32 + Bytesˉlength(Nameˉbytes));
+    Result = Appendˉu32(Result, Offset);
+    Result = Appendˉu32(Result, Maximumˉbytes);
+    Result = Appendˉu32(Result, Bytesˉlength(Nameˉbytes));
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Nameˉbytes);
+}
+
+fn Buildˉsnapshot() -> bytes {
+    var Result: bytes = Empty();
+    Result = Appendˉu32(Result, 1396987479u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 70u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32);
+    Result = Appendˉu32(Result, 32u32);
+    Result = Appendˉu32(Result, 64u32);
+    Result = Appendˉu32(Result, 68u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 64u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 68u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(97u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(7u8));
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(8u8));
+}
+
+export fn Main() -> i32 {
+    let Validˉrequest: bytes = Buildˉrequest("a", 0u32, 2u32);
+    let Snapshot: bytes = Buildˉsnapshot();
+    let Parsed: Directoryˉservice.Directoryˉserviceˉrequest =
+        Directoryˉservice.Directoryˉserviceˉparseˉrequest(Validˉrequest);
+    if !Directoryˉservice.Directoryˉserviceˉshouldˉinvokeˉprovider(Parsed) { return 1; }
+    let Read: bytes = Directoryˉsnapshot.Directoryˉsnapshotˉread(
+        Snapshot, "a", 0u32, 2u32
+    );
+    if Bytesˉlength(Read) != 26u32 { return 2; }
+    if Bytesˉreadˉu32ˉlittle(Read, 8u32) != 0u32 { return 3; }
+    if Bytesˉreadˉu32ˉlittle(Read, 20u32) != 2u32 { return 4; }
+    if Bytesˉreadˉu8(Read, 24u32) != 7u8 { return 5; }
+    if Bytesˉreadˉu8(Read, 25u32) != 8u8 { return 6; }
+    let Missing: bytes = Directoryˉsnapshot.Directoryˉsnapshotˉread(
+        Snapshot, "b", 0u32, 2u32
+    );
+    if Bytesˉreadˉu32ˉlittle(Missing, 8u32) != 1u32 { return 7; }
+    let Pastˉend: bytes = Directoryˉsnapshot.Directoryˉsnapshotˉread(
+        Snapshot, "a", 3u32, 2u32
+    );
+    if Bytesˉreadˉu32ˉlittle(Pastˉend, 8u32) != 8u32 { return 8; }
+    let Dotˉrequest: Directoryˉservice.Directoryˉserviceˉrequest =
+        Directoryˉservice.Directoryˉserviceˉparseˉrequest(Buildˉrequest(".", 0u32, 1u32));
+    if Directoryˉservice.Directoryˉserviceˉshouldˉinvokeˉprovider(Dotˉrequest) { return 9; }
+    let Limitˉrequest: Directoryˉservice.Directoryˉserviceˉrequest =
+        Directoryˉservice.Directoryˉserviceˉparseˉrequest(Buildˉrequest("a", 0u32, 3073u32));
+    if Directoryˉservice.Directoryˉserviceˉshouldˉinvokeˉprovider(Limitˉrequest) { return 10; }
+    let Badˉsnapshot: bytes = Directoryˉsnapshot.Directoryˉsnapshotˉread(
+        Empty(), "a", 0u32, 2u32
+    );
+    if Bytesˉlength(Badˉsnapshot) != 0u32 { return 11; }
+    return 42;
+}

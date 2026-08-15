@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Resource-Domain-Self-Test.wv"
+source "Operating-System/Kernel/Resource-Domain-Policy.wv"
+emit wvb

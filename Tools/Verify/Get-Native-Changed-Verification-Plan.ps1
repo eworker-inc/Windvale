@@ -213,7 +213,13 @@ function Add-Hosted-Publisher-Suites {
 
 function Add-Os-Suite {
     param([Parameter(Mandatory)][string]$Path)
-    if ($Path -match 'Process-Foundation|Process-Policy') {
+    if ($Path -match 'Resource-Domain') {
+        Add-Suite 'os-resource-domain'
+    } elseif ($Path -match 'Hello-Service-Fault|Process-Service-Fault-Shim|Process-User-Fault-Shim') {
+        Add-Gap 'os-process-fault-scenario-construction'
+    } elseif ($Path -match '/Services/|Windvale-Os-(?:Resource-Service|Resource-Store-Service|Directory-Service|Directory-Snapshot)|Windvale-(?:Resource-Service-Ipc|Directory-Service-Ipc|Directory-Snapshot)\.md$') {
+        Add-Suite 'os-services'
+    } elseif ($Path -match 'Process-Foundation|Process-Policy') {
         Add-Suite @('os-process-policy', 'os-probe')
     } elseif (
         $Path -match 'Process-Object|Process-Code-Extractor|Process-Resource-Store|Process-Directory-Snapshot|Boot-Resource-Object|Bytecode-Interpreter|Init-Resource-Service|Directory-Process-Service|Process-User-Shim|Boot-Resource-Service'
@@ -723,7 +729,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'packages'
         }
     } elseif ($Path.StartsWith('Operating-System/', [StringComparison]::Ordinal) -or
-        $Path -match '^Windvale-Os-.+\.wvproj$') {
+        $Path.StartsWith('Projects/Operating-System/', [StringComparison]::Ordinal)) {
         if ($Path.EndsWith('.cs', [StringComparison]::OrdinalIgnoreCase) -or
             $Path.EndsWith('.csproj', [StringComparison]::OrdinalIgnoreCase)) {
             Add-Gap 'managed-os-recovery-source'
@@ -1409,6 +1415,13 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
+    } elseif ($Path.StartsWith('Tests/Fixtures/Operating-System/Os-', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Os-', [StringComparison]::Ordinal)) {
+        if ($Path.Contains('Resource-Domain', [StringComparison]::Ordinal)) {
+            Add-Suite 'os-resource-domain'
+        } else {
+            Add-Suite 'os-services'
+        }
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv') {
         Add-Suite 'baseline-jit'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv') {
@@ -1430,6 +1443,7 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Specifications/Seed-Conformance.md') {
             $RunPlanVerification = $true
         } elseif ($Path -in @(
+            'Specifications/Windvale-Resource-Service-Ipc.md',
             'Specifications/Windvale-Directory-Service-Ipc.md',
             'Specifications/Windvale-Directory-Snapshot.md'
         )) {
@@ -1562,6 +1576,8 @@ foreach ($Path in $Paths) {
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
             Add-Hosted-Publisher-Suites
             Add-Suite 'console-verifier-reconstruction'
+        } elseif ($Path -eq 'Specifications/Windvale-Protected-Process.md') {
+            Add-Suite @('os-process-policy', 'os-process-object', 'os-probe')
         } elseif ($Path.StartsWith(
             'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',
             [StringComparison]::Ordinal) -or

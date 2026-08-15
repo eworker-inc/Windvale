@@ -1,0 +1,4 @@
+windvale-project 2
+root "Operating-System/Services/Directory-Service-Bridge.wv"
+source "Operating-System/Services/Directory-Service-Core.wv"
+emit wvb

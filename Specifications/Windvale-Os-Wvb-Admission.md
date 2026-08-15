@@ -22,7 +22,7 @@ The sole admitted input is canonical WVB 1.11 produced from `Function-Only.wv`:
 | Bytes | 816 |
 | SHA-256 | `28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936` |
 
-The exact bytes occur as immutable `Embeddedˉmodule` data in `Operating-System/Kernel/Wvb-Admission.wv`. `Expectedˉmodule` is the Windvale-owned accepted identity. The Stage 0 builder compiles the existing cross-compiler fixture and refuses image construction unless Stage 0 output, Windvale-compiler output, and embedded data are byte-identical.
+The exact bytes occur as immutable `Expectedˉmodule` data in `Operating-System/Kernel/Wvb-Admission.wv`; that value is the Windvale-owned accepted identity. Current native tests independently reproduce and verify the canonical fixture, while the Probe builder verifies the complete admission WVB/WVO identities before linking. The former Stage 0 byte-identity differential is retained in the immutable recovery release rather than executed by ordinary `main` construction.
 
 ## Windvale admission policy
 
@@ -46,8 +46,8 @@ Changed magic, section shape, code, and one-byte truncation must reject. The cod
 
 ## AOT symbols and call order
 
-The ordinary native build and frozen Stage 0 recovery path rename only verified
-WVO export symbols:
+The ordinary native build renames only a verified WVO export symbol. The frozen
+Stage 0 recovery implementation preserves the historical equivalent:
 
 | Source module | Boot-image export |
 | --- | --- |
@@ -76,8 +76,8 @@ The canonical program's AOT derivative is retained only as deterministic differe
 
 Windows and digest-pinned Debian 12 each pass the complete qualification gate with these identities.
 
-Decision 0447 adds a current native-source candidate without changing the
-qualified historical identities above. The native Project 1 front door produces
+Decision 0447 adds the current native-source construction without changing the
+qualified historical identities above. The native Project 2 front door produces
 a 4,071-byte admission WVB at SHA-256
 `69727bb8151aea164690be4f69adcda481532b965d9ae02ec92db21087f3d669`.
 Native lowering produces a 20,316-byte WVO at SHA-256
@@ -91,7 +91,9 @@ Decision 0449 moves the current 162-code-byte admission bridge to the shared
 reproduces the current 484-byte link object at SHA-256
 `271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d`
 without invoking Stage 0; the older qualified table remains historical evidence.
-Current Linux execution and grouped cross-host qualification remain pending.
+The current identities are enforced by the `os-process-policy`, `os-process-object`,
+and `os-probe` native owners. A new cross-host qualification claim for these
+post-qualification identities still requires the explicit dual-host gate.
 
 ## Non-claims and next boundary
 

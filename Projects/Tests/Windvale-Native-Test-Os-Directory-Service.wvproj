@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Directory-Service-Self-Test.wv"
+source "Operating-System/Services/Directory-Service-Core.wv"
+source "Operating-System/Services/Directory-Snapshot.wv"
+emit wvb

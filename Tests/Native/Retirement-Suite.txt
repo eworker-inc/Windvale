@@ -43,6 +43,8 @@ os-probe-object|Test-Os-Probe-Object-Producer|11|3|Tests: 11, Passed: 11, Failed
 os-kernel-target|Test-Os-Kernel-Target|7|2|Tests: 7, Passed: 7, Failed: 0
 os-process-policy|Test-Os-Process-Policy-Object|2|3|Tests: 2, Passed: 2, Failed: 0
 os-process-object|Test-Os-Process-Object|2|4|Tests: 2, Passed: 2, Failed: 0
+os-resource-domain|Test-Os-Resource-Domain|2|2|native os resource domain status=Passed projects=1 behavior=1 cases=2
+os-services|Test-Os-Services|10|4|native os services status=Passed projects=8 behavior=2 cases=10
 os-probe|Test-Os-Probe|4|3|Tests: 4, Passed: 4, Failed: 0
 aot-chain|Test-Aot-Chain|1|4|native aot chain status=Passed result=42
 native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified

@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Protected-process contract version 17 remains unchanged. Cross-host-qualified Probe 39, owned by [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md), supplies the retained timer evidence. Implemented-candidate Probe 40, owned by [Decision 0196](../Documents/Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md), changes process allocation order and reclamation mechanics without changing any `WVPROC17` field or syscall behavior.
+Protected-process contract version 17 remains unchanged. Cross-host-qualified Probe 39, owned by [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md), supplies the retained timer evidence. Cross-host-qualified Probe 40, owned by [Decision 0196](../Documents/Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md), changes process allocation order and reclamation mechanics without changing any `WVPROC17` field or syscall behavior.
 
-Probe 39 is cross-host qualified at exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` and GitHub [Verify run 30847279400](https://github.com/eworker-inc/Windvale/actions/runs/30847279400): all 87 Seed and 39 OS tests pass on Windows and Debian, and all five pinned Windows QEMU scenarios pass. Probe 40 has focused local evidence; cross-host qualification remains pending. This is an internal experiment, not a stable syscall ABI, process manager, endpoint registry, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
+Probe 39 is cross-host qualified at exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` and GitHub [Verify run 30847279400](https://github.com/eworker-inc/Windvale/actions/runs/30847279400). Probe 40 is cross-host qualified at exact implementation commit `c4008e75db061df375eb323d75a818863aee553f` and GitHub [Verify run 30853255559](https://github.com/eworker-inc/Windvale/actions/runs/30853255559): Windows and digest-pinned Debian pass all 87 Seed tests, all 39 OS tests, and the native CLI gate; all five pinned Windows QEMU scenarios pass. This is an internal experiment, not a stable syscall ABI, process manager, endpoint registry, supervisor, VFS, transferable-capability system, arbitrary WVB loader, complete verifier, or JIT.
 
 ## Ownership split
 
@@ -15,7 +15,7 @@ Probe 39 is cross-host qualified at exact implementation commit `6a250c86c30e892
 - `Boot-Resource-Service.wva` owns exact typed lookup for the two `WVBR002` entries used by the interpreter runtime.
 - Each process WVA shim exports one exact 88-byte CPU-bound preemption probe with process-specific register sentinels. `X64-Timer-Shims.wva` owns HPET/APIC admission, IRQ entry, clock reads, one-shot rearm, `SWAPGS`, `IRETQ`, and stop.
 - `X64-Memory-Object-Shims.wva` owns bounded first-fit allocation, complete bitmap/owner preflight, generation-safe release, page-vector publication, and zeroing for process memory objects.
-- Stage 0 temporarily owns fixed IDT/paging allocation, raw page-table writes, checked record serialization, x86-64 dispatch/context orchestration, immutable store/snapshot construction, and firmware packaging. Portable Windvale owns the matching ready/wait, bounded preemption, and memory-object lifecycle policy models.
+- Current `main` constructs the fixed IDT/paging, checked process records, x86-64 dispatch/context objects, immutable store/snapshot, linked image, and firmware through pinned native Windvale/WVA owners. The immutable Stage 0 recovery release preserves the former emitter and differential provenance; it is not an ordinary build dependency. Portable Windvale owns the matching ready/wait, bounded preemption, and memory-object lifecycle policy models.
 
 The kernel treats `WVRS 1` and `WVDS 1` as immutable byte extents with mapping and identity metadata. It does not parse names, snapshot entries, `WVRQ`, `WVRY`, `WVDQ`, or `WVDR`.
 
@@ -118,7 +118,7 @@ The interrupt boundary saves all fifteen GPRs, preserves uncontrolled live RFLAG
 
 ## Grant, service calls, execution, cleanup, and reuse
 
-1. Stage 0 maps the boot store only into init and the directory snapshot only into process 3, publishes checked descriptors, records both attached capabilities, and completes the bounded four-tick preemption experiment.
+1. The checked process machine maps the boot store only into init and the directory snapshot only into process 3, publishes checked descriptors, records both attached capabilities, and completes the bounded four-tick preemption experiment.
 2. The dispatcher starts process 3 to register its request page, then starts init. Init returns resource-set token `131073`; syscall 4 validates both grant records, pages, digests, absent PTEs, service leaf, and token.
 3. The kernel installs both RO/NX client aliases and publishes service table 5 plus `WVBR002` atomically.
 4. Client generation 1 calls the resource endpoint with the exact 55-byte `boot:main.configuration` request. Init dynamically selects the entry and returns the canonical 116-byte `WVRY 1` response.
@@ -133,7 +133,9 @@ The contained user-fault scenario sends `6` then executes privileged `CLI`; clea
 
 The contained service-fault scenario branches after generation 1's successful resource lookup. The client sends 37 bytes whose `WVDQ 1` total-length field declares 36 and blocks in syscall 6. Process 3 rejects the inconsistent request and executes privileged `CLI`, producing vector 13/error 0 at CPL3. The kernel accepts only the exact role, syscall, endpoint, channel, waiter, counter, and message shape; records the directory provider as faulted; closes only its endpoint/channel at two resolutions; clears every transient directory-channel field; wakes the client once with result `-1`; and leaves init alive. The client exits after three syscalls with result `6` and loses both resource aliases. No generation 2, restart, replacement, or supervision is claimed.
 
-## Deterministic Probe-40 candidate artifacts
+## Historically qualified Probe-40 artifacts
+
+The table records the exact artifacts qualified at implementation commit `c4008e75db061df375eb323d75a818863aee553f`. Current native `main` reconstructs the normal process object as a 512,978-byte WVO with SHA-256 `dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa`; the current builder does not reconstruct the two contained-fault process objects.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |

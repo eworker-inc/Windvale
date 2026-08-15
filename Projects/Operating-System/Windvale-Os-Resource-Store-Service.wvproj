@@ -1,0 +1,4 @@
+windvale-project 2
+root "Operating-System/Services/Resource-Store-Service.wv"
+source "Libraries/Foundation/Resources/Resource-Store.wv"
+emit wvb
