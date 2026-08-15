@@ -41,6 +41,7 @@ rebaseline.
 | Native qualification | ✅ | [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md) qualified 52 suites and 3,287 cases per host in four shards; the complete workflow took about 15 minutes. | Run this gate only for a selected release, promotion, bootstrap, security, ABI, or conformance state. |
 | Package-backed application | ✅ | Milestone 2 is complete under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md). Paired [Bundle 1/store run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) and [capability run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) retain the exact WVB, bundle, package, application, capability, success, denial, and offline-rebuild evidence. | Preserve these results while their declared inputs remain unchanged; do not reopen the completed 0.1 release gate. |
 | Development/stable installers | ✅ | [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) retains the paired exact `0.1.0-dev.1` archives. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) pins separate `0.1.0` Windows/Linux archives, now published in the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve their exact checksums; packaging corrections receive a new version rather than replacing published assets. |
+| Offline package lifecycle | 🎯 | [Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md) selects Milestone 4 without assigning `v0.2.0`. Portable Generation 1 / Activation 1 parsing, package/command closure, idempotent activation planning, rollback, missing-generation rejection, and serial exhaustion pass in the package-format owner. | Implement durable host activation and command dispatch over this semantic result, then prove recovery and two real packages on both hosts. |
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
 | Windvale OS | 🔵 | OS-1 owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption, and generation-safe non-tail memory objects; the current native candidate also gates its fixed three-process path through exact ResourceDomain1 process/page/endpoint accounting and terminal zero charge. | Advance the fixed accounting gate into one atomic dynamic launch/supervision slice before broad shell, networking, or driver work. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
@@ -105,14 +106,15 @@ other applications remain separate packages or projects. Milestone 3 is closed.
 
 OS-1 is not a prerequisite for `v0.1.0`.
 
-### Next product milestone: selection pending
+### Milestone 4 active: offline package lifecycle
 
-The roadmap intentionally does not assign Milestone 4 yet. The bounded choices
-are completing OS-1 composition, completing an offline generation-and-rollback
-package lifecycle, or selecting one consumer-driven durable database increment.
-Networking remains an enabling track unless one of those selected outcomes
-requires it. Define one finite gate before promoting any candidate into the
-numbered product sequence.
+[Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
+selects the offline generation-and-rollback lifecycle without assigning a
+`v0.2.0` release. Generation 1 and Activation 1 now have a portable specification,
+Windvale-native bounded readers, cross-record package validation, and pure
+activation/rollback planning. Host durable publication, command dispatch,
+interrupted activation recovery, and the two-real-package end-to-end demonstration
+remain. Networking, OS-1, and database breadth stay independent.
 
 ### Independent promotion checkpoint: native-only repository baseline
 

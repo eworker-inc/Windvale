@@ -607,11 +607,13 @@ foreach ($Path in $Paths) {
         Add-Suite 'libraries'
     } elseif ($Path -in @(
         'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
+        'Projects/Libraries/Windvale-Library-Installation-Generation.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Consistency.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Installation-Generation.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Consistency.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
         'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj',
@@ -665,6 +667,8 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
+    } elseif ($Path -eq 'Specifications/Windvale-Installation-Generation.md') {
+        Add-Suite 'package-format'
     } elseif ($Path -eq 'Specifications/Windvale-Package-Bundle.md' -or
         $Path -in @(
             'Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj',

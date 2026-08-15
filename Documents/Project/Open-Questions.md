@@ -30,22 +30,25 @@ The following are no longer open project questions:
 - Milestone 3 established the official 0.1 root/release delegation, signed
   Release Envelope 1, offline verifier, Windows/Linux installers, and exact-state
   qualification published as `v0.1.0`.
+- [Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
+  selects the offline package lifecycle as Milestone 4 without assigning a
+  `v0.2.0` release; OS-1 and database work remain independent.
 
 Historical documents that predate those decisions must not present them as
 unfinished work.
 
 ## Immediate roadmap questions
 
-### Milestone 4 selection
+### Milestone 4 offline lifecycle
 
-- Is the primary next user an installer/tool user, a Windvale OS developer, or
-  an application/database user?
-- Should Milestone 4 close the offline generation-and-rollback lifecycle,
-  complete OS-1 composition, or prove one bounded durable application workload?
-- Does the selected gate produce `v0.2.0`, a development checkpoint, or evidence
-  deliberately combined with a later product track?
-- Which dependencies are explicitly excluded so networking, new language
-  semantics, or broader host authority cannot silently expand the gate?
+- Which second real package provides the smallest distinct resolver, approval,
+  and command-dispatch pressure alongside WVDB Query?
+- Which host durable-replacement result can distinguish completed from
+  indeterminate activation without overclaiming directory durability?
+- How should command dispatch validate the active record on every launch without
+  making ordinary tool startup unreasonably expensive?
+- Which bounded candidate cleanup proves interrupted-activation recovery without
+  deleting an object that another verified generation references?
 
 ### Development verification maintenance
 
@@ -135,8 +138,8 @@ implementation checkpoints, fixture additions, artifact refreshes, and timing
 measurements should update code, specifications, the changelog, or the progress
 dashboard without creating another decision record.
 
-The next decision should define the selected Milestone 4 outcome and its finite
-gate. If OS-1 is selected, limit the following semantic decision to the first
-post-Probe-40 resource-domain and atomic-launch contract. If the offline package
-lifecycle is selected, decide Generation 1 and Activation 1 transaction semantics
-before adding commands or network retrieval.
+Generation 1 and Activation 1 semantics are accepted under Decision 0568. The
+next package decision should be limited to the durable host activation transaction
+only if implementation reveals a cross-host semantic choice not already fixed by
+that contract. OS work should independently limit its next semantic decision to
+the first post-Probe-40 resource-domain and atomic-launch contract.

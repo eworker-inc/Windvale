@@ -1,0 +1,314 @@
+module Windvaleˉinstallationˉgenerationˉselfˉtest profile portable;
+
+import Windvaleˉinstallationˉgeneration as Generation;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+fn Digestˉa() -> text {
+    return "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+}
+
+fn Digestˉb() -> text {
+    return "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+}
+
+fn Digestˉc() -> text {
+    return "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+}
+
+fn Digestˉd() -> text {
+    return "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+}
+
+fn Packageˉrecord(Name: text, Version: text, Bundle: text, Lock: text) -> text {
+    var Value: text = Textˉconcat("package ", Name);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Version);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Bundle);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Lock);
+    return Textˉconcat(Value, "\n");
+}
+
+fn Commandˉrecord(
+    Name: text,
+    Package: text,
+    Part: text,
+    Approval: text,
+    Launch: text
+) -> text {
+    var Value: text = Textˉconcat("command ", Name);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Package);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Part);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Approval);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, Launch);
+    return Textˉconcat(Value, "\n");
+}
+
+fn Validˉgeneration() -> text {
+    var Value: text = "windvale-generation 1\ntarget windows-x64\n";
+    Value = Textˉconcat(
+        Value,
+        Packageˉrecord("windvale.sdk", "0.1.0", Digestˉa(), Digestˉb())
+    );
+    Value = Textˉconcat(
+        Value,
+        Packageˉrecord("windvale.wvdb-query", "0.1.0", Digestˉc(), Digestˉd())
+    );
+    Value = Textˉconcat(
+        Value,
+        Commandˉrecord("wv", "windvale.sdk", "client", Digestˉa(), Digestˉb())
+    );
+    return Textˉconcat(
+        Value,
+        Commandˉrecord(
+            "wvdb-query", "windvale.wvdb-query", "application", Digestˉc(), Digestˉd()
+        )
+    );
+}
+
+fn Referenceˉequals(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input,
+        Packageˉtext.Windvaleˉpackageˉspan(Offset, Length),
+        Expected
+    );
+}
+
+fn Validˉgenerationˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8(Validˉgeneration());
+    let Scan: Generation.Windvaleˉgenerationˉscan =
+        Generation.Windvaleˉgenerationˉscanˉrecord(Input);
+    if Scan.Status != Generation.Windvaleˉgenerationˉstatus.Valid ||
+        Scan.Packages != 2u32 || Scan.Commands != 2u32 ||
+        !Referenceˉequals(Input, Scan.Targetˉoffset, Scan.Targetˉlength, "windows-x64") {
+        return false;
+    }
+    let Package: Generation.Windvaleˉgenerationˉpackage =
+        Generation.Windvaleˉgenerationˉpackageˉat(Scan, 1u32);
+    if !Package.Found ||
+        !Referenceˉequals(Input, Package.Nameˉoffset, Package.Nameˉlength, "windvale.wvdb-query") ||
+        !Referenceˉequals(Input, Package.Versionˉoffset, Package.Versionˉlength, "0.1.0") ||
+        !Referenceˉequals(Input, Package.Bundleˉoffset, Package.Bundleˉlength, Digestˉc()) {
+        return false;
+    }
+    let Command: Generation.Windvaleˉgenerationˉcommand =
+        Generation.Windvaleˉgenerationˉcommandˉat(Scan, 0u32);
+    if !Command.Found ||
+        !Referenceˉequals(Input, Command.Nameˉoffset, Command.Nameˉlength, "wv") ||
+        !Referenceˉequals(Input, Command.Packageˉoffset, Command.Packageˉlength, "windvale.sdk") ||
+        !Referenceˉequals(Input, Command.Partˉoffset, Command.Partˉlength, "client") {
+        return false;
+    }
+    let Missingˉcommand: Generation.Windvaleˉgenerationˉcommand =
+        Generation.Windvaleˉgenerationˉcommandˉat(Scan, 2u32);
+    return !Missingˉcommand.Found;
+}
+
+fn Generationˉstatusˉis(
+    Input: text,
+    Status: Generation.Windvaleˉgenerationˉstatus
+) -> bool {
+    let Scan: Generation.Windvaleˉgenerationˉscan =
+        Generation.Windvaleˉgenerationˉscanˉrecord(Textˉtoˉutf8(Input));
+    return Scan.Status == Status;
+}
+
+fn Generationˉrejections() -> bool {
+    let Missingˉcommand: text = Textˉconcat(
+        "windvale-generation 1\ntarget windows-x64\n",
+        Packageˉrecord("windvale.sdk", "0.1.0", Digestˉa(), Digestˉb())
+    );
+    if !Generationˉstatusˉis(
+        Missingˉcommand, Generation.Windvaleˉgenerationˉstatus.Missingˉrecord
+    ) { return false; }
+    let Unorderedˉpackages: text = Textˉconcat(
+        "windvale-generation 1\ntarget windows-x64\n",
+        Textˉconcat(
+            Packageˉrecord("windvale.z", "1", Digestˉa(), Digestˉb()),
+            Textˉconcat(
+                Packageˉrecord("windvale.a", "1", Digestˉc(), Digestˉd()),
+                Commandˉrecord("wv", "windvale.a", "client", Digestˉa(), Digestˉb())
+            )
+        )
+    );
+    if !Generationˉstatusˉis(
+        Unorderedˉpackages, Generation.Windvaleˉgenerationˉstatus.Invalidˉorder
+    ) { return false; }
+    let Unknownˉpackage: text = Textˉconcat(
+        Missingˉcommand,
+        Commandˉrecord("wv", "windvale.missing", "client", Digestˉa(), Digestˉb())
+    );
+    if !Generationˉstatusˉis(
+        Unknownˉpackage, Generation.Windvaleˉgenerationˉstatus.Unknownˉpackage
+    ) { return false; }
+    let Upperˉdigest: text =
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    let Invalidˉdigest: text = Textˉconcat(
+        "windvale-generation 1\ntarget windows-x64\n",
+        Textˉconcat(
+            Packageˉrecord("windvale.sdk", "1", Upperˉdigest, Digestˉb()),
+            Commandˉrecord("wv", "windvale.sdk", "client", Digestˉa(), Digestˉb())
+        )
+    );
+    if !Generationˉstatusˉis(
+        Invalidˉdigest, Generation.Windvaleˉgenerationˉstatus.Invalidˉdigest
+    ) { return false; }
+    let Commandˉbeforeˉpackage: text = Textˉconcat(
+        "windvale-generation 1\ntarget windows-x64\n",
+        Textˉconcat(
+            Commandˉrecord("wv", "windvale.sdk", "client", Digestˉa(), Digestˉb()),
+            Packageˉrecord("windvale.sdk", "1", Digestˉa(), Digestˉb())
+        )
+    );
+    if !Generationˉstatusˉis(
+        Commandˉbeforeˉpackage, Generation.Windvaleˉgenerationˉstatus.Invalidˉrecord
+    ) { return false; }
+    return Generationˉstatusˉis(
+        Textˉconcat(Validˉgeneration(), "command extra windvale.sdk client a b\n"),
+        Generation.Windvaleˉgenerationˉstatus.Invalidˉdigest
+    );
+}
+
+fn Activationˉrecord(Serial: text, Current: text, Previous: text) -> text {
+    var Value: text = Textˉconcat("windvale-activation 1\nserial ", Serial);
+    Value = Textˉconcat(Value, "\ncurrent ");
+    Value = Textˉconcat(Value, Current);
+    Value = Textˉconcat(Value, "\nprevious ");
+    Value = Textˉconcat(Value, Previous);
+    return Textˉconcat(Value, "\n");
+}
+
+fn Activationˉstatusˉis(
+    Input: text,
+    Status: Generation.Windvaleˉgenerationˉstatus
+) -> bool {
+    let Scan: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(Textˉtoˉutf8(Input));
+    return Scan.Status == Status;
+}
+
+fn Activationˉcases() -> bool {
+    let Noneˉinput: bytes = Textˉtoˉutf8(Activationˉrecord("1", Digestˉa(), "none"));
+    let None: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(Noneˉinput);
+    if None.Status != Generation.Windvaleˉgenerationˉstatus.Valid ||
+        None.Serial != 1u64 || !None.Previousˉnone ||
+        !Referenceˉequals(Noneˉinput, None.Currentˉoffset, None.Currentˉlength, Digestˉa()) {
+        return false;
+    }
+    let Pairˉinput: bytes = Textˉtoˉutf8(Activationˉrecord("9", Digestˉb(), Digestˉa()));
+    let Pair: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(Pairˉinput);
+    if Pair.Status != Generation.Windvaleˉgenerationˉstatus.Valid ||
+        Pair.Serial != 9u64 || Pair.Previousˉnone ||
+        !Referenceˉequals(Pairˉinput, Pair.Previousˉoffset, Pair.Previousˉlength, Digestˉa()) {
+        return false;
+    }
+    if !Activationˉstatusˉis(
+        Activationˉrecord("0", Digestˉa(), "none"),
+        Generation.Windvaleˉgenerationˉstatus.Invalidˉdecimal
+    ) { return false; }
+    if !Activationˉstatusˉis(
+        Activationˉrecord("01", Digestˉa(), "none"),
+        Generation.Windvaleˉgenerationˉstatus.Invalidˉdecimal
+    ) { return false; }
+    return Activationˉstatusˉis(
+        Activationˉrecord("2", Digestˉa(), Digestˉa()),
+        Generation.Windvaleˉgenerationˉstatus.Invalidˉrecord
+    );
+}
+
+fn Transitionˉcases() -> bool {
+    let Activationˉinput: bytes = Textˉtoˉutf8(
+        Activationˉrecord("9", Digestˉb(), Digestˉa())
+    );
+    let Activation: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(Activationˉinput);
+    let Requestedˉinput: bytes = Textˉtoˉutf8(Digestˉc());
+    let Requested: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉwholeˉspan(Requestedˉinput);
+    let Activate: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉactivate(
+            Activationˉinput, Activation, Requestedˉinput, Requested, true, true
+        );
+    if Activate.Status != Generation.Windvaleˉtransitionˉstatus.Ready ||
+        Activate.Serial != 10u64 || !Activate.Currentˉfromˉrequested ||
+        Activate.Previousˉnone ||
+        !Referenceˉequals(
+            Activationˉinput,
+            Activate.Previousˉoffset,
+            Activate.Previousˉlength,
+            Digestˉb()
+        ) {
+        return false;
+    }
+    let Sameˉinput: bytes = Textˉtoˉutf8(Digestˉb());
+    let Same: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉactivate(
+            Activationˉinput,
+            Activation,
+            Sameˉinput,
+            Packageˉtext.Windvaleˉpackageˉwholeˉspan(Sameˉinput),
+            true,
+            true
+        );
+    if Same.Status != Generation.Windvaleˉtransitionˉstatus.Unchanged ||
+        Same.Serial != 9u64 {
+        return false;
+    }
+    let Missing: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉactivate(
+            Activationˉinput, Activation, Requestedˉinput, Requested, true, false
+        );
+    if Missing.Status != Generation.Windvaleˉtransitionˉstatus.Requestedˉgenerationˉmissing {
+        return false;
+    }
+    let Rollback: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉrollback(Activation, true, true);
+    if Rollback.Status != Generation.Windvaleˉtransitionˉstatus.Ready ||
+        Rollback.Serial != 10u64 || Rollback.Currentˉfromˉrequested ||
+        !Referenceˉequals(
+            Activationˉinput,
+            Rollback.Currentˉoffset,
+            Rollback.Currentˉlength,
+            Digestˉa()
+        ) {
+        return false;
+    }
+    let None: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(
+            Textˉtoˉutf8(Activationˉrecord("1", Digestˉa(), "none"))
+        );
+    let Noˉprevious: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉrollback(None, true, true);
+    if Noˉprevious.Status != Generation.Windvaleˉtransitionˉstatus.Noˉpreviousˉgeneration {
+        return false;
+    }
+    let Exhausted: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(
+            Textˉtoˉutf8(
+                Activationˉrecord("18446744073709551615", Digestˉb(), Digestˉa())
+            )
+        );
+    let Exhaustedˉplan: Generation.Windvaleˉactivationˉplan =
+        Generation.Windvaleˉactivationˉplanˉrollback(Exhausted, true, true);
+    return Exhaustedˉplan.Status == Generation.Windvaleˉtransitionˉstatus.Serialˉexhausted;
+}
+
+export fn Main() -> i32 {
+    if !Validˉgenerationˉcase() { return 1; }
+    if !Generationˉrejections() { return 2; }
+    if !Activationˉcases() { return 3; }
+    if !Transitionˉcases() { return 4; }
+    return 42;
+}

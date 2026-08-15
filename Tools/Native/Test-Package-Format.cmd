@@ -37,6 +37,10 @@ set "AdmissionProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Packa
 set "AdmissionWvb=%TemporaryDirectory%\Admission.wvb"
 set "AdmissionWindowsApplication=%TemporaryDirectory%\Admission.exe"
 set "AdmissionLinuxApplication=%TemporaryDirectory%\Admission.elf"
+set "GenerationProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Installation-Generation.wvproj"
+set "GenerationWvb=%TemporaryDirectory%\Generation.wvb"
+set "GenerationWindowsApplication=%TemporaryDirectory%\Generation.exe"
+set "GenerationLinuxApplication=%TemporaryDirectory%\Generation.elf"
 
 set "Step=canonical-build"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%CanonicalProject%" "%CanonicalWvb%" >nul
@@ -122,7 +126,23 @@ set "Step=admission-windows-execution"
 "%AdmissionWindowsApplication%" "%RepositoryRoot%" >nul
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 
-echo native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10
+set "Step=generation-build"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%GenerationProject%" "%GenerationWvb%" >nul
+if errorlevel 1 goto :cleanup
+set "Step=generation-windows-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%GenerationWvb%" "%GenerationWindowsApplication%" windows >nul
+if errorlevel 1 goto :cleanup
+set "Step=generation-linux-container"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" ^
+    6 "%GenerationWvb%" "%GenerationLinuxApplication%" linux >nul
+if errorlevel 1 goto :cleanup
+set "Step=generation-windows-execution"
+"%GenerationWindowsApplication%" >nul
+if not "%ERRORLEVEL%"=="42" goto :cleanup
+
+echo native package format status=Passed result=42 modules=6 builds=7 groups=76 cross-host-images=12
 set "Result=0"
 
 :cleanup

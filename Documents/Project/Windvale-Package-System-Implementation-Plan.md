@@ -3,7 +3,7 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Rebaselined after the signed `v0.1.0` preview; the bounded bootstrap and release subset is complete, while the general package lifecycle remains proposed or partial
+- Status: Active Milestone 4 implementation after the signed `v0.1.0` preview; the bounded bootstrap and release subset is complete, while the general offline lifecycle remains partial
 - Product direction: [packages, releases, updates, and recovery](../Architecture/Packages-Releases-And-Recovery.md)
 - Official-source proposal: [hybrid Windvale endpoint and immutable GitHub archive](Windvale-Package-Source-Proposal.md)
 - Proposed formats and transactions: [release discovery](../Architecture/Windvale-Release-Discovery.md) and [bundle and installation](../Architecture/Windvale-Package-Bundle-And-Installation.md)
@@ -22,7 +22,7 @@ generation activation/rollback, online source, or self-updating client.
 | 3. Streaming Bundle 1 admission | ○ Open |
 | 4. Offline signature and release metadata | 🔵 Release Envelope 1 subset complete |
 | 5. Immutable local object store | 🔵 Milestone 2 subset complete |
-| 6. Generations, approvals, activation, and rollback | 🔵 Approval/launch records only |
+| 6. Generations, approvals, activation, and rollback | 🔵 Portable Generation 1 / Activation 1 candidate plus approval/launch records |
 | 7. Native launcher and `wv` client bootstrap | 🔵 Installer/bootstrap subset complete |
 | 8. Official network source | ○ Open |
 | 9. SDK release and qualification | 🔵 `v0.1.0` release subset complete |
@@ -307,8 +307,10 @@ inventory on Windows and Linux, with host paths absent from portable evidence.
 
 ### Slice 6: generations, approvals, activation, and rollback
 
-Standing: **partial**. Exact approval and target launch records exist; generation
-construction, activation recovery, revocation, and rollback do not.
+Standing: **partial**. Exact approval and target launch records exist. Decision
+0568 adds portable Generation 1 / Activation 1 parsing, package/command closure,
+and pure activation/rollback planning. Durable host construction/publication,
+interrupted activation recovery, command dispatch, and revocation remain open.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,

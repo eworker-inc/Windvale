@@ -47,6 +47,10 @@ admission_project="$repository_root/Projects/Tests/Windvale-Native-Test-Package-
 admission_wvb="$temporary_directory/Admission.wvb"
 admission_windows_application="$temporary_directory/Admission.exe"
 admission_linux_application="$temporary_directory/Admission.elf"
+generation_project="$repository_root/Projects/Tests/Windvale-Native-Test-Installation-Generation.wvproj"
+generation_wvb="$temporary_directory/Generation.wvb"
+generation_windows_application="$temporary_directory/Generation.exe"
+generation_linux_application="$temporary_directory/Generation.elf"
 
 "$script_directory/Build-Wvb.sh" "$canonical_project" "$canonical_wvb" >/dev/null || exit $?
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
@@ -91,4 +95,12 @@ cmp --silent "$first" "$second" || exit 1
 "$admission_linux_application" "$repository_root" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
-echo 'native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10'
+"$script_directory/Build-Wvb.sh" "$generation_project" "$generation_wvb" >/dev/null || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 6 \
+    "$generation_wvb" "$generation_windows_application" windows >/dev/null || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 6 \
+    "$generation_wvb" "$generation_linux_application" linux >/dev/null || exit $?
+"$generation_linux_application" >/dev/null
+[[ $? -eq 42 ]] || exit 1
+
+echo 'native package format status=Passed result=42 modules=6 builds=7 groups=76 cross-host-images=12'

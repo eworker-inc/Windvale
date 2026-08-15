@@ -6,7 +6,13 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ## Unreleased
 
-No unreleased product changes are recorded after `v0.1.0` yet.
+### Added
+
+- Selected the offline package lifecycle as Milestone 4 without assigning a
+  `v0.2.0` release, while keeping OS-1 and database work independent.
+- Added the portable Generation 1 / Activation 1 contract, Windvale-native
+  bounded readers, package/command closure checks, and idempotent activation and
+  rollback planning with missing-generation and serial-overflow rejection.
 
 ## 0.1.0 — 2026-08-15
 

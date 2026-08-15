@@ -1,0 +1,576 @@
+module Windvaleˉinstallationˉgeneration profile portable;
+
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+export enum Windvaleˉgenerationˉstatus {
+    Valid = 0;
+    Invalidˉtext = 2001;
+    Invalidˉheader = 2002;
+    Invalidˉrecord = 2003;
+    Invalidˉorder = 2004;
+    Invalidˉidentifier = 2005;
+    Invalidˉdigest = 2006;
+    Invalidˉdecimal = 2007;
+    Collectionˉlimit = 2008;
+    Unknownˉpackage = 2009;
+    Missingˉrecord = 2010;
+}
+
+export enum Windvaleˉtransitionˉstatus {
+    Ready = 0;
+    Unchanged = 1;
+    Invalidˉactivation = 2101;
+    Invalidˉrequestedˉgeneration = 2102;
+    Currentˉgenerationˉmissing = 2103;
+    Requestedˉgenerationˉmissing = 2104;
+    Previousˉgenerationˉmissing = 2105;
+    Noˉpreviousˉgeneration = 2106;
+    Serialˉexhausted = 2107;
+}
+
+export record Windvaleˉgenerationˉpackage {
+    Found: bool;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Versionˉoffset: u32;
+    Versionˉlength: u32;
+    Bundleˉoffset: u32;
+    Bundleˉlength: u32;
+    Lockˉoffset: u32;
+    Lockˉlength: u32;
+}
+
+export record Windvaleˉgenerationˉcommand {
+    Found: bool;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Packageˉoffset: u32;
+    Packageˉlength: u32;
+    Partˉoffset: u32;
+    Partˉlength: u32;
+    Approvalˉoffset: u32;
+    Approvalˉlength: u32;
+    Launchˉoffset: u32;
+    Launchˉlength: u32;
+}
+
+export record Windvaleˉgenerationˉscan {
+    Status: Windvaleˉgenerationˉstatus;
+    Targetˉoffset: u32;
+    Targetˉlength: u32;
+    Packages: u32;
+    Commands: u32;
+    Directory: bytes;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+export record Windvaleˉactivationˉscan {
+    Status: Windvaleˉgenerationˉstatus;
+    Serial: u64;
+    Currentˉoffset: u32;
+    Currentˉlength: u32;
+    Previousˉnone: bool;
+    Previousˉoffset: u32;
+    Previousˉlength: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+export record Windvaleˉactivationˉplan {
+    Status: Windvaleˉtransitionˉstatus;
+    Serial: u64;
+    Currentˉfromˉrequested: bool;
+    Currentˉoffset: u32;
+    Currentˉlength: u32;
+    Previousˉnone: bool;
+    Previousˉoffset: u32;
+    Previousˉlength: u32;
+}
+
+fn Emptyˉbytes() -> bytes { return Textˉtoˉutf8(""); }
+
+fn Tokenˉspan(
+    Input: bytes,
+    Line: Packageˉtext.Windvaleˉpackageˉline,
+    Index: u32
+) -> Packageˉtext.Windvaleˉpackageˉspan {
+    return Packageˉtext.Windvaleˉpackageˉtokenˉspan(
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, Index)
+    );
+}
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Appendˉspan(
+    Value: bytes,
+    Span: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    return Appendˉu32(Appendˉu32(Value, Span.Offset), Span.Length);
+}
+
+fn Readˉspan(Directory: bytes, Offset: u32) -> Packageˉtext.Windvaleˉpackageˉspan {
+    return Packageˉtext.Windvaleˉpackageˉspan(
+        Bytesˉreadˉu32ˉlittle(Directory, Offset),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32)
+    );
+}
+
+fn Generationˉfailure(
+    Status: Windvaleˉgenerationˉstatus,
+    Line: u32,
+    Column: u32
+) -> Windvaleˉgenerationˉscan {
+    return Windvaleˉgenerationˉscan(
+        Status, 0u32, 0u32, 0u32, 0u32, Emptyˉbytes(), Line, Column
+    );
+}
+
+fn Activationˉfailure(
+    Status: Windvaleˉgenerationˉstatus,
+    Line: u32,
+    Column: u32
+) -> Windvaleˉactivationˉscan {
+    return Windvaleˉactivationˉscan(
+        Status, 0u64, 0u32, 0u32, true, 0u32, 0u32, Line, Column
+    );
+}
+
+fn Appendˉpackage(
+    Directory: bytes,
+    Name: Packageˉtext.Windvaleˉpackageˉspan,
+    Version: Packageˉtext.Windvaleˉpackageˉspan,
+    Bundle: Packageˉtext.Windvaleˉpackageˉspan,
+    Lock: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    return Appendˉspan(
+        Appendˉspan(Appendˉspan(Appendˉspan(Directory, Name), Version), Bundle),
+        Lock
+    );
+}
+
+fn Appendˉcommand(
+    Directory: bytes,
+    Name: Packageˉtext.Windvaleˉpackageˉspan,
+    Package: Packageˉtext.Windvaleˉpackageˉspan,
+    Part: Packageˉtext.Windvaleˉpackageˉspan,
+    Approval: Packageˉtext.Windvaleˉpackageˉspan,
+    Launch: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    return Appendˉspan(
+        Appendˉspan(
+            Appendˉspan(Appendˉspan(Appendˉspan(Directory, Name), Package), Part),
+            Approval
+        ),
+        Launch
+    );
+}
+
+export fn Windvaleˉgenerationˉpackageˉat(
+    Scan: Windvaleˉgenerationˉscan,
+    Index: u32
+) -> Windvaleˉgenerationˉpackage {
+    if Scan.Status != Windvaleˉgenerationˉstatus.Valid || Index >= Scan.Packages {
+        return Windvaleˉgenerationˉpackage(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Offset: u32 = Index * 32u32;
+    if Offset > Bytesˉlength(Scan.Directory) ||
+        Bytesˉlength(Scan.Directory) - Offset < 32u32 {
+        return Windvaleˉgenerationˉpackage(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Name: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset);
+    let Version: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 8u32);
+    let Bundle: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 16u32);
+    let Lock: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 24u32);
+    return Windvaleˉgenerationˉpackage(
+        true, Name.Offset, Name.Length, Version.Offset, Version.Length,
+        Bundle.Offset, Bundle.Length, Lock.Offset, Lock.Length
+    );
+}
+
+export fn Windvaleˉgenerationˉcommandˉat(
+    Scan: Windvaleˉgenerationˉscan,
+    Index: u32
+) -> Windvaleˉgenerationˉcommand {
+    if Scan.Status != Windvaleˉgenerationˉstatus.Valid || Index >= Scan.Commands {
+        return Windvaleˉgenerationˉcommand(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Offset: u32 = Scan.Packages * 32u32 + Index * 40u32;
+    if Offset > Bytesˉlength(Scan.Directory) ||
+        Bytesˉlength(Scan.Directory) - Offset < 40u32 {
+        return Windvaleˉgenerationˉcommand(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Name: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset);
+    let Package: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 8u32);
+    let Part: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 16u32);
+    let Approval: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 24u32);
+    let Launch: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset + 32u32);
+    return Windvaleˉgenerationˉcommand(
+        true, Name.Offset, Name.Length, Package.Offset, Package.Length,
+        Part.Offset, Part.Length, Approval.Offset, Approval.Length,
+        Launch.Offset, Launch.Length
+    );
+}
+
+fn Packageˉexists(
+    Input: bytes,
+    Scan: Windvaleˉgenerationˉscan,
+    Name: Packageˉtext.Windvaleˉpackageˉspan
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Scan.Packages {
+        let Package: Windvaleˉgenerationˉpackage = Windvaleˉgenerationˉpackageˉat(Scan, Index);
+        let Existing: Packageˉtext.Windvaleˉpackageˉspan =
+            Packageˉtext.Windvaleˉpackageˉspan(Package.Nameˉoffset, Package.Nameˉlength);
+        if Package.Found && Packageˉtext.Windvaleˉpackageˉspansˉequal(
+            Input, Existing, Input, Name
+        ) { return true; }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+export fn Windvaleˉgenerationˉscanˉrecord(Input: bytes) -> Windvaleˉgenerationˉscan {
+    let Document: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(Input);
+    if !Document.Valid {
+        return Generationˉfailure(
+            Windvaleˉgenerationˉstatus.Invalidˉtext,
+            Document.Failureˉline,
+            Document.Failureˉcolumn
+        );
+    }
+    var Cursor: u32 = 0u32;
+    var Lineˉnumber: u32 = 1u32;
+    var Line: Packageˉtext.Windvaleˉpackageˉline =
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+    let Headerˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    if !Headerˉtokens.Valid || Headerˉtokens.Count != 2u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 0u32), "windvale-generation"
+        ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 1u32), "1"
+        ) {
+        return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉheader, 1u32, 1u32);
+    }
+    Cursor = Line.Nextˉoffset;
+    Lineˉnumber = 2u32;
+    if Cursor >= Bytesˉlength(Input) {
+        return Generationˉfailure(Windvaleˉgenerationˉstatus.Missingˉrecord, 2u32, 1u32);
+    }
+    Line = Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+    let Targetˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    let Target: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+    if !Targetˉtokens.Valid || Targetˉtokens.Count != 2u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 0u32), "target"
+        ) || !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(Input, Target) {
+        return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉrecord, 2u32, 1u32);
+    }
+    Cursor = Line.Nextˉoffset;
+    Lineˉnumber = 3u32;
+    var Packages: u32 = 0u32;
+    var Commands: u32 = 0u32;
+    var Directory: bytes = Emptyˉbytes();
+    var Previousˉpackage: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    var Previousˉcommand: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    var Inˉcommands: bool = false;
+
+    while Cursor < Bytesˉlength(Input) {
+        Line = Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+        let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
+            Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+        if !Tokens.Valid {
+            return Generationˉfailure(
+                Windvaleˉgenerationˉstatus.Invalidˉrecord,
+                Lineˉnumber,
+                Tokens.Failureˉcolumn
+            );
+        }
+        let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 0u32);
+        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "package") {
+            if Inˉcommands || Tokens.Count != 5u32 {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+            }
+            if Packages >= 64u32 {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+            }
+            let Packageˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+            let Packageˉversion: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
+            let Bundleˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 3u32);
+            let Lockˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 4u32);
+            if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Packageˉname) ||
+                !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Packageˉversion) {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
+            }
+            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Bundleˉdigest) ||
+                !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Lockˉdigest) {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+            }
+            if Packages > 0u32 && Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                Input, Previousˉpackage, Input, Packageˉname
+            ) >= 0 {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+            }
+            Directory = Appendˉpackage(
+                Directory, Packageˉname, Packageˉversion, Bundleˉdigest, Lockˉdigest
+            );
+            Previousˉpackage = Packageˉname;
+            Packages = Packages + 1u32;
+        } else if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "command") {
+            Inˉcommands = true;
+            if Packages == 0u32 || Tokens.Count != 6u32 {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+            }
+            if Commands >= 64u32 {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+            }
+            let Commandˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+            let Commandˉpackage: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
+            let Commandˉpart: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 3u32);
+            let Commandˉapproval: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 4u32);
+            let Commandˉlaunch: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 5u32);
+            if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Commandˉname) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Commandˉpackage) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Commandˉpart) {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
+            }
+            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Commandˉapproval) ||
+                !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Commandˉlaunch) {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+            }
+            let Partial: Windvaleˉgenerationˉscan = Windvaleˉgenerationˉscan(
+                Windvaleˉgenerationˉstatus.Valid,
+                Target.Offset,
+                Target.Length,
+                Packages,
+                Commands,
+                Directory,
+                0u32,
+                0u32
+            );
+            if !Packageˉexists(Input, Partial, Commandˉpackage) {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Unknownˉpackage, Lineˉnumber, 1u32);
+            }
+            if Commands > 0u32 && Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                Input, Previousˉcommand, Input, Commandˉname
+            ) >= 0 {
+                return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+            }
+            Directory = Appendˉcommand(
+                Directory,
+                Commandˉname,
+                Commandˉpackage,
+                Commandˉpart,
+                Commandˉapproval,
+                Commandˉlaunch
+            );
+            Previousˉcommand = Commandˉname;
+            Commands = Commands + 1u32;
+        } else {
+            return Generationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+        }
+        Cursor = Line.Nextˉoffset;
+        Lineˉnumber = Lineˉnumber + 1u32;
+    }
+    if Packages == 0u32 || Commands == 0u32 {
+        return Generationˉfailure(Windvaleˉgenerationˉstatus.Missingˉrecord, Lineˉnumber, 1u32);
+    }
+    return Windvaleˉgenerationˉscan(
+        Windvaleˉgenerationˉstatus.Valid,
+        Target.Offset,
+        Target.Length,
+        Packages,
+        Commands,
+        Directory,
+        0u32,
+        0u32
+    );
+}
+
+export fn Windvaleˉactivationˉscanˉrecord(Input: bytes) -> Windvaleˉactivationˉscan {
+    let Document: Packageˉtext.Windvaleˉpackageˉdocument =
+        Packageˉtext.Windvaleˉpackageˉscanˉdocument(Input);
+    if !Document.Valid {
+        return Activationˉfailure(
+            Windvaleˉgenerationˉstatus.Invalidˉtext,
+            Document.Failureˉline,
+            Document.Failureˉcolumn
+        );
+    }
+    if Document.Lines != 4u32 {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Missingˉrecord, 1u32, 1u32);
+    }
+    var Cursor: u32 = 0u32;
+    var Line: Packageˉtext.Windvaleˉpackageˉline =
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+    var Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
+        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    if !Tokens.Valid || Tokens.Count != 2u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 0u32), "windvale-activation"
+        ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 1u32), "1"
+        ) {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉheader, 1u32, 1u32);
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+    Tokens = Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    let Serialˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+    let Serial: Packageˉtext.Windvaleˉpackageˉdecimal =
+        Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Serialˉspan);
+    if !Tokens.Valid || Tokens.Count != 2u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 0u32), "serial"
+        ) || !Serial.Valid || Serial.Value == 0u64 {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdecimal, 2u32, 1u32);
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+    Tokens = Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    let Current: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+    if !Tokens.Valid || Tokens.Count != 2u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 0u32), "current"
+        ) || !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Current) {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdigest, 3u32, 1u32);
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+    Tokens = Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+    let Previous: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+    if !Tokens.Valid || Tokens.Count != 2u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Tokenˉspan(Input, Line, 0u32), "previous"
+        ) {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉrecord, 4u32, 1u32);
+    }
+    let Previousˉnone: bool = Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Previous, "none"
+    );
+    if !Previousˉnone && !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Previous) {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdigest, 4u32, 1u32);
+    }
+    if !Previousˉnone && Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Input, Current, Input, Previous
+    ) {
+        return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉrecord, 4u32, 1u32);
+    }
+    return Windvaleˉactivationˉscan(
+        Windvaleˉgenerationˉstatus.Valid,
+        Serial.Value,
+        Current.Offset,
+        Current.Length,
+        Previousˉnone,
+        Previous.Offset,
+        Previous.Length,
+        0u32,
+        0u32
+    );
+}
+
+fn Transitionˉfailure(Status: Windvaleˉtransitionˉstatus) -> Windvaleˉactivationˉplan {
+    return Windvaleˉactivationˉplan(
+        Status, 0u64, false, 0u32, 0u32, true, 0u32, 0u32
+    );
+}
+
+export fn Windvaleˉactivationˉplanˉactivate(
+    Activationˉinput: bytes,
+    Activation: Windvaleˉactivationˉscan,
+    Requestedˉinput: bytes,
+    Requested: Packageˉtext.Windvaleˉpackageˉspan,
+    Currentˉavailable: bool,
+    Requestedˉavailable: bool
+) -> Windvaleˉactivationˉplan {
+    if Activation.Status != Windvaleˉgenerationˉstatus.Valid {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Invalidˉactivation);
+    }
+    if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Requestedˉinput, Requested) {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Invalidˉrequestedˉgeneration);
+    }
+    if !Currentˉavailable {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Currentˉgenerationˉmissing);
+    }
+    if !Requestedˉavailable {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Requestedˉgenerationˉmissing);
+    }
+    let Current: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(Activation.Currentˉoffset, Activation.Currentˉlength);
+    if Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Activationˉinput, Current, Requestedˉinput, Requested
+    ) {
+        return Windvaleˉactivationˉplan(
+            Windvaleˉtransitionˉstatus.Unchanged,
+            Activation.Serial,
+            false,
+            Activation.Currentˉoffset,
+            Activation.Currentˉlength,
+            Activation.Previousˉnone,
+            Activation.Previousˉoffset,
+            Activation.Previousˉlength
+        );
+    }
+    if Activation.Serial == 18446744073709551615u64 {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Serialˉexhausted);
+    }
+    return Windvaleˉactivationˉplan(
+        Windvaleˉtransitionˉstatus.Ready,
+        Activation.Serial + 1u64,
+        true,
+        Requested.Offset,
+        Requested.Length,
+        false,
+        Activation.Currentˉoffset,
+        Activation.Currentˉlength
+    );
+}
+
+export fn Windvaleˉactivationˉplanˉrollback(
+    Activation: Windvaleˉactivationˉscan,
+    Currentˉavailable: bool,
+    Previousˉavailable: bool
+) -> Windvaleˉactivationˉplan {
+    if Activation.Status != Windvaleˉgenerationˉstatus.Valid {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Invalidˉactivation);
+    }
+    if !Currentˉavailable {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Currentˉgenerationˉmissing);
+    }
+    if Activation.Previousˉnone {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Noˉpreviousˉgeneration);
+    }
+    if !Previousˉavailable {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Previousˉgenerationˉmissing);
+    }
+    if Activation.Serial == 18446744073709551615u64 {
+        return Transitionˉfailure(Windvaleˉtransitionˉstatus.Serialˉexhausted);
+    }
+    return Windvaleˉactivationˉplan(
+        Windvaleˉtransitionˉstatus.Ready,
+        Activation.Serial + 1u64,
+        false,
+        Activation.Previousˉoffset,
+        Activation.Previousˉlength,
+        false,
+        Activation.Currentˉoffset,
+        Activation.Currentˉlength
+    );
+}

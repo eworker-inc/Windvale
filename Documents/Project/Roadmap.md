@@ -5,10 +5,10 @@
 
 ## Current planning boundary
 
-Preserve the completed 0.1 product path while selecting the next bounded product
-milestone from measured consumer pressure. OS-1 continues as an independent
-launch-and-service integration track. It may become the next product milestone,
-but that choice has not been made merely because Milestones 1 through 3 closed.
+Preserve the completed 0.1 product path while implementing Milestone 4's offline
+package lifecycle. OS-1 continues as an independent launch-and-service track;
+database work may also advance independently. Neither becomes a package-lifecycle
+dependency merely because the work overlaps in time.
 
 Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
@@ -134,6 +134,7 @@ deliberate selection for later releases and promotions.
 | Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
 | Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
+| Milestone 4: offline package lifecycle | 🎯 Current | Generation 1 / Activation 1 semantics are implemented candidates; host activation, recovery, rollback, and two-package evidence remain. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
 The completed 0.1 product path was:
@@ -144,45 +145,43 @@ A completed focused gate remains complete while its relevant inputs and contract
 stay unchanged. Later integrated evidence may consume that result; commits and
 pushes do not by themselves require it to be rerun.
 
-## Candidate next milestones — selection pending
+## Milestone 4: offline package lifecycle — active
 
-No Milestone 4 number or `v0.2.0` promise is assigned yet. Select one bounded
-outcome, define its finite completion gate, and leave the other lanes independent.
+[Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
+selects installer/tool users as the primary audience and an offline
+install/activate/recover/rollback demonstration as the finish. Networking, new
+language semantics, and broader host authority are excluded. Completion is a
+milestone checkpoint and does not publish `v0.2.0`.
 
-| Candidate | Bounded outcome | Why it is credible now |
-| --- | --- | --- |
-| Complete OS-1 composition | Atomic launch, one provider serving two live clients, and structured bounded supervision. | Portability is complete and three of the remaining gates have qualified foundations. |
-| Offline package lifecycle | General offline `wv install`, immutable generations, activation recovery, and rollback on Windows and Linux. | The 0.1 installer, release envelope, bounded bundle/store, approval, and launch records provide a real bootstrap subset. |
-| Durable application/database increment | Select one useful workload that requires a measured database recovery, reclamation, or concurrency increment. | The database already has substantial durable candidates, but the next slice should be chosen by an application rather than by feature accumulation. |
+### Selection record
 
-Networking remains a deliberate enabling track, not an automatic next milestone.
-Choose it only when a selected product outcome requires the shared asynchronous,
-secure-stream, and retrieval contracts.
-
-### Milestone 4 selection guide
-
-The project owner needs to make four decisions before Milestone 4 is named:
-
-1. **Primary user:** installer/tool user, Windvale OS developer, or application/database user.
-2. **Demonstrable finish:** an offline install/rollback demonstration, an OS
-   launch/supervision demonstration, or a useful durable application workload.
-3. **Allowed dependencies:** whether networking, new language semantics, or new
-   host authority may enter the completion gate. The default should be none.
-4. **Release relation:** whether completion produces `v0.2.0`, a development
-   checkpoint only, or evidence that will later be combined with another track.
-
-| Choice | Advantages | Costs and risks | Choose when |
+| Choice | Advantages | Costs and risks | Standing |
 | --- | --- | --- | --- |
-| Offline package lifecycle | Makes installation maintainable; gives `wv install`, generations, recovery, and rollback a real product boundary; reuses the completed 0.1 trust and installer work; remains testable without public infrastructure. | Requires generalizing the bounded package/store path and designing durable activation carefully; does not visibly advance Windvale OS. | The next priority is enabling people to keep, inspect, and safely change a Windvale installation. |
-| Complete OS-1 composition | Advances Windvale's defining vertical-integration goal; closes already-started launch, provider, and supervision contracts; gives future services a disciplined lifecycle. | Larger integration/debugging surface; less immediate value to current installer users; atomic rollback and two-live-client evidence can expose kernel/service work. | The next priority is a clean Windvale OS application/service demonstration rather than host distribution. |
-| Durable application/database increment | Produces another visibly useful workload; puts real pressure on libraries, packages, storage, and diagnostics; can reveal the smallest necessary language improvements. | Easy to expand into an open-ended database project; risks accumulating features without improving installation or OS composition; needs a sharply bounded user scenario. | A named application and workload already exist and can define a finite pass/fail gate. |
+| **Offline package lifecycle — selected** | Makes installation maintainable; gives `wv install`, generations, recovery, and rollback a real product boundary; reuses the completed 0.1 trust and installer work; remains testable without public infrastructure. | Requires generalizing the bounded package/store path and designing durable activation carefully; does not by itself advance Windvale OS. | Current Milestone 4. |
+| Complete OS-1 composition | Advances Windvale's defining vertical-integration goal and closes already-started launch, provider, and supervision contracts. | Larger integration/debugging surface and less immediate value to installer users. | Continue as parallel OS-1 work. |
+| Durable application/database increment | Produces another useful workload and can select the smallest necessary language/library improvements. | Can become an open-ended database project without a sharply bounded user scenario. | Continue independently when a named workload supplies the gate. |
 
-Recommended default: select **offline package lifecycle** as Milestone 4, keep
-OS-1 active in parallel, and defer networking until the offline generation and
-rollback model is proven. A suitable completion gate is: two real packages install
-from one offline release directory on both hosts, activate atomically, run with
-exact approvals, recover an interrupted activation, roll back without rewriting
-content, and uninstall without deleting separately owned application data.
+### Completion gate
+
+1. One offline release directory admits at least two real packages and their
+   exact lock, bundle, approval, launch, target, and command identities.
+2. Windows and Linux publish the same logical immutable Generation 1 inventory.
+3. Activation publishes one validated Activation 1 record atomically and command
+   dispatch observes either the complete old or complete new generation.
+4. Recovery handles an interrupted pre-publication candidate without guessing or
+   changing the active generation.
+5. Rollback increments the activation serial and selects the retained previous
+   generation without rewriting content or lowering release freshness policy.
+6. Denied, unavailable, corrupt, stale, overflow, and indeterminate cases fail
+   explicitly; uninstall preserves separately owned application data.
+
+### Current slice
+
+The portable Windvale implementation now parses bounded Generation 1 and
+Activation 1 records, validates ordered package/command closure, and plans
+idempotent activation and rollback. The next slice is the durable host activation
+adapter and command dispatcher; it must consume this semantic result rather than
+introduce another record grammar.
 
 ## Milestone 2: package-backed host application — complete
 

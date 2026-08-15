@@ -1276,17 +1276,22 @@ $NativeCases = @(
         Name = 'portable package-format owner'
         Paths = @(
             'Libraries/Package/Package-Consistency.wv',
+            'Libraries/Package/Installation-Generation.wv',
             'Libraries/Package/Package-Manifest.wv',
             'Libraries/Package/Package-Lock.wv',
             'Libraries/Package/Package-Resource-Admission.wv',
+            'Specifications/Windvale-Installation-Generation.md',
             'Tests/Fixtures/Package/Package-Consistency-Self-Test.wv',
+            'Tests/Fixtures/Package/Installation-Generation-Self-Test.wv',
             'Tests/Fixtures/Package/Package-Manifest-Self-Test.wv',
             'Tests/Fixtures/Package/Package-Lock-Self-Test.wv',
             'Tests/Fixtures/Package/Package-Resource-Admission-Self-Test.wv',
             'Projects/Libraries/Windvale-Library-Package-Consistency.wvproj',
+            'Projects/Libraries/Windvale-Library-Installation-Generation.wvproj',
             'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
             'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Consistency.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Installation-Generation.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Manifest.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
@@ -1530,7 +1535,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3407 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3425 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

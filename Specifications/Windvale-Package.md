@@ -12,8 +12,12 @@ inputs for one compilation. A package names parts, dependency edges, target scop
 license, and required capabilities. A lock records one fully selected source graph
 and every byte identity used to produce the output.
 
-No package bundle, content store, registry, signature envelope, installation
-generation, runtime WVB linker, or updater is implemented by this version.
+Decision 0561 separately implements the bounded Bundle 1 and immutable-publication
+subset used by WVDB Query. Decisions 0563 through 0566 implement the first signed
+offline release and installer custody path. Generation 1 / Activation 1 now define
+and implement the portable installed-state parser/planner under Decision 0568.
+A general resolver, registry, streaming store service, runtime WVB linker, online
+updater, and durable host activation adapter are not implemented by Package 1.
 
 ## Text and naming rules
 
