@@ -62,6 +62,40 @@ The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) an
 
 ## Quick start
 
+Install the Windvale 0.1.0 preview per user without administrator/root access or
+.NET. The bootstrap downloads the exact published installer, verifies its
+SHA-256, installs it, persists the command path, and activates that path in the
+current terminal.
+
+On Windows PowerShell, download the script and dot-source it so `wv` is
+available immediately:
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/eworker-inc/Windvale/main/Distribution/Installers/Install-Windvale.ps1 -OutFile Install-Windvale.ps1
+Unblock-File .\Install-Windvale.ps1; . .\Install-Windvale.ps1
+```
+
+On Linux, download and source the corresponding script:
+
+```sh
+curl -fLO https://raw.githubusercontent.com/eworker-inc/Windvale/main/Distribution/Installers/Install-Windvale.sh
+. ./Install-Windvale.sh
+```
+
+Confirm either installation with:
+
+```text
+wv version
+wv doctor
+wv tools
+```
+
+The versioned archives, checksums, signed manifest, and complete offline
+verification envelope remain available from the
+[Windvale 0.1.0 release](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0).
+
+### Build from source
+
 Requirements:
 
 - Windows x64 with the inbox command processor, or Linux x64 with Bash and
