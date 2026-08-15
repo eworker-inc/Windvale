@@ -47,8 +47,10 @@ experimental:
 
 The planned first product tag is `v0.1.0`, after the package-backed application,
 release envelope, offline verification, and explicit dual-host release gate are
-complete. Later previews would normally be `v0.2.0`, `v0.3.0`, and so on—not
-“release 2” without a compatibility meaning.
+complete. In the dependency-based roadmap these are Milestone 2 followed by
+Milestone 3. Parallel OS-1 launch/service composition is valuable but is not a
+prerequisite for this host-product preview. Later previews would normally be
+`v0.2.0`, `v0.3.0`, and so on—not “release 2” without a compatibility meaning.
 
 ## Tag mechanics
 

@@ -18,9 +18,10 @@ path to prove a small, coherent set of application and library contracts.
 Package, library, and application work may now proceed through the qualified
 native path when a direct consumer exists; it must not widen the frozen C#
 compiler. The active roadmap makes this useful package-backed application
-Milestone 2 while a separate Windvale OS launch/service milestone continues the
-kernel path. The two outcomes may share contracts without turning either into a
-prerequisite for every step of the other.
+Milestone 2 while parallel track OS-1 continues the Windvale OS launch/service
+path. The two outcomes may share contracts without turning either into a
+prerequisite for every step of the other. The 0.1 product release follows the
+package application as Milestone 3 and does not require OS-1 completion.
 
 The intended first outcome is one useful application that:
 

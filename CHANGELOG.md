@@ -6,6 +6,11 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ## Unreleased
 
+### Changed
+
+- Rebaselined the active roadmap by dependency without dropping any accepted gate: the package-backed host application remains Milestone 2, the Windvale 0.1 preview becomes Milestone 3, and the former OS milestone becomes parallel track OS-1. Gate audits now credit already-completed package, recovery, and three-environment WVB evidence while keeping bundle/store, capability binding, release security, resource-domain, launch, and supervision work explicit.
+- Corrected the Probe 40 specification to record its existing cross-host qualification at commit `c4008e75db061df375eb323d75a818863aee553f` and Verify run 30853255559 instead of describing the qualification as pending.
+
 ### Added
 
 - Completed the predictable-development-feedback milestone. Content-addressed linked-image/map reuse joins project, object, and current-host application checkpoints for all six portable database targets while all eight behaviors and cold paired-target qualification remain intact. The direct all-hit Windows owner now takes 87,800 ms instead of 402,638 ms, a 78.19% reduction; one 33-entry declaration machine-checks the three measured owner closures and five checkpoint families. Exact warm GitHub feedback passes end to end in 1m42s on Windows and 1m15s on Linux, while qualification jobs remain explicit and cache-independent.

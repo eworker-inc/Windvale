@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-Firmware Probe 40 is the implemented candidate for the first generation-safe non-tail memory-object reclamation proof. It composes ABI 22/context 7, WVA 1, admission 4/bridge 2, retained bridge 10, memory 17, paging 5, protected processes 17, private `WVMEMO01`/`WVTHR001`/`WVTIME01` evidence, endpoint 1, channel 4, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
+Firmware Probe 40 is the cross-host-qualified first generation-safe non-tail memory-object reclamation proof. It composes ABI 22/context 7, WVA 1, admission 4/bridge 2, retained bridge 10, memory 17, paging 5, protected processes 17, private `WVMEMO01`/`WVTHR001`/`WVTIME01` evidence, endpoint 1, channel 4, interpreter profile 7, `WVRES006`, `WVBR002`, `WVRS 1`, and `WVDS 1`.
 
-[Decision 0196](../Documents/Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md) owns Probe 40. Probe 39 is the cross-host-qualified baseline at exact implementation commit `6a250c86c30e8921d6bf9244a27d0fd763716cb0` and GitHub [Verify run 30847279400](https://github.com/eworker-inc/Windvale/actions/runs/30847279400): Windows and Debian each pass all 87 Seed and 39 OS tests plus the complete native CLI gate, and all five pinned Windows QEMU scenarios pass. Probe 40 has focused local evidence; independent Windows/Linux qualification remains pending.
+[Decision 0196](../Documents/Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md) owns Probe 40. Exact implementation commit `c4008e75db061df375eb323d75a818863aee553f` passes GitHub [Verify run 30853255559](https://github.com/eworker-inc/Windvale/actions/runs/30853255559): Windows and digest-pinned Debian each complete a zero-warning Release build, all 87 Seed tests, all 39 OS tests, and the complete native CLI gate. All five pinned Windows QEMU scenarios pass. Debian QEMU execution is not claimed.
 
 The firmware ABI follows UEFI 2.11 x64 calling conventions and `GetMemoryMap`/`ExitBootServices`. These host mechanics do not define portable Windvale semantics.
 
@@ -20,7 +20,7 @@ Stage 0 creates the loader, fixed-page memory leaf, exception, paging, admission
 
 The linked kernel payload fits the fixed 768 KiB supervisor RX window. Init and the directory service each fit two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
-Probe-40 candidate image identities are:
+Probe-40 qualified image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
@@ -30,7 +30,7 @@ Probe-40 candidate image identities are:
 | `user-fault` | 682,496 | `2dc3bbbb6d413499394840d2466c53a206142c6d62e1c7cdab6c490eb38507ad` | 0 |
 | `service-fault` | 667,648 | `bf39b8f503c9eaab0437f58dec89a3eb9b011ea1b7d3affe4c9187f2a7ab128d` | 0 |
 
-All five identities are deterministic in the focused Windows suite and pass pinned Windows QEMU 11.0/Q35/TCG with exact transcripts and exit results. The independent Windows/Linux qualification gate remains pending; no Debian QEMU execution is claimed.
+All five identities are deterministic in the focused Windows suite and pass pinned Windows QEMU 11.0/Q35/TCG with exact transcripts and exit results. The Windows/Linux qualification gate is recorded above; no Debian QEMU execution is claimed.
 
 ## Firmware exit and kernel entry
 

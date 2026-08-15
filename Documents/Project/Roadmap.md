@@ -1,14 +1,15 @@
 # Windvale development roadmap
 
-> Status: Active forward plan, reset after the completed .NET retirement gate on
-> 14 August 2026.
+> Status: Active dependency-based forward plan, rebaselined after the completed
+> .NET retirement gate and Milestone 1 on 14 August 2026.
 
 ## Active goal
 
 Turn the qualified Windvale-native compiler and toolchain into a useful,
-inspectable product path: fast ordinary development, one deterministic
-package-backed application on Windows and Linux, the next bounded Windvale OS
-service slice, and an honest 0.1 preview.
+inspectable product path: one deterministic package-backed application on
+Windows and Linux followed by an honest 0.1 preview. Advance the next bounded
+Windvale OS service slice as an independent integration track rather than an
+implicit prerequisite for that host-product release.
 
 Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
@@ -16,8 +17,9 @@ native execution remains a derived form over the same verified semantics.
 
 ## How to read this roadmap
 
-This file contains only forward milestones, their order, and their completion
-gates. It is not an implementation diary.
+This file contains forward milestones, their dependency order, completion
+gates, and the standing of already-earned evidence. It is not an implementation
+diary or a numbered maturity ladder.
 
 - [Progress.md](Progress.md) records current measured state.
 - [Seed-Verification-Evidence.md](Seed-Verification-Evidence.md) records exact
@@ -27,6 +29,12 @@ gates. It is not an implementation diary.
 
 Completed migration detail remains available through Decisions 0057, 0178,
 0213, 0525, and 0526 and Git history. It is not repeated here.
+
+The 14 August 2026 rebaseline preserves every accepted gate while correcting
+the earlier implied sequence. Former Milestone 4 is now product Milestone 3
+because it depends on Milestone 2 but not on the former Milestone 3. The former
+Milestone 3 is now parallel track OS-1. Historical decisions and commits keep
+their original milestone wording; this mapping prevents renumbering history.
 
 ## Completed foundation
 
@@ -118,7 +126,25 @@ Milestone 1 is closed. Ordinary development now has a measured bounded path;
 Milestone 2 is the active product milestone. Full qualification remains a
 separate future selection and was not spent to close this workflow milestone.
 
-## Milestone 2: useful package-backed application
+## Active dependency structure
+
+| Work | Standing | Dependency |
+| --- | :---: | --- |
+| Milestone 1: predictable development feedback | ✅ Complete | Closed foundation; preserve its bounded workflow. |
+| Native-only baseline promotion checkpoint | 🚧 Candidate | One explicit post-archive dual-host qualification and exact baseline tag; independent of product implementation. |
+| Milestone 2: package-backed host application | 🎯 Active | Uses the completed native compiler, package/lock instance, and bounded development path. |
+| Milestone 3: Windvale 0.1 preview | ○ Queued | Depends on Milestone 2 and the remaining release gates. |
+| Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful but does not block Milestone 3. |
+
+The product critical path is:
+
+`bundle admission → immutable store → capability execution and denial → release envelope → one final qualification → v0.1.0`
+
+A completed focused gate remains complete while its relevant inputs and contract
+stay unchanged. Later integrated evidence may consume that result; commits and
+pushes do not by themselves require it to be rerun.
+
+## Milestone 2: package-backed host application — active
 
 ### Outcome
 
@@ -149,31 +175,23 @@ this application supplies direct pressure.
 Do not add a public registry, general network resolver, dynamic linker, or SQL
 surface to complete this milestone.
 
-## Milestone 3: Windvale OS launch and service slice
+### Rebaseline audit
 
-### Outcome
+| Gate | Standing | Evidence or remaining boundary |
+| --- | :---: | --- |
+| Canonical manifest and lock closure | ✅ | Package 1 and Lock 1 select the exact WVDB Query source, resource, project, platform, license, tool, output, and capability closure under [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md). |
+| Deterministic independently admitted bundle | ○ | Bundle 1 has an accepted architecture but no writer, independent verifier, or malformed-input owner yet. |
+| Immutable content-addressed local store | ○ | Transaction and identity primitives exist, but no package-store publication service owns this gate. |
+| Same canonical host identities | 🚧 | The exact package instance and WVB identity are pinned and the paired native-host route exists; retain one current independent Windows/Linux identity report for integrated closure. |
+| Rights-reduced success and denial | 🚧 | The five-capability closure is explicit, but the native runner cannot yet bind `filesystem.directory_read_v1`; successful execution and denied/unsupported evidence remain open. |
+| Clean offline locked rebuild | ✅ | The selected package rebuilds from checked-in locked resources and documented native tool identities without .NET. Reconfirm it inside the final integrated package evidence without reopening the implementation gate. |
 
-Advance Probe 40 into one cleanly launched and supervised service/application
-composition without expanding the kernel into a package manager, shell, or
-policy engine.
+Milestone 2 therefore has two completed gates, two partial candidates, and two
+unimplemented infrastructure gates. Its remaining implementation sequence is
+bundle, store, then hosted binding/execution; the final identity report can cover
+the settled composition once.
 
-### Completion gate
-
-1. One flat resource domain owns explicit process, memory, capability, and work
-   limits.
-2. One immutable launch plan reserves, constructs, and publishes a process
-   atomically, rolling back every unpublished resource on failure.
-3. One isolated normal console or storage provider serves at least two clients
-   with bounded queues, explicit peer loss, and generation-safe teardown.
-4. Supervision reports structured completion and performs one bounded restart
-   or deliberate terminal failure without ambient authority.
-5. The exact application WVB used on Windows and Linux is admitted and executed
-   in the guest where its capability profile is supported.
-
-Dynamic discovery, general scheduling, a shell, networking, and multi-user
-policy remain later milestones unless this slice produces a measured need.
-
-## Milestone 4: Windvale 0.1 preview
+## Milestone 3: Windvale 0.1 preview — queued behind Milestone 2
 
 Windvale 0.1 is the first inspectable product release, not the first complete
 operating-system release. Its gate is defined in
@@ -197,6 +215,63 @@ The preview requires:
 Windvale OS distribution, a public package registry, automatic updates, ARM64,
 desktop graphics, a general network stack, and 1.0 compatibility are not 0.1
 requirements.
+
+### Rebaseline audit
+
+| Gate | Standing | Evidence or remaining boundary |
+| --- | :---: | --- |
+| .NET-free normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
+| Useful package-backed application | ○ | Inherits the unfinished Milestone 2 gates. |
+| Reproducible release artifacts | 🚧 | Source, native tools, licensing, provenance, recovery, and qualification foundations exist; the product bundle and release envelope remain open. |
+| Capability approval, binding, and denial | 🚧 | Package requirements and transitive closure exist; runtime approval/binding and denial evidence for the shipped application remain open. |
+| Public product threat model | ○ | `SECURITY.md` owns vulnerability reporting, not the required shipped-product threat model. |
+| Release signing and offline verification policy | ○ | Architecture exists, but no accepted key policy, release manifest verifier, or signed envelope closes this gate. |
+| Exact-state dual-host release qualification | ○ | Select and run this once after the release inputs settle; ordinary development runs do not satisfy it. |
+
+The native-only baseline qualification may be performed earlier as its own
+promotion checkpoint. It provides useful evidence but does not substitute for
+the final exact-state product qualification.
+
+## Parallel track OS-1: Windvale OS launch and service slice
+
+This is the former Milestone 3. The rebaseline changes its scheduling relation,
+not its outcome or completion gate.
+
+### Outcome
+
+Advance Probe 40 into one cleanly launched and supervised service/application
+composition without expanding the kernel into a package manager, shell, or
+policy engine.
+
+### Completion gate
+
+1. One flat resource domain owns explicit process, memory, capability, and work
+   limits.
+2. One immutable launch plan reserves, constructs, and publishes a process
+   atomically, rolling back every unpublished resource on failure.
+3. One isolated normal console or storage provider serves at least two clients
+   with bounded queues, explicit peer loss, and generation-safe teardown.
+4. Supervision reports structured completion and performs one bounded restart
+   or deliberate terminal failure without ambient authority.
+5. The exact application WVB used on Windows and Linux is admitted and executed
+   in the guest where its capability profile is supported.
+
+Dynamic discovery, general scheduling, a shell, networking, and multi-user
+policy remain later milestones unless this slice produces a measured need.
+
+### Rebaseline audit
+
+| Gate | Standing | Evidence or remaining boundary |
+| --- | :---: | --- |
+| Flat resource domain | ○ | Qualified ownership and memory-object primitives exist, but no domain yet owns the complete process, memory, capability, and work budget. |
+| Atomic launch transaction | ○ | The immutable launch-plan contract is designed; dynamic reserve/construct/publish and complete rollback are not implemented. |
+| Isolated provider serving two clients | 🔵 | Bounded queues, two endpoints, explicit peer loss, generation-safe rebind, and teardown are qualified. The fixed proof still serves sequential client generations rather than two live clients through a general provider boundary. |
+| Structured supervision | 🔵 | Contained service failure and deliberate terminal behavior are qualified foundations; a supervisor, generic completion record, and bounded restart policy are not implemented. |
+| Exact WVB across hosts and guest | ✅ | Decisions [0101](../Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) and [0103](../Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) qualify exact canonical application WVBs across Windows, Linux, and the guest. A future WVDB-specific guest composition is consumer integration, not a reason to reopen this portability proof. |
+
+OS-1 has one completed portability gate, two substantially qualified foundations,
+and two unimplemented composition mechanisms. Work may advance when it is the
+selected consumer without delaying the host-product critical path.
 
 ## Workstream rules
 
@@ -231,8 +306,8 @@ requirements.
 ### Browser, networking, shell, and virtualization
 
 These remain accepted or proposed future lanes in their architecture documents.
-They may receive bounded experiments, but they do not displace the four active
-milestones without a direct product or recovery need.
+They may receive bounded experiments, but they do not displace the product
+critical path or parallel OS-1 track without a direct product or recovery need.
 
 ## Verification policy
 

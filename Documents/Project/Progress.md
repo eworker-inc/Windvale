@@ -13,6 +13,11 @@ runs and identities, and accepted decisions own rationale.
 The image is a dated editorial snapshot. Update the Markdown when current state
 changes; refresh the image only when it becomes materially misleading.
 
+The roadmap is now dependency-based: Milestone 2 closes the package-backed host
+application, Milestone 3 closes the 0.1 preview, and OS-1 advances launch and
+service composition in parallel. The former numeric order remains in history;
+no completion gate was removed by the rebaseline.
+
 ## Indicators
 
 | Indicator | Meaning |
@@ -33,9 +38,9 @@ changes; refresh the image only when it becomes materially misleading.
 | Native-only repository | 🚧 | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions; [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md) removes all tracked managed source and direct managed entry points from `main`. | Pass one explicit post-archive dual-host qualification, then tag the exact commit as a native-only baseline. |
 | Development verification | ✅ | Milestone 1 is complete under [Decision 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md): front-door feedback takes 13,900 ms, the pinned WebAssembly engine path takes 29,674 ms, and the all-hit database owner fell from 402,638 ms to 87,800 ms with all eight behaviors. Exact warm [GitHub run 31852544894, attempt 2](https://github.com/eworker-inc/Windvale/actions/runs/31852544894/attempts/2) passes end to end in 1m42s on Windows and 1m15s on Linux; three owner closures and five checkpoint families are machine-checked. | Preserve the bounded path and add another checkpoint or owner only from new measured product pressure. |
 | Native qualification | ✅ | [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md) qualified 52 suites and 3,287 cases per host in four shards; the complete workflow took about 15 minutes. | Run this gate only for a selected release, promotion, bootstrap, security, ABI, or conformance state. |
-| Package-backed application | 🚧 | Workspace 2, Package 1, Lock 1, native capability-bearing composition, canonical package text, manifest/lock consistency, and exact locked-resource admission have focused implementation evidence. | Complete deterministic bundle/store admission plus hosted WVDB Query execution and denial on both hosts. |
+| Package-backed application | 🚧 | Two of six roadmap gates are complete: Package 1 and Lock 1 own the full selected closure, and the exact package rebuilds offline from locked resources and native tool identities. The host-identity and capability-execution gates are partial candidates. | Complete bundle admission, immutable store publication, and hosted WVDB Query execution/denial, then retain one integrated dual-host identity report. |
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
-| Windvale OS | 🔵 | Probe 40 qualifies protected processes, capability IPC, separate services/endpoints, bounded preemption evidence, and generation-safe non-tail memory objects. Native owners construct the accepted normal and terminal-fault images. | Add one flat resource domain and one atomic launch/supervision slice before broad shell, networking, or driver work. |
+| Windvale OS | 🔵 | OS-1 already owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption evidence, and generation-safe non-tail memory objects. | In the parallel OS track, add one flat resource domain and one atomic launch/supervision slice before broad shell, networking, or driver work. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
 | Public project and release foundation | 🚧 | Licensing, contribution, security, governance, authorship, and public repository policies exist. The exact Stage 0 recovery release is published and independently retained. | Produce the useful packaged application, threat model, signed release envelope, and offline verifier needed for a 0.1 preview. |
 
@@ -56,9 +61,57 @@ changes; refresh the image only when it becomes materially misleading.
 The later 52-suite/3,287-case plan is forward native coverage added after the
 retirement release. It does not reopen the completed dependency gate.
 
-## Current work
+## Current dependency-based work
 
-### 1. Preserve bounded development feedback
+### 1. Complete Milestone 2: package-backed host application
+
+The active product slice is WVDB Query from
+[Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md).
+The completed manifest/lock closure and offline locked rebuild remain credited.
+The remaining package/resource and durable-database work should converge on:
+
+1. one deterministic admitted bundle;
+2. one content-addressed local publication path;
+3. one complete capability closure and approval record;
+4. one successful rights-reduced hosted execution;
+5. one denied or unsupported execution with no ambient fallback; and
+6. matching canonical WVB/package identities on Windows and Linux.
+
+Item 3 already has the declared five-capability closure; the remaining work is
+the approval/binding boundary. Item 6 should be recorded once after the bundle,
+store, and runner inputs settle rather than after every intermediate commit.
+
+SQL, a registry, a network resolver, broad concurrency, and a database server
+are not required for this slice.
+
+### 2. Prepare Milestone 3: Windvale 0.1 preview
+
+Work that does not depend on the final package bytes may proceed while Milestone
+2 is active: define the shipped-product threat model, accept the first signing
+and offline-verification policy, and implement the bounded release envelope and
+verifier. Final artifact assembly and exact-state qualification wait for the
+application inputs to settle.
+
+OS-1 is not a prerequisite for `v0.1.0`.
+
+### Independent promotion checkpoint: native-only repository baseline
+
+The archival decision is implemented in the working repository: the immutable
+pre-removal release remains authoritative, the in-tree pointer preserves exact
+checksums and recovery custody, and guards require zero tracked managed files and
+zero direct managed entry points. The remaining step is one explicit complete
+Windows/Linux qualification on the committed post-archive state; ordinary
+per-commit full qualification remains disabled.
+
+### Parallel track OS-1: launch and service composition
+
+Preserve the already-qualified three-environment WVB, endpoint, bounded queue,
+peer-loss, teardown, contained-failure, and memory-object evidence. The open
+composition mechanisms are one flat resource domain, one atomic launch
+transaction, a provider serving two live clients, and generic structured
+supervision with a bounded restart or deliberate terminal result.
+
+### Preserve bounded development feedback
 
 - Use `Tools/Verify/Verify-Changed.ps1` once after a coherent edit.
 - Treat a passing affected-owner result as reusable until that owner's declared
@@ -69,31 +122,6 @@ retirement release. It does not reopen the completed dependency gate.
   state.
 - Promote related compiler and tool identities in coherent batches rather than
   repinning the entire product family on every implementation commit.
-
-### 2. Finish the useful package-backed application
-
-The active product slice is WVDB Query from
-[Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md).
-The package/lock/resource work and durable database work should converge on:
-
-1. one deterministic admitted bundle;
-2. one content-addressed local publication path;
-3. one complete capability closure and approval record;
-4. one successful rights-reduced hosted execution;
-5. one denied or unsupported execution with no ambient fallback; and
-6. matching canonical WVB/package identities on Windows and Linux.
-
-SQL, a registry, a network resolver, broad concurrency, and a database server
-are not required for this slice.
-
-### 3. Qualify the native-only repository baseline
-
-The archival decision is implemented in the working repository: the immutable
-pre-removal release remains authoritative, the in-tree pointer preserves exact
-checksums and recovery custody, and guards require zero tracked managed files and
-zero direct managed entry points. The remaining step is one explicit complete
-Windows/Linux qualification on the committed post-archive state; ordinary
-per-commit full qualification remains disabled.
 
 ## Working end to end
 
