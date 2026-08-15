@@ -18,12 +18,11 @@ const MAX_PATH_PARTS = 32;
 const MAX_TOKEN_BYTES = 64;
 const MAX_INVENTORY_ENTRIES = 8_192;
 const DOMAIN_PREFIX = Buffer.from("windvale-release-signature-v1\0", "ascii");
-const REQUIRED_PROFILE = new Set([
+const REQUIRED_PREVIEW_PROFILE = new Set([
     "approval|all",
     "installer|linux-x64",
     "installer|windows-x64",
     "license|all",
-    "package|all",
     "provenance|all",
     "qualification|linux-x64",
     "qualification|windows-x64",
@@ -207,7 +206,7 @@ function Readˉmanifest(ReleaseRoot, Policy, MinimumSequence) {
         Fail("Release manifest structure differs.");
     }
     const Version = /^version (0\.[0-9]+\.[0-9]+)$/.exec(Lines[1]);
-    const Channel = /^channel ([a-z0-9][a-z0-9.-]*)$/.exec(Lines[2]);
+    const Channel = /^channel (preview|stage)$/.exec(Lines[2]);
     const Sequence = /^sequence ([1-9][0-9]*)$/.exec(Lines[3]);
     const Revision = /^revision ([0-9a-f]{40})$/.exec(Lines[4]);
     const Tree = /^tree ([0-9a-f]{40})$/.exec(Lines[5]);
@@ -216,7 +215,7 @@ function Readˉmanifest(ReleaseRoot, Policy, MinimumSequence) {
     const ArtifactCount = /^artifact-count ([1-9][0-9]*)$/.exec(Lines[8]);
     if (!Version || !Channel || !Sequence || !Revision || !Tree || !PolicyHash ||
         !ReleaseKey || !ArtifactCount || !VERSION.test(Version[1]) ||
-        Channel[1] !== "preview" || !GIT_ID.test(Revision[1]) || !GIT_ID.test(Tree[1]) ||
+        !GIT_ID.test(Revision[1]) || !GIT_ID.test(Tree[1]) ||
         PolicyHash[1] !== Sha256(Policy.policyBytes) || ReleaseKey[1] !== Policy.releaseKeyId) {
         Fail("Release manifest header differs.");
     }
@@ -226,7 +225,7 @@ function Readˉmanifest(ReleaseRoot, Policy, MinimumSequence) {
         Fail("Release manifest is outside the accepted sequence or version policy.");
     }
     const Count = Decimal(ArtifactCount[1], "artifact count", 4096);
-    if (Lines.length !== 9 + Count || Count < REQUIRED_PROFILE.size) {
+    if (Lines.length !== 9 + Count || Count < 1) {
         Fail("Release artifact count differs.");
     }
     const Artifacts = [];
@@ -271,12 +270,43 @@ function Readˉmanifest(ReleaseRoot, Policy, MinimumSequence) {
             path: Match[5],
         });
     }
-    for (const Required of REQUIRED_PROFILE) {
-        if (!RoleTargets.has(Required)) Fail(`Release profile is missing ${Required}.`);
+    const Packages = Artifacts.filter(Artifact => Artifact.role === "package");
+    if (Channel[1] === "preview") {
+        for (const Required of REQUIRED_PREVIEW_PROFILE) {
+            if (!RoleTargets.has(Required)) Fail(`Release profile is missing ${Required}.`);
+        }
+        if (Packages.length === 0 ||
+            (Packages.length === 1 && Packages[0].target !== "all") ||
+            (Packages.length > 1 && Packages.some(Artifact => Artifact.target === "all"))) {
+            Fail("Release package profile must be one package|all or multiple package-ID targets.");
+        }
+    } else {
+        if (Packages.length < 2 || Packages.some(Artifact => Artifact.target === "all") ||
+            !RoleTargets.has("license|all") || !RoleTargets.has("verifier|all") ||
+            Artifacts.length !== 2 + Packages.length * 5) {
+            Fail("Offline stage profile structure differs.");
+        }
+        const Allowed = new Set(["license|all", "verifier|all"]);
+        for (const Package of Packages) {
+            for (const Role of [
+                "package",
+                "approval",
+                "provenance",
+                "launch-windows-x64",
+                "launch-linux-x64",
+            ]) {
+                Allowed.add(`${Role}|${Package.target}`);
+            }
+        }
+        if (RoleTargets.size !== Allowed.size ||
+            [...RoleTargets].some(Value => !Allowed.has(Value))) {
+            Fail("Offline stage package policy closure differs.");
+        }
     }
     return {
         bytes: ManifestBytes,
         version: Version[1],
+        channel: Channel[1],
         sequence: SequenceValue,
         revision: Revision[1],
         tree: Tree[1],
@@ -374,7 +404,7 @@ function Verifyˉrelease(TrustedRootPath, ReleasePath, MinimumSequenceText) {
     }
     process.stdout.write("release verify step=report item=4/4\n");
     process.stdout.write(
-        `release verify status=Valid version=${Manifest.version} sequence=${Manifest.sequence} ` +
+        `release verify status=Valid version=${Manifest.version} channel=${Manifest.channel} ` +
         `revision=${Manifest.revision} tree=${Manifest.tree} artifacts=${Manifest.artifacts.length} ` +
         `bytes=${Manifest.totalBytes} manifest=${Sha256(Manifest.bytes)} ` +
         `policy-generation=${Policy.generation}\n`,

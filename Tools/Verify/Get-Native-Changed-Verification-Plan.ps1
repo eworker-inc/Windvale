@@ -263,7 +263,7 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Create-Wvdb-Query-Fixture') {
         Add-Suite 'wvdb-query-capability'
     } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
-        Add-Suite 'release-envelope'
+        Add-Suite @('release-envelope', 'offline-package-stage')
     } elseif ($Stem -eq 'Test-Retirement-Suite') {
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
@@ -368,7 +368,7 @@ function Add-Native-Tool-Suite {
             'console-publisher-reconstruction'
         )
     } elseif ($Stem -in @('Build-Wvdb-Query-Package', 'Build-Wvb-Inspector-Package')) {
-        Add-Suite 'packages'
+        Add-Suite @('packages', 'offline-package-stage')
     } elseif ($Stem -eq 'Test-Package-Format') {
         Add-Suite 'package-format'
     } elseif ($Stem -eq 'Run-Wvb') {
@@ -589,15 +589,16 @@ foreach ($Path in $Paths) {
             'Tools/Release/Create-Release-Envelope.mjs',
             'Tools/Release/Verify-Release-Envelope.mjs'
         )) {
-            Add-Suite 'release-envelope'
+            Add-Suite @('release-envelope', 'offline-package-stage')
         } elseif ($Path -eq 'Tools/Release/Verify-Wvdb-Approval-Records.mjs') {
-            Add-Suite 'wvdb-approval'
+            Add-Suite @('wvdb-approval', 'offline-package-stage')
         } else {
             Add-Gap "release-tool:$([IO.Path]::GetFileName($Path))"
         }
-    } elseif ($Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal) -or
-        $Path -eq 'LICENSE.md') {
+    } elseif ($Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal)) {
         Add-Suite 'installers'
+    } elseif ($Path -eq 'LICENSE.md') {
+        Add-Suite @('installers', 'offline-package-stage')
     } elseif ($Path.StartsWith('Distribution/Releases/', [StringComparison]::Ordinal)) {
         Add-Suite 'release-envelope'
     } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal)) {
@@ -606,11 +607,14 @@ foreach ($Path in $Paths) {
             'Verify-Installation-Activation-Publisher.mjs'
         )) {
             Add-Suite 'installation-activation'
+        } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Create-Offline-Package-Stage-Input.mjs') {
+            Add-Suite 'offline-package-stage'
         } else {
             Add-Suite 'package-bundle'
         }
     } elseif ($Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
-        Add-Suite 'package-bundle'
+        Add-Suite @('package-bundle', 'offline-package-stage')
     } elseif ($Path.StartsWith('Tools/Windvale.Project/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
         Add-Suite 'workspace-project2'
@@ -673,16 +677,16 @@ foreach ($Path in $Paths) {
         Add-Suite @('package-format', 'package-bundle')
     } elseif ($Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -and
         ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch'))) {
-        Add-Suite 'wvdb-approval'
+        Add-Suite @('wvdb-approval', 'offline-package-stage')
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
-        Add-Suite @('packages', 'package-bundle', 'wvdb-query-capability', 'wvdb-approval')
+        Add-Suite @('packages', 'package-bundle', 'wvdb-query-capability', 'wvdb-approval', 'offline-package-stage')
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
     } elseif ($Path.StartsWith('Distribution/Applications/Wvb-Inspector/', [StringComparison]::Ordinal)) {
-        Add-Suite @('packages', 'package-format')
+        Add-Suite @('packages', 'package-format', 'offline-package-stage')
         if ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch')) {
             Add-Suite 'wvdb-approval'
         }
@@ -696,7 +700,7 @@ foreach ($Path in $Paths) {
             'Projects/Tools/Windvale-Package-Bundle-Writer.wvproj',
             'Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj'
         )) {
-        Add-Suite 'package-bundle'
+        Add-Suite @('package-bundle', 'offline-package-stage')
     } elseif ($Path -eq 'Windvale.wvws' -or
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {
@@ -1521,7 +1525,7 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'installers'
         } elseif ($Path -eq 'Specifications/Windvale-Release-Envelope.md') {
-            Add-Suite 'release-envelope'
+            Add-Suite @('release-envelope', 'offline-package-stage')
         } elseif ($Path -eq 'Specifications/Windvale-Capability-Approval-And-Launch.md') {
             Add-Suite 'wvdb-approval'
         } elseif ($Path -in @(

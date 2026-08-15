@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 6,403 LF-only bytes with SHA-256
-`517dc03ec213cf6a16e89e6555cb261c5b833ac8f3b368da33ae099d7f13e80e`.
+`Tests/Native/Retirement-Suite.txt` is 6,598 LF-only bytes with SHA-256
+`fe50eae5d1cf9f8c22678f6e207359adcb477d0484b92e98a4376ba3b0625104`.
 The first line is exactly:
 
 ```text
@@ -105,10 +105,11 @@ file. The current plan is:
 | `package-bundle` | `Test-Package-Bundle` | 12 | `native package bundle status=Passed cases=12 applications=2 bundles=2 objects=9 shared=1 idempotent=Verified` |
 | `installers` | `Test-Installers` | 8 | `native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified` |
 | `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified` |
-| `release-envelope` | `Test-Release-Envelope` | 16 | `native release envelope status=Passed cases=16 signatures=4 artifacts=11 protected-private-keys=2` |
+| `release-envelope` | `Test-Release-Envelope` | 17 | `native release envelope status=Passed cases=17 signatures=4 artifacts=12 packages=2 protected-private-keys=2` |
+| `offline-package-stage` | `Test-Offline-Package-Stage` | 8 | `native offline package stage status=Passed cases=8 packages=2 policy-records=8 artifacts=12 deterministic=Verified tamper=Rejected` |
 | `wvdb-approval` | `Test-Wvdb-Approval-Records` | 13 | `native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1` |
 
-The version-2 plan therefore contains exactly 62 suites and 3,452 cases. Its
+The version-2 plan therefore contains exactly 63 suites and 3,471 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
@@ -116,7 +117,7 @@ balanced shard inventory is:
 | 1 | 1 | 19 | 651.2 |
 | 2 | 16 | 1,282 | 592.2 |
 | 3 | 23 | 1,260 | 592.1 |
-| 4 | 22 | 891 | 591.8 |
+| 4 | 23 | 899 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
 semantic limit. The shard-1 timing predates the three new tree-growth cases and
@@ -153,7 +154,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 62, Passed: 62, Failed: 0, Cases: 3462
+Suites: 63, Passed: 63, Failed: 0, Cases: 3471
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

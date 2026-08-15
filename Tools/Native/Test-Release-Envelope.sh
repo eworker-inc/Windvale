@@ -24,14 +24,14 @@ fixture_tool=$repository_root/Tools/Native/Create-Release-Envelope-Fixture.mjs
 for directory in \
     Fixture Root-Key Release-Key Other-Root-Key Other-Release-Key Policy \
     First Second Tamper-Artifact Tamper-Manifest Tamper-Root Extra \
-    Unsafe-Out Missing-Out Wrong-Key-Out Changed-Out \
+    Unsafe-Out Missing-Out Mixed-Out Wrong-Key-Out Changed-Out \
     Protected-Fixture Protected-Root-Key Protected-Release-Key Protected-Policy Protected-First \
     Protected-Wrong-Out Protected-Missing-Out Protected-Tampered-Key Protected-Tamper-Out; do
     mkdir -- "$work/$directory" || exit 1
 done
 test_passphrase=windvale-test-passphrase-1
 
-echo 'native release envelope step=create-key-policy item=1/16'
+echo 'native release envelope step=create-key-policy item=1/17'
 node "$fixture_tool" create "$work/Fixture" || exit $?
 node "$creator" generate-test-key root "$work/Root-Key" >/dev/null || exit $?
 node "$creator" generate-test-key release "$work/Release-Key" >/dev/null || exit $?
@@ -45,7 +45,7 @@ node "$creator" create-root \
     "$work/Release-Key/release-public.pem" \
     "$work/Policy" >/dev/null || exit $?
 
-echo 'native release envelope step=create-first item=2/16'
+echo 'native release envelope step=create-first item=2/17'
 node "$creator" create-release \
     "$work/Policy" \
     "$work/Release-Key/release-private.pem" \
@@ -53,7 +53,7 @@ node "$creator" create-release \
     "$work/Fixture/Sources" \
     "$work/First" >/dev/null || exit $?
 
-echo 'native release envelope step=prove-determinism item=3/16'
+echo 'native release envelope step=prove-determinism item=3/17'
 node "$creator" create-release \
     "$work/Policy" \
     "$work/Release-Key/release-private.pem" \
@@ -62,29 +62,29 @@ node "$creator" create-release \
     "$work/Second" >/dev/null || exit $?
 node "$fixture_tool" compare "$work/First" "$work/Second" >/dev/null || exit $?
 
-echo 'native release envelope step=verify-valid item=4/16'
+echo 'native release envelope step=verify-valid item=4/17'
 node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/First" >/dev/null || exit $?
 if find "$work/First" -type f -name '*private*' | grep . >/dev/null; then exit 1; fi
 
-echo 'native release envelope step=reject-artifact-tamper item=5/16'
+echo 'native release envelope step=reject-artifact-tamper item=5/17'
 node "$fixture_tool" copy "$work/First" "$work/Tamper-Artifact" || exit $?
 printf x >>"$work/Tamper-Artifact/Artifacts/approval.txt"
 if node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/Tamper-Artifact" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-manifest-signature-tamper item=6/16'
+echo 'native release envelope step=reject-manifest-signature-tamper item=6/17'
 node "$fixture_tool" copy "$work/First" "$work/Tamper-Manifest" || exit $?
 printf x >>"$work/Tamper-Manifest/Release-Manifest.sig"
 if node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/Tamper-Manifest" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-root-signature-tamper item=7/16'
+echo 'native release envelope step=reject-root-signature-tamper item=7/17'
 node "$fixture_tool" copy "$work/First" "$work/Tamper-Root" || exit $?
 printf x >>"$work/Tamper-Root/Root-Policy.sig"
 if node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/Tamper-Root" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-wrong-root item=8/16'
+echo 'native release envelope step=reject-wrong-root item=8/17'
 if node "$verifier" verify "$work/Other-Root-Key/root-public.pem" "$work/First" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-undeclared-file item=9/16'
+echo 'native release envelope step=reject-undeclared-file item=9/17'
 node "$fixture_tool" copy "$work/First" "$work/Extra" || exit $?
 printf '%s\n' undeclared >"$work/Extra/undeclared.txt"
 if node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/Extra" >/dev/null 2>&1; then exit 1; fi
@@ -92,24 +92,31 @@ rm -- "$work/Extra/undeclared.txt" || exit 1
 mkdir -- "$work/Extra/Artifacts/undeclared-directory" || exit 1
 if node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/Extra" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-sequence-rollback item=10/16'
+echo 'native release envelope step=reject-sequence-rollback item=10/17'
 if node "$verifier" verify "$work/Root-Key/root-public.pem" "$work/First" 2 >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-unsafe-path item=11/16'
+echo 'native release envelope step=reject-unsafe-path item=11/17'
 node "$fixture_tool" mutate-input unsafe-path \
     "$work/Fixture/Release-Input.json" "$work/Unsafe-Input.json" || exit $?
 if node "$creator" create-release "$work/Policy" \
     "$work/Release-Key/release-private.pem" "$work/Unsafe-Input.json" \
     "$work/Fixture/Sources" "$work/Unsafe-Out" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-incomplete-profile item=12/16'
+echo 'native release envelope step=reject-incomplete-profile item=12/17'
 node "$fixture_tool" mutate-input missing-profile \
     "$work/Fixture/Release-Input.json" "$work/Missing-Input.json" || exit $?
 if node "$creator" create-release "$work/Policy" \
     "$work/Release-Key/release-private.pem" "$work/Missing-Input.json" \
     "$work/Fixture/Sources" "$work/Missing-Out" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-key-and-source-substitution item=13/16'
+echo 'native release envelope step=reject-mixed-package-profile item=13/17'
+node "$fixture_tool" mutate-input mixed-package-profile \
+    "$work/Fixture/Release-Input.json" "$work/Mixed-Input.json" || exit $?
+if node "$creator" create-release "$work/Policy" \
+    "$work/Release-Key/release-private.pem" "$work/Mixed-Input.json" \
+    "$work/Fixture/Sources" "$work/Mixed-Out" >/dev/null 2>&1; then exit 1; fi
+
+echo 'native release envelope step=reject-key-and-source-substitution item=14/17'
 if node "$creator" create-release "$work/Policy" \
     "$work/Other-Release-Key/release-private.pem" "$work/Fixture/Release-Input.json" \
     "$work/Fixture/Sources" "$work/Wrong-Key-Out" >/dev/null 2>&1; then exit 1; fi
@@ -118,7 +125,7 @@ if node "$creator" create-release "$work/Policy" \
     "$work/Release-Key/release-private.pem" "$work/Fixture/Release-Input.json" \
     "$work/Fixture/Sources" "$work/Changed-Out" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=protected-key-roundtrip item=14/16'
+echo 'native release envelope step=protected-key-roundtrip item=15/17'
 node "$fixture_tool" create "$work/Protected-Fixture" >/dev/null || exit $?
 printf '%s\n%s\n' "$test_passphrase" "$test_passphrase" | \
     node "$creator" generate-key root "$work/Protected-Root-Key" \
@@ -141,7 +148,7 @@ printf '%s\n' "$test_passphrase" | node "$creator" create-release \
 node "$verifier" verify "$work/Protected-Root-Key/root-public.pem" \
     "$work/Protected-First" >/dev/null || exit $?
 
-echo 'native release envelope step=reject-protected-key-credential-errors item=15/16'
+echo 'native release envelope step=reject-protected-key-credential-errors item=16/17'
 if printf '%s\n' windvale-test-wrong-passphrase | node "$creator" create-release \
     "$work/Protected-Policy" "$work/Protected-Release-Key/release-private.wvkey" \
     "$work/Protected-Fixture/Release-Input.json" "$work/Protected-Fixture/Sources" \
@@ -151,7 +158,7 @@ if node "$creator" create-release "$work/Protected-Policy" \
     "$work/Protected-Fixture/Release-Input.json" "$work/Protected-Fixture/Sources" \
     "$work/Protected-Missing-Out" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope step=reject-protected-key-tamper item=16/16'
+echo 'native release envelope step=reject-protected-key-tamper item=17/17'
 cp -- "$work/Protected-Root-Key/root-private.wvkey" \
     "$work/Protected-Tampered-Key/root-private.wvkey" || exit $?
 printf x >>"$work/Protected-Tampered-Key/root-private.wvkey"
@@ -161,4 +168,4 @@ if printf '%s\n' "$test_passphrase" | node "$creator" create-root \
     "$work/Protected-Release-Key/release-public.pem" \
     "$work/Protected-Tamper-Out" --key-passphrase >/dev/null 2>&1; then exit 1; fi
 
-echo 'native release envelope status=Passed cases=16 signatures=4 artifacts=11 protected-private-keys=2'
+echo 'native release envelope status=Passed cases=17 signatures=4 artifacts=12 packages=2 protected-private-keys=2'

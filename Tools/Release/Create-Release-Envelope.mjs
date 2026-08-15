@@ -27,12 +27,11 @@ const SCRYPT_P = 1;
 const SCRYPT_MAX_MEMORY = 268_435_456;
 const DOMAIN_PREFIX = Buffer.from("windvale-release-signature-v1\0", "ascii");
 const ENCRYPTED_KEY_HEADER = "windvale-encrypted-private-key 1";
-const REQUIRED_PROFILE = new Set([
+const REQUIRED_PREVIEW_PROFILE = new Set([
     "approval|all",
     "installer|linux-x64",
     "installer|windows-x64",
     "license|all",
-    "package|all",
     "provenance|all",
     "qualification|linux-x64",
     "qualification|windows-x64",
@@ -467,10 +466,40 @@ function Parseˉrootˉpolicy(PolicyBytes, SignatureBytes) {
     };
 }
 
-function Assertˉreleaseˉprofile(Artifacts) {
+function Assertˉreleaseˉprofile(Artifacts, Channel) {
     const Observed = new Set(Artifacts.map(Artifact => `${Artifact.role}|${Artifact.target}`));
-    for (const Required of REQUIRED_PROFILE) {
-        if (!Observed.has(Required)) Fail(`Release profile is missing ${Required}.`);
+    const Packages = Artifacts.filter(Artifact => Artifact.role === "package");
+    if (Channel === "preview") {
+        for (const Required of REQUIRED_PREVIEW_PROFILE) {
+            if (!Observed.has(Required)) Fail(`Release profile is missing ${Required}.`);
+        }
+        if (Packages.length === 0 ||
+            (Packages.length === 1 && Packages[0].target !== "all") ||
+            (Packages.length > 1 && Packages.some(Artifact => Artifact.target === "all"))) {
+            Fail("Release package profile must be one package|all or multiple package-ID targets.");
+        }
+        return;
+    }
+    if (Channel !== "stage" || Packages.length < 2 ||
+        Packages.some(Artifact => Artifact.target === "all") ||
+        !Observed.has("license|all") || !Observed.has("verifier|all") ||
+        Artifacts.length !== 2 + Packages.length * 5) {
+        Fail("Offline stage profile structure differs.");
+    }
+    const Allowed = new Set(["license|all", "verifier|all"]);
+    for (const Package of Packages) {
+        for (const Role of [
+            "package",
+            "approval",
+            "provenance",
+            "launch-windows-x64",
+            "launch-linux-x64",
+        ]) {
+            Allowed.add(`${Role}|${Package.target}`);
+        }
+    }
+    if (Observed.size !== Allowed.size || [...Observed].some(Value => !Allowed.has(Value))) {
+        Fail("Offline stage package policy closure differs.");
     }
 }
 
@@ -594,9 +623,10 @@ function Createˉrelease(
         "artifacts",
     ], "Release input");
     if (Input.format !== "windvale-release-envelope-input-1" ||
-        !VERSION.test(Input.version ?? "") || Input.channel !== "preview" ||
+        !VERSION.test(Input.version ?? "") ||
+        (Input.channel !== "preview" && Input.channel !== "stage") ||
         !GIT_ID.test(Input.revision ?? "") || !GIT_ID.test(Input.tree ?? "") ||
-        !Array.isArray(Input.artifacts) || Input.artifacts.length < REQUIRED_PROFILE.size ||
+        !Array.isArray(Input.artifacts) || Input.artifacts.length < 1 ||
         Input.artifacts.length > 4096) {
         Fail("Release input header differs.");
     }
@@ -681,7 +711,7 @@ function Createˉrelease(
         }
         CaseFoldedPaths.add(Folded);
     }
-    Assertˉreleaseˉprofile(Artifacts);
+    Assertˉreleaseˉprofile(Artifacts, Input.channel);
     const OutputEntries = new Set();
     for (const Artifact of Artifacts) {
         const Parts = Artifact.path.split("/");

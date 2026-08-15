@@ -6,8 +6,10 @@ Release Envelope 1 is the implemented, paired-host-qualified candidate for the
 first Windvale preview release-signing and offline-verification boundary under
 [Decision 0563](../Documents/Decisions/0563-First-Release-Envelope-And-Key-Policy.md).
 Its thirteen-case envelope-format core passes on Windows and Linux in Verify run
-31883543587. Decision 0566 expands that owner to sixteen cases for protected-key
-custody, passing on both hosts in Verify run 31888902259. Official key
+31883543587. Decision 0566 expanded that owner to sixteen cases for protected-key
+custody, passing on both hosts in Verify run 31888902259. Milestone 4 extends
+the backward-compatible preview profile to two named package artifacts and a
+seventeenth mixed-profile rejection. Official key
 generation, final release-state qualification, and `v0.1.0` publication remain
 separate gates.
 
@@ -126,7 +128,7 @@ contains:
 ```text
 windvale-release-manifest 1
 version <0.y.z>
-channel preview
+channel <preview|stage>
 sequence <positive-decimal>
 revision <40-lowercase-hex-git-object-id>
 tree <40-lowercase-hex-git-object-id>
@@ -159,7 +161,7 @@ role/target pairs:
 | `source` | `all` | Exact source archive for the selected revision/tree |
 | `installer` | `windows-x64` | Qualified deterministic Windows installer |
 | `installer` | `linux-x64` | Qualified deterministic Linux installer |
-| `package` | `all` | Exact admitted WVDB Query Bundle 1 |
+| `package` | `all` or package ID | One legacy package uses `all`; a multi-package envelope uses two or more distinct package IDs |
 | `approval` | `all` | Capability approval and target launch records |
 | `license` | `all` | Distributed license inventory |
 | `provenance` | `all` | Bounded source/package/tool provenance |
@@ -172,6 +174,29 @@ The installer payload manifests select their contained tools and licenses, so
 an installer is the platform tool-distribution object rather than a second copy
 of each executable in the release directory.
 
+A package profile is exactly one `package|all` artifact or at least two
+`package|<package-id>` artifacts. The forms cannot be mixed. This preserves the
+published single-package `v0.1.0` envelope while allowing Milestone 4 to bind
+the exact WVDB Query and WVB Inspector bundles without overloading one file or
+changing Release Manifest 1 syntax.
+
+The `stage` channel is a signed, offline development package set. It is not a
+published release, a version promotion, or an instruction to update an
+installed stable channel. Its profile contains exactly `license|all`,
+`verifier|all`, and, for every one of at least two named package targets,
+exactly one artifact in each of these roles:
+
+- `package`;
+- `approval`;
+- `provenance`;
+- `launch-windows-x64`; and
+- `launch-linux-x64`.
+
+No other role/target pair is admitted in the stage profile. This closes each
+package's bundle and policy inventory for an offline lifecycle demonstration
+while leaving installer, source archive, recovery, qualification, public
+discovery, and release promotion under their existing independent gates.
+
 The release-manifest signature uses the same six-record signature format with
 kind `release-manifest` and the delegated release-key identity.
 
@@ -183,7 +208,7 @@ validates, in order:
 1. the caller-provided Ed25519 root and its exact identity;
 2. root-policy structure, embedded keys, sequence geometry, and signature;
 3. release-manifest structure, policy selection, signature, canonical ordering,
-   counts, paths, sizes, and required preview roles;
+   counts, paths, sizes, and the selected preview or stage profile;
 4. every artifact's ordinary-file type, byte length, and SHA-256; and
 5. the bounded complete file and directory inventory, rejecting undeclared or
    missing entries.

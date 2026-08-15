@@ -26,7 +26,7 @@ goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Retirement-Suite.txt"
-set "PlanDigest=517dc03ec213cf6a16e89e6555cb261c5b833ac8f3b368da33ae099d7f13e80e"
+set "PlanDigest=fe50eae5d1cf9f8c22678f6e207359adcb477d0484b92e98a4376ba3b0625104"
 certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"%PlanDigest%" >nul
 if errorlevel 1 (
     >&2 echo Native retirement suite plan identity differs

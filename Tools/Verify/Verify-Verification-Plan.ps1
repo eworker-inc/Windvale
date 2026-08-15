@@ -1272,6 +1272,7 @@ $NativeCases = @(
             'package-format',
             'package-bundle',
             'wvdb-query-capability',
+            'offline-package-stage',
             'wvdb-approval'
         )
         Gaps = @()
@@ -1314,7 +1315,7 @@ $NativeCases = @(
             'Tools/Native/Build-Wvb-Inspector-Package.cmd',
             'Tools/Native/Build-Wvb-Inspector-Package.sh'
         )
-        Suites = @('packages', 'package-format')
+        Suites = @('packages', 'package-format', 'offline-package-stage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1332,7 +1333,7 @@ $NativeCases = @(
             'Tools/Package/Publish-Admitted-Bundle.ps1',
             'Specifications/Windvale-Package-Bundle.md'
         )
-        Suites = @('package-format', 'package-bundle')
+        Suites = @('package-format', 'package-bundle', 'offline-package-stage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1367,7 +1368,7 @@ $NativeCases = @(
             'Specifications/Windvale-Installer.md',
             'LICENSE.md'
         )
-        Suites = @('installers')
+        Suites = @('installers', 'offline-package-stage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1382,7 +1383,18 @@ $NativeCases = @(
             'Tools/Native/Test-Release-Envelope.sh',
             'Specifications/Windvale-Release-Envelope.md'
         )
-        Suites = @('release-envelope')
+        Suites = @('release-envelope', 'offline-package-stage')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'offline package stage owner'
+        Paths = @(
+            'Tools/Package/Create-Offline-Package-Stage-Input.mjs',
+            'Tools/Native/Test-Offline-Package-Stage.cmd',
+            'Tools/Native/Test-Offline-Package-Stage.sh'
+        )
+        Suites = @('offline-package-stage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1400,7 +1412,7 @@ $NativeCases = @(
             'Tools/Native/Test-Wvdb-Approval-Records.sh',
             'Specifications/Windvale-Capability-Approval-And-Launch.md'
         )
-        Suites = @('packages', 'package-format', 'wvdb-approval')
+        Suites = @('packages', 'package-format', 'offline-package-stage', 'wvdb-approval')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1528,9 +1540,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 63 -or
+if ($RetirementSuiteLines.Count -ne 64 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 62-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 63-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1568,7 +1580,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3462 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3471 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

@@ -7,7 +7,8 @@ const ENTRIES = [
     ["installer", "linux-x64", "windvale-linux.tar.gz"],
     ["installer", "windows-x64", "windvale-windows.zip"],
     ["license", "all", "LICENSE.md"],
-    ["package", "all", "wvdb-query.wvpb"],
+    ["package", "windvale.wvb-inspector", "wvb-inspector.wvbundle"],
+    ["package", "windvale.wvdb-query", "wvdb-query.wvbundle"],
     ["provenance", "all", "provenance.txt"],
     ["qualification", "linux-x64", "qualification-linux.txt"],
     ["qualification", "windows-x64", "qualification-windows.txt"],
@@ -73,7 +74,7 @@ function Createˉfixture(OutputPath) {
     };
     Writeˉtext(path.join(Output, "Root-Input.json"), `${JSON.stringify(RootInput, null, 2)}\n`);
     Writeˉtext(path.join(Output, "Release-Input.json"), `${JSON.stringify(ReleaseInput, null, 2)}\n`);
-    process.stdout.write("release fixture status=Created artifacts=11\n");
+    process.stdout.write("release fixture status=Created artifacts=12 packages=2\n");
 }
 
 function Copyˉtree(SourcePath, OutputPath) {
@@ -127,6 +128,13 @@ function Mutateˉinput(Kind, InputPath, OutputPath) {
     } else if (Kind === "missing-profile") {
         Input.artifacts = Input.artifacts.filter(Artifact =>
             !(Artifact.role === "recovery" && Artifact.target === "stage0"));
+    } else if (Kind === "mixed-package-profile") {
+        const Package = Input.artifacts.find(Artifact => Artifact.role === "package");
+        Input.artifacts.push({
+            ...Package,
+            target: "all",
+            path: "Artifacts/legacy-package.wvbundle",
+        });
     } else {
         Fail(`Unknown release fixture mutation: ${Kind}`);
     }
@@ -147,7 +155,7 @@ try {
         process.stderr.write(
             "Usage: node Create-Release-Envelope-Fixture.mjs " +
             "<create output|copy source output|compare left right|" +
-            "mutate-input unsafe-path|missing-profile input output>\n",
+            "mutate-input unsafe-path|missing-profile|mixed-package-profile input output>\n",
         );
         process.exitCode = 64;
     }

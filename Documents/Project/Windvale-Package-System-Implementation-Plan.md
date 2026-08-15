@@ -264,8 +264,10 @@ small in-memory oracle and never requires complete bundle bytes in one Windvale
 
 ### Slice 4: offline signature and release metadata
 
-Standing: **Release Envelope 1 subset complete** for `v0.1.0`; portable
-SHA-512/Ed25519 and the broader Root/Channel/Release discovery model remain open.
+Standing: **Release Envelope 1 subset complete** for `v0.1.0`, with a signed
+two-package offline `stage` profile implemented locally for Milestone 4;
+portable SHA-512/Ed25519 and the broader Root/Channel/Release discovery model
+remain open.
 
 Implement SHA-512 and Ed25519 verification as capability-free portable code with
 RFC 8032 test vectors plus an independent host-library differential oracle used
@@ -280,9 +282,10 @@ release mismatch, and signature domain separation.
 
 Exit gate: one completely offline directory authenticates an exact Release and
 the two package bundles on Windows and Linux without network or ambient trust.
-The bundle/store owner now proves that both exact real bundles coexist in one
-immutable store with one shared canonical license object and idempotent repeat
-publication. Release-envelope inventory and trust closure remain open.
+The signed stage now closes the two exact bundles, approvals, provenance,
+Windows/Linux launch records, shared canonical license, and verifier into one
+deterministic 12-artifact directory using ephemeral test keys. Local Windows
+evidence passes; paired-host evidence remains before this exit gate closes.
 
 ### Slice 5: immutable local object store
 
