@@ -41,10 +41,11 @@ unfinished work.
 
 ### Milestone 4 offline lifecycle
 
-- How should command dispatch validate the active record on every launch without
-  making ordinary tool startup unreasonably expensive?
-- Should the first command dispatcher reread and validate both canonical records
-  on every launch, or consume a separately published digest-bound route cache?
+- The selected local implementation is complete. Does the paired Windows/Linux
+  lifecycle and uninstall evidence agree before the milestone is closed?
+- Which later product milestone should own signed revocation/minimum-version
+  policy and a native installed package-client UI? Neither is required to label
+  this bounded offline lifecycle complete.
 
 ### Development verification maintenance
 

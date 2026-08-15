@@ -642,6 +642,11 @@ foreach ($Path in $Paths) {
             'Verify-Offline-Generation-Lifecycle.mjs'
         )) {
             Add-Suite 'offline-generation-lifecycle'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
+            'Uninstall-Offline-Package-State.mjs',
+            'Verify-Offline-Package-Uninstall.mjs'
+        )) {
+            Add-Suite @('offline-generation-lifecycle', 'offline-package-uninstall')
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Create-Offline-Package-Stage-Input.mjs') {
             Add-Suite 'offline-package-stage'

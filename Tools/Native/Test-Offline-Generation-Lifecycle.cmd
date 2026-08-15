@@ -32,10 +32,10 @@ echo native offline generation lifecycle step=verify-planner item=3/4 cases=12
 node "%RepositoryRoot%\Tools\Package\Verify-Installation-Activation-Planner.mjs" ^
     "%Work%\Planner.exe" || goto :cleanup
 
-echo native offline generation lifecycle step=compose-lifecycle item=4/4 cases=12
+echo native offline generation lifecycle step=compose-lifecycle item=4/4 cases=15
 node "%RepositoryRoot%\Tools\Package\Verify-Offline-Generation-Lifecycle.mjs" ^
     "%Work%\Planner.exe" "%Work%\Resolver.exe" windows-x64 || goto :cleanup
-echo native offline lifecycle composition status=Passed cases=24 planner=12 lifecycle=12 generations=2 activations=3 rollback=Verified
+echo native offline lifecycle composition status=Passed cases=27 planner=12 lifecycle=15 generations=2 activations=3 rollback=Verified uninstall=Verified preservation=2
 set "Result=0"
 
 :cleanup

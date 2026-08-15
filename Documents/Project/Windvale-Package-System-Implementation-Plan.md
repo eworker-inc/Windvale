@@ -3,7 +3,7 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Active Milestone 4 implementation after the signed `v0.1.0` preview; the bounded bootstrap and release subset is complete, while the general offline lifecycle remains partial
+- Status: Milestone 4 implementation complete locally after the signed `v0.1.0` preview; final paired-host lifecycle and uninstall evidence pending
 - Product direction: [packages, releases, updates, and recovery](../Architecture/Packages-Releases-And-Recovery.md)
 - Official-source proposal: [hybrid Windvale endpoint and immutable GitHub archive](Windvale-Package-Source-Proposal.md)
 - Proposed formats and transactions: [release discovery](../Architecture/Windvale-Release-Discovery.md) and [bundle and installation](../Architecture/Windvale-Package-Bundle-And-Installation.md)
@@ -316,7 +316,7 @@ inventory on Windows and Linux, with host paths absent from portable evidence.
 
 ### Slice 6: generations, approvals, activation, and rollback
 
-Standing: **partial**. Exact approval and target launch records exist. Decision
+Standing: **implemented locally; paired-host closure pending**. Exact approval and target launch records exist. Decision
 0568 adds portable Generation 1 / Activation 1 parsing, package/command closure,
 and pure activation/rollback planning. The signed stage now carries exact
 target-specific generation records and the host adapter immutably publishes an
@@ -330,7 +330,11 @@ Dispatch passed both hosts in GitHub run `31904886608`. The Windvale activation
 planner and host adapters now locally compose initial activation, interrupted
 update recovery, expanded-generation activation, command observation, and
 serial-incrementing rollback while retaining both immutable generations.
-Paired-host lifecycle evidence and revocation remain open.
+Decision 0580 then quarantines and removes only exact package-owned state through
+a recoverable transaction while preserving application data and unrelated root
+entries. Paired-host lifecycle/uninstall evidence remains. Signed revocation and
+minimum-version policy are a later security/update boundary, not an approximation
+inside this milestone.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,
@@ -375,11 +379,16 @@ when the installer embeds them for an offline first installation. WVDB Query,
 database servers, and later applications remain separate optional packages or
 projects.
 
-Exit gate: a clean Windows and Linux user profile installs the bootstrap once,
+Full-slice exit gate: a clean Windows and Linux user profile installs the bootstrap once,
 installs both packages offline, runs the inspector and WVDB Query with exact
 approved providers, updates the client, recovers a failed new client, rolls an
 application generation back, and uninstalls without deleting separately owned
 application data.
+
+Milestone 4 deliberately proves the smaller offline lifecycle through focused
+host adapters and the existing bootstrap rather than claiming this full future
+client UI. Its local composition now covers two real packages, activation,
+verified dispatch, interruption recovery, rollback, and safe uninstall.
 
 ### Slice 8: official network source
 

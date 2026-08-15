@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const GENERATION_PUBLISHER = path.join(SCRIPT_DIRECTORY, "Publish-Installation-Generation.mjs");
 const ACTIVATION_PUBLISHER = path.join(SCRIPT_DIRECTORY, "Publish-Installation-Activation.mjs");
+const UNINSTALLER = path.join(SCRIPT_DIRECTORY, "Uninstall-Offline-Package-State.mjs");
 const APPROVAL = {
     inspector: "32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f",
     wvdb: "3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71",
@@ -109,7 +110,7 @@ try {
     fs.writeFileSync(GenerationAInput, GenerationA, { flag: "wx" });
     fs.writeFileSync(GenerationBInput, GenerationB, { flag: "wx" });
 
-    process.stdout.write("generation lifecycle step=publish-generations item=1/8 generations=2\n");
+    process.stdout.write("generation lifecycle step=publish-generations item=1/10 generations=2\n");
     Requireˉsuccess(
         Node(GENERATION_PUBLISHER, "publish", Install, GenerationAInput, GenerationAIdentity),
         "Generation A publication",
@@ -125,7 +126,7 @@ try {
         Install, "generations", GenerationBIdentity, "Generation-1.txt",
     );
 
-    process.stdout.write("generation lifecycle step=bootstrap-first-generation item=2/8\n");
+    process.stdout.write("generation lifecycle step=bootstrap-first-generation item=2/10\n");
     const ActivationA = Activation("1", GenerationAIdentity, "none");
     const ActivationAInput = path.join(Work, "Activation-A.txt");
     fs.writeFileSync(ActivationAInput, ActivationA, { flag: "wx" });
@@ -136,11 +137,11 @@ try {
     );
     const PublicActivation = path.join(Install, "state", "Activation-1.txt");
 
-    process.stdout.write("generation lifecycle step=observe-first-generation item=3/8 commands=2\n");
+    process.stdout.write("generation lifecycle step=observe-first-generation item=3/10 commands=2\n");
     Resolve(Resolver, PublicActivation, PublishedA, Target, "wvdump", true);
     Resolve(Resolver, PublicActivation, PublishedA, Target, "wvquery", false);
 
-    process.stdout.write("generation lifecycle step=plan-update item=4/8\n");
+    process.stdout.write("generation lifecycle step=plan-update item=4/10\n");
     const PlannedB = Run(Planner, ["activate", PublicActivation,
         GenerationBIdentity, "present", "present"]);
     Requireˉsuccess(PlannedB, "update plan");
@@ -153,7 +154,7 @@ try {
     Requireˉsuccess(AdmittedB, "constructed update admission");
     assert.deepEqual(Decodeˉplan(AdmittedB.stdout), ActivationB);
 
-    process.stdout.write("generation lifecycle step=recover-interruption item=5/8\n");
+    process.stdout.write("generation lifecycle step=recover-interruption item=5/10\n");
     const Candidate = path.join(
         Install, "state", `${CANDIDATE_PREFIX}${Sha256(ActivationB)}`,
     );
@@ -164,7 +165,7 @@ try {
     assert.deepEqual(fs.readFileSync(PublicActivation), ActivationA);
     Resolve(Resolver, PublicActivation, PublishedA, Target, "wvquery", false);
 
-    process.stdout.write("generation lifecycle step=activate-expanded-generation item=6/8\n");
+    process.stdout.write("generation lifecycle step=activate-expanded-generation item=6/10\n");
     Requireˉsuccess(
         Node(ACTIVATION_PUBLISHER, "publish", Install, Sha256(ActivationA),
             ActivationBInput, Sha256(ActivationB)),
@@ -173,7 +174,7 @@ try {
     Resolve(Resolver, PublicActivation, PublishedB, Target, "wvdump", true);
     Resolve(Resolver, PublicActivation, PublishedB, Target, "wvquery", true);
 
-    process.stdout.write("generation lifecycle step=rollback item=7/8\n");
+    process.stdout.write("generation lifecycle step=rollback item=7/10\n");
     const PlannedRollback = Run(Planner, ["rollback", PublicActivation,
         "none", "present", "present"]);
     Requireˉsuccess(PlannedRollback, "rollback plan");
@@ -193,7 +194,7 @@ try {
     Resolve(Resolver, PublicActivation, PublishedA, Target, "wvdump", true);
     Resolve(Resolver, PublicActivation, PublishedA, Target, "wvquery", false);
 
-    process.stdout.write("generation lifecycle step=verify-retained-state item=8/8\n");
+    process.stdout.write("generation lifecycle step=verify-retained-state item=8/10\n");
     assert.equal(Sha256(fs.readFileSync(PublishedA)), GenerationAIdentity);
     assert.equal(Sha256(fs.readFileSync(PublishedB)), GenerationBIdentity);
     assert.deepEqual(fs.readFileSync(PublicActivation), ActivationRollback);
@@ -201,9 +202,32 @@ try {
     Requireˉsuccess(EmptyRecovery, "empty recovery");
     assert.match(EmptyRecovery.stdout, /cleaned=0/);
 
+    process.stdout.write("generation lifecycle step=prepare-uninstall item=9/10\n");
+    fs.mkdirSync(path.join(Install, "store", "objects", "sha256"), { recursive: true });
+    fs.mkdirSync(path.join(Install, "store", "bundles", "sha256"), { recursive: true });
+    const ApplicationData = path.join(Install, "application-data", "database.wvdb");
+    fs.mkdirSync(path.dirname(ApplicationData), { mode: 0o700 });
+    fs.writeFileSync(ApplicationData, "preserve-user-data", { flag: "wx" });
+    const Unrelated = path.join(Install, "notes.txt");
+    fs.writeFileSync(Unrelated, "preserve-unrelated-file", { flag: "wx" });
+
+    process.stdout.write("generation lifecycle step=uninstall item=10/10\n");
+    const Uninstall = Node(UNINSTALLER, "uninstall", Install);
+    Requireˉsuccess(Uninstall, "offline installation uninstall");
+    assert.match(Uninstall.stdout, /result=removed/);
+    for (const OwnedName of ["state", "generations", "store"]) {
+        assert.equal(fs.existsSync(path.join(Install, OwnedName)), false);
+    }
+    assert.equal(fs.readFileSync(ApplicationData, "utf8"), "preserve-user-data");
+    assert.equal(fs.readFileSync(Unrelated, "utf8"), "preserve-unrelated-file");
+    const RepeatUninstall = Node(UNINSTALLER, "uninstall", Install);
+    Requireˉsuccess(RepeatUninstall, "repeated offline installation uninstall");
+    assert.match(RepeatUninstall.stdout, /result=already-absent/);
+
     process.stdout.write(
-        "native offline generation lifecycle status=Passed cases=12 generations=2 " +
-        "activations=3 recoveries=2 command-observations=8 rollback=Verified\n",
+        "native offline generation lifecycle status=Passed cases=15 generations=2 " +
+        "activations=3 recoveries=2 command-observations=8 rollback=Verified " +
+        "uninstall=Verified preservation=2\n",
     );
 } finally {
     fs.rmSync(Work, { recursive: true, force: true });

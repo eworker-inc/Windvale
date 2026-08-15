@@ -1447,6 +1447,18 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'offline package uninstall owner'
+        Paths = @(
+            'Tools/Package/Uninstall-Offline-Package-State.mjs',
+            'Tools/Package/Verify-Offline-Package-Uninstall.mjs',
+            'Tools/Native/Test-Offline-Package-Uninstall.cmd',
+            'Tools/Native/Test-Offline-Package-Uninstall.sh'
+        )
+        Suites = @('offline-generation-lifecycle', 'offline-package-uninstall')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'installation command dispatch owner'
         Paths = @(
             'Tools/Package/Dispatch-Installation-Command.mjs',
@@ -1655,9 +1667,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 68 -or
+if ($RetirementSuiteLines.Count -ne 69 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 67-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 68-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1695,7 +1707,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3527 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3543 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

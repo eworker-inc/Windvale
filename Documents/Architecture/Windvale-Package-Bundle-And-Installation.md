@@ -354,6 +354,26 @@ transaction generations. A dry-run inventory and deterministic reachability proo
 precede deletion. Ordinary uninstall initially removes only a root from a new
 generation and leaves unreachable content for later authorized collection.
 
+## Recoverable bounded uninstall
+
+The bounded offline installation owns only `state`, `generations`, and `store`
+beneath an existing ordinary installation root. The host uninstall adapter
+validates the exact Activation 1, Generation 1, and SHA-256 store layouts before
+mutation; links, unknown entries, malformed transaction state, and policy-bound
+excess are rejected without removal. Interrupted activation or generation
+candidates must be resolved by their owning recovery adapters first.
+
+The adapter durably records `.windvale-uninstall-1/Uninstall-1.txt`, atomically
+quarantines `state` first so later command resolution cannot start, then
+quarantines `generations` and `store`. It revalidates and removes only those
+quarantined owned trees. The installation root, application data, and unrelated
+sibling files are never removal targets.
+
+Recovery completes a canonical recorded transaction rather than guessing or
+reactivating it. An empty transaction directory is an uncommitted attempt and is
+removed without changing owned state. Malformed or ambiguous transactions are
+preserved for inspection. A completed uninstall is idempotent.
+
 ## Required evidence
 
 Bundle qualification requires valid, boundary, truncated, oversized,

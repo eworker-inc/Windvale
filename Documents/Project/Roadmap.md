@@ -134,7 +134,7 @@ deliberate selection for later releases and promotions.
 | Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
 | Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
-| Milestone 4: offline package lifecycle | 🎯 Current | Generation/Activation semantics, durable host publication/recovery, a signed two-package offline stage, and paired active-command dispatch now exist; composed recovery/rollback passes locally, while paired lifecycle, revocation, uninstall, and end-to-end evidence remain. |
+| Milestone 4: offline package lifecycle | 🎯 Current | Every selected behavior is implemented locally: two-package admission, immutable generations, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall. Paired-host evidence for the final composition and uninstall remains before closure. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
 The completed 0.1 product path was:
@@ -201,8 +201,12 @@ or invalid selections. Dispatch passed both hosts in GitHub run `31904886608`.
 The composed lifecycle now locally publishes one- and two-package generations,
 recovers an interrupted update without changing the old activation, activates
 the expanded generation, and rolls back at serial 3 while retaining both
-immutable records. Paired-host lifecycle, revocation, safe uninstall, and the
-complete installation demonstration remain open.
+immutable records. It then durably uninstalls only package-owned state while
+preserving application data, unrelated files, and the installation root. A
+separate 13-case owner covers interrupted-uninstall recovery and five safety
+rejections. Paired-host final lifecycle and uninstall reports remain before the
+milestone closes. Signed revocation/minimum-version policy belongs to the later
+security/update boundary and is not silently approximated by this offline gate.
 
 ## Milestone 2: package-backed host application — complete
 
