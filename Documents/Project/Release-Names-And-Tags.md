@@ -45,12 +45,14 @@ experimental:
   contract break; and
 - reserve `v1.0.0` for an accepted stability/support policy.
 
-The planned first product tag is `v0.1.0`, after the package-backed application,
-release envelope, offline verification, and explicit dual-host release gate are
-complete. In the dependency-based roadmap these are Milestone 2 followed by
-Milestone 3. Parallel OS-1 launch/service composition is valuable but is not a
-prerequisite for this host-product preview. Later previews would normally be
-`v0.2.0`, `v0.3.0`, and so on—not “release 2” without a compatibility meaning.
+The first product tag is the signed `v0.1.0` preview published on 15 August 2026
+from exact commit `c1d350949207c7ee6f82ed2c399b748e188bf949` after the
+package-backed application, release envelope, offline verification, and explicit
+dual-host release gate completed. In the dependency-based roadmap these are
+Milestone 2 followed by Milestone 3. Parallel OS-1 launch/service composition is
+valuable but was not a prerequisite for this host-product preview. Later previews
+would normally be `v0.2.0`, `v0.3.0`, and so on—not “release 2” without a
+compatibility meaning.
 
 `v0.1.0` must publish installable per-user Windows and Linux artifacts for
 Windvale and its core tools. The base installation includes the launcher/client,
@@ -63,10 +65,11 @@ becoming implicit base-install dependencies.
 Decision 0562. It is not a Git product tag and must not be published as
 `v0.1.0`. Decision 0565 separately pins internally consistent `0.1.0` stable
 Windows/Linux artifacts for the release envelope; the stable filename alone is
-not a release or authenticity claim. Decisions 0563 and 0564 implement the trust
-policy, envelope, threat-model boundary, and exact approval records. The stable
-installer owner passes on both hosts in Verify run 31885759856; the project-owner
-root ceremony, exact-state qualification, and publication remain open.
+not a release or authenticity claim. Decisions 0563, 0564, and 0566 implement the
+trust policy, envelope, threat-model boundary, protected-key custody, and exact
+approval records. The official artifacts are authenticated by the signed tag and
+published Release Envelope 1; exact-state Qualification run 31889107326 passed
+before publication.
 
 ## Milestone checkpoint
 

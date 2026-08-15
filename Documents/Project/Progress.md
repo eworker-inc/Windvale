@@ -13,10 +13,11 @@ runs and identities, and accepted decisions own rationale.
 The image is a dated editorial snapshot. Update the Markdown when current state
 changes; refresh the image only when it becomes materially misleading.
 
-The roadmap is dependency-based: Milestone 2 closed the package-backed host
-application, Milestone 3 now owns the 0.1 preview, and OS-1 advances launch and
-service composition in parallel. The former numeric order remains in history;
-no completion gate was removed by the rebaseline.
+The roadmap is dependency-based: Milestones 1 through 3 are complete, including
+the package-backed host application and published 0.1 preview. OS-1 advances
+launch and service composition as the active parallel product track. The former
+numeric order remains in history; no completion gate was removed by the
+rebaseline.
 
 ## Indicators
 
@@ -35,15 +36,15 @@ no completion gate was removed by the rebaseline.
 | Seed through assembler and linker | ✅ | Source semantics, WVB, verification, runtime, object, assembly, and link foundations have Windows/Linux evidence. | Preserve their contracts as later products consume them. |
 | Windvale-written compiler | ✅ | The committed twelve-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Add forward semantics only for named consumers; do not widen Stage 0. |
 | Shared accepted-subset native backend | 🔵 | Interpreter, deterministic AOT, baseline JIT, hosted execution, and native object/link/container profiles are qualified for their documented subsets. | Broaden only where the package application, tools, or OS require an unsupported operation or ownership shape. |
-| Native-only repository | 🚧 | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions; [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md) removes all tracked managed source and direct managed entry points from `main`. | Pass one explicit post-archive dual-host qualification, then tag the exact commit as a native-only baseline. |
+| Native-only repository | ✅ | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions; [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md) removes all tracked managed source and direct managed entry points from `main`; final [Qualification run 31889107326](https://github.com/eworker-inc/Windvale/actions/runs/31889107326) passed on the post-archive `v0.1.0` state. | Preserve the qualified boundary; create a separate baseline tag only if it adds value beyond the exact signed product tag. |
 | Development verification | ✅ | Milestone 1 is complete under [Decision 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md): front-door feedback takes 13,900 ms, the pinned WebAssembly engine path takes 29,674 ms, and the all-hit database owner fell from 402,638 ms to 87,800 ms with all eight behaviors. Exact warm [GitHub run 31852544894, attempt 2](https://github.com/eworker-inc/Windvale/actions/runs/31852544894/attempts/2) passes end to end in 1m42s on Windows and 1m15s on Linux; three owner closures and five checkpoint families are machine-checked. | Preserve the bounded path and add another checkpoint or owner only from new measured product pressure. |
 | Native qualification | ✅ | [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md) qualified 52 suites and 3,287 cases per host in four shards; the complete workflow took about 15 minutes. | Run this gate only for a selected release, promotion, bootstrap, security, ABI, or conformance state. |
 | Package-backed application | ✅ | Milestone 2 is complete under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md). Paired [Bundle 1/store run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) and [capability run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) retain the exact WVB, bundle, package, application, capability, success, denial, and offline-rebuild evidence. | Preserve these results while their declared inputs remain unchanged; use the completed package path as an installer and release-envelope consumer in Milestone 3. |
-| Development/stable installers | ✅ | [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) retains the paired exact `0.1.0-dev.1` archives. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) pins separate `0.1.0` Windows/Linux archives and stable internal metadata while reproducing the development bytes unchanged. The combined owner passes on both hosts in [Verify run 31885759856](https://github.com/eworker-inc/Windvale/actions/runs/31885759856). | Select only the stable identities in the owner-signed release envelope. |
+| Development/stable installers | ✅ | [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) retains the paired exact `0.1.0-dev.1` archives. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) pins separate `0.1.0` Windows/Linux archives, now published in the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve their exact checksums; packaging corrections receive a new version rather than replacing published assets. |
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
 | Windvale OS | 🔵 | OS-1 owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption, and generation-safe non-tail memory objects; the current native candidate also gates its fixed three-process path through exact ResourceDomain1 process/page/endpoint accounting and terminal zero charge. | Advance the fixed accounting gate into one atomic dynamic launch/supervision slice before broad shell, networking, or driver work. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
-| Public project and release foundation | 🚧 | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier now exist. Their focused owners pass on Windows and Linux in Verify run 31883543587. The exact Stage 0 recovery release is published and independently retained. | Perform the project-owner root ceremony, select and qualify the final state, and publish the signed `v0.1.0` envelope. |
+| Public project and release foundation | ✅ | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier are published with the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve the published evidence and define the next preview from new product pressure rather than reopening 0.1.0. |
 
 ## .NET retirement result
 
@@ -87,24 +88,20 @@ feature belongs in it.
 SQL, a registry, a network resolver, broad concurrency, and a database server
 are not required for this slice.
 
-### 2. Active Milestone 3: Windvale 0.1 preview
+### 2. Milestone 3 complete: Windvale 0.1 preview
 
-Retain the qualified `0.1.0-dev.1` development artifacts from Decision 0562 and
-consume the separately pinned `0.1.0` stable Windows/Linux installers from
-Decision 0565. Their base payload is Windvale plus the bounded launcher/client,
-offline payload verifier, compiler, assembler, linker, runtime, publisher, and
-core inspection tools. A stable label alone is not the `v0.1.0` release.
-WVDB Query is a separate example/application package; database servers and other
-applications remain separate packages or projects. The shipped-product threat
-model, first signing/offline-verification policy, bounded envelope creator and
-independent verifier, and exact WVDB approval and target launch records are
-implemented under Decisions 0563 and 0564. The 13-case envelope-format core and
-8 approval-record cases pass on both hosts in Verify run 31883543587. Decision
-0566 expands the envelope owner to 16 cases for passphrase-protected key custody,
-passing on both hosts in Verify run 31888902259. The remaining sequence is the
-project-owner root ceremony, one selected-state complete qualification,
-reproducible envelope creation, offline verification, and the signed `v0.1.0`
-tag/publication.
+The signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0)
+was published on 15 August 2026 from exact commit
+`c1d350949207c7ee6f82ed2c399b748e188bf949`. Its Windows and Linux installers,
+source archive, WVDB Query bundle and approval records, qualification reports,
+provenance, root policy, signed manifest, public keys, offline verifier, and
+complete release envelope are retained as immutable release assets. Final
+[Qualification run 31889107326](https://github.com/eworker-inc/Windvale/actions/runs/31889107326)
+passed the selected commit on both hosts, and the signed tag binds manifest
+digest `2e28f45c668be869b17cc5547ee0865a0365417f442ecc49c0e481c696b6d85a`.
+
+WVDB Query remains a separate example/application package; database servers and
+other applications remain separate packages or projects. Milestone 3 is closed.
 
 OS-1 is not a prerequisite for `v0.1.0`.
 
@@ -113,9 +110,10 @@ OS-1 is not a prerequisite for `v0.1.0`.
 The archival decision is implemented in the working repository: the immutable
 pre-removal release remains authoritative, the in-tree pointer preserves exact
 checksums and recovery custody, and guards require zero tracked managed files and
-zero direct managed entry points. The remaining step is one explicit complete
-Windows/Linux qualification on the committed post-archive state; ordinary
-per-commit full qualification remains disabled.
+zero direct managed entry points. The `v0.1.0` selected state passed the explicit
+complete Windows/Linux qualification. A separate native-only checkpoint tag is
+now optional naming, not an open qualification gate; ordinary per-commit full
+qualification remains disabled.
 
 ### Parallel track OS-1: launch and service composition
 
@@ -148,7 +146,7 @@ supervision with a bounded restart or deliberate terminal result.
 - ✅ Canonical WVB → admitted guest resource → protected Windvale OS execution for the qualified examples.
 - ✅ Package manifest and lock → admitted immutable bundle/store → rights-limited WVDB Query execution on Windows and Linux.
 - 🚧 Probe 40 fixed ResourceDomain1 accounting → atomic launch → supervised isolated provider.
-- ○ Qualified product artifacts → signed release envelope → offline-verifiable Windvale 0.1 preview.
+- ✅ Qualified product artifacts → signed release envelope → offline-verifiable Windvale 0.1 preview.
 
 ## Reading the evidence
 

@@ -124,20 +124,20 @@ owner may remain slower when its complete boundary cannot be divided honestly.
 
 Milestone 1 is closed. Ordinary development now has a measured bounded path;
 Milestone 2 subsequently closed the package-backed application, and Milestone 3
-is now the active product milestone. Full qualification remains a separate
-deliberate selection.
+closed with the signed `v0.1.0` preview. Full qualification remains a separate
+deliberate selection for later releases and promotions.
 
 ## Active dependency structure
 
 | Work | Standing | Dependency |
 | --- | :---: | --- |
 | Milestone 1: predictable development feedback | ✅ Complete | Closed foundation; preserve its bounded workflow. |
-| Native-only baseline promotion checkpoint | 🚧 Candidate | One explicit post-archive dual-host qualification and exact baseline tag; independent of product implementation. |
+| Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
-| Milestone 3: Windvale 0.1 preview | 🎯 Active | Stable `0.1.0` installers and release security have paired evidence; complete custody and qualify the final selected state. |
-| Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful but does not block Milestone 3. |
+| Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
+| Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
-The product critical path is:
+The completed 0.1 product path was:
 
 `Windows/Linux installers and core-tool packages → release envelope → one final release qualification → v0.1.0`
 
@@ -192,7 +192,7 @@ Milestone 2 is closed at implementation/evidence commit
 activation, SQL, and server work do not reopen it; the bounded installer and
 release-envelope work now belongs to Milestone 3.
 
-## Milestone 3: Windvale 0.1 preview — active
+## Milestone 3: Windvale 0.1 preview — complete
 
 Windvale 0.1 is the first inspectable product release, not the first complete
 operating-system release. Its gate is defined in
@@ -202,7 +202,7 @@ defined by [Release-Names-And-Tags.md](Release-Names-And-Tags.md).
 
 The preview requires:
 
-1. the completed .NET-free normal workflow and recoverable Stage 0 lineage;
+1. the completed native normal workflow and recoverable Stage 0 lineage;
 2. the useful package-backed application from Milestone 2;
 3. reproducible source, package, tool, license, provenance, and qualification
    artifacts;
@@ -228,17 +228,18 @@ requirements.
 
 | Gate | Standing | Evidence or remaining boundary |
 | --- | :---: | --- |
-| .NET-free normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
+| Native normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
 | Useful package-backed application | ✅ | Milestone 2 is complete with paired Bundle 1/store and rights-reduced capability reports under Decision 0561. |
-| Reproducible release artifacts and installers | ✅ Infrastructure / 🚧 Official envelope | Decision 0562 retains the exact qualified `0.1.0-dev.1` artifacts. Decision 0565 pins distinct internally consistent `0.1.0` stable identities without duplicating the builder; the combined owner passes on both hosts in Verify run 31885759856. Decision 0563's bounded creator, independent verifier, eleven-artifact profile, and thirteen-case format core pass in Verify run 31883543587. Decision 0566 expands the owner to sixteen protected-key-custody cases, passing on both hosts in Verify run 31888902259; the owner-custodied official envelope remains. |
+| Reproducible release artifacts and installers | ✅ | Decision 0562 retains the exact qualified `0.1.0-dev.1` artifacts; Decision 0565 pins the stable `0.1.0` Windows/Linux identities; Decisions 0563 and 0566 own the envelope and protected-key custody. The official envelope is published with the [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). |
 | Capability approval, binding, and denial | ✅ | Decision 0564 fixes one approval and two target launch records around the existing five-capability closure. The independent eight-case owner passes on Windows and Linux in Verify run 31883543587. |
 | Public product threat model | ✅ | [Product-Threat-Model.md](../Architecture/Product-Threat-Model.md) covers the shipped source, compiler, WVB/WVO, bundle, installer, release, capability, and recovery boundaries with explicit limits and residual risks. |
-| Release signing and offline verification policy | 🚧 Ceremony | Decision 0563 fixes Ed25519 root delegation, caller-enforced minimum sequence, bounded manifest rules, and offline verification. The project owner must still accept custody, establish the official public root, and sign the final envelope. |
-| Exact-state dual-host release qualification | ○ | Select and run this once after the release inputs settle; ordinary development runs do not satisfy it. |
+| Release signing and offline verification policy | ✅ | The project-owner ceremony established the public root and release delegation; the published root policy, signed manifest, public keys, and independent verifier retain the offline verification path. |
+| Exact-state dual-host release qualification | ✅ | [Qualification run 31889107326](https://github.com/eworker-inc/Windvale/actions/runs/31889107326) passed exact commit `c1d350949207c7ee6f82ed2c399b748e188bf949` before the signed tag and release were published. |
 
-The native-only baseline qualification may be performed earlier as its own
-promotion checkpoint. It provides useful evidence but does not substitute for
-the final exact-state product qualification.
+Milestone 3 closed on 15 August 2026 with signed tag `v0.1.0`, manifest digest
+`2e28f45c668be869b17cc5547ee0865a0365417f442ecc49c0e481c696b6d85a`,
+and the immutable public preview release. Future fixes or preview milestones use
+new versions; they do not replace these assets.
 
 ## Parallel track OS-1: Windvale OS launch and service slice
 

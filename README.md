@@ -1,8 +1,8 @@
 # Windvale
 
-![Illustrated Windvale journey from the C# bootstrap through the Windvale language and tools to a self-hosting compiler](Documents/Project/Images/Windvale-Project-History-Day-15.png)
+![Four-panel Day 18 comic showing the signed Windvale 0.1.0 preview reaching Windows and Linux and running successfully](Documents/Project/Images/Windvale-Project-Progress-2026-08-15.png)
 
-*Day 15: AI systems under human direction grew Windvale from a C# bootstrap into a qualified native, self-hosting stack. The normal Windows and Linux paths no longer require .NET; the exact managed Stage 0 state is preserved in an immutable recovery release.*
+*Day 18: Windvale 0.1.0 ships as an installable preview for Windows and Linux. The signed release preserves exact source, qualification, recovery, and offline-verification evidence.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
@@ -35,18 +35,18 @@ Portable Function-Only.wv -> the same canonical WVB -> Windows, Linux, and Windv
 
 The Windvale-written compiler and native tools now own the accepted normal
 Windows and Linux build, verification, inspection, execution, assembly, link,
-packaging, WebAssembly, OS-image, and bootstrap paths. Decision 0526 qualified
-all eight .NET-retirement conditions. Decision 0558 moved the frozen C#
-implementation out of `main` into the exact Stage 0 recovery release; forward
-language semantics belong exclusively in `Compiler/Windvale`.
+packaging, WebAssembly, OS-image, and bootstrap paths. Decisions 0526 and 0558
+qualified the native transition and preserved the frozen Stage 0 implementation
+in its exact recovery release. Forward language semantics belong exclusively in
+`Compiler/Windvale`.
 
 ## Browser playground
 
-The normal playground is a static Monaco application over the Windvale-native WebAssembly pipeline. One disposable worker loads the digest-pinned interpreter and portable source compiler, constructs canonical `WVSS 1`, compiles to WVB, verifies the returned module again, and executes its scalar entry point. It starts no Blazor host or .NET runtime, and source stays in the browser.
+The normal playground is a static Monaco application over the Windvale-native WebAssembly pipeline. One disposable worker loads the digest-pinned interpreter and portable source compiler, constructs canonical `WVSS 1`, compiles to WVB, verifies the returned module again, and executes its scalar entry point. Source stays in the browser.
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
-Normal browser artifact production is also .NET-free: the native source front door rebuilds both WVB inputs, the pinned native source compiler rebuilds the portable compiler, and the pinned native WebAssembly compiler rebuilds the interpreter Wasm. Historical Stage 0 reconstruction begins from the immutable recovery release rather than this checkout.
+Normal browser artifact production uses the native source front door to rebuild both WVB inputs, the pinned native source compiler to rebuild the portable compiler, and the pinned native WebAssembly compiler to rebuild the interpreter Wasm. Historical Stage 0 reconstruction begins from the immutable recovery release rather than this checkout.
 
 Run it locally:
 
@@ -62,10 +62,10 @@ The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) an
 
 ## Quick start
 
-Install the Windvale 0.1.0 preview per user without administrator/root access or
-.NET. The bootstrap downloads the exact published installer, verifies its
-SHA-256, installs it, persists the command path, and activates that path in the
-current terminal.
+Install the Windvale 0.1.0 preview per user without administrator or root access.
+The bootstrap downloads the exact published installer, verifies its SHA-256,
+installs it, persists the command path, and activates that path in the current
+terminal.
 
 On Windows PowerShell, download the script and dot-source it so `wv` is
 available immediately:
@@ -94,58 +94,38 @@ The versioned archives, checksums, signed manifest, and complete offline
 verification envelope remain available from the
 [Windvale 0.1.0 release](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0).
 
-### Build from source
+### Compile with the installed tools
 
-Requirements:
+Clone or download this repository, then run the same commands from its root on
+Windows PowerShell or Linux:
 
-- Windows x64 with the inbox command processor, or Linux x64 with Bash and
-  `sha256sum`, for ordinary native source-to-WVB build, verification, and inspection
+```text
+wvbuild Examples/Seed/Sum-Data.wv Artifacts/Sum-Data.wvb
+wvverify Artifacts/Sum-Data.wvb
+wvdump Artifacts/Sum-Data.wvb
+wvrun Artifacts/Sum-Data.wvb
+```
 
-The active repository contains no managed projects and does not require a .NET
-SDK. The [Stage 0 recovery pointer](Bootstrap/Stage0/README.md) records the exact
-archived toolchain separately.
+The installed compiler publishes a 494-byte WVB module, the verifier admits it,
+and the runner reports `Result: 29`.
 
-Compile the portable example through the ordinary no-.NET front door on Windows:
+### Contributor build wrappers
+
+The checkout also provides digest-pinned wrappers for reproducible contributor
+work. They use project metadata and atomically replace only a verifier-admitted
+output:
 
 ```bat
 Tools\Native\Build-Wvb.cmd Examples\Seed\Sum-Data.wvproj Artifacts\Sum-Data.wvb
-```
-
-Or on Linux:
-
-```sh
-./Tools/Native/Build-Wvb.sh Examples/Seed/Sum-Data.wvproj Artifacts/Sum-Data.wvb
-```
-
-The checked-in native artifacts are digest-verified before use, and the publisher
-atomically replaces only a verifier-admitted output. Verify and inspect the result
-without .NET on Windows:
-
-```bat
 Tools\Native\Verify-Wvb.cmd Artifacts\Sum-Data.wvb
 Tools\Native\Inspect-Wvb.cmd Artifacts\Sum-Data.wvb
-```
-
-Or on Linux:
-
-```sh
-./Tools/Native/Verify-Wvb.sh Artifacts/Sum-Data.wvb
-./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
-```
-
-Execute through the ordinary native runner on Windows:
-
-```bat
 Tools\Native\Run-Wvb.cmd Artifacts\Sum-Data.wvb
 ```
 
-Or on Linux:
-
-```sh
-./Tools/Native/Run-Wvb.sh Artifacts/Sum-Data.wvb
-```
-
-The result is `Result: 29`.
+The Linux equivalents are `Build-Wvb.sh`, `Verify-Wvb.sh`, `Inspect-Wvb.sh`, and
+`Run-Wvb.sh` in the same directory. The
+[Stage 0 recovery pointer](Bootstrap/Stage0/README.md) records the archived
+toolchain separately.
 
 For native build and read-only WVB tooling, see the [native source-to-WVB runbook](Documents/Runbooks/Native-Source-To-Wvb.md). For the focused verification rhythm, bootstrap convergence, assembly, linking, and component examples, continue with the [Seed development runbook](Documents/Runbooks/Seed-Development.md).
 
@@ -200,7 +180,7 @@ export fn Main() -> i32 {
 - Platform scope, authority level, required capabilities, and optional capabilities remain separate metadata dimensions; a requirement never grants authority by itself.
 - The durable [Windvale OS architecture](Documents/Architecture/Windvale-Os-Architecture.md) uses a small capability-oriented kernel written primarily in `.wv`, a bounded `.wva` machine layer, and isolated Windvale services.
 - [Proposed next integrated defaults](Documents/Decisions/0198-Next-Integrated-Architecture-Defaults.md) connect the next resource-domain, process, console, network, trust, package, and language contracts for product review without claiming implementation.
-- C# and .NET are absent from `main`; the immutable qualified Stage 0 release remains the recovery and historical differential source.
+- The frozen Stage 0 implementation remains in an immutable qualified release for recovery and historical differential work.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
 
 ## Documentation
