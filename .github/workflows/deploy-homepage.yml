@@ -121,6 +121,7 @@ jobs:
           npm run verify:wasm-compiler-package
           npm run verify:wasm-compiler-demo
           npm run verify:wasm-compiler-core
+          npm run verify:wasm-workbench
 
       - name: Assemble same-origin static site
         if: ${{ steps.gate.outputs.deploy == 'true' }}

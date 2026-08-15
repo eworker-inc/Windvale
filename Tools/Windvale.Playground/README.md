@@ -1,6 +1,6 @@
 # Windvale Playground
 
-The Windvale playground is a static browser application over the experimental Windvale-native WebAssembly pipeline. Monaco remains the local editor. A disposable module worker loads an identity-pinned direct compiler Wasm and scalar interpreter Wasm, compiles one canonical `WVSS 1` source set to WVB, admits the returned bytes as untrusted input, and executes the verified scalar entry point. Source never leaves the browser.
+The Windvale playground is a static browser application over the experimental Windvale-native WebAssembly pipeline. Monaco remains the local editor. A disposable module worker loads an identity-pinned direct compiler Wasm and scalar interpreter Wasm, compiles one canonical `WVSS 1` source set to WVB, admits the returned bytes as untrusted input, and executes the verified scalar entry point. Source never leaves the browser. The page also includes an experimental Workbench terminal with a bounded origin-private `/workspace`; it is a browser host, not Windvale OS.
 
 This directory contains only the normal static playground. The retired Blazor
 host and managed comparison engine are available in the immutable Stage 0
@@ -25,6 +25,13 @@ One normal run performs this sequence inside a disposable worker:
 The default `Hello-Windvale.wv` proof produces 253 WVB bytes with SHA-256 `0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f`, writes `Hello from Windvale` plus LF, returns `0`, and requests zero .NET or Blazor assets. With its visible console grant disabled, the same module returns `WVR3010` before executing a guest instruction. The retained portable proof produces 183 WVB bytes, returns `42`, and exercises the same v3 response boundary without a capability. Initial download and WebAssembly compilation vary by browser, network, cache, and CPU; that timing is evidence rather than a portable performance contract.
 
 The page retains multiple in-memory source tabs, local Monaco syntax support and completions, resizable editor and evidence panes, mobile layout, light/dark themes, and execution/diagnostic/bytecode views. The browser execution profile remains deliberately narrow: one UTF-8 source module, a scalar `Main` result, and at most the explicitly granted bounded `console.write_line` capability. This is ordinary framework code in the page and worker; it requires no Chrome or other browser extension. Unsupported execution surface fails explicitly.
+
+The Workbench shell supports `help`, `pwd`, `ls`, `cat`, `save`, `open`,
+`write`, `rm`, `run`, `status`, and `clear`. It stores up to 64 flat UTF-8 files,
+64 KiB each and 2 MiB in aggregate, in the browser's Origin Private File System
+when available and labels a session-memory fallback otherwise. `run [file]`
+uses the same disposable compile, WVB admission, and scalar execution pipeline.
+The workspace is not granted to guest applications.
 
 ## Run locally
 

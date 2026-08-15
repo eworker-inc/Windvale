@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="./" />
-    <meta name="description" content="Compile, verify, and run Windvale programs locally in your browser." />
+    <meta name="description" content="Edit, store, compile, verify, and run Windvale programs in a browser-native workbench." />
     <meta itemprop="name" content="Windvale Playground" />
     <meta itemprop="description" content="Compile, verify, and run Windvale programs locally in your browser." />
     <meta itemprop="inLanguage" content="en-CA" />
@@ -44,7 +44,7 @@
     <script src="js/theme-bootstrap.js"></script>
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="editor/playground-editor.css" />
-    <title>Windvale Playground</title>
+    <title>Windvale Playground and Workbench</title>
 </head>
 <body>
     <div class="playground-shell" id="playground-shell">
@@ -70,7 +70,7 @@
 
         <div class="playground-frame">
           <div class="ide-toolbar">
-            <div class="native-toolbar-note"><i></i> Running entirely in Windvale-native WebAssembly</div>
+            <div class="native-toolbar-note"><i></i> Browser-native Workbench · Windvale-native WebAssembly compiler and runtime</div>
             <div class="toolbar-actions">
                 <label class="example-picker">
                     <span>Open example</span>
@@ -119,6 +119,11 @@ export fn Main() -> i32 {
                             <strong>portable or bounded console · scalar result</strong>
                             <p>Accepts a portable module, or a hosted module declaring only <code>console.write_line</code>, with <code>Main() -&gt; i32</code>.</p>
                         </div>
+                        <div class="workspace-card">
+                            <span>Workbench workspace</span>
+                            <strong id="workspace-summary">Mounting /workspace…</strong>
+                            <p>Shell files persist in origin-private browser storage when available. Applications do not receive ambient workspace access.</p>
+                        </div>
                         <fieldset class="capabilities">
                             <legend>Capability grants</legend>
                             <p>Declarations request authority; this control grants it for one disposable worker run.</p>
@@ -137,7 +142,7 @@ export fn Main() -> i32 {
                         </label>
                         <div class="sandbox-note">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8.1 7 10 4.2-1.9 7-5.4 7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>
-                            <p><strong>Browser sandbox</strong><span>No files, network, clock, or server upload. Compilation and execution stay in browser WebAssembly.</span></p>
+                            <p><strong>Browser sandbox</strong><span>No host files, network, clock, or server upload. The shell workspace stays within this site origin.</span></p>
                         </div>
                         <p class="latency-note">The direct compiler normally finishes the starter in about one second after the static package loads. Larger examples take a few seconds. Browser, network, and CPU speed vary.</p>
                     </div>
@@ -148,14 +153,29 @@ export fn Main() -> i32 {
 
             <section class="results-pane" aria-label="Program results">
                 <nav class="result-tabs" aria-label="Result views">
-                    <button class="active" type="button" data-result-tab="output" aria-pressed="true">Output</button>
+                    <button class="active" type="button" data-result-tab="terminal" aria-pressed="true">Workbench</button>
+                    <button type="button" data-result-tab="output" aria-pressed="false">Output</button>
                     <button type="button" data-result-tab="diagnostics" aria-pressed="false">Diagnostics <span class="tab-count" id="diagnostic-count" hidden>0</span></button>
                     <button type="button" data-result-tab="bytecode" aria-pressed="false">Bytecode</button>
                     <button type="button" data-result-tab="execution" aria-pressed="false">Execution</button>
                     <span class="result-status" id="result-status" hidden></span>
                 </nav>
                 <div class="result-body" aria-live="polite">
-                    <div class="result-view" data-result-view="output">
+                    <div class="result-view terminal-view" data-result-view="terminal">
+                        <div class="terminal" id="workbench-terminal" role="application" aria-label="Windvale Workbench terminal">
+                            <div class="terminal-banner">
+                                <span>Windvale Workbench</span>
+                                <small>Browser host · not Windvale OS</small>
+                            </div>
+                            <div class="terminal-transcript" id="terminal-transcript" role="log" aria-live="polite" aria-relevant="additions text"></div>
+                            <form class="terminal-command" id="terminal-command-form" autocomplete="off">
+                                <label for="terminal-command-input">/workspace <b>›</b></label>
+                                <input id="terminal-command-input" name="command" type="text" maxlength="4096" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Workbench command" disabled />
+                                <button type="submit" aria-label="Run Workbench command" title="Run command">↵</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="result-view" data-result-view="output" hidden>
                         <div class="empty-state">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z" /></svg>
                             <p>Run the program to compile source, verify the returned WVB, and execute it in WebAssembly.</p>

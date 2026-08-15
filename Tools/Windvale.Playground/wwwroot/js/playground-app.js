@@ -1,9 +1,13 @@
 import * as Editor from "../editor/playground-editor.js";
 import { Compileˉandˉrun } from "./windvale-compiler-host.js";
 import { EXAMPLES, SCRATCH_SOURCE } from "./playground-examples.js";
+import { Createˉworkbenchˉshell } from "./workbench-shell.js";
+import { Openˉworkbenchˉworkspace } from "./workbench-workspace.js";
 
 const MAXIMUM_SOURCE_TABS = 12;
 const COMPILER_TIMEOUT_MILLISECONDS = 300_000;
+const MAXIMUM_TERMINAL_CHARACTERS = 256 * 1024;
+const MAXIMUM_TERMINAL_LINES = 2_000;
 
 const Shell = document.getElementById("playground-shell");
 const Editorˉelement = document.getElementById("monaco-editor");
@@ -21,6 +25,10 @@ const Diagnosticˉcount = document.getElementById("diagnostic-count");
 const Statusˉdiagnostics = document.getElementById("status-diagnostics");
 const Runˉstate = document.getElementById("run-state");
 const Errorˉui = document.getElementById("playground-error-ui");
+const Workspaceˉsummary = document.getElementById("workspace-summary");
+const Terminalˉtranscript = document.getElementById("terminal-transcript");
+const Terminalˉform = document.getElementById("terminal-command-form");
+const Terminalˉinput = document.getElementById("terminal-command-input");
 const Resultˉviews = new Map(Array.from(
     document.querySelectorAll("[data-result-view]"),
     Element => [Element.dataset.resultView, Element],
@@ -37,9 +45,12 @@ let Sourceˉtabs = [{
 let Activeˉsourceˉtabˉid = 1;
 let Nextˉsourceˉtabˉid = 2;
 let Nextˉscratchˉnumber = 1;
-let Activeˉresultˉtab = "output";
+let Activeˉresultˉtab = "terminal";
 let Editorˉready = false;
 let Isˉrunning = false;
+let Workbenchˉshell = null;
+let Commandˉhistory = [];
+let Commandˉhistoryˉindex = 0;
 
 Initialize();
 
@@ -60,6 +71,7 @@ function Initialize() {
     catch (Failure) {
         Showˉunexpectedˉfailure(Failure);
     }
+    Initializeˉworkbench().catch(Showˉunexpectedˉfailure);
 }
 
 function Bindˉevents() {
@@ -86,8 +98,122 @@ function Bindˉevents() {
         const Status = Shell.querySelector("[data-status-characters]");
         Status.textContent = `${Fallbackˉeditor.value.length.toLocaleString()} chars`;
     });
+    Terminalˉform.addEventListener("submit", Executeˉterminalˉcommand);
+    Terminalˉinput.addEventListener("keydown", Navigateˉcommandˉhistory);
     window.addEventListener("beforeunload", () => Editor.Dispose());
     window.addEventListener("unhandledrejection", Event => Showˉunexpectedˉfailure(Event.reason));
+}
+
+async function Initializeˉworkbench() {
+    const Workspace = await Openˉworkbenchˉworkspace();
+    const Existing = await Workspace.List();
+    if (!Existing.some(Entry => Entry.Name === EXAMPLES[0].Fileˉname)) {
+        await Workspace.Writeˉtext(EXAMPLES[0].Fileˉname, EXAMPLES[0].Source);
+    }
+    Workbenchˉshell = Createˉworkbenchˉshell({
+        Workspace,
+        Readˉactiveˉsource: () => {
+            Saveˉactiveˉsource();
+            const Active = Activeˉsourceˉtab();
+            return { Name: Active.Fileˉname, Source: Active.Source };
+        },
+        Openˉsource: Openˉworkspaceˉsource,
+        Runˉsource: Runˉworkbenchˉsource,
+    });
+    Workspaceˉsummary.textContent = Workspace.Persistence === "origin-private"
+        ? "/workspace · persistent OPFS"
+        : "/workspace · session memory fallback";
+    Appendˉterminalˉline("Windvale Workbench ready. This browser host is not Windvale OS.", "system");
+    Appendˉterminalˉline("Type 'help' for commands. Hello-Windvale.wv is ready in /workspace.", "system");
+    Terminalˉinput.disabled = false;
+}
+
+async function Executeˉterminalˉcommand(Event) {
+    Event.preventDefault();
+    const Line = Terminalˉinput.value.trim();
+    Terminalˉinput.value = "";
+    if (Line.length === 0 || Workbenchˉshell === null || Isˉrunning) {
+        return;
+    }
+    Commandˉhistory.push(Line);
+    Commandˉhistory = Commandˉhistory.slice(-50);
+    Commandˉhistoryˉindex = Commandˉhistory.length;
+    Appendˉterminalˉline(Line, "command");
+    Terminalˉinput.disabled = true;
+    try {
+        const Result = await Workbenchˉshell.Execute(Line);
+        if (Result.Clear === true) {
+            Terminalˉtranscript.replaceChildren();
+        }
+        for (const Output of Result.Lines) {
+            Appendˉterminalˉline(Output);
+        }
+    }
+    catch (Failure) {
+        Appendˉterminalˉline(
+            Failure instanceof Error ? Failure.message : "The command failed.",
+            "error",
+        );
+    }
+    finally {
+        Terminalˉinput.disabled = Isˉrunning;
+        Terminalˉinput.focus();
+    }
+}
+
+function Navigateˉcommandˉhistory(Event) {
+    if (Event.key !== "ArrowUp" && Event.key !== "ArrowDown") {
+        return;
+    }
+    Event.preventDefault();
+    if (Event.key === "ArrowUp" && Commandˉhistoryˉindex > 0) {
+        Commandˉhistoryˉindex--;
+    } else if (Event.key === "ArrowDown" && Commandˉhistoryˉindex < Commandˉhistory.length) {
+        Commandˉhistoryˉindex++;
+    }
+    Terminalˉinput.value = Commandˉhistory[Commandˉhistoryˉindex] ?? "";
+    Terminalˉinput.setSelectionRange(Terminalˉinput.value.length, Terminalˉinput.value.length);
+}
+
+function Appendˉterminalˉline(Value, Kind = "output") {
+    const Line = document.createElement("div");
+    Line.className = `terminal-line ${Kind}`;
+    Line.textContent = Value;
+    Terminalˉtranscript.append(Line);
+    while (Terminalˉtranscript.childElementCount > MAXIMUM_TERMINAL_LINES ||
+        Terminalˉtranscript.textContent.length > MAXIMUM_TERMINAL_CHARACTERS) {
+        Terminalˉtranscript.firstElementChild?.remove();
+    }
+    Terminalˉtranscript.scrollTop = Terminalˉtranscript.scrollHeight;
+}
+
+function Openˉworkspaceˉsource(Name, Source) {
+    if (Isˉrunning) {
+        throw new Error("The editor is locked while a Windvale program is running.");
+    }
+    Saveˉactiveˉsource();
+    const Existing = Sourceˉtabs.find(Tab => Tab.Fileˉname === Name);
+    if (Existing !== undefined) {
+        Existing.Source = Source;
+        Existing.Description = "Loaded from the browser-native /workspace.";
+        Activeˉsourceˉtabˉid = Existing.Id;
+    } else {
+        if (Sourceˉtabs.length >= MAXIMUM_SOURCE_TABS) {
+            throw new Error("Close a source tab before opening another workspace file.");
+        }
+        const Tab = {
+            Id: Nextˉsourceˉtabˉid++,
+            Fileˉname: Name,
+            Description: "Loaded from the browser-native /workspace.",
+            Exampleˉid: null,
+            Authorizeˉconsoleˉwriteˉline: false,
+            Source,
+        };
+        Sourceˉtabs.push(Tab);
+        Activeˉsourceˉtabˉid = Tab.Id;
+    }
+    Renderˉsourceˉtabs();
+    Loadˉactiveˉsource();
 }
 
 function Activeˉsourceˉtab() {
@@ -246,7 +372,22 @@ async function Runˉprogram() {
         return;
     }
     Saveˉactiveˉsource();
-    const Source = Activeˉsourceˉtab().Source;
+    await Executeˉsource(Activeˉsourceˉtab().Source, false);
+}
+
+async function Runˉworkbenchˉsource(Name, Source) {
+    Appendˉterminalˉline(`launching ${Name} in one disposable worker…`, "system");
+    const Result = await Executeˉsource(Source, true);
+    if (!Result.Succeeded) {
+        throw new Error(Result.Error);
+    }
+    return Result;
+}
+
+async function Executeˉsource(Source, Keepˉterminalˉselected) {
+    if (Isˉrunning) {
+        return { Succeeded: false, Error: "One foreground Windvale program is already running." };
+    }
     const Instructionˉbudget = Number(Budgetˉpicker.value);
     Isˉrunning = true;
     Setˉbusy(true);
@@ -254,7 +395,9 @@ async function Runˉprogram() {
     Resultˉstatus.hidden = true;
     Editor.SetDiagnostics([]);
     Setˉdiagnosticˉcount(0);
-    Selectˉresultˉtab("output");
+    if (!Keepˉterminalˉselected) {
+        Selectˉresultˉtab("output");
+    }
     const Started = performance.now();
     const Updateˉprogress = () => {
         const Seconds = Math.floor((performance.now() - Started) / 1_000);
@@ -277,19 +420,34 @@ async function Runˉprogram() {
         const Elapsedˉmilliseconds = performance.now() - Started;
         const Frameworkˉrequests = Countˉframeworkˉrequests();
         if (!Result.Succeeded) {
-            Renderˉfailure(Result.Error ?? "The Windvale compiler worker failed.", Elapsedˉmilliseconds, Frameworkˉrequests);
+            const Message = Result.Error ?? "The Windvale compiler worker failed.";
+            Renderˉfailure(Message, Elapsedˉmilliseconds, Frameworkˉrequests);
+            return { Succeeded: false, Error: Message };
         } else if (!(Result.Wvb instanceof ArrayBuffer)) {
-            Renderˉfailure("The compiler worker did not return canonical WVB bytes.", Elapsedˉmilliseconds, Frameworkˉrequests);
+            const Message = "The compiler worker did not return canonical WVB bytes.";
+            Renderˉfailure(Message, Elapsedˉmilliseconds, Frameworkˉrequests);
+            return { Succeeded: false, Error: Message };
         } else {
             Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmilliseconds, Frameworkˉrequests);
+            return {
+                Succeeded: true,
+                Standardˉoutput: typeof Result.StandardOutput === "string" ? Result.StandardOutput : "",
+                Executionˉstatus: Result.ExecutionStatus,
+                Executionˉresult: Result.ExecutionResult,
+                Wvbˉbytes: Result.Wvb.byteLength,
+                Wvbˉsha256: Result.WvbSha256 ?? "—",
+                Elapsedˉseconds: Elapsedˉmilliseconds / 1_000,
+            };
         }
     }
     catch (Failure) {
+        const Message = Failure instanceof Error ? Failure.message : "The Windvale pipeline failed.";
         Renderˉfailure(
-            Failure instanceof Error ? Failure.message : "The Windvale pipeline failed.",
+            Message,
             performance.now() - Started,
             Countˉframeworkˉrequests(),
         );
+        return { Succeeded: false, Error: Message };
     }
     finally {
         clearInterval(Progressˉtimer);
@@ -412,6 +570,7 @@ function Setˉbusy(Busy) {
     Exampleˉpicker.disabled = Busy;
     Budgetˉpicker.disabled = Busy;
     Consoleˉauthorization.disabled = Busy;
+    Terminalˉinput.disabled = Busy || Workbenchˉshell === null;
     Renderˉsourceˉtabs();
 }
 

@@ -11,6 +11,8 @@ const [
     Host,
     Worker,
     Core,
+    Workbenchˉshell,
+    Workbenchˉworkspace,
     Playgroundˉpackage,
     Websiteˉpackage,
     Deploymentˉworkflow,
@@ -22,6 +24,8 @@ const [
     readFile(path.join(Playgroundˉroot, "js/windvale-compiler-host.js"), "utf8"),
     readFile(path.join(Playgroundˉroot, "js/windvale-compiler-worker.js"), "utf8"),
     readFile(path.join(Playgroundˉroot, "js/windvale-compiler-core.js"), "utf8"),
+    readFile(path.join(Playgroundˉroot, "js/workbench-shell.js"), "utf8"),
+    readFile(path.join(Playgroundˉroot, "js/workbench-workspace.js"), "utf8"),
     readFile(path.join(Repositoryˉroot, "Tools/Windvale.Playground/package.json"), "utf8"),
     readFile(path.join(Repositoryˉroot, "Website/package.json"), "utf8"),
     readFile(path.join(Repositoryˉroot, ".github/workflows/deploy-homepage.yml"), "utf8"),
@@ -34,6 +38,8 @@ for (const [Name, Source] of [
     ["host", Host],
     ["worker", Worker],
     ["core", Core],
+    ["workbench shell", Workbenchˉshell],
+    ["workbench workspace", Workbenchˉworkspace],
 ]) {
     if (/catch\s*\(\s*Error\s*\)/u.test(Source)) {
         Fail(`The ${Name} shadows the global Error constructor in a catch binding.`);
@@ -57,7 +63,12 @@ Requireˉtext(Playgroundˉindex, 'src="analytics.js"', "relative analytics entry
 Requireˉtext(Playgroundˉindex, "js/playground-app.js", "static playground entry");
 Requireˉtext(Playgroundˉindex, "Windvale-native WebAssembly", "native pipeline label");
 Requireˉtext(Playgroundˉindex, "authorize-console-write-line", "console grant control");
+Requireˉtext(Playgroundˉindex, "terminal-command-input", "interactive Workbench terminal");
+Requireˉtext(Playgroundˉindex, "not Windvale OS", "honest Workbench boundary");
 Requireˉtext(Playgroundˉapplication, "Compileˉandˉrun", "compiler pipeline invocation");
+Requireˉtext(Playgroundˉapplication, "Createˉworkbenchˉshell", "Workbench shell integration");
+Requireˉtext(Workbenchˉshell, "Runˉsource", "Workbench application launch boundary");
+Requireˉtext(Workbenchˉworkspace, "navigator.storage.getDirectory", "origin-private workspace boundary");
 Requireˉtext(Playgroundˉapplication, "Countˉframeworkˉrequests", "framework-request assertion");
 Requireˉtext(Playgroundˉapplication, "Editor.Initialize", "Monaco editor integration");
 Requireˉtext(Playgroundˉapplication, "New scratch tab unavailable while running", "running source-tab label");

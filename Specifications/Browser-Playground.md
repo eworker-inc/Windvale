@@ -1,6 +1,6 @@
 # Windvale browser playground host contract
 
-- Status: Experimental browser-native normal host with retained Stage 0 recovery implementation
+- Status: Experimental browser-native normal host and Workbench with retained Stage 0 recovery implementation
 - Implemented by: static code under `Tools/Windvale.Playground/wwwroot`, with `Tools/Windvale.Playground.Engine` and the C# UI retained for recovery
 - Permanent WebAssembly target: Not accepted by this contract
 
@@ -11,6 +11,35 @@ The normal browser playground is a fully client-side static application over a b
 The C# reference compiler, reusable playground engine, and former Blazor UI source remain recovery and comparison evidence. They are not the normal page adapter. This contract does not make WebAssembly, JavaScript, Monaco, or browser behavior the definition of Windvale semantics. The source language, canonical WVB, verifier, runtime behavior, profiles, and capability names remain owned by their existing specifications.
 
 The normal `/playground/` page is the only public playground presentation. Earlier focused proof pages are retired; their accepted decisions remain historical evidence.
+
+## Browser-native Workbench
+
+The same page includes the experimental Workbench accepted by
+[Decision 0582](../Documents/Decisions/0582-Browser-Native-Windvale-Workbench.md).
+It adds an interactive browser-hosted terminal and one flat `/workspace` without
+changing the compiler worker, interpreter worker, WVB admission boundary, or
+guest capability allowlist.
+
+The initial shell owns `help`, `pwd`, `ls`, `cat`, `save`, `open`, `write`, `rm`,
+`run`, `status`, and `clear`. It admits at most 4,096 command characters, performs
+no script evaluation, and runs one foreground command at a time. `run [file]`
+loads bounded UTF-8 source from the Workbench workspace and submits it through
+the same disposable source-to-WVB-to-execution route as the editor's Compile +
+Run action.
+
+When available, `/workspace` maps to an origin-private directory named
+`Windvale-Workbench-v1`. If that directory cannot be opened, the page labels and
+uses a session-memory fallback. Both providers expose at most 64 regular files,
+65,536 UTF-8 bytes per file, and 2,097,152 aggregate bytes. A name is one ASCII
+segment of 1 through 255 characters using letters, digits, `.`, `_`, and `-`;
+`.` and `..` are invalid. The first slice has no nested directories, links,
+native paths, import/export, selected host-folder mount, or durability claim.
+
+This workspace belongs to the JavaScript page adapter. It is not supplied to the
+compiler or runtime worker, and a Windvale application cannot read it through an
+ambient or implicit capability. OPFS is not the Windvale filesystem, the
+JavaScript command shell is not yet a Windvale application, disposable browser
+workers are not Windvale OS processes, and the Workbench is not an OS boot.
 
 ## Pipeline
 
@@ -105,7 +134,7 @@ It returns immutable evidence containing:
 - verified scalar status and result; and
 - exact bounded standard-output text.
 
-The worker core contains no DOM, file, network capability, extension API, or deployment API. The static JavaScript page is the normal UI adapter; no Chrome or other browser extension is required. The reusable C# engine remains a separate recovery and differential-test boundary.
+The worker core contains no DOM, file, network capability, extension API, or deployment API. The static JavaScript page is the normal UI adapter; it also owns the explicitly bounded Workbench workspace and does not transfer that authority into the worker. No Chrome or other browser extension is required. The reusable C# engine remains a separate recovery and differential-test boundary.
 
 The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mirrors the implemented lexical categories in `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Editor text crosses into the disposable worker only when a run is requested. The current native compiler diagnostic envelope does not carry source locations, so the normal page reports its exact bounded text without inventing editor markers.
 
@@ -137,6 +166,8 @@ This experiment does not establish:
 - browser UI APIs as portable Windvale UI semantics;
 - native x86-64, PE, ELF, WVO, UEFI, or Windvale OS execution in the browser;
 - production isolation for arbitrary hostile source;
+- guest access to the Workbench workspace or a general Windvale filesystem;
+- browser-worker processes, scheduling, or storage as Windvale OS semantics;
 - retirement of the retained Stage 0 recovery implementation; or
 - .NET-free recovery reconstruction of every pinned compiler/interpreter/WebAssembly artifact.
 

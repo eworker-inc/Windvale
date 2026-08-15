@@ -601,6 +601,40 @@ select {
     background: var(--green-soft);
 }
 
+.workspace-card {
+    margin-top: 9px;
+    padding: 9px 10px;
+    border: 1px solid color-mix(in srgb, var(--blue) 25%, var(--line));
+    border-radius: 7px;
+    background: var(--blue-soft);
+}
+
+.workspace-card > span,
+.workspace-card > strong {
+    display: block;
+}
+
+.workspace-card > span {
+    color: var(--blue);
+    font-size: 8px;
+    font-weight: 760;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.workspace-card > strong {
+    margin-top: 4px;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 10px;
+}
+
+.workspace-card > p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.4;
+}
+
 .native-profile-card > span,
 .native-profile-card > strong {
     display: block;
@@ -894,6 +928,129 @@ select {
 
 .result-view[hidden] {
     display: none;
+}
+
+.terminal-view {
+    height: 100%;
+}
+
+.terminal {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 180px;
+    color: #dce9f7;
+    background: #07111c;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+.terminal-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 7px 13px;
+    color: #8fa5ba;
+    border-bottom: 1px solid #1d3449;
+    background: #0b1926;
+    font-size: 9px;
+}
+
+.terminal-banner span {
+    color: #72d0ac;
+    font-weight: 760;
+    letter-spacing: 0.04em;
+}
+
+.terminal-transcript {
+    min-height: 0;
+    padding: 9px 13px;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.terminal-line {
+    min-height: 1.55em;
+}
+
+.terminal-line.command {
+    color: #a9c9ee;
+}
+
+.terminal-line.command::before {
+    color: #72d0ac;
+    content: "/workspace › ";
+}
+
+.terminal-line.error {
+    color: #ff8d96;
+}
+
+.terminal-line.system {
+    color: #8fa5ba;
+}
+
+.terminal-command {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 5px 13px;
+    border-top: 1px solid #1d3449;
+    background: #091623;
+}
+
+.terminal-command label {
+    color: #72d0ac;
+    font-size: 11px;
+}
+
+.terminal-command b {
+    color: #a9c9ee;
+}
+
+.terminal-command input {
+    width: 100%;
+    padding: 3px 0;
+    color: #f2f7fb;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    cursor: text;
+    font-family: inherit;
+    font-size: 11px;
+}
+
+.terminal-command input:disabled {
+    color: #6d8296;
+    cursor: wait;
+}
+
+.terminal-command button {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 26px;
+    padding: 0;
+    color: #a9c9ee;
+    border: 1px solid #29475e;
+    border-radius: 5px;
+    background: #102337;
+}
+
+.terminal-command button:hover,
+.terminal-command button:focus-visible {
+    color: #ffffff;
+    border-color: #527ca2;
+}
+
+.terminal-command:has(input:disabled) button {
+    opacity: 0.45;
+    pointer-events: none;
 }
 
 .running-state {

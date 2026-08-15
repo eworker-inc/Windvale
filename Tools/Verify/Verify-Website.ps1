@@ -34,6 +34,7 @@ Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-demo')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-package')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-demo')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-core')
+Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-workbench')
 
 $WebsiteScripts = Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot 'Tools/Website') -Filter '*.mjs' -File
 foreach ($WebsiteScript in $WebsiteScripts) {
