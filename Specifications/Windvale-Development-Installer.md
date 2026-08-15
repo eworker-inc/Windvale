@@ -60,7 +60,7 @@ directory, or an existing output artifact.
 | Target | Artifact | Bytes | SHA-256 | Payload manifest SHA-256 |
 | --- | --- | ---: | --- | --- |
 | Windows x64 | `windvale-0.1.0-dev.1-windows-x64.zip` | 38,351,998 | `2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186` | `6147bfdb0c4b91d34b157ecb3bce8a857157f5d0c885d2579ec7ae9cd7fcf7c1` |
-| Linux x64 | `windvale-0.1.0-dev.1-linux-x64.tar.gz` | 38,362,500 | `dc65a1091e918b8d73106cc6c4bb9bd1a3a905b42601eacd32453e0a073e5937` | `f6f96c6df5fcdf12a70bdffd7a7ccc622a77840f5c78762c8f520b3f2c93ce06` |
+| Linux x64 | `windvale-0.1.0-dev.1-linux-x64.tar.gz` | 38,363,012 | `cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850` | `f6f96c6df5fcdf12a70bdffd7a7ccc622a77840f5c78762c8f520b3f2c93ce06` |
 
 The ZIP uses stored entries, UTF-8 names, fixed DOS epoch metadata, no extra
 fields, ordered files, and explicit Unix-compatible modes. The Linux artifact

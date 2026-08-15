@@ -100,13 +100,24 @@ for command in $commands; do
     candidate=$install_root/bin/.$command.candidate.$$
     {
         printf '%s\n' '#!/bin/sh' 'set -eu'
+        printf '%s\n' \
+            'script=$0' \
+            'while [ -L "$script" ]; do' \
+            '    directory=$(CDPATH= cd -- "$(dirname -- "$script")" && pwd -P)' \
+            '    destination=$(readlink -- "$script")' \
+            '    case "$destination" in' \
+            '        /*) script=$destination ;;' \
+            '        *) script=$directory/$destination ;;' \
+            '    esac' \
+            'done' \
+            'script_directory=$(CDPATH= cd -- "$(dirname -- "$script")" && pwd -P)'
         if [ "$command" = wv ]; then
             printf '%s\n' \
                 "if [ \"\${1:-}\" = doctor ]; then" \
-                "    exec \"\$(CDPATH= cd -- \"\$(dirname -- \"\$0\")/../generations/$generation/bin\" && pwd -P)/wv-verify-installation\" \"\$(CDPATH= cd -- \"\$(dirname -- \"\$0\")/../generations/$generation\" && pwd -P)\" '$target' '$payload'" \
+                "    exec \"\$script_directory/../generations/$generation/bin/wv-verify-installation\" \"\$script_directory/../generations/$generation\" '$target' '$payload'" \
                 'fi'
         fi
-        printf '%s\n' "exec \"\$(CDPATH= cd -- \"\$(dirname -- \"\$0\")/../generations/$generation/bin\" && pwd -P)/$executable\" \"\$@\""
+        printf '%s\n' "exec \"\$script_directory/../generations/$generation/bin/$executable\" \"\$@\""
     } >"$candidate"
     chmod 0755 "$candidate"
     mv -f -- "$candidate" "$wrapper"

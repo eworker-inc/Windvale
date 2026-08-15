@@ -76,8 +76,8 @@
       "id": "linux-x64",
       "archive": "windvale-0.1.0-dev.1-linux-x64.tar.gz",
       "archiveFormat": "tar-gzip-store-1",
-      "expectedArchiveBytes": 38362500,
-      "expectedArchiveSha256": "dc65a1091e918b8d73106cc6c4bb9bd1a3a905b42601eacd32453e0a073e5937",
+      "expectedArchiveBytes": 38363012,
+      "expectedArchiveSha256": "cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850",
       "expectedPayloadSha256": "f6f96c6df5fcdf12a70bdffd7a7ccc622a77840f5c78762c8f520b3f2c93ce06",
       "files": [
         {

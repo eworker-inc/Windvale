@@ -46,8 +46,8 @@ cmp --silent "$work/First/$linux_archive" "$work/Second/$linux_archive" || exit 
 verify_file "$work/First/$windows_archive" 38351998 \
     2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186 \
     'Windows installer' || exit 1
-verify_file "$work/First/$linux_archive" 38362500 \
-    dc65a1091e918b8d73106cc6c4bb9bd1a3a905b42601eacd32453e0a073e5937 \
+verify_file "$work/First/$linux_archive" 38363012 \
+    cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850 \
     'Linux installer' || exit 1
 
 echo 'native development installer step=verify-and-reject item=3/8'

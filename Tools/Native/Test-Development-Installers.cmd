@@ -30,7 +30,7 @@ echo native development installer step=prove-reproducibility item=2/8
 fc /b "%Work%\First\%WindowsArchive%" "%Work%\Second\%WindowsArchive%" >nul || goto :cleanup
 fc /b "%Work%\First\%LinuxArchive%" "%Work%\Second\%LinuxArchive%" >nul || goto :cleanup
 call :verify_file "%Work%\First\%WindowsArchive%" 38351998 2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186 "Windows installer" || goto :cleanup
-call :verify_file "%Work%\First\%LinuxArchive%" 38362500 dc65a1091e918b8d73106cc6c4bb9bd1a3a905b42601eacd32453e0a073e5937 "Linux installer" || goto :cleanup
+call :verify_file "%Work%\First\%LinuxArchive%" 38363012 cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850 "Linux installer" || goto :cleanup
 
 echo native development installer step=verify-and-reject item=3/8
 node "%Builder%" verify "%Work%\First\%WindowsArchive%" >nul || goto :cleanup
