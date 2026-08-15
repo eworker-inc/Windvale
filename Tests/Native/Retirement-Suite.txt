@@ -60,4 +60,4 @@ package-bundle|Test-Package-Bundle|12|3|native package bundle status=Passed case
 installers|Test-Installers|8|3|native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified
 wvdb-query-capability|Test-Wvdb-Query-Native-Capability|5|3|native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified
 release-envelope|Test-Release-Envelope|16|4|native release envelope status=Passed cases=16 signatures=4 artifacts=11 protected-private-keys=2
-wvdb-approval|Test-Wvdb-Approval-Records|8|4|native wvdb approval status=Passed cases=8 records=3 capabilities=5 targets=2
+wvdb-approval|Test-Wvdb-Approval-Records|10|4|native application approval status=Passed cases=10 applications=2 records=4 capabilities=10 targets=2

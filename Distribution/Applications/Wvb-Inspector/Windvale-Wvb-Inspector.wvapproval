@@ -1,0 +1,21 @@
+windvale-capability-approval 1
+application windvale.wvb-inspector 0.1.0
+target hosted-wvb-v1
+package-manifest a58441a48b0e11c4062e77b0176934952c1de238c78d04ba88ca9ca61e0a41b6 412
+lock eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1 1021
+bundle a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 92781
+provenance e3d9ddf823a0fd4fab6406de97f3733cd1f5a802daf20dc15cf1d6d7de8ce44f 455
+executable 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 76527
+capability-count 5
+approve 0 console.write_line standard-output-line-v1
+approve 1 diagnostic.write_line standard-diagnostic-line-v1
+approve 2 file.read_bytes fixed-read-only-object-v1
+approve 3 process.argument immutable-argument-snapshot-v1
+approve 4 process.argument_count immutable-argument-snapshot-v1
+deny ambient-filesystem
+deny file-mutation
+deny environment
+deny network
+deny process-launch
+deny clock
+deny entropy

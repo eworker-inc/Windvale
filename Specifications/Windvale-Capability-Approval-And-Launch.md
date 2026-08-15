@@ -5,10 +5,12 @@
 Approval 1 and Launch Record 1 are implemented for the exact WVDB Query package
 selected by Milestone 2 under
 [Decision 0564](../Documents/Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md).
-They make the existing five-capability proof inspectable as installation and
-launch policy without creating a general launcher, approval UI, or capability
-database. The eight-case owner passes on Windows and Linux in Verify run
-31883543587.
+Milestone 4 adds an exact portable approval for WVB Inspector while leaving its
+target launch records open until real host artifacts are measured. These records
+make the capability proofs inspectable as installation and launch policy without
+creating a general launcher, approval UI, or capability database. The expanded
+ten-case owner covers two applications, four records, and ten approved
+capabilities.
 
 ## Approval record
 
@@ -29,6 +31,13 @@ approval substitutes.
 
 The exact Approval 1 identity is 927 bytes with SHA-256
 `3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71`.
+
+`Windvale-Wvb-Inspector.wvapproval` binds its exact manifest, lock, Bundle 1,
+provenance, and WVB identities to five capabilities: standard output,
+diagnostics, read-only `file.read_bytes`, and immutable argument count/value
+snapshots. It carries the same explicit denials as WVDB Query. Its exact identity
+is 917 bytes with SHA-256
+`8654fa00406baed038c00abec993985eb3fb286b301d30eeb309fb92b0ae2328`.
 
 ## Target launch records
 
@@ -61,14 +70,14 @@ outcomes.
 
 ## Admission and ownership
 
-`Verify-Wvdb-Approval-Records.mjs` independently rereads the live package,
-lock, and provenance identities; compares the package and lock capability
-closures; admits the exact approval; and admits both platform records. Its
-focused owner rejects added capability authority, capability substitution,
-writable provider substitution, target substitution, approval-identity
-substitution, and truncation.
+`Verify-Wvdb-Approval-Records.mjs` independently rereads both live package,
+lock, and provenance identity sets; compares each package and lock capability
+closure; admits both exact approvals; and admits the two implemented WVDB target
+records. Its focused owner rejects added capability authority, substitution in
+either application, writable provider substitution, target substitution,
+approval-identity substitution, and truncation.
 
-This exact application record is an implemented product slice, not a general
-approval grammar promise. A second application, configurable directory, new
-provider kind, or durable approval store requires a successor contract rather
-than unversioned fields.
+These exact application records are an implemented product slice, not a general
+approval grammar promise. Inspector target launch records, a configurable
+directory, a new provider kind, or a durable approval store require a successor
+contract rather than unversioned fields.

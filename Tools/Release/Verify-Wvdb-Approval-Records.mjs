@@ -46,6 +46,41 @@ const LINUX_BYTES = 1_310;
 const LINUX_SHA256 = "b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5";
 const BUNDLE_SHA256 = "3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474";
 const WVB_SHA256 = "61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2";
+const INSPECTOR_DIRECTORY = path.join(
+    REPOSITORY_ROOT,
+    "Distribution",
+    "Applications",
+    "Wvb-Inspector",
+);
+const INSPECTOR_APPROVAL_NAME = "Windvale-Wvb-Inspector.wvapproval";
+const INSPECTOR_CAPABILITIES = [
+    "console.write_line",
+    "diagnostic.write_line",
+    "file.read_bytes",
+    "process.argument",
+    "process.argument_count",
+];
+const INSPECTOR_IDENTITIES = {
+    manifest: [
+        "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack",
+        412,
+        "a58441a48b0e11c4062e77b0176934952c1de238c78d04ba88ca9ca61e0a41b6",
+    ],
+    lock: [
+        "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvlock",
+        1021,
+        "eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1",
+    ],
+    provenance: [
+        "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvprov",
+        455,
+        "e3d9ddf823a0fd4fab6406de97f3733cd1f5a802daf20dc15cf1d6d7de8ce44f",
+    ],
+};
+const INSPECTOR_APPROVAL_BYTES = 917;
+const INSPECTOR_APPROVAL_SHA256 = "8654fa00406baed038c00abec993985eb3fb286b301d30eeb309fb92b0ae2328";
+const INSPECTOR_BUNDLE_SHA256 = "a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9";
+const INSPECTOR_WVB_SHA256 = "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
 
 function Fail(Message) {
     throw new Error(Message);
@@ -80,21 +115,21 @@ function Assertˉlines(Observed, Expected, Description) {
     }
 }
 
-function Verifyˉpackageˉidentity(Key) {
-    const [RelativePath, ExpectedBytes, ExpectedSha256] = PACKAGE_IDENTITIES[Key];
+function Verifyˉpackageˉidentity(Identities, Key, Description) {
+    const [RelativePath, ExpectedBytes, ExpectedSha256] = Identities[Key];
     const Value = Readˉcanonical(path.join(REPOSITORY_ROOT, ...RelativePath.split("/")), Key);
     if (Value.bytes.length !== ExpectedBytes || Sha256(Value.bytes) !== ExpectedSha256) {
-        Fail(`The ${Key} identity differs.`);
+        Fail(`The ${Description} ${Key} identity differs.`);
     }
     return Value;
 }
 
-function Verifyˉclosure(Package, Lock) {
-    const Expected = CAPABILITIES.map(Name => `capability ${Name}`);
+function Verifyˉclosure(Package, Lock, Capabilities, Description) {
+    const Expected = Capabilities.map(Name => `capability ${Name}`);
     const PackageCapabilities = Package.lines.filter(Line => Line.startsWith("capability "));
     const LockCapabilities = Lock.lines.filter(Line => Line.startsWith("capability "));
-    Assertˉlines(PackageCapabilities, Expected, "Package capability closure");
-    Assertˉlines(LockCapabilities, Expected, "Lock capability closure");
+    Assertˉlines(PackageCapabilities, Expected, `${Description} package capability closure`);
+    Assertˉlines(LockCapabilities, Expected, `${Description} lock capability closure`);
 }
 
 function Expectedˉapproval() {
@@ -111,6 +146,32 @@ function Expectedˉapproval() {
         "approve 0 console.write_line standard-output-line-v1",
         "approve 1 diagnostic.write_line standard-diagnostic-line-v1",
         "approve 2 filesystem.directory_read_v1 fixed-read-only-object-v1",
+        "approve 3 process.argument immutable-argument-snapshot-v1",
+        "approve 4 process.argument_count immutable-argument-snapshot-v1",
+        "deny ambient-filesystem",
+        "deny file-mutation",
+        "deny environment",
+        "deny network",
+        "deny process-launch",
+        "deny clock",
+        "deny entropy",
+    ];
+}
+
+function Expectedˉinspectorˉapproval() {
+    return [
+        "windvale-capability-approval 1",
+        "application windvale.wvb-inspector 0.1.0",
+        "target hosted-wvb-v1",
+        "package-manifest a58441a48b0e11c4062e77b0176934952c1de238c78d04ba88ca9ca61e0a41b6 412",
+        "lock eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1 1021",
+        `bundle ${INSPECTOR_BUNDLE_SHA256} 92781`,
+        "provenance e3d9ddf823a0fd4fab6406de97f3733cd1f5a802daf20dc15cf1d6d7de8ce44f 455",
+        `executable ${INSPECTOR_WVB_SHA256} 76527`,
+        "capability-count 5",
+        "approve 0 console.write_line standard-output-line-v1",
+        "approve 1 diagnostic.write_line standard-diagnostic-line-v1",
+        "approve 2 file.read_bytes fixed-read-only-object-v1",
         "approve 3 process.argument immutable-argument-snapshot-v1",
         "approve 4 process.argument_count immutable-argument-snapshot-v1",
         "deny ambient-filesystem",
@@ -171,10 +232,10 @@ function Verifyˉrecords(RecordsPath) {
     }
     const RecordsRoot = fs.realpathSync(RecordsPath);
     process.stdout.write("wvdb approval step=verify-package item=1/4\n");
-    const Package = Verifyˉpackageˉidentity("manifest");
-    const Lock = Verifyˉpackageˉidentity("lock");
-    Verifyˉpackageˉidentity("provenance");
-    Verifyˉclosure(Package, Lock);
+    const Package = Verifyˉpackageˉidentity(PACKAGE_IDENTITIES, "manifest", "WVDB Query");
+    const Lock = Verifyˉpackageˉidentity(PACKAGE_IDENTITIES, "lock", "WVDB Query");
+    Verifyˉpackageˉidentity(PACKAGE_IDENTITIES, "provenance", "WVDB Query");
+    Verifyˉclosure(Package, Lock, CAPABILITIES, "WVDB Query");
 
     process.stdout.write("wvdb approval step=verify-approval item=2/4\n");
     const Approval = Readˉcanonical(path.join(RecordsRoot, APPROVAL_NAME), "Approval record");
@@ -204,13 +265,50 @@ function Verifyˉrecords(RecordsPath) {
     );
 }
 
+function Verifyˉinspectorˉrecords(RecordsPath) {
+    const RecordsStat = fs.lstatSync(RecordsPath);
+    if (!RecordsStat.isDirectory() || RecordsStat.isSymbolicLink()) {
+        Fail("The inspector approval record root is not an ordinary directory.");
+    }
+    const RecordsRoot = fs.realpathSync(RecordsPath);
+    process.stdout.write("inspector approval step=verify-package item=1/3\n");
+    const Package = Verifyˉpackageˉidentity(
+        INSPECTOR_IDENTITIES,
+        "manifest",
+        "WVB Inspector",
+    );
+    const Lock = Verifyˉpackageˉidentity(INSPECTOR_IDENTITIES, "lock", "WVB Inspector");
+    Verifyˉpackageˉidentity(INSPECTOR_IDENTITIES, "provenance", "WVB Inspector");
+    Verifyˉclosure(Package, Lock, INSPECTOR_CAPABILITIES, "WVB Inspector");
+
+    process.stdout.write("inspector approval step=verify-approval item=2/3\n");
+    const Approval = Readˉcanonical(
+        path.join(RecordsRoot, INSPECTOR_APPROVAL_NAME),
+        "Inspector approval record",
+    );
+    if (Approval.bytes.length !== INSPECTOR_APPROVAL_BYTES ||
+        Sha256(Approval.bytes) !== INSPECTOR_APPROVAL_SHA256) {
+        Fail("The inspector approval identity differs.");
+    }
+    Assertˉlines(Approval.lines, Expectedˉinspectorˉapproval(), "Inspector approval record");
+
+    process.stdout.write("inspector approval step=report item=3/3\n");
+    process.stdout.write(
+        `inspector approval status=Valid records=1 capabilities=5 ` +
+        `approval=${INSPECTOR_APPROVAL_SHA256}\n`,
+    );
+}
+
 const [Command, ...Arguments] = process.argv.slice(2);
 try {
     if (Command === "verify" && Arguments.length <= 1) {
         Verifyˉrecords(Arguments[0] ?? PACKAGE_DIRECTORY);
+    } else if (Command === "verify-inspector" && Arguments.length <= 1) {
+        Verifyˉinspectorˉrecords(Arguments[0] ?? INSPECTOR_DIRECTORY);
     } else {
         process.stderr.write(
-            "Usage: node Verify-Wvdb-Approval-Records.mjs verify [records-directory]\n",
+            "Usage: node Verify-Wvdb-Approval-Records.mjs <verify|verify-inspector> " +
+            "[records-directory]\n",
         );
         process.exitCode = 64;
     }
