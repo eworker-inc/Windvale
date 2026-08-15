@@ -280,6 +280,9 @@ release mismatch, and signature domain separation.
 
 Exit gate: one completely offline directory authenticates an exact Release and
 the two package bundles on Windows and Linux without network or ambient trust.
+The bundle/store owner now proves that both exact real bundles coexist in one
+immutable store with one shared canonical license object and idempotent repeat
+publication. Release-envelope inventory and trust closure remain open.
 
 ### Slice 5: immutable local object store
 

@@ -10,7 +10,10 @@ execution. The initial implementation policy accepts at most 4 MiB in one
 separate streaming admission slice before objects above the in-memory policy
 can be accepted.
 
-Bundle 1 carries selected immutable bytes. It does not resolve dependencies,
+The focused owner now rebuilds and independently admits the exact WVDB Query
+and WVB Inspector bundles twice, then publishes both into one immutable store.
+Their canonical LF license is one shared object, so the two bundles occupy nine
+unique objects and repeat publication creates nothing. Bundle 1 carries selected immutable bytes. It does not resolve dependencies,
 execute installation scripts, grant capabilities, select host paths, or confer
 official-release trust.
 

@@ -182,11 +182,11 @@ The portable Windvale implementation parses bounded Generation 1 and Activation
 activation and rollback. The first host adapter now compare-publishes exact
 caller-validated Activation 1 bytes, recovers an interrupted digest-named
 candidate without changing the public record, rejects stale state, and publishes
-rollback on both host paths without changing `v0.1.0`. The next slice is active
-generation command dispatch. WVDB Query and the WVB inspector now provide two
-real source-package candidates with distinct capability needs; they still need
-one admitted offline directory, approval/launch closure, and complete
-installation demonstration.
+rollback on both host paths without changing `v0.1.0`. WVDB Query and the WVB
+inspector now rebuild into two exact admitted bundles that coexist in one
+immutable store and share only the canonical license object. Release-envelope
+inventory, inspector approval/launch closure, active-generation command
+dispatch, and the complete installation demonstration remain open.
 
 ## Milestone 2: package-backed host application — complete
 
