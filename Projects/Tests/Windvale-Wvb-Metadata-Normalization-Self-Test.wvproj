@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Source-Wvb/Metadata-Normalization-Self-Test.wv"
+source "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv"
+emit wvb

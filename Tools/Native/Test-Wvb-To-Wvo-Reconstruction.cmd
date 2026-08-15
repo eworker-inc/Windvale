@@ -30,6 +30,21 @@ if not "%ERRORLEVEL%"=="64" goto :failed
 set "TestDirectory=%TEMP%\windvale-wvb-to-wvo-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate
 mkdir "%TestDirectory%" || goto :failed
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj" ^
+    "%TestDirectory%\Metadata-Normalization.wvb" >nul 2>"%TestDirectory%\Metadata-Normalization-Build.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Metadata-Normalization-Build.err") do if not "%%~zF"=="0" goto :failed
+call "%RepositoryRoot%\Tools\Native\Run-Wvb.cmd" ^
+    "%TestDirectory%\Metadata-Normalization.wvb" ^
+    >"%TestDirectory%\Metadata-Normalization.out" 2>"%TestDirectory%\Metadata-Normalization.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Metadata-Normalization.out") do if not "%%~zF"=="10" goto :failed
+findstr /c:"Result: 0" "%TestDirectory%\Metadata-Normalization.out" >nul
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Metadata-Normalization.err") do if not "%%~zF"=="0" goto :failed
+call :pass "portable metadata normalization"
+
 call "%RepositoryRoot%\Tools\Native\Construct-Wvb-To-Wvo-Reconstruction.cmd" "%TestDirectory%" ^
     >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
 if errorlevel 1 goto :failed

@@ -483,6 +483,24 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'portable WVB metadata normalization owner'
+        Paths = @(
+            'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv',
+            'Projects/Tests/Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj',
+            'Tests/Fixtures/Source-Wvb/Metadata-Normalization-Self-Test.wv'
+        )
+        Suites = @(
+            'seed',
+            'wvb-to-wvo-reconstruction',
+            'unsafe-wvb',
+            'wvb-containment',
+            'model-provider',
+            'libraries'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Wv-Linker reconstruction owner'
         Paths = @(
             'Tools/Native/Test-Wv-Linker-Reconstruction.cmd',
@@ -1745,7 +1763,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3553 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3554 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

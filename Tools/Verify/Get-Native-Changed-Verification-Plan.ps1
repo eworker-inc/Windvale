@@ -680,10 +680,15 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
         Add-Suite 'workspace-project2'
         Add-Compiler-Suites
-    } elseif ($Path -eq
-        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv') {
+    } elseif ($Path -in @(
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+        'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
+    )) {
         Add-Bytecode-Suites
         Add-Suite @('libraries', 'model-provider')
+        if ($Path -eq 'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv') {
+            Add-Suite 'wvb-to-wvo-reconstruction'
+        }
     } elseif ($Path -in @(
         'Libraries/Platform/Models/Bound-Model-Provider.wv',
         'Projects/Libraries/Windvale-Library-Bound-Model-Provider.wvproj',
@@ -1631,6 +1636,11 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Tests/Fixtures/Native-X64/Native-X64-Lowering-Metadata-Self-Test.wv',
         'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Metadata.wv'
+    )) {
+        Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj',
+        'Tests/Fixtures/Source-Wvb/Metadata-Normalization-Self-Test.wv'
     )) {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-U64.wv') {

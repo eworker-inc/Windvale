@@ -74,6 +74,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj" \
+    "$test_directory/Metadata-Normalization.wvb" \
+    >/dev/null 2>"$test_directory/Metadata-Normalization-Build.err" || fail
+[[ ! -s $test_directory/Metadata-Normalization-Build.err ]] || fail
+"$script_directory/Run-Wvb.sh" "$test_directory/Metadata-Normalization.wvb" \
+    >"$test_directory/Metadata-Normalization.out" \
+    2>"$test_directory/Metadata-Normalization.err" || fail
+printf '%s\n' 'Result: 0' >"$test_directory/Metadata-Normalization-Expected.out" || fail
+check_equal \
+    "$test_directory/Metadata-Normalization.out" \
+    "$test_directory/Metadata-Normalization-Expected.out" || fail
+[[ ! -s $test_directory/Metadata-Normalization.err ]] || fail
+pass 'portable metadata normalization'
+
 "$script_directory/Construct-Wvb-To-Wvo-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
 printf '%s\n' 'native WVB-to-WVO reconstruction status=Complete artifacts=7' \

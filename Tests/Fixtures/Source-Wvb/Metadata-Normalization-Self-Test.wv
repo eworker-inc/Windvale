@@ -1,0 +1,72 @@
+module Wvbˉmetadataˉnormalizationˉselfˉtest profile portable;
+
+import Windvaleˉwvbˉmetadataˉnormalization as Metadata;
+
+data Metadataˉmodule: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    115, 0, 0, 0, 2, 22, 0, 0, 0, 87, 118, 98, 203, 137, 116, 111,
+    203, 137, 119, 118, 111, 203, 137, 109, 101, 116, 97, 100, 97, 116, 97, 1,
+    1, 2, 2, 0, 0, 0, 5, 0, 0, 0, 108, 105, 110, 117, 120, 7,
+    0, 0, 0, 119, 105, 110, 100, 111, 119, 115, 1, 0, 0, 0, 22, 0,
+    0, 0, 112, 114, 111, 99, 101, 115, 115, 46, 97, 114, 103, 117, 109, 101,
+    110, 116, 95, 99, 111, 117, 110, 116, 1, 0, 0, 0, 1, 0, 0, 0,
+    15, 0, 0, 0, 102, 105, 108, 101, 46, 114, 101, 97, 100, 95, 98, 121,
+    116, 101, 115, 1, 0, 0, 0, 2, 0, 0, 0, 35, 0, 0, 0, 1,
+    0, 0, 0, 22, 0, 0, 0, 112, 114, 111, 99, 101, 115, 115, 46, 97,
+    114, 103, 117, 109, 101, 110, 116, 95, 99, 111, 117, 110, 116, 0, 0, 0,
+    0, 5, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0,
+    0, 0, 38, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97,
+    105, 110, 0, 0, 0, 0, 1, 5, 0, 0, 0, 5, 5, 2, 1, 1,
+    0, 0, 0, 0, 88, 0, 0, 0, 2, 0, 0, 0, 5, 0, 0, 0,
+    88, 0, 0, 0, 65, 0, 0, 0, 0, 5, 0, 0, 0, 0, 9, 0,
+    0, 0, 0, 5, 1, 0, 0, 0, 4, 0, 0, 0, 0, 4, 1, 0,
+    0, 0, 96, 5, 2, 0, 0, 0, 4, 2, 0, 0, 0, 49, 67, 0,
+    0, 0, 48, 51, 0, 0, 0, 1, 42, 0, 0, 0, 5, 3, 0, 0,
+    0, 4, 3, 0, 0, 0, 81, 48, 72, 0, 0, 0, 1, 1, 0, 0,
+    0, 5, 4, 0, 0, 0, 4, 4, 0, 0, 0, 81, 6, 0, 0, 0,
+    17, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110,
+    1, 0, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+    0
+];
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+    return Bytesˉconcat(
+        Result,
+        Bytesˉslice(Input, Offset + 1u32, Bytesˉlength(Input) - Offset - 1u32)
+    );
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    let Normalized: bytes =
+        Metadata.Windvaleˉwvbˉmetadataˉnormalize(Metadataˉmodule);
+    if Bytesˉlength(Normalized) != 282u32 { return 1; }
+    let Repeated: bytes =
+        Metadata.Windvaleˉwvbˉmetadataˉnormalize(Normalized);
+    if !Bytesˉequal(Normalized, Repeated) { return 2; }
+
+    let Badˉversion: bytes = Replaceˉu8(Metadataˉmodule, 48u32, 2u8);
+    if Bytesˉlength(
+        Metadata.Windvaleˉwvbˉmetadataˉnormalize(Badˉversion)
+    ) != 0u32 { return 3; }
+
+    let Requiredˉmismatch: bytes =
+        Replaceˉu8(Metadataˉmodule, 151u32, 102u8);
+    if Bytesˉlength(
+        Metadata.Windvaleˉwvbˉmetadataˉnormalize(Requiredˉmismatch)
+    ) != 0u32 { return 4; }
+    return 0;
+}
