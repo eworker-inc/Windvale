@@ -81,6 +81,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 ## External models
 
 - [Provider-neutral model protocol version 1](Windvale-Model-Protocol.md)
+- [Bound hosted model provider](Windvale-Bound-Model-Provider.md)
 
 ## Assembly, objects, and linking
 

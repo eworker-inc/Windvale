@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 7,661 LF-only bytes with SHA-256
-`0ec602e8f6d51a92a6619f3fd9738bd7c5bea2f60f0c8f92c98b6ad26b02bcdb`.
+`Tests/Native/Retirement-Suite.txt` is 7,786 LF-only bytes with SHA-256
+`fe38c7d91dd9de08da7b24316a8df97a0bb007c943d96a4a38f48f865d76a1e5`.
 The first line is exactly:
 
 ```text
@@ -94,6 +94,7 @@ file. The current plan is:
 | `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
+| `model-provider` | `Test-Model-Provider` | 8 | `native model provider status=Passed cases=8 local-result=0 cross-host-images=Verified` |
 | `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
 | `database-storage` | `Test-Database-Storage` | 24 | `native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified` |
@@ -114,15 +115,15 @@ file. The current plan is:
 | `offline-package-stage` | `Test-Offline-Package-Stage` | 8 | `native offline package stage status=Passed cases=8 packages=2 policy-records=8 generations=2 published=1 artifacts=14 deterministic=Verified tamper=Rejected` |
 | `wvdb-approval` | `Test-Wvdb-Approval-Records` | 13 | `native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1` |
 
-The version-2 plan therefore contains exactly 68 suites and 3,543 cases. Its
+The version-2 plan therefore contains exactly 69 suites and 3,553 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
-| 1 | 1 | 23 | 651.2 |
+| 1 | 1 | 24 | 651.2 |
 | 2 | 18 | 1,322 | 592.2 plus the lifecycle and uninstall owners |
-| 3 | 25 | 1,284 | 592.1 |
-| 4 | 24 | 914 | 591.8 plus the newly added dispatch owner |
+| 3 | 25 | 1,285 | 592.1 |
+| 4 | 25 | 922 | 591.8 plus the newly added dispatch and model-provider owners |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
 semantic limit. The shard-1 timing predates the three new tree-growth cases and
@@ -162,7 +163,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 68, Passed: 68, Failed: 0, Cases: 3545
+Suites: 69, Passed: 69, Failed: 0, Cases: 3553
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

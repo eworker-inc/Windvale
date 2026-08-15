@@ -1,0 +1,4 @@
+windvale-project 2
+root "Libraries/Platform/Models/Bound-Model-Provider.wv"
+source "Libraries/Models/Model-Protocol.wv"
+emit wvb

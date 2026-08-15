@@ -168,6 +168,7 @@ $NativeCases = @(
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction',
+            'model-provider',
             'database-storage'
         )
         Gaps = @()
@@ -397,6 +398,7 @@ $NativeCases = @(
             'lowerer-rejections',
             'console-packager-source-reconstruction',
             'native-u64-lowering',
+            'model-provider',
             'database-superblock',
             'database-durable-commit',
             'database-storage',
@@ -1117,7 +1119,28 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj',
             'Specifications/Windvale-Model-Protocol.md'
         )
-        Suites = @('workspace-project2', 'libraries')
+        Suites = @('model-provider', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'hosted model provider owner'
+        Paths = @(
+            'Libraries/Platform/Models/Bound-Model-Provider.wv',
+            'Projects/Libraries/Windvale-Library-Bound-Model-Provider.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Hosted-Model-Provider.wvproj',
+            'Tests/Fixtures/Models/Native-Hosted-Model-Provider-Self-Test.wv',
+            'Runtime/Native/X64-Scripted-Model-Provider-Host.wva',
+            'Tools/Native/Test-Model-Provider.cmd',
+            'Tools/Native/Test-Model-Provider.sh',
+            'Specifications/Windvale-Bound-Model-Provider.md'
+        )
+        Suites = @(
+            'assembler-rejections',
+            'assembler-golden',
+            'wva-differential',
+            'model-provider'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1302,6 +1325,7 @@ $NativeCases = @(
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction',
+            'model-provider',
             'database-storage'
         )
         Gaps = @()
@@ -1681,9 +1705,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 69 -or
+if ($RetirementSuiteLines.Count -ne 70 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 68-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 69-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1721,7 +1745,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3545 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3553 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

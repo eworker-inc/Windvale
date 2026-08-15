@@ -92,15 +92,19 @@ diagnostic.write_line(text) -> void
 file.read_bytes(text) -> bytes
 file.write_bytes(text, bytes) -> void
 filesystem.directory_read_v1(text, u32, u32) -> bytes
+model.catalog_v1(bytes) -> bytes
+model.inference_v1(bytes) -> bytes
 process.argument(u32) -> text
 process.argument_count() -> u32
 storage.random_access_v1(u32, u64, u64, u32, bytes) -> bytes
 ```
 
 The process, file-byte, console, and diagnostic leaves are defined by
-[Hosted-Resources.md](Hosted-Resources.md). The two rights-limited application
+[Hosted-Resources.md](Hosted-Resources.md). The directory and storage
 interfaces are defined by [Read-Only-Directory-Capability.md](Read-Only-Directory-Capability.md)
 and [Random-Access-Storage-Capability.md](Random-Access-Storage-Capability.md).
+The two model operations are defined by
+[Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md).
 
 ## Statements
 

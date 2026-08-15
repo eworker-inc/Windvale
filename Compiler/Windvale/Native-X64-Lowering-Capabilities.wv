@@ -82,14 +82,20 @@ fn Capabilityˉkind(
     ) {
         return 5u8;
     }
-    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "process.argument") {
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "model.catalog_v1") {
         return 6u8;
     }
-    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "process.argument_count") {
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "model.inference_v1") {
         return 7u8;
     }
-    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "storage.random_access_v1") {
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "process.argument") {
         return 8u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "process.argument_count") {
+        return 9u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "storage.random_access_v1") {
+        return 10u8;
     }
     return 0u8;
 }
@@ -131,13 +137,16 @@ fn Signatureˉisˉvalid(
             return 0u32;
         }
     }
-    if Kind == 6u8 {
-        if Parameters != 1u32 || First != 5u8 || Return != 3u8 { return 0u32; }
-    }
-    if Kind == 7u8 {
-        if Parameters != 0u32 || Return != 5u8 { return 0u32; }
+    if Kind == 6u8 || Kind == 7u8 {
+        if Parameters != 1u32 || First != 6u8 || Return != 6u8 { return 0u32; }
     }
     if Kind == 8u8 {
+        if Parameters != 1u32 || First != 5u8 || Return != 3u8 { return 0u32; }
+    }
+    if Kind == 9u8 {
+        if Parameters != 0u32 || Return != 5u8 { return 0u32; }
+    }
+    if Kind == 10u8 {
         if Parameters != 5u32 || First != 5u8 || Second != 10u8 ||
             Third != 10u8 || Fourth != 5u8 || Fifth != 6u8 || Return != 6u8 {
             return 0u32;
@@ -159,7 +168,7 @@ export fn Compilerˉnativeˉx64ˉcapabilitiesˉread(
     if Length < 4u32 { return Invalid; }
     let Limit: u32 = Offset + Length;
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
-    if Count > 8u32 { return Invalid; }
+    if Count > 10u32 { return Invalid; }
     var Kinds: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Previous: u32 = 0u32;
     var Cursor: u32 = Offset + 4u32;
@@ -195,7 +204,7 @@ export fn Compilerˉnativeˉx64ˉcapabilityˉkind(
 }
 
 export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() -> u8 {
-    return 7u8;
+    return 9u8;
 }
 
 export fn Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() -> u8 {
@@ -207,7 +216,7 @@ export fn Compilerˉnativeˉx64ˉdiagnosticˉwriteˉlineˉkind() -> u8 {
 }
 
 export fn Compilerˉnativeˉx64ˉprocessˉargumentˉkind() -> u8 {
-    return 6u8;
+    return 8u8;
 }
 
 export fn Compilerˉnativeˉx64ˉfileˉreadˉbytesˉkind() -> u8 {
@@ -219,11 +228,19 @@ export fn Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() -> u8 {
 }
 
 export fn Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() -> u8 {
-    return 8u8;
+    return 10u8;
 }
 
 export fn Compilerˉnativeˉx64ˉdirectoryˉreadˉkind() -> u8 {
     return 5u8;
+}
+
+export fn Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() -> u8 {
+    return 6u8;
+}
+
+export fn Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() -> u8 {
+    return 7u8;
 }
 
 export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes() -> u32 {
@@ -258,6 +275,12 @@ export fn Compilerˉnativeˉx64ˉdirectoryˉreadˉbytes() -> u32 {
     return Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉbytes() + 10u32;
 }
 
+export fn Compilerˉnativeˉx64ˉmodelˉcallˉbytes() -> u32 {
+    // The fixed provider-call frame remains five cells wide, while EDX exposes
+    // the exact one-cell bytes-to-bytes model signature.
+    return Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉbytes() + 10u32;
+}
+
 export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
     Kind: u8,
     Stack: bytes,
@@ -273,6 +296,36 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
     var Outputˉu32: u32 = U32ˉvalues;
     var Outputˉbytes: u32 = Bytesˉvalues;
     var Outputˉbody: u32 = Bodyˉbytes;
+    if Kind == Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
+        Kind == Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() {
+        if Outputˉdepth < 1u32 ||
+            Bytesˉreadˉu8(Outputˉstack, Outputˉdepth - 1u32) != 6u8 {
+            return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
+                false,
+                Outputˉstack,
+                Outputˉdepth,
+                Outputˉtext,
+                Outputˉu32,
+                Outputˉbytes,
+                Outputˉbody
+            );
+        }
+        Outputˉdepth = Outputˉdepth - 1u32;
+        Outputˉstack = Bytesˉslice(Outputˉstack, 0u32, Outputˉdepth);
+        Outputˉstack = Bytesˉconcat(Outputˉstack, Bytesˉfromˉu8(6u8));
+        Outputˉdepth = Outputˉdepth + 1u32;
+        Outputˉbytes = Outputˉbytes + 1u32;
+        Outputˉbody = Outputˉbody + Compilerˉnativeˉx64ˉmodelˉcallˉbytes();
+        return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
+            true,
+            Outputˉstack,
+            Outputˉdepth,
+            Outputˉtext,
+            Outputˉu32,
+            Outputˉbytes,
+            Outputˉbody
+        );
+    }
     if Kind == Compilerˉnativeˉx64ˉdirectoryˉreadˉkind() {
         if Outputˉdepth < 3u32 ||
             Bytesˉreadˉu8(Outputˉstack, Outputˉdepth - 3u32) != 3u8 ||
@@ -700,6 +753,57 @@ export fn Compilerˉnativeˉx64ˉemitˉcapability(
     var Outputˉtext: u32 = Nextˉtext;
     var Outputˉu32: u32 = Nextˉu32;
     var Outputˉbytes: u32 = Nextˉbytes;
+    if Kind == Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
+        Kind == Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() {
+        let Modelˉsource: u32 = Bytesˉreadˉu32ˉlittle(
+            Outputˉslots, (Outputˉdepth - 1u32) * 4u32
+        );
+        let Modelˉresult: u32 =
+            Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+                Locals,
+                I32ˉslots,
+                Boolˉslots,
+                Textˉslots,
+                U8ˉslots,
+                U32ˉslots,
+                Bytesˉslots,
+                6u8,
+                Outputˉbytes
+            );
+        let Modelˉemission: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission =
+            Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
+                Outputˉresult,
+                Capabilityˉindex,
+                1u32,
+                Modelˉsource,
+                Modelˉsource,
+                Modelˉsource,
+                Modelˉsource,
+                Modelˉsource,
+                Modelˉresult,
+                Failureˉtarget
+            );
+        Outputˉresult = Modelˉemission.Result;
+        Outputˉdepth = Outputˉdepth - 1u32;
+        Outputˉtypes = Bytesˉslice(Outputˉtypes, 0u32, Outputˉdepth);
+        Outputˉslots = Bytesˉslice(Outputˉslots, 0u32, Outputˉdepth * 4u32);
+        Outputˉtypes = Bytesˉconcat(Outputˉtypes, Bytesˉfromˉu8(6u8));
+        Outputˉslots = Bytesˉconcat(
+            Outputˉslots,
+            Bytesˉfromˉu32ˉlittle(Modelˉresult)
+        );
+        Outputˉdepth = Outputˉdepth + 1u32;
+        Outputˉbytes = Outputˉbytes + 1u32;
+        return Compilerˉnativeˉx64ˉcapabilityˉstate(
+            Outputˉresult,
+            Outputˉtypes,
+            Outputˉslots,
+            Outputˉdepth,
+            Outputˉtext,
+            Outputˉu32,
+            Outputˉbytes
+        );
+    }
     if Kind == Compilerˉnativeˉx64ˉdirectoryˉreadˉkind() {
         let Directoryˉnameˉsource: u32 = Bytesˉreadˉu32ˉlittle(
             Outputˉslots, (Outputˉdepth - 3u32) * 4u32

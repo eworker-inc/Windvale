@@ -8,11 +8,13 @@ This specification defines the implemented capability-free `WVMM 1`, `WVMQ 1`,
 text conversations, describe catalog and non-streaming generation operations,
 and independently admit provider-neutral results.
 
-This is not a public-network API, provider capability, JSON mapping, credential
-contract, or claim that Windvale can contact an external provider. The
-deterministic `Scriptedˉmodelˉprovider` is a capability-free corpus provider. A
-future hosted adapter must preserve this protocol after separately earning
-network, credential, cancellation, provider-call, and malformed-JSON evidence.
+This is not a public-network API, JSON mapping, credential contract, or claim
+that Windvale can contact an external provider. The deterministic
+`Scriptedˉmodelˉprovider` is a capability-free corpus provider. The implemented
+[bound hosted facade](Windvale-Bound-Model-Provider.md) preserves this protocol
+through an offline native capability seam. A future live adapter must separately
+earn network, credential, cancellation, transport-completion, and malformed-JSON
+evidence.
 
 All integers are unsigned little-endian. All reserved fields are zero. Every
 decoder requires the declared total to equal the complete supplied value and
@@ -149,16 +151,18 @@ generation `1` returns the stable model identity, fixed text, and fixed usage.
 A stale generation returns
 `Unavailable`; a malformed request returns `Invalid_request`.
 
-The Project 2 library manifests and `Model-Protocol-Self-Test.wv` compile under
+The Project 2 portable library manifests and `Model-Protocol-Self-Test.wv` compile under
 the native source front door. `Test-Libraries` owns deterministic compilation
 of both libraries and the accepted/rejected corpus. It does not claim a live
-provider call or native execution of a model adapter.
+provider call or public-network execution of a model adapter. The separate
+`model-provider` owner executes the deterministic hosted seam.
 
 ## Deferred boundary
 
-The first live seam remains two separately authorized conceptual operations,
-catalog and inference, over `bytes -> bytes`. It requires a named decision and
-implementation for native provider-call lowering, rights-limited binding,
-HTTPS/HTTP, secret custody, deadlines/cancellation, response ownership, and
-provider-specific bounded JSON mapping. No API key, endpoint, unrestricted
-header map, provider SDK object, or raw JSON belongs in these portable records.
+The two separately authorized catalog and inference operations over
+`bytes -> bytes`, native provider-call lowering, rights-limited binding, strict
+facade admission, and borrowed-response rule are implemented by Decision 0583.
+The live seam still requires HTTPS/HTTP, secret custody, deadlines/cancellation,
+transport-completion evidence, and provider-specific bounded JSON mapping. No
+API key, endpoint, unrestricted header map, provider SDK object, or raw JSON
+belongs in these portable records.

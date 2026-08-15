@@ -590,6 +590,12 @@ export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
             if Bytesˉreadˉu32ˉlittle(Input, Name + 8u32) != 1969713761u32 { Matches = false; }
             if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 1953391981u32 { Matches = false; }
             if Matches { Catalog = 4u32; }
+            Matches = true;
+            if Bytesˉreadˉu32ˉlittle(Input, Name) != 1701080941u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 4u32) != 1633889900u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 8u32) != 1869373812u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 829841255u32 { Matches = false; }
+            if Matches { Catalog = 8u32; }
         }
         if Nameˉlength == 18u32 {
             Matches = true;
@@ -599,6 +605,13 @@ export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
             if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 1768709989u32 { Matches = false; }
             if Bytesˉreadˉu16ˉlittle(Input, Name + 16u32) != 25966u32 { Matches = false; }
             if Matches { Catalog = 1u32; }
+            Matches = true;
+            if Bytesˉreadˉu32ˉlittle(Input, Name) != 1701080941u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 4u32) != 1852386924u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 8u32) != 1701995878u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 1600480110u32 { Matches = false; }
+            if Bytesˉreadˉu16ˉlittle(Input, Name + 16u32) != 12662u32 { Matches = false; }
+            if Matches { Catalog = 8u32; }
         }
         if Nameˉlength == 21u32 {
             Matches = true;
@@ -686,6 +699,11 @@ export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
             if Bytesˉreadˉu8(Input, Cursor + 3u32) != 5u8 { return Invalid; }
             if Bytesˉreadˉu8(Input, Cursor + 4u32) != 6u8 { return Invalid; }
             if Bytesˉreadˉu8(Input, Cursor + 5u32) != 6u8 { return Invalid; }
+        }
+        if Catalog == 8u32 {
+            if Parameterˉcount != 1u32 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor) != 6u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) != 6u8 { return Invalid; }
         }
         Cursor = Cursor + Parameterˉcount + 1u32;
         Previousˉname = Name;

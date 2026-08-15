@@ -1,9 +1,10 @@
 # Windvale external model provider library proposal
 
 > Status: Model slices 0 and 1 are implemented candidates under
-> [Decision 0573](../Decisions/0573-First-Provider-Neutral-Model-Protocol.md).
-> Live capability, network, credential, and provider-adapter slices remain
-> proposals. The provider survey is a
+> [Decision 0573](../Decisions/0573-First-Provider-Neutral-Model-Protocol.md),
+> and the currently feasible offline portion of slice 2 is implemented under
+> [Decision 0583](../Decisions/0583-First-Native-Bound-Model-Provider.md).
+> Live network, credential, and provider-adapter slices remain proposals. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
 
@@ -46,8 +47,8 @@ provider-neutral core now:
 Windvale does **not** yet have enough implemented infrastructure for a
 production library to contact public model APIs directly. The missing pieces
 are shared HTTPS/TLS and HTTP framing, production credential custody, general
-deadlines and cancellation, recoverable provider failures, a native
-`bytes -> bytes` provider-call shape, and multiple typed provider instances.
+deadlines and cancellation, catchable provider-loss results, and multiple typed
+provider instances.
 
 The honest first implementation is therefore a portable request/result codec
 and scripted provider. A build-restricted host reference adapter could contact
@@ -63,12 +64,15 @@ The repository now contains the exact capability-free
 portable encoder/decoder and validation code, a deterministic scripted provider,
 Project 2 library manifests, and a provider-neutral accepted/rejected corpus.
 The focused native library owner builds both libraries and the corpus project
-deterministically.
+deterministically. It also contains the hosted `model.catalog_v1` and
+`model.inference_v1` capability seam, strict facade, native lowering, exact
+scripted provider table, and current-host executable test with cross-host image
+construction.
 
-This checkpoint is intentionally not a live adapter. It does not define or
-invoke `model.catalog_v1` or `model.inference_v1`, contact OpenAI, Anthropic, or
-Google, read an API key, parse provider JSON, or claim HTTPS/cancellation
-evidence. Those remain slices 2 through 5 below.
+This checkpoint is intentionally not a live adapter. It does not contact
+OpenAI, Anthropic, Google, or another provider, read an API key, parse provider
+JSON, or claim HTTPS/cancellation evidence. Those remain slices 3 through 5
+below.
 
 ## Current external API landscape
 
@@ -307,9 +311,9 @@ expectations. An adapter never silently sends the prompt to another provider.
 | --- | --- | --- |
 | Typed provider-neutral state | Current Seed records, nested records, enums, exhaustive matching, and bounded sequences | Ready for the version-1 corpus and pure library. |
 | Strict canonical bytes | [`Foundation-Bytes`](../../Specifications/Foundation-Bytes.md) and many bounded binary readers/writers | Ready for a focused envelope after a decision freezes it. |
-| Typed platform-facade pattern | [`Random-Access-Storage.wv`](../../Libraries/Platform/Storage/Random-Access-Storage.wv) decodes and revalidates a provider-owned byte envelope | Ready as a pattern, not reusable model code. |
+| Typed platform-facade pattern | [`Bound-Model-Provider.wv`](../../Libraries/Platform/Models/Bound-Model-Provider.wv) validates requests and independently admits model responses | Implemented for the offline hosted seam. |
 | Rights-limited provider state | [`Windvale-Native-Capability-Provider-Table`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) | Partially ready; one provider per capability identity is practical. |
-| Native provider invocation | [`Windvale-Native-Provider-Call`](../../Specifications/Windvale-Native-Provider-Call.md) | Partial; model calls need a new verified `bytes -> bytes` shape and host integration. |
+| Native provider invocation | [`Windvale-Native-Provider-Call`](../../Specifications/Windvale-Native-Provider-Call.md) | Implemented for exact one-cell catalog and inference calls. |
 | JSON request and hostile-response codec | Windvale has deterministic JSON-style text quoting, not a general JSON value/parser contract | Not ready; provider JSON belongs first in the host adapter and needs bounded parsing. |
 | HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The [networking foundation plan](Windvale-Networking-Foundation-Implementation-Plan.md) defines ordered slices through secure HTTP retrieval | Designed, not implemented. |
 | Production API-key custody | Identity/trust architecture exists; no production key store or secret provider is implemented | Not ready. |
@@ -349,18 +353,20 @@ entropy, JSON parser, or model quality is required.
 
 ### Model slice 2: hosted byte-envelope seam
 
-Status: deferred; the required native `bytes -> bytes` provider call is not
-implemented.
+Status: implemented candidate for the currently feasible offline seam under
+Decision 0583. Catchable revocation/provider-loss results remain deferred.
 
 Add the two candidate capability identities, the verified `bytes -> bytes`
 native call shape, a scripted rights-limited host provider, and the typed
 `Libraries/Platform/Models/` facade. Provider state and response scratch remain
-execution-owned; the facade copies any admitted payload that must survive a
-later provider call rather than retaining a borrowed provider descriptor.
+execution-owned; a caller copies any admitted payload that must survive a later
+provider call rather than retaining a borrowed provider descriptor.
 
-Exit gate: exact launch admission, success, denial, malformed provider response,
-revocation, stale generation, and provider loss execute without any public
-network access.
+Current evidence covers deterministic construction, exact launch binding,
+catalog and inference success, request rejection before dispatch, malformed
+provider responses, and stale generation without public network access. Denial
+can use the typed protocol status; nonzero provider loss and revocation still
+take the runtime failure path until failures become catchable in source.
 
 ### Model slice 3: optional external reference oracle
 
@@ -440,9 +446,9 @@ A numbered decision is required before accepting:
 
 ## Immediate recommendation
 
-Accept the provider-neutral direction for discussion and, if this product lane
-is selected, implement only model slices 0 and 1 first. They are fully supported
-by current Windvale semantics and produce reusable tested code. Treat a live
-reference adapter as optional integration evidence. Do not describe Windvale as
-able to contact external models until the provider call, secure HTTP, credential,
-and live-adapter gates have actually passed.
+Continue from the implemented protocol and offline hosted seam. The next useful
+shared infrastructure is catchable provider failure plus secure networking,
+credential custody, deadlines/cancellation, and bounded hostile JSON parsing.
+Treat a live reference adapter as optional integration evidence. Do not describe
+Windvale as able to contact external models until secure HTTP, credential, and
+live-adapter gates have actually passed.

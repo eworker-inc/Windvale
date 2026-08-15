@@ -1,0 +1,172 @@
+module Nativeˉhostedˉmodelˉproviderˉselfˉtest profile hosted;
+
+import Boundˉmodelˉprovider as Bound;
+import Windvaleˉmodelˉprotocol as Protocol;
+
+capability model.catalog_v1;
+capability model.inference_v1;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Spanˉequalsˉtext(
+    Value: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) ||
+        Offset > Bytesˉlength(Value) ||
+        Length > Bytesˉlength(Value) - Offset {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Value, Offset + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Messages() -> bytes {
+    return Protocol.Modelˉmessagesˉappendˉbytes(
+        Protocol.Modelˉmessagesˉempty(),
+        Protocol.Modelˉrole.User,
+        "What is available today?"
+    );
+}
+
+fn Catalogˉsuccess() -> bool {
+    let Request: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        92u64, 0u64, 16u32, Emptyˉbytes()
+    );
+    let Result: Bound.Boundˉmodelˉcatalogˉresult =
+        Bound.Boundˉmodelˉcatalog(Request.Bytes);
+    if Request.Status != Protocol.Modelˉcodecˉstatus.Valid ||
+        Result.Requestˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Result.Catalog.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Result.Catalog.Status != Protocol.Modelˉstatus.Valid ||
+        Result.Catalog.Requestˉidentity != 92u64 ||
+        Result.Catalog.Providerˉgeneration != 1u64 ||
+        Result.Catalog.Entries != 2u32 {
+        return false;
+    }
+    let Stable: Protocol.Modelˉcatalogˉentry =
+        Protocol.Modelˉcatalogˉentryˉat(Result.Catalog, 0u32);
+    let Alias: Protocol.Modelˉcatalogˉentry =
+        Protocol.Modelˉcatalogˉentryˉat(Result.Catalog, 1u32);
+    return Stable.Found && Alias.Found &&
+        Stable.Lifecycle == Protocol.Modelˉlifecycle.Stable &&
+        Alias.Lifecycle == Protocol.Modelˉlifecycle.Mutableˉalias &&
+        Spanˉequalsˉtext(
+            Result.Catalog.Bytes,
+            Stable.Identifierˉoffset,
+            Stable.Identifierˉlength,
+            "scripted/text-1"
+        ) && Spanˉequalsˉtext(
+            Result.Catalog.Bytes,
+            Alias.Identifierˉoffset,
+            Alias.Identifierˉlength,
+            "scripted/current"
+        );
+}
+
+fn Requestˉrejection() -> bool {
+    let Result: Bound.Boundˉmodelˉcatalogˉresult =
+        Bound.Boundˉmodelˉcatalog(Emptyˉbytes());
+    return Result.Requestˉstatus ==
+            Protocol.Modelˉcodecˉstatus.Invalidˉenvelope &&
+        Result.Catalog.Codecˉstatus ==
+            Protocol.Modelˉcodecˉstatus.Invalidˉenvelope;
+}
+
+fn Catalogˉmalformedˉresponse() -> bool {
+    let Request: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        93u64, 0u64, 16u32, Emptyˉbytes()
+    );
+    let Result: Bound.Boundˉmodelˉcatalogˉresult =
+        Bound.Boundˉmodelˉcatalog(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Catalog.Codecˉstatus ==
+            Protocol.Modelˉcodecˉstatus.Invalidˉenvelope;
+}
+
+fn Generationˉrequest(
+    Identity: u64,
+    Generation: u64
+) -> Protocol.Modelˉencoded {
+    return Protocol.Modelˉgenerationˉrequest(
+        Identity,
+        Generation,
+        "scripted/current",
+        Messages(),
+        128u32
+    );
+}
+
+fn Generationˉsuccess() -> bool {
+    let Request: Protocol.Modelˉencoded = Generationˉrequest(94u64, 1u64);
+    let Result: Bound.Boundˉmodelˉgenerationˉresult =
+        Bound.Boundˉmodelˉgenerate(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Status == Protocol.Modelˉstatus.Valid &&
+        Result.Generation.Completion == Protocol.Modelˉcompletion.Complete &&
+        Result.Generation.Requestˉidentity == 94u64 &&
+        Result.Generation.Providerˉgeneration == 1u64 &&
+        Result.Generation.Inputˉtokens == 7u64 &&
+        Result.Generation.Outputˉtokens == 3u64 &&
+        Spanˉequalsˉtext(
+            Result.Generation.Bytes,
+            Result.Generation.Modelˉoffset,
+            Result.Generation.Modelˉlength,
+            "scripted/text-1"
+        ) && Spanˉequalsˉtext(
+            Result.Generation.Bytes,
+            Result.Generation.Textˉoffset,
+            Result.Generation.Textˉlength,
+            "scripted model response"
+        );
+}
+
+fn Staleˉgeneration() -> bool {
+    let Request: Protocol.Modelˉencoded = Generationˉrequest(95u64, 2u64);
+    let Result: Bound.Boundˉmodelˉgenerationˉresult =
+        Bound.Boundˉmodelˉgenerate(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Status == Protocol.Modelˉstatus.Unavailable &&
+        Result.Generation.Requestˉidentity == 95u64 &&
+        Result.Generation.Providerˉgeneration == 1u64 &&
+        Spanˉequalsˉtext(
+            Result.Generation.Bytes,
+            Result.Generation.Diagnosticˉoffset,
+            Result.Generation.Diagnosticˉlength,
+            "stale provider generation"
+        );
+}
+
+fn Generationˉmalformedˉresponse() -> bool {
+    let Request: Protocol.Modelˉencoded = Generationˉrequest(96u64, 1u64);
+    let Result: Bound.Boundˉmodelˉgenerationˉresult =
+        Bound.Boundˉmodelˉgenerate(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Codecˉstatus ==
+            Protocol.Modelˉcodecˉstatus.Invalidˉenvelope;
+}
+
+export fn Main() -> i32 {
+    if !Catalogˉsuccess() { return 1; }
+    if !Requestˉrejection() { return 2; }
+    if !Catalogˉmalformedˉresponse() { return 3; }
+    if !Generationˉsuccess() { return 4; }
+    if !Staleˉgeneration() { return 5; }
+    if !Generationˉmalformedˉresponse() { return 6; }
+    return 0;
+}

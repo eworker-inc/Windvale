@@ -683,7 +683,25 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv') {
         Add-Bytecode-Suites
-        Add-Suite 'libraries'
+        Add-Suite @('libraries', 'model-provider')
+    } elseif ($Path -in @(
+        'Libraries/Platform/Models/Bound-Model-Provider.wv',
+        'Projects/Libraries/Windvale-Library-Bound-Model-Provider.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Hosted-Model-Provider.wvproj',
+        'Tests/Fixtures/Models/Native-Hosted-Model-Provider-Self-Test.wv',
+        'Specifications/Windvale-Bound-Model-Provider.md'
+    )) {
+        Add-Suite 'model-provider'
+    } elseif ($Path -in @(
+        'Libraries/Models/Model-Protocol.wv',
+        'Libraries/Models/Scripted-Model-Provider.wv',
+        'Tests/Fixtures/Models/Model-Protocol-Self-Test.wv',
+        'Projects/Libraries/Windvale-Library-Model-Protocol.wvproj',
+        'Projects/Libraries/Windvale-Library-Scripted-Model-Provider.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj',
+        'Specifications/Windvale-Model-Protocol.md'
+    )) {
+        Add-Suite @('model-provider', 'workspace-project2', 'libraries')
     } elseif ($Path -in @(
         'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
         'Projects/Libraries/Windvale-Library-Installation-Generation.wvproj',
@@ -925,6 +943,9 @@ foreach ($Path in $Paths) {
     )) {
         Add-Assembler-Suites
         Add-Suite 'wvdb-query-capability'
+    } elseif ($Path -eq 'Runtime/Native/X64-Scripted-Model-Provider-Host.wva') {
+        Add-Assembler-Suites
+        Add-Suite 'model-provider'
     } elseif ($Path -in @(
         'Runtime/Windvale/Native-Capability-Provider-Table-Core.wv',
         'Runtime/Windvale/Native-Capability-Provider-Table-Core.wvproj',
@@ -975,6 +996,7 @@ foreach ($Path in $Paths) {
     )) {
         Add-Compiler-Suites
         Add-Suite 'native-u64-lowering'
+        Add-Suite 'model-provider'
         Add-Suite 'database-superblock'
         Add-Suite 'database-durable-commit'
         Require-Full-Database-Storage
@@ -1081,6 +1103,7 @@ foreach ($Path in $Paths) {
             'Compiler/Windvale/Source-Wir-Core.wv'
         )) {
             Require-Full-Database-Storage
+            Add-Suite 'model-provider'
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
@@ -1746,7 +1769,7 @@ foreach ($Path in $Paths) {
         } elseif ($Path -eq 'Specifications/Windvale-Native-X64-Lowering.md') {
             Add-Compiler-Suites
             $script:DatabaseStorageDevelopmentEligible = $false
-            Add-Suite @('native-u64-lowering', 'database-storage', 'wvb-to-wvo-reconstruction')
+            Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
         } elseif ($Path -in @(
             'Specifications/Seed-Language.md',
             'Specifications/Seed-Records.md',
@@ -1755,6 +1778,7 @@ foreach ($Path in $Paths) {
         )) {
             Add-Compiler-Suites
             Require-Full-Database-Storage
+            Add-Suite 'model-provider'
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
             Add-Suite 'uefi-packager'
         } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {

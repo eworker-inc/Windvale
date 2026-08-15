@@ -1,0 +1,95 @@
+module Boundˉmodelˉprovider profile hosted;
+
+import Windvaleˉmodelˉprotocol as Protocol;
+
+capability model.catalog_v1;
+capability model.inference_v1;
+
+export record Boundˉmodelˉcatalogˉresult {
+    Requestˉstatus: Protocol.Modelˉcodecˉstatus;
+    Catalog: Protocol.Modelˉcatalog;
+}
+
+export record Boundˉmodelˉgenerationˉresult {
+    Requestˉstatus: Protocol.Modelˉcodecˉstatus;
+    Generation: Protocol.Modelˉgeneration;
+}
+
+fn Boundˉmodelˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Boundˉmodelˉinvalidˉcatalog() -> Protocol.Modelˉcatalog {
+    return Protocol.Modelˉcatalogˉdecode(Boundˉmodelˉempty());
+}
+
+fn Boundˉmodelˉinvalidˉgeneration() -> Protocol.Modelˉgeneration {
+    return Protocol.Modelˉgenerationˉdecode(Boundˉmodelˉempty());
+}
+
+export fn Boundˉmodelˉcatalog(Request: bytes) -> Boundˉmodelˉcatalogˉresult {
+    let Decoded: Protocol.Modelˉrequest = Protocol.Modelˉrequestˉdecode(Request);
+    if Decoded.Status != Protocol.Modelˉcodecˉstatus.Valid {
+        return Boundˉmodelˉcatalogˉresult(
+            Decoded.Status,
+            Boundˉmodelˉinvalidˉcatalog()
+        );
+    }
+    if Decoded.Operation != Protocol.Modelˉoperation.Catalog {
+        return Boundˉmodelˉcatalogˉresult(
+            Protocol.Modelˉcodecˉstatus.Invalidˉvalue,
+            Boundˉmodelˉinvalidˉcatalog()
+        );
+    }
+    let Catalog: Protocol.Modelˉcatalog = Protocol.Modelˉcatalogˉdecode(
+        model.catalog_v1(Request)
+    );
+    if Catalog.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Catalog.Requestˉidentity != Decoded.Requestˉidentity ||
+        (Catalog.Status == Protocol.Modelˉstatus.Valid &&
+            Decoded.Providerˉgeneration != 0u64 &&
+            Catalog.Providerˉgeneration != Decoded.Providerˉgeneration) {
+        return Boundˉmodelˉcatalogˉresult(
+            Protocol.Modelˉcodecˉstatus.Valid,
+            Boundˉmodelˉinvalidˉcatalog()
+        );
+    }
+    return Boundˉmodelˉcatalogˉresult(
+        Protocol.Modelˉcodecˉstatus.Valid,
+        Catalog
+    );
+}
+
+export fn Boundˉmodelˉgenerate(Request: bytes)
+    -> Boundˉmodelˉgenerationˉresult {
+    let Decoded: Protocol.Modelˉrequest = Protocol.Modelˉrequestˉdecode(Request);
+    if Decoded.Status != Protocol.Modelˉcodecˉstatus.Valid {
+        return Boundˉmodelˉgenerationˉresult(
+            Decoded.Status,
+            Boundˉmodelˉinvalidˉgeneration()
+        );
+    }
+    if Decoded.Operation != Protocol.Modelˉoperation.Generate {
+        return Boundˉmodelˉgenerationˉresult(
+            Protocol.Modelˉcodecˉstatus.Invalidˉvalue,
+            Boundˉmodelˉinvalidˉgeneration()
+        );
+    }
+    let Generation: Protocol.Modelˉgeneration = Protocol.Modelˉgenerationˉdecode(
+        model.inference_v1(Request)
+    );
+    if Generation.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Generation.Requestˉidentity != Decoded.Requestˉidentity ||
+        (Generation.Status == Protocol.Modelˉstatus.Valid &&
+            Generation.Providerˉgeneration != Decoded.Providerˉgeneration) {
+        return Boundˉmodelˉgenerationˉresult(
+            Protocol.Modelˉcodecˉstatus.Valid,
+            Boundˉmodelˉinvalidˉgeneration()
+        );
+    }
+    return Boundˉmodelˉgenerationˉresult(
+        Protocol.Modelˉcodecˉstatus.Valid,
+        Generation
+    );
+}

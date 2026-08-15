@@ -1,0 +1,304 @@
+windvale-assembly 1
+
+# Platform-neutral ABI-23 owner for the deterministic hosted model-provider
+# qualification fixture. It binds only catalog and inference, publishes fixed
+# immutable responses, and grants no network, filesystem, process, or secret
+# authority.
+symbol local data Model_host_catalog_response in .rodata
+symbol local data Model_host_generation_response in .rodata
+symbol local data Model_host_identities in .rodata
+symbol local data Model_host_malformed_response in .rodata
+symbol local function Model_host_provider in .text
+symbol local data Model_host_stale_response in .rodata
+symbol export function Model_host_entry in .text
+symbol import function Main
+
+section code .text align 16
+define Model_host_entry
+push rbx
+move rbx rdx
+subtract_i32 rsp 4096
+
+# Clear the execution-owned context, exact provider table, and provider state,
+# then derive context 9 from the admitted context 7.
+xor rax rax
+xor ecx ecx
+label Model_host_entry_clear
+compare_i32 ecx 4096
+branch above_equal Model_host_entry_copy
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+jump_label Model_host_entry_clear
+
+label Model_host_entry_copy
+xor ecx ecx
+label Model_host_entry_copy_next
+compare_i32 ecx 112
+branch above_equal Model_host_entry_context
+load_memory_u64 rax rbx rcx 1 0
+store_memory_u64 rsp rcx 1 32 rax
+add_i32 ecx 8
+jump_label Model_host_entry_copy_next
+
+label Model_host_entry_context
+move_u32 eax 9
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 136
+store_memory_u32 rsp none 1 36 eax
+move rax rsp
+add_i32 rax 168
+store_memory_u64 rsp none 1 160 rax
+
+# Exact two-entry WVPT 1 table. Entries are lexicographically ordered and each
+# owns a distinct state object even though they share one validating target.
+move_u32 eax 1414551127
+store_memory_u32 rsp none 1 168 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 172 eax
+move_u32 eax 134
+store_memory_u32 rsp none 1 176 eax
+move_u32 eax 2
+store_memory_u32 rsp none 1 180 eax
+move_u32 eax 3
+store_memory_u32 rsp none 1 184 eax
+move_u32 eax 24
+store_memory_u32 rsp none 1 188 eax
+move_u32 eax 54
+store_memory_u32 rsp none 1 192 eax
+
+move_u32 eax 80
+store_memory_u32 rsp none 1 200 eax
+move_u32 eax 26
+store_memory_u32 rsp none 1 204 eax
+load_address rax Model_host_provider
+store_memory_u64 rsp none 1 208 rax
+move rax rsp
+add_i32 rax 320
+store_memory_u64 rsp none 1 216 rax
+
+move_u32 eax 106
+store_memory_u32 rsp none 1 224 eax
+move_u32 eax 28
+store_memory_u32 rsp none 1 228 eax
+load_address rax Model_host_provider
+store_memory_u64 rsp none 1 232 rax
+move rax rsp
+add_i32 rax 336
+store_memory_u64 rsp none 1 240 rax
+
+load_address rbx Model_host_identities
+move rdx rsp
+add_i32 rdx 248
+xor ecx ecx
+label Model_host_entry_identity_copy
+compare_i32 ecx 54
+branch above_equal Model_host_entry_state
+load_memory_u8 al rbx rcx 1 0
+store_memory_u8 rdx rcx 1 0 al
+add_i32 ecx 1
+jump_label Model_host_entry_identity_copy
+
+label Model_host_entry_state
+move_u32 eax 1
+store_memory_u32 rsp none 1 320 eax
+store_memory_u64 rsp none 1 328 rax
+move_u32 eax 2
+store_memory_u32 rsp none 1 336 eax
+move_u32 eax 1
+store_memory_u64 rsp none 1 344 rax
+
+xor rcx rcx
+move rdx rsp
+add_i32 rdx 32
+move r8 rdx
+xor r9 r9
+call Main
+add_i32 rsp 4096
+pop rbx
+return
+end define
+
+define Model_host_provider
+# Preserve both permanent host ABIs and the generated instruction/call/context
+# budgets. No external platform call is made by this deterministic provider.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r10
+push r11
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r13 r8
+move r14 r9
+
+test r12 r12
+branch equal Model_host_provider_abi_failure
+test r13 r13
+branch equal Model_host_provider_abi_failure
+test r14 r14
+branch equal Model_host_provider_abi_failure
+compare_i32 edx 1
+branch not_equal Model_host_provider_abi_failure
+
+# Admit only the two state objects derived from this execution's context base.
+# Result cells belong to generated function frames and have no fixed offset from
+# r15, so their lifetime is enforced by the lowering contract rather than a
+# host-frame address comparison.
+move rax r15
+add_i32 rax 288
+compare r13 rax
+branch equal Model_host_provider_state_ready
+add_i32 rax 16
+compare r13 rax
+branch not_equal Model_host_provider_abi_failure
+label Model_host_provider_state_ready
+
+# Revalidate the complete borrowed bytes cell and its WVMQ 1 envelope prefix.
+load_memory_u64 rsi r14 none 1 0
+load_memory_u64 rax r14 none 1 8
+move ebx eax
+shift_right rax 32
+test rax rax
+branch not_equal Model_host_provider_invalid_request
+test rsi rsi
+branch equal Model_host_provider_invalid_request
+compare_i32 ebx 48
+branch below Model_host_provider_invalid_request
+compare_i32 ebx 17472
+branch above Model_host_provider_invalid_request
+load_memory_u32 eax rsi none 1 0
+compare_i32 eax 1364022871
+branch not_equal Model_host_provider_invalid_request
+load_memory_u32 eax rsi none 1 4
+compare_i32 eax 1
+branch not_equal Model_host_provider_invalid_request
+load_memory_u32 eax rsi none 1 8
+compare eax ebx
+branch not_equal Model_host_provider_invalid_request
+load_memory_u32 eax rsi none 1 20
+test eax eax
+branch not_equal Model_host_provider_invalid_request
+load_memory_u32 eax rsi none 1 44
+test eax eax
+branch not_equal Model_host_provider_invalid_request
+
+load_memory_u32 ebp r13 none 1 0
+compare_i32 ebp 1
+branch equal Model_host_provider_catalog
+compare_i32 ebp 2
+branch equal Model_host_provider_generation
+jump_label Model_host_provider_abi_failure
+
+label Model_host_provider_catalog
+load_memory_u32 eax rsi none 1 12
+compare_i32 eax 1
+branch not_equal Model_host_provider_invalid_request
+load_memory_u32 edi rsi none 1 16
+compare_i32 edi 92
+branch equal Model_host_provider_catalog_success
+compare_i32 edi 93
+branch equal Model_host_provider_malformed
+jump_label Model_host_provider_invalid_request
+
+label Model_host_provider_catalog_success
+load_address r8 Model_host_catalog_response
+move_u32 ebx 150
+jump_label Model_host_provider_publish
+
+label Model_host_provider_generation
+load_memory_u32 eax rsi none 1 12
+compare_i32 eax 2
+branch not_equal Model_host_provider_invalid_request
+load_memory_u32 edi rsi none 1 16
+compare_i32 edi 94
+branch equal Model_host_provider_generation_success
+compare_i32 edi 95
+branch equal Model_host_provider_stale
+compare_i32 edi 96
+branch equal Model_host_provider_malformed
+jump_label Model_host_provider_invalid_request
+
+label Model_host_provider_generation_success
+load_address r8 Model_host_generation_response
+move_u32 ebx 102
+jump_label Model_host_provider_publish
+
+label Model_host_provider_stale
+load_address r8 Model_host_stale_response
+move_u32 ebx 89
+jump_label Model_host_provider_publish
+
+label Model_host_provider_malformed
+load_address r8 Model_host_malformed_response
+move_u32 ebx 4
+
+label Model_host_provider_publish
+store_memory_u64 r12 none 1 0 r8
+store_memory_u32 r12 none 1 8 ebx
+xor eax eax
+store_memory_u32 r12 none 1 12 eax
+jump_label Model_host_provider_complete
+
+label Model_host_provider_invalid_request
+move_u32 eax 2
+jump_label Model_host_provider_complete
+
+label Model_host_provider_abi_failure
+move_u32 eax 1
+
+label Model_host_provider_complete
+add_i32 rsp 40
+pop r15
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Model_host_catalog_response
+bytes 87 86 77 67 1 0 0 0 150 0 0 0 0 0 0 0 92 0 0 0
+bytes 0 0 0 0 1 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
+bytes 0 0 0 0 0 0 0 0 50 0 0 0 15 0 0 0 15 0 0 0
+bytes 3 0 0 0 1 0 0 0 115 99 114 105 112 116 101 100 47 116 101 120
+bytes 116 45 49 83 99 114 105 112 116 101 100 32 84 101 120 116 32 49 52 0
+bytes 0 0 16 0 0 0 16 0 0 0 3 0 0 0 2 0 0 0 115 99
+bytes 114 105 112 116 101 100 47 99 117 114 114 101 110 116 83 99 114 105 112 116
+bytes 101 100 32 67 117 114 114 101 110 116
+end define
+define Model_host_generation_response
+bytes 87 86 77 71 1 0 0 0 102 0 0 0 0 0 0 0 94 0 0 0
+bytes 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 15 0 0 0
+bytes 23 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 3 0 0 0
+bytes 0 0 0 0 115 99 114 105 112 116 101 100 47 116 101 120 116 45 49 115
+bytes 99 114 105 112 116 101 100 32 109 111 100 101 108 32 114 101 115 112 111 110
+bytes 115 101
+end define
+define Model_host_stale_response
+bytes 87 86 77 71 1 0 0 0 89 0 0 0 2 0 0 0 95 0 0 0
+bytes 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 0 0 0 0 25 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 0 0 0 0 115 116 97 108 101 32 112 114 111 118 105 100 101 114 32 103
+bytes 101 110 101 114 97 116 105 111 110
+end define
+define Model_host_malformed_response
+bytes 87 86 77 71
+end define
+define Model_host_identities
+bytes 16 0 0 0 109 111 100 101 108 46 99 97 116 97 108 111 103 95 118 49
+bytes 1 0 0 0 6 6 18 0 0 0 109 111 100 101 108 46 105 110 102 101
+bytes 114 101 110 99 101 95 118 49 1 0 0 0 6 6
+end define
+end section

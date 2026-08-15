@@ -4,8 +4,9 @@
 
 The first x86-64 capability-provider call emission, its separately implemented
 structural verifier, main-lowerer integration, focused host-backed storage, and
-fixed read-only directory execution are implemented candidates. An actual
-`storage.random_access_v1` or `filesystem.directory_read_v1` call selects native
+fixed read-only directory execution, and the offline bound-model provider are
+implemented candidates. An actual `storage.random_access_v1`,
+`filesystem.directory_read_v1`, `model.catalog_v1`, or `model.inference_v1` call selects native
 ABI 23 and execution-context version 9; capability declaration alone preserves
 ABI 22 and exact existing output. Windows executes all storage version-1
 operations plus the directory-backed WVDB Query success, denial, and unavailable
@@ -39,7 +40,7 @@ may read offset 128.
 
 ## Exact x86-64 emission
 
-The current emitter appends exactly 216 bytes for a five-parameter provider
+The current emitter appends exactly 216 bytes for a one-through-five-parameter provider
 call. A bytes-producing capability instruction also owns the ordinary 10-byte
 allocation-budget guard, so the main lowerer measures 226 bytes for the complete
 storage instruction. The emitter admits capability ordinals 0 through 31 and
@@ -64,7 +65,7 @@ The call registers are:
 | `R8` | Opaque, nonzero rights-limited provider-state pointer |
 | `R9` | Pointer to the five copied argument cells |
 | `RCX` | Pointer to the caller-owned result descriptor |
-| `EDX` | Exact argument-cell count, `5` |
+| `EDX` | Exact argument-cell count, `1` through `5` |
 | `R10`, `R11`, `R15` | Instruction budget, call-depth budget, and execution context; provider must preserve all three |
 
 The target may treat ordinary volatile registers as scratch. It must not change
@@ -107,6 +108,23 @@ control, payload range, response bound, revocation generation, and writer fence
 before touching host I/O. A successful result is one `WVSA 1` response borrowed
 from execution-owned provider scratch. Provider success does not reinterpret a
 partial or indeterminate mutation as completion.
+
+## Model-provider cell
+
+For `model.catalog_v1(bytes)->bytes` and
+`model.inference_v1(bytes)->bytes`, the provider call uses one complete borrowed
+bytes descriptor and reports argument count one. The fixed emitter still copies
+five cells, but cells one through four duplicate the verified source only as
+unobserved fixed-frame padding; the provider must inspect exactly the declared
+count. The provider revalidates the descriptor, complete `WVMQ 1` prefix,
+operation, selected capability state, and response bound. Its result is a
+borrowed `WVMC 1` or `WVMG 1` response admitted independently by the hosted
+facade.
+
+Decision 0583's scripted provider table has two exact entries and grants no
+ambient authority. It proves catalog and inference execution without network or
+credentials. [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md)
+owns the facade and current lifetime rules.
 
 ## Verification and current evidence
 

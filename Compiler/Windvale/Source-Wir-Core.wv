@@ -1249,6 +1249,10 @@ export fn Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
         if Index == 0u32 { return 5u32; }
         return 3u32;
     }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "model.catalog_v1") ||
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "model.inference_v1") {
+        return 6u32;
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument") {
         return 3u32;
     }
@@ -1268,6 +1272,8 @@ export fn Compilerˉsourceˉwirˉcapabilityˉreturnˉshape(
 ) -> u32 {
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "file.read_bytes") { return 6u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "filesystem.directory_read_v1") { return 6u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "model.catalog_v1") { return 6u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "model.inference_v1") { return 6u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument_count") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "storage.random_access_v1") { return 6u32; }
