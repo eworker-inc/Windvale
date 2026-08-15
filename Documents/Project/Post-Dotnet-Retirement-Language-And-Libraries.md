@@ -141,6 +141,38 @@ For example, a filesystem library must expose one exact rights-limited operation
 and typed provider outcomes; it must not grow from the bootstrap `file.read_bytes`
 leaf into ambient host paths.
 
+### Independent-metadata migration prerequisite
+
+The source compiler, canonical WVB 1.11 writer, general verifier, inspector, and
+reference runtime already accept the independent `platform`, `authority`,
+required-capability, and optional-capability header. Production migration is not
+yet ready to become a repository-wide source rewrite. At exact commit
+`75cc0580950a380af439106bdce523f7ddea4fbf`, 567 of 568 tracked `.wv` files still
+use the legacy `profile` header; only the focused metadata fixture uses the
+replacement form. The Windvale-native x86-64 lowerer also deliberately requires
+the WVB Module metadata-presence byte to be zero.
+
+Advance the migration in this order:
+
+1. make the native lowerer independently validate and admit one metadata-bearing
+   module while preserving its existing profile, capability, code, and object
+   rules;
+2. add malformed metadata cases for invalid presence, version, authority,
+   platform ordering, capability ordering/version/overlap, profile derivation,
+   and required-capability mismatch;
+3. prove one current package application through source compilation, WVB
+   verification and inspection, native lowering, packaging, and execution with
+   the replacement header on Windows and Linux;
+4. migrate that package's reachable libraries, then the remaining repository
+   source in owner-sized coherent batches with exact artifact updates; and
+5. remove the legacy source spelling only after every maintained target and
+   recovery boundary either accepts the replacement or names an explicit frozen
+   historical input.
+
+Do not mass-edit source before step 1. Source acceptance alone is not target
+support, and silently discarding metadata in a derived native product would
+violate the package and portability contracts.
+
 ### 2. Add typed capability references and scoped ownership where it is real
 
 The first language priority after the package baseline is one typed, rights-limited

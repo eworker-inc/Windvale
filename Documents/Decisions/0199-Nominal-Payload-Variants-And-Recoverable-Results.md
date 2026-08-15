@@ -1,6 +1,6 @@
 # Decision 0199: Nominal payload variants and recoverable results
 
-- Status: Accepted and implemented locally; coherent change-aware verification passes and independent cross-host qualification remains pending
+- Status: Accepted, implemented, and included in the cross-host-qualified WVB 1.11 semantic-freeze baseline under Decision 0213
 - Date: 2026-08-03
 
 ## Context
@@ -60,7 +60,7 @@ The verifier checks type and case indices, constructor arity and payload shape, 
 
 During the current no-compatibility development window, 1.9 is the current variant-bearing contract rather than a compatibility promise. Older readers, dual encodings, aliases, and migration shims are not required; temporarily retained 1.6 through 1.8 paths exist only while repository inputs advance.
 
-The Stage 0 and Windvale-written compilers, WVIR validation, canonical WVB writer/reader/verifier/inspector, and reference runtime implement this contract. Focused enum-match, variant-match, no-payload, payload, default-value, malformed-case, and cross-compiler byte-parity fixtures pass locally. The final change-aware gate also passes all 92 affected Seed tests; independent dual-host qualification remains pending.
+The Stage 0 and Windvale-written compilers, WVIR validation, canonical WVB writer/reader/verifier/inspector, and reference runtime implement this contract. Focused enum-match, variant-match, no-payload, payload, default-value, malformed-case, and cross-compiler byte-parity fixtures pass locally. The final change-aware gate also passed all 92 affected Seed tests. The later complete WVB 1.11 semantic-freeze baseline passed all 97 Seed tests on Windows and digest-pinned Debian 12 at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` under [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md); target-specific execution profiles remain separately bounded.
 
 ## Consequences
 

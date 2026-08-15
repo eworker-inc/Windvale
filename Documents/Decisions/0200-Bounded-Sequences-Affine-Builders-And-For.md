@@ -1,7 +1,7 @@
 # Decision 0200: Bounded sequences, affine builders, and `for`
 
 - Date: 2026-08-03
-- Status: Accepted and implemented locally; coherent change-aware verification passes and independent cross-host qualification remains pending
+- Status: Accepted, implemented, and included in the cross-host-qualified WVB 1.11 semantic-freeze baseline under Decision 0213
 - Refines: [Decision 0137](0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [Decision 0179](0179-Language-Application-And-Capability-Metadata-Direction.md), and [Decision 0184](0184-Language-Syntax-And-Operator-Evolution.md)
 - Retains: immutable published values, checked `u32` sizes, deterministic iteration, explicit mutation, canonical WVB verification, and no backward-compatibility promise during active development
 
@@ -52,7 +52,7 @@ WVB 1.10 adds value-shape kinds `12` (`sequence`) and `13` (`builder`). Each ser
 
 WVB readers need not accept the superseded 1.9-only surface as a compatibility obligation. Repository fixtures and generated evidence advance together under the active-development policy.
 
-The Stage 0 and Windvale-written compilers, WVIR validation, canonical WVB writer/reader/verifier/inspector, and reference runtime implement this contract. Both compilers produce the exact same 809-byte collection oracle with SHA-256 `5cd5e686cd8bbbe6d8bc793dcf7c270acd643301e16cdcf53a65a317ef08a8ee`; the verifier accepts it and the runtime returns `16`. The final change-aware gate passes all 92 affected Seed tests; independent cross-host qualification remains pending.
+The Stage 0 and Windvale-written compilers, WVIR validation, canonical WVB writer/reader/verifier/inspector, and reference runtime implement this contract. Both compilers produce the exact same 809-byte collection oracle with SHA-256 `5cd5e686cd8bbbe6d8bc793dcf7c270acd643301e16cdcf53a65a317ef08a8ee`; the verifier accepts it and the runtime returns `16`. The final change-aware gate passed all 92 affected Seed tests. The later complete WVB 1.11 semantic-freeze baseline passed all 97 Seed tests on Windows and digest-pinned Debian 12 at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` under [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md); target-specific execution profiles remain separately bounded.
 
 ## Consequences
 

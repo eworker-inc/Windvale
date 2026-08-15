@@ -178,7 +178,16 @@ The spelling and WVB 1.10 contract are selected by Decision 0200. The semantics 
 
 The recommended first family treats the maximum as part of the exact type. `sequence<Item, 256>` and `sequence<Item, 512>` are different types unless an explicit checked conversion copies or republishes the value. Length varies from zero through the maximum; iteration order is insertion order. Indexing outside current length traps as a contract violation.
 
-`builder<Item, N>` is uniquely owned and move-only. A one-item `Push` either completes or reports the builder unchanged; a later bulk operation may report an exact completed prefix. Capacity exhaustion is a typed recoverable result rather than a trap, and no operation grows beyond `N`. `freeze` consumes the builder and publishes one immutable sequence. A sequence may later share backing or provide borrowed slices, but storage identity, capacity beyond the declared maximum, and reference count remain unobservable.
+`builder<Item, N>` is uniquely owned and move-only. The implemented one-item
+`push` consumes the old state only after the append succeeds and traps with
+`WVR3030` when the declared maximum is already full. No operation grows beyond
+`N`. A later bulk or input-driven construction contract may instead return the
+unchanged builder or an exact completed prefix, but that requires a focused
+recoverable ownership decision rather than being implied by the current
+statement form. `freeze` consumes the builder and publishes one immutable
+sequence. A sequence may later share backing or provide borrowed slices, but
+storage identity, capacity beyond the declared maximum, and reference count
+remain unobservable.
 
 The first implementation may use contiguous bounded storage and explicit ownership without a tracing collector. Cycles, unbounded growth, lazy iterators, general collection generics, covariance, and concurrent mutation remain outside this family.
 
@@ -295,7 +304,11 @@ runtime by implication.
 
 ## Evolution order
 
-The first eight slices are implemented locally and await the final coherent-batch verification and cross-host qualification where required:
+The first eight slices are implemented. Their complete WVB 1.11 semantic-freeze
+baseline passed the paired Windows and Debian Qualification gate under
+[Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md).
+That source/WVB qualification does not widen the explicitly narrower native,
+WebAssembly, or Windvale OS execution profiles:
 
 1. Local inference, typed constants, trailing commas, named records, and `else if`.
 2. `break`, `continue`, `&&`, `||`, and mutable-local `+=`, `-=`, and `*=`.
