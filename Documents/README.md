@@ -150,6 +150,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Remote-terminal protocol architecture](Architecture/Remote-Terminal-Protocol.md) — future `WVTS/1` secure carrier, authentication, authorization, framing, terminal messages, limits, lifecycle, compatibility adapters, and qualification
 - [Identity, time, entropy, and trust](Architecture/Identity-Time-Entropy-And-Trust.md) — proposed provider separation, key custody, pinned mutual identity, authorization, trust generations, and secure-stream prerequisites
 - [Packages, releases, updates, and recovery](Architecture/Packages-Releases-And-Recovery.md) — proposed package/lock/bundle/release split, immutable installation generations, 0.1 gate, and later A/B updates
+- [Product threat model](Architecture/Product-Threat-Model.md) — shipped assets, trust boundaries, attacker model, bounded controls, residual risks, and incident response for the 0.1 preview
 - [Compiler bootstrap options](Architecture/Compiler-Bootstrap-Options.md) — bootstrap sequence and representation choices
 - [Native execution and .NET retirement](Architecture/Native-Execution-And-Dotnet-Retirement.md) — interpreter/JIT/AOT destination, completed accepted retirement gate, and historical transfer record
 - [Managed Stage 0 recovery pointer](../Bootstrap/Stage0/README.md) — immutable pre-removal release identity, checksums, and separate-workspace restoration boundary
@@ -166,6 +167,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Seed development runbook](Runbooks/Seed-Development.md) — prerequisites, verification tiers, bootstrap convergence, CLI examples, assembly, and linking
 - [Native source-to-WVB runbook](Runbooks/Native-Source-To-Wvb.md) — ordinary no-.NET project build, pinned artifact verification, atomic publication, limits, and Stage 0 reconstruction
 - [Development installer runbook](Runbooks/Development-Installer.md) — deterministic unsigned Windows/Linux installer construction, per-user installation, offline doctor, and bounded removal
+- [Preview release ceremony](Runbooks/Preview-Release-Ceremony.md) — separate root/release custody, selected-state qualification, reproducible envelope construction, offline verification, and immutable publication
 - [Progress comic publishing runbook](Runbooks/Progress-Comic-Publishing.md) — local asset ownership, responsive exports, homepage accessibility, archive direction, review, and publication
 - [Contributing guide](../CONTRIBUTING.md) — CLA acceptance, DCO sign-off, provenance, and pull-request requirements
 - [Website guide](../Website/README.md) — local preview, featured progress stories, social and favicon assets, support configuration, analytics, and publication

@@ -43,7 +43,7 @@ no completion gate was removed by the rebaseline.
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
 | Windvale OS | 🔵 | OS-1 already owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption evidence, and generation-safe non-tail memory objects. | In the parallel OS track, add one flat resource domain and one atomic launch/supervision slice before broad shell, networking, or driver work. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
-| Public project and release foundation | 🚧 | Licensing, contribution, security, governance, authorship, and public repository policies exist. The exact Stage 0 recovery release is published and independently retained. | Produce the useful packaged application, threat model, signed release envelope, and offline verifier needed for a 0.1 preview. |
+| Public project and release foundation | 🚧 | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier now exist. The exact Stage 0 recovery release is published and independently retained. | Obtain paired-host owner evidence, perform the project-owner root ceremony, select and qualify the final state, and publish the signed `v0.1.0` envelope. |
 
 ## .NET retirement result
 
@@ -95,9 +95,14 @@ launcher/client, offline payload verifier, compiler, assembler, linker, runtime,
 publisher, and core inspection tools. The exact artifacts are labeled
 `0.1.0-dev.1`; they are not the `v0.1.0` release.
 WVDB Query is a separate example/application package; database servers and other
-applications remain separate packages or projects. In parallel, define the
-shipped-product threat model, accept the first signing and offline-verification
-policy, and implement the bounded release envelope and verifier.
+applications remain separate packages or projects. The shipped-product threat
+model, first signing/offline-verification policy, bounded envelope creator and
+independent verifier, and exact WVDB approval and target launch records are
+implemented candidates under Decisions 0563 and 0564. Their local owners pass
+13 release-envelope and 8 approval-record cases. The remaining sequence is
+paired-host evidence, project-owner root custody, one selected-state complete
+qualification, reproducible envelope creation, offline verification, and the
+signed `v0.1.0` tag/publication.
 
 OS-1 is not a prerequisite for `v0.1.0`.
 

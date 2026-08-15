@@ -256,6 +256,8 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -eq 'Create-Wvdb-Query-Fixture') {
         Add-Suite 'wvdb-query-capability'
+    } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
+        Add-Suite 'release-envelope'
     } elseif ($Stem -eq 'Test-Retirement-Suite') {
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
@@ -562,10 +564,24 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Tools/Native/', [StringComparison]::Ordinal)) {
         Add-Native-Tool-Suite $Path
-    } elseif ($Path.StartsWith('Tools/Release/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal) -or
+    } elseif ($Path.StartsWith('Tools/Release/', [StringComparison]::Ordinal)) {
+        if ($Path -eq 'Tools/Release/Build-Development-Installers.mjs') {
+            Add-Suite 'development-installers'
+        } elseif ($Path -in @(
+            'Tools/Release/Create-Release-Envelope.mjs',
+            'Tools/Release/Verify-Release-Envelope.mjs'
+        )) {
+            Add-Suite 'release-envelope'
+        } elseif ($Path -eq 'Tools/Release/Verify-Wvdb-Approval-Records.mjs') {
+            Add-Suite 'wvdb-approval'
+        } else {
+            Add-Gap "release-tool:$([IO.Path]::GetFileName($Path))"
+        }
+    } elseif ($Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal) -or
         $Path -eq 'LICENSE.md') {
         Add-Suite 'development-installers'
+    } elseif ($Path.StartsWith('Distribution/Releases/', [StringComparison]::Ordinal)) {
+        Add-Suite 'release-envelope'
     } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
         Add-Suite 'package-bundle'
@@ -625,10 +641,13 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Libraries/Package/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Package/', [StringComparison]::Ordinal)) {
         Add-Suite @('package-format', 'package-bundle')
+    } elseif ($Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -and
+        ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch'))) {
+        Add-Suite 'wvdb-approval'
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
-        Add-Suite @('packages', 'package-bundle', 'wvdb-query-capability')
+        Add-Suite @('packages', 'package-bundle', 'wvdb-query-capability', 'wvdb-approval')
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
@@ -1451,6 +1470,10 @@ foreach ($Path in $Paths) {
             $RunPlanVerification = $true
         } elseif ($Path -eq 'Specifications/Windvale-Development-Installer.md') {
             Add-Suite 'development-installers'
+        } elseif ($Path -eq 'Specifications/Windvale-Release-Envelope.md') {
+            Add-Suite 'release-envelope'
+        } elseif ($Path -eq 'Specifications/Windvale-Capability-Approval-And-Launch.md') {
+            Add-Suite 'wvdb-approval'
         } elseif ($Path -in @(
             'Specifications/Windvale-Resource-Service-Ipc.md',
             'Specifications/Windvale-Directory-Service-Ipc.md',

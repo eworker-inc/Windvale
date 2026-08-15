@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 5,508 LF-only bytes with SHA-256
-`ca510477f0b5a578bbbd66fb87dc082fca8d5a29064c0b48933da21d493c79cb`.
+`Tests/Native/Retirement-Suite.txt` is 6,215 LF-only bytes with SHA-256
+`8a40b412edc75228ac0a7c41c5f70144247e9b41cd3cfaffc43102307b6099fd`.
 The first line is exactly:
 
 ```text
@@ -104,8 +104,10 @@ file. The current plan is:
 | `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 idempotent=Verified` |
 | `development-installers` | `Test-Development-Installers` | 8 | `native development installer status=Passed cases=8 archives=2 reproducible=Verified host-install=Verified` |
 | `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified` |
+| `release-envelope` | `Test-Release-Envelope` | 13 | `native release envelope status=Passed cases=13 signatures=2 artifacts=11 private-keys=External` |
+| `wvdb-approval` | `Test-Wvdb-Approval-Records` | 8 | `native wvdb approval status=Passed cases=8 records=3 capabilities=5 targets=2` |
 
-The version-2 plan therefore contains exactly 59 suites and 3,383 cases. Its
+The version-2 plan therefore contains exactly 61 suites and 3,404 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
@@ -113,12 +115,13 @@ balanced shard inventory is:
 | 1 | 1 | 17 | 651.2 |
 | 2 | 16 | 1,282 | 592.2 |
 | 3 | 22 | 1,217 | 592.1 |
-| 4 | 20 | 867 | 591.8 |
+| 4 | 22 | 888 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
 semantic limit. The shard-1 timing predates the three new tree-growth cases and
 the shard-3 timing predates the `package-format`, `package-bundle`,
-`development-installers`, and `wvdb-query-capability` owners; both will be
+`development-installers`, `wvdb-query-capability`, `release-envelope`, and
+`wvdb-approval` owners; both will be
 refreshed after the expanded plan completes qualification. Allocation uses
 the slower observed Windows/Linux interval for each measured owner and keeps
 the largest owner alone because it sets the current lower bound. Future
@@ -149,7 +152,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 59, Passed: 59, Failed: 0, Cases: 3383
+Suites: 61, Passed: 61, Failed: 0, Cases: 3404
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

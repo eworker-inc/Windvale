@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2; [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md) implements its admitted Bundle 1 and bounded immutable publication; and [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) implements an unsigned deterministic per-user native-tool installer candidate. No general resolver, signed release envelope, updater, multi-generation activation/rollback manager, or Windvale OS A/B installation contract is implemented.
+Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2; [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md) implements its admitted Bundle 1 and bounded immutable publication; [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) implements an unsigned deterministic per-user native-tool installer candidate; and Decisions [0563](../Decisions/0563-First-Release-Envelope-And-Key-Policy.md) and [0564](../Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md) implement candidate release-signing/offline-verification and exact WVDB approval/launch records. No official trust root or signed product envelope, general resolver, updater, multi-generation activation/rollback manager, or Windvale OS A/B installation contract exists yet.
 
 ## Recommendation
 
@@ -74,7 +74,13 @@ Official releases publish:
 - bounded build provenance or attestations; and
 - a signed release manifest covering every distributed object.
 
-The signing hierarchy should begin with an offline root that authorizes replaceable release-signing keys. The release manifest records key and policy generation. Rotation supports a defined overlap; revocation and recovery are distributed as signed immutable metadata. The design may adopt The Update Framework's separation of root, targets, snapshot, and timestamp roles when network updates become real; those roles are documented by the [TUF metadata model](https://theupdateframework.io/docs/metadata/). Windvale should not implement a partial look-alike and claim TUF protection.
+Release Envelope 1 implements one pinned offline Ed25519 root authorizing one
+replaceable release key for a bounded version line and sequence range. The
+manifest records key and policy generation, and an offline caller may impose a
+minimum sequence. Root rotation, threshold custody, emergency revocation, and
+network freshness are deliberately not approximated. A future design may adopt
+The Update Framework's distinct roles when network updates become real;
+Windvale does not claim TUF protection from this smaller offline profile.
 
 Provenance is evidence, not reproducibility by itself. Windvale can emit a bounded Windvale-native record and optionally translate it to the current [SLSA provenance model](https://slsa.dev/spec/v1.2/provenance) for ecosystem tooling. Exact rebuilds and independent verification remain authoritative project evidence.
 
@@ -122,4 +128,4 @@ Windvale OS, a public package registry, automatic network updates, WebAssembly p
 
 ## Deliberately open details
 
-Package 1 and Lock 1 freeze `.wvpack` and `.wvlock`, canonical text records, and the exact `local-source-1` pilot. The broader architecture does not yet freeze a general resolver algorithm, package-bundle binary encoding, signature suite, threshold policy, content-store location, garbage-collection limits, release cadence, or update transport. It fixes immutable content identity, separate manifests/locks/bundles/releases, per-part metadata, offline operation, non-authorizing signatures, generation-based activation, recoverable updates, and the recommended 0.1 product boundary.
+Package 1 and Lock 1 freeze `.wvpack` and `.wvlock`, canonical text records, and the exact `local-source-1` pilot. Bundle 1 and Release Envelope 1 freeze the first bundle and signature profiles without defining a general resolver, threshold policy, content-store garbage collection, release cadence, update transport, or online freshness. The broader architecture fixes immutable content identity, separate manifests/locks/bundles/releases, per-part metadata, offline operation, non-authorizing signatures, generation-based activation, recoverable updates, and the recommended 0.1 product boundary.

@@ -44,15 +44,6 @@ unfinished work.
 
 ### Useful package-backed application
 
-- What is the smallest deterministic bundle that carries the exact Package 1,
-  Lock 1, source, resource, license, and capability evidence required by WVDB
-  Query?
-- Which canonical digest and publication transaction identify an object in the
-  first local content-addressed store?
-- What exact approval record binds the transitive application capability closure
-  to rights-reduced Windows and Linux provider instances?
-- Which success, denial, unsupported-provider, stale-generation, partial-progress,
-  and indeterminate-mutation cases are required before hosted execution is useful?
 - How much repeated depth-three update, reclamation, and restart recovery does
   the application actually need before broader database work should wait?
 
@@ -91,14 +82,12 @@ The active questions are:
 
 - Which bundle encoding and maximum sizes can be independently admitted before
   extraction without requiring compression or a registry?
-- Which first signing algorithms, offline-root ceremony, release-key rotation,
-  and revocation rules are small enough for the 0.1 preview?
-- Which threat-model assets and attackers cover the actual shipped parsers,
-  verifiers, providers, package inputs, and recovery process?
-- What exact offline third-party command verifies every source, package, tool,
-  license, provenance, and qualification artifact in the preview?
-- Is the qualified Stage 0 release retained as a referenced immutable dependency,
-  or copied into each future release envelope by identity?
+- Which protected offline locations, custodians, backup failure domains, and
+  independent authenticated channel will the project owner accept for the first
+  official root identity?
+- When a second preview is prepared, is one replacement release key beneath a
+  new root-signed policy sufficient, or does operational experience justify a
+  threshold/root-rotation successor contract?
 
 ## Later architecture questions
 
@@ -129,8 +118,6 @@ implementation checkpoints, fixture additions, artifact refreshes, and timing
 measurements should update code, specifications, the changelog, or the progress
 dashboard without creating another decision record.
 
-The next decisions should therefore be limited to:
-
-1. a package bundle/content-store contract when the WVDB Query consumer is ready;
-2. an exact capability approval/binding record for that application; and
-3. the first post-Probe-40 resource-domain and atomic-launch contract.
+The next decision should therefore be limited to the first post-Probe-40
+resource-domain and atomic-launch contract, unless release-ceremony experience
+demonstrates that Release Envelope 1 needs a genuine successor policy.

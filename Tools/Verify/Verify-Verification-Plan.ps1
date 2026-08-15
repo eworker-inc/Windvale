@@ -1254,7 +1254,8 @@ $NativeCases = @(
             'packages',
             'package-format',
             'package-bundle',
-            'wvdb-query-capability'
+            'wvdb-query-capability',
+            'wvdb-approval'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1319,6 +1320,36 @@ $NativeCases = @(
             'LICENSE.md'
         )
         Suites = @('development-installers')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'release envelope owner'
+        Paths = @(
+            'Distribution/Releases/Windvale-Root-Policy-1.json',
+            'Tools/Release/Create-Release-Envelope.mjs',
+            'Tools/Release/Verify-Release-Envelope.mjs',
+            'Tools/Native/Create-Release-Envelope-Fixture.mjs',
+            'Tools/Native/Test-Release-Envelope.cmd',
+            'Tools/Native/Test-Release-Envelope.sh',
+            'Specifications/Windvale-Release-Envelope.md'
+        )
+        Suites = @('release-envelope')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVDB approval and launch owner'
+        Paths = @(
+            'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvapproval',
+            'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.windows-x64.wvlaunch',
+            'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.linux-x64.wvlaunch',
+            'Tools/Release/Verify-Wvdb-Approval-Records.mjs',
+            'Tools/Native/Test-Wvdb-Approval-Records.cmd',
+            'Tools/Native/Test-Wvdb-Approval-Records.sh',
+            'Specifications/Windvale-Capability-Approval-And-Launch.md'
+        )
+        Suites = @('wvdb-approval')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1446,9 +1477,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 60 -or
+if ($RetirementSuiteLines.Count -ne 62 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 59-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 61-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1486,7 +1517,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3383 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3404 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 
@@ -1512,8 +1543,14 @@ if ([regex]::Matches(
 }
 
 $GitAttributes = @(Get-Content -LiteralPath (Join-Path $RepositoryRoot '.gitattributes'))
-if (@($GitAttributes | Where-Object { $_ -eq '*.wvprov text eol=lf' }).Count -ne 1) {
-    throw 'Windvale provenance files must have one exact LF text policy in .gitattributes.'
+foreach ($Policy in @(
+    '*.wvprov text eol=lf',
+    '*.wvapproval text eol=lf',
+    '*.wvlaunch text eol=lf'
+)) {
+    if (@($GitAttributes | Where-Object { $_ -eq $Policy }).Count -ne 1) {
+        throw "Windvale record policy '$Policy' must occur exactly once in .gitattributes."
+    }
 }
 
 $LinuxArtifactIndex = @(git -C $RepositoryRoot ls-files -s -- 'Artifacts/**/*.elf')

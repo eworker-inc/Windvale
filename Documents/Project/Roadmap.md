@@ -134,7 +134,7 @@ deliberate selection.
 | Milestone 1: predictable development feedback | ✅ Complete | Closed foundation; preserve its bounded workflow. |
 | Native-only baseline promotion checkpoint | 🚧 Candidate | One explicit post-archive dual-host qualification and exact baseline tag; independent of product implementation. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
-| Milestone 3: Windvale 0.1 preview | 🎯 Active | The bounded installers are qualified; build the release envelope, threat model, and offline verification policy. |
+| Milestone 3: Windvale 0.1 preview | 🎯 Active | The bounded installers are qualified and the release-security implementation is ready for paired-host evidence; complete the owner custody ceremony and one selected-state release qualification. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful but does not block Milestone 3. |
 
 The product critical path is:
@@ -230,10 +230,10 @@ requirements.
 | --- | :---: | --- |
 | .NET-free normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
 | Useful package-backed application | ✅ | Milestone 2 is complete with paired Bundle 1/store and rights-reduced capability reports under Decision 0561. |
-| Reproducible release artifacts and installers | ✅ Installer / 🚧 Release | Decision 0562 qualifies exact `0.1.0-dev.1` Windows and Linux per-user installer artifacts with pinned payload/archive identities, offline payload checks, tamper refusal, and bounded uninstall in [paired-host run 31881681424](https://github.com/eworker-inc/Windvale/actions/runs/31881681424). The signed product envelope and offline release verifier remain open. |
-| Capability approval, binding, and denial | ✅ Foundation | WVDB Query owns one exact five-capability closure and rights-reduced success/denial evidence. Milestone 3 must turn that fixed proof into installed approval and launch records rather than widening the capability set. |
-| Public product threat model | ○ | `SECURITY.md` owns vulnerability reporting, not the required shipped-product threat model. |
-| Release signing and offline verification policy | ○ | Architecture exists, but no accepted key policy, release manifest verifier, or signed envelope closes this gate. |
+| Reproducible release artifacts and installers | ✅ Installer / 🚧 Official envelope | Decision 0562 qualifies exact `0.1.0-dev.1` Windows and Linux per-user installer artifacts. Decision 0563 implements the bounded creator, independent offline verifier, deterministic eleven-artifact profile, and thirteen-case rejection owner. Paired-host evidence and an owner-custodied official envelope remain. |
+| Capability approval, binding, and denial | 🚧 Paired evidence | Decision 0564 fixes one approval and two target launch records around the existing five-capability closure. The independent eight-case owner passes locally; paired Windows/Linux evidence remains. |
+| Public product threat model | ✅ | [Product-Threat-Model.md](../Architecture/Product-Threat-Model.md) covers the shipped source, compiler, WVB/WVO, bundle, installer, release, capability, and recovery boundaries with explicit limits and residual risks. |
+| Release signing and offline verification policy | 🚧 Ceremony | Decision 0563 fixes Ed25519 root delegation, caller-enforced minimum sequence, bounded manifest rules, and offline verification. The project owner must still accept custody, establish the official public root, and sign the final envelope. |
 | Exact-state dual-host release qualification | ○ | Select and run this once after the release inputs settle; ordinary development runs do not satisfy it. |
 
 The native-only baseline qualification may be performed earlier as its own

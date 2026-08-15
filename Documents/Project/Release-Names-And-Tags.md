@@ -62,8 +62,10 @@ becoming implicit base-install dependencies.
 `0.1.0-dev.1` is the first deterministic installer artifact label under Decision
 0562. It may be built and tested before the product release, but it is not a Git
 product tag and must not be published as `v0.1.0`. A development suffix records
-an installer iteration while the release envelope, trust policy, threat model,
-and exact-state release qualification remain open.
+an installer iteration. Decisions 0563 and 0564 now implement the release
+envelope, trust policy, threat-model boundary, and exact approval records; paired
+owner evidence, the project-owner root ceremony, exact-state qualification, and
+publication remain open.
 
 ## Milestone checkpoint
 
