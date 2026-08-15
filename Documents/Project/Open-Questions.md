@@ -146,6 +146,31 @@ can measure them:
   agent records, host product policy, or existing platform capabilities?
 - What exact software and proposal fixtures jointly prove the complete design
   while keeping business-domain semantics outside the portable kernel?
+- What is the exact durable boundary among an immutable agent definition, a
+  long-lived agent self, its owning principal, its values/commitments, and its
+  episode runs, and which owners may change each field?
+- How should several eligible intentions express parent purpose, conflict,
+  priority, fairness, preemption, satisfaction, cancellation, and expiry without
+  creating secret goals or implicit action authority?
+- What smallest nominal world/belief model proves entity, state, chronology,
+  hypothesis, expected observation, contradiction, calibration, and revision
+  without committing Windvale to a general knowledge graph?
+- Which first deterministic salience classes are adequate for relevance,
+  urgency, novelty, uncertainty, progress, risk, commitment, blocker, and
+  prediction error, and which dimensions must never become a reward objective?
+- Which working, episodic, semantic, procedural, prospective, and
+  autobiographical memory transitions may occur automatically in run-private
+  scope, and which require user, domain, policy, or business-owner review?
+- What exact wake sources, coalescing identity, rate limits, fairness, missed-wake
+  behavior, cancellation, and dormancy result let the subconscious continue
+  across time without becoming an unlimited background model?
+- Which evidence can calibrate the functional self-model's skills and failures,
+  and how must the agent refuse, degrade, or ask for help when that evidence is
+  missing or stale?
+- What smallest social-model profile distinguishes observed statements, accepted
+  preferences/commitments/consent/authority, knowledge evidence, and inferred
+  motives or reactions without enabling cross-relationship leakage or hidden
+  behavioral profiling?
 
 ## Later architecture questions
 

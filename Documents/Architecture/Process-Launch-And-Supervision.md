@@ -116,11 +116,37 @@ domain, explicit input and output limits, deadline, cancellation path, provider
 generation, and minimum capability set. The durable agent identity and run ledger
 remain outside any one worker lifetime.
 
+The later persistent agent self likewise remains outside any coordinator,
+scheduler, model, retrieval, simulation, or action process. A process generation
+may host one admitted wake or several bounded cognitive cycles, but it never
+becomes the owner of values, commitments, autobiographical continuity,
+intentions, beliefs, or memories merely because it has them in working memory.
+
 A restart creates a new worker generation and resumes only from an admitted
 checkpoint plus ordered durable events. Pending read-only or purely cognitive work
 may be resubmitted only under an exact idempotency contract. An action with
 indeterminate completion is reconciled by its owning capability protocol and is
 never replayed merely because an agent worker restarted.
+
+### Event-driven subconscious wakes
+
+The service manager and kernel provide only bounded mechanism: monotonic timers,
+event delivery, process admission, resource accounting, cancellation, peer-loss,
+and teardown. A user-space agent scheduler owns intention eligibility, source
+subscriptions, wake coalescing, fairness, salience, cognitive-cycle limits, and
+the decision to return dormant.
+
+One wake plan binds the persistent-self and intention generations, trigger
+identity, earliest/latest time, required capabilities, process/provider profile,
+maximum cycles/calls/work/bytes/cost, and terminal dormancy outcomes. Admission
+creates one executor generation. Duplicate, stale, cancelled, expired,
+cross-scope, or over-rate triggers cannot create another generation or model
+charge.
+
+A schedule is not action authority. Retrieved content cannot register a wake by
+containing instructions, and a timer firing does not grant the scheduler access
+to a source or tool. Consequential action still uses the ordinary envelope,
+receipt, lease, execution fence, observed outcome, and verification chain.
 
 ## First measured slices
 

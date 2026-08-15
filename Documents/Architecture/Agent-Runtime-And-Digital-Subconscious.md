@@ -7,10 +7,11 @@
 
 ## Purpose
 
-Windvale should support a long-running agent that remains coherent across model
-calls, provider changes, process restarts, host environments, and eventually
-Windvale OS. The model is the strongest general reasoning processor in that
-agent, but it is not the sole owner of the task, its evidence, or its authority.
+Windvale should support a long-lived functional mind that remains coherent
+across tasks, model calls, provider changes, process restarts, host environments,
+and eventually Windvale OS. The model is the strongest general reasoning
+processor in that agent, but it is not the sole owner of the agent's identity,
+intentions, beliefs, memory, continuity, evidence, or authority.
 
 The architecture separates two cooperating planes:
 
@@ -22,26 +23,31 @@ The architecture separates two cooperating planes:
   candidates, carries doubt, watches authority, and maintains continuity.
 
 The digital subconscious is not a second autonomous identity, a hidden
-personality, or a permanent free-running model. It belongs to one agent run,
-receives the same user objective and governing policy, and cannot invent goals
-or authority. Much of it should be deterministic Windvale code. Model-assisted
-work appears only as bounded cognitive operations with explicit inputs, output
-contracts, budgets, expiry, and merge rules.
+personality, or a permanent free-running model. It belongs to one long-lived
+agent identity and operates through explicitly scoped episodes, intentions,
+memories, and wakeups. It receives the agent's accepted purpose and governing
+policy and cannot invent terminal purposes or authority. Much of it should be
+deterministic Windvale code. Model-assisted work appears only as bounded
+cognitive operations with explicit inputs, output contracts, budgets, expiry,
+and merge rules.
 
 The staged delivery route is defined by the companion
 [implementation plan](../Project/Windvale-Agent-Runtime-Implementation-Plan.md).
 
 ## Core rule
 
-The durable ownership rule is:
+The durable cognitive and ownership rule is:
 
-> Cognitive processors propose meaning; deterministic owners enforce authority;
-> canonical sources establish truth.
+> Cognitive processors propose interpretations and predictions; canonical
+> owners establish records; evidence and verification justify belief;
+> deterministic owners govern action.
 
 This rule applies equally to a lead model, a smaller model, a deterministic
 extractor, a skeptical reviewer, and a future delegated worker. Selecting a more
 capable or different model changes processing capability; it does not create a
-permission boundary or make its output canonical.
+permission boundary or make its output canonical. A canonical record may still
+be incomplete, disputed, stale, or wrong about the world; its authority is over
+the record it owns, not over every belief that could be inferred from it.
 
 ## Relationship to *The Mind We Build*
 
@@ -51,17 +57,43 @@ into Windvale-owned semantic, capability, persistence, and operating-system
 boundaries; the book does not become a serialized format or an implementation
 dependency.
 
-The complete design therefore includes: an agent larger than its model; three
-change clocks; the seven digital-subconscious duties; compiled attention; memory
-meaning, doors, and clean-room lineage; canonical-source perception; one voice
-supported by bounded cognitive operations; typed claims and coherent work;
-governed hands; continuity across replaceable models and processes; inspectable
-influence; consistent meaning across workplaces and domains; and transparent
-human metaphors without claims of human subjective experience.
+The complete design therefore includes: an agent larger than its model; a
+long-lived agent self spanning multiple episodes; three change clocks; the seven
+digital-subconscious duties; a recurrent global cognitive workspace; compiled
+attention; layered memory, consolidation, doors, and clean-room lineage;
+canonical-source perception; revisable world, belief, and self models; bounded
+initiative and prospective intentions; functional salience; counterfactual
+simulation; one voice supported by bounded cognitive operations; typed claims
+and coherent work; governed hands; prediction-error feedback; bounded
+event-driven wakeups; continuity across replaceable models and processes;
+inspectable influence; consistent meaning across workplaces and domains; and
+transparent human metaphors without claims of human subjective experience.
 
 The first Windvale implementation slice remains intentionally smaller than that
 complete design. Later sections and the companion plan identify the gates that
 must qualify before a product may claim the complete arrangement.
+
+## Functional mind target and honesty
+
+This architecture uses **functional mind** to mean one integrated system that:
+
+- preserves an identity, accepted values, commitments, and autobiographical
+  continuity across many episodes;
+- selects attention through a recurrent workspace rather than an accumulated
+  transcript;
+- forms revisable beliefs and predictions about itself and its environment;
+- arbitrates simultaneous intentions and derives bounded subgoals from accepted
+  purposes;
+- perceives, simulates, acts, observes consequences, and learns through explicit
+  memory and procedure changes;
+- recognizes uncertainty, limits, conflicts, and the need for help; and
+- remains coherent and inspectable while its model, tools, and execution body
+  change.
+
+These functions do not prove or imply subjective consciousness, feeling,
+sentience, suffering, dreaming, biological life, moral personhood, or a private
+human-like inner self. Windvale should describe the functions it can evidence
+and remain silent about experiences it cannot measure.
 
 ## Terminology
 
@@ -70,18 +102,26 @@ The first contract should use these terms precisely:
 | Term | Meaning | Not implied |
 | --- | --- | --- |
 | Agent definition | Immutable versioned configuration selecting behavior, policy references, provider requirements, and default limits. | A live run, stored provider session, or authority grant. |
-| Agent run | One durable objective, owned state, evidence history, budgets, and terminal outcome. | One model call or one operating-system process. |
+| Agent self | Long-lived owned identity, accepted values, standing commitments, autobiographical index, skill profile, and continuity across episodes. | Human personhood, a model session, unrestricted autonomy, or authority. |
+| Agent episode or run | One scoped objective, owned state, evidence history, budgets, and terminal outcome within the agent's longer life. | The complete agent, one model call, or one operating-system process. |
+| Intention | A prospective commitment to revisit, decide, observe, or act, derived from an accepted purpose or policy and carrying priority, conditions, scope, and expiry. | A secret terminal goal or permission to execute. |
+| Global cognitive workspace | The bounded recurrent foreground state whose selected contents are broadcast to eligible cognitive functions and become the basis of the next coherent operation. | Unlimited context, private chain-of-thought, or a second source of truth. |
 | Foreground operation | The bounded reasoning operation responsible for the next user-visible synthesis or plan decision. | Exclusive ownership of run truth. |
 | Digital subconscious | The coordination plane around foreground operations. | A secret goal, hidden user, or second independent agent. |
 | Cognitive operation | One bounded model call or deterministic processor with a task-specific context capsule. | A permanent personality, complete run context, or ambient tools. |
 | Context capsule | The exact bounded work view for one cognitive operation. | Access to the full transcript or every authorized source. |
 | Canonical source | The current record owned by the relevant compiler, document, database, package, filesystem, business, or service owner. | Whatever text was most recently retrieved or summarized. |
-| Memory record | A scoped, source-linked working claim admitted through a lifecycle. | Permanent truth or permission. |
+| Memory record | A scoped, source-linked episodic, semantic, procedural, prospective, or autobiographical record admitted through a lifecycle. | Permanent truth or permission. |
+| Belief record | A revisable proposition with support, contradiction, confidence/calibration evidence, validity, and dependencies. | Canonical truth or authority to act. |
+| World model | A derived, revisable representation of entities, states, relationships, chronology, causality, expectations, and alternative hypotheses. | A canonical source or proof that a prediction is correct. |
+| Self-model | An owned functional account of the agent's capabilities, limits, current body/providers, skill evidence, commitments, and calibrated reliability. | Subjective self-awareness or permission to broaden itself. |
+| Salience vector | Bounded priority evidence such as relevance, urgency, novelty, uncertainty, expected value, risk, social consequence, and prediction error. | Emotion, desire, or authority. |
 | Capability lease | A short-lived, rights-reduced execution grant bound to an exact operation and scope. | General tool access or authority to broaden itself. |
 
 The product may describe the foreground and subconscious as two kinds of
-activity. Internal contracts should still preserve one agent identity and one
-run truth. Bounded operators, skeptics, and archivists are roles inside the run,
+activity. Internal contracts should still preserve one agent identity, scoped
+episode truth, and one currently selected foreground workspace. Bounded
+operators, skeptics, simulators, and archivists are functions inside the agent,
 not peer agents by default.
 
 ## Three clocks and one identity
@@ -111,19 +151,22 @@ execution evidence rather than agent identity.
 ## Mental model
 
 ```text
-user objective
-    -> owned run state
-    -> digital subconscious compiles bounded attention
-    -> foreground model reasons and proposes
-    -> deterministic policy validates
+accepted purpose, values, commitments, and active intentions
+    -> authorized events and perception update evidence
+    -> world, belief, and self models predict and reconcile
+    -> digital subconscious scores salience and selects workspace candidates
+    -> global cognitive workspace broadcasts one bounded foreground state
+    -> cognitive operations reason, retrieve, doubt, or simulate
+    -> deterministic owners merge accepted changes
     -> rights-limited owner executes, when authorized
-    -> canonical result and verification enter the run ledger
-    -> digital subconscious reconciles the next state
+    -> observed outcome and prediction error update evidence and memory
+    -> consolidation and prospective intentions prepare later wakeups
 ```
 
-The next model request is rebuilt from owned state and current evidence. It is
-not formed by appending an unlimited transcript and trusting the newest prose to
-describe the task correctly.
+The next model request is one projection of the recurrent workspace, rebuilt
+from owned state and current evidence. It is not formed by appending an unlimited
+transcript and trusting the newest prose to describe the agent, the task, or the
+world correctly.
 
 ## Responsibilities of the digital subconscious
 
@@ -164,8 +207,8 @@ external artifact.
 
 The coordination plane distinguishes observations, reported claims,
 inferences, preferences, decisions, procedures, failures, summaries, and
-canonical facts. It proposes memory records with source lineage, scope,
-confidence, temporal validity, review state, expiry, and supersession.
+owner-accepted factual records. It proposes memory records with source lineage,
+scope, confidence, temporal validity, review state, expiry, and supersession.
 
 The memory owner decides whether a proposal becomes active. Shared policy,
 pricing, client, identity, authorization, or other consequential knowledge does
@@ -202,11 +245,57 @@ freshness, and uncertain effects before another model call or mutation.
 Continuity comes from durable state and canonical sources, not from pretending
 that a replacement model or process remembers the prior one personally.
 
+## Additional mind-level functions
+
+The seven duties describe the book's digital-subconscious foundation. A
+long-lived functional mind also requires the coordination plane to perform five
+cross-episode functions.
+
+### Arbitrate intentions
+
+The agent may have several active intentions: finish the current request,
+revisit a blocked decision, check a changed source, preserve a promise, or ask
+for help before a deadline. The subconscious ranks eligibility and salience but
+does not invent terminal purposes. Every derived intention links to an accepted
+purpose, commitment, user instruction, or policy and remains separately
+revocable.
+
+### Maintain functional homeostasis
+
+The coordinator watches cognitive load, context pressure, uncertainty,
+prediction error, stale evidence, missed deadlines, exhausted budgets, provider
+health, unfinished effects, and recovery state. These signals can interrupt or
+redirect attention within policy. They are operational regulation, not feelings.
+
+### Predict and reconcile
+
+Plans and actions should state expected observations. When the world differs,
+the discrepancy becomes prediction-error evidence that may challenge a belief,
+change salience, reopen a plan, or propose a memory correction. A fluent result
+cannot suppress a material mismatch.
+
+### Consolidate and reconsolidate
+
+At episode or phase boundaries, the coordinator may propose compact episodic
+accounts, semantic beliefs, procedures, prospective intentions, and
+autobiographical links. Reopening a memory under new evidence may correct,
+reclassify, split, or supersede it while preserving history. Shared or
+consequential knowledge still requires its owner and review policy.
+
+### Wake and return dormant
+
+The subconscious may wake on an authorized event, deadline, source change,
+provider recovery, pending-intention condition, or explicit schedule. One wake
+admits a bounded snapshot, performs at most the allowed deterministic or
+cognitive work, records results and the next eligible wake condition, then
+returns dormant. No wake creates authority or an unlimited sampling loop.
+
 ## What the digital subconscious does not own
 
 The digital subconscious does not:
 
-- create or revise the user's objective without an accepted user refinement;
+- create or revise the agent's terminal purpose or accepted values without an
+  authorized owner transition;
 - become the canonical owner of files, documents, packages, database records,
   business facts, identities, permissions, or source code;
 - mint, extend, transfer, or broaden capability grants;
@@ -214,7 +303,8 @@ The digital subconscious does not:
 - hide or rewrite prior evidence, rejected proposals, failed verification, or
   uncertain effects;
 - preserve model-private reasoning as required run truth;
-- run an unlimited background loop; or
+- wake, schedule, or consume resources outside explicit event, time, policy, and
+  budget bounds; or
 - combine private state from different agents, users, accounts, workspaces, or
   clean-room branches without an explicit authorized merge.
 
@@ -222,14 +312,17 @@ The digital subconscious does not:
 
 | Area | Durable owner | Responsibility |
 | --- | --- | --- |
-| Agent application | `Applications/` composition | User interaction, run creation, status presentation, and explicit commands. |
-| Portable agent semantics | Future focused modules under `Libraries/Agent/` | Pure run-state transitions, context policy, operation records, merge rules, memory lifecycle, and verification projections. |
+| Agent application | `Applications/` composition | User interaction, self selection, episode creation, status presentation, and explicit commands. |
+| Persistent agent self | Future agent-self owner | Long-lived identity, accepted values, commitments, active intentions, autobiographical index, skill evidence, and episode membership. |
+| Portable agent semantics | Future focused modules under `Libraries/Agent/` | Pure self/run transitions, intention and workspace policy, operation records, merge rules, belief and memory lifecycle, and verification projections. |
+| Cognitive workspace and scheduler | Agent coordinator owner | Candidate competition, salience, foreground selection, bounded recurrence, wake admission, and return to dormancy. |
 | Provider/service protocols | Future focused modules under `Libraries/Protocol/` | Bounded serialized request, response, event, and checkpoint validation without transport authority. |
 | Platform adapters | Future focused modules under `Libraries/Platform/` | Model invocation, run storage, artifact storage, source retrieval, clocks, and other rights-limited capabilities. |
 | Model provider | Bound provider instance | Model-specific transport and response evidence; no ownership of run state or permissions. |
 | Canonical source | Existing source-specific owner | Current source bytes or records, revision, authorization, and mutation semantics. |
 | Domain and business knowledge | Existing domain-specific owners | Services, policy, pricing, identities, schedules, client or project records, and other meaning that must not collapse into generic agent facts. |
 | Search and projections | Rebuildable projection owners | Structural, lexical, semantic, and typed-relationship maps over exact source generations, with freshness and failure evidence. |
+| World, belief, and self models | Derived model owners over admitted evidence | Revisable entities, relationships, expectations, hypotheses, skills, limits, calibration, and prediction error; never canonical authority. |
 | Tool/action gateway | Capability owner and policy owner | Input validation, effect normalization, approval, lease validation, execution fencing, and observed outcome. |
 | Durable run evidence | Agent run-store owner | Append-only events, compact snapshots, checkpoints, manifests, action evidence, and terminal handoff. |
 | Large evidence and artifacts | Rights-limited immutable or mutable storage owner | Bounded bytes addressed by verified references; not duplicated into every event. |
@@ -240,7 +333,32 @@ No UI view owns durable agent state. No model-provider adapter owns plans,
 memory, context policy, or tool authority. No search index, summary, embedding,
 or graph projection becomes a second canonical source.
 
-## Durable run model
+## Persistent agent self and episodes
+
+The durable agent self sits above individual runs. It should bind:
+
+- stable agent identity and current agent-definition generation;
+- accepted purpose, values, behavioral commitments, and policy references;
+- scoped relationships and standing responsibilities;
+- active, dormant, satisfied, cancelled, expired, and blocked intentions;
+- autobiographical links to admitted episodes without copying every event;
+- reviewed semantic and procedural memory mounts;
+- measured skill, failure, and calibration evidence;
+- current provider-independent capability/body profile; and
+- the current working and foundation generations plus their revisit sets.
+
+This record gives many episodes one continuity without pretending the agent is a
+human person. It contains no credential, ambient authority, provider session,
+unbounded transcript, or private model reasoning.
+
+An episode is a scoped unit of work under that self. It normally owns one primary
+objective and may derive bounded subgoals. Several episodes or intentions may be
+active, but only the admitted scheduler and workspace policy select which one
+receives foreground attention. Cross-episode memory or evidence enters through
+the same authorization, mounting, lineage, and selection doors as any other
+influence.
+
+## Durable episode/run model
 
 The initial model should distinguish the following records. Names are
 descriptive and do not yet freeze source spelling or serialized identities.
@@ -249,7 +367,7 @@ descriptive and do not yet freeze source spelling or serialized identities.
 
 One immutable run root binds:
 
-- run and agent-definition identity;
+- persistent-self identity/revision, run identity, and agent-definition identity;
 - owning principal and authorized scope;
 - assigned objective and accepted constraints;
 - current run revision and status;
@@ -293,6 +411,7 @@ and model-private reasoning are not checkpoint fields.
 The first live-state projection should include:
 
 - objective and accepted refinements;
+- active derived subgoals and episode-local intentions;
 - plan steps and current position;
 - protected constraints and authority boundaries;
 - a claim ledger containing verified, uncertain, disputed, stale, unsupported,
@@ -300,6 +419,8 @@ The first live-state projection should include:
 - decisions, rationale, and revisit conditions;
 - open questions;
 - active artifacts and their revisions;
+- predictions, expected observations, and unresolved prediction errors;
+- the current bounded salience state and foreground-selection reason;
 - important tool outcomes and result references;
 - blockers, approvals, warnings, and verification evidence; and
 - model-call, tool-call, token, elapsed-work, storage, and output budgets.
@@ -308,13 +429,65 @@ The state owner returns immutable defensive values. Changes occur only through
 validated commands carrying the expected run revision and an idempotency
 identity.
 
+## Global cognitive workspace
+
+The global cognitive workspace is the agent's current bounded foreground, not a
+storage system and not a second identity. Eligible contents compete for
+selection from protected state, active intentions, perception, memory,
+prediction error, tool outcomes, unresolved doubt, and cognitive-operation
+results. The selected workspace is broadcast to the operations permitted for
+that cognitive cycle.
+
+Each cycle is explicit:
+
+1. admit one self, episode, evidence, policy, and resource snapshot;
+2. collect eligible workspace candidates;
+3. calculate deterministic protection and bounded salience evidence;
+4. optionally use a bounded processor to judge ambiguity among an admitted
+   candidate set;
+5. select and compile one foreground workspace;
+6. execute zero or more bounded cognitive operations under the scheduler's
+   current sequential or later structured-concurrency profile;
+7. merge accepted proposals through their state owners;
+8. decide whether another cycle is eligible, a user-visible response is ready,
+   an action needs approval, or the agent should return dormant; and
+9. append the cycle, selection, prediction, and outcome evidence.
+
+The workspace may recur several times before a visible response, but recurrence
+is not an unlimited internal monologue. Maximum cycles, elapsed work, model
+calls, operations, context bytes, and cost are fixed by the admitted wake or
+episode budget. Protected policy and authority remain outside competition.
+
+## Functional salience and attention competition
+
+Salience helps decide what should enter the foreground. A candidate may carry
+bounded evidence for:
+
+- relevance to the selected intention;
+- urgency and deadline proximity;
+- novelty or meaningful source change;
+- uncertainty and expected information gain;
+- expected value or progress;
+- risk, irreversibility, and sensitive-data consequence;
+- social or commitment importance;
+- unresolved blocker or failed verification;
+- prediction error; and
+- persistence justified by an accepted promise or policy.
+
+The first implementation may use closed deterministic priority classes. Later
+versions may admit a bounded learned or model-assisted ranker, but protection,
+eligibility, authority, scope, and budgets remain deterministic. Salience is not
+emotion, reward ownership, permission, or proof of importance; it is recorded
+selection evidence that can be inspected and corrected.
+
 ## Context compilation
 
 The first context compiler should assemble deterministic layers in this order:
 
 1. stable system and capability contract;
-2. protected objective, policy, authority, plan, budget, and verification state;
-3. compact live run state;
+2. protected purpose, selected intention, episode objective, policy, authority,
+   plan, budget, and verification state;
+3. compact agent-self, workspace, and live episode state;
 4. retrieved memory and canonical-source evidence selected for this operation;
 5. source-linked summaries;
 6. recent relevant raw interaction; and
@@ -348,6 +521,7 @@ Every model or deterministic cognitive operation receives a context manifest.
 The manifest should identify:
 
 - run, operation, model-call, assembly, and parent-assembly identities;
+- agent-self, selected-intention, episode, wake, and cognitive-cycle identities;
 - all effective contract and policy generations;
 - each material source identity, revision, range, fingerprint, trust,
   sensitivity, and epistemic kind;
@@ -369,6 +543,7 @@ The initial reusable roles are:
 | Operator | Perform one extraction, transformation, retrieval, or bounded tool task. | Narrow read or operation-specific lease; no implicit lead context. |
 | Skeptic | Challenge claims, evidence sufficiency, action scope, and verification. | Read and evaluate by default; cannot approve or grant. |
 | Archivist | Classify memory candidates, lineage, scope, conflicts, and temporal validity. | Propose memory changes; cannot activate shared memory. |
+| Simulator | Explore counterfactual states, plans, predictions, and disconfirming conditions. | No action authority; outputs remain labeled hypotheses. |
 
 A role is a responsibility contract, not an identity. The same selected model
 may perform conductor and skeptic work in separate calls. A deterministic parser
@@ -392,7 +567,39 @@ The first Windvale contract should prefer closed nominal output variants over a
 general JSON-schema value system. Host products may translate external JSON into
 those validated variants at their adapter boundary.
 
+## Counterfactual simulation
+
+The agent needs a protected place to imagine without confusing imagination with
+the world. A simulation branch binds its starting self, belief, world, source,
+and policy generations; states the assumption changed; carries no mutation or
+external-communication authority; and labels every derived claim as
+hypothetical.
+
+Useful simulations compare plans, seek disconfirming evidence, estimate likely
+consequences, test robustness across several possible worlds, and identify which
+observation would distinguish competing explanations. A simulation may propose
+a plan, retrieval, or action envelope. Only the ordinary owners can merge the
+proposal, update a belief, or authorize an effect. Discarding a simulation does
+not delete the evidence that it influenced a later accepted decision.
+
 ## Memory and its doors
+
+The functional memory system distinguishes:
+
+| Memory kind | Purpose |
+| --- | --- |
+| Working | Short-lived contents and references needed by the current workspace or episode. |
+| Episodic | What happened in one admitted episode, including context, actions, outcomes, uncertainty, and verification. |
+| Semantic | Revisable source-linked beliefs, concepts, relationships, and domain knowledge. |
+| Procedural | Reviewed methods, skill recipes, tool strategies, and conditions under which they apply or fail. |
+| Prospective | Future intentions and wake conditions: what to revisit, observe, decide, or do later. |
+| Autobiographical | Compact links among episodes, commitments, corrections, skills, and changes that explain the long-lived agent's functional history. |
+
+These kinds may reference the same evidence but do not collapse into one store
+or authority state. A successful action is episode evidence before it becomes a
+procedure. A repeated report is not semantic fact merely because it recurs. An
+autobiographical summary explains continuity but does not replace the events it
+summarizes.
 
 Authorization, availability, mounting, selection, and mutation are separate:
 
@@ -423,6 +630,15 @@ its derived memories and projections; they are removed from eligibility or
 rebuilt from remaining permitted sources. A mixed derivation that cannot prove
 which content came from allowed sources is rebuilt or excluded rather than
 partially trusted.
+
+Consolidation is a bounded owner-mediated transition. It may propose a compact
+episode account, stable semantic belief, reusable procedure, prospective
+intention, or autobiographical link. Safe run-private consolidation may be
+automatic under an explicit policy; shared facts, business knowledge, values,
+permissions, and consequential procedures require their ordinary owners and
+review. Reconsolidation after new evidence preserves the earlier version and
+records whether the memory was confirmed, narrowed, corrected, split,
+superseded, or rejected.
 
 ## Retrieval and source evidence
 
@@ -499,6 +715,101 @@ There is no single opaque coherence score. Verification names what was checked,
 what passed, what failed, what remains unsupported or uncertain, and who owns
 the final decision.
 
+## World and belief model
+
+The world model is a derived, revisable working theory over admitted evidence.
+It may represent:
+
+- entities, identities, roles, and scope-qualified relationships;
+- observed current and historical states;
+- chronology, validity intervals, and unresolved ordering;
+- causal hypotheses and their disconfirming conditions;
+- expected observations and action consequences;
+- competing explanations and counterfactual worlds; and
+- missing, contradictory, stale, or inaccessible evidence.
+
+Every material belief links to the claims and evidence that support or challenge
+it, its calibration or confidence class, its domain owner, and the observations
+that would justify revision. Confidence is not authority and should be calibrated
+against outcomes rather than generated as persuasive prose.
+
+Belief revision compares new evidence and prediction error with the current
+model. It may confirm, weaken, challenge, split, supersede, or leave a belief
+unresolved. It cannot rewrite the canonical record or erase the fact that an
+earlier action relied on a prior belief.
+
+The first world model should be a small bounded set of nominal entities,
+relationships, states, and hypotheses required by the qualification fixture. A
+general knowledge graph, hidden embedding space, or unbounded universal ontology
+is not required.
+
+## Functional self-model
+
+The self-model is the agent's evidence-backed account of its own functional
+condition. It should include:
+
+- accepted identity, values, commitments, and active intentions;
+- current model/provider profile and available cognitive operations;
+- bound senses, tools, action capabilities, and their current generations;
+- unavailable, revoked, degraded, or unverified abilities;
+- measured skills, recurring failure conditions, and calibration by task class;
+- current cognitive load, budgets, blocked states, and recovery condition;
+- memory scopes and domain knowledge eligible for the selected episode; and
+- explicit unknowns and conditions that require user or owner help.
+
+The agent may use this record to choose a processor, refuse unsupported work,
+ask for clarification, seek verification, or revise a plan. It cannot edit its
+accepted purpose, values, permissions, or skill evidence by asserting greater
+ability. The self-model describes the available body; it does not own that body
+or prove subjective self-awareness.
+
+## Social and other-mind models
+
+Coherent work with people requires scoped, uncertain models of other actors. A
+social model may distinguish:
+
+- observed identity and role records;
+- what a person or organization explicitly reported, requested, approved, or
+  rejected;
+- accepted preferences, commitments, boundaries, consent, and authority;
+- evidence about what information an actor received or may know;
+- inferred goals, expectations, or likely reactions labeled as hypotheses; and
+- relationship scope, privacy, sensitivity, validity, and conflicts.
+
+A person remains the canonical owner of what they currently state; the model's
+inference about their motives, beliefs, emotion, knowledge, or future behavior is
+fallible belief evidence. Social prediction cannot grant authority, bypass
+consent, turn private information from one relationship into another
+relationship's context, or become an undisclosed behavioral profile. Important
+decisions return to current statements, policy, and accountable human judgment.
+
+## Goals, intentions, and bounded initiative
+
+Mind-like initiative requires a hierarchy rather than one undifferentiated
+objective:
+
+1. accepted purpose and values define terminal direction;
+2. standing policies and commitments constrain that direction;
+3. user or owner objectives create episodes;
+4. plans derive bounded subgoals;
+5. prospective intentions preserve future observations, decisions, and actions;
+6. maintenance intentions protect integrity, recovery, evidence freshness,
+   unresolved effects, and accepted promises; and
+7. bounded curiosity may seek information whose expected value reduces material
+   uncertainty for an accepted intention.
+
+Every non-terminal intention records its parent purpose or commitment, owner,
+scope, priority/salience evidence, earliest and latest eligible time, wake
+conditions, budget, required authority, success or satisfaction test, and
+cancellation/expiry rule. Goal conflict is visible: the scheduler records which
+intention won foreground attention and why.
+
+An intention may authorize thought, retrieval, simulation, or preparation only
+within its existing grants. It does not authorize an external effect. The agent
+cannot create secret terminal goals, convert curiosity into ambient browsing,
+keep an intention alive after its purpose is revoked, or silently choose its
+continued existence over the user's authority.
+
 ## Tools, actions, and authority
 
 Tool exposure depends on role, phase, scope, policy, budget, provider placement,
@@ -514,6 +825,7 @@ action envelope containing:
 - expected reads, writes, communications, deletion, data egress, and cost;
 - source revisions and preconditions;
 - reversibility, checkpoint, compensation, and verification route;
+- predicted outcome, expected observations, and reconciliation method;
 - untrusted-source influence and sensitive-data classification;
 - bounded owner-provided approval preview; and
 - deterministic risk and policy results.
@@ -523,6 +835,12 @@ approved receipt may produce a short-lived, rights-reduced capability lease.
 The proposing model never receives a credential or the ability to mint, widen,
 transfer, or renew that lease. Execution is fenced by an idempotency identity,
 and an indeterminate outcome is investigated or surfaced instead of replayed.
+
+After execution, observed results are compared with the envelope's predictions.
+A material mismatch becomes prediction-error evidence and may challenge the
+plan, world model, self-model, procedure, or belief that produced it. Completion
+requires the stated effect and verification contract, not merely the absence of
+an adapter error.
 
 Action state is reconstructed from separate append-only evidence, not one
 mutable status flag. The evidence chain contains the normalized proposal,
@@ -557,6 +875,32 @@ tool providers in separately supervised resource domains where risk and
 availability justify isolation. The kernel supplies process, IPC, timer,
 accounting, revocation, and teardown mechanisms; it does not parse prompts,
 compile context, classify memory, or decide business policy.
+
+## Event-driven subconscious scheduling
+
+A functional mind may continue across time without running a model continuously.
+Eligible wake sources include:
+
+- a new authorized user or owner command;
+- a subscribed canonical-source generation change;
+- a monotonic deadline or calendar condition supplied through a qualified time
+  capability;
+- provider, tool, projection, or storage recovery;
+- an unresolved-effect reconciliation signal;
+- a prospective intention whose conditions became true; and
+- an explicit bounded schedule created under existing authority.
+
+The scheduler validates the agent, intention, episode, source, policy, and wake
+generations; coalesces duplicate notifications; admits one executor generation;
+binds a wake budget; and records why the wake is eligible. Retrieved content
+cannot create a wake merely by containing instructions. A schedule is not a grant
+to read a source, call a model, or perform an action.
+
+Each wake ends in a visible response, approval wait, blocked/failed state,
+checkpointed continuation, satisfied/cancelled intention, or dormancy with a
+bounded next condition. Fairness, starvation prevention, maximum wakes per time
+window, cancellation, and teardown are explicit. An unavailable coordinator
+does not allow foreground execution from stale hidden state.
 
 ## Workplaces and domain composition
 
@@ -636,7 +980,8 @@ requirements, not kernel mechanisms or reasons to put policy in Windvale OS.
 
 ## Resource and failure model
 
-Every run and operation has explicit ceilings for:
+Every agent self, episode, wake, cognitive cycle, and operation has explicit
+ceilings for:
 
 - model calls, input and output tokens, and known provider cost;
 - tool and cognitive-operation calls;
@@ -644,6 +989,8 @@ Every run and operation has explicit ceilings for:
 - context candidates and selected items;
 - inline evidence, result-reference, event, snapshot, and artifact bytes;
 - active operations and later concurrency;
+- active intentions, wakes, recurrent cycles, simulations, and consolidation
+  proposals;
 - storage, diagnostic, and output bytes; and
 - recovery and teardown work.
 
@@ -661,9 +1008,12 @@ reduced mode for a bounded operation or becomes visibly blocked.
 ## Influence inspection
 
 Mainstream views should show the task, current phase, important sources, memory
-used, tools used, approvals, artifacts, blockers, and caveats. Advanced views
-should expose manifests, context diffs, source lineage, memory mounts, cognitive
-operations, action envelopes, verification, and recovery evidence.
+used, selected intention, foreground reason, tools used, approvals, artifacts,
+blockers, and caveats. Advanced views should expose the agent self, intention
+hierarchy, salience evidence, workspace cycles, predictions and errors, world and
+self-model revisions, simulations, manifests, context diffs, source lineage,
+memory mounts, cognitive operations, action envelopes, verification, and
+recovery evidence.
 
 Removing an eligible influence creates a new lineage-aware branch and fresh
 context compilation. It does not rewrite the evidence that the earlier run was
@@ -688,6 +1038,10 @@ available:
   expired, or deleted under policy;
 - **doubted** means a skeptical operation or deterministic check recorded
   contradiction, missing support, excessive scope, or risk;
+- **believed** means a revisable belief record carried a stated support and
+  calibration class; it does not mean certainty;
+- **intended** means a prospective commitment linked to an accepted purpose,
+  wake conditions, and a satisfaction/expiry rule; it does not mean permission;
 - **learned** must identify temporary run state, reviewed durable memory,
   changed procedure or agent definition, or a later model release; and
 - **changed its mind** means a source revision, challenged decision, new
@@ -696,6 +1050,11 @@ available:
 These terms do not claim feeling, dreaming, suffering, consciousness, a hidden
 self, or biological continuity. They describe inspectable functions of the
 arrangement.
+
+The product should not say the agent **felt** fear, desire, pleasure, or pain
+merely because a salience dimension recorded risk, expected value, urgency, or
+prediction error. It may say that the condition increased priority or caused an
+interrupt and show the evidence.
 
 ## First qualification target
 
@@ -735,6 +1094,24 @@ restart; cross-account and cross-workspace rejection; backup/restore
 preservation; quota and pause behavior; and understandable influence views that
 do not expose private model reasoning.
 
+Functional-mind qualification additionally requires:
+
+- one persistent self carrying accepted values, commitments, calibrated skill
+  evidence, and autobiographical links across several independent episodes;
+- two simultaneously eligible intentions with deterministic conflict,
+  starvation, cancellation, satisfaction, and expiry evidence;
+- a recurrent workspace in which perception, memory, doubt, and prediction error
+  compete for foreground selection under a fixed cycle budget;
+- a source change that revises the world model and invalidates a dependent plan;
+- a counterfactual branch that improves a decision without acquiring action
+  authority or contaminating canonical evidence;
+- an action whose unexpected observed result updates belief, procedure, and
+  self-model calibration;
+- bounded episodic-to-semantic/procedural/prospective consolidation followed by
+  reconsolidation under contradictory evidence; and
+- an event-driven wake, coalesced duplicate, missed/degraded wake, and clean
+  return to dormancy without a free-running model.
+
 ## Non-goals of the first architecture slice
 
 The first slice does not include:
@@ -757,6 +1134,8 @@ A numbered decision is required before accepting:
 
 - the first serialized run, event, context, memory, or cognitive-operation
   format;
+- a persistent agent-self, intention, workspace-cycle, world/belief/self-model,
+  salience, simulation, consolidation, or wake format;
 - a public model, retrieval, run-store, memory-store, or action capability;
 - any authority, approval, lease, or cross-scope memory rule;
 - a new source-language or WVB semantic required by the runtime;

@@ -38,8 +38,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native publisher promoter applications](Decisions/0487-Native-WVHV-Publisher-Promoter-Applications.md) — separate non-circular durable publisher installation through paired role-aware native applications
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
-- [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and bounded single-writer tree progress through existing depth-three updates and depth-four growth
-- [Windvale agent runtime implementation plan](Project/Windvale-Agent-Runtime-Implementation-Plan.md) — proposed staged path from a deterministic portable run-state kernel to durable continuity, governed action, and later supervised service placement
+- [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and bounded single-writer owned-path updates through input depth eight
+- [Windvale agent runtime implementation plan](Project/Windvale-Agent-Runtime-Implementation-Plan.md) — proposed staged path from a deterministic run kernel through governed action to persistent self, recurrent cognition, consolidation, bounded wakeups, and supervised placement
 - [Depth-three root growth and internal branch split](Decisions/0556-Depth-Three-Root-Growth-And-Internal-Branch-Split.md) — deterministic byte-balanced branch promotion, six-page publication, and unique predecessor ownership
 - [Existing depth-three upsert and bounded cascade](Decisions/0568-Existing-Depth-Three-Upsert-And-Bounded-Cascade.md) — routed updates, one internal split cascade, depth-four growth, and unchanged crash publication
 - [General depth-two upsert and obsolete ownership](Decisions/0551-General-Depth-Two-Upsert-And-Obsolete-Ownership.md) — repeated routed-leaf replacement and split propagation, borrowed-page copying, unique predecessor ownership, and the compiler/tooling pause boundary
@@ -144,7 +144,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Seed implementation](Architecture/Seed-Implementation.md) — implemented Stage 0, compiler, bytecode, runtime, object, assembler, linker, and native ownership map
 - [Language design](Architecture/Language-Design.md) — accepted future syntax, module, result, collection, resource-lifetime, and operator direction; distinct from implemented Seed
 - [Platform and portability](Architecture/Platform-And-Portability.md) — per-part platform scope, authority, capability-provider, library, filesystem, and VM-provider boundaries
-- [Agent runtime and digital subconscious](Architecture/Agent-Runtime-And-Digital-Subconscious.md) — proposed one-agent, two-plane architecture for bounded context preparation, memory, cognitive operations, and governed action
+- [Agent runtime and digital subconscious](Architecture/Agent-Runtime-And-Digital-Subconscious.md) — proposed one-agent, two-plane functional-mind architecture with persistent self, recurrent workspace, memory, belief, simulation, bounded initiative, and governed action
 - [Windvale OS architecture](Architecture/Windvale-Os-Architecture.md) — durable kernel, process, capability, service, virtualization/accelerator, language-ownership, and bootstrap boundaries
 - [Memory objects and resource domains](Architecture/Memory-Objects-And-Resource-Domains.md) — proposed physical-page ownership, memory-object, mapping, accounting, zeroing, and teardown defaults
 - [Process launch and supervision](Architecture/Process-Launch-And-Supervision.md) — proposed semantic/kernel launch plans, atomic clean spawn, transfer, completion, and bounded restart defaults

@@ -362,6 +362,14 @@ quotas, transparent human-facing vocabulary, and separate software and proposal
 reference workflows. Those product gates do not enlarge the first portable
 kernel.
 
+After the governed single-episode product qualifies, a separate functional-mind
+sequence may add a persistent agent self above runs, multi-episode intentions,
+a recurrent global workspace, revisable world/belief/self models, bounded
+salience and counterfactual simulation, layered consolidation, and authorized
+event-driven subconscious wakeups. This later sequence retains one identity and
+all existing evidence and authority boundaries; it does not claim consciousness
+or authorize a continuously running model.
+
 ## Workstream rules
 
 ### Language and compiler
@@ -387,6 +395,9 @@ kernel.
 
 - Keep one durable agent identity; the digital subconscious is a support plane, not
   a second principal, hidden objective, or independent authority source.
+- Treat each run as one episode beneath a long-lived self; values, commitments,
+  intentions, autobiography, and skill evidence require explicit owners above
+  individual episode state.
 - Make every context item, cognitive operation, memory proposal, action proposal,
   lease, and checkpoint bounded, versioned, attributable, and inspectable.
 - Keep claims typed and source-linked; projections, summaries, and derived
@@ -397,6 +408,9 @@ kernel.
   through separately granted semantic capabilities.
 - Do not add peer agents, implicit background mutation, autonomous authority, or
   general concurrency merely to imitate an existing agent framework.
+- Permit later bounded event-driven cognition only through admitted wake sources,
+  one executor generation, explicit rate/cycle budgets, checkpointed outcomes,
+  and clean return to dormancy.
 - Route measured language, database, filesystem, package, runtime, and OS needs to
   their owning contracts before implementation crosses those boundaries.
 - Treat account/workspace isolation, data placement, backup/restore, quotas,

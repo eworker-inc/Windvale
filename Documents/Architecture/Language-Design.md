@@ -255,6 +255,16 @@ decision process. Foreground and digital-subconscious roles can execute
 sequentially in the first implementation and do not imply threads, promises, or
 `async` syntax.
 
+The later persistent-self, intention, workspace-cycle, belief/world/self-model,
+salience, simulation, consolidation, and wake corpora should likewise begin as
+closed nominal records and bounded sequential transitions. They do not require
+reflection, self-modifying code, an unbounded graph object, a built-in emotion or
+reward type, or syntax for consciousness. Event-driven wakeups use explicit
+capability and scheduler contracts; they are not language-level ambient events.
+Only measured coordination pressure may justify a bounded map, priority
+collection, or structured-concurrency addition through the ordinary language
+decision process.
+
 ## Later surface
 
 General generics, value-producing conditionals and matches, bounded interpolation, async/await, function values, closures, floating point, and visible unsafe blocks require focused ownership, ABI, resource, and consumer decisions. Unsafe machine or memory operations must eventually be visible both on their declaration and at their use; system profile alone is not sufficient syntax.

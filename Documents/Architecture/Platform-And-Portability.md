@@ -163,6 +163,12 @@ reasons. Provider fallback, repair, truncation, or degradation is visible eviden
 and cannot impersonate the requested route. Replacing the provider changes
 execution evidence rather than durable agent identity.
 
+The persistent agent self, episode membership, intentions, autobiographical
+links, beliefs, and memories remain host-independent owned data. Moving from
+Windows to Linux, a private host, or Windvale OS changes the available body,
+provider generations, placement, and self-model evidence; it does not create a
+new self or silently carry host-native handles and credentials into continuity.
+
 Account, workspace, principal, source, memory, artifact, result-reference, and
 capability identities are revalidated by their owning provider. Remote placement
 receives only the minimum permitted source ranges; credentials, raw storage
@@ -170,6 +176,13 @@ locations, private service metadata, unrelated tenant information, and secret
 values remain outside portable state and model context. Provider-, tool-group-,
 account-, and workspace-level pause controls fail closed while preserving
 inspectable recovery state; a client feature flag is not an authority boundary.
+
+Later event-driven subconscious operation uses separate semantic capabilities
+for monotonic wake conditions, qualified calendar mapping, canonical-source
+change subscriptions, provider recovery, and scheduler admission. No ambient
+host event loop or native notification identity enters portable state. A wake
+reports its trigger generation and may start bounded cognition, but it does not
+grant source access, model use, tool use, or external action.
 
 ## Filesystem contract family
 

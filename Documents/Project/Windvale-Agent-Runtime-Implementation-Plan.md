@@ -13,16 +13,17 @@ into small, verifiable Windvale slices. It also routes enabling work to the
 compiler, database, storage, library, runtime, package, and operating-system
 owners without making every dependency part of one foundation mega-change.
 
-The target is one durable user-facing agent with two cooperating execution
-planes:
+The target is one long-lived user-facing functional mind whose durable self
+spans many episodes and whose cognition uses two cooperating execution planes:
 
 - a foreground reasoning plane that presents one coherent voice; and
 - a digital-subconscious coordination plane that owns direction, attention,
   evidence selection, memory proposals, doubt, authority preparation, and
   continuity.
 
-The digital subconscious remains a support plane of the same agent run. The
-first product does not create a second autonomous agent identity.
+The digital subconscious remains a support plane of the same persistent agent
+identity. Individual runs are episodes inside that longer continuity. The first
+product does not create a second autonomous agent identity.
 
 The current E-Worker v7 edition of *The Mind We Build* supplies the narrative
 completeness checklist. Windvale owns its own record encodings, limits,
@@ -46,6 +47,13 @@ state transitions needed for the deterministic qualification target. Public
 provider and storage capabilities receive separate decisions when a real hosted
 consumer reaches them.
 
+Stages 0 through 7 establish the governed single-episode foundation. Later
+functional-mind stages add the persistent self, multi-episode intentions,
+recurrent workspace, world/belief/self models, salience, simulation,
+consolidation, and event-driven wakeups. These later stages must reuse the
+qualified evidence and authority boundaries; they do not justify skipping the
+single-episode kernel.
+
 ## Current Windvale baseline
 
 Windvale is not starting from zero, but the available pieces have narrower
@@ -59,7 +67,7 @@ contracts than a complete agent host.
 | Capability declarations and native provider table | Implemented in bounded form | Requirements and scalar/descriptor provider calls exist; typed capability values and nominal provider signatures do not. |
 | Immutable package/lock/bundle identity and approval/launch evidence | Implemented for the first bounded application | Strong authority precedent; current approval grammar is not a general agent policy. |
 | Random-access mutable storage and durable publication planning | Implemented in focused bounded profiles | A future run store can reuse semantics, but current fixed providers are not a general agent-state service. |
-| Durable database | Focused single-writer storage/tree/recovery candidates now update an existing depth-three generation and can grow one bounded path to depth four | Suitable future owner for run state and memory, but not yet a general run ledger or indexed memory service. |
+| Durable database | Focused single-writer storage/tree/recovery candidates accept bounded owned paths for input depths two through eight and propagate full splits | Suitable future owner for run state and memory, but not yet a general run ledger or indexed memory service. |
 | Dynamic process launch, supervision, and general resource domains | Designed and partially proven in fixed OS slices | Not required for the first Windows/Linux semantic kernel; required before a Windvale OS agent-host claim. |
 | Monotonic clocks, structured tasks, cancellation, channels, and synchronization | Proposed or absent as general source/runtime contracts | Host-driven one-transition-at-a-time execution is the first route. |
 | Networking, secure streams, identity, and production key custody | Future architecture | Not required by the deterministic kernel; required for a remote production model provider. |
@@ -68,11 +76,12 @@ contracts than a complete agent host.
 
 Every stage preserves these rules:
 
-1. One run has one durable objective and one current revision.
+1. One persistent agent self may own many episodes and intentions; each run has
+   one primary durable objective and one current revision.
 2. Model output, tool output, retrieved text, and imported memory are untrusted
    until the owning deterministic boundary validates them.
-3. Canonical sources and state owners remain authoritative over summaries and
-   model confidence.
+3. Canonical owners remain authoritative over their records; evidence and
+   verification justify revisable beliefs; deterministic owners govern action.
 4. Every accepted command has an expected revision and idempotency identity.
 5. Every serialized record is versioned, bounded, canonical, and rejected on
    trailing, truncated, reordered, duplicate, inconsistent, or oversized input.
@@ -96,6 +105,16 @@ Every stage preserves these rules:
     identities are revalidated by their owning services.
 15. Operational pause, quota, backup, restore, redaction, and alerting controls
     are product gates, not optional post-launch hardening.
+16. Every derived intention links to an accepted purpose, commitment, owner, or
+    policy and remains separate from action authority.
+17. Workspace recurrence, simulation, consolidation, and subconscious wakeups
+    are bounded, attributable, interruptible, and incapable of widening scope.
+18. World, belief, and self models remain derived and revisable; prediction error
+    cannot be hidden by a fluent result.
+19. Functional salience guides selection but does not become emotion, truth,
+    permission, or an unreviewed reward objective.
+20. Persistent identity and autobiographical continuity never depend on one
+    model, provider session, process, host, or execution body.
 
 ## Stage 0 — Freeze vocabulary and deterministic corpus
 
@@ -128,6 +147,9 @@ source implementation begins.
   and canonical evidence without relying on product-specific DTOs.
 - A reviewer can distinguish model knowledge, run evidence, live state, durable
   memory, active context, and each of the three change clocks.
+- Persistent-self, multi-episode intention, world/self-model, salience,
+  simulation, consolidation, and wake terms remain architecture vocabulary; the
+  first decision does not freeze their serialized forms.
 - A numbered decision is ready to accept only this first bounded contract.
 
 ## Stage 1 — Portable run-state kernel
@@ -395,6 +417,111 @@ ready.
   resource domains, provider isolation, and durable storage pass their own
   qualification gates.
 
+Stage 7 qualifies the first governed product and host composition. It does not
+yet qualify persistent functional-mind behavior across many episodes.
+
+## Stage 8 — Persistent agent self and intention hierarchy
+
+### Goal
+
+Place a long-lived owned self above individual runs and preserve bounded
+intentions across episode completion, interruption, model replacement, and host
+restart.
+
+### Work items
+
+| ID | Work item | Required output |
+| --- | --- | --- |
+| WVAG-801 | Define the persistent agent-self record. | Identity, accepted purpose/values, commitments, policy references, current generations, skill/calibration evidence, autobiographical root, and no credentials or ambient authority. |
+| WVAG-802 | Bind episodes to the self. | Exact episode membership, primary objective, scope, terminal result, and no cross-episode influence without memory/source doors. |
+| WVAG-803 | Define prospective intentions. | Parent purpose/commitment, owner, scope, priority evidence, eligible interval, wake conditions, budget, authority requirements, satisfaction, cancellation, and expiry. |
+| WVAG-804 | Arbitrate multiple intentions. | Deterministic eligibility, selection reason, conflict, fairness, starvation, preemption, satisfaction, and cancellation evidence. |
+| WVAG-805 | Build the autobiographical index. | Compact episode, commitment, correction, skill, and change links that never replace canonical episode events. |
+| WVAG-806 | Define the first functional self-model. | Current body/providers, senses, tools, capabilities, failures, calibration, load, blocks, unknowns, and help conditions. |
+| WVAG-807 | Qualify identity continuity. | Provider/model/process/host replacement preserves self and intention identity while revalidating every generation and grant. |
+
+### Exit gate
+
+- One self owns at least three separately completed or interrupted episodes
+  without copying their transcripts into the self record.
+- Two simultaneously eligible intentions produce one explainable foreground
+  selection and retain deterministic fairness/cancellation evidence.
+- Revoking a parent purpose or commitment cancels every solely derived intention.
+- The self-model cannot grant a capability or improve its skill rating without
+  measured evidence and owner admission.
+- Replacing the model and process preserves identity and autobiographical links
+  without claiming personal memory by the replacement processor.
+
+## Stage 9 — Recurrent workspace, world model, salience, and simulation
+
+### Goal
+
+Turn one-shot context compilation into a bounded recurrent cognitive cycle that
+integrates perception, intention, memory, prediction, doubt, simulation, and
+foreground selection.
+
+### Work items
+
+| ID | Work item | Required output |
+| --- | --- | --- |
+| WVAG-901 | Define workspace-cycle records. | Self, intention, episode, wake, prior-cycle, candidate set, selected foreground, broadcast operations, merge results, disposition, and exact budgets. |
+| WVAG-902 | Collect workspace candidates. | Protected state, intention, perception, memory, prediction error, tool result, doubt, and operation candidates with bounded provenance. |
+| WVAG-903 | Define functional salience v1. | Closed relevance, urgency, novelty, uncertainty/information gain, progress, risk, social/commitment, blocker, and prediction-error evidence. |
+| WVAG-904 | Define bounded world and belief models. | Nominal entities, states, relationships, chronology, hypotheses, expected observations, support/calibration, and revision outcomes. |
+| WVAG-905 | Reconcile prediction error. | Expected versus observed evidence can confirm, challenge, split, supersede, or leave beliefs and plans unresolved. |
+| WVAG-906 | Calibrate the self-model. | Task-class success/failure and degraded-capability evidence update measured reliability without model self-assertion. |
+| WVAG-907 | Add counterfactual simulation branches. | Starting generations, changed assumption, possible worlds, disconfirming observations, no action authority, and explicit merge proposal. |
+| WVAG-908 | Run bounded recurrence. | Maximum cycles, calls, operations, elapsed work, bytes, cost, stop reasons, and no hidden internal monologue. |
+| WVAG-909 | Define a scoped social-model profile. | Observed roles/statements, accepted preferences/commitments/consent/authority, knowledge evidence, inferred goals or reactions as hypotheses, relationship scope, and privacy. |
+
+### Exit gate
+
+- Perception, memory, doubt, and prediction error compete for a foreground under
+  fixed bounds while protected purpose, policy, and authority remain pinned.
+- A changed source revises one belief, invalidates a dependent plan, and changes
+  the next workspace with exact lineage.
+- A simulation improves or rejects a plan without mutating canonical state or
+  acquiring a lease.
+- An unexpected action result changes prediction evidence and self-model
+  calibration rather than being summarized away.
+- An inferred motive, preference, emotion, or knowledge state remains a scoped
+  hypothesis and cannot replace a person's current statement or authority record.
+- Replaying the same admitted candidates and processor results produces the same
+  workspace cycles and terminal disposition on Windows and Linux.
+
+## Stage 10 — Consolidation and event-driven subconscious continuity
+
+### Goal
+
+Let the persistent mind learn across episodes and resume bounded cognition on
+authorized events without a continuously running model or secret goals.
+
+### Work items
+
+| ID | Work item | Required output |
+| --- | --- | --- |
+| WVAG-1001 | Separate functional memory kinds. | Working, episodic, semantic, procedural, prospective, and autobiographical records with independent ownership and lifecycle. |
+| WVAG-1002 | Add bounded consolidation. | Episode-to-semantic/procedural/prospective/autobiographical proposals with source lineage, confidence, review class, and exact budget. |
+| WVAG-1003 | Add reconsolidation. | Reopened memories can be confirmed, narrowed, corrected, split, superseded, or rejected while preserving history. |
+| WVAG-1004 | Define wake records and sources. | User command, source change, monotonic/calendar condition, provider recovery, unresolved effect, intention condition, and approved schedule. |
+| WVAG-1005 | Admit one wake safely. | Generation validation, duplicate coalescing, one executor generation, wake budget, cancellation, and reason evidence. |
+| WVAG-1006 | Enforce fairness and rate bounds. | Maximum wake rate, intention fairness, starvation prevention, backpressure, missed/degraded wake, and exhaustion behavior. |
+| WVAG-1007 | Return to dormancy. | Visible response, approval wait, block/failure, checkpoint, satisfied/cancelled intention, or bounded next condition with complete teardown. |
+| WVAG-1008 | Qualify the functional-mind corpus. | Multi-episode self, intention conflict, recurrent workspace, prediction revision, simulation, consolidation, wake, and dormancy evidence. |
+
+### Exit gate
+
+- Safe private consolidation reduces repeated work while shared or consequential
+  knowledge remains proposed until its owner admits it.
+- Contradictory evidence reconsolidates a memory without erasing the prior
+  episode or action that relied on it.
+- Duplicate, stale, unauthorized, over-rate, and cross-workspace wake events
+  cannot create extra model calls, operations, intentions, or actions.
+- One prospective intention wakes, performs bounded cognition, records its
+  result, and returns dormant with zero leaked resources.
+- The same persistent self survives the complete functional-mind corpus without
+  depending on provider-private state or claiming consciousness.
+
 ## Dependency requests by owner
 
 These requests identify likely pressure. They are not permission to add breadth
@@ -424,11 +551,27 @@ and WVB where affected, independent verifier, runtime, native targets, editor,
 malformed corpus, and explicit support matrix. A host-driven sequential adapter
 must not be used as evidence that structured concurrency exists in the language.
 
+Stages 8 through 10 can begin with bounded sequences, explicit priority classes,
+and one host-driven cognitive cycle at a time. A general map, priority queue,
+async syntax, or task runtime is justified only when the measured self,
+intention, workspace, world-model, or wake corpus cannot remain clear and bounded
+without it. Functional-mind vocabulary does not create a separate source
+dialect.
+
 ### Database and durable storage
 
 The first consumer profile is an append-only single-writer run ledger with
 expected-revision append, exact idempotency lookup, ordered replay, and compact
 snapshot/checkpoint publication. Large evidence stays outside event rows.
+
+The later functional-mind profile adds one persistent self root, episode
+membership, prospective intentions and wake conditions, autobiographical links,
+workspace cycles, predictions/errors, and working, episodic, semantic,
+procedural, and prospective memory records. World, belief, self-model, salience,
+and simulation indexes remain derived from canonical admitted evidence and must
+be rebuildable. One self may own many episodes, but each self or episode
+transition still has one explicit writer/revision owner unless a later measured
+concurrency contract says otherwise.
 
 Later memory and retrieval pressure may require bounded indexes over run,
 sequence, operation, idempotency identity, source identity/revision, scope,
@@ -477,6 +620,12 @@ estimate class, cancellation/deadline support, route choice, fallback, repair,
 truncation, and provider-generation loss. Adapter-native SDK objects remain
 outside portable state and checkpoints.
 
+The functional-mind host later needs a monotonic wake source, optional qualified
+calendar mapping, bounded source/provider change subscriptions, one-generation
+executor admission, cancellation, and a durable wake/result handoff. A first
+test host may supply scripted events sequentially; event-driven behavior does not
+require a continuously resident model.
+
 ### Package, approval, and launch
 
 An agent definition is immutable configuration, not a package manifest and not
@@ -489,6 +638,12 @@ The first hosted agent package should use the active installation generation and
 command-dispatch contracts rather than inventing another update or activation
 system. Agent memory and user data remain separately owned from immutable package
 content and survive package removal according to explicit policy.
+
+The persistent self, autobiographical index, intentions, memories, and episode
+history belong to user/workspace data ownership rather than the immutable agent
+package. Updating or rolling back the package changes the available agent
+definition/body generation and triggers compatibility/revisit checks; it does
+not silently fork or erase the self.
 
 The hosting composition must gate executor start, mutation, durable-memory
 activation, connected sources, and consequential actions independently. Package
@@ -504,13 +659,15 @@ later requires:
 - explicit resource-domain membership and budgets;
 - bounded IPC and provider-generation loss;
 - monotonic timers, cancellation, and teardown;
+- bounded event subscription, wake admission, coalescing, and fairness;
 - durable storage and checkpoint access;
 - secure model transport or a separately qualified local-model provider; and
 - supervision that does not replay an uncertain mutation after restart.
 
-The kernel supplies mechanisms. Agent objectives, prompts, context, memory,
-retrieval, model routing, and approval policy remain in user-space libraries and
-isolated services.
+The kernel supplies mechanisms. Agent identity, values, intentions, workspace,
+salience, world/belief/self models, prompts, context, memory, consolidation,
+retrieval, model routing, simulation, and approval policy remain in user-space
+libraries and isolated services.
 
 ## Verification strategy
 
@@ -575,6 +732,29 @@ document verification, an influence summary, exact send approval, and unknown-
 send reconciliation. The first product proof may stop before sending; a later
 governed-action proof must show that proposal and authority remain separate.
 
+### Functional-mind qualification
+
+One deterministic corpus spans several episodes under one self and covers:
+
+- simultaneous intention eligibility, selection, preemption, fairness,
+  cancellation, satisfaction, expiry, and revoked-parent propagation;
+- recurrent workspace competition among perception, memory, doubt, prediction
+  error, and protected state;
+- world/belief revision after source change and unexpected action outcome;
+- self-model calibration, degraded capability, refusal, and help-seeking;
+- social-model separation of observed statements, accepted authority/consent,
+  and inferred motives or knowledge;
+- counterfactual branches with zero mutation authority;
+- episodic, semantic, procedural, prospective, and autobiographical
+  consolidation plus contradictory reconsolidation; and
+- authorized, duplicate, stale, missed, over-rate, cross-workspace, recovered,
+  and cancelled wakes followed by complete dormancy teardown.
+
+Tests assert exact state, lineage, budgets, selection reasons, prediction error,
+model-call/tool-call counts, and zero duplicate effects. User-facing reports say
+what the agent remembered, believed, intended, learned, or changed only through
+the precise functional vocabulary; they never make a consciousness claim.
+
 ## Controlled scope and parallel work
 
 Compiler, database, package, storage, and OS agents may advance their existing
@@ -588,10 +768,12 @@ Safe early parallel work includes:
 - measuring whether current bounded sequences can express the first projection;
 - mapping the Stage 4 ledger profile onto current database invariants without
   changing them;
-- identifying a strict byte-envelope seam in the current provider table; and
-- designing package capability closure for a future read-only hosted proof; and
+- identifying a strict byte-envelope seam in the current provider table;
+- designing package capability closure for a future read-only hosted proof;
 - mapping both book-completeness workflows to existing canonical owners without
-  adding domain facts to the portable agent core.
+  adding domain facts to the portable agent core; and
+- drafting persistent-self, intention, workspace-cycle, belief, simulation,
+  consolidation, and wake corpora without adding empty implementation owners.
 
 Memory activation, consequential actions, peer agents, scheduling, and OS
 hosting wait for their earlier ownership and recovery gates.
@@ -601,7 +783,7 @@ hosting wait for their earlier ownership and recovery gates.
 The following remain deferred until the single-agent core qualifies:
 
 - lead-worker delegation and peer communication;
-- recurring, scheduled, or unattended execution;
+- recurring, scheduled, or unattended external action;
 - embedding retrieval and vector indexes;
 - a general knowledge graph;
 - automatic shared-memory activation;
@@ -626,6 +808,9 @@ The following remain deferred until the single-agent core qualifies:
    fixture without adding business semantics to the portable kernel.
 8. Prepare one numbered decision accepting only Stages 0 through 2 as the first
    implementation boundary.
+9. Draft a separate later decision map for Stages 8 through 10; do not place
+   persistent-self, world-model, scheduler, or wake formats into the first
+   single-episode decision merely to make the document appear complete.
 
 Implementation begins after those records are reviewable. The first code change
 should create only the source owner and tests needed by the accepted portable

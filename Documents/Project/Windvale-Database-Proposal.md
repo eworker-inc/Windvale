@@ -5,10 +5,10 @@
   checked storage geometry, mutable storage-resource contract, `WVDS 1`
   superblock, `WVPG 1` page envelope, `WVCR 1` commit record, `WVTN 1` tree
   node, single-writer publication, repeated depth-two updates, deterministic
-  internal branch split, existing depth-three updates, and one bounded cascade
-  to depth-four growth are implemented candidates, but no general transaction
-  engine, server contract, SQL grammar, or product name is accepted by this
-  document
+  internal branch split, and bounded owned-path updates for input depths two
+  through eight with full split propagation are implemented candidates, but no
+  general transaction engine, server contract, SQL grammar, or product name is
+  accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -19,10 +19,10 @@ This document explores adding a database to Windvale without claiming that the
 current language, runtime, libraries, or operating system can already support a
 complete durable database server. The native backend now executes the durable
 superblock, physical-page, compact-log, publication-planning core, one
-rights-limited storage writer/recovery shell, repeated depth-two updates,
-existing depth-three updates, and one bounded split cascade that creates a
-depth-four root. Arbitrary-depth transactions and service boundaries remain
-absent.
+rights-limited storage writer/recovery shell, repeated depth-two updates, and a
+bounded owned-path transaction for input depths two through eight. A full
+depth-four cascade now creates a depth-five root. Provider-driven path discovery,
+input depth nine, reclamation, concurrency, and service boundaries remain absent.
 This proposal identifies what should be learned
 from EWDB, where a Windvale database would belong, which prerequisites are
 missing, and the smallest useful implementation sequence.
@@ -445,11 +445,12 @@ immutable page/log bytes and an executable durable-before-publish sequence.
 hosted executor publishes that structured root through every four-action crash
 boundary. It splits one full root leaf, repeatedly rewrites the depth-two tree,
 splits a full branch root into two branches beneath a new depth-three root, and
-updates a selected existing depth-three root/branch/leaf path. That bounded path
-can propagate one leaf split through the internal branch and root to create a
-depth-four root. The engine does not yet update that depth-four generation,
-represent an arbitrary-depth owned path, reclaim pages, or manage concurrent
-transactions.
+now accepts exact owned root-to-leaf page paths for input depths two through
+eight. The bounded transaction validates top-down, rebuilds bottom-up, propagates
+splits through every supplied ancestor, updates existing depth-four generations,
+and can create a depth-five root. The engine does not yet discover the path
+through one provider-owned mutation, accept input depth nine, reclaim pages, or
+manage concurrent transactions.
 
 This milestone needs no general query language, network protocol, or graph
 layer.
@@ -502,10 +503,30 @@ The first durable agent profile requires:
 - explicit stale generation, unavailable provider, partial progress, durable
   completion, and indeterminate completion outcomes.
 
+The later functional-mind profile adds:
+
+- one persistent agent-self root above episode/run roots;
+- bounded episode membership and autobiographical links;
+- prospective intentions, eligibility conditions, satisfaction, cancellation,
+  expiry, and wake identities;
+- recurrent workspace-cycle, selection, prediction, and prediction-error
+  evidence;
+- working, episodic, semantic, procedural, prospective, and autobiographical
+  memory records with consolidation/reconsolidation lineage; and
+- derived world, belief, self-model, salience, and simulation indexes that can be
+  rebuilt from admitted evidence.
+
+The self and each episode retain explicit revision owners. One self may contain
+many episodes without implying concurrent multi-writer mutation of one root.
+Wake admission and intention arbitration require idempotency and expected
+revision just as model calls and actions do.
+
 Later memory and retrieval stages may add indexes over attributed claims,
 provenance, support state, contradiction, dependent artifacts, source and
 projection generation, action identity, review state, recency, expiry, and access
-scope. Those indexes must remain derived from canonical admitted records and
+scope. Functional-mind pressure may later add self, episode, intention,
+prospective condition, wake, memory-kind, belief-support, calibration, and
+prediction-error indexes. Those indexes must remain derived from canonical admitted records and
 rebuildable without changing their meaning. The first durable product profile
 also requires a backup manifest that binds its event prefix, snapshots,
 idempotency evidence, and large-body references, plus a restore result that
@@ -513,8 +534,9 @@ rejects missing or changed dependencies.
 
 The first profile does not require SQL, a network server, distributed consensus,
 multi-writer runs, vector search, or database-owned agent policy. The database
-stores and retrieves bounded truth-bearing records; it does not decide what a
-model may believe, which projection is sufficient, or what an agent may do.
+stores and retrieves bounded state and evidence-bearing records; it does not
+decide what a model may believe, which intention deserves attention, which
+projection is sufficient, what should be consolidated, or what an agent may do.
 
 ## Differential and performance evidence
 
@@ -581,16 +603,17 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decisions 0534 through 0568 now supply the dual superblock, immutable page and
+Decisions 0534 through 0569 now supply the dual superblock, immutable page and
 tree-node envelopes, compact commit record, portable publication/recovery
 actions, exact ABI-23 storage call, one real provider pair, root-leaf lookup and
 upsert, repeated depth-two replacement, deterministic internal splitting, first
-depth-three root growth, updates within an existing depth-three generation, one
-bounded split cascade to depth four, and interruption at the publication
-uncertainty boundaries. The next database decision should define the owned
-bounded path and transaction shape required to update arbitrary supported
-depth, or begin reclamation evidence if measurements make append-only growth
-the more urgent limit. Independent Linux execution and ordinary configurable
+depth-three root growth, updates within existing depth-three and depth-four
+generations, one owned packed path for input depths two through eight, full split
+propagation through every supplied ancestor, and interruption at the publication
+uncertainty boundaries. The next database decision should begin reclamation
+evidence if append-only growth is the measured urgent limit, or define
+provider-driven path discovery only when a real server or agent consumer needs
+one-operation mutation. Independent Linux execution and ordinary configurable
 ABI-23 binding remain parallel qualification work. Catalog, network listener,
 and SQL execution should continue to consume rather than bypass the storage
 kernel.
