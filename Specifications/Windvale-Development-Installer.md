@@ -2,8 +2,10 @@
 
 ## Status
 
-Implemented candidate for the first bounded Milestone 3 installer slice under
+Qualified and implemented as the first bounded Milestone 3 installer slice under
 [Decision 0562](../Documents/Decisions/0562-First-Deterministic-Development-Installers.md).
+The exact owner passes on Windows and Linux in
+[Verify run 31881681424](https://github.com/eworker-inc/Windvale/actions/runs/31881681424).
 This contract does not define or announce the Windvale `v0.1.0` release.
 
 ## Purpose and scope

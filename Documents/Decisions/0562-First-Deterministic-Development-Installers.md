@@ -1,9 +1,10 @@
 # Decision 0562: First deterministic development installers
 
-- Status: Implemented candidate
+- Status: Qualified and implemented
 - Date: 2026-08-15
 - Advances: Milestone 3, Decisions 0183 and 0561
 - Contract: [Windvale development installer 1](../../Specifications/Windvale-Development-Installer.md)
+- Evidence: [paired-host Verify run 31881681424](https://github.com/eworker-inc/Windvale/actions/runs/31881681424)
 
 ## Context
 
@@ -48,9 +49,9 @@ candidate.
 
 ## Consequences
 
-- Windows users can install and inspect the native toolchain per-user from a
-  deterministic development archive; the matching Linux transaction is owned by
-  the permanent paired-host suite.
+- Windows and Linux x64 users can install and inspect the native toolchain
+  per-user from deterministic development archives; both transactions pass the
+  permanent eight-case owner on their target host.
 - The two archive and payload identities are exact inputs for the later release
   envelope and offline release verifier.
 - Shell and PowerShell are bootstrap installer dependencies, not Windvale source
