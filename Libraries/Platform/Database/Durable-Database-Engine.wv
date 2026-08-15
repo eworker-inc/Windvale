@@ -1,0 +1,276 @@
+module Durableˉdatabaseˉengine profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+
+capability storage.random_access_v1;
+
+const DATABASE_ENGINE_HEADER_BYTES: u32 = 512u32;
+
+export enum Databaseˉengineˉstatus {
+    Ready = 0;
+    Recovered = 1;
+    Recoveryˉactive = 2;
+    Reopenˉrequired = 3;
+    Storageˉfailure = 4;
+    Headerˉfailure = 5;
+    Invalidˉcurrent = 6;
+    Changedˉstorage = 7;
+    Recoveryˉfailure = 8;
+}
+
+export record Databaseˉengine {
+    Status: Databaseˉengineˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Storageˉgeneration: u64;
+    Storageˉlength: u64;
+    Recoveryˉstage: Recovery.Databaseˉstorageˉrecoveryˉstage;
+    Recoveryˉerror: Recovery.Databaseˉstorageˉrecoveryˉerror;
+    Recoveryˉactions: u32;
+    Current: Superblock.Databaseˉsuperblockˉselection;
+}
+
+fn Databaseˉengineˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉengineˉinvalidˉcurrent(
+    Storageˉlength: u64
+) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselect(
+        Databaseˉengineˉempty(),
+        Databaseˉengineˉempty(),
+        Storageˉlength
+    );
+}
+
+fn Databaseˉengineˉresult(
+    Status: Databaseˉengineˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Storageˉgeneration: u64,
+    Storageˉlength: u64,
+    Recoveryˉstage: Recovery.Databaseˉstorageˉrecoveryˉstage,
+    Recoveryˉerror: Recovery.Databaseˉstorageˉrecoveryˉerror,
+    Recoveryˉactions: u32,
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> Databaseˉengine {
+    return Databaseˉengine(
+        Status,
+        Storageˉstatus,
+        Storageˉgeneration,
+        Storageˉlength,
+        Recoveryˉstage,
+        Recoveryˉerror,
+        Recoveryˉactions,
+        Current
+    );
+}
+
+fn Databaseˉengineˉobserve() -> Databaseˉengine {
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Storageˉfailure,
+            Description.Status,
+            Description.Generation,
+            Description.Storageˉlength,
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Invalid,
+            Recovery.Databaseˉstorageˉrecoveryˉerror.None,
+            0u32,
+            Databaseˉengineˉinvalidˉcurrent(Description.Storageˉlength)
+        );
+    }
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        0u64,
+        DATABASE_ENGINE_HEADER_BYTES
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Bytesˉlength(Header.Value) != DATABASE_ENGINE_HEADER_BYTES {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Headerˉfailure,
+            Header.Status,
+            Description.Generation,
+            Description.Storageˉlength,
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Invalid,
+            Recovery.Databaseˉstorageˉrecoveryˉerror.None,
+            0u32,
+            Databaseˉengineˉinvalidˉcurrent(Description.Storageˉlength)
+        );
+    }
+    if Header.Generation != Description.Generation ||
+        Header.Storageˉlength != Description.Storageˉlength {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Changedˉstorage,
+            Header.Status,
+            Header.Generation,
+            Header.Storageˉlength,
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen,
+            Recovery.Databaseˉstorageˉrecoveryˉerror.Changedˉstorage,
+            0u32,
+            Databaseˉengineˉinvalidˉcurrent(Header.Storageˉlength)
+        );
+    }
+    let Current: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Bytesˉslice(Header.Value, 0u32, 256u32),
+            Bytesˉslice(Header.Value, 256u32, 256u32),
+            Description.Storageˉlength
+        );
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Invalidˉcurrent,
+            Storage.Storageˉstatus.Valid,
+            Description.Generation,
+            Description.Storageˉlength,
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Invalid,
+            Recovery.Databaseˉstorageˉrecoveryˉerror.Invalidˉselection,
+            0u32,
+            Current
+        );
+    }
+    var Status: Databaseˉengineˉstatus = Databaseˉengineˉstatus.Ready;
+    var Stage: Recovery.Databaseˉstorageˉrecoveryˉstage =
+        Recovery.Databaseˉstorageˉrecoveryˉstage.Ready;
+    if Current.Tailˉbytes != 0u64 {
+        Status = Databaseˉengineˉstatus.Recoveryˉactive;
+        Stage = Recovery.Databaseˉstorageˉrecoveryˉstage.Resizeˉtail;
+    }
+    return Databaseˉengineˉresult(
+        Status,
+        Storage.Storageˉstatus.Valid,
+        Description.Generation,
+        Description.Storageˉlength,
+        Stage,
+        Recovery.Databaseˉstorageˉrecoveryˉerror.None,
+        0u32,
+        Current
+    );
+}
+
+fn Databaseˉengineˉsameˉcurrent(
+    Before: Superblock.Databaseˉsuperblockˉselection,
+    After: Superblock.Databaseˉsuperblockˉselection
+) -> bool {
+    return After.Status ==
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid &&
+        After.Tailˉbytes == 0u64 &&
+        Before.Databaseˉidentityˉhigh == After.Databaseˉidentityˉhigh &&
+        Before.Databaseˉidentityˉlow == After.Databaseˉidentityˉlow &&
+        Before.Generation == After.Generation &&
+        Before.Committedˉsequence == After.Committedˉsequence &&
+        Before.Rootˉpage == After.Rootˉpage &&
+        Before.Commitˉlogˉhead == After.Commitˉlogˉhead &&
+        Before.Earliestˉretainedˉsequence ==
+            After.Earliestˉretainedˉsequence &&
+        Before.Pageˉcount == After.Pageˉcount &&
+        Before.Committedˉlength == After.Committedˉlength &&
+        Before.Pageˉsize == After.Pageˉsize &&
+        Before.Rootˉdepth == After.Rootˉdepth;
+}
+
+export fn Databaseˉengineˉopen(
+    Maximumˉrecoveryˉactions: u32
+) -> Databaseˉengine {
+    let Initial: Databaseˉengine = Databaseˉengineˉobserve();
+    if Initial.Status != Databaseˉengineˉstatus.Recoveryˉactive {
+        return Initial;
+    }
+    let Recoveryˉinitial: Recovery.Databaseˉstorageˉrecovery =
+        Recovery.Databaseˉstorageˉrecoveryˉbegin(
+            Initial.Current,
+            Initial.Storageˉgeneration,
+            Initial.Storageˉlength
+        );
+    if Recoveryˉinitial.Error !=
+            Recovery.Databaseˉstorageˉrecoveryˉerror.None {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Recoveryˉfailure,
+            Initial.Storageˉstatus,
+            Initial.Storageˉgeneration,
+            Initial.Storageˉlength,
+            Recoveryˉinitial.Stage,
+            Recoveryˉinitial.Error,
+            0u32,
+            Initial.Current
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉrecoveryˉexecution =
+        Executor.Databaseˉstorageˉrecoveryˉexecute(
+            Recoveryˉinitial,
+            Maximumˉrecoveryˉactions
+        );
+    if Execution.State.Stage ==
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Resizeˉtail ||
+        Execution.State.Stage ==
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Flushˉtail {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Recoveryˉactive,
+            Initial.Storageˉstatus,
+            Initial.Storageˉgeneration,
+            Execution.State.Storageˉlength,
+            Execution.State.Stage,
+            Execution.State.Error,
+            Execution.Actions,
+            Initial.Current
+        );
+    }
+    if Execution.State.Stage ==
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Reopenˉrequired,
+            Initial.Storageˉstatus,
+            Initial.Storageˉgeneration,
+            Execution.State.Storageˉlength,
+            Execution.State.Stage,
+            Execution.State.Error,
+            Execution.Actions,
+            Initial.Current
+        );
+    }
+    if Execution.State.Stage !=
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Ready ||
+        Execution.State.Error !=
+            Recovery.Databaseˉstorageˉrecoveryˉerror.None {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Recoveryˉfailure,
+            Initial.Storageˉstatus,
+            Initial.Storageˉgeneration,
+            Execution.State.Storageˉlength,
+            Execution.State.Stage,
+            Execution.State.Error,
+            Execution.Actions,
+            Initial.Current
+        );
+    }
+    let Reopened: Databaseˉengine = Databaseˉengineˉobserve();
+    if Reopened.Status != Databaseˉengineˉstatus.Ready ||
+        Reopened.Storageˉgeneration != Initial.Storageˉgeneration ||
+        !Databaseˉengineˉsameˉcurrent(Initial.Current, Reopened.Current) {
+        return Databaseˉengineˉresult(
+            Databaseˉengineˉstatus.Changedˉstorage,
+            Reopened.Storageˉstatus,
+            Reopened.Storageˉgeneration,
+            Reopened.Storageˉlength,
+            Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen,
+            Recovery.Databaseˉstorageˉrecoveryˉerror.Changedˉstorage,
+            Execution.Actions,
+            Reopened.Current
+        );
+    }
+    return Databaseˉengineˉresult(
+        Databaseˉengineˉstatus.Recovered,
+        Reopened.Storageˉstatus,
+        Reopened.Storageˉgeneration,
+        Reopened.Storageˉlength,
+        Recovery.Databaseˉstorageˉrecoveryˉstage.Ready,
+        Recovery.Databaseˉstorageˉrecoveryˉerror.None,
+        Execution.Actions,
+        Reopened.Current
+    );
+}

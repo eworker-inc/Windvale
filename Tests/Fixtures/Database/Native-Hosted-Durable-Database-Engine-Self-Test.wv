@@ -1,0 +1,105 @@
+module Nativeˉhostedˉdurableˉdatabaseˉengineˉselfˉtest profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Durableˉdatabaseˉengine as Engine;
+import Durableˉtreeˉreader as Reader;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+
+capability storage.random_access_v1;
+
+const COMMITTED_LENGTH: u64 = 20992u64;
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Maximumˉactions(Storageˉlength: u64) -> u32 {
+    if Storageˉlength == 20993u64 { return 0u32; }
+    if Storageˉlength == 20994u64 { return 1u32; }
+    return 2u32;
+}
+
+fn Validateˉcurrent(
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> bool {
+    return Current.Status ==
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid &&
+        Current.Generation == 2u64 && Current.Committedˉsequence == 1u64 &&
+        Current.Rootˉpage == 3u64 && Current.Commitˉlogˉhead == 4u64 &&
+        Current.Pageˉcount == 5u64 &&
+        Current.Committedˉlength == COMMITTED_LENGTH &&
+        Current.Pageˉsize == 4096u32 && Current.Rootˉdepth == 2u32 &&
+        Current.Tailˉbytes == 0u64;
+}
+
+fn Validateˉlookup(
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> i32 {
+    let Found: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(3u8));
+    if Found.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
+        Found.Pageˉvisits != 2u32 || Found.Pageˉidentifier != 2u64 ||
+        Bytesˉlength(Found.Value) != 4u32 ||
+        Bytesˉreadˉi32ˉlittle(Found.Value, 0u32) != 30 {
+        return 20;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Before: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Before.Status != Storage.Storageˉstatus.Valid ||
+        Before.Generation == 0u64 {
+        return 1;
+    }
+    let Actions: u32 = Maximumˉactions(Before.Storageˉlength);
+    let Opened: Engine.Databaseˉengine = Engine.Databaseˉengineˉopen(Actions);
+    if Before.Storageˉlength < 512u64 {
+        if Opened.Status != Engine.Databaseˉengineˉstatus.Headerˉfailure ||
+            Opened.Recoveryˉactions != 0u32 {
+            return 90;
+        }
+        return 91;
+    }
+    if Before.Storageˉlength == 20993u64 {
+        if Opened.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive ||
+            Opened.Recoveryˉstage !=
+                Recovery.Databaseˉstorageˉrecoveryˉstage.Resizeˉtail ||
+            Opened.Recoveryˉactions != 0u32 ||
+            Opened.Current.Tailˉbytes != 1u64 {
+            return 30;
+        }
+        return 100;
+    }
+    if Before.Storageˉlength == 20994u64 {
+        if Opened.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive ||
+            Opened.Recoveryˉstage !=
+                Recovery.Databaseˉstorageˉrecoveryˉstage.Flushˉtail ||
+            Opened.Recoveryˉactions != 1u32 ||
+            Opened.Storageˉlength != COMMITTED_LENGTH {
+            return 31;
+        }
+        return 101;
+    }
+    if Before.Storageˉlength > COMMITTED_LENGTH {
+        if Opened.Status != Engine.Databaseˉengineˉstatus.Recovered ||
+            Opened.Recoveryˉstage !=
+                Recovery.Databaseˉstorageˉrecoveryˉstage.Ready ||
+            Opened.Recoveryˉerror !=
+                Recovery.Databaseˉstorageˉrecoveryˉerror.None ||
+            Opened.Recoveryˉactions != 2u32 ||
+            Opened.Storageˉlength != COMMITTED_LENGTH ||
+            !Validateˉcurrent(Opened.Current) {
+            return 32;
+        }
+        return Validateˉlookup(Opened.Current);
+    }
+    if Opened.Status != Engine.Databaseˉengineˉstatus.Ready ||
+        Opened.Recoveryˉactions != 0u32 ||
+        Opened.Storageˉlength != COMMITTED_LENGTH ||
+        !Validateˉcurrent(Opened.Current) {
+        return 2;
+    }
+    return Validateˉlookup(Opened.Current);
+}

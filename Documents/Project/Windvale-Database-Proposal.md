@@ -368,6 +368,10 @@ adds one hosted mutation operation that discovers and copies the exact path,
 rejects snapshot changes, invokes that portable transaction, and executes the
 four-action publication with explicit active, committed, aborted, and recovery
 outcomes. Deeper inputs and reclamation remain future engine work.
+[Decision 0575](../Decisions/0575-Single-Writer-Database-Engine-Lifecycle.md)
+adds one exact open/recovery snapshot shared by the hosted read and write
+projections. Those projections remain separate native targets under the
+ordinary object bound while exposing the same admitted current generation.
 
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their

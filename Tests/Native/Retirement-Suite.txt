@@ -50,7 +50,7 @@ aot-chain|Test-Aot-Chain|1|4|native aot chain status=Passed result=42
 native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|20|1|native database storage status=Passed cases=20 local-results=0 cross-host-images=Verified
+database-storage|Test-Database-Storage|21|1|native database storage status=Passed cases=21 local-results=0 cross-host-images=Verified
 workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11

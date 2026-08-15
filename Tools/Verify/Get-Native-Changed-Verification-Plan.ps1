@@ -26,6 +26,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Depth-Three-Root-Growth.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Depth-Three-Upsert.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Tree-Path-Upsert.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Database-Engine.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj',
@@ -36,6 +37,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
 )
@@ -65,6 +67,7 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Depth-Three-Root-Growth.md',
     'Specifications/Windvale-Database-Depth-Three-Upsert.md',
     'Specifications/Windvale-Database-Tree-Path-Upsert.md',
+    'Specifications/Windvale-Database-Engine-Lifecycle.md',
     'Specifications/Windvale-Database-Hosted-Tree-Writer.md'
 )) {
     $null = $DatabaseDevelopmentPaths.Add($ContractPath)
@@ -689,6 +692,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Database-Engine', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Capability-Provider-Table', [StringComparison]::Ordinal)) {
@@ -757,6 +761,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Depth-Three-Upsert-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Tree-Path-Upsert-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Database-Engine-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Reader-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Writer-Self-Test.wv' -or
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
@@ -778,6 +783,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj' -or
@@ -820,6 +826,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Database-Engine', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Reader', [StringComparison]::Ordinal) -or
@@ -1823,6 +1830,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
         'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj',
