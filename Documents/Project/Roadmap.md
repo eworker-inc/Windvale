@@ -134,7 +134,7 @@ deliberate selection for later releases and promotions.
 | Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
 | Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
-| Milestone 4: offline package lifecycle | 🎯 Current | Generation/Activation semantics, durable host publication/recovery, and a signed two-package offline stage now exist; exact generation publication is in paired-host verification, while command dispatch, uninstall, and end-to-end evidence remain. |
+| Milestone 4: offline package lifecycle | 🎯 Current | Generation/Activation semantics, durable host publication/recovery, a signed two-package offline stage, and Windvale-native active-command selection now exist; actual target launch, uninstall, and end-to-end evidence remain. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
 The completed 0.1 product path was:
@@ -191,9 +191,11 @@ binds both bundles, approvals, provenance records, target launch records, the
 shared license, and the offline verifier in one deterministic directory without
 publishing a release or tag. The next stage revision also carries exact
 Windows/Linux Generation 1 command inventories and immutably publishes the
-current host's validated record. Paired-host evidence for that revision,
-active-generation command dispatch, safe uninstall, and the complete
-installation demonstration remain open.
+current host's validated record. Windvale-native resolution also proves that
+the active generation selects the exact `wvdump` or `wvquery` package, part,
+approval, and target launch without guessing. Paired-host evidence for those
+revisions, actual target launch, safe uninstall, and the complete installation
+demonstration remain open.
 
 ## Milestone 2: package-backed host application — complete
 

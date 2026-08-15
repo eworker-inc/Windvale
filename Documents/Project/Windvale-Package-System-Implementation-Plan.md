@@ -320,8 +320,11 @@ Standing: **partial**. Exact approval and target launch records exist. Decision
 0568 adds portable Generation 1 / Activation 1 parsing, package/command closure,
 and pure activation/rollback planning. The signed stage now carries exact
 target-specific generation records and the host adapter immutably publishes an
-already validated record. Paired-host generation evidence, composed activation
-recovery, command dispatch, and revocation remain open.
+already validated record. The Windvale-written resolver selects exact active
+command package, part, approval, and launch identities while rejecting malformed,
+inactive, wrong-target, and unknown selections. Paired-host generation/command
+evidence, composed activation recovery, actual target launch, and revocation
+remain open.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,

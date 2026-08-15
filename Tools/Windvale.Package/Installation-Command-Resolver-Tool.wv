@@ -1,0 +1,132 @@
+module Windvaleˉinstallationˉcommandˉresolverˉtool profile hosted;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉinstallationˉgeneration as Generation;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Spanˉtext(Input: bytes, Offset: u32, Length: u32) -> text {
+    return Textˉfromˉutf8(Bytesˉslice(Input, Offset, Length));
+}
+
+fn Spanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input,
+        Packageˉtext.Windvaleˉpackageˉspan(Offset, Length),
+        Expected
+    );
+}
+
+fn Generationˉisˉactive(
+    Activationˉinput: bytes,
+    Activation: Generation.Windvaleˉactivationˉscan,
+    Generationˉinput: bytes
+) -> bool {
+    let Digest: bytes = Sha256.Foundationˉsha256ˉhex(Generationˉinput);
+    return Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Activationˉinput,
+        Packageˉtext.Windvaleˉpackageˉspan(
+            Activation.Currentˉoffset,
+            Activation.Currentˉlength
+        ),
+        Digest,
+        Packageˉtext.Windvaleˉpackageˉwholeˉspan(Digest)
+    );
+}
+
+fn Commandˉreport(
+    Input: bytes,
+    Scan: Generation.Windvaleˉgenerationˉscan,
+    Command: Generation.Windvaleˉgenerationˉcommand,
+    Generationˉdigest: text
+) -> text {
+    var Value: text = "command resolution status=Valid generation=";
+    Value = Textˉconcat(Value, Generationˉdigest);
+    Value = Textˉconcat(Value, " target=");
+    Value = Textˉconcat(Value, Spanˉtext(Input, Scan.Targetˉoffset, Scan.Targetˉlength));
+    Value = Textˉconcat(Value, " command=");
+    Value = Textˉconcat(Value, Spanˉtext(Input, Command.Nameˉoffset, Command.Nameˉlength));
+    Value = Textˉconcat(Value, " package=");
+    Value = Textˉconcat(Value, Spanˉtext(Input, Command.Packageˉoffset, Command.Packageˉlength));
+    Value = Textˉconcat(Value, " part=");
+    Value = Textˉconcat(Value, Spanˉtext(Input, Command.Partˉoffset, Command.Partˉlength));
+    Value = Textˉconcat(Value, " approval=");
+    Value = Textˉconcat(Value, Spanˉtext(Input, Command.Approvalˉoffset, Command.Approvalˉlength));
+    Value = Textˉconcat(Value, " launch=");
+    return Textˉconcat(
+        Value,
+        Spanˉtext(Input, Command.Launchˉoffset, Command.Launchˉlength)
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line(
+            "Usage: wvcommand-resolve <Activation-1.txt> <Generation-1.txt> <target> <command>"
+        );
+        return 64;
+    }
+    let Activationˉinput: bytes = file.read_bytes(process.argument(0u32));
+    let Active: Generation.Windvaleˉactivationˉscan =
+        Generation.Windvaleˉactivationˉscanˉrecord(Activationˉinput);
+    if Active.Status != Generation.Windvaleˉgenerationˉstatus.Valid {
+        diagnostic.write_line("command resolution status=Invalid-activation");
+        return 1;
+    }
+    let Input: bytes = file.read_bytes(process.argument(1u32));
+    let Scan: Generation.Windvaleˉgenerationˉscan =
+        Generation.Windvaleˉgenerationˉscanˉrecord(Input);
+    if Scan.Status != Generation.Windvaleˉgenerationˉstatus.Valid {
+        diagnostic.write_line("command resolution status=Invalid-generation");
+        return 1;
+    }
+    if !Generationˉisˉactive(Activationˉinput, Active, Input) {
+        diagnostic.write_line("command resolution status=Inactive-generation");
+        return 1;
+    }
+    let Expectedˉtarget: text = process.argument(2u32);
+    if !Spanˉequalsˉtext(
+        Input,
+        Scan.Targetˉoffset,
+        Scan.Targetˉlength,
+        Expectedˉtarget
+    ) {
+        diagnostic.write_line("command resolution status=Wrong-target");
+        return 1;
+    }
+    let Commandˉname: text = process.argument(3u32);
+    var Index: u32 = 0u32;
+    while Index < Scan.Commands {
+        let Command: Generation.Windvaleˉgenerationˉcommand =
+            Generation.Windvaleˉgenerationˉcommandˉat(Scan, Index);
+        if Command.Found && Spanˉequalsˉtext(
+            Input,
+            Command.Nameˉoffset,
+            Command.Nameˉlength,
+            Commandˉname
+        ) {
+            console.write_line(
+                Commandˉreport(
+                    Input,
+                    Scan,
+                    Command,
+                    Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Input))
+                )
+            );
+            return 0;
+        }
+        Index = Index + 1u32;
+    }
+    diagnostic.write_line("command resolution status=Unknown-command");
+    return 1;
+}

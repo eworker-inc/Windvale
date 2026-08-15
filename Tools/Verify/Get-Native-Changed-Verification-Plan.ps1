@@ -617,6 +617,9 @@ foreach ($Path in $Paths) {
             'Verify-Installation-Generation-Publisher.mjs') {
             Add-Suite 'installation-generation-publication'
         } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Verify-Installation-Command-Resolver.mjs') {
+            Add-Suite 'installation-command-resolution'
+        } elseif ([IO.Path]::GetFileName($Path) -eq
             'Create-Offline-Package-Stage-Input.mjs') {
             Add-Suite 'offline-package-stage'
         } else {
@@ -624,6 +627,9 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -eq
+            'Installation-Command-Resolver-Tool.wv') {
+            Add-Suite @('package-format', 'installation-command-resolution')
+        } elseif ([IO.Path]::GetFileName($Path) -eq
             'Installation-Generation-Verifier-Tool.wv') {
             Add-Suite @('package-format', 'offline-package-stage')
         } else {
@@ -644,6 +650,7 @@ foreach ($Path in $Paths) {
         'Projects/Libraries/Windvale-Library-Package-Manifest.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Lock.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Resource-Admission.wvproj',
+        'Projects/Tools/Windvale-Installation-Command-Resolver.wvproj',
         'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj',
         'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj',
         'Projects/Tests/Windvale-Native-Test-Installation-Generation.wvproj',
@@ -655,6 +662,8 @@ foreach ($Path in $Paths) {
         Add-Suite 'package-format'
         if ($Path -eq 'Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj') {
             Add-Suite 'offline-package-stage'
+        } elseif ($Path -eq 'Projects/Tools/Windvale-Installation-Command-Resolver.wvproj') {
+            Add-Suite 'installation-command-resolution'
         }
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
         Add-Suite @('workspace-project2', 'libraries')
@@ -715,6 +724,7 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'package-format',
             'installation-activation',
+            'installation-command-resolution',
             'installation-generation-publication',
             'offline-package-stage'
         )

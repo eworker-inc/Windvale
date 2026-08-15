@@ -87,6 +87,25 @@ plans idempotent activation and rollback transitions. It performs no I/O and
 does not claim durable publication. Host lifecycle adapters must consume its
 semantic result rather than implement a second record grammar.
 
+## Active command resolution
+
+`Tools/Windvale.Package/Installation-Command-Resolver-Tool.wv` is the first
+Windvale-written active-command selector. A host supplies the public Activation
+1 file, the Generation 1 file named by the host path, the current target, and
+one command identifier. The resolver:
+
+1. parses both records through the portable implementation;
+2. hashes the complete generation and requires it to equal Activation 1's
+   current identity;
+3. requires the generation target to equal the caller's current target; and
+4. returns the exact package, part, approval, and launch identities for one
+   command record.
+
+Unknown commands, malformed records, inactive generations, and wrong targets
+fail explicitly. Resolution does not execute a process or grant the selected
+approval. The later host dispatcher must independently bind the exact launch
+record and may execute only after all referenced installed objects reverify.
+
 ## Host generation publication
 
 `Tools/Package/Publish-Installation-Generation.mjs` implements the bounded
