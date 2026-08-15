@@ -466,6 +466,7 @@ foreach ($Path in $Paths) {
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
     } elseif ($Path -in @(
+        '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
         'Specifications/README.md',

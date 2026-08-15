@@ -1286,6 +1286,13 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'repository text attributes'
+        Paths = @('.gitattributes')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'native development dependency closure'
         Paths = @(
             'Tests/Native/Development-Owner-Dependencies.txt',
@@ -1438,6 +1445,11 @@ if ([regex]::Matches(
         $GitHubVerificationWorkflow,
         [regex]::Escape('shard: [1, 2, 3, 4]')).Count -ne 2) {
     throw 'The GitHub verification workflow must declare four shards for both hosts.'
+}
+
+$GitAttributes = @(Get-Content -LiteralPath (Join-Path $RepositoryRoot '.gitattributes'))
+if (@($GitAttributes | Where-Object { $_ -eq '*.wvprov text eol=lf' }).Count -ne 1) {
+    throw 'Windvale provenance files must have one exact LF text policy in .gitattributes.'
 }
 
 $LinuxArtifactIndex = @(git -C $RepositoryRoot ls-files -s -- 'Artifacts/**/*.elf')
