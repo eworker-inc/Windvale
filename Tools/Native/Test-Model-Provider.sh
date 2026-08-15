@@ -63,4 +63,4 @@ echo 'START native model provider phase=execute item=4/4'
 model_result=$?
 [[ $model_result -eq 0 ]] || exit 1
 echo 'PASS  native model provider phase=execute item=4/4'
-echo 'native model provider status=Passed cases=8 local-result=0 cross-host-images=Verified'
+echo 'native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified'

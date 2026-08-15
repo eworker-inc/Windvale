@@ -2,8 +2,9 @@
 
 > Status: Model slices 0 and 1 are implemented candidates under
 > [Decision 0573](../Decisions/0573-First-Provider-Neutral-Model-Protocol.md),
-> and the currently feasible offline portion of slice 2 is implemented under
-> [Decision 0583](../Decisions/0583-First-Native-Bound-Model-Provider.md).
+> and the offline portion of slice 2 is implemented under
+> [Decision 0583](../Decisions/0583-First-Native-Bound-Model-Provider.md) and
+> [Decision 0585](../Decisions/0585-Catchable-Model-Provider-Lifecycle-Results.md).
 > Live network, credential, and provider-adapter slices remain proposals. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
@@ -47,8 +48,8 @@ provider-neutral core now:
 Windvale does **not** yet have enough implemented infrastructure for a
 production library to contact public model APIs directly. The missing pieces
 are shared HTTPS/TLS and HTTP framing, production credential custody, general
-deadlines and cancellation, catchable provider-loss results, and multiple typed
-provider instances.
+deadlines and cancellation, supervision of the bridge itself, and multiple
+typed provider instances.
 
 The honest first implementation is therefore a portable request/result codec
 and scripted provider. A build-restricted host reference adapter could contact
@@ -353,8 +354,8 @@ entropy, JSON parser, or model quality is required.
 
 ### Model slice 2: hosted byte-envelope seam
 
-Status: implemented candidate for the currently feasible offline seam under
-Decision 0583. Catchable revocation/provider-loss results remain deferred.
+Status: implemented candidate for the offline seam under Decisions 0583 and
+0585, including catchable bridge-lifecycle results.
 
 Add the two candidate capability identities, the verified `bytes -> bytes`
 native call shape, a scripted rights-limited host provider, and the typed
@@ -364,9 +365,10 @@ provider call rather than retaining a borrowed provider descriptor.
 
 Current evidence covers deterministic construction, exact launch binding,
 catalog and inference success, request rejection before dispatch, malformed
-provider responses, and stale generation without public network access. Denial
-can use the typed protocol status; nonzero provider loss and revocation still
-take the runtime failure path until failures become catchable in source.
+provider responses, stale generation, revoked binding, pre-dispatch peer exit,
+and indeterminate post-dispatch submission without public network access. An
+alive bridge publishes these outcomes as canonical bytes. ABI failure remains a
+trap when no trustworthy response can be published.
 
 ### Model slice 3: optional external reference oracle
 
@@ -446,9 +448,10 @@ A numbered decision is required before accepting:
 
 ## Immediate recommendation
 
-Continue from the implemented protocol and offline hosted seam. The next useful
-shared infrastructure is catchable provider failure plus secure networking,
-credential custody, deadlines/cancellation, and bounded hostile JSON parsing.
+Continue from the implemented protocol, offline hosted seam, and catchable
+bridge-lifecycle results. The next useful shared infrastructure is secure
+networking, credential custody, deadlines/cancellation, and bounded hostile
+JSON parsing.
 Treat a live reference adapter as optional integration evidence. Do not describe
 Windvale as able to contact external models until secure HTTP, credential, and
 live-adapter gates have actually passed.

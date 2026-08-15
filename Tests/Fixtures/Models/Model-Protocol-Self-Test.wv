@@ -150,8 +150,47 @@ fn Staleˉcatalogˉcase() -> bool {
         Scripted.Scriptedˉmodelˉrespond(Request.Bytes)
     );
     return Catalog.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
-        Catalog.Status == Protocol.Modelˉstatus.Unavailable && Catalog.Entries == 0u32 &&
+        Catalog.Status == Protocol.Modelˉstatus.Stale && Catalog.Entries == 0u32 &&
         Catalog.Diagnosticˉlength > 0u32;
+}
+
+fn Providerˉlifecycleˉcase() -> bool {
+    let Revoked: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉfailure(
+        100u64, 1u64, Protocol.Modelˉstatus.Revoked, "provider binding revoked"
+    );
+    let Revokedˉcatalog: Protocol.Modelˉcatalog =
+        Protocol.Modelˉcatalogˉdecode(Revoked.Bytes);
+    if Revokedˉcatalog.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Revokedˉcatalog.Status != Protocol.Modelˉstatus.Revoked {
+        return false;
+    }
+    let Stale: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+        101u64, 2u64, Protocol.Modelˉstatus.Stale, "provider generation changed"
+    );
+    let Peerˉexited: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+        102u64, 2u64, Protocol.Modelˉstatus.Peerˉexited, "provider peer exited"
+    );
+    let Indeterminate: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
+        103u64, 2u64, Protocol.Modelˉstatus.Submissionˉindeterminate,
+        "submission completion indeterminate"
+    );
+    let Staleˉresult: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Stale.Bytes);
+    let Peerˉresult: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Peerˉexited.Bytes);
+    let Indeterminateˉresult: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Indeterminate.Bytes);
+    if Staleˉresult.Status != Protocol.Modelˉstatus.Stale ||
+        Peerˉresult.Status != Protocol.Modelˉstatus.Peerˉexited ||
+        Indeterminateˉresult.Status !=
+            Protocol.Modelˉstatus.Submissionˉindeterminate {
+        return false;
+    }
+    let Unknown: bytes = Replaceˉu32(Indeterminate.Bytes, 12u32, 12u32);
+    let Unknownˉresult: Protocol.Modelˉgeneration =
+        Protocol.Modelˉgenerationˉdecode(Unknown);
+    return Unknownˉresult.Codecˉstatus ==
+        Protocol.Modelˉcodecˉstatus.Invalidˉenvelope;
 }
 
 fn Generationˉrequest() -> Protocol.Modelˉencoded {
@@ -263,5 +302,6 @@ export fn Main() -> i32 {
     if !Generationˉfailureˉcase() { return 8; }
     if !Unsupportedˉmodelˉcase() { return 9; }
     if !Completionˉcase() { return 10; }
+    if !Providerˉlifecycleˉcase() { return 11; }
     return 42;
 }

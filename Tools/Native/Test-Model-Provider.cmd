@@ -66,5 +66,5 @@ for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
 echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-model-provider-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native model provider status=Passed cases=8 local-result=0 cross-host-images=Verified
+echo native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
 exit /b 0

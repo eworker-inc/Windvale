@@ -32,6 +32,12 @@ well-formed denied, unavailable, rate-limited, or other typed failure. A
 malformed response becomes an invalid protocol result and is never treated as
 provider success.
 
+An alive bridge returns canonical failure bytes for `Revoked`, `Stale`,
+`Peer_exited`, and `Submission_indeterminate`. The first three prove rejection
+before dispatch. `Submission_indeterminate` means dispatch began but acceptance,
+completion, retention, and charge are uncertain; callers must not retry it
+automatically. No status authorizes silent fallback to another provider.
+
 Provider-returned bytes are borrowed for the provider binding's documented
 lifetime. A caller that must retain a response across another provider call
 must make an owned copy first. No pointer, native handle, API key, endpoint, or
@@ -45,7 +51,7 @@ the fixed five-cell call frame, passes argument count one, and publishes one
 caller-owned bytes result cell only when the provider returns zero.
 
 The deterministic qualification host binds an exact two-entry provider table
-and immutable scripted responses. It validates the selected state, one-cell
+and immutable scripted success and lifecycle responses. It validates the selected state, one-cell
 ABI, bytes descriptor, `WVMQ 1` prefix, operation, and admitted request identity.
 It grants no network, filesystem, process, clock, entropy, or credential
 authority.
@@ -57,12 +63,14 @@ compiles and lowers the hosted fixture twice, assembles the provider twice,
 checks deterministic WVB/WVO output, links one host-neutral image, constructs
 Windows and Linux hosted applications, and executes the current host. The
 fixture covers catalog success, request rejection before dispatch, malformed
-catalog response, generation success, stale generation, and malformed
+catalog response, generation success, stale generation, revoked binding,
+pre-dispatch peer exit, indeterminate post-dispatch submission, and malformed
 generation response.
 
 This implementation does not contact OpenAI, Anthropic, Google, or another
 service. It has no HTTP, TLS, DNS, proxy, JSON, credential custody, deadline,
-cancellation, streaming, retry, uncertain-submission, cost, or live catalog
-contract. Nonzero provider-call status still follows the existing runtime
-service-failure path; catchable revocation and provider-loss results require a
-later language/runtime result boundary.
+cancellation, streaming, retry, cost, or live catalog contract. Expected
+lifecycle outcomes are catchable only while an alive bridge can publish a
+trustworthy canonical response. Nonzero provider-call status still follows the
+runtime service-failure path for an invalid frame, corrupt bridge, or failure
+that cannot publish such a response.

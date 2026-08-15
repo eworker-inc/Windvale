@@ -136,10 +136,18 @@ generation, a returned model, and no diagnostic. Failure has completion zero,
 no model or output, and zero usage.
 
 Provider statuses are valid, invalid request, unavailable, unauthorized,
-rate-limited, unsupported, provider error, and cancelled. These statuses do not
-encode whether a remote submission was known not sent, accepted, or
-indeterminate. Live transport work must add that completion evidence before it
-may retry a potentially chargeable request.
+rate-limited, unsupported, provider error, cancelled, revoked, stale,
+peer-exited, and submission-indeterminate. Values `0` through `11` are exact;
+any larger value is malformed.
+
+`Revoked`, `Stale`, and `Peer_exited` are definite pre-dispatch lifecycle
+rejections. `Peer_exited` means the bound bridge observed that its backing peer
+had already exited before sending this request. `Submission_indeterminate`
+means dispatch began and the bridge cannot prove whether the request was
+accepted, completed, retained, or charged. It has completion zero, no model or
+output, no usage claim, and must never be retried automatically. Other statuses
+carry a definite provider response but do not by themselves authorize retry or
+fallback.
 
 ## Implemented corpus
 
@@ -148,8 +156,8 @@ may retry a potentially chargeable request.
 output evidence. Its fixed two-entry corpus requires a requested page size of
 at least two and otherwise returns `Invalid_request`. A generation request at
 generation `1` returns the stable model identity, fixed text, and fixed usage.
-A stale generation returns
-`Unavailable`; a malformed request returns `Invalid_request`.
+A stale generation returns `Stale`; a malformed request returns
+`Invalid_request`.
 
 The Project 2 portable library manifests and `Model-Protocol-Self-Test.wv` compile under
 the native source front door. `Test-Libraries` owns deterministic compilation
@@ -162,7 +170,8 @@ provider call or public-network execution of a model adapter. The separate
 The two separately authorized catalog and inference operations over
 `bytes -> bytes`, native provider-call lowering, rights-limited binding, strict
 facade admission, and borrowed-response rule are implemented by Decision 0583.
-The live seam still requires HTTPS/HTTP, secret custody, deadlines/cancellation,
-transport-completion evidence, and provider-specific bounded JSON mapping. No
+Decision 0585 adds the first catchable bridge-lifecycle and uncertain-submission
+results. The live seam still requires HTTPS/HTTP, secret custody,
+deadlines/cancellation, provider-specific transport evidence, and bounded JSON mapping. No
 API key, endpoint, unrestricted header map, provider SDK object, or raw JSON
 belongs in these portable records.

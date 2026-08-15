@@ -126,6 +126,13 @@ ambient authority. It proves catalog and inference execution without network or
 credentials. [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md)
 owns the facade and current lifetime rules.
 
+Decision 0585 requires an alive model bridge to return zero and publish a
+canonical typed response for revocation, stale generation, pre-dispatch peer
+exit, and indeterminate post-dispatch submission. Nonzero remains appropriate
+when the call frame or bridge is invalid and no trustworthy protocol response
+can be published. The native emitter is unchanged: the bridge, rather than
+generated application code, owns this conversion.
+
 ## Verification and current evidence
 
 `Compiler/Windvale/Native-X64-Provider-Call.wv` owns emission.

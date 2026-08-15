@@ -4,6 +4,7 @@
 - Status: Implemented candidate with current-host execution and cross-host image construction
 - Defines: [bound model provider](../../Specifications/Windvale-Bound-Model-Provider.md)
 - Extends: [Decision 0573](0573-First-Provider-Neutral-Model-Protocol.md)
+- Advanced by: [Decision 0585](0585-Catchable-Model-Provider-Lifecycle-Results.md)
 
 ## Context
 

@@ -32,6 +32,10 @@ export enum Modelˉstatus {
     Unsupported = 5;
     Providerˉerror = 6;
     Cancelled = 7;
+    Revoked = 8;
+    Stale = 9;
+    Peerˉexited = 10;
+    Submissionˉindeterminate = 11;
 }
 
 export enum Modelˉoperation {
@@ -185,7 +189,11 @@ fn Modelˉstatusˉfromˉu32(Value: u32) -> Modelˉstatus {
     if Value == 4u32 { return Modelˉstatus.Rateˉlimited; }
     if Value == 5u32 { return Modelˉstatus.Unsupported; }
     if Value == 6u32 { return Modelˉstatus.Providerˉerror; }
-    return Modelˉstatus.Cancelled;
+    if Value == 7u32 { return Modelˉstatus.Cancelled; }
+    if Value == 8u32 { return Modelˉstatus.Revoked; }
+    if Value == 9u32 { return Modelˉstatus.Stale; }
+    if Value == 10u32 { return Modelˉstatus.Peerˉexited; }
+    return Modelˉstatus.Submissionˉindeterminate;
 }
 
 fn Modelˉstatusˉtoˉu32(Value: Modelˉstatus) -> u32 {
@@ -196,7 +204,11 @@ fn Modelˉstatusˉtoˉu32(Value: Modelˉstatus) -> u32 {
     if Value == Modelˉstatus.Rateˉlimited { return 4u32; }
     if Value == Modelˉstatus.Unsupported { return 5u32; }
     if Value == Modelˉstatus.Providerˉerror { return 6u32; }
-    return 7u32;
+    if Value == Modelˉstatus.Cancelled { return 7u32; }
+    if Value == Modelˉstatus.Revoked { return 8u32; }
+    if Value == Modelˉstatus.Stale { return 9u32; }
+    if Value == Modelˉstatus.Peerˉexited { return 10u32; }
+    return 11u32;
 }
 
 fn Modelˉcompletionˉfromˉu32(Value: u32) -> Modelˉcompletion {
@@ -668,7 +680,7 @@ export fn Modelˉcatalogˉdecode(Value: bytes) -> Modelˉcatalog {
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Value, 32u32);
     let Continuationˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 36u32);
     let Diagnosticˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 40u32);
-    if Rawˉstatus > 7u32 || Entries > MODEL_MAXIMUM_CATALOG_ENTRIES ||
+    if Rawˉstatus > 11u32 || Entries > MODEL_MAXIMUM_CATALOG_ENTRIES ||
         Continuationˉlength > MODEL_MAXIMUM_CONTINUATION_BYTES ||
         Diagnosticˉlength > MODEL_MAXIMUM_DIAGNOSTIC_BYTES ||
         Continuationˉlength > Total - 48u32 ||
@@ -863,7 +875,7 @@ export fn Modelˉgenerationˉdecode(Value: bytes) -> Modelˉgeneration {
     let Diagnosticˉlength: u32 = Bytesˉreadˉu32ˉlittle(Value, 44u32);
     let Inputˉtokens: u64 = Bytesˉreadˉu64ˉlittle(Value, 48u32);
     let Outputˉtokens: u64 = Bytesˉreadˉu64ˉlittle(Value, 56u32);
-    if Rawˉstatus > 7u32 || Rawˉcompletion > 3u32 ||
+    if Rawˉstatus > 11u32 || Rawˉcompletion > 3u32 ||
         Modelˉlength > Total - 64u32 ||
         Textˉlength > Total - 64u32 - Modelˉlength ||
         Diagnosticˉlength != Total - 64u32 - Modelˉlength - Textˉlength {

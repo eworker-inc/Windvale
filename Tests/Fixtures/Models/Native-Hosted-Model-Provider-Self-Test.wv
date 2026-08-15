@@ -141,7 +141,7 @@ fn Staleˉgeneration() -> bool {
         Bound.Boundˉmodelˉgenerate(Request.Bytes);
     return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
         Result.Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
-        Result.Generation.Status == Protocol.Modelˉstatus.Unavailable &&
+        Result.Generation.Status == Protocol.Modelˉstatus.Stale &&
         Result.Generation.Requestˉidentity == 95u64 &&
         Result.Generation.Providerˉgeneration == 1u64 &&
         Spanˉequalsˉtext(
@@ -149,6 +149,57 @@ fn Staleˉgeneration() -> bool {
             Result.Generation.Diagnosticˉoffset,
             Result.Generation.Diagnosticˉlength,
             "stale provider generation"
+        );
+}
+
+fn Revokedˉbinding() -> bool {
+    let Request: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉrequest(
+        97u64, 0u64, 16u32, Emptyˉbytes()
+    );
+    let Result: Bound.Boundˉmodelˉcatalogˉresult =
+        Bound.Boundˉmodelˉcatalog(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Catalog.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Catalog.Status == Protocol.Modelˉstatus.Revoked &&
+        Result.Catalog.Requestˉidentity == 97u64 &&
+        Spanˉequalsˉtext(
+            Result.Catalog.Bytes,
+            Result.Catalog.Diagnosticˉoffset,
+            Result.Catalog.Diagnosticˉlength,
+            "provider binding revoked"
+        );
+}
+
+fn Peerˉexit() -> bool {
+    let Request: Protocol.Modelˉencoded = Generationˉrequest(98u64, 1u64);
+    let Result: Bound.Boundˉmodelˉgenerationˉresult =
+        Bound.Boundˉmodelˉgenerate(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Status == Protocol.Modelˉstatus.Peerˉexited &&
+        Result.Generation.Requestˉidentity == 98u64 &&
+        Spanˉequalsˉtext(
+            Result.Generation.Bytes,
+            Result.Generation.Diagnosticˉoffset,
+            Result.Generation.Diagnosticˉlength,
+            "provider peer exited"
+        );
+}
+
+fn Submissionˉindeterminate() -> bool {
+    let Request: Protocol.Modelˉencoded = Generationˉrequest(99u64, 1u64);
+    let Result: Bound.Boundˉmodelˉgenerationˉresult =
+        Bound.Boundˉmodelˉgenerate(Request.Bytes);
+    return Result.Requestˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Codecˉstatus == Protocol.Modelˉcodecˉstatus.Valid &&
+        Result.Generation.Status ==
+            Protocol.Modelˉstatus.Submissionˉindeterminate &&
+        Result.Generation.Requestˉidentity == 99u64 &&
+        Spanˉequalsˉtext(
+            Result.Generation.Bytes,
+            Result.Generation.Diagnosticˉoffset,
+            Result.Generation.Diagnosticˉlength,
+            "submission completion indeterminate"
         );
 }
 
@@ -168,5 +219,8 @@ export fn Main() -> i32 {
     if !Generationˉsuccess() { return 4; }
     if !Staleˉgeneration() { return 5; }
     if !Generationˉmalformedˉresponse() { return 6; }
+    if !Revokedˉbinding() { return 7; }
+    if !Peerˉexit() { return 8; }
+    if !Submissionˉindeterminate() { return 9; }
     return 0;
 }

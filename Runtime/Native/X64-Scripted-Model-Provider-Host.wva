@@ -8,8 +8,11 @@ symbol local data Model_host_catalog_response in .rodata
 symbol local data Model_host_generation_response in .rodata
 symbol local data Model_host_identities in .rodata
 symbol local data Model_host_malformed_response in .rodata
+symbol local data Model_host_peer_exited_response in .rodata
 symbol local function Model_host_provider in .text
+symbol local data Model_host_revoked_response in .rodata
 symbol local data Model_host_stale_response in .rodata
+symbol local data Model_host_submission_indeterminate_response in .rodata
 symbol export function Model_host_entry in .text
 symbol import function Main
 
@@ -203,11 +206,18 @@ compare_i32 edi 92
 branch equal Model_host_provider_catalog_success
 compare_i32 edi 93
 branch equal Model_host_provider_malformed
+compare_i32 edi 97
+branch equal Model_host_provider_revoked
 jump_label Model_host_provider_invalid_request
 
 label Model_host_provider_catalog_success
 load_address r8 Model_host_catalog_response
 move_u32 ebx 150
+jump_label Model_host_provider_publish
+
+label Model_host_provider_revoked
+load_address r8 Model_host_revoked_response
+move_u32 ebx 72
 jump_label Model_host_provider_publish
 
 label Model_host_provider_generation
@@ -221,6 +231,10 @@ compare_i32 edi 95
 branch equal Model_host_provider_stale
 compare_i32 edi 96
 branch equal Model_host_provider_malformed
+compare_i32 edi 98
+branch equal Model_host_provider_peer_exited
+compare_i32 edi 99
+branch equal Model_host_provider_submission_indeterminate
 jump_label Model_host_provider_invalid_request
 
 label Model_host_provider_generation_success
@@ -231,6 +245,16 @@ jump_label Model_host_provider_publish
 label Model_host_provider_stale
 load_address r8 Model_host_stale_response
 move_u32 ebx 89
+jump_label Model_host_provider_publish
+
+label Model_host_provider_peer_exited
+load_address r8 Model_host_peer_exited_response
+move_u32 ebx 84
+jump_label Model_host_provider_publish
+
+label Model_host_provider_submission_indeterminate
+load_address r8 Model_host_submission_indeterminate_response
+move_u32 ebx 99
 jump_label Model_host_provider_publish
 
 label Model_host_provider_malformed
@@ -287,11 +311,31 @@ bytes 99 114 105 112 116 101 100 32 109 111 100 101 108 32 114 101 115 112 111 1
 bytes 115 101
 end define
 define Model_host_stale_response
-bytes 87 86 77 71 1 0 0 0 89 0 0 0 2 0 0 0 95 0 0 0
+bytes 87 86 77 71 1 0 0 0 89 0 0 0 9 0 0 0 95 0 0 0
 bytes 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 bytes 0 0 0 0 25 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 bytes 0 0 0 0 115 116 97 108 101 32 112 114 111 118 105 100 101 114 32 103
 bytes 101 110 101 114 97 116 105 111 110
+end define
+define Model_host_revoked_response
+bytes 87 86 77 67 1 0 0 0 72 0 0 0 8 0 0 0 97 0 0 0
+bytes 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 24 0 0 0 0 0 0 0 112 114 111 118 105 100 101 114 32 98 105 110
+bytes 100 105 110 103 32 114 101 118 111 107 101 100
+end define
+define Model_host_peer_exited_response
+bytes 87 86 77 71 1 0 0 0 84 0 0 0 10 0 0 0 98 0 0 0
+bytes 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 0 0 0 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 0 0 0 0 112 114 111 118 105 100 101 114 32 112 101 101 114 32 101 120
+bytes 105 116 101 100
+end define
+define Model_host_submission_indeterminate_response
+bytes 87 86 77 71 1 0 0 0 99 0 0 0 11 0 0 0 99 0 0 0
+bytes 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 0 0 0 0 35 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+bytes 0 0 0 0 115 117 98 109 105 115 115 105 111 110 32 99 111 109 112 108
+bytes 101 116 105 111 110 32 105 110 100 101 116 101 114 109 105 110 97 116 101
 end define
 define Model_host_malformed_response
 bytes 87 86 77 71

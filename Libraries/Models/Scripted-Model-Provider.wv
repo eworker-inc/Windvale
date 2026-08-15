@@ -19,7 +19,7 @@ fn Catalogˉresponse(Request: Protocol.Modelˉrequest) -> bytes {
         let Failure: Protocol.Modelˉencoded = Protocol.Modelˉcatalogˉfailure(
             Request.Requestˉidentity,
             SCRIPTED_PROVIDER_GENERATION,
-            Protocol.Modelˉstatus.Unavailable,
+            Protocol.Modelˉstatus.Stale,
             "catalog generation changed"
         );
         return Failure.Bytes;
@@ -49,7 +49,7 @@ fn Generationˉresponse(Request: Protocol.Modelˉrequest) -> bytes {
         let Failure: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉfailure(
             Request.Requestˉidentity,
             SCRIPTED_PROVIDER_GENERATION,
-            Protocol.Modelˉstatus.Unavailable,
+            Protocol.Modelˉstatus.Stale,
             "catalog generation changed"
         );
         return Failure.Bytes;

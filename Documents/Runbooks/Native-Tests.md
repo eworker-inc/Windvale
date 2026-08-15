@@ -86,7 +86,7 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 | `native-u64-lowering` | 1 |
-| `model-provider` | 8 |
+| `model-provider` | 11 |
 | `database-superblock` | 13 |
 | `database-durable-commit` | 12 |
 | `database-storage` | 21 |
