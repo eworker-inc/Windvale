@@ -918,6 +918,7 @@ set "Map=%TemporaryDirectory%\%~1.map"
 set "WindowsApplication=%TemporaryDirectory%\%~1.exe"
 set "LinuxApplication=%TemporaryDirectory%\%~1.elf"
 set "ProjectCheckpoint=Rebuilt"
+set "LinkCheckpoint=Rebuilt"
 set "WindowsApplicationCheckpoint=Rebuilt"
 set "LinuxApplicationCheckpoint=Rebuilt"
 if "%Development%"=="1" set "LinuxApplicationCheckpoint=NotRun"
@@ -952,9 +953,19 @@ if not "%Development%"=="1" (
     if errorlevel 1 exit /b 1
 )
 
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
-    "%Image%" "%FirstWvo%" >"%Map%"
-if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Linked-Image.cmd" ^
+        0 Main "%FirstWvo%" "%Image%" "%Map%" ^
+        >"%TemporaryDirectory%\%~1-Link-Cache.txt"
+    if errorlevel 1 exit /b 1
+    set "LinkCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native linked image cache status=" "%TemporaryDirectory%\%~1-Link-Cache.txt"') do set "LinkCheckpoint=%%S"
+    if not defined LinkCheckpoint exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
+        "%Image%" "%FirstWvo%" >"%Map%"
+    if errorlevel 1 exit /b 1
+)
 set "EntryOffset="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%Map%"') do set "EntryOffset=%%E"
 if not defined EntryOffset exit /b 1
@@ -989,8 +1000,8 @@ if not "%Development%"=="1" (
 if "%Development%"=="1" (
     call :read_clock TargetEnd
     call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
-    call echo PASS  native database storage development target=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% host=windows-%WindowsApplicationCheckpoint%
-    endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%WindowsApplicationCheckpoint%,"
+    call echo PASS  native database storage development target=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=%LinkCheckpoint% host=windows-%WindowsApplicationCheckpoint%
+    endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%/link-%LinkCheckpoint%," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%WindowsApplicationCheckpoint%,"
     exit /b 0
 )
 endlocal

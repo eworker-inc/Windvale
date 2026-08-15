@@ -194,6 +194,7 @@ verify_target() {
     local linux_application="$temporary_directory/$label.elf"
     local windows_application="$temporary_directory/$label.exe"
     local project_checkpoint=Rebuilt
+    local link_checkpoint=Rebuilt
     local linux_application_checkpoint=Rebuilt
     local target_start=$SECONDS
     if ((development == 1)); then
@@ -221,7 +222,17 @@ verify_target() {
         "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
     fi
 
-    "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || return $?
+    if ((development == 1)); then
+        local link_cache_report="$temporary_directory/$label-Link-Cache.txt"
+        "$script_directory/Build-Cached-Linked-Image.sh" \
+            0 Main "$first_wvo" "$image" "$map" > "$link_cache_report" || return $?
+        link_checkpoint=$(sed -n \
+            's/^native linked image cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* entry=[0-9][0-9]*$/\1/p' \
+            "$link_cache_report")
+        [[ $link_checkpoint == Created || $link_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || return $?
+    fi
     local entry_offset
     entry_offset=$(sed -n 's/^entry name=Main address=\([0-9][0-9]*\)$/\1/p' "$map")
     case "$entry_offset" in
@@ -253,8 +264,8 @@ verify_target() {
 
     if ((development == 1)); then
         local target_elapsed_ms=$(((SECONDS - target_start) * 1000))
-        echo "PASS  native database storage development target=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint host=linux-$linux_application_checkpoint"
-        portable_project_checkpoints+="$label:$project_checkpoint,"
+        echo "PASS  native database storage development target=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint host=linux-$linux_application_checkpoint"
+        portable_project_checkpoints+="$label:$project_checkpoint/link-$link_checkpoint,"
         portable_application_checkpoints+="$label:linux-$linux_application_checkpoint,"
     else
         "$script_directory/Package-Hosted-Wvb.sh" image 6 \

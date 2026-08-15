@@ -98,6 +98,18 @@ foreach ($Job in $DevelopmentJobs) {
         "Development job '$Job' does not pin the Node setup action."
     Assert-Workflow ($Block -match '(?m)^          node-version: 24$') `
         "Development job '$Job' does not pin Node.js 24."
+    Assert-Workflow (
+        $Block.Contains(
+            'uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5')
+    ) "Development job '$Job' does not pin the accepted checkpoint cache action."
+    Assert-Workflow (
+        $Block.Contains(
+            'key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}') -and
+        $Block.Contains(
+            'windvale-native-development-v1-${{ runner.os }}-') -and
+        $Block.Contains(
+            'WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache')
+    ) "Development job '$Job' does not bind the isolated versioned checkpoint cache."
 }
 
 $QualificationJobs = @(
@@ -115,6 +127,10 @@ foreach ($Job in $QualificationJobs) {
     Assert-Workflow (
         $Block.Contains("    if: `${{ needs.classify-changes.outputs.scope == 'qualification' }}")
     ) "Qualification job '$Job' does not use the fail-closed qualification condition."
+    Assert-Workflow (
+        !$Block.Contains('actions/cache@') -and
+        !$Block.Contains('WINDVALE_NATIVE_CACHE_ROOT')
+    ) "Qualification job '$Job' consults development checkpoint state."
 }
 
 $ExpectedCommands = @{

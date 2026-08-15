@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $RetirementInventoryVerifier = Join-Path $PSScriptRoot 'Verify-Dotnet-Retirement-Inventory.ps1'
+$DevelopmentDependencyVerifier = Join-Path $PSScriptRoot 'Verify-Native-Development-Dependencies.ps1'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
@@ -1138,11 +1139,14 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Tool-Checkpoint.md',
             'Tools/Native/Build-Cached-Hosted-Application.cmd',
             'Tools/Native/Build-Cached-Hosted-Application.sh',
+            'Tools/Native/Build-Cached-Linked-Image.cmd',
+            'Tools/Native/Build-Cached-Linked-Image.sh',
             'Tools/Native/Build-Cached-Project-Object.cmd',
             'Tools/Native/Build-Cached-Project-Object.sh',
             'Tools/Native/Build-Cached-Project-Wvb.cmd',
             'Tools/Native/Build-Cached-Project-Wvb.sh',
             'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
+            'Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs',
             'Tools/Native/Get-Native-Project-Cache-Key.mjs'
         )
         Suites = @('database-storage')
@@ -1240,6 +1244,16 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'native development dependency closure'
+        Paths = @(
+            'Tests/Native/Development-Owner-Dependencies.txt',
+            'Tools/Verify/Verify-Native-Development-Dependencies.ps1'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'removed Stage 0 live recovery owner'
         Paths = @(
             'Documents/Project/Stage0-Recovery-Dependencies.json',
@@ -1317,6 +1331,7 @@ $NativeCases = @(
 )
 
 & $RetirementInventoryVerifier -Quiet
+& $DevelopmentDependencyVerifier -Quiet
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)

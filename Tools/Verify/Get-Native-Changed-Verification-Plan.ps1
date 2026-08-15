@@ -233,9 +233,11 @@ function Add-Native-Tool-Suite {
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
     if ($Stem -in @(
         'Build-Cached-Hosted-Application',
+        'Build-Cached-Linked-Image',
         'Build-Cached-Project-Object',
         'Build-Cached-Project-Wvb',
         'Get-Native-Hosted-Application-Cache-Key',
+        'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Test-Database-Storage'
     )) {
@@ -468,6 +470,7 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Native-Changed-Verification.md',
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
         'Tests/Native/Retirement-Suite.txt',
+        'Tests/Native/Development-Owner-Dependencies.txt',
         'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
         'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
     )) {
@@ -540,6 +543,7 @@ foreach ($Path in $Paths) {
             'Verify-Changed.ps1',
             'Verify-Change-Classification.ps1',
             'Verify-Dotnet-Retirement-Inventory.ps1',
+            'Verify-Native-Development-Dependencies.ps1',
             'Verify-Verification-Plan.ps1'
         )) {
             $RunPlanVerification = $true

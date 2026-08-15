@@ -26,7 +26,12 @@ function Isˉsameˉpath(left, right) {
     return WINDOWS ? left.toLowerCase() === right.toLowerCase() : left === right;
 }
 
-async function Readˉboundedˉordinaryˉfile(candidate, label, maximumBytes = MAXIMUM_INPUT_BYTES) {
+async function Readˉboundedˉordinaryˉfile(
+    candidate,
+    label,
+    maximumBytes = MAXIMUM_INPUT_BYTES,
+    allowWindowsAlias = false
+) {
     let linkInformation;
     let information;
     try {
@@ -40,10 +45,10 @@ async function Readˉboundedˉordinaryˉfile(candidate, label, maximumBytes = MA
         Fail(`The ${label} is not a bounded ordinary file: ${candidate}`);
     }
     const canonical = await realpath(candidate).catch(() => '');
-    if (!Isˉsameˉpath(canonical, candidate)) {
+    if (!Isˉsameˉpath(canonical, candidate) && !(WINDOWS && allowWindowsAlias)) {
         Fail(`The ${label} must use its canonical non-link path: ${candidate}`);
     }
-    return readFile(candidate);
+    return readFile(WINDOWS && allowWindowsAlias ? canonical : candidate);
 }
 
 function Addˉfield(hash, label, bytes) {
@@ -123,12 +128,13 @@ Addˉfield(hash, 'target', Buffer.from(target, 'ascii'));
 Addˉfield(hash, 'profile', Buffer.from(profile, 'ascii'));
 Addˉfield(hash, 'fragment-count', Buffer.from(fragmentCountText, 'ascii'));
 Addˉfield(hash, 'entry', Buffer.from(entry, 'ascii'));
-Addˉfield(hash, 'input-wvb', await Readˉboundedˉordinaryˉfile(inputPath, 'hosted input WVB'));
+Addˉfield(hash, 'input-wvb', await Readˉboundedˉordinaryˉfile(
+    inputPath, 'hosted input WVB', MAXIMUM_INPUT_BYTES, true));
 
 for (let index = 0; index < fragmentCount; index += 1) {
     const chunkPath = `${chunkPrefix}.chunk-${index}`;
     const chunkBytes = await Readˉboundedˉordinaryˉfile(
-        chunkPath, 'hosted native-image fragment', MAXIMUM_FRAGMENT_BYTES);
+        chunkPath, 'hosted native-image fragment', MAXIMUM_FRAGMENT_BYTES, true);
     if (index + 1 < fragmentCount && chunkBytes.length !== MAXIMUM_FRAGMENT_BYTES) {
         Fail('Every nonfinal hosted native-image fragment must be exactly 4 MiB.');
     }
