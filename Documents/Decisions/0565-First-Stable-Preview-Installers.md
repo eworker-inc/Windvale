@@ -1,9 +1,10 @@
 # Decision 0565: First stable preview installers
 
-- Status: Implemented; paired qualification pending
+- Status: Qualified and implemented
 - Date: 2026-08-15
 - Advances: Milestone 3 and Decisions 0562 and 0563
 - Contract: [Windvale installer 1](../../Specifications/Windvale-Installer.md)
+- Evidence: [paired-host Verify run 31885759856](https://github.com/eworker-inc/Windvale/actions/runs/31885759856)
 
 ## Context
 
@@ -58,6 +59,9 @@ gate before the archives or `v0.1.0` tag are official.
 - Stable archive authenticity still depends on the signed release envelope;
   platform code signing, notarization, automatic update, and rollback remain
   later product work.
+- The channel-neutral eight-case owner passes at exact implementation commit
+  `56c840ae30b311477768f4844cb5146cd112b4a8` on Windows and Linux in Verify
+  run 31885759856.
 
 ## Reconsideration triggers
 

@@ -64,9 +64,9 @@ Decision 0562. It is not a Git product tag and must not be published as
 `v0.1.0`. Decision 0565 separately pins internally consistent `0.1.0` stable
 Windows/Linux artifacts for the release envelope; the stable filename alone is
 not a release or authenticity claim. Decisions 0563 and 0564 implement the trust
-policy, envelope, threat-model boundary, and exact approval records. Paired
-stable-installer evidence, the project-owner root ceremony, exact-state
-qualification, and publication remain open.
+policy, envelope, threat-model boundary, and exact approval records. The stable
+installer owner passes on both hosts in Verify run 31885759856; the project-owner
+root ceremony, exact-state qualification, and publication remain open.
 
 ## Milestone checkpoint
 

@@ -134,7 +134,7 @@ deliberate selection.
 | Milestone 1: predictable development feedback | ✅ Complete | Closed foundation; preserve its bounded workflow. |
 | Native-only baseline promotion checkpoint | 🚧 Candidate | One explicit post-archive dual-host qualification and exact baseline tag; independent of product implementation. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
-| Milestone 3: Windvale 0.1 preview | 🎯 Active | Stable `0.1.0` installer identities and release security are implemented; pair the installer owner, complete custody, and qualify the final selected state. |
+| Milestone 3: Windvale 0.1 preview | 🎯 Active | Stable `0.1.0` installers and release security have paired evidence; complete custody and qualify the final selected state. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful but does not block Milestone 3. |
 
 The product critical path is:
@@ -230,7 +230,7 @@ requirements.
 | --- | :---: | --- |
 | .NET-free normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
 | Useful package-backed application | ✅ | Milestone 2 is complete with paired Bundle 1/store and rights-reduced capability reports under Decision 0561. |
-| Reproducible release artifacts and installers | 🚧 Stable pairing / official envelope | Decision 0562 retains the exact qualified `0.1.0-dev.1` artifacts. Decision 0565 pins distinct internal/external `0.1.0` stable identities without duplicating the builder; paired installer evidence is pending. Decision 0563's bounded creator, independent verifier, eleven-artifact profile, and thirteen-case owner pass in Verify run 31883543587. An owner-custodied official envelope remains. |
+| Reproducible release artifacts and installers | ✅ Infrastructure / 🚧 Official envelope | Decision 0562 retains the exact qualified `0.1.0-dev.1` artifacts. Decision 0565 pins distinct internally consistent `0.1.0` stable identities without duplicating the builder; the combined owner passes on both hosts in Verify run 31885759856. Decision 0563's bounded creator, independent verifier, eleven-artifact profile, and thirteen-case owner pass in Verify run 31883543587. An owner-custodied official envelope remains. |
 | Capability approval, binding, and denial | ✅ | Decision 0564 fixes one approval and two target launch records around the existing five-capability closure. The independent eight-case owner passes on Windows and Linux in Verify run 31883543587. |
 | Public product threat model | ✅ | [Product-Threat-Model.md](../Architecture/Product-Threat-Model.md) covers the shipped source, compiler, WVB/WVO, bundle, installer, release, capability, and recovery boundaries with explicit limits and residual risks. |
 | Release signing and offline verification policy | 🚧 Ceremony | Decision 0563 fixes Ed25519 root delegation, caller-enforced minimum sequence, bounded manifest rules, and offline verification. The project owner must still accept custody, establish the official public root, and sign the final envelope. |

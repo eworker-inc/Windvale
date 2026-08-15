@@ -2,12 +2,13 @@
 
 ## Status
 
-Implemented for the deterministic `development` and `stable` channels under
+Qualified and implemented for deterministic `development` and `stable` channels under
 [Decisions 0562](../Documents/Decisions/0562-First-Deterministic-Development-Installers.md)
 and [0565](../Documents/Decisions/0565-First-Stable-Preview-Installers.md).
 Decision 0562's exact development artifacts pass on both hosts in
 [Verify run 31881681424](https://github.com/eworker-inc/Windvale/actions/runs/31881681424).
-Paired evidence for the stable artifacts is required before publication.
+The channel-neutral owner, including the stable artifacts, passes on both hosts
+in [Verify run 31885759856](https://github.com/eworker-inc/Windvale/actions/runs/31885759856).
 
 ## Purpose and scope
 
