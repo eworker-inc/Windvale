@@ -7,6 +7,12 @@ import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 
 capability storage.random_access_v1;
 
+fn Databaseˉdurableˉbootstrapˉownedˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    let Prefixed: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Prefixed, 1u32, Length);
+}
+
 export enum Databaseˉdurableˉbootstrapˉstatus {
     Created = 0;
     Active = 1;
@@ -15,6 +21,7 @@ export enum Databaseˉdurableˉbootstrapˉstatus {
     Invalidˉplan = 4;
     Reopenˉrequired = 5;
     Rejected = 6;
+    Resumed = 7;
 }
 
 export record Databaseˉdurableˉbootstrapˉresult {
@@ -95,6 +102,8 @@ export fn Databaseˉdurableˉbootstrapˉcreate(
             0u64,
             512u32
         );
+        let Headerˉbytes: bytes =
+            Databaseˉdurableˉbootstrapˉownedˉcopy(Header.Value);
         let Root: Storage.Storageˉresult = Storage.Storageˉreadˉat(
             Description.Generation,
             512u64,
@@ -122,7 +131,7 @@ export fn Databaseˉdurableˉbootstrapˉcreate(
             Plan,
             Description.Generation,
             Description.Storageˉlength,
-            Header.Value,
+            Headerˉbytes,
             Root.Value
         );
     }
@@ -156,6 +165,9 @@ export fn Databaseˉdurableˉbootstrapˉcreate(
     if Execution.State.Status ==
         Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
         Status = Databaseˉdurableˉbootstrapˉstatus.Created;
+        if Description.Storageˉlength != 0u64 {
+            Status = Databaseˉdurableˉbootstrapˉstatus.Resumed;
+        }
     } else if Execution.State.Status ==
         Publication.Databaseˉstorageˉpublicationˉstatus.Active {
         Status = Databaseˉdurableˉbootstrapˉstatus.Active;

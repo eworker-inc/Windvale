@@ -1,0 +1,281 @@
+module Durableˉdatabaseˉlifecycle profile hosted;
+
+import Durableˉdatabaseˉbootstrap as Bootstrap;
+import Durableˉdatabaseˉengine as Engine;
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+
+capability storage.random_access_v1;
+
+export enum Databaseˉdurableˉlifecycleˉstatus {
+    Created = 0;
+    Resumed = 1;
+    Opened = 2;
+    Recovered = 3;
+    Creationˉactive = 4;
+    Recoveryˉactive = 5;
+    Reopenˉrequired = 6;
+    Invalidˉrequest = 7;
+    Notˉdatabase = 8;
+    Identityˉmismatch = 9;
+    Pageˉsizeˉmismatch = 10;
+    Storageˉfailure = 11;
+    Creationˉfailure = 12;
+    Openˉfailure = 13;
+}
+
+export record Databaseˉdurableˉlifecycle {
+    Status: Databaseˉdurableˉlifecycleˉstatus;
+    Engineˉattempted: bool;
+    Bootstrap: Bootstrap.Databaseˉdurableˉbootstrapˉresult;
+    Engine: Engine.Databaseˉengine;
+}
+
+fn Databaseˉdurableˉlifecycleˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉlifecycleˉunattemptedˉengine(
+    Creation: Bootstrap.Databaseˉdurableˉbootstrapˉresult
+) -> Engine.Databaseˉengine {
+    let Empty: bytes = Databaseˉdurableˉlifecycleˉempty();
+    return Engine.Databaseˉengine(
+        Engine.Databaseˉengineˉstatus.Invalidˉcurrent,
+        Creation.Storageˉstatus,
+        Creation.Storageˉgeneration,
+        Creation.Storageˉlength,
+        Recovery.Databaseˉstorageˉrecoveryˉstage.Invalid,
+        Recovery.Databaseˉstorageˉrecoveryˉerror.None,
+        0u32,
+        Superblock.Databaseˉsuperblockˉselect(
+            Empty,
+            Empty,
+            Creation.Storageˉlength
+        )
+    );
+}
+
+fn Databaseˉdurableˉlifecycleˉresult(
+    Status: Databaseˉdurableˉlifecycleˉstatus,
+    Engineˉattempted: bool,
+    Creation: Bootstrap.Databaseˉdurableˉbootstrapˉresult,
+    Opened: Engine.Databaseˉengine
+) -> Databaseˉdurableˉlifecycle {
+    return Databaseˉdurableˉlifecycle(
+        Status,
+        Engineˉattempted,
+        Creation,
+        Opened
+    );
+}
+
+fn Databaseˉdurableˉlifecycleˉwithoutˉengine(
+    Status: Databaseˉdurableˉlifecycleˉstatus,
+    Creation: Bootstrap.Databaseˉdurableˉbootstrapˉresult
+) -> Databaseˉdurableˉlifecycle {
+    return Databaseˉdurableˉlifecycleˉresult(
+        Status,
+        false,
+        Creation,
+        Databaseˉdurableˉlifecycleˉunattemptedˉengine(Creation)
+    );
+}
+
+fn Databaseˉdurableˉlifecycleˉidentityˉstatus(
+    Opened: Engine.Databaseˉengine,
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32
+) -> Databaseˉdurableˉlifecycleˉstatus {
+    if Opened.Current.Databaseˉidentityˉhigh != Databaseˉidentityˉhigh ||
+        Opened.Current.Databaseˉidentityˉlow != Databaseˉidentityˉlow {
+        return Databaseˉdurableˉlifecycleˉstatus.Identityˉmismatch;
+    }
+    if Opened.Current.Pageˉsize != Pageˉsize {
+        return Databaseˉdurableˉlifecycleˉstatus.Pageˉsizeˉmismatch;
+    }
+    return Databaseˉdurableˉlifecycleˉstatus.Opened;
+}
+
+fn Databaseˉdurableˉlifecycleˉengineˉfailure(
+    Creation: Bootstrap.Databaseˉdurableˉbootstrapˉresult,
+    Opened: Engine.Databaseˉengine
+) -> Databaseˉdurableˉlifecycle {
+    var Status: Databaseˉdurableˉlifecycleˉstatus =
+        Databaseˉdurableˉlifecycleˉstatus.Openˉfailure;
+    if Opened.Status == Engine.Databaseˉengineˉstatus.Storageˉfailure {
+        Status = Databaseˉdurableˉlifecycleˉstatus.Storageˉfailure;
+    } else if Opened.Status == Engine.Databaseˉengineˉstatus.Headerˉfailure ||
+        Opened.Status == Engine.Databaseˉengineˉstatus.Invalidˉcurrent {
+        Status = Databaseˉdurableˉlifecycleˉstatus.Notˉdatabase;
+    } else if Opened.Status == Engine.Databaseˉengineˉstatus.Reopenˉrequired ||
+        Opened.Status == Engine.Databaseˉengineˉstatus.Changedˉstorage {
+        Status = Databaseˉdurableˉlifecycleˉstatus.Reopenˉrequired;
+    }
+    return Databaseˉdurableˉlifecycleˉresult(
+        Status,
+        true,
+        Creation,
+        Opened
+    );
+}
+
+fn Databaseˉdurableˉlifecycleˉready(
+    Creation: Bootstrap.Databaseˉdurableˉbootstrapˉresult,
+    Opened: Engine.Databaseˉengine,
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32
+) -> Databaseˉdurableˉlifecycle {
+    let Identity: Databaseˉdurableˉlifecycleˉstatus =
+        Databaseˉdurableˉlifecycleˉidentityˉstatus(
+            Opened,
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize
+        );
+    if Identity != Databaseˉdurableˉlifecycleˉstatus.Opened {
+        return Databaseˉdurableˉlifecycleˉresult(
+            Identity,
+            true,
+            Creation,
+            Opened
+        );
+    }
+    var Status: Databaseˉdurableˉlifecycleˉstatus =
+        Databaseˉdurableˉlifecycleˉstatus.Opened;
+    if Opened.Status == Engine.Databaseˉengineˉstatus.Recovered {
+        Status = Databaseˉdurableˉlifecycleˉstatus.Recovered;
+    } else if Creation.Status ==
+        Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Created {
+        Status = Databaseˉdurableˉlifecycleˉstatus.Created;
+    } else if Creation.Status ==
+        Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Resumed {
+        Status = Databaseˉdurableˉlifecycleˉstatus.Resumed;
+    }
+    return Databaseˉdurableˉlifecycleˉresult(
+        Status,
+        true,
+        Creation,
+        Opened
+    );
+}
+
+export fn Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32,
+    Maximumˉcreationˉactions: u32,
+    Maximumˉrecoveryˉactions: u32
+) -> Databaseˉdurableˉlifecycle {
+    let Creation: Bootstrap.Databaseˉdurableˉbootstrapˉresult =
+        Bootstrap.Databaseˉdurableˉbootstrapˉcreate(
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize,
+            Maximumˉcreationˉactions
+        );
+    if Creation.Status ==
+        Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Invalidˉplan {
+        return Databaseˉdurableˉlifecycleˉwithoutˉengine(
+            Databaseˉdurableˉlifecycleˉstatus.Invalidˉrequest,
+            Creation
+        );
+    }
+    if Creation.Status ==
+        Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Active {
+        return Databaseˉdurableˉlifecycleˉwithoutˉengine(
+            Databaseˉdurableˉlifecycleˉstatus.Creationˉactive,
+            Creation
+        );
+    }
+    if Creation.Status ==
+        Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Reopenˉrequired {
+        return Databaseˉdurableˉlifecycleˉwithoutˉengine(
+            Databaseˉdurableˉlifecycleˉstatus.Reopenˉrequired,
+            Creation
+        );
+    }
+    if Creation.Status ==
+        Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Storageˉfailure {
+        return Databaseˉdurableˉlifecycleˉwithoutˉengine(
+            Databaseˉdurableˉlifecycleˉstatus.Storageˉfailure,
+            Creation
+        );
+    }
+    if Creation.Status !=
+            Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Created &&
+        Creation.Status !=
+            Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Resumed &&
+        Creation.Status !=
+            Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Notˉempty {
+        return Databaseˉdurableˉlifecycleˉwithoutˉengine(
+            Databaseˉdurableˉlifecycleˉstatus.Creationˉfailure,
+            Creation
+        );
+    }
+
+    let Observed: Engine.Databaseˉengine = Engine.Databaseˉengineˉopen(0u32);
+    if Observed.Status == Engine.Databaseˉengineˉstatus.Ready {
+        return Databaseˉdurableˉlifecycleˉready(
+            Creation,
+            Observed,
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize
+        );
+    }
+    if Observed.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive {
+        return Databaseˉdurableˉlifecycleˉengineˉfailure(
+            Creation,
+            Observed
+        );
+    }
+    let Identity: Databaseˉdurableˉlifecycleˉstatus =
+        Databaseˉdurableˉlifecycleˉidentityˉstatus(
+            Observed,
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize
+        );
+    if Identity != Databaseˉdurableˉlifecycleˉstatus.Opened {
+        return Databaseˉdurableˉlifecycleˉresult(
+            Identity,
+            true,
+            Creation,
+            Observed
+        );
+    }
+    if Maximumˉrecoveryˉactions == 0u32 {
+        return Databaseˉdurableˉlifecycleˉresult(
+            Databaseˉdurableˉlifecycleˉstatus.Recoveryˉactive,
+            true,
+            Creation,
+            Observed
+        );
+    }
+    let Recovered: Engine.Databaseˉengine = Engine.Databaseˉengineˉopen(
+        Maximumˉrecoveryˉactions
+    );
+    if Recovered.Status == Engine.Databaseˉengineˉstatus.Recoveryˉactive {
+        return Databaseˉdurableˉlifecycleˉresult(
+            Databaseˉdurableˉlifecycleˉstatus.Recoveryˉactive,
+            true,
+            Creation,
+            Recovered
+        );
+    }
+    if Recovered.Status == Engine.Databaseˉengineˉstatus.Recovered ||
+        Recovered.Status == Engine.Databaseˉengineˉstatus.Ready {
+        return Databaseˉdurableˉlifecycleˉready(
+            Creation,
+            Recovered,
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize
+        );
+    }
+    return Databaseˉdurableˉlifecycleˉengineˉfailure(Creation, Recovered);
+}

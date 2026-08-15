@@ -55,7 +55,9 @@ reopen and are never silently replayed in-process.
 ## Reopen admission
 
 After restart, the hosted bootstrap reads existing bytes only when the observed
-length equals the exact target length. It resumes only these byte-exact states:
+length equals the exact target length. Provider response bytes are borrowed
+from reusable bounded scratch, so the first read is copied into owned bytes
+before the second provider call. It resumes only these byte-exact states:
 
 - canonical root plus a zero 512-byte header: repeat the content-and-length
   flush, then publish and flush the first superblock; or
@@ -67,11 +69,11 @@ windows. Any other nonempty length, root, or header is `Not_empty` and causes no
 mutation. In particular, a short root write or partial superblock write is not
 repaired by guessing and is not truncated.
 
-On success the result reports `Created`, the provider generation, target
-length, and number of executed actions. A zero action budget may report
-`Active`; uncertain provider completion reports `Reopen_required`. Callers
-must open or reopen the database engine after creation rather than treating
-the bootstrap result as a live engine session.
+Fresh success reports `Created`; a byte-exact nonempty resume reports `Resumed`.
+Both include the provider generation, target length, and number of executed
+actions. A zero action budget may report `Active`; uncertain provider completion
+reports `Reopen_required`. Callers must open or reopen the database engine after
+creation rather than treating the bootstrap result as a live engine session.
 
 ## Verification
 

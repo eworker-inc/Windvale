@@ -1,8 +1,7 @@
 windvale-project 2
-root "Tests/Fixtures/Database/Native-Hosted-Durable-Database-Engine-Self-Test.wv"
+root "Libraries/Platform/Database/Durable-Database-Lifecycle.wv"
 source "Libraries/Platform/Database/Durable-Database-Bootstrap.wv"
 source "Libraries/Platform/Database/Durable-Database-Engine.wv"
-source "Libraries/Platform/Database/Durable-Database-Lifecycle.wv"
 source "Libraries/Platform/Database/Durable-Storage-Executor.wv"
 source "Foundation/Byte-Construction.wv"
 source "Foundation/Sha256-Compression.wv"

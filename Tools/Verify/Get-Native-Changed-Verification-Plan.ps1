@@ -31,6 +31,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Tree-Path-Upsert.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Database-Engine.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Database-Bootstrap.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Database-Lifecycle.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
@@ -760,6 +761,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Database-Bootstrap', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Database-Engine', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Database-Lifecycle', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Capability-Provider-Table', [StringComparison]::Ordinal)) {
@@ -905,6 +907,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Database-Bootstrap', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Database-Engine', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Database-Lifecycle', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Reader', [StringComparison]::Ordinal) -or

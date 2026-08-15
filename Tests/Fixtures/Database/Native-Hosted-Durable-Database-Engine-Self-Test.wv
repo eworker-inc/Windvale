@@ -1,18 +1,17 @@
 module Nativeˉhostedˉdurableˉdatabaseˉengineˉselfˉtest profile hosted;
 
 import Randomˉaccessˉstorage as Storage;
+import Durableˉdatabaseˉbootstrap as Bootstrap;
 import Durableˉdatabaseˉengine as Engine;
-import Durableˉtreeˉreader as Reader;
+import Durableˉdatabaseˉlifecycle as Lifecycle;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
 
 capability storage.random_access_v1;
 
 const COMMITTED_LENGTH: u64 = 20992u64;
-
-fn Key(Value: u8) -> bytes {
-    return Bytesˉfromˉu8(Value);
-}
+const INITIAL_LENGTH: u64 = 4608u64;
+const PAGE_SIZE: u32 = 4096u32;
 
 fn Maximumˉactions(Storageˉlength: u64) -> u32 {
     if Storageˉlength == 20993u64 { return 0u32; }
@@ -33,18 +32,20 @@ fn Validateˉcurrent(
         Current.Tailˉbytes == 0u64;
 }
 
-fn Validateˉlookup(
+fn Validateˉinitial(
     Current: Superblock.Databaseˉsuperblockˉselection
-) -> i32 {
-    let Found: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
-        Reader.Databaseˉdurableˉtreeˉlookup(Current, Key(3u8));
-    if Found.Status != Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found ||
-        Found.Pageˉvisits != 2u32 || Found.Pageˉidentifier != 2u64 ||
-        Bytesˉlength(Found.Value) != 4u32 ||
-        Bytesˉreadˉi32ˉlittle(Found.Value, 0u32) != 30 {
-        return 20;
-    }
-    return 0;
+) -> bool {
+    return Current.Status ==
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid &&
+        Current.Databaseˉidentityˉhigh == 1u64 &&
+        Current.Databaseˉidentityˉlow == 2u64 &&
+        Current.Generation == 1u64 && Current.Committedˉsequence == 0u64 &&
+        Current.Rootˉpage == 0u64 &&
+        Current.Commitˉlogˉhead == 18446744073709551615u64 &&
+        Current.Pageˉcount == 1u64 &&
+        Current.Committedˉlength == INITIAL_LENGTH &&
+        Current.Pageˉsize == PAGE_SIZE && Current.Rootˉdepth == 1u32 &&
+        Current.Tailˉbytes == 0u64;
 }
 
 export fn Main() -> i32 {
@@ -53,17 +54,101 @@ export fn Main() -> i32 {
         Before.Generation == 0u64 {
         return 1;
     }
+    let Invalid: Lifecycle.Databaseˉdurableˉlifecycle =
+        Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+            0u64,
+            0u64,
+            PAGE_SIZE,
+            4u32,
+            0u32
+        );
+    if Invalid.Status !=
+            Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Invalidˉrequest ||
+        Invalid.Engineˉattempted {
+        return 3;
+    }
+    if Before.Storageˉlength == 0u64 {
+        let Deferred: Lifecycle.Databaseˉdurableˉlifecycle =
+            Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+                1u64,
+                2u64,
+                PAGE_SIZE,
+                0u32,
+                0u32
+            );
+        if Deferred.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Creationˉactive ||
+            Deferred.Engineˉattempted ||
+            Deferred.Bootstrap.Status !=
+                Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Active ||
+            Deferred.Bootstrap.Actions != 0u32 ||
+            Deferred.Bootstrap.Storageˉlength != 0u64 {
+            return 60;
+        }
+        let Created: Lifecycle.Databaseˉdurableˉlifecycle =
+            Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+                1u64,
+                2u64,
+                PAGE_SIZE,
+                4u32,
+                0u32
+            );
+        if Created.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Created ||
+            !Created.Engineˉattempted ||
+            Created.Bootstrap.Status !=
+                Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Created ||
+            Created.Bootstrap.Actions != 4u32 ||
+            Created.Engine.Status != Engine.Databaseˉengineˉstatus.Ready ||
+            !Validateˉinitial(Created.Engine.Current) {
+            return 61;
+        }
+        return 70;
+    }
+    if Before.Storageˉlength == INITIAL_LENGTH {
+        let Resumed: Lifecycle.Databaseˉdurableˉlifecycle =
+            Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+                1u64,
+                2u64,
+                PAGE_SIZE,
+                4u32,
+                0u32
+            );
+        if Resumed.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Resumed ||
+            !Resumed.Engineˉattempted ||
+            Resumed.Bootstrap.Status !=
+                Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Resumed ||
+            Resumed.Bootstrap.Actions != 1u32 ||
+            Resumed.Engine.Status != Engine.Databaseˉengineˉstatus.Ready ||
+            !Validateˉinitial(Resumed.Engine.Current) {
+            return 62;
+        }
+        return 71;
+    }
     let Actions: u32 = Maximumˉactions(Before.Storageˉlength);
-    let Opened: Engine.Databaseˉengine = Engine.Databaseˉengineˉopen(Actions);
+    let Lifecycleˉresult: Lifecycle.Databaseˉdurableˉlifecycle =
+        Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+            1u64,
+            2u64,
+            PAGE_SIZE,
+            4u32,
+            Actions
+        );
+    let Opened: Engine.Databaseˉengine = Lifecycleˉresult.Engine;
     if Before.Storageˉlength < 512u64 {
-        if Opened.Status != Engine.Databaseˉengineˉstatus.Headerˉfailure ||
+        if Lifecycleˉresult.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Notˉdatabase ||
+            Opened.Status != Engine.Databaseˉengineˉstatus.Headerˉfailure ||
             Opened.Recoveryˉactions != 0u32 {
             return 90;
         }
         return 91;
     }
     if Before.Storageˉlength == 20993u64 {
-        if Opened.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive ||
+        if Lifecycleˉresult.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Recoveryˉactive ||
+            Opened.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive ||
             Opened.Recoveryˉstage !=
                 Recovery.Databaseˉstorageˉrecoveryˉstage.Resizeˉtail ||
             Opened.Recoveryˉactions != 0u32 ||
@@ -73,7 +158,9 @@ export fn Main() -> i32 {
         return 100;
     }
     if Before.Storageˉlength == 20994u64 {
-        if Opened.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive ||
+        if Lifecycleˉresult.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Recoveryˉactive ||
+            Opened.Status != Engine.Databaseˉengineˉstatus.Recoveryˉactive ||
             Opened.Recoveryˉstage !=
                 Recovery.Databaseˉstorageˉrecoveryˉstage.Flushˉtail ||
             Opened.Recoveryˉactions != 1u32 ||
@@ -83,7 +170,9 @@ export fn Main() -> i32 {
         return 101;
     }
     if Before.Storageˉlength > COMMITTED_LENGTH {
-        if Opened.Status != Engine.Databaseˉengineˉstatus.Recovered ||
+        if Lifecycleˉresult.Status !=
+                Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Recovered ||
+            Opened.Status != Engine.Databaseˉengineˉstatus.Recovered ||
             Opened.Recoveryˉstage !=
                 Recovery.Databaseˉstorageˉrecoveryˉstage.Ready ||
             Opened.Recoveryˉerror !=
@@ -93,13 +182,39 @@ export fn Main() -> i32 {
             !Validateˉcurrent(Opened.Current) {
             return 32;
         }
-        return Validateˉlookup(Opened.Current);
+        return 0;
     }
-    if Opened.Status != Engine.Databaseˉengineˉstatus.Ready ||
+    if Lifecycleˉresult.Status !=
+            Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Opened ||
+        Opened.Status != Engine.Databaseˉengineˉstatus.Ready ||
         Opened.Recoveryˉactions != 0u32 ||
         Opened.Storageˉlength != COMMITTED_LENGTH ||
         !Validateˉcurrent(Opened.Current) {
         return 2;
     }
-    return Validateˉlookup(Opened.Current);
+    let Wrongˉidentity: Lifecycle.Databaseˉdurableˉlifecycle =
+        Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+            9u64,
+            2u64,
+            PAGE_SIZE,
+            4u32,
+            0u32
+        );
+    let Wrongˉpage: Lifecycle.Databaseˉdurableˉlifecycle =
+        Lifecycle.Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+            1u64,
+            2u64,
+            8192u32,
+            4u32,
+            0u32
+        );
+    if Wrongˉidentity.Status !=
+            Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Identityˉmismatch ||
+        Wrongˉidentity.Engine.Status != Engine.Databaseˉengineˉstatus.Ready ||
+        Wrongˉpage.Status !=
+            Lifecycle.Databaseˉdurableˉlifecycleˉstatus.Pageˉsizeˉmismatch ||
+        Wrongˉpage.Engine.Status != Engine.Databaseˉengineˉstatus.Ready {
+        return 4;
+    }
+    return 0;
 }

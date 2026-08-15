@@ -3,6 +3,7 @@
 ## Status
 
 - Hosted lifecycle: `Libraries/Platform/Database/Durable-Database-Engine.wv`
+- Create-or-open composition: `Libraries/Platform/Database/Durable-Database-Lifecycle.wv`
 - Read projection: `Libraries/Platform/Database/Durable-Tree-Reader.wv`
 - Write projection: `Libraries/Platform/Database/Durable-Tree-Writer.wv`
 - Capability: `storage.random_access_v1`
@@ -31,6 +32,37 @@ log, page count, page size, depth, and committed length with zero tail.
 `Reopenˉrequired` preserves a stale or indeterminate observation and does not
 claim that the committed state remains current. Neither state authorizes
 application-mutation replay.
+
+## Create or open
+
+The hosted composition exposes:
+
+```text
+Databaseˉdurableˉlifecycleˉcreateˉorˉopen(
+    Expectedˉidentityˉhigh,
+    Expectedˉidentityˉlow,
+    Pageˉsize,
+    Maximumˉcreationˉactions,
+    Maximumˉrecoveryˉactions
+) -> Databaseˉdurableˉlifecycle
+```
+
+It first runs exact bootstrap admission. Invalid input, pending creation,
+storage failure, rejection, or uncertain completion returns without attempting
+engine open. Fresh completion is `Created`; completing a canonical nonempty
+initial image is `Resumed`.
+
+For other nonempty storage, the composition opens the engine with zero recovery
+actions. A valid current selection must match the expected two-part database
+identity and page size before any recovery mutation is authorized. Only then
+may a second bounded engine open repair an unpublished tail. Identity and page
+size are revalidated after recovery. A different valid database therefore
+returns `Identityˉmismatch` or `Pageˉsizeˉmismatch` without repairing it.
+
+The result states whether engine open was attempted and retains both the full
+bootstrap result and engine snapshot. `Notˉdatabase` covers malformed header or
+selection evidence; storage, creation, open, active, and reopen-required states
+remain distinct.
 
 ## Open and recovery
 
@@ -74,20 +106,20 @@ preserved. Failure does not fabricate a valid current snapshot.
 
 ## Verification
 
-The focused engine fixture opens the committed depth-two generation without
-changing bytes and performs a two-page lookup through `Engine.Current`. It
-then covers zero-action recovery at resize, one-action recovery at the required
-flush, completed two-action tail recovery with byte-identical convergence, and
-truncated-header rejection. The dedicated target compiler-aligns 146 functions
-and lowers to a 3,439,032-byte ordinary object.
+The focused engine fixture rejects invalid creation without opening, exposes
+zero-action creation, creates and opens an empty database, resumes its exact
+initial image without changing bytes, opens an evolved generation, rejects
+wrong identity/page size, covers zero-, one-, and two-action tail recovery, and
+rejects a truncated header. Tree lookup remains covered by the dedicated hosted
+reader target so the lifecycle object stays below the ordinary object ceiling.
 
-The Windows database development owner passes twelve targets. The Linux image
+The Windows database development owner passes fifteen targets. The Linux image
 is constructed by the complete owner, but independent execution and the cold
 paired-host retirement gate remain qualification evidence.
 
 ## Exclusions
 
-This contract does not create a database, grant storage authority, pin a
-snapshot, coordinate multiple writers, assign client sessions, define records
+This contract does not create a host storage object, grant storage authority,
+pin a snapshot, coordinate multiple writers, assign client sessions, define records
 or catalogs, parse queries, listen on a network, authenticate peers, reclaim
 pages, or retry uncertain mutations.

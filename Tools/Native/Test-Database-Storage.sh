@@ -720,6 +720,9 @@ verify_host_engine() {
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
     local run_directory="$temporary_directory/Engine-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local create_directory="$temporary_directory/Engine-Create"
+    local create_storage="$create_directory/Windvale-Database-Storage.bin"
+    local create_snapshot="$create_directory/Windvale-Database-Storage.created"
     local engine_checkpoint=Rebuilt
     local engine_application_checkpoint=Rebuilt
 
@@ -768,6 +771,23 @@ verify_host_engine() {
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux >/dev/null || return $?
     fi
+
+    mkdir -- "$create_directory" || return $?
+    (cd -- "$create_directory" && "$linux_application" >/dev/null)
+    local create_result=$?
+    if [[ $create_result -ne 70 ]]; then
+        echo "The native engine fresh lifecycle returned $create_result, expected 70." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$create_storage") -eq 4608 ]] || return 1
+    cp -- "$create_storage" "$create_snapshot" || return $?
+    (cd -- "$create_directory" && "$linux_application" >/dev/null)
+    create_result=$?
+    if [[ $create_result -ne 71 ]]; then
+        echo "The native engine initial reopen returned $create_result, expected 71." >&2
+        return 1
+    fi
+    cmp --silent -- "$create_snapshot" "$create_storage" || return 1
 
     [[ -f $depth_two_committed_file ]] || return 1
     mkdir -- "$run_directory" || return $?

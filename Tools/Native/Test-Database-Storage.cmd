@@ -676,6 +676,9 @@ set "LinuxApplication=%TemporaryDirectory%\Engine.elf"
 set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
 set "RunDirectory=%TemporaryDirectory%\Engine-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CreateDirectory=%TemporaryDirectory%\Engine-Create"
+set "CreateStorage=%CreateDirectory%\Windvale-Database-Storage.bin"
+set "CreateSnapshot=%CreateDirectory%\Windvale-Database-Storage.created"
 set "EngineCheckpoint=Rebuilt"
 set "EngineApplicationCheckpoint=Rebuilt"
 
@@ -722,6 +725,27 @@ if "%Development%"=="1" (
         "%WindowsApplication%" windows >nul
     if errorlevel 1 exit /b 1
 )
+
+mkdir "%CreateDirectory%" || exit /b 1
+pushd "%CreateDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="70" (
+    >&2 echo The native engine fresh lifecycle returned %ApplicationResult%, expected 70.
+    exit /b 1
+)
+for %%F in ("%CreateStorage%") do if not "%%~zF"=="4608" exit /b 1
+copy /b "%CreateStorage%" "%CreateSnapshot%" >nul || exit /b 1
+pushd "%CreateDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="71" (
+    >&2 echo The native engine initial reopen returned %ApplicationResult%, expected 71.
+    exit /b 1
+)
+fc /b "%CreateSnapshot%" "%CreateStorage%" >nul || exit /b 1
 
 if not exist "%DepthTwoCommittedFile%" exit /b 1
 mkdir "%RunDirectory%" || exit /b 1
