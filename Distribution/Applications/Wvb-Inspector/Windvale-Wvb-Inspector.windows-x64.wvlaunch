@@ -1,0 +1,25 @@
+windvale-launch-record 2
+application windvale.wvb-inspector 0.1.0
+generation 0.1.0-windows-x64-32023a688e3a
+target windows-x64
+approval 32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f 923
+bundle a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 92781
+lock eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1 1021
+wvb 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 76527
+host-application 61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381 795136
+entry Main
+provider-table 2 5
+bind 0 console.write_line host-standard-output line-lf
+bind 1 diagnostic.write_line host-standard-diagnostic line-lf
+bind 2 file.read_bytes host-read-only-file argument-0
+bind 3 process.argument immutable-launch-arguments 1
+bind 4 process.argument_count immutable-launch-arguments 1
+argument-count 1
+argument 0 host-path-utf8 1 4096
+deny path-enumeration
+deny file-mutation
+deny environment
+deny network
+deny process-launch
+deny clock
+deny entropy

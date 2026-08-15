@@ -683,6 +683,9 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Distribution/Applications/Wvb-Inspector/', [StringComparison]::Ordinal)) {
         Add-Suite @('packages', 'package-format')
+        if ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch')) {
+            Add-Suite 'wvdb-approval'
+        }
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Specifications/Windvale-Installation-Generation.md') {

@@ -53,6 +53,8 @@ const INSPECTOR_DIRECTORY = path.join(
     "Wvb-Inspector",
 );
 const INSPECTOR_APPROVAL_NAME = "Windvale-Wvb-Inspector.wvapproval";
+const INSPECTOR_WINDOWS_NAME = "Windvale-Wvb-Inspector.windows-x64.wvlaunch";
+const INSPECTOR_LINUX_NAME = "Windvale-Wvb-Inspector.linux-x64.wvlaunch";
 const INSPECTOR_CAPABILITIES = [
     "console.write_line",
     "diagnostic.write_line",
@@ -77,10 +79,14 @@ const INSPECTOR_IDENTITIES = {
         "e3d9ddf823a0fd4fab6406de97f3733cd1f5a802daf20dc15cf1d6d7de8ce44f",
     ],
 };
-const INSPECTOR_APPROVAL_BYTES = 917;
-const INSPECTOR_APPROVAL_SHA256 = "8654fa00406baed038c00abec993985eb3fb286b301d30eeb309fb92b0ae2328";
+const INSPECTOR_APPROVAL_BYTES = 923;
+const INSPECTOR_APPROVAL_SHA256 = "32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f";
 const INSPECTOR_BUNDLE_SHA256 = "a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9";
 const INSPECTOR_WVB_SHA256 = "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
+const INSPECTOR_WINDOWS_BYTES = 1_000;
+const INSPECTOR_WINDOWS_SHA256 = "eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b";
+const INSPECTOR_LINUX_BYTES = 996;
+const INSPECTOR_LINUX_SHA256 = "f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b";
 
 function Fail(Message) {
     throw new Error(Message);
@@ -104,6 +110,18 @@ function Readˉcanonical(FilePath, Description) {
         Fail(`${Description} is not canonical LF UTF-8.`);
     }
     return { bytes: Bytes, lines: Text.slice(0, -1).split("\n") };
+}
+
+function Verifyˉbinaryˉidentity(RelativePath, ExpectedBytes, ExpectedSha256, Description) {
+    const FilePath = path.join(REPOSITORY_ROOT, ...RelativePath.split("/"));
+    const Stat = fs.lstatSync(FilePath);
+    if (!Stat.isFile() || Stat.isSymbolicLink() || Stat.size !== ExpectedBytes) {
+        Fail(`The ${Description} identity differs.`);
+    }
+    const Bytes = fs.readFileSync(FilePath);
+    if (Bytes.length !== ExpectedBytes || Sha256(Bytes) !== ExpectedSha256) {
+        Fail(`The ${Description} identity differs.`);
+    }
 }
 
 function Assertˉlines(Observed, Expected, Description) {
@@ -171,10 +189,43 @@ function Expectedˉinspectorˉapproval() {
         "capability-count 5",
         "approve 0 console.write_line standard-output-line-v1",
         "approve 1 diagnostic.write_line standard-diagnostic-line-v1",
-        "approve 2 file.read_bytes fixed-read-only-object-v1",
+        "approve 2 file.read_bytes explicit-host-file-read-only-v1",
         "approve 3 process.argument immutable-argument-snapshot-v1",
         "approve 4 process.argument_count immutable-argument-snapshot-v1",
         "deny ambient-filesystem",
+        "deny file-mutation",
+        "deny environment",
+        "deny network",
+        "deny process-launch",
+        "deny clock",
+        "deny entropy",
+    ];
+}
+
+function Expectedˉinspectorˉlaunch(Target) {
+    const Windows = Target === "windows-x64";
+    return [
+        "windvale-launch-record 2",
+        "application windvale.wvb-inspector 0.1.0",
+        `generation 0.1.0-${Target}-32023a688e3a`,
+        `target ${Target}`,
+        `approval ${INSPECTOR_APPROVAL_SHA256} ${INSPECTOR_APPROVAL_BYTES}`,
+        `bundle ${INSPECTOR_BUNDLE_SHA256} 92781`,
+        "lock eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1 1021",
+        `wvb ${INSPECTOR_WVB_SHA256} 76527`,
+        Windows ?
+            "host-application 61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381 795136" :
+            "host-application d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627 794624",
+        "entry Main",
+        "provider-table 2 5",
+        "bind 0 console.write_line host-standard-output line-lf",
+        "bind 1 diagnostic.write_line host-standard-diagnostic line-lf",
+        "bind 2 file.read_bytes host-read-only-file argument-0",
+        "bind 3 process.argument immutable-launch-arguments 1",
+        "bind 4 process.argument_count immutable-launch-arguments 1",
+        "argument-count 1",
+        "argument 0 host-path-utf8 1 4096",
+        "deny path-enumeration",
         "deny file-mutation",
         "deny environment",
         "deny network",
@@ -271,7 +322,7 @@ function Verifyˉinspectorˉrecords(RecordsPath) {
         Fail("The inspector approval record root is not an ordinary directory.");
     }
     const RecordsRoot = fs.realpathSync(RecordsPath);
-    process.stdout.write("inspector approval step=verify-package item=1/3\n");
+    process.stdout.write("inspector approval step=verify-package-and-hosts item=1/4 targets=2\n");
     const Package = Verifyˉpackageˉidentity(
         INSPECTOR_IDENTITIES,
         "manifest",
@@ -280,8 +331,20 @@ function Verifyˉinspectorˉrecords(RecordsPath) {
     const Lock = Verifyˉpackageˉidentity(INSPECTOR_IDENTITIES, "lock", "WVB Inspector");
     Verifyˉpackageˉidentity(INSPECTOR_IDENTITIES, "provenance", "WVB Inspector");
     Verifyˉclosure(Package, Lock, INSPECTOR_CAPABILITIES, "WVB Inspector");
+    Verifyˉbinaryˉidentity(
+        "Artifacts/Native-Front-Door/windows-x64/wvdump.exe",
+        795_136,
+        "61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381",
+        "WVB Inspector Windows host application",
+    );
+    Verifyˉbinaryˉidentity(
+        "Artifacts/Native-Front-Door/linux-x64/wvdump.elf",
+        794_624,
+        "d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627",
+        "WVB Inspector Linux host application",
+    );
 
-    process.stdout.write("inspector approval step=verify-approval item=2/3\n");
+    process.stdout.write("inspector approval step=verify-approval item=2/4\n");
     const Approval = Readˉcanonical(
         path.join(RecordsRoot, INSPECTOR_APPROVAL_NAME),
         "Inspector approval record",
@@ -292,10 +355,37 @@ function Verifyˉinspectorˉrecords(RecordsPath) {
     }
     Assertˉlines(Approval.lines, Expectedˉinspectorˉapproval(), "Inspector approval record");
 
-    process.stdout.write("inspector approval step=report item=3/3\n");
+    process.stdout.write("inspector approval step=verify-launch-records item=3/4 targets=2\n");
+    const Windows = Readˉcanonical(
+        path.join(RecordsRoot, INSPECTOR_WINDOWS_NAME),
+        "Inspector Windows launch record",
+    );
+    const Linux = Readˉcanonical(
+        path.join(RecordsRoot, INSPECTOR_LINUX_NAME),
+        "Inspector Linux launch record",
+    );
+    if (Windows.bytes.length !== INSPECTOR_WINDOWS_BYTES ||
+        Sha256(Windows.bytes) !== INSPECTOR_WINDOWS_SHA256 ||
+        Linux.bytes.length !== INSPECTOR_LINUX_BYTES ||
+        Sha256(Linux.bytes) !== INSPECTOR_LINUX_SHA256) {
+        Fail("An inspector target launch-record identity differs.");
+    }
+    Assertˉlines(
+        Windows.lines,
+        Expectedˉinspectorˉlaunch("windows-x64"),
+        "Inspector Windows launch record",
+    );
+    Assertˉlines(
+        Linux.lines,
+        Expectedˉinspectorˉlaunch("linux-x64"),
+        "Inspector Linux launch record",
+    );
+
+    process.stdout.write("inspector approval step=report item=4/4\n");
     process.stdout.write(
-        `inspector approval status=Valid records=1 capabilities=5 ` +
-        `approval=${INSPECTOR_APPROVAL_SHA256}\n`,
+        `inspector approval status=Valid records=3 capabilities=5 targets=2 ` +
+        `approval=${INSPECTOR_APPROVAL_SHA256} windows=${INSPECTOR_WINDOWS_SHA256} ` +
+        `linux=${INSPECTOR_LINUX_SHA256}\n`,
     );
 }
 

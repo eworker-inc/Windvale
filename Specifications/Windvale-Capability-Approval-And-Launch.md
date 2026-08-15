@@ -1,16 +1,16 @@
-# Windvale capability approval and launch records version 1
+# Windvale capability approval and launch records
 
 ## Status
 
 Approval 1 and Launch Record 1 are implemented for the exact WVDB Query package
 selected by Milestone 2 under
 [Decision 0564](../Documents/Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md).
-Milestone 4 adds an exact portable approval for WVB Inspector while leaving its
-target launch records open until real host artifacts are measured. These records
-make the capability proofs inspectable as installation and launch policy without
-creating a general launcher, approval UI, or capability database. The expanded
-ten-case owner covers two applications, four records, and ten approved
-capabilities.
+Milestone 4 adds exact Approval 1 and Launch Record 2 records for WVB Inspector
+under [Decision 0570](../Documents/Decisions/0570-Wvb-Inspector-Launch-Record-2.md).
+These records make both capability proofs inspectable as installation and launch
+policy without creating a general launcher, approval UI, or capability database.
+The 13-case paired-host owner covers two applications, six records, ten approved
+capabilities, four target records, and one exact command execution per host.
 
 ## Approval record
 
@@ -34,10 +34,11 @@ The exact Approval 1 identity is 927 bytes with SHA-256
 
 `Windvale-Wvb-Inspector.wvapproval` binds its exact manifest, lock, Bundle 1,
 provenance, and WVB identities to five capabilities: standard output,
-diagnostics, read-only `file.read_bytes`, and immutable argument count/value
-snapshots. It carries the same explicit denials as WVDB Query. Its exact identity
-is 917 bytes with SHA-256
-`8654fa00406baed038c00abec993985eb3fb286b301d30eeb309fb92b0ae2328`.
+diagnostics, explicit-host-file read-only `file.read_bytes`, and immutable
+argument count/value snapshots. It carries the same explicit denials as WVDB
+Query while distinguishing one explicitly supplied host file from ambient
+enumeration or mutation. Its exact identity is 923 bytes with SHA-256
+`32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f`.
 
 ## Target launch records
 
@@ -62,6 +63,25 @@ The Windows record is exactly 1,315 bytes with SHA-256
 the Linux record is exactly 1,310 bytes with SHA-256
 `b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5`.
 
+### WVB Inspector Launch Record 2
+
+Launch Record 2 binds a portable package directly to one already installed,
+target-specific native host application. It adds the exact lock identity and
+uses a named `Main` entry rather than WVDB's composed WVO/image fields. Its
+provider-table version 2 binds exactly one 1..4,096-byte UTF-8 host-path argument
+to read-only `file.read_bytes`, plus immutable argument snapshots, output, and
+diagnostics. It denies enumeration, mutation, environment, network,
+process-launch, clock, and entropy authority.
+
+The selected host applications are the exact `wvdump` front doors already
+contained in the `v0.1.0` installers. Their embedded source product is the exact
+76,527-byte package WVB with SHA-256
+`293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
+The Windows Launch Record 2 is 1,000 bytes with SHA-256
+`eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b`;
+the Linux record is 996 bytes with SHA-256
+`f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b`.
+
 An approval records what authority the application owner accepts. A launch
 record proves which rights-limited providers and target bytes will be used.
 Neither record opens a file, starts a process, or proves that a provider remains
@@ -72,12 +92,13 @@ outcomes.
 
 `Verify-Wvdb-Approval-Records.mjs` independently rereads both live package,
 lock, and provenance identity sets; compares each package and lock capability
-closure; admits both exact approvals; and admits the two implemented WVDB target
-records. Its focused owner rejects added capability authority, substitution in
-either application, writable provider substitution, target substitution,
-approval-identity substitution, and truncation.
+closure; admits both exact approvals and all four target records; verifies both
+inspector host binaries; and executes the exact inspector command on each native
+host. Its focused owner rejects added capability authority, substitution in
+either application, host substitution, writable provider substitution, target
+substitution, approval-identity substitution, and truncation.
 
 These exact application records are an implemented product slice, not a general
-approval grammar promise. Inspector target launch records, a configurable
-directory, a new provider kind, or a durable approval store require a successor
-contract rather than unversioned fields.
+approval grammar promise. A configurable directory, mutable provider, dynamic
+approval UI, or durable approval store requires a successor contract rather
+than unversioned fields.

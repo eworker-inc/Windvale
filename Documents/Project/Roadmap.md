@@ -185,8 +185,9 @@ candidate without changing the public record, rejects stale state, and publishes
 rollback on both host paths without changing `v0.1.0`. WVDB Query and the WVB
 inspector now rebuild into two exact admitted bundles that coexist in one
 immutable store and share only the canonical license object. Both have exact
-portable approvals; the inspector still needs measured target launch records.
-Release-envelope inventory, complete launch closure, active-generation command
+portable approvals and measured Windows/Linux launch records; the inspector's
+exact installed host executes on each platform. Release-envelope inventory,
+active-generation command
 dispatch, and the complete installation demonstration remain open.
 
 ## Milestone 2: package-backed host application — complete

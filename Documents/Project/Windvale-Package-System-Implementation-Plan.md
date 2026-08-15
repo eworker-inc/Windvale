@@ -62,8 +62,8 @@ or authority grant.
 | Immutable resource semantics | Foundation resource store and read-only directory snapshot library | Reusable for package resources and tests |
 | Random-access storage semantics | `storage.random_access_v1`, execution context 9, ABI-23 provider calls, Windows/Linux storage leaves, and durable database recovery | Focused native provider exists; it owns one fixed database object and is not a package-store or general launcher binding |
 | Hosted CLI basics | Process arguments, console/diagnostic output, whole-file read/write, native tool packaging | Enough for the first parser/verifier tools |
-| Capability metadata | WVB capability catalog, root transitive approval, Package 1 complete capability closure, two canonical installed approvals, and WVDB target-specific launch records | Both portable approvals are implemented; inspector target records, general dynamic launcher binding, revocation, and generation policy remain open |
-| Useful second package | Exact `windvale.wvb-inspector` manifest, lock, provenance, and 76,527-byte WVB | Implemented candidate with a distinct five-capability closure; approval/launch and general resolution remain |
+| Capability metadata | WVB capability catalog, root transitive approval, Package 1 complete capability closure, two canonical installed approvals, and four target-specific launch records | Both exact package paths now have approval and paired-host launch closure; general dynamic launcher binding, revocation, and generation policy remain open |
+| Useful second package | Exact `windvale.wvb-inspector` manifest, lock, provenance, 76,527-byte WVB, approval, and paired native-host records | Implemented with a distinct five-capability closure and exact execution on each host; general resolution remains |
 
 The merged durable-database and compiler batch now provides valuable `u64`,
 nested-record, byte-concatenation, provider-table, positioned-storage, flush,

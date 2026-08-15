@@ -9,7 +9,7 @@ executable 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 7652
 capability-count 5
 approve 0 console.write_line standard-output-line-v1
 approve 1 diagnostic.write_line standard-diagnostic-line-v1
-approve 2 file.read_bytes fixed-read-only-object-v1
+approve 2 file.read_bytes explicit-host-file-read-only-v1
 approve 3 process.argument immutable-argument-snapshot-v1
 approve 4 process.argument_count immutable-argument-snapshot-v1
 deny ambient-filesystem

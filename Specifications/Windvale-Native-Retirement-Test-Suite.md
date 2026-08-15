@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 6,390 LF-only bytes with SHA-256
-`54c38d7fafc32861510df6e21d46f7ce6817cc419b6fc1351082665c6e72cb49`.
+`Tests/Native/Retirement-Suite.txt` is 6,403 LF-only bytes with SHA-256
+`517dc03ec213cf6a16e89e6555cb261c5b833ac8f3b368da33ae099d7f13e80e`.
 The first line is exactly:
 
 ```text
@@ -106,7 +106,7 @@ file. The current plan is:
 | `installers` | `Test-Installers` | 8 | `native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified` |
 | `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified` |
 | `release-envelope` | `Test-Release-Envelope` | 16 | `native release envelope status=Passed cases=16 signatures=4 artifacts=11 protected-private-keys=2` |
-| `wvdb-approval` | `Test-Wvdb-Approval-Records` | 10 | `native application approval status=Passed cases=10 applications=2 records=4 capabilities=10 targets=2` |
+| `wvdb-approval` | `Test-Wvdb-Approval-Records` | 13 | `native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1` |
 
 The version-2 plan therefore contains exactly 62 suites and 3,452 cases. Its
 balanced shard inventory is:
@@ -153,7 +153,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 62, Passed: 62, Failed: 0, Cases: 3459
+Suites: 62, Passed: 62, Failed: 0, Cases: 3462
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

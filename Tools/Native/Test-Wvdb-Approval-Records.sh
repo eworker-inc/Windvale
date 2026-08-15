@@ -15,6 +15,8 @@ windows=Windvale-Wvdb-Query.windows-x64.wvlaunch
 linux=Windvale-Wvdb-Query.linux-x64.wvlaunch
 inspector_records=$repository_root/Distribution/Applications/Wvb-Inspector
 inspector_approval=Windvale-Wvb-Inspector.wvapproval
+inspector_windows=Windvale-Wvb-Inspector.windows-x64.wvlaunch
+inspector_linux=Windvale-Wvb-Inspector.linux-x64.wvlaunch
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-wvdb-approval.XXXXXXXX") || exit 1
 cleanup() {
@@ -31,47 +33,67 @@ for directory in Copy Extra Capability Writable Target Approval-Identity Truncat
     cp -- "$records/$windows" "$work/$directory/$windows" || exit 1
     cp -- "$records/$linux" "$work/$directory/$linux" || exit 1
 done
-mkdir -- "$work/Inspector-Capability" || exit 1
-cp -- "$inspector_records/$inspector_approval" \
-    "$work/Inspector-Capability/$inspector_approval" || exit 1
+for directory in Inspector-Capability Inspector-Host Inspector-Target; do
+    mkdir -- "$work/$directory" || exit 1
+    cp -- "$inspector_records/$inspector_approval" "$work/$directory/$inspector_approval" || exit 1
+    cp -- "$inspector_records/$inspector_windows" "$work/$directory/$inspector_windows" || exit 1
+    cp -- "$inspector_records/$inspector_linux" "$work/$directory/$inspector_linux" || exit 1
+done
 
-echo 'native application approval step=verify-wvdb-source item=1/10'
+echo 'native application approval step=verify-wvdb-source item=1/13'
 node "$verifier" verify "$records" >/dev/null || exit $?
 
-echo 'native application approval step=verify-wvdb-copy item=2/10'
+echo 'native application approval step=verify-wvdb-copy item=2/13'
 node "$verifier" verify "$work/Copy" >/dev/null || exit $?
 
-echo 'native application approval step=verify-inspector-source item=3/10'
+echo 'native application approval step=verify-inspector-source item=3/13'
 node "$verifier" verify-inspector "$inspector_records" >/dev/null || exit $?
 
-echo 'native application approval step=reject-inspector-capability-substitution item=4/10'
+echo 'native application approval step=execute-inspector-command item=4/13 target=linux-x64'
+"$repository_root/Artifacts/Native-Front-Door/linux-x64/wvdump.elf" \
+    "$repository_root/Artifacts/Native-Front-Door/Wvb/Wvb-Inspector.wvb" \
+    >"$work/Inspector-Run.txt" || exit $?
+node -e "const x=require('node:fs').readFileSync(process.argv[1],'utf8').replaceAll('\r\n','\n').split('\n');if(x[0]!=='wvdump 1'||!x[1].startsWith('module version=1.11 profile=hosted '))process.exit(1);" \
+    "$work/Inspector-Run.txt" || exit $?
+
+echo 'native application approval step=reject-inspector-capability-substitution item=5/13'
 sed -i 's/file\.read_bytes/file.write_bytes/' \
     "$work/Inspector-Capability/$inspector_approval" || exit 1
 if node "$verifier" verify-inspector "$work/Inspector-Capability" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval step=reject-extra-approval item=5/10'
+echo 'native application approval step=reject-inspector-host-substitution item=6/13'
+sed -i 's/61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381/0000000000000000000000000000000000000000000000000000000000000000/' \
+    "$work/Inspector-Host/$inspector_windows" || exit 1
+if node "$verifier" verify-inspector "$work/Inspector-Host" >/dev/null 2>&1; then exit 1; fi
+
+echo 'native application approval step=reject-inspector-target-substitution item=7/13'
+cp -- "$work/Inspector-Target/$inspector_linux" \
+    "$work/Inspector-Target/$inspector_windows" || exit 1
+if node "$verifier" verify-inspector "$work/Inspector-Target" >/dev/null 2>&1; then exit 1; fi
+
+echo 'native application approval step=reject-extra-approval item=8/13'
 printf '%s\n' 'approve 5 network.connect ambient-network' >>"$work/Extra/$approval"
 if node "$verifier" verify "$work/Extra" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval step=reject-wvdb-capability-substitution item=6/10'
+echo 'native application approval step=reject-wvdb-capability-substitution item=9/13'
 sed -i 's/console\.write_line/console.write/' "$work/Capability/$approval" || exit 1
 if node "$verifier" verify "$work/Capability" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval step=reject-writable-provider item=7/10'
+echo 'native application approval step=reject-writable-provider item=10/13'
 sed -i 's/fixed-read-only-object/mutable-directory-object/' "$work/Writable/$windows" || exit 1
 if node "$verifier" verify "$work/Writable" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval step=reject-target-substitution item=8/10'
+echo 'native application approval step=reject-target-substitution item=11/13'
 cp -- "$work/Target/$linux" "$work/Target/$windows" || exit 1
 if node "$verifier" verify "$work/Target" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval step=reject-approval-identity-substitution item=9/10'
+echo 'native application approval step=reject-approval-identity-substitution item=12/13'
 sed -i 's/3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71/0000000000000000000000000000000000000000000000000000000000000000/' \
     "$work/Approval-Identity/$linux" || exit 1
 if node "$verifier" verify "$work/Approval-Identity" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval step=reject-truncated-record item=10/10'
+echo 'native application approval step=reject-truncated-record item=13/13'
 printf '%s\n' 'windvale-launch-record 1' >"$work/Truncated/$windows"
 if node "$verifier" verify "$work/Truncated" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native application approval status=Passed cases=10 applications=2 records=4 capabilities=10 targets=2'
+echo 'native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1'

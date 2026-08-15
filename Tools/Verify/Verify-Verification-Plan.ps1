@@ -1387,17 +1387,20 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'WVDB approval and launch owner'
+        Name = 'application approval and launch owner'
         Paths = @(
             'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvapproval',
             'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.windows-x64.wvlaunch',
             'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.linux-x64.wvlaunch',
+            'Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvapproval',
+            'Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.windows-x64.wvlaunch',
+            'Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.linux-x64.wvlaunch',
             'Tools/Release/Verify-Wvdb-Approval-Records.mjs',
             'Tools/Native/Test-Wvdb-Approval-Records.cmd',
             'Tools/Native/Test-Wvdb-Approval-Records.sh',
             'Specifications/Windvale-Capability-Approval-And-Launch.md'
         )
-        Suites = @('wvdb-approval')
+        Suites = @('packages', 'package-format', 'wvdb-approval')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1565,7 +1568,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3459 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3462 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 
