@@ -7,7 +7,8 @@ selected by Milestone 2 under
 [Decision 0564](../Documents/Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md).
 They make the existing five-capability proof inspectable as installation and
 launch policy without creating a general launcher, approval UI, or capability
-database.
+database. The eight-case owner passes on Windows and Linux in Verify run
+31883543587.
 
 ## Approval record
 

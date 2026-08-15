@@ -1,6 +1,6 @@
 # Decision 0564: First installed capability approval and launch records
 
-- Status: Implemented candidate
+- Status: Implemented
 - Date: 2026-08-15
 - Advances: Milestone 3 and Decisions 0145, 0530, and 0561
 - Contract: [Capability approval and launch records version 1](../../Specifications/Windvale-Capability-Approval-And-Launch.md)
@@ -34,6 +34,9 @@ approval evidence.
 Own the records with an independent verifier and an eight-case paired-host
 suite. Substitution of capability names, additional authority, writable
 providers, targets, approval identities, or incomplete records is rejection.
+
+The eight-case owner passed on Windows and Linux in Verify run 31883543587 at
+commit `fcc77c2afb8c1daf0465041983695866d6e8b826`.
 
 ## Consequences
 

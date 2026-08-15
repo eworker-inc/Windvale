@@ -1,6 +1,6 @@
 # Decision 0563: First release envelope and key policy
 
-- Status: Implemented candidate
+- Status: Implemented
 - Date: 2026-08-15
 - Advances: Milestone 3 and Decisions 0183, 0198, and 0562
 - Contract: [Windvale release envelope version 1](../../Specifications/Windvale-Release-Envelope.md)
@@ -43,6 +43,10 @@ Never check in, upload, log, or place an official private key in CI. The
 repository may implement the ceremony and qualify the format without claiming
 that an official trust root exists. Creating that root is a separate explicit
 custody action by the project owner.
+
+The creator, independent verifier, and thirteen-case owner passed on Windows
+and Linux in Verify run 31883543587 at commit
+`fcc77c2afb8c1daf0465041983695866d6e8b826`.
 
 ## Consequences
 

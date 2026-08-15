@@ -2,12 +2,12 @@
 
 ## Status
 
-Release Envelope 1 is the implemented candidate for the first Windvale preview
-release-signing and offline-verification boundary under
+Release Envelope 1 is the implemented, paired-host-qualified candidate for the
+first Windvale preview release-signing and offline-verification boundary under
 [Decision 0563](../Documents/Decisions/0563-First-Release-Envelope-And-Key-Policy.md).
-Its focused owner is locally passing; official key generation, paired-host
-qualification, final release-state selection, and `v0.1.0` publication remain
-separate gates.
+Its thirteen-case focused owner passes on Windows and Linux in Verify run
+31883543587. Official key generation, final release-state qualification, and
+`v0.1.0` publication remain separate gates.
 
 The format is deliberately smaller than The Update Framework. It is a bounded
 offline release envelope with one pinned root and one delegated release key; it
