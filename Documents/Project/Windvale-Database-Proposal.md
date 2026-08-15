@@ -499,12 +499,18 @@ The first durable agent profile requires:
   completion, and indeterminate completion outcomes.
 
 Later memory and retrieval stages may add indexes over attributed claims,
-provenance, confidence, contradiction, recency, and access scope. Those indexes
-must remain derived from canonical admitted records and rebuildable without
-changing their meaning. The first profile does not require SQL, a network server,
-distributed consensus, multi-writer runs, vector search, or database-owned agent
-policy. The database stores and retrieves bounded truth-bearing records; it does
-not decide what a model may believe or what an agent may do.
+provenance, support state, contradiction, dependent artifacts, source and
+projection generation, action identity, review state, recency, expiry, and access
+scope. Those indexes must remain derived from canonical admitted records and
+rebuildable without changing their meaning. The first durable product profile
+also requires a backup manifest that binds its event prefix, snapshots,
+idempotency evidence, and large-body references, plus a restore result that
+rejects missing or changed dependencies.
+
+The first profile does not require SQL, a network server, distributed consensus,
+multi-writer runs, vector search, or database-owned agent policy. The database
+stores and retrieves bounded truth-bearing records; it does not decide what a
+model may believe, which projection is sufficient, or what an agent may do.
 
 ## Differential and performance evidence
 

@@ -43,6 +43,26 @@ extractor, a skeptical reviewer, and a future delegated worker. Selecting a more
 capable or different model changes processing capability; it does not create a
 permission boundary or make its output canonical.
 
+## Relationship to *The Mind We Build*
+
+The current E-Worker v7 edition of *The Mind We Build* is the narrative
+completeness guide for this proposal. This document translates its arrangement
+into Windvale-owned semantic, capability, persistence, and operating-system
+boundaries; the book does not become a serialized format or an implementation
+dependency.
+
+The complete design therefore includes: an agent larger than its model; three
+change clocks; the seven digital-subconscious duties; compiled attention; memory
+meaning, doors, and clean-room lineage; canonical-source perception; one voice
+supported by bounded cognitive operations; typed claims and coherent work;
+governed hands; continuity across replaceable models and processes; inspectable
+influence; consistent meaning across workplaces and domains; and transparent
+human metaphors without claims of human subjective experience.
+
+The first Windvale implementation slice remains intentionally smaller than that
+complete design. Later sections and the companion plan identify the gates that
+must qualify before a product may claim the complete arrangement.
+
 ## Terminology
 
 The first contract should use these terms precisely:
@@ -63,6 +83,30 @@ The product may describe the foreground and subconscious as two kinds of
 activity. Internal contracts should still preserve one agent identity and one
 run truth. Bounded operators, skeptics, and archivists are roles inside the run,
 not peer agents by default.
+
+## Three clocks and one identity
+
+The agent changes on three deliberately separate clocks:
+
+- the **operation clock** changes attention, live state, evidence, plans, and
+  context from one bounded operation to the next;
+- the **working clock** changes accepted memory, procedures, domain knowledge,
+  policies, tool catalogs, and agent definitions through owned review; and
+- the **foundation clock** changes the selected model, model profile, runtime,
+  compiler, or other foundational implementation through a qualified release.
+
+An operation-clock transition must not silently promote working knowledge. A
+working-clock change does not rewrite the evidence of earlier runs. A
+foundation-clock upgrade does not create a new durable agent identity or allow
+the new model to claim personal memory of the old model.
+
+Every operation records the effective agent-definition, model, provider,
+policy, tool-catalog, memory-mount, source, and protocol generations. Adopting a
+new working or foundation generation is an explicit transition with
+compatibility validation, required migration or reconstruction, and a visible
+revisit set for assumptions that depended on the previous generation. A
+provider route or cache may change faster than the foundation, but it remains
+execution evidence rather than agent identity.
 
 ## Mental model
 
@@ -184,9 +228,12 @@ The digital subconscious does not:
 | Platform adapters | Future focused modules under `Libraries/Platform/` | Model invocation, run storage, artifact storage, source retrieval, clocks, and other rights-limited capabilities. |
 | Model provider | Bound provider instance | Model-specific transport and response evidence; no ownership of run state or permissions. |
 | Canonical source | Existing source-specific owner | Current source bytes or records, revision, authorization, and mutation semantics. |
+| Domain and business knowledge | Existing domain-specific owners | Services, policy, pricing, identities, schedules, client or project records, and other meaning that must not collapse into generic agent facts. |
+| Search and projections | Rebuildable projection owners | Structural, lexical, semantic, and typed-relationship maps over exact source generations, with freshness and failure evidence. |
 | Tool/action gateway | Capability owner and policy owner | Input validation, effect normalization, approval, lease validation, execution fencing, and observed outcome. |
 | Durable run evidence | Agent run-store owner | Append-only events, compact snapshots, checkpoints, manifests, action evidence, and terminal handoff. |
 | Large evidence and artifacts | Rights-limited immutable or mutable storage owner | Bounded bytes addressed by verified references; not duplicated into every event. |
+| User experience | Focused applications and a later advanced inspector | Task-specific commands and understandable projections over public agent capabilities; never an alternate state owner. |
 | Windvale OS mechanism | Kernel/WVA and isolated services | Resource domains, processes, IPC, timers, revocation, teardown, and provider isolation. |
 
 No UI view owns durable agent state. No model-provider adapter owns plans,
@@ -248,7 +295,8 @@ The first live-state projection should include:
 - objective and accepted refinements;
 - plan steps and current position;
 - protected constraints and authority boundaries;
-- verified, uncertain, and challenged facts with source references;
+- a claim ledger containing verified, uncertain, disputed, stale, unsupported,
+  and challenged propositions with source references;
 - decisions, rationale, and revisit conditions;
 - open questions;
 - active artifacts and their revisions;
@@ -276,6 +324,25 @@ The upper layers are protected. Flexible history, summaries, and bulky results
 are trimmed first. The compiler reserves the operation's maximum output before
 admitting input and records per-layer size, rejection, omission, and trimming
 evidence.
+
+Every eligible context item has one attention state, independent from whether
+its underlying memory or source remains durable:
+
+| State | Meaning |
+| --- | --- |
+| Pinned | Protected in the current operation because removing it could change the task, authority, or truthful status. |
+| Active | Selected as directly useful to the current phase. |
+| Referenced | Represented by a bounded descriptor while its larger body remains in an authorized evidence owner. |
+| Dormant | Authorized and available but not selected for this operation. |
+| Summarized | Represented by a smaller source-linked transformation with exact lineage. |
+| Excluded | Deliberately ineligible to influence this branch. |
+| Superseded | Replaced by a newer source, decision, or accepted record. |
+| Expired | Ineligible until evidence or authority is refreshed. |
+
+Attention transitions are recorded rather than inferred from prompt text. An
+item leaving active context is not deleted, and an excluded item cannot return
+through a summary, cache, projection, or derived memory that depends solely on
+it.
 
 Every model or deterministic cognitive operation receives a context manifest.
 The manifest should identify:
@@ -350,6 +417,13 @@ Clean-room branches must exclude descendants as well as direct source bytes. If
 a summary, memory, claim, index entry, or relationship derives only from an
 excluded attempt, its lineage makes it ineligible for that branch.
 
+Retention, archival, deletion, legal hold, and protected-history policy remain
+separate from model selection. Deleting or forbidding a sole source invalidates
+its derived memories and projections; they are removed from eligibility or
+rebuilt from remaining permitted sources. A mixed derivation that cannot prove
+which content came from allowed sources is rebuilt or excluded rather than
+partially trusted.
+
 ## Retrieval and source evidence
 
 The preferred retrieval ladder is:
@@ -366,6 +440,64 @@ Direct and structural access should qualify before embeddings or a general
 knowledge graph become foundation dependencies. Search projections record their
 source generation and expose stale, incomplete, conflicting, unavailable, and
 failed outcomes rather than returning plausible text as if it were current.
+
+Every material retrieval produces a bounded evidence bundle containing:
+
+- query identity, objective, authorized scope, mounts, and exclusions;
+- source and projection generations plus the strategies attempted;
+- selected source identities, exact ranges, fingerprints, trust, sensitivity,
+  and epistemic kinds;
+- supporting and contradicting passages;
+- omissions, continuation, truncation, and unavailable-source evidence;
+- freshness and projection status; and
+- a sufficiency result of complete, partial, disputed, stale, absent, or not
+  evaluated.
+
+A projection is a rebuildable map, never a second reality. It declares current,
+partial, building, stale, failed, or unavailable state. Source changes
+invalidate affected projection generations and every dependent claim or
+artifact verification records that invalidation until current evidence is
+opened and evaluated again.
+
+## Claims, evidence, and coherence
+
+The central product of the agent is evidence-grounded coherent work, not merely
+fluent output. A claim record should bind:
+
+- one bounded proposition and its epistemic kind: fact, report, allegation,
+  observation, preference, inference, decision, or draft assertion;
+- the source classes expected to support it;
+- supporting, contradicting, and missing evidence references;
+- relevant source revisions, time or validity interval, and scope;
+- support state: complete, partial, disputed, stale, absent, or intentionally
+  unverified;
+- dependent decisions, artifact sections, actions, and verification results;
+  and
+- the owner responsible for acceptance, correction, or final judgment.
+
+An accepted allegation proves that an allegation was recorded; it does not turn
+the allegation into an accepted fact. A price, compiler-derived reference,
+story event, client preference, and medical observation may share evidence
+machinery while retaining different domain meaning and authority.
+
+The coherent-work loop is:
+
+1. clarify the outcome and active authority;
+2. select permitted memory scopes and exclusions;
+3. pin current source and projection generations;
+4. retrieve evidence through the clearest available sense;
+5. update claims, decisions, uncertainties, and the plan;
+6. use bounded cognitive operations where focused judgment helps;
+7. propose a change through the canonical owner;
+8. review and execute the exact authorized action;
+9. refresh affected projections;
+10. verify the resulting artifact, record, or external effect;
+11. promote durable knowledge deliberately; and
+12. produce a truthful source-linked handoff.
+
+There is no single opaque coherence score. Verification names what was checked,
+what passed, what failed, what remains unsupported or uncertain, and who owns
+the final decision.
 
 ## Tools, actions, and authority
 
@@ -392,6 +524,21 @@ The proposing model never receives a credential or the ability to mint, widen,
 transfer, or renew that lease. Execution is fenced by an idempotency identity,
 and an indeterminate outcome is investigated or surfaced instead of replayed.
 
+Action state is reconstructed from separate append-only evidence, not one
+mutable status flag. The evidence chain contains the normalized proposal,
+review decision or denial, permission receipt, lease issue/revocation/expiry,
+execution-start fence, owner-observed outcome, and verification result. A
+material change to recipient, target, revision, amount, disclosure, deletion,
+cost, or scope creates a new envelope and requires a new decision.
+
+Normal treatment follows consequence: authorized reads and exact calculations
+may execute and be recorded; scoped reversible mutations require the applicable
+delegation, checkpoint, and verification; external communication, publishing,
+purchases, permission changes, sensitive disclosure, live-data mutation, and
+broad deletion require exact approval unless a visible policy delegates that
+precise scope; unauthorized, cross-scope, secret-leaking, unbounded, or unclear
+effects are denied.
+
 ## Portability and runtime placement
 
 The portable semantic core must not depend on E-Worker DTOs, EWDB implementation
@@ -410,6 +557,24 @@ tool providers in separately supervised resource domains where risk and
 availability justify isolation. The kernel supplies process, IPC, timer,
 accounting, revocation, and teardown mechanisms; it does not parse prompts,
 compile context, classify memory, or decide business policy.
+
+## Workplaces and domain composition
+
+Focused applications should remain the ordinary front door. A later advanced
+agent inspector may expose runs, sources, memories, operations, actions, and
+lineage across artifacts. Both consume the same public agent capabilities and
+neither owns hidden task state.
+
+The reusable skeleton remains stable across software, documents, research,
+business work, legal drafting, long-form writing, and other domains. Domain
+owners retain meaning: compiler evidence outranks a guessed code relationship;
+approved pricing remains with its business owner; allegations stay distinct
+from accepted facts; story canon changes only through its owner; and organized
+medical information does not create clinical authority or regulated readiness.
+
+Different hosts and product surfaces may bind different providers, tools, and
+domain capabilities without changing the meaning of objectives, claims,
+memory, authority, checkpoints, and action evidence.
 
 ## Provider capabilities
 
@@ -433,6 +598,41 @@ model adapter may use one strictly validated byte-envelope capability because
 the current native provider table already supports `bytes`; that is an adapter
 transition, not permission to make opaque JSON or provider payloads the portable
 agent contract.
+
+Every model or deterministic-processor route records the selected capability
+profile, processor/model version, provider generation, placement, permitted
+data class, context and output limits, usage evidence, cancellation/deadline
+support, and the routing reasons among capability, privacy, risk, quality,
+latency, and cost. A deliberate route is not a failure fallback. A provider
+failure, fallback, repair, truncation, or degraded result emits visible evidence
+and cannot silently change the processor contract.
+
+## Account, data, and operational controls
+
+Account, workspace, principal, run, source, memory, artifact, result-reference,
+cursor, and capability identities are revalidated at the service that owns the
+referenced state. Possessing one identifier is not authority to cross an account,
+workspace, memory mount, clean-room branch, or source scope.
+
+Provider placement receives only the minimum permitted context and source ranges
+needed for the operation. Credentials, raw native storage locations, private
+service metadata, unrelated tenant information, and secret values stay outside
+portable records, model context, browser views, and telemetry. Correlation may
+link run, operation, model, tool, action, projection, and verification evidence
+without logging sensitive payloads by default.
+
+A deployed host must independently gate the executor, mutating tools, durable
+memory, connected sources, and consequential actions. Provider-, tool-group-,
+account-, and workspace-level pause or deny controls fail closed while leaving
+the run inspectable and recoverable. Client presentation flags are never a
+security boundary.
+
+Before external users, the selected profile requires tested backup and restore
+for run evidence, checkpoints, memory, and artifact references; rate, model-call,
+tool-call, concurrency, storage, and cost quotas; retention and redaction policy;
+and alerts for stuck runs, repeated invalid output, unknown effects, denied
+actions, recovery failure, and projection lag. These are product qualification
+requirements, not kernel mechanisms or reasons to put policy in Windvale OS.
 
 ## Resource and failure model
 
@@ -470,6 +670,33 @@ context compilation. It does not rewrite the evidence that the earlier run was
 influenced by that item. Protected objectives, policies, canonical source state,
 and permission evidence cannot be removed through this feature.
 
+The inspector exposes owned influences and outcomes, not private model
+chain-of-thought or a fictional explanation of internal activations. A compact
+view may summarize what mattered; an advanced view opens exact manifests,
+evidence, lineage, decisions, and effect records.
+
+## Human-language transparency
+
+Human metaphors are useful only when their engineering meaning remains
+available:
+
+- **remembered** means an owned memory or canonical source influenced the
+  compiled context;
+- **noticed** means retrieval or a cognitive operation introduced evidence into
+  attention;
+- **forgot** must be qualified as excluded, externalized, summarized, archived,
+  expired, or deleted under policy;
+- **doubted** means a skeptical operation or deterministic check recorded
+  contradiction, missing support, excessive scope, or risk;
+- **learned** must identify temporary run state, reviewed durable memory,
+  changed procedure or agent definition, or a later model release; and
+- **changed its mind** means a source revision, challenged decision, new
+  evidence, or changed context produced an owned state transition.
+
+These terms do not claim feeling, dreaming, suffering, consciousness, a hidden
+self, or biological continuity. They describe inspectable functions of the
+arrangement.
+
 ## First qualification target
 
 The first convincing Windvale proof should be deterministic and read-only:
@@ -487,6 +714,26 @@ The first convincing Windvale proof should be deterministic and read-only:
 This proves the semantic arrangement without claiming production model quality,
 networking, durable memory, mutation authority, scheduling, or Windvale OS
 hosting.
+
+## Book-completeness qualification
+
+Later gates should prove the complete design through two reference workflows:
+
+- a software workflow exercises repository rules, exact source and compiler
+  evidence, bounded edits, refreshed projections, focused verification, and a
+  truthful handoff; and
+- a proposal workflow exercises approved business knowledge, current pricing,
+  client-scoped memory, scheduling evidence, a source-linked claim ledger,
+  skeptical review, document verification, an influence summary, exact send
+  approval, and unknown-send reconciliation.
+
+Before describing the design as complete, deterministic evidence should also
+show a 50-operation context-pressure run; clean-room descendant exclusion;
+source-change invalidation; provider substitution without identity loss;
+reviewed memory promotion and correction; action evidence reconstructed after
+restart; cross-account and cross-workspace rejection; backup/restore
+preservation; quota and pause behavior; and understandable influence views that
+do not expose private model reasoning.
 
 ## Non-goals of the first architecture slice
 

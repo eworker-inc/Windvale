@@ -112,9 +112,15 @@ and [implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md) establi
 direction but intentionally leave the following choices open until a fixed corpus
 can measure them:
 
-- What are the exact first wire-independent agent, run, event, context-manifest,
-  context-diff, checkpoint, and cognitive-operation records, and what byte, item,
-  depth, diagnostic, and work limits bound each one?
+- What are the exact first wire-independent agent, run, event, typed-claim,
+  context-manifest, context-diff, checkpoint, and cognitive-operation records,
+  and what byte, item, depth, diagnostic, and work limits bound each one?
+- Which agent-definition, policy, model, provider, tool-catalog, memory-mount,
+  source, and protocol generations belong to the operation, working-knowledge,
+  and foundation clocks, and what enters the revisit set when one changes?
+- Which exact epistemic and support kinds are sufficient for the first claim
+  ledger, and how do later domain owners add meaning without turning every
+  allegation, preference, compiler result, or observation into a generic fact?
 - Which deterministic fixture best proves the digital subconscious can preserve
   direction, prepare attention, retrieve associations without promoting them to
   truth, carry doubt, watch authority, and maintain continuity without acting as a
@@ -122,6 +128,9 @@ can measure them:
 - Which identities, sequence numbers, deadlines, and timestamps remain supplied
   inputs in the first portable kernel, and which later semantic clock or entropy
   capabilities should create them?
+- What is the smallest evidence-bundle and projection-lifecycle contract that
+  proves freshness, contradiction, omission, truncation, sufficiency,
+  invalidation, and rebuild without requiring embeddings or a general graph?
 - Once the database proposal's durable writer contract is finalized, what exact
   mapping provides expected-revision event append, idempotency replay/conflict,
   ordered replay, checkpoints, and large-body references without inventing a
@@ -132,6 +141,11 @@ can measure them:
   output reported?
 - Which first action capability demonstrates lease-bound governed effect without
   making model output executable authority or retrying an indeterminate mutation?
+- Which retention, deletion, legal-hold, backup/restore, quota, telemetry,
+  provider-placement, and emergency-pause responsibilities belong to portable
+  agent records, host product policy, or existing platform capabilities?
+- What exact software and proposal fixtures jointly prove the complete design
+  while keeping business-domain semantics outside the portable kernel?
 
 ## Later architecture questions
 

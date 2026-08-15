@@ -24,6 +24,11 @@ planes:
 The digital subconscious remains a support plane of the same agent run. The
 first product does not create a second autonomous agent identity.
 
+The current E-Worker v7 edition of *The Mind We Build* supplies the narrative
+completeness checklist. Windvale owns its own record encodings, limits,
+capability contracts, storage mappings, and host qualification; neither the
+book nor E-Worker DTOs become runtime dependencies.
+
 ## Planning decision
 
 Begin with a capability-free portable semantic kernel and deterministic scripted
@@ -81,6 +86,16 @@ Every stage preserves these rules:
    supplies another provider composition rather than redefining the agent.
 10. Each stage has a finite deterministic exit gate before broader capability is
     added.
+11. Operation, working-knowledge, and foundation/model changes remain separate
+    clocks with recorded generations and explicit adoption.
+12. Material prose claims remain typed, source-linked, and visibly complete,
+    partial, disputed, stale, absent, or intentionally unverified.
+13. Projection and memory derivations remain rebuildable and ineligible when
+    their permitted source lineage disappears.
+14. Account, workspace, principal, source, memory, artifact, and capability
+    identities are revalidated by their owning services.
+15. Operational pause, quota, backup, restore, redaction, and alerting controls
+    are product gates, not optional post-launch hardening.
 
 ## Stage 0 — Freeze vocabulary and deterministic corpus
 
@@ -93,12 +108,16 @@ source implementation begins.
 
 | ID | Work item | Required output |
 | --- | --- | --- |
-| WVAG-001 | Define the first run-state vocabulary. | Closed status, plan, fact, decision, blocker, verification, budget, and artifact kinds. |
+| WVAG-001 | Define the first run-state vocabulary. | Closed status, plan, typed claim, decision, blocker, verification, budget, and artifact kinds. |
 | WVAG-002 | Define the first event vocabulary. | Run-created, plan-updated, source-observed, context-compiled, challenge-proposed, challenge-merged, checkpoint-created, and terminal events. |
 | WVAG-003 | Define identity and revision rules. | Supplied deterministic identities for fixtures, nonzero monotonic run revision, idempotency identity, and no civil-time ordering dependency. |
 | WVAG-004 | Define first context and challenge records. | Bounded candidates, manifest items, omissions, context diff, skeptic result, and merge outcome. |
 | WVAG-005 | Create accepted and rejected corpus cases. | Valid, boundary, truncated, oversized, duplicate, reordered, stale-revision, replay, invalid-merge, and protected-state cases. |
 | WVAG-006 | Define deterministic output identities. | Exact canonical bytes and SHA-256 for final state, manifest, checkpoint, and handoff fixtures. |
+| WVAG-007 | Define the three clocks. | Operation, working-knowledge/configuration, and foundation/model generation records plus explicit adoption and revisit rules. |
+| WVAG-008 | Freeze attention lifecycle terms. | Pinned, active, referenced, dormant, summarized, excluded, superseded, and expired states with valid transitions. |
+| WVAG-009 | Define the first claim and evidence vocabulary. | Epistemic kind, support state, source requirements, supporting/contradicting/missing evidence, dependent artifacts, and owner. |
+| WVAG-010 | Define human-facing cognitive terms. | Exact observable meanings for remembered, noticed, forgot, doubted, learned, and changed its mind without subjective claims. |
 
 ### Exit gate
 
@@ -107,6 +126,8 @@ source implementation begins.
   operating-system process service.
 - A reviewer can distinguish run truth, context projection, cognitive proposal,
   and canonical evidence without relying on product-specific DTOs.
+- A reviewer can distinguish model knowledge, run evidence, live state, durable
+  memory, active context, and each of the three change clocks.
 - A numbered decision is ready to accept only this first bounded contract.
 
 ## Stage 1 — Portable run-state kernel
@@ -129,10 +150,11 @@ contract decision.
 | --- | --- | --- |
 | WVAG-101 | Admit one run root. | Exact version, objective, constraints, policy generation, budgets, and initial revision. |
 | WVAG-102 | Admit one ordered event. | Checked identity, kind, expected revision, resulting revision, bounded payload, and trailing-data rejection. |
-| WVAG-103 | Fold run events into immutable state. | Deterministic plan, facts, decisions, blockers, verification, budget, and terminal status. |
+| WVAG-103 | Fold run events into immutable state. | Deterministic plan, typed claim ledger, decisions, blockers, verification, budget, and terminal status. |
 | WVAG-104 | Enforce protected state. | Events cannot remove the objective, current user refinement, policy, failed verification, or open unknown-effect blocker through an ordinary context command. |
 | WVAG-105 | Enforce idempotent replay. | Exact repeated identity returns the recorded transition; changed payload returns conflict. |
 | WVAG-106 | Publish canonical inspection output. | Bounded human-readable report plus exact machine record. |
+| WVAG-107 | Bind effective generations. | Agent-definition, policy, model profile, provider, tool catalog, memory mount, source, and protocol generations plus an explicit revisit set after adoption. |
 
 ### Exit gate
 
@@ -141,6 +163,8 @@ contract decision.
 - Every rejected event leaves the preceding state unchanged.
 - Event replay cannot increment a budget, revision, model-call count, or other
   effect twice.
+- A working- or foundation-clock transition cannot rewrite prior run evidence or
+  silently carry assumptions forward without a revisit result.
 - No hidden mutable global state or capability call participates.
 
 ## Stage 2 — Context and digital-subconscious kernel
@@ -154,7 +178,7 @@ through deterministic policy.
 
 | ID | Work item | Required output |
 | --- | --- | --- |
-| WVAG-201 | Define bounded context candidates. | Source identity/revision, trust, epistemic kind, layer, priority, estimated size, protection, and compact content/reference. |
+| WVAG-201 | Define bounded context candidates. | Source identity/revision, trust, epistemic kind, layer, attention state, priority, estimated size, protection, and compact content/reference. |
 | WVAG-202 | Implement deterministic eligibility. | Permission, mount, lineage, freshness, protection, expiry, and source-generation checks. |
 | WVAG-203 | Implement token/size-budget planning v1. | Conservative abstract units or bounded byte/character accounting; exact model tokenizer is not required. |
 | WVAG-204 | Compile one context manifest. | Stable ordering, output reserve, selected items, omissions, rejection codes, and exact fingerprints. |
@@ -162,12 +186,15 @@ through deterministic policy.
 | WVAG-206 | Admit a skeptic capsule and result. | One objective, non-goals, exact sources, constraints, no tools, output kind, budget, and expiry evidence. |
 | WVAG-207 | Merge a challenge. | Unsupported or contradictory claim becomes challenged without rewriting source evidence or granting authority. |
 | WVAG-208 | Reject unsafe context and merge requests. | Protected removal, stale revision, forged source, cross-run identity, over-budget output, and hidden-permission proposals fail closed. |
+| WVAG-209 | Bind challenge evidence to claims. | Supporting, contradicting, and missing-evidence references update support state and dependent verification without converting an allegation or inference into fact. |
 
 ### Exit gate
 
 - A bounded fixture omits low-value evidence while retaining every protected
   objective, constraint, blocker, and failed verification.
 - The manifest explains every material inclusion and omission.
+- Context diffs explain every transition among pinned, active, referenced,
+  dormant, summarized, excluded, superseded, and expired.
 - A valid skeptic result challenges one claim; an invalid result changes nothing.
 - The next compiled context reflects the accepted challenge deterministically.
 
@@ -192,12 +219,16 @@ state.
 | WVAG-303 | Validate placement evidence. | Selected processor kind/profile and permitted source sensitivity are recorded before dispatch. |
 | WVAG-304 | Externalize processor transcripts. | The run retains bounded result evidence and references, not provider-private reasoning or unlimited raw traces. |
 | WVAG-305 | Qualify resume without provider session state. | Replaying canonical response evidence after host restart reaches the same state without a second processor invocation. |
+| WVAG-306 | Record deterministic routing evidence. | Processor/model version, capability profile, provider generation, placement, permitted data class, limits, usage, and capability/privacy/risk/quality/latency/cost reasons. |
+| WVAG-307 | Expose fallback and degradation. | Failure fallback, truncation, repair, route change, or reduced verifier status emits a bounded warning and cannot impersonate the requested route. |
 
 ### Exit gate
 
 - Scripted processor loss cannot corrupt or advance run state.
 - Invalid, mismatched, oversized, late, or cross-run responses are rejected.
 - Exact response replay does not repeat a charge or merge.
+- A provider substitution changes execution evidence without changing run or
+  durable agent identity.
 - Windows and Linux pass the same request/response corpus.
 
 This stage does not accept a public `ai.*` capability. It proves the semantic
@@ -239,6 +270,7 @@ or a graph store.
 | WVAG-404 | Publish compact snapshots and checkpoints. | Snapshot generation and source event revision are inseparable. |
 | WVAG-405 | Inject interruption at every publication boundary. | Recovery selects either the complete prior or complete next revision. |
 | WVAG-406 | Reconcile resume. | Source/provider generations, budgets, policy, and pending effects are rechecked before progress. |
+| WVAG-407 | Prove backup and restore of the first durable profile. | Run events, snapshots, manifests, checkpoints, idempotency evidence, and large-body references restore without changing identity or replaying work. |
 
 ### Exit gate
 
@@ -247,6 +279,8 @@ or a graph store.
 - Concurrent or stale append attempts cannot both advance one run revision.
 - An uncertain durable mutation is reopened and classified rather than replayed
   blindly.
+- Backup and restore preserve exact run reconstruction and every referenced body
+  required by the next context.
 
 ## Stage 5 — Retrieval and memory doors
 
@@ -266,6 +300,10 @@ retrieved or remembered text as canonical truth.
 | WVAG-505 | Implement propose/correct/archive/reject/mark-stale. | Optimistic concurrency and audit evidence; no silent rewrite. |
 | WVAG-506 | Implement memory mounts. | Inherit, clean-room, selective, and compare profiles with derived-lineage exclusion. |
 | WVAG-507 | Add archivist classification. | Structured proposal only; the memory owner and review policy decide activation. |
+| WVAG-508 | Define bounded evidence bundles. | Query/scope, mounts/exclusions, source and projection generations, strategies, anchors, contradiction, omission, truncation, freshness, and sufficiency. |
+| WVAG-509 | Define projection lifecycle and invalidation. | Current, partial, building, stale, failed, and unavailable states plus source-change invalidation and deterministic rebuild evidence. |
+| WVAG-510 | Connect claims to evidence and artifacts. | Source deletion or revision invalidates dependent claims, decisions, artifact sections, and verification until refreshed. |
+| WVAG-511 | Define retention and deletion interaction. | Archive, expiry, deletion, legal hold, protected history, sole-source invalidation, and inseparable mixed-derivation rebuild/exclusion. |
 
 ### Exit gate
 
@@ -275,6 +313,10 @@ retrieved or remembered text as canonical truth.
 - A clean-room branch excludes selected attempts and every projection derived
   solely from them.
 - Correcting a memory retains the prior record and source lineage.
+- Every material retrieval reports freshness, contradiction, truncation, and a
+  closed sufficiency state.
+- Removing or forbidding a source cannot leave its sole-source claims, memories,
+  or projections eligible.
 
 Embeddings and typed relationship indexes remain later, benchmark-selected
 extensions.
@@ -296,6 +338,8 @@ giving the foreground or subconscious plane ambient authority.
 | WVAG-604 | Add isolated skeptical review. | Read-only challenge that cannot approve or mint authority. |
 | WVAG-605 | Fence execution and replay. | Exact completed retry returns recorded outcome; unknown effect is not dispatched again. |
 | WVAG-606 | Connect artifact and verification ledgers. | Failed or unknown verification prevents a completed claim. |
+| WVAG-607 | Persist the append-only action evidence chain. | Envelope, review decision, receipt, lease issue/revocation/expiry, execution-start fence, observed outcome, and verification reconstruct effective status. |
+| WVAG-608 | Classify consequence treatment. | Read/calculation, scoped reversible mutation, exact-approval consequential action, and deny classes with deterministic data/scope/cost rules. |
 
 ### Exit gate
 
@@ -305,12 +349,14 @@ giving the foreground or subconscious plane ambient authority.
   before mutation.
 - An interrupted effect becomes a truthful known result or unknown blocker,
   never an automatic retry.
+- A material envelope change creates a new proposal and cannot reuse the prior
+  approval or lease.
 
 External communication, payment, permission changes, live broad deletion, and
 other consequential actions remain denied or separately approved future
 profiles.
 
-## Stage 7 — Product and Windvale OS placement
+## Stage 7 — Product, operational controls, and Windvale OS placement
 
 ### Goal
 
@@ -328,12 +374,22 @@ ready.
 | WVAG-704 | Bind explicit resource ceilings. | Model, tool, context, storage, output, process, memory, and teardown budgets. |
 | WVAG-705 | Define Windvale OS service composition. | Coordinator, model adapter, store, retrieval, and tools placed in explicit resource domains with bounded IPC. |
 | WVAG-706 | Qualify provider loss and supervision. | Peer loss, cancellation, restart generation, rebind, checkpoint resume, and terminal teardown. |
+| WVAG-707 | Add focused and advanced product projections. | One task-specific application and one advanced inspector consume the same public contracts without owning hidden state. |
+| WVAG-708 | Enforce account, workspace, and data placement. | Owner-bound identifier revalidation, minimum provider disclosure, secret exclusion, and safe telemetry correlation. |
+| WVAG-709 | Add independent emergency controls. | Executor, mutation, durable-memory, connected-source, and consequential-action gates plus provider/tool-group/account/workspace pause. |
+| WVAG-710 | Bind quotas, retention, and alerts. | Rate, calls, concurrency, storage, cost, redaction, and retention ceilings with stuck-run, invalid-output, unknown-effect, recovery, denial, and projection-lag alerts. |
+| WVAG-711 | Qualify transparent human vocabulary. | Product text maps remembered, noticed, forgot, doubted, learned, and changed its mind to owned evidence and never claims a hidden human self. |
+| WVAG-712 | Run the two book-completeness workflows. | Verified software change and proposal-draft scenarios cover canonical evidence, claims, memory, influence, action approval, and uncertain-effect reconciliation. |
 
 ### Exit gate
 
 - Mainstream users can understand what the agent is doing without reading raw
   events.
 - Advanced inspection can trace a material claim to current source evidence.
+- Focused and advanced views agree because both project the same owned state.
+- Cross-account/workspace identifiers, forbidden provider placement, paused
+  capability groups, exceeded quotas, and incomplete restore fail closed while
+  preserving an inspectable run.
 - Windows and Linux hosted products use the same canonical agent semantics.
 - A Windvale OS claim is made only after dynamic launch, supervision, clocks,
   resource domains, provider isolation, and durable storage pass their own
@@ -376,10 +432,13 @@ snapshot/checkpoint publication. Large evidence stays outside event rows.
 
 Later memory and retrieval pressure may require bounded indexes over run,
 sequence, operation, idempotency identity, source identity/revision, scope,
+claim support, dependent artifact, projection generation, action identity,
 status, review state, and expiry. These are selected only by measured queries.
-Multiple writers, group commit, retention, compaction, reclamation, and backup
-enter when the workload reaches them; they are not hidden assumptions of the
-first semantic kernel.
+The first durable product profile requires backup/restore of its owned events,
+checkpoints, idempotency evidence, and large-body references. Multiple writers,
+group commit, retention automation, compaction, and reclamation enter when the
+workload reaches them; they are not hidden assumptions of the first semantic
+kernel.
 
 ### Filesystem and object storage
 
@@ -394,6 +453,11 @@ evidence. It must not infer atomic replacement, directory durability, watching,
 or append semantics from the host filesystem. A new operation receives a
 separate interface only when its exact guarantee is required.
 
+Backup manifests must bind every large-body or artifact reference needed to
+reconstruct the admitted run revision. Restore must reject missing, changed,
+cross-workspace, or unauthorized bodies rather than rebuilding a plausible but
+different context.
+
 ### Runtime and native providers
 
 The current native capability-provider table accepts scalar and descriptor
@@ -407,6 +471,12 @@ versions. Provider state remains a nonzero rights-limited execution-owned object
 with a lifetime containing every call. Provider identity, target addresses,
 credentials, and conversation handles never enter WVB or durable run evidence.
 
+The public provider seam eventually reports stable model/profile identity,
+context and output limits, data-placement eligibility, usage or an explicit
+estimate class, cancellation/deadline support, route choice, fallback, repair,
+truncation, and provider-generation loss. Adapter-native SDK objects remain
+outside portable state and checkpoints.
+
 ### Package, approval, and launch
 
 An agent definition is immutable configuration, not a package manifest and not
@@ -419,6 +489,11 @@ The first hosted agent package should use the active installation generation and
 command-dispatch contracts rather than inventing another update or activation
 system. Agent memory and user data remain separately owned from immutable package
 content and survive package removal according to explicit policy.
+
+The hosting composition must gate executor start, mutation, durable-memory
+activation, connected sources, and consequential actions independently. Package
+selection and launch approval do not replace provider-, tool-group-, account-,
+or workspace-level emergency pause controls.
 
 ### Windvale OS
 
@@ -454,6 +529,16 @@ response, cancellation, provider loss, conflicting evidence, unsupported claim,
 unsafe action request, and recovery. Production model quality is never required
 for deterministic conformance.
 
+### Source, claim, and coherence qualification
+
+Fixed cases cover direct identity, structure, lexical search, stale and partial
+projections, contradictory passages, missing sources, truncation, and all closed
+sufficiency states. Removing or revising a source must invalidate every
+sole-source memory, claim, decision, artifact dependency, and verification
+result. Domain cases prove that an allegation, observation, preference,
+inference, compiler-derived relationship, and approved fact do not collapse into
+one authority state.
+
 ### Differential evidence
 
 Where E-Worker already implements an equivalent context, operation, or run
@@ -475,6 +560,21 @@ pressure, repeated processor results, challenged facts, checkpoint/resume, and
 interruption at every publication boundary. The clean and recovered terminal
 state, manifest, and handoff must match exactly.
 
+Backup/restore, provider substitution, clean-room regeneration, action recovery,
+quota exhaustion, and each emergency pause are injected independently. Restore
+must preserve exact evidence identities; a pause or exhausted quota must fail
+closed without making the run disappear or reporting completion.
+
+### Book-completeness workflows
+
+The software workflow uses repository rules, exact source and compiler evidence,
+one bounded artifact change, projection refresh, verification, and truthful
+handoff. The proposal workflow uses approved service and price records,
+client-scoped memory, scheduling evidence, a claim ledger, skeptical review,
+document verification, an influence summary, exact send approval, and unknown-
+send reconciliation. The first product proof may stop before sending; a later
+governed-action proof must show that proposal and authority remain separate.
+
 ## Controlled scope and parallel work
 
 Compiler, database, package, storage, and OS agents may advance their existing
@@ -489,7 +589,9 @@ Safe early parallel work includes:
 - mapping the Stage 4 ledger profile onto current database invariants without
   changing them;
 - identifying a strict byte-envelope seam in the current provider table; and
-- designing package capability closure for a future read-only hosted proof.
+- designing package capability closure for a future read-only hosted proof; and
+- mapping both book-completeness workflows to existing canonical owners without
+  adding domain facts to the portable agent core.
 
 Memory activation, consequential actions, peer agents, scheduling, and OS
 hosting wait for their earlier ownership and recovery gates.
@@ -510,14 +612,19 @@ The following remain deferred until the single-agent core qualifies:
 
 ## Immediate next documentation and decision work
 
-1. Review the proposed architecture terminology, especially one agent identity
-   with foreground and subconscious planes.
-2. Select the Stage 0 corpus scenario and exact maximum sizes.
-3. Draft the first closed run/event/context/challenge record specification.
-4. Check the proposed fields against current Seed record/variant/sequence limits.
-5. Map the Stage 4 store operations to the database team's completed contract
-   after that result lands; do not pre-empt its current completion claim.
-6. Prepare one numbered decision accepting only Stages 0 through 2 as the first
+1. Review the proposed architecture terminology, especially one agent identity,
+   two cooperating planes, and three clocks.
+2. Select the Stage 0 software corpus scenario and exact maximum sizes.
+3. Draft the first closed run/event/context/claim/challenge record
+   specification, including attention and support states.
+4. Define which generations a foundation or working-knowledge change records
+   and which assumptions enter its revisit set.
+5. Check the proposed fields against current Seed record/variant/sequence limits.
+6. Map the Stage 4 store operations to the database team's completed contract
+   without pre-empting its current completion claim.
+7. Record the later proposal workflow as a differential book-completeness
+   fixture without adding business semantics to the portable kernel.
+8. Prepare one numbered decision accepting only Stages 0 through 2 as the first
    implementation boundary.
 
 Implementation begins after those records are reviewable. The first code change

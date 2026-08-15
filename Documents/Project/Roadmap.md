@@ -339,10 +339,12 @@ This lane is documented for dependency planning; it is not an active milestone a
 does not displace the current compiler, database, package, or OS gates. Its first
 candidate gate is deliberately capability-free and portable:
 
-1. freeze one versioned corpus for agent, run, event, context-manifest, context-diff,
-   checkpoint, and operation-result records;
-2. implement deterministic bounded transition, validation, context-selection, and
-   influence-inspection functions over supplied identities and time;
+1. freeze one versioned corpus for agent, run, event, typed claim,
+   context-manifest, context-diff, checkpoint, and operation-result records,
+   including the three change clocks and closed attention states;
+2. implement deterministic bounded transition, validation, claim-support,
+   context-selection, and influence-inspection functions over supplied
+   identities and time;
 3. prove exact bytes and reports on Windows and Linux; and
 4. keep model providers, clocks, entropy, durable storage, filesystems, and action
    capabilities outside that first semantic kernel.
@@ -352,6 +354,13 @@ but the agent lane must consume the qualified database contract rather than defi
 a competing store. Compiler and library additions likewise require a measured
 agent corpus plus at least one independent consumer before they widen shared
 language semantics.
+
+Later book-completeness gates add source/projection invalidation, evidence
+bundles and sufficiency, reviewed memory, append-only action evidence,
+cross-workspace/data-placement controls, backup/restore, emergency pause and
+quotas, transparent human-facing vocabulary, and separate software and proposal
+reference workflows. Those product gates do not enlarge the first portable
+kernel.
 
 ## Workstream rules
 
@@ -380,6 +389,9 @@ language semantics.
   a second principal, hidden objective, or independent authority source.
 - Make every context item, cognitive operation, memory proposal, action proposal,
   lease, and checkpoint bounded, versioned, attributable, and inspectable.
+- Keep claims typed and source-linked; projections, summaries, and derived
+  memories remain rebuildable and lose eligibility when their permitted lineage
+  becomes stale or unavailable.
 - Keep the first portable kernel capability-free. Model calls, clocks, entropy,
   persistence, retrieval, filesystem access, and external effects enter only
   through separately granted semantic capabilities.
@@ -387,6 +399,9 @@ language semantics.
   general concurrency merely to imitate an existing agent framework.
 - Route measured language, database, filesystem, package, runtime, and OS needs to
   their owning contracts before implementation crosses those boundaries.
+- Treat account/workspace isolation, data placement, backup/restore, quotas,
+  telemetry redaction, and emergency pause as named product gates rather than
+  invisible deployment assumptions.
 
 ### Operating system
 

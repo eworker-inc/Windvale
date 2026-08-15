@@ -156,6 +156,21 @@ must be explicit: a timed-out model call may be abandoned or reconciled under it
 operation contract, but it cannot silently commit a memory fact or external
 mutation.
 
+Each route records model/profile identity, provider generation, placement,
+permitted data class, context/output limits, usage or estimate class,
+cancellation/deadline support, and capability/privacy/risk/quality/latency/cost
+reasons. Provider fallback, repair, truncation, or degradation is visible evidence
+and cannot impersonate the requested route. Replacing the provider changes
+execution evidence rather than durable agent identity.
+
+Account, workspace, principal, source, memory, artifact, result-reference, and
+capability identities are revalidated by their owning provider. Remote placement
+receives only the minimum permitted source ranges; credentials, raw storage
+locations, private service metadata, unrelated tenant information, and secret
+values remain outside portable state and model context. Provider-, tool-group-,
+account-, and workspace-level pause controls fail closed while preserving
+inspectable recovery state; a client feature flag is not an authority boundary.
+
 ## Filesystem contract family
 
 Windvale should define a small common filesystem contract without making Win32, POSIX, or the first Windvale OS filesystem the universal model. A process receives a rights-limited filesystem or directory capability; it does not receive ambient access to a host filesystem.
