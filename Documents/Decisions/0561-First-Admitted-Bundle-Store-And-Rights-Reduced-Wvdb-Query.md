@@ -1,6 +1,6 @@
 # Decision 0561: First admitted bundle, immutable store, and rights-reduced WVDB Query
 
-- Status: Implemented candidate
+- Status: Qualified and implemented
 - Date: 2026-08-15
 - Extends: Decisions 0530, 0557, and 0560
 - Scope: Milestone 2 package-backed host application
@@ -83,19 +83,27 @@ application proof.
 | Windows hosted application | 258,048 | `7cd60860e07294d9a45064495da33a42cc752849accfc672c35a69454cd963d8` |
 | Linux hosted application | 258,048 | `29b4d4db7505daec94865d423e3805b02bde95751343b1fb7e4ceee8045a202d` |
 
-The local Windows owner returns values `42` and `-5`, reports a missing key,
-rejects a same-length unauthorized object name, and reports an unavailable
-authorized object without crashing or falling back to ambient access. The
+The permanent owners return values `42` and `-5`, report a missing key, reject
+a same-length unauthorized object name, and report an unavailable authorized
+object without crashing or falling back to ambient access. The
 Bundle 1 owner writes the exact candidate twice, admits both independently,
 creates five objects plus one bundle on first publication, and reuses all six
-immutable identities on the second publication. Exact Linux execution and the
-paired-host reports remain the final promotion evidence for this candidate.
+immutable identities on the second publication.
+
+GitHub Verify run
+[31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188)
+passes the exact Bundle 1/store owner on Windows and Linux at commit
+`d9795e0e15944b3342ea7c4a42105eee38420708`. Run
+[31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140)
+passes the exact five-case capability owner on both hosts at commit
+`204e8082fdaabbc7333ac40ed6ca7ff8564de123`. The latter commit changes no
+Bundle 1 input, so the paired reports qualify one coherent final state.
 
 ## Consequences
 
-- Milestone 2 has a complete implementation candidate with one remaining
-  promotion action: run the settled owners on both permanent hosts and retain
-  their matching summaries.
+- Milestone 2 is complete. Its settled Bundle 1/store and WVDB capability owners
+  have matching Windows and Linux reports, and later commits need not rerun
+  them while their declared inputs remain unchanged.
 - Bundle admission and object publication are useful foundations for the 0.1
   installer, but they are not a signed release envelope, activation database,
   updater, or general package-store service.

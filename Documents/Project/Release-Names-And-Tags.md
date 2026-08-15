@@ -61,12 +61,13 @@ becoming implicit base-install dependencies.
 
 ## Milestone checkpoint
 
-After the exact Milestone 2 commit passes its paired Windows/Linux owners, it may
-receive an annotated checkpoint tag of the form
-`milestone-2-package-app-<commit12>`. This records a completed stage without
-claiming that installers, signing, support, or the `v0.1.0` product are ready.
-Do not use an unqualified `stage-2` tag: “Stage 2” is already used for compiler
-self-reproduction and would be ambiguous.
+The exact completed Milestone 2 implementation/evidence commit is
+`204e8082fdaabbc7333ac40ed6ca7ff8564de123`. Its annotated checkpoint tag is
+`milestone-2-package-app-204e8082fdaa`, backed by paired Bundle 1/store run
+31872089188 and capability run 31872429140. This records a completed stage
+without claiming that installers, signing, support, or the `v0.1.0` product are
+ready. Do not use an unqualified `stage-2` tag: “Stage 2” is already used for
+compiler self-reproduction and would be ambiguous.
 
 ## Tag mechanics
 

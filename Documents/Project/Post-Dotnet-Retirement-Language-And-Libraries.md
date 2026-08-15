@@ -17,11 +17,11 @@ path to prove a small, coherent set of application and library contracts.
 
 Package, library, and application work may now proceed through the qualified
 native path when a direct consumer exists; it must not widen the frozen C#
-compiler. The active roadmap makes this useful package-backed application
+compiler. The roadmap closed this useful package-backed application as
 Milestone 2 while parallel track OS-1 continues the Windvale OS launch/service
 path. The two outcomes may share contracts without turning either into a
-prerequisite for every step of the other. The 0.1 product release follows the
-package application as Milestone 3 and does not require OS-1 completion.
+prerequisite for every step of the other. The active 0.1 product release work is
+Milestone 3 and does not require OS-1 completion.
 
 The intended first outcome is one useful application that:
 
@@ -42,15 +42,15 @@ stack, or Windvale OS distribution is ready.
 
 The first implementation slice is selected under
 [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md)
-and implemented as a promotion candidate under
+and qualified as the completed Milestone 2 slice under
 [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md).
 WVDB Query builds deterministically from Package 1 and Lock 1, composes the
 portable decimal and database code with the hosted read-only directory facade,
 and exposes its exact capability closure for inspection. The bounded Bundle 1,
 immutable store publication, paired native applications, directory-provider
-binding, successful reads, and denied/unavailable cases are implemented. The
-settled exact-commit Windows/Linux owner reports remain the final promotion
-evidence before the complete outcome above is claimed.
+binding, successful reads, and denied/unavailable cases pass on Windows and
+Linux in Verify runs 31872089188 and 31872429140. The complete outcome above is
+therefore closed; installer and release-envelope work belongs to Milestone 3.
 
 ## Keep the library model simple
 
@@ -243,17 +243,16 @@ Before a proposed addition becomes accepted, it needs:
    compilation, verification, and each execution backend; and
 5. Windows and Linux reports whenever the slice claims cross-host behavior.
 
-The next review should select one package-backed application and its smallest
-reusable portable and platform libraries. Prefer an existing multi-module workload
-with bounded input, observable useful output, typed operational failure, and a
-capability-denial case over a new demonstration invented for the proposal. That
-real workload, rather than a language-feature wish list, decides whether typed
-capability references, result propagation, or bounded keyed collections are the
-next implementation slice.
+The selected package-backed application and its smallest reusable portable and
+platform libraries are now qualified under Decision 0561. Future reviews should
+continue to prefer an existing multi-module workload with bounded input,
+observable useful output, typed operational failure, and a capability-denial
+case over a new demonstration invented for a proposal. A real workload, rather
+than a language-feature wish list, should decide whether typed capability
+references, result propagation, or bounded keyed collections are widened.
 
-The existing `Readˉonlyˉwvdb` snapshot path is now the selected first application
-composition. It has a standalone entry point, canonical Package 1 / Lock 1 input,
-and paired native build and inspection owners. It still needs native
-directory-provider binding, cross-host execution, and capability-denial evidence.
-Selection does not promote the experimental `WVDB 1` bytes into a durable database
-format.
+The existing `Readˉonlyˉwvdb` snapshot path is the completed first application
+composition. It has a standalone entry point, canonical Package 1 / Lock 1
+input, paired native build and inspection owners, native directory-provider
+binding, cross-host execution, and capability-denial evidence. Completion does
+not promote the experimental `WVDB 1` bytes into a durable database format.
