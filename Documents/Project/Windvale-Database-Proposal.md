@@ -506,6 +506,9 @@ The first durable agent profile requires:
 The later functional-mind profile adds:
 
 - one persistent agent-self root above episode/run roots;
+- governance profile/charter and authority-manifest generations, role/roster
+  assignments, exact-revision approvals, amendments, dissents, suspensions,
+  transitions, exports, restores, succession, archival, and retirement evidence;
 - bounded episode membership and autobiographical links;
 - prospective intentions, eligibility conditions, satisfaction, cancellation,
   expiry, and wake identities;
@@ -536,7 +539,11 @@ The first profile does not require SQL, a network server, distributed consensus,
 multi-writer runs, vector search, or database-owned agent policy. The database
 stores and retrieves bounded state and evidence-bearing records; it does not
 decide what a model may believe, which intention deserves attention, which
-projection is sufficient, what should be consolidated, or what an agent may do.
+projection is sufficient, what should be consolidated, who constitutionally
+owns a self field, or what an agent may do. The proposed
+[persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
+owns that later semantic direction; this proposal supplies storage only after a
+consumer freezes exact bounded records.
 
 ## Differential and performance evidence
 

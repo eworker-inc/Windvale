@@ -334,7 +334,10 @@ digital-subconscious support plane. The companion
 [implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md) stages the
 work from deterministic records and transitions through hosted model invocation,
 durable continuity, retrieval, governed action, and eventual supervised service
-placement.
+placement. The
+[persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
+adds a named E-Worker development/test authority for early fixtures and a later
+constitutional-stewardship profile for advanced operation.
 
 This lane is documented for dependency planning; it is not an active milestone and
 does not displace the current compiler, database, package, or OS gates. Its first
@@ -371,6 +374,14 @@ event-driven subconscious wakeups. This later sequence retains one identity and
 all existing evidence and authority boundaries; it does not claim consciousness
 or authorize a continuously running model.
 
+Development and qualification may place most self-governance decisions with a
+versioned E-Worker Development Authority so experiments can create, revise,
+break, restore, migrate, and retire synthetic test selves. That arrangement is
+not the product destination. Production-like pilots introduce real principals,
+domain/data owners, and bounded E-Worker roles; advanced operation requires a
+qualified transition that removes test bypasses and broad developer access and
+instantiates the complete authority matrix.
+
 ## Workstream rules
 
 ### Language and compiler
@@ -399,6 +410,12 @@ or authorize a continuously running model.
 - Treat each run as one episode beneath a long-lived self; values, commitments,
   intentions, autobiography, and skill evidence require explicit owners above
   individual episode state.
+- Use Profile D only for bounded, visibly non-production development/testing;
+  record every role E-Worker occupies, all test bypasses, scope, expiry, audit,
+  disposal, and the prohibition on silent promotion.
+- Treat advanced governance as a separate migration gate with a primary
+  principal, constitutional stewards, domain/data owners, runtime custodian,
+  capability owners, audit/appeal, recovery/succession, and expired test access.
 - Make every context item, cognitive operation, memory proposal, action proposal,
   lease, and checkpoint bounded, versioned, attributable, and inspectable.
 - Keep claims typed and source-linked; projections, summaries, and derived

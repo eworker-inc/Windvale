@@ -54,6 +54,17 @@ An identity record should contain:
 
 Machine, service, remote-client, package-publisher, release-channel, and administrative identities use separate kinds. Reusing one key across kinds is not the default and requires explicit policy.
 
+The proposed
+[persistent-self governance architecture](Persistent-Self-Ownership-And-Governance.md)
+also distinguishes authenticated identity from a governance role. Proving that
+a caller is an E-Worker developer, primary principal, constitutional steward,
+domain owner, runtime custodian, auditor, or recovery party does not prove that
+the caller currently occupies that role for one self. The admitted governance
+manifest binds the identity and roster generation, exact role, scope, threshold,
+expiry, and charter revision. A development/test roster may use explicit fixture
+identities, but those identities and universal test access must be structurally
+ineligible after an advanced-profile transition.
+
 Trust stores are immutable, content-addressed snapshots. A trust update creates a new generation rather than mutating a live set in place. A connection, launch, or release verification record identifies the exact trust snapshot and policy used. Revocation creates an observable provider generation change and an explicit decision about existing sessions; it never rewrites old evidence.
 
 ## TLS and secure streams
@@ -79,6 +90,13 @@ An authorization decision binds:
 - revocation behavior for an already active grant.
 
 The decision is immutable. A policy update creates a new decision for new work and sends explicit revocation or replacement events where the interface permits them. An interactive prompt is only one input to policy; it is not the enforcement boundary.
+
+A persistent-self amendment approval is likewise evidence, not a capability.
+The governance owner first validates the required principal, steward,
+domain/data, audit, or recovery roles against the exact manifest generation and
+proposal revision. Existing authorization owners still decide whether any
+resulting export, restore, provider binding, deletion, or external action may
+execute.
 
 ## Provisioning and recovery
 

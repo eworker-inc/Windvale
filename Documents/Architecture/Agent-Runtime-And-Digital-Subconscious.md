@@ -33,6 +33,11 @@ and merge rules.
 
 The staged delivery route is defined by the companion
 [implementation plan](../Project/Windvale-Agent-Runtime-Implementation-Plan.md).
+The separate
+[persistent-self ownership and governance architecture](Persistent-Self-Ownership-And-Governance.md)
+defines who may establish or change the long-lived self, including a bounded
+E-Worker development/test profile and the later constitutional-stewardship
+transition.
 
 ## Core rule
 
@@ -103,6 +108,7 @@ The first contract should use these terms precisely:
 | --- | --- | --- |
 | Agent definition | Immutable versioned configuration selecting behavior, policy references, provider requirements, and default limits. | A live run, stored provider session, or authority grant. |
 | Agent self | Long-lived owned identity, accepted values, standing commitments, autobiographical index, skill profile, and continuity across episodes. | Human personhood, a model session, unrestricted autonomy, or authority. |
+| Governance manifest | Versioned assignment of the persistent-self profile, principals, stewards, field/domain owners, runtime custodian, audit/recovery roles, thresholds, limits, and expiry. | One universal owner, legal personhood, or a capability grant. |
 | Agent episode or run | One scoped objective, owned state, evidence history, budgets, and terminal outcome within the agent's longer life. | The complete agent, one model call, or one operating-system process. |
 | Intention | A prospective commitment to revisit, decide, observe, or act, derived from an accepted purpose or policy and carrying priority, conditions, scope, and expiry. | A secret terminal goal or permission to execute. |
 | Global cognitive workspace | The bounded recurrent foreground state whose selected contents are broadcast to eligible cognitive functions and become the basis of the next coherent operation. | Unlimited context, private chain-of-thought, or a second source of truth. |
@@ -313,7 +319,7 @@ The digital subconscious does not:
 | Area | Durable owner | Responsibility |
 | --- | --- | --- |
 | Agent application | `Applications/` composition | User interaction, self selection, episode creation, status presentation, and explicit commands. |
-| Persistent agent self | Future agent-self owner | Long-lived identity, accepted values, commitments, active intentions, autobiographical index, skill evidence, and episode membership. |
+| Persistent agent self | Governance-selected field owners behind one agent-self owner | Long-lived identity, accepted values, commitments, active intentions, autobiographical index, skill evidence, episode membership, and exact authority-manifest revision. |
 | Portable agent semantics | Future focused modules under `Libraries/Agent/` | Pure self/run transitions, intention and workspace policy, operation records, merge rules, belief and memory lifecycle, and verification projections. |
 | Cognitive workspace and scheduler | Agent coordinator owner | Candidate competition, salience, foreground selection, bounded recurrence, wake admission, and return to dormancy. |
 | Provider/service protocols | Future focused modules under `Libraries/Protocol/` | Bounded serialized request, response, event, and checkpoint validation without transport authority. |
@@ -333,11 +339,27 @@ No UI view owns durable agent state. No model-provider adapter owns plans,
 memory, context policy, or tool authority. No search index, summary, embedding,
 or graph projection becomes a second canonical source.
 
+Persistent-self ownership is deliberately plural. During bounded development
+and testing, a named E-Worker Development Authority may occupy most governance
+roles for synthetic or separately authorized test agents. That authority must
+be rostered, scoped, expiring, auditable, and marked non-production. It cannot
+override independent data/domain rights or silently survive promotion.
+
+An advanced agent instead uses the constitutional-stewardship profile defined in
+the [governance architecture](Persistent-Self-Ownership-And-Governance.md): a
+primary principal supplies beneficial direction; constitutional stewards guard
+high-impact amendment; domain owners and affected people retain their own
+records and consent; a runtime custodian operates the service; capability owners
+govern effects; and audit, appeal, recovery, and succession remain explicit.
+The agent is a proposer within that arrangement, never its sole approver.
+
 ## Persistent agent self and episodes
 
 The durable agent self sits above individual runs. It should bind:
 
 - stable agent identity and current agent-definition generation;
+- current governance-profile, charter, authority-manifest, principal, steward,
+  runtime-custodian, audit, recovery, and successor generations;
 - accepted purpose, values, behavioral commitments, and policy references;
 - scoped relationships and standing responsibilities;
 - active, dormant, satisfied, cancelled, expired, and blocked intentions;
@@ -1098,6 +1120,9 @@ Functional-mind qualification additionally requires:
 
 - one persistent self carrying accepted values, commitments, calibrated skill
   evidence, and autobiographical links across several independent episodes;
+- a bounded development/test governance manifest plus a qualified transition
+  that expires E-Worker's broad test authority and instantiates advanced
+  principal, steward, domain, custody, audit, and recovery roles;
 - two simultaneously eligible intentions with deterministic conflict,
   starvation, cancellation, satisfaction, and expiry evidence;
 - a recurrent workspace in which perception, memory, doubt, and prediction error
@@ -1125,7 +1150,9 @@ The first slice does not include:
 - a browser, desktop, or Studio user interface;
 - production local-model management;
 - provider-specific prompt caching as a correctness dependency;
-- regulated-domain readiness; or
+- regulated-domain readiness;
+- independent agent self-ownership or a production constitutional-governance
+  claim; or
 - a Windvale OS hosting claim.
 
 ## Decision and implementation triggers
@@ -1136,6 +1163,8 @@ A numbered decision is required before accepting:
   format;
 - a persistent agent-self, intention, workspace-cycle, world/belief/self-model,
   salience, simulation, consolidation, or wake format;
+- a governance profile, constitutional charter, authority manifest, amendment,
+  succession, or development-to-advanced transition format;
 - a public model, retrieval, run-store, memory-store, or action capability;
 - any authority, approval, lease, or cross-scope memory rule;
 - a new source-language or WVB semantic required by the runtime;

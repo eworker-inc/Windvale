@@ -12,6 +12,10 @@ This plan turns the proposed
 into small, verifiable Windvale slices. It also routes enabling work to the
 compiler, database, storage, library, runtime, package, and operating-system
 owners without making every dependency part of one foundation mega-change.
+The companion
+[persistent-self ownership and governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
+defines the temporary E-Worker development/test authority and the later
+constitutional-operation profile used by the persistent-self stages.
 
 The target is one long-lived user-facing functional mind whose durable self
 spans many episodes and whose cognition uses two cooperating execution planes:
@@ -53,6 +57,14 @@ recurrent workspace, world/belief/self models, salience, simulation,
 consolidation, and event-driven wakeups. These later stages must reuse the
 qualified evidence and authority boundaries; they do not justify skipping the
 single-episode kernel.
+
+All early fixtures use a visibly non-production development/test governance
+profile. A named E-Worker Development Authority may make most decisions in that
+profile so the team can test identity, purpose, memory, failure, recovery, and
+migration rapidly. Advanced operation is a separate gate that revokes that
+broad authority and instantiates the destination principal, stewards,
+domain/data owners, runtime custodian, capability owners, audit/appeal, and
+recovery roles.
 
 ## Current Windvale baseline
 
@@ -115,6 +127,35 @@ Every stage preserves these rules:
     permission, or an unreviewed reward objective.
 20. Persistent identity and autobiographical continuity never depend on one
     model, provider session, process, host, or execution body.
+21. Every test self binds a versioned governance profile, authority roster,
+    environment/data/capability scope, expiry, audit route, and disposal or
+    transition rule.
+22. The E-Worker development authority may occupy several recorded roles in a
+    test, but it cannot override independent domain/data rights or turn test
+    custody into permanent ownership.
+23. The agent may propose governance changes, conflicts, refusal, and review; it
+    cannot approve its own constitutional authority, grants, history erasure,
+    replication, successor, or resistance to suspension.
+24. Development-to-advanced promotion is a qualified migration that expires
+    test credentials and bypasses; a profile label or software version cannot
+    perform that transition.
+
+## Governance across delivery stages
+
+Governance is exercised from the first corpus even though the persistent-self
+serialized format waits until Stage 8:
+
+| Delivery context | Governance profile | Authority arrangement | Gate |
+| --- | --- | --- | --- |
+| Stages 0–7 deterministic and hosted development | Profile D — development/test | Named E-Worker Development Authority may fill principal, steward, domain, operator, audit, and recovery roles as separately recorded positions. | Exact roster, limits, synthetic or separately authorized data, non-production marking, audit, expiry, and disposal. |
+| Stages 8–10 functional-mind development | Profile D — development/test | Same broad test authority, now exercised through real persistent-self field classes, amendments, suspension, recovery, and migration fixtures. | No self-approved authority; every Profile C approval position is simulated and inspectable. |
+| Production-like supervised pilot | Profile P — pilot | Real principal/domain/data owners apply; E-Worker retains only named, bounded technical or steward roles. | Participant notice, real capability owners, expiry, export/disposal, incident path, and no universal developer authority. |
+| Advanced persistent operation | Profile C — constitutional operation | Primary principal, constitutional stewards, field/domain owners, affected data subjects, runtime custodian, capability owners, audit/appeal, and recovery/succession are explicit. | Qualified separation, amendment, conflict, export, restore, succession, retirement, and removal of Profile D access. |
+
+The same portable transition machinery should serve every row. Profile D is a
+governance configuration, not permission to bypass source ownership, action
+capabilities, or the append-only evidence model. Test-only fault injection uses
+an explicit test capability that is structurally ineligible in Profiles P and C.
 
 ## Stage 0 — Freeze vocabulary and deterministic corpus
 
@@ -137,6 +178,7 @@ source implementation begins.
 | WVAG-008 | Freeze attention lifecycle terms. | Pinned, active, referenced, dormant, summarized, excluded, superseded, and expired states with valid transitions. |
 | WVAG-009 | Define the first claim and evidence vocabulary. | Epistemic kind, support state, source requirements, supporting/contradicting/missing evidence, dependent artifacts, and owner. |
 | WVAG-010 | Define human-facing cognitive terms. | Exact observable meanings for remembered, noticed, forgot, doubted, learned, and changed its mind without subjective claims. |
+| WVAG-011 | Define the development/test governance fixture. | Profile identity, E-Worker authority roster/threshold, role assignments, scope, expiry, synthetic/authorized data rule, test-only bypass declarations, audit, disposal, and promotion prohibition. |
 
 ### Exit gate
 
@@ -150,6 +192,9 @@ source implementation begins.
 - Persistent-self, multi-episode intention, world/self-model, salience,
   simulation, consolidation, and wake terms remain architecture vocabulary; the
   first decision does not freeze their serialized forms.
+- A reviewer can identify who authorized the fixture, which roles the E-Worker
+  team occupies, which shortcuts are test-only, and why the fixture cannot be
+  promoted to advanced operation.
 - A numbered decision is ready to accept only this first bounded contract.
 
 ## Stage 1 — Portable run-state kernel
@@ -439,6 +484,11 @@ restart.
 | WVAG-805 | Build the autobiographical index. | Compact episode, commitment, correction, skill, and change links that never replace canonical episode events. |
 | WVAG-806 | Define the first functional self-model. | Current body/providers, senses, tools, capabilities, failures, calibration, load, blocks, unknowns, and help conditions. |
 | WVAG-807 | Qualify identity continuity. | Provider/model/process/host replacement preserves self and intention identity while revalidating every generation and grant. |
+| WVAG-808 | Define governance profiles and manifests. | Profile D/P/C identity; principal, steward, domain/data, custody, capability, audit/appeal, recovery/successor roles; thresholds; scope; expiry; and charter revision. |
+| WVAG-809 | Define self-field authority and change classes. | Canonical owner, proposer, approver, evidence, delay, expiry, appeal, export, deletion, recovery, and audit for change classes zero through four. |
+| WVAG-810 | Implement constitutional amendment evidence. | Proposed, analyzed, noticed, approved/disputed, delayed, prepared, activated, and reviewed states with exact-revision approval and no historical rewrite. |
+| WVAG-811 | Qualify agent standing and hard invariants. | Agent proposals, conflict notice, refusal, help, and review work; rejection of self-grant, self-ownership assertion, hidden copy, history erasure, steward change, or suspension resistance. |
+| WVAG-812 | Qualify development-to-advanced transition. | Destination role matrix, retained-data admission, checkpoint/export, test-access revocation, profile-C activation, post-check, and explicit remaining/expired E-Worker roles. |
 
 ### Exit gate
 
@@ -451,6 +501,11 @@ restart.
   measured evidence and owner admission.
 - Replacing the model and process preserves identity and autobiographical links
   without claiming personal memory by the replacement processor.
+- One Profile D fixture records separate governance roles even where the named
+  E-Worker authority fills them, and test-only bypasses fail under Profile C.
+- The transition corpus removes broad development access, rejects unauthorized
+  test memories, and activates an exact advanced authority matrix without
+  silently renaming or rewriting the self.
 
 ## Stage 9 — Recurrent workspace, world model, salience, and simulation
 
@@ -572,6 +627,12 @@ and simulation indexes remain derived from canonical admitted evidence and must
 be rebuildable. One self may own many episodes, but each self or episode
 transition still has one explicit writer/revision owner unless a later measured
 concurrency contract says otherwise.
+
+Governance manifests, role/roster generations, exact-revision approvals,
+amendments, dissents, emergency suspensions, transitions, exports, restores,
+succession, archival, and retirement join that later durable profile as
+append-only evidence. The database stores and replays those records; it does not
+decide their constitutional or domain meaning.
 
 Later memory and retrieval pressure may require bounded indexes over run,
 sequence, operation, idempotency identity, source identity/revision, scope,
@@ -736,6 +797,11 @@ governed-action proof must show that proposal and authority remain separate.
 
 One deterministic corpus spans several episodes under one self and covers:
 
+- Profile D authority, separate simulated roles, rejected test-bypass use under
+  Profile C, and a development-to-advanced transition that removes broad
+  E-Worker access;
+- class-3 commitment disagreement and a class-4 amendment with missing,
+  disputed, delayed, approved, failed-activation, and reviewed outcomes;
 - simultaneous intention eligibility, selection, preemption, fairness,
   cancellation, satisfaction, expiry, and revoked-parent propagation;
 - recurrent workspace competition among perception, memory, doubt, prediction
@@ -772,6 +838,8 @@ Safe early parallel work includes:
 - designing package capability closure for a future read-only hosted proof;
 - mapping both book-completeness workflows to existing canonical owners without
   adding domain facts to the portable agent core; and
+- drafting Profile D authority and Profile C transition corpora without
+  assuming that a broad development credential is a production identity; and
 - drafting persistent-self, intention, workspace-cycle, belief, simulation,
   consolidation, and wake corpora without adding empty implementation owners.
 
@@ -795,7 +863,7 @@ The following remain deferred until the single-agent core qualifies:
 ## Immediate next documentation and decision work
 
 1. Review the proposed architecture terminology, especially one agent identity,
-   two cooperating planes, and three clocks.
+   two cooperating planes, three clocks, and phased constitutional stewardship.
 2. Select the Stage 0 software corpus scenario and exact maximum sizes.
 3. Draft the first closed run/event/context/claim/challenge record
    specification, including attention and support states.
@@ -806,9 +874,13 @@ The following remain deferred until the single-agent core qualifies:
    without pre-empting its current completion claim.
 7. Record the later proposal workflow as a differential book-completeness
    fixture without adding business semantics to the portable kernel.
-8. Prepare one numbered decision accepting only Stages 0 through 2 as the first
-   implementation boundary.
-9. Draft a separate later decision map for Stages 8 through 10; do not place
+8. Instantiate the Profile D corpus with a provisional named E-Worker authority,
+   separate simulated roles, exact limits, expiry, disposal, and promotion
+   rejection; the durable roster mechanism remains subject to its decision.
+9. Prepare one numbered decision accepting only Stages 0 through 2 as the first
+   implementation boundary, including test-governance vocabulary but no
+   persistent-self format.
+10. Draft a separate later decision map for Stages 8 through 10; do not place
    persistent-self, world-model, scheduler, or wake formats into the first
    single-episode decision merely to make the document appear complete.
 

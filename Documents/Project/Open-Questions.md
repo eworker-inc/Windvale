@@ -108,9 +108,11 @@ The active questions are:
 ## Agent runtime and digital subconscious questions
 
 The proposed [agent runtime architecture](../Architecture/Agent-Runtime-And-Digital-Subconscious.md)
-and [implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md) establish
-direction but intentionally leave the following choices open until a fixed corpus
-can measure them:
+and [implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md), together
+with the proposed
+[persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md),
+establish direction but intentionally leave the following choices open until a
+fixed corpus can measure them:
 
 - What are the exact first wire-independent agent, run, event, typed-claim,
   context-manifest, context-diff, checkpoint, and cognitive-operation records,
@@ -146,9 +148,19 @@ can measure them:
   agent records, host product policy, or existing platform capabilities?
 - What exact software and proposal fixtures jointly prove the complete design
   while keeping business-domain semantics outside the portable kernel?
-- What is the exact durable boundary among an immutable agent definition, a
-  long-lived agent self, its owning principal, its values/commitments, and its
-  episode runs, and which owners may change each field?
+- What exact roster identity, approval threshold, expiry, environment/data
+  scope, audit route, and test-only bypass representation should instantiate the
+  first E-Worker Development Authority fixture?
+- Which personal, organizational, collaborative, or assisted arrangement should
+  supply the first Profile C corpus, and what principal/steward/domain/custody/
+  audit/recovery separation is realistic for it?
+- Which exact self fields and deployment obligations require stricter or
+  narrower authority than the proposed change-class and field matrix defaults?
+- What cooling-off, dissent, lost-steward, compromised-operator, appeal, and
+  emergency-resumption rules permit recovery without recreating a sole owner?
+- Should a test self ever retain identity across the development-to-advanced
+  gate, or should the first profile always create a successor and admit only
+  separately authorized memories and commitments?
 - How should several eligible intentions express parent purpose, conflict,
   priority, fairness, preemption, satisfaction, cancellation, and expiry without
   creating secret goals or implicit action authority?
