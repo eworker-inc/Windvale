@@ -98,11 +98,12 @@ WVDB Query is a separate example/application package; database servers and other
 applications remain separate packages or projects. The shipped-product threat
 model, first signing/offline-verification policy, bounded envelope creator and
 independent verifier, and exact WVDB approval and target launch records are
-implemented under Decisions 0563 and 0564. Their 13 release-envelope and 8
-approval-record cases pass on both hosts in Verify run 31883543587. The
-remaining sequence is project-owner root custody, one selected-state complete
-qualification, reproducible envelope creation, offline verification, and the
-signed `v0.1.0` tag/publication.
+implemented under Decisions 0563 and 0564. The 13-case envelope-format core and
+8 approval-record cases pass on both hosts in Verify run 31883543587. Decision
+0566 expands the envelope owner to 16 cases for passphrase-protected key custody;
+paired evidence for that expansion remains before the project-owner root
+ceremony, one selected-state complete qualification, reproducible envelope
+creation, offline verification, and the signed `v0.1.0` tag/publication.
 
 OS-1 is not a prerequisite for `v0.1.0`.
 

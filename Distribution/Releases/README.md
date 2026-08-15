@@ -12,4 +12,7 @@ perform the separate ceremony in
 before adding the authenticated public root or publishing `v0.1.0`.
 
 No private root or release key may enter the repository, CI, a release asset, or
-an ordinary build cache.
+an ordinary build cache. Official software-held private keys use the
+passphrase-protected `.wvkey` custody wrapper from
+[`Decision 0566`](../../Documents/Decisions/0566-Passphrase-Protected-Release-Key-Custody.md);
+unencrypted PEM generation is test-only.

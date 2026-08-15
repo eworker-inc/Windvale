@@ -59,6 +59,10 @@ and Linux in Verify run 31883543587 at commit
 - The first root ceremony, final signed envelope, selected-state qualification,
   tag signature, and public release remain open until the project owner accepts
   custody and performs the documented ceremony.
+- [Decision 0566](0566-Passphrase-Protected-Release-Key-Custody.md) implements
+  the successor adapter for passphrase-protected private-key files on separately
+  detachable owner-controlled volumes. It does not change Release Envelope 1 or
+  weaken the offline-root and independent-backup requirements.
 
 ## Reconsideration triggers
 

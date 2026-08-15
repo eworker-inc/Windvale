@@ -11,15 +11,24 @@ that has not been approved for signing keys.
 
 ## 1. Prepare custody locations
 
-Use two separately controlled encrypted locations:
+Use two separately controlled protected storage locations. Protection may be
+provided by an encrypted containing volume or by the Decision 0566 encrypted
+private-key wrapper on owner-controlled detachable storage:
 
 - an offline root location that is disconnected after policy signing; and
 - a release-signing location with narrower operational access.
 
 Retain at least two protected offline root backups in separate physical failure
 domains. Record the public key identity out of band. Never copy either private
-PEM into Windvale, GitHub Actions, a release, issue, task, terminal transcript,
+key into Windvale, GitHub Actions, a release, issue, task, terminal transcript,
 or support bundle.
+
+For the first detachable-disk ceremony under Decision 0566, use `Keys A` for
+the primary protected root key, `Keys B` for its protected backup, and `Release`
+for the protected operational release and Git tag-signing keys. The backing
+storage and host access must be owner-controlled. Move the detached `Keys B`
+backing object to a separate durable failure domain before publication; three
+virtual disks on one host are not three physical backups.
 
 ## 2. Generate separate keys
 
@@ -27,18 +36,26 @@ From a trusted checkout using the qualified Node.js runtime, create empty
 directories outside the repository and run one role at a time:
 
 ```text
-node Tools/Release/Create-Release-Envelope.mjs generate-key root <empty-offline-root-directory>
-node Tools/Release/Create-Release-Envelope.mjs generate-key release <empty-release-key-directory>
+node Tools/Release/Create-Release-Envelope.mjs generate-key root <empty-offline-root-directory> --key-passphrase
+node Tools/Release/Create-Release-Envelope.mjs generate-key release <empty-release-key-directory> --key-passphrase
 ```
 
-The command writes an unencrypted PKCS #8 private PEM with mode `0600` where the
-host supports POSIX modes, an SPKI public PEM, and a key-id text file. Therefore
-the containing volume and offline custody are required protections. Inspect the
-reported identities through a second trusted channel before use.
+The command reads and confirms the passphrase through a masked terminal prompt;
+do not place it in an argument, environment variable, redirected file, task, or
+transcript. It writes a scrypt/AES-256-GCM-protected `.wvkey` containing PKCS #8
+bytes, an SPKI public PEM, and a key-id text file. The private file uses mode
+`0600` where the host supports POSIX modes. Inspect the reported public
+identities through a second trusted channel before use.
+
+Copy the complete protected root output to `Keys B`, compare every byte, then
+detach the backup. Do not independently generate the backup: both root copies
+must recover the same public identity. Use a different passphrase for the
+release key.
 
 If project policy requires a hardware token, threshold custody, passphrase-
-encrypted key, or audited signing appliance, stop: those require a successor
-decision and adapter rather than exporting a weaker PEM.
+manager integration, or audited signing appliance, stop: those require another
+successor decision and adapter. Decision 0566 is the approved software
+passphrase adapter; do not export its decrypted PKCS #8 bytes.
 
 ## 3. Sign the root policy offline
 
@@ -53,9 +70,10 @@ Create an empty policy output directory and run:
 ```text
 node Tools/Release/Create-Release-Envelope.mjs create-root \
   <Windvale-Root-Policy-1.json> \
-  <root-private.pem> \
+  <root-private.wvkey> \
   <release-public.pem> \
-  <empty-policy-output-directory>
+  <empty-policy-output-directory> \
+  --key-passphrase
 ```
 
 Return only `Root-Policy.txt`, `Root-Policy.sig`, the root public PEM, and their
@@ -120,10 +138,11 @@ root, and an existing empty output directory:
 ```text
 node Tools/Release/Create-Release-Envelope.mjs create-release \
   <root-policy-directory> \
-  <release-private.pem> \
+  <release-private.wvkey> \
   <release-input.json> \
   <artifact-staging-root> \
-  <empty-release-output-directory>
+  <empty-release-output-directory> \
+  --key-passphrase
 ```
 
 Construct it a second time from the same inputs and compare every file. No
@@ -165,4 +184,6 @@ than weakening the gate.
 The Ed25519 release-envelope key is not automatically a Git tag-signing key.
 Confirm the independent Git signing identity and public verification path before
 tagging; do not export or convert the envelope private key merely to satisfy
-`git tag -s`.
+`git tag -s`. For the first release, create a separate passphrase-protected
+Ed25519 SSH signing key on the `Release` disk and register only its public key as
+a GitHub SSH signing key.
