@@ -1758,50 +1758,50 @@ $NativeCases = @(
 & $RetirementInventoryVerifier -Quiet
 & $DevelopmentDependencyVerifier -Quiet
 
-$RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
-$RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 71 -or
-    $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 70-suite inventory differs.'
+$VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
+$VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
+if ($VerificationOwnerLines.Count -ne 71 -or
+    $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
+    throw 'The native verification-owner header or exact 70-owner inventory differs.'
 }
-$RetirementSuiteCases = 0
-$RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
-foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
+$VerificationOwnerCases = 0
+$VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
+foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
     $Fields = $Line -split '\|', 5
     if ($Fields.Count -ne 5) {
-        throw "Malformed native retirement-suite entry: $Line"
+        throw "Malformed native verification-owner entry: $Line"
     }
-    $RetirementEntryCases = 0
-    $RetirementEntryShard = 0
+    $VerificationOwnerEntryCases = 0
+    $VerificationOwnerEntryShard = 0
     if (![int]::TryParse($Fields[2], [Globalization.NumberStyles]::None,
             [Globalization.CultureInfo]::InvariantCulture,
-            [ref]$RetirementEntryCases) -or
-        $RetirementEntryCases -le 0) {
-        throw "Invalid native retirement-suite case count: $Line"
+            [ref]$VerificationOwnerEntryCases) -or
+        $VerificationOwnerEntryCases -le 0) {
+        throw "Invalid native verification-owner case count: $Line"
     }
     if (![int]::TryParse($Fields[3], [Globalization.NumberStyles]::None,
             [Globalization.CultureInfo]::InvariantCulture,
-            [ref]$RetirementEntryShard) -or
-        $RetirementEntryShard -lt 1 -or $RetirementEntryShard -gt 4) {
-        throw "Invalid native retirement-suite shard: $Line"
+            [ref]$VerificationOwnerEntryShard) -or
+        $VerificationOwnerEntryShard -lt 1 -or $VerificationOwnerEntryShard -gt 4) {
+        throw "Invalid native qualification shard: $Line"
     }
-    $RetirementSuiteCases += $RetirementEntryCases
-    $null = $RetirementSuiteShards.Add($RetirementEntryShard)
+    $VerificationOwnerCases += $VerificationOwnerEntryCases
+    $null = $VerificationOwnerShards.Add($VerificationOwnerEntryShard)
     $WindowsOwner = "Tools/Native/$($Fields[1]).cmd"
     $LinuxOwner = "Tools/Native/$($Fields[1]).sh"
     foreach ($Owner in @($WindowsOwner, $LinuxOwner)) {
         if (!(Test-Path -LiteralPath (Join-Path $RepositoryRoot $Owner) -PathType Leaf)) {
-            throw "The native retirement suite is missing owner '$Owner'."
+            throw "The native verification plan is missing owner '$Owner'."
         }
     }
     $LinuxIndex = @(git -C $RepositoryRoot ls-files -s -- $LinuxOwner)
     if ($LASTEXITCODE -ne 0 -or $LinuxIndex.Count -ne 1 -or
         $LinuxIndex[0] -notmatch '^100755 ') {
-        throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
+        throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3568 -or $RetirementSuiteShards.Count -ne 4) {
-    throw 'The native retirement-suite case total or four-shard coverage differs.'
+if ($VerificationOwnerCases -ne 3568 -or $VerificationOwnerShards.Count -ne 4) {
+    throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
 $GitHubVerificationWorkflow = Get-Content -LiteralPath (
@@ -1811,8 +1811,8 @@ $RequiredWorkflowFragments = @(
     'cancel-in-progress: true',
     'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
     'git diff --check HEAD^ HEAD --',
-    'run: Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}',
-    'run: ./Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}'
+    'run: Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}',
+    'run: ./Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}'
 )
 foreach ($Fragment in $RequiredWorkflowFragments) {
     if (!$GitHubVerificationWorkflow.Contains($Fragment, [StringComparison]::Ordinal)) {

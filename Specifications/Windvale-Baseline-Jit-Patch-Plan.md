@@ -96,7 +96,7 @@ exact `WVLT 1` write-then-execute lifetime: writable while copying, executable
 only after a successful permission transition, never writable and executable
 at the same time, and torn down on every completion or failure path. Decision
 0424 records paired Windows/Debian execution of the fixed candidate. Later
-current-host retirement-suite runs do not by themselves renew paired-host
+current-host verification-owner runs do not by themselves renew paired-host
 qualification.
 
 ## Verification

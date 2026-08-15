@@ -30,7 +30,7 @@ The following are no longer open project questions:
 - Milestone 3 established the official 0.1 root/release delegation, signed
   Release Envelope 1, offline verifier, Windows/Linux installers, and exact-state
   qualification published as `v0.1.0`.
-- [Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
+- [Decision 0590](../Decisions/0590-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
   selected the offline package lifecycle as Milestone 4 without assigning a
   `v0.2.0` release. Decisions 0578 and 0580 close its paired activation,
   rollback, and safe-uninstall evidence in GitHub run `31906316540`; OS-1 and
@@ -276,7 +276,7 @@ measurements should update code, specifications, the changelog, or the progress
 dashboard without creating another decision record.
 
 Generation 1 and Activation 1 semantics and the first host publication mechanics
-are accepted under Decision 0568. The next package decision should be limited to
+are accepted under Decision 0590. The next package decision should be limited to
 command dispatch or package ownership only if implementation reveals a cross-host
 semantic choice not already fixed by that contract. OS work should independently
 limit its next semantic decision to the first post-Probe-40 resource-domain and

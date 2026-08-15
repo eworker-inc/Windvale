@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$SuitePlanPath = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
+$SuitePlanPath = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $SelectedSuites = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $Gaps = [System.Collections.Generic.HashSet[string]]::new(
@@ -148,8 +148,8 @@ foreach ($ContractPath in @(
 
 $SuitePlanLines = @(Get-Content -LiteralPath $SuitePlanPath)
 if ($SuitePlanLines.Count -lt 2 -or
-    $SuitePlanLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header differs.'
+    $SuitePlanLines[0] -ne 'windvale-native-verification-owners 1') {
+    throw 'The native verification-owner header differs.'
 }
 $SuiteEntries = @(
     $SuitePlanLines |
@@ -157,10 +157,10 @@ $SuiteEntries = @(
         ForEach-Object {
             $Fields = $_ -split '\|', 5
             if ($Fields.Count -ne 5) {
-                throw "Malformed native retirement-suite entry: $_"
+                throw "Malformed native verification-owner entry: $_"
             }
             if ($Fields[3] -notin @('1', '2', '3', '4')) {
-                throw "Invalid native retirement-suite shard: $_"
+                throw "Invalid native qualification shard: $_"
             }
             [pscustomobject]@{
                 Name = $Fields[0]
@@ -173,7 +173,7 @@ $KnownSuites = [System.Collections.Generic.HashSet[string]]::new(
 $SuiteByCommand = @{}
 foreach ($Entry in $SuiteEntries) {
     if (!$KnownSuites.Add($Entry.Name)) {
-        throw "Duplicate native retirement suite '$($Entry.Name)'."
+        throw "Duplicate native verification owner '$($Entry.Name)'."
     }
     $SuiteByCommand[$Entry.Command] = $Entry.Name
 }
@@ -182,7 +182,7 @@ function Add-Suite {
     param([Parameter(Mandatory)][string[]]$Name)
     foreach ($SuiteName in $Name) {
         if (!$KnownSuites.Contains($SuiteName)) {
-            throw "Unknown native retirement suite '$SuiteName'."
+            throw "Unknown native verification owner '$SuiteName'."
         }
         $null = $SelectedSuites.Add($SuiteName)
     }
@@ -344,7 +344,7 @@ function Add-Native-Tool-Suite {
         Add-Suite 'wvdb-query-capability'
     } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
         Add-Suite @('release-envelope', 'offline-package-stage')
-    } elseif ($Stem -eq 'Test-Retirement-Suite') {
+    } elseif ($Stem -in @('Test-Verification-Owners', 'Test-Retirement-Suite')) {
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
         Add-Suite @('os-process-object', 'os-probe')
@@ -580,7 +580,9 @@ foreach ($Path in $Paths) {
         'Specifications/README.md',
         'Specifications/Windvale-Native-Changed-Verification.md',
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
+        'Specifications/Windvale-Native-Verification-Owners.md',
         'Tests/Native/Retirement-Suite.txt',
+        'Tests/Native/Verification-Owners.txt',
         'Tests/Native/Development-Owner-Dependencies.txt',
         'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
         'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
@@ -2109,7 +2111,7 @@ if (!$DatabaseDevelopmentRequiresAllTargets -and
     )[0]
 }
 if (!$Quiet) {
-    Write-Host "Native suites: [$($OrderedSuites -join ', ')]"
+    Write-Host "Native owners: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
     Write-Host "Plan verification: $($RunPlanVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly engine verification: $($RunWebAssemblyEngineVerification.ToString().ToLowerInvariant())"

@@ -4,7 +4,7 @@
 
 This contract defines the .NET-free Windows development front door for selecting
 the narrowest owned native verification after a changed-file classification.
-It composes existing native retirement suites; it does not redefine their test
+It composes existing native verification owners; it does not redefine their test
 expectations or replace the final dual-host qualification gate.
 
 ## Planning contract
@@ -13,7 +13,7 @@ expectations or replace the final dual-host qualification gate.
 normalizes separators and leading repository markers, removes empty and duplicate
 values, and returns:
 
-- native retirement-suite names in the canonical manifest order;
+- native verification-owner names in the canonical manifest order;
 - sorted, stable names for every uncovered evidence boundary;
 - whether verification-plan and managed-entry inventory checks are required; and
 - the database development target when exactly one declared test-project closure
@@ -28,7 +28,7 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,351-case coordinator
+Unknown input must never select every owner. The complete 70-owner, 3,568-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
 The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace
@@ -123,17 +123,17 @@ changes it:
 2. refuses any nonempty gap set without invoking .NET;
 3. runs the planner/inventory verifier when selected;
 4. runs the focused GitHub workflow verifier when selected;
-5. invokes each selected suite through `Test-Retirement-Suite.cmd --filter` on
+5. invokes each selected owner through `Test-Verification-Owners.cmd --filter` on
    Windows or the paired `.sh` coordinator on non-Windows hosts, except that an
-   eligible `database-storage` suite receives its exact development target;
+   eligible `database-storage` owner receives its exact development target;
 6. invokes either the pinned WebAssembly engine checkpoint or the complete
    construction-and-engine owner when selected, never both;
 7. stops at the first failure unless `-NoFailFast` is explicit; and
 8. optionally writes `windvale-native-changed-verification-timing-1` JSON.
 
 The command is development feedback. Passing it is not Standard, Qualification,
-cross-host, or complete-retirement evidence. A pre-existing output owned by a
-child suite retains that suite's preservation contract.
+cross-host, or qualification evidence. A pre-existing output owned by a child
+owner retains that owner's preservation contract.
 
 ## Verification
 

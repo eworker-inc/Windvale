@@ -1,4 +1,4 @@
-# Decision 0572: Portable WVB Module Metadata Normalization Contract
+# Decision 0592: Portable WVB Module Metadata Normalization Contract
 
 - Status: Implemented in the source verifier and build driver; pinned front-door promotion pending
 - Date: 2026-08-15

@@ -15,9 +15,9 @@ and every byte identity used to produce the output.
 Decision 0561 separately implements the bounded Bundle 1 and immutable-publication
 subset used by WVDB Query. Decisions 0563 through 0566 implement the first signed
 offline release and installer custody path. Generation 1 / Activation 1 now define
-and implement the portable installed-state parser/planner under Decision 0568.
+and implement the portable installed-state parser/planner under Decision 0590.
 A general resolver, registry, streaming store service, runtime WVB linker, and
-online updater are not implemented by Package 1. Decision 0568's separate host
+online updater are not implemented by Package 1. Decision 0590's separate host
 adapter now publishes and recovers exact caller-validated Activation 1 bytes.
 
 ## Text and naming rules

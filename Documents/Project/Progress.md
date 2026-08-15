@@ -61,8 +61,9 @@ was removed by the rebaseline.
 | Exact selected-release recovery | **2/2 hosts** |
 | Published and independently retained recovery assets | **13/13** |
 
-The later 52-suite/3,287-case plan is forward native coverage added after the
-retirement release. It does not reopen the completed dependency gate.
+Current work uses a separate 70-owner, 3,568-case native verification registry.
+That evolving coverage is not part of the frozen retirement counter and does
+not reopen the completed dependency gate.
 
 ## Completed milestones and active work
 
@@ -108,7 +109,7 @@ OS-1 is not a prerequisite for `v0.1.0`.
 
 ### Milestone 4 complete: offline package lifecycle
 
-[Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
+[Decision 0590](../Decisions/0590-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
 selects the offline generation-and-rollback lifecycle without assigning a
 `v0.2.0` release. Generation 1 and Activation 1 now have a portable specification,
 Windvale-native bounded readers, cross-record package validation, and pure

@@ -62,19 +62,19 @@ WebAssembly owner, or workflow audit and refuses uncovered active boundaries.
 Run it once after a coherent edit rather than running increasingly broad levels
 for the same source state.
 
-One named native suite can be selected directly with:
+One named native owner can be selected directly with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter <suite-name>
+Tools\Native\Test-Verification-Owners.cmd --filter <owner-name>
 ```
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter <suite-name>
+./Tools/Native/Test-Verification-Owners.sh --filter <owner-name>
 ```
 
 The complete fixed manifest, WebAssembly owner, and compiler convergence run on
 both permanent hosts only for an explicitly selected qualification state. GitHub
-shards the native manifest without changing its exact suite inventory or
+shards the native manifest without changing its exact owner inventory or
 aggregate result.
 
 ## Comparing hosts

@@ -26,7 +26,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
 - [Release names and tags](Project/Release-Names-And-Tags.md) — separate recovery archives, qualified baselines, and `v0.y.z` product promises
 - [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced native-only tree and immutable Stage 0 recovery identity
-- [Measured native retirement sharding](Decisions/0550-Measured-Native-Retirement-Sharding.md) — cold four-way host sharding, per-owner timing, exact 52-suite/3,287-case coverage, and unchanged aggregate qualification
+- [Native verification owners](Decisions/0589-Separate-Historical-Retirement-From-Live-Native-Verification.md) — frozen `v0.1.0` retirement evidence, a current 70-owner registry, focused development selection, and explicit qualification
+- [Measured native retirement sharding](Decisions/0550-Measured-Native-Retirement-Sharding.md) — historical cold four-way host sharding and exact 52-suite/3,287-case qualification evidence
 - [Grouped staging and Linux publisher closure](Decisions/0523-Grouped-Staging-And-Linux-Publisher-Closure.md) — bounded multi-value code-chunk admission, exact Linux data/executable modes, existing-destination policy preservation, and coherent publisher-family repinning
 - [Enum-complete native WVO inspector reconstruction](Decisions/0522-Enum-Complete-Native-Wvo-Inspector-Reconstruction.md) — repaired module-specific enum-service composition, explicit Linux executable mode, refreshed paired candidates, and native self-test ownership
 - [Native WVA and linker execution transfer](Decisions/0521-Native-Wva-And-Linker-Execution-Transfer.md) — independent Windows/Linux ownership of self-test, scanning, semantic rejection and preservation, provider assembly, canonical image/map publication, and undefined-import preservation
@@ -77,7 +78,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 52 native suites and 3,277 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — historical rationale for the original digest-bound retirement coordinator
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases

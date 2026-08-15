@@ -146,7 +146,7 @@ leaf into ambient host paths.
 The source compiler, canonical WVB 1.11 writer, and reference runtime accept the
 independent `platform`, `authority`, required-capability, and optional-capability
 header. Decision 0571 added bounded admission at the paired native WVB-to-WVO
-application boundary. Decision 0572 adds a portable normalization contract,
+application boundary. Decision 0592 adds a portable normalization contract,
 focused malformed-input proof, and a metadata-aware source-verifier adapter for
 the standalone verifier and compiler build driver. Its native owner builds and
 packages the complete verifier and admits the exact metadata-bearing fixture.

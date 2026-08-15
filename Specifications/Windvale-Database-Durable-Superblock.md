@@ -138,7 +138,7 @@ states and progress rules are defined in
 
 `Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj`
 builds one hosted selector with 13 bounded cases. The focused
-`database-superblock` retirement owner proves deterministic WVB and WVO bytes,
+`database-superblock` verification owner proves deterministic WVB and WVO bytes,
 independent WVO verification, exact flat-image and hosted-application
 identities, local execution of all cases, and construction of the other host's
 application. Independent Linux execution remains part of the dual-host GitHub

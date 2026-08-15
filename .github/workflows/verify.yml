@@ -201,7 +201,7 @@ jobs:
         run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
 
   windows-native-suite:
-    name: Windows native retirement suite (${{ matrix.shard }}/4)
+    name: Windows native qualification (${{ matrix.shard }}/4)
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
     strategy:
@@ -242,12 +242,12 @@ jobs:
           }
           if ($LASTEXITCODE -ne 0) { throw 'Changed-file whitespace verification failed.' }
 
-      - name: Run complete native retirement suite
+      - name: Run native qualification shard
         shell: cmd
-        run: Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}
+        run: Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}
 
   linux-native-suite:
-    name: Linux native retirement suite (${{ matrix.shard }}/4)
+    name: Linux native qualification (${{ matrix.shard }}/4)
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
     strategy:
@@ -277,9 +277,9 @@ jobs:
         with:
           node-version: 24
 
-      - name: Run complete native retirement suite
+      - name: Run native qualification shard
         shell: bash
-        run: ./Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}
+        run: ./Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}
 
   windows-webassembly:
     name: Windows native WebAssembly

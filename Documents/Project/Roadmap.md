@@ -148,7 +148,7 @@ pushes do not by themselves require it to be rerun.
 
 ## Milestone 4: offline package lifecycle — complete
 
-[Decision 0568](../Decisions/0568-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
+[Decision 0590](../Decisions/0590-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
 selects installer/tool users as the primary audience and an offline
 install/activate/recover/rollback demonstration as the finish. Networking, new
 language semantics, and broader host authority are excluded. Completion is a

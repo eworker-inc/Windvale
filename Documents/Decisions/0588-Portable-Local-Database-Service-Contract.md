@@ -1,4 +1,4 @@
-# Decision 0587: Portable local database service contract
+# Decision 0588: Portable local database service contract
 
 - Date: 2026-08-15
 - Status: Implemented portable contract

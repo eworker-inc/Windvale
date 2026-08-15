@@ -175,7 +175,7 @@ owners. Ordinary edits should not repin unrelated artifact families.
 ## Verification ownership
 
 `Tools/Verify/Verify-Changed.ps1` classifies a coherent change and selects the
-narrowest reliable native owners. `Tests/Native/Retirement-Suite.txt` is the
+narrowest reliable native owners. `Tests/Native/Verification-Owners.txt` is the
 fixed complete manifest used by explicit qualification, with paired Windows and
 Linux owners and canonical sharding.
 

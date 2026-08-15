@@ -134,8 +134,8 @@ foreach ($Job in $QualificationJobs) {
 }
 
 $ExpectedCommands = @{
-    'windows-native-suite' = 'Tools\Native\Test-Retirement-Suite.cmd --shard ${{ matrix.shard }}'
-    'linux-native-suite' = './Tools/Native/Test-Retirement-Suite.sh --shard ${{ matrix.shard }}'
+    'windows-native-suite' = 'Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}'
+    'linux-native-suite' = './Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}'
     'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1'
     'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1'
     'windows-bootstrap' = 'Tools\Verify\Verify-Bootstrap.cmd'

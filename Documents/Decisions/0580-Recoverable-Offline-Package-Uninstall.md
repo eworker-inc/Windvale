@@ -2,7 +2,7 @@
 
 - Status: Implemented; paired-host evidence passed in GitHub run `31906316540`
 - Date: 2026-08-15
-- Advances: Milestone 4 and Decision 0568
+- Advances: Milestone 4 and Decision 0590
 - Depends on: Decisions 0561 and 0578
 - Contract: [Package bundle and installation](../Architecture/Windvale-Package-Bundle-And-Installation.md)
 

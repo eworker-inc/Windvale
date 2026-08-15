@@ -35,7 +35,7 @@ state adds elapsed time without strengthening the selected claim.
 | Lightweight | Ordinary Markdown, root license, or editor-package-only changes | `git diff --check`, link/path review, and editor verification when relevant | Documentation or editor development feedback |
 | Website | Static site, browser package, Cloudflare function, or website-tool changes | `Tools/Verify/Verify-Website.ps1` | Website development feedback |
 | Development | Implementation or specification changes with mapped native owners | `Tools/Verify/Verify-Changed.ps1` selects affected owners in canonical order | Development feedback only |
-| Qualification | Explicit workflow dispatch or an unresolved comparison that must fail closed | Complete cold native retirement shards, WebAssembly owner, and compiler convergence on Windows and Debian | Qualification for the selected source state |
+| Qualification | Explicit workflow dispatch or an unresolved comparison that must fail closed | Complete cold native verification-owner shards, WebAssembly owner, and compiler convergence on Windows and Debian | Qualification for the selected source state |
 
 The development planner refuses an uncovered path. It does not use the managed
 Seed harness or the complete unfiltered native suite as an implicit fallback.
@@ -148,10 +148,10 @@ in 11,860 ms. Qualification remains cold and ignores this selection.
 
 ## Qualification sharding
 
-The native retirement manifest assigns every suite exactly once to one of four
-shards. Manifest order remains canonical inside each shard; no-argument local
-execution remains the sequential oracle, and exact filters remain available for
-focused work.
+The native verification-owner manifest assigns every owner exactly once to one
+of four qualification shards. Manifest order remains canonical inside each
+shard; no-argument local execution remains the sequential oracle, and exact
+filters remain available for focused work.
 
 Decision 0550 qualified 52 suites and 3,287 cases per host. Four shards reduced
 the observed complete workflow from about 40 minutes to about 15 minutes without

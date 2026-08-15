@@ -135,6 +135,6 @@ an archive copied outside that envelope has no independent signature. Installer
 1 does not implement a general package resolver, native recovery launcher,
 multi-generation activation, rollback, repair, or garbage collection.
 
-Decision 0568's portable Generation 1 / Activation 1 parser and transition
+Decision 0590's portable Generation 1 / Activation 1 parser and transition
 planner begin the successor lifecycle contract without changing these published
 Installer 1 bytes or claiming that host activation and rollback are implemented.

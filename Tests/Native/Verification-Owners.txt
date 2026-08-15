@@ -1,4 +1,4 @@
-windvale-native-retirement-suite 2
+windvale-native-verification-owners 1
 seed|Test-Seed|26|2|Tests: 26, Passed: 26, Failed: 0
 seed-native-front-door|Test-Seed-Native-Front-Door|1|2|Tests: 1, Passed: 1, Failed: 0
 seed-native-front-door-reconstruction|Test-Seed-Native-Front-Door-Reconstruction|1|2|Tests: 1, Passed: 1, Failed: 0

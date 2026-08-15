@@ -95,7 +95,7 @@ Probe 34's `WVCHAN03` adopts the terminal boundary in the guest. Client exit or 
 
 [`Resource-Service-Core.wv`](../Operating-System/Services/Resource-Service-Core.wv) parses `WVRQ 1`, invokes the complete portable `WVRS 1` validator and lookup, applies the requested inline-data ceiling, and constructs canonical `WVRY 1`. It never returns a resource from a partially validated store.
 
-[`Resource-Service-Bridge.wv`](../Operating-System/Services/Resource-Service-Bridge.wv) is the hosted integration adapter. It declares only `file.read_bytes`, reads opaque inputs `boot:resources.wvrs` and `ipc:resource-request.wvrq`, and returns the response bytes. Explicit Project 2 manifests compile the portable core, hosted bridge, and store-backed service through the native front door. The `os-services` retirement owner executes the portable core against success, malformed request, missing name, response-limit, and invalid-store cases. The former managed differential oracle remains historical recovery evidence, not a live dependency in `main`.
+[`Resource-Service-Bridge.wv`](../Operating-System/Services/Resource-Service-Bridge.wv) is the hosted integration adapter. It declares only `file.read_bytes`, reads opaque inputs `boot:resources.wvrs` and `ipc:resource-request.wvrq`, and returns the response bytes. Explicit Project 2 manifests compile the portable core, hosted bridge, and store-backed service through the native front door. The `os-services` verification owner executes the portable core against success, malformed request, missing name, response-limit, and invalid-store cases. The former managed differential oracle remains historical recovery evidence, not a live dependency in `main`.
 
 ## Implementation evidence and limits
 

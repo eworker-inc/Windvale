@@ -5,291 +5,40 @@ This runbook owns the first .NET-free repository test slice accepted by
 inventory and non-claims are defined by the
 [native test-plan contract](../../Specifications/Windvale-Native-Test-Plan.md).
 
-## Retirement-suite coordinator
+## Verification-owner coordinator
 
 The digest-bound coordinator composes every transferred fixed native lane
 without entering the managed Seed harness. On Windows x64, run one focused lane
 with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter unsafe-wvb
+Tools\Native\Test-Verification-Owners.cmd --filter unsafe-wvb
 ```
 
 On Linux x64:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter unsafe-wvb
+./Tools/Native/Test-Verification-Owners.sh --filter unsafe-wvb
 ```
 
 GitHub qualification runs four digest-bound disjoint shards on each host:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --shard 1
+Tools\Native\Test-Verification-Owners.cmd --shard 1
 ```
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --shard 1
+./Tools/Native/Test-Verification-Owners.sh --shard 1
 ```
 
 Use shard values `1` through `4`. The manifest fixes every assignment, and the
 final verification gate requires all four shards on both hosts. The ordinary
 no-argument command remains available as the sequential complete-plan oracle.
 
-The exact filter names and case counts are:
-
-| Filter | Cases |
-| --- | ---: |
-| `seed` | 26 |
-| `seed-native-front-door` | 1 |
-| `seed-native-front-door-reconstruction` | 1 |
-| `seed-native-console-aot` | 1 |
-| `compiler-reconstruction` | 3 |
-| `segmented-compiler-toolset-reconstruction` | 3 |
-| `wvb-to-wvo-reconstruction` | 6 |
-| `wvb-runner-reconstruction` | 3 |
-| `wv-linker-reconstruction` | 3 |
-| `wvo-inspector-reconstruction` | 3 |
-| `console-verifier-reconstruction` | 3 |
-| `console-publisher-reconstruction` | 3 |
-| `wvo-publisher-reconstruction` | 2 |
-| `baseline-jit` | 6 |
-| `unsafe-wvb` | 20 |
-| `wvb-containment` | 1,000 |
-| `wvo-read-only` | 13 |
-| `wvo-differential` | 256 |
-| `wvo-containment` | 500 |
-| `wvo-hostile-size` | 5 |
-| `assembler-rejections` | 11 |
-| `assembler-golden` | 4 |
-| `wva-differential` | 269 |
-| `source-containment` | 500 |
-| `lowerer-rejections` | 2 |
-| `linker-rejections` | 10 |
-| `linker-hostile` | 200 |
-| `linker-map-limit` | 1 |
-| `console-packager-rejections` | 3 |
-| `console-container-hostile` | 256 |
-| `console-container-mutations` | 19 |
-| `hosted-console-container-mutations` | 15 |
-| `console-segmented-size` | 2 |
-| `console-segmented-construction` | 2 |
-| `console-packager-source-reconstruction` | 2 |
-| `console-packager-container-reconstruction` | 4 |
-| `publisher-rejections` | 4 |
-| `hosted-verifier-publisher-files` | 15 |
-| `uefi-packager` | 3 |
-| `wvo-export-renamer` | 4 |
-| `os-probe-object` | 11 |
-| `os-kernel-target` | 7 |
-| `os-process-policy` | 2 |
-| `os-process-object` | 2 |
-| `os-probe` | 4 |
-| `aot-chain` | 1 |
-| `native-u64-lowering` | 1 |
-| `model-provider` | 11 |
-| `database-superblock` | 13 |
-| `database-durable-commit` | 12 |
-| `database-storage` | 21 |
-| `workspace-project2` | 8 |
-| `libraries` | 29 |
-| `packages` | 8 |
-| `package-format` | 58 |
-
-Omitting selection arguments runs all 54 suites and 3,351 cases in manifest
-order. Each owner pass includes `elapsed-ms`, followed by total timing and the
-unchanged semantic terminal summary:
-
-```text
-Timing: elapsed-ms=<time>
-Suites: 54, Passed: 54, Failed: 0, Cases: 3351
-```
-
-Do not use the unfiltered command as another inner-loop level. It is reserved
-for the final grouped retirement candidate unless the coordinator boundary
-itself changes. The plan identity, child summaries, exit/channel behavior, and
-failure rules are defined by the
-[native retirement test-suite contract](../../Specifications/Windvale-Native-Retirement-Test-Suite.md).
-
-The ordinary front-door owner is intentionally small:
-
-```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter seed-native-front-door
-```
-
-It validates the pinned manifest and checksum inventory, all 18 artifact
-identities, and current-host admission of all six WVB modules. It does not build
-the product family. The complete 105-artifact and 185-assertion reconstruction
-remains available only when that evidence is actually required:
-
-```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter seed-native-front-door-reconstruction
-```
-
-Use the corresponding `.sh` commands on Linux. The reconstruction owner remains
-part of explicit complete qualification; do not run it after an unchanged smoke
-result merely because a commit or push is next.
-
-The bounded baseline-JIT owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter baseline-jit
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter baseline-jit
-```
-
-It runs the aggregate `WVJP 1` producer/verifier self-test and the five named
-`WVLT 1` W^X publication behaviors. A current-host pass is not paired-host
-qualification and does not claim the general JIT/backend is complete.
-
-The segmented compiler toolset reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter segmented-compiler-toolset-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter segmented-compiler-toolset-reconstruction
-```
-
-It calls the durable constructor once, then treats each WVB and its paired exact
-Windows/Linux applications as one case. The three cases cover the WVO staging
-producer, compiler-image staging tool, and canonical image transport tool.
-
-The current WVB-to-WVO reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter wvb-to-wvo-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wvb-to-wvo-reconstruction
-```
-
-Its six cases verify the seven-file candidate inventory, execute the portable
-metadata normalizer, build and package the source verifier and require it to
-admit the metadata-bearing fixture, call the durable lowerer constructor once,
-compare its rebuilt artifacts byte for byte, and reproduce the fixed Return-42
-and independent-metadata WVOs on the current host.
-
-The source-built runner reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter wvb-runner-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wvb-runner-reconstruction
-```
-
-Its three cases verify the four-file candidate inventory, rebuild the WVB from
-the complete Project 1 source closure, reconstruct the exact WVO and paired
-profile-5 applications, and exercise the current-host runner with exact result,
-instruction-count, option-rejection, and malformed-input reports. It does not
-claim independent Linux execution or grouped qualification.
-
-The standard Wv-Linker reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter wv-linker-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wv-linker-reconstruction
-```
-
-Its three cases verify the exact five-file linker candidate inventory, rebuild
-the canonical WVB plus intermediate WVO and fragment through the retained
-segmented stage, link, and transport path, reconstruct the paired profile-4
-applications, and exercise the rebuilt current-host linker over a fixed link
-vector. The segmented construction path avoids using the standard linker to
-link its own successor. This remains retained same-release current-Windows-host
-evidence, not independent Linux reconstruction, clean bootstrap, promotion, or
-grouped qualification.
-
-The WVO inspector reconstruction owner can be selected directly:
-
-```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter wvo-inspector-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wvo-inspector-reconstruction
-```
-
-Its three cases verify the exact candidate inventory, reconstruct the WVO
-inspector WVB and paired Windows/Linux applications through the retained native
-cross-target toolsets, and execute the current-host compatibility and profile
-isolation matrix. This is current-Windows-host evidence; it is not independent
-Linux execution or a clean previous-seed renewal. The accepted focused run
-passes all three cases in 28.1 seconds.
-
-The console-application verifier reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter console-verifier-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter console-verifier-reconstruction
-```
-
-Its three cases verify the exact candidate inventory, run the durable
-constructor once and compare the rebuilt WVB, WVO, and paired applications,
-then exercise the rebuilt current-host verifier over the fixed valid and
-rejected console-container vectors. This focused lane does not claim an
-independent Linux-host execution or the final grouped retirement gate.
-
-The console-application publisher reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter console-publisher-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter console-publisher-reconstruction
-```
-
-Its three cases verify the exact four-file candidate inventory, rebuild the WVB
-and WVO and construct both target applications, and exercise current-host
-publication success plus rejected-input output preservation. The lane runs its
-durable constructor for each target and retains publisher-family regression in
-the existing focused owner. It does not claim independent Linux-host execution
-or the final grouped retirement gate.
-
-The role-3 WVO publisher reconstruction owner can be selected directly:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter wvo-publisher-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wvo-publisher-reconstruction
-```
-
-It verifies the three-file publisher candidate inventory, natively rebuilds
-the publisher WVB with an exact completion transcript, constructs the paired
-Windows and Linux applications through the role-3 pipeline, and compares all
-three rebuilt products byte for byte. The two cases retain WVO behavioral and
-publisher-rejection coverage in their existing focused lanes.
-
-The ordinary and segmented console-packager container candidates have one
-separate focused reconstruction owner:
-
-```cmd
-Tools\Native\Test-Retirement-Suite.cmd --filter console-packager-container-reconstruction
-```
-
-```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter console-packager-container-reconstruction
-```
-
-It checks each three-file candidate inventory, rejects a missing constructor
-destination, calls the durable constructor exactly once, requires its exact
-channels, and compares both rebuilt WVB-and-paired-application families byte
-for byte. The four cases keep source-to-WVO reconstruction in the separate
-`console-packager-source-reconstruction` lane.
+The canonical owner names, commands, case counts, qualification shards, and
+terminal summaries live only in `Tests/Native/Verification-Owners.txt`. Do not
+copy that evolving inventory into this runbook. Inspect the manifest or ask the
+changed-file planner for the affected owner.
 
 ## Changed-file front door
 
@@ -408,13 +157,13 @@ the first object independently, and compares both generated objects byte for
 byte. Run it on Windows with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter assembler-golden
+Tools\Native\Test-Verification-Owners.cmd --filter assembler-golden
 ```
 
 On Linux x64:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter assembler-golden
+./Tools/Native/Test-Verification-Owners.sh --filter assembler-golden
 ```
 
 Success is:
@@ -430,13 +179,13 @@ includes 32 valid mutations, so this is not a rejection-only corpus. Run only
 this lane on Windows with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter wvo-differential
+Tools\Native\Test-Verification-Owners.cmd --filter wvo-differential
 ```
 
 or on Linux:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wvo-differential
+./Tools/Native/Test-Verification-Owners.sh --filter wvo-differential
 ```
 
 The native verifier must agree on all 32 accepted and 224 rejected rows and
@@ -485,13 +234,13 @@ and destination preservation for each public native-linker invocation. Run its
 focused lane with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter linker-hostile
+Tools\Native\Test-Verification-Owners.cmd --filter linker-hostile
 ```
 
 or on Linux:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter linker-hostile
+./Tools/Native/Test-Verification-Owners.sh --filter linker-hostile
 ```
 
 The command generates no random value while running. Its exact success summary
@@ -554,13 +303,13 @@ and 128 ELF candidates, then drives both suffix-selected portable verifier paths
 through the current-host native console publisher. Run only this lane with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter console-container-hostile
+Tools\Native\Test-Verification-Owners.cmd --filter console-container-hostile
 ```
 
 or on Linux:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter console-container-hostile
+./Tools/Native/Test-Verification-Owners.sh --filter console-container-hostile
 ```
 
 Every manifest-owned case requires exact rejection, empty standard output,
@@ -574,13 +323,13 @@ and thirteen exact managed mutations. It does not rebuild either container or
 generate mutations during the run. On Windows use:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter hosted-console-container-mutations
+Tools\Native\Test-Verification-Owners.cmd --filter hosted-console-container-mutations
 ```
 
 On Linux use:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter hosted-console-container-mutations
+./Tools/Native/Test-Verification-Owners.sh --filter hosted-console-container-mutations
 ```
 
 Both valid candidates must publish byte-identically. Every rejected candidate
@@ -593,13 +342,13 @@ first chunk is exactly 4 MiB and cannot be joined with its second chunk into one
 ordinary Windvale byte value. On Windows use:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter console-segmented-size
+Tools\Native\Test-Verification-Owners.cmd --filter console-segmented-size
 ```
 
 On Linux use:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter console-segmented-size
+./Tools/Native/Test-Verification-Owners.sh --filter console-segmented-size
 ```
 
 The fixed corpus contains the target-marked Windows and Linux maximum-plus-one
@@ -689,13 +438,13 @@ and 69 managed positive register/control/relocation vectors. Run the complete la
 Windows with:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter wva-differential
+Tools\Native\Test-Verification-Owners.cmd --filter wva-differential
 ```
 
 or on Linux:
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter wva-differential
+./Tools/Native/Test-Verification-Owners.sh --filter wva-differential
 ```
 
 The native assembler must match all 199 Stage 0 rejection codes, preserve each
@@ -741,7 +490,7 @@ must reject a fixed invalid WVB, preserve that input and a pre-existing
 destination exactly, and leave no private package directory. The terminal
 summary is `Tests: 2, Passed: 2, Failed: 0`.
 
-These commands are separate from the fixed retirement-suite coordinator until
+These commands are separate from the fixed verification-owner coordinator until
 the hosted-container candidate is promoted. Run the Windows and Linux halves
 from the same fetched commit during the final grouped gate; do not run one host
 script repeatedly or use a passing Windows result as Linux execution evidence.
@@ -781,7 +530,7 @@ packages the exact EFI. Use the focused retirement lane to check all three exact
 constructions plus existing-output preservation:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
+Tools\Native\Test-Verification-Owners.cmd --filter os-probe
 ```
 
 The normal object seed is now empty. All eleven formerly frozen objects have
@@ -792,36 +541,36 @@ To exercise the kernel target directly:
 
 ```bat
 Tools\Native\Lower-Os-Kernel-Wvb.cmd input.wvb output.wvo
-Tools\Native\Test-Retirement-Suite.cmd --filter os-kernel-target
+Tools\Native\Test-Verification-Owners.cmd --filter os-kernel-target
 ```
 
 ```sh
 ./Tools/Native/Lower-Os-Kernel-Wvb.sh input.wvb output.wvo
-./Tools/Native/Test-Retirement-Suite.sh --filter os-kernel-target
+./Tools/Native/Test-Verification-Owners.sh --filter os-kernel-target
 ```
 
 To construct the process-policy object directly:
 
 ```bat
 Tools\Native\Build-Os-Process-Policy-Object.cmd output.wvo
-Tools\Native\Test-Retirement-Suite.cmd --filter os-process-policy
+Tools\Native\Test-Verification-Owners.cmd --filter os-process-policy
 ```
 
 ```sh
 ./Tools/Native/Build-Os-Process-Policy-Object.sh output.wvo
-./Tools/Native/Test-Retirement-Suite.sh --filter os-process-policy
+./Tools/Native/Test-Verification-Owners.sh --filter os-process-policy
 ```
 
 To construct the normal process object directly:
 
 ```bat
 Tools\Native\Build-Os-Process-Object.cmd output.wvo
-Tools\Native\Test-Retirement-Suite.cmd --filter os-process-object
+Tools\Native\Test-Verification-Owners.cmd --filter os-process-object
 ```
 
 ```sh
 ./Tools/Native/Build-Os-Process-Object.sh output.wvo
-./Tools/Native/Test-Retirement-Suite.sh --filter os-process-object
+./Tools/Native/Test-Verification-Owners.sh --filter os-process-object
 ```
 
 This path regenerates the three embedded images, canonical program, resource
@@ -894,8 +643,8 @@ managed recovery step to the native development path.
 
 ## Current boundary
 
-The 3,351-case coordinator is the complete native retirement plan, not an
-inner-loop repository verifier. It covers result, runtime-failure,
+The 70-owner, 3,568-case registry is the complete native qualification plan,
+not an inner-loop repository verifier. It covers result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, OS, package, database, and AOT-chain contracts.
 WebAssembly and compiler convergence remain separate explicit qualification
@@ -904,7 +653,7 @@ filter; uncovered maintained paths fail closed instead of selecting Stage 0.
 
 Before running a filter, review its child command, fixtures, and expected
 summary against the changed behavior; update them first if the contract changed.
-Then run only `Test-Retirement-Suite.cmd --filter <suite-name>` or its `.sh`
+Then run only `Test-Verification-Owners.cmd --filter <owner-name>` or its `.sh`
 counterpart once. Reuse that result while relevant inputs remain unchanged. Do
 not also run the child directly or progress through broader local levels for the
 same source state. Immediately before the final grouped candidate, update from

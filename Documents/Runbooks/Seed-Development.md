@@ -39,14 +39,14 @@ Linux. The complete four-shard native suite, WebAssembly owner, and compiler
 convergence run only through explicit workflow dispatch for a selected release,
 promotion, bootstrap, security, ABI, or conformance state.
 
-To run one named retirement-suite owner directly:
+To run one named verification owner directly:
 
 ```bat
-Tools\Native\Test-Retirement-Suite.cmd --filter seed-native-front-door
+Tools\Native\Test-Verification-Owners.cmd --filter seed-native-front-door
 ```
 
 ```sh
-./Tools/Native/Test-Retirement-Suite.sh --filter seed-native-front-door
+./Tools/Native/Test-Verification-Owners.sh --filter seed-native-front-door
 ```
 
 This fast owner checks all pinned front-door identities and current-host WVB

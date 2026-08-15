@@ -2,7 +2,7 @@
 
 - Status: Implemented; paired-host evidence passed in GitHub run `31906316540`
 - Date: 2026-08-15
-- Advances: Milestone 4 and Decision 0568
+- Advances: Milestone 4 and Decision 0590
 - Depends on: Decisions 0574 and 0576
 - Contract: [Generation 1 and Activation 1](../../Specifications/Windvale-Installation-Generation.md)
 

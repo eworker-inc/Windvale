@@ -1,4 +1,4 @@
-# Decision 0568: Offline package lifecycle and Generation 1 / Activation 1
+# Decision 0590: Offline package lifecycle and Generation 1 / Activation 1
 
 - Status: Accepted
 - Date: 2026-08-15

@@ -136,9 +136,9 @@ if ($Plan.Scope -eq 'website') {
 
     $IsWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
     $Coordinator = if ($IsWindowsHost) {
-        Join-Path $RepositoryRoot 'Tools/Native/Test-Retirement-Suite.cmd'
+        Join-Path $RepositoryRoot 'Tools/Native/Test-Verification-Owners.cmd'
     } else {
-        Join-Path $RepositoryRoot 'Tools/Native/Test-Retirement-Suite.sh'
+        Join-Path $RepositoryRoot 'Tools/Native/Test-Verification-Owners.sh'
     }
     foreach ($Suite in $NativePlan.Suites) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
@@ -152,14 +152,14 @@ if ($Plan.Scope -eq 'website') {
                 }
                 $DatabaseTarget = $NativePlan.DatabaseStorageDevelopmentTarget
                 Write-Host (
-                    'Native suite database-storage mode=development-checkpoint ' +
+                    'Native owner database-storage mode=development-checkpoint ' +
                     "target=$DatabaseTarget")
                 & $DevelopmentOwner --development-target $DatabaseTarget
             } else {
                 & $Coordinator --filter $Suite
             }
             if ($LASTEXITCODE -ne 0) {
-                throw "Native suite '$Suite' exited $LASTEXITCODE."
+                throw "Native owner '$Suite' exited $LASTEXITCODE."
             }
         } catch {
             $Failures.Add($Suite)
@@ -221,5 +221,5 @@ if ($Plan.Scope -eq 'website') {
         throw "Native changed-file verification failed: $($Failures -join ', ')."
     }
 } else {
-    Write-Host 'Changed-file verification passed without native suite execution.'
+    Write-Host 'Changed-file verification passed without native owner execution.'
 }

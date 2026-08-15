@@ -1,8 +1,8 @@
-# Decision 0571: Signed two-package offline stage
+# Decision 0591: Signed two-package offline stage
 
 - Status: Implemented locally; paired-host evidence pending
 - Date: 2026-08-15
-- Advances: Milestone 4 and Decision 0568
+- Advances: Milestone 4 and Decision 0590
 - Contract: [Release Envelope 1](../../Specifications/Windvale-Release-Envelope.md)
 
 ## Context

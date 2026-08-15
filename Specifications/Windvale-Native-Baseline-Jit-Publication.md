@@ -77,7 +77,7 @@ Each application performs these checks in a single native process:
 4. publish, invoke, compare, and release a plan returning `-1`;
 5. force a seal failure and verify that the still-writable mapping is released.
 
-The fixed `baseline-jit` retirement owner counts these five behaviors plus one
+The fixed `baseline-jit` verification owner counts these five behaviors plus one
 separate producer/verifier self-test from the patch-plan contract, for six
 cases in total.
 

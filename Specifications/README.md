@@ -51,7 +51,8 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [`wvdump` report](Wv-Dump-Report.md)
 - [Native WVB read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md)
 - [Native WVB unsafe rejection tests](Windvale-Native-Wvb-Unsafe-Rejection-Tests.md)
-- [Native retirement test suite](Windvale-Native-Retirement-Test-Suite.md)
+- [Native verification owners](Windvale-Native-Verification-Owners.md)
+- [Historical native retirement test suite](Windvale-Native-Retirement-Test-Suite.md)
 - [Baseline-JIT patch plan](Windvale-Baseline-Jit-Patch-Plan.md)
 - [Native baseline-JIT publication](Windvale-Native-Baseline-Jit-Publication.md)
 
