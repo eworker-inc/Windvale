@@ -45,7 +45,7 @@ The exact filter names and case counts are:
 | `seed-native-console-aot` | 1 |
 | `compiler-reconstruction` | 3 |
 | `segmented-compiler-toolset-reconstruction` | 3 |
-| `wvb-to-wvo-reconstruction` | 3 |
+| `wvb-to-wvo-reconstruction` | 6 |
 | `wvb-runner-reconstruction` | 3 |
 | `wv-linker-reconstruction` | 3 |
 | `wvo-inspector-reconstruction` | 3 |
@@ -167,9 +167,11 @@ Tools\Native\Test-Retirement-Suite.cmd --filter wvb-to-wvo-reconstruction
 ./Tools/Native/Test-Retirement-Suite.sh --filter wvb-to-wvo-reconstruction
 ```
 
-It verifies the five-file candidate inventory, calls its durable constructor
-once, compares the rebuilt WVB and paired applications byte for byte, and
-requires the current-host rebuilt lowerer to reproduce the fixed Return-42 WVO.
+Its six cases verify the seven-file candidate inventory, execute the portable
+metadata normalizer, build and package the source verifier and require it to
+admit the metadata-bearing fixture, call the durable lowerer constructor once,
+compare its rebuilt artifacts byte for byte, and reproduce the fixed Return-42
+and independent-metadata WVOs on the current host.
 
 The source-built runner reconstruction owner can be selected directly:
 

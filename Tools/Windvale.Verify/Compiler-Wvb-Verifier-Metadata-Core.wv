@@ -1,0 +1,11 @@
+module Windvaleˉcompilerˉwvbˉverifierˉmetadata profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
+
+export fn Compilerˉwvbˉverifyˉmetadata(Input: bytes) -> u32 {
+    let Normalized: bytes =
+        Metadataˉnormalization.Windvaleˉwvbˉmetadataˉnormalize(Input);
+    if Bytesˉlength(Normalized) == 0u32 { return 1u32; }
+    return Semanticˉverifier.Compilerˉwvbˉverify(Normalized);
+}

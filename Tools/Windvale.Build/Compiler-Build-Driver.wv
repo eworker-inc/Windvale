@@ -4,7 +4,7 @@ import Compilerˉsourceˉwvb as Sourceˉwvb;
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉset as Sourceˉset;
-import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
 import Windvaleˉproject as Project;
 
 capability console.write_line;
@@ -279,7 +279,8 @@ fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
         return 1;
     }
 
-    let Verification: u32 = Semanticˉverifier.Compilerˉwvbˉverify(Summary.Bytecode);
+    let Verification: u32 =
+        Metadataˉverifier.Compilerˉwvbˉverifyˉmetadata(Summary.Bytecode);
     if Verification != 0u32 {
         if Verification == 1u32 {
             diagnostic.write_line("build status=Verifierˉrejected phase=semantic");

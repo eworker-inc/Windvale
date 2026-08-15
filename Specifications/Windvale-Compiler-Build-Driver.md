@@ -56,7 +56,11 @@ Project failures use the existing `WVP1001` through `WVP1007` identities with on
 
 ## Verification and publication boundary
 
-`Compilerˉwvbˉverify(bytes) -> u32` is now a portable imported function shared by the standalone verifier tool and the build driver. It returns:
+`Compilerˉwvbˉverifyˉmetadata(bytes) -> u32` is the portable imported function
+shared by the standalone verifier tool and the build driver. It validates and
+normalizes independently present module metadata before invoking the retained
+compiler-aligned semantic, typed-execution, and reachability verifier. It
+returns:
 
 | Status | Meaning |
 | ---: | --- |

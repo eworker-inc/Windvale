@@ -146,11 +146,19 @@ leaf into ambient host paths.
 The source compiler, canonical WVB 1.11 writer, and reference runtime accept the
 independent `platform`, `authority`, required-capability, and optional-capability
 header. Decision 0571 added bounded admission at the paired native WVB-to-WVO
-application boundary. Decision 0572 adds a portable normalization contract and
-focused malformed-input proof, but a native inspector smoke test rejected its
-first integration and the normal compiler-aligned verifier remains at its
-current binding-evidence ceiling. Both production consumers still require
-implementation.
+application boundary. Decision 0572 adds a portable normalization contract,
+focused malformed-input proof, and a metadata-aware source-verifier adapter for
+the standalone verifier and compiler build driver. Its native owner builds and
+packages the complete verifier and admits the exact metadata-bearing fixture.
+The earlier apparent binding-evidence ceiling was an unreachable-module
+diagnostic hidden by the old build report, not a real capacity limit. The
+normalizer uses private bounded byte tuples so the complete build driver stays
+within the native x64 runtime encoding's existing 64-record ceiling; the
+source-built model-provider path proves native staging and execution. The
+digest-pinned ordinary verifier and inspector still require artifact promotion;
+publisher and package consumers retain the absent form for their owner-sized
+migrations, and the inspector's attempted source integration remains rejected
+after a Windows file-report crash.
 Production migration is therefore not ready to become a repository-wide source
 rewrite; the focused metadata fixture remains the replacement-form proof input.
 
@@ -159,11 +167,11 @@ Advance the migration in this order:
 1. ✅ make the native lowerer independently validate and admit one metadata-bearing
    module while preserving its existing profile, capability, code, and object
    rules;
-2. 🔵 add malformed metadata cases for invalid presence, version, authority,
+2. ✅ add malformed metadata cases for invalid presence, version, authority,
    platform ordering, capability ordering/version/overlap, profile derivation,
    and required-capability mismatch; lowerer coverage is complete and the
-   portable normalization contract now has its first deterministic/malformed
-   consumer cases;
+   portable normalization contract now has deterministic/malformed consumer
+   cases, and the source verifier consumes its normalized view;
 3. prove one current package application through source compilation, WVB
    verification and inspection, native lowering, packaging, and execution with
    the replacement header on Windows and Linux;

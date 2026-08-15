@@ -32,7 +32,11 @@ pass() {
 }
 fail() {
     tests=$((tests + 1))
-    echo 'FAIL  WVB-to-WVO reconstruction'
+    echo "FAIL  WVB-to-WVO reconstruction phase=${phase:-setup}"
+    if [[ -n ${test_directory:-} && -f $test_directory/Metadata-Verifier.out ]]; then
+        echo "DETAIL metadata-verifier-report bytes=$(wc -c < "$test_directory/Metadata-Verifier.out")"
+        cat -- "$test_directory/Metadata-Verifier.out"
+    fi
     echo "Tests: $tests, Passed: $passed, Failed: $((tests - passed))"
     exit 1
 }
@@ -74,6 +78,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+phase=metadata-normalizer-build
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj" \
     "$test_directory/Metadata-Normalization.wvb" \
@@ -89,6 +94,33 @@ check_equal \
 [[ ! -s $test_directory/Metadata-Normalization.err ]] || fail
 pass 'portable metadata normalization'
 
+phase=metadata-verifier-build
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj" \
+    "$test_directory/Metadata-Verifier.wvb" \
+    >/dev/null 2>"$test_directory/Metadata-Verifier-Build.err" || fail
+[[ ! -s $test_directory/Metadata-Verifier-Build.err ]] || fail
+phase=metadata-verifier-package
+"$script_directory/Package-Hosted-Wvb.sh" 2 \
+    "$test_directory/Metadata-Verifier.wvb" \
+    "$test_directory/Metadata-Verifier.elf" linux \
+    >"$test_directory/Metadata-Verifier-Package.out" \
+    2>"$test_directory/Metadata-Verifier-Package.err" || fail
+[[ ! -s $test_directory/Metadata-Verifier-Package.err ]] || fail
+phase=metadata-verifier-execution
+"$test_directory/Metadata-Verifier.elf" "$candidate/Metadata.wvb" \
+    >"$test_directory/Metadata-Verifier.out" \
+    2>"$test_directory/Metadata-Verifier.err" || fail
+phase=metadata-verifier-report
+printf '%s\n' 'wvb status=Valid profile=compiler-aligned' \
+    >"$test_directory/Metadata-Verifier-Expected.out" || fail
+check_equal \
+    "$test_directory/Metadata-Verifier.out" \
+    "$test_directory/Metadata-Verifier-Expected.out" || fail
+[[ ! -s $test_directory/Metadata-Verifier.err ]] || fail
+pass 'compiler-aligned metadata verification'
+
+phase=lowerer-reconstruction
 "$script_directory/Construct-Wvb-To-Wvo-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
 printf '%s\n' 'native WVB-to-WVO reconstruction status=Complete artifacts=7' \

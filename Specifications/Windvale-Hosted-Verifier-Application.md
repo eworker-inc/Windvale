@@ -23,11 +23,26 @@ These are deliberately fixed tool profiles, not a general hosted-application for
 The canonical source project is [`Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj`](../Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv` as the hosted adapter;
+- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv` as the
+  metadata-aware verifier adapter;
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv`;
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv`;
-- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv`.
+- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv`;
+- `Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv`.
 
-The semantic and executable modules are portable. Their shared `Compilerˉwvbˉverify(bytes) -> u32` entry is also consumed in-process by the [compiler build driver](Windvale-Compiler-Build-Driver.md); the standalone tool owns only arguments, file input, diagnostics, and process result mapping.
+The metadata, semantic, and executable modules are portable. The
+`Compilerˉwvbˉverifyˉmetadata(bytes) -> u32` entry is also consumed in-process
+by the [compiler build driver](Windvale-Compiler-Build-Driver.md); the
+standalone tool owns only arguments, file input, diagnostics, and process
+result mapping. The retained absent-form
+`Compilerˉwvbˉverify(bytes) -> u32` entry remains available to pinned consumers
+that have not migrated their artifact family.
+
+The metadata-aware entry accepts both the retained absent metadata form and
+independently validated present metadata. It validates and reconstructs a
+bounded immutable absent-form view before semantic, typed-execution, or
+reachability validation; later verifier phases never interpret or silently
+ignore admission metadata.
 
 The executable requires one candidate path:
 

@@ -756,12 +756,18 @@ foreach ($Path in $Paths) {
         Add-Suite 'workspace-project2'
         Add-Compiler-Suites
     } elseif ($Path -in @(
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
         'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
     )) {
         Add-Bytecode-Suites
         Add-Suite @('libraries', 'model-provider')
-        if ($Path -eq 'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv') {
+        if ($Path -in @(
+            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
+            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
+            'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
+        )) {
             Add-Suite 'wvb-to-wvo-reconstruction'
         }
     } elseif ($Path -in @(

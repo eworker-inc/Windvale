@@ -30,6 +30,7 @@ if not "%ERRORLEVEL%"=="64" goto :failed
 set "TestDirectory=%TEMP%\windvale-wvb-to-wvo-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate
 mkdir "%TestDirectory%" || goto :failed
+set "Phase=metadata-normalizer-build"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj" ^
     "%TestDirectory%\Metadata-Normalization.wvb" >nul 2>"%TestDirectory%\Metadata-Normalization-Build.err"
@@ -45,6 +46,31 @@ if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Metadata-Normalization.err") do if not "%%~zF"=="0" goto :failed
 call :pass "portable metadata normalization"
 
+set "Phase=metadata-verifier-build"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Wvb-Verifier.wvproj" ^
+    "%TestDirectory%\Metadata-Verifier.wvb" >nul 2>"%TestDirectory%\Metadata-Verifier-Build.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Metadata-Verifier-Build.err") do if not "%%~zF"=="0" goto :failed
+set "Phase=metadata-verifier-package"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 2 ^
+    "%TestDirectory%\Metadata-Verifier.wvb" ^
+    "%TestDirectory%\Metadata-Verifier.exe" windows ^
+    >"%TestDirectory%\Metadata-Verifier-Package.out" 2>"%TestDirectory%\Metadata-Verifier-Package.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Metadata-Verifier-Package.err") do if not "%%~zF"=="0" goto :failed
+set "Phase=metadata-verifier-execution"
+"%TestDirectory%\Metadata-Verifier.exe" "%Candidate%\Metadata.wvb" ^
+    >"%TestDirectory%\Metadata-Verifier.out" 2>"%TestDirectory%\Metadata-Verifier.err"
+if errorlevel 1 goto :failed
+set "Phase=metadata-verifier-report"
+for %%F in ("%TestDirectory%\Metadata-Verifier.out") do if not "%%~zF"=="42" goto :failed
+findstr /c:"wvb status=Valid profile=compiler-aligned" "%TestDirectory%\Metadata-Verifier.out" >nul
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Metadata-Verifier.err") do if not "%%~zF"=="0" goto :failed
+call :pass "compiler-aligned metadata verification"
+
+set "Phase=lowerer-reconstruction"
 call "%RepositoryRoot%\Tools\Native\Construct-Wvb-To-Wvo-Reconstruction.cmd" "%TestDirectory%" ^
     >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
 if errorlevel 1 goto :failed
@@ -103,9 +129,13 @@ if exist "%ResolvedTestDirectory%\." rmdir /s /q "%ResolvedTestDirectory%"
 exit /b 0
 
 :failed
+if defined TestDirectory if exist "%TestDirectory%\Metadata-Verifier.out" (
+    for %%F in ("%TestDirectory%\Metadata-Verifier.out") do echo DETAIL metadata-verifier-report bytes=%%~zF
+    type "%TestDirectory%\Metadata-Verifier.out"
+)
 call :cleanup >nul 2>nul
 set /a Tests+=1
 set /a Failed=Tests-Passed
-echo FAIL  WVB-to-WVO reconstruction
+echo FAIL  WVB-to-WVO reconstruction phase=%Phase%
 echo Tests: %Tests%, Passed: %Passed%, Failed: %Failed%
 exit /b 1

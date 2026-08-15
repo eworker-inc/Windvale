@@ -1,60 +1,40 @@
 module Windvaleˉwvbˉmetadataˉnormalization profile portable;
 
-export record Windvaleˉwvbˉmetadata {
-    Valid: bool;
-    Present: bool;
-    Requiredˉcount: u32;
-    Requiredˉranks: bytes;
-    Optionalˉcount: u32;
-    Optionalˉranks: bytes;
-}
-
-record Windvaleˉwvbˉmetadataˉstring {
-    Valid: bool;
-    Offset: u32;
-    Length: u32;
-    Nextˉoffset: u32;
-}
-
-record Windvaleˉwvbˉmetadataˉrequirements {
-    Valid: bool;
-    Count: u32;
-    Ranks: bytes;
-    Nextˉoffset: u32;
-}
-
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
-fn Invalid(Input: bytes) -> Windvaleˉwvbˉmetadata {
-    return Windvaleˉwvbˉmetadata(
-        false, false, 0u32, Empty(Input), 0u32, Empty(Input)
-    );
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
 }
 
-fn Invalidˉstring() -> Windvaleˉwvbˉmetadataˉstring {
-    return Windvaleˉwvbˉmetadataˉstring(false, 0u32, 0u32, 0u32);
+fn Stringˉvalue(Input: bytes, Offset: u32, Length: u32, Next: u32) -> bytes {
+    var Result: bytes = Appendˉu32(Empty(Input), Offset);
+    Result = Appendˉu32(Result, Length);
+    return Appendˉu32(Result, Next);
 }
 
-fn Invalidˉrequirements(Input: bytes)
-    -> Windvaleˉwvbˉmetadataˉrequirements {
-    return Windvaleˉwvbˉmetadataˉrequirements(
-        false, 0u32, Empty(Input), 0u32
-    );
+fn Stringˉoffset(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 0u32);
 }
 
-fn Readˉstring(Input: bytes, Cursor: u32, Limit: u32)
-    -> Windvaleˉwvbˉmetadataˉstring {
-    if Cursor > Limit { return Invalidˉstring(); }
-    if Limit - Cursor < 4u32 { return Invalidˉstring(); }
+fn Stringˉlength(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 4u32);
+}
+
+fn Stringˉnext(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 8u32);
+}
+
+fn Readˉstring(Input: bytes, Cursor: u32, Limit: u32) -> bytes {
+    let Invalid: bytes = Empty(Input);
+    if Cursor > Limit { return Invalid; }
+    if Limit - Cursor < 4u32 { return Invalid; }
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
     let Offset: u32 = Cursor + 4u32;
-    if Length == 0u32 || Length > 255u32 { return Invalidˉstring(); }
-    if Length > Limit - Offset { return Invalidˉstring(); }
-    return Windvaleˉwvbˉmetadataˉstring(
-        true, Offset, Length, Offset + Length
-    );
+    if Length == 0u32 || Length > 255u32 { return Invalid; }
+    if Length > Limit - Offset { return Invalid; }
+    return Stringˉvalue(Input, Offset, Length, Offset + Length);
 }
 
 fn Spanˉequalsˉtext(
@@ -148,10 +128,31 @@ fn Capabilityˉrank(Input: bytes, Offset: u32, Length: u32) -> u8 {
     return 0u8;
 }
 
-fn Readˉrequirements(Input: bytes, Cursor: u32, Limit: u32)
-    -> Windvaleˉwvbˉmetadataˉrequirements {
-    let Invalidˉresult: Windvaleˉwvbˉmetadataˉrequirements =
-        Invalidˉrequirements(Input);
+fn Requirementsˉvalue(
+    Input: bytes,
+    Count: u32,
+    Ranks: bytes,
+    Next: u32
+) -> bytes {
+    var Result: bytes = Appendˉu32(Empty(Input), Next);
+    Result = Appendˉu32(Result, Count);
+    return Bytesˉconcat(Result, Ranks);
+}
+
+fn Requirementsˉnext(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 0u32);
+}
+
+fn Requirementsˉcount(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 4u32);
+}
+
+fn Requirementsˉrank(Value: bytes, Index: u32) -> u8 {
+    return Bytesˉreadˉu8(Value, 8u32 + Index);
+}
+
+fn Readˉrequirements(Input: bytes, Cursor: u32, Limit: u32) -> bytes {
+    let Invalidˉresult: bytes = Empty(Input);
     if Cursor > Limit { return Invalidˉresult; }
     if Limit - Cursor < 4u32 { return Invalidˉresult; }
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
@@ -161,13 +162,14 @@ fn Readˉrequirements(Input: bytes, Cursor: u32, Limit: u32)
     var Previous: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Count {
-        let Name: Windvaleˉwvbˉmetadataˉstring =
-            Readˉstring(Input, Current, Limit);
-        if !Name.Valid { return Invalidˉresult; }
-        let Rank: u8 = Capabilityˉrank(Input, Name.Offset, Name.Length);
+        let Name: bytes = Readˉstring(Input, Current, Limit);
+        if Bytesˉlength(Name) == 0u32 { return Invalidˉresult; }
+        let Rank: u8 = Capabilityˉrank(
+            Input, Stringˉoffset(Name), Stringˉlength(Name)
+        );
         let Numericˉrank: u32 = U32ˉfromˉu8(Rank);
         if Rank == 0u8 || Numericˉrank <= Previous { return Invalidˉresult; }
-        Current = Name.Nextˉoffset;
+        Current = Stringˉnext(Name);
         if Limit - Current < 4u32 { return Invalidˉresult; }
         if Bytesˉreadˉu32ˉlittle(Input, Current) != 1u32 {
             return Invalidˉresult;
@@ -177,23 +179,19 @@ fn Readˉrequirements(Input: bytes, Cursor: u32, Limit: u32)
         Previous = Numericˉrank;
         Index = Index + 1u32;
     }
-    return Windvaleˉwvbˉmetadataˉrequirements(
-        true, Count, Ranks, Current
-    );
+    return Requirementsˉvalue(Input, Count, Ranks, Current);
 }
 
-fn Requirementsˉoverlap(
-    Required: Windvaleˉwvbˉmetadataˉrequirements,
-    Optional: Windvaleˉwvbˉmetadataˉrequirements
-) -> bool {
+fn Requirementsˉoverlap(Required: bytes, Optional: bytes) -> bool {
     var Overlap: bool = false;
     var Requiredˉindex: u32 = 0u32;
-    while Requiredˉindex < Required.Count {
-        let Requiredˉrank: u8 = Bytesˉreadˉu8(Required.Ranks, Requiredˉindex);
+    while Requiredˉindex < Requirementsˉcount(Required) {
+        let Requiredˉrank: u8 = Requirementsˉrank(Required, Requiredˉindex);
         var Optionalˉindex: u32 = 0u32;
-        while Optionalˉindex < Optional.Count {
-            let Optionalˉrank: u8 =
-                Bytesˉreadˉu8(Optional.Ranks, Optionalˉindex);
+        while Optionalˉindex < Requirementsˉcount(Optional) {
+            let Optionalˉrank: u8 = Requirementsˉrank(
+                Optional, Optionalˉindex
+            );
             if Requiredˉrank == Optionalˉrank { Overlap = true; }
             Optionalˉindex = Optionalˉindex + 1u32;
         }
@@ -206,25 +204,26 @@ fn Capabilitiesˉmatch(
     Input: bytes,
     Offset: u32,
     Length: u32,
-    Metadata: Windvaleˉwvbˉmetadata
+    Metadata: bytes
 ) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if Offset > Total || Length > Total - Offset || Length < 4u32 { return false; }
     let Limit: u32 = Offset + Length;
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
-    if Count != Metadata.Requiredˉcount { return false; }
+    if Count != Bytesˉreadˉu32ˉlittle(Metadata, 1u32) { return false; }
     var Cursor: u32 = Offset + 4u32;
     var Index: u32 = 0u32;
     while Index < Count {
-        let Name: Windvaleˉwvbˉmetadataˉstring =
-            Readˉstring(Input, Cursor, Limit);
-        if !Name.Valid { return false; }
-        let Rank: u8 = Capabilityˉrank(Input, Name.Offset, Name.Length);
+        let Name: bytes = Readˉstring(Input, Cursor, Limit);
+        if Bytesˉlength(Name) == 0u32 { return false; }
+        let Rank: u8 = Capabilityˉrank(
+            Input, Stringˉoffset(Name), Stringˉlength(Name)
+        );
         if Rank == 0u8 { return false; }
-        if Rank != Bytesˉreadˉu8(Metadata.Requiredˉranks, Index) {
+        if Rank != Bytesˉreadˉu8(Metadata, 5u32 + Index) {
             return false;
         }
-        Cursor = Name.Nextˉoffset;
+        Cursor = Stringˉnext(Name);
         if Limit - Cursor < 5u32 { return false; }
         let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
         if Parameters > 5u32 { return false; }
@@ -235,22 +234,34 @@ fn Capabilitiesˉmatch(
     return Cursor == Limit;
 }
 
-export fn Windvaleˉwvbˉmetadataˉread(
+fn Metadataˉvalue(Input: bytes, Present: bool, Required: bytes) -> bytes {
+    var Presence: u8 = 0u8;
+    var Count: u32 = 0u32;
+    var Ranks: bytes = Empty(Input);
+    if Present {
+        Presence = 1u8;
+        Count = Requirementsˉcount(Required);
+        Ranks = Bytesˉslice(Required, 8u32, Count);
+    }
+    var Result: bytes = Bytesˉfromˉu8(Presence);
+    Result = Appendˉu32(Result, Count);
+    return Bytesˉconcat(Result, Ranks);
+}
+
+fn Readˉmetadata(
     Input: bytes,
     Cursor: u32,
     Limit: u32,
     Profile: u8
-) -> Windvaleˉwvbˉmetadata {
-    let Invalidˉresult: Windvaleˉwvbˉmetadata = Invalid(Input);
+) -> bytes {
+    let Invalidˉresult: bytes = Empty(Input);
     let Total: u32 = Bytesˉlength(Input);
     if Limit > Total || Cursor >= Limit { return Invalidˉresult; }
     let Presence: u8 = Bytesˉreadˉu8(Input, Cursor);
     var Current: u32 = Cursor + 1u32;
     if Presence == 0u8 {
         if Current != Limit { return Invalidˉresult; }
-        return Windvaleˉwvbˉmetadata(
-            true, false, 0u32, Empty(Input), 0u32, Empty(Input)
-        );
+        return Metadataˉvalue(Input, false, Empty(Input));
     }
     if Presence != 1u8 { return Invalidˉresult; }
     if Limit - Current < 6u32 { return Invalidˉresult; }
@@ -271,10 +282,11 @@ export fn Windvaleˉwvbˉmetadataˉread(
     var Previousˉlength: u32 = 0u32;
     var Platformˉindex: u32 = 0u32;
     while Platformˉindex < Platformˉcount {
-        let Platform: Windvaleˉwvbˉmetadataˉstring =
-            Readˉstring(Input, Current, Limit);
-        if !Platform.Valid { return Invalidˉresult; }
-        if !Platformˉidentityˉisˉvalid(Input, Platform.Offset, Platform.Length) {
+        let Platform: bytes = Readˉstring(Input, Current, Limit);
+        if Bytesˉlength(Platform) == 0u32 { return Invalidˉresult; }
+        if !Platformˉidentityˉisˉvalid(
+            Input, Stringˉoffset(Platform), Stringˉlength(Platform)
+        ) {
             return Invalidˉresult;
         }
         if Platformˉindex != 0u32 {
@@ -282,21 +294,22 @@ export fn Windvaleˉwvbˉmetadataˉread(
                 Input,
                 Previousˉoffset,
                 Previousˉlength,
-                Platform.Offset,
-                Platform.Length
+                Stringˉoffset(Platform),
+                Stringˉlength(Platform)
             ) { return Invalidˉresult; }
         }
-        Previousˉoffset = Platform.Offset;
-        Previousˉlength = Platform.Length;
-        Current = Platform.Nextˉoffset;
+        Previousˉoffset = Stringˉoffset(Platform);
+        Previousˉlength = Stringˉlength(Platform);
+        Current = Stringˉnext(Platform);
         Platformˉindex = Platformˉindex + 1u32;
     }
-    let Required: Windvaleˉwvbˉmetadataˉrequirements =
-        Readˉrequirements(Input, Current, Limit);
-    if !Required.Valid { return Invalidˉresult; }
-    let Optional: Windvaleˉwvbˉmetadataˉrequirements =
-        Readˉrequirements(Input, Required.Nextˉoffset, Limit);
-    if !Optional.Valid || Optional.Nextˉoffset != Limit {
+    let Required: bytes = Readˉrequirements(Input, Current, Limit);
+    if Bytesˉlength(Required) == 0u32 { return Invalidˉresult; }
+    let Optional: bytes = Readˉrequirements(
+        Input, Requirementsˉnext(Required), Limit
+    );
+    if Bytesˉlength(Optional) == 0u32 ||
+        Requirementsˉnext(Optional) != Limit {
         return Invalidˉresult;
     }
     if Requirementsˉoverlap(Required, Optional) { return Invalidˉresult; }
@@ -304,19 +317,13 @@ export fn Windvaleˉwvbˉmetadataˉread(
     if Authority == 4u8 {
         Expectedˉprofile = 3u8;
     } else {
-        if Required.Count != 0u32 || Optional.Count != 0u32 {
+        if Requirementsˉcount(Required) != 0u32 ||
+            Requirementsˉcount(Optional) != 0u32 {
             Expectedˉprofile = 2u8;
         }
     }
     if Profile != Expectedˉprofile { return Invalidˉresult; }
-    return Windvaleˉwvbˉmetadata(
-        true,
-        true,
-        Required.Count,
-        Required.Ranks,
-        Optional.Count,
-        Optional.Ranks
-    );
+    return Metadataˉvalue(Input, true, Required);
 }
 
 export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
@@ -345,12 +352,11 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 21u32);
     if Nameˉlength > Moduleˉlength - 6u32 { return Invalid; }
     let Metadataˉoffset: u32 = 25u32 + Nameˉlength;
-    let Metadata: Windvaleˉwvbˉmetadata =
-        Windvaleˉwvbˉmetadataˉread(
-            Input, Metadataˉoffset, Moduleˉend, Profile
-        );
-    if !Metadata.Valid { return Invalid; }
-    if !Metadata.Present { return Input; }
+    let Metadata: bytes = Readˉmetadata(
+        Input, Metadataˉoffset, Moduleˉend, Profile
+    );
+    if Bytesˉlength(Metadata) == 0u32 { return Invalid; }
+    if Bytesˉreadˉu8(Metadata, 0u32) == 0u8 { return Input; }
     if Moduleˉend > Total || Total - Moduleˉend < 12u32 { return Invalid; }
     if Bytesˉreadˉu8(Input, Moduleˉend) != 2u8 ||
         Bytesˉreadˉu8(Input, Moduleˉend + 1u32) != 0u8 ||
