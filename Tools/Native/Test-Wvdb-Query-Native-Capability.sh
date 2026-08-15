@@ -192,4 +192,4 @@ if ! grep -F 'storage-failure status=' "$work/Unavailable.txt" >/dev/null; then
 fi
 
 echo 'native wvdb query identity host=linux wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 windows-application=7cd60860e07294d9a45064495da33a42cc752849accfc672c35a69454cd963d8 linux-application=29b4d4db7505daec94865d423e3805b02bde95751343b1fb7e4ceee8045a202d'
-echo 'native wvdb query capability status=Passed cases=5 capabilities=5 cross-host-images=Verified'
+echo 'native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified'

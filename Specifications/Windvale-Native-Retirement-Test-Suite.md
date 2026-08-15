@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 5,508 LF-only bytes with SHA-256
-`c64f20933c54adf09454867c79ad73d0fdb9e2c97ece4360ce47dfa036abb8ee`.
+`ca510477f0b5a578bbbd66fb87dc082fca8d5a29064c0b48933da21d493c79cb`.
 The first line is exactly:
 
 ```text
@@ -100,7 +100,7 @@ file. The current plan is:
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 58 | `native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10` |
 | `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 idempotent=Verified` |
-| `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 cross-host-images=Verified` |
+| `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified` |
 
 The version-2 plan therefore contains exactly 56 suites and 3,363 cases. Its
 balanced shard inventory is:
