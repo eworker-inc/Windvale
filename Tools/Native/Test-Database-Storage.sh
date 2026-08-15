@@ -728,6 +728,11 @@ if ((development == 1)); then
             echo 'The native database storage development depth-three stage failed.' >&2
             exit 1
         }
+    verify_target DepthThreeUpsert \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || {
+            echo 'The native database storage development depth-three-upsert stage failed.' >&2
+            exit 1
+        }
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     echo "PASS  native database storage development phase=portable-targets elapsed-ms=$portable_elapsed_ms"
 else
@@ -751,6 +756,8 @@ else
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || exit $?
     verify_target DepthThree \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || exit $?
+    verify_target DepthThreeUpsert \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
     verify_target ProviderTable \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
     verify_target ProviderCall \
@@ -786,7 +793,7 @@ if ((development == 1)); then
     echo "PASS  native database storage development phase=host-tree-reader elapsed-ms=$host_tree_reader_elapsed_ms"
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
     echo "native database storage development timing tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed cases=8 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
+    echo "native database storage development status=Passed cases=9 local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader"
     exit 0
 fi
-echo 'native database storage status=Passed cases=17 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=18 local-results=0 cross-host-images=Verified'

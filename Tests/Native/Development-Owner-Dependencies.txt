@@ -17,6 +17,7 @@ database-storage|producer|Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs
 database-storage|producer|Tools/Native/Get-Native-Project-Cache-Key.mjs
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj
+database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj

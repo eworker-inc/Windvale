@@ -146,6 +146,9 @@ that minimizes encoded-byte imbalance with the earliest candidate as tie
 break. Both canonical nonempty child branches are decoded again before return.
 The exact durable composition is defined by [depth-three root
 growth](Windvale-Database-Depth-Three-Root-Growth.md).
+Updating an already depth-three generation and propagating one split through
+its selected internal branch and root is defined by [existing depth-three
+upsert](Windvale-Database-Depth-Three-Upsert.md).
 
 A successful lookup value is a borrowed slice of the caller-supplied immutable
 node bytes. Its lifetime is therefore the input's lifetime. When the input came
@@ -190,6 +193,12 @@ growth composition](Windvale-Database-Depth-Three-Root-Growth.md) splits the
 leaf, splits the branch root, and promotes one separator into a new root. It
 allocates five data pages plus one log while retaining the same publication and
 recovery protocol.
+
+The [existing depth-three upsert
+composition](Windvale-Database-Depth-Three-Upsert.md) validates two routed
+levels and handles leaf rewrite, leaf split, internal-branch split, and one
+root split. Exactly the replacement leaf, branch, and root own the three
+obsolete committed pages; a final root split grows the result to depth four.
 
 ## Verification
 
