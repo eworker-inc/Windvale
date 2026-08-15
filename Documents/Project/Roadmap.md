@@ -271,14 +271,14 @@ policy remain later milestones unless this slice produces a measured need.
 
 | Gate | Standing | Evidence or remaining boundary |
 | --- | :---: | --- |
-| Flat resource domain | ○ | Qualified ownership and memory-object primitives exist, but no domain yet owns the complete process, memory, capability, and work budget. |
+| Flat resource domain | 🔵 | The current native Probe 40 candidate reserves and commits exactly 3 processes, 144 ordinary pages, and 2 endpoints before publication, retains peaks across client reuse, rejects post-stop work, and finishes at zero charge. Dynamic membership plus capability and work budgets remain open. |
 | Atomic launch transaction | ○ | The immutable launch-plan contract is designed; dynamic reserve/construct/publish and complete rollback are not implemented. |
 | Isolated provider serving two clients | 🔵 | Bounded queues, two endpoints, explicit peer loss, generation-safe rebind, and teardown are qualified. The fixed proof still serves sequential client generations rather than two live clients through a general provider boundary. |
 | Structured supervision | 🔵 | Contained service failure and deliberate terminal behavior are qualified foundations; a supervisor, generic completion record, and bounded restart policy are not implemented. |
 | Exact WVB across hosts and guest | ✅ | Decisions [0101](../Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) and [0103](../Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) qualify exact canonical application WVBs across Windows, Linux, and the guest. A future WVDB-specific guest composition is consumer integration, not a reason to reopen this portability proof. |
 
-OS-1 has one completed portability gate, two substantially qualified foundations,
-and two unimplemented composition mechanisms. Work may advance when it is the
+OS-1 has one completed portability gate, three substantially implemented or
+qualified foundations, and one unimplemented atomic-launch composition mechanism. Work may advance when it is the
 selected consumer without delaying the host-product critical path.
 
 ## Workstream rules

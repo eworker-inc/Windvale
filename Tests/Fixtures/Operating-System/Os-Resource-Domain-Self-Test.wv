@@ -2,32 +2,38 @@ module Osˉresourceˉdomainˉselfˉtest profile portable;
 import Resourceˉdomainˉpolicy as Domain;
 
 export fn Main() -> i32 {
-    let Invalid: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(0u32, 1u32, 3u32, 160u32, 2u32);
+    let Invalid: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(0u32, 1u32, 3u32, 144u32, 2u32);
     if Invalid.Status != Domain.Resourceˉdomainˉstatus.Invalidˉdomain { return 1; }
-    let Created: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 160u32, 2u32);
-    let Tooˉlarge: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉreserve(Created, 4u32, 157u32, 2u32);
+    let Created: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
+    let Tooˉlarge: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉreserve(Created, 4u32, 144u32, 2u32);
     if Tooˉlarge.Status != Domain.Resourceˉdomainˉstatus.Limitˉexceeded { return 2; }
     if Tooˉlarge.Committedˉprocesses != 0u32 { return 3; }
-    let Reserved: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉreserve(Created, 3u32, 157u32, 2u32);
+    let Reserved: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉreserve(Created, 3u32, 144u32, 2u32);
     if Reserved.Status != Domain.Resourceˉdomainˉstatus.Success { return 4; }
     let Busy: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉreserve(Reserved, 0u32, 1u32, 0u32);
     if Busy.Status != Domain.Resourceˉdomainˉstatus.Reservationˉbusy { return 5; }
-    let Wrong: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcommit(Reserved, 3u32, 156u32, 2u32);
+    let Wrong: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcommit(Reserved, 3u32, 143u32, 2u32);
     if Wrong.Status != Domain.Resourceˉdomainˉstatus.Reservationˉmismatch { return 6; }
-    if Wrong.Reservedˉpages != 157u32 { return 7; }
-    let Committed: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcommit(Reserved, 3u32, 157u32, 2u32);
-    if Committed.Committedˉpages != 157u32 { return 8; }
-    if Committed.Peakˉpages != 157u32 { return 9; }
+    if Wrong.Reservedˉpages != 144u32 { return 7; }
+    let Committed: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcommit(Reserved, 3u32, 144u32, 2u32);
+    if Committed.Committedˉpages != 144u32 { return 8; }
+    if Committed.Peakˉpages != 144u32 { return 9; }
     let Stopping: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉstop(Committed, 9u32);
     let Repeated: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉstop(Stopping, 10u32);
     if Repeated.Stopˉreason != 9u32 { return 10; }
+    let Rejected: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉreserve(Repeated, 1u32, 1u32, 1u32);
+    if Rejected.Status != Domain.Resourceˉdomainˉstatus.Notˉalive { return 15; }
+    if Rejected.Committedˉpages != 144u32 { return 16; }
     let Live: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉfinishˉstop(Repeated);
     if Live.Status != Domain.Resourceˉdomainˉstatus.Resourcesˉlive { return 11; }
-    let Released: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉrelease(Repeated, 3u32, 157u32, 2u32);
-    if Released.Peakˉpages != 157u32 { return 12; }
+    let Released: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉrelease(Repeated, 3u32, 144u32, 2u32);
+    if Released.Peakˉpages != 144u32 { return 12; }
     let Finished: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉfinishˉstop(Released);
     if Finished.State != Domain.Resourceˉdomainˉstate.Dead { return 13; }
     let Finalˉstate: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉstop(Finished, 11u32);
     if Finalˉstate.Stopˉreason != 9u32 { return 14; }
+    let Finishedˉagain: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉfinishˉstop(Finalˉstate);
+    if Finishedˉagain.State != Domain.Resourceˉdomainˉstate.Dead { return 17; }
+    if Finishedˉagain.Committedˉpages != 0u32 { return 18; }
     return 42;
 }

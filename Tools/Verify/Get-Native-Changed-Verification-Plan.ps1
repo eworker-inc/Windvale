@@ -538,6 +538,8 @@ foreach ($Path in $Paths) {
         )) {
             Add-GitHubQualificationVerification
             $RunPlanVerification = $true
+        } elseif ([IO.Path]::GetFileName($Path) -eq 'Verify-Os-Boot.ps1') {
+            Add-Suite 'os-probe'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Console-Aot.ps1',
             'Verify-Seed-Native-Console-Aot.sh'
@@ -1319,6 +1321,10 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite @('os-probe-object', 'os-probe')
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Os-Process-Object-Toolset-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite @('os-process-object', 'os-probe')
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Compiler-Reconstruction-Candidate/',
         [StringComparison]::Ordinal)) {

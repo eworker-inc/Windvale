@@ -22,9 +22,9 @@ existing="$temporary_directory/Existing.wvo"
 
 "$script_directory/Build-Os-Process-Policy-Object.sh" "$object" \
     >/dev/null 2>&1 || exit 1
-if [[ $(wc -c < "$object") -ne 129310 ]] ||
+if [[ $(wc -c < "$object") -ne 583416 ]] ||
     ! printf '%s  %s\n' \
-        '35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678' \
+        '4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428' \
         "$object" | sha256sum --check --strict --quiet; then
     exit 1
 fi

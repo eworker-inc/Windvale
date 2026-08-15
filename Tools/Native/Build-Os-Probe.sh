@@ -11,19 +11,19 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9
+        efi_digest=3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06
         ;;
     invalid-opcode)
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734
+        efi_digest=7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e
         ;;
     general-protection)
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b
+        efi_digest=6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2
         ;;
     *)
         echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
@@ -78,9 +78,9 @@ if ! "$script_directory/Build-Wvb.sh" \
     cat -- "$work/01-build.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/01-kernel.wvb") -ne 1484 ]] ||
+if [[ $(wc -c < "$work/01-kernel.wvb") -ne 1581 ]] ||
     ! printf '%s  %s\n' \
-        '7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c' \
+        '795734982cded8b3605cb5cf0f110667b71140d5639185c3ef94cde3174b3bc0' \
         "$work/01-kernel.wvb" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 kernel module is invalid.' >&2
     exit 1
@@ -91,9 +91,9 @@ if ! "$script_directory/Lower-Os-Kernel-Wvb.sh" \
     cat -- "$work/01-lower.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/01-kernel.wvo") -ne 12134 ]] ||
+if [[ $(wc -c < "$work/01-kernel.wvo") -ne 13454 ]] ||
     ! printf '%s  %s\n' \
-        'bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8' \
+        '4bf896ac2b349d9e786bbb7cae0165cb47273aa82ff2985a7ff33c3185978e8b' \
         "$work/01-kernel.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 kernel object is invalid.' >&2
     exit 1
@@ -171,9 +171,9 @@ if ! "$script_directory/Build-Os-Process-Policy-Object.sh" \
     cat -- "$work/04.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/04-process-policy.wvo") -ne 129310 ]] ||
+if [[ $(wc -c < "$work/04-process-policy.wvo") -ne 583416 ]] ||
     ! printf '%s  %s\n' \
-        '35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678' \
+        '4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428' \
         "$work/04-process-policy.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process-policy object is invalid.' >&2
     exit 1
@@ -186,7 +186,7 @@ if ! "$script_directory/Build-Os-Process-Object.sh" \
 fi
 if [[ $(wc -c < "$work/05-process.wvo") -ne 512978 ]] ||
     ! printf '%s  %s\n' \
-        'dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa' \
+        'e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a' \
         "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process object is invalid.' >&2
     exit 1
@@ -281,11 +281,13 @@ if ! "$script_directory/Package-Uefi.sh" \
     cat -- "$work/Package.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/Probe40.efi") -ne 683008 ]] ||
+if [[ $(wc -c < "$work/Probe40.efi") -ne 1137152 ]] ||
     ! printf '%s  %s\n' \
         "$efi_digest" \
         "$work/Probe40.efi" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 EFI candidate is invalid.' >&2
+    printf 'Probe40.efi bytes=%s\n' "$(wc -c < "$work/Probe40.efi")" >&2
+    sha256sum -- "$work/Probe40.efi" >&2
     exit 1
 fi
 
@@ -296,6 +298,6 @@ fi
 printf '%s\n' \
     'windvale-os-probe-native-build 40' \
     "scenario=$scenario" \
-    'efi-bytes=683008' \
+    'efi-bytes=1137152' \
     "efi-sha256=$efi_digest" \
     "output=$output"

@@ -56,10 +56,10 @@ exports `Windvale_kernel_entry` and `Windvale_kernel_main`, and imports
 `relative-i32` relocation with addend `-4` for the memory-entry call and one for
 each derived byte-output call.
 
-For the canonical Probe 40 source, the input WVB is 1,484 bytes at SHA-256
-`7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c`.
-The exact output is 12,134 bytes at SHA-256
-`bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8`.
+For the canonical Probe 40 source, the input WVB is 1,581 bytes at SHA-256
+`795734982cded8b3605cb5cf0f110667b71140d5639185c3ef94cde3174b3bc0`.
+The exact output is 13,454 bytes at SHA-256
+`4bf896ac2b349d9e786bbb7cae0165cb47273aa82ff2985a7ff33c3185978e8b`.
 
 ## Focused evidence
 

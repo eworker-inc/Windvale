@@ -11,19 +11,19 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9"
+    set "EfiDigest=3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734"
+    set "EfiDigest=7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b"
+    set "EfiDigest=6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -72,12 +72,12 @@ if errorlevel 1 goto :failure
 set "FailureStep=kernel-build"
 cmd /d /c call "%Builder%" "%KernelProject%" "%Work%\01-kernel.wvb" >"%Work%\01-build.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\01-kernel.wvb" 1484 7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c
+call :verify "%Work%\01-kernel.wvb" 1581 795734982cded8b3605cb5cf0f110667b71140d5639185c3ef94cde3174b3bc0
 if errorlevel 1 goto :failure
 set "FailureStep=kernel-lower"
 cmd /d /c call "%KernelLowerer%" "%Work%\01-kernel.wvb" "%Work%\01-kernel.wvo" >"%Work%\01-lower.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\01-kernel.wvo" 12134 bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8
+call :verify "%Work%\01-kernel.wvo" 13454 4bf896ac2b349d9e786bbb7cae0165cb47273aa82ff2985a7ff33c3185978e8b
 if errorlevel 1 goto :failure
 set "FailureStep=admission-build"
 cmd /d /c call "%Builder%" "%AdmissionProject%" "%Work%\02-wvb-admission.wvb" >"%Work%\02-build.log" 2>&1
@@ -110,13 +110,13 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-policy"
 cmd /d /c call "%PolicyProducer%" "%Work%\04-process-policy.wvo" >"%Work%\04.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678
+call :verify "%Work%\04-process-policy.wvo" 583416 4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428
 if errorlevel 1 goto :failure
 
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 512978 dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa
+call :verify "%Work%\05-process.wvo" 512978 e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"
@@ -192,14 +192,14 @@ if errorlevel 1 goto :failure
 set "FailureStep=package"
 cmd /d /c call "%Packager%" "%Work%\Probe40.bin" 0 "%Work%\Probe40.efi" >"%Work%\Package.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Probe40.efi" 683008 %EfiDigest%
+call :verify "%Work%\Probe40.efi" 1137152 %EfiDigest%
 if errorlevel 1 goto :failure
 
 move /y "%Work%\Probe40.efi" "%Output%" >nul
 if errorlevel 1 goto :failure
 echo windvale-os-probe-native-build 40
 echo scenario=%Scenario%
-echo efi-bytes=683008
+echo efi-bytes=1137152
 echo efi-sha256=%EfiDigest%
 echo output=%Output%
 if exist "%Work%" rmdir /s /q "%Work%"
@@ -227,6 +227,10 @@ if exist "%Work%\12.log" type "%Work%\12.log" 1>&2
 if exist "%Work%\13.log" type "%Work%\13.log" 1>&2
 if exist "%Work%\Link.map" type "%Work%\Link.map" 1>&2
 if exist "%Work%\Package.log" type "%Work%\Package.log" 1>&2
+if exist "%Work%\Probe40.efi" (
+    for %%F in ("%Work%\Probe40.efi") do >&2 echo Probe40.efi bytes=%%~zF
+    certutil -hashfile "%Work%\Probe40.efi" SHA256 1>&2
+)
 if exist "%Work%" dir /b /a "%Work%" 1>&2
 if exist "%Work%" rmdir /s /q "%Work%"
 exit /b 1

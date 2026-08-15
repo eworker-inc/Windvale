@@ -882,6 +882,18 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'normal process object candidate and boot verifier ownership'
+        Paths = @(
+            'Artifacts/Native-Os-Process-Object-Toolset-Candidate/Manifest.json',
+            'Artifacts/Native-Os-Process-Object-Toolset-Candidate/normal-x64-process.bin',
+            'Artifacts/Native-Os-Process-Object-Toolset-Candidate/SHA256SUMS',
+            'Tools/Verify/Verify-Os-Boot.ps1'
+        )
+        Suites = @('os-process-object', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'protected process specification'
         Paths = @('Specifications/Windvale-Protected-Process.md')
         Suites = @('os-process-policy', 'os-process-object', 'os-probe')

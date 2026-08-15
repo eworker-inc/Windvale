@@ -43,22 +43,32 @@ export fn Resourceˉdomainˉcreate(
     );
 }
 
+export fn Resourceˉdomainˉreserveˉstatus(
+    Domain: Resourceˉdomainˉtransition,
+    Processes: u32, Pages: u32, Endpoints: u32
+) -> Resourceˉdomainˉstatus {
+    if Domain.Identity == 0u32 { return Resourceˉdomainˉstatus.Invalidˉdomain; }
+    if Domain.Generation == 0u32 { return Resourceˉdomainˉstatus.Invalidˉdomain; }
+    if Domain.State != Resourceˉdomainˉstate.Alive { return Resourceˉdomainˉstatus.Notˉalive; }
+    if Domain.Reservedˉprocesses != 0u32 { return Resourceˉdomainˉstatus.Reservationˉbusy; }
+    if Domain.Reservedˉpages != 0u32 { return Resourceˉdomainˉstatus.Reservationˉbusy; }
+    if Domain.Reservedˉendpoints != 0u32 { return Resourceˉdomainˉstatus.Reservationˉbusy; }
+    if Domain.Committedˉprocesses > Domain.Processˉlimit { return Resourceˉdomainˉstatus.Limitˉexceeded; }
+    if Processes > Domain.Processˉlimit - Domain.Committedˉprocesses { return Resourceˉdomainˉstatus.Limitˉexceeded; }
+    if Domain.Committedˉpages > Domain.Pageˉlimit { return Resourceˉdomainˉstatus.Limitˉexceeded; }
+    if Pages > Domain.Pageˉlimit - Domain.Committedˉpages { return Resourceˉdomainˉstatus.Limitˉexceeded; }
+    if Domain.Committedˉendpoints > Domain.Endpointˉlimit { return Resourceˉdomainˉstatus.Limitˉexceeded; }
+    if Endpoints > Domain.Endpointˉlimit - Domain.Committedˉendpoints { return Resourceˉdomainˉstatus.Limitˉexceeded; }
+    return Resourceˉdomainˉstatus.Success;
+}
+
 export fn Resourceˉdomainˉreserve(
     Domain: Resourceˉdomainˉtransition,
     Processes: u32, Pages: u32, Endpoints: u32
 ) -> Resourceˉdomainˉtransition {
-    if Domain.Identity == 0u32 { return Transition(Resourceˉdomainˉstatus.Invalidˉdomain, Domain); }
-    if Domain.Generation == 0u32 { return Transition(Resourceˉdomainˉstatus.Invalidˉdomain, Domain); }
-    if Domain.State != Resourceˉdomainˉstate.Alive { return Transition(Resourceˉdomainˉstatus.Notˉalive, Domain); }
-    if Domain.Reservedˉprocesses != 0u32 { return Transition(Resourceˉdomainˉstatus.Reservationˉbusy, Domain); }
-    if Domain.Reservedˉpages != 0u32 { return Transition(Resourceˉdomainˉstatus.Reservationˉbusy, Domain); }
-    if Domain.Reservedˉendpoints != 0u32 { return Transition(Resourceˉdomainˉstatus.Reservationˉbusy, Domain); }
-    if Domain.Committedˉprocesses > Domain.Processˉlimit { return Transition(Resourceˉdomainˉstatus.Limitˉexceeded, Domain); }
-    if Processes > Domain.Processˉlimit - Domain.Committedˉprocesses { return Transition(Resourceˉdomainˉstatus.Limitˉexceeded, Domain); }
-    if Domain.Committedˉpages > Domain.Pageˉlimit { return Transition(Resourceˉdomainˉstatus.Limitˉexceeded, Domain); }
-    if Pages > Domain.Pageˉlimit - Domain.Committedˉpages { return Transition(Resourceˉdomainˉstatus.Limitˉexceeded, Domain); }
-    if Domain.Committedˉendpoints > Domain.Endpointˉlimit { return Transition(Resourceˉdomainˉstatus.Limitˉexceeded, Domain); }
-    if Endpoints > Domain.Endpointˉlimit - Domain.Committedˉendpoints { return Transition(Resourceˉdomainˉstatus.Limitˉexceeded, Domain); }
+    let Status: Resourceˉdomainˉstatus =
+        Resourceˉdomainˉreserveˉstatus(Domain, Processes, Pages, Endpoints);
+    if Status != Resourceˉdomainˉstatus.Success { return Transition(Status, Domain); }
     return Resourceˉdomainˉtransition(
         Resourceˉdomainˉstatus.Success, Domain.Identity, Domain.Generation, Domain.State,
         Domain.Processˉlimit, Domain.Pageˉlimit, Domain.Endpointˉlimit,
@@ -125,17 +135,25 @@ export fn Resourceˉdomainˉstop(
     );
 }
 
+export fn Resourceˉdomainˉfinishˉstopˉstatus(
+    Domain: Resourceˉdomainˉtransition
+) -> Resourceˉdomainˉstatus {
+    if Domain.State == Resourceˉdomainˉstate.Dead { return Resourceˉdomainˉstatus.Success; }
+    if Domain.State != Resourceˉdomainˉstate.Stopping { return Resourceˉdomainˉstatus.Notˉalive; }
+    if Domain.Reservedˉprocesses != 0u32 { return Resourceˉdomainˉstatus.Resourcesˉlive; }
+    if Domain.Reservedˉpages != 0u32 { return Resourceˉdomainˉstatus.Resourcesˉlive; }
+    if Domain.Reservedˉendpoints != 0u32 { return Resourceˉdomainˉstatus.Resourcesˉlive; }
+    if Domain.Committedˉprocesses != 0u32 { return Resourceˉdomainˉstatus.Resourcesˉlive; }
+    if Domain.Committedˉpages != 0u32 { return Resourceˉdomainˉstatus.Resourcesˉlive; }
+    if Domain.Committedˉendpoints != 0u32 { return Resourceˉdomainˉstatus.Resourcesˉlive; }
+    return Resourceˉdomainˉstatus.Success;
+}
+
 export fn Resourceˉdomainˉfinishˉstop(
     Domain: Resourceˉdomainˉtransition
 ) -> Resourceˉdomainˉtransition {
-    if Domain.State == Resourceˉdomainˉstate.Dead { return Transition(Resourceˉdomainˉstatus.Success, Domain); }
-    if Domain.State != Resourceˉdomainˉstate.Stopping { return Transition(Resourceˉdomainˉstatus.Notˉalive, Domain); }
-    if Domain.Reservedˉprocesses != 0u32 { return Transition(Resourceˉdomainˉstatus.Resourcesˉlive, Domain); }
-    if Domain.Reservedˉpages != 0u32 { return Transition(Resourceˉdomainˉstatus.Resourcesˉlive, Domain); }
-    if Domain.Reservedˉendpoints != 0u32 { return Transition(Resourceˉdomainˉstatus.Resourcesˉlive, Domain); }
-    if Domain.Committedˉprocesses != 0u32 { return Transition(Resourceˉdomainˉstatus.Resourcesˉlive, Domain); }
-    if Domain.Committedˉpages != 0u32 { return Transition(Resourceˉdomainˉstatus.Resourcesˉlive, Domain); }
-    if Domain.Committedˉendpoints != 0u32 { return Transition(Resourceˉdomainˉstatus.Resourcesˉlive, Domain); }
+    let Status: Resourceˉdomainˉstatus = Resourceˉdomainˉfinishˉstopˉstatus(Domain);
+    if Status != Resourceˉdomainˉstatus.Success { return Transition(Status, Domain); }
     return Resourceˉdomainˉtransition(
         Resourceˉdomainˉstatus.Success, Domain.Identity, Domain.Generation,
         Resourceˉdomainˉstate.Dead,

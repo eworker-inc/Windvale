@@ -135,7 +135,7 @@ The contained service-fault scenario branches after generation 1's successful re
 
 ## Historically qualified Probe-40 artifacts
 
-The table records the exact artifacts qualified at implementation commit `c4008e75db061df375eb323d75a818863aee553f`. Current native `main` reconstructs the normal process object as a 512,978-byte WVO with SHA-256 `dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa`; the current builder does not reconstruct the two contained-fault process objects.
+The table records the exact artifacts qualified at implementation commit `c4008e75db061df375eb323d75a818863aee553f`. Current native `main` reconstructs the normal process object as a 512,978-byte WVO with the current identity recorded by the process-object contract; its policy context advances the measured instruction budget from 16,384 to 17,493 and call-depth budget from 3 to 4 for the composed ResourceDomain1 path. The current builder does not reconstruct the two contained-fault process objects.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |

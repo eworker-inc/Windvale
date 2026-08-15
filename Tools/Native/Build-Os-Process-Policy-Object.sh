@@ -42,8 +42,8 @@ if ! "$script_directory/Build-Wvb.sh" \
     cat -- "$work/Build.log" >&2
     exit 1
 fi
-verify_identity "$work/Process-Policy.wvb" 18764 \
-    c46c6b3780cad8d292607ed687a7e511e2e3c47fbc6fc21526ecc0ffeb937895 || exit 1
+verify_identity "$work/Process-Policy.wvb" 33786 \
+    26a540bc1435114608aa597545c805e0786c9593b6e8ba19e8919b9f7718b0c1 || exit 1
 
 if ! "$script_directory/Lower-Wvb-To-Wvo.sh" \
     "$work/Process-Policy.wvb" "$work/Process-Policy-Main.wvo" \
@@ -51,8 +51,8 @@ if ! "$script_directory/Lower-Wvb-To-Wvo.sh" \
     cat -- "$work/Lower.log" >&2
     exit 1
 fi
-verify_identity "$work/Process-Policy-Main.wvo" 129284 \
-    11e1796c176dcdeb2f643108b646363751347707ca4b16b0e914b8c0b384987e || exit 1
+verify_identity "$work/Process-Policy-Main.wvo" 583390 \
+    dcee27f6384933ef07cf99eefd5f3355e25edbf690c332c7b201a397a0031d95 || exit 1
 
 if ! "$script_directory/Rename-Wvo-Export.sh" \
     "$work/Process-Policy-Main.wvo" Main Windvale_kernel_process_policy \
@@ -60,8 +60,8 @@ if ! "$script_directory/Rename-Wvo-Export.sh" \
     cat -- "$work/Rename.log" >&2
     exit 1
 fi
-if ! verify_identity "$work/Process-Policy.wvo" 129310 \
-        35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678 ||
+if ! verify_identity "$work/Process-Policy.wvo" 583416 \
+        4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428 ||
     ! "$script_directory/Verify-Wvo.sh" "$work/Process-Policy.wvo" >/dev/null 2>&1; then
     echo 'The native OS process-policy object build failed.' >&2
     exit 1

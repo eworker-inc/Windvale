@@ -39,12 +39,12 @@ verify_identity() {
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Operating-System/Windvale-Os-Kernel-Markers.wvproj" "$module" \
     >/dev/null 2>&1 || exit 1
-verify_identity "$module" 1484 \
-    7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c || exit 1
+verify_identity "$module" 1581 \
+    795734982cded8b3605cb5cf0f110667b71140d5639185c3ef94cde3174b3bc0 || exit 1
 "$script_directory/Lower-Os-Kernel-Wvb.sh" "$module" "$object" \
     >/dev/null 2>&1 || exit 1
-verify_identity "$object" 12134 \
-    bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8 || exit 1
+verify_identity "$object" 13454 \
+    4bf896ac2b349d9e786bbb7cae0165cb47273aa82ff2985a7ff33c3185978e8b || exit 1
 "$script_directory/Verify-Wvo.sh" "$object" >/dev/null 2>&1 || exit 1
 
 printf '%s\n' preserved > "$existing"

@@ -41,12 +41,15 @@ The builder performs these bounded steps:
    `normal-x64-process.bin` architecture fixture through the Windvale-owned WVO
    layout and relocation encoders.
 7. Require the 512,978-byte identity
-   `dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa`,
+   `e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a`,
    independently verify the WVO, and publish it through the native publisher.
 
 The seven embedded data payloads total 463,531 bytes and are always regenerated.
-Only `.text.process` remains a reviewed architecture fixture, at SHA-256
-`05938e22e02abac6d396fa5a64342d94609900a6401b112f18de0fb5421a41b5`.
+Only `.text.process` remains a reviewed architecture fixture. Its exact 17,493
+instruction and depth-4 policy context is sufficient for the composed
+ResourceDomain1 transition path while retaining the kernel stack and all other
+process bytes, at SHA-256
+`993827337a101660107742e4f41de5d2df849517d4aa16bb919d708531592bfc`.
 The one-time Windvale code extractor validates the predecessor WVO shape before
 copying that exact section; it is provenance tooling and is not part of the
 ordinary build.

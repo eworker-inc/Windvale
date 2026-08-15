@@ -41,7 +41,7 @@ no completion gate was removed by the rebaseline.
 | Package-backed application | ✅ | Milestone 2 is complete under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md). Paired [Bundle 1/store run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) and [capability run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) retain the exact WVB, bundle, package, application, capability, success, denial, and offline-rebuild evidence. | Preserve these results while their declared inputs remain unchanged; use the completed package path as an installer and release-envelope consumer in Milestone 3. |
 | Development/stable installers | ✅ | [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) retains the paired exact `0.1.0-dev.1` archives. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) pins separate `0.1.0` Windows/Linux archives and stable internal metadata while reproducing the development bytes unchanged. The combined owner passes on both hosts in [Verify run 31885759856](https://github.com/eworker-inc/Windvale/actions/runs/31885759856). | Select only the stable identities in the owner-signed release envelope. |
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key tree nodes, routed updates, internal branch splitting, depth-three root growth, provider-backed reads, and interruption recovery. | Let the package-backed application select the minimum repeated depth-three, reclamation, and recovery behavior needed for a useful workload. |
-| Windvale OS | 🔵 | OS-1 already owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption evidence, and generation-safe non-tail memory objects. | In the parallel OS track, add one flat resource domain and one atomic launch/supervision slice before broad shell, networking, or driver work. |
+| Windvale OS | 🔵 | OS-1 owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption, and generation-safe non-tail memory objects; the current native candidate also gates its fixed three-process path through exact ResourceDomain1 process/page/endpoint accounting and terminal zero charge. | Advance the fixed accounting gate into one atomic dynamic launch/supervision slice before broad shell, networking, or driver work. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
 | Public project and release foundation | 🚧 | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier now exist. Their focused owners pass on Windows and Linux in Verify run 31883543587. The exact Stage 0 recovery release is published and independently retained. | Perform the project-owner root ceremony, select and qualify the final state, and publish the signed `v0.1.0` envelope. |
 
@@ -121,8 +121,8 @@ per-commit full qualification remains disabled.
 
 Preserve the already-qualified three-environment WVB, endpoint, bounded queue,
 peer-loss, teardown, contained-failure, and memory-object evidence. The open
-composition mechanisms are one flat resource domain, one atomic launch
-transaction, a provider serving two live clients, and generic structured
+composition mechanisms are a dynamic resource-domain owner beyond the fixed
+Probe 40 accounting gate, one atomic launch transaction, a provider serving two live clients, and generic structured
 supervision with a bounded restart or deliberate terminal result.
 
 ### Preserve bounded development feedback
@@ -147,7 +147,7 @@ supervision with a bounded restart or deliberate terminal result.
 - ✅ Portable Windvale modules → bounded WebAssembly compiler/interpreter → static browser worker.
 - ✅ Canonical WVB → admitted guest resource → protected Windvale OS execution for the qualified examples.
 - ✅ Package manifest and lock → admitted immutable bundle/store → rights-limited WVDB Query execution on Windows and Linux.
-- 🚧 Probe 40 → flat resource domain → atomic launch → supervised isolated provider.
+- 🚧 Probe 40 fixed ResourceDomain1 accounting → atomic launch → supervised isolated provider.
 - ○ Qualified product artifacts → signed release envelope → offline-verifiable Windvale 0.1 preview.
 
 ## Reading the evidence

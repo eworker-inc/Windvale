@@ -15,21 +15,21 @@ set "InvalidOpcode=%TemporaryDirectory%\Invalid-Opcode.efi"
 set "GeneralProtection=%TemporaryDirectory%\General-Protection.efi"
 set "Status=1"
 
-call :build normal "%Normal%" 080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9
+call :build normal "%Normal%" 3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06
 if errorlevel 1 goto :failure
 
 call "%Builder%" "%Normal%" normal >"%TemporaryDirectory%\Repeat.out" 2>"%TemporaryDirectory%\Repeat.err"
 if not errorlevel 1 goto :failure
 findstr /x /c:"The native Probe 40 output already exists." "%TemporaryDirectory%\Repeat.err" >nul
 if errorlevel 1 goto :failure
-call :verify "%Normal%" 080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9
+call :verify "%Normal%" 3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06
 if errorlevel 1 goto :failure
 dir /b /a "%TemporaryDirectory%\.windvale-os-probe-native-*" >nul 2>&1
 if not errorlevel 1 goto :failure
 
-call :build invalid-opcode "%InvalidOpcode%" 8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734
+call :build invalid-opcode "%InvalidOpcode%" 7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e
 if errorlevel 1 goto :failure
-call :build general-protection "%GeneralProtection%" 47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b
+call :build general-protection "%GeneralProtection%" 6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2
 if errorlevel 1 goto :failure
 
 echo Tests: 4, Passed: 4, Failed: 0
@@ -53,7 +53,7 @@ findstr /x /c:"windvale-os-probe-native-build 40" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
 findstr /x /c:"scenario=%CaseScenario%" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
-findstr /x /c:"efi-bytes=683008" "%CaseStandardOutput%" >nul
+findstr /x /c:"efi-bytes=1137152" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
 findstr /x /c:"efi-sha256=%CaseDigest%" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
@@ -62,7 +62,7 @@ exit /b %ERRORLEVEL%
 
 :verify
 if not exist "%~1" exit /b 1
-for %%F in ("%~1") do if not "%%~zF"=="683008" exit /b 1
+for %%F in ("%~1") do if not "%%~zF"=="1137152" exit /b 1
 certutil -hashfile "%~1" SHA256 | findstr /i /x /c:"%~2" >nul
 exit /b %ERRORLEVEL%
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended next architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted clean-spawn, service-manager, process-role, and resource-domain direction in [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). A portable [resource-domain policy 1](../../Specifications/Windvale-Os-Resource-Domain-Policy.md) candidate implements the first atomic accounting model, but Windvale OS does not yet integrate that domain into Probe 40 or implement dynamic process creation, a launch transaction, service supervision, restart policy, or a public process ABI.
+Recommended next architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted clean-spawn, service-manager, process-role, and resource-domain direction in [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). Portable [resource-domain policy 1](../../Specifications/Windvale-Os-Resource-Domain-Policy.md) now gates Probe 40's fixed three-process construction with atomic accounting, but Windvale OS does not yet implement a dynamic resource-domain object, dynamic process creation, a general launch transaction, service supervision, restart policy, or a public process ABI.
 
 ## Recommendation
 
@@ -102,7 +102,7 @@ Restart creates a new process and provider generation. Clients observe peer loss
 
 ## First measured slices
 
-1. Retain Probe 40's qualified independently lived memory-object baseline and add one flat resource domain around the existing processes and objects.
+1. Retain Probe 40's qualified independently lived memory-object baseline and its current native flat-domain accounting gate around the existing processes and objects.
 2. Dynamically launch one known verified child with one input resource, three explicit streams, one reduced capability, and one observer. Reject malformed plans before the child is visible.
 3. Exercise normal completion, verifier rejection, capability refusal, trap, process fault, cancellation, forced stop, provider loss, and launcher death. Each leaves zero charges and stale generations unusable.
 4. Move one non-critical existing provider under the service manager with `Never` restart and explicit availability publication.

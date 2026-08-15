@@ -23,7 +23,7 @@ trap cleanup EXIT
 verify_output() {
     local path=$1
     local digest=$2
-    [[ $(wc -c < "$path") -eq 683008 ]] &&
+    [[ $(wc -c < "$path") -eq 1137152 ]] &&
         printf '%s  %s\n' "$digest" "$path" |
             sha256sum --check --strict --quiet
 }
@@ -42,7 +42,7 @@ build_case() {
     if [[ $? -ne 0 || -s $standard_error ]] ||
         ! grep -Fxq 'windvale-os-probe-native-build 40' "$standard_output" ||
         ! grep -Fxq "scenario=$scenario" "$standard_output" ||
-        ! grep -Fxq 'efi-bytes=683008' "$standard_output" ||
+        ! grep -Fxq 'efi-bytes=1137152' "$standard_output" ||
         ! grep -Fxq "efi-sha256=$digest" "$standard_output" ||
         ! verify_output "$output" "$digest"; then
         cat -- "$standard_output" "$standard_error" >&2
@@ -51,7 +51,7 @@ build_case() {
 }
 
 build_case normal "$normal" \
-    080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 || exit 1
+    3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06 || exit 1
 
 "$script_directory/Build-Os-Probe.sh" "$normal" normal \
     >"$temporary_directory/Repeat.out" 2>"$temporary_directory/Repeat.err"
@@ -59,7 +59,7 @@ repeat_status=$?
 if [[ $repeat_status -ne 1 ]] ||
     ! grep -Fxq 'The native Probe 40 output already exists.' "$temporary_directory/Repeat.err" ||
     ! verify_output "$normal" \
-        080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 ||
+        3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06 ||
     find "$temporary_directory" -maxdepth 1 -name '.windvale-os-probe-native.*' -print -quit |
         grep -q .; then
     cat -- "$temporary_directory/Repeat.out" "$temporary_directory/Repeat.err" >&2
@@ -67,8 +67,8 @@ if [[ $repeat_status -ne 1 ]] ||
 fi
 
 build_case invalid-opcode "$invalid_opcode" \
-    8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734 || exit 1
+    7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e || exit 1
 build_case general-protection "$general_protection" \
-    47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b || exit 1
+    6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2 || exit 1
 
 echo 'Tests: 4, Passed: 4, Failed: 0'

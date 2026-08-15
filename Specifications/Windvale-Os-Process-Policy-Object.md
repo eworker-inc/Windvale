@@ -24,17 +24,18 @@ directory and are removed on success or failure.
 
 The builder performs these exact steps:
 
-1. Build `Projects/Operating-System/Windvale-Os-Process-Policy.wvproj`, whose sole root is
-   `Operating-System/Kernel/Process-Foundation.wv`.
-2. Require the 18,764-byte WVB identity
-   `c46c6b3780cad8d292607ed687a7e511e2e3c47fbc6fc21526ecc0ffeb937895`.
+1. Build `Projects/Operating-System/Windvale-Os-Process-Policy.wvproj`, whose root is
+   `Operating-System/Kernel/Process-Foundation.wv` and whose declared source is
+   `Operating-System/Kernel/Resource-Domain-Policy.wv`.
+2. Require the 33,786-byte WVB identity
+   `26a540bc1435114608aa597545c805e0786c9593b6e8ba19e8919b9f7718b0c1`.
 3. Lower through the ordinary accepted-subset WVB-to-WVO launcher and require
-   the 129,284-byte unrenamed identity
-   `11e1796c176dcdeb2f643108b646363751347707ca4b16b0e914b8c0b384987e`.
+   the 583,390-byte unrenamed identity
+   `dcee27f6384933ef07cf99eefd5f3355e25edbf690c332c7b201a397a0031d95`.
 4. Rename exported `Main` to `Windvale_kernel_process_policy` through the
    verified native renamer into a private final candidate.
-5. Require the 129,310-byte final identity
-   `35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678`
+5. Require the 583,416-byte final identity
+   `4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428`
    and independently admit the resulting WVO before publishing it through the
    native WVO publisher.
 

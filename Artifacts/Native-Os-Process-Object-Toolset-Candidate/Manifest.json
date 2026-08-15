@@ -1,14 +1,14 @@
 {
   "format": "windvale-native-os-process-object-toolset-candidate-1",
   "status": "candidate",
-  "sourceDecision": "0456",
-  "parentCommit": "a110ad8992ac416db3ba8b3b79ddc587a8643627",
+  "sourceDecision": "0567",
+  "parentCommit": "3bfc065d518bd6a2cd4d45ee28c33f7e37ab8b1a",
   "hostedProfile": 1,
   "qualification": "pending",
   "architectureFixture": {
     "name": "normal-x64-process.bin",
     "bytes": 46678,
-    "sha256": "05938e22e02abac6d396fa5a64342d94609900a6401b112f18de0fb5421a41b5"
+    "sha256": "993827337a101660107742e4f41de5d2df849517d4aa16bb919d708531592bfc"
   },
   "tools": [
     {
@@ -67,6 +67,6 @@
   "output": {
     "name": "05-process.wvo",
     "bytes": 512978,
-    "sha256": "dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa"
+    "sha256": "e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a"
   }
 }

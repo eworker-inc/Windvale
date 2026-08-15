@@ -1,4 +1,5 @@
 module Processˉfoundation profile portable;
+import Resourceˉdomainˉpolicy as Domain;
 
 // Exact SHA-256 identities of the CPL3 interpreter, admitted WVB, execution
 // budget, Windvale resource owner, Windvale directory owner, package-resource
@@ -348,7 +349,81 @@ fn Hasˉmemoryˉobjectˉcontract() -> bool {
     return true;
 }
 
-export fn Main() -> i32 {
+fn Hasˉresourceˉdomainˉusage() -> bool {
+    var Current: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
+    let Rejection: Domain.Resourceˉdomainˉstatus =
+        Domain.Resourceˉdomainˉreserveˉstatus(Current, 4u32, 144u32, 2u32);
+    if Rejection != Domain.Resourceˉdomainˉstatus.Limitˉexceeded { return false; }
+    if Current.Committedˉpages != 0u32 { return false; }
+    Current = Domain.Resourceˉdomainˉreserve(Current, 3u32, 144u32, 2u32);
+    if Current.Reservedˉprocesses != 3u32 { return false; }
+    if Current.Reservedˉpages != 144u32 { return false; }
+    if Current.Reservedˉendpoints != 2u32 { return false; }
+    Current = Domain.Resourceˉdomainˉcommit(Current, 3u32, 144u32, 2u32);
+    if Current.Committedˉprocesses != 3u32 { return false; }
+    if Current.Committedˉpages != 144u32 { return false; }
+    if Current.Committedˉendpoints != 2u32 { return false; }
+    if Current.Peakˉprocesses != 3u32 { return false; }
+    if Current.Peakˉpages != 144u32 { return false; }
+    if Current.Peakˉendpoints != 2u32 { return false; }
+    Current = Domain.Resourceˉdomainˉrelease(Current, 1u32, 122u32, 0u32);
+    if Current.Committedˉprocesses != 2u32 { return false; }
+    if Current.Committedˉpages != 22u32 { return false; }
+    if Current.Committedˉendpoints != 2u32 { return false; }
+    Current = Domain.Resourceˉdomainˉreserve(Current, 1u32, 122u32, 0u32);
+    Current = Domain.Resourceˉdomainˉcommit(Current, 1u32, 122u32, 0u32);
+    if Current.Committedˉprocesses != 3u32 { return false; }
+    if Current.Committedˉpages != 144u32 { return false; }
+    if Current.Peakˉpages != 144u32 { return false; }
+    return true;
+}
+
+fn Hasˉresourceˉdomainˉstop() -> bool {
+    var Current: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉtransition(
+        Domain.Resourceˉdomainˉstatus.Success, 1u32, 1u32,
+        Domain.Resourceˉdomainˉstate.Alive, 3u32, 144u32, 2u32,
+        0u32, 0u32, 0u32, 3u32, 144u32, 2u32,
+        3u32, 144u32, 2u32, 0u32
+    );
+    Current = Domain.Resourceˉdomainˉstop(Current, 40u32);
+    let Rejection: Domain.Resourceˉdomainˉstatus =
+        Domain.Resourceˉdomainˉreserveˉstatus(Current, 1u32, 1u32, 1u32);
+    if Rejection != Domain.Resourceˉdomainˉstatus.Notˉalive { return false; }
+    if Current.Committedˉprocesses != 3u32 { return false; }
+    if Current.Committedˉpages != 144u32 { return false; }
+    if Current.Committedˉendpoints != 2u32 { return false; }
+    Current = Domain.Resourceˉdomainˉstop(Current, 41u32);
+    if Current.Stopˉreason != 40u32 { return false; }
+    return Domain.Resourceˉdomainˉfinishˉstopˉstatus(Current) ==
+        Domain.Resourceˉdomainˉstatus.Resourcesˉlive;
+}
+
+fn Hasˉresourceˉdomainˉteardown() -> bool {
+    var Current: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉtransition(
+        Domain.Resourceˉdomainˉstatus.Success, 1u32, 1u32,
+        Domain.Resourceˉdomainˉstate.Stopping, 3u32, 144u32, 2u32,
+        0u32, 0u32, 0u32, 3u32, 144u32, 2u32,
+        3u32, 144u32, 2u32, 40u32
+    );
+    Current = Domain.Resourceˉdomainˉrelease(Current, 1u32, 122u32, 0u32);
+    Current = Domain.Resourceˉdomainˉrelease(Current, 1u32, 10u32, 1u32);
+    Current = Domain.Resourceˉdomainˉrelease(Current, 1u32, 12u32, 1u32);
+    if Current.Committedˉprocesses != 0u32 { return false; }
+    if Current.Committedˉpages != 0u32 { return false; }
+    if Current.Committedˉendpoints != 0u32 { return false; }
+    if Current.Peakˉprocesses != 3u32 { return false; }
+    if Current.Peakˉpages != 144u32 { return false; }
+    if Current.Peakˉendpoints != 2u32 { return false; }
+    Current = Domain.Resourceˉdomainˉfinishˉstop(Current);
+    if Current.State != Domain.Resourceˉdomainˉstate.Dead { return false; }
+    Current = Domain.Resourceˉdomainˉfinishˉstop(Current);
+    if Current.State != Domain.Resourceˉdomainˉstate.Dead { return false; }
+    if Current.Stopˉreason != 40u32 { return false; }
+    return true;
+}
+
+fn Processˉfoundationˉtoken() -> i32 {
     if !Hasˉidentity(Interpreterˉdigest, Expectedˉinterpreterˉdigest) { return 0; }
     if !Hasˉidentity(Programˉdigest, Expectedˉprogramˉdigest) { return 0; }
     if !Hasˉidentity(Budgetˉdigest, Expectedˉbudgetˉdigest) { return 0; }
@@ -442,5 +517,16 @@ export fn Main() -> i32 {
     if 2u32 + 2u32 + 2u32 + 2u32 + 1u32 != Initˉsyscallˉbudget { return 0; }
     if 2u32 + 2u32 + 1u32 != Directoryˉsyscallˉbudget { return 0; }
     if 2u32 + 1u32 + 1u32 != Interpreterˉsyscallˉbudget { return 0; }
+
+    return 97;
+}
+
+export fn Main() -> i32 {
+    if Processˉfoundationˉtoken() != 97 { return 0; }
+    // Each bounded phase uses the same exact fixed topology after the
+    // foundation frame unwinds, retaining the sixteen-KiB kernel stack bound.
+    if !Hasˉresourceˉdomainˉusage() { return 0; }
+    if !Hasˉresourceˉdomainˉstop() { return 0; }
+    if !Hasˉresourceˉdomainˉteardown() { return 0; }
     return 97;
 }
