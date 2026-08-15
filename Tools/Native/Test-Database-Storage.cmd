@@ -31,8 +31,10 @@ set "WorkspaceResource=%WorkspacePath:\=/%"
 set "Result=1"
 set "ProjectCheckpointHostStorage=NotRun"
 set "ProjectCheckpointHostTreeReader=NotRun"
+set "ProjectCheckpointHostTreeWriter=NotRun"
 set "ApplicationCheckpointHostStorage=NotRun"
 set "ApplicationCheckpointHostTreeReader=NotRun"
+set "ApplicationCheckpointHostTreeWriter=NotRun"
 set "ProjectWvbCheckpoint=NotRun"
 set "PortableProjectCheckpoints="
 set "PortableApplicationCheckpoints="
@@ -155,6 +157,17 @@ if "%Development%"=="1" (
     call :read_clock HostTreeReaderEnd
     call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderElapsedMs
     call echo PASS  native database storage development phase=host-tree-reader elapsed-ms=%%HostTreeReaderElapsedMs%%
+    call :read_clock HostTreeWriterStart
+    echo START native database storage development phase=host-tree-writer
+    call :verify_host_tree_writer ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development host-tree-writer stage failed.
+        goto :cleanup
+    )
+    call :read_clock HostTreeWriterEnd
+    call :elapsed_milliseconds HostTreeWriterStart HostTreeWriterEnd HostTreeWriterElapsedMs
+    call echo PASS  native database storage development phase=host-tree-writer elapsed-ms=%%HostTreeWriterElapsedMs%%
     call :read_clock DevelopmentEnd
     call :elapsed_milliseconds DevelopmentStart DevelopmentEnd DevelopmentElapsedMs
     set "Result=0"
@@ -215,6 +228,9 @@ if errorlevel 1 goto :cleanup
 call :verify_host_tree_reader ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_tree_writer ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -228,11 +244,11 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development timing tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed cases=10 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%
+    echo native database storage development timing tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
+    echo native database storage development status=Passed cases=11 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=19 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=20 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage
@@ -590,6 +606,161 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
     "%LinuxApplication%" linux >nul
 if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_tree_writer
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\HostTreeWriter-First.wvb"
+set "SecondWvb=%TemporaryDirectory%\HostTreeWriter-Second.wvb"
+set "FirstWvbResource=%FirstWvb:\=/%"
+set "SecondWvbResource=%SecondWvb:\=/%"
+set "FirstWvo=%TemporaryDirectory%\HostTreeWriter-First.wvo"
+set "SecondWvo=%TemporaryDirectory%\HostTreeWriter-Second.wvo"
+set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
+set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
+set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
+set "WindowsImage=%TemporaryDirectory%\HostTreeWriter-Windows.bin"
+set "WindowsImagePrefix=%TemporaryDirectory%\HostTreeWriter-Windows-Image"
+set "WindowsMap=%TemporaryDirectory%\HostTreeWriter-Windows.map"
+set "WindowsApplication=%TemporaryDirectory%\HostTreeWriter.exe"
+set "LinuxImage=%TemporaryDirectory%\HostTreeWriter-Linux.bin"
+set "LinuxImagePrefix=%TemporaryDirectory%\HostTreeWriter-Linux-Image"
+set "LinuxMap=%TemporaryDirectory%\HostTreeWriter-Linux.map"
+set "LinuxApplication=%TemporaryDirectory%\HostTreeWriter.elf"
+set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
+set "RunDirectory=%TemporaryDirectory%\HostTreeWriter-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+set "HostTreeWriterCheckpoint=Rebuilt"
+set "HostTreeWriterApplicationCheckpoint=Rebuilt"
+
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+        >"%TemporaryDirectory%\HostTreeWriter-Cache.txt"
+    if errorlevel 1 (
+        >&2 echo The native host tree-writer project-object checkpoint failed.
+        exit /b 1
+    )
+    set "HostTreeWriterCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostTreeWriter-Cache.txt"') do set "HostTreeWriterCheckpoint=%%S"
+    if not defined HostTreeWriterCheckpoint exit /b 1
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvb%" "%SecondWvb%" >nul
+    if errorlevel 1 exit /b 1
+    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+    if errorlevel 1 exit /b 1
+    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvo%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+)
+if not exist "%Common%" exit /b 1
+if not exist "%WindowsPlatform%" exit /b 1
+
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if errorlevel 1 exit /b 1
+set "WindowsEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
+if not defined WindowsEntry exit /b 1
+echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul || exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >"%TemporaryDirectory%\HostTreeWriter-Application-Cache.txt"
+    if errorlevel 1 exit /b 1
+    set "HostTreeWriterApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostTreeWriter-Application-Cache.txt"') do set "HostTreeWriterApplicationCheckpoint=%%S"
+    if not defined HostTreeWriterApplicationCheckpoint exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >nul
+    if errorlevel 1 exit /b 1
+)
+
+if not exist "%DepthTwoCommittedFile%" exit /b 1
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%DepthTwoCommittedFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-writer publication returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="33280" exit /b 1
+copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
+for %%S in (0 1 2 3 4) do (
+    call :verify_host_tree_writer_interruption ^
+        "%WindowsApplication%" "%DepthTwoCommittedFile%" %%S
+    if errorlevel 1 exit /b 1
+)
+
+if "%Development%"=="1" (
+    endlocal & set "ProjectCheckpointHostTreeWriter=%HostTreeWriterCheckpoint%" & set "ApplicationCheckpointHostTreeWriter=%HostTreeWriterApplicationCheckpoint%"
+    exit /b 0
+)
+if not exist "%LinuxPlatform%" exit /b 1
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
+    "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
+if errorlevel 1 exit /b 1
+set "LinuxEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
+if not defined LinuxEntry exit /b 1
+echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
+    "%LinuxApplication%" linux >nul
+if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_tree_writer_interruption
+setlocal EnableExtensions DisableDelayedExpansion
+set "Application=%~f1"
+set "Committed=%~f2"
+set "Step=%~3"
+set "ScenarioDirectory=%TemporaryDirectory%\HostTreeWriter-Interruption-%Step%"
+set "ScenarioStorage=%ScenarioDirectory%\Windvale-Database-Storage.bin"
+mkdir "%ScenarioDirectory%" || exit /b 1
+copy /b "%Committed%" "%ScenarioStorage%" >nul || exit /b 1
+set /a MarkerLength=20993+Step
+fsutil file seteof "%ScenarioStorage%" %MarkerLength% >nul || exit /b 1
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+set /a ExpectedResult=110+Step
+if not "%ApplicationResult%"=="%ExpectedResult%" (
+    >&2 echo The native host tree-writer interruption %Step% returned %ApplicationResult%, expected %ExpectedResult%.
+    exit /b 1
+)
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="33280" exit /b 1
 endlocal
 exit /b 0
 

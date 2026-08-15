@@ -1161,6 +1161,7 @@ $NativeCases = @(
             'Libraries/Database/Tree-Node.wv',
             'Libraries/Platform/Database/Durable-Storage-Executor.wv',
             'Libraries/Platform/Database/Durable-Tree-Reader.wv',
+            'Libraries/Platform/Database/Durable-Tree-Writer.wv',
             'Tests/Fixtures/Database/Database-Storage-Publication-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv',
@@ -1170,8 +1171,10 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Tree-Path-Upsert-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Reader-Self-Test.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Writer-Self-Test.wv',
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
             'Specifications/Windvale-Database-Tree-Path-Upsert.md',
+            'Specifications/Windvale-Database-Hosted-Tree-Writer.md',
             'Runtime/Native/X64-Random-Access-Storage-Host.wva',
             'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
             'Runtime/Native/Linux-X64-Random-Access-Storage.wva'
@@ -1194,6 +1197,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Storage-Executor.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Tree-Reader.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
@@ -1202,7 +1206,8 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
-            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj'
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
         )
         Suites = @('database-storage', 'workspace-project2', 'libraries')
         Gaps = @()
@@ -1580,7 +1585,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3471 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3472 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

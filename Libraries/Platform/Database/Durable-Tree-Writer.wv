@@ -1,0 +1,553 @@
+module Durableˉtreeˉwriter profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Randomˉaccessˉstorage as Storage;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+import Windvaleˉdatabaseˉtreeˉpathˉupsert as Upsert;
+
+capability storage.random_access_v1;
+
+const DATABASE_TREE_WRITER_HEADER_BYTES: u64 = 512u64;
+const DATABASE_TREE_WRITER_MINIMUM_DEPTH: u32 = 2u32;
+const DATABASE_TREE_WRITER_MAXIMUM_DEPTH: u32 = 8u32;
+const DATABASE_TREE_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉdurableˉtreeˉupsertˉstatus {
+    Committed = 0;
+    Active = 1;
+    Aborted = 2;
+    Recover = 3;
+    Invalidˉcurrent = 4;
+    Invalidˉkey = 5;
+    Unsupportedˉdepth = 6;
+    Storageˉfailure = 7;
+    Changedˉsnapshot = 8;
+    Pageˉfailure = 9;
+    Invalidˉdurableˉpage = 10;
+    Invalidˉnode = 11;
+    Invalidˉgraph = 12;
+    Transactionˉfailure = 13;
+    Publicationˉfailure = 14;
+}
+
+export record Databaseˉdurableˉtreeˉupsertˉresult {
+    Status: Databaseˉdurableˉtreeˉupsertˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Transactionˉerror: Upsert.Databaseˉtreeˉpathˉupsertˉerror;
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror;
+    Pathˉpages: u32;
+    Actions: u32;
+    Replaced: bool;
+    Splitˉlevels: u32;
+    Rootˉsplit: bool;
+    Rootˉpage: u64;
+    Rootˉdepth: u32;
+    Dataˉpageˉcount: u32;
+    Publicationˉstate: Publication.Databaseˉstorageˉpublication;
+}
+
+record Databaseˉdurableˉtreeˉpathˉresult {
+    Status: Databaseˉdurableˉtreeˉupsertˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Transactionˉerror: Upsert.Databaseˉtreeˉpathˉupsertˉerror;
+    Visits: u32;
+    Pages: bytes;
+}
+
+fn Databaseˉdurableˉtreeˉwriterˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉtreeˉwriterˉownedˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    let Prefixed: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Prefixed, 1u32, Length);
+}
+
+fn Databaseˉdurableˉtreeˉwriterˉinvalidˉpublication()
+    -> Publication.Databaseˉstorageˉpublication {
+    let Rejected: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉreject(
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉcurrent
+        );
+    return Publication.Databaseˉstorageˉpublicationˉbegin(
+        Rejected.Publication,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉtreeˉwriterˉempty(),
+        Databaseˉdurableˉtreeˉwriterˉempty()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉpathˉfailure(
+    Status: Databaseˉdurableˉtreeˉupsertˉstatus,
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus,
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror,
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Transactionˉerror: Upsert.Databaseˉtreeˉpathˉupsertˉerror,
+    Visits: u32
+) -> Databaseˉdurableˉtreeˉpathˉresult {
+    return Databaseˉdurableˉtreeˉpathˉresult(
+        Status,
+        Readˉstatus,
+        Readˉerror,
+        Readˉstorageˉerror,
+        Pageˉerror,
+        Nodeˉerror,
+        Transactionˉerror,
+        Visits,
+        Databaseˉdurableˉtreeˉwriterˉempty()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+    Status: Databaseˉdurableˉtreeˉupsertˉstatus,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Transactionˉerror: Upsert.Databaseˉtreeˉpathˉupsertˉerror,
+    Visits: u32
+) -> Databaseˉdurableˉtreeˉpathˉresult {
+    return Databaseˉdurableˉtreeˉpathˉfailure(
+        Status,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Nodeˉerror,
+        Transactionˉerror,
+        Visits
+    );
+}
+
+fn Databaseˉdurableˉtreeˉwriterˉfailure(
+    Status: Databaseˉdurableˉtreeˉupsertˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Path: Databaseˉdurableˉtreeˉpathˉresult,
+    Transactionˉerror: Upsert.Databaseˉtreeˉpathˉupsertˉerror,
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror
+) -> Databaseˉdurableˉtreeˉupsertˉresult {
+    return Databaseˉdurableˉtreeˉupsertˉresult(
+        Status,
+        Storageˉstatus,
+        Path.Readˉstatus,
+        Path.Readˉerror,
+        Path.Readˉstorageˉerror,
+        Path.Pageˉerror,
+        Path.Nodeˉerror,
+        Transactionˉerror,
+        Publicationˉerror,
+        Path.Visits,
+        0u32,
+        false,
+        0u32,
+        false,
+        DATABASE_TREE_WRITER_NO_PAGE,
+        0u32,
+        0u32,
+        Databaseˉdurableˉtreeˉwriterˉinvalidˉpublication()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉwriterˉoutcome(
+    Status: Databaseˉdurableˉtreeˉupsertˉstatus,
+    Transaction: Upsert.Databaseˉtreeˉpathˉupsert,
+    Execution: Executor.Databaseˉstorageˉpublicationˉexecution,
+    Pathˉpages: u32
+) -> Databaseˉdurableˉtreeˉupsertˉresult {
+    return Databaseˉdurableˉtreeˉupsertˉresult(
+        Status,
+        Storage.Storageˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Upsert.Databaseˉtreeˉpathˉupsertˉerror.Valid,
+        Execution.State.Error,
+        Pathˉpages,
+        Execution.Actions,
+        Transaction.Replaced,
+        Transaction.Splitˉlevels,
+        Transaction.Rootˉsplit,
+        Transaction.Rootˉpage,
+        Transaction.Rootˉdepth,
+        Transaction.Dataˉpageˉcount,
+        Execution.State
+    );
+}
+
+fn Databaseˉdurableˉtreeˉpathˉcollect(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Description: Storage.Storageˉresult,
+    Key: bytes
+) -> Databaseˉdurableˉtreeˉpathˉresult {
+    var Path: bytes = Databaseˉdurableˉtreeˉwriterˉempty();
+    var Pageˉidentifier: u64 = Current.Rootˉpage;
+    var Remainingˉdepth: u32 = Current.Rootˉdepth;
+    var Visits: u32 = 0u32;
+    var Hasˉlower: bool = false;
+    var Lower: bytes = Databaseˉdurableˉtreeˉwriterˉempty();
+    var Hasˉupper: bool = false;
+    var Upper: bytes = Databaseˉdurableˉtreeˉwriterˉempty();
+    while Remainingˉdepth > 0u32 {
+        if Pageˉidentifier >= Current.Pageˉcount {
+            return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉgraph,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                Visits
+            );
+        }
+        let Read: Pageˉreader.Databaseˉpageˉreadˉresult =
+            Pageˉreader.Databaseˉstorageˉreadˉpage(
+                DATABASE_TREE_WRITER_HEADER_BYTES,
+                Current.Pageˉsize,
+                Pageˉidentifier
+            );
+        Visits = Visits + 1u32;
+        if Read.Status != Pageˉreader.Databaseˉpageˉreadˉstatus.Valid {
+            return Databaseˉdurableˉtreeˉpathˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Pageˉfailure,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉpage,
+                Visits
+            );
+        }
+        if Read.Generation != Description.Generation ||
+            Read.Storageˉlength != Description.Storageˉlength {
+            return Databaseˉdurableˉtreeˉpathˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Changedˉsnapshot,
+                Read.Status,
+                Pageˉreader.Databaseˉpageˉerror.Changedˉstorage,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                Visits
+            );
+        }
+        let Durable: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Read.Value);
+        if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉdurableˉtreeˉpathˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉdurableˉpage,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Durable.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉpage,
+                Visits
+            );
+        }
+        let Isˉroot: bool = Visits == 1u32;
+        let Isˉleaf: bool = Remainingˉdepth == 1u32;
+        if Durable.Pageˉidentifier != Pageˉidentifier ||
+            Durable.Pageˉsize != Current.Pageˉsize ||
+            Durable.Generation > Current.Generation ||
+            Durable.Commitˉsequence > Current.Committedˉsequence ||
+            Isˉroot &&
+                (Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+                Durable.Generation != Current.Generation ||
+                Durable.Commitˉsequence != Current.Committedˉsequence) ||
+            !Isˉroot && Isˉleaf &&
+                Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+            !Isˉroot && !Isˉleaf &&
+                Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Branch {
+            return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉgraph,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                Visits
+            );
+        }
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Durable.Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Node.Entryˉcount != Durable.Itemˉcount {
+            var Selectedˉnodeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Node.Error;
+            if Selectedˉnodeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Selectedˉnodeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount;
+            }
+            return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉnode,
+                Selectedˉnodeˉerror,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                Visits
+            );
+        }
+        if Isˉleaf {
+            if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
+                Node.Entryˉcount == 0u32 {
+                return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                    Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉnode,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,
+                    Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                    Visits
+                );
+            }
+            let Rangeˉerror: Tree.Databaseˉtreeˉnodeˉerror =
+                Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+                    Durable.Payload,
+                    Hasˉlower,
+                    Lower,
+                    Hasˉupper,
+                    Upper
+                );
+            if Rangeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                    Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉgraph,
+                    Rangeˉerror,
+                    Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉrange,
+                    Visits
+                );
+            }
+        } else {
+            if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch {
+                return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                    Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉnode,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,
+                    Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉnode,
+                    Visits
+                );
+            }
+            let Route: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+                Tree.Databaseˉtreeˉbranchˉroute(
+                    Durable.Payload,
+                    Key,
+                    Hasˉlower,
+                    Lower,
+                    Hasˉupper,
+                    Upper
+                );
+            if Route.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+                Route.Child >= Durable.Pageˉidentifier ||
+                Route.Child >= Current.Pageˉcount {
+                var Selectedˉrouteˉerror: Tree.Databaseˉtreeˉnodeˉerror =
+                    Route.Error;
+                if Selectedˉrouteˉerror ==
+                        Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                    Selectedˉrouteˉerror =
+                        Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild;
+                }
+                return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+                    Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉgraph,
+                    Selectedˉrouteˉerror,
+                    Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉroute,
+                    Visits
+                );
+            }
+            Pageˉidentifier = Route.Child;
+            Hasˉlower = Route.Hasˉlower;
+            Lower = Route.Lower;
+            Hasˉupper = Route.Hasˉupper;
+            Upper = Route.Upper;
+        }
+        let Owned: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉownedˉcopy(Durable);
+        if Owned.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉdurableˉtreeˉpathˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉdurableˉpage,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Owned.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉpage,
+                Visits
+            );
+        }
+        Path = Bytesˉconcat(Path, Owned.Bytes);
+        Remainingˉdepth = Remainingˉdepth - 1u32;
+    }
+    return Databaseˉdurableˉtreeˉpathˉresult(
+        Databaseˉdurableˉtreeˉupsertˉstatus.Active,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Upsert.Databaseˉtreeˉpathˉupsertˉerror.Valid,
+        Visits,
+        Databaseˉdurableˉtreeˉwriterˉownedˉcopy(Path)
+    );
+}
+
+export fn Databaseˉdurableˉtreeˉupsert(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Key: bytes,
+    Value: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉtreeˉupsertˉresult {
+    let Emptyˉpath: Databaseˉdurableˉtreeˉpathˉresult =
+        Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉcurrent,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Upsert.Databaseˉtreeˉpathˉupsertˉerror.Valid,
+            0u32
+        );
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉcurrent,
+            Storage.Storageˉstatus.Valid,
+            Emptyˉpath,
+            Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉcurrent,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if Bytesˉlength(Key) == 0u32 || Bytesˉlength(Key) > 4096u32 {
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉkey,
+            Storage.Storageˉstatus.Valid,
+            Emptyˉpath,
+            Upsert.Databaseˉtreeˉpathˉupsertˉerror.Invalidˉupsert,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if Current.Rootˉdepth < DATABASE_TREE_WRITER_MINIMUM_DEPTH ||
+        Current.Rootˉdepth > DATABASE_TREE_WRITER_MAXIMUM_DEPTH {
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Unsupportedˉdepth,
+            Storage.Storageˉstatus.Valid,
+            Emptyˉpath,
+            Upsert.Databaseˉtreeˉpathˉupsertˉerror.Unsupportedˉdepth,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Storageˉfailure,
+            Description.Status,
+            Emptyˉpath,
+            Upsert.Databaseˉtreeˉpathˉupsertˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if Description.Storageˉlength != Current.Committedˉlength {
+        let Changedˉpath: Databaseˉdurableˉtreeˉpathˉresult =
+            Databaseˉdurableˉtreeˉpathˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Changedˉsnapshot,
+                Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+                Pageˉreader.Databaseˉpageˉerror.Changedˉstorage,
+                Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Upsert.Databaseˉtreeˉpathˉupsertˉerror.Pathˉmismatch,
+                0u32
+            );
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Changedˉsnapshot,
+            Description.Status,
+            Changedˉpath,
+            Changedˉpath.Transactionˉerror,
+            Publication.Databaseˉstorageˉpublicationˉerror.Changedˉstorage
+        );
+    }
+    let Path: Databaseˉdurableˉtreeˉpathˉresult =
+        Databaseˉdurableˉtreeˉpathˉcollect(Current, Description, Key);
+    if Path.Status != Databaseˉdurableˉtreeˉupsertˉstatus.Active {
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Path.Status,
+            Storage.Storageˉstatus.Valid,
+            Path,
+            Path.Transactionˉerror,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    let Transaction: Upsert.Databaseˉtreeˉpathˉupsert =
+        Upsert.Databaseˉtreeˉpathˉupsertˉbegin(
+            Current,
+            Path.Pages,
+            Key,
+            Value
+        );
+    if Transaction.Error != Upsert.Databaseˉtreeˉpathˉupsertˉerror.Valid {
+        let Transactionˉpath: Databaseˉdurableˉtreeˉpathˉresult =
+            Databaseˉdurableˉtreeˉpathˉfailure(
+                Databaseˉdurableˉtreeˉupsertˉstatus.Transactionˉfailure,
+                Path.Readˉstatus,
+                Path.Readˉerror,
+                Path.Readˉstorageˉerror,
+                Transaction.Pageˉerror,
+                Transaction.Nodeˉerror,
+                Transaction.Error,
+                Path.Visits
+            );
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Transactionˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Transactionˉpath,
+            Transaction.Error,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    let Initial: Publication.Databaseˉstorageˉpublication =
+        Publication.Databaseˉstorageˉpublicationˉbegin(
+            Transaction.Commit.Publication,
+            Description.Generation,
+            Current.Tailˉbytes,
+            Description.Storageˉlength,
+            Transaction.Commit.Pages,
+            Transaction.Commit.Superblock
+        );
+    if Initial.Status != Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        return Databaseˉdurableˉtreeˉwriterˉfailure(
+            Databaseˉdurableˉtreeˉupsertˉstatus.Publicationˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Path,
+            Upsert.Databaseˉtreeˉpathˉupsertˉerror.Valid,
+            Initial.Error
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(
+            Initial,
+            Maximumˉactions
+        );
+    var Resultˉstatus: Databaseˉdurableˉtreeˉupsertˉstatus =
+        Databaseˉdurableˉtreeˉupsertˉstatus.Publicationˉfailure;
+    if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
+        Resultˉstatus = Databaseˉdurableˉtreeˉupsertˉstatus.Committed;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        Resultˉstatus = Databaseˉdurableˉtreeˉupsertˉstatus.Active;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Resultˉstatus = Databaseˉdurableˉtreeˉupsertˉstatus.Aborted;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Recover {
+        Resultˉstatus = Databaseˉdurableˉtreeˉupsertˉstatus.Recover;
+    }
+    return Databaseˉdurableˉtreeˉwriterˉoutcome(
+        Resultˉstatus,
+        Transaction,
+        Execution,
+        Path.Visits
+    );
+}

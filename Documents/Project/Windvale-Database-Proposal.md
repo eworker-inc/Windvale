@@ -363,8 +363,11 @@ split cascade through a new depth-four root.
 [Decision 0569](../Decisions/0569-Bounded-Owned-Tree-Path-Upsert.md) replaces
 the fixed-height composition with one owned exact-page path for input depths
 two through eight and demonstrates a four-level cascade into depth five.
-Provider-driven mutation, deeper inputs, and reclamation remain future engine
-work.
+[Decision 0572](../Decisions/0572-Provider-Driven-Durable-Tree-Writer.md) then
+adds one hosted mutation operation that discovers and copies the exact path,
+rejects snapshot changes, invokes that portable transaction, and executes the
+four-action publication with explicit active, committed, aborted, and recovery
+outcomes. Deeper inputs and reclamation remain future engine work.
 
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their

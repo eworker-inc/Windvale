@@ -23,7 +23,7 @@ suite boundary specifically requires it.
 ## Plan identity and grammar
 
 `Tests/Native/Retirement-Suite.txt` is 6,598 LF-only bytes with SHA-256
-`fe50eae5d1cf9f8c22678f6e207359adcb477d0484b92e98a4376ba3b0625104`.
+`5a4cbe0d5c89398cb484115f4cda4ae67295956192a3e6e2169d42023ba84ca3`.
 The first line is exactly:
 
 ```text
@@ -96,7 +96,7 @@ file. The current plan is:
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
 | `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
-| `database-storage` | `Test-Database-Storage` | 19 | `native database storage status=Passed cases=19 local-results=0 cross-host-images=Verified` |
+| `database-storage` | `Test-Database-Storage` | 20 | `native database storage status=Passed cases=20 local-results=0 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 11 | `native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11` |
@@ -109,12 +109,12 @@ file. The current plan is:
 | `offline-package-stage` | `Test-Offline-Package-Stage` | 8 | `native offline package stage status=Passed cases=8 packages=2 policy-records=8 artifacts=12 deterministic=Verified tamper=Rejected` |
 | `wvdb-approval` | `Test-Wvdb-Approval-Records` | 13 | `native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1` |
 
-The version-2 plan therefore contains exactly 63 suites and 3,471 cases. Its
+The version-2 plan therefore contains exactly 63 suites and 3,472 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
-| 1 | 1 | 19 | 651.2 |
+| 1 | 1 | 20 | 651.2 |
 | 2 | 16 | 1,282 | 592.2 |
 | 3 | 23 | 1,260 | 592.1 |
 | 4 | 23 | 899 | 591.8 |
@@ -154,7 +154,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 63, Passed: 63, Failed: 0, Cases: 3471
+Suites: 63, Passed: 63, Failed: 0, Cases: 3472
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
