@@ -1,6 +1,6 @@
 # Decision 0574: Active Generation 1 command resolution
 
-- Status: Implemented locally; paired-host evidence pending
+- Status: Implemented and paired-host verified in GitHub run `31903569891`
 - Date: 2026-08-15
 - Advances: Milestone 4 and Decision 0568
 - Contract: [Generation 1 and Activation 1](../../Specifications/Windvale-Installation-Generation.md)

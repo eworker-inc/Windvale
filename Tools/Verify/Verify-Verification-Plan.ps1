@@ -1333,6 +1333,7 @@ $NativeCases = @(
             'package-format',
             'installation-activation',
             'installation-command-resolution',
+            'installation-command-dispatch',
             'installation-generation-publication',
             'package-bundle',
             'offline-package-stage'
@@ -1415,6 +1416,18 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'installation command dispatch owner'
+        Paths = @(
+            'Tools/Package/Dispatch-Installation-Command.mjs',
+            'Tools/Package/Verify-Installation-Command-Dispatcher.mjs',
+            'Tools/Native/Test-Installation-Command-Dispatch.cmd',
+            'Tools/Native/Test-Installation-Command-Dispatch.sh'
+        )
+        Suites = @('installation-command-dispatch')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'installer owner'
         Paths = @(
             'Distribution/Installers/Windvale-Development-Installer.json',
@@ -1477,7 +1490,13 @@ $NativeCases = @(
             'Tools/Native/Test-Wvdb-Approval-Records.sh',
             'Specifications/Windvale-Capability-Approval-And-Launch.md'
         )
-        Suites = @('packages', 'package-format', 'offline-package-stage', 'wvdb-approval')
+        Suites = @(
+            'packages',
+            'package-format',
+            'installation-command-dispatch',
+            'offline-package-stage',
+            'wvdb-approval'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1605,9 +1624,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 66 -or
+if ($RetirementSuiteLines.Count -ne 67 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 65-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 66-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1645,7 +1664,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3492 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3501 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

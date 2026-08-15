@@ -106,6 +106,36 @@ fail explicitly. Resolution does not execute a process or grant the selected
 approval. The later host dispatcher must independently bind the exact launch
 record and may execute only after all referenced installed objects reverify.
 
+## Host command dispatch
+
+`Tools/Package/Dispatch-Installation-Command.mjs` is the first bounded
+Windows/Linux process adapter. It opens the public Activation 1 record and its
+digest-named immutable Generation 1 record, invokes the Windvale-written
+resolver, and accepts only its exact canonical success report. Before process
+creation it independently requires all of these identities and relationships:
+
+1. the generation selected by Activation 1 remains byte-identical;
+2. the supplied bundle matches the selected package's bundle identity;
+3. the approval matches the selected approval, package, version, bundle, lock,
+   and executable identities;
+4. the target launch record matches the selected launch, approval, bundle,
+   executable, target, and host-application identities; and
+5. command arguments satisfy the exact `wvdump` or `wvquery` launch profile.
+
+The adapter copies the verified host bytes into private storage, flushes and
+rereads that copy, then starts it directly without a command shell and propagates
+the application's exit status. The first profile supports only the
+two exact Generation 1 commands. It grants no package-manager, signing, network,
+environment, mutation, or process-launch capability to either application; the
+launch records bind the existing inspector file reader and WVDB fixed read-only
+directory provider. Unknown commands, unsupported profiles, substitutions,
+tampering, and invalid arguments fail before process creation.
+
+This development adapter still receives already acquired object paths from its
+caller. A later installed launcher will resolve those paths beneath the durable
+object store and add revocation observation without changing the portable
+Generation 1 grammar.
+
 ## Host generation publication
 
 `Tools/Package/Publish-Installation-Generation.mjs` implements the bounded

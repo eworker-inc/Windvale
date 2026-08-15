@@ -57,6 +57,7 @@ packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 bu
 package-format|Test-Package-Format|82|3|native package format status=Passed result=42 modules=6 builds=7 groups=82 cross-host-images=12
 installation-activation|Test-Installation-Activation|16|3|native installation activation status=Passed cases=16 records=3 current=5cb7a15cb4f585d3aca474c4acdb35f55e6b6a4660aeee1d568db719f62742d3
 installation-command-resolution|Test-Installation-Command-Resolution|8|3|native installation command resolution status=Passed cases=8 commands=2 cross-host-generations=Verified
+installation-command-dispatch|Test-Installation-Command-Dispatch|9|4|native installation command dispatch status=Passed cases=9 commands=2 executions=2 integrity-rejections=4 policy-rejections=3
 installation-generation-publication|Test-Installation-Generation-Publication|8|3|native installation generation publication status=Passed cases=8 generation=c8b8daac8f5298b8c3cab1ba46312ddbe09d6f1718972599872eb901a482f261 bytes=377
 package-bundle|Test-Package-Bundle|12|3|native package bundle status=Passed cases=12 applications=2 bundles=2 objects=9 shared=1 idempotent=Verified
 installers|Test-Installers|8|3|native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified

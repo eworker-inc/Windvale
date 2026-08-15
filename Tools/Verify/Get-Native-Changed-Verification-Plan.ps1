@@ -622,6 +622,11 @@ foreach ($Path in $Paths) {
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Verify-Installation-Command-Resolver.mjs') {
             Add-Suite 'installation-command-resolution'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
+            'Dispatch-Installation-Command.mjs',
+            'Verify-Installation-Command-Dispatcher.mjs'
+        )) {
+            Add-Suite 'installation-command-dispatch'
         } elseif ([IO.Path]::GetFileName($Path) -eq
             'Create-Offline-Package-Stage-Input.mjs') {
             Add-Suite 'offline-package-stage'
@@ -709,7 +714,7 @@ foreach ($Path in $Paths) {
         Add-Suite @('package-format', 'package-bundle')
     } elseif ($Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -and
         ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch'))) {
-        Add-Suite @('wvdb-approval', 'offline-package-stage')
+        Add-Suite @('installation-command-dispatch', 'wvdb-approval', 'offline-package-stage')
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
@@ -720,7 +725,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Distribution/Applications/Wvb-Inspector/', [StringComparison]::Ordinal)) {
         Add-Suite @('packages', 'package-format', 'offline-package-stage')
         if ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch')) {
-            Add-Suite 'wvdb-approval'
+            Add-Suite @('installation-command-dispatch', 'wvdb-approval')
         }
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
@@ -728,6 +733,7 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'package-format',
             'installation-activation',
+            'installation-command-dispatch',
             'installation-command-resolution',
             'installation-generation-publication',
             'offline-package-stage'

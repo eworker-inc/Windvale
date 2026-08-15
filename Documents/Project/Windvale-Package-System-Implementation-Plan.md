@@ -322,9 +322,11 @@ and pure activation/rollback planning. The signed stage now carries exact
 target-specific generation records and the host adapter immutably publishes an
 already validated record. The Windvale-written resolver selects exact active
 command package, part, approval, and launch identities while rejecting malformed,
-inactive, wrong-target, and unknown selections. Paired-host generation/command
-evidence, composed activation recovery, actual target launch, and revocation
-remain open.
+inactive, wrong-target, and unknown selections. GitHub run `31903569891` supplies
+paired-host selection evidence. The bounded host dispatcher additionally
+reverifies the exact bundle, approval, launch, target, and host executable before
+locally executing both real commands, with seven pre-execution rejection cases.
+Paired-host dispatch, composed activation recovery, and revocation remain open.
 
 Implement Generation 1 and Activation 1 parsing/construction. Introduce typed
 approval objects one capability interface at a time, beginning with console,
