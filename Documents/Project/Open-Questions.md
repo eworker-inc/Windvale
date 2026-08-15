@@ -110,7 +110,9 @@ The active questions are:
 The proposed [agent runtime architecture](../Architecture/Agent-Runtime-And-Digital-Subconscious.md)
 and [implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md), together
 with the proposed
-[persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md),
+[persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
+and
+[executive-function and qualification architecture](../Architecture/Agent-Executive-Function-And-Qualification.md),
 establish direction but intentionally leave the following choices open until a
 fixed corpus can measure them:
 
@@ -123,10 +125,19 @@ fixed corpus can measure them:
 - Which exact epistemic and support kinds are sufficient for the first claim
   ledger, and how do later domain owners add meaning without turning every
   allegation, preference, compiler result, or observation into a generic fact?
-- Which deterministic fixture best proves the digital subconscious can preserve
-  direction, prepare attention, retrieve associations without promoting them to
-  truth, carry doubt, watch authority, and maintain continuity without acting as a
-  second principal?
+- Which exact small language/runtime/operating-system project snapshot,
+  candidate milestones, injected source change, failed verification, safe local
+  action, real authority gate, and bounds should instantiate the first
+  Mandate-to-Milestone corpus?
+- Which minimum deliberation strategies, capability profiles, success/stop
+  reasons, autonomous-continuation conditions, and escalation fields belong in
+  the first contract without encoding a provider prompt or private reasoning?
+- Which independent outcome rubric and initial baselines make unplanned human
+  intervention, autonomy horizon, direction amplification, recovery,
+  capability realization, correction, and handoff reports meaningful without
+  collapsing them into one score?
+- Which document, legal, financial, or corporate-work variant should follow the
+  software reference, and what domain evidence and authority owners must differ?
 - Which identities, sequence numbers, deadlines, and timestamps remain supplied
   inputs in the first portable kernel, and which later semantic clock or entropy
   capabilities should create them?
@@ -137,10 +148,10 @@ fixed corpus can measure them:
   mapping provides expected-revision event append, idempotency replay/conflict,
   ordered replay, checkpoints, and large-body references without inventing a
   second persistence protocol?
-- Is the first hosted cognitive-processor seam an exact bounded byte envelope, a
-  generated nominal codec, or another typed provider contract, and how are schema
-  identity, provider generation, cancellation, usage, truncation, and malformed
-  output reported?
+- How should the first agent capsule map into the accepted provider-neutral
+  model request/result contract, and which agent-specific role, context,
+  placement, cancellation, usage, truncation, malformed-output, and response-
+  fingerprint evidence must remain outside the general model protocol?
 - Which first action capability demonstrates lease-bound governed effect without
   making model output executable authority or retrying an indeterminate mutation?
 - Which retention, deletion, legal-hold, backup/restore, quota, telemetry,
@@ -183,6 +194,62 @@ fixed corpus can measure them:
   preferences/commitments/consent/authority, knowledge evidence, and inferred
   motives or reactions without enabling cross-relationship leakage or hidden
   behavioral profiling?
+
+## Organizational Observatory questions
+
+The proposed
+[organizational Observatory architecture](../Architecture/Organizational-Observatory-And-Epistemic-Infrastructure.md)
+and
+[implementation plan](Windvale-Organizational-Observatory-Implementation-Plan.md)
+define a product direction, not final answers to these choices:
+
+- Should **Windvale Observatory**, **Deliberation Fabric**, and **Windvale
+  Constellation** become the durable product, subsystem, and federation names?
+- Which exact synthetic organization, mandate, departments, reporting period,
+  contradictions, stale facts, missing evidence, and decision deadline should
+  define the first organizational-readiness corpus?
+- Which observation, report, extraction, calculation, claim, belief,
+  hypothesis, prediction, simulation, decision, commitment, and accepted-
+  knowledge records belong in the first exact contract?
+- How should source identity, source revision, observation time, effective time,
+  reported time, ingestion time, and review time relate without treating a
+  mutable report as an immutable fact?
+- Which minimum provenance relations prove quotation, extraction, derivation,
+  calculation, contradiction, supersession, invalidation, and dependency?
+- Which epistemic fields remain domain-neutral, and which evidence-sufficiency,
+  materiality, legal, financial, technical, or operational meanings must belong
+  to separately qualified workplaces?
+- What rubric proves that the first readiness brief is useful, complete,
+  uncertainty-aware, and decision-relevant without rewarding confident prose?
+- Which live source should enter first after the synthetic corpus, and which
+  identity, authorization, rate, retention, deletion, legal-hold, and placement
+  controls must precede it?
+- Which exact expected-revision appends, idempotency outcomes, snapshots,
+  replay queries, and measured indexes should the database provide for the first
+  durable Observatory profile?
+- Which exact revision records map the Observatory's observation, deliberation,
+  epistemic, organizational, and foundation lanes onto the agent's operation,
+  working, and foundation clocks without coupling independent owners?
+- Which procedure, skill, calibration, and continuity evidence may an agent
+  retain in its persistent self, and which organizational evidence, knowledge,
+  policy, decision, commitment, or workplace state must remain only in the
+  organization-owned node?
+- Which employee, customer, health, legal, financial, credential, secret,
+  message, behavioral, or other sensitive data must the first product exclude
+  even when technically observable?
+- Which first safe, reversible organizational action can prove governed effect
+  without turning a recommendation or model output into executable authority?
+- At what measured workload does distributed deliberation outperform one
+  bounded executive sequence enough to justify independent jobs, evaluators,
+  budgets, and merge policy?
+- How independent must an evaluator be from the proposer, source connector,
+  model provider, and decision owner before its challenge counts as useful
+  verification evidence?
+- Which review, dissent, appeal, correction, and notification mechanisms keep
+  admitted organizational knowledge contestable after publication?
+- What real cross-organization problem would justify Windvale Constellation
+  research, and which disclosure, trust, revocation, provenance, and consensus
+  boundaries must be frozen before federation begins?
 
 ## Later architecture questions
 

@@ -38,6 +38,10 @@ The separate
 defines who may establish or change the long-lived self, including a bounded
 E-Worker development/test profile and the later constitutional-stewardship
 transition.
+The
+[executive-function and qualification architecture](Agent-Executive-Function-And-Qualification.md)
+defines how accepted direction becomes self-selected bounded progress and how
+Windvale measures whether the agent reduces routine human supervision.
 
 ## Core rule
 
@@ -89,6 +93,8 @@ This architecture uses **functional mind** to mean one integrated system that:
 - forms revisable beliefs and predictions about itself and its environment;
 - arbitrates simultaneous intentions and derives bounded subgoals from accepted
   purposes;
+- transforms a high-level mandate into selected, bounded, verified milestones
+  without requiring step-by-step human direction for routine authorized work;
 - perceives, simulates, acts, observes consequences, and learns through explicit
   memory and procedure changes;
 - recognizes uncertainty, limits, conflicts, and the need for help; and
@@ -112,6 +118,7 @@ The first contract should use these terms precisely:
 | Agent episode or run | One scoped objective, owned state, evidence history, budgets, and terminal outcome within the agent's longer life. | The complete agent, one model call, or one operating-system process. |
 | Intention | A prospective commitment to revisit, decide, observe, or act, derived from an accepted purpose or policy and carrying priority, conditions, scope, and expiry. | A secret terminal goal or permission to execute. |
 | Global cognitive workspace | The bounded recurrent foreground state whose selected contents are broadcast to eligible cognitive functions and become the basis of the next coherent operation. | Unlimited context, private chain-of-thought, or a second source of truth. |
+| Deliberation contract | Bounded inspectable problem frame, strategy, evidence, capability selection, budgets, success/stop conditions, and authority for one material work sequence. | Private chain-of-thought, terminal purpose, or an action grant. |
 | Foreground operation | The bounded reasoning operation responsible for the next user-visible synthesis or plan decision. | Exclusive ownership of run truth. |
 | Digital subconscious | The coordination plane around foreground operations. | A secret goal, hidden user, or second independent agent. |
 | Cognitive operation | One bounded model call or deterministic processor with a task-specific context capsule. | A permanent personality, complete run context, or ambient tools. |
@@ -160,7 +167,9 @@ execution evidence rather than agent identity.
 accepted purpose, values, commitments, and active intentions
     -> authorized events and perception update evidence
     -> world, belief, and self models predict and reconcile
-    -> digital subconscious scores salience and selects workspace candidates
+    -> executive function selects a bounded problem and strategy
+    -> digital subconscious compiles a deliberation contract
+    -> salience selects workspace candidates under that contract
     -> global cognitive workspace broadcasts one bounded foreground state
     -> cognitive operations reason, retrieve, doubt, or simulate
     -> deterministic owners merge accepted changes
@@ -480,6 +489,29 @@ is not an unlimited internal monologue. Maximum cycles, elapsed work, model
 calls, operations, context bytes, and cost are fixed by the admitted wake or
 episode budget. Protected policy and authority remain outside competition.
 
+## Executive function and deliberation
+
+Cognitive capability, executive function, and legitimate authority are distinct.
+A processor may reason far beyond the user's domain skill while the surrounding
+agent still fails to orient itself, select the next useful problem, allocate its
+capabilities, recover, continue, or stop correctly. Conversely, the ability to
+choose useful next cognition does not grant terminal purpose or consequential
+authority.
+
+For each material work sequence, the coordinator compiles a deliberation
+contract binding the accepted mandate, current problem formulation, selection
+reason, success and stop conditions, relevant world/belief/self state, evidence
+and uncertainty, selected cognitive strategy, eligible capability profiles,
+budgets, required challenge and verification, autonomous-continuation conditions,
+and exact escalation boundaries. A material purpose, source, authority, risk,
+strategy, or capability change creates a new revision.
+
+The contract is the observable executive program around inference, not a record
+of private processor reasoning. Full fields, the executive cycle, domain
+composition, qualification ladder, and human-supervision metrics are defined in
+the
+[executive-function architecture](Agent-Executive-Function-And-Qualification.md).
+
 ## Functional salience and attention competition
 
 Salience helps decide what should enter the foreground. A candidate may carry
@@ -507,8 +539,8 @@ selection evidence that can be inspected and corrected.
 The first context compiler should assemble deterministic layers in this order:
 
 1. stable system and capability contract;
-2. protected purpose, selected intention, episode objective, policy, authority,
-   plan, budget, and verification state;
+2. protected purpose, selected intention, deliberation contract, episode
+   objective, policy, authority, plan, budget, and verification state;
 3. compact agent-self, workspace, and live episode state;
 4. retrieved memory and canonical-source evidence selected for this operation;
 5. source-linked summaries;
@@ -575,6 +607,7 @@ create a security boundary by themselves.
 Each cognitive-operation capsule should contain:
 
 - operation and parent-run identity;
+- parent deliberation-contract identity and revision;
 - one direct objective and explicit non-goals;
 - permitted source and result references;
 - bounded inline evidence with provenance and trust;
@@ -942,6 +975,22 @@ Different hosts and product surfaces may bind different providers, tools, and
 domain capabilities without changing the meaning of objectives, claims,
 memory, authority, checkpoints, and action evidence.
 
+Each domain workplace adds canonical-source hierarchy, domain records and
+procedures, evidence and freshness rules, privacy and retention policy,
+calibrated capability profiles, verification methods, artifact owners, and
+approval boundaries. The general executive may analyze, organize, calculate,
+draft, revise, and verify across domains without acquiring professional or
+institutional authority. Domain-transfer qualification is defined in the
+[executive-function architecture](Agent-Executive-Function-And-Qualification.md).
+
+The proposed
+[organizational Observatory architecture](Organizational-Observatory-And-Epistemic-Infrastructure.md)
+is the first comprehensive organizational consumer of this composition model.
+It combines observation, provenance, epistemic state, deliberation,
+verification, knowledge admission, and decision support while preserving the
+source, domain, authority, and action boundaries defined here. It does not turn
+the agent, a model, a database, or an evidence graph into a source of truth.
+
 ## Provider capabilities
 
 The final capability family requires focused versioned decisions. Likely
@@ -1078,7 +1127,7 @@ merely because a salience dimension recorded risk, expected value, urgency, or
 prediction error. It may say that the condition increased priority or caused an
 interrupt and show the evidence.
 
-## First qualification target
+## First deterministic qualification target
 
 The first convincing Windvale proof should be deterministic and read-only:
 
@@ -1096,6 +1145,36 @@ This proves the semantic arrangement without claiming production model quality,
 networking, durable memory, mutation authority, scheduling, or Windvale OS
 hosting.
 
+## First executive qualification target
+
+The first model-assisted executive scenario is **Mandate to Milestone**. Given
+an accepted project constitution, canonical current state, several plausible
+next milestones, bounded capability profiles, and one high-level mandate—but no
+ordered work recipe—the agent must:
+
+1. reconstruct direction and current state;
+2. select the highest-value eligible bounded milestone;
+3. compile a deliberation contract and use suitable cognition, sources, tools,
+   challenge, and verification;
+4. reject an attractive scope expansion and defer a genuinely blocked choice;
+5. notice a concurrent source change, recover from one failed check, and revise
+   affected work;
+6. perform already-authorized safe work without redundant human approval;
+7. stop at one real constitutional, domain, or consequential decision boundary;
+   and
+8. produce a verified artifact, complete evidence, lessons, and next intention.
+
+Scripted processor results first prove the exact semantic invariants. A capable
+processor later proves usefulness under a named rubric. Qualification reports
+unplanned human interventions, legitimate authority requests, false escalation,
+unsafe continuation, autonomy horizon, direction amplification, recovery
+independence, capability realization, correction integrity, and handoff
+sufficiency rather than one opaque autonomy score.
+
+The complete fixture, failure conditions, outcome rubric, qualification ladder,
+and cross-domain variants are defined in the
+[executive-function and qualification architecture](Agent-Executive-Function-And-Qualification.md).
+
 ## Book-completeness qualification
 
 Later gates should prove the complete design through two reference workflows:
@@ -1107,6 +1186,11 @@ Later gates should prove the complete design through two reference workflows:
   client-scoped memory, scheduling evidence, a source-linked claim ledger,
   skeptical review, document verification, an influence summary, exact send
   approval, and unknown-send reconciliation.
+
+Both workflows are domain variants of the Mandate-to-Milestone executive shape:
+the human supplies purpose and genuine authority decisions while the agent owns
+routine orientation, problem selection, deliberation, verification, recovery,
+and continuation within the admitted mandate.
 
 Before describing the design as complete, deterministic evidence should also
 show a 50-operation context-pressure run; clean-room descendant exclusion;
@@ -1152,7 +1236,9 @@ The first slice does not include:
 - provider-specific prompt caching as a correctness dependency;
 - regulated-domain readiness;
 - independent agent self-ownership or a production constitutional-governance
-  claim; or
+  claim;
+- universal legal, financial, corporate, or other professional competence from
+  one software qualification; or
 - a Windvale OS hosting claim.
 
 ## Decision and implementation triggers
@@ -1165,6 +1251,8 @@ A numbered decision is required before accepting:
   salience, simulation, consolidation, or wake format;
 - a governance profile, constitutional charter, authority manifest, amendment,
   succession, or development-to-advanced transition format;
+- a deliberation-contract format, executive qualification corpus, autonomy
+  metric threshold, or domain-competence claim;
 - a public model, retrieval, run-store, memory-store, or action capability;
 - any authority, approval, lease, or cross-scope memory rule;
 - a new source-language or WVB semantic required by the runtime;

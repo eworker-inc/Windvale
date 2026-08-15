@@ -16,6 +16,16 @@ The companion
 [persistent-self ownership and governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
 defines the temporary E-Worker development/test authority and the later
 constitutional-operation profile used by the persistent-self stages.
+The
+[executive-function and qualification architecture](../Architecture/Agent-Executive-Function-And-Qualification.md)
+defines the deliberation contract, Mandate-to-Milestone scenario, outcome
+assessment, and human-supervision metrics.
+
+The proposed
+[organizational Observatory architecture](../Architecture/Organizational-Observatory-And-Epistemic-Infrastructure.md)
+and its
+[implementation plan](Windvale-Organizational-Observatory-Implementation-Plan.md)
+define the first broad organizational consumer of these agent contracts.
 
 The target is one long-lived user-facing functional mind whose durable self
 spans many episodes and whose cognition uses two cooperating execution planes:
@@ -80,6 +90,7 @@ contracts than a complete agent host.
 | Immutable package/lock/bundle identity and approval/launch evidence | Implemented for the first bounded application | Strong authority precedent; current approval grammar is not a general agent policy. |
 | Random-access mutable storage and durable publication planning | Implemented in focused bounded profiles | A future run store can reuse semantics, but current fixed providers are not a general agent-state service. |
 | Durable database | Focused single-writer storage/tree/recovery candidates accept bounded owned paths for input depths two through eight and propagate full splits | Suitable future owner for run state and memory, but not yet a general run ledger or indexed memory service. |
+| Provider-neutral model protocol and scripted provider | Implemented candidates under [Decision 0573](../Decisions/0573-First-Provider-Neutral-Model-Protocol.md) | Reuse the accepted bounded catalog, request, result, codec, and scripted-provider corpus; agent integration and a live host capability remain future work. |
 | Dynamic process launch, supervision, and general resource domains | Designed and partially proven in fixed OS slices | Not required for the first Windows/Linux semantic kernel; required before a Windvale OS agent-host claim. |
 | Monotonic clocks, structured tasks, cancellation, channels, and synchronization | Proposed or absent as general source/runtime contracts | Host-driven one-transition-at-a-time execution is the first route. |
 | Networking, secure streams, identity, and production key custody | Future architecture | Not required by the deterministic kernel; required for a remote production model provider. |
@@ -139,6 +150,13 @@ Every stage preserves these rules:
 24. Development-to-advanced promotion is a qualified migration that expires
     test credentials and bypasses; a profile label or software version cannot
     perform that transition.
+25. The principal supplies constitution, outcomes, resources, and consequential
+    boundaries; the agent owns routine cognitive continuation within them.
+26. Each material work sequence binds an inspectable deliberation contract with
+    problem, strategy, evidence, capability, budget, success, stop, verification,
+    and escalation fields rather than treating a prompt as the whole mind.
+27. Qualification distinguishes exact semantic conformance from model-assisted
+    executive, cognitive, domain, continuity, and governance competence.
 
 ## Governance across delivery stages
 
@@ -179,6 +197,7 @@ source implementation begins.
 | WVAG-009 | Define the first claim and evidence vocabulary. | Epistemic kind, support state, source requirements, supporting/contradicting/missing evidence, dependent artifacts, and owner. |
 | WVAG-010 | Define human-facing cognitive terms. | Exact observable meanings for remembered, noticed, forgot, doubted, learned, and changed its mind without subjective claims. |
 | WVAG-011 | Define the development/test governance fixture. | Profile identity, E-Worker authority roster/threshold, role assignments, scope, expiry, synthetic/authorized data rule, test-only bypass declarations, audit, disposal, and promotion prohibition. |
+| WVAG-012 | Freeze the Mandate-to-Milestone corpus shape. | High-level mandate, project constitution/state, candidate milestones, scope expansion, blocked choice, valid milestone, capability profiles, budgets, disturbance schedule, semantic invariants, outputs, and no ordered work recipe. |
 
 ### Exit gate
 
@@ -195,6 +214,8 @@ source implementation begins.
 - A reviewer can identify who authorized the fixture, which roles the E-Worker
   team occupies, which shortcuts are test-only, and why the fixture cannot be
   promoted to advanced operation.
+- A reviewer can distinguish scripted semantic conformance from later
+  model-assisted executive and outcome competence over the same scenario.
 - A numbered decision is ready to accept only this first bounded contract.
 
 ## Stage 1 — Portable run-state kernel
@@ -254,6 +275,7 @@ through deterministic policy.
 | WVAG-207 | Merge a challenge. | Unsupported or contradictory claim becomes challenged without rewriting source evidence or granting authority. |
 | WVAG-208 | Reject unsafe context and merge requests. | Protected removal, stale revision, forged source, cross-run identity, over-budget output, and hidden-permission proposals fail closed. |
 | WVAG-209 | Bind challenge evidence to claims. | Supporting, contradicting, and missing-evidence references update support state and dependent verification without converting an allegation or inference into fact. |
+| WVAG-210 | Compile a deliberation contract. | Selected problem and alternatives, strategy, evidence/uncertainty, capability profiles, budgets, success/stop/verification conditions, continuation rules, and escalation boundaries. |
 
 ### Exit gate
 
@@ -264,6 +286,9 @@ through deterministic policy.
   dormant, summarized, excluded, superseded, and expired.
 - A valid skeptic result challenges one claim; an invalid result changes nothing.
 - The next compiled context reflects the accepted challenge deterministically.
+- A prompt or context projection cannot replace the canonical deliberation
+  contract, and a material source, authority, risk, strategy, or capability
+  change produces a new revision.
 
 ## Stage 3 — Scripted hosted processor bridge
 
@@ -272,22 +297,26 @@ through deterministic policy.
 Prove the transition between Windvale portable semantics and a disposable host
 processor without introducing a production model dependency.
 
-The first bridge may be a repository test host or an E-Worker adapter. The host
-owns scheduling and supplies one exact scripted response. Windvale owns request
-admission, context/capsule construction, response validation, merge, and final
-state.
+The first bridge consumes the accepted provider-neutral model protocol and
+scripted provider from
+[Decision 0573](../Decisions/0573-First-Provider-Neutral-Model-Protocol.md). A
+repository test host or E-Worker adapter may own scheduling and supply one exact
+scripted response, but it must not introduce a competing general inference
+envelope. Windvale owns agent-specific request admission, context/capsule
+construction, response validation, merge, and final state.
 
 ### Work items
 
 | ID | Work item | Required output |
 | --- | --- | --- |
-| WVAG-301 | Define a bounded processor request/response protocol. | Strict versioned bytes with role, capsule digest, output kind, maximum bytes, result status, and response fingerprint. |
+| WVAG-301 | Bind the agent capsule to the accepted model protocol. | An agent-owned mapping to the Decision 0573 request/result contract with role, capsule digest, output kind, maximum bytes, result status, and response fingerprint. |
 | WVAG-302 | Add a deterministic scripted host. | Fixed success, invalid output, timeout, unavailable, cancellation, and provider-loss scenarios. |
 | WVAG-303 | Validate placement evidence. | Selected processor kind/profile and permitted source sensitivity are recorded before dispatch. |
 | WVAG-304 | Externalize processor transcripts. | The run retains bounded result evidence and references, not provider-private reasoning or unlimited raw traces. |
 | WVAG-305 | Qualify resume without provider session state. | Replaying canonical response evidence after host restart reaches the same state without a second processor invocation. |
 | WVAG-306 | Record deterministic routing evidence. | Processor/model version, capability profile, provider generation, placement, permitted data class, limits, usage, and capability/privacy/risk/quality/latency/cost reasons. |
 | WVAG-307 | Expose fallback and degradation. | Failure fallback, truncation, repair, route change, or reduced verifier status emits a bounded warning and cannot impersonate the requested route. |
+| WVAG-308 | Replay Mandate to Milestone through the bridge. | Scripted selection, contract revisions, source change, failed check, recovery, safe continuation, exact approval stop, verification, and handoff evidence. |
 
 ### Exit gate
 
@@ -297,9 +326,20 @@ state.
 - A provider substitution changes execution evidence without changing run or
   durable agent identity.
 - Windows and Linux pass the same request/response corpus.
+- The fixture proceeds through already-authorized routine transitions without a
+  synthetic human prompt and blocks only at its exact injected authority gate.
 
-This stage does not accept a public `ai.*` capability. It proves the semantic
-seam that a later capability must implement.
+This stage does not accept a public live-model capability. It proves agent
+integration over the capability-free accepted protocol and scripted provider;
+a later live capability must preserve that protocol's meaning.
+
+After this deterministic exit gate, an opt-in development oracle may run the
+read-only Mandate-to-Milestone scenario through one capable processor to
+calibrate the outcome rubric and expose executive-design gaps early. That report
+is experimental capability evidence: it cannot satisfy cross-host conformance,
+authorize mutation, make a production-provider claim, or turn provider-private
+state into continuity. Stage 7 later qualifies the complete hosted assessment
+through accepted product boundaries.
 
 ## Stage 4 — Durable run continuity
 
@@ -447,6 +487,7 @@ ready.
 | WVAG-710 | Bind quotas, retention, and alerts. | Rate, calls, concurrency, storage, cost, redaction, and retention ceilings with stuck-run, invalid-output, unknown-effect, recovery, denial, and projection-lag alerts. |
 | WVAG-711 | Qualify transparent human vocabulary. | Product text maps remembered, noticed, forgot, doubted, learned, and changed its mind to owned evidence and never claims a hidden human self. |
 | WVAG-712 | Run the two book-completeness workflows. | Verified software change and proposal-draft scenarios cover canonical evidence, claims, memory, influence, action approval, and uncertain-effect reconciliation. |
+| WVAG-713 | Run the first model-assisted executive assessment. | Mandate-to-Milestone outcome rubric plus unplanned intervention, legitimate request, false escalation, unsafe continuation, autonomy-horizon, direction-amplification, recovery, capability-realization, correction, and handoff reports. |
 
 ### Exit gate
 
@@ -458,6 +499,10 @@ ready.
   capability groups, exceeded quotas, and incomplete restore fail closed while
   preserving an inspectable run.
 - Windows and Linux hosted products use the same canonical agent semantics.
+- A capable processor completes the bounded executive scenario with no
+  unplanned human intervention, no unsafe continuation, and a passing artifact
+  and evidence review; the report does not convert processor quality into a
+  portable semantic claim.
 - A Windvale OS claim is made only after dynamic launch, supervision, clocks,
   resource domains, provider isolation, and durable storage pass their own
   qualification gates.
@@ -783,6 +828,21 @@ quota exhaustion, and each emergency pause are injected independently. Restore
 must preserve exact evidence identities; a pause or exhausted quota must fail
 closed without making the run disappear or reporting completion.
 
+### Executive-function and capability qualification
+
+The scripted Mandate-to-Milestone corpus proves exact milestone eligibility,
+deliberation revisions, authority, source-change propagation, failure recovery,
+safe continuation, approval stop, verification, and handoff state. Windows and
+Linux must produce the same canonical records around supplied processor results.
+
+A separate model-assisted assessment permits different reasoning, strategy, and
+artifact prose while applying the same invariant monitor and a versioned outcome
+rubric. It reports unplanned human interventions separately from legitimate
+authority requests and never rewards fewer questions when the agent guessed a
+consequential preference, ignored evidence, or exceeded scope. Processor
+substitution may change capability and efficiency scores but not identity,
+authority, or semantic conformance.
+
 ### Book-completeness workflows
 
 The software workflow uses repository rules, exact source and compiler evidence,
@@ -863,8 +923,11 @@ The following remain deferred until the single-agent core qualifies:
 ## Immediate next documentation and decision work
 
 1. Review the proposed architecture terminology, especially one agent identity,
-   two cooperating planes, three clocks, and phased constitutional stewardship.
-2. Select the Stage 0 software corpus scenario and exact maximum sizes.
+   two cooperating planes, three clocks, phased constitutional stewardship, and
+   the deliberation contract.
+2. Freeze the exact small Mandate-to-Milestone software fixture, candidate
+   milestones, injected disturbances, first safe-mutation boundary, rubric, and
+   maximum sizes.
 3. Draft the first closed run/event/context/claim/challenge record
    specification, including attention and support states.
 4. Define which generations a foundation or working-knowledge change records

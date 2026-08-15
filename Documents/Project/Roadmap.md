@@ -346,6 +346,11 @@ placement. The
 [persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
 adds a named E-Worker development/test authority for early fixtures and a later
 constitutional-stewardship profile for advanced operation.
+The
+[executive-function and qualification architecture](../Architecture/Agent-Executive-Function-And-Qualification.md)
+adds the deliberation contract and a provider-neutral Mandate-to-Milestone test
+of whether the agent can turn direction into verified progress without routine
+human supervision.
 
 This lane is documented for dependency planning; it is not an active milestone and
 does not displace the current compiler, database, package, or OS gates. Its first
@@ -360,6 +365,14 @@ candidate gate is deliberately capability-free and portable:
 3. prove exact bytes and reports on Windows and Linux; and
 4. keep model providers, clocks, entropy, durable storage, filesystems, and action
    capabilities outside that first semantic kernel.
+
+The same corpus later receives a model-assisted executive pass. It presents a
+high-level mandate, several plausible milestones, one valid bounded next step,
+one scope expansion, one blocked choice, one lower-value option, a source change,
+a failed check, and separate safe versus approval-required operations. The agent
+must select, deliberate, recover, verify, continue safe work, and stop at the
+real authority boundary. Semantic conformance remains exact; usefulness and
+capability realization use a separate named outcome rubric.
 
 Database append/replay and snapshot work may later satisfy the durable-run profile,
 but the agent lane must consume the qualified database contract rather than define
@@ -389,6 +402,36 @@ not the product destination. Production-like pilots introduce real principals,
 domain/data owners, and bounded E-Worker roles; advanced operation requires a
 qualified transition that removes test bypasses and broad developer access and
 instantiates the complete authority matrix.
+
+## Proposed future product lane: organizational Observatory
+
+The proposed
+[organizational Observatory architecture](../Architecture/Organizational-Observatory-And-Epistemic-Infrastructure.md)
+defines internal organizational intelligence as epistemic infrastructure: one
+product composed from independently owned observation, evidence, epistemic-
+state, deliberation, verification, knowledge-admission, decision-support, and
+action systems. Its
+[implementation plan](Windvale-Organizational-Observatory-Implementation-Plan.md)
+begins with a synthetic, read-only organizational-readiness brief rather than a
+live connector, continuous model cluster, general knowledge graph, or action
+engine.
+
+This lane is documented for product and dependency planning; it is not an
+active milestone. Stages 0 through 3 are capability-free and deterministic:
+they freeze the organizational vocabulary and corpus, preserve source and
+provenance identity, maintain typed epistemic state and invalidation, and
+produce a scripted evidence-backed readiness brief with disagreement and
+uncertainty visible. Later stages may consume the qualified agent runtime,
+provider-neutral model protocol, database, filesystem, identity, network,
+connector, package, and OS contracts without redefining them.
+
+The product maintains a continuously revisable account of what admitted
+evidence supports; it is not a source of truth and must not silently convert
+observations, reports, calculations, hypotheses, recommendations, decisions, or
+commitments into one undifferentiated fact. Search remains one observation
+sense among many. A later cross-organization **Windvale Constellation** remains
+research until one real federation problem and its disclosure, trust,
+provenance, revocation, and consensus boundaries are named.
 
 ## Workstream rules
 
@@ -426,6 +469,13 @@ instantiates the complete authority matrix.
   capability owners, audit/appeal, recovery/succession, and expired test access.
 - Make every context item, cognitive operation, memory proposal, action proposal,
   lease, and checkpoint bounded, versioned, attributable, and inspectable.
+- Compile one deliberation contract for each material work sequence so a
+  high-level mandate becomes an explicit selected problem, strategy, evidence
+  set, capability allocation, success/stop rule, verification route, and
+  escalation boundary.
+- Measure unplanned human intervention separately from legitimate approval:
+  fewer questions are useful only when routine authorized work continues and
+  consequential ambiguity still stops correctly.
 - Keep claims typed and source-linked; projections, summaries, and derived
   memories remain rebuildable and lose eligibility when their permitted lineage
   becomes stale or unavailable.
@@ -442,6 +492,32 @@ instantiates the complete authority matrix.
 - Treat account/workspace isolation, data placement, backup/restore, quotas,
   telemetry redaction, and emergency pause as named product gates rather than
   invisible deployment assumptions.
+
+### Organizational Observatory
+
+- Describe the product as evidence-backed epistemic infrastructure, never as a
+  universal source of truth or an infallible organizational authority.
+- Begin with the static synthetic, read-only readiness scenario; add durable
+  state, live sources, drafts, and actions only at their named gates.
+- Keep observations, source reports, extractions, calculations, claims,
+  hypotheses, predictions, recommendations, decisions, commitments, and
+  accepted organizational knowledge distinct and attributable.
+- Keep domain meaning and knowledge admission with qualified domain and
+  institutional owners; shared machinery may transport evidence but must not
+  erase legal, financial, technical, operational, or governance boundaries.
+- Keep organization-owned evidence, knowledge, policy, decisions, commitments,
+  and workplace state outside agent-private memory; persistent-self continuity
+  cannot bypass source, retention, correction, revocation, or deletion owners.
+- Exclude hidden employee surveillance, behavioral scoring, inferred intent,
+  and cross-context profiling from the foundation product.
+- Prove the first deliberation with scripted jobs and explicit challenge before
+  introducing model-assisted or distributed reasoning.
+- Add indexes only from measured records and workloads; do not begin with a
+  general graph, vector store, or distributed consensus system.
+- Route model, database, filesystem, connector, identity, network, compiler,
+  library, package, and OS requirements to their owning documents and decisions.
+- Defer Windvale Constellation until a real cross-organization consumer
+  justifies its disclosure, trust, provenance, revocation, and consensus model.
 
 ### Operating system
 

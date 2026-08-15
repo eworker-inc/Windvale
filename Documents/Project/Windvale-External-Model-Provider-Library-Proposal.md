@@ -22,6 +22,14 @@ result. The later agent runtime can consume the same interface while retaining
 ownership of run state, context compilation, memory, routing, tools, approvals,
 and continuity.
 
+The proposed
+[Windvale Observatory](../Architecture/Organizational-Observatory-And-Epistemic-Infrastructure.md)
+is a later high-pressure consumer of the same interface. Its Deliberation
+Fabric may request bounded cognitive work through this library, but the model
+library does not own observations, evidence, claims, organizational knowledge,
+invalidation, scheduling, consensus, evaluation, source authority, decisions,
+or actions.
+
 ## Summary conclusion
 
 Windvale has enough implemented language and library machinery to begin the

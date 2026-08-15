@@ -552,6 +552,44 @@ owns a self field, or what an agent may do. The proposed
 owns that later semantic direction; this proposal supplies storage only after a
 consumer freezes exact bounded records.
 
+## Organizational-Observatory consumer profile
+
+The proposed
+[Windvale Observatory architecture](../Architecture/Organizational-Observatory-And-Epistemic-Infrastructure.md)
+and
+[implementation plan](Windvale-Organizational-Observatory-Implementation-Plan.md)
+name a second future consumer of the database contract. Stages 0 through 3
+remain capability-free, use a static synthetic corpus, and do not require
+durable storage. A durable mapping begins only after the Observatory freezes
+exact observation, evidence, claim, support, invalidation, decision, and
+artifact records and the database writer and recovery surface are independently
+qualified.
+
+The first durable Observatory profile likely requires:
+
+- expected-revision append for each organization or bounded knowledge domain;
+- immutable observation, evidence, source-revision, and large-body records;
+- exact idempotency replay/conflict outcomes, ordered replay, and snapshots;
+- measured indexes for source/revision, claim/support/status, dependency,
+  validity interval, workplace, subject, decision, artifact, job, and revisit
+  membership;
+- deterministic invalidation and review queues when a source, policy,
+  calculation, or admitted dependency changes; and
+- backup and restore evidence binding canonical records, derived indexes,
+  snapshots, idempotency state, and referenced bodies.
+
+Those lookups are planning pressure, not permission to add a general graph,
+unbounded query language, distributed writer, or vector-search contract. Exact
+records and measured fixtures must select each index.
+
+The database stores and retrieves canonical and derived records. It does not
+decide which source has authority, whether evidence supports a claim, whether a
+claim becomes accepted organizational knowledge, which professional judgment
+applies, how deliberation reaches a recommendation, or whether an organizational
+action is authorized. Organization-owned Observatory roots and agent-owned
+persistent-self roots remain distinct even if one engine stores both; a storage
+path or index cannot transfer ownership between them.
+
 ## Differential and performance evidence
 
 EWDB should remain an oracle, not a hidden runtime dependency. Candidate
