@@ -1,0 +1,244 @@
+module Databaseˉcollectionˉcatalogˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉcollectionˉcatalog as Catalog;
+
+data Invalidˉutf8: bytes = [192, 128];
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu32ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Withˉu64(Input: bytes, Offset: u32, Value: u64) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 8u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu64ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Decodeˉerror(Input: bytes) -> Catalog.Databaseˉcollectionˉerror {
+    let Result: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉdecode(Input);
+    return Result.Error;
+}
+
+fn Encodeˉerror(
+    Collection: u64,
+    Schema: u64,
+    Name: bytes
+) -> Catalog.Databaseˉcollectionˉerror {
+    let Result: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉencode(
+            Collection,
+            Schema,
+            Name
+        );
+    return Result.Error;
+}
+
+fn Descriptorˉcontract() -> i32 {
+    let Name: bytes = Textˉtoˉutf8("orders");
+    let Encoded: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉencode(7u64, 9u64, Name);
+    if Encoded.Error != Catalog.Databaseˉcollectionˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 46u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1279481431u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 40u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 12u32) != 0u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 16u32) != 7u64 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 24u32) != 9u64 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 32u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 36u32) != 0u32 {
+        return 1;
+    }
+    let Decoded: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉdecode(Encoded.Bytes);
+    let Deterministic: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉencode(7u64, 9u64, Name);
+    if Decoded.Error != Catalog.Databaseˉcollectionˉerror.Valid ||
+        Decoded.Collection != 7u64 ||
+        Decoded.Primaryˉschema != 9u64 ||
+        !Bytesˉequal(Decoded.Name, Name) ||
+        !Bytesˉequal(Decoded.Bytes, Encoded.Bytes) ||
+        !Bytesˉequal(Deterministic.Bytes, Encoded.Bytes) {
+        return 2;
+    }
+    return 0;
+}
+
+fn Operationˉcontract() -> i32 {
+    let Name: bytes = Textˉtoˉutf8("events");
+    let Read: Catalog.Databaseˉcollectionˉread =
+        Catalog.Databaseˉcollectionˉreadˉprepare(11u64);
+    let Put: Catalog.Databaseˉcollectionˉput =
+        Catalog.Databaseˉcollectionˉputˉprepare(11u64, 12u64, Name);
+    if Read.Error != Catalog.Databaseˉcollectionˉerror.Valid ||
+        Put.Error != Catalog.Databaseˉcollectionˉerror.Valid ||
+        !Bytesˉequal(Read.Key, Put.Key) {
+        return 1;
+    }
+    let Admitted: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉadmit(Put.Key, Put.Value);
+    if Admitted.Error != Catalog.Databaseˉcollectionˉerror.Valid ||
+        Admitted.Collection != 11u64 ||
+        Admitted.Primaryˉschema != 12u64 ||
+        !Bytesˉequal(Admitted.Name, Name) {
+        return 2;
+    }
+    let Other: Catalog.Databaseˉcollectionˉput =
+        Catalog.Databaseˉcollectionˉputˉprepare(13u64, 12u64, Name);
+    let Mismatch: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉadmit(Other.Key, Put.Value);
+    if Mismatch.Error != Catalog.Databaseˉcollectionˉerror.Identityˉmismatch {
+        return 3;
+    }
+    let Invalid: Catalog.Databaseˉcollectionˉput =
+        Catalog.Databaseˉcollectionˉputˉprepare(
+            0u64,
+            12u64,
+            Name
+        );
+    if Invalid.Error != Catalog.Databaseˉcollectionˉerror.Invalidˉcollection ||
+        Bytesˉlength(Invalid.Key) != 0u32 ||
+        Bytesˉlength(Invalid.Value) != 0u32 {
+        return 4;
+    }
+    return 0;
+}
+
+fn Descriptorˉrejections() -> i32 {
+    let Valid: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉencode(
+            2u64,
+            3u64,
+            Textˉtoˉutf8("x")
+        );
+    if Decodeˉerror(Emptyˉbytes()) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉlength ||
+        Decodeˉerror(Withˉu32(Valid.Bytes, 0u32, 0u32)) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉmagic ||
+        Decodeˉerror(Withˉu32(Valid.Bytes, 4u32, 2u32)) !=
+            Catalog.Databaseˉcollectionˉerror.Unsupportedˉversion ||
+        Decodeˉerror(Withˉu32(Valid.Bytes, 8u32, 36u32)) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉheaderˉsize ||
+        Decodeˉerror(Withˉu32(Valid.Bytes, 12u32, 1u32)) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉflags ||
+        Decodeˉerror(Withˉu64(Valid.Bytes, 16u32, 0u64)) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉcollection ||
+        Decodeˉerror(Withˉu64(Valid.Bytes, 24u32, 0u64)) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉschema ||
+        Decodeˉerror(Withˉu32(Valid.Bytes, 36u32, 1u32)) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉreserved {
+        return 1;
+    }
+    let Truncated: bytes = Bytesˉslice(
+        Valid.Bytes,
+        0u32,
+        Bytesˉlength(Valid.Bytes) - 1u32
+    );
+    let Trailing: bytes = Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8));
+    if Decodeˉerror(Truncated) !=
+            Catalog.Databaseˉcollectionˉerror.Truncated ||
+        Decodeˉerror(Trailing) !=
+            Catalog.Databaseˉcollectionˉerror.Trailingˉbytes ||
+        Encodeˉerror(2u64, 3u64, Emptyˉbytes()) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉnameˉlength ||
+        Encodeˉerror(2u64, 3u64, Invalidˉutf8) !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉnameˉencoding {
+        return 2;
+    }
+    let Invalidˉencoded: bytes = Bytesˉconcat(
+        Bytesˉslice(Valid.Bytes, 0u32, 40u32),
+        Invalidˉutf8
+    );
+    let Invalidˉlength: bytes = Withˉu32(Invalidˉencoded, 32u32, 2u32);
+    if Decodeˉerror(Invalidˉlength) !=
+        Catalog.Databaseˉcollectionˉerror.Invalidˉnameˉencoding {
+        return 3;
+    }
+    return 0;
+}
+
+fn Descriptorˉboundaries() -> i32 {
+    let Maximum: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉencode(
+            2u64,
+            3u64,
+            Zeroes(256u32)
+        );
+    let Oversized: Catalog.Databaseˉcollectionˉdescriptorˉresult =
+        Catalog.Databaseˉcollectionˉdescriptorˉencode(
+            2u64,
+            3u64,
+            Zeroes(257u32)
+        );
+    if Maximum.Error != Catalog.Databaseˉcollectionˉerror.Valid ||
+        Bytesˉlength(Maximum.Bytes) != 296u32 ||
+        Oversized.Error !=
+            Catalog.Databaseˉcollectionˉerror.Invalidˉnameˉlength {
+        return 1;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Descriptor: i32 = Descriptorˉcontract();
+    if Descriptor != 0 { return 10 + Descriptor; }
+    let Operation: i32 = Operationˉcontract();
+    if Operation != 0 { return 20 + Operation; }
+    let Rejections: i32 = Descriptorˉrejections();
+    if Rejections != 0 { return 30 + Rejections; }
+    let Boundaries: i32 = Descriptorˉboundaries();
+    if Boundaries != 0 { return 40 + Boundaries; }
+    return 0;
+}

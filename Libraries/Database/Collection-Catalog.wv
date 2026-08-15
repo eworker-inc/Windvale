@@ -1,0 +1,292 @@
+module Windvaleˉdatabaseˉcollectionˉcatalog profile portable;
+
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+const DATABASE_COLLECTION_MAGIC: u32 = 1279481431u32;
+const DATABASE_COLLECTION_VERSION: u32 = 1u32;
+const DATABASE_COLLECTION_HEADER_BYTES: u32 = 40u32;
+const DATABASE_COLLECTION_MAXIMUM_NAME_BYTES: u32 = 256u32;
+const DATABASE_COLLECTION_MAXIMUM_BYTES: u32 = 296u32;
+
+export enum Databaseˉcollectionˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheaderˉsize = 4;
+    Invalidˉflags = 5;
+    Invalidˉcollection = 6;
+    Invalidˉschema = 7;
+    Invalidˉnameˉlength = 8;
+    Invalidˉnameˉencoding = 9;
+    Invalidˉreserved = 10;
+    Truncated = 11;
+    Trailingˉbytes = 12;
+    Invalidˉkey = 13;
+    Identityˉmismatch = 14;
+}
+
+export record Databaseˉcollectionˉdescriptorˉresult {
+    Error: Databaseˉcollectionˉerror;
+    Collection: u64;
+    Primaryˉschema: u64;
+    Name: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉcollectionˉread {
+    Error: Databaseˉcollectionˉerror;
+    Key: bytes;
+}
+
+export record Databaseˉcollectionˉput {
+    Error: Databaseˉcollectionˉerror;
+    Key: bytes;
+    Value: bytes;
+}
+
+fn Databaseˉcollectionˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉcollectionˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return Databaseˉcollectionˉempty(); }
+    let Owned: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Owned, 1u32, Length);
+}
+
+fn Databaseˉcollectionˉdescriptorˉfailure(
+    Error: Databaseˉcollectionˉerror
+) -> Databaseˉcollectionˉdescriptorˉresult {
+    return Databaseˉcollectionˉdescriptorˉresult(
+        Error,
+        0u64,
+        0u64,
+        Databaseˉcollectionˉempty(),
+        Databaseˉcollectionˉempty()
+    );
+}
+
+fn Databaseˉcollectionˉreadˉfailure(
+    Error: Databaseˉcollectionˉerror
+) -> Databaseˉcollectionˉread {
+    return Databaseˉcollectionˉread(Error, Databaseˉcollectionˉempty());
+}
+
+fn Databaseˉcollectionˉputˉfailure(
+    Error: Databaseˉcollectionˉerror
+) -> Databaseˉcollectionˉput {
+    return Databaseˉcollectionˉput(
+        Error,
+        Databaseˉcollectionˉempty(),
+        Databaseˉcollectionˉempty()
+    );
+}
+
+export fn Databaseˉcollectionˉdescriptorˉencode(
+    Collection: u64,
+    Primaryˉschema: u64,
+    Name: bytes
+) -> Databaseˉcollectionˉdescriptorˉresult {
+    if Collection == 0u64 {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉcollection
+        );
+    }
+    if Primaryˉschema == 0u64 {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉschema
+        );
+    }
+    let Nameˉlength: u32 = Bytesˉlength(Name);
+    if Nameˉlength == 0u32 ||
+        Nameˉlength > DATABASE_COLLECTION_MAXIMUM_NAME_BYTES {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉnameˉlength
+        );
+    }
+    if !Textˉutf8ˉisˉvalid(Name) {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉnameˉencoding
+        );
+    }
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_COLLECTION_MAGIC);
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_COLLECTION_VERSION)
+    );
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_COLLECTION_HEADER_BYTES)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Collection));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Primaryˉschema));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Nameˉlength));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Name);
+    return Databaseˉcollectionˉdescriptorˉresult(
+        Databaseˉcollectionˉerror.Valid,
+        Collection,
+        Primaryˉschema,
+        Databaseˉcollectionˉcopy(Name),
+        Encoded
+    );
+}
+
+export fn Databaseˉcollectionˉdescriptorˉdecode(
+    Input: bytes
+) -> Databaseˉcollectionˉdescriptorˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_COLLECTION_HEADER_BYTES ||
+        Total > DATABASE_COLLECTION_MAXIMUM_BYTES {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_COLLECTION_MAGIC {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_COLLECTION_VERSION {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+        DATABASE_COLLECTION_HEADER_BYTES {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉheaderˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉflags
+        );
+    }
+    let Collection: u64 = Bytesˉreadˉu64ˉlittle(Input, 16u32);
+    if Collection == 0u64 {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉcollection
+        );
+    }
+    let Primaryˉschema: u64 = Bytesˉreadˉu64ˉlittle(Input, 24u32);
+    if Primaryˉschema == 0u64 {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉschema
+        );
+    }
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Nameˉlength == 0u32 ||
+        Nameˉlength > DATABASE_COLLECTION_MAXIMUM_NAME_BYTES {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉnameˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉreserved
+        );
+    }
+    let Expected: u32 = DATABASE_COLLECTION_HEADER_BYTES + Nameˉlength;
+    if Total < Expected {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Truncated
+        );
+    }
+    if Total > Expected {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Trailingˉbytes
+        );
+    }
+    let Name: bytes = Bytesˉslice(
+        Input,
+        DATABASE_COLLECTION_HEADER_BYTES,
+        Nameˉlength
+    );
+    if !Textˉutf8ˉisˉvalid(Name) {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉnameˉencoding
+        );
+    }
+    return Databaseˉcollectionˉdescriptorˉresult(
+        Databaseˉcollectionˉerror.Valid,
+        Collection,
+        Primaryˉschema,
+        Databaseˉcollectionˉcopy(Name),
+        Databaseˉcollectionˉcopy(Input)
+    );
+}
+
+export fn Databaseˉcollectionˉreadˉprepare(
+    Collection: u64
+) -> Databaseˉcollectionˉread {
+    if Collection == 0u64 {
+        return Databaseˉcollectionˉreadˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉcollection
+        );
+    }
+    let Key: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉcollectionˉkey(Collection);
+    if Key.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Databaseˉcollectionˉreadˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉkey
+        );
+    }
+    return Databaseˉcollectionˉread(
+        Databaseˉcollectionˉerror.Valid,
+        Key.Bytes
+    );
+}
+
+export fn Databaseˉcollectionˉputˉprepare(
+    Collection: u64,
+    Primaryˉschema: u64,
+    Name: bytes
+) -> Databaseˉcollectionˉput {
+    let Read: Databaseˉcollectionˉread =
+        Databaseˉcollectionˉreadˉprepare(Collection);
+    if Read.Error != Databaseˉcollectionˉerror.Valid {
+        return Databaseˉcollectionˉputˉfailure(Read.Error);
+    }
+    let Value: Databaseˉcollectionˉdescriptorˉresult =
+        Databaseˉcollectionˉdescriptorˉencode(
+            Collection,
+            Primaryˉschema,
+            Name
+        );
+    if Value.Error != Databaseˉcollectionˉerror.Valid {
+        return Databaseˉcollectionˉputˉfailure(Value.Error);
+    }
+    return Databaseˉcollectionˉput(
+        Databaseˉcollectionˉerror.Valid,
+        Read.Key,
+        Value.Bytes
+    );
+}
+
+export fn Databaseˉcollectionˉadmit(
+    Keyˉbytes: bytes,
+    Valueˉbytes: bytes
+) -> Databaseˉcollectionˉdescriptorˉresult {
+    let Key: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Keyˉbytes);
+    if Key.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Key.Kind != Logical.Databaseˉlogicalˉkeyˉkind.Collection {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Invalidˉkey
+        );
+    }
+    let Value: Databaseˉcollectionˉdescriptorˉresult =
+        Databaseˉcollectionˉdescriptorˉdecode(Valueˉbytes);
+    if Value.Error != Databaseˉcollectionˉerror.Valid { return Value; }
+    if Key.Collection != Value.Collection {
+        return Databaseˉcollectionˉdescriptorˉfailure(
+            Databaseˉcollectionˉerror.Identityˉmismatch
+        );
+    }
+    return Value;
+}

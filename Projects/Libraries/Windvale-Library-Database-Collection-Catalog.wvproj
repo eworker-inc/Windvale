@@ -1,0 +1,4 @@
+windvale-project 2
+root "Libraries/Database/Collection-Catalog.wv"
+source "Libraries/Database/Logical-Record.wv"
+emit wvb
