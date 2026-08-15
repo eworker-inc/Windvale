@@ -1,0 +1,404 @@
+module Windvaleˉdatabaseˉbootstrap profile portable;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Commitˉpublication;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Storageˉpublication;
+
+const DATABASE_BOOTSTRAP_HEADER_BYTES: u32 = 512u32;
+const DATABASE_BOOTSTRAP_SUPERBLOCK_BYTES: u32 = 256u32;
+const DATABASE_BOOTSTRAP_ROOT_POSITION: u64 = 512u64;
+const DATABASE_BOOTSTRAP_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉbootstrapˉerror {
+    Valid = 0;
+    Invalidˉdatabaseˉidentity = 1;
+    Invalidˉpageˉsize = 2;
+    Invalidˉroot = 3;
+    Invalidˉsuperblock = 4;
+    Invalidˉselection = 5;
+    Invalidˉpublication = 6;
+    Invalidˉstorageˉgeneration = 7;
+    Storageˉnotˉempty = 8;
+    Invalidˉheaderˉlength = 9;
+    Invalidˉrootˉlength = 10;
+    Mismatchedˉroot = 11;
+    Noncanonicalˉheader = 12;
+}
+
+export record Databaseˉbootstrapˉplan {
+    Error: Databaseˉbootstrapˉerror;
+    Publication: Commitˉpublication.Databaseˉcommitˉpublication;
+    Root: bytes;
+    Superblock: bytes;
+    Targetˉlength: u64;
+    Pageˉsize: u32;
+}
+
+export record Databaseˉbootstrapˉpublication {
+    Error: Databaseˉbootstrapˉerror;
+    State: Storageˉpublication.Databaseˉstorageˉpublication;
+}
+
+fn Databaseˉbootstrapˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉbootstrapˉzeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Databaseˉbootstrapˉempty(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Databaseˉbootstrapˉbytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉbootstrapˉinvalidˉcommitˉpublication()
+    -> Commitˉpublication.Databaseˉcommitˉpublication {
+    return Commitˉpublication.Databaseˉcommitˉpublication(
+        Commitˉpublication.Databaseˉcommitˉpublicationˉerror.Invalidˉstate,
+        Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Invalid,
+        Superblock.Databaseˉsuperblockˉslot.None,
+        0u64,
+        0u64,
+        Commitˉpublication.Databaseˉcommitˉpublicationˉflushˉscope.None,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+fn Databaseˉbootstrapˉinvalidˉstorageˉpublication()
+    -> Storageˉpublication.Databaseˉstorageˉpublication {
+    return Storageˉpublication.Databaseˉstorageˉpublication(
+        Storageˉpublication.Databaseˉstorageˉpublicationˉstatus.Invalid,
+        Storageˉpublication.Databaseˉstorageˉpublicationˉerror.Invalidˉstate,
+        Storageˉpublication.Databaseˉstorageˉproviderˉerror.None,
+        Databaseˉbootstrapˉinvalidˉcommitˉpublication(),
+        0u64,
+        0u64,
+        0u32,
+        Databaseˉbootstrapˉempty(),
+        Databaseˉbootstrapˉempty()
+    );
+}
+
+fn Databaseˉbootstrapˉplanˉfailure(
+    Error: Databaseˉbootstrapˉerror
+) -> Databaseˉbootstrapˉplan {
+    return Databaseˉbootstrapˉplan(
+        Error,
+        Databaseˉbootstrapˉinvalidˉcommitˉpublication(),
+        Databaseˉbootstrapˉempty(),
+        Databaseˉbootstrapˉempty(),
+        0u64,
+        0u32
+    );
+}
+
+fn Databaseˉbootstrapˉpublicationˉfailure(
+    Error: Databaseˉbootstrapˉerror
+) -> Databaseˉbootstrapˉpublication {
+    return Databaseˉbootstrapˉpublication(
+        Error,
+        Databaseˉbootstrapˉinvalidˉstorageˉpublication()
+    );
+}
+
+fn Databaseˉbootstrapˉpageˉsizeˉisˉvalid(Pageˉsize: u32) -> bool {
+    return Pageˉsize == 4096u32 ||
+        Pageˉsize == 8192u32 ||
+        Pageˉsize == 16384u32 ||
+        Pageˉsize == 32768u32 ||
+        Pageˉsize == 65536u32;
+}
+
+export fn Databaseˉbootstrapˉplanˉbuild(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32
+) -> Databaseˉbootstrapˉplan {
+    if Databaseˉidentityˉhigh == 0u64 && Databaseˉidentityˉlow == 0u64 {
+        return Databaseˉbootstrapˉplanˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉdatabaseˉidentity
+        );
+    }
+    if !Databaseˉbootstrapˉpageˉsizeˉisˉvalid(Pageˉsize) {
+        return Databaseˉbootstrapˉplanˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉpageˉsize
+        );
+    }
+    let Targetˉlength: u64 =
+        DATABASE_BOOTSTRAP_ROOT_POSITION + U64ˉfromˉu32(Pageˉsize);
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Page.Databaseˉdurableˉpageˉkind.Root,
+                Pageˉsize,
+                0u64,
+                1u64,
+                0u64,
+                DATABASE_BOOTSTRAP_NO_PAGE,
+                0u32,
+                Databaseˉbootstrapˉempty()
+            )
+        );
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Bytesˉlength(Root.Bytes) != Pageˉsize {
+        return Databaseˉbootstrapˉplanˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉroot
+        );
+    }
+    let Header: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(
+            Superblock.Databaseˉsuperblock(
+                Databaseˉidentityˉhigh,
+                Databaseˉidentityˉlow,
+                1u64,
+                0u64,
+                0u64,
+                DATABASE_BOOTSTRAP_NO_PAGE,
+                0u64,
+                1u64,
+                Targetˉlength,
+                Pageˉsize,
+                1u32
+            )
+        );
+    if Header.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
+        Bytesˉlength(Header.Bytes) != DATABASE_BOOTSTRAP_SUPERBLOCK_BYTES {
+        return Databaseˉbootstrapˉplanˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉsuperblock
+        );
+    }
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Header.Bytes,
+            Databaseˉbootstrapˉzeroes(DATABASE_BOOTSTRAP_SUPERBLOCK_BYTES),
+            Targetˉlength
+        );
+    if Selection.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First ||
+        Selection.Databaseˉidentityˉhigh != Databaseˉidentityˉhigh ||
+        Selection.Databaseˉidentityˉlow != Databaseˉidentityˉlow ||
+        Selection.Generation != 1u64 ||
+        Selection.Committedˉsequence != 0u64 ||
+        Selection.Rootˉpage != 0u64 ||
+        Selection.Commitˉlogˉhead != DATABASE_BOOTSTRAP_NO_PAGE ||
+        Selection.Pageˉcount != 1u64 ||
+        Selection.Committedˉlength != Targetˉlength ||
+        Selection.Pageˉsize != Pageˉsize ||
+        Selection.Rootˉdepth != 1u32 ||
+        Selection.Tailˉbytes != 0u64 {
+        return Databaseˉbootstrapˉplanˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉselection
+        );
+    }
+    let Publication: Commitˉpublication.Databaseˉcommitˉpublication =
+        Commitˉpublication.Databaseˉcommitˉpublication(
+            Commitˉpublication.Databaseˉcommitˉpublicationˉerror.Valid,
+            Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Writeˉpages,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            DATABASE_BOOTSTRAP_ROOT_POSITION,
+            U64ˉfromˉu32(Pageˉsize),
+            Commitˉpublication.Databaseˉcommitˉpublicationˉflushˉscope.None,
+            0u64,
+            0u64,
+            0u64,
+            1u64,
+            0u64,
+            Targetˉlength
+        );
+    let Admission: Storageˉpublication.Databaseˉstorageˉpublication =
+        Storageˉpublication.Databaseˉstorageˉpublicationˉbegin(
+            Publication,
+            1u64,
+            0u64,
+            0u64,
+            Root.Bytes,
+            Header.Bytes
+        );
+    if Admission.Status !=
+            Storageˉpublication.Databaseˉstorageˉpublicationˉstatus.Active ||
+        Admission.Error !=
+            Storageˉpublication.Databaseˉstorageˉpublicationˉerror.None {
+        return Databaseˉbootstrapˉplanˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉpublication
+        );
+    }
+    return Databaseˉbootstrapˉplan(
+        Databaseˉbootstrapˉerror.Valid,
+        Publication,
+        Root.Bytes,
+        Header.Bytes,
+        Targetˉlength,
+        Pageˉsize
+    );
+}
+
+export fn Databaseˉbootstrapˉpublicationˉbegin(
+    Plan: Databaseˉbootstrapˉplan,
+    Storageˉgeneration: u64,
+    Observedˉstorageˉlength: u64
+) -> Databaseˉbootstrapˉpublication {
+    if Plan.Error != Databaseˉbootstrapˉerror.Valid {
+        return Databaseˉbootstrapˉpublicationˉfailure(Plan.Error);
+    }
+    if Storageˉgeneration == 0u64 {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉstorageˉgeneration
+        );
+    }
+    if Observedˉstorageˉlength != 0u64 {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Storageˉnotˉempty
+        );
+    }
+    let State: Storageˉpublication.Databaseˉstorageˉpublication =
+        Storageˉpublication.Databaseˉstorageˉpublicationˉbegin(
+            Plan.Publication,
+            Storageˉgeneration,
+            0u64,
+            Observedˉstorageˉlength,
+            Plan.Root,
+            Plan.Superblock
+        );
+    if State.Status !=
+            Storageˉpublication.Databaseˉstorageˉpublicationˉstatus.Active ||
+        State.Error !=
+            Storageˉpublication.Databaseˉstorageˉpublicationˉerror.None {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉpublication
+        );
+    }
+    return Databaseˉbootstrapˉpublication(
+        Databaseˉbootstrapˉerror.Valid,
+        State
+    );
+}
+
+fn Databaseˉbootstrapˉresumeˉstate(
+    Plan: Databaseˉbootstrapˉplan,
+    Storageˉgeneration: u64,
+    Stage: Commitˉpublication.Databaseˉcommitˉpublicationˉstage,
+    Flushˉscope:
+        Commitˉpublication.Databaseˉcommitˉpublicationˉflushˉscope
+) -> Databaseˉbootstrapˉpublication {
+    let Publication: Commitˉpublication.Databaseˉcommitˉpublication =
+        Commitˉpublication.Databaseˉcommitˉpublication(
+            Commitˉpublication.Databaseˉcommitˉpublicationˉerror.Valid,
+            Stage,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            0u64,
+            0u64,
+            Flushˉscope,
+            0u64,
+            0u64,
+            0u64,
+            1u64,
+            0u64,
+            Plan.Targetˉlength
+        );
+    return Databaseˉbootstrapˉpublication(
+        Databaseˉbootstrapˉerror.Valid,
+        Storageˉpublication.Databaseˉstorageˉpublication(
+            Storageˉpublication.Databaseˉstorageˉpublicationˉstatus.Active,
+            Storageˉpublication.Databaseˉstorageˉpublicationˉerror.None,
+            Storageˉpublication.Databaseˉstorageˉproviderˉerror.None,
+            Publication,
+            Storageˉgeneration,
+            Plan.Targetˉlength,
+            Plan.Pageˉsize,
+            Plan.Root,
+            Plan.Superblock
+        )
+    );
+}
+
+export fn Databaseˉbootstrapˉpublicationˉresume(
+    Plan: Databaseˉbootstrapˉplan,
+    Storageˉgeneration: u64,
+    Observedˉstorageˉlength: u64,
+    Header: bytes,
+    Root: bytes
+) -> Databaseˉbootstrapˉpublication {
+    if Plan.Error != Databaseˉbootstrapˉerror.Valid {
+        return Databaseˉbootstrapˉpublicationˉfailure(Plan.Error);
+    }
+    if Storageˉgeneration == 0u64 {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉstorageˉgeneration
+        );
+    }
+    if Observedˉstorageˉlength != Plan.Targetˉlength {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Storageˉnotˉempty
+        );
+    }
+    if Bytesˉlength(Header) != DATABASE_BOOTSTRAP_HEADER_BYTES {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉheaderˉlength
+        );
+    }
+    if Bytesˉlength(Root) != Plan.Pageˉsize {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Invalidˉrootˉlength
+        );
+    }
+    if !Databaseˉbootstrapˉbytesˉequal(Root, Plan.Root) {
+        return Databaseˉbootstrapˉpublicationˉfailure(
+            Databaseˉbootstrapˉerror.Mismatchedˉroot
+        );
+    }
+    let Emptyˉheader: bytes =
+        Databaseˉbootstrapˉzeroes(DATABASE_BOOTSTRAP_HEADER_BYTES);
+    if Databaseˉbootstrapˉbytesˉequal(Header, Emptyˉheader) {
+        return Databaseˉbootstrapˉresumeˉstate(
+            Plan,
+            Storageˉgeneration,
+            Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Flushˉpages,
+            Commitˉpublication.Databaseˉcommitˉpublicationˉflushˉscope.Contentˉandˉlength
+        );
+    }
+    let Expectedˉheader: bytes = Bytesˉconcat(
+        Plan.Superblock,
+        Databaseˉbootstrapˉzeroes(DATABASE_BOOTSTRAP_SUPERBLOCK_BYTES)
+    );
+    if Databaseˉbootstrapˉbytesˉequal(Header, Expectedˉheader) {
+        return Databaseˉbootstrapˉresumeˉstate(
+            Plan,
+            Storageˉgeneration,
+            Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock,
+            Commitˉpublication.Databaseˉcommitˉpublicationˉflushˉscope.Content
+        );
+    }
+    return Databaseˉbootstrapˉpublicationˉfailure(
+        Databaseˉbootstrapˉerror.Noncanonicalˉheader
+    );
+}

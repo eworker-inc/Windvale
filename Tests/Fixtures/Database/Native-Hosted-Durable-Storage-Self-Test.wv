@@ -1,11 +1,13 @@
 module Nativeˉhostedˉdurableˉstorageˉselfˉtest profile hosted;
 
 import Randomˉaccessˉstorage as Storage;
+import Durableˉdatabaseˉbootstrap as Bootstrap;
 import Durableˉstorageˉexecutor as Executor;
 import Durableˉtreeˉreader as Reader;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉbootstrap as Bootstrapˉcontract;
 import Windvaleˉdatabaseˉsingleˉleafˉupsert as Leaf;
 import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
 import Windvaleˉdatabaseˉstorageˉpublication as Publication;
@@ -25,84 +27,24 @@ fn Emptyˉbytes() -> bytes {
 }
 
 fn Createˉdatabase(Generation: u64) -> i32 {
-    let Root: Page.Databaseˉdurableˉpageˉresult =
-        Page.Databaseˉdurableˉpageˉencode(
-            Page.Databaseˉdurableˉpage(
-                Page.Databaseˉdurableˉpageˉkind.Root,
-                PAGE_SIZE,
-                0u64,
-                1u64,
-                0u64,
-                NO_PAGE,
-                0u32,
-                Emptyˉbytes()
-            )
+    let Created: Bootstrap.Databaseˉdurableˉbootstrapˉresult =
+        Bootstrap.Databaseˉdurableˉbootstrapˉcreate(
+            1u64,
+            2u64,
+            PAGE_SIZE,
+            4u32
         );
-    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
-        Bytesˉlength(Root.Bytes) != PAGE_SIZE {
+    if Created.Status !=
+            Bootstrap.Databaseˉdurableˉbootstrapˉstatus.Created ||
+        Created.Bootstrapˉerror !=
+            Bootstrapˉcontract.Databaseˉbootstrapˉerror.Valid ||
+        Created.Storageˉstatus != Storage.Storageˉstatus.Valid ||
+        Created.Publicationˉerror !=
+            Publication.Databaseˉstorageˉpublicationˉerror.None ||
+        Created.Storageˉgeneration != Generation ||
+        Created.Storageˉlength != DATABASE_LENGTH ||
+        Created.Actions != 4u32 {
         return 10;
-    }
-
-    let Pageˉwrite: Storage.Storageˉresult = Storage.Storageˉwriteˉat(
-        Generation,
-        512u64,
-        Root.Bytes
-    );
-    if Pageˉwrite.Status != Storage.Storageˉstatus.Valid ||
-        Pageˉwrite.Completion != Storage.Storageˉcompletion.Completed ||
-        Pageˉwrite.Progress != PAGE_SIZE ||
-        Pageˉwrite.Storageˉlength != DATABASE_LENGTH {
-        return 11;
-    }
-    let Pageˉflush: Storage.Storageˉresult = Storage.Storageˉflush(
-        Generation,
-        Storage.Storageˉflush.Contentˉandˉlength
-    );
-    if Pageˉflush.Status != Storage.Storageˉstatus.Valid ||
-        Pageˉflush.Completion != Storage.Storageˉcompletion.Completed ||
-        Pageˉflush.Storageˉlength != DATABASE_LENGTH {
-        return 12;
-    }
-
-    let Header: Superblock.Databaseˉsuperblockˉresult =
-        Superblock.Databaseˉsuperblockˉencode(
-            Superblock.Databaseˉsuperblock(
-                1u64,
-                2u64,
-                1u64,
-                0u64,
-                0u64,
-                NO_PAGE,
-                0u64,
-                1u64,
-                DATABASE_LENGTH,
-                PAGE_SIZE,
-                1u32
-            )
-        );
-    if Header.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
-        Bytesˉlength(Header.Bytes) != 256u32 {
-        return 13;
-    }
-    let Headerˉwrite: Storage.Storageˉresult = Storage.Storageˉwriteˉat(
-        Generation,
-        0u64,
-        Header.Bytes
-    );
-    if Headerˉwrite.Status != Storage.Storageˉstatus.Valid ||
-        Headerˉwrite.Completion != Storage.Storageˉcompletion.Completed ||
-        Headerˉwrite.Progress != 256u32 ||
-        Headerˉwrite.Storageˉlength != DATABASE_LENGTH {
-        return 14;
-    }
-    let Headerˉflush: Storage.Storageˉresult = Storage.Storageˉflush(
-        Generation,
-        Storage.Storageˉflush.Content
-    );
-    if Headerˉflush.Status != Storage.Storageˉstatus.Valid ||
-        Headerˉflush.Completion != Storage.Storageˉcompletion.Completed ||
-        Headerˉflush.Storageˉlength != DATABASE_LENGTH {
-        return 15;
     }
     return 0;
 }

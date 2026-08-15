@@ -104,6 +104,12 @@ if "%Development%"=="1" (
         >&2 echo The native database storage development collection-catalog stage failed.
         goto :cleanup
     )
+    call :verify_target Bootstrap ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Bootstrap.wvproj"
+    if errorlevel 1 (
+        >&2 echo The native database storage development bootstrap stage failed.
+        goto :cleanup
+    )
     call :verify_target SingleLeaf ^
         "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
     if errorlevel 1 (
@@ -220,6 +226,9 @@ if errorlevel 1 goto :cleanup
 call :verify_target CollectionCatalog ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Collection-Catalog.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target Bootstrap ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Bootstrap.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target SingleLeaf ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
 if errorlevel 1 goto :cleanup
@@ -279,10 +288,10 @@ if "%PrepareOnly%"=="1" (
 )
 if "%Development%"=="1" (
     echo native database storage development timing tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed cases=14 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
+    echo native database storage development status=Passed cases=15 local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=23 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_host_storage

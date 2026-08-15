@@ -1,0 +1,300 @@
+module Databaseˉbootstrapˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉbootstrap as Bootstrap;
+import Windvaleˉdatabaseˉcommitˉpublication as Commitˉpublication;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+
+const PAGE_SIZE: u32 = 4096u32;
+const TARGET_LENGTH: u64 = 4608u64;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    if Bytesˉlength(First) != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(First) {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Replaceˉfirst(Input: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Value),
+        Bytesˉslice(Input, 1u32, Bytesˉlength(Input) - 1u32)
+    );
+}
+
+fn Completed(
+    Generation: u64,
+    Length: u64,
+    Position: u64,
+    Progress: u32
+) -> Publication.Databaseˉstorageˉobservation {
+    return Publication.Databaseˉstorageˉobservation(
+        Publication.Databaseˉstorageˉobservationˉkind.Completed,
+        Publication.Databaseˉstorageˉproviderˉerror.None,
+        Generation,
+        Length,
+        Position,
+        Progress
+    );
+}
+
+fn Planˉcontract() -> i32 {
+    let Plan: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, PAGE_SIZE);
+    let Again: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, PAGE_SIZE);
+    if Plan.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid ||
+        Plan.Targetˉlength != TARGET_LENGTH ||
+        Plan.Pageˉsize != PAGE_SIZE ||
+        Bytesˉlength(Plan.Root) != PAGE_SIZE ||
+        Bytesˉlength(Plan.Superblock) != 256u32 ||
+        !Bytesˉequal(Plan.Root, Again.Root) ||
+        !Bytesˉequal(Plan.Superblock, Again.Superblock) {
+        return 1;
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Plan.Root);
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Pageˉidentifier != 0u64 ||
+        Root.Generation != 1u64 ||
+        Root.Commitˉsequence != 0u64 ||
+        Root.Previousˉpage != 18446744073709551615u64 ||
+        Root.Itemˉcount != 0u32 ||
+        Bytesˉlength(Root.Payload) != 0u32 {
+        return 2;
+    }
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Plan.Superblock,
+            Zeroes(256u32),
+            Plan.Targetˉlength
+        );
+    if Selection.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First ||
+        Selection.Databaseˉidentityˉhigh != 1u64 ||
+        Selection.Databaseˉidentityˉlow != 2u64 ||
+        Selection.Generation != 1u64 ||
+        Selection.Committedˉsequence != 0u64 ||
+        Selection.Rootˉpage != 0u64 ||
+        Selection.Pageˉcount != 1u64 ||
+        Selection.Committedˉlength != TARGET_LENGTH ||
+        Selection.Rootˉdepth != 1u32 {
+        return 3;
+    }
+    let Maximum: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, 65536u32);
+    if Maximum.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid ||
+        Maximum.Targetˉlength != 66048u64 ||
+        Bytesˉlength(Maximum.Root) != 65536u32 {
+        return 4;
+    }
+    return 0;
+}
+
+fn Publicationˉcontract() -> i32 {
+    let Plan: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, PAGE_SIZE);
+    let Initial: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉbegin(Plan, 9u64, 0u64);
+    var State: Publication.Databaseˉstorageˉpublication = Initial.State;
+    var Action: Publication.Databaseˉstorageˉaction =
+        Publication.Databaseˉstorageˉpublicationˉaction(State);
+    if Initial.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid ||
+        Action.Kind != Publication.Databaseˉstorageˉactionˉkind.Write ||
+        Action.Generation != 9u64 || Action.Position != 512u64 ||
+        Action.Length != PAGE_SIZE || !Bytesˉequal(Action.Value, Plan.Root) {
+        return 1;
+    }
+    State = Publication.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(9u64, TARGET_LENGTH, 512u64, PAGE_SIZE)
+    );
+    Action = Publication.Databaseˉstorageˉpublicationˉaction(State);
+    if Action.Kind != Publication.Databaseˉstorageˉactionˉkind.Flush ||
+        Action.Flushˉscope !=
+            Publication.Databaseˉstorageˉflushˉscope.Contentˉandˉlength {
+        return 2;
+    }
+    State = Publication.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(9u64, TARGET_LENGTH, 0u64, 0u32)
+    );
+    Action = Publication.Databaseˉstorageˉpublicationˉaction(State);
+    if Action.Kind != Publication.Databaseˉstorageˉactionˉkind.Write ||
+        Action.Position != 0u64 || Action.Length != 256u32 ||
+        !Bytesˉequal(Action.Value, Plan.Superblock) {
+        return 3;
+    }
+    State = Publication.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(9u64, TARGET_LENGTH, 0u64, 256u32)
+    );
+    Action = Publication.Databaseˉstorageˉpublicationˉaction(State);
+    if Action.Kind != Publication.Databaseˉstorageˉactionˉkind.Flush ||
+        Action.Flushˉscope != Publication.Databaseˉstorageˉflushˉscope.Content {
+        return 4;
+    }
+    State = Publication.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(9u64, TARGET_LENGTH, 0u64, 0u32)
+    );
+    if State.Status !=
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed ||
+        State.Publication.Stage !=
+            Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Committed {
+        return 5;
+    }
+    return 0;
+}
+
+fn Resumeˉcontract() -> i32 {
+    let Plan: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, PAGE_SIZE);
+    let Pages: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan,
+            9u64,
+            TARGET_LENGTH,
+            Zeroes(512u32),
+            Plan.Root
+        );
+    let Pagesˉaction: Publication.Databaseˉstorageˉaction =
+        Publication.Databaseˉstorageˉpublicationˉaction(Pages.State);
+    if Pages.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid ||
+        Pages.State.Publication.Stage !=
+            Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Flushˉpages ||
+        Pagesˉaction.Kind != Publication.Databaseˉstorageˉactionˉkind.Flush ||
+        Pagesˉaction.Flushˉscope !=
+            Publication.Databaseˉstorageˉflushˉscope.Contentˉandˉlength {
+        return 1;
+    }
+    let Header: bytes = Bytesˉconcat(Plan.Superblock, Zeroes(256u32));
+    let Superblockˉresume: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan,
+            9u64,
+            TARGET_LENGTH,
+            Header,
+            Plan.Root
+        );
+    let Headerˉaction: Publication.Databaseˉstorageˉaction =
+        Publication.Databaseˉstorageˉpublicationˉaction(
+            Superblockˉresume.State
+        );
+    if Superblockˉresume.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid ||
+        Superblockˉresume.State.Publication.Stage !=
+            Commitˉpublication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock ||
+        Headerˉaction.Kind != Publication.Databaseˉstorageˉactionˉkind.Flush ||
+        Headerˉaction.Flushˉscope !=
+            Publication.Databaseˉstorageˉflushˉscope.Content {
+        return 2;
+    }
+    return 0;
+}
+
+fn Rejections() -> i32 {
+    let Plan: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, PAGE_SIZE);
+    let Identity: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(0u64, 0u64, PAGE_SIZE);
+    let Size: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(1u64, 2u64, 4095u32);
+    let Generation: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉbegin(Plan, 0u64, 0u64);
+    let Nonempty: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉbegin(Plan, 9u64, 1u64);
+    if Identity.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Invalidˉdatabaseˉidentity ||
+        Size.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Invalidˉpageˉsize ||
+        Generation.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Invalidˉstorageˉgeneration ||
+        Nonempty.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Storageˉnotˉempty {
+        return 1;
+    }
+    let Wrongˉlength: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan, 9u64, 512u64, Zeroes(512u32), Plan.Root
+        );
+    let Headerˉlength: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan, 9u64, TARGET_LENGTH, Zeroes(511u32), Plan.Root
+        );
+    let Rootˉlength: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan, 9u64, TARGET_LENGTH, Zeroes(512u32), Zeroes(4095u32)
+        );
+    if Wrongˉlength.Error != Bootstrap.Databaseˉbootstrapˉerror.Storageˉnotˉempty ||
+        Headerˉlength.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Invalidˉheaderˉlength ||
+        Rootˉlength.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Invalidˉrootˉlength {
+        return 2;
+    }
+    let Rootˉmismatch: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan,
+            9u64,
+            TARGET_LENGTH,
+            Zeroes(512u32),
+            Replaceˉfirst(Plan.Root, 0u8)
+        );
+    let Headerˉmismatch: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan,
+            9u64,
+            TARGET_LENGTH,
+            Replaceˉfirst(Zeroes(512u32), 1u8),
+            Plan.Root
+        );
+    if Rootˉmismatch.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Mismatchedˉroot ||
+        Headerˉmismatch.Error !=
+            Bootstrap.Databaseˉbootstrapˉerror.Noncanonicalˉheader {
+        return 3;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Plan: i32 = Planˉcontract();
+    if Plan != 0 { return 10 + Plan; }
+    let Publication: i32 = Publicationˉcontract();
+    if Publication != 0 { return 20 + Publication; }
+    let Resume: i32 = Resumeˉcontract();
+    if Resume != 0 { return 30 + Resume; }
+    let Rejected: i32 = Rejections();
+    if Rejected != 0 { return 40 + Rejected; }
+    return 0;
+}

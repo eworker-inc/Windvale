@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 7,426 LF-only bytes with SHA-256
-`8d28ad7eab2aae11cb6c0f39146ce9423a55cab715cba1da50c631170c59e60d`.
+`Tests/Native/Retirement-Suite.txt` is 7,661 LF-only bytes with SHA-256
+`0ec602e8f6d51a92a6619f3fd9738bd7c5bea2f60f0c8f92c98b6ad26b02bcdb`.
 The first line is exactly:
 
 ```text
@@ -96,7 +96,7 @@ file. The current plan is:
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
 | `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
 | `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
-| `database-storage` | `Test-Database-Storage` | 23 | `native database storage status=Passed cases=23 local-results=0 cross-host-images=Verified` |
+| `database-storage` | `Test-Database-Storage` | 24 | `native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
 | `libraries` | `Test-Libraries` | 29 | `native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29` |
 | `packages` | `Test-Wvdb-Query-Package` | 11 | `native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11` |
@@ -162,7 +162,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 68, Passed: 68, Failed: 0, Cases: 3543
+Suites: 68, Passed: 68, Failed: 0, Cases: 3545
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

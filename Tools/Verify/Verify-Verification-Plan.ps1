@@ -1183,7 +1183,9 @@ $NativeCases = @(
             'Libraries/Database/Tree-Node.wv',
             'Libraries/Database/Logical-Record.wv',
             'Libraries/Database/Collection-Catalog.wv',
+            'Libraries/Database/Database-Bootstrap.wv',
             'Libraries/Platform/Database/Durable-Storage-Executor.wv',
+            'Libraries/Platform/Database/Durable-Database-Bootstrap.wv',
             'Libraries/Platform/Database/Durable-Database-Engine.wv',
             'Libraries/Platform/Database/Durable-Tree-Reader.wv',
             'Libraries/Platform/Database/Durable-Tree-Writer.wv',
@@ -1193,6 +1195,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Collection-Catalog-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Bootstrap-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Root-Split-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Depth-Two-Upsert-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Tree-Path-Upsert-Self-Test.wv',
@@ -1203,6 +1206,7 @@ $NativeCases = @(
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
             'Specifications/Windvale-Database-Logical-Records.md',
             'Specifications/Windvale-Database-Collection-Catalog.md',
+            'Specifications/Windvale-Database-Bootstrap.md',
             'Specifications/Windvale-Database-Tree-Path-Upsert.md',
             'Specifications/Windvale-Database-Engine-Lifecycle.md',
             'Specifications/Windvale-Database-Hosted-Tree-Writer.md',
@@ -1228,7 +1232,9 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Collection-Catalog.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Storage-Executor.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Database-Bootstrap.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Database-Engine.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Tree-Reader.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
@@ -1238,6 +1244,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
@@ -1714,7 +1721,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3544 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3545 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

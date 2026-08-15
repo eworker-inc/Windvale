@@ -22,6 +22,7 @@ $DatabaseStorageDevelopmentEligible = $true
 $DatabaseDevelopmentPaths = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $DatabaseDevelopmentProjects = @(
+    'Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Collection-Catalog.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Tree-Branch-Split.wvproj',
@@ -29,10 +30,12 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Depth-Three-Upsert.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Tree-Path-Upsert.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Database-Engine.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj',
@@ -66,6 +69,7 @@ foreach ($RuntimePath in @(
     $null = $DatabaseDevelopmentPaths.Add($RuntimePath)
 }
 foreach ($ContractPath in @(
+    'Specifications/Windvale-Database-Bootstrap.md',
     'Specifications/Windvale-Database-Collection-Catalog.md',
     'Specifications/Windvale-Database-Logical-Records.md',
     'Specifications/Windvale-Database-Tree-Node.md',
@@ -730,6 +734,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
             $Path.Contains('Collection-Catalog', [StringComparison]::Ordinal) -or
+            $Path.Contains('Database-Bootstrap', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Database-Engine', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
@@ -796,6 +801,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Collection-Catalog-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Bootstrap-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Single-Leaf-Upsert-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Branch-Split-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Root-Split-Self-Test.wv' -or
@@ -820,6 +826,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj' -or
@@ -872,6 +879,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
             $Path.Contains('Collection-Catalog', [StringComparison]::Ordinal) -or
+            $Path.Contains('Database-Bootstrap', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Storage-Executor', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Database-Engine', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
@@ -1885,6 +1893,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj',

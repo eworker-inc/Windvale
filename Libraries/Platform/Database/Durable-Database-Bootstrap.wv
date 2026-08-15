@@ -1,0 +1,178 @@
+module Durableˉdatabaseˉbootstrap profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉbootstrap as Bootstrap;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+
+capability storage.random_access_v1;
+
+export enum Databaseˉdurableˉbootstrapˉstatus {
+    Created = 0;
+    Active = 1;
+    Notˉempty = 2;
+    Storageˉfailure = 3;
+    Invalidˉplan = 4;
+    Reopenˉrequired = 5;
+    Rejected = 6;
+}
+
+export record Databaseˉdurableˉbootstrapˉresult {
+    Status: Databaseˉdurableˉbootstrapˉstatus;
+    Bootstrapˉerror: Bootstrap.Databaseˉbootstrapˉerror;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror;
+    Storageˉgeneration: u64;
+    Storageˉlength: u64;
+    Actions: u32;
+}
+
+fn Databaseˉdurableˉbootstrapˉresultˉfrom(
+    Status: Databaseˉdurableˉbootstrapˉstatus,
+    Bootstrapˉerror: Bootstrap.Databaseˉbootstrapˉerror,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror,
+    Storageˉgeneration: u64,
+    Storageˉlength: u64,
+    Actions: u32
+) -> Databaseˉdurableˉbootstrapˉresult {
+    return Databaseˉdurableˉbootstrapˉresult(
+        Status,
+        Bootstrapˉerror,
+        Storageˉstatus,
+        Publicationˉerror,
+        Storageˉgeneration,
+        Storageˉlength,
+        Actions
+    );
+}
+
+export fn Databaseˉdurableˉbootstrapˉcreate(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉbootstrapˉresult {
+    let Plan: Bootstrap.Databaseˉbootstrapˉplan =
+        Bootstrap.Databaseˉbootstrapˉplanˉbuild(
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize
+        );
+    if Plan.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid {
+        return Databaseˉdurableˉbootstrapˉresultˉfrom(
+            Databaseˉdurableˉbootstrapˉstatus.Invalidˉplan,
+            Plan.Error,
+            Storage.Storageˉstatus.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            0u64,
+            0u64,
+            0u32
+        );
+    }
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Databaseˉdurableˉbootstrapˉresultˉfrom(
+            Databaseˉdurableˉbootstrapˉstatus.Storageˉfailure,
+            Bootstrap.Databaseˉbootstrapˉerror.Valid,
+            Description.Status,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            Description.Generation,
+            Description.Storageˉlength,
+            0u32
+        );
+    }
+    var Initial: Bootstrap.Databaseˉbootstrapˉpublication =
+        Bootstrap.Databaseˉbootstrapˉpublicationˉbegin(
+            Plan,
+            Description.Generation,
+            Description.Storageˉlength
+        );
+    if Description.Storageˉlength == Plan.Targetˉlength {
+        let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+            Description.Generation,
+            0u64,
+            512u32
+        );
+        let Root: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+            Description.Generation,
+            512u64,
+            Pageˉsize
+        );
+        if Header.Status != Storage.Storageˉstatus.Valid ||
+            Root.Status != Storage.Storageˉstatus.Valid ||
+            Header.Storageˉlength != Description.Storageˉlength ||
+            Root.Storageˉlength != Description.Storageˉlength {
+            var Failedˉstatus: Storage.Storageˉstatus = Header.Status;
+            if Header.Status == Storage.Storageˉstatus.Valid {
+                Failedˉstatus = Root.Status;
+            }
+            return Databaseˉdurableˉbootstrapˉresultˉfrom(
+                Databaseˉdurableˉbootstrapˉstatus.Storageˉfailure,
+                Bootstrap.Databaseˉbootstrapˉerror.Valid,
+                Failedˉstatus,
+                Publication.Databaseˉstorageˉpublicationˉerror.None,
+                Description.Generation,
+                Description.Storageˉlength,
+                0u32
+            );
+        }
+        Initial = Bootstrap.Databaseˉbootstrapˉpublicationˉresume(
+            Plan,
+            Description.Generation,
+            Description.Storageˉlength,
+            Header.Value,
+            Root.Value
+        );
+    }
+    if Initial.Error != Bootstrap.Databaseˉbootstrapˉerror.Valid {
+        var Admissionˉstatus: Databaseˉdurableˉbootstrapˉstatus =
+            Databaseˉdurableˉbootstrapˉstatus.Invalidˉplan;
+        if Initial.Error == Bootstrap.Databaseˉbootstrapˉerror.Storageˉnotˉempty ||
+            Initial.Error == Bootstrap.Databaseˉbootstrapˉerror.Invalidˉheaderˉlength ||
+            Initial.Error == Bootstrap.Databaseˉbootstrapˉerror.Invalidˉrootˉlength ||
+            Initial.Error == Bootstrap.Databaseˉbootstrapˉerror.Mismatchedˉroot ||
+            Initial.Error == Bootstrap.Databaseˉbootstrapˉerror.Noncanonicalˉheader {
+            Admissionˉstatus = Databaseˉdurableˉbootstrapˉstatus.Notˉempty;
+        }
+        return Databaseˉdurableˉbootstrapˉresultˉfrom(
+            Admissionˉstatus,
+            Initial.Error,
+            Storage.Storageˉstatus.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            Description.Generation,
+            Description.Storageˉlength,
+            0u32
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(
+            Initial.State,
+            Maximumˉactions
+        );
+    var Status: Databaseˉdurableˉbootstrapˉstatus =
+        Databaseˉdurableˉbootstrapˉstatus.Invalidˉplan;
+    if Execution.State.Status ==
+        Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
+        Status = Databaseˉdurableˉbootstrapˉstatus.Created;
+    } else if Execution.State.Status ==
+        Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        Status = Databaseˉdurableˉbootstrapˉstatus.Active;
+    } else if Execution.State.Status ==
+        Publication.Databaseˉstorageˉpublicationˉstatus.Recover {
+        Status = Databaseˉdurableˉbootstrapˉstatus.Reopenˉrequired;
+    } else if Execution.State.Status ==
+        Publication.Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Status = Databaseˉdurableˉbootstrapˉstatus.Rejected;
+    }
+    return Databaseˉdurableˉbootstrapˉresultˉfrom(
+        Status,
+        Bootstrap.Databaseˉbootstrapˉerror.Valid,
+        Storage.Storageˉstatus.Valid,
+        Execution.State.Error,
+        Description.Generation,
+        Execution.State.Storageˉlength,
+        Execution.Actions
+    );
+}
