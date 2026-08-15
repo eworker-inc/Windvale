@@ -47,6 +47,12 @@ $Cases = @(
         Editor = $false
     },
     @{
+        Name = 'browser playground contract and website verifier'
+        Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1')
+        Scope = 'website'
+        Editor = $false
+    },
+    @{
         Name = 'source specification'
         Paths = @('Specifications/Seed-Language.md')
         Scope = 'development'

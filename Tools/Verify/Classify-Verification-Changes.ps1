@@ -94,6 +94,8 @@ function Test-WebsitePath {
             '.github/workflows/deploy-homepage.yml',
             'package.json',
             'package-lock.json',
+            'Specifications/Browser-Playground.md',
+            'Tools/Verify/Verify-Website.ps1',
             'Vite-Config.mjs',
             'Tools/Windvale.Playground/package.json',
             'Tools/Windvale.Playground/package-lock.json'

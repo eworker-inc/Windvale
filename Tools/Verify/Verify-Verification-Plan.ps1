@@ -13,6 +13,7 @@ $Cases = @(
     @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
+    @{ Name = 'browser playground website contract'; Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'website editor'; Paths = @('Tools/Windvale.Playground/Editor/Vite-Config.mjs', 'Tools/Editors/Windvale/package.json'); Scope = 'website'; Editor = $true; Areas = @() },
     @{ Name = 'website and compiler'; Paths = @('Website/site.js', 'Compiler/Windvale/Source-Lexer-Core.wv'); Scope = 'development'; Editor = $true; Areas = $AllAreas },
     @{ Name = 'compiler'; Paths = @('Compiler/Windvale/Source-Lexer-Core.wv'); Scope = 'development'; Editor = $true; Areas = @('compiler') },
