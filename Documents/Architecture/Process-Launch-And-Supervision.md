@@ -100,6 +100,28 @@ There is no infinite restart loop and no restart without reserved recovery resou
 
 Restart creates a new process and provider generation. Clients observe peer loss. Read-only idempotent operations may be retried only under their interface contract; an indeterminate mutating request is never replayed automatically.
 
+## Agent processes and cognitive operations
+
+The foreground and digital-subconscious roles in the proposed
+[agent runtime architecture](Agent-Runtime-And-Digital-Subconscious.md) do not
+select a kernel process type or grant process authority. The first hosted profile
+may execute both logical planes sequentially inside one ordinary process while a
+deterministic owner admits bounded cognitive-operation envelopes and records their
+results. This is sufficient to qualify role separation without requiring hidden
+background threads or a second principal.
+
+Later placement may isolate model providers, retrieval workers, or action executors
+in separately supervised processes or services. Each receives its own resource
+domain, explicit input and output limits, deadline, cancellation path, provider
+generation, and minimum capability set. The durable agent identity and run ledger
+remain outside any one worker lifetime.
+
+A restart creates a new worker generation and resumes only from an admitted
+checkpoint plus ordered durable events. Pending read-only or purely cognitive work
+may be resubmitted only under an exact idempotency contract. An action with
+indeterminate completion is reconciled by its owning capability protocol and is
+never replayed merely because an agent worker restarted.
+
 ## First measured slices
 
 1. Retain Probe 40's qualified independently lived memory-object baseline and its current native flat-domain accounting gate around the existing processes and objects.

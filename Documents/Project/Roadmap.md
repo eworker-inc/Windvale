@@ -323,6 +323,34 @@ OS-1 has one completed portability gate, three substantially implemented or
 qualified foundations, and one unimplemented atomic-launch composition mechanism. Work may advance when it is the
 selected consumer without delaying the host-product critical path.
 
+## Proposed future product lane: agent runtime and digital subconscious
+
+The proposed [agent runtime architecture](../Architecture/Agent-Runtime-And-Digital-Subconscious.md)
+defines one durable agent identity with a foreground reasoning plane and a bounded
+digital-subconscious support plane. The companion
+[implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md) stages the
+work from deterministic records and transitions through hosted model invocation,
+durable continuity, retrieval, governed action, and eventual supervised service
+placement.
+
+This lane is documented for dependency planning; it is not an active milestone and
+does not displace the current compiler, database, package, or OS gates. Its first
+candidate gate is deliberately capability-free and portable:
+
+1. freeze one versioned corpus for agent, run, event, context-manifest, context-diff,
+   checkpoint, and operation-result records;
+2. implement deterministic bounded transition, validation, context-selection, and
+   influence-inspection functions over supplied identities and time;
+3. prove exact bytes and reports on Windows and Linux; and
+4. keep model providers, clocks, entropy, durable storage, filesystems, and action
+   capabilities outside that first semantic kernel.
+
+Database append/replay and snapshot work may later satisfy the durable-run profile,
+but the agent lane must consume the qualified database contract rather than define
+a competing store. Compiler and library additions likewise require a measured
+agent corpus plus at least one independent consumer before they widen shared
+language semantics.
+
 ## Workstream rules
 
 ### Language and compiler
@@ -343,6 +371,20 @@ selected consumer without delaying the host-product critical path.
 - Do not begin SQL, a server protocol, broad concurrency, or a public product
   identity before the bounded storage and capability contracts are useful end
   to end.
+
+### Agent runtime
+
+- Keep one durable agent identity; the digital subconscious is a support plane, not
+  a second principal, hidden objective, or independent authority source.
+- Make every context item, cognitive operation, memory proposal, action proposal,
+  lease, and checkpoint bounded, versioned, attributable, and inspectable.
+- Keep the first portable kernel capability-free. Model calls, clocks, entropy,
+  persistence, retrieval, filesystem access, and external effects enter only
+  through separately granted semantic capabilities.
+- Do not add peer agents, implicit background mutation, autonomous authority, or
+  general concurrency merely to imitate an existing agent framework.
+- Route measured language, database, filesystem, package, runtime, and OS needs to
+  their owning contracts before implementation crosses those boundaries.
 
 ### Operating system
 

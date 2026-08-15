@@ -131,6 +131,31 @@ Process placement is likewise provider-specific. Windows or Linux may use an in-
 
 Static internalization into one canonical WVB is the first implementation direction because it preserves deterministic self-contained artifacts. Decision 0183 selects immutable content-addressed package bundles and a canonical lockfile before any central registry or dynamic runtime linker. The proposed [package and release architecture](Packages-Releases-And-Recovery.md) keeps project manifests, package manifests, lockfiles, bundles, release envelopes, and update plans separate and derives compatibility and capability closure per selected package part. Service discovery and provider replacement remain separate later mechanisms. The Stage 0 candidate now admits capability-bearing dependencies only when each importer explicitly re-approves the complete transitive requirement set; final WVB capabilities retain canonical ordinal order and still require a separate runtime grant. [`Libraries/README.md`](../../Libraries/README.md) records the implemented layers and filesystem-facing boundary. A derived native or AOT container must eventually preserve and verify the canonical module identity, independent platform scope, and complete capability requirements; an unannotated machine image must not become the authority source.
 
+## Agent and model provider boundaries
+
+The proposed [agent runtime and digital-subconscious architecture](Agent-Runtime-And-Digital-Subconscious.md)
+keeps agent identity, run transitions, context manifests, checkpoints, operation
+envelopes, and influence evidence in portable Windvale contracts. A cognitive model
+is a replaceable semantic provider, not the definition of those contracts. Windows,
+Linux, and Windvale OS may bind different local or remote implementations while the
+same validated request, result, usage, cancellation, expiry, and provider-loss
+outcomes remain visible to portable code.
+
+The foreground reasoning plane and digital-subconscious plane are logical roles,
+not platform privilege classes. Neither receives filesystem, database, network,
+process, package, clock, entropy, or action authority merely because a model
+produced an output. The deterministic owner validates every returned envelope and
+may only submit an effect through a separately approved rights-limited capability
+and lease. A provider conversation or cache key is neither durable agent identity
+nor evidence that authority survives restart.
+
+Provider-native JSON, tokens, streaming frames, and billing fields stop at the host
+adapter. The platform library exposes bounded nominal Windvale values or a strict
+versioned byte envelope with independent validation. Remote-provider uncertainty
+must be explicit: a timed-out model call may be abandoned or reconciled under its
+operation contract, but it cannot silently commit a memory fact or external
+mutation.
+
 ## Filesystem contract family
 
 Windvale should define a small common filesystem contract without making Win32, POSIX, or the first Windvale OS filesystem the universal model. A process receives a rights-limited filesystem or directory capability; it does not receive ambient access to a host filesystem.

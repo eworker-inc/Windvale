@@ -107,6 +107,34 @@ The active questions are:
 - Which exact launcher boundary binds a selected generation and its approvals
   without giving the package client ambient process or filesystem authority?
 
+## Agent runtime and digital subconscious questions
+
+The proposed [agent runtime architecture](../Architecture/Agent-Runtime-And-Digital-Subconscious.md)
+and [implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md) establish
+direction but intentionally leave the following choices open until a fixed corpus
+can measure them:
+
+- What are the exact first wire-independent agent, run, event, context-manifest,
+  context-diff, checkpoint, and cognitive-operation records, and what byte, item,
+  depth, diagnostic, and work limits bound each one?
+- Which deterministic fixture best proves the digital subconscious can preserve
+  direction, prepare attention, retrieve associations without promoting them to
+  truth, carry doubt, watch authority, and maintain continuity without acting as a
+  second principal?
+- Which identities, sequence numbers, deadlines, and timestamps remain supplied
+  inputs in the first portable kernel, and which later semantic clock or entropy
+  capabilities should create them?
+- Once the database proposal's durable writer contract is finalized, what exact
+  mapping provides expected-revision event append, idempotency replay/conflict,
+  ordered replay, checkpoints, and large-body references without inventing a
+  second persistence protocol?
+- Is the first hosted cognitive-processor seam an exact bounded byte envelope, a
+  generated nominal codec, or another typed provider contract, and how are schema
+  identity, provider generation, cancellation, usage, truncation, and malformed
+  output reported?
+- Which first action capability demonstrates lease-bound governed effect without
+  making model output executable authority or retrying an indeterminate mutation?
+
 ## Later architecture questions
 
 The following lanes remain important but do not select the immediate milestone

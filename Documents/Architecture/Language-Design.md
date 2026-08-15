@@ -231,6 +231,30 @@ Strongest to weakest:
 
 Binary operators are left-associative and operands evaluate left to right. Assignment has no precedence because it is not an expression. User code cannot define operators or precedence.
 
+## Agent-runtime consumer direction
+
+The proposed [agent runtime and digital-subconscious architecture](Agent-Runtime-And-Digital-Subconscious.md)
+is a named consumer of the language, not a reason to create a separate agent
+dialect. Its first portable semantic kernel should use the existing explicit
+records, closed variants, bounded sequences, integer arithmetic, result values,
+and deterministic function calls. Supplied identifiers, sequence numbers, and
+times keep that first slice independent from clocks, entropy, storage, model
+providers, and ambient process state.
+
+The first agent records must be nominal and versioned rather than arbitrary JSON or
+loosely shaped maps. Provider-specific JSON may exist at a host adapter boundary,
+but it does not define Windvale agent semantics. A strict bounded byte envelope is
+an acceptable early model-provider seam only when an independent validator maps it
+to the nominal record contract before the semantic kernel observes it.
+
+Later agent pressure may help justify typed capability references as values, one
+bounded deterministic associative collection, or structured concurrency. None is
+pre-approved by this architecture: each requires exact ownership, bounds, ABI,
+diagnostic, cross-host, and second-consumer evidence under the ordinary language
+decision process. Foreground and digital-subconscious roles can execute
+sequentially in the first implementation and do not imply threads, promises, or
+`async` syntax.
+
 ## Later surface
 
 General generics, value-producing conditionals and matches, bounded interpolation, async/await, function values, closures, floating point, and visible unsafe blocks require focused ownership, ABI, resource, and consumer decisions. Unsafe machine or memory operations must eventually be visible both on their declaration and at their use; system profile alone is not sufficient syntax.

@@ -1,7 +1,14 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Active implementation proposal; the bounded reader, hosted page seams, checked storage geometry, mutable storage-resource contract, `WVDS 1` superblock, `WVPG 1` page envelope, `WVCR 1` commit record, `WVTN 1` tree node, single-writer publication, repeated depth-two updates, deterministic internal branch split, and first depth-three root growth are implemented candidates, but no general transaction engine, server contract, SQL grammar, or product name is accepted by this document
+- Status: Active implementation proposal; the bounded reader, hosted page seams,
+  checked storage geometry, mutable storage-resource contract, `WVDS 1`
+  superblock, `WVPG 1` page envelope, `WVCR 1` commit record, `WVTN 1` tree
+  node, single-writer publication, repeated depth-two updates, deterministic
+  internal branch split, existing depth-three updates, and one bounded cascade
+  to depth-four growth are implemented candidates, but no general transaction
+  engine, server contract, SQL grammar, or product name is accepted by this
+  document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -12,9 +19,10 @@ This document explores adding a database to Windvale without claiming that the
 current language, runtime, libraries, or operating system can already support a
 complete durable database server. The native backend now executes the durable
 superblock, physical-page, compact-log, publication-planning core, one
-  rights-limited storage writer/recovery shell, repeated depth-two updates, and
-  the first depth-three root generation. General transaction and service
-  boundaries remain absent.
+rights-limited storage writer/recovery shell, repeated depth-two updates,
+existing depth-three updates, and one bounded split cascade that creates a
+depth-four root. Arbitrary-depth transactions and service boundaries remain
+absent.
 This proposal identifies what should be learned
 from EWDB, where a Windvale database would belong, which prerequisites are
 missing, and the smallest useful implementation sequence.
@@ -432,9 +440,11 @@ immutable page/log bytes and an executable durable-before-publish sequence.
 `WVTN 1` now adds variable-key leaf lookup, replacement, and insertion, and the
 hosted executor publishes that structured root through every four-action crash
 boundary. It splits one full root leaf, repeatedly rewrites the depth-two tree,
-and now splits a full branch root into two branches beneath a new depth-three
-root. The engine does not yet update an existing depth-three generation,
-cascade a non-root internal split, reclaim pages, or manage concurrent
+splits a full branch root into two branches beneath a new depth-three root, and
+updates a selected existing depth-three root/branch/leaf path. That bounded path
+can propagate one leaf split through the internal branch and root to create a
+depth-four root. The engine does not yet update that depth-four generation,
+represent an arbitrary-depth owned path, reclaim pages, or manage concurrent
 transactions.
 
 This milestone needs no general query language, network protocol, or graph
@@ -468,6 +478,33 @@ After the kernel is stable:
 - add inspection, backup, restore, repair, and qualification tools; and
 - bind the same engine and semantic capabilities into a supervised Windvale OS
   service when OS storage and service lifecycle contracts are qualified.
+
+## Agent-runtime consumer profile
+
+The proposed [Windvale agent runtime implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md)
+names a future durable-run consumer of the database contract. This does not change
+the database's current milestones or claim that the consumer is implemented. The
+agent's deterministic stages remain capability-free; persistence begins only after
+the database writer and recovery surface they need is independently qualified.
+
+The first durable agent profile requires:
+
+- an append-only event stream per run with an expected prior revision;
+- exact idempotency-key replay and same-key/different-body conflict outcomes;
+- ordered bounded replay from a known revision;
+- immutable checkpoint or snapshot publication tied to the admitted event prefix;
+- stable references for context or evidence bodies too large for the bounded event
+  record; and
+- explicit stale generation, unavailable provider, partial progress, durable
+  completion, and indeterminate completion outcomes.
+
+Later memory and retrieval stages may add indexes over attributed claims,
+provenance, confidence, contradiction, recency, and access scope. Those indexes
+must remain derived from canonical admitted records and rebuildable without
+changing their meaning. The first profile does not require SQL, a network server,
+distributed consensus, multi-writer runs, vector search, or database-owned agent
+policy. The database stores and retrieves bounded truth-bearing records; it does
+not decide what a model may believe or what an agent may do.
 
 ## Differential and performance evidence
 

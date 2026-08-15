@@ -216,6 +216,29 @@ evidence can support bounded tasks, channels, cancellation, ownership transfer, 
 typed failure propagation. `async`/`await` syntax, if later justified, should sit on
 that model rather than invent an independent promise runtime.
 
+## Agent runtime as a named future consumer
+
+The proposed [agent runtime architecture](../Architecture/Agent-Runtime-And-Digital-Subconscious.md)
+and [staged implementation plan](Windvale-Agent-Runtime-Implementation-Plan.md) can
+begin without widening the language. Existing nominal records, closed variants,
+bounded sequences, explicit results, and deterministic functions are sufficient
+for its first run-state, context-selection, checkpoint, and influence-inspection
+corpora. Foreground and digital-subconscious operations may be scheduled
+sequentially, and supplied identity/time values avoid premature entropy and clock
+requirements.
+
+That consumer may later provide measured pressure for:
+
+- one bounded deterministic map after another product lane needs the same value;
+- typed capability references with explicit affine ownership and no serialization;
+- generated bounded codecs for nominal provider envelopes; and
+- structured concurrency only after cancellation, budget, join, teardown, and
+  provider-loss behavior have native runtime and OS evidence.
+
+These are dependency candidates, not an agent-specific syntax roadmap. Arbitrary
+JSON values, ambient provider sessions, unbounded message histories, hidden tasks,
+and model-selected capability acquisition remain outside the language contract.
+
 ## What this stage deliberately does not add
 
 This proposal retains the language design's rejection of classes/inheritance,
