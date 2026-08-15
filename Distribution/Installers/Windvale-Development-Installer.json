@@ -1,0 +1,135 @@
+{
+  "format": "windvale-development-installer-input-1",
+  "version": "0.1.0-dev.1",
+  "channel": "development",
+  "sharedFiles": [
+    {
+      "source": "LICENSE.md",
+      "path": "LICENSE.md",
+      "bytes": 13249,
+      "sha256": "26fc8ccf707d50fcd569353b594345ac234d4bf6e367b2b03cefe6027e108bef",
+      "mode": "0644",
+      "text": "lf"
+    }
+  ],
+  "targets": [
+    {
+      "id": "windows-x64",
+      "archive": "windvale-0.1.0-dev.1-windows-x64.zip",
+      "archiveFormat": "zip-store-1",
+      "expectedArchiveBytes": 38351998,
+      "expectedArchiveSha256": "2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186",
+      "expectedPayloadSha256": "6147bfdb0c4b91d34b157ecb3bce8a857157f5d0c885d2579ec7ae9cd7fcf7c1",
+      "files": [
+        {
+          "source": "Artifacts/Native-Front-Door/windows-x64/wvbuild.exe",
+          "path": "bin/wvbuild.exe",
+          "bytes": 29429248,
+          "sha256": "65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/windows-x64/wvasm.exe",
+          "path": "bin/wvasm.exe",
+          "bytes": 2895360,
+          "sha256": "40a35687fb052dcd4f6d3a767436f4024d91bd5f03890b30fa4f0300184a35ed",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.exe",
+          "path": "bin/wvlink.exe",
+          "bytes": 1796608,
+          "sha256": "f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/windows-x64/wvrun.exe",
+          "path": "bin/wvrun.exe",
+          "bytes": 778752,
+          "sha256": "91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/windows-x64/wvdump.exe",
+          "path": "bin/wvdump.exe",
+          "bytes": 795136,
+          "sha256": "61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
+          "path": "bin/wvverify.exe",
+          "bytes": 1255936,
+          "sha256": "a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/windows-x64/wvpublish.exe",
+          "path": "bin/wvpublish.exe",
+          "bytes": 1371136,
+          "sha256": "b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421",
+          "mode": "0755"
+        }
+      ]
+    },
+    {
+      "id": "linux-x64",
+      "archive": "windvale-0.1.0-dev.1-linux-x64.tar.gz",
+      "archiveFormat": "tar-gzip-store-1",
+      "expectedArchiveBytes": 38362500,
+      "expectedArchiveSha256": "dc65a1091e918b8d73106cc6c4bb9bd1a3a905b42601eacd32453e0a073e5937",
+      "expectedPayloadSha256": "f6f96c6df5fcdf12a70bdffd7a7ccc622a77840f5c78762c8f520b3f2c93ce06",
+      "files": [
+        {
+          "source": "Artifacts/Native-Front-Door/linux-x64/wvbuild.elf",
+          "path": "bin/wvbuild",
+          "bytes": 29429760,
+          "sha256": "d228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/linux-x64/wvasm.elf",
+          "path": "bin/wvasm",
+          "bytes": 2895872,
+          "sha256": "36796a26917e699030e2987c01b74799bcdc339af578f76e02f9a1f47ca10b8c",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.elf",
+          "path": "bin/wvlink",
+          "bytes": 1798144,
+          "sha256": "8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/linux-x64/wvrun.elf",
+          "path": "bin/wvrun",
+          "bytes": 778240,
+          "sha256": "8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/linux-x64/wvdump.elf",
+          "path": "bin/wvdump",
+          "bytes": 794624,
+          "sha256": "d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
+          "path": "bin/wvverify",
+          "bytes": 1257472,
+          "sha256": "cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4",
+          "mode": "0755"
+        },
+        {
+          "source": "Artifacts/Native-Front-Door/linux-x64/wvpublish.elf",
+          "path": "bin/wvpublish",
+          "bytes": 1369077,
+          "sha256": "b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af",
+          "mode": "0755"
+        }
+      ]
+    }
+  ]
+}

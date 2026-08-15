@@ -1,0 +1,56 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    echo 'Usage: wv-verify-installation <root> <target> [expected-payload-sha256]' >&2
+    exit 64
+fi
+
+root=$(CDPATH= cd -- "$1" && pwd -P)
+target=$2
+expected_payload=${3:-}
+manifest=$root/Payload-Manifest.txt
+[ -f "$manifest" ] || { echo 'The payload manifest is missing.' >&2; exit 1; }
+observed_payload=$(sha256sum -- "$manifest" | cut -d ' ' -f 1)
+[ -z "$expected_payload" ] || [ "$observed_payload" = "$expected_payload" ] || {
+    echo 'The payload manifest identity differs from the installer.' >&2
+    exit 1
+}
+
+header=$(sed -n '1p' "$manifest")
+version_record=$(sed -n '2p' "$manifest")
+target_record=$(sed -n '3p' "$manifest")
+[ "$header" = 'windvale-installer-payload 1' ] || { echo 'Invalid payload header.' >&2; exit 1; }
+printf '%s\n' "$version_record" | grep -Eq '^version [0-9]+\.[0-9]+\.[0-9]+-dev\.[0-9]+$' || {
+    echo 'Invalid payload version.' >&2
+    exit 1
+}
+[ "$target_record" = "target $target" ] || { echo 'Invalid payload target.' >&2; exit 1; }
+
+count=0
+while IFS=' ' read -r record expected_sha256 expected_bytes expected_mode relative_path extra; do
+    [ "$record" = file ] || { echo 'Invalid payload record.' >&2; exit 1; }
+    [ -z "${extra:-}" ] || { echo 'Invalid payload record width.' >&2; exit 1; }
+    printf '%s\n' "$expected_sha256" | grep -Eq '^[0-9a-f]{64}$' || exit 1
+    printf '%s\n' "$expected_bytes" | grep -Eq '^[0-9]+$' || exit 1
+    printf '%s\n' "$expected_mode" | grep -Eq '^0[0-7]{3}$' || exit 1
+    case "$relative_path" in
+        /*|../*|*/../*|*/..|*//*)
+            echo 'The payload contains an unsafe path.' >&2
+            exit 1
+            ;;
+    esac
+    file=$root/$relative_path
+    [ -f "$file" ] && [ ! -L "$file" ] || { echo "Missing payload file: $relative_path" >&2; exit 1; }
+    observed_bytes=$(wc -c <"$file" | tr -d '[:space:]')
+    [ "$observed_bytes" = "$expected_bytes" ] || { echo "Invalid payload size: $relative_path" >&2; exit 1; }
+    observed_sha256=$(sha256sum -- "$file" | cut -d ' ' -f 1)
+    [ "$observed_sha256" = "$expected_sha256" ] || { echo "Invalid payload digest: $relative_path" >&2; exit 1; }
+    observed_mode=$(stat -c '%a' -- "$file")
+    [ "0$observed_mode" = "$expected_mode" ] || { echo "Invalid payload mode: $relative_path" >&2; exit 1; }
+    count=$((count + 1))
+done <<EOF
+$(sed -n '4,$p' "$manifest")
+EOF
+
+printf '%s\n' "windvale installation status=Verified target=$target files=$count payload=$observed_payload"

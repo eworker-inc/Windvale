@@ -461,6 +461,7 @@ foreach ($Path in $Paths) {
     if (
         $Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal) -or
         (
+            $Path -ne 'LICENSE.md' -and
             !$Path.StartsWith('Specifications/', [StringComparison]::Ordinal) -and
             (
                 $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
@@ -561,6 +562,10 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Tools/Native/', [StringComparison]::Ordinal)) {
         Add-Native-Tool-Suite $Path
+    } elseif ($Path.StartsWith('Tools/Release/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal) -or
+        $Path -eq 'LICENSE.md') {
+        Add-Suite 'development-installers'
     } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
         Add-Suite 'package-bundle'
@@ -1352,7 +1357,8 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
-            'console-publisher-reconstruction'
+            'console-publisher-reconstruction',
+            'development-installers'
         )
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Front-Door/',
@@ -1360,7 +1366,8 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'wvb-runner-reconstruction',
             'console-verifier-reconstruction',
-            'console-publisher-reconstruction'
+            'console-publisher-reconstruction',
+            'development-installers'
         )
     } elseif ($Path -in @(
         'Artifacts/Native-Aot-Composition-Probe/Return-42.exe',
@@ -1442,6 +1449,8 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         if ($Path -eq 'Specifications/Seed-Conformance.md') {
             $RunPlanVerification = $true
+        } elseif ($Path -eq 'Specifications/Windvale-Development-Installer.md') {
+            Add-Suite 'development-installers'
         } elseif ($Path -in @(
             'Specifications/Windvale-Resource-Service-Ipc.md',
             'Specifications/Windvale-Directory-Service-Ipc.md',

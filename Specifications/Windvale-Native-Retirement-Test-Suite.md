@@ -89,6 +89,8 @@ file. The current plan is:
 | `os-kernel-target` | `Test-Os-Kernel-Target` | 7 | `Tests: 7, Passed: 7, Failed: 0` |
 | `os-process-policy` | `Test-Os-Process-Policy-Object` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `os-process-object` | `Test-Os-Process-Object` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
+| `os-resource-domain` | `Test-Os-Resource-Domain` | 2 | `native os resource domain status=Passed projects=1 behavior=1 cases=2` |
+| `os-services` | `Test-Os-Services` | 10 | `native os services status=Passed projects=8 behavior=2 cases=10` |
 | `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 | `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
@@ -100,23 +102,24 @@ file. The current plan is:
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 58 | `native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10` |
 | `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 idempotent=Verified` |
+| `development-installers` | `Test-Development-Installers` | 8 | `native development installer status=Passed cases=8 archives=2 reproducible=Verified host-install=Verified` |
 | `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified` |
 
-The version-2 plan therefore contains exactly 56 suites and 3,363 cases. Its
+The version-2 plan therefore contains exactly 59 suites and 3,383 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 17 | 651.2 |
-| 2 | 15 | 1,280 | 592.2 |
-| 3 | 21 | 1,209 | 592.1 |
-| 4 | 19 | 857 | 591.8 |
+| 2 | 16 | 1,282 | 592.2 |
+| 3 | 22 | 1,217 | 592.1 |
+| 4 | 20 | 867 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
 semantic limit. The shard-1 timing predates the three new tree-growth cases and
-the shard-3 timing predates the `package-format`, `package-bundle`, and
-`wvdb-query-capability` owners; both will be refreshed after the expanded plan
-completes qualification. Allocation uses
+the shard-3 timing predates the `package-format`, `package-bundle`,
+`development-installers`, and `wvdb-query-capability` owners; both will be
+refreshed after the expanded plan completes qualification. Allocation uses
 the slower observed Windows/Linux interval for each measured owner and keeps
 the largest owner alone because it sets the current lower bound. Future
 rebalancing changes the digest-bound plan and requires new
@@ -146,7 +149,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 56, Passed: 56, Failed: 0, Cases: 3363
+Suites: 59, Passed: 59, Failed: 0, Cases: 3383
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

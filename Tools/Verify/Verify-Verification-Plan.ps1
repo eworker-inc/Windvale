@@ -485,7 +485,8 @@ $NativeCases = @(
             'seed-native-front-door',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
-            'console-publisher-reconstruction'
+            'console-publisher-reconstruction',
+            'development-installers'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1300,6 +1301,28 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'development installer owner'
+        Paths = @(
+            'Distribution/Installers/Windvale-Development-Installer.json',
+            'Distribution/Installers/Templates/windows-x64/Install-Windvale.ps1',
+            'Distribution/Installers/Templates/windows-x64/Uninstall-Windvale.ps1',
+            'Distribution/Installers/Templates/windows-x64/wv.cmd',
+            'Distribution/Installers/Templates/windows-x64/wv-verify-installation.ps1',
+            'Distribution/Installers/Templates/linux-x64/install.sh',
+            'Distribution/Installers/Templates/linux-x64/uninstall.sh',
+            'Distribution/Installers/Templates/linux-x64/wv',
+            'Distribution/Installers/Templates/linux-x64/wv-verify-installation',
+            'Tools/Release/Build-Development-Installers.mjs',
+            'Tools/Native/Test-Development-Installers.cmd',
+            'Tools/Native/Test-Development-Installers.sh',
+            'Specifications/Windvale-Development-Installer.md',
+            'LICENSE.md'
+        )
+        Suites = @('development-installers')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'library project owner'
         Paths = @('Projects/Libraries/Windvale-Database-Reader.wvproj')
         Suites = @('workspace-project2', 'libraries')
@@ -1423,9 +1446,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 59 -or
+if ($RetirementSuiteLines.Count -ne 60 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 58-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 59-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1463,7 +1486,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3375 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3383 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

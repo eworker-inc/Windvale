@@ -59,6 +59,12 @@ Query can be a separate downloadable application package; a database server and
 other applications use their own packages or projects and versions rather than
 becoming implicit base-install dependencies.
 
+`0.1.0-dev.1` is the first deterministic installer artifact label under Decision
+0562. It may be built and tested before the product release, but it is not a Git
+product tag and must not be published as `v0.1.0`. A development suffix records
+an installer iteration while the release envelope, trust policy, threat model,
+and exact-state release qualification remain open.
+
 ## Milestone checkpoint
 
 The exact completed Milestone 2 implementation/evidence commit is

@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2. No general resolver, package bundle, content-addressed store, installed generation, signed release envelope, updater, or Windvale OS A/B installation contract is implemented.
+Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2; [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md) implements its admitted Bundle 1 and bounded immutable publication; and [Decision 0562](../Decisions/0562-First-Deterministic-Development-Installers.md) implements an unsigned deterministic per-user native-tool installer candidate. No general resolver, signed release envelope, updater, multi-generation activation/rollback manager, or Windvale OS A/B installation contract is implemented.
 
 ## Recommendation
 
@@ -115,7 +115,7 @@ Windvale OS, a public package registry, automatic network updates, WebAssembly p
 2. Generalize the implemented Package 1 / Lock 1 pilot only when a second real package requires resolution beyond its exact local-source graph.
 3. Add an independently verified content-addressed local store and deterministic package bundle.
 4. Bind selected package parts and approved capabilities into the clean-spawn launch plan.
-5. Produce an unsigned local package flow on Windows and Linux, then add signed release envelopes and offline verification.
+5. Promote the implemented unsigned local application and native-tool installer flows on Windows and Linux, then add signed release envelopes and offline release verification.
 6. Preserve the completed Decision 0057 normal-path retirement and exact Stage 0 recovery identity, then qualify the 0.1 checklist from one deliberately selected source state.
 7. Add installed generations and application rollback before a network package client.
 8. Add Windvale OS A/B system updates only after writable filesystem, durability, boot selection, civil time or signed freshness, key custody, and local recovery evidence exist.

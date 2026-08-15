@@ -165,6 +165,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 
 - [Seed development runbook](Runbooks/Seed-Development.md) — prerequisites, verification tiers, bootstrap convergence, CLI examples, assembly, and linking
 - [Native source-to-WVB runbook](Runbooks/Native-Source-To-Wvb.md) — ordinary no-.NET project build, pinned artifact verification, atomic publication, limits, and Stage 0 reconstruction
+- [Development installer runbook](Runbooks/Development-Installer.md) — deterministic unsigned Windows/Linux installer construction, per-user installation, offline doctor, and bounded removal
 - [Progress comic publishing runbook](Runbooks/Progress-Comic-Publishing.md) — local asset ownership, responsive exports, homepage accessibility, archive direction, review, and publication
 - [Contributing guide](../CONTRIBUTING.md) — CLA acceptance, DCO sign-off, provenance, and pull-request requirements
 - [Website guide](../Website/README.md) — local preview, featured progress stories, social and favicon assets, support configuration, analytics, and publication

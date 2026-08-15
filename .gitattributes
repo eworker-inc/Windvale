@@ -52,4 +52,6 @@ SHA256SUMS text eol=lf
 LICENSE text eol=lf
 _headers text eol=lf
 .nojekyll text eol=lf
+Distribution/Installers/Templates/linux-x64/wv text eol=lf
+Distribution/Installers/Templates/linux-x64/wv-verify-installation text eol=lf
 Tools/Windvale.Playground/wwwroot/editor/notices/monaco-editor-ThirdPartyNotices.txt whitespace=-blank-at-eof

@@ -2,11 +2,13 @@
 
 ## Status and relationship
 
-This document defines the proposed first deterministic package bundle, immutable
-host store, installation generation, activation, rollback, and capability-aware
-launch transaction. None is implemented. The implemented baseline remains the
-single exact WVDB Query Package 1 / Lock 1 local-source build described by
-[Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md).
+This document defines the broader deterministic package bundle, immutable host
+store, installation generation, activation, rollback, and capability-aware
+launch transaction. Decision 0561 implements Bundle 1 and bounded immutable
+publication for the single exact WVDB Query Package 1 / Lock 1 application.
+Decision 0562 implements a separate unsigned native-tool development installer
+with one payload-derived per-user generation. General activation, approvals,
+rollback, self-update, repair, and garbage collection remain proposed.
 
 The design composes with [release discovery 1](Windvale-Release-Discovery.md): a
 signed Release names one exact bundle digest and size; bundle admission publishes
@@ -314,6 +316,11 @@ The one-time host installer contains:
 The compiler, runtime, assembler, linker, and applications are ordinary bundles.
 The launcher is stable enough to recover a previous client but does not contain
 package resolution, network discovery, or application semantics.
+
+Development installer 1 is a deliberate precursor, not this complete bootstrap:
+it packages exact retained native tools directly, uses platform scripts and fixed
+shims instead of the future native recovery launcher, and owns only clean install,
+idempotent reuse, tamper detection, and uninstall of one recorded generation.
 
 Client self-update constructs a new client generation through the normal object
 and generation transaction, exits the old client, and asks the launcher or a

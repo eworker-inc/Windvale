@@ -230,7 +230,7 @@ requirements.
 | --- | :---: | --- |
 | .NET-free normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
 | Useful package-backed application | ✅ | Milestone 2 is complete with paired Bundle 1/store and rights-reduced capability reports under Decision 0561. |
-| Reproducible release artifacts and installers | 🚧 | Source, native tools, licensing, provenance, recovery, Bundle 1, and immutable publication foundations exist; the bounded Windows/Linux installer set and signed product envelope remain open. |
+| Reproducible release artifacts and installers | 🚧 Candidate | Decision 0562 constructs exact `0.1.0-dev.1` Windows and Linux per-user installer artifacts with pinned payload/archive identities, offline payload checks, tamper refusal, and bounded uninstall. Retain the paired-host focused reports, then add the signed product envelope and offline release verifier. |
 | Capability approval, binding, and denial | ✅ Foundation | WVDB Query owns one exact five-capability closure and rights-reduced success/denial evidence. Milestone 3 must turn that fixed proof into installed approval and launch records rather than widening the capability set. |
 | Public product threat model | ○ | `SECURITY.md` owns vulnerability reporting, not the required shipped-product threat model. |
 | Release signing and offline verification policy | ○ | Architecture exists, but no accepted key policy, release manifest verifier, or signed envelope closes this gate. |

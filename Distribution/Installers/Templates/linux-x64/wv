@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+case "${1:-}" in
+    version)
+        cat -- "$script_directory/../VERSION"
+        ;;
+    doctor)
+        exec "$script_directory/wv-verify-installation" \
+            "$script_directory/.." linux-x64
+        ;;
+    tools)
+        printf '%s\n' 'wvbuild wvasm wvlink wvrun wvdump wvverify wvpublish'
+        ;;
+    help|'')
+        echo 'Usage: wv <version|doctor|tools|help>' >&2
+        echo 'Run the installed native tools directly for build, assembly, linking, execution, and inspection.' >&2
+        exit 64
+        ;;
+    *)
+        echo "Unknown wv command: $1" >&2
+        exit 64
+        ;;
+esac
