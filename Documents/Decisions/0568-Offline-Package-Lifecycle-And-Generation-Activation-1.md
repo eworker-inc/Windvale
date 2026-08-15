@@ -53,9 +53,13 @@ deleting separately owned application data.
 - The existing published `v0.1.0` installer inputs and assets remain immutable.
 - The first slice can use the existing package-format owner and does not require
   registry, TLS, DNS, HTTP, civil time, or new compiler semantics.
-- General package resolution, host durable activation, command dispatch,
-  multi-package installation, and uninstall reachability remain implementation
-  work after the portable contract.
+- General package resolution, command dispatch, multi-package installation, and
+  uninstall reachability remain implementation work after the portable contract.
+- The first host activation publisher now implements compare-before-write,
+  durable private publication, atomic public replacement, explicit
+  indeterminate completion, and bounded interruption recovery on Windows and
+  Linux without changing the published `v0.1.0` installers. Command dispatch,
+  multi-package installation, and uninstall reachability remain open.
 - OS-1 and database work may continue independently and later consume package
   identities without changing this milestone gate.
 - A later release decision chooses whether accumulated work merits `v0.1.x`,

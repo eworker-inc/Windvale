@@ -43,12 +43,10 @@ unfinished work.
 
 - Which second real package provides the smallest distinct resolver, approval,
   and command-dispatch pressure alongside WVDB Query?
-- Which host durable-replacement result can distinguish completed from
-  indeterminate activation without overclaiming directory durability?
 - How should command dispatch validate the active record on every launch without
   making ordinary tool startup unreasonably expensive?
-- Which bounded candidate cleanup proves interrupted-activation recovery without
-  deleting an object that another verified generation references?
+- Should the first command dispatcher reread and validate both canonical records
+  on every launch, or consume a separately published digest-bound route cache?
 
 ### Development verification maintenance
 
@@ -138,8 +136,9 @@ implementation checkpoints, fixture additions, artifact refreshes, and timing
 measurements should update code, specifications, the changelog, or the progress
 dashboard without creating another decision record.
 
-Generation 1 and Activation 1 semantics are accepted under Decision 0568. The
-next package decision should be limited to the durable host activation transaction
-only if implementation reveals a cross-host semantic choice not already fixed by
-that contract. OS work should independently limit its next semantic decision to
-the first post-Probe-40 resource-domain and atomic-launch contract.
+Generation 1 and Activation 1 semantics and the first host publication mechanics
+are accepted under Decision 0568. The next package decision should be limited to
+command dispatch or package ownership only if implementation reveals a cross-host
+semantic choice not already fixed by that contract. OS work should independently
+limit its next semantic decision to the first post-Probe-40 resource-domain and
+atomic-launch contract.

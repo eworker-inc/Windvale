@@ -134,7 +134,7 @@ deliberate selection for later releases and promotions.
 | Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
 | Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
-| Milestone 4: offline package lifecycle | 🎯 Current | Generation 1 / Activation 1 semantics are implemented candidates; host activation, recovery, rollback, and two-package evidence remain. |
+| Milestone 4: offline package lifecycle | 🎯 Current | Generation 1 / Activation 1 semantics and the first durable host publisher/recovery owner are implemented candidates; command dispatch and two-package evidence remain. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
 The completed 0.1 product path was:
@@ -177,11 +177,14 @@ milestone checkpoint and does not publish `v0.2.0`.
 
 ### Current slice
 
-The portable Windvale implementation now parses bounded Generation 1 and
-Activation 1 records, validates ordered package/command closure, and plans
-idempotent activation and rollback. The next slice is the durable host activation
-adapter and command dispatcher; it must consume this semantic result rather than
-introduce another record grammar.
+The portable Windvale implementation parses bounded Generation 1 and Activation
+1 records, validates ordered package/command closure, and plans idempotent
+activation and rollback. The first host adapter now compare-publishes exact
+caller-validated Activation 1 bytes, recovers an interrupted digest-named
+candidate without changing the public record, rejects stale state, and publishes
+rollback on both host paths without changing `v0.1.0`. The next slice is active
+generation command dispatch, followed by the second real package and complete
+offline-directory demonstration.
 
 ## Milestone 2: package-backed host application — complete
 

@@ -13,6 +13,10 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 - Added the portable Generation 1 / Activation 1 contract, Windvale-native
   bounded readers, package/command closure checks, and idempotent activation and
   rollback planning with missing-generation and serial-overflow rejection.
+- Added the first cross-host Activation 1 publisher with compare-before-write,
+  flushed and reread private candidates, atomic replacement, explicit stale and
+  indeterminate outcomes, bounded interruption recovery, and rollback
+  publication without changing the `v0.1.0` installers.
 
 ## 0.1.0 — 2026-08-15
 

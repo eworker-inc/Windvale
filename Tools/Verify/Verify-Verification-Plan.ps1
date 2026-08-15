@@ -1296,7 +1296,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
         )
-        Suites = @('package-format', 'package-bundle')
+        Suites = @('package-format', 'installation-activation', 'package-bundle')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1315,6 +1315,18 @@ $NativeCases = @(
             'Specifications/Windvale-Package-Bundle.md'
         )
         Suites = @('package-format', 'package-bundle')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'installation activation host owner'
+        Paths = @(
+            'Tools/Package/Publish-Installation-Activation.mjs',
+            'Tools/Package/Verify-Installation-Activation-Publisher.mjs',
+            'Tools/Native/Test-Installation-Activation.cmd',
+            'Tools/Native/Test-Installation-Activation.sh'
+        )
+        Suites = @('installation-activation')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1495,9 +1507,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 62 -or
+if ($RetirementSuiteLines.Count -ne 63 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 61-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 62-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1535,7 +1547,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3425 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3441 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

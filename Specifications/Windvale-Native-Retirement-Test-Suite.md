@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 6,193 LF-only bytes with SHA-256
-`90a0224f31cd0021719c05e1e250454b7e2df5b7f03d6c89658d631e2f8802f9`.
+`Tests/Native/Retirement-Suite.txt` is 6,388 LF-only bytes with SHA-256
+`a8fd28f9d65ca49efb73a6e27436b61c8c82b96459f132aa904e718543928df6`.
 The first line is exactly:
 
 ```text
@@ -101,25 +101,26 @@ file. The current plan is:
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 76 | `native package format status=Passed result=42 modules=6 builds=7 groups=76 cross-host-images=12` |
+| `installation-activation` | `Test-Installation-Activation` | 16 | `native installation activation status=Passed cases=16 records=3 current=5cb7a15cb4f585d3aca474c4acdb35f55e6b6a4660aeee1d568db719f62742d3` |
 | `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 idempotent=Verified` |
 | `installers` | `Test-Installers` | 8 | `native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified` |
 | `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified` |
 | `release-envelope` | `Test-Release-Envelope` | 16 | `native release envelope status=Passed cases=16 signatures=4 artifacts=11 protected-private-keys=2` |
 | `wvdb-approval` | `Test-Wvdb-Approval-Records` | 8 | `native wvdb approval status=Passed cases=8 records=3 capabilities=5 targets=2` |
 
-The version-2 plan therefore contains exactly 61 suites and 3,425 cases. Its
+The version-2 plan therefore contains exactly 62 suites and 3,441 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 17 | 651.2 |
 | 2 | 16 | 1,282 | 592.2 |
-| 3 | 22 | 1,235 | 592.1 |
+| 3 | 23 | 1,251 | 592.1 |
 | 4 | 22 | 891 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
 semantic limit. The shard-1 timing predates the three new tree-growth cases and
-the shard-3 timing predates the `package-format`, `package-bundle`,
+the shard-3 timing predates the `package-format`, `installation-activation`, `package-bundle`,
 `installers`, `wvdb-query-capability`, `release-envelope`, and
 `wvdb-approval` owners; both will be
 refreshed after the expanded plan completes qualification. Allocation uses
@@ -152,7 +153,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 61, Passed: 61, Failed: 0, Cases: 3425
+Suites: 62, Passed: 62, Failed: 0, Cases: 3441
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

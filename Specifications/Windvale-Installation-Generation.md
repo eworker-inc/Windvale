@@ -86,3 +86,32 @@ bounded package/command views, validates cross-record package references, and
 plans idempotent activation and rollback transitions. It performs no I/O and
 does not claim durable publication. Host lifecycle adapters must consume its
 semantic result rather than implement a second record grammar.
+
+## Host activation publication
+
+`Tools/Package/Publish-Installation-Activation.mjs` implements the first
+Windows/Linux filesystem adapter for a caller-supplied, already validated
+Activation 1 transition. It deliberately does not parse Activation 1 or plan a
+transition. The caller supplies the exact expected public-record SHA-256, the
+exact next bytes, and their expected SHA-256.
+
+`publish` compares the current public identity, recognizes an exact
+already-published record without rewriting it, exclusively creates one
+digest-named sibling, flushes and rereads that sibling, atomically replaces the
+public record, and flushes the state directory where the host API can report
+that guarantee. A stale expected identity is rejected before a candidate is
+created. A failure after replacement is reported as indeterminate rather than
+known unchanged.
+
+`recover` reads the public record first. It removes at most one bounded ordinary
+digest-named candidate only after its bytes match the name, and it never changes
+the public record. Multiple, malformed, symbolic-link, or identity-mismatched
+candidates are preserved for inspection and rejected.
+
+The adapter requires an existing ordinary installation root and owns only its
+`state` directory. This development adapter uses the pinned Node.js host runtime;
+it is not included in the immutable `v0.1.0` installers and is not yet an
+installed `wv` command. Its focused owner proves initial activation,
+idempotency, effective replacement, stale-writer rejection, interruption
+recovery, corrupt-candidate preservation, rollback publication, and empty
+recovery on each permanent host.

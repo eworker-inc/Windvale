@@ -594,8 +594,16 @@ foreach ($Path in $Paths) {
         Add-Suite 'installers'
     } elseif ($Path.StartsWith('Distribution/Releases/', [StringComparison]::Ordinal)) {
         Add-Suite 'release-envelope'
-    } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
+    } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal)) {
+        if ([IO.Path]::GetFileName($Path) -in @(
+            'Publish-Installation-Activation.mjs',
+            'Verify-Installation-Activation-Publisher.mjs'
+        )) {
+            Add-Suite 'installation-activation'
+        } else {
+            Add-Suite 'package-bundle'
+        }
+    } elseif ($Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
         Add-Suite 'package-bundle'
     } elseif ($Path.StartsWith('Tools/Windvale.Project/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
@@ -668,7 +676,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Specifications/Windvale-Installation-Generation.md') {
-        Add-Suite 'package-format'
+        Add-Suite @('package-format', 'installation-activation')
     } elseif ($Path -eq 'Specifications/Windvale-Package-Bundle.md' -or
         $Path -in @(
             'Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj',
