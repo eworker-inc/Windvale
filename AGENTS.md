@@ -25,6 +25,16 @@ Windvale is a source-available experiment in constructing a small computing stac
 - Long-running repository scripts should emit bounded phase or item progress before buffered summaries so a person can distinguish active work from a stalled process. Prefer stable `step=<name>`, `item=<current>/<total>`, or percentage fields that automation can ignore safely.
 - Update the phase count when scope changes materially, and make clear whether a failure is local to the current phase or invalidates earlier completed evidence.
 
+## Performance and memory discipline
+
+- Treat performance and memory use as product requirements across Windvale-generated code, compilers, runtimes, verifiers, development workflows, tests, repository tools, and applications.
+- Keep time, allocation, buffer, collection, recursion, queue, diagnostic, and retained-state bounds explicit. Reject oversized or malformed untrusted input before expensive work or allocation whenever the contract permits.
+- Measure representative hot paths and long-running workflows before and after material optimization work. Record the input size, host and profile, elapsed time, and peak or working-set memory when practical so claims remain reproducible.
+- Protect development feedback time: avoid redundant compilation and verification, preserve valid intermediate evidence and caches, select the narrowest reliable verifier, and keep long operations visibly progressing.
+- Give performance and memory regressions named workloads and enforceable thresholds when stable measurement is available. Tests and verifiers themselves must remain bounded and must not hide accidental superlinear work behind small fixtures.
+- Prefer clear data ownership, streaming or bounded buffering, and predictable allocation over avoidable copying and unbounded retention. Applications must expose resource limits and failure behavior appropriate to their profile.
+- Never trade correctness, safety, deterministic output, portability contracts, or maintainability for an unevidenced micro-optimization. Document deliberate tradeoffs and keep a simple correctness oracle where optimized implementations need comparison.
+
 ## Durable project direction
 
 - Windows and Linux are permanent Windvale hosts. They are not the semantic definition of the language.

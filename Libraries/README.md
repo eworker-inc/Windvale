@@ -68,6 +68,7 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Database-Depth-Three-Root-Growth` | `Windvaleˉdatabaseˉdepthˉthreeˉrootˉgrowth` | portable / none |
 | `Windvale-Library-Database-Depth-Three-Upsert` | `Windvaleˉdatabaseˉdepthˉthreeˉupsert` | portable / none |
 | `Windvale-Library-Database-Tree-Path-Upsert` | `Windvaleˉdatabaseˉtreeˉpathˉupsert` | portable / none |
+| `Windvale-Library-Local-Database-Service` | `Windvaleˉdatabaseˉlocalˉservice` | portable / none |
 | `Windvale-Library-Wvdb-Reader` | `Windvaleˉdatabaseˉreader` | portable / none |
 | `Windvale-Library-Hosted-Resource-Store` | `Hostedˉresourceˉstore` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Directory` | `Readˉonlyˉdirectory` | hosted / `filesystem.directory_read_v1` |

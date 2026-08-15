@@ -1,0 +1,336 @@
+module Localˉdatabaseˉserviceˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlocalˉservice as Service;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+fn Empty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) !=
+            Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Current(
+    Identityˉhigh: u64,
+    Identityˉlow: u64,
+    Generation: u64,
+    Sequence: u64,
+    Rootˉpage: u64,
+    Pageˉcount: u64,
+    Length: u64
+) -> Superblock.Databaseˉsuperblockˉselection {
+    var Commitˉlog: u64 = 18446744073709551615u64;
+    if Sequence != 0u64 { Commitˉlog = Pageˉcount - 1u64; }
+    let Encoded: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(
+            Superblock.Databaseˉsuperblock(
+                Identityˉhigh,
+                Identityˉlow,
+                Generation,
+                Sequence,
+                Rootˉpage,
+                Commitˉlog,
+                Sequence,
+                Pageˉcount,
+                Length,
+                4096u32,
+                1u32
+            )
+        );
+    return Superblock.Databaseˉsuperblockˉselect(
+        Encoded.Bytes,
+        Empty(),
+        Length
+    );
+}
+
+fn Expectˉready(
+    Session: Service.Databaseˉlocalˉsession,
+    Next: u64
+) -> bool {
+    return Session.Status == Service.Databaseˉlocalˉsessionˉstatus.Ready &&
+        Session.Nextˉrequest == Next && Session.Activeˉrequest == 0u64;
+}
+
+export fn Main() -> i32 {
+    let First: Superblock.Databaseˉsuperblockˉselection =
+        Current(1u64, 2u64, 1u64, 0u64, 0u64, 1u64, 4608u64);
+    let Invalid: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉopen(
+            9u64,
+            2u64,
+            4096u32,
+            First
+        );
+    let Invalidˉsession: Service.Databaseˉlocalˉsession = Invalid.Session;
+    if Invalid.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession ||
+        Invalidˉsession.Status !=
+            Service.Databaseˉlocalˉsessionˉstatus.Closed {
+        return 1;
+    }
+    let Opened: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉopen(
+            1u64,
+            2u64,
+            4096u32,
+            First
+        );
+    if Opened.Status != Service.Databaseˉlocalˉserviceˉstatus.Opened ||
+        !Expectˉready(Opened.Session, 1u64) {
+        return 2;
+    }
+    let Uncertainˉget: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Opened.Session,
+            1u64,
+            3u64,
+            Textˉtoˉutf8("record")
+        );
+    let Uncertain: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉgetˉcomplete(
+            Uncertainˉget,
+            Service.Databaseˉlocalˉcompletion.Reopenˉrequired,
+            Empty()
+        );
+    let Uncertainˉsession: Service.Databaseˉlocalˉsession =
+        Uncertain.Session;
+    if Uncertain.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Reopenˉrequired ||
+        Uncertainˉsession.Reopenˉmustˉadvance {
+        return 19;
+    }
+    let Uncertainˉreopened: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉreopen(Uncertain.Session, First);
+    if Uncertainˉreopened.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Reopened ||
+        !Expectˉready(Uncertainˉreopened.Session, 2u64) {
+        return 20;
+    }
+    let Wrongˉrequest: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Opened.Session,
+            2u64,
+            3u64,
+            Textˉtoˉutf8("record")
+        );
+    if Wrongˉrequest.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest ||
+        !Expectˉready(Wrongˉrequest.Session, 1u64) {
+        return 3;
+    }
+    let Badˉcollection: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Opened.Session,
+            1u64,
+            0u64,
+            Textˉtoˉutf8("record")
+        );
+    if Badˉcollection.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Encodingˉfailure ||
+        Badˉcollection.Logicalˉerror !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉcollection ||
+        !Expectˉready(Badˉcollection.Session, 1u64) {
+        return 4;
+    }
+    let Getˉone: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Opened.Session,
+            1u64,
+            3u64,
+            Textˉtoˉutf8("record")
+        );
+    let Getˉoneˉsession: Service.Databaseˉlocalˉsession = Getˉone.Session;
+    if Getˉone.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Getˉprepared ||
+        Getˉoneˉsession.Status !=
+            Service.Databaseˉlocalˉsessionˉstatus.Busyˉget ||
+        Bytesˉlength(Getˉone.Key) == 0u32 {
+        return 5;
+    }
+    let Concurrent: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉputˉprepare(
+            Getˉone.Session,
+            1u64,
+            3u64,
+            Textˉtoˉutf8("record"),
+            7u64,
+            Textˉtoˉutf8("value")
+        );
+    if Concurrent.Status !=
+        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
+        return 6;
+    }
+    let Wrongˉcancel: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉcancel(Getˉone.Session, 2u64);
+    if Wrongˉcancel.Status !=
+        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
+        return 7;
+    }
+    let Cancelled: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉcancel(Getˉone.Session, 1u64);
+    if Cancelled.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Cancelled ||
+        !Expectˉready(Cancelled.Session, 2u64) {
+        return 8;
+    }
+    let Put: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉputˉprepare(
+            Cancelled.Session,
+            2u64,
+            3u64,
+            Textˉtoˉutf8("record"),
+            7u64,
+            Textˉtoˉutf8("value")
+        );
+    let Putˉsession: Service.Databaseˉlocalˉsession = Put.Session;
+    if Put.Status != Service.Databaseˉlocalˉserviceˉstatus.Putˉprepared ||
+        Putˉsession.Status !=
+            Service.Databaseˉlocalˉsessionˉstatus.Busyˉput ||
+        Bytesˉlength(Put.Key) == 0u32 || Bytesˉlength(Put.Value) == 0u32 {
+        return 9;
+    }
+    let Prematureˉclose: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉclose(Put.Session);
+    if Prematureˉclose.Status !=
+        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
+        return 10;
+    }
+    let Committed: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉputˉcomplete(
+            Put,
+            Service.Databaseˉlocalˉcompletion.Putˉcommitted
+        );
+    let Committedˉsession: Service.Databaseˉlocalˉsession =
+        Committed.Session;
+    if Committed.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Putˉcommitted ||
+        Committedˉsession.Status !=
+            Service.Databaseˉlocalˉsessionˉstatus.Reopenˉrequired ||
+        Committedˉsession.Nextˉrequest != 3u64 ||
+        !Committedˉsession.Reopenˉmustˉadvance {
+        return 11;
+    }
+    let Whileˉreopen: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Committed.Session,
+            3u64,
+            3u64,
+            Textˉtoˉutf8("record")
+        );
+    if Whileˉreopen.Status !=
+        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
+        return 12;
+    }
+    let Sameˉreopen: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉreopen(Committed.Session, First);
+    if Sameˉreopen.Status !=
+        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
+        return 21;
+    }
+    let Wrongˉcurrent: Superblock.Databaseˉsuperblockˉselection =
+        Current(9u64, 2u64, 2u64, 1u64, 1u64, 3u64, 12800u64);
+    let Wrongˉreopen: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉreopen(
+            Committed.Session,
+            Wrongˉcurrent
+        );
+    if Wrongˉreopen.Status !=
+        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
+        return 13;
+    }
+    let Second: Superblock.Databaseˉsuperblockˉselection =
+        Current(1u64, 2u64, 2u64, 1u64, 1u64, 3u64, 12800u64);
+    let Reopened: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉreopen(Committed.Session, Second);
+    if Reopened.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Reopened ||
+        !Expectˉready(Reopened.Session, 3u64) {
+        return 14;
+    }
+    let Getˉfound: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Reopened.Session,
+            3u64,
+            3u64,
+            Textˉtoˉutf8("record")
+        );
+    let Encoded: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(
+            7u64,
+            Textˉtoˉutf8("value")
+        );
+    let Found: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉgetˉcomplete(
+            Getˉfound,
+            Service.Databaseˉlocalˉcompletion.Found,
+            Encoded.Bytes
+        );
+    if Found.Status != Service.Databaseˉlocalˉserviceˉstatus.Found ||
+        Found.Schema != 7u64 ||
+        !Bytesˉequal(Found.Payload, Textˉtoˉutf8("value")) ||
+        !Expectˉready(Found.Session, 4u64) {
+        return 15;
+    }
+    let Getˉmissing: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Found.Session,
+            4u64,
+            3u64,
+            Textˉtoˉutf8("missing")
+        );
+    let Missing: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉgetˉcomplete(
+            Getˉmissing,
+            Service.Databaseˉlocalˉcompletion.Missing,
+            Empty()
+        );
+    if Missing.Status != Service.Databaseˉlocalˉserviceˉstatus.Missing ||
+        !Expectˉready(Missing.Session, 5u64) {
+        return 16;
+    }
+    let Getˉinvalid: Service.Databaseˉlocalˉrequest =
+        Service.Databaseˉlocalˉgetˉprepare(
+            Missing.Session,
+            5u64,
+            3u64,
+            Textˉtoˉutf8("invalid")
+        );
+    let Invalidˉvalue: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉgetˉcomplete(
+            Getˉinvalid,
+            Service.Databaseˉlocalˉcompletion.Found,
+            Textˉtoˉutf8("bad")
+        );
+    let Invalidˉvalueˉsession: Service.Databaseˉlocalˉsession =
+        Invalidˉvalue.Session;
+    if Invalidˉvalue.Status !=
+            Service.Databaseˉlocalˉserviceˉstatus.Invalidˉvalue ||
+        Invalidˉvalueˉsession.Status !=
+            Service.Databaseˉlocalˉsessionˉstatus.Failed ||
+        Invalidˉvalueˉsession.Nextˉrequest != 6u64 {
+        return 17;
+    }
+    let Closed: Service.Databaseˉlocalˉresult =
+        Service.Databaseˉlocalˉsessionˉclose(Invalidˉvalue.Session);
+    let Closedˉsession: Service.Databaseˉlocalˉsession = Closed.Session;
+    if Closed.Status != Service.Databaseˉlocalˉserviceˉstatus.Closed ||
+        Closedˉsession.Status !=
+            Service.Databaseˉlocalˉsessionˉstatus.Closed {
+        return 18;
+    }
+    return 0;
+}

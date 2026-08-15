@@ -1,0 +1,572 @@
+module Windvaleˉdatabaseˉlocalˉservice profile portable;
+
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉlocalˉsessionˉstatus {
+    Closed = 0;
+    Ready = 1;
+    Busyˉget = 2;
+    Busyˉput = 3;
+    Reopenˉrequired = 4;
+    Failed = 5;
+}
+
+export enum Databaseˉlocalˉserviceˉstatus {
+    Opened = 0;
+    Getˉprepared = 1;
+    Putˉprepared = 2;
+    Found = 3;
+    Missing = 4;
+    Putˉcommitted = 5;
+    Rejected = 6;
+    Cancelled = 7;
+    Reopened = 8;
+    Closed = 9;
+    Invalidˉsession = 10;
+    Invalidˉrequest = 11;
+    Encodingˉfailure = 12;
+    Invalidˉvalue = 13;
+    Reopenˉrequired = 14;
+    Failed = 15;
+}
+
+export enum Databaseˉlocalˉcompletion {
+    Found = 0;
+    Missing = 1;
+    Putˉcommitted = 2;
+    Rejected = 3;
+    Reopenˉrequired = 4;
+    Failed = 5;
+}
+
+export record Databaseˉlocalˉsession {
+    Status: Databaseˉlocalˉsessionˉstatus;
+    Databaseˉidentityˉhigh: u64;
+    Databaseˉidentityˉlow: u64;
+    Pageˉsize: u32;
+    Current: Superblock.Databaseˉsuperblockˉselection;
+    Nextˉrequest: u64;
+    Activeˉrequest: u64;
+    Reopenˉmustˉadvance: bool;
+}
+
+export record Databaseˉlocalˉrequest {
+    Status: Databaseˉlocalˉserviceˉstatus;
+    Logicalˉerror: Logical.Databaseˉlogicalˉerror;
+    Session: Databaseˉlocalˉsession;
+    Request: u64;
+    Key: bytes;
+    Value: bytes;
+}
+
+export record Databaseˉlocalˉresult {
+    Status: Databaseˉlocalˉserviceˉstatus;
+    Logicalˉerror: Logical.Databaseˉlogicalˉerror;
+    Session: Databaseˉlocalˉsession;
+    Request: u64;
+    Schema: u64;
+    Payload: bytes;
+}
+
+fn Databaseˉlocalˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉlocalˉinvalidˉcurrent()
+    -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselect(
+        Databaseˉlocalˉempty(),
+        Databaseˉlocalˉempty(),
+        0u64
+    );
+}
+
+fn Databaseˉlocalˉinvalidˉsession()
+    -> Databaseˉlocalˉsession {
+    return Databaseˉlocalˉsession(
+        Databaseˉlocalˉsessionˉstatus.Closed,
+        0u64,
+        0u64,
+        0u32,
+        Databaseˉlocalˉinvalidˉcurrent(),
+        0u64,
+        0u64,
+        false
+    );
+}
+
+fn Databaseˉlocalˉsessionˉwithˉstatus(
+    Session: Databaseˉlocalˉsession,
+    Status: Databaseˉlocalˉsessionˉstatus,
+    Nextˉrequest: u64,
+    Activeˉrequest: u64
+) -> Databaseˉlocalˉsession {
+    return Databaseˉlocalˉsession(
+        Status,
+        Session.Databaseˉidentityˉhigh,
+        Session.Databaseˉidentityˉlow,
+        Session.Pageˉsize,
+        Session.Current,
+        Nextˉrequest,
+        Activeˉrequest,
+        Session.Reopenˉmustˉadvance
+    );
+}
+
+fn Databaseˉlocalˉrequestˉfailure(
+    Status: Databaseˉlocalˉserviceˉstatus,
+    Error: Logical.Databaseˉlogicalˉerror,
+    Session: Databaseˉlocalˉsession,
+    Request: u64
+) -> Databaseˉlocalˉrequest {
+    return Databaseˉlocalˉrequest(
+        Status,
+        Error,
+        Session,
+        Request,
+        Databaseˉlocalˉempty(),
+        Databaseˉlocalˉempty()
+    );
+}
+
+fn Databaseˉlocalˉresultˉfailure(
+    Status: Databaseˉlocalˉserviceˉstatus,
+    Error: Logical.Databaseˉlogicalˉerror,
+    Session: Databaseˉlocalˉsession,
+    Request: u64
+) -> Databaseˉlocalˉresult {
+    return Databaseˉlocalˉresult(
+        Status,
+        Error,
+        Session,
+        Request,
+        0u64,
+        Databaseˉlocalˉempty()
+    );
+}
+
+fn Databaseˉlocalˉrequestˉisˉvalid(
+    Session: Databaseˉlocalˉsession,
+    Request: u64
+) -> bool {
+    return Session.Status == Databaseˉlocalˉsessionˉstatus.Ready &&
+        Request != 0u64 && Request == Session.Nextˉrequest &&
+        Request != U64_MAXIMUM;
+}
+
+fn Databaseˉlocalˉcompleteˉsession(
+    Session: Databaseˉlocalˉsession,
+    Status: Databaseˉlocalˉsessionˉstatus
+) -> Databaseˉlocalˉsession {
+    return Databaseˉlocalˉsessionˉwithˉstatus(
+        Session,
+        Status,
+        Session.Activeˉrequest + 1u64,
+        0u64
+    );
+}
+
+fn Databaseˉlocalˉcompleteˉforˉreopen(
+    Session: Databaseˉlocalˉsession,
+    Mustˉadvance: bool
+) -> Databaseˉlocalˉsession {
+    return Databaseˉlocalˉsession(
+        Databaseˉlocalˉsessionˉstatus.Reopenˉrequired,
+        Session.Databaseˉidentityˉhigh,
+        Session.Databaseˉidentityˉlow,
+        Session.Pageˉsize,
+        Session.Current,
+        Session.Activeˉrequest + 1u64,
+        0u64,
+        Mustˉadvance
+    );
+}
+
+export fn Databaseˉlocalˉsessionˉopen(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32,
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> Databaseˉlocalˉresult {
+    if Databaseˉidentityˉhigh == 0u64 &&
+            Databaseˉidentityˉlow == 0u64 ||
+        Pageˉsize == 0u32 {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Databaseˉlocalˉinvalidˉsession(),
+            0u64
+        );
+    }
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 ||
+        Current.Databaseˉidentityˉhigh != Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Databaseˉidentityˉlow ||
+        Current.Pageˉsize != Pageˉsize {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Databaseˉlocalˉinvalidˉsession(),
+            0u64
+        );
+    }
+    let Session: Databaseˉlocalˉsession = Databaseˉlocalˉsession(
+        Databaseˉlocalˉsessionˉstatus.Ready,
+        Databaseˉidentityˉhigh,
+        Databaseˉidentityˉlow,
+        Pageˉsize,
+        Current,
+        1u64,
+        0u64,
+        false
+    );
+    return Databaseˉlocalˉresult(
+        Databaseˉlocalˉserviceˉstatus.Opened,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Session,
+        0u64,
+        0u64,
+        Databaseˉlocalˉempty()
+    );
+}
+
+export fn Databaseˉlocalˉgetˉprepare(
+    Session: Databaseˉlocalˉsession,
+    Request: u64,
+    Collection: u64,
+    Identity: bytes
+) -> Databaseˉlocalˉrequest {
+    if !Databaseˉlocalˉrequestˉisˉvalid(Session, Request) {
+        return Databaseˉlocalˉrequestˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            Request
+        );
+    }
+    let Prepared: Logical.Databaseˉlogicalˉget =
+        Logical.Databaseˉlogicalˉgetˉprepare(Collection, Identity);
+    if Prepared.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Databaseˉlocalˉrequestˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Encodingˉfailure,
+            Prepared.Error,
+            Session,
+            Request
+        );
+    }
+    let Busy: Databaseˉlocalˉsession =
+        Databaseˉlocalˉsessionˉwithˉstatus(
+            Session,
+            Databaseˉlocalˉsessionˉstatus.Busyˉget,
+            Session.Nextˉrequest,
+            Request
+        );
+    return Databaseˉlocalˉrequest(
+        Databaseˉlocalˉserviceˉstatus.Getˉprepared,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Busy,
+        Request,
+        Prepared.Key,
+        Databaseˉlocalˉempty()
+    );
+}
+
+export fn Databaseˉlocalˉputˉprepare(
+    Session: Databaseˉlocalˉsession,
+    Request: u64,
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes
+) -> Databaseˉlocalˉrequest {
+    if !Databaseˉlocalˉrequestˉisˉvalid(Session, Request) {
+        return Databaseˉlocalˉrequestˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            Request
+        );
+    }
+    let Prepared: Logical.Databaseˉlogicalˉput =
+        Logical.Databaseˉlogicalˉputˉprepare(
+            Collection,
+            Identity,
+            Schema,
+            Payload
+        );
+    if Prepared.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Databaseˉlocalˉrequestˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Encodingˉfailure,
+            Prepared.Error,
+            Session,
+            Request
+        );
+    }
+    let Busy: Databaseˉlocalˉsession =
+        Databaseˉlocalˉsessionˉwithˉstatus(
+            Session,
+            Databaseˉlocalˉsessionˉstatus.Busyˉput,
+            Session.Nextˉrequest,
+            Request
+        );
+    return Databaseˉlocalˉrequest(
+        Databaseˉlocalˉserviceˉstatus.Putˉprepared,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Busy,
+        Request,
+        Prepared.Key,
+        Prepared.Value
+    );
+}
+
+export fn Databaseˉlocalˉgetˉcomplete(
+    Prepared: Databaseˉlocalˉrequest,
+    Completion: Databaseˉlocalˉcompletion,
+    Value: bytes
+) -> Databaseˉlocalˉresult {
+    let Preparedˉsession: Databaseˉlocalˉsession = Prepared.Session;
+    if Prepared.Status != Databaseˉlocalˉserviceˉstatus.Getˉprepared ||
+        Preparedˉsession.Status !=
+            Databaseˉlocalˉsessionˉstatus.Busyˉget ||
+        Preparedˉsession.Activeˉrequest != Prepared.Request {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Preparedˉsession,
+            Prepared.Request
+        );
+    }
+    if Completion == Databaseˉlocalˉcompletion.Found {
+        let Record: Logical.Databaseˉlogicalˉrecordˉresult =
+            Logical.Databaseˉlogicalˉrecordˉdecode(Value);
+        if Record.Error != Logical.Databaseˉlogicalˉerror.Valid {
+            let Invalidˉvalueˉfailed: Databaseˉlocalˉsession =
+                Databaseˉlocalˉcompleteˉsession(
+                    Preparedˉsession,
+                    Databaseˉlocalˉsessionˉstatus.Failed
+                );
+            return Databaseˉlocalˉresultˉfailure(
+                Databaseˉlocalˉserviceˉstatus.Invalidˉvalue,
+                Record.Error,
+                Invalidˉvalueˉfailed,
+                Prepared.Request
+            );
+        }
+        let Foundˉready: Databaseˉlocalˉsession =
+            Databaseˉlocalˉcompleteˉsession(
+                Preparedˉsession,
+                Databaseˉlocalˉsessionˉstatus.Ready
+            );
+        return Databaseˉlocalˉresult(
+            Databaseˉlocalˉserviceˉstatus.Found,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Foundˉready,
+            Prepared.Request,
+            Record.Schema,
+            Record.Payload
+        );
+    }
+    if Completion == Databaseˉlocalˉcompletion.Missing &&
+        Bytesˉlength(Value) == 0u32 {
+        let Missingˉready: Databaseˉlocalˉsession =
+            Databaseˉlocalˉcompleteˉsession(
+                Preparedˉsession,
+                Databaseˉlocalˉsessionˉstatus.Ready
+            );
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Missing,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Missingˉready,
+            Prepared.Request
+        );
+    }
+    if Completion == Databaseˉlocalˉcompletion.Reopenˉrequired {
+        let Reopen: Databaseˉlocalˉsession =
+            Databaseˉlocalˉcompleteˉforˉreopen(
+                Preparedˉsession,
+                false
+            );
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Reopenˉrequired,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Reopen,
+            Prepared.Request
+        );
+    }
+    let Completionˉfailed: Databaseˉlocalˉsession = Databaseˉlocalˉcompleteˉsession(
+        Preparedˉsession,
+        Databaseˉlocalˉsessionˉstatus.Failed
+    );
+    return Databaseˉlocalˉresultˉfailure(
+        Databaseˉlocalˉserviceˉstatus.Failed,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Completionˉfailed,
+        Prepared.Request
+    );
+}
+
+export fn Databaseˉlocalˉputˉcomplete(
+    Prepared: Databaseˉlocalˉrequest,
+    Completion: Databaseˉlocalˉcompletion
+) -> Databaseˉlocalˉresult {
+    let Preparedˉsession: Databaseˉlocalˉsession = Prepared.Session;
+    if Prepared.Status != Databaseˉlocalˉserviceˉstatus.Putˉprepared ||
+        Preparedˉsession.Status !=
+            Databaseˉlocalˉsessionˉstatus.Busyˉput ||
+        Preparedˉsession.Activeˉrequest != Prepared.Request {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Preparedˉsession,
+            Prepared.Request
+        );
+    }
+    if Completion == Databaseˉlocalˉcompletion.Putˉcommitted ||
+        Completion == Databaseˉlocalˉcompletion.Reopenˉrequired {
+        let Reopen: Databaseˉlocalˉsession =
+            Databaseˉlocalˉcompleteˉforˉreopen(
+                Preparedˉsession,
+                Completion == Databaseˉlocalˉcompletion.Putˉcommitted
+            );
+        var Status: Databaseˉlocalˉserviceˉstatus =
+            Databaseˉlocalˉserviceˉstatus.Reopenˉrequired;
+        if Completion == Databaseˉlocalˉcompletion.Putˉcommitted {
+            Status = Databaseˉlocalˉserviceˉstatus.Putˉcommitted;
+        }
+        return Databaseˉlocalˉresultˉfailure(
+            Status,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Reopen,
+            Prepared.Request
+        );
+    }
+    if Completion == Databaseˉlocalˉcompletion.Rejected {
+        let Ready: Databaseˉlocalˉsession =
+            Databaseˉlocalˉcompleteˉsession(
+                Preparedˉsession,
+                Databaseˉlocalˉsessionˉstatus.Ready
+            );
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Rejected,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Ready,
+            Prepared.Request
+        );
+    }
+    let Failed: Databaseˉlocalˉsession = Databaseˉlocalˉcompleteˉsession(
+        Preparedˉsession,
+        Databaseˉlocalˉsessionˉstatus.Failed
+    );
+    return Databaseˉlocalˉresultˉfailure(
+        Databaseˉlocalˉserviceˉstatus.Failed,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Failed,
+        Prepared.Request
+    );
+}
+
+export fn Databaseˉlocalˉcancel(
+    Session: Databaseˉlocalˉsession,
+    Request: u64
+) -> Databaseˉlocalˉresult {
+    if Session.Status != Databaseˉlocalˉsessionˉstatus.Busyˉget &&
+            Session.Status != Databaseˉlocalˉsessionˉstatus.Busyˉput ||
+        Session.Activeˉrequest != Request {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            Request
+        );
+    }
+    let Ready: Databaseˉlocalˉsession = Databaseˉlocalˉcompleteˉsession(
+        Session,
+        Databaseˉlocalˉsessionˉstatus.Ready
+    );
+    return Databaseˉlocalˉresultˉfailure(
+        Databaseˉlocalˉserviceˉstatus.Cancelled,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Ready,
+        Request
+    );
+}
+
+export fn Databaseˉlocalˉsessionˉreopen(
+    Session: Databaseˉlocalˉsession,
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> Databaseˉlocalˉresult {
+    let Previous: Superblock.Databaseˉsuperblockˉselection = Session.Current;
+    if Session.Status !=
+            Databaseˉlocalˉsessionˉstatus.Reopenˉrequired ||
+        Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 ||
+        Current.Databaseˉidentityˉhigh !=
+            Session.Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Session.Databaseˉidentityˉlow ||
+        Current.Pageˉsize != Session.Pageˉsize ||
+        Current.Generation < Previous.Generation ||
+        Current.Committedˉsequence < Previous.Committedˉsequence ||
+        Session.Reopenˉmustˉadvance &&
+            (Current.Generation <= Previous.Generation ||
+                Current.Committedˉsequence <=
+                    Previous.Committedˉsequence) {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            0u64
+        );
+    }
+    let Ready: Databaseˉlocalˉsession = Databaseˉlocalˉsession(
+        Databaseˉlocalˉsessionˉstatus.Ready,
+        Session.Databaseˉidentityˉhigh,
+        Session.Databaseˉidentityˉlow,
+        Session.Pageˉsize,
+        Current,
+        Session.Nextˉrequest,
+        0u64,
+        false
+    );
+    return Databaseˉlocalˉresult(
+        Databaseˉlocalˉserviceˉstatus.Reopened,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Ready,
+        0u64,
+        0u64,
+        Databaseˉlocalˉempty()
+    );
+}
+
+export fn Databaseˉlocalˉsessionˉclose(
+    Session: Databaseˉlocalˉsession
+) -> Databaseˉlocalˉresult {
+    if Session.Status == Databaseˉlocalˉsessionˉstatus.Closed ||
+        Session.Status == Databaseˉlocalˉsessionˉstatus.Busyˉget ||
+        Session.Status == Databaseˉlocalˉsessionˉstatus.Busyˉput {
+        return Databaseˉlocalˉresultˉfailure(
+            Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            0u64
+        );
+    }
+    let Closed: Databaseˉlocalˉsession =
+        Databaseˉlocalˉsessionˉwithˉstatus(
+            Session,
+            Databaseˉlocalˉsessionˉstatus.Closed,
+            Session.Nextˉrequest,
+            0u64
+        );
+    return Databaseˉlocalˉresultˉfailure(
+        Databaseˉlocalˉserviceˉstatus.Closed,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Closed,
+        0u64
+    );
+}
