@@ -22,8 +22,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 5,170 LF-only bytes with SHA-256
-`6378bb2d59fdd4d816bd319d013403d5d701ca4bce2fb440fff3f382935a05d7`.
+`Tests/Native/Retirement-Suite.txt` is 5,508 LF-only bytes with SHA-256
+`0002d3e2661e80478790c5794e75727133e060913ac66c90fd9ff8770270b577`.
 The first line is exactly:
 
 ```text
@@ -99,21 +99,24 @@ file. The current plan is:
 | `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 | `package-format` | `Test-Package-Format` | 58 | `native package format status=Passed result=42 modules=5 builds=6 groups=58 cross-host-images=10` |
+| `package-bundle` | `Test-Package-Bundle` | 7 | `native package bundle status=Passed cases=7 bundle=48dff6cf6ce4d5e58e0e13d5a75a514deb86aa98d0b43b5ffbf69d7155b04b6d objects=5 idempotent=Verified` |
+| `wvdb-query-capability` | `Test-Wvdb-Query-Native-Capability` | 5 | `native wvdb query capability status=Passed cases=5 capabilities=5 cross-host-images=Verified` |
 
-The version-2 plan therefore contains exactly 54 suites and 3,351 cases. Its
+The version-2 plan therefore contains exactly 56 suites and 3,363 cases. Its
 balanced shard inventory is:
 
 | Shard | Suites | Cases | Measured slower-host seconds |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 17 | 651.2 |
 | 2 | 15 | 1,280 | 592.2 |
-| 3 | 19 | 1,197 | 592.1 |
+| 3 | 21 | 1,209 | 592.1 |
 | 4 | 19 | 857 | 591.8 |
 
 The timing column is scheduling evidence from GitHub run `31806725202`, not a
 semantic limit. The shard-1 timing predates the three new tree-growth cases and
-the shard-3 timing predates the `package-format` owner; both will be refreshed
-after the expanded plan completes qualification. Allocation uses
+the shard-3 timing predates the `package-format`, `package-bundle`, and
+`wvdb-query-capability` owners; both will be refreshed after the expanded plan
+completes qualification. Allocation uses
 the slower observed Windows/Linux interval for each measured owner and keeps
 the largest owner alone because it sets the current lower bound. Future
 rebalancing changes the digest-bound plan and requires new
@@ -143,7 +146,7 @@ A complete success ends with:
 
 ```text
 Timing: elapsed-ms=<time>
-Suites: 53, Passed: 53, Failed: 0, Cases: 3329
+Suites: 56, Passed: 56, Failed: 0, Cases: 3363
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

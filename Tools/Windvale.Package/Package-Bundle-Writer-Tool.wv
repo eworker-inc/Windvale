@@ -1,0 +1,90 @@
+module Windvaleˉpackageˉbundleˉwriterˉtool profile hosted;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉpackageˉbundleˉwriter as Bundleˉwriter;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Statusˉtext(
+    Status: Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus
+) -> text {
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid {
+        return "Valid";
+    }
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock {
+        return "Invalid-manifest-lock";
+    }
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Unsupportedˉtarget {
+        return "Unsupported-target";
+    }
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉexecutable {
+        return "Invalid-executable";
+    }
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉlicense {
+        return "Invalid-license";
+    }
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉprovenance {
+        return "Invalid-provenance";
+    }
+    if Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Duplicateˉblob {
+        return "Duplicate-blob";
+    }
+    return "Bundle-limit";
+}
+
+fn Report(
+    Result: Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉresult
+) -> text {
+    var Value: text = Textˉconcat("bundle status=", Statusˉtext(Result.Status));
+    let Code: text = Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉdiagnosticˉcode(
+        Result.Status
+    );
+    if Result.Status != Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid {
+        Value = Textˉconcat(Value, Textˉconcat(" code=", Code));
+    }
+    Value = Textˉconcat(
+        Value, Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Result.Value)))
+    );
+    Value = Textˉconcat(Value, Textˉconcat(" items=", U32ˉformat(Result.Items)));
+    Value = Textˉconcat(Value, Textˉconcat(" blobs=", U32ˉformat(Result.Blobs)));
+    if Result.Status == Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid {
+        Value = Textˉconcat(
+            Value,
+            Textˉconcat(
+                " sha256=",
+                Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Result.Value))
+            )
+        );
+    }
+    return Value;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 6u32 {
+        diagnostic.write_line(
+            "Usage: wvbundle-write <manifest.wvpack> <lock.wvlock> <executable.wvb> <license> <provenance> <candidate.wvbundle>"
+        );
+        return 64;
+    }
+    let Result: Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉresult =
+        Bundleˉwriter.Windvaleˉpackageˉbundleˉwrite(
+            file.read_bytes(process.argument(0u32)),
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32)),
+            file.read_bytes(process.argument(3u32)),
+            file.read_bytes(process.argument(4u32))
+        );
+    let Description: text = Report(Result);
+    if Result.Status != Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid {
+        diagnostic.write_line(Description);
+        return 1;
+    }
+    file.write_bytes(process.argument(5u32), Result.Value);
+    console.write_line(Description);
+    return 0;
+}

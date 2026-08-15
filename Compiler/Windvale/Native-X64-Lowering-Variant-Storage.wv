@@ -1,0 +1,298 @@
+module Compilerˉnativeˉx64ˉloweringˉvariantˉstorage profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+
+export record Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    Valid: bool;
+    Stackˉrecords: bytes;
+    Depth: u32;
+    Usedˉrecords: bytes;
+    Resultˉrecord: u32;
+    Recordˉtypes: bytes;
+    Recordˉvalues: u32;
+    Scratchˉvalues: u32;
+    Blockˉrecordˉvalues: u32;
+}
+
+export record Compilerˉnativeˉx64ˉvariantˉstorageˉinput {
+    Stackˉrecords: bytes;
+    Depth: u32;
+    Usedˉrecords: bytes;
+    Recordˉtypes: bytes;
+    Recordˉvalues: u32;
+    Scratchˉvalues: u32;
+    Blockˉrecordˉvalues: u32;
+}
+
+record Variantˉpayloadˉstate {
+    Valid: bool;
+    Stackˉrecords: bytes;
+    Depth: u32;
+    Usedˉrecords: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Index),
+            Bytesˉfromˉu8(Value)
+        ),
+        Bytesˉslice(Input, Index + 1u32, Bytesˉlength(Input) - Index - 1u32)
+    );
+}
+
+fn Pushˉrecord(Records: bytes, Record: u32) -> bytes {
+    return Bytesˉconcat(Records, Bytesˉfromˉu32ˉlittle(Record));
+}
+
+fn Pushˉscalar(Records: bytes) -> bytes {
+    return Pushˉrecord(Records, 4294967295u32);
+}
+
+fn Popˉrecords(Records: bytes, Depth: u32) -> bytes {
+    return Bytesˉslice(Records, 0u32, Depth * 4u32);
+}
+
+fn Recordˉwidth(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Type: u8
+) -> u32 {
+    return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+        Input,
+        Types,
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+    );
+}
+
+fn Rememberˉrecordˉtype(
+    Input: bytes,
+    Recordˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Identifier: u32,
+    Type: u8
+) -> bytes {
+    if Identifier == Bytesˉlength(Recordˉtypes) {
+        return Bytesˉconcat(Recordˉtypes, Bytesˉfromˉu8(Type));
+    }
+    let Existing: u8 = Bytesˉreadˉu8(Recordˉtypes, Identifier);
+    if Recordˉwidth(Input, Types, Type) > Recordˉwidth(Input, Types, Existing) {
+        return Setˉbyte(Recordˉtypes, Identifier, Type);
+    }
+    return Recordˉtypes;
+}
+
+fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    return Compilerˉnativeˉx64ˉvariantˉstorageˉstate(
+        false,
+        Empty(Input),
+        0u32,
+        Empty(Input),
+        4294967295u32,
+        Empty(Input),
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Consumeˉpayload(
+    Input: bytes,
+    Payloadˉtype: u8,
+    Stackˉrecords: bytes,
+    Depth: u32,
+    Usedˉrecords: bytes
+) -> Variantˉpayloadˉstate {
+    if Payloadˉtype == 0u8 {
+        return Variantˉpayloadˉstate(true, Stackˉrecords, Depth, Usedˉrecords);
+    }
+    if Depth == 0u32 {
+        return Variantˉpayloadˉstate(false, Empty(Input), 0u32, Empty(Input));
+    }
+    let Payloadˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+        Stackˉrecords,
+        (Depth - 1u32) * 4u32
+    );
+    var Nextˉuses: bytes = Usedˉrecords;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payloadˉtype) {
+        if Payloadˉrecord == 4294967295u32 {
+            return Variantˉpayloadˉstate(false, Empty(Input), 0u32, Empty(Input));
+        }
+        Nextˉuses = Bytesˉconcat(
+            Nextˉuses,
+            Bytesˉfromˉu32ˉlittle(Payloadˉrecord)
+        );
+    } else if Payloadˉrecord != 4294967295u32 {
+        return Variantˉpayloadˉstate(false, Empty(Input), 0u32, Empty(Input));
+    }
+    let Nextˉdepth: u32 = Depth - 1u32;
+    return Variantˉpayloadˉstate(
+        true,
+        Popˉrecords(Stackˉrecords, Nextˉdepth),
+        Nextˉdepth,
+        Nextˉuses
+    );
+}
+
+fn Finishˉrecord(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Resultˉtype: u8,
+    State: Compilerˉnativeˉx64ˉvariantˉstorageˉinput
+) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    if State.Blockˉrecordˉvalues >= 256u32 { return Invalid(Input); }
+    let Resultˉrecord: u32 = State.Scratchˉvalues;
+    let Nextˉblockˉvalues: u32 = State.Blockˉrecordˉvalues + 1u32;
+    var Nextˉrecordˉvalues: u32 = State.Recordˉvalues;
+    if Nextˉblockˉvalues > Nextˉrecordˉvalues {
+        Nextˉrecordˉvalues = Nextˉblockˉvalues;
+    }
+    return Compilerˉnativeˉx64ˉvariantˉstorageˉstate(
+        true,
+        Pushˉrecord(State.Stackˉrecords, Resultˉrecord),
+        State.Depth + 1u32,
+        State.Usedˉrecords,
+        Resultˉrecord,
+        Rememberˉrecordˉtype(
+            Input,
+            State.Recordˉtypes,
+            Types,
+            Resultˉrecord,
+            Resultˉtype
+        ),
+        Nextˉrecordˉvalues,
+        State.Scratchˉvalues + 1u32,
+        Nextˉblockˉvalues
+    );
+}
+
+fn Variantˉcreateˉstep(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Cursor: u32,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉstorageˉinput
+) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 5u32);
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    if !Payload.Valid { return Invalid(Input); }
+    let Consumed: Variantˉpayloadˉstate = Consumeˉpayload(
+        Input,
+        Payload.Type,
+        State.Stackˉrecords,
+        State.Depth,
+        State.Usedˉrecords
+    );
+    if !Consumed.Valid { return Invalid(Input); }
+    return Finishˉrecord(
+        Input,
+        Types,
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex),
+        Compilerˉnativeˉx64ˉvariantˉstorageˉinput(
+            Consumed.Stackˉrecords,
+            Consumed.Depth,
+            Consumed.Usedˉrecords,
+            State.Recordˉtypes,
+            State.Recordˉvalues,
+            State.Scratchˉvalues,
+            State.Blockˉrecordˉvalues
+        )
+    );
+}
+
+fn Variantˉinspectˉstep(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Cursor: u32,
+    Opcode: u8,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉstorageˉinput
+) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    if State.Depth == 0u32 { return Invalid(Input); }
+    let Used: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉrecords,
+        (State.Depth - 1u32) * 4u32
+    );
+    if Used == 4294967295u32 { return Invalid(Input); }
+    let Nextˉuses: bytes = Bytesˉconcat(
+        State.Usedˉrecords,
+        Bytesˉfromˉu32ˉlittle(Used)
+    );
+    let Nextˉdepth: u32 = State.Depth - 1u32;
+    let Nextˉstack: bytes = Popˉrecords(State.Stackˉrecords, Nextˉdepth);
+    if Opcode == 152u8 {
+        return Compilerˉnativeˉx64ˉvariantˉstorageˉstate(
+            true,
+            Pushˉscalar(Nextˉstack),
+            Nextˉdepth + 1u32,
+            Nextˉuses,
+            4294967295u32,
+            State.Recordˉtypes,
+            State.Recordˉvalues,
+            State.Scratchˉvalues,
+            State.Blockˉrecordˉvalues
+        );
+    }
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 5u32);
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    if !Payload.Valid || Payload.Type == 0u8 { return Invalid(Input); }
+    if !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+        return Compilerˉnativeˉx64ˉvariantˉstorageˉstate(
+            true,
+            Pushˉscalar(Nextˉstack),
+            Nextˉdepth + 1u32,
+            Nextˉuses,
+            4294967295u32,
+            State.Recordˉtypes,
+            State.Recordˉvalues,
+            State.Scratchˉvalues,
+            State.Blockˉrecordˉvalues
+        );
+    }
+    return Finishˉrecord(
+        Input,
+        Types,
+        Payload.Type,
+        Compilerˉnativeˉx64ˉvariantˉstorageˉinput(
+            Nextˉstack,
+            Nextˉdepth,
+            Nextˉuses,
+            State.Recordˉtypes,
+            State.Recordˉvalues,
+            State.Scratchˉvalues,
+            State.Blockˉrecordˉvalues
+        )
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Cursor: u32,
+    Opcode: u8,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉstorageˉinput
+) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    if Opcode == 151u8 {
+        return Variantˉcreateˉstep(Input, Codeˉoffset, Cursor, Types, State);
+    }
+    return Variantˉinspectˉstep(Input, Codeˉoffset, Cursor, Opcode, Types, State);
+}

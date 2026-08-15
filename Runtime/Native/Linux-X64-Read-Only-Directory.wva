@@ -1,0 +1,121 @@
+windvale-assembly 1
+
+# Linux x64 leaf for the single immutable directory entry. This module owns
+# only an O_RDONLY|O_CLOEXEC descriptor and issues only openat, lseek, pread64,
+# and close. It has no mutation syscall or ambient pathname input.
+symbol local data Directory_linux_path in .rodata
+symbol export function Directory_platform_close in .text
+symbol export function Directory_platform_open in .text
+symbol export function Directory_platform_read in .text
+
+section code .text align 16
+define Directory_platform_open
+push r12
+move r12 r8
+
+# openat(AT_FDCWD, fixed-path, O_RDONLY|O_CLOEXEC, 0)
+move_i32 edi -100
+load_address rsi Directory_linux_path
+move_u32 edx 524288
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -4095
+branch above_equal Directory_linux_open_failure
+store_memory_u64 r12 none 1 0 rax
+
+# lseek(fd, 0, SEEK_END) obtains the immutable snapshot length. WVDR 1 uses
+# u32 lengths, so larger objects fail before source entry.
+move edi eax
+xor esi esi
+move_u32 edx 2
+move_u32 eax 8
+syscall
+compare_i32 rax -4095
+branch above_equal Directory_linux_open_close_failure
+move_u32 ecx 4294967295
+compare rax rcx
+branch above Directory_linux_open_close_failure
+store_memory_u64 r12 none 1 8 rax
+xor eax eax
+pop r12
+return
+
+label Directory_linux_open_close_failure
+load_memory_u64 rdi r12 none 1 0
+move_u32 eax 3
+syscall
+label Directory_linux_open_failure
+move_u32 eax 1
+pop r12
+return
+end define
+
+define Directory_platform_read
+push r12
+push r13
+push r14
+push r15
+move r12 r8
+move r13 r9
+move r14 r11
+move r15d r10d
+xor eax eax
+store_memory_u32 r12 none 1 24 eax
+
+label Directory_linux_read_next
+test r15d r15d
+branch equal Directory_linux_read_complete
+load_memory_u64 rdi r12 none 1 0
+move rsi r14
+move edx r15d
+move r10 r13
+move_u32 eax 17
+syscall
+compare_i32 rax -4095
+branch above_equal Directory_linux_read_failure
+test rax rax
+branch equal Directory_linux_read_failure
+compare rax r15
+branch above Directory_linux_read_failure
+add r14 rax
+add r13 rax
+subtract r15 rax
+load_memory_u32 ecx r12 none 1 24
+add ecx eax
+store_memory_u32 r12 none 1 24 ecx
+jump_label Directory_linux_read_next
+
+label Directory_linux_read_complete
+xor eax eax
+jump_label Directory_linux_read_return
+label Directory_linux_read_failure
+move_u32 eax 1
+label Directory_linux_read_return
+pop r15
+pop r14
+pop r13
+pop r12
+return
+end define
+
+define Directory_platform_close
+load_memory_u64 rdi r8 none 1 0
+move_u32 eax 3
+syscall
+test rax rax
+branch not_equal Directory_linux_close_failure
+xor eax eax
+return
+label Directory_linux_close_failure
+move_u32 eax 1
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Directory_linux_path
+bytes 87 105 110 100 118 97 108 101 45 68 97 116 97 98 97 115 101
+bytes 45 83 116 111 114 97 103 101 46 98 105 110 0
+end define
+end section

@@ -132,19 +132,19 @@ separate future selection and was not spent to close this workflow milestone.
 | --- | :---: | --- |
 | Milestone 1: predictable development feedback | ✅ Complete | Closed foundation; preserve its bounded workflow. |
 | Native-only baseline promotion checkpoint | 🚧 Candidate | One explicit post-archive dual-host qualification and exact baseline tag; independent of product implementation. |
-| Milestone 2: package-backed host application | 🎯 Active | Uses the completed native compiler, package/lock instance, and bounded development path. |
+| Milestone 2: package-backed host application | 🚧 Promotion candidate | All six implementation gates are locally complete under Decision 0561; retain the settled paired-host owner reports. |
 | Milestone 3: Windvale 0.1 preview | ○ Queued | Depends on Milestone 2 and the remaining release gates. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful but does not block Milestone 3. |
 
 The product critical path is:
 
-`bundle admission → immutable store → capability execution and denial → release envelope → one final qualification → v0.1.0`
+`Milestone 2 paired-host promotion → Windows/Linux installers and core-tool packages → release envelope → one final release qualification → v0.1.0`
 
 A completed focused gate remains complete while its relevant inputs and contract
 stay unchanged. Later integrated evidence may consume that result; commits and
 pushes do not by themselves require it to be rerun.
 
-## Milestone 2: package-backed host application — active
+## Milestone 2: package-backed host application — promotion candidate
 
 ### Outcome
 
@@ -180,16 +180,16 @@ surface to complete this milestone.
 | Gate | Standing | Evidence or remaining boundary |
 | --- | :---: | --- |
 | Canonical manifest and lock closure | ✅ | Package 1 and Lock 1 select the exact WVDB Query source, resource, project, platform, license, tool, output, and capability closure under [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md). |
-| Deterministic independently admitted bundle | ○ | Bundle 1 has an accepted architecture but no writer, independent verifier, or malformed-input owner yet. |
-| Immutable content-addressed local store | ○ | Transaction and identity primitives exist, but no package-store publication service owns this gate. |
-| Same canonical host identities | 🚧 | The exact package instance and WVB identity are pinned and the paired native-host route exists; retain one current independent Windows/Linux identity report for integrated closure. |
-| Rights-reduced success and denial | 🚧 | The five-capability closure is explicit, but the native runner cannot yet bind `filesystem.directory_read_v1`; successful execution and denied/unsupported evidence remain open. |
+| Deterministic independently admitted bundle | ✅ Candidate | Distinct Windvale-written writer and verifier implementations construct and admit the exact 43,995-byte Bundle 1 identity under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md); the self-test owns valid, boundary, malformed, ordering, geometry, digest, target, and executable rejection cases. |
+| Immutable content-addressed local store | ✅ Candidate | The admitted bundle publisher creates five digest-derived objects plus one bundle through private reread-verified publication and proves an idempotent second publish with zero rewrites. This bounded host publisher closes Milestone 2 without claiming the later general activation/store service. |
+| Same canonical host identities | 🚧 Promotion | WVB `61f7b9d…`, bundle `48dff6c…`, and paired Windows/Linux application identities are pinned in one owner. The settled exact-commit Windows/Linux reports are the remaining promotion action. |
+| Rights-reduced success and denial | ✅ Candidate | The ABI-23 five-entry provider table binds only `filesystem.directory_read_v1` to one fixed immutable object. Windows executes positive, negative-value, missing-key, unauthorized-name, and unavailable-provider cases; the Linux owner uses the same WVB, provider contract, and pinned Linux image. |
 | Clean offline locked rebuild | ✅ | The selected package rebuilds from checked-in locked resources and documented native tool identities without .NET. Reconfirm it inside the final integrated package evidence without reopening the implementation gate. |
 
-Milestone 2 therefore has two completed gates, two partial candidates, and two
-unimplemented infrastructure gates. Its remaining implementation sequence is
-bundle, store, then hosted binding/execution; the final identity report can cover
-the settled composition once.
+Milestone 2 therefore has no remaining implementation slice. Its only open
+action is the deliberately selected paired-host promotion run over the settled
+owners. Do not add installer, registry, signing, activation, SQL, or server work
+to this milestone while that evidence is running.
 
 ## Milestone 3: Windvale 0.1 preview — queued behind Milestone 2
 
@@ -212,6 +212,13 @@ The preview requires:
 7. one deliberately selected source state passing explicit dual-host
    qualification.
 
+The first downloadable product shape is a per-user Windows installer and a
+per-user Linux installer. Each installs the small Windvale launcher/client,
+offline verifier, compiler, assembler, linker, runtime, and core inspectors.
+WVDB Query may be offered as a separately installable example package; a
+database server and other applications are separate packages or projects and
+do not enlarge the base installer.
+
 Windvale OS distribution, a public package registry, automatic updates, ARM64,
 desktop graphics, a general network stack, and 1.0 compatibility are not 0.1
 requirements.
@@ -221,9 +228,9 @@ requirements.
 | Gate | Standing | Evidence or remaining boundary |
 | --- | :---: | --- |
 | .NET-free normal path and recoverable Stage 0 | ✅ | The normal repository is native-only and the exact pre-archive Stage 0 recovery release is published and independently retained. |
-| Useful package-backed application | ○ | Inherits the unfinished Milestone 2 gates. |
-| Reproducible release artifacts | 🚧 | Source, native tools, licensing, provenance, recovery, and qualification foundations exist; the product bundle and release envelope remain open. |
-| Capability approval, binding, and denial | 🚧 | Package requirements and transitive closure exist; runtime approval/binding and denial evidence for the shipped application remain open. |
+| Useful package-backed application | 🚧 | The implementation candidate is complete; inherit the final paired-host Milestone 2 promotion report. |
+| Reproducible release artifacts and installers | 🚧 | Source, native tools, licensing, provenance, recovery, Bundle 1, and immutable publication foundations exist; the bounded Windows/Linux installer set and signed product envelope remain open. |
+| Capability approval, binding, and denial | ✅ Foundation | WVDB Query owns one exact five-capability closure and rights-reduced success/denial evidence. Milestone 3 must turn that fixed proof into installed approval and launch records rather than widening the capability set. |
 | Public product threat model | ○ | `SECURITY.md` owns vulnerability reporting, not the required shipped-product threat model. |
 | Release signing and offline verification policy | ○ | Architecture exists, but no accepted key policy, release manifest verifier, or signed envelope closes this gate. |
 | Exact-state dual-host release qualification | ○ | Select and run this once after the release inputs settle; ordinary development runs do not satisfy it. |

@@ -58,6 +58,7 @@ export fn Nativeˉx64ˉproviderˉcallˉverify(
     Input: bytes,
     Offset: u32,
     Capabilityˉindex: u32,
+    Argumentˉcount: u32,
     Firstˉsource: u32,
     Secondˉsource: u32,
     Thirdˉsource: u32,
@@ -67,7 +68,8 @@ export fn Nativeˉx64ˉproviderˉcallˉverify(
     Failureˉtarget: u32
 ) -> Nativeˉx64ˉproviderˉcallˉverification {
     let Total: u32 = Bytesˉlength(Input);
-    if Capabilityˉindex >= 32u32 ||
+    if Capabilityˉindex >= 32u32 || Argumentˉcount == 0u32 ||
+        Argumentˉcount > 5u32 ||
         Firstˉsource >= 2048u32 || Secondˉsource >= 2048u32 ||
         Thirdˉsource >= 2048u32 || Fourthˉsource >= 2048u32 ||
         Fifthˉsource >= 2048u32 || Resultˉtarget >= 2048u32 {
@@ -119,7 +121,7 @@ export fn Nativeˉx64ˉproviderˉcallˉverify(
         !Byteˉequals(Input, Cursor + 7u32, 36u8) ||
         !U32ˉequals(Input, Cursor + 8u32, 80u32 + Resultˉtarget * 16u32) ||
         !Byteˉequals(Input, Cursor + 12u32, 186u8) ||
-        !U32ˉequals(Input, Cursor + 13u32, 5u32) ||
+        !U32ˉequals(Input, Cursor + 13u32, Argumentˉcount) ||
         !Byteˉequals(Input, Cursor + 17u32, 255u8) ||
         !Byteˉequals(Input, Cursor + 18u32, 208u8) ||
         !Byteˉequals(Input, Cursor + 19u32, 72u8) ||

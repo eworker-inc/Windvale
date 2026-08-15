@@ -1,0 +1,525 @@
+module Windvaleˉpackageˉbundleˉwriter profile portable;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
+import Windvaleˉpackageˉconsistency as Consistency;
+import Windvaleˉpackageˉmanifest as Manifest;
+import Windvaleˉpackageˉresourceˉadmission as Resourceˉadmission;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+export enum Windvaleˉpackageˉbundleˉwriteˉstatus {
+    Valid = 0;
+    Invalidˉmanifestˉlock = 1501;
+    Unsupportedˉtarget = 1502;
+    Invalidˉexecutable = 1503;
+    Invalidˉlicense = 1504;
+    Invalidˉprovenance = 1505;
+    Duplicateˉblob = 1506;
+    Bundleˉlimit = 1507;
+}
+
+export record Windvaleˉpackageˉbundleˉwriteˉresult {
+    Status: Windvaleˉpackageˉbundleˉwriteˉstatus;
+    Value: bytes;
+    Items: u32;
+    Blobs: u32;
+}
+
+const BUNDLE_HEADER_BYTES: u32 = 128u32;
+const BUNDLE_INDEX_LIMIT: u32 = 1048576u32;
+const BUNDLE_MEMORY_LIMIT: u32 = 4194304u32;
+const BUNDLE_ITEM_COUNT: u32 = 3u32;
+const BUNDLE_BLOB_COUNT: u32 = 5u32;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failure(
+    Input: bytes,
+    Status: Windvaleˉpackageˉbundleˉwriteˉstatus
+) -> Windvaleˉpackageˉbundleˉwriteˉresult {
+    return Windvaleˉpackageˉbundleˉwriteˉresult(
+        Status, Empty(Input), 0u32, 0u32
+    );
+}
+
+fn Success(Value: bytes) -> Windvaleˉpackageˉbundleˉwriteˉresult {
+    return Windvaleˉpackageˉbundleˉwriteˉresult(
+        Windvaleˉpackageˉbundleˉwriteˉstatus.Valid,
+        Value,
+        BUNDLE_ITEM_COUNT,
+        BUNDLE_BLOB_COUNT
+    );
+}
+
+fn Spanˉbytes(Input: bytes, Offset: u32, Length: u32) -> bytes {
+    return Bytesˉslice(Input, Offset, Length);
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Digestˉless(Left: bytes, Right: bytes) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Leftˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Index));
+        let Rightˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Index));
+        if Leftˉvalue < Rightˉvalue { return true; }
+        if Leftˉvalue > Rightˉvalue { return false; }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+fn Sourceˉvalue(
+    Source: u32,
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Executable: bytes,
+    License: bytes,
+    Provenance: bytes
+) -> bytes {
+    if Source == 0u32 { return Manifestˉinput; }
+    if Source == 1u32 { return Lockˉinput; }
+    if Source == 2u32 { return Executable; }
+    if Source == 3u32 { return License; }
+    return Provenance;
+}
+
+fn Sourceˉdigest(
+    Source: u32,
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Executable: bytes,
+    License: bytes,
+    Provenance: bytes
+) -> bytes {
+    return Sha256.Foundationˉsha256ˉhex(
+        Sourceˉvalue(
+            Source,
+            Manifestˉinput,
+            Lockˉinput,
+            Executable,
+            License,
+            Provenance
+        )
+    );
+}
+
+fn Sourceˉselected(Order: bytes, Source: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Order) {
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Order, Index)) == Source { return true; }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+fn Blobˉorder(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Executable: bytes,
+    License: bytes,
+    Provenance: bytes
+) -> bytes {
+    var Order: bytes = Empty(Manifestˉinput);
+    while Bytesˉlength(Order) < BUNDLE_BLOB_COUNT {
+        var Found: bool = false;
+        var Selected: u32 = 0u32;
+        var Selectedˉdigest: bytes = Empty(Manifestˉinput);
+        var Source: u32 = 0u32;
+        while Source < BUNDLE_BLOB_COUNT {
+            if !Sourceˉselected(Order, Source) {
+                let Digest: bytes = Sourceˉdigest(
+                    Source,
+                    Manifestˉinput,
+                    Lockˉinput,
+                    Executable,
+                    License,
+                    Provenance
+                );
+                if !Found || Digestˉless(Digest, Selectedˉdigest) {
+                    Found = true;
+                    Selected = Source;
+                    Selectedˉdigest = Digest;
+                }
+            }
+            Source = Source + 1u32;
+        }
+        if !Found { return Empty(Manifestˉinput); }
+        Order = Bytesˉconcat(
+            Order,
+            Bytesˉslice(Bytesˉfromˉu32ˉlittle(Selected), 0u32, 1u32)
+        );
+    }
+    return Order;
+}
+
+fn Appendˉfield(Line: text, Field: text) -> text {
+    return Textˉconcat(Line, Textˉconcat(" ", Field));
+}
+
+fn Appendˉline(Index: text, Line: text) -> text {
+    return Textˉconcat(Index, Textˉconcat(Line, "\n"));
+}
+
+fn Itemˉline(
+    Role: text,
+    Identifier: text,
+    Target: text,
+    Digest: bytes
+) -> text {
+    var Line: text = Appendˉfield("item", Role);
+    Line = Appendˉfield(Line, Identifier);
+    Line = Appendˉfield(Line, Target);
+    return Appendˉfield(Line, Textˉfromˉutf8(Digest));
+}
+
+fn Blobˉline(Digest: bytes, Length: u32, Offset: u32) -> text {
+    var Line: text = Appendˉfield("blob", Textˉfromˉutf8(Digest));
+    Line = Appendˉfield(Line, U32ˉformat(Length));
+    return Appendˉfield(Line, U32ˉformat(Offset));
+}
+
+fn Hexˉnibble(Value: u8) -> u32 {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 48u32 && Character <= 57u32 {
+        return Character - 48u32;
+    }
+    return Character - 87u32;
+}
+
+fn Rawˉdigest(Hex: bytes) -> bytes {
+    var Result: bytes = Empty(Hex);
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let High: u32 = Hexˉnibble(Bytesˉreadˉu8(Hex, Index * 2u32));
+        let Low: u32 = Hexˉnibble(Bytesˉreadˉu8(Hex, Index * 2u32 + 1u32));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(
+                Bytesˉfromˉu32ˉlittle(High * 16u32 + Low), 0u32, 1u32
+            )
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Header(
+    Index: bytes,
+    Content: bytes
+) -> bytes {
+    let Indexˉbytes: u32 = Bytesˉlength(Index);
+    let Contentˉbytes: u32 = Bytesˉlength(Content);
+    let Totalˉbytes: u32 = BUNDLE_HEADER_BYTES + Indexˉbytes + Contentˉbytes;
+    var Result: bytes = Textˉtoˉutf8("WVPB");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(BUNDLE_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Totalˉbytes))
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(BUNDLE_HEADER_BYTES))
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Indexˉbytes))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu64ˉlittle(
+            U64ˉfromˉu32(BUNDLE_HEADER_BYTES + Indexˉbytes)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Contentˉbytes))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(BUNDLE_BLOB_COUNT));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(BUNDLE_ITEM_COUNT));
+    Result = Bytesˉconcat(
+        Result,
+        Rawˉdigest(Sha256.Foundationˉsha256ˉhex(Index))
+    );
+    var Reserved: u32 = 0u32;
+    while Reserved < 8u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Reserved = Reserved + 1u32;
+    }
+    return Result;
+}
+
+fn Duplicateˉblobˉexists(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Executable: bytes,
+    License: bytes,
+    Provenance: bytes
+) -> bool {
+    var Left: u32 = 0u32;
+    while Left < BUNDLE_BLOB_COUNT {
+        let Leftˉdigest: bytes = Sourceˉdigest(
+            Left, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+        );
+        var Right: u32 = Left + 1u32;
+        while Right < BUNDLE_BLOB_COUNT {
+            if Bytesˉequal(
+                Leftˉdigest,
+                Sourceˉdigest(
+                    Right,
+                    Manifestˉinput,
+                    Lockˉinput,
+                    Executable,
+                    License,
+                    Provenance
+                )
+            ) { return true; }
+            Right = Right + 1u32;
+        }
+        Left = Left + 1u32;
+    }
+    return false;
+}
+
+export fn Windvaleˉpackageˉbundleˉwrite(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Executable: bytes,
+    License: bytes,
+    Provenance: bytes
+) -> Windvaleˉpackageˉbundleˉwriteˉresult {
+    let Consistent: Consistency.Windvaleˉpackageˉconsistencyˉresult =
+        Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
+            Manifestˉinput, Lockˉinput
+        );
+    if Consistent.Status !=
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock
+        );
+    }
+    let Package: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
+    let Target: bytes = Spanˉbytes(
+        Manifestˉinput, Package.Targetˉoffset, Package.Targetˉlength
+    );
+    if !Bytesˉequal(Target, Textˉtoˉutf8("hosted-wvb-v1")) {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Unsupportedˉtarget
+        );
+    }
+    let Outputˉadmission: Resourceˉadmission.Windvaleˉpackageˉresourceˉresult =
+        Resourceˉadmission.Windvaleˉpackageˉverifyˉlockedˉresource(
+            Lockˉinput,
+            Resourceˉadmission.Windvaleˉpackageˉresourceˉkind.Output,
+            0u32,
+            Empty(Executable),
+            Executable
+        );
+    if Outputˉadmission.Status !=
+        Resourceˉadmission.Windvaleˉpackageˉresourceˉstatus.Valid ||
+        Wvbˉverifier.Compilerˉwvbˉverify(Executable) != 0u32 {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉexecutable
+        );
+    }
+    if Bytesˉlength(License) == 0u32 || Bytesˉlength(License) > 65536u32 {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉlicense
+        );
+    }
+    if Bytesˉlength(Provenance) == 0u32 || Bytesˉlength(Provenance) > 65536u32 {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉprovenance
+        );
+    }
+    if Duplicateˉblobˉexists(
+        Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    ) {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Duplicateˉblob
+        );
+    }
+
+    let Order: bytes = Blobˉorder(
+        Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    );
+    if Bytesˉlength(Order) != BUNDLE_BLOB_COUNT {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Duplicateˉblob
+        );
+    }
+
+    let Name: bytes = Spanˉbytes(
+        Manifestˉinput, Package.Nameˉoffset, Package.Nameˉlength
+    );
+    let Version: bytes = Spanˉbytes(
+        Manifestˉinput, Package.Versionˉoffset, Package.Versionˉlength
+    );
+    let Root: bytes = Spanˉbytes(
+        Manifestˉinput, Package.Rootˉoffset, Package.Rootˉlength
+    );
+    let Licenseˉidentifier: bytes = Spanˉbytes(
+        Manifestˉinput, Package.Licenseˉoffset, Package.Licenseˉlength
+    );
+    let Manifestˉdigest: bytes = Sourceˉdigest(
+        0u32, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    );
+    let Lockˉdigest: bytes = Sourceˉdigest(
+        1u32, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    );
+    let Executableˉdigest: bytes = Sourceˉdigest(
+        2u32, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    );
+    let Licenseˉdigest: bytes = Sourceˉdigest(
+        3u32, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    );
+    let Provenanceˉdigest: bytes = Sourceˉdigest(
+        4u32, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+    );
+
+    var Indexˉtext: text = "windvale-bundle-index 1\n";
+    var Packageˉline: text = Appendˉfield(
+        "package", Textˉfromˉutf8(Name)
+    );
+    Packageˉline = Appendˉfield(Packageˉline, Textˉfromˉutf8(Version));
+    Packageˉline = Appendˉfield(Packageˉline, Textˉfromˉutf8(Target));
+    Indexˉtext = Appendˉline(Indexˉtext, Packageˉline);
+    var Manifestˉline: text = Appendˉfield(
+        "manifest", Textˉfromˉutf8(Manifestˉdigest)
+    );
+    Manifestˉline = Appendˉfield(
+        Manifestˉline, U32ˉformat(Bytesˉlength(Manifestˉinput))
+    );
+    Indexˉtext = Appendˉline(Indexˉtext, Manifestˉline);
+    var Lockˉline: text = Appendˉfield("lock", Textˉfromˉutf8(Lockˉdigest));
+    Lockˉline = Appendˉfield(
+        Lockˉline, U32ˉformat(Bytesˉlength(Lockˉinput))
+    );
+    Indexˉtext = Appendˉline(Indexˉtext, Lockˉline);
+    Indexˉtext = Appendˉline(
+        Indexˉtext,
+        Itemˉline(
+            "executable",
+            Textˉfromˉutf8(Root),
+            Textˉfromˉutf8(Target),
+            Executableˉdigest
+        )
+    );
+    Indexˉtext = Appendˉline(
+        Indexˉtext,
+        Itemˉline(
+            "license",
+            Textˉfromˉutf8(Licenseˉidentifier),
+            Textˉfromˉutf8(Target),
+            Licenseˉdigest
+        )
+    );
+    Indexˉtext = Appendˉline(
+        Indexˉtext,
+        Itemˉline(
+            "provenance",
+            "source-and-tool-identities",
+            Textˉfromˉutf8(Target),
+            Provenanceˉdigest
+        )
+    );
+
+    var Content: bytes = Empty(Manifestˉinput);
+    var Blobˉindex: u32 = 0u32;
+    while Blobˉindex < BUNDLE_BLOB_COUNT {
+        let Source: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Order, Blobˉindex));
+        let Value: bytes = Sourceˉvalue(
+            Source, Manifestˉinput, Lockˉinput, Executable, License, Provenance
+        );
+        if Bytesˉlength(Value) > BUNDLE_MEMORY_LIMIT - Bytesˉlength(Content) {
+            return Failure(
+                Manifestˉinput,
+                Windvaleˉpackageˉbundleˉwriteˉstatus.Bundleˉlimit
+            );
+        }
+        Indexˉtext = Appendˉline(
+            Indexˉtext,
+            Blobˉline(
+                Sourceˉdigest(
+                    Source,
+                    Manifestˉinput,
+                    Lockˉinput,
+                    Executable,
+                    License,
+                    Provenance
+                ),
+                Bytesˉlength(Value),
+                Bytesˉlength(Content)
+            )
+        );
+        Content = Bytesˉconcat(Content, Value);
+        Blobˉindex = Blobˉindex + 1u32;
+    }
+
+    let Index: bytes = Textˉtoˉutf8(Indexˉtext);
+    if Bytesˉlength(Index) > BUNDLE_INDEX_LIMIT ||
+        Bytesˉlength(Content) >
+            BUNDLE_MEMORY_LIMIT - BUNDLE_HEADER_BYTES - Bytesˉlength(Index) {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Bundleˉlimit
+        );
+    }
+    let Headerˉbytes: bytes = Header(Index, Content);
+    if Bytesˉlength(Headerˉbytes) != BUNDLE_HEADER_BYTES {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Bundleˉlimit
+        );
+    }
+    return Success(
+        Bytesˉconcat(Headerˉbytes, Bytesˉconcat(Index, Content))
+    );
+}
+
+export fn Windvaleˉpackageˉbundleˉwriteˉdiagnosticˉcode(
+    Status: Windvaleˉpackageˉbundleˉwriteˉstatus
+) -> text {
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock {
+        return "WVPK1501";
+    }
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Unsupportedˉtarget {
+        return "WVPK1502";
+    }
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉexecutable {
+        return "WVPK1503";
+    }
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉlicense {
+        return "WVPK1504";
+    }
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉprovenance {
+        return "WVPK1505";
+    }
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Duplicateˉblob {
+        return "WVPK1506";
+    }
+    if Status == Windvaleˉpackageˉbundleˉwriteˉstatus.Bundleˉlimit {
+        return "WVPK1507";
+    }
+    return "";
+}

@@ -10,7 +10,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Linker=%RepositoryRoot%\Artifacts\Native-Segmented-Compiler-Toolset-Candidate\windows-x64-wvlinkstage.exe"
 
-certutil -hashfile "%Linker%" SHA256 | findstr /I /C:"32fc318be24b6dcd7f67720098242872c3b2d2b960b7c75e7418a89f92b7bf43" >nul
+certutil -hashfile "%Linker%" SHA256 | findstr /I /C:"bbef433e11eb63d265cee5a7439d5e500163a27723d72ac7a805fb7eb0181844" >nul
 if errorlevel 1 (
     >&2 echo The Windows segmented compiler-image linker artifact digest is invalid.
     exit /b 1

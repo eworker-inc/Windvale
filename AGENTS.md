@@ -17,6 +17,14 @@ Windvale is a source-available experiment in constructing a small computing stac
 - Do not add implementation merely to make a design document appear complete.
 - Do not commit secrets, private keys, credentials, local SDK installations, build caches, virtual disks, firmware images, or machine-specific configuration.
 
+## Progress reporting
+
+- Give a concise progress update before starting tool-driven work and at least once every 60 seconds while long-running work continues.
+- When the work has a known set of phases, report progress as `current/total` and an approximate percentage, such as `phase 4/6 (67%)`, and name the active phase.
+- When the remaining work cannot be estimated honestly, report the current named phase, the completed phases, and the next checkpoint instead of inventing a percentage.
+- Long-running repository scripts should emit bounded phase or item progress before buffered summaries so a person can distinguish active work from a stalled process. Prefer stable `step=<name>`, `item=<current>/<total>`, or percentage fields that automation can ignore safely.
+- Update the phase count when scope changes materially, and make clear whether a failure is local to the current phase or invalidates earlier completed evidence.
+
 ## Durable project direction
 
 - Windows and Linux are permanent Windvale hosts. They are not the semantic definition of the language.

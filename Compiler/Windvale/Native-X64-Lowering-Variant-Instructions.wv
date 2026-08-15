@@ -1,0 +1,380 @@
+module Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉinstructions;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Typeˉtag(Result: bytes, Typeˉindex: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 65u8);
+    Output = Appendˉbyte(Output, 184u8);
+    return Appendˉu32(Output, Typeˉindex);
+}
+
+fn Loadˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrdx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉraxˉfield(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+}
+
+fn Storeˉraxˉfield(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+}
+
+fn Loadˉrecordˉfield(Result: bytes, Field: u32, Second: bool) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 130u8);
+    var Offset: u32 = Field * 16u32;
+    if Second { Offset = Offset + 8u32; }
+    return Appendˉu32(Output, Offset);
+}
+
+fn Frameˉaddress(Result: bytes, Cell: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Cell * 16u32);
+}
+
+fn Addˉraxˉoffset(Result: bytes, Offset: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 5u8);
+    return Appendˉu32(Output, Offset);
+}
+
+fn Storeˉtag(Result: bytes, Case: u32, Backing: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 184u8);
+    Output = Appendˉu32(Output, Case);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Backing * 16u32);
+}
+
+fn Valueˉslot(
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Type: u8,
+    Index: u32
+) -> u32 {
+    return Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals,
+        Shape.I32ˉslots,
+        Shape.Boolˉslots,
+        Shape.Textˉslots,
+        Shape.U8ˉslots,
+        Shape.U32ˉslots,
+        Shape.Bytesˉslots,
+        Type,
+        Index
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉvariantˉcreateˉbytes(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Caseˉindex: u32
+) -> u32 {
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    if Payload.Type == 0u8 { return 44u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+        return 52u32 + 30u32 *
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+                Input,
+                Types,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+                    Payload.Type
+                )
+            );
+    }
+    return 76u32;
+}
+
+export fn Compilerˉnativeˉx64ˉvariantˉisˉcaseˉbytes() -> u32 {
+    return 42u32;
+}
+
+export fn Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(
+    Payloadˉtype: u8
+) -> u32 {
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payloadˉtype) {
+        return 38u32;
+    }
+    return 54u32;
+}
+
+fn Emitˉcreate(
+    Input: bytes,
+    Offset: u32,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    var Depth: u32 = State.Stackˉdepth;
+    var Source: u32 = 0u32;
+    if Payload.Type != 0u8 {
+        Depth = Depth - 1u32;
+        Source = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32);
+    }
+    let Target: u32 = Shape.Recordˉbase + State.Nextˉrecord;
+    let Backing: u32 = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
+        Storage.Scratchˉoffsets,
+        State.Nextˉrecord * 4u32
+    );
+    var Output: bytes = Typeˉtag(State.Result, Typeˉindex);
+    Output = Storeˉtag(Output, Caseˉindex, Backing);
+    if Payload.Type != 0u8 {
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+            Output = Loadˉrdx(Output, Source);
+            let Width: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+                Input,
+                Types,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+                    Payload.Type
+                )
+            );
+            var Field: u32 = 0u32;
+            while Field < Width {
+                Output = Loadˉrecordˉfield(Output, Field, false);
+                Output = Storeˉrax(Output, Backing + 2u32 + Field);
+                Output = Loadˉrecordˉfield(Output, Field, true);
+                Output = Storeˉraxˉfield(Output, Backing + 2u32 + Field);
+                Field = Field + 1u32;
+            }
+        } else {
+            Output = Loadˉrax(Output, Source);
+            Output = Storeˉrax(Output, Backing + 1u32);
+            Output = Loadˉraxˉfield(Output, Source);
+            Output = Storeˉraxˉfield(Output, Backing + 1u32);
+        }
+    }
+    Output = Frameˉaddress(Output, Backing);
+    Output = Storeˉrax(Output, Target);
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Output,
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex)
+            )
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord + 1u32
+    );
+}
+
+fn Emitˉisˉcase(
+    Input: bytes,
+    Offset: u32,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32);
+    let Target: u32 = Valueˉslot(Shape, 2u8, State.Nextˉbool);
+    var Output: bytes = Loadˉrdx(State.Result, Source);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 130u8);
+    Output = Appendˉu32(Output, 0u32);
+    Output = Appendˉbyte(Output, 61u8);
+    Output = Appendˉu32(Output, Caseˉindex);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 182u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Target * 16u32);
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Output,
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(2u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool + 1u32,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord
+    );
+}
+
+fn Emitˉpayload(
+    Input: bytes,
+    Offset: u32,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32);
+    var Index: u32 = State.Nextˉi32;
+    if Payload.Type == 2u8 { Index = State.Nextˉbool; }
+    if Payload.Type == 3u8 { Index = State.Nextˉtext; }
+    if Payload.Type == 4u8 { Index = State.Nextˉu8; }
+    if Payload.Type == 5u8 || Payload.Type == 10u8 { Index = State.Nextˉu32; }
+    if Payload.Type == 6u8 { Index = State.Nextˉbytes; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Payload.Type) {
+        Index = State.Nextˉenum;
+    }
+    var Target: u32 = Valueˉslot(Shape, Payload.Type, Index);
+    var Output: bytes = Typeˉtag(State.Result, Typeˉindex);
+    var Nextˉrecord: u32 = State.Nextˉrecord;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+        Target = Shape.Recordˉbase + State.Nextˉrecord;
+        Output = Loadˉrax(Output, Source);
+        Output = Addˉraxˉoffset(Output, 32u32);
+        Output = Storeˉrax(Output, Target);
+        Nextˉrecord = Nextˉrecord + 1u32;
+    } else {
+        Output = Loadˉrdx(Output, Source);
+        Output = Loadˉrecordˉfield(Output, 1u32, false);
+        Output = Storeˉrax(Output, Target);
+        Output = Loadˉrecordˉfield(Output, 1u32, true);
+        Output = Storeˉraxˉfield(Output, Target);
+    }
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉtext: u32 = State.Nextˉtext;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    var Nextˉenum: u32 = State.Nextˉenum;
+    if Payload.Type == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+    if Payload.Type == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
+    if Payload.Type == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
+    if Payload.Type == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Payload.Type == 5u8 || Payload.Type == 10u8 {
+        Nextˉu32 = Nextˉu32 + 1u32;
+    }
+    if Payload.Type == 6u8 { Nextˉbytes = Nextˉbytes + 1u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Payload.Type) {
+        Nextˉenum = Nextˉenum + 1u32;
+    }
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Output,
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(Payload.Type)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        Nextˉi32,
+        Nextˉbool,
+        Nextˉtext,
+        Nextˉu8,
+        Nextˉu32,
+        Nextˉbytes,
+        Nextˉenum,
+        Nextˉrecord
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(
+    Input: bytes,
+    Offset: u32,
+    Opcode: u8,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    if Opcode == 151u8 {
+        return Emitˉcreate(Input, Offset, Shape, Types, Storage, State);
+    }
+    if Opcode == 152u8 {
+        return Emitˉisˉcase(Input, Offset, Shape, State);
+    }
+    return Emitˉpayload(Input, Offset, Shape, Types, State);
+}

@@ -1,0 +1,390 @@
+module Windvaleˉpackageˉbundleˉselfˉtest profile portable;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉpackageˉbundleˉverifier as Verifier;
+import Windvaleˉpackageˉbundleˉwriter as Writer;
+
+data EXECUTABLE_FIXTURE: bytes = [87,86,66,49,1,0,11,0,7,0,0,0,1,0,0,0,27,0,0,0,1,21,0,0,0,87,118,98,203,137,116,111,203,137,119,118,111,203,137,102,105,120,116,117,114,101,0,2,0,0,0,4,0,0,0,0,0,0,0,3,0,0,0,4,0,0,0,0,0,0,0,4,0,0,0,34,0,0,0,1,0,0,0,4,0,0,0,77,97,105,110,0,0,0,0,1,1,0,0,0,1,0,0,0,0,16,0,0,0,1,0,0,0,5,0,0,0,16,0,0,0,1,42,0,0,0,5,0,0,0,0,4,0,0,0,0,81,6,0,0,0,17,0,0,0,1,0,0,0,4,0,0,0,77,97,105,110,1,0,0,0,0,7,0,0,0,4,0,0,0,0,0,0,0];
+
+fn Empty() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+    return Bytesˉconcat(
+        Result,
+        Bytesˉslice(Input, Offset + 1u32, Bytesˉlength(Input) - Offset - 1u32)
+    );
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+    return Bytesˉconcat(
+        Result,
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Spanˉequalsˉtext(Input: bytes, Offset: u32, Expected: text) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    let Length: u32 = Bytesˉlength(Expectedˉbytes);
+    if Offset > Bytesˉlength(Input) { return false; }
+    if Length > Bytesˉlength(Input) - Offset { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Wrongˉtargetˉbundle(Bundle: bytes) -> bytes {
+    let Indexˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Bundle, 32u32);
+    let Index: bytes = Bytesˉslice(Bundle, 128u32, Indexˉbytes);
+    var Changed: bytes = Empty();
+    var Cursor: u32 = 0u32;
+    while Cursor < Indexˉbytes {
+        if Spanˉequalsˉtext(Index, Cursor, "hosted-wvb-v1") {
+            Changed = Bytesˉconcat(
+                Changed, Textˉtoˉutf8("hosted-wvb-v2")
+            );
+            Cursor = Cursor + 13u32;
+        } else {
+            Changed = Bytesˉconcat(
+                Changed, Bytesˉslice(Index, Cursor, 1u32)
+            );
+            Cursor = Cursor + 1u32;
+        }
+    }
+    let Contentˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Bundle, 40u32);
+    let Contentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Bundle, 48u32);
+    return Header(
+        Changed,
+        Bytesˉslice(Bundle, Contentˉoffset, Contentˉbytes),
+        Bytesˉreadˉu32ˉlittle(Bundle, 60u32),
+        Bytesˉreadˉu32ˉlittle(Bundle, 56u32)
+    );
+}
+
+fn Hexˉnibble(Value: u8) -> u32 {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character <= 57u32 { return Character - 48u32; }
+    return Character - 87u32;
+}
+
+fn Rawˉdigest(Value: bytes) -> bytes {
+    let Hex: bytes = Sha256.Foundationˉsha256ˉhex(Value);
+    var Result: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let High: u32 = Hexˉnibble(Bytesˉreadˉu8(Hex, Index * 2u32));
+        let Low: u32 = Hexˉnibble(Bytesˉreadˉu8(Hex, Index * 2u32 + 1u32));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(
+                Bytesˉfromˉu32ˉlittle(High * 16u32 + Low), 0u32, 1u32
+            )
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Header(Index: bytes, Content: bytes, Items: u32, Blobs: u32) -> bytes {
+    let Indexˉbytes: u32 = Bytesˉlength(Index);
+    let Contentˉbytes: u32 = Bytesˉlength(Content);
+    var Result: bytes = Textˉtoˉutf8("WVPB");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(128u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu64ˉlittle(
+            U64ˉfromˉu32(128u32 + Indexˉbytes + Contentˉbytes)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(128u32))
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Indexˉbytes))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(128u32 + Indexˉbytes))
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Contentˉbytes))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Blobs));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Items));
+    Result = Bytesˉconcat(Result, Rawˉdigest(Index));
+    var Reserved: u32 = 0u32;
+    while Reserved < 8u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Reserved = Reserved + 1u32;
+    }
+    return Bytesˉconcat(Result, Bytesˉconcat(Index, Content));
+}
+
+fn Executable() -> bytes {
+    return EXECUTABLE_FIXTURE;
+}
+
+fn Manifestˉvalue(Target: text) -> bytes {
+    var Value: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget ";
+    Value = Textˉconcat(Value, Target);
+    Value = Textˉconcat(
+        Value,
+        "\nproject Projects/Example.wvproj\npart a hosted Applications/A.wv\n"
+    );
+    return Textˉtoˉutf8(Value);
+}
+
+fn Lockˉvalue(Manifest: bytes, Program: bytes, Target: text) -> bytes {
+    let Manifestˉdigest: text =
+        Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Manifest));
+    let Programˉdigest: text =
+        Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Program));
+    let Fixed: text =
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    var Value: text =
+        "windvale-lock 1\nresolver local-source-1\nroot windvale.example 1 a\ntarget ";
+    Value = Textˉconcat(Value, Target);
+    Value = Textˉconcat(Value, "\nlicense MIT\norigin workspace ");
+    Value = Textˉconcat(Value, Fixed);
+    Value = Textˉconcat(Value, " 1 Windvale.wvws\npackage ");
+    Value = Textˉconcat(Value, Manifestˉdigest);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, U32ˉformat(Bytesˉlength(Manifest)));
+    Value = Textˉconcat(Value, " Distribution/Example.wvpack\ncompiler ");
+    Value = Textˉconcat(Value, Fixed);
+    Value = Textˉconcat(Value, " 1 Artifacts/Compiler.wvb\nproject ");
+    Value = Textˉconcat(Value, Fixed);
+    Value = Textˉconcat(Value, " 1 Projects/Example.wvproj\npart a hosted ");
+    Value = Textˉconcat(Value, Fixed);
+    Value = Textˉconcat(Value, " 1 Applications/A.wv\noutput ");
+    Value = Textˉconcat(Value, Programˉdigest);
+    Value = Textˉconcat(Value, " ");
+    Value = Textˉconcat(Value, U32ˉformat(Bytesˉlength(Program)));
+    return Textˉtoˉutf8(Textˉconcat(Value, "\n"));
+}
+
+fn Write(
+    Manifest: bytes,
+    Lock: bytes,
+    Program: bytes,
+    License: bytes,
+    Provenance: bytes
+) -> Writer.Windvaleˉpackageˉbundleˉwriteˉresult {
+    return Writer.Windvaleˉpackageˉbundleˉwrite(
+        Manifest, Lock, Program, License, Provenance
+    );
+}
+
+fn Validˉcase() -> bytes {
+    let Program: bytes = Executable();
+    let Manifest: bytes = Manifestˉvalue("hosted-wvb-v1");
+    let Lock: bytes = Lockˉvalue(Manifest, Program, "hosted-wvb-v1");
+    let First: Writer.Windvaleˉpackageˉbundleˉwriteˉresult = Write(
+        Manifest, Lock, Program, Textˉtoˉutf8("MIT\n"),
+        Textˉtoˉutf8("windvale-provenance 1\nfixture bundle-self-test\n")
+    );
+    let Second: Writer.Windvaleˉpackageˉbundleˉwriteˉresult = Write(
+        Manifest, Lock, Program, Textˉtoˉutf8("MIT\n"),
+        Textˉtoˉutf8("windvale-provenance 1\nfixture bundle-self-test\n")
+    );
+    if First.Status != Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid ||
+        First.Items != 3u32 || First.Blobs != 5u32 ||
+        !Bytesˉequal(First.Value, Second.Value) {
+        return Empty();
+    }
+    let Admitted: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(First.Value);
+    if Admitted.Status != Verifier.Windvaleˉpackageˉbundleˉstatus.Valid ||
+        Admitted.Items != 3u32 || Admitted.Blobs != 5u32 {
+        return Empty();
+    }
+    return First.Value;
+}
+
+fn Writerˉrejections() -> u32 {
+    let Program: bytes = Executable();
+    let Wrongˉmanifest: bytes = Manifestˉvalue("hosted-wvb-v2");
+    let Wrongˉlock: bytes = Lockˉvalue(
+        Wrongˉmanifest, Program, "hosted-wvb-v2"
+    );
+    let Wrong: Writer.Windvaleˉpackageˉbundleˉwriteˉresult = Write(
+        Wrongˉmanifest, Wrongˉlock, Program,
+        Textˉtoˉutf8("MIT\n"), Textˉtoˉutf8("provenance\n")
+    );
+    if Wrong.Status !=
+        Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock {
+        return 1u32;
+    }
+    let Hostile: bytes = Textˉtoˉutf8("not-a-wvb");
+    let Hostileˉmanifest: bytes = Manifestˉvalue("hosted-wvb-v1");
+    let Hostileˉlock: bytes = Lockˉvalue(
+        Hostileˉmanifest, Hostile, "hosted-wvb-v1"
+    );
+    let Hostileˉresult: Writer.Windvaleˉpackageˉbundleˉwriteˉresult =
+        Write(
+            Hostileˉmanifest, Hostileˉlock, Hostile,
+            Textˉtoˉutf8("MIT\n"), Textˉtoˉutf8("provenance\n")
+        );
+    if Hostileˉresult.Status !=
+        Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉexecutable {
+        return 2u32;
+    }
+    let Manifest: bytes = Manifestˉvalue("hosted-wvb-v1");
+    let Lock: bytes = Lockˉvalue(Manifest, Program, "hosted-wvb-v1");
+    let Duplicate: bytes = Textˉtoˉutf8("same-resource\n");
+    let Duplicateˉresult: Writer.Windvaleˉpackageˉbundleˉwriteˉresult =
+        Write(Manifest, Lock, Program, Duplicate, Duplicate);
+    if Duplicateˉresult.Status !=
+        Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Duplicateˉblob {
+        return 3u32;
+    }
+    return 0u32;
+}
+
+fn Verifierˉmutations(Bundle: bytes) -> u32 {
+    let Length: u32 = Bytesˉlength(Bundle);
+    let Truncated: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Bytesˉslice(Bundle, 0u32, Length - 1u32)
+        );
+    if Truncated.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉheader {
+        return 1u32;
+    }
+    let Corruptˉindex: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Replaceˉu8(Bundle, 128u32, 88u8)
+        );
+    if Corruptˉindex.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉdigest {
+        return 2u32;
+    }
+    let Last: u8 = Bytesˉreadˉu8(Bundle, Length - 1u32);
+    var Replacement: u8 = 0u8;
+    if Last == 0u8 { Replacement = 1u8; }
+    let Corruptˉblob: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Replaceˉu8(Bundle, Length - 1u32, Replacement)
+        );
+    if Corruptˉblob.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉdigest {
+        return 3u32;
+    }
+    let Wrongˉtarget: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Wrongˉtargetˉbundle(Bundle)
+        );
+    if Wrongˉtarget.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Wrongˉtarget {
+        return 4u32;
+    }
+    let Oversized: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Replaceˉu32(Bundle, 56u32, 4097u32)
+        );
+    if Oversized.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Collectionˉlimit {
+        return 5u32;
+    }
+    return 0u32;
+}
+
+fn Geometryˉbundle(Secondˉoffset: text, Secondˉdigest: text) -> bytes {
+    let First: text =
+        "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6";
+    let Third: text =
+        "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb";
+    var Index: text =
+        "windvale-bundle-index 1\npackage windvale.example 1 hosted-wvb-v1\nmanifest 2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6 1\nlock 3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d 1\nitem license MIT hosted-wvb-v1 ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb\nblob ";
+    Index = Textˉconcat(Index, First);
+    Index = Textˉconcat(Index, " 1 0\nblob ");
+    Index = Textˉconcat(Index, Secondˉdigest);
+    Index = Textˉconcat(Index, " 1 ");
+    Index = Textˉconcat(Index, Secondˉoffset);
+    Index = Textˉconcat(Index, "\nblob ");
+    Index = Textˉconcat(Index, Third);
+    Index = Textˉconcat(Index, " 1 2\n");
+    return Header(Textˉtoˉutf8(Index), Textˉtoˉutf8("cba"), 1u32, 3u32);
+}
+
+fn Geometryˉrejections() -> u32 {
+    let One: text =
+        "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d";
+    let Overlap: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(Geometryˉbundle("0", One));
+    if Overlap.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry {
+        return 1u32;
+    }
+    let Gap: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(Geometryˉbundle("2", One));
+    if Gap.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry {
+        return 2u32;
+    }
+    let Duplicate: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Geometryˉbundle("1", "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6")
+        );
+    if Duplicate.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Duplicateˉrecord {
+        return 3u32;
+    }
+    let Unordered: Verifier.Windvaleˉpackageˉbundleˉresult =
+        Verifier.Windvaleˉpackageˉbundleˉverify(
+            Geometryˉbundle("1", "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+        );
+    if Unordered.Status !=
+        Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉorder {
+        return 4u32;
+    }
+    return 0u32;
+}
+
+export fn Main() -> i32 {
+    let Bundle: bytes = Validˉcase();
+    if Bytesˉlength(Bundle) == 0u32 { return 1; }
+    let Writerˉfailure: u32 = Writerˉrejections();
+    if Writerˉfailure == 1u32 { return 21; }
+    if Writerˉfailure == 2u32 { return 22; }
+    if Writerˉfailure == 3u32 { return 23; }
+    let Verifierˉfailure: u32 = Verifierˉmutations(Bundle);
+    if Verifierˉfailure == 1u32 { return 31; }
+    if Verifierˉfailure == 2u32 { return 32; }
+    if Verifierˉfailure == 3u32 { return 33; }
+    if Verifierˉfailure == 4u32 { return 34; }
+    if Verifierˉfailure == 5u32 { return 35; }
+    let Geometryˉfailure: u32 = Geometryˉrejections();
+    if Geometryˉfailure == 1u32 { return 51; }
+    if Geometryˉfailure == 2u32 { return 52; }
+    if Geometryˉfailure == 3u32 { return 53; }
+    if Geometryˉfailure == 4u32 { return 54; }
+    return 42;
+}

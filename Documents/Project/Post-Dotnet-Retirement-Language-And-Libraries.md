@@ -40,12 +40,17 @@ This is the application-side complement of the proposed
 it is not a claim that a public registry, dynamic runtime linker, desktop, network
 stack, or Windvale OS distribution is ready.
 
-The first implementation slice is now selected under [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md).
-WVDB Query builds deterministically from Package 1 and Lock 1, composes the portable
-decimal and database code with the hosted read-only directory facade, and exposes
-its exact capability closure for inspection. The package build and inspection path
-is implemented on both native hosts. Native directory-provider binding, execution,
-and denial evidence remain open, so the complete outcome above is not yet claimed.
+The first implementation slice is selected under
+[Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md)
+and implemented as a promotion candidate under
+[Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md).
+WVDB Query builds deterministically from Package 1 and Lock 1, composes the
+portable decimal and database code with the hosted read-only directory facade,
+and exposes its exact capability closure for inspection. The bounded Bundle 1,
+immutable store publication, paired native applications, directory-provider
+binding, successful reads, and denied/unavailable cases are implemented. The
+settled exact-commit Windows/Linux owner reports remain the final promotion
+evidence before the complete outcome above is claimed.
 
 ## Keep the library model simple
 

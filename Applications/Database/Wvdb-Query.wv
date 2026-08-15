@@ -18,6 +18,19 @@ fn Wvdbˉqueryˉkeyˉreport(Prefix: text, Key: u32) -> text {
     return Textˉconcat(Prefix, U32ˉformat(Key));
 }
 
+fn Wvdbˉqueryˉvalueˉreport(Value: i32) -> text {
+    if Value == (-2147483647 - 1) { return "-2147483648"; }
+    var Magnitude: i32 = Value;
+    var Prefix: text = "";
+    if Value < 0 {
+        Magnitude = -Value;
+        Prefix = "-";
+    }
+    let Encoded: bytes = Bytesˉfromˉi32ˉlittle(Magnitude);
+    let Unsigned: u32 = Bytesˉreadˉu32ˉlittle(Encoded, 0u32);
+    return Textˉconcat(Prefix, U32ˉformat(Unsigned));
+}
+
 export fn Main() -> i32 {
     if process.argument_count() != 2u32 { return Wvdbˉqueryˉusage(); }
 
@@ -38,7 +51,7 @@ export fn Main() -> i32 {
         case Snapshot.Wvdbˉsnapshotˉlookupˉresult.Found(Value) {
             var Foundˉreport: text = Wvdbˉqueryˉkeyˉreport("found key=", Parsed.Value);
             Foundˉreport = Textˉconcat(Foundˉreport, " value=");
-            console.write_line(Textˉconcat(Foundˉreport, I32ˉformat(Value)));
+            console.write_line(Textˉconcat(Foundˉreport, Wvdbˉqueryˉvalueˉreport(Value)));
             return 0;
         }
         case Snapshot.Wvdbˉsnapshotˉlookupˉresult.Missing {

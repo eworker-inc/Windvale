@@ -40,6 +40,7 @@ fn Emit() -> Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission {
     return Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
         Bytesˉfromˉu32ˉlittle(287454020u32),
         1u32,
+        5u32,
         2u32,
         3u32,
         4u32,
@@ -56,6 +57,7 @@ fn Verify(Input: bytes) -> bool {
             Input,
             4u32,
             1u32,
+            5u32,
             2u32,
             3u32,
             4u32,
@@ -86,6 +88,7 @@ fn Boundˉtests() -> i32 {
         Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
             Prefix,
             31u32,
+            5u32,
             2047u32,
             2046u32,
             2045u32,
@@ -100,6 +103,7 @@ fn Boundˉtests() -> i32 {
             Maximum.Result,
             4u32,
             31u32,
+            5u32,
             2047u32,
             2046u32,
             2045u32,
@@ -111,9 +115,16 @@ fn Boundˉtests() -> i32 {
     if !Maximumˉverification.Valid { return 5; }
     let Invalid: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission =
         Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
-            Prefix, 32u32, 2u32, 3u32, 4u32, 5u32, 6u32, 7u32, 0u32
+            Prefix, 32u32, 5u32, 2u32, 3u32, 4u32, 5u32, 6u32, 7u32, 0u32
         );
     if Invalid.Valid || !Bytesˉareˉequal(Invalid.Result, Prefix) { return 6; }
+    let Invalidˉarity: Providerˉcall.Compilerˉnativeˉx64ˉproviderˉcallˉemission =
+        Providerˉcall.Compilerˉnativeˉx64ˉemitˉproviderˉcall(
+            Prefix, 1u32, 0u32, 2u32, 3u32, 4u32, 5u32, 6u32, 7u32, 0u32
+        );
+    if Invalidˉarity.Valid || !Bytesˉareˉequal(Invalidˉarity.Result, Prefix) {
+        return 13;
+    }
     return 0;
 }
 

@@ -52,6 +52,22 @@ Milestone 3. Parallel OS-1 launch/service composition is valuable but is not a
 prerequisite for this host-product preview. Later previews would normally be
 `v0.2.0`, `v0.3.0`, and so on—not “release 2” without a compatibility meaning.
 
+`v0.1.0` must publish installable per-user Windows and Linux artifacts for
+Windvale and its core tools. The base installation includes the launcher/client,
+offline verifier, compiler, assembler, linker, runtime, and inspectors. WVDB
+Query can be a separate downloadable application package; a database server and
+other applications use their own packages or projects and versions rather than
+becoming implicit base-install dependencies.
+
+## Milestone checkpoint
+
+After the exact Milestone 2 commit passes its paired Windows/Linux owners, it may
+receive an annotated checkpoint tag of the form
+`milestone-2-package-app-<commit12>`. This records a completed stage without
+claiming that installers, signing, support, or the `v0.1.0` product are ready.
+Do not use an unqualified `stage-2` tag: “Stage 2” is already used for compiler
+self-reproduction and would be ambiguous.
+
 ## Tag mechanics
 
 Tags are immutable names for exact Git commits. Create release tags as annotated

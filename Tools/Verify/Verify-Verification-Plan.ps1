@@ -398,11 +398,29 @@ $NativeCases = @(
             'native-u64-lowering',
             'database-superblock',
             'database-durable-commit',
-            'database-storage'
+            'database-storage',
+            'wvdb-query-capability'
         )
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $false
+    },
+    @{
+        Name = 'rights-reduced WVDB query host owner'
+        Paths = @(
+            'Runtime/Native/X64-Read-Only-Directory-Host.wva',
+            'Runtime/Native/Windows-X64-Read-Only-Directory.wva',
+            'Runtime/Native/Linux-X64-Read-Only-Directory.wva',
+            'Tools/Native/Create-Wvdb-Query-Fixture.mjs'
+        )
+        Suites = @(
+            'assembler-rejections',
+            'assembler-golden',
+            'wva-differential',
+            'wvdb-query-capability'
+        )
+        Gaps = @()
+        VerifyPlan = $false
     },
     @{
         Name = 'segmented compiler linker closure'
@@ -1191,7 +1209,13 @@ $NativeCases = @(
             'Projects/Applications/Windvale-Wvdb-Query.wvproj',
             'Specifications/Windvale-Package.md'
         )
-        Suites = @('workspace-project2', 'packages', 'package-format')
+        Suites = @(
+            'workspace-project2',
+            'packages',
+            'package-format',
+            'package-bundle',
+            'wvdb-query-capability'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1214,7 +1238,25 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj',
             'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
         )
-        Suites = @('package-format')
+        Suites = @('package-format', 'package-bundle')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Bundle 1 and immutable store owner'
+        Paths = @(
+            'Libraries/Package/Package-Bundle-Writer.wv',
+            'Libraries/Package/Package-Bundle-Verifier.wv',
+            'Tests/Fixtures/Package/Package-Bundle-Self-Test.wv',
+            'Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj',
+            'Projects/Tools/Windvale-Package-Bundle-Writer.wvproj',
+            'Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj',
+            'Tools/Windvale.Package/Package-Bundle-Writer-Tool.wv',
+            'Tools/Windvale.Package/Package-Bundle-Verifier-Tool.wv',
+            'Tools/Package/Publish-Admitted-Bundle.ps1',
+            'Specifications/Windvale-Package-Bundle.md'
+        )
+        Suites = @('package-format', 'package-bundle')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1335,9 +1377,9 @@ $NativeCases = @(
 
 $RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
 $RetirementSuiteLines = @(Get-Content -LiteralPath $RetirementSuitePlan)
-if ($RetirementSuiteLines.Count -ne 55 -or
+if ($RetirementSuiteLines.Count -ne 57 -or
     $RetirementSuiteLines[0] -ne 'windvale-native-retirement-suite 2') {
-    throw 'The native retirement-suite header or exact 54-suite inventory differs.'
+    throw 'The native retirement-suite header or exact 56-suite inventory differs.'
 }
 $RetirementSuiteCases = 0
 $RetirementSuiteShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1375,7 +1417,7 @@ foreach ($Line in $RetirementSuiteLines | Select-Object -Skip 1) {
         throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($RetirementSuiteCases -ne 3351 -or $RetirementSuiteShards.Count -ne 4) {
+if ($RetirementSuiteCases -ne 3363 -or $RetirementSuiteShards.Count -ne 4) {
     throw 'The native retirement-suite case total or four-shard coverage differs.'
 }
 

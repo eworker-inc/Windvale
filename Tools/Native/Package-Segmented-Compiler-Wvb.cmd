@@ -24,12 +24,27 @@ set "CanonicalPrefix=%TemporaryDirectory%\Canonical"
 set "CanonicalManifest=%TemporaryDirectory%\Canonical.wvli"
 set "Result=1"
 
+echo segmented compiler package step=stage input=%~nx2
 call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" "%Input%" "%ObjectPrefix%" "%ObjectManifest%" >"%TemporaryDirectory%\Stage.txt"
-if errorlevel 1 goto :cleanup
+if errorlevel 1 (
+    type "%TemporaryDirectory%\Stage.txt" >&2
+    goto :cleanup
+)
+echo segmented compiler package step=stage status=Complete
+echo segmented compiler package step=link
 call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%TemporaryDirectory%\Link.txt"
-if errorlevel 1 goto :cleanup
+if errorlevel 1 (
+    type "%TemporaryDirectory%\Link.txt" >&2
+    goto :cleanup
+)
+echo segmented compiler package step=link status=Complete
+echo segmented compiler package step=transport
 call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TemporaryDirectory%\Transport.txt"
-if errorlevel 1 goto :cleanup
+if errorlevel 1 (
+    type "%TemporaryDirectory%\Transport.txt" >&2
+    goto :cleanup
+)
+echo segmented compiler package step=transport status=Complete
 
 set "NativeEntry="
 set "FragmentCount="
@@ -42,8 +57,10 @@ if not defined FragmentCount goto :cleanup
 echo(%NativeEntry%| findstr /r /x "[0-9][0-9]*" >nul || goto :cleanup
 echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || goto :cleanup
 
+echo segmented compiler package step=container fragments=%FragmentCount% entry=%NativeEntry%
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%"
 set "Result=%ERRORLEVEL%"
+if "%Result%"=="0" echo segmented compiler package status=Complete output=%~nx3
 
 :cleanup
 del /f /q "%TemporaryDirectory%\*" >nul 2>nul

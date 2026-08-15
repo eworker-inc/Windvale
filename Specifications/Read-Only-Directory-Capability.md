@@ -87,4 +87,14 @@ The result contains typed status, immutable chunk bytes, stable file length, and
 
 The Stage 0 reference runtime accepts an explicit `IReadˉonlyˉdirectory` instance. It does not resolve host paths. The reference launcher constructs one through `--bind-read-only-directory <path>` on Windows or Linux and still requires the separate `--allow filesystem.directory_read_v1` authorization. This provider eagerly materializes at most 4,096 queryable immediate entries and 64 MiB of regular-file bytes before process entry, uses ordinal names, and treats directories, reparse points, and devices as `Not_file`; these are reference-provider binding bounds rather than changes to the application response format. Windvale OS must bind the same semantic capability to a checked runtime adapter and isolated provider endpoint; the kernel remains responsible only for capability identity, rights, generation, IPC bounds, peer lifecycle, and cleanup.
 
-Native ABI lowering, a Windvale OS service protocol, independent platform-scope metadata, multiple directory instances, enumeration, open handles, links, mutation, durability, watching, mapping, and persistent filesystem layout are outside version 1.
+The first native ABI-23 binding is implemented for the fixed WVDB Query proof.
+It constructs an execution-owned five-entry provider table, binds this capability
+at ordinal two to one fixed immutable object, and uses separate read-only Windows
+and Linux leaves. Source receives no native path or handle. This proves the exact
+single-object success, denial, and unavailable paths; it is not a configurable
+launcher or general directory service.
+
+A Windvale OS service protocol, independent platform-scope metadata, multiple
+directory instances, enumeration, source-visible open handles, links, mutation,
+durability, watching, mapping, and persistent filesystem layout remain outside
+version 1.

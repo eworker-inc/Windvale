@@ -243,7 +243,7 @@ canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
 The exact 75,553-byte tool WVB has SHA-256
-`67a7b2142f5a95b5ce2e49b9c329ad7908d37418bc6cfd2b2b773c6b97b06265`.
+`5795ccd8f12266f0228b7191680dc6881f5a09ddb81973ee6225d24fa38a60bb`.
 Its canonical repository source closure is
 `Projects/Linker/Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -263,9 +263,9 @@ toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
 The Windows candidate is 852,480 bytes at SHA-256
-`32fc318be24b6dcd7f67720098242872c3b2d2b960b7c75e7418a89f92b7bf43`;
+`bbef433e11eb63d265cee5a7439d5e500163a27723d72ac7a805fb7eb0181844`;
 the Linux candidate is 851,968 bytes at SHA-256
-`baa183ff2318ace7e29d9aed39b1261d7887403674e52466efeb5fa12d88c8b8`.
+`0762483a8c4d68bdb246100f757890a1ee22b42e1b2f4b67cd08d1d2d102aa0b`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process
@@ -308,12 +308,12 @@ segmented WVO producer, segmented image linker, canonical image transport, and
 hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
 
-The segmented producer WVB is exactly 482,789 bytes at SHA-256
-`35c7be9284e3a9f180e13f3b20b1c0fe72f7b0b227c94f18b4dd47c56d86eeea`.
-Its Windows application is 6,935,552 bytes at SHA-256
-`292514068284da40eb0f288bfb4564ab7802d1fc8b03f80e6a5a3d45a311f7b4`;
-its Linux application is 6,934,528 bytes at SHA-256
-`812671adda682daf49902eb1679b49a40811a113cc6b951de727926ee8348d66`.
+The segmented producer WVB is exactly 526,914 bytes at SHA-256
+`c20f22cec9ce735ccde9904fc08d64c8c9c91e086bfd35292abd1832731ccff7`.
+Its Windows application is 7,711,232 bytes at SHA-256
+`4b7d9cc05e98fbe0277b86e7a1a5a288892caf8c2f9e9ca91e8050f479064884`;
+its Linux application is 7,712,768 bytes at SHA-256
+`fe95f58555d63b2b09fe166958e9a4e25bd6093d130683c8128658a9cfa51c60`.
 Decisions 0496, 0542, and 0545 reconstruct this pair and the staging and transport pairs from
 the retained native candidate toolset on Windows. That construction does not
 by itself prove Stage 2, Linux execution, promotion, or a seed-independent

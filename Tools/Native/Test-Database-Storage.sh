@@ -156,8 +156,8 @@ if ((development == 1)); then
     [[ $project_wvb_checkpoint == Created || $project_wvb_checkpoint == Hit ]] || exit 1
     prepare_cached_build_driver "$build_driver_wvb" || exit $?
     lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
-    verify_file "$lowerer" 6500352 \
-        de7bdb40637208ee05a7987aba0ea88366638e132fb3f7ba5d9730befde316b5 || exit $?
+    verify_file "$lowerer" 7274496 \
+        328640d04a2cdff6d1fe943b076554933a7538652185e0e1002fcc4cacbd3579 || exit $?
 else
     "$script_directory/Build-Wvb.sh" \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \

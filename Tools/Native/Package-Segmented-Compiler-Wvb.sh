@@ -34,9 +34,24 @@ image_manifest="$temporary_directory/Image.wvli"
 canonical_prefix="$temporary_directory/Canonical"
 canonical_manifest="$temporary_directory/Canonical.wvli"
 
-"$script_directory/Stage-Compiler-Wvb.sh" "$input" "$object_prefix" "$object_manifest" >"$temporary_directory/Stage.txt" || exit $?
-"$script_directory/Link-Staged-Compiler-Wvo.sh" "$object_prefix" "$object_manifest" "$image_prefix" "$image_manifest" >"$temporary_directory/Link.txt" || exit $?
-"$script_directory/Transport-Compiler-Image.sh" "$image_prefix" "$image_manifest" "$canonical_prefix" "$canonical_manifest" >"$temporary_directory/Transport.txt" || exit $?
+echo "segmented compiler package step=stage input=$(basename -- "$input")"
+if ! "$script_directory/Stage-Compiler-Wvb.sh" "$input" "$object_prefix" "$object_manifest" >"$temporary_directory/Stage.txt"; then
+    cat -- "$temporary_directory/Stage.txt" >&2
+    exit 1
+fi
+echo 'segmented compiler package step=stage status=Complete'
+echo 'segmented compiler package step=link'
+if ! "$script_directory/Link-Staged-Compiler-Wvo.sh" "$object_prefix" "$object_manifest" "$image_prefix" "$image_manifest" >"$temporary_directory/Link.txt"; then
+    cat -- "$temporary_directory/Link.txt" >&2
+    exit 1
+fi
+echo 'segmented compiler package step=link status=Complete'
+echo 'segmented compiler package step=transport'
+if ! "$script_directory/Transport-Compiler-Image.sh" "$image_prefix" "$image_manifest" "$canonical_prefix" "$canonical_manifest" >"$temporary_directory/Transport.txt"; then
+    cat -- "$temporary_directory/Transport.txt" >&2
+    exit 1
+fi
+echo 'segmented compiler package step=transport status=Complete'
 
 transport_line=$(sed -n '/^compiler image transport status=Complete /p' "$temporary_directory/Transport.txt")
 native_entry=$(printf '%s\n' "$transport_line" | sed -n 's/^.* entry-offset=\([0-9][0-9]*\) chunks=.*$/\1/p')
@@ -49,4 +64,6 @@ case "$fragment_count" in
     *) echo 'The compiler-image transport did not report one canonical chunk count.' >&2; exit 1 ;;
 esac
 
+echo "segmented compiler package step=container fragments=$fragment_count entry=$native_entry"
 "$script_directory/Package-Hosted-Wvb.sh" image "$1" "$input" "$canonical_prefix" "$fragment_count" "$native_entry" "$output"
+echo "segmented compiler package status=Complete output=$(basename -- "$output")"

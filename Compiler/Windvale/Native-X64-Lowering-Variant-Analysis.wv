@@ -1,0 +1,275 @@
+module Compilerˉnativeˉx64ˉloweringˉvariantˉanalysis profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions as Variantˉinstructions;
+
+export record Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    Valid: bool;
+    Stack: bytes;
+    Depth: u32;
+    I32ˉvalues: u32;
+    Boolˉvalues: u32;
+    Textˉvalues: u32;
+    U8ˉvalues: u32;
+    U32ˉvalues: u32;
+    Bytesˉvalues: u32;
+    Enumˉvalues: u32;
+    Recordˉvalues: u32;
+    Bodyˉbytes: u32;
+}
+
+fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+        false,
+        Bytesˉslice(Input, 0u32, 0u32),
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Analyzeˉcreate(
+    Input: bytes,
+    Instructionˉoffset: u32,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
+) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Instructionˉoffset + 1u32
+    );
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Instructionˉoffset + 5u32
+    );
+    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 ||
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 ||
+        Caseˉindex >= Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Types,
+            Typeˉindex
+        ) {
+        return Invalid(Input);
+    }
+    let Variantˉtype: u8 =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex);
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    if !Payload.Valid { return Invalid(Input); }
+    var Stack: bytes = State.Stack;
+    var Depth: u32 = State.Depth;
+    if Payload.Type != 0u8 {
+        if Depth == 0u32 ||
+            Bytesˉreadˉu8(Stack, Depth - 1u32) != Payload.Type {
+            return Invalid(Input);
+        }
+        Depth = Depth - 1u32;
+        Stack = Bytesˉslice(Stack, 0u32, Depth);
+    }
+    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+        true,
+        Bytesˉconcat(Stack, Bytesˉfromˉu8(Variantˉtype)),
+        Depth + 1u32,
+        State.I32ˉvalues,
+        State.Boolˉvalues,
+        State.Textˉvalues,
+        State.U8ˉvalues,
+        State.U32ˉvalues,
+        State.Bytesˉvalues,
+        State.Enumˉvalues,
+        State.Recordˉvalues + 1u32,
+        State.Bodyˉbytes +
+            Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉcreateˉbytes(
+                Input,
+                Types,
+                Typeˉindex,
+                Caseˉindex
+            )
+    );
+}
+
+fn Analyzeˉinspect(
+    Input: bytes,
+    Instructionˉoffset: u32,
+    Opcode: u8,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
+) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Instructionˉoffset + 1u32
+    );
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Instructionˉoffset + 5u32
+    );
+    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 ||
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 ||
+        Caseˉindex >= Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Types,
+            Typeˉindex
+        ) {
+        return Invalid(Input);
+    }
+    let Variantˉtype: u8 =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex);
+    if State.Depth == 0u32 ||
+        Bytesˉreadˉu8(State.Stack, State.Depth - 1u32) != Variantˉtype {
+        return Invalid(Input);
+    }
+    let Depth: u32 = State.Depth - 1u32;
+    var Stack: bytes = Bytesˉslice(State.Stack, 0u32, Depth);
+    if Opcode == 152u8 {
+        return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+            true,
+            Bytesˉconcat(Stack, Bytesˉfromˉu8(2u8)),
+            Depth + 1u32,
+            State.I32ˉvalues,
+            State.Boolˉvalues + 1u32,
+            State.Textˉvalues,
+            State.U8ˉvalues,
+            State.U32ˉvalues,
+            State.Bytesˉvalues,
+            State.Enumˉvalues,
+            State.Recordˉvalues,
+            State.Bodyˉbytes +
+                Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉisˉcaseˉbytes()
+        );
+    }
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input,
+            Types,
+            Typeˉindex,
+            Caseˉindex
+        );
+    if !Payload.Valid { return Invalid(Input); }
+    if Opcode != 153u8 || Payload.Type == 0u8 { return Invalid(Input); }
+    Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(Payload.Type));
+    var I32ˉvalues: u32 = State.I32ˉvalues;
+    var Boolˉvalues: u32 = State.Boolˉvalues;
+    var Textˉvalues: u32 = State.Textˉvalues;
+    var U8ˉvalues: u32 = State.U8ˉvalues;
+    var U32ˉvalues: u32 = State.U32ˉvalues;
+    var Bytesˉvalues: u32 = State.Bytesˉvalues;
+    var Enumˉvalues: u32 = State.Enumˉvalues;
+    var Recordˉvalues: u32 = State.Recordˉvalues;
+    if Payload.Type == 1u8 { I32ˉvalues = I32ˉvalues + 1u32; }
+    if Payload.Type == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
+    if Payload.Type == 3u8 { Textˉvalues = Textˉvalues + 1u32; }
+    if Payload.Type == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
+    if Payload.Type == 5u8 || Payload.Type == 10u8 {
+        U32ˉvalues = U32ˉvalues + 1u32;
+    }
+    if Payload.Type == 6u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Payload.Type) {
+        Enumˉvalues = Enumˉvalues + 1u32;
+    }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+        Recordˉvalues = Recordˉvalues + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+        true,
+        Stack,
+        Depth + 1u32,
+        I32ˉvalues,
+        Boolˉvalues,
+        Textˉvalues,
+        U8ˉvalues,
+        U32ˉvalues,
+        Bytesˉvalues,
+        Enumˉvalues,
+        Recordˉvalues,
+        State.Bodyˉbytes +
+            Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(
+                Payload.Type
+            )
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
+    Input: bytes,
+    Instructionˉoffset: u32,
+    Opcode: u8,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
+) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    if Opcode == 151u8 {
+        return Analyzeˉcreate(Input, Instructionˉoffset, Types, State);
+    }
+    return Analyzeˉinspect(Input, Instructionˉoffset, Opcode, Types, State);
+}
+
+fn Encodeˉstate(
+    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(1u8);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Depth));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.I32ˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Boolˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Textˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.U8ˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.U32ˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Bytesˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Enumˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Recordˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Bodyˉbytes));
+    return Bytesˉconcat(Result, State.Stack);
+}
+
+fn Decodeˉstate(
+    Input: bytes,
+    State: bytes
+) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    if Bytesˉlength(State) < 41u32 || Bytesˉreadˉu8(State, 0u32) != 1u8 ||
+        Bytesˉreadˉu32ˉlittle(State, 1u32) != Bytesˉlength(State) - 41u32 {
+        return Invalid(Input);
+    }
+    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+        true,
+        Bytesˉslice(State, 41u32, Bytesˉlength(State) - 41u32),
+        Bytesˉreadˉu32ˉlittle(State, 1u32),
+        Bytesˉreadˉu32ˉlittle(State, 5u32),
+        Bytesˉreadˉu32ˉlittle(State, 9u32),
+        Bytesˉreadˉu32ˉlittle(State, 13u32),
+        Bytesˉreadˉu32ˉlittle(State, 17u32),
+        Bytesˉreadˉu32ˉlittle(State, 21u32),
+        Bytesˉreadˉu32ˉlittle(State, 25u32),
+        Bytesˉreadˉu32ˉlittle(State, 29u32),
+        Bytesˉreadˉu32ˉlittle(State, 33u32),
+        Bytesˉreadˉu32ˉlittle(State, 37u32)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉvalue(
+    Input: bytes,
+    Instructionˉoffset: u32,
+    Opcode: u8,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: bytes
+) -> bytes {
+    let Current: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+        Decodeˉstate(Input, State);
+    if !Current.Valid { return Bytesˉslice(Input, 0u32, 0u32); }
+    let Result: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+        Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
+            Input,
+            Instructionˉoffset,
+            Opcode,
+            Types,
+            Current
+        );
+    if !Result.Valid { return Bytesˉslice(Input, 0u32, 0u32); }
+    return Encodeˉstate(Result);
+}

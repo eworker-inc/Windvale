@@ -217,6 +217,12 @@ owner with no uncovered specification path.
 
 ### Slice 2: Bundle 1 writer and read-only verifier
 
+Decision 0561 implements the bounded in-memory portion of this slice. Distinct
+Windvale-written writer and verifier tools produce and admit the exact WVDB Query
+bundle, and the permanent owner pins its identity and malformed-input self-test.
+The larger streaming boundary remains Slice 3 rather than weakening the 4 MiB
+implementation policy.
+
 Promote only the Bundle 1 header and index sections of the architecture into a
 specification. Implement a deterministic writer over the two real package outputs
 and a separate read-only verifier. Start with bounded in-memory fixtures while the
@@ -260,6 +266,12 @@ Exit gate: one completely offline directory authenticates an exact Release and
 the two package bundles on Windows and Linux without network or ambient trust.
 
 ### Slice 5: immutable local object store
+
+Decision 0561 also implements the Milestone 2 publication subset: an already
+admitted bundle publishes digest-derived blobs and the bundle through private
+reread-verified files, rejects identity corruption, and proves idempotent repeat
+publication. This is not yet the general semantic request/response service,
+durable activation store, or crash matrix required to complete this full slice.
 
 Define the semantic package-store request/response contract and paired host
 adapters. Reuse the proven native publication transaction states: private sibling,
@@ -308,10 +320,13 @@ wv rollback
 wv run <command> -- <arguments>
 ```
 
-Install per-user first. The host installer places only the launcher, initial
-client generation, trust root, official source configuration, and PATH shim.
-Compiler, assembler, linker, runtime, inspector, WVDB Query, and later applications
-remain packages.
+Install per-user first. The host installer places the launcher, initial client
+generation, trust root, official source configuration, PATH shim, and one
+offline-verifiable base package set containing the compiler, assembler, linker,
+runtime, and core inspectors. These core tools retain package identities even
+when the installer embeds them for an offline first installation. WVDB Query,
+database servers, and later applications remain separate optional packages or
+projects.
 
 Exit gate: a clean Windows and Linux user profile installs the bootstrap once,
 installs both packages offline, runs the inspector and WVDB Query with exact

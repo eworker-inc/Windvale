@@ -248,7 +248,9 @@ function Add-Native-Tool-Suite {
         Add-Suite $SuiteByCommand[$Stem]
         return
     }
-    if ($Stem -eq 'Test-Retirement-Suite') {
+    if ($Stem -eq 'Create-Wvdb-Query-Fixture') {
+        Add-Suite 'wvdb-query-capability'
+    } elseif ($Stem -eq 'Test-Retirement-Suite') {
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
         Add-Suite @('os-process-object', 'os-probe')
@@ -552,6 +554,9 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Tools/Native/', [StringComparison]::Ordinal)) {
         Add-Native-Tool-Suite $Path
+    } elseif ($Path.StartsWith('Tools/Package/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Windvale.Package/', [StringComparison]::Ordinal)) {
+        Add-Suite 'package-bundle'
     } elseif ($Path.StartsWith('Tools/Windvale.Project/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
         Add-Suite 'workspace-project2'
@@ -607,16 +612,23 @@ foreach ($Path in $Paths) {
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Path.StartsWith('Libraries/Package/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Package/', [StringComparison]::Ordinal)) {
-        Add-Suite 'package-format'
+        Add-Suite @('package-format', 'package-bundle')
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
-        Add-Suite 'packages'
+        Add-Suite @('packages', 'package-bundle', 'wvdb-query-capability')
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
     } elseif ($Path -eq 'Specifications/Windvale-Package.md') {
         Add-Suite @('packages', 'package-format')
+    } elseif ($Path -eq 'Specifications/Windvale-Package-Bundle.md' -or
+        $Path -in @(
+            'Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj',
+            'Projects/Tools/Windvale-Package-Bundle-Writer.wvproj',
+            'Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj'
+        )) {
+        Add-Suite 'package-bundle'
     } elseif ($Path -eq 'Windvale.wvws' -or
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {
@@ -727,6 +739,13 @@ foreach ($Path in $Paths) {
         Add-Compiler-Suites
         Add-WebAssemblyVerification
     } elseif ($Path -in @(
+        'Runtime/Native/X64-Read-Only-Directory-Host.wva',
+        'Runtime/Native/Windows-X64-Read-Only-Directory.wva',
+        'Runtime/Native/Linux-X64-Read-Only-Directory.wva'
+    )) {
+        Add-Assembler-Suites
+        Add-Suite 'wvdb-query-capability'
+    } elseif ($Path -in @(
         'Runtime/Windvale/Native-Capability-Provider-Table-Core.wv',
         'Runtime/Windvale/Native-Capability-Provider-Table-Core.wvproj',
         'Runtime/Windvale/Native-Capability-Provider-Table-Bridge.wv',
@@ -762,6 +781,9 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Variant-Storage.wv',
         'Compiler/Windvale/Native-X64-Lowering-Runtime-Descriptors.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
@@ -776,6 +798,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'database-superblock'
         Add-Suite 'database-durable-commit'
         Require-Full-Database-Storage
+        Add-Suite 'wvdb-query-capability'
         Add-Suite 'segmented-compiler-toolset-reconstruction'
         Add-Suite @(
             'wvb-to-wvo-reconstruction',

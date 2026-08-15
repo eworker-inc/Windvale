@@ -1,0 +1,135 @@
+module Windvaleˉpackageˉbundleˉverifierˉtool profile hosted;
+
+import Windvaleˉpackageˉbundleˉverifier as Bundleˉverifier;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Statusˉtext(
+    Status: Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus
+) -> text {
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Valid {
+        return "Valid";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉsize {
+        return "Invalid-size";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉheader {
+        return "Invalid-header";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉdigest {
+        return "Invalid-index-digest";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉtext {
+        return "Invalid-index-text";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord {
+        return "Invalid-index-record";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉorder {
+        return "Invalid-index-order";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Duplicateˉrecord {
+        return "Duplicate-record";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry {
+        return "Invalid-blob-geometry";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉdigest {
+        return "Invalid-blob-digest";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Unreferencedˉblob {
+        return "Unreferenced-blob";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉpackage {
+        return "Invalid-package";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Manifestˉlockˉmismatch {
+        return "Manifest-lock-mismatch";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch {
+        return "Item-mismatch";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉexecutable {
+        return "Invalid-executable";
+    }
+    if Status == Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Wrongˉtarget {
+        return "Wrong-target";
+    }
+    return "Collection-limit";
+}
+
+fn Spanˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> text {
+    return Textˉfromˉutf8(Bytesˉslice(Input, Offset, Length));
+}
+
+fn Report(
+    Result: Bundleˉverifier.Windvaleˉpackageˉbundleˉresult,
+    Bundleˉbytes: u32
+) -> text {
+    var Value: text = Textˉconcat("bundle status=", Statusˉtext(Result.Status));
+    let Code: text = Bundleˉverifier.Windvaleˉpackageˉbundleˉdiagnosticˉcode(
+        Result.Status
+    );
+    if Result.Status != Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Valid {
+        Value = Textˉconcat(Value, Textˉconcat(" code=", Code));
+    }
+    Value = Textˉconcat(Value, Textˉconcat(" bytes=", U32ˉformat(Bundleˉbytes)));
+    if Result.Status != Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Valid {
+        return Textˉconcat(
+            Value,
+            Textˉconcat(" failure-index=", U32ˉformat(Result.Failureˉindex))
+        );
+    }
+    Value = Textˉconcat(
+        Value,
+        Textˉconcat(
+            " package=",
+            Spanˉtext(Result.Index, Result.Packageˉoffset, Result.Packageˉlength)
+        )
+    );
+    Value = Textˉconcat(
+        Value,
+        Textˉconcat(
+            " version=",
+            Spanˉtext(Result.Index, Result.Versionˉoffset, Result.Versionˉlength)
+        )
+    );
+    Value = Textˉconcat(
+        Value,
+        Textˉconcat(
+            " target=",
+            Spanˉtext(Result.Index, Result.Targetˉoffset, Result.Targetˉlength)
+        )
+    );
+    Value = Textˉconcat(Value, Textˉconcat(" items=", U32ˉformat(Result.Items)));
+    Value = Textˉconcat(Value, Textˉconcat(" blobs=", U32ˉformat(Result.Blobs)));
+    return Textˉconcat(
+        Value,
+        Textˉconcat(" sha256=", Textˉfromˉutf8(Result.Digest))
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: wvbundle-verify <bundle.wvbundle>");
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Result: Bundleˉverifier.Windvaleˉpackageˉbundleˉresult =
+        Bundleˉverifier.Windvaleˉpackageˉbundleˉverify(Input);
+    let Description: text = Report(Result, Bytesˉlength(Input));
+    if Result.Status != Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Valid {
+        diagnostic.write_line(Description);
+        return 1;
+    }
+    console.write_line(Description);
+    return 0;
+}

@@ -34,7 +34,7 @@ cmp --silent "$temporary_directory/First.wvb" "$temporary_directory/Second.wvb" 
 first_bytes=$(wc -c < "$temporary_directory/First.wvb") || exit 1
 first_digest_line=$(sha256sum -- "$temporary_directory/First.wvb") || exit 1
 first_sha256=${first_digest_line%% *}
-[[ $first_bytes -eq 25763 && $first_sha256 == 063a23023d2baedbf21503ae43d4c3eac13a0e77bf87d0b41182518bf88f53f8 ]] || exit 1
+[[ $first_bytes -eq 26294 && $first_sha256 == 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 ]] || exit 1
 
 "$script_directory/Inspect-Wvb.sh" "$temporary_directory/First.wvb" >"$temporary_directory/Inspect.txt" || exit $?
 capability_count=$(grep -c '^capability index=' "$temporary_directory/Inspect.txt") || exit 1

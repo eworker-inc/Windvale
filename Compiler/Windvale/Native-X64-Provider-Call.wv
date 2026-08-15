@@ -49,6 +49,7 @@ export fn Compilerˉnativeˉx64ˉproviderˉcallˉbytes() -> u32 {
 export fn Compilerˉnativeˉx64ˉemitˉproviderˉcall(
     Input: bytes,
     Capabilityˉindex: u32,
+    Argumentˉcount: u32,
     Firstˉsource: u32,
     Secondˉsource: u32,
     Thirdˉsource: u32,
@@ -57,7 +58,8 @@ export fn Compilerˉnativeˉx64ˉemitˉproviderˉcall(
     Resultˉtarget: u32,
     Failureˉtarget: u32
 ) -> Compilerˉnativeˉx64ˉproviderˉcallˉemission {
-    if Capabilityˉindex >= 32u32 ||
+    if Capabilityˉindex >= 32u32 || Argumentˉcount == 0u32 ||
+        Argumentˉcount > 5u32 ||
         Firstˉsource >= 2048u32 || Secondˉsource >= 2048u32 ||
         Thirdˉsource >= 2048u32 || Fourthˉsource >= 2048u32 ||
         Fifthˉsource >= 2048u32 || Resultˉtarget >= 2048u32 {
@@ -87,7 +89,7 @@ export fn Compilerˉnativeˉx64ˉemitˉproviderˉcall(
     Result = Appendˉfour(Result, 72u8, 141u8, 140u8, 36u8);
     Result = Appendˉu32(Result, 80u32 + Resultˉtarget * 16u32);
     Result = Appendˉu8(Result, 186u8);
-    Result = Appendˉu32(Result, 5u32);
+    Result = Appendˉu32(Result, Argumentˉcount);
     Result = Appendˉu8(Result, 255u8);
     Result = Appendˉu8(Result, 208u8);
     Result = Appendˉfour(Result, 72u8, 131u8, 196u8, 80u8);

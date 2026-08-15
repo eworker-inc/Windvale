@@ -13,7 +13,7 @@ export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() -> u32 {
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() -> u32 {
-    return 512u32;
+    return 1024u32;
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉappend(

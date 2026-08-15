@@ -127,23 +127,23 @@ verify_file() {
     fi
 }
 
-verify_file "$wvo_staging_wvb" 482789 \
-    35c7be9284e3a9f180e13f3b20b1c0fe72f7b0b227c94f18b4dd47c56d86eeea \
+verify_file "$wvo_staging_wvb" 526914 \
+    c20f22cec9ce735ccde9904fc08d64c8c9c91e086bfd35292abd1832731ccff7 \
     'WVO staging producer WVB' || exit 1
-verify_file "$output_root/windows-x64-wvstage.exe" 6935552 \
-    292514068284da40eb0f288bfb4564ab7802d1fc8b03f80e6a5a3d45a311f7b4 \
+verify_file "$output_root/windows-x64-wvstage.exe" 7711232 \
+    4b7d9cc05e98fbe0277b86e7a1a5a288892caf8c2f9e9ca91e8050f479064884 \
     'Windows WVO staging producer' || exit 1
-verify_file "$output_root/linux-x64-wvstage.elf" 6934528 \
-    812671adda682daf49902eb1679b49a40811a113cc6b951de727926ee8348d66 \
+verify_file "$output_root/linux-x64-wvstage.elf" 7712768 \
+    fe95f58555d63b2b09fe166958e9a4e25bd6093d130683c8128658a9cfa51c60 \
     'Linux WVO staging producer' || exit 1
 verify_file "$image_staging_wvb" 75553 \
-    67a7b2142f5a95b5ce2e49b9c329ad7908d37418bc6cfd2b2b773c6b97b06265 \
+    5795ccd8f12266f0228b7191680dc6881f5a09ddb81973ee6225d24fa38a60bb \
     'compiler-image staging WVB' || exit 1
 verify_file "$output_root/windows-x64-wvlinkstage.exe" 852480 \
-    32fc318be24b6dcd7f67720098242872c3b2d2b960b7c75e7418a89f92b7bf43 \
+    bbef433e11eb63d265cee5a7439d5e500163a27723d72ac7a805fb7eb0181844 \
     'Windows compiler-image staging application' || exit 1
 verify_file "$output_root/linux-x64-wvlinkstage.elf" 851968 \
-    baa183ff2318ace7e29d9aed39b1261d7887403674e52466efeb5fa12d88c8b8 \
+    0762483a8c4d68bdb246100f757890a1ee22b42e1b2f4b67cd08d1d2d102aa0b \
     'Linux compiler-image staging application' || exit 1
 verify_file "$transport_wvb" 23836 \
     dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d \

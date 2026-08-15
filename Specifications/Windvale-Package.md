@@ -160,7 +160,8 @@ missing lock, rejects a copied manifest at an alternate identity, and proves tha
 failed admission preserves an existing output.
 
 This qualifies deterministic local build, inspection, locked-input rejection, and
-publication behavior. It does not qualify runtime provider binding or application
-execution. The current native runner cannot yet bind
-`filesystem.directory_read_v1`; cross-host execution and capability-denial
-evidence remain the next package-application slice.
+publication behavior. Decision 0561's separate Bundle 1 and WVDB Query owners now
+add immutable content-addressed publication, fixed
+`filesystem.directory_read_v1` binding, application execution, and explicit
+missing, denied, and unavailable evidence. Exact paired-host promotion remains
+the boundary for claiming the complete package-backed application milestone.

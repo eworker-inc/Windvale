@@ -18,7 +18,7 @@ if /I not "%Manifest%"=="%ExpectedManifest%" (
     exit /b 64
 )
 
-call :verify_file "%Lock%" 1750 51d918b47e0dfb05f4d4aed0aff9f322a247e544b46c48a220fb9567be04612e "package lock"
+call :verify_file "%Lock%" 1750 ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618 "package lock"
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%Manifest%" 866 835f573302377fdd38e4c3d51fa9106397beba0b9813f99bfc3143d08a156406 "package manifest"
 if errorlevel 1 goto :lock_rejected
@@ -28,7 +28,7 @@ call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Seed\Wvb\Windvale-
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Projects\Applications\Windvale-Wvdb-Query.wvproj" 270 86570daa0dac6410dc8a64947901a3fc955db24afe3589bc70986f96abb8f49a "project"
 if errorlevel 1 goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Applications\Database\Wvdb-Query.wv" 2721 1159c10ae4b565e382c57cdf1dcc07311da961fede5e73bb950bca80c9c1a77b "application part"
+call :verify_file "%RepositoryRoot%\Applications\Database\Wvdb-Query.wv" 3168 22d1fb0b883383fd51cd103d9b831d500178bbedc3d79df12dc86af74070c2d8 "application part"
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Foundation\Decimal-Parsing.wv" 1276 797eb31da7e7a8c93e0d082bf910bc6d8e7988bcfad757a87c979075912e668a "decimal part"
 if errorlevel 1 goto :lock_rejected
@@ -50,11 +50,11 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Applications\Windvale-Wvdb-Query.wvproj" ^
     "%Candidate%" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%Candidate%" 25763 063a23023d2baedbf21503ae43d4c3eac13a0e77bf87d0b41182518bf88f53f8 "locked output"
+call :verify_file "%Candidate%" 26294 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 "locked output"
 if errorlevel 1 goto :cleanup
 "%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvpublish.exe" "%Candidate%" "%Output%" >nul
 if errorlevel 1 goto :cleanup
-echo package status=Published root=windvale.wvdb-query target=hosted-wvb-v1 bytes=25763 sha256=063a23023d2baedbf21503ae43d4c3eac13a0e77bf87d0b41182518bf88f53f8
+echo package status=Published root=windvale.wvdb-query target=hosted-wvb-v1 bytes=26294 sha256=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2
 set "Result=0"
 
 :cleanup

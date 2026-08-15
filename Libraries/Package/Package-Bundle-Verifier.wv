@@ -1,0 +1,1085 @@
+module Windvaleˉpackageˉbundleˉverifier profile portable;
+
+import Foundationˉsha256 as Sha256;
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
+import Windvaleˉpackageˉconsistency as Consistency;
+import Windvaleˉpackageˉlock as Lock;
+import Windvaleˉpackageˉmanifest as Manifest;
+import Windvaleˉpackageˉtext as Packageˉtext;
+
+export enum Windvaleˉpackageˉbundleˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1401;
+    Invalidˉheader = 1402;
+    Invalidˉindexˉdigest = 1403;
+    Invalidˉindexˉtext = 1404;
+    Invalidˉindexˉrecord = 1405;
+    Invalidˉindexˉorder = 1406;
+    Duplicateˉrecord = 1407;
+    Invalidˉblobˉgeometry = 1408;
+    Invalidˉblobˉdigest = 1409;
+    Unreferencedˉblob = 1410;
+    Invalidˉpackage = 1411;
+    Manifestˉlockˉmismatch = 1412;
+    Itemˉmismatch = 1413;
+    Invalidˉexecutable = 1414;
+    Wrongˉtarget = 1415;
+    Collectionˉlimit = 1416;
+}
+
+export record Windvaleˉpackageˉbundleˉitem {
+    Found: bool;
+    Roleˉoffset: u32;
+    Roleˉlength: u32;
+    Identifierˉoffset: u32;
+    Identifierˉlength: u32;
+    Targetˉoffset: u32;
+    Targetˉlength: u32;
+    Digestˉoffset: u32;
+    Digestˉlength: u32;
+}
+
+export record Windvaleˉpackageˉbundleˉblob {
+    Found: bool;
+    Digestˉoffset: u32;
+    Digestˉlength: u32;
+    Bytes: u32;
+    Contentˉoffset: u32;
+}
+
+export record Windvaleˉpackageˉbundleˉresult {
+    Status: Windvaleˉpackageˉbundleˉstatus;
+    Failureˉindex: u32;
+    Items: u32;
+    Blobs: u32;
+    Index: bytes;
+    Directory: bytes;
+    Contentˉoffset: u32;
+    Packageˉoffset: u32;
+    Packageˉlength: u32;
+    Versionˉoffset: u32;
+    Versionˉlength: u32;
+    Targetˉoffset: u32;
+    Targetˉlength: u32;
+    Manifestˉdigestˉoffset: u32;
+    Manifestˉdigestˉlength: u32;
+    Manifestˉbytes: u32;
+    Lockˉdigestˉoffset: u32;
+    Lockˉdigestˉlength: u32;
+    Lockˉbytes: u32;
+    Digest: bytes;
+}
+
+record Windvaleˉpackageˉbundleˉdecimal {
+    Valid: bool;
+    Value: u32;
+}
+
+record Windvaleˉpackageˉbundleˉindexˉscan {
+    Status: Windvaleˉpackageˉbundleˉstatus;
+    Failureˉindex: u32;
+    Packageˉoffset: u32;
+    Packageˉlength: u32;
+    Versionˉoffset: u32;
+    Versionˉlength: u32;
+    Targetˉoffset: u32;
+    Targetˉlength: u32;
+    Manifestˉdigestˉoffset: u32;
+    Manifestˉdigestˉlength: u32;
+    Manifestˉbytes: u32;
+    Lockˉdigestˉoffset: u32;
+    Lockˉdigestˉlength: u32;
+    Lockˉbytes: u32;
+    Directory: bytes;
+}
+
+const BUNDLE_HEADER_BYTES: u32 = 128u32;
+const BUNDLE_INDEX_LIMIT: u32 = 1048576u32;
+const BUNDLE_TOTAL_LIMIT: u64 = 2147483648u64;
+const BUNDLE_COLLECTION_LIMIT: u32 = 4096u32;
+const ITEM_DIRECTORY_BYTES: u32 = 32u32;
+const BLOB_DIRECTORY_BYTES: u32 = 16u32;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Emptyˉitem() -> Windvaleˉpackageˉbundleˉitem {
+    return Windvaleˉpackageˉbundleˉitem(
+        false,
+        0u32, 0u32,
+        0u32, 0u32,
+        0u32, 0u32,
+        0u32, 0u32
+    );
+}
+
+fn Emptyˉblob() -> Windvaleˉpackageˉbundleˉblob {
+    return Windvaleˉpackageˉbundleˉblob(false, 0u32, 0u32, 0u32, 0u32);
+}
+
+fn Failure(
+    Input: bytes,
+    Status: Windvaleˉpackageˉbundleˉstatus,
+    Failureˉindex: u32
+) -> Windvaleˉpackageˉbundleˉresult {
+    let Nothing: bytes = Empty(Input);
+    return Windvaleˉpackageˉbundleˉresult(
+        Status,
+        Failureˉindex,
+        0u32,
+        0u32,
+        Nothing,
+        Nothing,
+        0u32,
+        0u32, 0u32,
+        0u32, 0u32,
+        0u32, 0u32,
+        0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32,
+        Nothing
+    );
+}
+
+fn Indexˉfailure(
+    Input: bytes,
+    Status: Windvaleˉpackageˉbundleˉstatus,
+    Failureˉindex: u32
+) -> Windvaleˉpackageˉbundleˉindexˉscan {
+    return Windvaleˉpackageˉbundleˉindexˉscan(
+        Status,
+        Failureˉindex,
+        0u32, 0u32,
+        0u32, 0u32,
+        0u32, 0u32,
+        0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32,
+        Empty(Input)
+    );
+}
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Appendˉspan(
+    Value: bytes,
+    Span: Packageˉtext.Windvaleˉpackageˉspan
+) -> bytes {
+    var Result: bytes = Appendˉu32(Value, Span.Offset);
+    return Appendˉu32(Result, Span.Length);
+}
+
+fn Tokenˉspan(
+    Input: bytes,
+    Line: Packageˉtext.Windvaleˉpackageˉline,
+    Index: u32
+) -> Packageˉtext.Windvaleˉpackageˉspan {
+    return Packageˉtext.Windvaleˉpackageˉtokenˉspan(
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, Index)
+    );
+}
+
+fn Decimalˉu32(
+    Input: bytes,
+    Span: Packageˉtext.Windvaleˉpackageˉspan
+) -> Windvaleˉpackageˉbundleˉdecimal {
+    if !Packageˉtext.Windvaleˉpackageˉspanˉvalid(Input, Span) ||
+        Span.Length == 0u32 || Span.Length > 10u32 {
+        return Windvaleˉpackageˉbundleˉdecimal(false, 0u32);
+    }
+    if Span.Length > 1u32 && Bytesˉreadˉu8(Input, Span.Offset) == 48u8 {
+        return Windvaleˉpackageˉbundleˉdecimal(false, 0u32);
+    }
+    var Value: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        let Character: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Input, Span.Offset + Index)
+        );
+        if Character < 48u32 || Character > 57u32 {
+            return Windvaleˉpackageˉbundleˉdecimal(false, 0u32);
+        }
+        let Digit: u32 = Character - 48u32;
+        if Value > 214748364u32 ||
+            (Value == 214748364u32 && Digit > 8u32) {
+            return Windvaleˉpackageˉbundleˉdecimal(false, 0u32);
+        }
+        Value = Value * 10u32 + Digit;
+        Index = Index + 1u32;
+    }
+    return Windvaleˉpackageˉbundleˉdecimal(true, Value);
+}
+
+fn Itemˉfromˉdirectory(
+    Directory: bytes,
+    Items: u32,
+    Index: u32
+) -> Windvaleˉpackageˉbundleˉitem {
+    if Index >= Items { return Emptyˉitem(); }
+    let Offset: u32 = Index * ITEM_DIRECTORY_BYTES;
+    if Offset > Bytesˉlength(Directory) ||
+        ITEM_DIRECTORY_BYTES > Bytesˉlength(Directory) - Offset {
+        return Emptyˉitem();
+    }
+    return Windvaleˉpackageˉbundleˉitem(
+        true,
+        Bytesˉreadˉu32ˉlittle(Directory, Offset),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 8u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 12u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 16u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 20u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 24u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 28u32)
+    );
+}
+
+fn Blobˉfromˉdirectory(
+    Directory: bytes,
+    Items: u32,
+    Blobs: u32,
+    Index: u32
+) -> Windvaleˉpackageˉbundleˉblob {
+    if Index >= Blobs { return Emptyˉblob(); }
+    let Offset: u32 = Items * ITEM_DIRECTORY_BYTES +
+        Index * BLOB_DIRECTORY_BYTES;
+    if Offset > Bytesˉlength(Directory) ||
+        BLOB_DIRECTORY_BYTES > Bytesˉlength(Directory) - Offset {
+        return Emptyˉblob();
+    }
+    return Windvaleˉpackageˉbundleˉblob(
+        true,
+        Bytesˉreadˉu32ˉlittle(Directory, Offset),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 8u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 12u32)
+    );
+}
+
+export fn Windvaleˉpackageˉbundleˉitemˉat(
+    Result: Windvaleˉpackageˉbundleˉresult,
+    Index: u32
+) -> Windvaleˉpackageˉbundleˉitem {
+    if Result.Status != Windvaleˉpackageˉbundleˉstatus.Valid {
+        return Emptyˉitem();
+    }
+    return Itemˉfromˉdirectory(Result.Directory, Result.Items, Index);
+}
+
+export fn Windvaleˉpackageˉbundleˉblobˉat(
+    Result: Windvaleˉpackageˉbundleˉresult,
+    Index: u32
+) -> Windvaleˉpackageˉbundleˉblob {
+    if Result.Status != Windvaleˉpackageˉbundleˉstatus.Valid {
+        return Emptyˉblob();
+    }
+    return Blobˉfromˉdirectory(
+        Result.Directory, Result.Items, Result.Blobs, Index
+    );
+}
+
+fn Spanˉcompare(
+    Input: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> i32 {
+    return Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+        Input,
+        Packageˉtext.Windvaleˉpackageˉspan(Leftˉoffset, Leftˉlength),
+        Input,
+        Packageˉtext.Windvaleˉpackageˉspan(Rightˉoffset, Rightˉlength)
+    );
+}
+
+fn Itemsˉcompare(
+    Input: bytes,
+    Left: Windvaleˉpackageˉbundleˉitem,
+    Right: Windvaleˉpackageˉbundleˉitem
+) -> i32 {
+    var Compared: i32 = Spanˉcompare(
+        Input,
+        Left.Roleˉoffset, Left.Roleˉlength,
+        Right.Roleˉoffset, Right.Roleˉlength
+    );
+    if Compared != 0 { return Compared; }
+    Compared = Spanˉcompare(
+        Input,
+        Left.Identifierˉoffset, Left.Identifierˉlength,
+        Right.Identifierˉoffset, Right.Identifierˉlength
+    );
+    if Compared != 0 { return Compared; }
+    Compared = Spanˉcompare(
+        Input,
+        Left.Targetˉoffset, Left.Targetˉlength,
+        Right.Targetˉoffset, Right.Targetˉlength
+    );
+    if Compared != 0 { return Compared; }
+    return Spanˉcompare(
+        Input,
+        Left.Digestˉoffset, Left.Digestˉlength,
+        Right.Digestˉoffset, Right.Digestˉlength
+    );
+}
+
+fn Roleˉvalid(
+    Input: bytes,
+    Span: Packageˉtext.Windvaleˉpackageˉspan
+) -> bool {
+    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Span, "executable"
+    ) { return true; }
+    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Span, "library"
+    ) { return true; }
+    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Span, "resource"
+    ) { return true; }
+    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Span, "license"
+    ) { return true; }
+    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Span, "provenance"
+    ) { return true; }
+    return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Span, "qualification"
+    );
+}
+
+fn Indexˉtextˉvalid(Input: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 || Total > BUNDLE_INDEX_LIMIT ||
+        !Textˉutf8ˉisˉvalid(Input) ||
+        Bytesˉreadˉu8(Input, Total - 1u32) != 10u8 {
+        return false;
+    }
+    if Total >= 3u32 &&
+        Bytesˉreadˉu8(Input, 0u32) == 239u8 &&
+        Bytesˉreadˉu8(Input, 1u32) == 187u8 &&
+        Bytesˉreadˉu8(Input, 2u32) == 191u8 {
+        return false;
+    }
+    var Cursor: u32 = 0u32;
+    while Cursor < Total {
+        let Line: Packageˉtext.Windvaleˉpackageˉline =
+            Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+        if !Line.Valid { return false; }
+        let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
+            Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+        if !Tokens.Valid { return false; }
+        Cursor = Line.Nextˉoffset;
+    }
+    return Cursor == Total;
+}
+
+fn Scanˉindex(
+    Input: bytes,
+    Items: u32,
+    Blobs: u32
+) -> Windvaleˉpackageˉbundleˉindexˉscan {
+    if !Indexˉtextˉvalid(Input) {
+        return Indexˉfailure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉtext, 0u32
+        );
+    }
+    if Items == 0u32 || Blobs == 0u32 ||
+        Items > BUNDLE_COLLECTION_LIMIT || Blobs > BUNDLE_COLLECTION_LIMIT {
+        return Indexˉfailure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Collectionˉlimit, 0u32
+        );
+    }
+
+    var Directory: bytes = Empty(Input);
+    var Cursor: u32 = 0u32;
+    var Lineˉindex: u32 = 0u32;
+    var Packageˉoffset: u32 = 0u32;
+    var Packageˉlength: u32 = 0u32;
+    var Versionˉoffset: u32 = 0u32;
+    var Versionˉlength: u32 = 0u32;
+    var Targetˉoffset: u32 = 0u32;
+    var Targetˉlength: u32 = 0u32;
+    var Manifestˉdigestˉoffset: u32 = 0u32;
+    var Manifestˉdigestˉlength: u32 = 0u32;
+    var Manifestˉbytes: u32 = 0u32;
+    var Lockˉdigestˉoffset: u32 = 0u32;
+    var Lockˉdigestˉlength: u32 = 0u32;
+    var Lockˉbytes: u32 = 0u32;
+
+    while Cursor < Bytesˉlength(Input) {
+        let Line: Packageˉtext.Windvaleˉpackageˉline =
+            Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
+        let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
+            Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+        if Lineˉindex == 0u32 {
+            if Tokens.Count != 2u32 ||
+                !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Tokenˉspan(Input, Line, 0u32),
+                    "windvale-bundle-index"
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Tokenˉspan(Input, Line, 1u32), "1"
+                ) {
+                return Indexˉfailure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+                    Lineˉindex
+                );
+            }
+        } else if Lineˉindex == 1u32 {
+            let Packageˉspan: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 1u32);
+            let Versionˉspan: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 2u32);
+            let Targetˉspan: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 3u32);
+            if Tokens.Count != 4u32 ||
+                !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Tokenˉspan(Input, Line, 0u32), "package"
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(
+                    Input, Packageˉspan
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(
+                    Input, Versionˉspan
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(
+                    Input, Targetˉspan
+                ) {
+                return Indexˉfailure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+                    Lineˉindex
+                );
+            }
+            Packageˉoffset = Packageˉspan.Offset;
+            Packageˉlength = Packageˉspan.Length;
+            Versionˉoffset = Versionˉspan.Offset;
+            Versionˉlength = Versionˉspan.Length;
+            Targetˉoffset = Targetˉspan.Offset;
+            Targetˉlength = Targetˉspan.Length;
+        } else if Lineˉindex == 2u32 || Lineˉindex == 3u32 {
+            var Expected: text = "manifest";
+            if Lineˉindex == 3u32 { Expected = "lock"; }
+            let Digest: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 1u32);
+            let Byteˉspan: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 2u32);
+            let Parsed: Windvaleˉpackageˉbundleˉdecimal =
+                Decimalˉu32(Input, Byteˉspan);
+            if Tokens.Count != 3u32 ||
+                !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Tokenˉspan(Input, Line, 0u32), Expected
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Digest) ||
+                !Parsed.Valid {
+                return Indexˉfailure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+                    Lineˉindex
+                );
+            }
+            if Lineˉindex == 2u32 {
+                Manifestˉdigestˉoffset = Digest.Offset;
+                Manifestˉdigestˉlength = Digest.Length;
+                Manifestˉbytes = Parsed.Value;
+            } else {
+                Lockˉdigestˉoffset = Digest.Offset;
+                Lockˉdigestˉlength = Digest.Length;
+                Lockˉbytes = Parsed.Value;
+            }
+        } else if Lineˉindex < 4u32 + Items {
+            let Role: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 1u32);
+            let Identifier: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 2u32);
+            let Target: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 3u32);
+            let Itemˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 4u32);
+            if Tokens.Count != 5u32 ||
+                !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Tokenˉspan(Input, Line, 0u32), "item"
+                ) || !Roleˉvalid(Input, Role) ||
+                !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(
+                    Input, Identifier
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(
+                    Input, Target
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(
+                    Input, Itemˉdigest
+                ) {
+                return Indexˉfailure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+                    Lineˉindex
+                );
+            }
+            let Current: Windvaleˉpackageˉbundleˉitem =
+                Windvaleˉpackageˉbundleˉitem(
+                    true,
+                    Role.Offset, Role.Length,
+                    Identifier.Offset, Identifier.Length,
+                    Target.Offset, Target.Length,
+                    Itemˉdigest.Offset, Itemˉdigest.Length
+                );
+            let Itemˉindex: u32 = Lineˉindex - 4u32;
+            if Itemˉindex > 0u32 {
+                let Previousˉitem: Windvaleˉpackageˉbundleˉitem =
+                    Itemˉfromˉdirectory(Directory, Items, Itemˉindex - 1u32);
+                let Itemˉcomparison: i32 =
+                    Itemsˉcompare(Input, Previousˉitem, Current);
+                if Itemˉcomparison == 0 {
+                    return Indexˉfailure(
+                        Input,
+                        Windvaleˉpackageˉbundleˉstatus.Duplicateˉrecord,
+                        Itemˉindex
+                    );
+                }
+                if Itemˉcomparison > 0 {
+                    return Indexˉfailure(
+                        Input,
+                        Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉorder,
+                        Itemˉindex
+                    );
+                }
+            }
+            Directory = Appendˉspan(Directory, Role);
+            Directory = Appendˉspan(Directory, Identifier);
+            Directory = Appendˉspan(Directory, Target);
+            Directory = Appendˉspan(Directory, Itemˉdigest);
+        } else {
+            let Blobˉindex: u32 = Lineˉindex - 4u32 - Items;
+            if Blobˉindex >= Blobs {
+                return Indexˉfailure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+                    Lineˉindex
+                );
+            }
+            let Blobˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 1u32);
+            let Bytesˉspan: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 2u32);
+            let Offsetˉspan: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(Input, Line, 3u32);
+            let Parsedˉbytes: Windvaleˉpackageˉbundleˉdecimal =
+                Decimalˉu32(Input, Bytesˉspan);
+            let Parsedˉoffset: Windvaleˉpackageˉbundleˉdecimal =
+                Decimalˉu32(Input, Offsetˉspan);
+            if Tokens.Count != 4u32 ||
+                !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                    Input, Tokenˉspan(Input, Line, 0u32), "blob"
+                ) ||
+                !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(
+                    Input, Blobˉdigest
+                ) ||
+                !Parsedˉbytes.Valid || !Parsedˉoffset.Valid {
+                return Indexˉfailure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+                    Lineˉindex
+                );
+            }
+            if Blobˉindex > 0u32 {
+                let Previousˉblob: Windvaleˉpackageˉbundleˉblob =
+                    Blobˉfromˉdirectory(
+                        Directory, Items, Blobs, Blobˉindex - 1u32
+                    );
+                let Blobˉcomparison: i32 = Spanˉcompare(
+                    Input,
+                    Previousˉblob.Digestˉoffset,
+                    Previousˉblob.Digestˉlength,
+                    Blobˉdigest.Offset,
+                    Blobˉdigest.Length
+                );
+                if Blobˉcomparison == 0 {
+                    return Indexˉfailure(
+                        Input,
+                        Windvaleˉpackageˉbundleˉstatus.Duplicateˉrecord,
+                        Blobˉindex
+                    );
+                }
+                if Blobˉcomparison > 0 {
+                    return Indexˉfailure(
+                        Input,
+                        Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉorder,
+                        Blobˉindex
+                    );
+                }
+            }
+            Directory = Appendˉspan(Directory, Blobˉdigest);
+            Directory = Appendˉu32(Directory, Parsedˉbytes.Value);
+            Directory = Appendˉu32(Directory, Parsedˉoffset.Value);
+        }
+        Cursor = Line.Nextˉoffset;
+        Lineˉindex = Lineˉindex + 1u32;
+    }
+
+    if Lineˉindex != 4u32 + Items + Blobs {
+        return Indexˉfailure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord,
+            Lineˉindex
+        );
+    }
+    return Windvaleˉpackageˉbundleˉindexˉscan(
+        Windvaleˉpackageˉbundleˉstatus.Valid,
+        0u32,
+        Packageˉoffset, Packageˉlength,
+        Versionˉoffset, Versionˉlength,
+        Targetˉoffset, Targetˉlength,
+        Manifestˉdigestˉoffset, Manifestˉdigestˉlength, Manifestˉbytes,
+        Lockˉdigestˉoffset, Lockˉdigestˉlength, Lockˉbytes,
+        Directory
+    );
+}
+
+fn Rawˉdigestˉmatches(Input: bytes, Offset: u32, Hex: bytes) -> bool {
+    if Bytesˉlength(Hex) != 64u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let Highˉcharacter: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Hex, Index * 2u32)
+        );
+        let Lowˉcharacter: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Hex, Index * 2u32 + 1u32)
+        );
+        var High: u32 = Highˉcharacter - 48u32;
+        var Low: u32 = Lowˉcharacter - 48u32;
+        if Highˉcharacter >= 97u32 { High = Highˉcharacter - 87u32; }
+        if Lowˉcharacter >= 97u32 { Low = Lowˉcharacter - 87u32; }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Index)) !=
+            High * 16u32 + Low {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Spansˉequal(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    return Packageˉtext.Windvaleˉpackageˉspansˉequal(
+        Left,
+        Packageˉtext.Windvaleˉpackageˉspan(Leftˉoffset, Leftˉlength),
+        Right,
+        Packageˉtext.Windvaleˉpackageˉspan(Rightˉoffset, Rightˉlength)
+    );
+}
+
+fn Findˉblob(
+    Index: bytes,
+    Directory: bytes,
+    Items: u32,
+    Blobs: u32,
+    Digestˉoffset: u32,
+    Digestˉlength: u32
+) -> Windvaleˉpackageˉbundleˉblob {
+    var Blobˉindex: u32 = 0u32;
+    while Blobˉindex < Blobs {
+        let Blob: Windvaleˉpackageˉbundleˉblob = Blobˉfromˉdirectory(
+            Directory, Items, Blobs, Blobˉindex
+        );
+        if Spansˉequal(
+            Index, Blob.Digestˉoffset, Blob.Digestˉlength,
+            Index, Digestˉoffset, Digestˉlength
+        ) { return Blob; }
+        Blobˉindex = Blobˉindex + 1u32;
+    }
+    return Emptyˉblob();
+}
+
+fn Blobˉreferenced(
+    Index: bytes,
+    Scan: Windvaleˉpackageˉbundleˉindexˉscan,
+    Items: u32,
+    Blob: Windvaleˉpackageˉbundleˉblob
+) -> bool {
+    if Spansˉequal(
+        Index, Blob.Digestˉoffset, Blob.Digestˉlength,
+        Index, Scan.Manifestˉdigestˉoffset, Scan.Manifestˉdigestˉlength
+    ) || Spansˉequal(
+        Index, Blob.Digestˉoffset, Blob.Digestˉlength,
+        Index, Scan.Lockˉdigestˉoffset, Scan.Lockˉdigestˉlength
+    ) { return true; }
+    var Itemˉindex: u32 = 0u32;
+    while Itemˉindex < Items {
+        let Item: Windvaleˉpackageˉbundleˉitem = Itemˉfromˉdirectory(
+            Scan.Directory, Items, Itemˉindex
+        );
+        if Spansˉequal(
+            Index, Blob.Digestˉoffset, Blob.Digestˉlength,
+            Index, Item.Digestˉoffset, Item.Digestˉlength
+        ) { return true; }
+        Itemˉindex = Itemˉindex + 1u32;
+    }
+    return false;
+}
+
+export fn Windvaleˉpackageˉbundleˉverify(
+    Input: bytes
+) -> Windvaleˉpackageˉbundleˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < BUNDLE_HEADER_BYTES || U64ˉfromˉu32(Total) > BUNDLE_TOTAL_LIMIT {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉsize, Total
+        );
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 80u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 66u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != BUNDLE_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 ||
+        Bytesˉreadˉu64ˉlittle(Input, 16u32) != U64ˉfromˉu32(Total) ||
+        Bytesˉreadˉu64ˉlittle(Input, 24u32) !=
+            U64ˉfromˉu32(BUNDLE_HEADER_BYTES) {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉheader, 0u32
+        );
+    }
+    var Reserved: u32 = 96u32;
+    while Reserved < BUNDLE_HEADER_BYTES {
+        if Bytesˉreadˉu8(Input, Reserved) != 0u8 {
+            return Failure(
+                Input,
+                Windvaleˉpackageˉbundleˉstatus.Invalidˉheader,
+                Reserved
+            );
+        }
+        Reserved = Reserved + 1u32;
+    }
+
+    let Indexˉbytesˉwide: u64 = Bytesˉreadˉu64ˉlittle(Input, 32u32);
+    if Indexˉbytesˉwide == 0u64 ||
+        Indexˉbytesˉwide > U64ˉfromˉu32(BUNDLE_INDEX_LIMIT) {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉheader, 32u32
+        );
+    }
+    if Indexˉbytesˉwide > U64ˉfromˉu32(Total - BUNDLE_HEADER_BYTES) {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉheader, 32u32
+        );
+    }
+    let Contentˉoffsetˉwide: u64 = Bytesˉreadˉu64ˉlittle(Input, 40u32);
+    let Contentˉbytesˉwide: u64 = Bytesˉreadˉu64ˉlittle(Input, 48u32);
+    let Indexˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉheader, 36u32
+        );
+    }
+    let Contentˉoffset: u32 = BUNDLE_HEADER_BYTES + Indexˉbytes;
+    if Contentˉoffsetˉwide != U64ˉfromˉu32(Contentˉoffset) ||
+        Contentˉbytesˉwide != U64ˉfromˉu32(Total - Contentˉoffset) {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉheader, 40u32
+        );
+    }
+    let Blobs: u32 = Bytesˉreadˉu32ˉlittle(Input, 56u32);
+    let Items: u32 = Bytesˉreadˉu32ˉlittle(Input, 60u32);
+    if Blobs == 0u32 || Items == 0u32 ||
+        Blobs > BUNDLE_COLLECTION_LIMIT || Items > BUNDLE_COLLECTION_LIMIT {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Collectionˉlimit,
+            56u32
+        );
+    }
+
+    let Index: bytes = Bytesˉslice(
+        Input, BUNDLE_HEADER_BYTES, Indexˉbytes
+    );
+    let Indexˉdigest: bytes = Sha256.Foundationˉsha256ˉhex(Index);
+    if !Rawˉdigestˉmatches(Input, 64u32, Indexˉdigest) {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉdigest,
+            64u32
+        );
+    }
+    let Scan: Windvaleˉpackageˉbundleˉindexˉscan =
+        Scanˉindex(Index, Items, Blobs);
+    if Scan.Status != Windvaleˉpackageˉbundleˉstatus.Valid {
+        return Failure(Input, Scan.Status, Scan.Failureˉindex);
+    }
+
+    let Contentˉbytes: u32 = Total - Contentˉoffset;
+    var Expectedˉoffset: u32 = 0u32;
+    var Blobˉindex: u32 = 0u32;
+    while Blobˉindex < Blobs {
+        let Blob: Windvaleˉpackageˉbundleˉblob = Blobˉfromˉdirectory(
+            Scan.Directory, Items, Blobs, Blobˉindex
+        );
+        if !Blob.Found || Blob.Contentˉoffset != Expectedˉoffset ||
+            Blob.Bytes > Contentˉbytes - Expectedˉoffset {
+            return Failure(
+                Input,
+                Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry,
+                Blobˉindex
+            );
+        }
+        let Value: bytes = Bytesˉslice(
+            Input, Contentˉoffset + Blob.Contentˉoffset, Blob.Bytes
+        );
+        let Digest: bytes = Sha256.Foundationˉsha256ˉhex(Value);
+        if !Spansˉequal(
+            Digest, 0u32, Bytesˉlength(Digest),
+            Index, Blob.Digestˉoffset, Blob.Digestˉlength
+        ) {
+            return Failure(
+                Input,
+                Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉdigest,
+                Blobˉindex
+            );
+        }
+        if !Blobˉreferenced(Index, Scan, Items, Blob) {
+            return Failure(
+                Input,
+                Windvaleˉpackageˉbundleˉstatus.Unreferencedˉblob,
+                Blobˉindex
+            );
+        }
+        Expectedˉoffset = Expectedˉoffset + Blob.Bytes;
+        Blobˉindex = Blobˉindex + 1u32;
+    }
+    if Expectedˉoffset != Contentˉbytes {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry,
+            Blobs
+        );
+    }
+
+    let Manifestˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
+        Index,
+        Scan.Directory,
+        Items,
+        Blobs,
+        Scan.Manifestˉdigestˉoffset,
+        Scan.Manifestˉdigestˉlength
+    );
+    let Lockˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
+        Index,
+        Scan.Directory,
+        Items,
+        Blobs,
+        Scan.Lockˉdigestˉoffset,
+        Scan.Lockˉdigestˉlength
+    );
+    if !Manifestˉblob.Found || !Lockˉblob.Found ||
+        Manifestˉblob.Bytes != Scan.Manifestˉbytes ||
+        Lockˉblob.Bytes != Scan.Lockˉbytes {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch,
+            0u32
+        );
+    }
+    let Manifestˉinput: bytes = Bytesˉslice(
+        Input,
+        Contentˉoffset + Manifestˉblob.Contentˉoffset,
+        Manifestˉblob.Bytes
+    );
+    let Lockˉinput: bytes = Bytesˉslice(
+        Input,
+        Contentˉoffset + Lockˉblob.Contentˉoffset,
+        Lockˉblob.Bytes
+    );
+    let Consistent: Consistency.Windvaleˉpackageˉconsistencyˉresult =
+        Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
+            Manifestˉinput, Lockˉinput
+        );
+    if Consistent.Status !=
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Manifestˉlockˉmismatch,
+            Consistent.Index
+        );
+    }
+    let Package: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
+    let Locked: Lock.Windvaleˉlockˉscan =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput);
+    if Package.Status != Manifest.Windvaleˉpackageˉstatus.Valid ||
+        Locked.Status != Lock.Windvaleˉlockˉstatus.Valid {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉpackage, 0u32
+        );
+    }
+    if !Spansˉequal(
+        Index, Scan.Packageˉoffset, Scan.Packageˉlength,
+        Manifestˉinput, Package.Nameˉoffset, Package.Nameˉlength
+    ) || !Spansˉequal(
+        Index, Scan.Versionˉoffset, Scan.Versionˉlength,
+        Manifestˉinput, Package.Versionˉoffset, Package.Versionˉlength
+    ) {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉpackage, 0u32
+        );
+    }
+    if !Spansˉequal(
+        Index, Scan.Targetˉoffset, Scan.Targetˉlength,
+        Manifestˉinput, Package.Targetˉoffset, Package.Targetˉlength
+    ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Index,
+        Packageˉtext.Windvaleˉpackageˉspan(
+            Scan.Targetˉoffset, Scan.Targetˉlength
+        ),
+        "hosted-wvb-v1"
+    ) {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Wrongˉtarget, 0u32
+        );
+    }
+
+    var Executables: u32 = 0u32;
+    var Licenses: u32 = 0u32;
+    var Provenance: u32 = 0u32;
+    var Lockedˉoutputˉfound: bool = false;
+    var Itemˉindex: u32 = 0u32;
+    while Itemˉindex < Items {
+        let Item: Windvaleˉpackageˉbundleˉitem = Itemˉfromˉdirectory(
+            Scan.Directory, Items, Itemˉindex
+        );
+        if !Spansˉequal(
+            Index, Item.Targetˉoffset, Item.Targetˉlength,
+            Index, Scan.Targetˉoffset, Scan.Targetˉlength
+        ) {
+            return Failure(
+                Input,
+                Windvaleˉpackageˉbundleˉstatus.Wrongˉtarget,
+                Itemˉindex
+            );
+        }
+        let Itemˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
+            Index,
+            Scan.Directory,
+            Items,
+            Blobs,
+            Item.Digestˉoffset,
+            Item.Digestˉlength
+        );
+        if !Itemˉblob.Found {
+            return Failure(
+                Input,
+                Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch,
+                Itemˉindex
+            );
+        }
+        let Role: Packageˉtext.Windvaleˉpackageˉspan =
+            Packageˉtext.Windvaleˉpackageˉspan(
+                Item.Roleˉoffset, Item.Roleˉlength
+            );
+        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Index, Role, "executable"
+        ) {
+            Executables = Executables + 1u32;
+            let Executable: bytes = Bytesˉslice(
+                Input,
+                Contentˉoffset + Itemˉblob.Contentˉoffset,
+                Itemˉblob.Bytes
+            );
+            if Wvbˉverifier.Compilerˉwvbˉverify(Executable) != 0u32 {
+                return Failure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Invalidˉexecutable,
+                    Itemˉindex
+                );
+            }
+            if U64ˉfromˉu32(Itemˉblob.Bytes) == Locked.Outputˉbytes &&
+                Spansˉequal(
+                Index, Item.Digestˉoffset, Item.Digestˉlength,
+                Lockˉinput,
+                Locked.Outputˉdigestˉoffset,
+                Locked.Outputˉdigestˉlength
+            ) {
+                Lockedˉoutputˉfound = true;
+            }
+        }
+        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Index, Role, "license"
+        ) {
+            Licenses = Licenses + 1u32;
+            if !Spansˉequal(
+                Index, Item.Identifierˉoffset, Item.Identifierˉlength,
+                Manifestˉinput,
+                Package.Licenseˉoffset,
+                Package.Licenseˉlength
+            ) {
+                return Failure(
+                    Input,
+                    Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch,
+                    Itemˉindex
+                );
+            }
+        }
+        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Index, Role, "provenance"
+        ) {
+            Provenance = Provenance + 1u32;
+        }
+        Itemˉindex = Itemˉindex + 1u32;
+    }
+    if Executables != 1u32 || Licenses != 1u32 || Provenance == 0u32 ||
+        !Lockedˉoutputˉfound {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch, Items
+        );
+    }
+
+    return Windvaleˉpackageˉbundleˉresult(
+        Windvaleˉpackageˉbundleˉstatus.Valid,
+        0u32,
+        Items,
+        Blobs,
+        Index,
+        Scan.Directory,
+        Contentˉoffset,
+        Scan.Packageˉoffset, Scan.Packageˉlength,
+        Scan.Versionˉoffset, Scan.Versionˉlength,
+        Scan.Targetˉoffset, Scan.Targetˉlength,
+        Scan.Manifestˉdigestˉoffset,
+        Scan.Manifestˉdigestˉlength,
+        Scan.Manifestˉbytes,
+        Scan.Lockˉdigestˉoffset,
+        Scan.Lockˉdigestˉlength,
+        Scan.Lockˉbytes,
+        Sha256.Foundationˉsha256ˉhex(Input)
+    );
+}
+
+export fn Windvaleˉpackageˉbundleˉdiagnosticˉcode(
+    Status: Windvaleˉpackageˉbundleˉstatus
+) -> text {
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉsize { return "WVPK1401"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉheader { return "WVPK1402"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉdigest { return "WVPK1403"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉtext { return "WVPK1404"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉrecord { return "WVPK1405"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉorder { return "WVPK1406"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Duplicateˉrecord { return "WVPK1407"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry { return "WVPK1408"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉdigest { return "WVPK1409"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Unreferencedˉblob { return "WVPK1410"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉpackage { return "WVPK1411"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Manifestˉlockˉmismatch { return "WVPK1412"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch { return "WVPK1413"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Invalidˉexecutable { return "WVPK1414"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Wrongˉtarget { return "WVPK1415"; }
+    if Status == Windvaleˉpackageˉbundleˉstatus.Collectionˉlimit { return "WVPK1416"; }
+    return "";
+}

@@ -3,13 +3,14 @@
 ## Status and scope
 
 The first x86-64 capability-provider call emission, its separately implemented
-structural verifier, main-lowerer integration, and focused host-backed storage
-execution are implemented candidates. An actual `storage.random_access_v1`
-call selects native ABI 23 and execution-context version 9; capability
-declaration alone preserves ABI 22 and exact existing output. Windows executes
-all version-1 operations and restart tail recovery. The equivalent Linux image
-is constructed; independent Linux execution and ordinary configurable
-container binding remain pending before this becomes a hosted product contract.
+structural verifier, main-lowerer integration, focused host-backed storage, and
+fixed read-only directory execution are implemented candidates. An actual
+`storage.random_access_v1` or `filesystem.directory_read_v1` call selects native
+ABI 23 and execution-context version 9; capability declaration alone preserves
+ABI 22 and exact existing output. Windows executes all storage version-1
+operations plus the directory-backed WVDB Query success, denial, and unavailable
+paths. Equivalent Linux images are constructed; independent Linux execution and
+ordinary configurable container binding remain promotion boundaries.
 
 The call consumes one ordinal entry from the immutable [`WVPT 1` provider
 table](Windvale-Native-Capability-Provider-Table.md). Generated code never
@@ -72,6 +73,21 @@ any execution resource not owned by its rights-limited state. Zero `EAX` means
 the result cell contains a complete admitted response descriptor. Nonzero `EAX`
 means the result cell is unpublished and generated code takes the existing
 service-failure path.
+
+## Read-only directory cells
+
+For `filesystem.directory_read_v1(text,u32,u32)->bytes`, the provider call uses
+three complete ABI cells: one borrowed text descriptor, the request offset in
+the second low dword, and the maximum chunk length in the third low dword. The
+provider revalidates the exact argument count, descriptor padding and range,
+ASCII name, request geometry, selected identity, and execution-owned result
+cell before platform I/O. Its admitted result is one `WVDR 1` response borrowed
+from provider scratch.
+
+Decision 0561's fixed host accepts only
+`Windvale-Database-Storage.bin`. A different exact-length name returns
+`Not_found`; an absent authorized backing returns `Unavailable`; neither path
+falls back to an ambient directory. The provider owns no mutation operation.
 
 ## Random-access storage cells
 

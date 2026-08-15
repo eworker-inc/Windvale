@@ -316,7 +316,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                     }
                     Expectedˉfunctionˉoffset = Offset;
                 }
-                if Functionˉordinal >= 512u32 ||
+                if Functionˉordinal >= 1024u32 ||
                     Offset != Expectedˉfunctionˉoffset ||
                     Size == 0u32 || Offset > Envelopeˉsummary.Textˉbytes ||
                     Size > Envelopeˉsummary.Textˉbytes - Offset {
@@ -383,7 +383,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     }
 
     let Functions: u32 = Localˉfunctions + 1u32;
-    if Functions > 512u32 {
+    if Functions > 1024u32 {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
         );
