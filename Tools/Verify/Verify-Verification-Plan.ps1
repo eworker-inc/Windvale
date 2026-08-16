@@ -1430,7 +1430,9 @@ $NativeCases = @(
             'Specifications/Windvale-Database-Hosted-Tree-Writer.md',
             'Runtime/Native/X64-Random-Access-Storage-Host.wva',
             'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
-            'Runtime/Native/Linux-X64-Random-Access-Storage.wva'
+            'Runtime/Native/Linux-X64-Random-Access-Storage.wva',
+            'Tools/Database/Measure-Database-Comparison.ps1',
+            'Tools/Database/SQLite-Durable-Cycle.py'
         )
         Suites = @('database-storage', 'libraries')
         Gaps = @()

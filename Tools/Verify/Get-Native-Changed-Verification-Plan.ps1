@@ -149,6 +149,18 @@ foreach ($HostRootSplitProject in $HostRootSplitProjects) {
         $DatabaseStorageDevelopmentEligible = $false
     }
 }
+foreach ($DatabasePerformancePath in @(
+    'Tools/Database/Measure-Database-Comparison.ps1',
+    'Tools/Database/SQLite-Durable-Cycle.py'
+)) {
+    if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($DatabasePerformancePath)) {
+        $DatabaseDevelopmentTargetsByPath[$DatabasePerformancePath] =
+            [System.Collections.Generic.HashSet[string]]::new(
+                [StringComparer]::Ordinal)
+    }
+    $null = $DatabaseDevelopmentTargetsByPath[$DatabasePerformancePath].Add(
+        'host-root-writer')
+}
 $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Bootstrap.md' = @('bootstrap', 'engine')
     'Specifications/Windvale-Database-Collection-Catalog.md' = @('collection-catalog')
@@ -231,6 +243,12 @@ foreach ($RuntimePath in @(
     'Runtime/Native/Linux-X64-Random-Access-Storage.wva'
 )) {
     $null = $DatabaseDevelopmentPaths.Add($RuntimePath)
+}
+foreach ($DatabasePerformancePath in @(
+    'Tools/Database/Measure-Database-Comparison.ps1',
+    'Tools/Database/SQLite-Durable-Cycle.py'
+)) {
+    $null = $DatabaseDevelopmentPaths.Add($DatabasePerformancePath)
 }
 foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Bootstrap.md',
@@ -1230,6 +1248,8 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'packages'
         }
+    } elseif ($Path.StartsWith('Tools/Database/', [StringComparison]::Ordinal)) {
+        Add-Suite 'database-storage'
     } elseif ($Path.StartsWith('Operating-System/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Operating-System/', [StringComparison]::Ordinal)) {
         if ($Path.EndsWith('.cs', [StringComparison]::OrdinalIgnoreCase) -or
