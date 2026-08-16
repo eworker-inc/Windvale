@@ -298,8 +298,7 @@ fn Databaseˉdurableˉtreeˉpathˉcollect(
             );
         }
         if Isˉleaf {
-            if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
-                Node.Entryˉcount == 0u32 {
+            if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf {
                 return Databaseˉdurableˉtreeˉpathˉsimpleˉfailure(
                     Databaseˉdurableˉtreeˉupsertˉstatus.Invalidˉnode,
                     Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,

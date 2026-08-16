@@ -178,7 +178,8 @@ fn Databaseˉdurableˉpageˉvalidate(
         if Value.Itemˉcount != 0u32 {
             return Databaseˉdurableˉpageˉerror.Invalidˉitemˉcount;
         }
-    } else if Value.Itemˉcount == 0u32 {
+    } else if Value.Itemˉcount == 0u32 &&
+        Value.Kind != Databaseˉdurableˉpageˉkind.Leaf {
         return Databaseˉdurableˉpageˉerror.Invalidˉitemˉcount;
     }
     if Value.Kind == Databaseˉdurableˉpageˉkind.Commitˉlog {

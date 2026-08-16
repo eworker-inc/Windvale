@@ -69,8 +69,8 @@ cmp -s -- "$first_wvb" "$second_wvb" || {
     echo 'The database-durable-commit WVB is not deterministic.' >&2
     exit 1
 }
-verify_file "$first_wvb" 107155 \
-    1a026edee89222585e5c6b7a7367fca807846d5cfdd58010fc85d872f7f2973c \
+verify_file "$first_wvb" 107828 \
+    479e631466733ae421d3477f61cedf1f716aa993cfecd7da560818a9d6dc4b60 \
     'database-durable-commit WVB' || exit $?
 
 "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || exit $?
@@ -80,8 +80,8 @@ cmp -s -- "$first_wvo" "$second_wvo" || {
     exit 1
 }
 "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || exit $?
-verify_file "$first_wvo" 2001802 \
-    2abe19205e0f1e64afb7d49931697ab7f96646e315adf76531f52c50ddff14b5 \
+verify_file "$first_wvo" 2011934 \
+    7fd1efcf7a103f88935c73f751b4455a27cb858cd6abe3b0866a1205abdee0b9 \
     'database-durable-commit WVO' || exit $?
 
 "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || exit $?
@@ -90,16 +90,16 @@ entry_offset=$(sed -n 's/^entry name=Main address=//p' "$map")
     echo "The database-durable-commit entry offset is $entry_offset, expected 151017." >&2
     exit 1
 }
-verify_file "$image" 1998308 \
-    60da45fe57c3d1614024588be4c22044f4057fa04512693d82df47f90aebfbe1 \
+verify_file "$image" 2008420 \
+    316dc0369bbcd9f5b39e35054ce650e7e7b90f1a812f1b2df117d399ed57ca38 \
     'database-durable-commit image' || exit $?
 cp -- "$image" "$image_prefix.chunk-0" || exit $?
 
 "$script_directory/Package-Hosted-Wvb.sh" image 6 \
     "$first_wvb" "$image_prefix" 1 "$entry_offset" "$linux_application" linux \
     >/dev/null || exit $?
-verify_file "$linux_application" 2019328 \
-    965b4a1fb73b6aaf33aec2478443329b6759a6b20c93e3e3f83067476b81125d \
+verify_file "$linux_application" 2031616 \
+    0fc26f6e50812e27717704672f269eac66e13054b10d0c61c30a23086808171e \
     'database-durable-commit Linux application' || exit $?
 for test_case in A B C D E F G H I J K L; do
     "$linux_application" "$test_case" >/dev/null
@@ -113,8 +113,8 @@ done
 "$script_directory/Package-Hosted-Wvb.sh" image 6 \
     "$first_wvb" "$image_prefix" 1 "$entry_offset" "$windows_application" windows \
     >/dev/null || exit $?
-verify_file "$windows_application" 2019328 \
-    36d24784407890f07b1a279276d52c7f979e6cb06340cc5ae08baa4f37cd286f \
+verify_file "$windows_application" 2029568 \
+    61b45837da9a702c1c66738897fba66bd67476831f47fcbdd3a43b5b8509f9be \
     'database-durable-commit Windows application' || exit $?
 
 echo 'native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified'

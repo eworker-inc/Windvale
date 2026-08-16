@@ -47,7 +47,7 @@ Every database page is exactly the page size recorded by `WVDS 1`. Its first
 | 40 | 8 | commit sequence | zero only for the initial root rule below |
 | 48 | 8 | previous page | earlier page identity or no-page sentinel |
 | 56 | 4 | payload length | at most `page_size - 128` |
-| 60 | 4 | item count | zero exactly when payload is empty |
+| 60 | 4 | item count | zero when payload is empty; a leaf may also carry one validated nonempty zero-item tree payload |
 | 64 | 32 | payload checksum | raw SHA-256 of the used payload bytes only |
 | 96 | 32 | header checksum | raw SHA-256 of bytes 0 through 95 |
 
@@ -69,6 +69,13 @@ The envelope does not interpret root, branch, or leaf payload bytes. The
 separate [`WVTN 1`](Windvale-Database-Tree-Node.md) contract now defines the
 first variable-key leaf and branch payload shape, while `WVPG 1` continues to
 own physical identity, generation, checksums, and zero padding.
+
+A leaf alone may have item count zero with a nonempty payload. This admits the
+canonical 32-byte zero-entry `WVTN 1` leaf produced by physical deletion.
+The tree reader still decodes that inner payload and requires its entry count
+to equal the outer zero, so this envelope exception does not admit an invalid
+logical node. Root, branch, and commit-log pages retain the ordinary nonempty
+payload and positive item-count rule.
 
 ## `WVCR 1` compact commit record
 

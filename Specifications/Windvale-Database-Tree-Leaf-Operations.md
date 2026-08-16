@@ -63,6 +63,11 @@ provider read must consume or explicitly copy borrowed slices first.
 
 ## Durable continuation
 
+[`Databaseˉtreeˉpathˉdeleteˉbegin`](Windvale-Database-Tree-Path-Upsert.md)
+now composes physical deletion through an owned root-to-leaf path and emits
+one atomic copy-on-write commit. Provider-backed path discovery and
+publication remain separate from that portable transaction.
+
 The durable reader first routes the start key to one leaf with inherited
 lower-inclusive and upper-exclusive bounds. When the leaf is exhausted, that
 upper separator is the inclusive start key for routing the next leaf from the

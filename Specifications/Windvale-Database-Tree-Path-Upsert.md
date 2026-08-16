@@ -1,4 +1,4 @@
-# Windvale database bounded tree-path upsert
+# Windvale database bounded tree-path mutation
 
 ## Status
 
@@ -30,13 +30,26 @@ root generation and sequence. Descendants may come from any generation and
 sequence not newer than `Current`. Every page must use the selected page size,
 match the child selected by routing `Key`, remain below its parent and the
 committed page count, agree with its decoded item count, and use the expected
-root, branch, or leaf physical kind. The nonempty leaf and `Key` must remain
+root, branch, or leaf physical kind. The leaf and `Key` must remain
 inside the lower-inclusive and upper-exclusive bounds inherited from all
 branches.
 
 The exact-length owned path is the transaction's input-consumption boundary.
 It does not borrow provider buffers, retain caller storage, discover pages, or
 grant storage authority.
+
+The same owned-path boundary also exposes physical deletion:
+
+```text
+Databaseˉtreeˉpathˉdeleteˉbegin(Current, Path, Key)
+    -> Databaseˉtreeˉpathˉdelete
+```
+
+It performs the same complete top-down validation. A missing key is a typed
+successful no-op with `Found = false`, `Has_commit = false`, no allocated or
+obsolete pages, and the unchanged root identity. It does not spend a
+generation or construct publishable bytes. A present key is physically
+removed and reports `Found = true`, `Has_commit = true`.
 
 ## Validation and propagation
 
@@ -84,6 +97,15 @@ All new child identities are below their parent identities. Page-identifier,
 generation, and sequence exhaustion are rejected before unsafe arithmetic or
 publication.
 
+A present delete never splits or merges. For input depth `D`, it emits exactly
+`D` data pages: the replacement leaf, then each replacement ancestor through
+the root. Each output page names its selected predecessor, and obsolete-page
+evidence lists those `D` predecessors leaf-first. Separators remain unchanged
+and valid as lower-inclusive partitions. Removing the final entry produces a
+canonical 32-byte zero-entry `WVTN 1` leaf inside a zero-item `WVPG 1` leaf;
+the durable envelope admits this leaf-only shape while the tree layer still
+validates its inner bytes and count. A later upsert can refill that leaf.
+
 ## Publication and determinism
 
 `Databaseˉcommitˉbatchˉbegin` validates the ordered encoded data pages,
@@ -120,6 +142,12 @@ the emitted pages, checks exact identities and target length, and compares two
 complete constructions byte for byte. It rejects wrong length, unsupported
 depth, a mismatched routed child, and a malformed page.
 
+The same fixture deletes a present key through depth three, checks the
+replacement leaf, branch and root links, exact obsolete identities, stable
+routing, and deterministic commit bytes. It proves a missing key constructs
+no commit, removes the final entry into a valid zero-item durable leaf, and
+then refills that empty leaf through the ordinary upsert path.
+
 The project is an owned target of both database-storage modes on Windows and
 Linux. Current focused Windows execution returns `0`; paired-host
 qualification remains pending.
@@ -127,7 +155,7 @@ qualification remains pending.
 ## Exclusions
 
 This milestone does not discover the path through I/O, update input trees
-deeper than eight, delete or merge entries, reclaim or reuse pages, pin
+deeper than eight, merge entries, reclaim or reuse pages, pin
 snapshots, add concurrent writers, provide range cursors, define catalogs or
 row codecs, parse SQL, listen on a network, authenticate clients, or own server
 lifecycle.
