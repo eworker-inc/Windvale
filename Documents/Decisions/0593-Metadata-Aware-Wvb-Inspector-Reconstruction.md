@@ -1,6 +1,6 @@
 # Decision 0593: Metadata-Aware WVB Inspector Reconstruction
 
-- Status: Implemented with current Windows execution evidence; Linux execution and promotion pending
+- Status: Implemented with current Windows and Debian WSL2 execution evidence; exact identities and promotion pending
 - Date: 2026-08-15
 - Advances: Decision 0592
 - Contracts: [Hosted read-only applications](../../Specifications/Windvale-Hosted-Verifier-Application.md), [Seed bytecode](../../Specifications/Seed-Bytecode.md)
@@ -44,6 +44,9 @@ composes the profile-4 application twice, requires identical bytes, runs its
 self-tests, inspects an absent-form WVB, and inspects the exact 369-byte
 metadata-present fixture with SHA-256
 `94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa`.
+The Linux owner explicitly restores and checks executable mode on the completed
+application before execution; the deterministic container bytes do not encode a
+host-filesystem mode bit.
 The changed-file planner selects this owner for the inspector, metadata
 normalizer, and shared hosted-verifier construction boundaries.
 
@@ -54,9 +57,9 @@ exported function.
 
 ## Consequences
 
-- A current Windvale-authored profile-4 Windows application now inspects both
-  retained and metadata-present WVB inputs without .NET and without a second
-  metadata parser.
+- Current Windvale-authored profile-4 Windows and Debian WSL2 applications now
+  inspect both retained and metadata-present WVB inputs without .NET and without
+  a second metadata parser.
 - Shared construction edits now re-prove profile 4 alongside the other hosted
   verifier consumers. This adds four bounded cases to the live registry and
   increases cold verification work, while cache reuse keeps repeat checks
@@ -66,9 +69,11 @@ exported function.
   fields.
 - The alias fix removes a real blocker for metadata-bearing multi-module
   applications, but does not promote the pinned normal compiler front door.
-- Windows current-source evidence is not Linux evidence. The Linux owner mirror,
-  exact candidate identities, and promotion must complete before a dual-host or
-  front-door claim.
+- The same current source state passed the four-case Windows owner in 78.240
+  seconds and the Debian WSL2 mirror in 93.000 seconds. These are local
+  environment measurements, not release qualification or portable performance
+  thresholds. Exact candidate identities and promotion must still complete
+  before a normal-front-door claim.
 - One complete metadata-bearing package build, install, launch, and execution
   path remains pending; repository-wide source migration is still prohibited.
 

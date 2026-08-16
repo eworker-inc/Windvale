@@ -98,10 +98,14 @@ case "$inspector_entry" in ''|*[!0-9]*) fail 'inspector entry' ;; esac
     "$work/Runtime.wvhr" "$work/Platform.wvhb" "$work/Startup.wvsd" \
     "$work/Bundle.wvsi" "$work/Wvb-Inspector-Second.elf" >/dev/null || fail 'second container'
 cmp --silent -- "$work/Wvb-Inspector.elf" "$work/Wvb-Inspector-Second.elf" || fail 'nondeterministic container'
+chmod +x "$work/Wvb-Inspector.elf" || fail 'Linux application executable mode'
+[[ -x $work/Wvb-Inspector.elf ]] || fail 'Linux application is not executable'
 echo 'PASS  WVB inspector reconstruction deterministic Linux application'
 
 echo 'native WVB inspector reconstruction step=execute item=3/4'
-"$work/Wvb-Inspector.elf" >"$work/Self.txt" 2>&1 || fail 'self-tests'
+self_test_status=0
+"$work/Wvb-Inspector.elf" >"$work/Self.txt" 2>&1 || self_test_status=$?
+[[ $self_test_status -eq 0 ]] || fail "self-tests status=$self_test_status"
 echo 'PASS  WVB inspector reconstruction self-tests'
 "$work/Wvb-Inspector.elf" \
     "$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb" \
