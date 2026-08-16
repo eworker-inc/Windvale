@@ -1,0 +1,334 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉgroups profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉancestorˉgroups as Ancestors;
+import Windvaleˉdatabaseˉtransactionˉbranchˉpartition as Partition;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Replace(Input: bytes, Offset: u32, Count: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Offset + Count, Bytesˉlength(Input) - Offset - Count)
+    );
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Powerˉbytes(Exponent: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    var Index: u32 = 0u32;
+    while Index < Exponent {
+        Result = Bytesˉconcat(Result, Result);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 3u64, 3u64, 2u64, 12u64, 11u64, 1u64, 13u64,
+        53760u64, PAGE_SIZE, 3u32
+    );
+}
+
+fn Leaf(First: u8, Second: u8) -> bytes {
+    let One: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu8(First), Bytesˉfromˉu8(First), MAXIMUM_PAYLOAD
+        );
+    let Two: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            One.Bytes, Bytesˉfromˉu8(Second), Bytesˉfromˉu8(Second), MAXIMUM_PAYLOAD
+        );
+    return Two.Bytes;
+}
+
+fn Branch(Separator: u8, Left: u64, Right: u64) -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Bytesˉfromˉu8(Separator), Left, Right, MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Durable(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Identifier: u64,
+    Payload: bytes
+) -> bytes {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Kind, PAGE_SIZE, Identifier, 3u64, 2u64, NO_PAGE,
+                Node.Entryˉcount, Payload
+            )
+        );
+    return Result.Bytes;
+}
+
+fn Root() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Root, 12u64,
+        Branch(5u8, 10u64, 11u64)
+    );
+}
+
+fn Leftˉparent() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, 10u64,
+        Branch(3u8, 8u64, 9u64)
+    );
+}
+
+fn Rightˉparent() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, 11u64,
+        Branch(8u8, 6u64, 7u64)
+    );
+}
+
+fn Leafˉpage(Identifier: u64, First: u8, Second: u8) -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Leaf, Identifier, Leaf(First, Second)
+    );
+}
+
+fn Leftˉpath() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Root(), Leftˉparent()), Leafˉpage(8u64, 1u8, 2u8)
+    );
+}
+
+fn Rightˉpath() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Root(), Rightˉparent()), Leafˉpage(7u64, 8u8, 9u8)
+    );
+}
+
+fn Put(Key: u8, Value: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Bytesˉfromˉu8(Value)
+        );
+    return Result.Bytes;
+}
+
+fn Mutations() -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32, Bytesˉconcat(Put(1u8, 10u8), Put(8u8, 80u8))
+        );
+    return Result.Bytes;
+}
+
+fn Child(Pageˉidentifier: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+            Pageˉidentifier, Empty()
+        );
+    return Result.Bytes;
+}
+
+fn Group(Original: u64, Replacement: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+            Original, Replacement, 1u32, Child(Replacement)
+        );
+    return Result.Bytes;
+}
+
+fn Replacementsˉfor(Firstˉold: u64, Secondˉold: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            2u32, 2u32, 15u64,
+            Bytesˉconcat(Group(Firstˉold, 15u64), Group(Secondˉold, 16u64))
+        );
+    return Result.Bytes;
+}
+
+fn Planningˉcontract() -> i32 {
+    let Pathsˉbytes: bytes = Bytesˉconcat(Leftˉpath(), Rightˉpath());
+    let First: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Pathsˉbytes, 1u32,
+            Replacementsˉfor(10u64, 11u64)
+        );
+    let Second: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Pathsˉbytes, 1u32,
+            Replacementsˉfor(10u64, 11u64)
+        );
+    let Groupˉresult: Ancestors.Databaseˉtransactionˉancestorˉgroup =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupˉread(First.Bytes, 0u32);
+    let Branchˉresult: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(
+            Groupˉresult.Payload, 0u32
+        );
+    let Low: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Branchˉresult.Payload, Bytesˉfromˉu8(1u8),
+            false, Empty(), false, Empty()
+        );
+    let High: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Branchˉresult.Payload, Bytesˉfromˉu8(8u8),
+            false, Empty(), false, Empty()
+        );
+    if First.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid ||
+        !First.Changed || First.Pageˉsize != PAGE_SIZE ||
+        First.Rootˉdepth != 3u32 || First.Childˉlevel != 1u32 ||
+        First.Parentˉgroupˉcount != 1u32 || First.Outputˉbranchˉcount != 1u32 ||
+        First.Inputˉgroupˉcount != 2u32 || First.Inputˉchildˉcount != 2u32 ||
+        First.Firstˉreplacementˉpage != 15u64 ||
+        !Same(First.Bytes, Second.Bytes) {
+        return 1;
+    }
+    if Groupˉresult.Error !=
+            Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid ||
+        Groupˉresult.Parentˉpage != 12u64 ||
+        Groupˉresult.Replacementˉgroupˉcount != 2u32 ||
+        Groupˉresult.Replacementˉchildˉcount != 2u32 ||
+        Groupˉresult.Outputˉbranchˉcount != 1u32 ||
+        Branchˉresult.Error !=
+            Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid ||
+        Branchˉresult.Entryˉcount != 1u32 ||
+        Low.Child != 15u64 || High.Child != 16u64 {
+        return 2;
+    }
+    return 0;
+}
+
+fn Rejectionˉcontract() -> i32 {
+    let Pathsˉbytes: bytes = Bytesˉconcat(Leftˉpath(), Rightˉpath());
+    let Invalidˉlevel: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Pathsˉbytes, 0u32,
+            Replacementsˉfor(10u64, 11u64)
+        );
+    let Invalidˉpath: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(),
+            Bytesˉslice(Pathsˉbytes, 0u32, Bytesˉlength(Pathsˉbytes) - 1u32),
+            1u32, Replacementsˉfor(10u64, 11u64)
+        );
+    let Missing: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Pathsˉbytes, 1u32,
+            Replacementsˉfor(9u64, 11u64)
+        );
+    let Valid: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Pathsˉbytes, 1u32,
+            Replacementsˉfor(10u64, 11u64)
+        );
+    let Truncated: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(
+            Bytesˉslice(Valid.Bytes, 0u32, Bytesˉlength(Valid.Bytes) - 1u32)
+        );
+    let Trailing: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(
+            Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8))
+        );
+    let Badˉmagic: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(
+            Replace(Valid.Bytes, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32))
+        );
+    let Record: bytes = Bytesˉslice(
+        Valid.Bytes, 64u32, Bytesˉlength(Valid.Bytes) - 64u32
+    );
+    var Duplicateˉheader: bytes = Bytesˉslice(Valid.Bytes, 0u32, 64u32);
+    Duplicateˉheader = Withˉu32(Duplicateˉheader, 28u32, 2u32);
+    Duplicateˉheader = Withˉu32(Duplicateˉheader, 32u32, 2u32);
+    Duplicateˉheader = Withˉu32(Duplicateˉheader, 36u32, 4u32);
+    Duplicateˉheader = Withˉu32(Duplicateˉheader, 40u32, 4u32);
+    Duplicateˉheader = Withˉu32(
+        Duplicateˉheader, 44u32, 64u32 + Bytesˉlength(Record) * 2u32
+    );
+    let Duplicateˉparent: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(
+            Bytesˉconcat(
+                Duplicateˉheader, Bytesˉconcat(Record, Record)
+            )
+        );
+    let Oversized: bytes = Bytesˉconcat(
+        Bytesˉconcat(Powerˉbytes(21u32), Powerˉbytes(20u32)),
+        Bytesˉfromˉu8(0u8)
+    );
+    let Tooˉlarge: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(Oversized);
+    if Invalidˉlevel.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉdepth {
+        return 1;
+    }
+    if Invalidˉpath.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉpaths {
+        return 2;
+    }
+    if Missing.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Childˉnotˉfound {
+        return 3;
+    }
+    if Truncated.Error !=
+            Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉgroup &&
+        Truncated.Error !=
+            Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉtotalˉlength {
+        return 4;
+    }
+    if Trailing.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉtotalˉlength {
+        return 5;
+    }
+    if Badˉmagic.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉmagic {
+        return 6;
+    }
+    if Tooˉlarge.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉlength {
+        return 7;
+    }
+    if Duplicateˉparent.Error !=
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉgroup {
+        return 8;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Planning: i32 = Planningˉcontract();
+    if Planning != 0 { return 100 + Planning; }
+    let Rejection: i32 = Rejectionˉcontract();
+    if Rejection != 0 { return 300 + Rejection; }
+    return 0;
+}

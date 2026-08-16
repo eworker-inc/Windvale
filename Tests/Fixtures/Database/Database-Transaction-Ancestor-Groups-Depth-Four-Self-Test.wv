@@ -1,0 +1,227 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉgroupsˉdepthˉfour profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉancestorˉgroups as Ancestors;
+import Windvaleˉdatabaseˉtransactionˉbranchˉpartition as Partition;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 4u64, 3u64, 2u64, 20u64, 19u64, 1u64, 21u64,
+        86528u64, PAGE_SIZE, 4u32
+    );
+}
+
+fn Leaf(First: u8, Second: u8) -> bytes {
+    let One: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu8(First), Bytesˉfromˉu8(First), MAXIMUM_PAYLOAD
+        );
+    let Two: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            One.Bytes, Bytesˉfromˉu8(Second), Bytesˉfromˉu8(Second), MAXIMUM_PAYLOAD
+        );
+    return Two.Bytes;
+}
+
+fn Branch(Separator: u8, Left: u64, Right: u64) -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Bytesˉfromˉu8(Separator), Left, Right, MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Durable(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Identifier: u64,
+    Payload: bytes
+) -> bytes {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Kind, PAGE_SIZE, Identifier, 3u64, 2u64, NO_PAGE,
+                Node.Entryˉcount, Payload
+            )
+        );
+    return Result.Bytes;
+}
+
+fn Root() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Root, 20u64,
+        Branch(5u8, 18u64, 19u64)
+    );
+}
+
+fn Leftˉgrandparent() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, 18u64,
+        Branch(3u8, 10u64, 11u64)
+    );
+}
+
+fn Rightˉgrandparent() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, 19u64,
+        Branch(8u8, 12u64, 13u64)
+    );
+}
+
+fn Parent(Pageˉidentifier: u64, Separator: u8, Left: u64, Right: u64) -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, Pageˉidentifier,
+        Branch(Separator, Left, Right)
+    );
+}
+
+fn Leafˉpage(Identifier: u64, First: u8, Second: u8) -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Leaf, Identifier, Leaf(First, Second)
+    );
+}
+
+fn Leftˉpath() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉconcat(Root(), Leftˉgrandparent()),
+            Parent(10u64, 2u8, 8u64, 9u64)
+        ),
+        Leafˉpage(8u64, 0u8, 1u8)
+    );
+}
+
+fn Rightˉpath() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉconcat(Root(), Rightˉgrandparent()),
+            Parent(13u64, 9u8, 6u64, 7u64)
+        ),
+        Leafˉpage(7u64, 9u8, 10u8)
+    );
+}
+
+fn Put(Key: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Bytesˉfromˉu8(Key)
+        );
+    return Result.Bytes;
+}
+
+fn Mutations() -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32, Bytesˉconcat(Put(1u8), Put(9u8))
+        );
+    return Result.Bytes;
+}
+
+fn Child(Pageˉidentifier: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+            Pageˉidentifier, Empty()
+        );
+    return Result.Bytes;
+}
+
+fn Group(Original: u64, Replacement: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+            Original, Replacement, 1u32, Child(Replacement)
+        );
+    return Result.Bytes;
+}
+
+fn Replacementˉplan() -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            2u32, 2u32, 21u64,
+            Bytesˉconcat(Group(10u64, 21u64), Group(13u64, 22u64))
+        );
+    return Result.Bytes;
+}
+
+export fn Main() -> i32 {
+    let Result: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Bytesˉconcat(Leftˉpath(), Rightˉpath()),
+            2u32, Replacementˉplan()
+        );
+    let Leftˉgroup: Ancestors.Databaseˉtransactionˉancestorˉgroup =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupˉread(Result.Bytes, 0u32);
+    let Rightˉgroup: Ancestors.Databaseˉtransactionˉancestorˉgroup =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupˉread(Result.Bytes, 1u32);
+    let Leftˉbranch: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(
+            Leftˉgroup.Payload, 0u32
+        );
+    let Rightˉbranch: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(
+            Rightˉgroup.Payload, 0u32
+        );
+    let Low: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Leftˉbranch.Payload, Bytesˉfromˉu8(1u8),
+            false, Empty(), true, Bytesˉfromˉu8(5u8)
+        );
+    let High: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Rightˉbranch.Payload, Bytesˉfromˉu8(9u8),
+            true, Bytesˉfromˉu8(5u8), false, Empty()
+        );
+    if Result.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid {
+        if Result.Error == Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉpaths {
+            return 12;
+        }
+        if Result.Error == Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Childˉnotˉfound {
+            return 13;
+        }
+        if Result.Error == Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉparent {
+            return 14;
+        }
+        if Result.Error == Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Partitionˉfailed {
+            return 15;
+        }
+        if Result.Error == Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Invalidˉoutput {
+            return 16;
+        }
+        return 11;
+    }
+    if Result.Rootˉdepth != 4u32 || Result.Childˉlevel != 2u32 ||
+        Result.Parentˉgroupˉcount != 2u32 || Result.Outputˉbranchˉcount != 2u32 {
+        return 2;
+    }
+    if Leftˉgroup.Parentˉpage != 18u64 || Rightˉgroup.Parentˉpage != 19u64 ||
+        Leftˉgroup.Replacementˉgroupˉcount != 1u32 ||
+        Rightˉgroup.Replacementˉgroupˉcount != 1u32 {
+        return 3;
+    }
+    if Leftˉbranch.Error !=
+            Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid ||
+        Rightˉbranch.Error !=
+            Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+        return 4;
+    }
+    if Low.Child != 21u64 || High.Child != 22u64 {
+        return 5;
+    }
+    return 0;
+}
