@@ -1,0 +1,340 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉpages profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉleafˉpages as LeafPages;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 2u64, 3u64, 2u64, 10u64, 11u64, 1u64, 12u64,
+        49664u64, PAGE_SIZE, 2u32
+    );
+}
+
+fn Currentˉwithˉpageˉcount(Pageˉcount: u64) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 2u64, 3u64, 2u64, 10u64, 11u64, 1u64, Pageˉcount,
+        49664u64, PAGE_SIZE, 2u32
+    );
+}
+
+fn Currentˉroot() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 2u64, 3u64, 2u64, 8u64, 11u64, 1u64, 9u64,
+        37376u64, PAGE_SIZE, 1u32
+    );
+}
+
+fn Leaf(First: u8, Second: u8) -> bytes {
+    let One: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu8(First), Bytesˉfromˉu8(First), MAXIMUM_PAYLOAD
+        );
+    let Two: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            One.Bytes, Bytesˉfromˉu8(Second), Bytesˉfromˉu8(Second), MAXIMUM_PAYLOAD
+        );
+    return Two.Bytes;
+}
+
+fn Branch() -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Bytesˉfromˉu8(5u8), 9u64, 8u64, MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Durable(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Identifier: u64,
+    Payload: bytes
+) -> bytes {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Kind, PAGE_SIZE, Identifier, 3u64, 2u64, NO_PAGE,
+                Node.Entryˉcount, Payload
+            )
+        );
+    return Result.Bytes;
+}
+
+fn Root() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Root, 10u64, Branch());
+}
+
+fn Left() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Leaf, 9u64, Leaf(1u8, 2u8));
+}
+
+fn Right() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Leaf, 8u64, Leaf(6u8, 7u8));
+}
+
+fn Rootˉleaf() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Root, 8u64, Leaf(1u8, 2u8));
+}
+
+fn Leftˉpath() -> bytes { return Bytesˉconcat(Root(), Left()); }
+fn Rightˉpath() -> bytes { return Bytesˉconcat(Root(), Right()); }
+
+fn Put(Key: u8, Value: bytes) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Value
+        );
+    return Result.Bytes;
+}
+
+fn Putˉu8(Key: u8, Value: u8) -> bytes {
+    return Put(Key, Bytesˉfromˉu8(Value));
+}
+
+fn Delete(Key: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉdelete(Bytesˉfromˉu8(Key));
+    return Result.Bytes;
+}
+
+fn Mutationˉset(Count: u32, Input: bytes) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(Count, Input);
+    return Result.Bytes;
+}
+
+fn Durableˉpageˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(
+        3u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Putˉu8(1u8, 10u8), Delete(2u8)),
+            Putˉu8(6u8, 60u8)
+        )
+    );
+    let Pathsˉbytes: bytes = Bytesˉconcat(
+        Bytesˉconcat(Leftˉpath(), Leftˉpath()), Rightˉpath()
+    );
+    let First: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Current(), Mutations, Pathsˉbytes
+        );
+    let Second: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Current(), Mutations, Pathsˉbytes
+        );
+    if First.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid ||
+        !First.Changed || First.Pageˉsize != PAGE_SIZE || First.Rootˉdepth != 2u32 ||
+        First.Replacementˉgroupˉcount != 2u32 || First.Dataˉpageˉcount != 2u32 ||
+        First.Targetˉgeneration != 4u64 || First.Targetˉsequence != 3u64 ||
+        First.Firstˉpage != 12u64 || Bytesˉlength(First.Pages) != 8192u32 ||
+        !Same(First.Bytes, Second.Bytes) {
+        return 1;
+    }
+    let Leftˉgroup: LeafPages.Databaseˉtransactionˉleafˉpagesˉgroup =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉgroupˉread(First.Bytes, 0u32);
+    let Rightˉgroup: LeafPages.Databaseˉtransactionˉleafˉpagesˉgroup =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉgroupˉread(First.Bytes, 1u32);
+    let Leftˉreplacement: LeafPages.Databaseˉtransactionˉleafˉpagesˉleaf =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉleafˉread(Leftˉgroup, 0u32);
+    let Leftˉpage: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Bytesˉslice(First.Pages, 0u32, PAGE_SIZE));
+    let Rightˉpage: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Bytesˉslice(First.Pages, PAGE_SIZE, PAGE_SIZE));
+    let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leftˉpage.Payload, Bytesˉfromˉu8(1u8));
+    let Duplicateˉsourceˉbytes: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(First.Bytes, 0u32, 120u32),
+            Bytesˉfromˉu64ˉlittle(9u64)
+        ),
+        Bytesˉslice(First.Bytes, 128u32, Bytesˉlength(First.Bytes) - 128u32)
+    );
+    let Duplicateˉsource: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉdecode(Duplicateˉsourceˉbytes);
+    if Leftˉgroup.Originalˉpage != 9u64 || Leftˉgroup.Firstˉpage != 12u64 ||
+        Leftˉgroup.Leafˉcount != 1u32 || Leftˉgroup.Entryˉcount != 1u32 ||
+        Rightˉgroup.Originalˉpage != 8u64 || Rightˉgroup.Firstˉpage != 13u64 ||
+        Leftˉreplacement.Pageˉidentifier != 12u64 ||
+        Bytesˉlength(Leftˉreplacement.Separator) != 0u32 ||
+        Leftˉpage.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+        Leftˉpage.Previousˉpage != 9u64 || Rightˉpage.Previousˉpage != 8u64 ||
+        !One.Found || Bytesˉreadˉu8(One.Value, 0u32) != 10u8 ||
+        Duplicateˉsource.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Invalidˉmap {
+        return 2;
+    }
+    return 0;
+}
+
+fn Unchangedˉcontract() -> i32 {
+    let Result: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Current(), Mutationˉset(1u32, Delete(3u8)), Leftˉpath()
+        );
+    if Result.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid ||
+        Result.Changed || Result.Replacementˉgroupˉcount != 0u32 ||
+        Result.Dataˉpageˉcount != 0u32 || Result.Targetˉgeneration != 3u64 ||
+        Result.Targetˉsequence != 2u64 || Result.Firstˉpage != NO_PAGE ||
+        Bytesˉlength(Result.Map) != 0u32 || Bytesˉlength(Result.Pages) != 0u32 ||
+        Bytesˉlength(Result.Bytes) != 72u32 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Rootˉcontract() -> i32 {
+    let Result: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Currentˉroot(), Mutationˉset(1u32, Putˉu8(1u8, 10u8)), Rootˉleaf()
+        );
+    let Durable: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Result.Pages);
+    if Result.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid ||
+        Result.Dataˉpageˉcount != 1u32 || Result.Firstˉpage != 9u64 ||
+        Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Durable.Pageˉidentifier != 9u64 || Durable.Previousˉpage != 8u64 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Partitionˉcontract() -> i32 {
+    var Large: bytes = Bytesˉfromˉu64ˉlittle(1u64);
+    while Bytesˉlength(Large) < 1024u32 { Large = Bytesˉconcat(Large, Large); }
+    Large = Bytesˉslice(Large, 0u32, 1000u32);
+    let Mutations: bytes = Mutationˉset(
+        4u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Put(0u8, Large), Put(1u8, Large)),
+            Bytesˉconcat(Put(3u8, Large), Put(4u8, Large))
+        )
+    );
+    let Path: bytes = Leftˉpath();
+    let Pathsˉbytes: bytes = Bytesˉconcat(
+        Bytesˉconcat(Path, Path), Bytesˉconcat(Path, Path)
+    );
+    let Result: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Current(), Mutations, Pathsˉbytes
+        );
+    let Group: LeafPages.Databaseˉtransactionˉleafˉpagesˉgroup =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉgroupˉread(Result.Bytes, 0u32);
+    let First: LeafPages.Databaseˉtransactionˉleafˉpagesˉleaf =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉleafˉread(Group, 0u32);
+    let Second: LeafPages.Databaseˉtransactionˉleafˉpagesˉleaf =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉleafˉread(Group, 1u32);
+    let Firstˉpage: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Bytesˉslice(Result.Pages, 0u32, PAGE_SIZE));
+    let Secondˉpage: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Bytesˉslice(Result.Pages, PAGE_SIZE, PAGE_SIZE));
+    let Wrongˉseparatorˉbytes: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Result.Bytes, 0u32, 136u32),
+            Bytesˉfromˉu8(5u8)
+        ),
+        Bytesˉslice(Result.Bytes, 137u32, Bytesˉlength(Result.Bytes) - 137u32)
+    );
+    let Wrongˉseparator: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉdecode(Wrongˉseparatorˉbytes);
+    if Result.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid ||
+        Result.Replacementˉgroupˉcount != 1u32 || Result.Dataˉpageˉcount != 2u32 ||
+        Group.Originalˉpage != 9u64 || Group.Firstˉpage != 12u64 ||
+        Group.Leafˉcount != 2u32 || Group.Entryˉcount != 5u32 ||
+        First.Pageˉidentifier != 12u64 || Second.Pageˉidentifier != 13u64 ||
+        Bytesˉlength(First.Separator) != 0u32 ||
+        Bytesˉreadˉu8(Second.Separator, 0u32) != 4u8 ||
+        Firstˉpage.Previousˉpage != 9u64 || Secondˉpage.Previousˉpage != NO_PAGE ||
+        Wrongˉseparator.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Invalidˉmap {
+        return 1;
+    }
+    return 0;
+}
+
+fn Rejectionˉcontract() -> i32 {
+    let Mutation: bytes = Mutationˉset(1u32, Putˉu8(1u8, 10u8));
+    let Short: bytes = Bytesˉslice(Leftˉpath(), 0u32, Bytesˉlength(Leftˉpath()) - 1u32);
+    let Invalidˉpath: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(Current(), Mutation, Short);
+    let Exhausted: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Currentˉwithˉpageˉcount(U64_MAXIMUM), Mutation, Leftˉpath()
+        );
+    let Valid: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(Current(), Mutation, Leftˉpath());
+    let Trailing: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉdecode(
+            Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8))
+        );
+    let Corruptˉpage: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Valid.Bytes, 0u32, Bytesˉlength(Valid.Bytes) - 1u32),
+            Bytesˉfromˉu8(1u8)
+        ),
+        Empty()
+    );
+    let Corrupt: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉdecode(Corruptˉpage);
+    let Invalidˉgroup: LeafPages.Databaseˉtransactionˉleafˉpagesˉgroup =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉgroupˉread(Valid.Bytes, 1u32);
+    if Invalidˉpath.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Groupsˉfailed ||
+        Invalidˉpath.Pathsˉerror != Paths.Databaseˉtransactionˉpathsˉerror.Invalidˉlength ||
+        Exhausted.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Pageˉidentifierˉexhausted ||
+        Trailing.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Invalidˉtotalˉlength ||
+        Corrupt.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Invalidˉpage ||
+        Invalidˉgroup.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Invalidˉindex {
+        return 1;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Durable: i32 = Durableˉpageˉcontract();
+    if Durable != 0 { return 100 + Durable; }
+    let Unchanged: i32 = Unchangedˉcontract();
+    if Unchanged != 0 { return 200 + Unchanged; }
+    let Rootˉpage: i32 = Rootˉcontract();
+    if Rootˉpage != 0 { return 300 + Rootˉpage; }
+    let Partitioned: i32 = Partitionˉcontract();
+    if Partitioned != 0 { return 400 + Partitioned; }
+    let Rejection: i32 = Rejectionˉcontract();
+    if Rejection != 0 { return 500 + Rejection; }
+    return 0;
+}

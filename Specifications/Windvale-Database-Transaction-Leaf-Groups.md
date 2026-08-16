@@ -92,6 +92,6 @@ index, inconsistent total length, and a corrupt partition plan.
 ## Exclusions and next step
 
 This plan does not assign new page identities, merge shared ancestors, write
-storage, or publish a transaction. The next planner assigns consecutive durable
-page identities to every changed group's replacement leaves and constructs one
-bottom-up shared replacement tree before one atomic commit batch.
+storage, or publish a transaction. The [durable leaf-page planner](Windvale-Database-Transaction-Leaf-Pages.md)
+now assigns consecutive identities and encodes the changed leaves. Shared
+bottom-up ancestor replacement and one atomic commit batch remain next.

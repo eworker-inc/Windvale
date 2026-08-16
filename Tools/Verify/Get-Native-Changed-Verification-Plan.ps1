@@ -33,6 +33,7 @@ $DatabaseDevelopmentTargetProjects = [ordered]@{
     'transaction-paths' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj'
     'transaction-leaf-groups' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj'
     'transaction-leaf-partition' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj'
+    'transaction-leaf-pages' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj'
     'query-ir' = 'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj'
     'sql-lowerer' = 'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj'
     'json-value' = 'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj'
@@ -111,6 +112,15 @@ if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TransactionLeafPartitionProj
 }
 $null = $DatabaseDevelopmentTargetsByPath[$TransactionLeafPartitionProject].Add(
     'transaction-leaf-partition')
+$TransactionLeafPagesProject =
+    'Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Pages.wvproj'
+if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TransactionLeafPagesProject)) {
+    $DatabaseDevelopmentTargetsByPath[$TransactionLeafPagesProject] =
+        [System.Collections.Generic.HashSet[string]]::new(
+            [StringComparer]::Ordinal)
+}
+$null = $DatabaseDevelopmentTargetsByPath[$TransactionLeafPagesProject].Add(
+    'transaction-leaf-pages')
 $DurableTreeScanProject =
     'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj'
 if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($DurableTreeScanProject)) {
@@ -235,6 +245,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Transaction-Paths.md' = @('transaction-paths')
     'Specifications/Windvale-Database-Transaction-Leaf-Groups.md' = @('transaction-leaf-groups')
     'Specifications/Windvale-Database-Transaction-Leaf-Partition.md' = @('transaction-leaf-partition')
+    'Specifications/Windvale-Database-Transaction-Leaf-Pages.md' = @('transaction-leaf-pages')
     'Specifications/Windvale-Database-Query-Ir.md' = @('query-ir')
     'Specifications/Windvale-Database-Sql.md' = @('sql-lowerer')
     'Specifications/Windvale-Database-Json-Value.md' = @('json-value')
@@ -272,6 +283,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Transaction-Paths.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Groups.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Partition.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Pages.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Sql-Lowerer.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
@@ -303,6 +315,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',
@@ -368,6 +381,7 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Transaction-Paths.md',
     'Specifications/Windvale-Database-Transaction-Leaf-Groups.md',
     'Specifications/Windvale-Database-Transaction-Leaf-Partition.md',
+    'Specifications/Windvale-Database-Transaction-Leaf-Pages.md',
     'Specifications/Windvale-Database-Query-Ir.md',
     'Specifications/Windvale-Database-Sql.md',
     'Specifications/Windvale-Database-Json-Value.md',
@@ -1248,6 +1262,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Transaction-Paths', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Leaf-Groups', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Leaf-Partition', [StringComparison]::Ordinal) -or
+            $Path.Contains('Transaction-Leaf-Pages', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
             $Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
             $Path.Contains('Json-Value', [StringComparison]::Ordinal) -or
@@ -1335,6 +1350,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Paths-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Partition-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Pages-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Json-Value-Self-Test.wv' -or
@@ -1381,6 +1397,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj' -or
@@ -1459,6 +1476,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Transaction-Paths', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Leaf-Groups', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Leaf-Partition', [StringComparison]::Ordinal) -or
+            $Path.Contains('Transaction-Leaf-Pages', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
             ($Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
                 $Path -eq 'Specifications/Windvale-Database-Sql.md') -or
@@ -2667,23 +2685,31 @@ if (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Contains('sql-lowerer')) {
     $DatabaseDevelopmentTarget = 'typed-query-sql'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
-    $SelectedDatabaseDevelopmentTargets.Count -eq 5 -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 6 -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-mutations') -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-rewrite') -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-paths') -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups') -and
-    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-partition')) {
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-partition') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-pages')) {
     $DatabaseDevelopmentTarget = 'transaction'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
-    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 3 -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-paths') -and
-    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups')) {
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-pages')) {
     $DatabaseDevelopmentTarget = 'transaction-paths'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
-    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 3 -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-partition') -and
-    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups')) {
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-pages')) {
     $DatabaseDevelopmentTarget = 'transaction-leaf-partition'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-pages')) {
+    $DatabaseDevelopmentTarget = 'transaction-leaf-groups'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
     $SelectedDatabaseDevelopmentTargets.Contains('query-ir') -and
