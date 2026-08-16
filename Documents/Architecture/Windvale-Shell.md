@@ -50,7 +50,10 @@ Windvale should not copy PowerShell's long names as the only usable spelling,
 its large dynamic object and conversion surface, ambient profiles, or its role
 as a second general-purpose programming language. Serious automation remains an
 ordinary verified Windvale application. The shell is an intentionally smaller
-interactive composition environment.
+interactive composition environment. The proposed
+[Windvale scripting experience](../Project/Windvale-Scripting-Proposal.md) makes
+short source-first automation convenient without creating a second shell
+language or bypassing application verification and authority boundaries.
 
 ## Experience principles
 
