@@ -1,0 +1,352 @@
+module Windvaleˉstandardˉbyteˉoutputˉcoreˉselfˉtest profile portable;
+
+import Windvaleˉboundedˉoperationˉcore as Operation;
+import Windvaleˉstandardˉbyteˉoutputˉcore as Output;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Clockˉat(Tick: u64) -> Operation.Operationˉclock {
+    return Operation.Operationˉclockˉcreate(1u64, Tick);
+}
+
+fn Openˉwith(
+    Maximumˉchunk: u32,
+    Maximumˉbuffer: u32,
+    Maximumˉtotal: u64
+) -> Output.Outputˉstate {
+    return Output.Outputˉopen(
+        7u64, 3u64, 11u64, 5u64, Clockˉat(0u64),
+        Maximumˉchunk, Maximumˉbuffer, Maximumˉtotal,
+        100u64, 1000u64
+    );
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Repeatedˉbyte(Value: u8) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(Value);
+    var Length: u32 = 1u32;
+    while Length < 65536u32 {
+        Result = Bytesˉconcat(Result, Result);
+        Length = Length * 2u32;
+    }
+    return Result;
+}
+
+fn Invalidˉinputsˉcase() -> bool {
+    let Invalidˉidentity: Output.Outputˉstate = Output.Outputˉopen(
+        0u64, 3u64, 11u64, 5u64, Clockˉat(0u64),
+        4u32, 4u32, 8u64, 100u64, 1000u64
+    );
+    let Invalidˉlimit: Output.Outputˉstate = Output.Outputˉopen(
+        7u64, 3u64, 11u64, 5u64, Clockˉat(0u64),
+        65537u32, 4u32, 8u64, 100u64, 1000u64
+    );
+    let Invalidˉclock: Output.Outputˉstate = Output.Outputˉopen(
+        7u64, 3u64, 11u64, 5u64,
+        Operation.Operationˉclockˉcreate(0u64, 0u64),
+        4u32, 4u32, 8u64, 100u64, 1000u64
+    );
+    let State: Output.Outputˉstate = Openˉwith(4u32, 4u32, 8u64);
+    let Wrongˉgeneration: Output.Outputˉtransition = Output.Outputˉconsume(
+        State, 7u64, 4u64, 11u64, 5u64, 1u32
+    );
+    return Invalidˉidentity.Error == Output.Outputˉerror.Invalidˉidentity &&
+        Invalidˉlimit.Error == Output.Outputˉerror.Invalidˉlimit &&
+        Invalidˉclock.Error == Output.Outputˉerror.Invalidˉclock &&
+        !Wrongˉgeneration.Applied &&
+        Wrongˉgeneration.Error == Output.Outputˉerror.Invalidˉgeneration;
+}
+
+fn Zeroˉbytesˉcase() -> bool {
+    let State: Output.Outputˉstate = Openˉwith(4u32, 4u32, 8u64);
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        State, 1u64, 1u64, Clockˉat(1u64), 20u64, Emptyˉbytes()
+    );
+    if !Begun.Applied || Begun.State.Acceptedˉbytes != 0u64 ||
+        Bytesˉlength(Begun.State.Buffer) != 0u32 ||
+        Begun.State.Write.Outcome != Operation.Operationˉoutcome.Completed {
+        return false;
+    }
+    let Closed: Output.Outputˉtransition =
+        Output.Outputˉwriterˉclose(Begun.State);
+    let Released: Output.Outputˉtransition =
+        Output.Outputˉrelease(Closed.State);
+    let Repeated: Output.Outputˉtransition =
+        Output.Outputˉrelease(Released.State);
+    return Closed.Applied && Closed.State.Phase == Output.Outputˉphase.Closed &&
+        Released.Applied && Released.State.Phase == Output.Outputˉphase.Released &&
+        Repeated.Applied && Repeated.State.Phase == Output.Outputˉphase.Released;
+}
+
+fn Oneˉbyteˉcase() -> bool {
+    let Value: bytes = Bytesˉfromˉu8(65u8);
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(4u32, 4u32, 8u64),
+        2u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Completed: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Begun.State, Clockˉat(2u64), Operation.Operationˉeventˉkind.Complete,
+        1u32
+    );
+    let Consumed: Output.Outputˉtransition = Output.Outputˉconsume(
+        Completed.State, 7u64, 3u64, 11u64, 5u64, 1u32
+    );
+    return Completed.Applied && Completed.State.Acceptedˉbytes == 1u64 &&
+        Bytesˉequal(Completed.State.Buffer, Value) && Consumed.Applied &&
+        Consumed.State.Consumedˉbytes == 1u64 &&
+        Bytesˉlength(Consumed.State.Buffer) == 0u32;
+}
+
+fn Maximumˉchunkˉcase() -> bool {
+    let Value: bytes = Repeatedˉbyte(90u8);
+    if Bytesˉlength(Value) != 65536u32 { return false; }
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(65536u32, 65536u32, 65536u64),
+        3u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Completed: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Begun.State, Clockˉat(2u64), Operation.Operationˉeventˉkind.Complete,
+        65536u32
+    );
+    let Consumed: Output.Outputˉtransition = Output.Outputˉconsume(
+        Completed.State, 7u64, 3u64, 11u64, 5u64, 65536u32
+    );
+    return Completed.Applied && Completed.State.Acceptedˉbytes == 65536u64 &&
+        Bytesˉequal(Completed.State.Buffer, Value) && Consumed.Applied &&
+        Consumed.State.Consumedˉbytes == 65536u64;
+}
+
+fn Invalidˉutf8ˉcase() -> bool {
+    var Value: bytes = Bytesˉfromˉu8(255u8);
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(192u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(128u8));
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(3u32, 3u32, 3u64),
+        4u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Completed: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Begun.State, Clockˉat(2u64), Operation.Operationˉeventˉkind.Complete,
+        3u32
+    );
+    return Completed.Applied && Bytesˉequal(Completed.State.Buffer, Value) &&
+        Bytesˉreadˉu8(Completed.State.Buffer, 0u32) == 255u8 &&
+        Bytesˉreadˉu8(Completed.State.Buffer, 1u32) == 192u8;
+}
+
+fn Multipleˉchunksˉcase() -> bool {
+    let First: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(1u8), Bytesˉfromˉu8(2u8)
+    );
+    let Firstˉbegun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(4u32, 4u32, 8u64),
+        5u64, 1u64, Clockˉat(1u64), 20u64, First
+    );
+    let Firstˉdone: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Firstˉbegun.State, Clockˉat(2u64),
+        Operation.Operationˉeventˉkind.Complete, 2u32
+    );
+    let Secondˉbegun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Firstˉdone.State, 6u64, 1u64, Clockˉat(3u64), 20u64,
+        Bytesˉfromˉu8(3u8)
+    );
+    let Secondˉdone: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Secondˉbegun.State, Clockˉat(4u64),
+        Operation.Operationˉeventˉkind.Complete, 1u32
+    );
+    let Closing: Output.Outputˉtransition =
+        Output.Outputˉwriterˉclose(Secondˉdone.State);
+    let Firstˉconsume: Output.Outputˉtransition = Output.Outputˉconsume(
+        Closing.State, 7u64, 3u64, 11u64, 5u64, 1u32
+    );
+    let Lastˉconsume: Output.Outputˉtransition = Output.Outputˉconsume(
+        Firstˉconsume.State, 7u64, 3u64, 11u64, 5u64, 2u32
+    );
+    return Secondˉdone.State.Acceptedˉbytes == 3u64 && Closing.Applied &&
+        Closing.State.Phase == Output.Outputˉphase.Closing &&
+        Firstˉconsume.State.Phase == Output.Outputˉphase.Closing &&
+        Lastˉconsume.State.Phase == Output.Outputˉphase.Closed &&
+        Lastˉconsume.State.Consumedˉbytes == 3u64;
+}
+
+fn Backpressureˉcase() -> bool {
+    var Value: bytes = Bytesˉfromˉu8(1u8);
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(2u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(3u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(4u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(5u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(6u8));
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(6u32, 4u32, 8u64),
+        7u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Dispatched: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Begun.State, Clockˉat(2u64), Operation.Operationˉeventˉkind.Dispatch,
+        0u32
+    );
+    let Four: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Dispatched.State, Clockˉat(3u64),
+        Operation.Operationˉeventˉkind.Progress, 4u32
+    );
+    let Blocked: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Four.State, Clockˉat(4u64), Operation.Operationˉeventˉkind.Progress,
+        6u32
+    );
+    let Drained: Output.Outputˉtransition = Output.Outputˉconsume(
+        Four.State, 7u64, 3u64, 11u64, 5u64, 2u32
+    );
+    let Six: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Drained.State, Clockˉat(5u64), Operation.Operationˉeventˉkind.Progress,
+        6u32
+    );
+    let Completed: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Six.State, Clockˉat(6u64), Operation.Operationˉeventˉkind.Complete,
+        6u32
+    );
+    return Four.Applied && Four.State.Acceptedˉbytes == 4u64 &&
+        !Blocked.Applied && Blocked.Error == Output.Outputˉerror.Backpressured &&
+        Blocked.State.Writeˉoffset == 4u32 && Drained.Applied && Six.Applied &&
+        Six.State.Acceptedˉbytes == 6u64 &&
+        Bytesˉlength(Six.State.Buffer) == 4u32 && Completed.Applied;
+}
+
+fn Peerˉcloseˉcase() -> bool {
+    let Value: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(1u8), Bytesˉfromˉu8(2u8)
+    );
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(2u32, 2u32, 4u64),
+        8u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Dispatched: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Begun.State, Clockˉat(2u64), Operation.Operationˉeventˉkind.Dispatch,
+        0u32
+    );
+    let Partial: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Dispatched.State, Clockˉat(3u64),
+        Operation.Operationˉeventˉkind.Progress, 1u32
+    );
+    let Closed: Output.Outputˉtransition = Output.Outputˉpeerˉclose(
+        Partial.State, 7u64, 3u64, 11u64, 5u64, Clockˉat(4u64)
+    );
+    let Released: Output.Outputˉtransition = Output.Outputˉrelease(Closed.State);
+    return Closed.Applied && Closed.State.Phase == Output.Outputˉphase.Peerˉclosed &&
+        Closed.State.Acceptedˉbytes == 1u64 &&
+        Closed.State.Releasedˉwithoutˉdeliveryˉbytes == 1u64 &&
+        Closed.State.Write.Outcome == Operation.Operationˉoutcome.Completed &&
+        Bytesˉlength(Closed.State.Buffer) == 0u32 && Released.Applied;
+}
+
+fn Cancellationˉcase() -> bool {
+    var Value: bytes = Bytesˉfromˉu8(1u8);
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(2u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(3u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(4u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(5u8));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu8(6u8));
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(6u32, 4u32, 8u64),
+        9u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Dispatched: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Begun.State, Clockˉat(2u64), Operation.Operationˉeventˉkind.Dispatch,
+        0u32
+    );
+    let Partial: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Dispatched.State, Clockˉat(3u64),
+        Operation.Operationˉeventˉkind.Progress, 4u32
+    );
+    let Blocked: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Partial.State, Clockˉat(4u64),
+        Operation.Operationˉeventˉkind.Progress, 6u32
+    );
+    let Cancelled: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Partial.State, Clockˉat(5u64), Operation.Operationˉeventˉkind.Cancel,
+        0u32
+    );
+    let Released: Output.Outputˉtransition =
+        Output.Outputˉrelease(Cancelled.State);
+    return !Blocked.Applied && Blocked.Error == Output.Outputˉerror.Backpressured &&
+        Cancelled.Applied &&
+        Cancelled.State.Phase == Output.Outputˉphase.Writeˉindeterminate &&
+        Cancelled.State.Write.Cause == Operation.Operationˉcause.Cancellation &&
+        Cancelled.State.Acceptedˉbytes == 4u64 &&
+        Cancelled.State.Releasedˉwithoutˉdeliveryˉbytes == 4u64 &&
+        Released.Applied;
+}
+
+fn Providerˉandˉcleanupˉcase() -> bool {
+    let Value: bytes = Bytesˉfromˉu8(1u8);
+    let Bufferedˉbegin: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(2u32, 2u32, 4u64),
+        10u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Buffered: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        Bufferedˉbegin.State, Clockˉat(2u64),
+        Operation.Operationˉeventˉkind.Complete, 1u32
+    );
+    let Lost: Output.Outputˉtransition = Output.Outputˉproviderˉtransition(
+        Buffered.State, 7u64, 3u64, 11u64, 5u64, Clockˉat(3u64),
+        Output.Outputˉproviderˉevent.Providerˉloss, 0u64
+    );
+    let Restartˉbegin: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(2u32, 2u32, 4u64),
+        11u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Restarted: Output.Outputˉtransition = Output.Outputˉproviderˉtransition(
+        Restartˉbegin.State, 7u64, 3u64, 11u64, 5u64, Clockˉat(2u64),
+        Output.Outputˉproviderˉevent.Providerˉrestart, 4u64
+    );
+    let Teardownˉbegin: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Openˉwith(2u32, 2u32, 4u64),
+        12u64, 1u64, Clockˉat(1u64), 20u64, Value
+    );
+    let Tornˉdown: Output.Outputˉtransition = Output.Outputˉproviderˉtransition(
+        Teardownˉbegin.State, 7u64, 3u64, 11u64, 5u64, Clockˉat(2u64),
+        Output.Outputˉproviderˉevent.Teardown, 4u64
+    );
+    let Invalidˉteardown: Output.Outputˉtransition =
+        Output.Outputˉproviderˉtransition(
+            Openˉwith(2u32, 2u32, 4u64),
+            7u64, 3u64, 11u64, 5u64, Clockˉat(2u64),
+            Output.Outputˉproviderˉevent.Teardown, 3u64
+        );
+    let Released: Output.Outputˉtransition = Output.Outputˉrelease(Lost.State);
+    let Repeated: Output.Outputˉtransition = Output.Outputˉrelease(Released.State);
+    return Lost.Applied && Lost.State.Phase == Output.Outputˉphase.Providerˉlost &&
+        Lost.State.Releasedˉwithoutˉdeliveryˉbytes == 1u64 &&
+        Restarted.Applied && Restarted.State.Phase == Output.Outputˉphase.Stale &&
+        Tornˉdown.Applied && Tornˉdown.State.Phase == Output.Outputˉphase.Tornˉdown &&
+        !Invalidˉteardown.Applied &&
+        Invalidˉteardown.Error == Output.Outputˉerror.Invalidˉgeneration &&
+        Released.Applied && Repeated.Applied &&
+        Bytesˉlength(Repeated.State.Buffer) == 0u32;
+}
+
+export fn Main() -> i32 {
+    if !Invalidˉinputsˉcase() { return 1; }
+    if !Zeroˉbytesˉcase() { return 2; }
+    if !Oneˉbyteˉcase() { return 3; }
+    if !Maximumˉchunkˉcase() { return 4; }
+    if !Invalidˉutf8ˉcase() { return 5; }
+    if !Multipleˉchunksˉcase() { return 6; }
+    if !Backpressureˉcase() { return 7; }
+    if !Peerˉcloseˉcase() { return 8; }
+    if !Cancellationˉcase() { return 9; }
+    if !Providerˉandˉcleanupˉcase() { return 10; }
+    return 42;
+}

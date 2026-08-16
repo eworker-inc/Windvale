@@ -62,6 +62,7 @@ native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Pass
 model-provider|Test-Model-Provider|11|4|native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
 external-model-reference|Test-External-Model-Reference|24|4|external model reference status=Passed providers=3 cases=24 live-calls=0 secrets=0
 operation-core|Test-Bounded-Operation-Core|10|4|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
+standard-byte-output|Test-Standard-Byte-Output-Core|10|4|native standard byte output status=Passed cases=10 local-result=42 cross-host-images=Verified
 shell-one-parser|Test-Shell-1-Parser|47|4|native shell 1 parser status=Passed cases=47 local-result=42 webassembly-smoke=11 cross-host-images=Verified
 echo-application|Test-Echo-Application|9|3|native Windvale echo status=Passed cases=9 capabilities=3 wvb=5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 cross-host-applications=Verified
 echo-command-launch|Test-Echo-Command-Launch|10|4|native echo command launch status=Passed cases=10 executions=2 integrity-rejections=3 policy-rejections=4 resolution-rejections=1 private-cleanup=Verified

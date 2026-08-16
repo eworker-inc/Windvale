@@ -1079,6 +1079,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite @('operation-core', 'network-connect-stream')
     } elseif ($Path -in @(
+        'Libraries/Platform/Streams/Standard-Byte-Output-Core.wv',
+        'Projects/Libraries/Windvale-Library-Standard-Byte-Output-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Standard-Byte-Output-Core.wvproj',
+        'Tests/Fixtures/Streams/Standard-Byte-Output-Core-Self-Test.wv',
+        'Specifications/Standard-Byte-Output-Core.md'
+    )) {
+        Add-Suite 'standard-byte-output'
+    } elseif ($Path -in @(
         'Libraries/Network/Address-Authority.wv',
         'Projects/Libraries/Windvale-Library-Network-Address-Authority.wvproj',
         'Projects/Tests/Windvale-Native-Test-Network-Address-Authority.wvproj',

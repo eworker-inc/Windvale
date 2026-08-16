@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Streams/Standard-Byte-Output-Core-Self-Test.wv"
+source "Libraries/Foundation/Operations/Bounded-Operation-Core.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output-Core.wv"
+emit wvb

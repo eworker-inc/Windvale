@@ -36,7 +36,7 @@ shell.
 | Command metadata | Partial bootstrap evidence | Generation 1 resolves exact commands, but general split launch/presentation metadata is incomplete |
 | First external application | Implemented hosted candidate | `echo` has one exact WVB, a three-capability directory, paired native applications, and nine paired execution cases; package/generation launch remains pending |
 | Dynamic launch/observation | Not general | The host dispatcher executes two older fixed profiles; `echo`, Windvale OS, and the browser lack the permanent general provider |
-| Standard byte streams | Not implemented | Existing console output is text-oriented; real `file-read`/`cat` requires exact byte output |
+| Standard byte streams | Implemented portable candidate | Exact accepted bytes, backpressure, drain, peer/provider loss, generation safety, and cleanup pass the paired ten-group Windows/Debian owner; concrete providers remain pending |
 | Read-only directory | Useful first candidate | Exact immutable single-segment reads exist; general enumeration/navigation do not |
 | Windows/Linux hosts | Strong bootstrap base | Arguments, output, package identities, runtime, and fixed dispatch evidence exist |
 | Browser host | Workbench bootstrap exists | JavaScript shell, OPFS/session storage, compiler/runtime workers, and line output exist; guest launch providers do not |
@@ -181,6 +181,14 @@ The first stream owner should test zero bytes, one byte, maximum chunk, multiple
 chunks, invalid UTF-8 bytes, slow reader, early reader exit, cancellation under
 backpressure, provider loss, and complete cleanup.
 
+Current result: [Decision 0704](../Decisions/0704-First-Portable-Standard-Byte-Output-Core.md)
+implements that capability-free state machine and the complete ten-group corpus.
+The same deterministic WVB/WVO-derived image returns `42` on Windows and Debian.
+It is not a live provider: Windows, Linux, browser, and Windvale OS adapters still
+need separate binding evidence. The focused owner reconstructs the exact accepted
+Decision 0587 compiler generation because current general compiler packaging is
+not yet a promoted front door.
+
 ### 7. Bound filesystem scope
 
 Use the existing immutable read-only directory capability for the first
@@ -265,7 +273,8 @@ provider contracts are accepted.
 
 ### Slice 3: exact `file-read`
 
-- implement and qualify standard byte output;
+- bind and permanently own the implemented standard-byte-output core through a
+  concrete provider;
 - bind the existing read-only directory snapshot;
 - implement `file-read` as an ordinary Windvale application;
 - prove exact binary output with no appended newline;

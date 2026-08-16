@@ -1,0 +1,638 @@
+module Windvaleˉstandardˉbyteˉoutputˉcore profile portable;
+
+import Windvaleˉboundedˉoperationˉcore as Operation;
+
+const OUTPUT_MAXIMUM_CHUNK_BYTES: u32 = 65536u32;
+const OUTPUT_MAXIMUM_BUFFER_BYTES: u32 = 262144u32;
+const OUTPUT_MAXIMUM_TOTAL_BYTES: u64 = 4194304u64;
+
+export enum Outputˉerror {
+    Valid = 0;
+    Invalidˉidentity = 1;
+    Invalidˉgeneration = 2;
+    Invalidˉlimit = 3;
+    Invalidˉstate = 4;
+    Invalidˉevent = 5;
+    Invalidˉclock = 6;
+    Invalidˉdeadline = 7;
+    Backpressured = 8;
+    Arithmeticˉoverflow = 9;
+}
+
+export enum Outputˉphase {
+    Invalid = 0;
+    Open = 1;
+    Closing = 2;
+    Closed = 3;
+    Peerˉclosed = 4;
+    Providerˉlost = 5;
+    Stale = 6;
+    Tornˉdown = 7;
+    Writeˉindeterminate = 8;
+    Released = 9;
+}
+
+export enum Outputˉproviderˉevent {
+    Providerˉloss = 1;
+    Providerˉrestart = 2;
+    Teardown = 3;
+}
+
+export record Outputˉstate {
+    Error: Outputˉerror;
+    Phase: Outputˉphase;
+    Providerˉidentity: u64;
+    Providerˉgeneration: u64;
+    Streamˉidentity: u64;
+    Streamˉgeneration: u64;
+    Clockˉgeneration: u64;
+    Maximumˉchunkˉbytes: u32;
+    Maximumˉbufferˉbytes: u32;
+    Maximumˉtotalˉbytes: u64;
+    Maximumˉdeadlineˉspan: u64;
+    Expiresˉat: u64;
+    Acceptedˉbytes: u64;
+    Consumedˉbytes: u64;
+    Releasedˉwithoutˉdeliveryˉbytes: u64;
+    Buffer: bytes;
+    Pendingˉwrite: bytes;
+    Writeˉoffset: u32;
+    Write: Operation.Operationˉstate;
+}
+
+export record Outputˉtransition {
+    Error: Outputˉerror;
+    Applied: bool;
+    State: Outputˉstate;
+}
+
+fn Outputˉemptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Outputˉemptyˉoperation() -> Operation.Operationˉstate {
+    return Operation.Operationˉbegin(
+        0u64, 0u64, 0u64, 0u64,
+        Operation.Operationˉclockˉcreate(0u64, 0u64),
+        0u64, 0u64, true
+    );
+}
+
+fn Outputˉfailure(Error: Outputˉerror) -> Outputˉstate {
+    return Outputˉstate(
+        Error, Outputˉphase.Invalid,
+        0u64, 0u64, 0u64, 0u64, 0u64,
+        0u32, 0u32, 0u64, 0u64, 0u64,
+        0u64, 0u64, 0u64,
+        Outputˉemptyˉbytes(), Outputˉemptyˉbytes(), 0u32,
+        Outputˉemptyˉoperation()
+    );
+}
+
+fn Outputˉtransitionˉfailure(
+    State: Outputˉstate,
+    Error: Outputˉerror
+) -> Outputˉtransition {
+    return Outputˉtransition(Error, false, State);
+}
+
+fn Outputˉwriteˉactive(State: Outputˉstate) -> bool {
+    return State.Write.Error == Operation.Operationˉerror.Valid &&
+        State.Write.Accepted &&
+        State.Write.Phase != Operation.Operationˉphase.Terminal;
+}
+
+fn Outputˉterminalˉphase(Phase: Outputˉphase) -> bool {
+    return Phase == Outputˉphase.Closed ||
+        Phase == Outputˉphase.Peerˉclosed ||
+        Phase == Outputˉphase.Providerˉlost ||
+        Phase == Outputˉphase.Stale ||
+        Phase == Outputˉphase.Tornˉdown ||
+        Phase == Outputˉphase.Writeˉindeterminate ||
+        Phase == Outputˉphase.Released;
+}
+
+fn Outputˉstateˉvalid(State: Outputˉstate) -> bool {
+    if State.Error != Outputˉerror.Valid ||
+        State.Phase == Outputˉphase.Invalid ||
+        State.Providerˉidentity == 0u64 || State.Providerˉgeneration == 0u64 ||
+        State.Streamˉidentity == 0u64 || State.Streamˉgeneration == 0u64 ||
+        State.Clockˉgeneration == 0u64 {
+        return false;
+    }
+    if State.Maximumˉchunkˉbytes == 0u32 ||
+        State.Maximumˉchunkˉbytes > OUTPUT_MAXIMUM_CHUNK_BYTES ||
+        State.Maximumˉbufferˉbytes == 0u32 ||
+        State.Maximumˉbufferˉbytes > OUTPUT_MAXIMUM_BUFFER_BYTES ||
+        State.Maximumˉtotalˉbytes == 0u64 ||
+        State.Maximumˉtotalˉbytes > OUTPUT_MAXIMUM_TOTAL_BYTES ||
+        State.Maximumˉdeadlineˉspan == 0u64 || State.Expiresˉat == 0u64 {
+        return false;
+    }
+    if State.Acceptedˉbytes > State.Maximumˉtotalˉbytes ||
+        State.Consumedˉbytes > State.Acceptedˉbytes ||
+        State.Releasedˉwithoutˉdeliveryˉbytes >
+            State.Acceptedˉbytes - State.Consumedˉbytes {
+        return false;
+    }
+    let Buffered: u32 = Bytesˉlength(State.Buffer);
+    if Buffered > State.Maximumˉbufferˉbytes ||
+        U64ˉfromˉu32(Buffered) != State.Acceptedˉbytes -
+            State.Consumedˉbytes - State.Releasedˉwithoutˉdeliveryˉbytes {
+        return false;
+    }
+    let Pending: u32 = Bytesˉlength(State.Pendingˉwrite);
+    if Pending > State.Maximumˉchunkˉbytes { return false; }
+    if Outputˉwriteˉactive(State) {
+        if Pending == 0u32 || State.Writeˉoffset > Pending ||
+            State.Write.Providerˉidentity != State.Providerˉidentity ||
+            State.Write.Providerˉgeneration != State.Providerˉgeneration ||
+            State.Write.Clockˉgeneration != State.Clockˉgeneration ||
+            State.Write.Progressˉlimit != U64ˉfromˉu32(Pending) ||
+            State.Write.Progress != U64ˉfromˉu32(State.Writeˉoffset) {
+            return false;
+        }
+    } else if Pending != 0u32 || State.Writeˉoffset != 0u32 {
+        return false;
+    }
+    if State.Phase == Outputˉphase.Closing && Outputˉwriteˉactive(State) {
+        return false;
+    }
+    if Outputˉterminalˉphase(State.Phase) &&
+        (Buffered != 0u32 || Outputˉwriteˉactive(State)) {
+        return false;
+    }
+    return true;
+}
+
+fn Outputˉwith(
+    State: Outputˉstate,
+    Phase: Outputˉphase,
+    Acceptedˉbytes: u64,
+    Consumedˉbytes: u64,
+    Releasedˉwithoutˉdeliveryˉbytes: u64,
+    Buffer: bytes,
+    Pendingˉwrite: bytes,
+    Writeˉoffset: u32,
+    Write: Operation.Operationˉstate
+) -> Outputˉstate {
+    return Outputˉstate(
+        Outputˉerror.Valid, Phase,
+        State.Providerˉidentity, State.Providerˉgeneration,
+        State.Streamˉidentity, State.Streamˉgeneration,
+        State.Clockˉgeneration,
+        State.Maximumˉchunkˉbytes, State.Maximumˉbufferˉbytes,
+        State.Maximumˉtotalˉbytes, State.Maximumˉdeadlineˉspan,
+        State.Expiresˉat,
+        Acceptedˉbytes, Consumedˉbytes, Releasedˉwithoutˉdeliveryˉbytes,
+        Buffer, Pendingˉwrite, Writeˉoffset, Write
+    );
+}
+
+export fn Outputˉopen(
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Streamˉidentity: u64,
+    Streamˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Maximumˉchunkˉbytes: u32,
+    Maximumˉbufferˉbytes: u32,
+    Maximumˉtotalˉbytes: u64,
+    Maximumˉdeadlineˉspan: u64,
+    Expiresˉat: u64
+) -> Outputˉstate {
+    if Providerˉidentity == 0u64 || Streamˉidentity == 0u64 {
+        return Outputˉfailure(Outputˉerror.Invalidˉidentity);
+    }
+    if Providerˉgeneration == 0u64 || Streamˉgeneration == 0u64 {
+        return Outputˉfailure(Outputˉerror.Invalidˉgeneration);
+    }
+    if Clock.Error != Operation.Operationˉerror.Valid || Clock.Generation == 0u64 {
+        return Outputˉfailure(Outputˉerror.Invalidˉclock);
+    }
+    if Maximumˉchunkˉbytes == 0u32 ||
+        Maximumˉchunkˉbytes > OUTPUT_MAXIMUM_CHUNK_BYTES ||
+        Maximumˉbufferˉbytes == 0u32 ||
+        Maximumˉbufferˉbytes > OUTPUT_MAXIMUM_BUFFER_BYTES ||
+        Maximumˉtotalˉbytes == 0u64 ||
+        Maximumˉtotalˉbytes > OUTPUT_MAXIMUM_TOTAL_BYTES ||
+        Maximumˉdeadlineˉspan == 0u64 {
+        return Outputˉfailure(Outputˉerror.Invalidˉlimit);
+    }
+    if Expiresˉat <= Clock.Tick {
+        return Outputˉfailure(Outputˉerror.Invalidˉdeadline);
+    }
+    return Outputˉstate(
+        Outputˉerror.Valid, Outputˉphase.Open,
+        Providerˉidentity, Providerˉgeneration,
+        Streamˉidentity, Streamˉgeneration, Clock.Generation,
+        Maximumˉchunkˉbytes, Maximumˉbufferˉbytes,
+        Maximumˉtotalˉbytes, Maximumˉdeadlineˉspan, Expiresˉat,
+        0u64, 0u64, 0u64,
+        Outputˉemptyˉbytes(), Outputˉemptyˉbytes(), 0u32,
+        Outputˉemptyˉoperation()
+    );
+}
+
+fn Outputˉdeadlineˉerror(
+    State: Outputˉstate,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64
+) -> Outputˉerror {
+    if Clock.Error != Operation.Operationˉerror.Valid ||
+        Clock.Generation != State.Clockˉgeneration {
+        return Outputˉerror.Invalidˉclock;
+    }
+    if Clock.Tick >= State.Expiresˉat || Deadline <= Clock.Tick ||
+        Deadline > State.Expiresˉat ||
+        Deadline - Clock.Tick > State.Maximumˉdeadlineˉspan {
+        return Outputˉerror.Invalidˉdeadline;
+    }
+    return Outputˉerror.Valid;
+}
+
+export fn Outputˉwriteˉbegin(
+    State: Outputˉstate,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64,
+    Value: bytes
+) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) || State.Phase != Outputˉphase.Open ||
+        Outputˉwriteˉactive(State) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    if Operationˉidentity == 0u64 {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉidentity);
+    }
+    if Operationˉgeneration == 0u64 {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉgeneration);
+    }
+    let Deadlineˉerror: Outputˉerror =
+        Outputˉdeadlineˉerror(State, Clock, Deadline);
+    if Deadlineˉerror != Outputˉerror.Valid {
+        return Outputˉtransitionˉfailure(State, Deadlineˉerror);
+    }
+    let Length: u32 = Bytesˉlength(Value);
+    if Length > State.Maximumˉchunkˉbytes ||
+        U64ˉfromˉu32(Length) > State.Maximumˉtotalˉbytes - State.Acceptedˉbytes {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉlimit);
+    }
+    let Write: Operation.Operationˉstate = Operation.Operationˉbegin(
+        State.Providerˉidentity, State.Providerˉgeneration,
+        Operationˉidentity, Operationˉgeneration,
+        Clock, Deadline, U64ˉfromˉu32(Length), true
+    );
+    if Write.Error != Operation.Operationˉerror.Valid || !Write.Accepted {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    if Length == 0u32 {
+        let Complete: Operation.Operationˉtransition = Operation.Operationˉadvance(
+            Write, Clock,
+            Operation.Operationˉeventˉcreate(
+                Operation.Operationˉeventˉkind.Complete, Write, 0u64
+            )
+        );
+        if !Complete.Applied {
+            return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+        }
+        return Outputˉtransition(
+            Outputˉerror.Valid, true,
+            Outputˉwith(
+                State, Outputˉphase.Open,
+                State.Acceptedˉbytes, State.Consumedˉbytes,
+                State.Releasedˉwithoutˉdeliveryˉbytes,
+                State.Buffer, Outputˉemptyˉbytes(), 0u32, Complete.State
+            )
+        );
+    }
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Outputˉphase.Open,
+            State.Acceptedˉbytes, State.Consumedˉbytes,
+            State.Releasedˉwithoutˉdeliveryˉbytes,
+            State.Buffer, Value, 0u32, Write
+        )
+    );
+}
+
+export fn Outputˉwriteˉadvance(
+    State: Outputˉstate,
+    Clock: Operation.Operationˉclock,
+    Kind: Operation.Operationˉeventˉkind,
+    Progress: u32
+) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) || State.Phase != Outputˉphase.Open ||
+        !Outputˉwriteˉactive(State) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    let Pendingˉlength: u32 = Bytesˉlength(State.Pendingˉwrite);
+    if Kind != Operation.Operationˉeventˉkind.Dispatch &&
+        Kind != Operation.Operationˉeventˉkind.Progress &&
+        Kind != Operation.Operationˉeventˉkind.Complete &&
+        Kind != Operation.Operationˉeventˉkind.Reject &&
+        Kind != Operation.Operationˉeventˉkind.Cancel {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    if (Kind == Operation.Operationˉeventˉkind.Dispatch ||
+        Kind == Operation.Operationˉeventˉkind.Reject ||
+        Kind == Operation.Operationˉeventˉkind.Cancel) && Progress != 0u32 {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    if (Kind == Operation.Operationˉeventˉkind.Progress ||
+        Kind == Operation.Operationˉeventˉkind.Complete) &&
+        Progress > Pendingˉlength {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    if Kind == Operation.Operationˉeventˉkind.Complete &&
+        Progress != Pendingˉlength {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    let Value: u64 = U64ˉfromˉu32(Progress);
+    let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State.Write, Clock,
+        Operation.Operationˉeventˉcreate(Kind, State.Write, Value)
+    );
+    if !Advanced.Applied {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    var Nextˉoffset: u32 = State.Writeˉoffset;
+    if Advanced.State.Progress == U64ˉfromˉu32(Progress) {
+        Nextˉoffset = Progress;
+    } else if Advanced.State.Progress != U64ˉfromˉu32(State.Writeˉoffset) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    if Nextˉoffset < State.Writeˉoffset {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    let Delta: u32 = Nextˉoffset - State.Writeˉoffset;
+    let Buffered: u32 = Bytesˉlength(State.Buffer);
+    if Delta > State.Maximumˉbufferˉbytes - Buffered {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Backpressured);
+    }
+    var Buffer: bytes = State.Buffer;
+    if Delta != 0u32 {
+        Buffer = Bytesˉconcat(
+            Buffer,
+            Bytesˉslice(State.Pendingˉwrite, State.Writeˉoffset, Delta)
+        );
+    }
+    let Accepted: u64 = State.Acceptedˉbytes + U64ˉfromˉu32(Delta);
+    var Phase: Outputˉphase = Outputˉphase.Open;
+    var Pending: bytes = State.Pendingˉwrite;
+    var Offset: u32 = Nextˉoffset;
+    if Advanced.State.Phase == Operation.Operationˉphase.Terminal {
+        Pending = Outputˉemptyˉbytes();
+        Offset = 0u32;
+        if Advanced.State.Outcome ==
+            Operation.Operationˉoutcome.Submissionˉindeterminate {
+            Phase = Outputˉphase.Writeˉindeterminate;
+            let Released: u64 = State.Releasedˉwithoutˉdeliveryˉbytes +
+                U64ˉfromˉu32(Bytesˉlength(Buffer));
+            return Outputˉtransition(
+                Outputˉerror.Valid, true,
+                Outputˉwith(
+                    State, Phase, Accepted, State.Consumedˉbytes, Released,
+                    Outputˉemptyˉbytes(), Pending, Offset, Advanced.State
+                )
+            );
+        }
+    }
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Phase, Accepted, State.Consumedˉbytes,
+            State.Releasedˉwithoutˉdeliveryˉbytes,
+            Buffer, Pending, Offset, Advanced.State
+        )
+    );
+}
+
+fn Outputˉidentityˉvalid(
+    State: Outputˉstate,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Streamˉidentity: u64,
+    Streamˉgeneration: u64
+) -> bool {
+    return Providerˉidentity == State.Providerˉidentity &&
+        Providerˉgeneration == State.Providerˉgeneration &&
+        Streamˉidentity == State.Streamˉidentity &&
+        Streamˉgeneration == State.Streamˉgeneration;
+}
+
+export fn Outputˉconsume(
+    State: Outputˉstate,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Streamˉidentity: u64,
+    Streamˉgeneration: u64,
+    Count: u32
+) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) ||
+        (State.Phase != Outputˉphase.Open &&
+        State.Phase != Outputˉphase.Closing) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    if !Outputˉidentityˉvalid(
+        State, Providerˉidentity, Providerˉgeneration,
+        Streamˉidentity, Streamˉgeneration
+    ) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉgeneration);
+    }
+    let Buffered: u32 = Bytesˉlength(State.Buffer);
+    if Count == 0u32 || Count > Buffered {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉlimit);
+    }
+    let Remaining: bytes = Bytesˉslice(State.Buffer, Count, Buffered - Count);
+    let Consumed: u64 = State.Consumedˉbytes + U64ˉfromˉu32(Count);
+    var Phase: Outputˉphase = State.Phase;
+    if Phase == Outputˉphase.Closing && Bytesˉlength(Remaining) == 0u32 {
+        Phase = Outputˉphase.Closed;
+    }
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Phase, State.Acceptedˉbytes, Consumed,
+            State.Releasedˉwithoutˉdeliveryˉbytes,
+            Remaining, State.Pendingˉwrite, State.Writeˉoffset, State.Write
+        )
+    );
+}
+
+export fn Outputˉwriterˉclose(State: Outputˉstate) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) || State.Phase != Outputˉphase.Open ||
+        Outputˉwriteˉactive(State) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    var Phase: Outputˉphase = Outputˉphase.Closing;
+    if Bytesˉlength(State.Buffer) == 0u32 { Phase = Outputˉphase.Closed; }
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Phase, State.Acceptedˉbytes, State.Consumedˉbytes,
+            State.Releasedˉwithoutˉdeliveryˉbytes,
+            State.Buffer, State.Pendingˉwrite, State.Writeˉoffset, State.Write
+        )
+    );
+}
+
+export fn Outputˉpeerˉclose(
+    State: Outputˉstate,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Streamˉidentity: u64,
+    Streamˉgeneration: u64,
+    Clock: Operation.Operationˉclock
+) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) ||
+        (State.Phase != Outputˉphase.Open &&
+        State.Phase != Outputˉphase.Closing) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    if !Outputˉidentityˉvalid(
+        State, Providerˉidentity, Providerˉgeneration,
+        Streamˉidentity, Streamˉgeneration
+    ) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉgeneration);
+    }
+    if Clock.Error != Operation.Operationˉerror.Valid ||
+        Clock.Generation != State.Clockˉgeneration {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉclock);
+    }
+    var Write: Operation.Operationˉstate = State.Write;
+    if Outputˉwriteˉactive(State) {
+        var Kind: Operation.Operationˉeventˉkind =
+            Operation.Operationˉeventˉkind.Reject;
+        var Value: u64 = 0u64;
+        if State.Write.Phase == Operation.Operationˉphase.Dispatched {
+            Kind = Operation.Operationˉeventˉkind.Complete;
+            Value = U64ˉfromˉu32(State.Writeˉoffset);
+        }
+        let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+            State.Write, Clock,
+            Operation.Operationˉeventˉcreate(Kind, State.Write, Value)
+        );
+        if !Advanced.Applied {
+            return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+        }
+        Write = Advanced.State;
+    }
+    let Released: u64 = State.Releasedˉwithoutˉdeliveryˉbytes +
+        U64ˉfromˉu32(Bytesˉlength(State.Buffer));
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Outputˉphase.Peerˉclosed,
+            State.Acceptedˉbytes, State.Consumedˉbytes, Released,
+            Outputˉemptyˉbytes(), Outputˉemptyˉbytes(), 0u32, Write
+        )
+    );
+}
+
+export fn Outputˉproviderˉtransition(
+    State: Outputˉstate,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Streamˉidentity: u64,
+    Streamˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Event: Outputˉproviderˉevent,
+    Newˉproviderˉgeneration: u64
+) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) || Outputˉterminalˉphase(State.Phase) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    if !Outputˉidentityˉvalid(
+        State, Providerˉidentity, Providerˉgeneration,
+        Streamˉidentity, Streamˉgeneration
+    ) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉgeneration);
+    }
+    if Clock.Error != Operation.Operationˉerror.Valid ||
+        Clock.Generation != State.Clockˉgeneration {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉclock);
+    }
+    if (Event == Outputˉproviderˉevent.Providerˉrestart ||
+        Event == Outputˉproviderˉevent.Teardown) &&
+        (Newˉproviderˉgeneration == 0u64 ||
+        Newˉproviderˉgeneration == State.Providerˉgeneration) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉgeneration);
+    }
+    if Event != Outputˉproviderˉevent.Providerˉloss &&
+        Event != Outputˉproviderˉevent.Providerˉrestart &&
+        Event != Outputˉproviderˉevent.Teardown {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+    }
+    var Phase: Outputˉphase = Outputˉphase.Providerˉlost;
+    if Event == Outputˉproviderˉevent.Providerˉrestart {
+        Phase = Outputˉphase.Stale;
+    } else if Event == Outputˉproviderˉevent.Teardown {
+        Phase = Outputˉphase.Tornˉdown;
+    }
+    var Write: Operation.Operationˉstate = State.Write;
+    if Outputˉwriteˉactive(State) {
+        var Advanced: Operation.Operationˉtransition =
+            Operation.Operationˉtransition(
+                Operation.Operationˉerror.Invalidˉevent, false, State.Write
+            );
+        if Event == Outputˉproviderˉevent.Providerˉloss {
+            Advanced = Operation.Operationˉadvance(
+                State.Write, Clock,
+                Operation.Operationˉeventˉcreate(
+                    Operation.Operationˉeventˉkind.Providerˉloss,
+                    State.Write, 0u64
+                )
+            );
+        } else if Event == Outputˉproviderˉevent.Providerˉrestart {
+            Advanced = Operation.Operationˉadvance(
+                State.Write, Clock,
+                Operation.Operationˉeventˉcreate(
+                    Operation.Operationˉeventˉkind.Providerˉrestart,
+                    State.Write, Newˉproviderˉgeneration
+                )
+            );
+        } else {
+            Advanced = Operation.Operationˉteardown(
+                State.Write, Clock, Newˉproviderˉgeneration
+            );
+        }
+        if !Advanced.Applied {
+            return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉevent);
+        }
+        Write = Advanced.State;
+        if Write.Outcome == Operation.Operationˉoutcome.Submissionˉindeterminate {
+            Phase = Outputˉphase.Writeˉindeterminate;
+        }
+    }
+    let Released: u64 = State.Releasedˉwithoutˉdeliveryˉbytes +
+        U64ˉfromˉu32(Bytesˉlength(State.Buffer));
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Phase, State.Acceptedˉbytes, State.Consumedˉbytes, Released,
+            Outputˉemptyˉbytes(), Outputˉemptyˉbytes(), 0u32, Write
+        )
+    );
+}
+
+export fn Outputˉrelease(State: Outputˉstate) -> Outputˉtransition {
+    if !Outputˉstateˉvalid(State) || !Outputˉterminalˉphase(State.Phase) {
+        return Outputˉtransitionˉfailure(State, Outputˉerror.Invalidˉstate);
+    }
+    if State.Phase == Outputˉphase.Released {
+        return Outputˉtransition(Outputˉerror.Valid, true, State);
+    }
+    return Outputˉtransition(
+        Outputˉerror.Valid, true,
+        Outputˉwith(
+            State, Outputˉphase.Released,
+            State.Acceptedˉbytes, State.Consumedˉbytes,
+            State.Releasedˉwithoutˉdeliveryˉbytes,
+            State.Buffer, State.Pendingˉwrite, State.Writeˉoffset, State.Write
+        )
+    );
+}

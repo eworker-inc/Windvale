@@ -1683,6 +1683,21 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'standard byte output core owner'
+        Paths = @(
+            'Libraries/Platform/Streams/Standard-Byte-Output-Core.wv',
+            'Projects/Libraries/Windvale-Library-Standard-Byte-Output-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Standard-Byte-Output-Core.wvproj',
+            'Tests/Fixtures/Streams/Standard-Byte-Output-Core-Self-Test.wv',
+            'Tools/Native/Test-Standard-Byte-Output-Core.cmd',
+            'Tools/Native/Test-Standard-Byte-Output-Core.sh',
+            'Specifications/Standard-Byte-Output-Core.md'
+        )
+        Suites = @('standard-byte-output')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'network address authority owner'
         Paths = @(
             'Libraries/Network/Address-Authority.wv',
@@ -2588,9 +2603,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 94 -or
+if ($VerificationOwnerLines.Count -ne 95 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 92-owner inventory differs.'
+    throw 'The native verification-owner header or exact 94-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2628,7 +2643,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4393 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4403 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

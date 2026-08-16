@@ -1,0 +1,4 @@
+windvale-project 2
+root "Libraries/Platform/Streams/Standard-Byte-Output-Core.wv"
+source "Libraries/Foundation/Operations/Bounded-Operation-Core.wv"
+emit wvb
