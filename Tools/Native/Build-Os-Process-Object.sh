@@ -94,9 +94,9 @@ verify_identity "$work/Init-Shim.wvo" 2118 52098aac184961fda7c3a23c8577851df6c18
 run_logged Assemble-Directory.log "$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Kernel/Directory-Process-Service-Shim.wva" "$work/Directory-Shim.wvo"
 verify_identity "$work/Directory-Shim.wvo" 1549 c0a7524130b8733ed17a3ce52fc04986cb449394c9ee509280120b86a3ed8c88 || exit 1
 run_logged Assemble-Filesystem.log "$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Kernel/Filesystem-Process-Service-Shim.wva" "$work/Filesystem-Shim.wvo"
-verify_identity "$work/Filesystem-Shim.wvo" 302 dc212ce43b59102a05521531e6df4674291851c72a1be8990eff049ea46879dd || exit 1
+verify_identity "$work/Filesystem-Shim.wvo" 302 aae81021f8e5d349570533299bbd1c4196358c3ad857eecc80b5b918c48f301c || exit 1
 run_logged Assemble-Network.log "$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Kernel/Network-Process-Service-Shim.wva" "$work/Network-Shim.wvo"
-verify_identity "$work/Network-Shim.wvo" 296 628852893fcbc32e610261517a79c3acd56714ce0c197beab1c0a3917dedf726 || exit 1
+verify_identity "$work/Network-Shim.wvo" 296 ffc757391199f456850bdb80a2f67b1815b7bc7c1dda9a1bf6b6ed1919df87af || exit 1
 run_logged Assemble-Boot.log "$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Runtime/Boot-Resource-Service.wva" "$work/Boot-Stencil.wvo"
 verify_identity "$work/Boot-Stencil.wvo" 462 fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9 || exit 1
 run_logged Assemble-User.log "$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Kernel/Process-User-Shim.wva" "$work/User-Shim.wvo"
@@ -110,9 +110,9 @@ verify_identity "$work/Init.bin" 5159 e9624ebe3b857b77d8b1024a4edfdaf23e040ee61f
 run_logged Link-Directory.log "$script_directory/Link-Wvo.sh" 0 Windvale_directory_process_user_entry "$work/Directory.bin" "$work/Directory-Shim.wvo" "$work/Directory.wvo"
 verify_identity "$work/Directory.bin" 3911 f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb || exit 1
 run_logged Link-Filesystem.log "$script_directory/Link-Wvo.sh" 0 Windvale_filesystem_process_user_entry "$work/Filesystem.bin" "$work/Filesystem-Shim.wvo" "$work/Filesystem.wvo"
-verify_identity "$work/Filesystem.bin" 195657 453cef870da3f375400d1c58cc8ebd385f761c2eafbdf3b3fb70603db8520dab || exit 1
+verify_identity "$work/Filesystem.bin" 195657 57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6 || exit 1
 run_logged Link-Network.log "$script_directory/Link-Wvo.sh" 0 Windvale_network_process_user_entry "$work/Network.bin" "$work/Network-Shim.wvo" "$work/Network.wvo"
-verify_identity "$work/Network.bin" 242571 57067da10da68fc1d35b41784e147d8f60ed1e05441cb68bc803ad5a9682f6d1 || exit 1
+verify_identity "$work/Network.bin" 242571 68182de6018a6c64d02c4a384355ea14c463a67d1939cb18db0c058223358e42 || exit 1
 run_logged Link-Client.log "$script_directory/Link-Wvo.sh" 0 Windvale_process_user_entry "$work/Client.bin" "$work/User-Shim.wvo" "$work/Interpreter.wvo" "$work/Boot-Service.wvo"
 verify_identity "$work/Client.bin" 449261 be4f88ad2460a17e5902670a9ca2bf70021d8b5ce46e2414f00f940a8f4d32b6 || exit 1
 
@@ -122,6 +122,6 @@ run_logged Directory-Snapshot.log "$toolset/linux-x64-process-directory-snapshot
 verify_identity "$work/Directory.wvds" 3184 0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a || exit 1
 
 run_logged Process-Object.log "$toolset/linux-x64-process-object.elf" "$toolset/normal-x64-process.bin" "$work/Init.bin" "$work/Client.bin" "$work/Program.wvb" "$work/Resources.wvrs" "$work/Directory.wvds" "$work/Directory.bin" "$work/Filesystem.bin" "$work/Network.bin" "$work/Process.wvo"
-verify_identity "$work/Process.wvo" 952002 c4606029a8af59770b2022f710b26fcd6d4207dba9d9d939c25faf423ee96d50 || exit 1
+verify_identity "$work/Process.wvo" 952002 5a6feaaf9be084e83b539080a14949809dcd3e3d99fca514a57b6f931af6d263 || exit 1
 run_logged Verify-Process.log "$script_directory/Verify-Wvo.sh" "$work/Process.wvo"
 run_logged Publish.log "$script_directory/Publish-Wvo.sh" "$work/Process.wvo" "$output"

@@ -13,7 +13,7 @@ move r8 rdx
 add_i32 r8 1024
 move_u32 r9d 65600
 move_u32 ebx 5
-move_u32 esi 65538
+move_u32 esi 131072
 syscall
 label filesystem_service_failure
 move_u32 ebx 3

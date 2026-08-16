@@ -42,5 +42,8 @@ code, create an IPC endpoint, publish a capability, run FAT32, or process a
 packet. [Provider launch transaction 1](Windvale-Os-Provider-Launch-Transaction.md)
 now composes these values with resource-domain reservation, exact image/page
 geometry, private construction evidence, readiness publication, rollback, and
-teardown. The privileged machine mechanisms still must bind that transaction
-before a live provider claim is made.
+teardown. Its machine-binding leaf maps the logical request/domain identities
+to sequential generation-safe process and endpoint identities only after their
+fixed slots are released and closed. The privileged record, paging, endpoint,
+and context-transfer mechanisms still must consume that transaction before a
+live provider claim is made.

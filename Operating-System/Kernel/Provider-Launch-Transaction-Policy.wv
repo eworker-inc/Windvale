@@ -2,6 +2,7 @@ module Providerˉlaunchˉtransactionˉpolicy profile portable;
 
 import Resourceˉdomainˉpolicy as Domain;
 import Serviceˉlaunchˉpolicy as Service;
+import Providerˉmachineˉbindingˉpolicy as Machine;
 
 export enum Providerˉlaunchˉstatus {
     Success = 0; Requestˉrejected = 1; Invalidˉimage = 2;
@@ -55,6 +56,8 @@ export fn Providerˉlaunchˉadmit(
     Endpointˉreference: u32,
     Imageˉbytes: u32,
     Imageˉidentityˉmatches: bool,
+    Processˉslotˉreleased: bool,
+    Endpointˉslotˉclosed: bool,
     Imageˉmappedˉreadˉexecute: bool,
     Privateˉmemoryˉmappedˉreadˉwrite: bool,
     Endpointˉbound: bool,
@@ -79,10 +82,25 @@ export fn Providerˉlaunchˉadmit(
             Plan.Role, Plan.Domainˉreference
         );
     }
-    if Processˉreference != Plan.Requestˉreference ||
-        Endpointˉreference != Plan.Domainˉreference {
+    let Machineˉstatus: Machine.Providerˉmachineˉbindingˉstatus =
+        Machine.Providerˉmachineˉbindingˉstatus(
+            Plan.Role, Plan.Requestˉreference, Plan.Domainˉreference,
+            Processˉreference, Endpointˉreference,
+            Processˉslotˉreleased, Endpointˉslotˉclosed
+        );
+    if Machineˉstatus == Machine.Providerˉmachineˉbindingˉstatus.Invalidˉrole ||
+        Machineˉstatus == Machine.Providerˉmachineˉbindingˉstatus.Invalidˉrequest ||
+        Machineˉstatus == Machine.Providerˉmachineˉbindingˉstatus.Invalidˉdomain ||
+        Machineˉstatus == Machine.Providerˉmachineˉbindingˉstatus.Invalidˉprocess ||
+        Machineˉstatus == Machine.Providerˉmachineˉbindingˉstatus.Invalidˉendpoint {
         return Providerˉfault(
             Providerˉlaunchˉstatus.Invalidˉreference,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+    if Machineˉstatus != Machine.Providerˉmachineˉbindingˉstatus.Success {
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Constructionˉfailed,
             Plan.Role, Plan.Domainˉreference
         );
     }

@@ -19,9 +19,9 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 "%Work%\Filesystem-Re
 if not "%ERRORLEVEL%"=="46" goto :cleanup
 call "%Native%\Rename-Wvo-Export.cmd" "%Work%\Filesystem-Main.wvo" Main Windvale_filesystem_process_service_main "%Work%\Filesystem.wvo" >nul || goto :cleanup
 call "%Native%\Assemble-Wva.cmd" "%Root%\Operating-System\Kernel\Filesystem-Process-Service-Shim.wva" "%Work%\Filesystem-Shim.wvo" >nul || goto :cleanup
-call :verify "%Work%\Filesystem-Shim.wvo" 302 dc212ce43b59102a05521531e6df4674291851c72a1be8990eff049ea46879dd || goto :cleanup
+call :verify "%Work%\Filesystem-Shim.wvo" 302 aae81021f8e5d349570533299bbd1c4196358c3ad857eecc80b5b918c48f301c || goto :cleanup
 call "%Native%\Link-Wvo.cmd" 0 Windvale_filesystem_process_user_entry "%Work%\Filesystem.bin" "%Work%\Filesystem-Shim.wvo" "%Work%\Filesystem.wvo" >nul || goto :cleanup
-call :verify "%Work%\Filesystem.bin" 195657 453cef870da3f375400d1c58cc8ebd385f761c2eafbdf3b3fb70603db8520dab || goto :cleanup
+call :verify "%Work%\Filesystem.bin" 195657 57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6 || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%Root%\Projects\Operating-System\Windvale-Os-Network-Process-Service.wvproj" "%Work%\Network.wvb" >nul || goto :cleanup
 call :verify "%Work%\Network.wvb" 13543 32c595716af0a3706226d677924a5279ea2d7b97b0a4cbdf7c6c9eed808e1b2a || goto :cleanup
 call "%Native%\Lower-Wvb-To-Wvo.cmd" "%Work%\Network.wvb" "%Work%\Network-Main.wvo" >nul || goto :cleanup
@@ -32,9 +32,9 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 "%Work%\Network-Readi
 if not "%ERRORLEVEL%"=="47" goto :cleanup
 call "%Native%\Rename-Wvo-Export.cmd" "%Work%\Network-Main.wvo" Main Windvale_network_process_service_main "%Work%\Network.wvo" >nul || goto :cleanup
 call "%Native%\Assemble-Wva.cmd" "%Root%\Operating-System\Kernel\Network-Process-Service-Shim.wva" "%Work%\Network-Shim.wvo" >nul || goto :cleanup
-call :verify "%Work%\Network-Shim.wvo" 296 628852893fcbc32e610261517a79c3acd56714ce0c197beab1c0a3917dedf726 || goto :cleanup
+call :verify "%Work%\Network-Shim.wvo" 296 ffc757391199f456850bdb80a2f67b1815b7bc7c1dda9a1bf6b6ed1919df87af || goto :cleanup
 call "%Native%\Link-Wvo.cmd" 0 Windvale_network_process_user_entry "%Work%\Network.bin" "%Work%\Network-Shim.wvo" "%Work%\Network.wvo" >nul || goto :cleanup
-call :verify "%Work%\Network.bin" 242571 57067da10da68fc1d35b41784e147d8f60ed1e05441cb68bc803ad5a9682f6d1 || goto :cleanup
+call :verify "%Work%\Network.bin" 242571 68182de6018a6c64d02c4a384355ea14c463a67d1939cb18db0c058223358e42 || goto :cleanup
 echo native os provider images status=Passed services=2 readiness=2 cases=8
 set "Status=0"
 goto :cleanup

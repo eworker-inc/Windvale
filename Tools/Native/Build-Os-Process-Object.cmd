@@ -134,12 +134,12 @@ if errorlevel 1 goto :failure
 set "FailureStep=assemble-filesystem-shim"
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Kernel\Filesystem-Process-Service-Shim.wva" "%Work%\Filesystem-Shim.wvo" >"%Work%\Assemble-Filesystem.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Filesystem-Shim.wvo" 302 dc212ce43b59102a05521531e6df4674291851c72a1be8990eff049ea46879dd
+call :verify "%Work%\Filesystem-Shim.wvo" 302 aae81021f8e5d349570533299bbd1c4196358c3ad857eecc80b5b918c48f301c
 if errorlevel 1 goto :failure
 set "FailureStep=assemble-network-shim"
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Kernel\Network-Process-Service-Shim.wva" "%Work%\Network-Shim.wvo" >"%Work%\Assemble-Network.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Network-Shim.wvo" 296 628852893fcbc32e610261517a79c3acd56714ce0c197beab1c0a3917dedf726
+call :verify "%Work%\Network-Shim.wvo" 296 ffc757391199f456850bdb80a2f67b1815b7bc7c1dda9a1bf6b6ed1919df87af
 if errorlevel 1 goto :failure
 set "FailureStep=assemble-boot-resource"
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Runtime\Boot-Resource-Service.wva" "%Work%\Boot-Stencil.wvo" >"%Work%\Assemble-Boot.log" 2>&1
@@ -171,12 +171,12 @@ if errorlevel 1 goto :failure
 set "FailureStep=link-filesystem"
 call "%Native%\Link-Wvo.cmd" 0 Windvale_filesystem_process_user_entry "%Work%\Filesystem.bin" "%Work%\Filesystem-Shim.wvo" "%Work%\Filesystem.wvo" >"%Work%\Link-Filesystem.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Filesystem.bin" 195657 453cef870da3f375400d1c58cc8ebd385f761c2eafbdf3b3fb70603db8520dab
+call :verify "%Work%\Filesystem.bin" 195657 57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6
 if errorlevel 1 goto :failure
 set "FailureStep=link-network"
 call "%Native%\Link-Wvo.cmd" 0 Windvale_network_process_user_entry "%Work%\Network.bin" "%Work%\Network-Shim.wvo" "%Work%\Network.wvo" >"%Work%\Link-Network.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Network.bin" 242571 57067da10da68fc1d35b41784e147d8f60ed1e05441cb68bc803ad5a9682f6d1
+call :verify "%Work%\Network.bin" 242571 68182de6018a6c64d02c4a384355ea14c463a67d1939cb18db0c058223358e42
 if errorlevel 1 goto :failure
 set "FailureStep=link-client"
 call "%Native%\Link-Wvo.cmd" 0 Windvale_process_user_entry "%Work%\Client.bin" "%Work%\User-Shim.wvo" "%Work%\Interpreter.wvo" "%Work%\Boot-Service.wvo" >"%Work%\Link-Client.log" 2>&1
@@ -198,7 +198,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=build-process-object"
 "%Toolset%\windows-x64-process-object.exe" "%Toolset%\normal-x64-process.bin" "%Work%\Init.bin" "%Work%\Client.bin" "%Work%\Program.wvb" "%Work%\Resources.wvrs" "%Work%\Directory.wvds" "%Work%\Directory.bin" "%Work%\Filesystem.bin" "%Work%\Network.bin" "%Work%\Process.wvo" >"%Work%\Process-Object.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process.wvo" 952002 c4606029a8af59770b2022f710b26fcd6d4207dba9d9d939c25faf423ee96d50
+call :verify "%Work%\Process.wvo" 952002 5a6feaaf9be084e83b539080a14949809dcd3e3d99fca514a57b6f931af6d263
 if errorlevel 1 goto :failure
 call "%Native%\Verify-Wvo.cmd" "%Work%\Process.wvo" >"%Work%\Verify-Process.log" 2>&1
 if errorlevel 1 goto :failure

@@ -1,0 +1,54 @@
+module Providerˉmachineˉbindingˉpolicy profile portable;
+
+export enum Providerˉmachineˉbindingˉstatus {
+    Success = 0; Invalidˉrole = 1; Invalidˉrequest = 2;
+    Invalidˉdomain = 3; Invalidˉprocess = 4;
+    Invalidˉendpoint = 5; Processˉslotˉlive = 6;
+    Endpointˉslotˉopen = 7;
+}
+
+export fn Providerˉmachineˉbindingˉstatus(
+    Role: u32,
+    Requestˉreference: u32,
+    Domainˉreference: u32,
+    Processˉreference: u32,
+    Endpointˉreference: u32,
+    Processˉslotˉreleased: bool,
+    Endpointˉslotˉclosed: bool
+) -> Providerˉmachineˉbindingˉstatus {
+    if Role != 2u32 && Role != 3u32 {
+        return Providerˉmachineˉbindingˉstatus.Invalidˉrole;
+    }
+    var Expectedˉrequest: u32 = 65540u32;
+    var Expectedˉdomain: u32 = 65538u32;
+    // The first bounded machine reuses process/object slot 2 after both fixed
+    // client generations. Filesystem is generation 3; network is generation 4.
+    var Expectedˉprocess: u32 = 196610u32;
+    // The closed resource and directory endpoint slots advance independently.
+    var Expectedˉendpoint: u32 = 131072u32;
+    if Role == 3u32 {
+        Expectedˉrequest = 65541u32;
+        Expectedˉdomain = 65539u32;
+        Expectedˉprocess = 262146u32;
+        Expectedˉendpoint = 131073u32;
+    }
+    if Requestˉreference != Expectedˉrequest {
+        return Providerˉmachineˉbindingˉstatus.Invalidˉrequest;
+    }
+    if Domainˉreference != Expectedˉdomain {
+        return Providerˉmachineˉbindingˉstatus.Invalidˉdomain;
+    }
+    if Processˉreference != Expectedˉprocess {
+        return Providerˉmachineˉbindingˉstatus.Invalidˉprocess;
+    }
+    if Endpointˉreference != Expectedˉendpoint {
+        return Providerˉmachineˉbindingˉstatus.Invalidˉendpoint;
+    }
+    if !Processˉslotˉreleased {
+        return Providerˉmachineˉbindingˉstatus.Processˉslotˉlive;
+    }
+    if !Endpointˉslotˉclosed {
+        return Providerˉmachineˉbindingˉstatus.Endpointˉslotˉopen;
+    }
+    return Providerˉmachineˉbindingˉstatus.Success;
+}

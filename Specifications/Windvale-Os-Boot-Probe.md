@@ -24,9 +24,9 @@ Current native `main` image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 1,693,184 | `e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c` | 0 |
-| `invalid-opcode` | 1,693,184 | `f7e72f53641b5f545d133a5c0a5912d2949671ae0dfe816985493323ba0d5df1` | 3 |
-| `general-protection` | 1,693,184 | `9be38b55f9710b38e871751e682d1181922ee5cc804022310e82fe62b5096b11` | 3 |
+| `normal` | 1,693,184 | `4d25d5105149b6b819ff35e41e027ecf351d04ba865dc7c6f3bd6c18a77bcbce` | 0 |
+| `invalid-opcode` | 1,693,184 | `05ac3cc2d3a6337a2838f507e5a15b10755e3e6775fc6160850fc3ea4a338f31` | 3 |
+| `general-protection` | 1,693,184 | `34862977a74940f31829c7b5d9aee684bb5d9fdade4ce9e3eba9e830811c3a8d` | 3 |
 
 The current native builder does not construct `user-fault` or `service-fault`; changes to their retained source seams are therefore an explicit changed-file verification gap rather than falsely covered by the normal probe owner.
 
@@ -117,7 +117,7 @@ $efi = Join-Path $env:TEMP 'Windvale-Probe40-normal.efi'
 Tools\Native\Build-Os-Probe.cmd $efi normal
 pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
     -EfiPath $efi `
-    -ExpectedEfiSha256 e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c `
+    -ExpectedEfiSha256 4d25d5105149b6b819ff35e41e027ecf351d04ba865dc7c6f3bd6c18a77bcbce `
     -Scenario normal
 ```
 

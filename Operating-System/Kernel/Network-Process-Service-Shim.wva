@@ -13,7 +13,7 @@ move r8 rdx
 add_i32 r8 1024
 move_u32 r9d 4096
 move_u32 ebx 5
-move_u32 esi 65539
+move_u32 esi 131073
 syscall
 label network_service_failure
 move_u32 ebx 3

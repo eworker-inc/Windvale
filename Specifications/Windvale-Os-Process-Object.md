@@ -49,7 +49,7 @@ The builder performs these bounded steps:
    `normal-x64-process.bin` architecture fixture through the Windvale-owned WVO
    layout and relocation encoders.
 8. Require the 952,002-byte identity
-   `c4606029a8af59770b2022f710b26fcd6d4207dba9d9d939c25faf423ee96d50`,
+   `5a6feaaf9be084e83b539080a14949809dcd3e3d99fca514a57b6f931af6d263`,
    independently verify the WVO, and publish it through the native publisher.
 
 The nine embedded data payloads total 901,759 bytes and are always regenerated.

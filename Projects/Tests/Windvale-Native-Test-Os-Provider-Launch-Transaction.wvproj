@@ -1,6 +1,7 @@
 windvale-project 2
 root "Tests/Fixtures/Operating-System/Os-Provider-Launch-Transaction-Self-Test.wv"
 source "Operating-System/Kernel/Provider-Launch-Transaction-Policy.wv"
+source "Operating-System/Kernel/Provider-Launch-Machine-Binding-Policy.wv"
 source "Operating-System/Kernel/Resource-Domain-Policy.wv"
 source "Operating-System/Kernel/Service-Launch-Policy.wv"
 emit wvb
