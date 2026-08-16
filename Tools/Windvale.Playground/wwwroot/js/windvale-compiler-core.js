@@ -79,6 +79,74 @@ export async function Compileˉverifyˉexecute(
     );
     const Wvb = Readˉwvco(Compilerˉrun.Output);
 
+    const Execution = Executeˉverifiedˉwvb(
+        Interpreterˉexports,
+        Wvb,
+        Executionˉinstructionˉlimit,
+        Authorizeˉconsoleˉwriteˉline,
+    );
+
+    return {
+        Wvb,
+        Wvbˉsha256: await Sha256(Wvb),
+        Compilerˉinstructions: Compilerˉrun.Instructions,
+        ...Execution,
+    };
+}
+
+export async function Verifyˉexecuteˉwvb(
+    Interpreterˉbytes,
+    Wvb,
+    Executionˉinstructionˉlimit = 1_000_000,
+    Authorizeˉconsoleˉwriteˉline = false,
+) {
+    Requireˉbytes(Interpreterˉbytes, "interpreter");
+    Requireˉbytes(Wvb, "WVB");
+    Requireˉinstructionˉlimit(Executionˉinstructionˉlimit);
+    if (typeof Authorizeˉconsoleˉwriteˉline !== "boolean") {
+        throw new TypeError("The console.write_line authorization must be boolean.");
+    }
+    if (!WebAssembly.validate(Interpreterˉbytes)) {
+        throw new Error("The browser rejected the packaged Windvale interpreter.");
+    }
+
+    const Interpreterˉmodule = await WebAssembly.compile(Interpreterˉbytes);
+    if (WebAssembly.Module.imports(Interpreterˉmodule).length !== 0) {
+        throw new Error("The packaged Windvale interpreter imports a host capability.");
+    }
+    Requireˉexports(Interpreterˉmodule, "interpreter");
+    const Interpreterˉinstance = await WebAssembly.instantiate(
+        Interpreterˉmodule,
+        {},
+    );
+    const Interpreterˉexports = Interpreterˉinstance.exports;
+    const Interpreterˉmemory = Interpreterˉexports["Windvale.memory"];
+    if (Readˉglobal(Interpreterˉexports, "Windvale.abi") !== 3 ||
+        Readˉglobal(Interpreterˉexports, "Windvale.output_kind") !== 1 ||
+        !(Interpreterˉmemory instanceof WebAssembly.Memory) ||
+        Interpreterˉmemory.buffer.byteLength !== 129 * 65_536) {
+        throw new Error("The packaged interpreter violates execution ABI 3.");
+    }
+    Requireˉfixedˉmemory(Interpreterˉmemory, "interpreter");
+    Requireˉinterpreterˉmemoryˉregions(Interpreterˉexports);
+
+    return {
+        Wvbˉsha256: await Sha256(Wvb),
+        ...Executeˉverifiedˉwvb(
+            Interpreterˉexports,
+            Wvb,
+            Executionˉinstructionˉlimit,
+            Authorizeˉconsoleˉwriteˉline,
+        ),
+    };
+}
+
+function Executeˉverifiedˉwvb(
+    Interpreterˉexports,
+    Wvb,
+    Executionˉinstructionˉlimit,
+    Authorizeˉconsoleˉwriteˉline,
+) {
     const Executionˉrequest = Buildˉscalarˉrequest(
         Wvb,
         Executionˉinstructionˉlimit,
@@ -95,19 +163,23 @@ export async function Compileˉverifyˉexecute(
     }
 
     return {
-        Wvb,
-        Wvbˉsha256: await Sha256(Wvb),
-        Compilerˉinstructions: Compilerˉrun.Instructions,
         Executionˉstatus: Executionˉresponse.Status,
         Executionˉresult: Readˉi32(Executionˉresponse.Result, 0),
         Standardˉoutput: Decodeˉutf8(
             Executionˉresponse.Standardˉoutput,
             "standard output",
         ),
-        Moduleˉprofile: Readˉu8(Wvb, 20) === 2 ? "hosted" : "portable",
+        Moduleˉprofile: Readˉmoduleˉprofile(Wvb),
         Executionˉguestˉinstructions: Executionˉresponse.Guestˉinstructions,
         Executionˉouterˉinstructions: Executionˉrun.Outerˉinstructions,
     };
+}
+
+function Readˉmoduleˉprofile(Wvb) {
+    if (Wvb.byteLength <= 20 || Readˉu32(Wvb, 0) !== 0x3142_5657) {
+        return "unknown";
+    }
+    return Readˉu8(Wvb, 20) === 2 ? "hosted" : "portable";
 }
 
 function Buildˉsourceˉset(Source) {

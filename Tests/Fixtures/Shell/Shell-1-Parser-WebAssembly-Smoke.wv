@@ -1,0 +1,93 @@
+module Windvaleˉshellˉoneˉparserˉwebassemblyˉsmoke profile portable;
+
+import Windvaleˉshellˉoneˉparser as Shell;
+
+fn Bytesˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Total {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+fn Scanˉis(
+    Input: bytes,
+    Status: Shell.Windvaleˉshellˉoneˉstatus,
+    Words: u32,
+    Failureˉoffset: u32
+) -> bool {
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    return Scan.Status == Status && Scan.Words == Words &&
+        Scan.Failureˉoffset == Failureˉoffset;
+}
+
+fn Wordˉis(Input: bytes, Index: u32, Expected: bytes) -> bool {
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Word: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Scan, Index);
+    return Word.Found && Bytesˉsame(
+        Shell.Windvaleˉshellˉoneˉwordˉbytes(Input, Word), Expected
+    );
+}
+
+export fn Main() -> i32 {
+    if !Scanˉis(
+        Textˉtoˉutf8("echo alpha beta"),
+        Shell.Windvaleˉshellˉoneˉstatus.Valid, 3u32, 0u32
+    ) { return 201; }
+
+    let Quoted: bytes = Textˉtoˉutf8("echo 'alpha beta' \"c\\td\"");
+    if !Scanˉis(
+        Quoted, Shell.Windvaleˉshellˉoneˉstatus.Valid, 3u32, 0u32
+    ) { return 202; }
+    if !Wordˉis(Quoted, 1u32, Textˉtoˉutf8("alpha beta")) {
+        return 203;
+    }
+    if !Wordˉis(Quoted, 2u32, Textˉtoˉutf8("c\td")) { return 204; }
+
+    let Invalidˉutf8: bytes = Bytesˉslice(
+        Bytesˉfromˉu32ˉlittle(128u32), 0u32, 1u32
+    );
+    if !Scanˉis(
+        Invalidˉutf8, Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8,
+        0u32, 0u32
+    ) { return 205; }
+    if !Scanˉis(
+        Textˉtoˉutf8("echo |"),
+        Shell.Windvaleˉshellˉoneˉstatus.Reservedˉoperator, 0u32, 5u32
+    ) { return 206; }
+    if !Scanˉis(
+        Textˉtoˉutf8("echo \"x"),
+        Shell.Windvaleˉshellˉoneˉstatus.Unclosedˉdoubleˉquote, 0u32, 7u32
+    ) { return 207; }
+    if !Scanˉis(
+        Textˉtoˉutf8("echo ab\"cd\""),
+        Shell.Windvaleˉshellˉoneˉstatus.Missingˉseparator, 0u32, 7u32
+    ) { return 208; }
+
+    let Aliasˉinput: bytes = Textˉtoˉutf8("cat file.wvb");
+    let Aliasˉscan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Aliasˉinput);
+    if !Bytesˉsame(
+        Shell.Windvaleˉshellˉoneˉcanonicalˉcommand(Aliasˉinput, Aliasˉscan),
+        Textˉtoˉutf8("file-read")
+    ) { return 209; }
+
+    let Paths: bytes = Textˉtoˉutf8(
+        "echo 'C:\\Work\\Input.wvb' '/tmp/input.wvb'"
+    );
+    if !Wordˉis(Paths, 1u32, Textˉtoˉutf8("C:\\Work\\Input.wvb")) {
+        return 210;
+    }
+    if !Wordˉis(Paths, 2u32, Textˉtoˉutf8("/tmp/input.wvb")) {
+        return 211;
+    }
+    return 42;
+}

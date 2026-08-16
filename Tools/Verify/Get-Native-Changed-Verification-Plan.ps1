@@ -1005,7 +1005,10 @@ foreach ($Path in $Paths) {
         'Libraries/Shell/Shell-1-Parser.wv',
         'Projects/Libraries/Windvale-Library-Shell-1-Parser.wvproj',
         'Projects/Tests/Windvale-Native-Test-Shell-1-Parser.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Shell-1-Parser-WebAssembly-Smoke.wvproj',
         'Tests/Fixtures/Shell/Shell-1-Parser-Self-Test.wv',
+        'Tests/Fixtures/Shell/Shell-1-Parser-WebAssembly-Smoke.wv',
+        'Tools/Website/Verify-Shell-1-Parser-WebAssembly.mjs',
         'Specifications/Windvale-Shell-1.md'
     )) {
         Add-Suite 'shell-one-parser'

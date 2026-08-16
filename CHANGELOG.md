@@ -11,9 +11,11 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 - Accepted Windvale Shell 1 and added its capability-free portable parser with
   strict UTF-8 byte offsets, bounded quote/escape handling, immutable indexed
   word views, exact `WVSH1xxx` results, and fixed `cat` to `file-read`
-  canonicalization. Its 47-case focused owner has isolated Windows execution
-  evidence and deterministically constructs both hosted target images; terminal,
-  launch, byte-stream, browser, and Windvale OS shell integration remain pending.
+  canonicalization. Its focused owner passes all 47 native cases independently
+  on Windows and Debian and deterministically constructs both hosted target
+  images. An exact 11-check WVB smoke also agrees in Node 24 and Chromium 151;
+  the complete browser corpus plus terminal, launch, byte-stream, and Windvale
+  OS shell integration remain pending.
 - Selected Milestone 5 as the future `v0.2.0` connected-services preview: a
   Windvale-native rewrite of the database portion of EWorker Data Service,
   portable Windows/Debian service lifecycle, a signed connected installer and

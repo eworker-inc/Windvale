@@ -48,6 +48,7 @@ Equal(
 Equal(1_186_358, Result.Compilerˉinstructions, "compiler instructions");
 Equal(0, Result.Executionˉstatus, "execution status");
 Equal(42, Result.Executionˉresult, "execution result");
+Equal("portable", Result.Moduleˉprofile, "execution module profile");
 Equal(4, Result.Executionˉguestˉinstructions, "execution guest instructions");
 Equal(8_877, Result.Executionˉouterˉinstructions, "execution outer instructions");
 
@@ -61,6 +62,7 @@ const Denied = await Compileˉverifyˉexecute(
 Equal(3010, Denied.Executionˉstatus, "denied console status");
 Equal(0, Denied.Executionˉguestˉinstructions, "denied console instructions");
 Equal("", Denied.Standardˉoutput, "denied console output");
+Equal("hosted", Denied.Moduleˉprofile, "denied console module profile");
 
 const Hello = await Compileˉverifyˉexecute(
     Interpreter,

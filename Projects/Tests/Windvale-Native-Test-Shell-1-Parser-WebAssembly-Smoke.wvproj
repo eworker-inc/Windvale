@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Shell/Shell-1-Parser-WebAssembly-Smoke.wv"
+source "Libraries/Shell/Shell-1-Parser.wv"
+emit wvb

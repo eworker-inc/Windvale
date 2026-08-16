@@ -37,13 +37,14 @@ verify_file() {
 
 library_project="$repository_root/Projects/Libraries/Windvale-Library-Shell-1-Parser.wvproj"
 test_project="$repository_root/Projects/Tests/Windvale-Native-Test-Shell-1-Parser.wvproj"
+webassembly_project="$repository_root/Projects/Tests/Windvale-Native-Test-Shell-1-Parser-WebAssembly-Smoke.wvproj"
 lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 
-echo 'START native shell 1 parser phase=tools item=1/4'
+echo 'START native shell 1 parser phase=tools item=1/5'
 verify_file "$lowerer" 7483392 30ffb3ce953b173d1bbee77c8e440e901806a676f7ec17683b5cfe3953ebb441 || exit $?
-echo 'PASS  native shell 1 parser phase=tools item=1/4'
+echo 'PASS  native shell 1 parser phase=tools item=1/5'
 
-echo 'START native shell 1 parser phase=compile item=2/4'
+echo 'START native shell 1 parser phase=compile item=2/5'
 "$script_directory/Build-Wvb.sh" "$library_project" "$work/Library-A.wvb" >/dev/null || exit $?
 "$script_directory/Build-Wvb.sh" "$library_project" "$work/Library-B.wvb" >/dev/null || exit $?
 cmp -s -- "$work/Library-A.wvb" "$work/Library-B.wvb" || exit 1
@@ -54,15 +55,16 @@ cmp -s -- "$work/Test-A.wvb" "$work/Test-B.wvb" || exit 1
 "$lowerer" "$work/Test-B.wvb" "$work/Test-B.wvo" >/dev/null || exit $?
 cmp -s -- "$work/Test-A.wvo" "$work/Test-B.wvo" || exit 1
 "$script_directory/Check-Wvo.sh" "$work/Test-A.wvo" >/dev/null || exit $?
-echo 'PASS  native shell 1 parser phase=compile item=2/4'
+"$script_directory/Build-Wvb.sh" "$webassembly_project" "$work/WebAssembly-Smoke.wvb" >/dev/null || exit $?
+echo 'PASS  native shell 1 parser phase=compile item=2/5'
 
-echo 'START native shell 1 parser phase=link item=3/4'
+echo 'START native shell 1 parser phase=link item=3/5'
 "$script_directory/Link-Wvo.sh" 0 Main "$work/Shell-Image.chunk-0" "$work/Test-A.wvo" >"$work/Link.txt" || exit $?
 entry=$(sed -n 's/^entry name=Main address=//p' "$work/Link.txt")
 [[ $entry =~ ^[0-9]+$ ]] || exit 1
-echo 'PASS  native shell 1 parser phase=link item=3/4'
+echo 'PASS  native shell 1 parser phase=link item=3/5'
 
-echo 'START native shell 1 parser phase=execute item=4/4'
+echo 'START native shell 1 parser phase=execute item=4/5'
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 "$work/Test-A.wvb" "$work/Shell-Image" 1 "$entry" "$work/Shell.elf" linux >/dev/null || exit $?
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 "$work/Test-A.wvb" "$work/Shell-Image" 1 "$entry" "$work/Shell.exe" windows >/dev/null || exit $?
 set +e
@@ -70,5 +72,9 @@ set +e
 application_result=$?
 set -e
 [[ $application_result -eq 42 ]] || exit 1
-echo 'PASS  native shell 1 parser phase=execute item=4/4'
-echo 'native shell 1 parser status=Passed cases=47 local-result=42 cross-host-images=Verified'
+echo 'PASS  native shell 1 parser phase=execute item=4/5'
+
+echo 'START native shell 1 parser phase=webassembly item=5/5'
+node --no-liftoff "$repository_root/Tools/Website/Verify-Shell-1-Parser-WebAssembly.mjs" "$work/WebAssembly-Smoke.wvb" >/dev/null || exit $?
+echo 'PASS  native shell 1 parser phase=webassembly item=5/5'
+echo 'native shell 1 parser status=Passed cases=47 local-result=42 webassembly-smoke=11 cross-host-images=Verified'

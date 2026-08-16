@@ -2,14 +2,17 @@
 
 ## Status
 
-Accepted parser and command contract with an implemented portable parser
-candidate under
+Accepted parser and command contract with an implemented portable parser under
 [Decision 0602](../Documents/Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md).
-The focused owner currently has isolated Windows execution evidence over 47
-cases and constructs both hosted target images. This specification does not
-claim an implemented interactive shell, terminal service, command
-metadata format, dynamic launcher, standard byte stream, browser command worker,
-or Windvale OS service.
+The focused owner executes 47 cases independently on Windows and Debian,
+constructs both hosted target images, and executes an exact 11-check bounded
+smoke WVB through the pinned WebAssembly interpreter. A named Chromium 151 run
+reproduces the Node 24 WebAssembly result and counters. The complete 47-case
+corpus has not yet run in a browser, so this remains parser implementation
+evidence rather than complete browser conformance. This specification does not
+claim an implemented interactive shell, terminal service, command metadata
+format, dynamic launcher, standard byte stream, browser command worker, or
+Windvale OS service.
 
 The product intent and cross-host boundary are defined by the
 [Windvale shell architecture](../Documents/Architecture/Windvale-Shell.md).
@@ -390,6 +393,17 @@ Windows and Linux execution, browser WebAssembly-hosted execution, and eventuall
 Windvale OS. Host agreement over a different parser or error offset is not Shell
 1 conformance.
 
+The current native owner exercises all 47 reviewed cases through Windows and
+Debian. Its browser phase compiles
+`Shell-1-Parser-WebAssembly-Smoke.wv` with the same portable parser source and
+pins the resulting 27,088-byte WVB, SHA-256, scalar result, empty output, module
+profile, and instruction counters. That 11-check subset covers successful word
+splitting, single and double quotes, escape decoding, invalid UTF-8, reserved
+operators, unclosed quotes, quote concatenation, fixed aliasing, and
+Windows/Linux-looking argument data. This is a useful bounded engine and named
+Chromium proof, but it does not satisfy the complete same-fixture-corpus rule
+above.
+
 ## Deferred Shell versions
 
 Shell 2 may add sequencing, byte pipelines, redirection, and conditional chaining
@@ -409,9 +423,10 @@ representation may expose an immutable scan plus indexed word views and a
 materializer instead of allocating a hidden host collection, provided it
 preserves the logical result above.
 
-Current-host execution and construction of both hosted target images prove one
-native implementation slice. Independent Windows and Linux execution plus
-browser WebAssembly-hosted execution must reproduce the same fixtures before a
-cross-host parser-conformance claim. An interactive Shell 1 claim additionally
-requires the separately accepted terminal, resolver, launch, stream, and
-completion contracts.
+Paired Windows and Debian execution now proves the 47-case native implementation
+slice. The bounded 11-check WebAssembly smoke additionally proves that the same
+parser source survives canonical WVB construction and the pinned browser
+runtime in Node 24 and Chromium 151. The complete browser fixture corpus must
+still agree before a cross-host parser-conformance claim. An interactive Shell
+1 claim additionally requires the separately accepted terminal, resolver,
+launch, stream, and completion contracts.

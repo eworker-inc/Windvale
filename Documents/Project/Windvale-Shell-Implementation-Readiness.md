@@ -357,7 +357,11 @@ contract rather than compensating inside the shell.
 The capability-free parser implementation gate is satisfied: owner choices are
 accepted, the result representation is proven, diagnostics are reserved, the
 47-case fixtures are reviewed, and `shell-one-parser` owns native verification.
-Cross-host and browser promotion evidence remains separate.
+The complete native corpus now passes independently on Windows and Debian. An
+11-check WebAssembly smoke over the same parser also passes in Node 24 and named
+Chromium 151 without widening browser limits. Complete 47-case browser and
+Windvale OS execution remain separate promotion evidence; they do not block the
+next capability-free resolver/launch composition slice.
 
 The hosted interactive shell is ready when terminal/session, command metadata,
 resolver, semantic launch/observation, structured completion, standard byte

@@ -1,7 +1,7 @@
 # Decision 0602: Shell 1 parser contract and first portable core
 
 - Date: 2026-08-15
-- Status: Implemented portable parser candidate with isolated Windows evidence
+- Status: Implemented portable parser with paired native and bounded browser evidence
 - Contract: [Windvale Shell 1](../../Specifications/Windvale-Shell-1.md)
 - Architecture: [Windvale shell](../Architecture/Windvale-Shell.md)
 - Readiness: [shell implementation readiness](../Project/Windvale-Shell-Implementation-Readiness.md)
@@ -41,8 +41,8 @@ and prevent the parser from being ordinary Windvale source.
 - Register one focused native verification owner covering valid, boundary,
   malformed, deterministic, command, alias, quoting, UTF-8, and word-view cases.
 - Do not present this parser slice as an interactive shell, a Windvale OS shell,
-  or browser conformance. Those claims wait for their named providers and
-  independent execution evidence.
+  or complete browser conformance. Those claims wait for their named providers
+  and the complete same-corpus execution evidence.
 
 ## Consequences
 
@@ -51,13 +51,19 @@ resolver, launcher, and stream work proceeds independently. The bounded rescan
 representation trades a small amount of repeated work for simple immutable
 ownership and avoids introducing a general collection solely for the shell.
 
-The first native owner proves deterministic WVB/WVO construction, executes all
-47 cases on the current Windows host, and constructs both hosted target images.
-Independent execution
-on Windows and Linux plus WebAssembly-hosted execution remains necessary before
-claiming cross-host parser conformance. `file-read`, `cat`, command launch, and
-the five built-ins are contracted names and behavior, not implemented
-applications in this slice.
+The focused owner proves deterministic WVB/WVO construction, executes all 47
+cases through the real local native adapter, and constructs both hosted target
+images. The current slice passes that owner independently on Windows and Debian.
+It also rebuilds one exact 27,088-byte portable WVB with SHA-256
+`ffa2723513b4f3846beabbd89b7a4d67fb8bb7999ad79c7684e72756b1ea302f`
+and executes 11 representative checks through the pinned WebAssembly
+interpreter. Node 24 and Chromium 151 agree on result `42`, empty output, 81,619
+guest instructions, and 80,257,283 outer instructions.
+
+The browser smoke is bounded evidence over the same parser implementation; it
+is not the specification's complete 47-case same-corpus browser-conformance
+gate. `file-read`, `cat`, command launch, and the five built-ins are contracted
+names and behavior, not implemented applications in this slice.
 
 ## Reconsideration triggers
 
