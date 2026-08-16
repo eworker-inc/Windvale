@@ -111,6 +111,7 @@ indexes.
 ## Exclusions and next step
 
 `WVLD 1` does not rewrite branch pages, grow a root after leaf partitioning,
-append a commit record, publish a superblock, or write storage. The next
-planner consumes its replacement map and the already validated transaction
-paths to rewrite each shared ancestor once, bottom-up.
+append a commit record, publish a superblock, or write storage. `WVPP 1` now
+consumes its replacement map and the already validated transaction paths to
+rewrite the first shared ancestor once. Durable branch allocation and
+recursive upward propagation remain next.

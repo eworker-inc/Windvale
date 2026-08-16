@@ -1,0 +1,745 @@
+module Windvaleˉdatabaseˉtransactionˉparentˉgroups profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉbranchˉpartition as BranchPartition;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉleafˉpages as LeafPages;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TRANSACTION_PARENT_GROUPS_MAGIC: u32 = 1347442263u32;
+const DATABASE_TRANSACTION_PARENT_GROUPS_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES: u32 = 40u32;
+const DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES: u32 = 32u32;
+const DATABASE_TRANSACTION_PARENT_GROUPS_MAXIMUM_BYTES: u32 = 3145728u32;
+const DATABASE_TRANSACTION_LEAF_PAGES_GROUP_BYTES: u32 = 32u32;
+const DATABASE_TRANSACTION_LEAF_PAGES_LEAF_BYTES: u32 = 16u32;
+
+export enum Databaseˉtransactionˉparentˉgroupsˉerror {
+    Valid = 0;
+    Invalidˉdepth = 1;
+    Leafˉpagesˉfailed = 2;
+    Invalidˉleafˉplan = 3;
+    Parentˉnotˉfound = 4;
+    Invalidˉparent = 5;
+    Replacementˉfailed = 6;
+    Partitionˉfailed = 7;
+    Invalidˉoutput = 8;
+    Invalidˉlength = 9;
+    Invalidˉmagic = 10;
+    Unsupportedˉversion = 11;
+    Invalidˉheader = 12;
+    Invalidˉflags = 13;
+    Invalidˉcount = 14;
+    Invalidˉtotalˉlength = 15;
+    Invalidˉgroup = 16;
+    Invalidˉindex = 17;
+}
+
+export record Databaseˉtransactionˉparentˉgroupsˉresult {
+    Error: Databaseˉtransactionˉparentˉgroupsˉerror;
+    Leafˉpagesˉerror: LeafPages.Databaseˉtransactionˉleafˉpagesˉerror;
+    Replacementsˉerror: Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Partitionˉerror: BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Failedˉgroup: u32;
+    Changed: bool;
+    Parentˉgroupˉcount: u32;
+    Outputˉbranchˉcount: u32;
+    Leafˉdataˉpageˉcount: u32;
+    Rootˉdepth: u32;
+    Leafˉpages: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉtransactionˉparentˉgroup {
+    Error: Databaseˉtransactionˉparentˉgroupsˉerror;
+    Parentˉpage: u64;
+    Replacementˉgroupˉcount: u32;
+    Replacementˉchildˉcount: u32;
+    Outputˉbranchˉcount: u32;
+    Entryˉcount: u32;
+    Payload: bytes;
+}
+
+record Databaseˉtransactionˉparentˉlocation {
+    Found: bool;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Parentˉpage: u64;
+    Payload: bytes;
+}
+
+record Databaseˉtransactionˉparentˉcompleted {
+    Error: Databaseˉtransactionˉparentˉgroupsˉerror;
+    Replacementsˉerror: Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Partitionˉerror: BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Outputˉbranchˉcount: u32;
+    Bytes: bytes;
+}
+
+fn Databaseˉtransactionˉparentˉgroupsˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉparentˉgroupsˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 { return Databaseˉtransactionˉparentˉgroupsˉempty(); }
+    return Bytesˉslice(Bytesˉconcat(Bytesˉfromˉu8(0u8), Input), 1u32, Total);
+}
+
+fn Databaseˉtransactionˉparentˉgroupsˉcanˉappend(
+    Current: bytes,
+    Next: bytes
+) -> bool {
+    let Limit: u32 = DATABASE_TRANSACTION_PARENT_GROUPS_MAXIMUM_BYTES -
+        DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES;
+    let Used: u32 = Bytesˉlength(Current);
+    return Used <= Limit && Bytesˉlength(Next) <= Limit - Used;
+}
+
+fn Databaseˉtransactionˉparentˉgroupsˉfailure(
+    Error: Databaseˉtransactionˉparentˉgroupsˉerror,
+    Leafˉpagesˉerror: LeafPages.Databaseˉtransactionˉleafˉpagesˉerror,
+    Replacementsˉerror: Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror,
+    Partitionˉerror: BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Failedˉgroup: u32
+) -> Databaseˉtransactionˉparentˉgroupsˉresult {
+    let Empty: bytes = Databaseˉtransactionˉparentˉgroupsˉempty();
+    return Databaseˉtransactionˉparentˉgroupsˉresult(
+        Error, Leafˉpagesˉerror, Replacementsˉerror, Partitionˉerror,
+        Pageˉerror, Nodeˉerror, Failedˉgroup,
+        false, 0u32, 0u32, 0u32, 0u32, Empty, Empty
+    );
+}
+
+fn Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+    Error: Databaseˉtransactionˉparentˉgroupsˉerror
+) -> Databaseˉtransactionˉparentˉgroupsˉresult {
+    return Databaseˉtransactionˉparentˉgroupsˉfailure(
+        Error,
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        0u32
+    );
+}
+
+fn Databaseˉtransactionˉparentˉgroupsˉencode(
+    Changed: bool,
+    Parentˉcount: u32,
+    Outputˉcount: u32,
+    Leafˉpageˉcount: u32,
+    Rootˉdepth: u32,
+    Groups: bytes
+) -> bytes {
+    var Flags: u32 = 0u32;
+    if Changed { Flags = 1u32; }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_PARENT_GROUPS_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_PARENT_GROUPS_VERSION));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Parentˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Outputˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Leafˉpageˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Rootˉdepth));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES + Bytesˉlength(Groups)
+        )
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Result, Groups);
+}
+
+fn Databaseˉtransactionˉparentˉgroupˉrecord(
+    Parentˉpage: u64,
+    Replacementˉgroupˉcount: u32,
+    Replacementˉchildˉcount: u32,
+    Outputˉbranchˉcount: u32,
+    Entryˉcount: u32,
+    Payload: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu64ˉlittle(Parentˉpage);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Replacementˉgroupˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Replacementˉchildˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Outputˉbranchˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entryˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Payload)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Result, Payload);
+}
+
+fn Databaseˉtransactionˉparentˉfind(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutationˉcount: u32,
+    Pathsˉbytes: bytes,
+    Leafˉpage: u64
+) -> Databaseˉtransactionˉparentˉlocation {
+    var Index: u32 = 0u32;
+    while Index < Mutationˉcount {
+        let Leafˉoffset: u32 =
+            (Index * Current.Rootˉdepth + Current.Rootˉdepth - 1u32) *
+            Current.Pageˉsize;
+        let Leaf: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(
+                Bytesˉslice(Pathsˉbytes, Leafˉoffset, Current.Pageˉsize)
+            );
+        if Leaf.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉtransactionˉparentˉlocation(
+                false, Leaf.Error, Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                0u64, Databaseˉtransactionˉparentˉgroupsˉempty()
+            );
+        }
+        if Leaf.Pageˉidentifier == Leafˉpage {
+            let Parentˉoffset: u32 =
+                (Index * Current.Rootˉdepth + Current.Rootˉdepth - 2u32) *
+                Current.Pageˉsize;
+            let Parent: Page.Databaseˉdurableˉpageˉresult =
+                Page.Databaseˉdurableˉpageˉdecode(
+                    Bytesˉslice(Pathsˉbytes, Parentˉoffset, Current.Pageˉsize)
+                );
+            if Parent.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+                return Databaseˉtransactionˉparentˉlocation(
+                    false, Parent.Error, Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    0u64, Databaseˉtransactionˉparentˉgroupsˉempty()
+                );
+            }
+            let Node: Tree.Databaseˉtreeˉnodeˉresult =
+                Tree.Databaseˉtreeˉnodeˉdecode(Parent.Payload);
+            if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+                Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch {
+                var Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Node.Error;
+                if Nodeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                    Nodeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind;
+                }
+                return Databaseˉtransactionˉparentˉlocation(
+                    false, Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Nodeˉerror, Parent.Pageˉidentifier,
+                    Databaseˉtransactionˉparentˉgroupsˉempty()
+                );
+            }
+            return Databaseˉtransactionˉparentˉlocation(
+                true, Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Parent.Pageˉidentifier,
+                Databaseˉtransactionˉparentˉgroupsˉcopy(Parent.Payload)
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉparentˉlocation(
+        false, Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        0u64, Databaseˉtransactionˉparentˉgroupsˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉparentˉcomplete(
+    Parentˉpage: u64,
+    Parentˉpayload: bytes,
+    Groupˉcount: u32,
+    Replacementˉcount: u32,
+    Firstˉpage: u64,
+    Replacementˉgroups: bytes,
+    Maximumˉpayload: u32
+) -> Databaseˉtransactionˉparentˉcompleted {
+    let Replacementˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            Groupˉcount, Replacementˉcount, Firstˉpage, Replacementˉgroups
+        );
+    if Replacementˉplan.Error !=
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+        return Databaseˉtransactionˉparentˉcompleted(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Replacementˉfailed,
+            Replacementˉplan.Error,
+            BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            0u32, Databaseˉtransactionˉparentˉgroupsˉempty()
+        );
+    }
+    let Partitioned: BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Parentˉpayload, Replacementˉplan.Bytes, Maximumˉpayload
+        );
+    if Partitioned.Error !=
+            BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+        return Databaseˉtransactionˉparentˉcompleted(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Partitionˉfailed,
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+            Partitioned.Error, Partitioned.Nodeˉerror,
+            0u32, Databaseˉtransactionˉparentˉgroupsˉempty()
+        );
+    }
+    return Databaseˉtransactionˉparentˉcompleted(
+        Databaseˉtransactionˉparentˉgroupsˉerror.Valid,
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Partitioned.Branchˉcount,
+        Databaseˉtransactionˉparentˉgroupˉrecord(
+            Parentˉpage, Groupˉcount, Replacementˉcount,
+            Partitioned.Branchˉcount, Partitioned.Entryˉcount,
+            Partitioned.Bytes
+        )
+    );
+}
+
+export fn Databaseˉtransactionˉparentˉgroupsˉplan(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutationsˉbytes: bytes,
+    Pathsˉbytes: bytes
+) -> Databaseˉtransactionˉparentˉgroupsˉresult {
+    if Current.Rootˉdepth < 2u32 {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉdepth
+        );
+    }
+    let Leafˉplan: LeafPages.Databaseˉtransactionˉleafˉpagesˉresult =
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉplan(
+            Current, Mutationsˉbytes, Pathsˉbytes
+        );
+    if Leafˉplan.Error != LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid {
+        return Databaseˉtransactionˉparentˉgroupsˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Leafˉpagesˉfailed,
+            Leafˉplan.Error,
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+            BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+            Leafˉplan.Pageˉerror, Leafˉplan.Nodeˉerror,
+            Leafˉplan.Failedˉgroup
+        );
+    }
+    if !Leafˉplan.Changed {
+        let Empty: bytes = Databaseˉtransactionˉparentˉgroupsˉempty();
+        let Encodedˉunchanged: bytes = Databaseˉtransactionˉparentˉgroupsˉencode(
+            false, 0u32, 0u32, 0u32, Current.Rootˉdepth, Empty
+        );
+        let Unchanged: Databaseˉtransactionˉparentˉgroupsˉresult =
+            Databaseˉtransactionˉparentˉgroupsˉdecode(Encodedˉunchanged);
+        if Unchanged.Error != Databaseˉtransactionˉparentˉgroupsˉerror.Valid {
+            return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉoutput
+            );
+        }
+        return Databaseˉtransactionˉparentˉgroupsˉresult(
+            Unchanged.Error, Unchanged.Leafˉpagesˉerror,
+            Unchanged.Replacementsˉerror, Unchanged.Partitionˉerror,
+            Unchanged.Pageˉerror, Unchanged.Nodeˉerror, 0u32,
+            false, 0u32, 0u32, 0u32, Current.Rootˉdepth,
+            Leafˉplan.Bytes, Unchanged.Bytes
+        );
+    }
+    if Leafˉplan.Rootˉdepth != Current.Rootˉdepth ||
+        Leafˉplan.Firstˉpage != Current.Pageˉcount ||
+        Leafˉplan.Replacementˉgroupˉcount == 0u32 {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉleafˉplan
+        );
+    }
+    let Mutations: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉdecode(Mutationsˉbytes);
+    if Mutations.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉleafˉplan
+        );
+    }
+
+    var Resultˉgroups: bytes = Databaseˉtransactionˉparentˉgroupsˉempty();
+    var Parentˉcount: u32 = 0u32;
+    var Outputˉcount: u32 = 0u32;
+    var Leafˉgroupˉcursor: u32 = 0u32;
+    var Leafˉgroupˉindex: u32 = 0u32;
+    var Active: bool = false;
+    var Activeˉparent: u64 = 0u64;
+    var Activeˉpayload: bytes = Databaseˉtransactionˉparentˉgroupsˉempty();
+    var Activeˉgroupˉcount: u32 = 0u32;
+    var Activeˉreplacementˉcount: u32 = 0u32;
+    var Activeˉfirstˉpage: u64 = 0u64;
+    var Activeˉgroups: bytes = Databaseˉtransactionˉparentˉgroupsˉempty();
+    while Leafˉgroupˉindex < Leafˉplan.Replacementˉgroupˉcount {
+        if Leafˉgroupˉcursor > Bytesˉlength(Leafˉplan.Map) ||
+            Bytesˉlength(Leafˉplan.Map) - Leafˉgroupˉcursor <
+                DATABASE_TRANSACTION_LEAF_PAGES_GROUP_BYTES {
+            return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉleafˉplan
+            );
+        }
+        let Oldˉleaf: u64 = Bytesˉreadˉu64ˉlittle(
+            Leafˉplan.Map, Leafˉgroupˉcursor
+        );
+        let Firstˉnewˉleaf: u64 = Bytesˉreadˉu64ˉlittle(
+            Leafˉplan.Map, Leafˉgroupˉcursor + 8u32
+        );
+        let Newˉleafˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Leafˉplan.Map, Leafˉgroupˉcursor + 16u32
+        );
+        let Leafˉbodyˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Leafˉplan.Map, Leafˉgroupˉcursor + 24u32
+        );
+        let Location: Databaseˉtransactionˉparentˉlocation =
+            Databaseˉtransactionˉparentˉfind(
+                Current, Mutations.Count, Pathsˉbytes, Oldˉleaf
+            );
+        if !Location.Found {
+            var Error: Databaseˉtransactionˉparentˉgroupsˉerror =
+                Databaseˉtransactionˉparentˉgroupsˉerror.Parentˉnotˉfound;
+            if Location.Pageˉerror != Page.Databaseˉdurableˉpageˉerror.Valid ||
+                Location.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Error = Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉparent;
+            }
+            return Databaseˉtransactionˉparentˉgroupsˉfailure(
+                Error,
+                LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+                Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+                BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+                Location.Pageˉerror, Location.Nodeˉerror, Leafˉgroupˉindex
+            );
+        }
+        if Active && Location.Parentˉpage != Activeˉparent {
+            let Completed: Databaseˉtransactionˉparentˉcompleted =
+                Databaseˉtransactionˉparentˉcomplete(
+                    Activeˉparent, Activeˉpayload, Activeˉgroupˉcount,
+                    Activeˉreplacementˉcount, Activeˉfirstˉpage,
+                    Activeˉgroups, Current.Pageˉsize - 128u32
+                );
+            if Completed.Error != Databaseˉtransactionˉparentˉgroupsˉerror.Valid {
+                return Databaseˉtransactionˉparentˉgroupsˉfailure(
+                    Completed.Error,
+                    LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+                    Completed.Replacementsˉerror, Completed.Partitionˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Completed.Nodeˉerror, Parentˉcount
+                );
+            }
+            if !Databaseˉtransactionˉparentˉgroupsˉcanˉappend(
+                    Resultˉgroups, Completed.Bytes
+                ) {
+                return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                    Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉoutput
+                );
+            }
+            Resultˉgroups = Bytesˉconcat(Resultˉgroups, Completed.Bytes);
+            Outputˉcount = Outputˉcount + Completed.Outputˉbranchˉcount;
+            Parentˉcount = Parentˉcount + 1u32;
+            Active = false;
+            Activeˉgroupˉcount = 0u32;
+            Activeˉreplacementˉcount = 0u32;
+            Activeˉgroups = Databaseˉtransactionˉparentˉgroupsˉempty();
+        }
+        if !Active {
+            Active = true;
+            Activeˉparent = Location.Parentˉpage;
+            Activeˉpayload = Location.Payload;
+            Activeˉfirstˉpage = Firstˉnewˉleaf;
+        }
+        var Replacementˉchildren: bytes = Databaseˉtransactionˉparentˉgroupsˉempty();
+        var Leafˉbodyˉcursor: u32 =
+            Leafˉgroupˉcursor + DATABASE_TRANSACTION_LEAF_PAGES_GROUP_BYTES;
+        let Leafˉbodyˉend: u32 = Leafˉbodyˉcursor + Leafˉbodyˉlength;
+        var Newˉleafˉindex: u32 = 0u32;
+        while Newˉleafˉindex < Newˉleafˉcount {
+            let Newˉleafˉpage: u64 = Bytesˉreadˉu64ˉlittle(
+                Leafˉplan.Map, Leafˉbodyˉcursor
+            );
+            let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Leafˉplan.Map, Leafˉbodyˉcursor + 8u32
+            );
+            let Separator: bytes = Bytesˉslice(
+                Leafˉplan.Map,
+                Leafˉbodyˉcursor + DATABASE_TRANSACTION_LEAF_PAGES_LEAF_BYTES,
+                Separatorˉlength
+            );
+            let Child: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+                Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+                    Newˉleafˉpage, Separator
+                );
+            if Child.Error != Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+                return Databaseˉtransactionˉparentˉgroupsˉfailure(
+                    Databaseˉtransactionˉparentˉgroupsˉerror.Replacementˉfailed,
+                    LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+                    Child.Error,
+                    BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    Leafˉgroupˉindex
+                );
+            }
+            Replacementˉchildren = Bytesˉconcat(Replacementˉchildren, Child.Bytes);
+            Leafˉbodyˉcursor = Leafˉbodyˉcursor +
+                DATABASE_TRANSACTION_LEAF_PAGES_LEAF_BYTES + Separatorˉlength;
+            Newˉleafˉindex = Newˉleafˉindex + 1u32;
+        }
+        if Leafˉbodyˉcursor != Leafˉbodyˉend {
+            return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉleafˉplan
+            );
+        }
+        let Replacementˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+            Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+                Oldˉleaf, Firstˉnewˉleaf, Newˉleafˉcount,
+                Replacementˉchildren
+            );
+        if Replacementˉgroup.Error !=
+                Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+            return Databaseˉtransactionˉparentˉgroupsˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Replacementˉfailed,
+                LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+                Replacementˉgroup.Error,
+                BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Leafˉgroupˉindex
+            );
+        }
+        Activeˉgroups = Bytesˉconcat(Activeˉgroups, Replacementˉgroup.Bytes);
+        Activeˉgroupˉcount = Activeˉgroupˉcount + 1u32;
+        Activeˉreplacementˉcount = Activeˉreplacementˉcount + Newˉleafˉcount;
+        Leafˉgroupˉcursor = Leafˉbodyˉend;
+        Leafˉgroupˉindex = Leafˉgroupˉindex + 1u32;
+    }
+    if !Active || Leafˉgroupˉcursor != Bytesˉlength(Leafˉplan.Map) {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉleafˉplan
+        );
+    }
+    let Finalˉparent: Databaseˉtransactionˉparentˉcompleted =
+        Databaseˉtransactionˉparentˉcomplete(
+            Activeˉparent, Activeˉpayload, Activeˉgroupˉcount,
+            Activeˉreplacementˉcount, Activeˉfirstˉpage,
+            Activeˉgroups, Current.Pageˉsize - 128u32
+        );
+    if Finalˉparent.Error != Databaseˉtransactionˉparentˉgroupsˉerror.Valid {
+        return Databaseˉtransactionˉparentˉgroupsˉfailure(
+            Finalˉparent.Error,
+            LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+            Finalˉparent.Replacementsˉerror, Finalˉparent.Partitionˉerror,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Finalˉparent.Nodeˉerror, Parentˉcount
+        );
+    }
+    if !Databaseˉtransactionˉparentˉgroupsˉcanˉappend(
+            Resultˉgroups, Finalˉparent.Bytes
+        ) {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉoutput
+        );
+    }
+    Resultˉgroups = Bytesˉconcat(Resultˉgroups, Finalˉparent.Bytes);
+    Outputˉcount = Outputˉcount + Finalˉparent.Outputˉbranchˉcount;
+    Parentˉcount = Parentˉcount + 1u32;
+    let Encoded: bytes = Databaseˉtransactionˉparentˉgroupsˉencode(
+        true, Parentˉcount, Outputˉcount,
+        Leafˉplan.Dataˉpageˉcount, Current.Rootˉdepth, Resultˉgroups
+    );
+    let Checked: Databaseˉtransactionˉparentˉgroupsˉresult =
+        Databaseˉtransactionˉparentˉgroupsˉdecode(Encoded);
+    if Checked.Error != Databaseˉtransactionˉparentˉgroupsˉerror.Valid {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉoutput
+        );
+    }
+    return Databaseˉtransactionˉparentˉgroupsˉresult(
+        Checked.Error, Checked.Leafˉpagesˉerror,
+        Checked.Replacementsˉerror, Checked.Partitionˉerror,
+        Checked.Pageˉerror, Checked.Nodeˉerror, 0u32,
+        true, Checked.Parentˉgroupˉcount,
+        Checked.Outputˉbranchˉcount, Checked.Leafˉdataˉpageˉcount,
+        Checked.Rootˉdepth, Leafˉplan.Bytes, Checked.Bytes
+    );
+}
+
+export fn Databaseˉtransactionˉparentˉgroupsˉdecode(
+    Input: bytes
+) -> Databaseˉtransactionˉparentˉgroupsˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES ||
+        Total > DATABASE_TRANSACTION_PARENT_GROUPS_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TRANSACTION_PARENT_GROUPS_MAGIC {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TRANSACTION_PARENT_GROUPS_VERSION {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉheader
+        );
+    }
+    let Flags: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Parentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Outputˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Leafˉpageˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Rootˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    if Flags > 1u32 {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉflags
+        );
+    }
+    if Rootˉdepth < 2u32 || Rootˉdepth > 128u32 ||
+        Parentˉcount > 32u32 || Outputˉcount > 95u32 ||
+        Leafˉpageˉcount > 64u32 ||
+        Flags == 0u32 && (Parentˉcount != 0u32 || Outputˉcount != 0u32 || Leafˉpageˉcount != 0u32) ||
+        Flags == 1u32 && (Parentˉcount == 0u32 || Outputˉcount == 0u32 || Leafˉpageˉcount == 0u32) {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉcount
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 32u32) != Total {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉtotalˉlength
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Countedˉoutputs: u32 = 0u32;
+    while Index < Parentˉcount {
+        if Cursor > Total || Total - Cursor < DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES {
+            return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉgroup
+            );
+        }
+        let Parentˉpage: u64 = Bytesˉreadˉu64ˉlittle(Input, Cursor);
+        let Replacementˉgroups: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Replacementˉchildren: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Outputˉbranches: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 16u32);
+        let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 20u32);
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 24u32);
+        var Duplicateˉparent: bool = false;
+        var Priorˉcursor: u32 = DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES;
+        var Priorˉindex: u32 = 0u32;
+        while Priorˉindex < Index {
+            if Bytesˉreadˉu64ˉlittle(Input, Priorˉcursor) == Parentˉpage {
+                Duplicateˉparent = true;
+            }
+            Priorˉcursor = Priorˉcursor +
+                DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES +
+                Bytesˉreadˉu32ˉlittle(Input, Priorˉcursor + 24u32);
+            Priorˉindex = Priorˉindex + 1u32;
+        }
+        if Replacementˉgroups == 0u32 || Replacementˉgroups > 32u32 ||
+            Replacementˉchildren < Replacementˉgroups || Replacementˉchildren > 64u32 ||
+            Outputˉbranches == 0u32 || Outputˉbranches > 64u32 ||
+            Entryˉcount == 0u32 || Entryˉcount > 4159u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 28u32) != 0u32 ||
+            Payloadˉlength > Total - Cursor - DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES ||
+            Duplicateˉparent {
+            return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉgroup
+            );
+        }
+        let Payload: bytes = Bytesˉslice(
+            Input, Cursor + DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES,
+            Payloadˉlength
+        );
+        let Partitioned: BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+            BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉdecode(Payload);
+        if Partitioned.Error !=
+                BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid ||
+            Partitioned.Branchˉcount != Outputˉbranches ||
+            Partitioned.Entryˉcount != Entryˉcount ||
+            Partitioned.Appliedˉgroupˉcount != Replacementˉgroups {
+            return Databaseˉtransactionˉparentˉgroupsˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉgroup,
+                LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+                Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+                Partitioned.Error,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Partitioned.Nodeˉerror, Index
+            );
+        }
+        if Countedˉoutputs > 95u32 - Outputˉbranches {
+            return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉcount
+            );
+        }
+        Countedˉoutputs = Countedˉoutputs + Outputˉbranches;
+        Cursor = Cursor + DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES + Payloadˉlength;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total || Countedˉoutputs != Outputˉcount {
+        return Databaseˉtransactionˉparentˉgroupsˉsimpleˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉgroup
+        );
+    }
+    return Databaseˉtransactionˉparentˉgroupsˉresult(
+        Databaseˉtransactionˉparentˉgroupsˉerror.Valid,
+        LeafPages.Databaseˉtransactionˉleafˉpagesˉerror.Valid,
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        BranchPartition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        0u32, Flags == 1u32, Parentˉcount, Outputˉcount,
+        Leafˉpageˉcount, Rootˉdepth,
+        Databaseˉtransactionˉparentˉgroupsˉempty(),
+        Databaseˉtransactionˉparentˉgroupsˉcopy(Input)
+    );
+}
+
+fn Databaseˉtransactionˉparentˉgroupˉfailure(
+    Error: Databaseˉtransactionˉparentˉgroupsˉerror
+) -> Databaseˉtransactionˉparentˉgroup {
+    return Databaseˉtransactionˉparentˉgroup(
+        Error, 0u64, 0u32, 0u32, 0u32, 0u32,
+        Databaseˉtransactionˉparentˉgroupsˉempty()
+    );
+}
+
+export fn Databaseˉtransactionˉparentˉgroupˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉtransactionˉparentˉgroup {
+    let Decoded: Databaseˉtransactionˉparentˉgroupsˉresult =
+        Databaseˉtransactionˉparentˉgroupsˉdecode(Input);
+    if Decoded.Error != Databaseˉtransactionˉparentˉgroupsˉerror.Valid {
+        return Databaseˉtransactionˉparentˉgroupˉfailure(Decoded.Error);
+    }
+    if Requested >= Decoded.Parentˉgroupˉcount {
+        return Databaseˉtransactionˉparentˉgroupˉfailure(
+            Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉindex
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_PARENT_GROUPS_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    while Index < Decoded.Parentˉgroupˉcount {
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 24u32);
+        if Index == Requested {
+            return Databaseˉtransactionˉparentˉgroup(
+                Databaseˉtransactionˉparentˉgroupsˉerror.Valid,
+                Bytesˉreadˉu64ˉlittle(Decoded.Bytes, Cursor),
+                Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 8u32),
+                Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 12u32),
+                Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 16u32),
+                Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 20u32),
+                Databaseˉtransactionˉparentˉgroupsˉcopy(
+                    Bytesˉslice(
+                        Decoded.Bytes,
+                        Cursor + DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES,
+                        Payloadˉlength
+                    )
+                )
+            );
+        }
+        Cursor = Cursor + DATABASE_TRANSACTION_PARENT_GROUPS_RECORD_BYTES + Payloadˉlength;
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉparentˉgroupˉfailure(
+        Databaseˉtransactionˉparentˉgroupsˉerror.Invalidˉindex
+    );
+}

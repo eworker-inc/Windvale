@@ -24,17 +24,19 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=33"
+set "SelectedCases=34"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
-    tree-node logical-record typed-row transaction-mutations transaction-leaf-rewrite transaction-leaf-pages transaction-branch-partition query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
+    tree-node logical-record typed-row transaction-mutations transaction-leaf-rewrite transaction-parent-groups query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
     branch-split root-split depth-two depth-three depth-three-upsert
     tree-path-upsert tree-path-delete host-storage
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
-if /I "%DevelopmentTarget%"=="transaction-leaf-groups" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="transaction-paths" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="transaction-leaf-partition" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=6"
+if /I "%DevelopmentTarget%"=="transaction-leaf-pages" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="transaction-branch-partition" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="transaction-leaf-groups" set "SelectedCases=3"
+if /I "%DevelopmentTarget%"=="transaction-paths" set "SelectedCases=4"
+if /I "%DevelopmentTarget%"=="transaction-leaf-partition" set "SelectedCases=4"
+if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=7"
 if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-tree-delete" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="host-tree-scan" set "SelectedCases=3"
@@ -152,6 +154,8 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionBranchPartition transaction-branch-partition "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj"
     if errorlevel 1 goto :cleanup
+    call :verify_development_target TransactionParentGroups transaction-parent-groups "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj" transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-branch-partition
+    if errorlevel 1 goto :cleanup
     call :verify_development_target QueryIr query-ir "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql
     if errorlevel 1 goto :cleanup
     call :verify_development_target SqlLowerer sql-lowerer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Sql-Lowerer.wvproj" query-sql typed-query-sql
@@ -241,6 +245,9 @@ call :verify_target TransactionLeafPages ^
 if errorlevel 1 goto :cleanup
 call :verify_target TransactionBranchPartition ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target TransactionParentGroups ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target QueryIr ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj"
@@ -350,11 +357,11 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=42 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=43 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
-if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" if /I not "%DevelopmentTarget%"=="%~4" if /I not "%DevelopmentTarget%"=="%~5" if /I not "%DevelopmentTarget%"=="%~6" if /I not "%DevelopmentTarget%"=="%~7" exit /b 0
+if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" if /I not "%DevelopmentTarget%"=="%~4" if /I not "%DevelopmentTarget%"=="%~5" if /I not "%DevelopmentTarget%"=="%~6" if /I not "%DevelopmentTarget%"=="%~7" if /I not "%DevelopmentTarget%"=="%~8" if /I not "%DevelopmentTarget%"=="%~9" exit /b 0
 set /a ProgressCurrent+=1
 call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
 call :verify_target "%~1" "%~3"

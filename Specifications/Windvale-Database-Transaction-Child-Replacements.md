@@ -72,6 +72,7 @@ return owned slices only after complete validation.
 
 ## Next use
 
-The branch partitioner consumes `WVCR 1` directly. The shared-parent planner
-will adapt `WVLD 1` leaf replacements into `WVCR 1`, group them by their one
-parent at the current level, and repeat the same contract upward.
+The branch partitioner consumes `WVCR 1` directly. `WVPP 1` adapts `WVLD 1`
+leaf replacements into this form and groups them by their parent at the first
+branch level. Durable branch allocation will emit the same contract again for
+each next ancestor level.

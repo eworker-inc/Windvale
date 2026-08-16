@@ -98,6 +98,8 @@ unchanged middle routing, a four-child replacement split into two branches,
 the final-separator backtrack, deterministic output, invalid bounds, a missing
 child, malformed replacement bytes, trailing output, and invalid indexes.
 
-The next planner groups `WVCR 1` replacements by parent from the validated
-transaction paths, allocates durable pages for each `WVBP 1` output, and
-repeats upward until one root remains or a new root level is created.
+`WVPP 1` now groups `WVCR 1` replacements by parent from the validated
+transaction paths and invokes this partitioner once per affected parent. The
+next planner allocates durable pages for each `WVBP 1` output and repeats the
+same replacement shape upward until one root remains or a new root level is
+created.
