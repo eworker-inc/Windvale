@@ -3,7 +3,7 @@ module Fat32ˉvolumeˉadmission profile portable;
 const FAT32_BOOT_SECTOR_BYTES: u32 = 512u32;
 const FAT32_BYTES_PER_SECTOR: u32 = 512u32;
 const FAT32_MINIMUM_CLUSTERS: u64 = 65525u64;
-const FAT32_MAXIMUM_CLUSTERS: u64 = 268435445u64;
+const FAT32_MAXIMUM_CLUSTERS: u64 = 268435438u64;
 data Fat32ˉtypeˉlabel: bytes = [70,65,84,51,50,32,32,32];
 
 export enum Fat32ˉvolumeˉstatus {
@@ -21,6 +21,8 @@ export record Fat32ˉvolumeˉgeometry {
     Sectorsˉperˉcluster: u32;
     Reservedˉsectors: u32;
     Fatˉcount: u32;
+    Activeˉfat: u32;
+    Mirrored: bool;
     Fatˉsectors: u32;
     Totalˉsectors: u64;
     Firstˉdataˉsector: u64;
@@ -31,7 +33,7 @@ export record Fat32ˉvolumeˉgeometry {
 
 fn Invalid(Status: Fat32ˉvolumeˉstatus) -> Fat32ˉvolumeˉgeometry {
     return Fat32ˉvolumeˉgeometry(
-        Status, 0u32, 0u32, 0u32, 0u32, 0u32,
+        Status, 0u32, 0u32, 0u32, 0u32, 0u32, false, 0u32,
         0u64, 0u64, 0u64, 0u64, 0u32
     );
 }
@@ -101,6 +103,9 @@ export fn Fat32ˉvolumeˉadmit(
             (Extendedˉflags & 15u32) >= Fatˉcount) {
         return Invalid(Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry);
     }
+    let Mirrored: bool = (Extendedˉflags & 128u32) == 0u32;
+    var Activeˉfat: u32 = 0u32;
+    if !Mirrored { Activeˉfat = Extendedˉflags & 15u32; }
     if Bytesˉreadˉu16ˉlittle(Bootˉsector, 17u32) != 0u32 ||
         Bytesˉreadˉu16ˉlittle(Bootˉsector, 19u32) != 0u32 ||
         Bytesˉreadˉu16ˉlittle(Bootˉsector, 22u32) != 0u32 {
@@ -160,7 +165,8 @@ export fn Fat32ˉvolumeˉadmit(
     return Fat32ˉvolumeˉgeometry(
         Fat32ˉvolumeˉstatus.Valid,
         Bytesˉperˉsector, Sectorsˉperˉcluster, Reservedˉsectors,
-        Fatˉcount, Fatˉsectors, Totalˉsectors, Firstˉdataˉsector,
+        Fatˉcount, Activeˉfat, Mirrored, Fatˉsectors,
+        Totalˉsectors, Firstˉdataˉsector,
         Dataˉsectors, Clusterˉcount, Rootˉcluster
     );
 }

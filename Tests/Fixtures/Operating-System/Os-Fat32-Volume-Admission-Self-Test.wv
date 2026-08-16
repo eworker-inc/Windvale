@@ -1,5 +1,6 @@
 module Osˉfat32ˉvolumeˉadmissionˉselfˉtest profile portable;
 
+import Fat32ˉclusterˉchain as Chain;
 import Fat32ˉvolumeˉadmission as Fat32;
 
 data Validˉbootˉsector: bytes = [
@@ -50,6 +51,26 @@ fn Status(
     return Geometry.Status;
 }
 
+fn Traceˉtwo(First: u32, Second: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(First),
+        Bytesˉfromˉu32ˉlittle(Second)
+    );
+}
+
+fn Chainˉstatus(
+    Entries: bytes,
+    First: u32,
+    Clusters: u64,
+    Maximum: u32
+) -> Chain.Fat32ˉchainˉstatus {
+    let Result: Chain.Fat32ˉchainˉresult =
+        Chain.Fat32ˉclusterˉchainˉadmit(
+        Entries, First, Clusters, Maximum
+    );
+    return Result.Status;
+}
+
 export fn Main() -> i32 {
     let Valid: bytes = Validˉbootˉsector;
     let Geometry: Fat32.Fat32ˉvolumeˉgeometry =
@@ -59,6 +80,7 @@ export fn Main() -> i32 {
     if Geometry.Sectorsˉperˉcluster != 1u32 { return 103; }
     if Geometry.Reservedˉsectors != 32u32 { return 104; }
     if Geometry.Fatˉcount != 2u32 { return 105; }
+    if Geometry.Activeˉfat != 0u32 || !Geometry.Mirrored { return 112; }
     if Geometry.Fatˉsectors != 539u32 { return 106; }
     if Geometry.Totalˉsectors != 70000u64 { return 107; }
     if Geometry.Firstˉdataˉsector != 1110u64 { return 108; }
@@ -114,5 +136,107 @@ export fn Main() -> i32 {
         Fat32.Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry { return 24; }
     if Status(Replaceˉu16(Valid, 40u32, 130u32), 70000u64) !=
         Fat32.Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry { return 25; }
+    let Selected: Fat32.Fat32ˉvolumeˉgeometry =
+        Fat32.Fat32ˉvolumeˉadmit(
+            Replaceˉu16(Valid, 40u32, 129u32), 70000u64
+        );
+    if Selected.Status != Fat32.Fat32ˉvolumeˉstatus.Valid ||
+        Selected.Activeˉfat != 1u32 || Selected.Mirrored { return 26; }
+    let Chainˉgeometry: Chain.Fat32ˉfatˉgeometry =
+        Chain.Fat32ˉfatˉgeometryˉadmit(
+            Geometry.Reservedˉsectors, Geometry.Fatˉcount,
+            Geometry.Activeˉfat, Geometry.Fatˉsectors,
+            Geometry.Clusterˉcount
+        );
+    let Selectedˉchainˉgeometry: Chain.Fat32ˉfatˉgeometry =
+        Chain.Fat32ˉfatˉgeometryˉadmit(
+            Selected.Reservedˉsectors, Selected.Fatˉcount,
+            Selected.Activeˉfat, Selected.Fatˉsectors,
+            Selected.Clusterˉcount
+        );
+    let Rootˉentry: Chain.Fat32ˉentryˉlocation =
+        Chain.Fat32ˉfatˉentryˉlocate(Chainˉgeometry, 2u32);
+    if Rootˉentry.Status != Chain.Fat32ˉentryˉlocationˉstatus.Valid ||
+        Rootˉentry.Sector != 32u64 || Rootˉentry.Offset != 8u32 {
+        return 27;
+    }
+    let Selectedˉentry: Chain.Fat32ˉentryˉlocation =
+        Chain.Fat32ˉfatˉentryˉlocate(Selectedˉchainˉgeometry, 130u32);
+    if Selectedˉentry.Status != Chain.Fat32ˉentryˉlocationˉstatus.Valid ||
+        Selectedˉentry.Sector != 572u64 || Selectedˉentry.Offset != 8u32 {
+        return 28;
+    }
+    let Invalidˉentry: Chain.Fat32ˉentryˉlocation =
+        Chain.Fat32ˉfatˉentryˉlocate(Chainˉgeometry, 1u32);
+    if Invalidˉentry.Status !=
+        Chain.Fat32ˉentryˉlocationˉstatus.Invalidˉcluster { return 29; }
+    let Complete: Chain.Fat32ˉchainˉresult =
+        Chain.Fat32ˉclusterˉchainˉadmit(
+            Traceˉtwo(3u32, 268435455u32), 2u32, 68890u64, 2u32
+        );
+    if Complete.Status != Chain.Fat32ˉchainˉstatus.Complete ||
+        Complete.Clusters != 2u32 || Complete.Lastˉcluster != 3u32 {
+        return 30;
+    }
+    if Chainˉstatus(
+        Traceˉtwo(2684354563u32, 4294967295u32),
+        2u32, 68890u64, 2u32
+    ) != Chain.Fat32ˉchainˉstatus.Complete { return 31; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(268435448u32),
+        2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Complete { return 32; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(0u32), 2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Freeˉcluster { return 33; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(1u32), 2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Reservedˉcluster { return 34; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(268435440u32),
+        2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Reservedˉcluster { return 35; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(268435447u32),
+        2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Badˉcluster { return 36; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(70000u32),
+        2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Outˉofˉrange { return 37; }
+    if Chainˉstatus(
+        Traceˉtwo(3u32, 2u32), 2u32, 68890u64, 2u32
+    ) != Chain.Fat32ˉchainˉstatus.Cycle { return 38; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(3u32), 2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Truncated { return 39; }
+    if Chainˉstatus(
+        Traceˉtwo(268435455u32, 268435455u32),
+        2u32, 68890u64, 2u32
+    ) != Chain.Fat32ˉchainˉstatus.Trailingˉentry { return 40; }
+    if Chainˉstatus(
+        Bytesˉslice(Bytesˉfromˉu32ˉlittle(3u32), 0u32, 3u32),
+        2u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Invalidˉtrace { return 41; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(268435455u32),
+        2u32, 68890u64, 0u32
+    ) != Chain.Fat32ˉchainˉstatus.Budgetˉexceeded { return 42; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(268435455u32),
+        2u32, 65524u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Invalidˉgeometry { return 43; }
+    if Chainˉstatus(
+        Bytesˉfromˉu32ˉlittle(268435455u32),
+        1u32, 68890u64, 1u32
+    ) != Chain.Fat32ˉchainˉstatus.Invalidˉfirstˉcluster { return 44; }
+    let Badˉgeometry: Chain.Fat32ˉfatˉgeometry =
+        Chain.Fat32ˉfatˉgeometryˉadmit(
+            0u32, 2u32, 0u32, 539u32, 68890u64
+        );
+    let Badˉlocation: Chain.Fat32ˉentryˉlocation =
+        Chain.Fat32ˉfatˉentryˉlocate(Badˉgeometry, 2u32);
+    if Badˉlocation.Status !=
+        Chain.Fat32ˉentryˉlocationˉstatus.Invalidˉgeometry { return 45; }
     return 47;
 }

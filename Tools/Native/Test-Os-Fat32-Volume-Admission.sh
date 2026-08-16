@@ -22,18 +22,20 @@ verify() {
     printf '%s  %s\n' "$digest" "$path" | sha256sum --check --status
 }
 
-"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Fat32-Volume-Admission.wvproj" "$work/Policy.wvb" >/dev/null || exit $?
-verify "$work/Policy.wvb" 7367 d7f5e96b7d4710f8ba9d68c991239ad1a77b23943ca3d112862b3307168d93e2 || exit $?
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Fat32-Volume-Admission.wvproj" "$work/Volume.wvb" >/dev/null || exit $?
+verify "$work/Volume.wvb" 7654 564793e2af919a9adf7623f28775f653ac89cc642c5bb0cd22624cde896645e8 || exit $?
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Fat32-Cluster-Chain.wvproj" "$work/Chain.wvb" >/dev/null || exit $?
+verify "$work/Chain.wvb" 6359 75470d2a1c48c86754e2f91cd5919306fe73d76c567b87f7490fc87cc1eeeb1a || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Fat32-Volume-Admission.wvproj" "$work/Test.wvb" >/dev/null || exit $?
-verify "$work/Test.wvb" 13866 1d500f81f31fd79a79bf9710fc4adabdc3247b911c7a08ce73945a7872c45c87 || exit $?
+verify "$work/Test.wvb" 25600 c978805d2dec9acb9ba08e3fa9466d5f21aab013aff0f6d6c807666ac986bcd9 || exit $?
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Test.wvb" "$work/Test.wvo" >/dev/null || exit $?
-verify "$work/Test.wvo" 133972 85253e6a09bc720a329dee126fa2489e770ebd5c22c56062940b7ae017c2cf2b || exit $?
+verify "$work/Test.wvo" 264918 f76bbf03b2ea89434c089480d89f825b55b39c822a07cfcefb8f655400b99c6c || exit $?
 "$script_directory/Link-Wvo.sh" 0 Main "$work/Test.bin" "$work/Test.wvo" >/dev/null || exit $?
-verify "$work/Test.bin" 133432 f2b218eaae3ef40b501eaf264c638d7b60f3627294aeb53210f2c8d4660b77bc || exit $?
-"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Test.bin" 0 "$work/Test.exe" >/dev/null || exit $?
-verify "$work/Test.exe" 135168 165ba51a97e89b7e93ac70d727201ee9c57edb72858b41e538a1d6ef8a0e1512 || exit $?
-"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/Test.bin" 0 "$work/Test.elf" >/dev/null || exit $?
-verify "$work/Test.elf" 139376 40cd9dbee4a19ac6bd328c2e4eccd0683b7fe0520c88d3cb4180910facd7e048 || exit $?
+verify "$work/Test.bin" 264072 13cfc508c60525df095300d4c97696db27795c069eecfdbe6c7030be27362b81 || exit $?
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Test.bin" 2483 "$work/Test.exe" >/dev/null || exit $?
+verify "$work/Test.exe" 265728 3caf2067fcdaefcc142d9b9c92c23f2e4056e2b0303f52793a9c50908b1c61ee || exit $?
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/Test.bin" 2483 "$work/Test.elf" >/dev/null || exit $?
+verify "$work/Test.elf" 270448 6b19c412245ecaec65d0e83371f1d160b71d030c47d76d63e1cf67d6856b1ae4 || exit $?
 "$work/Test.elf" >/dev/null
 [[ $? -eq 47 ]] || exit 1
-echo 'native os fat32 volume admission status=Passed projects=2 cases=25 local-result=47 cross-host-images=Verified'
+echo 'native os fat32 volume and chain admission status=Passed projects=3 cases=45 local-result=47 cross-host-images=Verified'

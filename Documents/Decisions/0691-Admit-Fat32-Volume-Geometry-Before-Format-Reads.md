@@ -32,11 +32,12 @@ granted block capability.
 
 ## Evidence and consequences
 
-The 7,367-byte policy WVB has SHA-256
-`d7f5e96b7d4710f8ba9d68c991239ad1a77b23943ca3d112862b3307168d93e2`.
-The 13,866-byte test WVB has SHA-256
-`1d500f81f31fd79a79bf9710fc4adabdc3247b911c7a08ce73945a7872c45c87`;
-its paired native images cover 25 cases and the current Windows host returns
+The current 7,654-byte policy WVB has SHA-256
+`564793e2af919a9adf7623f28775f653ac89cc642c5bb0cd22624cde896645e8`.
+Decision 0695 narrows its high-cluster compatibility ceiling and composes it
+with cluster-chain admission. Their 25,600-byte shared test WVB has SHA-256
+`c978805d2dec9acb9ba08e3fa9466d5f21aab013aff0f6d6c807666ac986bcd9`;
+the paired native images cover 45 cases and the current Windows host returns
 47.
 
 This creates the trusted geometry input for a read-only FAT and directory

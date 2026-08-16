@@ -1,0 +1,206 @@
+module Fat32ˉclusterˉchain profile portable;
+
+const FAT32_ENTRY_MASK: u32 = 268435455u32;
+const FAT32_MAXIMUM_DATA_CLUSTER: u32 = 268435439u32;
+const FAT32_RESERVED_START: u32 = 268435440u32;
+const FAT32_BAD_CLUSTER: u32 = 268435447u32;
+const FAT32_END_START: u32 = 268435448u32;
+const FAT32_MAXIMUM_TRACE_CLUSTERS: u32 = 4096u32;
+
+export enum Fat32ˉentryˉlocationˉstatus {
+    Valid = 0; Invalidˉgeometry = 1; Invalidˉcluster = 2;
+}
+
+export record Fat32ˉentryˉlocation {
+    Status: Fat32ˉentryˉlocationˉstatus;
+    Sector: u64;
+    Offset: u32;
+}
+
+export record Fat32ˉfatˉgeometry {
+    Valid: bool;
+    Reservedˉsectors: u32;
+    Fatˉcount: u32;
+    Activeˉfat: u32;
+    Fatˉsectors: u32;
+    Clusterˉcount: u64;
+}
+
+export enum Fat32ˉchainˉstatus {
+    Complete = 0; Invalidˉgeometry = 1; Invalidˉtrace = 2;
+    Invalidˉfirstˉcluster = 3; Budgetˉexceeded = 4;
+    Freeˉcluster = 5; Reservedˉcluster = 6; Badˉcluster = 7;
+    Outˉofˉrange = 8; Cycle = 9; Truncated = 10;
+    Trailingˉentry = 11;
+}
+
+export record Fat32ˉchainˉresult {
+    Status: Fat32ˉchainˉstatus;
+    Clusters: u32;
+    Lastˉcluster: u32;
+}
+
+fn Fat32ˉentryˉlocationˉinvalid(
+    Status: Fat32ˉentryˉlocationˉstatus
+) -> Fat32ˉentryˉlocation {
+    return Fat32ˉentryˉlocation(Status, 0u64, 0u32);
+}
+
+fn Fat32ˉchainˉresultˉmake(
+    Status: Fat32ˉchainˉstatus,
+    Clusters: u32,
+    Lastˉcluster: u32
+) -> Fat32ˉchainˉresult {
+    return Fat32ˉchainˉresult(Status, Clusters, Lastˉcluster);
+}
+
+fn Fat32ˉclusterˉisˉvalid(Cluster: u32, Clusterˉcount: u64) -> bool {
+    return Cluster >= 2u32 && Cluster <= FAT32_MAXIMUM_DATA_CLUSTER &&
+        U64ˉfromˉu32(Cluster) < Clusterˉcount + 2u64;
+}
+
+export fn Fat32ˉfatˉentryˉlocate(
+    Geometry: Fat32ˉfatˉgeometry,
+    Cluster: u32
+) -> Fat32ˉentryˉlocation {
+    if !Geometry.Valid {
+        return Fat32ˉentryˉlocationˉinvalid(
+            Fat32ˉentryˉlocationˉstatus.Invalidˉgeometry
+        );
+    }
+    if !Fat32ˉclusterˉisˉvalid(Cluster, Geometry.Clusterˉcount) {
+        return Fat32ˉentryˉlocationˉinvalid(
+            Fat32ˉentryˉlocationˉstatus.Invalidˉcluster
+        );
+    }
+    let Fatˉbase: u64 = U64ˉfromˉu32(Geometry.Reservedˉsectors) +
+        U64ˉfromˉu32(Geometry.Activeˉfat) *
+            U64ˉfromˉu32(Geometry.Fatˉsectors);
+    let Entryˉsector: u64 = U64ˉfromˉu32(Cluster) / 128u64;
+    return Fat32ˉentryˉlocation(
+        Fat32ˉentryˉlocationˉstatus.Valid,
+        Fatˉbase + Entryˉsector,
+        (Cluster % 128u32) * 4u32
+    );
+}
+
+export fn Fat32ˉfatˉgeometryˉadmit(
+    Reservedˉsectors: u32,
+    Fatˉcount: u32,
+    Activeˉfat: u32,
+    Fatˉsectors: u32,
+    Clusterˉcount: u64
+) -> Fat32ˉfatˉgeometry {
+    if Reservedˉsectors == 0u32 || Fatˉcount == 0u32 ||
+        Fatˉcount > 2u32 || Activeˉfat >= Fatˉcount ||
+        Fatˉsectors == 0u32 || Clusterˉcount < 65525u64 ||
+        Clusterˉcount > 268435438u64 {
+        return Fat32ˉfatˉgeometry(
+            false, 0u32, 0u32, 0u32, 0u32, 0u64
+        );
+    }
+    return Fat32ˉfatˉgeometry(
+        true, Reservedˉsectors, Fatˉcount, Activeˉfat,
+        Fatˉsectors, Clusterˉcount
+    );
+}
+
+fn Fat32ˉtraceˉcontains(Visited: bytes, Cluster: u32) -> bool {
+    var Offset: u32 = 0u32;
+    while Offset < Bytesˉlength(Visited) {
+        if Bytesˉreadˉu32ˉlittle(Visited, Offset) == Cluster {
+            return true;
+        }
+        Offset = Offset + 4u32;
+    }
+    return false;
+}
+
+export fn Fat32ˉclusterˉchainˉadmit(
+    Rawˉentries: bytes,
+    Firstˉcluster: u32,
+    Clusterˉcount: u64,
+    Maximumˉclusters: u32
+) -> Fat32ˉchainˉresult {
+    if Clusterˉcount < 65525u64 || Clusterˉcount > 268435438u64 {
+        return Fat32ˉchainˉresultˉmake(
+            Fat32ˉchainˉstatus.Invalidˉgeometry, 0u32, 0u32
+        );
+    }
+    let Traceˉbytes: u32 = Bytesˉlength(Rawˉentries);
+    if Traceˉbytes == 0u32 || Traceˉbytes % 4u32 != 0u32 {
+        return Fat32ˉchainˉresultˉmake(
+            Fat32ˉchainˉstatus.Invalidˉtrace, 0u32, 0u32
+        );
+    }
+    let Traceˉclusters: u32 = Traceˉbytes / 4u32;
+    if Maximumˉclusters == 0u32 ||
+        Maximumˉclusters > FAT32_MAXIMUM_TRACE_CLUSTERS ||
+        Traceˉclusters > Maximumˉclusters {
+        return Fat32ˉchainˉresultˉmake(
+            Fat32ˉchainˉstatus.Budgetˉexceeded, 0u32, 0u32
+        );
+    }
+    if !Fat32ˉclusterˉisˉvalid(Firstˉcluster, Clusterˉcount) {
+        return Fat32ˉchainˉresultˉmake(
+            Fat32ˉchainˉstatus.Invalidˉfirstˉcluster, 0u32, 0u32
+        );
+    }
+    var Visited: bytes = Bytesˉfromˉu32ˉlittle(Firstˉcluster);
+    var Current: u32 = Firstˉcluster;
+    var Index: u32 = 0u32;
+    while Index < Traceˉclusters {
+        let Raw: u32 = Bytesˉreadˉu32ˉlittle(Rawˉentries, Index * 4u32);
+        let Next: u32 = Raw & FAT32_ENTRY_MASK;
+        let Seenˉclusters: u32 = Index + 1u32;
+        if Next >= FAT32_END_START {
+            if Seenˉclusters != Traceˉclusters {
+                return Fat32ˉchainˉresultˉmake(
+                    Fat32ˉchainˉstatus.Trailingˉentry,
+                    Seenˉclusters, Current
+                );
+            }
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Complete, Seenˉclusters, Current
+            );
+        }
+        if Next == 0u32 {
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Freeˉcluster, Seenˉclusters, Current
+            );
+        }
+        if Next == 1u32 ||
+            (Next >= FAT32_RESERVED_START && Next < FAT32_BAD_CLUSTER) {
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Reservedˉcluster,
+                Seenˉclusters, Current
+            );
+        }
+        if Next == FAT32_BAD_CLUSTER {
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Badˉcluster, Seenˉclusters, Current
+            );
+        }
+        if !Fat32ˉclusterˉisˉvalid(Next, Clusterˉcount) {
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Outˉofˉrange, Seenˉclusters, Current
+            );
+        }
+        if Fat32ˉtraceˉcontains(Visited, Next) {
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Cycle, Seenˉclusters, Current
+            );
+        }
+        if Seenˉclusters == Traceˉclusters {
+            return Fat32ˉchainˉresultˉmake(
+                Fat32ˉchainˉstatus.Truncated, Seenˉclusters, Current
+            );
+        }
+        Visited = Bytesˉconcat(Visited, Bytesˉfromˉu32ˉlittle(Next));
+        Current = Next;
+        Index = Index + 1u32;
+    }
+    return Fat32ˉchainˉresultˉmake(
+        Fat32ˉchainˉstatus.Truncated, Traceˉclusters, Current
+    );
+}
