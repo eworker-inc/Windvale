@@ -255,6 +255,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [x86-64 generation-2 endpoint-rebind emission](Windvale-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.md)
 - [x86-64 generation-2 client re-entry emission](Windvale-Os-X64-Process-Client-Generation-Two-Reentry-Emission.md)
 - [x86-64 generation-2 return-validation emission](Windvale-Os-X64-Process-Client-Generation-Two-Return-Validation-Emission.md)
+- [x86-64 generation-2 client user-transfer emission](Windvale-Os-X64-Process-Client-Generation-Two-User-Transfer-Emission.md)
 - [x86-64 directory-provider allocation emission](Windvale-Os-X64-Process-Directory-Allocation-Emission.md)
 - [x86-64 directory-provider record emission](Windvale-Os-X64-Process-Directory-Record-Emission.md)
 - [x86-64 directory-provider paging emission](Windvale-Os-X64-Process-Directory-Paging-Emission.md)

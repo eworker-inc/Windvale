@@ -636,6 +636,8 @@ provenance, revocation, and consensus boundaries are named.
   first generation-2 `sysretq` and reach byte 25,953.
   Resumed processor/resource/mapping/alias validation now reaches byte 26,964,
   immediately before the next dispatcher crossing.
+  The generation-adapted checked client transfer now executes the second
+  generation-2 `sysretq` and reaches byte 27,138.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

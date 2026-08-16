@@ -253,6 +253,12 @@ entries, backing-object aliases, and per-resource context records. This advances
 source ownership through byte 26,964, immediately before the next `swapgs` and
 dispatcher call.
 
+The next 174-byte user transfer derives the existing checked constructor with
+only its selected-client generation changed from 1 to 2. Dispatcher exit,
+external page-table activation, GS/continuation publication, private context
+restoration, and `sysretq` remain the same contract. Source ownership reaches
+byte 27,138 at the second generation-2 user entry.
+
 The first restart policies are deliberately small:
 
 - `Never`;
