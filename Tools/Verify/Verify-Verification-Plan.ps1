@@ -2807,9 +2807,11 @@ $NativeCases = @(
     @{
         Name = 'OS x64 code-emission development target manifest'
         Paths = @('Tests/Native/Os-X64-Code-Emission-Development-Targets.txt')
-        Suites = @()
+        Suites = @('os-x64-code-emission')
         Gaps = @()
         VerifyPlan = $true
+        OsX64Development = $false
+        OsX64Target = 'all'
     },
     @{
         Name = 'OS x64 code-emission exact development target'
@@ -3042,20 +3044,34 @@ $OsX64TargetPlan = Join-Path $RepositoryRoot `
 $OsX64TargetLines = @(Get-Content -LiteralPath $OsX64TargetPlan)
 if ($OsX64TargetLines.Count -ne 57 -or
     $OsX64TargetLines[0] -ne
-        'windvale-os-x64-code-emission-development-targets 1') {
+        'windvale-os-x64-code-emission-development-targets 2') {
     throw 'The OS x64 code-emission development-target inventory differs.'
 }
 $OsX64TargetNames = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $OsX64TargetProjects = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
+$OsX64TargetArtifacts = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$OsX64ExpectedExit = 50
 foreach ($Line in @($OsX64TargetLines | Select-Object -Skip 1)) {
     $Fields = $Line.Split('|')
-    if ($Fields.Count -lt 4 -or $Fields.Count -gt 5 -or
+    if ($Fields.Count -lt 16 -or $Fields.Count -gt 17 -or
+        $Fields[0] -notmatch '^[a-z0-9][a-z0-9-]*$' -or
+        $Fields[1] -notmatch
+            '^Projects/Tests/Windvale-Native-Test-Os-X64-.+-Emission\.wvproj$' -or
+        $Fields[2] -notmatch '^[A-Za-z][A-Za-z0-9]*$' -or
+        $Fields[3] -ne [string]$OsX64ExpectedExit -or
+        @($Fields[4], $Fields[6], $Fields[8], $Fields[10], $Fields[12] |
+            Where-Object { $_ -notmatch '^[0-9]+$' }).Count -ne 0 -or
+        @($Fields[5], $Fields[7], $Fields[9], $Fields[11], $Fields[13] |
+            Where-Object { $_ -notmatch '^[0-9a-f]{64}$' }).Count -ne 0 -or
         !$OsX64TargetNames.Add($Fields[0]) -or
-        !$OsX64TargetProjects.Add($Fields[1])) {
+        !$OsX64TargetProjects.Add($Fields[1]) -or
+        !$OsX64TargetArtifacts.Add($Fields[2])) {
         throw "Invalid or duplicate OS x64 code-emission development target: $Line"
     }
+    $OsX64ExpectedExit++
     $ProjectLeaf = [IO.Path]::GetFileName($Fields[1])
     $ExpectedTarget = $ProjectLeaf.Substring(
         'Windvale-Native-Test-Os-X64-'.Length,
@@ -3065,7 +3081,8 @@ foreach ($Line in @($OsX64TargetLines | Select-Object -Skip 1)) {
     if ($Fields[0] -ne $ExpectedTarget) {
         throw "OS x64 code-emission target name differs from its project: $Line"
     }
-    foreach ($InputPath in @($Fields | Select-Object -Skip 1)) {
+    $InputPaths = @($Fields[1]) + @($Fields | Select-Object -Skip 14)
+    foreach ($InputPath in $InputPaths) {
         if (!(Test-Path -LiteralPath (Join-Path $RepositoryRoot $InputPath) -PathType Leaf)) {
             throw "Missing OS x64 code-emission development input: $InputPath"
         }
@@ -3080,7 +3097,7 @@ foreach ($Line in @($OsX64TargetLines | Select-Object -Skip 1)) {
     )
     if (!([System.Linq.Enumerable]::SequenceEqual(
             [string[]]$ProjectDeclarations,
-            [string[]]@($Fields | Select-Object -Skip 2)))) {
+            [string[]]@($Fields | Select-Object -Skip 14)))) {
         throw "OS x64 code-emission project closure differs: $($Fields[1])"
     }
 }
@@ -3088,14 +3105,65 @@ $OsX64WindowsOwner = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.cmd')
 $OsX64LinuxOwner = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.sh')
-foreach ($TargetName in $OsX64TargetNames) {
-    if ([regex]::Matches(
-            $OsX64WindowsOwner,
-            [regex]::Escape('"%DevelopmentTarget%"=="' + $TargetName + '"')).Count -ne 1 -or
-        [regex]::Matches(
-            $OsX64LinuxOwner,
-            [regex]::Escape("selected '$TargetName'")).Count -ne 1) {
-        throw "OS x64 code-emission owner selection differs: $TargetName"
+$OsX64OwnerContracts = @(
+    @{
+        Host = 'Windows'
+        Text = $OsX64WindowsOwner
+        Required = @(
+            'Os-X64-Code-Emission-Development-Targets.txt',
+            'windvale-os-x64-code-emission-development-targets 2',
+            ':consider_case',
+            ':run_case',
+            '%CaseProject%',
+            '%CaseArtifact%',
+            '%CaseExpectedExit%'
+        )
+        Build = 'Build-Wvb\.cmd'
+        Lower = 'Lower-Wvb-To-Wvo\.cmd'
+        Link = 'Link-Wvo\.cmd'
+        Package = 'Package-Console\.cmd'
+        LegacySelector = 'if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="[a-z]'
+    },
+    @{
+        Host = 'Linux'
+        Text = $OsX64LinuxOwner
+        Required = @(
+            'Os-X64-Code-Emission-Development-Targets.txt',
+            'windvale-os-x64-code-emission-development-targets 2',
+            'run_case()',
+            '$repository_root/$project',
+            '$work/$artifact',
+            '$expected_exit'
+        )
+        Build = 'Build-Wvb\.sh'
+        Lower = 'Lower-Wvb-To-Wvo\.sh'
+        Link = 'Link-Wvo\.sh'
+        Package = 'Package-Console\.sh'
+        LegacySelector = "if selected '[a-z]"
+    }
+)
+foreach ($OwnerContract in $OsX64OwnerContracts) {
+    foreach ($Fragment in $OwnerContract.Required) {
+        if (!$OwnerContract.Text.Contains($Fragment, [StringComparison]::Ordinal)) {
+            throw "$($OwnerContract.Host) OS x64 code-emission owner is missing '$Fragment'."
+        }
+    }
+    foreach ($CommandContract in @(
+        @{ Pattern = $OwnerContract.Build; Count = 1 },
+        @{ Pattern = $OwnerContract.Lower; Count = 1 },
+        @{ Pattern = $OwnerContract.Link; Count = 1 },
+        @{ Pattern = $OwnerContract.Package; Count = 2 }
+    )) {
+        if ([regex]::Matches(
+                $OwnerContract.Text,
+                $CommandContract.Pattern).Count -ne $CommandContract.Count) {
+            throw "$($OwnerContract.Host) OS x64 code-emission generic command count differs."
+        }
+    }
+    if ([regex]::IsMatch(
+            $OwnerContract.Text,
+            $OwnerContract.LegacySelector)) {
+        throw "$($OwnerContract.Host) OS x64 code-emission owner retains repeated selectors."
     }
 }
 

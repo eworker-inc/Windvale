@@ -59,14 +59,13 @@ projects and 336 cases. Shared code and qualification retain the full evidence
 boundary. The manifest adds one small maintained mapping surface, but removes
 the need for the planner to reread all project files on every selection.
 
-The owner scripts remain mechanically repetitive. A later refactor may make the
-target manifest drive one generic project executor, but that refactor is not
-required to obtain the bounded development-path reduction.
+The initially implemented owner scripts remained mechanically repetitive.
+[Decision 0735](0735-Manifest-Driven-Os-X64-Code-Emission-Verification.md) now
+makes the target manifest drive one generic project executor per host while
+preserving this decision's development and qualification boundaries.
 
 ## Reconsideration triggers
 
 Reconsider this decision if a project dependency can change without appearing
 in the manifest, a focused run differs from the corresponding complete-owner
-case, shared inputs select one target, Linux target execution differs, or a
-generic manifest-driven owner can replace the paired repeated scripts without
-weakening exact-byte evidence.
+case, shared inputs select one target, or Linux target execution differs.

@@ -225,6 +225,15 @@ syntax validation. The complete Windows owner passed all 56 projects and 336
 cases in 115,333 ms, making the measured 3,622 ms middle-target owner 31.84
 times faster without changing the complete route.
 
+That owner is also manifest-driven. The versioned row for each target owns its
+project closure, artifact stem, local result, and exact WVB, WVO, linked-image,
+Windows-container, and Linux-container identities. The paired host scripts each
+contain one generic pipeline instead of 56 copied pipelines. This reduces the
+two scripts from 2,411 lines to 263 lines and makes target additions single-row
+changes while retaining the complete owner. The generic Linux path also executes
+all 56 local containers; it closes four copied-body omissions that had packaged
+and hashed an ELF without performing the declared current-host execution.
+
 The library development owner now selects one of seven dependency clusters from
 a canonical 29-project manifest. The planner derives each cluster's source
 closure from its Project 2 declarations; shared, multi-cluster, owner, and

@@ -35,24 +35,36 @@ $OsX64CodeEmissionDevelopmentTargetNames =
     [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $OsX64CodeEmissionDevelopmentTargetProjects =
     [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$OsX64CodeEmissionDevelopmentTargetArtifacts =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$OsX64CodeEmissionDevelopmentExpectedExit = 50
 if ($OsX64CodeEmissionDevelopmentLines.Count -ne 57 -or
     $OsX64CodeEmissionDevelopmentLines[0] -ne
-        'windvale-os-x64-code-emission-development-targets 1') {
+        'windvale-os-x64-code-emission-development-targets 2') {
     $OsX64CodeEmissionDevelopmentEligible = $false
 }
 foreach ($Line in @($OsX64CodeEmissionDevelopmentLines | Select-Object -Skip 1)) {
     $Fields = $Line.Split('|')
-    if ($Fields.Count -lt 4 -or $Fields.Count -gt 5 -or
+    if ($Fields.Count -lt 16 -or $Fields.Count -gt 17 -or
         $Fields[0] -notmatch '^[a-z0-9][a-z0-9-]*$' -or
         $Fields[1] -notmatch
             '^Projects/Tests/Windvale-Native-Test-Os-X64-.+-Emission\.wvproj$' -or
+        $Fields[2] -notmatch '^[A-Za-z][A-Za-z0-9]*$' -or
+        $Fields[3] -ne [string]$OsX64CodeEmissionDevelopmentExpectedExit -or
+        @($Fields[4], $Fields[6], $Fields[8], $Fields[10], $Fields[12] |
+            Where-Object { $_ -notmatch '^[0-9]+$' }).Count -ne 0 -or
+        @($Fields[5], $Fields[7], $Fields[9], $Fields[11], $Fields[13] |
+            Where-Object { $_ -notmatch '^[0-9a-f]{64}$' }).Count -ne 0 -or
         !$OsX64CodeEmissionDevelopmentTargetNames.Add($Fields[0]) -or
-        !$OsX64CodeEmissionDevelopmentTargetProjects.Add($Fields[1])) {
+        !$OsX64CodeEmissionDevelopmentTargetProjects.Add($Fields[1]) -or
+        !$OsX64CodeEmissionDevelopmentTargetArtifacts.Add($Fields[2])) {
         $OsX64CodeEmissionDevelopmentEligible = $false
         continue
     }
+    $OsX64CodeEmissionDevelopmentExpectedExit++
     $TargetName = $Fields[0]
-    foreach ($TargetPath in @($Fields | Select-Object -Skip 1)) {
+    $TargetPaths = @($Fields[1]) + @($Fields | Select-Object -Skip 14)
+    foreach ($TargetPath in $TargetPaths) {
         if (!$OsX64CodeEmissionDevelopmentTargetsByPath.ContainsKey($TargetPath)) {
             $OsX64CodeEmissionDevelopmentTargetsByPath[$TargetPath] =
                 [System.Collections.Generic.HashSet[string]]::new(
@@ -1276,6 +1288,7 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -match 'X64-(?:Code|Process-.+)-Emission' -or
         $Path -in @(
+            'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt',
             'Tools/Native/Test-Os-X64-Code-Emission.cmd',
             'Tools/Native/Test-Os-X64-Code-Emission.sh'
         )) {
@@ -1320,6 +1333,10 @@ foreach ($Path in $Paths) {
         $RunPlanVerification = $true
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
         Add-Suite @('wvb-to-wvo-reconstruction', 'lowerer-rejections')
+    } elseif ($Path -eq
+        'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt') {
+        $RunPlanVerification = $true
+        Add-Suite 'os-x64-code-emission'
     } elseif ($Path -in @(
         '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
@@ -1330,7 +1347,6 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Native-Verification-Owners.md',
         'Tests/Native/Retirement-Suite.txt',
         'Tests/Native/Library-Development-Targets.txt',
-        'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt',
         'Tests/Native/Verification-Owners.txt',
         'Tests/Native/Development-Owner-Dependencies.txt',
         'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',

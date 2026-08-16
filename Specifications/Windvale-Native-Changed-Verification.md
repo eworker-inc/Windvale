@@ -124,14 +124,17 @@ ambiguous maintained database inputs select `all`. Hosted targets retain their
 behavioral prerequisites: the tree reader consumes host-storage output, and the
 engine and tree writer consume the reader's committed depth-two output.
 
-The `os-x64-code-emission` development lane reads the canonical 56-target
-manifest. One exact target is returned only when every affected emission input
-belongs to that same project closure. Shared inputs, multiple targets, changes
-to the paired owner scripts, malformed target data, and otherwise ambiguous
-inputs select `all`. An exact target retains the project's WVB, WVO, linked
-image, Windows container, Linux container, and current-host execution checks;
-qualification and no-argument owner execution retain all 56 projects and 336
-cases.
+The `os-x64-code-emission` development lane reads the canonical version-2,
+56-target manifest. Each row owns its project closure, artifact stem, expected
+local result, and exact WVB, WVO, linked-image, Windows-container, and
+Linux-container identities. One exact target is returned only when every
+affected emission input belongs to that same project closure. Shared inputs,
+multiple targets, changes to the paired owner scripts, malformed target data,
+and otherwise ambiguous inputs select `all`. The paired owners execute one
+generic host pipeline over the selected rows. An exact target retains the six
+declared checks; qualification and no-argument owner execution retain all 56
+projects and 336 cases. A change to the manifest itself selects planner
+verification plus that complete owner.
 
 ## Dispatch contract
 
