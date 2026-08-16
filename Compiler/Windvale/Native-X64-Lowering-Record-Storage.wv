@@ -1215,7 +1215,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Capabilityˉkinds,
                 Capabilityˉindex
             );
-            if Capabilityˉkind == 0u8 || U32ˉfromˉu8(Capabilityˉkind) > 10u32 {
+            if Capabilityˉkind == 0u8 || U32ˉfromˉu8(Capabilityˉkind) > 11u32 {
                 return Invalid(Input);
             }
             var Capabilityˉparameters: u32 = 1u32;
@@ -1260,6 +1260,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
                 Capabilityˉkind ==
                     Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() ||
+                Capabilityˉkind ==
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() ||
                 Capabilityˉkind ==
                     Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() {
                 Stackˉrecords = Pushˉscalar(Stackˉrecords);

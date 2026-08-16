@@ -96,6 +96,7 @@ model.catalog_v1(bytes) -> bytes
 model.inference_v1(bytes) -> bytes
 process.argument(u32) -> text
 process.argument_count() -> u32
+standard_output.write_v1(bytes) -> bytes
 storage.random_access_v1(u32, u64, u64, u32, bytes) -> bytes
 ```
 
@@ -103,6 +104,8 @@ The process, file-byte, console, and diagnostic leaves are defined by
 [Hosted-Resources.md](Hosted-Resources.md). The directory and storage
 interfaces are defined by [Read-Only-Directory-Capability.md](Read-Only-Directory-Capability.md)
 and [Random-Access-Storage-Capability.md](Random-Access-Storage-Capability.md).
+Exact standard byte output is defined by
+[Standard-Byte-Output-Capability.md](Standard-Byte-Output-Capability.md).
 The two model operations are defined by
 [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md).
 

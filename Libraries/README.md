@@ -99,6 +99,9 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Native-Hosted-Snapshot-Page` | `Nativeˉhostedˉsnapshotˉpage` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Wvdb` | `Readˉonlyˉwvdb` | hosted / `filesystem.directory_read_v1` |
 | `Windvale-Library-Bounded-Operation-Core` | `Windvaleˉboundedˉoperationˉcore` | portable / none |
+| `Windvale-Library-Standard-Byte-Output-Core` | `Windvaleˉstandardˉbyteˉoutputˉcore` | portable / none |
+| `Windvale-Library-Standard-Byte-Output-Response-Core` | `Windvaleˉstandardˉbyteˉoutputˉresponseˉcore` | portable / none |
+| `Windvale-Library-Standard-Byte-Output` | `Windvaleˉstandardˉbyteˉoutput` | hosted / `standard_output.write_v1` |
 | `Windvale-Library-Network-Address-Authority` | `Windvaleˉnetworkˉaddressˉauthority` | portable / none |
 | `Windvale-Library-Model-Protocol` | `Windvaleˉmodelˉprotocol` | portable / none |
 | `Windvale-Library-Scripted-Model-Provider` | `Windvaleˉscriptedˉmodelˉprovider` | portable / none |
@@ -161,6 +164,13 @@ Profile import compatibility is currently monotonic: portable imports portable; 
 ## Filesystem libraries
 
 The existing `file.read_bytes` and `file.write_bytes` leaves are bounded host-tool resource adapters. They accept opaque host-resolved names and are not the future filesystem API.
+
+The first standard byte-output interface is
+[`standard_output.write_v1`](../Specifications/Standard-Byte-Output-Capability.md):
+one rights-limited stream, exact byte prefixes, typed pre-dispatch and
+post-dispatch failures, generation checks, and no native handle or text
+conversion. Its portable response decoder and output state machine remain
+separate from the hosted capability adapter.
 
 The first filesystem interface is [`filesystem.directory_read_v1`](../Specifications/Read-Only-Directory-Capability.md): one rights-limited immutable directory snapshot, strict single-segment names, `u32` offsets, exact chunks of at most 3,072 bytes, typed lifecycle failures, and no native paths or handles. The reference `windvale run` launcher can bind a bounded eager Windows/Linux snapshot with `--bind-read-only-directory <path>`; the capability still requires a separate `--allow`. Its `_v1` suffix is a temporary compatibility encoding until WVB carries independent capability-name/version metadata.
 

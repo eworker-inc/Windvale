@@ -163,8 +163,10 @@ managed compiler or host-specific semantic implementation was used.
 
 ## Next boundary
 
-This core satisfies the semantic prerequisite for byte-exact standard output.
-It does not yet make `file-read` or `cat` available. The next shell slice binds
-one concrete rights-limited output provider and the existing immutable
-read-only directory capability to an ordinary Windvale `file-read` application,
-then proves identical bytes with no appended newline.
+This core supplies the semantic state machine used by the hosted
+`standard_output.write_v1` adapter. Decision 0713 binds that capability and the
+existing immutable read-only directory to the ordinary Windvale `file-read`
+application. Its focused owner proves exact bytes with no appended newline on
+Windows and Linux. The fixed `cat` alias already canonicalizes to `file-read` in
+the Shell 1 parser; active-generation packaging and browser execution remain
+separate integration boundaries.

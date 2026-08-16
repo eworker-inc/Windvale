@@ -1,0 +1,8 @@
+windvale-project 2
+root "Applications/Shell/File-Read.wv"
+source "Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+source "Libraries/Foundation/Operations/Bounded-Operation-Core.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output-Core.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output-Response-Core.wv"
+emit wvb

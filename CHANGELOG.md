@@ -8,6 +8,11 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Added the hosted `standard_output.write_v1` provider contract, a portable
+  20-case hostile-response decoder, Windows/Linux byte-output leaves, and the
+  ordinary `file-read` application. Its 32-case owner proves exact arbitrary
+  bytes, chunk and 4 MiB boundaries, refusal paths, and deterministic paired
+  native images; Shell 1's existing `cat` alias now has a real canonical target.
 - Accepted Windvale Shell 1 and added its capability-free portable parser with
   strict UTF-8 byte offsets, bounded quote/escape handling, immutable indexed
   word views, exact `WVSH1xxx` results, and fixed `cat` to `file-read`

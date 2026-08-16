@@ -143,8 +143,11 @@ fn Capabilityˉrank(Input: bytes, Offset: u32, Length: u32) -> u8 {
     if Spanˉequalsˉtext(Input, Offset, Length, "process.argument") { return 7u8; }
     if Spanˉequalsˉtext(Input, Offset, Length, "process.argument_count") { return 8u8; }
     if Spanˉequalsˉtext(
-        Input, Offset, Length, "storage.random_access_v1"
+        Input, Offset, Length, "standard_output.write_v1"
     ) { return 9u8; }
+    if Spanˉequalsˉtext(
+        Input, Offset, Length, "storage.random_access_v1"
+    ) { return 10u8; }
     return 0u8;
 }
 

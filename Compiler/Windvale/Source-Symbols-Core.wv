@@ -348,6 +348,7 @@ export fn Compilerˉsourceˉsymbolsˉisˉknownˉcapability(
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "model.inference_v1") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument_count") { return true; }
+    if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "standard_output.write_v1") { return true; }
     if Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "storage.random_access_v1") { return true; }
     return false;
 }

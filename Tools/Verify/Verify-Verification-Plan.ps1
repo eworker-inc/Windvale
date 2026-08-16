@@ -170,6 +170,7 @@ $NativeCases = @(
             'lowerer-rejections',
             'console-packager-source-reconstruction',
             'model-provider',
+            'file-read-application',
             'database-storage'
         )
         Gaps = @()
@@ -435,6 +436,7 @@ $NativeCases = @(
             'console-packager-source-reconstruction',
             'native-u64-lowering',
             'model-provider',
+            'file-read-application',
             'database-superblock',
             'database-durable-commit',
             'database-storage',
@@ -456,6 +458,7 @@ $NativeCases = @(
             'assembler-rejections',
             'assembler-golden',
             'wva-differential',
+            'file-read-application',
             'wvdb-query-capability'
         )
         Gaps = @()
@@ -534,6 +537,7 @@ $NativeCases = @(
             'unsafe-wvb',
             'wvb-containment',
             'model-provider',
+            'file-read-application',
             'libraries'
         )
         Gaps = @()
@@ -1729,7 +1733,7 @@ $NativeCases = @(
             'Tools/Native/Test-Standard-Byte-Output-Core.sh',
             'Specifications/Standard-Byte-Output-Core.md'
         )
-        Suites = @('standard-byte-output')
+        Suites = @('standard-byte-output', 'file-read-application')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2688,9 +2692,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 97 -or
+if ($VerificationOwnerLines.Count -ne 98 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 96-owner inventory differs.'
+    throw 'The native verification-owner header or exact 97-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2728,7 +2732,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4489 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4521 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

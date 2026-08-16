@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Streams/Standard-Byte-Output-Response-Core-Self-Test.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output-Response-Core.wv"
+emit wvb

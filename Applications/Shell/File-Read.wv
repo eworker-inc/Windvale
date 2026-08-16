@@ -1,0 +1,74 @@
+module Fileˉread profile hosted;
+
+import Readˉonlyˉdirectory as Directory;
+import Windvaleˉstandardˉbyteˉoutput as Output;
+
+capability diagnostic.write_line;
+capability filesystem.directory_read_v1;
+capability process.argument;
+capability process.argument_count;
+capability standard_output.write_v1;
+
+fn Fileˉreadˉusage() -> i32 {
+    diagnostic.write_line("Usage: file-read <name>");
+    return 64;
+}
+
+fn Fileˉreadˉdirectoryˉfailure(
+    Status: Directory.Directoryˉreadˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat("file-read: directory status=", Enumˉname(Status))
+    );
+    return 3;
+}
+
+fn Fileˉreadˉoutputˉfailure(
+    Status: Output.Standardˉoutputˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat("file-read: output status=", Enumˉname(Status))
+    );
+    return 4;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return Fileˉreadˉusage(); }
+    let Name: text = process.argument(0u32);
+    var Read: Directory.Directoryˉreadˉresult =
+        Directory.Directoryˉreadˉbytes(Name, 0u32, 3072u32);
+    if Read.Status != Directory.Directoryˉreadˉstatus.Valid {
+        return Fileˉreadˉdirectoryˉfailure(Read.Status);
+    }
+    if Read.Fileˉlength > 4194304u32 {
+        diagnostic.write_line("file-read: file exceeds 4194304 bytes");
+        return 3;
+    }
+
+    var Session: Output.Standardˉoutputˉsession = Output.Standardˉoutputˉopen();
+    if Session.Status != Output.Standardˉoutputˉstatus.Valid {
+        return Fileˉreadˉoutputˉfailure(Session.Status);
+    }
+    var Complete: bool = false;
+    while !Complete {
+        Session = Output.Standardˉoutputˉwrite(Session, Read.Value);
+        if Session.Status != Output.Standardˉoutputˉstatus.Valid {
+            return Fileˉreadˉoutputˉfailure(Session.Status);
+        }
+        if Read.Nextˉoffset == Read.Fileˉlength {
+            Complete = true;
+        } else {
+            Read = Directory.Directoryˉreadˉbytes(
+                Name, Read.Nextˉoffset, 3072u32
+            );
+            if Read.Status != Directory.Directoryˉreadˉstatus.Valid {
+                return Fileˉreadˉdirectoryˉfailure(Read.Status);
+            }
+        }
+    }
+    Session = Output.Standardˉoutputˉclose(Session);
+    if Session.Status != Output.Standardˉoutputˉstatus.Valid {
+        return Fileˉreadˉoutputˉfailure(Session.Status);
+    }
+    return 0;
+}

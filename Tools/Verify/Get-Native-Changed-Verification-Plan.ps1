@@ -717,6 +717,8 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -eq 'Verify-Echo-Application') {
         Add-Suite 'echo-application'
+    } elseif ($Stem -eq 'Verify-File-Read-Application') {
+        Add-Suite 'file-read-application'
     } elseif ($Stem -eq 'Build-Echo-Package') {
         Add-Suite @('echo-application', 'echo-command-launch')
     } elseif ($Stem -eq 'Create-Wvdb-Query-Fixture') {
@@ -1152,7 +1154,12 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
     )) {
         Add-Bytecode-Suites
-        Add-Suite @('libraries', 'model-provider', 'wvb-inspector-reconstruction')
+        Add-Suite @(
+            'libraries',
+            'model-provider',
+            'file-read-application',
+            'wvb-inspector-reconstruction'
+        )
         if ($Path -in @(
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
@@ -1175,7 +1182,17 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Streams/Standard-Byte-Output-Core-Self-Test.wv',
         'Specifications/Standard-Byte-Output-Core.md'
     )) {
-        Add-Suite 'standard-byte-output'
+        Add-Suite @('standard-byte-output', 'file-read-application')
+    } elseif ($Path -in @(
+        'Libraries/Platform/Streams/Standard-Byte-Output.wv',
+        'Libraries/Platform/Streams/Standard-Byte-Output-Response-Core.wv',
+        'Projects/Libraries/Windvale-Library-Standard-Byte-Output.wvproj',
+        'Projects/Libraries/Windvale-Library-Standard-Byte-Output-Response-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Standard-Byte-Output-Response-Core.wvproj',
+        'Tests/Fixtures/Streams/Standard-Byte-Output-Response-Core-Self-Test.wv',
+        'Specifications/Standard-Byte-Output-Capability.md'
+    )) {
+        Add-Suite 'file-read-application'
     } elseif ($Path -in @(
         'Libraries/Network/Address-Authority.wv',
         'Projects/Libraries/Windvale-Library-Network-Address-Authority.wvproj',
@@ -1300,13 +1317,21 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'shell-one-parser'
         if ($Path -eq 'Specifications/Windvale-Shell-1.md') {
-            Add-Suite 'echo-application'
+            Add-Suite @('echo-application', 'file-read-application')
         }
     } elseif ($Path -in @(
         'Applications/Shell/Echo.wv',
         'Projects/Applications/Windvale-Echo.wvproj'
     )) {
         Add-Suite @('echo-application', 'echo-command-launch')
+        if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
+            Add-Suite 'workspace-project2'
+        }
+    } elseif ($Path -in @(
+        'Applications/Shell/File-Read.wv',
+        'Projects/Applications/Windvale-File-Read.wvproj'
+    )) {
+        Add-Suite 'file-read-application'
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
@@ -1696,7 +1721,14 @@ foreach ($Path in $Paths) {
         'Runtime/Native/Linux-X64-Read-Only-Directory.wva'
     )) {
         Add-Assembler-Suites
-        Add-Suite 'wvdb-query-capability'
+        Add-Suite @('wvdb-query-capability', 'file-read-application')
+    } elseif ($Path -in @(
+        'Runtime/Native/X64-File-Read-Host.wva',
+        'Runtime/Native/Windows-X64-Standard-Byte-Output.wva',
+        'Runtime/Native/Linux-X64-Standard-Byte-Output.wva'
+    )) {
+        Add-Assembler-Suites
+        Add-Suite 'file-read-application'
     } elseif ($Path -eq 'Runtime/Native/X64-Scripted-Model-Provider-Host.wva') {
         Add-Assembler-Suites
         Add-Suite 'model-provider'
@@ -1755,6 +1787,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'database-durable-commit'
         Require-Full-Database-Storage
         Add-Suite 'wvdb-query-capability'
+        Add-Suite 'file-read-application'
         Add-Suite 'segmented-compiler-toolset-reconstruction'
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
@@ -1866,7 +1899,7 @@ foreach ($Path in $Paths) {
             'Compiler/Windvale/Source-Wir-Core.wv'
         )) {
             Require-Full-Database-Storage
-            Add-Suite 'model-provider'
+            Add-Suite @('model-provider', 'file-read-application')
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites

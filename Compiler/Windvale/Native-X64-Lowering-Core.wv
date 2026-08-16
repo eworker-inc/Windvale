@@ -1230,7 +1230,8 @@ fn Compilerˉnativeˉx64ˉfunctionˉusesˉprovider(
             if Kind == Nativeˉcapabilities.Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() ||
                 Kind == Nativeˉcapabilities.Compilerˉnativeˉx64ˉdirectoryˉreadˉkind() ||
                 Kind == Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
-                Kind == Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() {
+                Kind == Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() ||
+                Kind == Nativeˉcapabilities.Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() {
                 return true;
             }
         }
@@ -3605,7 +3606,9 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
         if Capabilityˉkind ==
                 Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
             Capabilityˉkind ==
-                Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() {
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() ||
+            Capabilityˉkind ==
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() {
             return Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉcallˉbytes();
         }
         return Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();

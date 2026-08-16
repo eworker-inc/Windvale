@@ -1,0 +1,92 @@
+windvale-assembly 1
+
+# Windows standard-output byte leaf. It uses only the verified WVIO stdout
+# handle and WriteFile target and reports exact completed calls.
+symbol export function Standard_output_platform_write in .text
+
+section code .text align 16
+define Standard_output_platform_write
+push rbx
+push r12
+push r13
+push r14
+push r15
+push r10
+push r11
+subtract_i32 rsp 48
+move r12 r8
+move r13 r9
+move r14d r10d
+move r15 r11
+xor eax eax
+store_memory_u32 r15 none 1 0 eax
+
+load_memory_u64 rbx r12 none 1 88
+test rbx rbx
+branch equal Standard_output_windows_failure
+load_memory_u32 eax rbx none 1 0
+compare_i32 eax 1330206295
+branch not_equal Standard_output_windows_failure
+load_memory_u32 eax rbx none 1 4
+compare_i32 eax 1
+branch not_equal Standard_output_windows_failure
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 48
+branch not_equal Standard_output_windows_failure
+load_memory_u32 eax rbx none 1 12
+compare_i32 eax 1
+branch not_equal Standard_output_windows_failure
+load_memory_u32 eax rbx none 1 16
+and_i32 eax 1
+test eax eax
+branch equal Standard_output_windows_failure
+load_memory_u64 r12 rbx none 1 24
+test r12 r12
+branch equal Standard_output_windows_failure
+load_memory_u64 rbx rbx none 1 40
+test rbx rbx
+branch equal Standard_output_windows_failure
+
+label Standard_output_windows_next
+test r14d r14d
+branch equal Standard_output_windows_complete
+xor eax eax
+store_memory_u32 rsp none 1 40 eax
+store_memory_u64 rsp none 1 32 rax
+move rcx r12
+move rdx r13
+move r8d r14d
+move r9 rsp
+add_i32 r9 40
+call_register rbx
+test eax eax
+branch equal Standard_output_windows_failure
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch equal Standard_output_windows_failure
+compare eax r14d
+branch above Standard_output_windows_failure
+add r13 rax
+subtract r14d eax
+load_memory_u32 ecx r15 none 1 0
+add ecx eax
+store_memory_u32 r15 none 1 0 ecx
+jump_label Standard_output_windows_next
+
+label Standard_output_windows_complete
+xor eax eax
+jump_label Standard_output_windows_return
+label Standard_output_windows_failure
+move_u32 eax 1
+label Standard_output_windows_return
+add_i32 rsp 48
+pop r11
+pop r10
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+end define
+end section

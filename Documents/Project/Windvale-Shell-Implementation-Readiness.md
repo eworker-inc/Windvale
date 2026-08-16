@@ -273,6 +273,15 @@ provider contracts are accepted.
 
 ### Slice 3: exact `file-read`
 
+Current result: the concrete `standard_output.write_v1` response contract,
+portable hostile-response decoder, hosted adapter, Windows/Linux native leaves,
+and ordinary `Applications/Shell/File-Read.wv` application are implemented.
+The 32-case focused owner proves deterministic cross-target images and exact
+local-host output independently on both permanent hosts. The parser's fixed
+`cat` alias already selects canonical identity `file-read`. Active-generation
+package metadata and the Workbench browser replacement remain open and are not
+implied by this hosted application evidence.
+
 - bind and permanently own the implemented standard-byte-output core through a
   concrete provider;
 - bind the existing read-only directory snapshot;

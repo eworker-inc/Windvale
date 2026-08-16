@@ -1,0 +1,3 @@
+windvale-project 2
+root "Libraries/Platform/Streams/Standard-Byte-Output-Response-Core.wv"
+emit wvb

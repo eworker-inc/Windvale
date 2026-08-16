@@ -87,10 +87,13 @@ The canonical catalog contains the seven process, file-byte, console, and
 diagnostic signatures defined by [Hosted-Resources.md](Hosted-Resources.md), plus
 `filesystem.directory_read_v1(text, u32, u32) -> bytes` and
 `storage.random_access_v1(u32, u64, u64, u32, bytes) -> bytes`, plus
+`standard_output.write_v1(bytes) -> bytes`, plus
 `model.catalog_v1(bytes) -> bytes` and `model.inference_v1(bytes) -> bytes`.
 Their semantic
 contracts are defined by [Read-Only-Directory-Capability.md](Read-Only-Directory-Capability.md)
 and [Random-Access-Storage-Capability.md](Random-Access-Storage-Capability.md),
+with byte output defined by
+[Standard-Byte-Output-Capability.md](Standard-Byte-Output-Capability.md),
 with the model seam defined by
 [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md).
 Extending the recognized catalog does not change this encoding or the WVB version

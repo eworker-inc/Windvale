@@ -1,0 +1,309 @@
+module Windvaleˉstandardˉbyteˉoutput profile hosted;
+
+import Windvaleˉboundedˉoperationˉcore as Operation;
+import Windvaleˉstandardˉbyteˉoutputˉcore as Output;
+import Windvaleˉstandardˉbyteˉoutputˉresponseˉcore as Response;
+
+capability standard_output.write_v1;
+
+const OUTPUT_PROVIDER_IDENTITY: u64 = 1u64;
+const OUTPUT_PROVIDER_GENERATION: u64 = 1u64;
+const OUTPUT_STREAM_IDENTITY: u64 = 1u64;
+const OUTPUT_STREAM_GENERATION: u64 = 1u64;
+const OUTPUT_CLOCK_GENERATION: u64 = 1u64;
+
+export enum Standardˉoutputˉstatus {
+    Valid = 0;
+    Rejected = 1;
+    Peerˉclosed = 2;
+    Providerˉlost = 3;
+    Stale = 4;
+    Revoked = 5;
+    Indeterminate = 6;
+    Invalidˉresponse = 7;
+    Invalidˉstate = 8;
+}
+
+export record Standardˉoutputˉsession {
+    Status: Standardˉoutputˉstatus;
+    State: Output.Outputˉstate;
+    Nextˉoperation: u64;
+    Tick: u64;
+}
+
+fn Standardˉoutputˉclock(Tick: u64) -> Operation.Operationˉclock {
+    return Operation.Operationˉclockˉcreate(OUTPUT_CLOCK_GENERATION, Tick);
+}
+
+fn Standardˉoutputˉsessionˉwith(
+    Session: Standardˉoutputˉsession,
+    Status: Standardˉoutputˉstatus,
+    State: Output.Outputˉstate,
+    Tick: u64
+) -> Standardˉoutputˉsession {
+    return Standardˉoutputˉsession(
+        Status, State, Session.Nextˉoperation + 1u64, Tick
+    );
+}
+
+fn Standardˉoutputˉconsumeˉknown(
+    State: Output.Outputˉstate,
+    Progress: u32
+) -> Output.Outputˉtransition {
+    if Progress == 0u32 {
+        return Output.Outputˉtransition(Output.Outputˉerror.Valid, true, State);
+    }
+    return Output.Outputˉconsume(
+        State,
+        OUTPUT_PROVIDER_IDENTITY,
+        OUTPUT_PROVIDER_GENERATION,
+        OUTPUT_STREAM_IDENTITY,
+        OUTPUT_STREAM_GENERATION,
+        Progress
+    );
+}
+
+fn Standardˉoutputˉdispatchedˉprogress(
+    State: Output.Outputˉstate,
+    Tick: u64,
+    Progress: u32
+) -> Output.Outputˉtransition {
+    let Dispatched: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+        State,
+        Standardˉoutputˉclock(Tick),
+        Operation.Operationˉeventˉkind.Dispatch,
+        0u32
+    );
+    if !Dispatched.Applied || Progress == 0u32 { return Dispatched; }
+    return Output.Outputˉwriteˉadvance(
+        Dispatched.State,
+        Standardˉoutputˉclock(Tick + 1u64),
+        Operation.Operationˉeventˉkind.Progress,
+        Progress
+    );
+}
+
+export fn Standardˉoutputˉopen() -> Standardˉoutputˉsession {
+    let State: Output.Outputˉstate = Output.Outputˉopen(
+        OUTPUT_PROVIDER_IDENTITY,
+        OUTPUT_PROVIDER_GENERATION,
+        OUTPUT_STREAM_IDENTITY,
+        OUTPUT_STREAM_GENERATION,
+        Standardˉoutputˉclock(0u64),
+        65536u32,
+        65536u32,
+        4194304u64,
+        16u64,
+        16777216u64
+    );
+    if State.Error != Output.Outputˉerror.Valid {
+        return Standardˉoutputˉsession(
+            Standardˉoutputˉstatus.Invalidˉstate, State, 1u64, 0u64
+        );
+    }
+    return Standardˉoutputˉsession(
+        Standardˉoutputˉstatus.Valid, State, 1u64, 0u64
+    );
+}
+
+export fn Standardˉoutputˉwrite(
+    Session: Standardˉoutputˉsession,
+    Value: bytes
+) -> Standardˉoutputˉsession {
+    if Session.Status != Standardˉoutputˉstatus.Valid ||
+        Session.State.Phase != Output.Outputˉphase.Open ||
+        Session.Nextˉoperation == 0u64 || Session.Tick > 16777184u64 {
+        return Standardˉoutputˉsession(
+            Standardˉoutputˉstatus.Invalidˉstate,
+            Session.State,
+            Session.Nextˉoperation,
+            Session.Tick
+        );
+    }
+    let Length: u32 = Bytesˉlength(Value);
+    let Begun: Output.Outputˉtransition = Output.Outputˉwriteˉbegin(
+        Session.State,
+        Session.Nextˉoperation,
+        1u64,
+        Standardˉoutputˉclock(Session.Tick + 1u64),
+        Session.Tick + 16u64,
+        Value
+    );
+    if !Begun.Applied {
+        return Standardˉoutputˉsession(
+            Standardˉoutputˉstatus.Invalidˉstate,
+            Session.State,
+            Session.Nextˉoperation,
+            Session.Tick
+        );
+    }
+    if Length == 0u32 {
+        return Standardˉoutputˉsessionˉwith(
+            Session, Standardˉoutputˉstatus.Valid,
+            Begun.State, Session.Tick + 1u64
+        );
+    }
+
+    let Providerˉresponse: Response.Standardˉoutputˉresponse =
+        Response.Standardˉoutputˉresponseˉread(
+        standard_output.write_v1(Value), Length
+    );
+    if !Providerˉresponse.Valid {
+        let Unknown: Output.Outputˉtransition = Standardˉoutputˉdispatchedˉprogress(
+            Begun.State, Session.Tick + 2u64, 0u32
+        );
+        if !Unknown.Applied {
+            return Standardˉoutputˉsessionˉwith(
+                Session, Standardˉoutputˉstatus.Invalidˉstate,
+                Begun.State, Session.Tick + 2u64
+            );
+        }
+        let Lost: Output.Outputˉtransition = Output.Outputˉproviderˉtransition(
+            Unknown.State,
+            OUTPUT_PROVIDER_IDENTITY,
+            OUTPUT_PROVIDER_GENERATION,
+            OUTPUT_STREAM_IDENTITY,
+            OUTPUT_STREAM_GENERATION,
+            Standardˉoutputˉclock(Session.Tick + 3u64),
+            Output.Outputˉproviderˉevent.Providerˉloss,
+            0u64
+        );
+        return Standardˉoutputˉsessionˉwith(
+            Session, Standardˉoutputˉstatus.Invalidˉresponse,
+            Lost.State, Session.Tick + 3u64
+        );
+    }
+
+    if Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Rejected ||
+        Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Stale ||
+        Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Revoked {
+        let Rejected: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+            Begun.State,
+            Standardˉoutputˉclock(Session.Tick + 2u64),
+            Operation.Operationˉeventˉkind.Reject,
+            0u32
+        );
+        if Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Rejected {
+            return Standardˉoutputˉsessionˉwith(
+                Session, Standardˉoutputˉstatus.Rejected,
+                Rejected.State, Session.Tick + 2u64
+            );
+        }
+        var Event: Output.Outputˉproviderˉevent =
+            Output.Outputˉproviderˉevent.Providerˉrestart;
+        var Status: Standardˉoutputˉstatus = Standardˉoutputˉstatus.Stale;
+        if Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Revoked {
+            Event = Output.Outputˉproviderˉevent.Teardown;
+            Status = Standardˉoutputˉstatus.Revoked;
+        }
+        let Ended: Output.Outputˉtransition = Output.Outputˉproviderˉtransition(
+            Rejected.State,
+            OUTPUT_PROVIDER_IDENTITY,
+            OUTPUT_PROVIDER_GENERATION,
+            OUTPUT_STREAM_IDENTITY,
+            OUTPUT_STREAM_GENERATION,
+            Standardˉoutputˉclock(Session.Tick + 3u64),
+            Event,
+            Providerˉresponse.Providerˉgeneration
+        );
+        return Standardˉoutputˉsessionˉwith(
+            Session, Status, Ended.State, Session.Tick + 3u64
+        );
+    }
+
+    let Advanced: Output.Outputˉtransition = Standardˉoutputˉdispatchedˉprogress(
+        Begun.State, Session.Tick + 2u64, Providerˉresponse.Progress
+    );
+    if !Advanced.Applied {
+        return Standardˉoutputˉsessionˉwith(
+            Session, Standardˉoutputˉstatus.Invalidˉstate,
+            Begun.State, Session.Tick + 3u64
+        );
+    }
+    let Consumed: Output.Outputˉtransition = Standardˉoutputˉconsumeˉknown(
+        Advanced.State, Providerˉresponse.Progress
+    );
+    if !Consumed.Applied {
+        return Standardˉoutputˉsessionˉwith(
+            Session, Standardˉoutputˉstatus.Invalidˉstate,
+            Advanced.State, Session.Tick + 3u64
+        );
+    }
+
+    if Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Completed {
+        let Completed: Output.Outputˉtransition = Output.Outputˉwriteˉadvance(
+            Consumed.State,
+            Standardˉoutputˉclock(Session.Tick + 4u64),
+            Operation.Operationˉeventˉkind.Complete,
+            Length
+        );
+        return Standardˉoutputˉsessionˉwith(
+            Session, Standardˉoutputˉstatus.Valid,
+            Completed.State, Session.Tick + 4u64
+        );
+    }
+    if Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Peerˉclosed {
+        let Closed: Output.Outputˉtransition = Output.Outputˉpeerˉclose(
+            Consumed.State,
+            OUTPUT_PROVIDER_IDENTITY,
+            OUTPUT_PROVIDER_GENERATION,
+            OUTPUT_STREAM_IDENTITY,
+            OUTPUT_STREAM_GENERATION,
+            Standardˉoutputˉclock(Session.Tick + 4u64)
+        );
+        return Standardˉoutputˉsessionˉwith(
+            Session, Standardˉoutputˉstatus.Peerˉclosed,
+            Closed.State, Session.Tick + 4u64
+        );
+    }
+    let Providerˉended: Output.Outputˉtransition = Output.Outputˉproviderˉtransition(
+        Consumed.State,
+        OUTPUT_PROVIDER_IDENTITY,
+        OUTPUT_PROVIDER_GENERATION,
+        OUTPUT_STREAM_IDENTITY,
+        OUTPUT_STREAM_GENERATION,
+        Standardˉoutputˉclock(Session.Tick + 4u64),
+        Output.Outputˉproviderˉevent.Providerˉloss,
+        0u64
+    );
+    var Resultˉstatus: Standardˉoutputˉstatus =
+        Standardˉoutputˉstatus.Indeterminate;
+    if Providerˉresponse.Status == Response.Standardˉoutputˉproviderˉstatus.Providerˉlost {
+        Resultˉstatus = Standardˉoutputˉstatus.Providerˉlost;
+    }
+    return Standardˉoutputˉsessionˉwith(
+        Session, Resultˉstatus, Providerˉended.State, Session.Tick + 4u64
+    );
+}
+
+export fn Standardˉoutputˉclose(
+    Session: Standardˉoutputˉsession
+) -> Standardˉoutputˉsession {
+    if Session.Status != Standardˉoutputˉstatus.Valid {
+        return Session;
+    }
+    let Closed: Output.Outputˉtransition = Output.Outputˉwriterˉclose(Session.State);
+    if !Closed.Applied {
+        return Standardˉoutputˉsession(
+            Standardˉoutputˉstatus.Invalidˉstate,
+            Session.State,
+            Session.Nextˉoperation,
+            Session.Tick
+        );
+    }
+    let Released: Output.Outputˉtransition = Output.Outputˉrelease(Closed.State);
+    if !Released.Applied {
+        return Standardˉoutputˉsession(
+            Standardˉoutputˉstatus.Invalidˉstate,
+            Closed.State,
+            Session.Nextˉoperation,
+            Session.Tick
+        );
+    }
+    return Standardˉoutputˉsession(
+        Standardˉoutputˉstatus.Valid,
+        Released.State,
+        Session.Nextˉoperation,
+        Session.Tick
+    );
+}

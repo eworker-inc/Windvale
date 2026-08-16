@@ -1,0 +1,459 @@
+windvale-assembly 1
+
+# ABI-23 host for the first byte-exact file-read application. It binds one
+# fixed immutable directory object and one standard-output byte provider. The
+# generated application receives neither a native path nor an output handle.
+symbol local data File_read_host_file_name in .rodata
+symbol local data File_read_host_identities in .rodata
+symbol local function Fr_dir_provider in .text
+symbol local function Fr_out_provider in .text
+symbol export function File_read_host_entry in .text
+symbol import function Directory_platform_close
+symbol import function Directory_platform_open
+symbol import function Directory_platform_read
+symbol import function Main
+symbol import function Standard_output_platform_write
+
+section code .text align 16
+define File_read_host_entry
+push rbx
+move rbx rdx
+subtract_i32 rsp 4096
+
+xor rax rax
+xor ecx ecx
+label File_read_host_entry_clear
+compare_i32 ecx 4096
+branch above_equal File_read_host_entry_copy
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+jump_label File_read_host_entry_clear
+
+label File_read_host_entry_copy
+xor ecx ecx
+label File_read_host_entry_copy_next
+compare_i32 ecx 112
+branch above_equal File_read_host_entry_context
+load_memory_u64 rax rbx rcx 1 0
+store_memory_u64 rsp rcx 1 32 rax
+add_i32 ecx 8
+jump_label File_read_host_entry_copy_next
+
+label File_read_host_entry_context
+move_u32 eax 9
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 136
+store_memory_u32 rsp none 1 36 eax
+move rax rsp
+add_i32 rax 168
+store_memory_u64 rsp none 1 160 rax
+
+# WVPT 1: diagnostic, directory read, argument, argument count, byte output.
+move_u32 eax 1414551127
+store_memory_u32 rsp none 1 168 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 172 eax
+move_u32 eax 314
+store_memory_u32 rsp none 1 176 eax
+move_u32 eax 5
+store_memory_u32 rsp none 1 180 eax
+move_u32 eax 18
+store_memory_u32 rsp none 1 184 eax
+move_u32 eax 24
+store_memory_u32 rsp none 1 188 eax
+move_u32 eax 162
+store_memory_u32 rsp none 1 192 eax
+
+move_u32 eax 152
+store_memory_u32 rsp none 1 200 eax
+move_u32 eax 31
+store_memory_u32 rsp none 1 204 eax
+
+move_u32 eax 183
+store_memory_u32 rsp none 1 224 eax
+move_u32 eax 40
+store_memory_u32 rsp none 1 228 eax
+load_address rax Fr_dir_provider
+store_memory_u64 rsp none 1 232 rax
+move rax rsp
+add_i32 rax 496
+store_memory_u64 rsp none 1 240 rax
+
+move_u32 eax 223
+store_memory_u32 rsp none 1 248 eax
+move_u32 eax 26
+store_memory_u32 rsp none 1 252 eax
+
+move_u32 eax 249
+store_memory_u32 rsp none 1 272 eax
+move_u32 eax 31
+store_memory_u32 rsp none 1 276 eax
+
+move_u32 eax 280
+store_memory_u32 rsp none 1 296 eax
+move_u32 eax 34
+store_memory_u32 rsp none 1 300 eax
+load_address rax Fr_out_provider
+store_memory_u64 rsp none 1 304 rax
+move rax rsp
+add_i32 rax 3680
+store_memory_u64 rsp none 1 312 rax
+
+# Retain the admitted host context only for the Windows directory leaf.
+move r8 rsp
+add_i32 r8 496
+store_memory_u64 r8 none 1 3144 rbx
+
+# Copy the exact five WVB capability identities after the table entries.
+load_address rbx File_read_host_identities
+move rdx rsp
+add_i32 rdx 320
+xor ecx ecx
+label File_read_host_entry_identity_copy
+compare_i32 ecx 162
+branch above_equal File_read_host_entry_open
+load_memory_u8 al rbx rcx 1 0
+store_memory_u8 rdx rcx 1 0 al
+add_i32 ecx 1
+jump_label File_read_host_entry_identity_copy
+
+label File_read_host_entry_open
+# Directory state starts at context + 464.
+move r8 rsp
+add_i32 r8 496
+call Directory_platform_open
+move r8 rsp
+add_i32 r8 496
+test eax eax
+branch equal File_read_host_entry_main
+move_u32 eax 4
+store_memory_u32 r8 none 1 28 eax
+
+label File_read_host_entry_main
+xor rcx rcx
+move rdx rsp
+add_i32 rdx 32
+move r8 rdx
+xor r9 r9
+call Main
+move rbx rax
+
+move r8 rsp
+add_i32 r8 496
+load_memory_u32 eax r8 none 1 28
+test eax eax
+branch not_equal File_read_host_entry_return_main
+call Directory_platform_close
+test eax eax
+branch equal File_read_host_entry_return_main
+test rbx rbx
+branch not_equal File_read_host_entry_return_main
+move_u32 ebx 71
+
+label File_read_host_entry_return_main
+move rax rbx
+add_i32 rsp 4096
+pop rbx
+return
+end define
+
+define Fr_dir_provider
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r10
+push r11
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r13 r8
+move r14 r9
+
+test r12 r12
+branch equal File_read_directory_provider_abi_failure
+test r13 r13
+branch equal File_read_directory_provider_abi_failure
+test r14 r14
+branch equal File_read_directory_provider_abi_failure
+compare_i32 edx 3
+branch not_equal File_read_directory_provider_abi_failure
+move rax r15
+add_i32 rax 464
+compare r13 rax
+branch not_equal File_read_directory_provider_abi_failure
+
+load_memory_u64 rsi r14 none 1 0
+load_memory_u64 rax r14 none 1 8
+move r10d eax
+shift_right rax 32
+test rax rax
+branch not_equal File_read_directory_provider_invalid_request
+test rsi rsi
+branch equal File_read_directory_provider_invalid_request
+test r10d r10d
+branch equal File_read_directory_provider_invalid_request
+compare_i32 r10d 255
+branch above File_read_directory_provider_invalid_request
+load_memory_u32 ebp r14 none 1 16
+load_memory_u32 eax r14 none 1 20
+test eax eax
+branch not_equal File_read_directory_provider_invalid_request
+load_memory_u64 rax r14 none 1 24
+test rax rax
+branch not_equal File_read_directory_provider_invalid_request
+load_memory_u32 edi r14 none 1 32
+load_memory_u32 eax r14 none 1 36
+test eax eax
+branch not_equal File_read_directory_provider_invalid_request
+load_memory_u64 rax r14 none 1 40
+test rax rax
+branch not_equal File_read_directory_provider_invalid_request
+compare_i32 edi 3072
+branch above File_read_directory_provider_invalid_request
+move eax ebp
+add eax edi
+branch below File_read_directory_provider_invalid_request
+
+move r8 r13
+add_i32 r8 32
+move_u32 eax 1380210263
+store_memory_u32 r8 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r8 none 1 4 eax
+xor eax eax
+store_memory_u32 r8 none 1 8 eax
+load_memory_u32 eax r13 none 1 8
+store_memory_u32 r8 none 1 12 eax
+store_memory_u32 r8 none 1 16 ebp
+xor eax eax
+store_memory_u32 r8 none 1 20 eax
+
+load_memory_u32 eax r13 none 1 28
+test eax eax
+branch equal File_read_directory_provider_name
+compare_i32 eax 3
+branch equal File_read_directory_provider_denied
+jump_label File_read_directory_provider_unavailable
+
+label File_read_directory_provider_name
+compare_i32 r10d 29
+branch not_equal File_read_directory_provider_not_found
+load_address rbx File_read_host_file_name
+xor ecx ecx
+label File_read_directory_provider_name_next
+compare_i32 ecx 29
+branch above_equal File_read_directory_provider_geometry
+load_memory_u8 al rsi rcx 1 0
+load_memory_u8 dl rbx rcx 1 0
+compare al dl
+branch not_equal File_read_directory_provider_not_found
+add_i32 ecx 1
+jump_label File_read_directory_provider_name_next
+
+label File_read_directory_provider_geometry
+load_memory_u32 eax r13 none 1 8
+compare ebp eax
+branch above File_read_directory_provider_invalid_offset
+subtract eax ebp
+compare eax edi
+branch below File_read_directory_provider_chunk_ready
+move eax edi
+label File_read_directory_provider_chunk_ready
+store_memory_u32 r8 none 1 20 eax
+test eax eax
+branch equal File_read_directory_provider_publish
+xor ecx ecx
+store_memory_u32 r13 none 1 24 ecx
+move r8 r13
+move r9 rbp
+move r10d eax
+move r11 r13
+add_i32 r11 56
+call Directory_platform_read
+test eax eax
+branch not_equal File_read_directory_provider_unavailable_after_read
+move r8 r13
+add_i32 r8 32
+load_memory_u32 eax r13 none 1 24
+load_memory_u32 ecx r8 none 1 20
+compare eax ecx
+branch not_equal File_read_directory_provider_unavailable_after_read
+jump_label File_read_directory_provider_publish
+
+label File_read_directory_provider_not_found
+move_u32 eax 1
+jump_label File_read_directory_provider_failure
+label File_read_directory_provider_denied
+move_u32 eax 3
+jump_label File_read_directory_provider_failure
+label File_read_directory_provider_unavailable_after_read
+move r8 r13
+add_i32 r8 32
+label File_read_directory_provider_unavailable
+move_u32 eax 4
+label File_read_directory_provider_failure
+store_memory_u32 r8 none 1 8 eax
+xor eax eax
+store_memory_u32 r8 none 1 12 eax
+store_memory_u32 r8 none 1 20 eax
+jump_label File_read_directory_provider_publish
+
+label File_read_directory_provider_invalid_offset
+move_u32 eax 8
+store_memory_u32 r8 none 1 8 eax
+jump_label File_read_directory_provider_publish
+
+label File_read_directory_provider_invalid_request
+move_u32 eax 1
+jump_label File_read_directory_provider_complete
+
+label File_read_directory_provider_publish
+load_memory_u32 ebx r8 none 1 20
+add_i32 ebx 24
+store_memory_u64 r12 none 1 0 r8
+store_memory_u32 r12 none 1 8 ebx
+xor eax eax
+store_memory_u32 r12 none 1 12 eax
+jump_label File_read_directory_provider_complete
+
+label File_read_directory_provider_abi_failure
+move_u32 eax 1
+
+label File_read_directory_provider_complete
+add_i32 rsp 40
+pop r15
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+define Fr_out_provider
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r10
+push r11
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r13 r8
+move r14 r9
+
+test r12 r12
+branch equal File_read_output_provider_abi_failure
+test r13 r13
+branch equal File_read_output_provider_abi_failure
+test r14 r14
+branch equal File_read_output_provider_abi_failure
+compare_i32 edx 1
+branch not_equal File_read_output_provider_abi_failure
+move rax r15
+add_i32 rax 3648
+compare r13 rax
+branch not_equal File_read_output_provider_abi_failure
+
+load_memory_u64 r9 r14 none 1 0
+load_memory_u64 rax r14 none 1 8
+move ebx eax
+shift_right rax 32
+test rax rax
+branch not_equal File_read_output_provider_abi_failure
+compare_i32 ebx 65536
+branch above File_read_output_provider_abi_failure
+test ebx ebx
+branch equal File_read_output_provider_response
+test r9 r9
+branch equal File_read_output_provider_abi_failure
+
+xor eax eax
+store_memory_u32 r13 none 1 24 eax
+move r8 r15
+move r10d ebx
+move r11 r13
+add_i32 r11 24
+call Standard_output_platform_write
+test eax eax
+branch equal File_read_output_provider_response
+move_u32 eax 6
+store_memory_u32 r13 none 1 44 eax
+jump_label File_read_output_provider_publish
+
+label File_read_output_provider_response
+xor eax eax
+store_memory_u32 r13 none 1 44 eax
+
+label File_read_output_provider_publish
+move_u32 eax 1464817239
+store_memory_u32 r13 none 1 32 eax
+move_u32 eax 1
+store_memory_u32 r13 none 1 36 eax
+move_u32 eax 32
+store_memory_u32 r13 none 1 40 eax
+load_memory_u32 eax r13 none 1 24
+store_memory_u32 r13 none 1 48 eax
+xor eax eax
+store_memory_u32 r13 none 1 52 eax
+move_u32 eax 1
+store_memory_u64 r13 none 1 56 rax
+move rax r13
+add_i32 rax 32
+store_memory_u64 r12 none 1 0 rax
+move_u32 eax 32
+store_memory_u32 r12 none 1 8 eax
+xor eax eax
+store_memory_u32 r12 none 1 12 eax
+jump_label File_read_output_provider_complete
+
+label File_read_output_provider_abi_failure
+move_u32 eax 1
+jump_label File_read_output_provider_return
+label File_read_output_provider_complete
+xor eax eax
+label File_read_output_provider_return
+add_i32 rsp 40
+pop r15
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section
+
+section rodata .rodata align 1
+define File_read_host_file_name
+bytes 87 105 110 100 118 97 108 101 45 68 97 116 97 98 97 115 101 45 83 116
+bytes 111 114 97 103 101 46 98 105 110
+end define
+define File_read_host_identities
+bytes 21 0 0 0 100 105 97 103 110 111 115 116 105 99 46 119 114 105 116 101
+bytes 95 108 105 110 101 1 0 0 0 3 0 28 0 0 0 102 105 108 101 115
+bytes 121 115 116 101 109 46 100 105 114 101 99 116 111 114 121 95 114 101 97 100
+bytes 95 118 49 3 0 0 0 3 5 5 6 16 0 0 0 112 114 111 99 101
+bytes 115 115 46 97 114 103 117 109 101 110 116 1 0 0 0 5 3 22 0 0
+bytes 0 112 114 111 99 101 115 115 46 97 114 103 117 109 101 110 116 95 99 111
+bytes 117 110 116 0 0 0 0 5 24 0 0 0 115 116 97 110 100 97 114 100
+bytes 95 111 117 116 112 117 116 46 119 114 105 116 101 95 118 49 1 0 0 0
+bytes 6 6
+end define
+end section

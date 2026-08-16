@@ -1,0 +1,78 @@
+module Windvaleˉstandardˉbyteˉoutputˉresponseˉcore profile portable;
+
+const OUTPUT_RESPONSE_MAGIC: u32 = 1464817239u32;
+const OUTPUT_RESPONSE_BYTES: u32 = 32u32;
+const OUTPUT_PROVIDER_GENERATION: u64 = 1u64;
+
+export enum Standardˉoutputˉproviderˉstatus {
+    Completed = 0;
+    Rejected = 1;
+    Peerˉclosed = 2;
+    Providerˉlost = 3;
+    Stale = 4;
+    Revoked = 5;
+    Indeterminate = 6;
+}
+
+export record Standardˉoutputˉresponse {
+    Valid: bool;
+    Status: Standardˉoutputˉproviderˉstatus;
+    Progress: u32;
+    Providerˉgeneration: u64;
+}
+
+fn Standardˉoutputˉproviderˉstatusˉfromˉu32(
+    Value: u32
+) -> Standardˉoutputˉproviderˉstatus {
+    if Value == 0u32 { return Standardˉoutputˉproviderˉstatus.Completed; }
+    if Value == 1u32 { return Standardˉoutputˉproviderˉstatus.Rejected; }
+    if Value == 2u32 { return Standardˉoutputˉproviderˉstatus.Peerˉclosed; }
+    if Value == 3u32 { return Standardˉoutputˉproviderˉstatus.Providerˉlost; }
+    if Value == 4u32 { return Standardˉoutputˉproviderˉstatus.Stale; }
+    if Value == 5u32 { return Standardˉoutputˉproviderˉstatus.Revoked; }
+    return Standardˉoutputˉproviderˉstatus.Indeterminate;
+}
+
+export fn Standardˉoutputˉresponseˉread(
+    Value: bytes,
+    Requested: u32
+) -> Standardˉoutputˉresponse {
+    if Bytesˉlength(Value) != OUTPUT_RESPONSE_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Value, 0u32) != OUTPUT_RESPONSE_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != OUTPUT_RESPONSE_BYTES {
+        return Standardˉoutputˉresponse(
+            false, Standardˉoutputˉproviderˉstatus.Indeterminate, 0u32, 0u64
+        );
+    }
+    let Statusˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    let Progress: u32 = Bytesˉreadˉu32ˉlittle(Value, 16u32);
+    let Reserved: u32 = Bytesˉreadˉu32ˉlittle(Value, 20u32);
+    let Generation: u64 = Bytesˉreadˉu64ˉlittle(Value, 24u32);
+    if Statusˉvalue > 6u32 || Progress > Requested || Reserved != 0u32 ||
+        Generation == 0u64 {
+        return Standardˉoutputˉresponse(
+            false, Standardˉoutputˉproviderˉstatus.Indeterminate, 0u32, 0u64
+        );
+    }
+    let Status: Standardˉoutputˉproviderˉstatus =
+        Standardˉoutputˉproviderˉstatusˉfromˉu32(Statusˉvalue);
+    if Status == Standardˉoutputˉproviderˉstatus.Completed &&
+        (Progress != Requested || Generation != OUTPUT_PROVIDER_GENERATION) {
+        return Standardˉoutputˉresponse(false, Status, Progress, Generation);
+    }
+    if (Status == Standardˉoutputˉproviderˉstatus.Rejected ||
+        Status == Standardˉoutputˉproviderˉstatus.Stale ||
+        Status == Standardˉoutputˉproviderˉstatus.Revoked) && Progress != 0u32 {
+        return Standardˉoutputˉresponse(false, Status, Progress, Generation);
+    }
+    if Status == Standardˉoutputˉproviderˉstatus.Stale ||
+        Status == Standardˉoutputˉproviderˉstatus.Revoked {
+        if Generation == OUTPUT_PROVIDER_GENERATION {
+            return Standardˉoutputˉresponse(false, Status, Progress, Generation);
+        }
+    } else if Generation != OUTPUT_PROVIDER_GENERATION {
+        return Standardˉoutputˉresponse(false, Status, Progress, Generation);
+    }
+    return Standardˉoutputˉresponse(true, Status, Progress, Generation);
+}

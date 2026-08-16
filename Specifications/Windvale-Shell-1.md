@@ -16,8 +16,9 @@ with paired native evidence and an exact active-generation command closure under
 [Decision 0693](../Documents/Decisions/0693-Echo-Package-Approval-And-Launch-Record-3.md).
 This
 specification does not claim an implemented interactive shell, terminal service,
-complete command metadata, dynamic launcher, standard byte stream, browser
-command worker, or Windvale OS service.
+complete command metadata, dynamic launcher, browser command worker, or Windvale
+OS service. The hosted exact-byte stream and `file-read` application are now
+implemented under Decision 0713.
 
 The product intent and cross-host boundary are defined by the
 [Windvale shell architecture](../Documents/Architecture/Windvale-Shell.md).
@@ -303,6 +304,14 @@ of exactly standard line output plus immutable argument and argument-count
 access, and its paired hosted owner proves the selected byte behavior and
 argument ceilings. Resolution, approval, launch, and completion remain separate
 Shell 1 boundaries and are not implemented by that application.
+
+The implemented `file-read` entry point is `Applications/Shell/File-Read.wv`.
+Its WVB declares the read-only directory and standard byte-output capabilities
+plus immutable argument and diagnostic access. The paired hosted owner proves
+exact arbitrary bytes, no added terminator, the 3,072-byte chunk boundary, and
+the 4 MiB ceiling. The fixed `cat` alias is implemented by
+`Windvaleˉshellˉoneˉcanonicalˉcommand`; active-generation resolution remains a
+later composition step.
 
 ## Resolution and launch separation
 

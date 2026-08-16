@@ -6,7 +6,8 @@ The first x86-64 capability-provider call emission, its separately implemented
 structural verifier, main-lowerer integration, focused host-backed storage, and
 fixed read-only directory execution, and the offline bound-model provider are
 implemented candidates. An actual `storage.random_access_v1`,
-`filesystem.directory_read_v1`, `model.catalog_v1`, or `model.inference_v1` call selects native
+`filesystem.directory_read_v1`, `standard_output.write_v1`,
+`model.catalog_v1`, or `model.inference_v1` call selects native
 ABI 23 and execution-context version 9; capability declaration alone preserves
 ABI 22 and exact existing output. Windows executes all storage version-1
 operations plus the directory-backed WVDB Query success, denial, and unavailable
@@ -125,6 +126,21 @@ Decision 0583's scripted provider table has two exact entries and grants no
 ambient authority. It proves catalog and inference execution without network or
 credentials. [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md)
 owns the facade and current lifetime rules.
+
+## Standard-output cell
+
+For `standard_output.write_v1(bytes)->bytes`, the provider call uses one
+complete borrowed bytes descriptor and argument count one. The provider
+revalidates the descriptor, the 65,536-byte call ceiling, its exact bound state,
+and the caller-owned result cell before dispatch. It returns one borrowed
+32-byte `WVOW 1` response with exact local progress and generation.
+
+The Windows leaf loops over `WriteFile` through the already admitted private
+stdout handle and function target. The Linux leaf loops over `write(2)` through
+the admitted private stdout descriptor, retrying only `EINTR`. Neither leaf
+decodes text, adds a terminator, exposes a handle, or treats local acceptance as
+remote receipt or durable commit. The shared adapter and response decoder are
+owned by [Standard-Byte-Output-Capability.md](Standard-Byte-Output-Capability.md).
 
 Decision 0585 requires an alive model bridge to return zero and publish a
 canonical typed response for revocation, stale generation, pre-dispatch peer

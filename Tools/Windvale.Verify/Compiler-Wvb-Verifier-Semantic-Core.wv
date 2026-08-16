@@ -642,6 +642,14 @@ export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
             if Bytesˉreadˉu32ˉlittle(Input, Name + 16u32) != 1936024419u32 { Matches = false; }
             if Bytesˉreadˉu32ˉlittle(Input, Name + 20u32) != 829841267u32 { Matches = false; }
             if Matches { Catalog = 7u32; }
+            Matches = true;
+            if Bytesˉreadˉu32ˉlittle(Input, Name) != 1851880563u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 4u32) != 1685217636u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 8u32) != 1953853279u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 779384176u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 16u32) != 1953067639u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 20u32) != 829841253u32 { Matches = false; }
+            if Matches { Catalog = 8u32; }
         }
         if Nameˉlength == 28u32 {
             Matches = true;

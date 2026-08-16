@@ -161,7 +161,7 @@ ordinal name independently of source declaration order. Dependency capability ca
 are rebound to those root-owned indices by canonical capability name. Parameter and
 result tags come from the fixed eleven-entry Seed catalog, including
 `filesystem.directory_read_v1`, `storage.random_access_v1`,
-`model.catalog_v1`, and `model.inference_v1`.
+`standard_output.write_v1`, `model.catalog_v1`, and `model.inference_v1`.
 
 WVIR operation `63` carries a validated WVSD capability directory entry. The backend ranks that entry among capability declarations by ordinal name and emits WVB `call.capability` with the resulting index. No capability is inferred, removed, or authorized by compilation; host support and runtime authorization remain separate required boundaries.
 
