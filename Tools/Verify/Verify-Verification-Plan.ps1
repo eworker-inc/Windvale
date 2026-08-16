@@ -1297,6 +1297,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'OS FAT32 block-read ownership'
+        Paths = @(
+            'Operating-System/Services/Fat32-Block-Read-Transaction.wv',
+            'Projects/Operating-System/Windvale-Os-Fat32-Block-Read-Transaction.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Fat32-Block-Read-Transaction.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Fat32-Block-Read-Transaction-Self-Test.wv',
+            'Specifications/Windvale-Os-Fat32-Block-Read-Transaction.md'
+        )
+        Suites = @('os-fat32-block-read', 'native-u64-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'portable network authority ownership'
         Paths = @(
             'Libraries/Platform/Networking/Network-Authority.wv',
@@ -2536,7 +2549,7 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 93 -or
+if ($VerificationOwnerLines.Count -ne 94 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
     throw 'The native verification-owner header or exact 92-owner inventory differs.'
 }
@@ -2576,7 +2589,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4337 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4351 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

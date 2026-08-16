@@ -103,8 +103,12 @@ masks the reserved high nibble, classifies every special value, rejects cycles
 and truncated/trailing traces, and enforces a caller-selected ceiling no larger
 than 4,096 clusters. The combined 45-case owner passes in paired native images.
 FSInfo/backup content validation, mirrored-FAT comparison, directory parsing,
-block capability binding, media removal, and file data reads remain before
-slice 4 is complete.
+live block-provider IPC, media removal, and file data reads remain before slice
+4 is complete. Block-read transaction 1 now admits a generation-safe,
+rights-limited sector grant, plans at most eight exact sectors, and distinguishes
+stale, unavailable, lost-provider, and invalid-payload completion. Its 14-case
+native owner passes; this is policy evidence rather than a hardware-driver
+claim.
 
 ### Filesystem slice 5: boot and application integration
 

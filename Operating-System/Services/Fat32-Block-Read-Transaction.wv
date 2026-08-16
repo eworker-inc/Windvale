@@ -1,0 +1,189 @@
+module Fat32ˉblockˉreadˉtransaction profile portable;
+
+const FAT32_SECTOR_BYTES: u32 = 512u32;
+const FAT32_MAXIMUM_READ_SECTORS: u32 = 8u32;
+data Empty: bytes = [];
+
+export enum Fat32ˉblockˉcapabilityˉstatus {
+    Valid = 0; Invalidˉdevice = 1; Invalidˉrange = 2;
+    Invalidˉgeneration = 3;
+}
+
+export record Fat32ˉblockˉcapability {
+    Status: Fat32ˉblockˉcapabilityˉstatus;
+    Firstˉsector: u64;
+    Sectorˉcount: u64;
+    Generation: u32;
+    Canˉread: bool;
+}
+
+export enum Fat32ˉblockˉplanˉstatus {
+    Valid = 0; Invalidˉcapability = 1; Denied = 2;
+    Stale = 3; Invalidˉsequence = 4; Invalidˉlimit = 5;
+    Outsideˉgrant = 6;
+}
+
+export record Fat32ˉblockˉreadˉplan {
+    Status: Fat32ˉblockˉplanˉstatus;
+    Generation: u32;
+    Sequence: u32;
+    Nextˉsequence: u32;
+    Deviceˉsector: u64;
+    Sectorˉcount: u32;
+    Byteˉcount: u32;
+}
+
+export enum Fat32ˉblockˉproviderˉstatus {
+    Complete = 0; Unavailable = 1; Providerˉlost = 2;
+}
+
+export enum Fat32ˉblockˉresultˉstatus {
+    Complete = 0; Invalidˉplan = 1; Stale = 2;
+    Unavailable = 3; Providerˉlost = 4; Invalidˉpayload = 5;
+}
+
+export record Fat32ˉblockˉreadˉresult {
+    Status: Fat32ˉblockˉresultˉstatus;
+    Sequence: u32;
+    Nextˉsequence: u32;
+    Deviceˉsector: u64;
+    Sectorˉcount: u32;
+    Payload: bytes;
+}
+
+fn Fat32ˉblockˉcapabilityˉinvalid(
+    Status: Fat32ˉblockˉcapabilityˉstatus
+) -> Fat32ˉblockˉcapability {
+    return Fat32ˉblockˉcapability(Status, 0u64, 0u64, 0u32, false);
+}
+
+fn Fat32ˉblockˉplanˉinvalid(
+    Status: Fat32ˉblockˉplanˉstatus
+) -> Fat32ˉblockˉreadˉplan {
+    return Fat32ˉblockˉreadˉplan(
+        Status, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32
+    );
+}
+
+fn Fat32ˉblockˉresultˉmake(
+    Status: Fat32ˉblockˉresultˉstatus,
+    Plan: Fat32ˉblockˉreadˉplan,
+    Payload: bytes
+) -> Fat32ˉblockˉreadˉresult {
+    return Fat32ˉblockˉreadˉresult(
+        Status, Plan.Sequence, Plan.Nextˉsequence,
+        Plan.Deviceˉsector, Plan.Sectorˉcount, Payload
+    );
+}
+
+export fn Fat32ˉblockˉcapabilityˉadmit(
+    Deviceˉsectors: u64,
+    Firstˉsector: u64,
+    Sectorˉcount: u64,
+    Generation: u32,
+    Canˉread: bool
+) -> Fat32ˉblockˉcapability {
+    if Deviceˉsectors == 0u64 {
+        return Fat32ˉblockˉcapabilityˉinvalid(
+            Fat32ˉblockˉcapabilityˉstatus.Invalidˉdevice
+        );
+    }
+    if Sectorˉcount == 0u64 || Firstˉsector >= Deviceˉsectors ||
+        Sectorˉcount > Deviceˉsectors - Firstˉsector {
+        return Fat32ˉblockˉcapabilityˉinvalid(
+            Fat32ˉblockˉcapabilityˉstatus.Invalidˉrange
+        );
+    }
+    if Generation == 0u32 {
+        return Fat32ˉblockˉcapabilityˉinvalid(
+            Fat32ˉblockˉcapabilityˉstatus.Invalidˉgeneration
+        );
+    }
+    return Fat32ˉblockˉcapability(
+        Fat32ˉblockˉcapabilityˉstatus.Valid,
+        Firstˉsector, Sectorˉcount, Generation, Canˉread
+    );
+}
+
+export fn Fat32ˉblockˉreadˉplanˉadmit(
+    Capability: Fat32ˉblockˉcapability,
+    Presentedˉgeneration: u32,
+    Sequence: u32,
+    Expectedˉsequence: u32,
+    Relativeˉsector: u64,
+    Sectorˉcount: u32
+) -> Fat32ˉblockˉreadˉplan {
+    if Capability.Status != Fat32ˉblockˉcapabilityˉstatus.Valid {
+        return Fat32ˉblockˉplanˉinvalid(
+            Fat32ˉblockˉplanˉstatus.Invalidˉcapability
+        );
+    }
+    if !Capability.Canˉread {
+        return Fat32ˉblockˉplanˉinvalid(Fat32ˉblockˉplanˉstatus.Denied);
+    }
+    if Presentedˉgeneration != Capability.Generation {
+        return Fat32ˉblockˉplanˉinvalid(Fat32ˉblockˉplanˉstatus.Stale);
+    }
+    if Expectedˉsequence == 0u32 || Expectedˉsequence == 4294967295u32 ||
+        Sequence != Expectedˉsequence {
+        return Fat32ˉblockˉplanˉinvalid(
+            Fat32ˉblockˉplanˉstatus.Invalidˉsequence
+        );
+    }
+    if Sectorˉcount == 0u32 ||
+        Sectorˉcount > FAT32_MAXIMUM_READ_SECTORS {
+        return Fat32ˉblockˉplanˉinvalid(
+            Fat32ˉblockˉplanˉstatus.Invalidˉlimit
+        );
+    }
+    if Relativeˉsector >= Capability.Sectorˉcount ||
+        U64ˉfromˉu32(Sectorˉcount) >
+            Capability.Sectorˉcount - Relativeˉsector {
+        return Fat32ˉblockˉplanˉinvalid(
+            Fat32ˉblockˉplanˉstatus.Outsideˉgrant
+        );
+    }
+    return Fat32ˉblockˉreadˉplan(
+        Fat32ˉblockˉplanˉstatus.Valid,
+        Capability.Generation, Sequence, Sequence + 1u32,
+        Capability.Firstˉsector + Relativeˉsector,
+        Sectorˉcount, Sectorˉcount * FAT32_SECTOR_BYTES
+    );
+}
+
+export fn Fat32ˉblockˉreadˉcomplete(
+    Plan: Fat32ˉblockˉreadˉplan,
+    Currentˉgeneration: u32,
+    Providerˉstatus: Fat32ˉblockˉproviderˉstatus,
+    Payload: bytes
+) -> Fat32ˉblockˉreadˉresult {
+    if Plan.Status != Fat32ˉblockˉplanˉstatus.Valid {
+        return Fat32ˉblockˉresultˉmake(
+            Fat32ˉblockˉresultˉstatus.Invalidˉplan, Plan, Empty
+        );
+    }
+    if Currentˉgeneration != Plan.Generation {
+        return Fat32ˉblockˉresultˉmake(
+            Fat32ˉblockˉresultˉstatus.Stale, Plan, Empty
+        );
+    }
+    if Providerˉstatus == Fat32ˉblockˉproviderˉstatus.Unavailable {
+        return Fat32ˉblockˉresultˉmake(
+            Fat32ˉblockˉresultˉstatus.Unavailable, Plan, Empty
+        );
+    }
+    if Providerˉstatus == Fat32ˉblockˉproviderˉstatus.Providerˉlost {
+        return Fat32ˉblockˉresultˉmake(
+            Fat32ˉblockˉresultˉstatus.Providerˉlost, Plan, Empty
+        );
+    }
+    if Bytesˉlength(Payload) != Plan.Byteˉcount {
+        return Fat32ˉblockˉresultˉmake(
+            Fat32ˉblockˉresultˉstatus.Invalidˉpayload, Plan, Empty
+        );
+    }
+    return Fat32ˉblockˉresultˉmake(
+        Fat32ˉblockˉresultˉstatus.Complete,
+        Plan, Bytesˉslice(Payload, 0u32, Plan.Byteˉcount)
+    );
+}

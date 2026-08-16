@@ -1,0 +1,122 @@
+module Osˉfat32ˉblockˉreadˉtransactionˉselfˉtest profile portable;
+
+import Fat32ˉblockˉreadˉtransaction as Block;
+
+data Empty: bytes = [];
+
+fn Payload(Length: u32) -> bytes {
+    var Result: bytes = Empty;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(90u8));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Capabilityˉstatus(
+    Deviceˉsectors: u64,
+    Firstˉsector: u64,
+    Sectorˉcount: u64,
+    Generation: u32,
+    Canˉread: bool
+) -> Block.Fat32ˉblockˉcapabilityˉstatus {
+    let Capability: Block.Fat32ˉblockˉcapability =
+        Block.Fat32ˉblockˉcapabilityˉadmit(
+            Deviceˉsectors, Firstˉsector, Sectorˉcount,
+            Generation, Canˉread
+        );
+    return Capability.Status;
+}
+
+fn Planˉstatus(
+    Capability: Block.Fat32ˉblockˉcapability,
+    Generation: u32,
+    Sequence: u32,
+    Expected: u32,
+    Sector: u64,
+    Count: u32
+) -> Block.Fat32ˉblockˉplanˉstatus {
+    let Plan: Block.Fat32ˉblockˉreadˉplan =
+        Block.Fat32ˉblockˉreadˉplanˉadmit(
+            Capability, Generation, Sequence, Expected, Sector, Count
+        );
+    return Plan.Status;
+}
+
+fn Resultˉstatus(
+    Plan: Block.Fat32ˉblockˉreadˉplan,
+    Generation: u32,
+    Provider: Block.Fat32ˉblockˉproviderˉstatus,
+    Value: bytes
+) -> Block.Fat32ˉblockˉresultˉstatus {
+    let Result: Block.Fat32ˉblockˉreadˉresult =
+        Block.Fat32ˉblockˉreadˉcomplete(
+            Plan, Generation, Provider, Value
+        );
+    return Result.Status;
+}
+
+export fn Main() -> i32 {
+    let Capability: Block.Fat32ˉblockˉcapability =
+        Block.Fat32ˉblockˉcapabilityˉadmit(
+            70000u64, 32u64, 539u64, 7u32, true
+        );
+    if Capability.Status != Block.Fat32ˉblockˉcapabilityˉstatus.Valid {
+        return 2;
+    }
+    let Plan: Block.Fat32ˉblockˉreadˉplan =
+        Block.Fat32ˉblockˉreadˉplanˉadmit(
+            Capability, 7u32, 9u32, 9u32, 1u64, 2u32
+        );
+    if Plan.Status != Block.Fat32ˉblockˉplanˉstatus.Valid ||
+        Plan.Deviceˉsector != 33u64 || Plan.Byteˉcount != 1024u32 ||
+        Plan.Nextˉsequence != 10u32 { return 3; }
+    let Complete: Block.Fat32ˉblockˉreadˉresult =
+        Block.Fat32ˉblockˉreadˉcomplete(
+            Plan, 7u32, Block.Fat32ˉblockˉproviderˉstatus.Complete,
+            Payload(1024u32)
+        );
+    if Complete.Status != Block.Fat32ˉblockˉresultˉstatus.Complete ||
+        Bytesˉlength(Complete.Payload) != 1024u32 { return 4; }
+    if Capabilityˉstatus(
+        0u64, 0u64, 1u64, 1u32, true
+    ) != Block.Fat32ˉblockˉcapabilityˉstatus.Invalidˉdevice { return 5; }
+    if Capabilityˉstatus(
+        10u64, 9u64, 2u64, 1u32, true
+    ) != Block.Fat32ˉblockˉcapabilityˉstatus.Invalidˉrange { return 6; }
+    let Denied: Block.Fat32ˉblockˉcapability =
+        Block.Fat32ˉblockˉcapabilityˉadmit(
+            70000u64, 32u64, 539u64, 7u32, false
+        );
+    if Planˉstatus(
+        Denied, 7u32, 9u32, 9u32, 0u64, 1u32
+    ) != Block.Fat32ˉblockˉplanˉstatus.Denied { return 7; }
+    if Planˉstatus(
+        Capability, 6u32, 9u32, 9u32, 0u64, 1u32
+    ) != Block.Fat32ˉblockˉplanˉstatus.Stale { return 8; }
+    if Planˉstatus(
+        Capability, 7u32, 8u32, 9u32, 0u64, 1u32
+    ) != Block.Fat32ˉblockˉplanˉstatus.Invalidˉsequence { return 9; }
+    if Planˉstatus(
+        Capability, 7u32, 9u32, 9u32, 0u64, 9u32
+    ) != Block.Fat32ˉblockˉplanˉstatus.Invalidˉlimit { return 10; }
+    if Planˉstatus(
+        Capability, 7u32, 9u32, 9u32, 538u64, 2u32
+    ) != Block.Fat32ˉblockˉplanˉstatus.Outsideˉgrant { return 11; }
+    if Resultˉstatus(
+        Plan, 8u32, Block.Fat32ˉblockˉproviderˉstatus.Complete,
+        Payload(1024u32)
+    ) != Block.Fat32ˉblockˉresultˉstatus.Stale { return 12; }
+    if Resultˉstatus(
+        Plan, 7u32, Block.Fat32ˉblockˉproviderˉstatus.Unavailable, Empty
+    ) != Block.Fat32ˉblockˉresultˉstatus.Unavailable { return 13; }
+    if Resultˉstatus(
+        Plan, 7u32, Block.Fat32ˉblockˉproviderˉstatus.Providerˉlost, Empty
+    ) != Block.Fat32ˉblockˉresultˉstatus.Providerˉlost { return 14; }
+    if Resultˉstatus(
+        Plan, 7u32, Block.Fat32ˉblockˉproviderˉstatus.Complete,
+        Payload(512u32)
+    ) != Block.Fat32ˉblockˉresultˉstatus.Invalidˉpayload { return 15; }
+    return 47;
+}
