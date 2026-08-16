@@ -621,7 +621,8 @@ provenance, revocation, and consensus boundaries are named.
   publication and zero-result resume reach byte 15,243, exact client reply
   delivery reaches byte 15,574, and checked transfer of the first 37-byte
   directory request reaches byte 15,905. Checked publication and provider
-  resume for the 3,096-byte reply reach byte 16,241. Client reply delivery,
+  resume for the 3,096-byte reply reach byte 16,241, and exact client delivery
+  reaches byte 16,572, completing the first directory round trip.
   syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

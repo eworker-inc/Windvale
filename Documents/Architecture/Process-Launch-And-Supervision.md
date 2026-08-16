@@ -195,6 +195,9 @@ The directory provider's reply-publication transaction then checks its exact
 3,096-byte reply state, clears the channel publication state, dispatches only
 the admitted provider generation, restores its checked saved context, and
 returns zero through `sysretq`, advancing ownership through byte 16,241.
+The complementary delivery then validates that reply, dispatches only the
+admitted client generation, restores its checked context, and returns the exact
+3,096-byte result through `sysretq`, advancing ownership through byte 16,572.
 
 The first restart policies are deliberately small:
 
