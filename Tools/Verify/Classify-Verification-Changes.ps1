@@ -143,6 +143,11 @@ function Test-LightweightPath {
     return (
         $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
         $Path -eq 'LICENSE.md' -or
+        $Path -in @(
+            'Tools/Verify/Classify-Verification-Changes.ps1',
+            'Tools/Verify/Verify-Change-Classification.ps1',
+            'Tools/Verify/Verify-Verification-Plan.ps1'
+        ) -or
         $IsDocumentationImage
     )
 }
@@ -154,6 +159,8 @@ function Test-WebsitePath {
     )
 
     return (
+        $Path.StartsWith('Applications/Web/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Libraries/Web/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Website/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('functions/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tools/Website/', [StringComparison]::Ordinal) -or
@@ -167,7 +174,9 @@ function Test-WebsitePath {
             'Tools/Verify/Verify-Website.ps1',
             'Vite-Config.mjs',
             'Tools/Windvale.Playground/package.json',
-            'Tools/Windvale.Playground/package-lock.json'
+            'Tools/Windvale.Playground/package-lock.json',
+            'Applications/Web/Wvdb-Workbench/package.json',
+            'Applications/Web/Wvdb-Workbench/package-lock.json'
         )
     )
 }

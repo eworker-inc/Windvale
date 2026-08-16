@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $WebsiteRoot = Join-Path $RepositoryRoot 'Website'
 $PlaygroundRoot = Join-Path $RepositoryRoot 'Tools/Windvale.Playground'
+$WvdbWorkbenchRoot = Join-Path $RepositoryRoot 'Applications/Web/Wvdb-Workbench'
 
 function Invoke-External {
     param(
@@ -29,7 +30,10 @@ function Invoke-External {
 
 Invoke-External $WebsiteRoot 'npm' @('ci')
 Invoke-External $PlaygroundRoot 'npm' @('ci')
+Invoke-External $WvdbWorkbenchRoot 'npm' @('ci')
 Invoke-External $PlaygroundRoot 'npm' @('run', 'build')
+Invoke-External $WvdbWorkbenchRoot 'npm' @('run', 'check')
+Invoke-External $WvdbWorkbenchRoot 'npm' @('run', 'build')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-demo')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-package')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-demo')
@@ -50,6 +54,7 @@ $BrowserScripts = @(
         }
     Get-ChildItem -LiteralPath (Join-Path $PlaygroundRoot 'wwwroot') -Filter '*.js' -File -Recurse |
         Where-Object { !$_.FullName.StartsWith((Join-Path $PlaygroundRoot 'wwwroot/editor'), [StringComparison]::OrdinalIgnoreCase) }
+    Get-ChildItem -LiteralPath (Join-Path $WvdbWorkbenchRoot 'Public') -Filter '*.js' -File -Recurse
 )
 foreach ($BrowserScript in $BrowserScripts) {
     Invoke-External $RepositoryRoot 'node' @('--check', $BrowserScript.FullName)

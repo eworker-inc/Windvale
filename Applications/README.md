@@ -12,6 +12,12 @@ The first applications are `Database/Wvdb-Query.wv`, `Shell/Echo.wv`,
 `filesystem.directory_read_v1`; `Echo` is the first ordinary application in the
 accepted Windvale Shell 1 catalog.
 
+`Web/Wvdb-Workbench/` is the first independently deployable browser application.
+Its initial PWA is an explicitly synthetic, read-only WVDB administration
+preview. Reusable browser framework and workbench components live in
+`Libraries/Web/`; the public website and compiler playground retain their
+separate owners.
+
 ## Echo
 
 The command writes its immutable arguments separated by one ASCII space and one

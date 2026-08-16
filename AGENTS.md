@@ -128,6 +128,34 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 - Keep dependencies explicit; importing a declaration must not perform global registration or other runtime work.
 - Repository-maintained text uses LF line endings except Windows command files. Keep text and binary classifications explicit in `.gitattributes`; do not rely on a contributor's global `core.autocrlf` setting.
 
+## Browser web applications
+
+- Put independently deployable browser applications under `Applications/Web/`
+  and reusable browser-native framework or component code under `Libraries/Web/`.
+  Keep the public website and developer playground under their existing owners.
+- Keep application hosts thin. Compose inert manifests, explicit contracts, and
+  focused components; importing a module must not register global behavior.
+- Give durable application state one explicit owner. Commands request changes
+  from that owner, the owner publishes immutable snapshots and typed change
+  sets, and registered render boundaries update only the affected surface.
+- Dispose listeners, observers, timers, workers, and other resources through an
+  explicit lifecycle scope. A component must not leave work behind after its
+  host is removed.
+- Treat theme and localization data as scoped inputs. Use semantic design tokens,
+  CSS cascade layers, logical layout properties, stable message identifiers, and
+  a documented fallback locale rather than component-global mutable settings.
+- Keep application CSS in the `wv.*` cascade layers and custom properties in the
+  `--wv-*` namespace. Reusable components must not depend on application selectors.
+- Model mutations explicitly. Drafting, validation, execution, and durable save
+  are separate states; do not turn field edits into hidden database or network
+  writes. Never retry an indeterminate mutation without an idempotency contract.
+- Treat every browser/server DTO and persisted browser value as untrusted input.
+  Validate it on both sides of the boundary and keep credentials, native paths,
+  database files, and ambient authority out of browser bundles.
+- An installable PWA is still a browser host. Offline support, background work,
+  caching, and installability must be declared per application and must not imply
+  Windvale OS semantics or unavailable server capabilities.
+
 ## Testing and verification
 
 - Choose the narrowest reliable verifier for the changed behavior. Verification levels are alternatives, not a ladder: do not run changed-file, Fast, Development, Standard, and Qualification sequentially for the same source state. A passing broader level subsumes its narrower levels.

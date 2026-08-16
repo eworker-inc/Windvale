@@ -23,8 +23,27 @@ $Cases = @(
         Editor = $true
     },
     @{
+        Name = 'classification rule verification only'
+        Paths = @(
+            'Tools/Verify/Classify-Verification-Changes.ps1',
+            'Tools/Verify/Verify-Change-Classification.ps1',
+            'Tools/Verify/Verify-Verification-Plan.ps1'
+        )
+        Scope = 'lightweight'
+        Editor = $false
+    },
+    @{
         Name = 'website static content'
         Paths = @('Website/index.html', 'Website/styles.css')
+        Scope = 'website'
+        Editor = $false
+    },
+    @{
+        Name = 'browser application and shared web library'
+        Paths = @(
+            'Applications/Web/Wvdb-Workbench/Source/Main.ts',
+            'Libraries/Web/Framework/State/State-Owner.ts'
+        )
         Scope = 'website'
         Editor = $false
     },

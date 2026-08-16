@@ -1,0 +1,80 @@
+@layer wv.reset, wv.tokens, wv.framework, wv.components, wv.apps, wv.overrides;
+
+@layer wv.reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; min-block-size: 100%; }
+  body { min-block-size: 100dvh; }
+  button, input, textarea, select { font: inherit; }
+  button { color: inherit; }
+}
+
+@layer wv.tokens {
+  :root {
+    font-family: Inter, ui-sans-serif, "Segoe UI Variable", "Segoe UI", sans-serif;
+    color-scheme: dark;
+    --wv-font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    --wv-bg-canvas: #0d1119;
+    --wv-bg-surface: #141a24;
+    --wv-bg-raised: #1a2230;
+    --wv-bg-muted: #111722;
+    --wv-bg-hover: #222c3c;
+    --wv-bg-selected: #20364a;
+    --wv-fg-primary: #edf3fa;
+    --wv-fg-secondary: #aab7c7;
+    --wv-fg-muted: #748397;
+    --wv-border: #2b3544;
+    --wv-border-strong: #3b485b;
+    --wv-accent: #52b8d6;
+    --wv-accent-strong: #79d7ee;
+    --wv-accent-soft: #173545;
+    --wv-success: #55c995;
+    --wv-warning: #e4b75d;
+    --wv-danger: #ef7d83;
+    --wv-shadow: 0 16px 42px rgb(0 0 0 / 28%);
+    --wv-radius-sm: 5px;
+    --wv-radius-md: 9px;
+    --wv-radius-lg: 14px;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --wv-bg-canvas: #eef2f6;
+    --wv-bg-surface: #ffffff;
+    --wv-bg-raised: #f7f9fb;
+    --wv-bg-muted: #f1f4f7;
+    --wv-bg-hover: #e8eef4;
+    --wv-bg-selected: #dceef5;
+    --wv-fg-primary: #17212d;
+    --wv-fg-secondary: #526174;
+    --wv-fg-muted: #7b8795;
+    --wv-border: #d5dde6;
+    --wv-border-strong: #bdc8d4;
+    --wv-accent: #087f9c;
+    --wv-accent-strong: #006b86;
+    --wv-accent-soft: #d9f0f5;
+    --wv-success: #16845a;
+    --wv-warning: #a56608;
+    --wv-danger: #c93d4b;
+    --wv-shadow: 0 16px 42px rgb(39 55 72 / 16%);
+  }
+}
+
+@layer wv.framework {
+  html, body { overflow: hidden; background: var(--wv-bg-canvas); color: var(--wv-fg-primary); }
+  body { accent-color: var(--wv-accent); }
+  .wv-app-root { inline-size: 100vw; block-size: 100dvh; }
+  .wv-visually-hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  :focus-visible { outline: 2px solid var(--wv-accent-strong); outline-offset: 2px; }
+  ::selection { background: var(--wv-accent); color: #071016; }
+  * { scrollbar-width: thin; scrollbar-color: var(--wv-border-strong) transparent; }
+}

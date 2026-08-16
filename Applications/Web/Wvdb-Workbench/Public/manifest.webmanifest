@@ -1,0 +1,28 @@
+{
+  "id": "wvdb-workbench",
+  "name": "WVDB Workbench for Windvale",
+  "short_name": "WVDB",
+  "description": "An installable WVDB administration workbench for Windvale.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#0d1119",
+  "theme_color": "#10141d",
+  "categories": ["developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "./icons/wvdb-workbench-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/wvdb-workbench-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
