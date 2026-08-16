@@ -38,14 +38,14 @@ wire format.
 
 The exchange WVB is 20,279 bytes at SHA-256
 `820617dc73799c5cbaea318d85a0e6352e539889eb6f3ea525c2dee22cca6690`.
-The composed 37-case owner returns 47 on Windows and pins deterministic
+The composed 59-case owner returns 47 on Windows and pins deterministic
 Windows/Linux images. It covers invalid binding, capacity rejection, dispatch
 identity, completion-before-dispatch, cancellation on both sides of dispatch,
 teardown, exact completion, duplicate completion, malformed reply consumption,
-and peer loss.
+peer loss, and a checked immutable-image provider round trip.
 
-This policy does not yet issue a kernel endpoint syscall, execute a block
-driver, detect media change, or discover partitions. File-read transaction 1
+This policy does not yet issue a kernel endpoint syscall, execute a hardware
+block driver, detect media change, or discover partitions. File-read transaction 1
 now owns the admitted identity and its exact begin, dispatch, and completion
 transitions while copying validated partial-sector data into a shared filesystem
 reply, but live guest execution remains a separate integration claim.

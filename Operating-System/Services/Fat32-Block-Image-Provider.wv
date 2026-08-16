@@ -1,0 +1,135 @@
+module Fat32ˉblockˉimageˉprovider profile portable;
+
+const FAT32_BLOCK_REQUEST_MAGIC: u32 = 1380079191u32;
+const FAT32_BLOCK_RESPONSE_MAGIC: u32 = 1346524759u32;
+const FAT32_BLOCK_HEADER_BYTES: u32 = 48u32;
+const FAT32_SECTOR_BYTES: u32 = 512u32;
+const FAT32_MAXIMUM_READ_SECTORS: u32 = 8u32;
+const FAT32_MAXIMUM_IMAGE_BYTES: u32 = 67108864u32;
+const MAXIMUM_SEQUENCE: u32 = 4294967295u32;
+data Empty: bytes = [];
+
+export enum Fat32ˉblockˉimageˉstatus {
+    Complete = 0; Invalidˉbinding = 1; Invalidˉrequest = 2;
+    Stale = 3; Outsideˉimage = 4;
+}
+
+export record Fat32ˉblockˉimageˉreply {
+    Status: Fat32ˉblockˉimageˉstatus;
+    Generation: u32;
+    Sequence: u32;
+    Deviceˉsector: u64;
+    Sectorˉcount: u32;
+    Blockˉreference: u64;
+    Response: bytes;
+}
+
+fn Fat32ˉblockˉimageˉinvalid(
+    Status: Fat32ˉblockˉimageˉstatus
+) -> Fat32ˉblockˉimageˉreply {
+    return Fat32ˉblockˉimageˉreply(
+        Status, 0u32, 0u32, 0u64, 0u32, 0u64, Empty
+    );
+}
+
+fn Fat32ˉblockˉimageˉappendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Fat32ˉblockˉimageˉappendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Fat32ˉblockˉimageˉnarrowˉu32(Value: u64) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Value), 0u32);
+}
+
+export fn Fat32ˉblockˉimageˉserve(
+    Request: bytes,
+    Boundˉblockˉreference: u64,
+    Currentˉgeneration: u32,
+    Firstˉsector: u64,
+    Image: bytes
+) -> Fat32ˉblockˉimageˉreply {
+    let Imageˉbytes: u32 = Bytesˉlength(Image);
+    if Boundˉblockˉreference == 0u64 || Currentˉgeneration == 0u32 ||
+        Imageˉbytes == 0u32 || Imageˉbytes > FAT32_MAXIMUM_IMAGE_BYTES ||
+        Imageˉbytes % FAT32_SECTOR_BYTES != 0u32 {
+        return Fat32ˉblockˉimageˉinvalid(
+            Fat32ˉblockˉimageˉstatus.Invalidˉbinding
+        );
+    }
+    if Bytesˉlength(Request) != FAT32_BLOCK_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Request, 0u32) !=
+            FAT32_BLOCK_REQUEST_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Request, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 8u32) !=
+            FAT32_BLOCK_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Request, 36u32) != 0u32 {
+        return Fat32ˉblockˉimageˉinvalid(
+            Fat32ˉblockˉimageˉstatus.Invalidˉrequest
+        );
+    }
+    let Generation: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
+    let Sequence: u32 = Bytesˉreadˉu32ˉlittle(Request, 16u32);
+    let Sectorˉcount: u32 = Bytesˉreadˉu32ˉlittle(Request, 20u32);
+    let Deviceˉsector: u64 = Bytesˉreadˉu64ˉlittle(Request, 24u32);
+    let Byteˉcount: u32 = Bytesˉreadˉu32ˉlittle(Request, 32u32);
+    let Blockˉreference: u64 = Bytesˉreadˉu64ˉlittle(Request, 40u32);
+    if Sequence == 0u32 || Sequence == MAXIMUM_SEQUENCE ||
+        Sectorˉcount == 0u32 ||
+        Sectorˉcount > FAT32_MAXIMUM_READ_SECTORS ||
+        Byteˉcount != Sectorˉcount * FAT32_SECTOR_BYTES ||
+        Blockˉreference != Boundˉblockˉreference {
+        return Fat32ˉblockˉimageˉinvalid(
+            Fat32ˉblockˉimageˉstatus.Invalidˉrequest
+        );
+    }
+    if Generation != Currentˉgeneration {
+        return Fat32ˉblockˉimageˉinvalid(Fat32ˉblockˉimageˉstatus.Stale);
+    }
+    let Imageˉsectors: u64 = U64ˉfromˉu32(
+        Imageˉbytes / FAT32_SECTOR_BYTES
+    );
+    if Deviceˉsector < Firstˉsector {
+        return Fat32ˉblockˉimageˉinvalid(
+            Fat32ˉblockˉimageˉstatus.Outsideˉimage
+        );
+    }
+    let Relativeˉsector: u64 = Deviceˉsector - Firstˉsector;
+    if Relativeˉsector >= Imageˉsectors ||
+        U64ˉfromˉu32(Sectorˉcount) > Imageˉsectors - Relativeˉsector {
+        return Fat32ˉblockˉimageˉinvalid(
+            Fat32ˉblockˉimageˉstatus.Outsideˉimage
+        );
+    }
+    let Byteˉoffsetˉwide: u64 = Relativeˉsector * 512u64;
+    if Byteˉoffsetˉwide > 4294967295u64 {
+        return Fat32ˉblockˉimageˉinvalid(
+            Fat32ˉblockˉimageˉstatus.Outsideˉimage
+        );
+    }
+    let Payload: bytes = Bytesˉslice(
+        Image, Fat32ˉblockˉimageˉnarrowˉu32(Byteˉoffsetˉwide), Byteˉcount
+    );
+    var Response: bytes = Bytesˉfromˉu32ˉlittle(
+        FAT32_BLOCK_RESPONSE_MAGIC
+    );
+    Response = Fat32ˉblockˉimageˉappendˉu32(Response, 1u32);
+    Response = Fat32ˉblockˉimageˉappendˉu32(
+        Response, FAT32_BLOCK_HEADER_BYTES + Byteˉcount
+    );
+    Response = Fat32ˉblockˉimageˉappendˉu32(Response, Generation);
+    Response = Fat32ˉblockˉimageˉappendˉu32(Response, Sequence);
+    Response = Fat32ˉblockˉimageˉappendˉu32(Response, 0u32);
+    Response = Fat32ˉblockˉimageˉappendˉu64(Response, Deviceˉsector);
+    Response = Fat32ˉblockˉimageˉappendˉu32(Response, Sectorˉcount);
+    Response = Fat32ˉblockˉimageˉappendˉu32(Response, Byteˉcount);
+    Response = Fat32ˉblockˉimageˉappendˉu64(Response, Blockˉreference);
+    Response = Bytesˉconcat(Response, Payload);
+    return Fat32ˉblockˉimageˉreply(
+        Fat32ˉblockˉimageˉstatus.Complete,
+        Generation, Sequence, Deviceˉsector, Sectorˉcount,
+        Blockˉreference, Response
+    );
+}

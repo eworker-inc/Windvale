@@ -16,33 +16,37 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Op
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Protocol.wvb" 8726 5d37a54cc6e6763aca7f1e2c76d128cedae49d5febeef6ffa85d1d4de7e1348e
 if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Operating-System\Windvale-Os-Fat32-Block-Image-Provider.wvproj" "%Work%\Image-Provider.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\Image-Provider.wvb" 4639 60b56a15ad26ff54993e004768439f6a567353debd4a95e05efe60550b89a5bf
+if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Operating-System\Windvale-Os-Fat32-Block-Exchange-State.wvproj" "%Work%\Exchange.wvb" >nul
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Exchange.wvb" 20279 820617dc73799c5cbaea318d85a0e6352e539889eb6f3ea525c2dee22cca6690
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-Fat32-Block-Read-Transaction.wvproj" "%Work%\Test.wvb" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%Work%\Test.wvb" 34028 00f91945f789b8b8349ea54089b746f1de3de596c8ff7588a1b57277820a2dc9
+call :verify "%Work%\Test.wvb" 48627 d46c881e3313836e5f6293940e6a35d072344f4541787870dfe2b9bd61a53de6
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\Test.wvb" "%Work%\Test.wvo" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%Work%\Test.wvo" 805998 5f9cd5bd8bb2f2ffd2fe98b78d12320e068ac07d9e90d28f8bdeaf75a9139342
+call :verify "%Work%\Test.wvo" 999688 363e58478646a9dac0ce9af53b33f4a650c17282f0019b990fe66c5b81bfa1a6
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\Test.bin" "%Work%\Test.wvo" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%Work%\Test.bin" 804176 2f1b7f97db4f39c867c8f421f238345469897a074c0476a7cedcbdd962324b16
+call :verify "%Work%\Test.bin" 997504 6cb0edc44d71524197e52a396731a1fb78aae60e2882b1744918961faaf25f91
 if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\Test.bin" 23090 "%Work%\Test.exe" >nul
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\Test.bin" 33885 "%Work%\Test.exe" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%Work%\Test.exe" 805888 95e78a464a2a2ab5aeba45374ac39d02836ce4720cd8e6530d88aec595360991
+call :verify "%Work%\Test.exe" 999424 38079168f595ec6d488579b241a0e2018ee12ee52244cf905d7b9404de00588f
 if errorlevel 1 goto :cleanup
 "%Work%\Test.exe" >nul
 if not "%ERRORLEVEL%"=="47" goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\Test.bin" 23090 "%Work%\Test.elf" >nul
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\Test.bin" 33885 "%Work%\Test.elf" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%Work%\Test.elf" 811120 4e6d3527cbcb1fd63cfd9ceebd6d23feed516d7c65a30e49624bd158148ade6b
+call :verify "%Work%\Test.elf" 1003632 0659762421ef3ddf1c394ca7b4e305fec3bf571da020a6b377fa47020fd7db5c
 if errorlevel 1 goto :cleanup
-echo native os fat32 block exchange lifecycle status=Passed projects=4 cases=37 local-result=47 cross-host-images=Verified
+echo native os fat32 block image and exchange lifecycle status=Passed projects=5 cases=59 local-result=47 cross-host-images=Verified
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

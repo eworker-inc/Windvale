@@ -118,7 +118,10 @@ implemented exchange lifecycle now binds it to one endpoint and one grant,
 separates construction from dispatch, rejects concurrent and duplicate
 completion, consumes dispatched sequences exactly once, distinguishes
 pre-dispatch from post-dispatch cancellation, and requires teardown after peer
-loss. The privileged endpoint syscall adapter and block driver remain pending.
+loss. An immutable block-image provider now independently admits the request,
+maps at most eight sectors inside one 64 MiB read-only image, and emits the exact
+validated response. The privileged endpoint syscall adapter and hardware block
+driver remain pending.
 
 File-read plan 1 maps one admitted `u64` file offset plus the exact resolved
 cluster into at most eight sectors and 4,096 covered bytes. File-read

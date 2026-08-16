@@ -1,6 +1,7 @@
 windvale-project 2
 root "Tests/Fixtures/Operating-System/Os-Fat32-Block-Read-Transaction-Self-Test.wv"
 source "Operating-System/Services/Fat32-Block-Exchange-State.wv"
+source "Operating-System/Services/Fat32-Block-Image-Provider.wv"
 source "Operating-System/Services/Fat32-Block-Provider-Protocol.wv"
 source "Operating-System/Services/Fat32-Block-Read-Transaction.wv"
 emit wvb

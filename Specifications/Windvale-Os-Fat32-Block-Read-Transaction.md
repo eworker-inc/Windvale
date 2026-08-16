@@ -23,15 +23,16 @@ contract never silently retries a provider operation.
 
 The policy WVB is 5,036 bytes at SHA-256
 `8e6d447b4ee2bcbb6b549d37d42d1093ac7c1aa18ffacaa3f2e09bb4fcc913b5`.
-The transaction is composed with the provider protocol and exchange lifecycle
-in a 34,028-byte test WVB at SHA-256
-`00f91945f789b8b8349ea54089b746f1de3de596c8ff7588a1b57277820a2dc9`.
-The 37-case owner lowers deterministic Windows/Linux images and covers exact
+The transaction is composed with the provider protocol, exchange lifecycle, and
+immutable block-image provider in a 48,627-byte test WVB at SHA-256
+`d46c881e3313836e5f6293940e6a35d072344f4541787870dfe2b9bd61a53de6`.
+The 59-case owner lowers deterministic Windows/Linux images and covers exact
 planning/completion, malformed device extents, denied rights, stale generation,
 sequence mismatch, transfer ceilings, grant escape, provider failures, short
 payloads, request/response wire binding, capacity-one dispatch, exact-once
-completion, cancellation, peer loss, and teardown.
+completion, cancellation, peer loss, teardown, immutable-image binding, checked
+sector mapping, and provider-produced response bytes.
 
-This transaction and its exchange lifecycle are not a hardware driver, DMA
-contract, cache, partition parser, or privileged IPC adapter. Those require
-separate kernel/driver and service integration evidence.
+This transaction, exchange lifecycle, and immutable-memory provider are not a
+hardware driver, DMA contract, cache, partition parser, or privileged IPC
+adapter. Those require separate kernel/driver and service integration evidence.

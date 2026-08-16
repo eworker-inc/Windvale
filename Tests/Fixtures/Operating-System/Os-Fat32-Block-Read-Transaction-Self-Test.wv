@@ -3,8 +3,19 @@ module Osˉfat32ˉblockˉreadˉtransactionˉselfˉtest profile portable;
 import Fat32ˉblockˉreadˉtransaction as Block;
 import Fat32ˉblockˉproviderˉprotocol as Protocol;
 import Fat32ˉblockˉexchangeˉstate as State;
+import Fat32ˉblockˉimageˉprovider as Imageˉprovider;
 
 data Empty: bytes = [];
+
+fn Filled(Value: u8, Length: u32) -> bytes {
+    var Result: bytes = Empty;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
 
 fn Payload(Length: u32) -> bytes {
     var Result: bytes = Empty;
@@ -14,6 +25,13 @@ fn Payload(Length: u32) -> bytes {
         Index = Index + 1u32;
     }
     return Result;
+}
+
+fn Blockˉimage() -> bytes {
+    var Result: bytes = Filled(10u8, 512u32);
+    Result = Bytesˉconcat(Result, Filled(20u8, 512u32));
+    Result = Bytesˉconcat(Result, Filled(30u8, 512u32));
+    return Bytesˉconcat(Result, Filled(40u8, 512u32));
 }
 
 fn Capabilityˉstatus(
@@ -65,6 +83,30 @@ fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
 
 fn Appendˉu64(Value: bytes, Field: u64) -> bytes {
     return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Providerˉrequest(
+    Magic: u32,
+    Version: u32,
+    Total: u32,
+    Generation: u32,
+    Sequence: u32,
+    Sectorˉcount: u32,
+    Deviceˉsector: u64,
+    Byteˉcount: u32,
+    Reserved: u32,
+    Reference: u64
+) -> bytes {
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(Magic);
+    Request = Appendˉu32(Request, Version);
+    Request = Appendˉu32(Request, Total);
+    Request = Appendˉu32(Request, Generation);
+    Request = Appendˉu32(Request, Sequence);
+    Request = Appendˉu32(Request, Sectorˉcount);
+    Request = Appendˉu64(Request, Deviceˉsector);
+    Request = Appendˉu32(Request, Byteˉcount);
+    Request = Appendˉu32(Request, Reserved);
+    return Appendˉu64(Request, Reference);
 }
 
 fn Response(
@@ -318,5 +360,192 @@ export fn Main() -> i32 {
             State.Fat32ˉblockˉexchangeˉresultˉstatus.Providerˉlost {
         return 38;
     }
+
+    let Image: bytes = Blockˉimage();
+    let Served: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Dispatched.Request, 55u64, 7u32, 32u64, Image
+        );
+    if Served.Status != Imageˉprovider.Fat32ˉblockˉimageˉstatus.Complete ||
+        Served.Generation != 7u32 || Served.Sequence != 1u32 ||
+        Served.Deviceˉsector != 33u64 || Served.Sectorˉcount != 2u32 ||
+        Served.Blockˉreference != 55u64 { return 39; }
+    if Bytesˉlength(Served.Response) != 1072u32 ||
+        Bytesˉreadˉu8(Served.Response, 48u32) != 20u8 ||
+        Bytesˉreadˉu8(Served.Response, 559u32) != 20u8 ||
+        Bytesˉreadˉu8(Served.Response, 560u32) != 30u8 ||
+        Bytesˉreadˉu8(Served.Response, 1071u32) != 30u8 {
+        return 40;
+    }
+    let Imageˉcomplete: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcomplete(
+            Dispatched, 77u64, 7u32, Served.Response
+        );
+    if Imageˉcomplete.Status != State.Fat32ˉblockˉexchangeˉstatus.Success ||
+        Imageˉcomplete.Resultˉstatus !=
+            State.Fat32ˉblockˉexchangeˉresultˉstatus.Complete ||
+        Bytesˉlength(Imageˉcomplete.Resultˉpayload) != 1024u32 ||
+        Bytesˉreadˉu8(Imageˉcomplete.Resultˉpayload, 0u32) != 20u8 ||
+        Bytesˉreadˉu8(Imageˉcomplete.Resultˉpayload, 512u32) != 30u8 {
+        return 41;
+    }
+    let Invalidˉproviderˉbinding: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Dispatched.Request, 0u64, 7u32, 32u64, Image
+        );
+    if Invalidˉproviderˉbinding.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉbinding { return 42; }
+    let Misalignedˉprovider: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Dispatched.Request, 55u64, 7u32, 32u64,
+            Bytesˉslice(Image, 0u32, 2047u32)
+        );
+    if Misalignedˉprovider.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉbinding { return 43; }
+    let Staleˉprovider: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Dispatched.Request, 55u64, 8u32, 32u64, Image
+        );
+    if Staleˉprovider.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Stale { return 44; }
+    let Outsideˉplan: Block.Fat32ˉblockˉreadˉplan =
+        Block.Fat32ˉblockˉreadˉplanˉadmit(
+            Capability, 7u32, 11u32, 11u32, 3u64, 2u32
+        );
+    let Outsideˉprovider: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Protocol.Fat32ˉblockˉproviderˉrequest(Outsideˉplan, 55u64),
+            55u64, 7u32, 32u64, Image
+        );
+    if Outsideˉprovider.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Outsideˉimage { return 45; }
+    let Wrongˉblockˉprovider: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Protocol.Fat32ˉblockˉproviderˉrequest(Plan, 56u64),
+            55u64, 7u32, 32u64, Image
+        );
+    if Wrongˉblockˉprovider.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 46; }
+    let Badˉmagic: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                0u32, 1u32, 48u32, 7u32, 9u32, 2u32,
+                33u64, 1024u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Badˉmagic.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 48; }
+    let Badˉtotal: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 47u32, 7u32, 9u32, 2u32,
+                33u64, 1024u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Badˉtotal.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 49; }
+    let Badˉreserved: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 48u32, 7u32, 9u32, 2u32,
+                33u64, 1024u32, 1u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Badˉreserved.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 50; }
+    let Badˉsequence: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 48u32, 7u32, 0u32, 2u32,
+                33u64, 1024u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Badˉsequence.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 51; }
+    let Badˉbyteˉcount: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 48u32, 7u32, 9u32, 2u32,
+                33u64, 512u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Badˉbyteˉcount.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 52; }
+    let Truncatedˉprovider: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Bytesˉslice(Dispatched.Request, 0u32, 47u32),
+            55u64, 7u32, 32u64, Image
+        );
+    if Truncatedˉprovider.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 53; }
+    let Oversizedˉprovider: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Bytesˉconcat(Dispatched.Request, Bytesˉfromˉu8(0u8)),
+            55u64, 7u32, 32u64, Image
+        );
+    if Oversizedˉprovider.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 54; }
+    let Badˉversion: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 2u32, 48u32, 7u32, 9u32, 2u32,
+                33u64, 1024u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Badˉversion.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 55; }
+    let Zeroˉsectors: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 48u32, 7u32, 9u32, 0u32,
+                33u64, 0u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Zeroˉsectors.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 56; }
+    let Tooˉmanyˉsectors: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 48u32, 7u32, 9u32, 9u32,
+                33u64, 4608u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Tooˉmanyˉsectors.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉrequest { return 57; }
+    let Beforeˉimage: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Providerˉrequest(
+                1380079191u32, 1u32, 48u32, 7u32, 9u32, 1u32,
+                31u64, 512u32, 0u32, 55u64
+            ), 55u64, 7u32, 32u64, Image
+        );
+    if Beforeˉimage.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Outsideˉimage { return 58; }
+    let Zeroˉgeneration: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Dispatched.Request, 55u64, 0u32, 32u64, Image
+        );
+    if Zeroˉgeneration.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉbinding { return 59; }
+    let Emptyˉimage: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Dispatched.Request, 55u64, 7u32, 32u64, Empty
+        );
+    if Emptyˉimage.Status !=
+        Imageˉprovider.Fat32ˉblockˉimageˉstatus.Invalidˉbinding { return 60; }
+    let Lastˉplan: Block.Fat32ˉblockˉreadˉplan =
+        Block.Fat32ˉblockˉreadˉplanˉadmit(
+            Capability, 7u32, 12u32, 12u32, 3u64, 1u32
+        );
+    let Lastˉsector: Imageˉprovider.Fat32ˉblockˉimageˉreply =
+        Imageˉprovider.Fat32ˉblockˉimageˉserve(
+            Protocol.Fat32ˉblockˉproviderˉrequest(Lastˉplan, 55u64),
+            55u64, 7u32, 32u64, Image
+        );
+    if Lastˉsector.Status !=
+            Imageˉprovider.Fat32ˉblockˉimageˉstatus.Complete ||
+        Bytesˉlength(Lastˉsector.Response) != 560u32 ||
+        Bytesˉreadˉu8(Lastˉsector.Response, 48u32) != 40u8 ||
+        Bytesˉreadˉu8(Lastˉsector.Response, 559u32) != 40u8 { return 61; }
     return 47;
 }

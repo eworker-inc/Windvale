@@ -52,7 +52,7 @@ os-provider-launch-transaction|Test-Os-Provider-Launch-Transaction|15|2|native o
 filesystem-semantics|Test-Filesystem-Semantics|18|3|native filesystem semantics status=Passed cases=18 local-result=42 cross-host-images=Verified
 os-filesystem-service|Test-Os-Filesystem-Service|19|2|native os filesystem service status=Passed cases=19 local-result=43 cross-host-images=Verified
 os-fat32-volume|Test-Os-Fat32-Volume-Admission|80|3|native os fat32 volume chain directory and file-read admission status=Passed projects=7 cases=80 local-result=47 cross-host-images=Verified
-os-fat32-block-read|Test-Os-Fat32-Block-Read|37|3|native os fat32 block exchange lifecycle status=Passed projects=4 cases=37 local-result=47 cross-host-images=Verified
+os-fat32-block-read|Test-Os-Fat32-Block-Read|59|3|native os fat32 block image and exchange lifecycle status=Passed projects=5 cases=59 local-result=47 cross-host-images=Verified
 os-fat32-file-read|Test-Os-Fat32-File-Read-Transaction|18|3|native os fat32 file read transaction status=Passed projects=3 cases=18 exchanges=2 local-result=47 cross-host-images=Verified
 bounded-operation|Test-Bounded-Operation|12|2|native bounded operation status=Passed cases=12 local-result=44 cross-host-images=Verified
 os-network-authority|Test-Network-Authority|18|2|native network authority status=Passed cases=18 local-result=45 cross-host-images=Verified
