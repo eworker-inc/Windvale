@@ -162,6 +162,12 @@ and process states, then reacquires and validates the generation-one client
 program resource, its exact geometry and rights, its owner generation, and its
 private page-table linkage. Any mismatch reaches the common fail-closed boundary
 before client activation, advancing ownership through byte 13,786.
+The adjacent budget transaction applies the same generation, authority, and
+private-mapping checks to the generation-two budget resource. The following
+backing-record transaction validates the exact program/budget record geometry
+and their retained store/directory bindings, including identity, generation,
+rights, owner, page-table, and empty mutable-state fields. Together they close
+client-resource validation through byte 14,402 before context transfer.
 
 The first restart policies are deliberately small:
 
