@@ -91,9 +91,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 163300 9ebfe92eef070dfdcf18c4d176b5f32f64ad3f80751340b8a59ab2f1d567ec2a "native-built WVB publisher WVB"
-if errorlevel 1 goto :failed
-fc /b "%Construction%\Wvb-Publisher.wvb" "%TestDirectory%\Wvb-Publisher.wvb" >nul
+call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 181772 c90f5325ea409d0710254812e1d434cce712de68385dec74d23eef5a475cf3c4 "metadata-aware WVB publisher candidate"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
     "%TestDirectory%\Wvb-Publisher.wvb" ^
@@ -102,9 +100,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 1349361 43a594776b4e280575ac14e2866b4708961dd1290d643b41779a4933a8ba5991 "native-lowered WVB publisher WVO"
-if errorlevel 1 goto :failed
-fc /b "%Construction%\Wvb-Publisher.wvo" "%TestDirectory%\Wvb-Publisher.wvo" >nul
+call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 1523708 c1ce50f68e12dc94e56fa848c6f09f707ad117294af5e19f15659b7901c0bf35 "metadata-aware WVB publisher object candidate"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TestDirectory%\Wvb-Publisher.bin" "%TestDirectory%\Wvb-Publisher.wvo" >"%TestDirectory%\Wvb-Publisher-Link.out" 2>"%TestDirectory%\Wvb-Publisher-Link.err"
 if errorlevel 1 goto :failed
@@ -112,9 +108,9 @@ call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native
 if errorlevel 1 goto :failed
 findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1347597 3d419d28b606408e7b2430cceacf4c0b7b109bcd511df4e98ca0d41b871f1c2d "linked WVB publisher fragment"
+call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1520746 98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a "linked metadata-aware WVB publisher fragment"
 if errorlevel 1 goto :failed
-call :pass "publisher construction inventory"
+call :pass "publisher source candidate and retained construction inventory"
 
 set /a Total+=1
 call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher.cmd" windows "%TestDirectory%\Publisher.exe" >"%TestDirectory%\Windows.out" 2>"%TestDirectory%\Windows.err"

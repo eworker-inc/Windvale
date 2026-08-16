@@ -1,6 +1,6 @@
 module Windvaleˉwvbˉpublisherˉtool profile hosted;
 
-import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
 import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉbridge;
 
 capability console.write_line;
@@ -35,7 +35,7 @@ fn Wvbˉpublisherˉpathsˉareˉequal(Left: text, Right: text) -> bool {
 }
 
 fn Wvbˉpublisherˉcandidateˉstatus(Candidate: bytes) -> i32 {
-    let Status: u32 = Semanticˉverifier.Compilerˉwvbˉverify(Candidate);
+    let Status: u32 = Metadataˉverifier.Compilerˉwvbˉverifyˉmetadata(Candidate);
     if Status == 1u32 {
         diagnostic.write_line("publication status=Rejected phase=semantic");
         return 1;

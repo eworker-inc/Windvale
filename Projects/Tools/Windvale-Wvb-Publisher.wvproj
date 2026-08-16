@@ -1,8 +1,10 @@
 windvale-project 2
 root "Tools/Windvale.Publish/Wvb-Publisher-Tool.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+source "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv"
 source "Tools/Windvale.Publish/Wvb-Publication-Native-Bridge.wv"
 source "Tools/Windvale.Publish/Wvb-Publication-Transaction.wv"
 emit wvb

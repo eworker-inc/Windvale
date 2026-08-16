@@ -1,4 +1,4 @@
-# Decision 0698: Freeze the FAT32 block-provider wire protocol
+# Decision 0699: Freeze the FAT32 block-provider wire protocol
 
 - Status: Implemented architecture-neutral native candidate; endpoint loop pending
 - Date: 2026-08-16

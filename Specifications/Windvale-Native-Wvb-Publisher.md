@@ -14,7 +14,7 @@ The candidate applications are not yet promoted over the retained
 the grouped retirement gate, and native compiler/build-driver self-convergence
 remain before that cutover.
 
-## Exact source and native geometry
+## Retained construction geometry
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -28,6 +28,22 @@ transaction-begin bridge is `$function_0002` at offset 5,475 with 389 bytes;
 the transaction-apply bridge is `$function_0001` at offset 4,686 with 789
 bytes. These roles are discovered from the canonical WVB declarations and
 admitted explicitly; symbol numbering alone is not semantic authority.
+
+The current source candidate instead routes its immutable input through the
+shared independent-metadata verifier adapter before semantic verification. It
+retains absent-form acceptance and rejects invalid replacement metadata before
+the publication transaction begins. The current candidate identities are:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Metadata-aware WVB publisher WVB | 181,772 | `c90f5325ea409d0710254812e1d434cce712de68385dec74d23eef5a475cf3c4` |
+| Native-lowered WVO | 1,523,708 | `c1ce50f68e12dc94e56fa848c6f09f707ad117294af5e19f15659b7901c0bf35` |
+| Linked fragment | 1,520,746 | `98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a` |
+
+The current candidate is not yet an input to construction variant 2. The
+retained records below continue to admit only the preceding exact geometry
+until the construction, admission, promoter, candidate, and front-door family
+is refreshed coherently.
 
 ## Native construction
 
@@ -54,13 +70,16 @@ one inventory and one process toolset.
 
 ## Evidence and remaining boundary
 
-The focused native owner rebuilds and lowers the WVB publisher, requires exact
-WVB/WVO/fragment equality, reconstructs both applications, and executes the
-current-host candidate on a canonical portable WVB. The immutable recovery release
-retains historical differential evidence; it is not part of the normal publisher
-build or focused verification path.
+The focused native owner rebuilds, lowers, and links the current metadata-aware
+source candidate with exact identities on both hosts. Separately, it verifies
+the retained construction inventory, reconstructs both retained applications,
+and executes the current-host retained candidate on a canonical portable WVB.
+This separation keeps source progress visible without misrepresenting the old
+variant-2 artifact as metadata-aware. The immutable recovery release retains
+historical differential evidence; it is not part of the normal publisher build
+or focused verification path.
 
-The current compiler and compiler-build-driver WVB candidates still encounter
-the same semantic-verifier rejection through both the retained front door and
-this candidate. That existing verifier/self-convergence boundary is not
-bypassed by publication and remains the next compiler bootstrap seam.
+The retained front-door publisher still rejects replacement metadata. Promotion
+requires refreshed exact construction geometry and paired application identities
+before a package such as Echo can migrate its source header through the ordinary
+build and publication path.
