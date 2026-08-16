@@ -1,0 +1,208 @@
+module Osˉendpointˉtransferˉprofileˉselfˉtest profile portable;
+
+import Endpointˉtransferˉprofile as Transfer;
+
+fn Testˉcall(
+    Profile: u32,
+    Requestˉstart: u64,
+    Requestˉbytes: u32,
+    Requestˉreadable: bool,
+    Responseˉstart: u64,
+    Responseˉcapacity: u32,
+    Responseˉwritable: bool
+) -> Transfer.Endpointˉcallˉplan {
+    return Transfer.Endpointˉcallˉadmit(
+        Profile, 65540u32, 65538u32, 2u32, 65541u32, 3u32,
+        65536u64, 262144u64,
+        Requestˉstart, Requestˉbytes, Requestˉreadable,
+        Responseˉstart, Responseˉcapacity, Responseˉwritable
+    );
+}
+
+fn Testˉreply(
+    Call: Transfer.Endpointˉcallˉplan,
+    Endpoint: u32,
+    Callerˉgeneration: u32,
+    Providerˉgeneration: u32,
+    Start: u64,
+    Bytes: u32,
+    Readable: bool
+) -> Transfer.Endpointˉreplyˉplan {
+    return Transfer.Endpointˉreplyˉadmit(
+        Call, Endpoint, 65538u32, Callerˉgeneration,
+        65541u32, Providerˉgeneration,
+        262144u64, 393216u64, Start, Bytes, Readable
+    );
+}
+
+fn Testˉcallˉstatus(
+    Profile: u32,
+    Requestˉstart: u64,
+    Requestˉbytes: u32,
+    Requestˉreadable: bool,
+    Responseˉstart: u64,
+    Responseˉcapacity: u32,
+    Responseˉwritable: bool
+) -> Transfer.Endpointˉtransferˉstatus {
+    let Plan: Transfer.Endpointˉcallˉplan = Testˉcall(
+        Profile, Requestˉstart, Requestˉbytes, Requestˉreadable,
+        Responseˉstart, Responseˉcapacity, Responseˉwritable
+    );
+    return Plan.Status;
+}
+
+fn Testˉreplyˉstatus(
+    Call: Transfer.Endpointˉcallˉplan,
+    Endpoint: u32,
+    Callerˉgeneration: u32,
+    Providerˉgeneration: u32,
+    Start: u64,
+    Bytes: u32,
+    Readable: bool
+) -> Transfer.Endpointˉtransferˉstatus {
+    let Plan: Transfer.Endpointˉreplyˉplan = Testˉreply(
+        Call, Endpoint, Callerˉgeneration, Providerˉgeneration,
+        Start, Bytes, Readable
+    );
+    return Plan.Status;
+}
+
+export fn Main() -> i32 {
+    let Control: Transfer.Endpointˉcallˉplan =
+        Testˉcall(1u32, 65536u64, 1u32, true, 73728u64, 4096u32, true);
+    if Control.Status != Transfer.Endpointˉtransferˉstatus.Ready ||
+        Control.Requestˉpages != 1u32 || Control.Responseˉpages != 1u32 ||
+        Control.Requestˉend != 65537u64 ||
+        Control.Responseˉend != 77824u64 { return 2; }
+
+    let Block: Transfer.Endpointˉcallˉplan =
+        Testˉcall(2u32, 69632u64, 48u32, true, 73728u64, 4144u32, true);
+    if Block.Status != Transfer.Endpointˉtransferˉstatus.Ready ||
+        Block.Profile != 2u32 || Block.Requestˉpages != 1u32 ||
+        Block.Responseˉpages != 2u32 ||
+        Block.Responseˉend != 77872u64 { return 3; }
+
+    let Filesystem: Transfer.Endpointˉcallˉplan = Testˉcall(
+        3u32, 65536u64, 64u32, true, 131072u64, 65600u32, true
+    );
+    if Filesystem.Status != Transfer.Endpointˉtransferˉstatus.Ready ||
+        Filesystem.Requestˉpages != 1u32 ||
+        Filesystem.Responseˉpages != 17u32 ||
+        Filesystem.Responseˉend != 196672u64 { return 4; }
+
+    if Testˉcallˉstatus(
+        0u32, 65536u64, 1u32, true, 73728u64, 1u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉprofile { return 5; }
+    let Noˉendpoint: Transfer.Endpointˉcallˉplan =
+        Transfer.Endpointˉcallˉadmit(
+            2u32, 0u32, 65538u32, 2u32, 65541u32, 3u32,
+            65536u64, 262144u64,
+            69632u64, 48u32, true, 73728u64, 4144u32, true
+        );
+    if Noˉendpoint.Status !=
+        Transfer.Endpointˉtransferˉstatus.Invalidˉidentity { return 6; }
+    let Sameˉpeer: Transfer.Endpointˉcallˉplan =
+        Transfer.Endpointˉcallˉadmit(
+            2u32, 65540u32, 65538u32, 2u32, 65538u32, 3u32,
+            65536u64, 262144u64,
+            69632u64, 48u32, true, 73728u64, 4144u32, true
+        );
+    if Sameˉpeer.Status !=
+        Transfer.Endpointˉtransferˉstatus.Invalidˉidentity { return 7; }
+    if Testˉcallˉstatus(
+        2u32, 69632u64, 47u32, true, 73728u64, 4144u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 8; }
+    if Testˉcallˉstatus(
+        2u32, 69632u64, 48u32, true, 73728u64, 4096u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 9; }
+    if Testˉcallˉstatus(
+        3u32, 65536u64, 63u32, true, 131072u64, 65600u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 10; }
+    if Testˉcallˉstatus(
+        3u32, 65536u64, 65601u32, true, 139264u64, 65600u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 11; }
+    if Testˉcallˉstatus(
+        3u32, 65536u64, 64u32, true, 131072u64, 65599u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 12; }
+
+    let Unalignedˉuser: Transfer.Endpointˉcallˉplan =
+        Transfer.Endpointˉcallˉadmit(
+            2u32, 65540u32, 65538u32, 2u32, 65541u32, 3u32,
+            65537u64, 262144u64,
+            69632u64, 48u32, true, 73728u64, 4144u32, true
+        );
+    if Unalignedˉuser.Status !=
+        Transfer.Endpointˉtransferˉstatus.Invalidˉuserˉrange { return 13; }
+    if Testˉcallˉstatus(
+        2u32, 65535u64, 48u32, true, 73728u64, 4144u32, true
+    ) !=
+        Transfer.Endpointˉtransferˉstatus.Invalidˉuserˉrange { return 14; }
+    if Testˉcallˉstatus(
+        3u32, 65536u64, 64u32, true, 135105u64, 65600u32, true
+    ) !=
+        Transfer.Endpointˉtransferˉstatus.Invalidˉuserˉrange { return 15; }
+    if Testˉcallˉstatus(
+        2u32, 73728u64, 48u32, true, 73728u64, 4144u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Overlap { return 16; }
+    if Testˉcallˉstatus(
+        2u32, 69632u64, 48u32, false, 73728u64, 4144u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉmapping { return 17; }
+    if Testˉcallˉstatus(
+        2u32, 69632u64, 48u32, true, 73728u64, 4144u32, false
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉmapping { return 18; }
+
+    let Blockˉreply: Transfer.Endpointˉreplyˉplan =
+        Testˉreply(Block, 65540u32, 2u32, 3u32, 266240u64, 4144u32, true);
+    if Blockˉreply.Status != Transfer.Endpointˉtransferˉstatus.Ready ||
+        Blockˉreply.Responseˉpages != 2u32 ||
+        Blockˉreply.Responseˉend != 270384u64 ||
+        Blockˉreply.Clientˉdestination != 73728u64 ||
+        Blockˉreply.Clientˉcapacity != 4144u32 { return 19; }
+    if Testˉreplyˉstatus(
+        Block, 65540u32, 2u32, 3u32, 266240u64, 47u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 20; }
+    if Testˉreplyˉstatus(
+        Block, 65540u32, 2u32, 3u32, 266240u64, 4145u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉsize { return 21; }
+    if Testˉreplyˉstatus(
+        Block, 65542u32, 2u32, 3u32, 266240u64, 48u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Stale { return 22; }
+    if Testˉreplyˉstatus(
+        Block, 65540u32, 2u32, 4u32, 266240u64, 48u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Stale { return 23; }
+    if Testˉreplyˉstatus(
+        Block, 65540u32, 2u32, 3u32, 393200u64, 48u32, true
+    ) !=
+        Transfer.Endpointˉtransferˉstatus.Invalidˉuserˉrange { return 24; }
+    if Testˉreplyˉstatus(
+        Block, 65540u32, 2u32, 3u32, 266240u64, 48u32, false
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉmapping { return 25; }
+
+    let Filesystemˉreply: Transfer.Endpointˉreplyˉplan = Testˉreply(
+        Filesystem, 65540u32, 2u32, 3u32,
+        266240u64, 65600u32, true
+    );
+    if Filesystemˉreply.Status != Transfer.Endpointˉtransferˉstatus.Ready ||
+        Filesystemˉreply.Responseˉpages != 17u32 ||
+        Filesystemˉreply.Clientˉcapacity != 65600u32 { return 26; }
+
+    let Lost: Transfer.Endpointˉreplyˉplan = Transfer.Endpointˉpeerˉexit(
+        Block, 65540u32, 65541u32, 3u32
+    );
+    if Lost.Status != Transfer.Endpointˉtransferˉstatus.Peerˉlost ||
+        Lost.Responseˉbytes != 0u32 || Lost.Responseˉstart != 0u64 ||
+        Lost.Clientˉdestination != 73728u64 { return 27; }
+    let Staleˉexit: Transfer.Endpointˉreplyˉplan =
+        Transfer.Endpointˉpeerˉexit(Block, 65540u32, 65541u32, 4u32);
+    if Staleˉexit.Status != Transfer.Endpointˉtransferˉstatus.Stale { return 28; }
+    if Testˉreplyˉstatus(
+        Noˉendpoint, 65540u32, 2u32, 3u32, 266240u64, 48u32, true
+    ) != Transfer.Endpointˉtransferˉstatus.Invalidˉidentity { return 29; }
+    let Maximumˉrequest: Transfer.Endpointˉcallˉplan = Testˉcall(
+        3u32, 65536u64, 65600u32, true, 139264u64, 65600u32, true
+    );
+    if Maximumˉrequest.Status != Transfer.Endpointˉtransferˉstatus.Ready ||
+        Maximumˉrequest.Requestˉpages != 17u32 ||
+        Maximumˉrequest.Responseˉpages != 17u32 { return 30; }
+    return 47;
+}

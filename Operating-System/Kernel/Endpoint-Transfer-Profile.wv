@@ -1,0 +1,265 @@
+module Endpointˉtransferˉprofile profile portable;
+
+const PAGE_BYTES: u64 = 4096u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Endpointˉtransferˉstatus {
+    Ready = 0; Invalidˉprofile = 1; Invalidˉidentity = 2;
+    Invalidˉsize = 3; Invalidˉuserˉrange = 4;
+    Invalidˉmapping = 5; Overlap = 6; Stale = 7;
+    Peerˉlost = 8;
+}
+
+export record Endpointˉcallˉplan {
+    Status: Endpointˉtransferˉstatus;
+    Profile: u32;
+    Endpointˉreference: u32;
+    Callerˉreference: u32;
+    Callerˉgeneration: u32;
+    Providerˉreference: u32;
+    Providerˉgeneration: u32;
+    Requestˉstart: u64;
+    Requestˉbytes: u32;
+    Requestˉend: u64;
+    Requestˉpages: u32;
+    Responseˉstart: u64;
+    Responseˉcapacity: u32;
+    Responseˉend: u64;
+    Responseˉpages: u32;
+}
+
+export record Endpointˉreplyˉplan {
+    Status: Endpointˉtransferˉstatus;
+    Endpointˉreference: u32;
+    Callerˉreference: u32;
+    Providerˉreference: u32;
+    Responseˉstart: u64;
+    Responseˉbytes: u32;
+    Responseˉend: u64;
+    Responseˉpages: u32;
+    Clientˉdestination: u64;
+    Clientˉcapacity: u32;
+}
+
+fn Endpointˉcallˉinvalid(
+    Status: Endpointˉtransferˉstatus
+) -> Endpointˉcallˉplan {
+    return Endpointˉcallˉplan(
+        Status, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u64, 0u32, 0u64, 0u32, 0u64, 0u32, 0u64, 0u32
+    );
+}
+
+fn Endpointˉreplyˉinvalid(
+    Status: Endpointˉtransferˉstatus
+) -> Endpointˉreplyˉplan {
+    return Endpointˉreplyˉplan(
+        Status, 0u32, 0u32, 0u32,
+        0u64, 0u32, 0u64, 0u32, 0u64, 0u32
+    );
+}
+
+fn Endpointˉnarrowˉu32(Value: u64) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Value), 0u32);
+}
+
+fn Endpointˉrequestˉsizeˉvalid(Profile: u32, Bytes: u32) -> bool {
+    if Profile == 1u32 { return Bytes >= 1u32 && Bytes <= 4096u32; }
+    if Profile == 2u32 { return Bytes == 48u32; }
+    if Profile == 3u32 { return Bytes >= 64u32 && Bytes <= 65600u32; }
+    return false;
+}
+
+fn Endpointˉresponseˉcapacityˉvalid(
+    Profile: u32,
+    Capacity: u32
+) -> bool {
+    if Profile == 1u32 { return Capacity >= 1u32 && Capacity <= 4096u32; }
+    if Profile == 2u32 { return Capacity == 4144u32; }
+    if Profile == 3u32 { return Capacity == 65600u32; }
+    return false;
+}
+
+fn Endpointˉresponseˉsizeˉvalid(Profile: u32, Bytes: u32) -> bool {
+    if Profile == 1u32 { return Bytes >= 1u32 && Bytes <= 4096u32; }
+    if Profile == 2u32 { return Bytes >= 48u32 && Bytes <= 4144u32; }
+    if Profile == 3u32 { return Bytes >= 64u32 && Bytes <= 65600u32; }
+    return false;
+}
+
+fn Endpointˉwindowˉvalid(
+    Userˉstart: u64,
+    Userˉend: u64,
+    Start: u64,
+    Bytes: u32
+) -> bool {
+    if Userˉstart >= Userˉend || Userˉstart % PAGE_BYTES != 0u64 ||
+        Userˉend % PAGE_BYTES != 0u64 || Bytes == 0u32 ||
+        Start < Userˉstart || Start >= Userˉend ||
+        U64ˉfromˉu32(Bytes) > U64_MAXIMUM - Start {
+        return false;
+    }
+    let End: u64 = Start + U64ˉfromˉu32(Bytes);
+    return End <= Userˉend;
+}
+
+fn Endpointˉwindowˉpages(Start: u64, End: u64) -> u32 {
+    let First: u64 = Start / PAGE_BYTES;
+    let Last: u64 = (End - 1u64) / PAGE_BYTES;
+    return Endpointˉnarrowˉu32(Last - First + 1u64);
+}
+
+export fn Endpointˉcallˉadmit(
+    Profile: u32,
+    Endpointˉreference: u32,
+    Callerˉreference: u32,
+    Callerˉgeneration: u32,
+    Providerˉreference: u32,
+    Providerˉgeneration: u32,
+    Userˉstart: u64,
+    Userˉend: u64,
+    Requestˉstart: u64,
+    Requestˉbytes: u32,
+    Requestˉreadable: bool,
+    Responseˉstart: u64,
+    Responseˉcapacity: u32,
+    Responseˉwritableˉnonexecuting: bool
+) -> Endpointˉcallˉplan {
+    if Profile < 1u32 || Profile > 3u32 {
+        return Endpointˉcallˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉprofile
+        );
+    }
+    if Endpointˉreference == 0u32 || Callerˉreference == 0u32 ||
+        Callerˉgeneration == 0u32 || Providerˉreference == 0u32 ||
+        Providerˉgeneration == 0u32 ||
+        Callerˉreference == Providerˉreference {
+        return Endpointˉcallˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉidentity
+        );
+    }
+    if !Endpointˉrequestˉsizeˉvalid(Profile, Requestˉbytes) ||
+        !Endpointˉresponseˉcapacityˉvalid(Profile, Responseˉcapacity) {
+        return Endpointˉcallˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉsize
+        );
+    }
+    if !Endpointˉwindowˉvalid(
+            Userˉstart, Userˉend, Requestˉstart, Requestˉbytes
+        ) ||
+        !Endpointˉwindowˉvalid(
+            Userˉstart, Userˉend, Responseˉstart, Responseˉcapacity
+        ) {
+        return Endpointˉcallˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉuserˉrange
+        );
+    }
+    if !Requestˉreadable || !Responseˉwritableˉnonexecuting {
+        return Endpointˉcallˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉmapping
+        );
+    }
+    let Requestˉend: u64 = Requestˉstart + U64ˉfromˉu32(Requestˉbytes);
+    let Responseˉend: u64 =
+        Responseˉstart + U64ˉfromˉu32(Responseˉcapacity);
+    if Requestˉend > Responseˉstart && Responseˉend > Requestˉstart {
+        return Endpointˉcallˉinvalid(Endpointˉtransferˉstatus.Overlap);
+    }
+    let Requestˉpages: u32 =
+        Endpointˉwindowˉpages(Requestˉstart, Requestˉend);
+    let Responseˉpages: u32 =
+        Endpointˉwindowˉpages(Responseˉstart, Responseˉend);
+    if Requestˉpages > 17u32 || Responseˉpages > 17u32 {
+        return Endpointˉcallˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉuserˉrange
+        );
+    }
+    return Endpointˉcallˉplan(
+        Endpointˉtransferˉstatus.Ready, Profile,
+        Endpointˉreference, Callerˉreference, Callerˉgeneration,
+        Providerˉreference, Providerˉgeneration,
+        Requestˉstart, Requestˉbytes, Requestˉend, Requestˉpages,
+        Responseˉstart, Responseˉcapacity, Responseˉend, Responseˉpages
+    );
+}
+
+export fn Endpointˉreplyˉadmit(
+    Call: Endpointˉcallˉplan,
+    Endpointˉreference: u32,
+    Callerˉreference: u32,
+    Callerˉgeneration: u32,
+    Providerˉreference: u32,
+    Providerˉgeneration: u32,
+    Providerˉuserˉstart: u64,
+    Providerˉuserˉend: u64,
+    Responseˉstart: u64,
+    Responseˉbytes: u32,
+    Responseˉreadable: bool
+) -> Endpointˉreplyˉplan {
+    if Call.Status != Endpointˉtransferˉstatus.Ready {
+        return Endpointˉreplyˉinvalid(Call.Status);
+    }
+    if Endpointˉreference != Call.Endpointˉreference ||
+        Callerˉreference != Call.Callerˉreference ||
+        Callerˉgeneration != Call.Callerˉgeneration ||
+        Providerˉreference != Call.Providerˉreference ||
+        Providerˉgeneration != Call.Providerˉgeneration {
+        return Endpointˉreplyˉinvalid(Endpointˉtransferˉstatus.Stale);
+    }
+    if !Endpointˉresponseˉsizeˉvalid(Call.Profile, Responseˉbytes) ||
+        Responseˉbytes > Call.Responseˉcapacity {
+        return Endpointˉreplyˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉsize
+        );
+    }
+    if !Endpointˉwindowˉvalid(
+            Providerˉuserˉstart, Providerˉuserˉend,
+            Responseˉstart, Responseˉbytes
+        ) {
+        return Endpointˉreplyˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉuserˉrange
+        );
+    }
+    if !Responseˉreadable {
+        return Endpointˉreplyˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉmapping
+        );
+    }
+    let Responseˉend: u64 = Responseˉstart + U64ˉfromˉu32(Responseˉbytes);
+    let Responseˉpages: u32 =
+        Endpointˉwindowˉpages(Responseˉstart, Responseˉend);
+    if Responseˉpages > 17u32 {
+        return Endpointˉreplyˉinvalid(
+            Endpointˉtransferˉstatus.Invalidˉuserˉrange
+        );
+    }
+    return Endpointˉreplyˉplan(
+        Endpointˉtransferˉstatus.Ready,
+        Call.Endpointˉreference, Call.Callerˉreference,
+        Call.Providerˉreference, Responseˉstart, Responseˉbytes,
+        Responseˉend, Responseˉpages,
+        Call.Responseˉstart, Call.Responseˉcapacity
+    );
+}
+
+export fn Endpointˉpeerˉexit(
+    Call: Endpointˉcallˉplan,
+    Endpointˉreference: u32,
+    Providerˉreference: u32,
+    Providerˉgeneration: u32
+) -> Endpointˉreplyˉplan {
+    if Call.Status != Endpointˉtransferˉstatus.Ready {
+        return Endpointˉreplyˉinvalid(Call.Status);
+    }
+    if Endpointˉreference != Call.Endpointˉreference ||
+        Providerˉreference != Call.Providerˉreference ||
+        Providerˉgeneration != Call.Providerˉgeneration {
+        return Endpointˉreplyˉinvalid(Endpointˉtransferˉstatus.Stale);
+    }
+    return Endpointˉreplyˉplan(
+        Endpointˉtransferˉstatus.Peerˉlost,
+        Call.Endpointˉreference, Call.Callerˉreference,
+        Call.Providerˉreference, 0u64, 0u32, 0u64, 0u32,
+        Call.Responseˉstart, Call.Responseˉcapacity
+    );
+}

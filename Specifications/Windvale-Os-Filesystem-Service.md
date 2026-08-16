@@ -14,6 +14,11 @@ The first capacity-one provider-state candidate is implemented separately: it
 owns generation advance, caller ownership, open-profile authority, stale
 references, close, and peer-exit reclamation without exposing its native token.
 
+Kernel [endpoint transfer profile 3](Windvale-Os-Endpoint-Transfer-Profile.md)
+now admits the complete 64..65,600-byte request and response envelopes with a
+17-page ceiling. That policy is architecture-neutral; the x86-64 syscall
+adapter and live provider invocation remain pending.
+
 ## Request envelope
 
 `WVFQ 1` is little-endian and contains 64 through 65,600 bytes:

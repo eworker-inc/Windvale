@@ -47,6 +47,11 @@ original correlation, file reference and position, and admitted FAT32 file
 length. The existing filesystem-service validator must accept the constructed
 response before it is returned.
 
+The complete transaction reply fits kernel
+[endpoint transfer profile 3](Windvale-Os-Endpoint-Transfer-Profile.md), whose
+exact caller capacity is 65,600 bytes. Individual `WVBR 1`/`WVBP 1` exchanges
+fit profile 2's 48-byte request and 4,144-byte reply capacity.
+
 ## Evidence and limits
 
 The chain-position module is a 7,186-byte WVB at SHA-256

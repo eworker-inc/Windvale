@@ -87,6 +87,13 @@ The first capacity-one handle state now separately proves ownership, profile
 rights, generation reuse, stale rejection, close, and peer-exit reclamation;
 dispatch and multi-client queueing remain open.
 
+Endpoint transfer profiles 1 now close the previous message-size mismatch:
+control traffic remains bounded to 4,096 bytes, block traffic reserves an exact
+48-byte request and 4,144-byte reply window, and filesystem traffic reserves
+the complete 65,600-byte envelope. Admission binds both peer generations,
+checked user windows, mapping rights, non-overlap, and a 17-page ceiling. This
+is portable kernel policy; the x86-64 syscall 6/7 adapter is still required.
+
 ### Filesystem slice 4: block and FAT32 provider — read transaction implemented candidate
 
 Add one isolated block-device path and a bounded FAT32 service. Qualify malformed
@@ -120,8 +127,9 @@ completion, consumes dispatched sequences exactly once, distinguishes
 pre-dispatch from post-dispatch cancellation, and requires teardown after peer
 loss. An immutable block-image provider now independently admits the request,
 maps at most eight sectors inside one 64 MiB read-only image, and emits the exact
-validated response. The privileged endpoint syscall adapter and hardware block
-driver remain pending.
+validated response. Endpoint profile 2 now admits that exact wire geometry, but
+the privileged x86-64 copy/wait/reply adapter and hardware block driver remain
+pending.
 
 File-read plan 1 maps one admitted `u64` file offset plus the exact resolved
 cluster into at most eight sectors and 4,096 covered bytes. File-read
@@ -130,9 +138,9 @@ binds an authorized file reference and media generation, and owns every exact
 block-exchange identity from begin through dispatch and completion. It copies
 partial-sector bytes and accumulates the full 65,536-byte shared limit before
 emitting a validator-accepted `WVFP 1` reply.
-Its 18-case owner crosses two clusters and exchanges. The privileged endpoint
-syscall, block driver, media discovery/change detection, and guest execution
-remain open.
+Its 18-case owner crosses two clusters and exchanges. Endpoint profile 3 now
+admits the maximum shared reply, while the privileged machine adapter, block
+driver, media discovery/change detection, and guest execution remain open.
 
 ### Filesystem slice 5: boot and application integration
 

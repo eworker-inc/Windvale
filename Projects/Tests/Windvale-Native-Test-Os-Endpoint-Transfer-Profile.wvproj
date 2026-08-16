@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Endpoint-Transfer-Profile-Self-Test.wv"
+source "Operating-System/Kernel/Endpoint-Transfer-Profile.wv"
+emit wvb

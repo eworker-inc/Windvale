@@ -26,6 +26,11 @@ constructs the request, validates the response before field use, copies the
 exact successful payload, and maps the provider result through block-read
 completion. A malformed reply becomes invalid payload and is never retried.
 
+Kernel [endpoint transfer profile 2](Windvale-Os-Endpoint-Transfer-Profile.md)
+reserves the exact 48-byte request and 4,144-byte maximum reply. Its
+architecture-neutral admission policy is implemented; the x86-64 syscall
+adapter remains pending.
+
 ## Evidence and limits
 
 The protocol WVB is 8,726 bytes at SHA-256

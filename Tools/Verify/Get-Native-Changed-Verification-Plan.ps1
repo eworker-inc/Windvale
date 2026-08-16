@@ -587,6 +587,8 @@ function Add-Os-Suite {
         Add-Suite 'os-x64-code-emission'
     } elseif ($Path -match 'Provider-Launch-(?:Transaction|Lifecycle)') {
         Add-Suite 'os-provider-launch-transaction'
+    } elseif ($Path -match 'Endpoint-Transfer-Profile') {
+        Add-Suite @('os-endpoint-transfer', 'native-u64-lowering')
     } elseif ($Path -match '(?:Filesystem|Network)-Process-Service|Provider-Images') {
         Add-Suite @('os-provider-images', 'os-application-launch')
     } elseif ($Path -match 'Fat32-Block-(Read|Provider|Exchange|Image)') {
@@ -2306,6 +2308,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'os-x64-code-emission'
         } elseif ($Path.Contains('Provider-Launch-', [StringComparison]::Ordinal)) {
             Add-Suite 'os-provider-launch-transaction'
+        } elseif ($Path.Contains('Endpoint-Transfer-Profile', [StringComparison]::Ordinal)) {
+            Add-Suite @('os-endpoint-transfer', 'native-u64-lowering')
         } elseif ($Path.Contains('Fat32-Block-Read', [StringComparison]::Ordinal) -or
             $Path.Contains('Fat32-Block-Provider', [StringComparison]::Ordinal) -or
             $Path.Contains('Fat32-Block-Exchange', [StringComparison]::Ordinal) -or

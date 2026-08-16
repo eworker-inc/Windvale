@@ -1281,6 +1281,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'OS endpoint transfer profile ownership'
+        Paths = @(
+            'Operating-System/Kernel/Endpoint-Transfer-Profile.wv',
+            'Projects/Operating-System/Windvale-Os-Endpoint-Transfer-Profile.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Endpoint-Transfer-Profile.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Endpoint-Transfer-Profile-Self-Test.wv',
+            'Specifications/Windvale-Os-Endpoint-Transfer-Profile.md'
+        )
+        Suites = @('os-endpoint-transfer', 'native-u64-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'OS FAT32 volume-chain-directory-file ownership'
         Paths = @(
             'Operating-System/Services/Fat32-Volume-Admission.wv',
@@ -2639,9 +2652,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 96 -or
+if ($VerificationOwnerLines.Count -ne 97 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 95-owner inventory differs.'
+    throw 'The native verification-owner header or exact 96-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2679,7 +2692,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4460 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4489 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
