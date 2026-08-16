@@ -1,5 +1,6 @@
 module Processˉobjectˉtool profile hosted;
 
+import Processˉobjectˉapplicationˉstart as Applicationˉstartˉobject;
 import Processˉobjectˉlayout as Layout;
 import Processˉobjectˉrelocations as Relocations;
 
@@ -21,9 +22,9 @@ fn Buildˉobject(Sections: bytes, Symbols: bytes, Relocationˉbytes: bytes) -> b
     Header = Bytesˉconcat(Header, Bytesˉfromˉu8(1u8));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu8(0u8));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(10u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(27u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(55u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(11u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(29u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(58u32));
     return Bytesˉconcat(
         Bytesˉconcat(Header, Sections),
         Bytesˉconcat(Symbols, Relocationˉbytes)
@@ -58,22 +59,34 @@ export fn Main() -> i32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
+    let Patchedˉcode: bytes = Applicationˉstartˉobject.Patch(Code);
+    if Bytesˉlength(Patchedˉcode) != 46678u32 {
+        diagnostic.write_line("process object status=Rejected");
+        return 1;
+    }
+    let Handler: bytes = Applicationˉstartˉobject.Handler();
+    if Bytesˉlength(Handler) != 192u32 {
+        diagnostic.write_line("process object status=Rejected");
+        return 1;
+    }
     let Sections: bytes = Bytesˉconcat(
-        Layout.Buildˉfirstˉsections(Code, Init, Client, Program),
+        Layout.Buildˉfirstˉsections(
+            Patchedˉcode, Handler, Init, Client, Program
+        ),
         Layout.Buildˉfinalˉsections(
             Store, Snapshot, Directory, Filesystem, Network
         )
     );
     let Symbols: bytes = Layout.Buildˉsymbols();
     let Relocationˉbytes: bytes = Relocations.Buildˉrelocations();
-    if Bytesˉlength(Sections) != 948789u32 ||
-        Bytesˉlength(Symbols) != 1481u32 ||
-        Bytesˉlength(Relocationˉbytes) != 1100u32 {
+    if Bytesˉlength(Sections) != 949032u32 ||
+        Bytesˉlength(Symbols) != 1627u32 ||
+        Bytesˉlength(Relocationˉbytes) != 1160u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
     let Result: bytes = Buildˉobject(Sections, Symbols, Relocationˉbytes);
-    if Bytesˉlength(Result) != 951394u32 {
+    if Bytesˉlength(Result) != 951843u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }

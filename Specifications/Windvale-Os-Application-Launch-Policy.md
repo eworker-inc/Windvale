@@ -6,9 +6,11 @@ Application-launch policy 1 is the immutable kernel-admission gate for both
 sequential generations of the known Probe 40 child. Its version-1 start
 function composes with resource-domain policy 1 and
 application-machine-construction policy 1 before the process machine publishes
-either client. It is a statically typed Windvale source ABI, not yet a
-public syscall ABI, package resolver, general process creator, service manager,
-or claim that arbitrary applications can now be started. The separate
+either client. Syscall operation 8 is now the first fixed application-start
+entry: it derives the current init context, accounts the call, snapshots one
+64-byte request from the current user page, and erases the kernel snapshot
+before returning. It is not a package resolver, general process creator,
+service manager, or claim that arbitrary applications can now be started. The separate
 [`WVSR 1`](Windvale-Os-Application-Start-Request.md) decoder now validates one
 fixed serialized application profile before calling this typed ABI.
 The architecture-neutral
@@ -75,17 +77,18 @@ exact two-process/22-page/two-endpoint baseline.
 
 The composed WVB returns token 97 only after the boot-service envelope and both
 launch transactions admit. Its 699,394-byte link-facing object remains inside
-the fixed 768 KiB supervisor RX window. The normal 1,252,864-byte
+the fixed 772 KiB supervisor RX window. The normal 1,692,160-byte
 current-Windows-host Probe 40 image at SHA-256
-`5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb`
+`6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354`
 passes the pinned QEMU/OVMF gate through application execution and
 guest-controlled shutdown.
 
 ## Focused evidence and limits
 
 The `os-application-launch` native owner builds the admission policies,
-serialized request decoder, and user-copy boundary and executes five behavior
-programs covering 41 cases: every `WVSR 1` structural status and typed handoff,
+serialized request decoder, user-copy boundary, and derived syscall context and
+executes focused behavior programs covering 61 cases: every `WVSR 1`
+structural status and typed handoff,
 nine copy/window/caller cases, plus
 unsupported-version, unauthorized-caller, stale-publication, malformed-plan,
 wrong-domain, and rights-profile rejection before exposure; successful
@@ -96,9 +99,9 @@ the same module composes into token 97; `os-process-object` pins the measured
 context; and `os-probe` pins all three EFI constructions.
 
 Policy 1 does not resolve packages, load an arbitrary image, allocate or map
-machine objects dynamically, read live x86-64 user pages, transfer/move
+machine objects dynamically, transfer/move
 capabilities, accept variable total resource charges, expose
-cancellation/completion, or provide a user-callable launch syscall. The
-portable user-copy policy proves copy-before-parse over an admitted bytes
-window; architecture-specific page access and syscall entry remain successor
-slices, not implied behavior.
+cancellation/completion, or accept callers other than fixed init generation 1.
+Operation 8 currently ends after checked context loading and snapshot
+admission; connecting the admitted request to private machine construction and
+charge-backed publication is the next slice.

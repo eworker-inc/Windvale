@@ -30,7 +30,7 @@ compact recipes remain in the original focused package.
 | `exceptions` | `09-exceptions.wvo` | 483 | `9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c` |
 | `wvb-admission-bridge` | `12-wvb-admission-bridge.wvo` | 484 | `271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d` |
 | `native-bridge-and-support` | `13-native-bridge-and-support.wvo` | 461 | `472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b` |
-| `paging` | `10-paging.wvo` | 1,292 | `a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d` |
+| `paging` | `10-paging.wvo` | 1,292 | `5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b` |
 | `memory` | `08-memory.wvo` | 1,529 | `2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed` |
 | `memory-invalid-opcode` | `08-memory.wvo` | 1,545 | `09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868` |
 | `memory-general-protection` | `08-memory.wvo` | 1,545 | `23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0` |
@@ -66,9 +66,9 @@ extension or compatibility registry.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `Os-Probe-Object-Producer.wvb` | 42,835 | `ab26d2cd8820887fc15475a4ee29aaf884af9b5a0d8bd3313a847d00cc03e042` |
-| Windows x64 application | 461,312 | `fcd22c975ed04534d30733c5ddabb7811a9b9578effd0d27839d171bdac76d0c` |
-| Linux x64 application | 462,848 | `c4e22a9f67d5bdb4f186ddfbb63aa93032712ea7bdc260ed28076b12f0217e80` |
+| `Os-Probe-Object-Producer.wvb` | 42,835 | `3e9520406ee2de0ed1e2ad30868ed29e2bfa64fae19982468aaf2f1814f50278` |
+| Windows x64 application | 461,312 | `e8b631d301e8ee47c121fd6778eddc444debcdfcbb63b2d3a9f312306f58d38b` |
+| Linux x64 application | 462,848 | `8e8817adb31bf502103a842a0945d5699b1af4ec25eb0c48891da7d6d0f6c280` |
 
 The nine-case fixed lane requires all six exact outputs plus independent WVO
 admission, existing-destination preservation, unknown-kind rejection, and

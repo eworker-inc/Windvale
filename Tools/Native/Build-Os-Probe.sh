@@ -11,25 +11,25 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb
-        efi_bytes=1691136
-        code_tail_offset=785968
+        efi_digest=6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354
+        efi_bytes=1692160
+        code_tail_offset=786992
         ;;
     invalid-opcode)
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=a0c361386e8ce0aa1d8d73b2ca85f26768f2335992e993a869136db00d0daca0
-        efi_bytes=1691136
-        code_tail_offset=785984
+        efi_digest=7eadb0fa7ab96611a3cbe259c9860b7da381011e4dda80fd8e18535eaa71ca1b
+        efi_bytes=1692160
+        code_tail_offset=787008
         ;;
     general-protection)
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=7a446760851890f26becb2c00e7e76f016e95f02d30b5a4ecef78d3b692e1afd
-        efi_bytes=1691136
-        code_tail_offset=785984
+        efi_digest=5f9dcaaaeaa2a179ec348a417752b62853876f22124bf61ec16f7ef11a3bf9e2
+        efi_bytes=1692160
+        code_tail_offset=787008
         ;;
     *)
         echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
@@ -190,11 +190,31 @@ if ! "$script_directory/Build-Os-Process-Object.sh" \
     cat -- "$work/05.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/05-process.wvo") -ne 951394 ]] ||
+if [[ $(wc -c < "$work/05-process.wvo") -ne 951843 ]] ||
     ! printf '%s  %s\n' \
-        '884152027e10221591f1fc79bbffd8875c14d507e5652719ede4d67dea22624e' \
+        '2ea81c1e4e5bbeb2656dd3a938b330f391fd3749b54a6b4f5cafde45af1e74b2' \
         "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process object is invalid.' >&2
+    exit 1
+fi
+
+if ! "$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Operating-System/Kernel/X64-Application-Start-Syscall-Context.wva" \
+    "$work/14-application-start-context.wvo" >"$work/14.log" 2>&1; then
+    cat -- "$work/14.log" >&2
+    exit 1
+fi
+if ! "$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Operating-System/Kernel/X64-Application-Start-User-Copy.wva" \
+    "$work/15-application-start-copy.wvo" >"$work/15.log" 2>&1; then
+    cat -- "$work/15.log" >&2
+    exit 1
+fi
+if ! printf '%s  %s\n%s  %s\n' \
+    'd639056eb9831f89ef3baa33b06b522437d2da4444f74e2db1d58229656dc04b' "$work/14-application-start-context.wvo" \
+    '74978b1f6124517b44205cba52aaf6c161cf5d00e39ff9ab3ad883d527c87ddb' "$work/15-application-start-copy.wvo" |
+    sha256sum --check --strict --quiet; then
+    echo 'A native Probe 40 application-start object is invalid.' >&2
     exit 1
 fi
 
@@ -246,7 +266,7 @@ if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
     'e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344' "$work/07-timer-shims.wvo" \
     "$memory_digest" "$work/08-memory.wvo" \
     '9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c' "$work/09-exceptions.wvo" \
-    'a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d' "$work/10-paging.wvo" \
+    '5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b' "$work/10-paging.wvo" \
     '271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d' "$work/12-wvb-admission-bridge.wvo" \
     '472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b' "$work/13-native-bridge-and-support.wvo" \
     '845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193' "$work/11-kernel-shims.wvo" |
@@ -266,6 +286,8 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/03-native-wvb-probe.wvo" \
     "$work/04-process-policy.wvo" \
     "$work/05-process.wvo" \
+    "$work/14-application-start-context.wvo" \
+    "$work/15-application-start-copy.wvo" \
     "$work/06-memory-object-shims.wvo" \
     "$work/07-timer-shims.wvo" \
     "$work/08-memory.wvo" \
@@ -281,7 +303,7 @@ if ! grep -Fxq 'entry name=Windvale_boot_probe address=0' "$work/Link.map"; then
     echo 'The native Probe 40 linker reported an unexpected entry.' >&2
     exit 1
 fi
-if ! grep -Fxq "section index=14 input=13 source-index=1 kind=code name=.text.support image-offset=$code_tail_offset address=$code_tail_offset memory-bytes=23 data-bytes=23 alignment=16" "$work/Link.map"; then
+if ! grep -Fxq "section index=17 input=15 source-index=1 kind=code name=.text.support image-offset=$code_tail_offset address=$code_tail_offset memory-bytes=23 data-bytes=23 alignment=16" "$work/Link.map"; then
     echo 'The native Probe 40 linker reported an unexpected supervisor code boundary.' >&2
     exit 1
 fi

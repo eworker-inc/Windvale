@@ -55,6 +55,7 @@ fn Importˉfunction(Name: text) -> bytes {
 
 export fn Buildˉfirstˉsections(
     Code: bytes,
+    Handlerˉbytes: bytes,
     Init: bytes,
     Client: bytes,
     Program: bytes
@@ -62,6 +63,10 @@ export fn Buildˉfirstˉsections(
     var Result: bytes = Encodeˉsection(
         ".text.process", 1u8, 16u32, 46678u32, Code
     );
+    Result = Append(Result, Encodeˉsection(
+        ".text.process.application_start",
+        1u8, 16u32, 192u32, Handlerˉbytes
+    ));
     Result = Append(Result, Encodeˉsection(
         ".rodata.ainit", 2u8, 16u32, 5159u32, Init
     ));
@@ -104,31 +109,35 @@ export fn Buildˉfinalˉsections(
 
 export fn Buildˉsymbols() -> bytes {
     var Result: bytes = Dataˉsymbol(
-        "Windvale_init_resource_user_image", 1u32, 5159u32
+        "Windvale_init_resource_user_image", 2u32, 5159u32
     );
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_process_client_image", 2u32, 449261u32
+        "Windvale_process_client_image", 3u32, 449261u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_boot", 3u32, 816u32
+        "Windvale_resource_init_boot", 4u32, 816u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_budget", 4u32, 4u32
+        "Windvale_resource_init_budget", 5u32, 4u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_directory", 6u32, 3184u32
+        "Windvale_resource_init_directory", 7u32, 3184u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_store", 5u32, 1196u32
+        "Windvale_resource_init_store", 6u32, 1196u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_service_directory_user_image", 7u32, 3911u32
+        "Windvale_service_directory_user_image", 8u32, 3911u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_service_filesystem_user_image", 8u32, 195657u32
+        "Windvale_service_filesystem_user_image", 9u32, 195657u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_service_network_user_image", 9u32, 242571u32
+        "Windvale_service_network_user_image", 10u32, 242571u32
+    ));
+    Result = Append(Result, Encodeˉsymbol(
+        "Windvale_kernel_x64_application_start_syscall_handler",
+        2u8, 1u8, 1u32, 0u32, 192u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_enter",
@@ -146,7 +155,6 @@ export fn Buildˉsymbols() -> bytes {
         "Windvale_kernel_x64_timer_interrupt",
         2u8, 1u8, 0u32, 39632u32, 7046u32
     ));
-
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_allocate_memory_object"
     ));
@@ -155,6 +163,9 @@ export fn Buildˉsymbols() -> bytes {
     ));
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_release_memory_object"
+    ));
+    Result = Append(Result, Importˉfunction(
+        "Windvale_kernel_x64_application_start_syscall_context"
     ));
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_x64_exception_terminal"

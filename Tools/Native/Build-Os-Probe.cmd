@@ -11,25 +11,25 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb"
-    set "EfiBytes=1691136"
-    set "CodeTailOffset=785968"
+    set "EfiDigest=6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354"
+    set "EfiBytes=1692160"
+    set "CodeTailOffset=786992"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=a0c361386e8ce0aa1d8d73b2ca85f26768f2335992e993a869136db00d0daca0"
-    set "EfiBytes=1691136"
-    set "CodeTailOffset=785984"
+    set "EfiDigest=7eadb0fa7ab96611a3cbe259c9860b7da381011e4dda80fd8e18535eaa71ca1b"
+    set "EfiBytes=1692160"
+    set "CodeTailOffset=787008"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=7a446760851890f26becb2c00e7e76f016e95f02d30b5a4ecef78d3b692e1afd"
-    set "EfiBytes=1691136"
-    set "CodeTailOffset=785984"
+    set "EfiDigest=5f9dcaaaeaa2a179ec348a417752b62853876f22124bf61ec16f7ef11a3bf9e2"
+    set "EfiBytes=1692160"
+    set "CodeTailOffset=787008"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -122,7 +122,18 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 951394 884152027e10221591f1fc79bbffd8875c14d507e5652719ede4d67dea22624e
+call :verify "%Work%\05-process.wvo" 951843 2ea81c1e4e5bbeb2656dd3a938b330f391fd3749b54a6b4f5cafde45af1e74b2
+if errorlevel 1 goto :failure
+
+set "FailureStep=application-start-context"
+cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Application-Start-Syscall-Context.wva" "%Work%\14-application-start-context.wvo" >"%Work%\14.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\14-application-start-context.wvo" 344 d639056eb9831f89ef3baa33b06b522437d2da4444f74e2db1d58229656dc04b
+if errorlevel 1 goto :failure
+set "FailureStep=application-start-copy"
+cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Application-Start-User-Copy.wva" "%Work%\15-application-start-copy.wvo" >"%Work%\15.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\15-application-start-copy.wvo" 799 74978b1f6124517b44205cba52aaf6c161cf5d00e39ff9ab3ad883d527c87ddb
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"
@@ -163,7 +174,7 @@ set "FailureStep=verify-exceptions"
 call :verify "%Work%\09-exceptions.wvo" 483 9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c
 if errorlevel 1 goto :failure
 set "FailureStep=verify-paging"
-call :verify "%Work%\10-paging.wvo" 1292 a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d
+call :verify "%Work%\10-paging.wvo" 1292 5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b
 if errorlevel 1 goto :failure
 set "FailureStep=verify-wvb-admission-bridge"
 call :verify "%Work%\12-wvb-admission-bridge.wvo" 484 271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d
@@ -183,6 +194,8 @@ cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
     "%Work%\03-native-wvb-probe.wvo" ^
     "%Work%\04-process-policy.wvo" ^
     "%Work%\05-process.wvo" ^
+    "%Work%\14-application-start-context.wvo" ^
+    "%Work%\15-application-start-copy.wvo" ^
     "%Work%\06-memory-object-shims.wvo" ^
     "%Work%\07-timer-shims.wvo" ^
     "%Work%\08-memory.wvo" ^
@@ -233,6 +246,8 @@ if exist "%Work%\10.log" type "%Work%\10.log" 1>&2
 if exist "%Work%\11.log" type "%Work%\11.log" 1>&2
 if exist "%Work%\12.log" type "%Work%\12.log" 1>&2
 if exist "%Work%\13.log" type "%Work%\13.log" 1>&2
+if exist "%Work%\14.log" type "%Work%\14.log" 1>&2
+if exist "%Work%\15.log" type "%Work%\15.log" 1>&2
 if exist "%Work%\Link.map" type "%Work%\Link.map" 1>&2
 if exist "%Work%\Package.log" type "%Work%\Package.log" 1>&2
 if exist "%Work%\Probe40.efi" (

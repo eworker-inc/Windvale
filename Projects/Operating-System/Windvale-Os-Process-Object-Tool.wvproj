@@ -1,5 +1,6 @@
 windvale-project 2
 root "Operating-System/Tools/Process-Object-Tool.wv"
+source "Operating-System/Tools/Process-Object-Application-Start.wv"
 source "Operating-System/Tools/Process-Object-Layout.wv"
 source "Operating-System/Tools/Process-Object-Relocations.wv"
 emit wvb
