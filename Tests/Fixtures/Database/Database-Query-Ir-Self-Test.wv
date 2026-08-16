@@ -1,0 +1,351 @@
+module Windvaleˉnativeˉtestˉdatabaseˉqueryˉir profile portable;
+
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+import Windvaleˉdatabaseˉqueryˉir as Query;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Field(Kind: u32, Nullable: bool, Maximum: u32, Name: text) -> bytes {
+    var Flags: u32 = 0u32;
+    if Nullable { Flags = 1u32; }
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Kind);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Maximum));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉbytes))
+    );
+    return Bytesˉconcat(Result, Nameˉbytes);
+}
+
+fn Fields() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Field(1u32, false, 1u32, "active"),
+            Field(2u32, true, 8u32, "balance")
+        ),
+        Bytesˉconcat(
+            Field(4u32, false, 32u32, "name"),
+            Field(5u32, false, 16u32, "data")
+        )
+    );
+}
+
+fn Definition() -> bytes {
+    let Fieldˉbytes: bytes = Fields();
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1129535063u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(48u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(7u64));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(9u64));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(4u32));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Fieldˉbytes))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(0u64));
+    return Bytesˉconcat(Result, Fieldˉbytes);
+}
+
+fn Parameter(Kind: u32, Null: bool, Data: bytes) -> bytes {
+    var Flags: u32 = 0u32;
+    if Null { Flags = 1u32; }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Kind);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Result, Data);
+}
+
+fn Parameters() -> bytes {
+    return Bytesˉconcat(
+        Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(5u64)),
+        Parameter(4u32, false, Textˉtoˉutf8("Ada"))
+    );
+}
+
+fn Projections() -> bytes {
+    let First: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉprojection(0u32);
+    let Second: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉprojection(2u32);
+    return Bytesˉconcat(First.Bytes, Second.Bytes);
+}
+
+fn Predicates() -> bytes {
+    let Lower: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉpredicate(
+            1u32,
+            Query.Databaseˉqueryˉoperator.Greaterˉorˉequal,
+            0u32
+        );
+    let Different: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉpredicate(
+            2u32,
+            Query.Databaseˉqueryˉoperator.Notˉequal,
+            1u32
+        );
+    let Nullable: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉpredicate(
+            1u32,
+            Query.Databaseˉqueryˉoperator.Isˉnotˉnull,
+            4294967295u32
+        );
+    return Bytesˉconcat(Bytesˉconcat(Lower.Bytes, Different.Bytes), Nullable.Bytes);
+}
+
+fn Orders() -> bytes {
+    let First: Query.Databaseˉqueryˉcomponent = Query.Databaseˉqueryˉorder(
+        1u32,
+        Query.Databaseˉqueryˉdirection.Ascending
+    );
+    let Second: Query.Databaseˉqueryˉcomponent = Query.Databaseˉqueryˉorder(
+        2u32,
+        Query.Databaseˉqueryˉdirection.Descending
+    );
+    return Bytesˉconcat(First.Bytes, Second.Bytes);
+}
+
+fn Validˉquery() -> Query.Databaseˉqueryˉresult {
+    return Query.Databaseˉqueryˉencode(
+        7u64,
+        9u64,
+        25u32,
+        2u32,
+        Projections(),
+        3u32,
+        Predicates(),
+        2u32,
+        Orders(),
+        2u32,
+        Parameters(),
+        Definition()
+    );
+}
+
+fn Errorˉof(Input: bytes) -> Query.Databaseˉqueryˉerror {
+    let Result: Query.Databaseˉqueryˉresult =
+        Query.Databaseˉqueryˉdecode(Input, Definition());
+    return Result.Error;
+}
+
+fn Encodingˉcontract() -> i32 {
+    let First: Query.Databaseˉqueryˉresult = Validˉquery();
+    let Second: Query.Databaseˉqueryˉresult = Validˉquery();
+    if First.Error != Query.Databaseˉqueryˉerror.Valid ||
+        First.Collection != 7u64 || First.Schema != 9u64 ||
+        First.Projectionˉcount != 2u32 || First.Predicateˉcount != 3u32 ||
+        First.Orderˉcount != 2u32 || First.Parameterˉcount != 2u32 ||
+        First.Limit != 25u32 || !Same(First.Bytes, Second.Bytes) ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 0u32) != 1230067287u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 8u32) != 72u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 52u32) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 56u32) != 48u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 60u32) != 16u32 {
+        return 1;
+    }
+    let Decoded: Query.Databaseˉqueryˉresult =
+        Query.Databaseˉqueryˉdecode(First.Bytes, Definition());
+    if Decoded.Error != Query.Databaseˉqueryˉerror.Valid ||
+        !Same(Decoded.Projections, Projections()) ||
+        !Same(Decoded.Predicates, Predicates()) ||
+        !Same(Decoded.Orders, Orders()) ||
+        !Same(Decoded.Parameters, Parameters()) {
+        return 2;
+    }
+    return 0;
+}
+
+fn Headerˉrejections() -> i32 {
+    let Valid: Query.Databaseˉqueryˉresult = Validˉquery();
+    if Errorˉof(Empty()) != Query.Databaseˉqueryˉerror.Invalidˉlength {
+        return 1;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 0u32, 0u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉmagic {
+        return 2;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 4u32, 2u32)) !=
+        Query.Databaseˉqueryˉerror.Unsupportedˉversion {
+        return 3;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 12u32, 1u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉflags {
+        return 4;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 32u32, 65u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉprojectionˉcount {
+        return 5;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 36u32, 33u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉpredicateˉcount {
+        return 6;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 40u32, 9u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉorderˉcount {
+        return 7;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 44u32, 33u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉparameterˉcount {
+        return 8;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 48u32, 0u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉlimit {
+        return 9;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 52u32, 4u32)) !=
+        Query.Databaseˉqueryˉerror.Invalidˉsectionˉlength {
+        return 10;
+    }
+    return 0;
+}
+
+fn Semanticˉerror(
+    Projectionsˉvalue: bytes,
+    Projectionˉcount: u32,
+    Predicatesˉvalue: bytes,
+    Predicateˉcount: u32,
+    Ordersˉvalue: bytes,
+    Orderˉcount: u32,
+    Parametersˉvalue: bytes,
+    Parameterˉcount: u32
+) -> Query.Databaseˉqueryˉerror {
+    let Result: Query.Databaseˉqueryˉresult = Query.Databaseˉqueryˉencode(
+        7u64,
+        9u64,
+        10u32,
+        Projectionˉcount,
+        Projectionsˉvalue,
+        Predicateˉcount,
+        Predicatesˉvalue,
+        Orderˉcount,
+        Ordersˉvalue,
+        Parameterˉcount,
+        Parametersˉvalue,
+        Definition()
+    );
+    return Result.Error;
+}
+
+fn Semanticˉrejections() -> i32 {
+    let Projectionˉzero: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉprojection(0u32);
+    let Duplicateˉprojection: bytes = Bytesˉconcat(
+        Projectionˉzero.Bytes,
+        Projectionˉzero.Bytes
+    );
+    if Semanticˉerror(Duplicateˉprojection, 2u32, Empty(), 0u32, Empty(), 0u32, Empty(), 0u32) !=
+        Query.Databaseˉqueryˉerror.Duplicateˉprojection {
+        return 1;
+    }
+    let Invalidˉfieldˉcomponent: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉprojection(4u32);
+    let Invalidˉfield: bytes = Invalidˉfieldˉcomponent.Bytes;
+    if Semanticˉerror(Invalidˉfield, 1u32, Empty(), 0u32, Empty(), 0u32, Empty(), 0u32) !=
+        Query.Databaseˉqueryˉerror.Invalidˉfield {
+        return 2;
+    }
+    let Nameˉparameter: bytes = Parameter(
+        4u32,
+        false,
+        Textˉtoˉutf8("x")
+    );
+    let Wrongˉkindˉcomponent: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉpredicate(
+        1u32,
+        Query.Databaseˉqueryˉoperator.Equal,
+        0u32
+    );
+    let Wrongˉkind: bytes = Wrongˉkindˉcomponent.Bytes;
+    if Semanticˉerror(Empty(), 0u32, Wrongˉkind, 1u32, Empty(), 0u32, Nameˉparameter, 1u32) !=
+        Query.Databaseˉqueryˉerror.Parameterˉkindˉmismatch {
+        return 3;
+    }
+    let Nullˉparameter: bytes = Parameter(2u32, true, Empty());
+    if Semanticˉerror(Empty(), 0u32, Wrongˉkind, 1u32, Empty(), 0u32, Nullˉparameter, 1u32) !=
+        Query.Databaseˉqueryˉerror.Nullˉcomparison {
+        return 4;
+    }
+    let Boolˉparameter: bytes = Parameter(
+        1u32,
+        false,
+        Bytesˉfromˉu8(1u8)
+    );
+    let Orderedˉboolˉcomponent: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉpredicate(
+        0u32,
+        Query.Databaseˉqueryˉoperator.Greater,
+        0u32
+    );
+    let Orderedˉbool: bytes = Orderedˉboolˉcomponent.Bytes;
+    if Semanticˉerror(Empty(), 0u32, Orderedˉbool, 1u32, Empty(), 0u32, Boolˉparameter, 1u32) !=
+        Query.Databaseˉqueryˉerror.Unsupportedˉordering {
+        return 5;
+    }
+    let Unused: bytes = Parameter(4u32, false, Textˉtoˉutf8("unused"));
+    if Semanticˉerror(Empty(), 0u32, Empty(), 0u32, Empty(), 0u32, Unused, 1u32) !=
+        Query.Databaseˉqueryˉerror.Unusedˉparameter {
+        return 6;
+    }
+    let Orderˉascending: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉorder(
+            2u32,
+            Query.Databaseˉqueryˉdirection.Ascending
+        );
+    let Orderˉdescending: Query.Databaseˉqueryˉcomponent =
+        Query.Databaseˉqueryˉorder(
+            2u32,
+            Query.Databaseˉqueryˉdirection.Descending
+        );
+    let Duplicateˉorder: bytes = Bytesˉconcat(
+        Orderˉascending.Bytes,
+        Orderˉdescending.Bytes
+    );
+    if Semanticˉerror(Empty(), 0u32, Empty(), 0u32, Duplicateˉorder, 2u32, Empty(), 0u32) !=
+        Query.Databaseˉqueryˉerror.Duplicateˉorder {
+        return 7;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Encoding: i32 = Encodingˉcontract();
+    if Encoding != 0 { return 100 + Encoding; }
+    let Header: i32 = Headerˉrejections();
+    if Header != 0 { return 200 + Header; }
+    let Semantic: i32 = Semanticˉrejections();
+    if Semantic != 0 { return 300 + Semantic; }
+    return 0;
+}

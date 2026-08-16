@@ -1599,7 +1599,20 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
-        DatabaseTarget = 'typed-row'
+        DatabaseTarget = 'typed-query'
+    },
+    @{
+        Name = 'focused database query-ir owner'
+        Paths = @(
+            'Libraries/Database/Query-Ir.wv',
+            'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv',
+            'Specifications/Windvale-Database-Query-Ir.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'query-ir'
     },
     @{
         Name = 'focused database json-value owner'
@@ -1684,6 +1697,7 @@ $NativeCases = @(
             'Libraries/Database/Logical-Record-Write.wv',
             'Libraries/Database/Schema-Definition.wv',
             'Libraries/Database/Typed-Row.wv',
+            'Libraries/Database/Query-Ir.wv',
             'Libraries/Database/Json-Value.wv',
             'Libraries/Database/Json-Protocol.wv',
             'Libraries/Database/Local-Database-Contracts.wv',
@@ -1711,6 +1725,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Json-Value-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Json-Protocol-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Collection-Catalog-Self-Test.wv',
@@ -1732,6 +1747,7 @@ $NativeCases = @(
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
             'Specifications/Windvale-Database-Logical-Records.md',
             'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md',
+            'Specifications/Windvale-Database-Query-Ir.md',
             'Specifications/Windvale-Database-Json-Value.md',
             'Specifications/Windvale-Database-Json-Protocol.md',
             'Specifications/Windvale-Database-Collection-Catalog.md',
@@ -1768,6 +1784,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Json-Protocol.wvproj',
             'Projects/Libraries/Windvale-Library-Local-Database-Contracts.wvproj',
@@ -1795,6 +1812,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Json-Protocol.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
@@ -2283,7 +2301,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4144 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4145 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -1,0 +1,739 @@
+module Windvaleˉdatabaseˉqueryˉir profile portable;
+
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+
+const DATABASE_QUERY_MAGIC: u32 = 1230067287u32;
+const DATABASE_QUERY_VERSION: u32 = 1u32;
+const DATABASE_QUERY_HEADER_BYTES: u32 = 72u32;
+const DATABASE_QUERY_MAXIMUM_BYTES: u32 = 61408u32;
+const DATABASE_QUERY_MAXIMUM_PROJECTIONS: u32 = 64u32;
+const DATABASE_QUERY_MAXIMUM_PREDICATES: u32 = 32u32;
+const DATABASE_QUERY_MAXIMUM_ORDERS: u32 = 8u32;
+const DATABASE_QUERY_MAXIMUM_PARAMETERS: u32 = 32u32;
+const DATABASE_QUERY_MAXIMUM_ROWS: u32 = 500u32;
+const DATABASE_QUERY_NO_PARAMETER: u32 = 4294967295u32;
+
+export enum Databaseˉqueryˉoperator {
+    Invalid = 0;
+    Equal = 1;
+    Notˉequal = 2;
+    Less = 3;
+    Lessˉorˉequal = 4;
+    Greater = 5;
+    Greaterˉorˉequal = 6;
+    Isˉnull = 7;
+    Isˉnotˉnull = 8;
+}
+
+export enum Databaseˉqueryˉdirection {
+    Invalid = 0;
+    Ascending = 1;
+    Descending = 2;
+}
+
+export enum Databaseˉqueryˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉflags = 5;
+    Invalidˉidentity = 6;
+    Schemaˉmismatch = 7;
+    Invalidˉprojectionˉcount = 8;
+    Invalidˉpredicateˉcount = 9;
+    Invalidˉorderˉcount = 10;
+    Invalidˉparameterˉcount = 11;
+    Invalidˉlimit = 12;
+    Invalidˉsectionˉlength = 13;
+    Invalidˉfield = 14;
+    Duplicateˉprojection = 15;
+    Duplicateˉorder = 16;
+    Invalidˉoperator = 17;
+    Invalidˉdirection = 18;
+    Invalidˉparameter = 19;
+    Unusedˉparameter = 20;
+    Invalidˉparameterˉvalue = 21;
+    Parameterˉkindˉmismatch = 22;
+    Nullˉcomparison = 23;
+    Unsupportedˉordering = 24;
+    Invalidˉreserved = 25;
+}
+
+export record Databaseˉqueryˉcomponent {
+    Error: Databaseˉqueryˉerror;
+    Bytes: bytes;
+}
+
+record Databaseˉqueryˉparameterˉresult {
+    Valid: bool;
+    Kind: Schema.Databaseˉfieldˉkind;
+    Null: bool;
+    Next: u32;
+}
+
+export record Databaseˉqueryˉresult {
+    Error: Databaseˉqueryˉerror;
+    Collection: u64;
+    Schema: u64;
+    Projectionˉcount: u32;
+    Predicateˉcount: u32;
+    Orderˉcount: u32;
+    Parameterˉcount: u32;
+    Limit: u32;
+    Projections: bytes;
+    Predicates: bytes;
+    Orders: bytes;
+    Parameters: bytes;
+    Bytes: bytes;
+}
+
+fn Databaseˉqueryˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉqueryˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 { return Databaseˉqueryˉempty(); }
+    return Bytesˉslice(
+        Bytesˉconcat(Bytesˉfromˉu8(0u8), Input),
+        1u32,
+        Total
+    );
+}
+
+fn Databaseˉqueryˉfailure(
+    Error: Databaseˉqueryˉerror
+) -> Databaseˉqueryˉresult {
+    let Empty: bytes = Databaseˉqueryˉempty();
+    return Databaseˉqueryˉresult(
+        Error,
+        0u64,
+        0u64,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty
+    );
+}
+
+fn Databaseˉqueryˉcomponentˉfailure(
+    Error: Databaseˉqueryˉerror
+) -> Databaseˉqueryˉcomponent {
+    return Databaseˉqueryˉcomponent(Error, Databaseˉqueryˉempty());
+}
+
+fn Databaseˉqueryˉoperatorˉraw(
+    Operator: Databaseˉqueryˉoperator
+) -> u32 {
+    if Operator == Databaseˉqueryˉoperator.Equal { return 1u32; }
+    if Operator == Databaseˉqueryˉoperator.Notˉequal { return 2u32; }
+    if Operator == Databaseˉqueryˉoperator.Less { return 3u32; }
+    if Operator == Databaseˉqueryˉoperator.Lessˉorˉequal { return 4u32; }
+    if Operator == Databaseˉqueryˉoperator.Greater { return 5u32; }
+    if Operator == Databaseˉqueryˉoperator.Greaterˉorˉequal { return 6u32; }
+    if Operator == Databaseˉqueryˉoperator.Isˉnull { return 7u32; }
+    if Operator == Databaseˉqueryˉoperator.Isˉnotˉnull { return 8u32; }
+    return 0u32;
+}
+
+fn Databaseˉqueryˉoperatorˉfromˉraw(
+    Value: u32
+) -> Databaseˉqueryˉoperator {
+    if Value == 1u32 { return Databaseˉqueryˉoperator.Equal; }
+    if Value == 2u32 { return Databaseˉqueryˉoperator.Notˉequal; }
+    if Value == 3u32 { return Databaseˉqueryˉoperator.Less; }
+    if Value == 4u32 { return Databaseˉqueryˉoperator.Lessˉorˉequal; }
+    if Value == 5u32 { return Databaseˉqueryˉoperator.Greater; }
+    if Value == 6u32 { return Databaseˉqueryˉoperator.Greaterˉorˉequal; }
+    if Value == 7u32 { return Databaseˉqueryˉoperator.Isˉnull; }
+    if Value == 8u32 { return Databaseˉqueryˉoperator.Isˉnotˉnull; }
+    return Databaseˉqueryˉoperator.Invalid;
+}
+
+fn Databaseˉqueryˉdirectionˉraw(
+    Direction: Databaseˉqueryˉdirection
+) -> u32 {
+    if Direction == Databaseˉqueryˉdirection.Ascending { return 1u32; }
+    if Direction == Databaseˉqueryˉdirection.Descending { return 2u32; }
+    return 0u32;
+}
+
+fn Databaseˉqueryˉkindˉraw(Kind: Schema.Databaseˉfieldˉkind) -> u32 {
+    if Kind == Schema.Databaseˉfieldˉkind.I64 { return 2u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.U64 { return 3u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.Text { return 4u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.Bytes { return 5u32; }
+    return 1u32;
+}
+
+fn Databaseˉqueryˉkindˉfromˉraw(
+    Value: u32
+) -> Schema.Databaseˉfieldˉkind {
+    if Value == 2u32 { return Schema.Databaseˉfieldˉkind.I64; }
+    if Value == 3u32 { return Schema.Databaseˉfieldˉkind.U64; }
+    if Value == 4u32 { return Schema.Databaseˉfieldˉkind.Text; }
+    if Value == 5u32 { return Schema.Databaseˉfieldˉkind.Bytes; }
+    return Schema.Databaseˉfieldˉkind.Boolean;
+}
+
+fn Databaseˉqueryˉparameterˉdataˉvalid(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(Data);
+    if Null { return Length == 0u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.Boolean {
+        if Length != 1u32 { return false; }
+        let Value: u8 = Bytesˉreadˉu8(Data, 0u32);
+        return Value == 0u8 || Value == 1u8;
+    }
+    if Kind == Schema.Databaseˉfieldˉkind.I64 ||
+        Kind == Schema.Databaseˉfieldˉkind.U64 {
+        return Length == 8u32;
+    }
+    if Kind == Schema.Databaseˉfieldˉkind.Text {
+        return Textˉutf8ˉisˉvalid(Data);
+    }
+    return true;
+}
+
+export fn Databaseˉqueryˉparameter(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> Databaseˉqueryˉcomponent {
+    if !Databaseˉqueryˉparameterˉdataˉvalid(Kind, Null, Data) {
+        return Databaseˉqueryˉcomponentˉfailure(
+            Databaseˉqueryˉerror.Invalidˉparameterˉvalue
+        );
+    }
+    var Flags: u32 = 0u32;
+    if Null { Flags = 1u32; }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(
+        Databaseˉqueryˉkindˉraw(Kind)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Data);
+    return Databaseˉqueryˉcomponent(Databaseˉqueryˉerror.Valid, Result);
+}
+
+export fn Databaseˉqueryˉprojection(
+    Field: u32
+) -> Databaseˉqueryˉcomponent {
+    return Databaseˉqueryˉcomponent(
+        Databaseˉqueryˉerror.Valid,
+        Bytesˉfromˉu32ˉlittle(Field)
+    );
+}
+
+export fn Databaseˉqueryˉpredicate(
+    Field: u32,
+    Operator: Databaseˉqueryˉoperator,
+    Parameter: u32
+) -> Databaseˉqueryˉcomponent {
+    let Rawˉoperator: u32 = Databaseˉqueryˉoperatorˉraw(Operator);
+    if Rawˉoperator == 0u32 {
+        return Databaseˉqueryˉcomponentˉfailure(
+            Databaseˉqueryˉerror.Invalidˉoperator
+        );
+    }
+    let Nullˉoperator: bool =
+        Operator == Databaseˉqueryˉoperator.Isˉnull ||
+        Operator == Databaseˉqueryˉoperator.Isˉnotˉnull;
+    if (Nullˉoperator && Parameter != DATABASE_QUERY_NO_PARAMETER) ||
+        (!Nullˉoperator && Parameter == DATABASE_QUERY_NO_PARAMETER) {
+        return Databaseˉqueryˉcomponentˉfailure(
+            Databaseˉqueryˉerror.Invalidˉparameter
+        );
+    }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Field);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Rawˉoperator));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Parameter));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Databaseˉqueryˉcomponent(Databaseˉqueryˉerror.Valid, Result);
+}
+
+export fn Databaseˉqueryˉorder(
+    Field: u32,
+    Direction: Databaseˉqueryˉdirection
+) -> Databaseˉqueryˉcomponent {
+    let Rawˉdirection: u32 = Databaseˉqueryˉdirectionˉraw(Direction);
+    if Rawˉdirection == 0u32 {
+        return Databaseˉqueryˉcomponentˉfailure(
+            Databaseˉqueryˉerror.Invalidˉdirection
+        );
+    }
+    return Databaseˉqueryˉcomponent(
+        Databaseˉqueryˉerror.Valid,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Field),
+            Bytesˉfromˉu32ˉlittle(Rawˉdirection)
+        )
+    );
+}
+
+fn Databaseˉqueryˉfieldˉshape(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Target: u32
+) -> Schema.Databaseˉschemaˉfieldˉshapeˉresult {
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Shape: Schema.Databaseˉschemaˉfieldˉshapeˉresult =
+        Schema.Databaseˉschemaˉfieldˉshapeˉat(Definition.Fields, Cursor);
+    while Index < Target {
+        Cursor = Shape.Next;
+        Shape = Schema.Databaseˉschemaˉfieldˉshapeˉat(
+            Definition.Fields,
+            Cursor
+        );
+        Index = Index + 1u32;
+    }
+    return Shape;
+}
+
+fn Databaseˉqueryˉprojectionˉerror(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Projections: bytes,
+    Count: u32
+) -> Databaseˉqueryˉerror {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Projections, Index * 4u32);
+        if Field >= Definition.Fieldˉcount {
+            return Databaseˉqueryˉerror.Invalidˉfield;
+        }
+        var Prior: u32 = 0u32;
+        while Prior < Index {
+            if Bytesˉreadˉu32ˉlittle(Projections, Prior * 4u32) == Field {
+                return Databaseˉqueryˉerror.Duplicateˉprojection;
+            }
+            Prior = Prior + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Databaseˉqueryˉerror.Valid;
+}
+
+fn Databaseˉqueryˉparameterˉread(
+    Parameters: bytes,
+    Offset: u32
+) -> Databaseˉqueryˉparameterˉresult {
+    let Total: u32 = Bytesˉlength(Parameters);
+    if Offset > Total || Total - Offset < 16u32 {
+        return Databaseˉqueryˉparameterˉresult(
+            false,
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            0u32
+        );
+    }
+    let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Parameters, Offset);
+    let Rawˉflags: u32 = Bytesˉreadˉu32ˉlittle(Parameters, Offset + 4u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Parameters, Offset + 8u32);
+    if Rawˉkind == 0u32 || Rawˉkind > 5u32 || Rawˉflags > 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Parameters, Offset + 12u32) != 0u32 ||
+        Length > Total - Offset - 16u32 {
+        return Databaseˉqueryˉparameterˉresult(
+            false,
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            0u32
+        );
+    }
+    let Kind: Schema.Databaseˉfieldˉkind =
+        Databaseˉqueryˉkindˉfromˉraw(Rawˉkind);
+    let Null: bool = Rawˉflags == 1u32;
+    if !Databaseˉqueryˉparameterˉdataˉvalid(
+            Kind,
+            Null,
+            Bytesˉslice(Parameters, Offset + 16u32, Length)
+        ) {
+        return Databaseˉqueryˉparameterˉresult(
+            false,
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            0u32
+        );
+    }
+    return Databaseˉqueryˉparameterˉresult(
+        true,
+        Kind,
+        Null,
+        Offset + 16u32 + Length
+    );
+}
+
+fn Databaseˉqueryˉparameterˉat(
+    Parameters: bytes,
+    Target: u32
+) -> Databaseˉqueryˉparameterˉresult {
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Value: Databaseˉqueryˉparameterˉresult =
+        Databaseˉqueryˉparameterˉread(Parameters, Cursor);
+    while Index < Target {
+        Cursor = Value.Next;
+        Value = Databaseˉqueryˉparameterˉread(Parameters, Cursor);
+        Index = Index + 1u32;
+    }
+    return Value;
+}
+
+fn Databaseˉqueryˉparametersˉerror(
+    Parameters: bytes,
+    Count: u32
+) -> Databaseˉqueryˉerror {
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Value: Databaseˉqueryˉparameterˉresult =
+            Databaseˉqueryˉparameterˉread(Parameters, Cursor);
+        if !Value.Valid {
+            return Databaseˉqueryˉerror.Invalidˉparameterˉvalue;
+        }
+        Cursor = Value.Next;
+        Index = Index + 1u32;
+    }
+    if Cursor != Bytesˉlength(Parameters) {
+        return Databaseˉqueryˉerror.Invalidˉparameterˉvalue;
+    }
+    return Databaseˉqueryˉerror.Valid;
+}
+
+fn Databaseˉqueryˉpredicateˉerror(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Predicates: bytes,
+    Predicateˉcount: u32,
+    Parameters: bytes,
+    Parameterˉcount: u32
+) -> Databaseˉqueryˉerror {
+    var Index: u32 = 0u32;
+    while Index < Predicateˉcount {
+        let Offset: u32 = Index * 16u32;
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Predicates, Offset);
+        if Field >= Definition.Fieldˉcount {
+            return Databaseˉqueryˉerror.Invalidˉfield;
+        }
+        let Operator: Databaseˉqueryˉoperator =
+            Databaseˉqueryˉoperatorˉfromˉraw(
+                Bytesˉreadˉu32ˉlittle(Predicates, Offset + 4u32)
+            );
+        if Operator == Databaseˉqueryˉoperator.Invalid {
+            return Databaseˉqueryˉerror.Invalidˉoperator;
+        }
+        if Bytesˉreadˉu32ˉlittle(Predicates, Offset + 12u32) != 0u32 {
+            return Databaseˉqueryˉerror.Invalidˉreserved;
+        }
+        let Parameter: u32 = Bytesˉreadˉu32ˉlittle(
+            Predicates,
+            Offset + 8u32
+        );
+        let Nullˉoperator: bool =
+            Operator == Databaseˉqueryˉoperator.Isˉnull ||
+            Operator == Databaseˉqueryˉoperator.Isˉnotˉnull;
+        if Nullˉoperator {
+            if Parameter != DATABASE_QUERY_NO_PARAMETER {
+                return Databaseˉqueryˉerror.Invalidˉparameter;
+            }
+        } else {
+            if Parameter >= Parameterˉcount {
+                return Databaseˉqueryˉerror.Invalidˉparameter;
+            }
+            let Shape: Schema.Databaseˉschemaˉfieldˉshapeˉresult =
+                Databaseˉqueryˉfieldˉshape(Definition, Field);
+            let Value: Databaseˉqueryˉparameterˉresult =
+                Databaseˉqueryˉparameterˉat(Parameters, Parameter);
+            if Value.Kind != Shape.Kind {
+                return Databaseˉqueryˉerror.Parameterˉkindˉmismatch;
+            }
+            if Value.Null {
+                return Databaseˉqueryˉerror.Nullˉcomparison;
+            }
+            let Ordered: bool =
+                Operator == Databaseˉqueryˉoperator.Less ||
+                Operator == Databaseˉqueryˉoperator.Lessˉorˉequal ||
+                Operator == Databaseˉqueryˉoperator.Greater ||
+                Operator == Databaseˉqueryˉoperator.Greaterˉorˉequal;
+            if Ordered && (Shape.Kind == Schema.Databaseˉfieldˉkind.Boolean ||
+                    Shape.Kind == Schema.Databaseˉfieldˉkind.Bytes) {
+                return Databaseˉqueryˉerror.Unsupportedˉordering;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    var Parameterˉindex: u32 = 0u32;
+    while Parameterˉindex < Parameterˉcount {
+        var Used: bool = false;
+        var Predicateˉindex: u32 = 0u32;
+        while Predicateˉindex < Predicateˉcount {
+            if Bytesˉreadˉu32ˉlittle(
+                    Predicates,
+                    Predicateˉindex * 16u32 + 8u32
+                ) == Parameterˉindex {
+                Used = true;
+            }
+            Predicateˉindex = Predicateˉindex + 1u32;
+        }
+        if !Used { return Databaseˉqueryˉerror.Unusedˉparameter; }
+        Parameterˉindex = Parameterˉindex + 1u32;
+    }
+    return Databaseˉqueryˉerror.Valid;
+}
+
+fn Databaseˉqueryˉorderˉerror(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Orders: bytes,
+    Count: u32
+) -> Databaseˉqueryˉerror {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Offset: u32 = Index * 8u32;
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Orders, Offset);
+        if Field >= Definition.Fieldˉcount {
+            return Databaseˉqueryˉerror.Invalidˉfield;
+        }
+        let Direction: u32 = Bytesˉreadˉu32ˉlittle(Orders, Offset + 4u32);
+        if Direction == 0u32 || Direction > 2u32 {
+            return Databaseˉqueryˉerror.Invalidˉdirection;
+        }
+        let Shape: Schema.Databaseˉschemaˉfieldˉshapeˉresult =
+            Databaseˉqueryˉfieldˉshape(Definition, Field);
+        if Shape.Kind == Schema.Databaseˉfieldˉkind.Boolean ||
+            Shape.Kind == Schema.Databaseˉfieldˉkind.Bytes {
+            return Databaseˉqueryˉerror.Unsupportedˉordering;
+        }
+        var Prior: u32 = 0u32;
+        while Prior < Index {
+            if Bytesˉreadˉu32ˉlittle(Orders, Prior * 8u32) == Field {
+                return Databaseˉqueryˉerror.Duplicateˉorder;
+            }
+            Prior = Prior + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Databaseˉqueryˉerror.Valid;
+}
+
+export fn Databaseˉqueryˉdecode(
+    Input: bytes,
+    Schemaˉbytes: bytes
+) -> Databaseˉqueryˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_QUERY_HEADER_BYTES ||
+        Total > DATABASE_QUERY_MAXIMUM_BYTES {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉlength);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_QUERY_MAGIC {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉmagic);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_QUERY_VERSION {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_QUERY_HEADER_BYTES {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉheader);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉflags);
+    }
+    let Collection: u64 = Bytesˉreadˉu64ˉlittle(Input, 16u32);
+    let Schemaˉidentity: u64 = Bytesˉreadˉu64ˉlittle(Input, 24u32);
+    if Collection == 0u64 || Schemaˉidentity == 0u64 {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉidentity);
+    }
+    let Projectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Predicateˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    let Orderˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 44u32);
+    let Limit: u32 = Bytesˉreadˉu32ˉlittle(Input, 48u32);
+    if Projectionˉcount > DATABASE_QUERY_MAXIMUM_PROJECTIONS {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Invalidˉprojectionˉcount
+        );
+    }
+    if Predicateˉcount > DATABASE_QUERY_MAXIMUM_PREDICATES {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Invalidˉpredicateˉcount
+        );
+    }
+    if Orderˉcount > DATABASE_QUERY_MAXIMUM_ORDERS {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Invalidˉorderˉcount
+        );
+    }
+    if Parameterˉcount > DATABASE_QUERY_MAXIMUM_PARAMETERS {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Invalidˉparameterˉcount
+        );
+    }
+    if Limit == 0u32 || Limit > DATABASE_QUERY_MAXIMUM_ROWS {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉlimit);
+    }
+    let Projectionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 52u32);
+    let Predicateˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 56u32);
+    let Orderˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 60u32);
+    let Parameterˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 64u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 68u32) != 0u32 {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Invalidˉreserved);
+    }
+    if Projectionˉbytes != Projectionˉcount * 4u32 ||
+        Predicateˉbytes != Predicateˉcount * 16u32 ||
+        Orderˉbytes != Orderˉcount * 8u32 {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Invalidˉsectionˉlength
+        );
+    }
+    let Variableˉbytes: u32 = Total - DATABASE_QUERY_HEADER_BYTES;
+    if Projectionˉbytes > Variableˉbytes ||
+        Predicateˉbytes > Variableˉbytes - Projectionˉbytes ||
+        Orderˉbytes > Variableˉbytes - Projectionˉbytes - Predicateˉbytes ||
+        Parameterˉbytes != Variableˉbytes - Projectionˉbytes -
+            Predicateˉbytes - Orderˉbytes {
+        return Databaseˉqueryˉfailure(
+            Databaseˉqueryˉerror.Invalidˉsectionˉlength
+        );
+    }
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Definition.Error != Schema.Databaseˉschemaˉerror.Valid {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Schemaˉmismatch);
+    }
+    if Definition.Collection != Collection ||
+        Definition.Schema != Schemaˉidentity {
+        return Databaseˉqueryˉfailure(Databaseˉqueryˉerror.Schemaˉmismatch);
+    }
+    let Projectionˉoffset: u32 = DATABASE_QUERY_HEADER_BYTES;
+    let Predicateˉoffset: u32 = Projectionˉoffset + Projectionˉbytes;
+    let Orderˉoffset: u32 = Predicateˉoffset + Predicateˉbytes;
+    let Parameterˉoffset: u32 = Orderˉoffset + Orderˉbytes;
+    let Projections: bytes = Bytesˉslice(
+        Input,
+        Projectionˉoffset,
+        Projectionˉbytes
+    );
+    let Predicates: bytes = Bytesˉslice(
+        Input,
+        Predicateˉoffset,
+        Predicateˉbytes
+    );
+    let Orders: bytes = Bytesˉslice(Input, Orderˉoffset, Orderˉbytes);
+    let Parameters: bytes = Bytesˉslice(
+        Input,
+        Parameterˉoffset,
+        Parameterˉbytes
+    );
+    let Projectionˉerror: Databaseˉqueryˉerror =
+        Databaseˉqueryˉprojectionˉerror(
+            Definition,
+            Projections,
+            Projectionˉcount
+        );
+    if Projectionˉerror != Databaseˉqueryˉerror.Valid {
+        return Databaseˉqueryˉfailure(Projectionˉerror);
+    }
+    let Parameterˉerror: Databaseˉqueryˉerror =
+        Databaseˉqueryˉparametersˉerror(Parameters, Parameterˉcount);
+    if Parameterˉerror != Databaseˉqueryˉerror.Valid {
+        return Databaseˉqueryˉfailure(Parameterˉerror);
+    }
+    let Predicateˉerror: Databaseˉqueryˉerror =
+        Databaseˉqueryˉpredicateˉerror(
+            Definition,
+            Predicates,
+            Predicateˉcount,
+            Parameters,
+            Parameterˉcount
+        );
+    if Predicateˉerror != Databaseˉqueryˉerror.Valid {
+        return Databaseˉqueryˉfailure(Predicateˉerror);
+    }
+    let Orderˉerror: Databaseˉqueryˉerror =
+        Databaseˉqueryˉorderˉerror(Definition, Orders, Orderˉcount);
+    if Orderˉerror != Databaseˉqueryˉerror.Valid {
+        return Databaseˉqueryˉfailure(Orderˉerror);
+    }
+    return Databaseˉqueryˉresult(
+        Databaseˉqueryˉerror.Valid,
+        Collection,
+        Schemaˉidentity,
+        Projectionˉcount,
+        Predicateˉcount,
+        Orderˉcount,
+        Parameterˉcount,
+        Limit,
+        Databaseˉqueryˉcopy(Projections),
+        Databaseˉqueryˉcopy(Predicates),
+        Databaseˉqueryˉcopy(Orders),
+        Databaseˉqueryˉcopy(Parameters),
+        Databaseˉqueryˉcopy(Input)
+    );
+}
+
+export fn Databaseˉqueryˉencode(
+    Collection: u64,
+    Schemaˉidentity: u64,
+    Limit: u32,
+    Projectionˉcount: u32,
+    Projections: bytes,
+    Predicateˉcount: u32,
+    Predicates: bytes,
+    Orderˉcount: u32,
+    Orders: bytes,
+    Parameterˉcount: u32,
+    Parameters: bytes,
+    Schemaˉbytes: bytes
+) -> Databaseˉqueryˉresult {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_QUERY_MAGIC);
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(DATABASE_QUERY_VERSION)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(DATABASE_QUERY_HEADER_BYTES)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Collection));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Schemaˉidentity));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Projectionˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Predicateˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Orderˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Parameterˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Limit));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Projections))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Predicates))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Orders))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Parameters))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Projections);
+    Result = Bytesˉconcat(Result, Predicates);
+    Result = Bytesˉconcat(Result, Orders);
+    Result = Bytesˉconcat(Result, Parameters);
+    return Databaseˉqueryˉdecode(Result, Schemaˉbytes);
+}

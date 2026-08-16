@@ -72,7 +72,7 @@ external-model-gateway|Test-External-Model-Gateway|30|4|external model gateway s
 native-external-model-gateway|Test-Native-External-Model-Gateway|14|4|native external model gateway status=Passed cases=14 local-result=0 cross-host-images=Verified public-network=0 real-credentials=0
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|30|1|native database storage status=Passed cases=30 local-results=0 cross-host-images=Verified
+database-storage|Test-Database-Storage|31|1|native database storage status=Passed cases=31 local-results=0 cross-host-images=Verified
 workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11

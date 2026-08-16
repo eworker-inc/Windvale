@@ -79,6 +79,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Bounded typed database rows and schemas](Windvale-Database-Typed-Rows-And-Schemas.md)
 - [Strict bounded database JSON value](Windvale-Database-Json-Value.md)
 - [Strict database JSON protocol envelope](Windvale-Database-Json-Protocol.md)
+- [Bounded typed database query IR](Windvale-Database-Query-Ir.md)
 - [Deterministic durable database bootstrap](Windvale-Database-Bootstrap.md)
 - [Portable local database service session](Windvale-Database-Local-Service.md)
 - [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)

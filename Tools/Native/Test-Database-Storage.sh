@@ -19,15 +19,18 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=21
+        selected_cases=22
         ;;
-    tree-node|logical-record|typed-row|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
+    tree-node|logical-record|typed-row|query-ir|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
         selected_cases=1
         ;;
     host-tree-reader)
         selected_cases=2
         ;;
     json)
+        selected_cases=2
+        ;;
+    typed-query)
         selected_cases=2
         ;;
     host-root-writer)
@@ -1476,7 +1479,9 @@ if ((development == 1)); then
     verify_development_target LogicalRecord logical-record \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
     verify_development_target TypedRow typed-row \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" typed-query || exit $?
+    verify_development_target QueryIr query-ir \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query || exit $?
     verify_development_target JsonValue json-value \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj" json || exit $?
     verify_development_target JsonProtocol json-protocol \
@@ -1523,6 +1528,8 @@ verify_target LogicalRecord \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
 verify_target TypedRow \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
+verify_target QueryIr \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" || exit $?
 verify_target JsonValue \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj" || exit $?
 verify_target JsonProtocol \
@@ -1575,4 +1582,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=30 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=31 local-results=0 cross-host-images=Verified'
