@@ -38,13 +38,22 @@ function Canonicalˉtarget(Value) {
     return true;
 }
 
-function Canonicalˉheaderˉvalue(Value) {
-    if (typeof Value !== "string" || Value.length < 1 || Value.length > 4_096 ||
-        Value.trim() !== Value || Buffer.byteLength(Value, "ascii") !== Value.length) return false;
-    for (const Byte of Buffer.from(Value, "ascii")) {
-        if (Byte !== 0x09 && (Byte < 0x20 || Byte > 0x7e)) return false;
+function Headerˉvalueˉbytes(Value) {
+    let Bytes;
+    if (typeof Value === "string") {
+        if (Buffer.byteLength(Value, "ascii") !== Value.length) return null;
+        Bytes = Buffer.from(Value, "ascii");
+    } else if (Buffer.isBuffer(Value)) {
+        Bytes = Value;
+    } else if (Value instanceof Uint8Array) {
+        Bytes = Buffer.from(Value.buffer, Value.byteOffset, Value.byteLength);
+    } else return null;
+    if (Bytes.length < 1 || Bytes.length > 4_096 || Bytes[0] === 0x20 || Bytes[0] === 0x09 ||
+        Bytes.at(-1) === 0x20 || Bytes.at(-1) === 0x09) return null;
+    for (const Byte of Bytes) {
+        if (Byte !== 0x09 && (Byte < 0x20 || Byte > 0x7e)) return null;
     }
-    return true;
+    return Bytes;
 }
 
 function Limits(Values = {}) {
@@ -100,26 +109,31 @@ export function Buildˉboundedˉhttp1ˉrequest({
     }
     if (headers.length > 16) Fail("limit", "HTTP request has too many headers.");
     const Seen = new Set();
-    const Lines = [
-        `${method} ${target} HTTP/1.1`,
-        `Host: ${service}${port === 443 ? "" : `:${port}`}`,
-        "Connection: close",
+    const Parts = [
+        Buffer.from(
+            `${method} ${target} HTTP/1.1\r\n` +
+            `Host: ${service}${port === 443 ? "" : `:${port}`}\r\n` +
+            "Connection: close\r\n",
+            "ascii",
+        ),
     ];
     for (const Header of headers) {
         if (Header === null || typeof Header !== "object" ||
             typeof Header.name !== "string" || Header.name !== Header.name.toLowerCase() ||
-            !TOKEN.test(Header.name) || !Allowed.has(Header.name) || Seen.has(Header.name) ||
-            !Canonicalˉheaderˉvalue(Header.value)) {
+            !TOKEN.test(Header.name) || !Allowed.has(Header.name) || Seen.has(Header.name)) {
             Fail("invalid_request", "HTTP request header is invalid or unauthorized.");
         }
+        const Value = Headerˉvalueˉbytes(Header.value);
+        if (Value === null) Fail("invalid_request", "HTTP request header value is invalid.");
         Seen.add(Header.name);
-        Lines.push(`${Header.name}: ${Header.value}`);
+        Parts.push(Buffer.from(`${Header.name}: `, "ascii"), Value, Buffer.from("\r\n", "ascii"));
     }
     if (Payload.length !== 0 && !Seen.has("content-type")) {
         Fail("invalid_request", "HTTP request body requires an admitted content type.");
     }
-    if (method === "POST") Lines.push(`Content-Length: ${Payload.length}`);
-    const Prefix = Buffer.from(`${Lines.join("\r\n")}\r\n\r\n`, "ascii");
+    if (method === "POST") Parts.push(Buffer.from(`Content-Length: ${Payload.length}\r\n`, "ascii"));
+    Parts.push(Buffer.from("\r\n", "ascii"));
+    const Prefix = Buffer.concat(Parts);
     if (Prefix.length > 16_384 || Prefix.length + Payload.length > Maximum) {
         Fail("limit", "HTTP request exceeds its byte limit.");
     }

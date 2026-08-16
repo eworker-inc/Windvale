@@ -89,6 +89,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Supervised host network provider](Host-Network-Provider.md)
 - [Supervised host TLS 1.3 provider](Host-Tls-Provider.md)
 - [Bounded HTTPS version 1](Bounded-Https.md)
+- [Protected provider credential version 1](Protected-Provider-Credential.md)
 
 ## Networking
 

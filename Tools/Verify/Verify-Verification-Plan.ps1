@@ -1219,6 +1219,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'protected credential owner'
+        Paths = @(
+            'Runtime/Hosted/Credentials/Protected-Credential.mjs',
+            'Tools/Credentials/Test-Protected-Credential.mjs',
+            'Tools/Native/Test-Protected-Credential.cmd',
+            'Tools/Native/Test-Protected-Credential.sh',
+            'Specifications/Protected-Provider-Credential.md'
+        )
+        Suites = @('protected-credential')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'hosted model provider owner'
         Paths = @(
             'Libraries/Platform/Models/Bound-Model-Provider.wv',
@@ -1892,9 +1905,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 78 -or
+if ($VerificationOwnerLines.Count -ne 79 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 75-owner inventory differs.'
+    throw 'The native verification-owner header or exact 78-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1932,7 +1945,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3693 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3709 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

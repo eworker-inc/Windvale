@@ -601,6 +601,8 @@ export class Hostˉnetworkˉprovider {
         } catch (Error) {
             if (Error instanceof Providerˉfailure) return this.#Failure(Request, Error.status);
             return this.#Failure(Request, Hostˉnetworkˉstatus.ProviderLost);
+        } finally {
+            if (Request.operation === Hostˉnetworkˉoperation.Write) Request.payload.fill(0);
         }
     }
 

@@ -157,14 +157,18 @@ export class Hostˉnetworkˉsupervisor {
                 Reject(new Error("Host-network supervisor response deadline expired."));
             }, Timeout + 1_000);
             this.pending.set(RequestId.toString(), { resolve: Resolve, reject: Reject, timer: Timer });
-            this.child.stdin.write(Bytes, Error => {
+            const Completeˉwrite = Error => {
+                Bytes.fill(0);
                 if (!Error) return;
                 const Pending = this.pending.get(RequestId.toString());
                 if (!Pending) return;
                 this.pending.delete(RequestId.toString());
                 clearTimeout(Timer);
                 Reject(new Error("Host-network provider input failed."));
-            });
+            };
+            try { this.child.stdin.write(Bytes, Completeˉwrite); } catch (Error) {
+                Completeˉwrite(Error);
+            }
         });
     }
 

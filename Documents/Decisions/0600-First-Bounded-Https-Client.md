@@ -1,7 +1,7 @@
 # Decision 0600: First bounded HTTPS client
 
 - Date: 2026-08-15
-- Status: Implemented candidate with isolated Windows evidence
+- Status: Implemented candidate with independent Windows/Linux evidence
 - Advances: network slice 5
 - Contract: [bounded HTTPS](../../Specifications/Bounded-Https.md)
 - Builds on: [Decision 0599](0599-First-Supervised-Host-Tls-13-Provider.md)
@@ -48,8 +48,8 @@ peers with strict limits and without credentials. The external-model gateway
 can reuse this framing after protected credential custody supplies an internal
 authorization field; portable callers still receive no URL or header map.
 
-This remains a hosted bootstrap candidate. Independent Linux execution, the
-Windvale capability/timer bridge, credential custody, provider JSON validation,
+This remains a hosted bootstrap candidate. The Windvale capability/timer bridge,
+provider JSON validation,
 and an end-to-end supervised model gateway remain required. The first profile
 does not follow redirects or implement HTTP/2, HTTP/3, pooling, compression,
 cookies, caching, proxies, or retries.

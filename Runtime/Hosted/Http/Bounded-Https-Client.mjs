@@ -209,6 +209,7 @@ export class Boundedˉhttpsˉclient {
             if (Error instanceof Boundedˉhttpˉfailure) throw Error;
             throw new Boundedˉhttpˉfailure("provider_lost", "HTTPS provider failed.");
         } finally {
+            Request.fill(0);
             if (Connection?.status === Hostˉnetworkˉstatus.Valid) {
                 try {
                     await Supervisor.closeConnection(

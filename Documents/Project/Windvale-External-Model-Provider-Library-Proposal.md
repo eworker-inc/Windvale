@@ -10,8 +10,9 @@
 > Shared network slice 2 is implemented under
 > [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md).
 > The supervised resolver/TCP, TLS 1.3, and bounded HTTPS bootstrap path is
-> implemented under Decisions 0598 through 0600, with bounded HTTPS awaiting its
-> independent Linux execution result.
+> implemented with independent Windows/Linux evidence under Decisions 0598
+> through 0600. Protected provider credential custody is an implemented
+> Windows-evidenced candidate under Decision 0601.
 > The build-restricted model slice 3 reference oracle is implemented under
 > [Decision 0597](../Decisions/0597-First-External-Model-Reference-Oracle.md)
 > for OpenAI, Anthropic, and Google; its deterministic evidence makes no live
@@ -338,8 +339,8 @@ expectations. An adapter never silently sends the prompt to another provider.
 | Rights-limited provider state | [`Windvale-Native-Capability-Provider-Table`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) | Partially ready; one provider per capability identity is practical. |
 | Native provider invocation | [`Windvale-Native-Provider-Call`](../../Specifications/Windvale-Native-Provider-Call.md) | Implemented for exact one-cell catalog and inference calls. |
 | JSON request and hostile-response codec | Windvale has deterministic JSON-style text quoting, not a general JSON value/parser contract | Not ready; provider JSON belongs first in the host adapter and needs bounded parsing. |
-| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The operation, authority, and stream cores plus supervised [host network](../../Specifications/Host-Network-Provider.md), [TLS 1.3](../../Specifications/Host-Tls-Provider.md), and [bounded HTTPS](../../Specifications/Bounded-Https.md) execute against isolated peers | Resolver/TCP and TLS are dual-host verified; HTTPS has Windows evidence while Linux execution, native binding, and production promotion remain pending. |
-| Production API-key custody | Identity/trust architecture exists; no production key store or secret provider is implemented | Not ready. |
+| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The operation, authority, and stream cores plus supervised [host network](../../Specifications/Host-Network-Provider.md), [TLS 1.3](../../Specifications/Host-Tls-Provider.md), and [bounded HTTPS](../../Specifications/Bounded-Https.md) execute against isolated peers | Resolver/TCP, TLS, and HTTPS are dual-host verified; native binding and production promotion remain pending. |
+| Production API-key custody | The hosted [protected provider credential](../../Specifications/Protected-Provider-Credential.md) wrapper and revocable fixed-origin lease have isolated Windows evidence | Ready for supervised-gateway integration after independent Linux execution; OS-keyring/HSM custody remains later work. |
 | Multiple simultaneous provider instances | Typed capability values and nominal provider signatures are future work | Not ready; use separate launches first. |
 | Streaming and concurrent inference | General structured tasks, cancellation, channels, and concurrent provider calls are absent or proposed | Not ready and outside version 1. |
 | Agent integration | The agent architecture and staged plan are proposed; the deterministic kernel is not implemented | Not a blocker for the standalone library; integration comes later. |
@@ -475,8 +476,8 @@ Continue from the implemented protocol, offline hosted seam, catchable
 bridge-lifecycle results, bounded operation/deadline/cancellation core, network
 authority and reliable-stream semantics, and the three-provider reference
 oracle. The real Windows/Linux resolver/TCP and TLS providers plus the first
-bounded HTTPS client now exist. Close HTTPS's Linux evidence, then implement
-production credential custody. Reuse the oracle's provider mappings above those shared
+bounded HTTPS client and protected credential custody now exist. Close custody's
+Linux evidence, then implement the supervised gateway. Reuse the oracle's provider mappings above those shared
 contracts rather than adding model-specific network calls.
 Decision 0595 makes one live adapter and its separately installable gateway a
 Milestone 5 release requirement rather than optional integration evidence.

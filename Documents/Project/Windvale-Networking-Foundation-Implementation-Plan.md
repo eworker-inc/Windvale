@@ -10,10 +10,11 @@
   [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
   [Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md),
   [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md),
-  and [Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md).
-  Resolver/TCP and TLS have independent Windows/Linux execution evidence.
-  Bounded HTTPS has isolated Windows evidence; its independent Linux execution
-  and the native capability bridge remain pending, so no
+  [Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md), and
+  [Decision 0601](../Decisions/0601-First-Protected-Provider-Credential-Custody.md).
+  Resolver/TCP, TLS, and bounded HTTPS have independent Windows/Linux execution
+  evidence. Protected credential custody has isolated Windows evidence; its
+  independent Linux execution and the native capability bridge remain pending, so no
   production network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -240,7 +241,7 @@ native secure-transport leaves remain required before production promotion.
 
 Status: hosted bootstrap candidate implemented under
 [Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md); independent
-Linux execution and native binding remain pending.
+Windows/Linux execution is complete and native binding remains pending.
 
 Implement the portable HTTP client and bounded streaming response body above the
 secure-stream provider. Do not expose cookies, credential discovery, proxy
@@ -255,7 +256,20 @@ The first client binds one exact service and target set, performs one GET or
 POST per TLS connection, owns authority and length headers, and accepts only one
 canonical content length or selected chunked framing. Twenty-nine cases cover
 strict parsing plus real isolated TLS peers. It follows no redirect, performs no
-decompression or retry, and receives no credential.
+decompression or retry, and receives credentials only through the separately
+owned protected-custody injection path.
+
+### External-model credential custody
+
+Status: hosted bootstrap candidate implemented under
+[Decision 0601](../Decisions/0601-First-Protected-Provider-Credential-Custody.md);
+independent Linux execution and supervised gateway ownership remain pending.
+
+The bounded `WVSC 1` wrapper encrypts one provider credential at rest and
+authenticates its provider, generation, exact DNS service, implied HTTPS port
+443, and cryptographic profile. A private revocable lease injects the OpenAI,
+Anthropic, or Google authorization field only inside bounded HTTPS after an exact
+generation check. Sixteen isolated cases use fake keys and no public network.
 
 ### Network slice 6: package-source integration
 
@@ -299,7 +313,7 @@ The `v0.1.0` offline installer and release subset is complete, and Decisions
 the external-model gateway. Preserve the implemented slice 1 and slice 2
 candidates, close bounded HTTPS's independent Linux execution gap, bind the
 supervised providers through the native capability table and timer contract,
-then advance credential custody and the model gateway without weakening the
+then advance the supervised model gateway without weakening the
 separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking
 does not claim completion of the independent Windvale OS packet, driver, or TCP

@@ -11,9 +11,8 @@ package retrieval and the external-model gateway rather than a model-specific
 
 The implementation follows [HTTP semantics](https://www.rfc-editor.org/rfc/rfc9110)
 and [HTTP/1.1 message framing](https://www.rfc-editor.org/rfc/rfc9112) while
-selecting a deliberately stricter first profile. The current local execution
-evidence is Windows. The same source and owner target Linux, but independent
-Linux execution remains required.
+selecting a deliberately stricter first profile. The owner has independent
+Windows and Linux execution evidence for the same source.
 
 ## Immutable client binding
 
@@ -129,10 +128,10 @@ includes `public-network=0`, `credentials=0`, and `redirects-followed=0`.
 
 ## Deferred production boundary
 
-Independent Linux execution, a serialized Windvale HTTP capability/facade, and
-the native capability/timer bridge remain open. Authorization or API-key header
-injection belongs to protected credential custody above this client and must not
-broaden its public header interface. Provider JSON admission and the supervised
-model gateway are the next consumers. HTTP/2, HTTP/3, connection pooling,
+A serialized Windvale HTTP capability/facade and the native capability/timer
+bridge remain open. Authorization or API-key injection is owned by
+[protected credential custody](Protected-Provider-Credential.md) above this
+client and does not broaden its public header interface. Provider JSON admission
+and the supervised model gateway are the next consumers. HTTP/2, HTTP/3, connection pooling,
 cookies, caching, decompression, proxies, automatic redirects, and automatic
 retry are not version-1 features.

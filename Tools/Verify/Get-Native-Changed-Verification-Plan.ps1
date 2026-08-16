@@ -878,8 +878,16 @@ foreach ($Path in $Paths) {
             'Tools/Native/Test-Bounded-Https.cmd',
             'Tools/Native/Test-Bounded-Https.sh',
             'Specifications/Bounded-Https.md'
-        )) {
+    )) {
         Add-Suite 'bounded-https'
+    } elseif ($Path.StartsWith('Runtime/Hosted/Credentials/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Tools/Credentials/Test-Protected-Credential.mjs',
+            'Tools/Native/Test-Protected-Credential.cmd',
+            'Tools/Native/Test-Protected-Credential.sh',
+            'Specifications/Protected-Provider-Credential.md'
+        )) {
+        Add-Suite 'protected-credential'
     } elseif ($Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-Host-Network-Provider.cmd',
