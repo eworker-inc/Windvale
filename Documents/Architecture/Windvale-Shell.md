@@ -15,6 +15,13 @@ contract is implemented by this document. The current browser Workbench command
 line is a JavaScript host prototype; its file and editor commands are not the
 Windvale shell or Windvale OS applications.
 
+The compatibility analysis follows the accepted
+[platform and portability model](Platform-And-Portability.md), the current
+[Windvale OS architecture](Windvale-Os-Architecture.md), and the bounded
+[browser playground contract](../../Specifications/Browser-Playground.md).
+WebAssembly's possible status as a permanent host remains a separate product
+decision; this document defines what compatibility would require from that host.
+
 ## Product intent
 
 Windvale should have one small capability-native shell implemented in Windvale
@@ -108,6 +115,328 @@ WVB without changing its behavior. The browser may run it through the bounded
 WebAssembly-hosted interpreter and adapt browser storage to the same semantic
 filesystem capabilities. One source and one conformance suite are required;
 byte-identical host-native executables are not.
+
+## Compatibility model
+
+Shell compatibility is a semantic claim with four distinct levels:
+
+1. **core compatibility:** the same command bytes produce the same parse,
+   resolution request, immutable arguments, and portable diagnostics;
+2. **command compatibility:** an application with the same exact identity and
+   bound semantic capabilities produces the same defined output and completion;
+3. **session compatibility:** current location, aliases, history policy,
+   cancellation, and foreground completion follow the same contracts; and
+4. **integration compatibility:** a host may add explicitly scoped commands or
+   terminal features without claiming they exist everywhere.
+
+A host is not shell-compatible merely because it can display a prompt. A
+compatibility claim names the supported level, shell and WVB identities,
+provider contract versions, command-generation identity, and qualification
+evidence. Optional host integration must remain observable and must not weaken
+core or command compatibility.
+
+The intended first host profiles are:
+
+| Concern | Windows host | Linux host | Windvale OS | Browser/WebAssembly host |
+| --- | --- | --- | --- | --- |
+| Shell implementation | canonical WVB through the Windvale runtime, with optional shared-backend native execution | same canonical WVB and runtime/native semantics | same canonical WVB interpreted, JITed, cached, or AOT-compiled | same canonical shell WVB through a bounded WebAssembly-hosted runtime in a worker |
+| Terminal adapter | Windows console or graphical terminal integration | TTY, PTY, or graphical terminal integration | isolated terminal service over serial first, graphical later | DOM presentation and input adapter outside the worker |
+| Command resolver | immutable active-generation service; current host dispatcher is bootstrap evidence | same active-generation semantics | user-space package/resolver service | digest-verified static or origin-stored generation through a browser adapter |
+| Process execution | clean Windvale launch provider over Windows process/runtime mechanisms | clean Windvale launch provider over Linux process/runtime mechanisms | service-manager launch into a bounded resource domain | disposable or supervised workers representing isolated command executions |
+| Filesystem | rights-limited providers over explicitly selected Windows objects | rights-limited providers over explicitly selected Linux objects | filesystem service endpoints and directory capabilities | rights-limited providers over OPFS or session memory |
+| Cancellation | typed shell cancellation translated by the Windows adapter | typed shell cancellation translated by the Linux adapter | terminal event and authorized process cancellation | cooperative worker message, then explicit forced worker termination |
+| Persistence | explicit history/configuration store, never `%USERPROFILE%` discovery | explicit history/configuration store, never `$HOME` discovery | explicit user-space storage capability | explicit origin-scoped store; absence or eviction remains observable |
+| Host extensions | explicitly Windows-scoped applications | explicitly Linux-scoped applications | explicitly Windvale-OS-scoped applications | explicitly browser/Workbench-scoped applications |
+
+The browser is the host environment in the last column. WebAssembly supplies a
+bounded execution representation but does not itself supply terminals, files,
+processes, packages, time, identity, or persistence. JavaScript may implement a
+host adapter, but portable Windvale code never receives the DOM, an OPFS handle,
+a worker object, or an unrestricted JavaScript import surface.
+
+### Shared semantic baseline
+
+The following behavior must not vary by host:
+
+- command input is strict UTF-8 with explicit byte and word bounds;
+- parsing and quoting use the selected Shell grammar, never the invoking host's
+  command-line parser;
+- canonical command and alias comparison is ordinal and case-sensitive unless a
+  later shell version explicitly selects another rule;
+- arguments are one ordered immutable text vector and do not contain the shell
+  executable, host launcher options, an ambient command-line string, or an
+  inherited environment;
+- `--` has the same application-option meaning on every host;
+- resolution uses one immutable active-generation identity and never scans a
+  Windows `PATH`, Linux `PATH`, browser storage names, or the current directory;
+- text output is strict UTF-8 and captured lines use LF bytes even when a host
+  terminal renders them differently;
+- standard output, diagnostics, terminal control, and structured completion are
+  separate channels;
+- current location is authority represented by a directory capability, not a
+  process-global native path string;
+- application capability requirements, approval, concrete grants, and provider
+  binding remain separate;
+- provider loss, cancellation, forced termination, verifier rejection, language
+  trap, and normal nonzero application result remain distinct;
+- directory and command enumeration use canonical deterministic ordering rather
+  than provider-native ordering; and
+- deadlines and resource meters use Windvale contracts rather than host clock,
+  scheduler, or process-accounting accidents.
+
+An interactive command entered inside Windvale Shell is therefore parsed only
+once by Windvale Shell. When a native Windows or Linux launcher starts the shell,
+that outer launcher may necessarily receive host-parsed arguments; it must place
+only the explicitly separated application arguments into Windvale's immutable
+argument snapshot. Host quoting rules end at that outer boundary and do not
+become Shell 1 syntax.
+
+### Compatibility versus command availability
+
+The shell core can be portable even when a particular command is not. Every
+command record declares its supported platform scope and required semantic
+capabilities. The active resolver exposes only identities that can be considered
+for the current target, while command inspection can explain that an installed
+identity is unavailable because of target, profile, provider, approval, or
+policy.
+
+The baseline catalog should prefer commands whose semantic interfaces can be
+implemented on all four hosts. Platform-scoped commands remain explicit:
+
+```text
+command-info vm-list
+Platform       windvale-os, windows, linux
+Browser        unsupported: no VM observation provider
+```
+
+Absence is not emulation. A browser adapter must not return invented process or
+filesystem information merely to make a command appear portable. Conversely, a
+Windows- or Linux-specific application does not make the portable shell itself
+platform-specific.
+
+## Host compatibility details
+
+### Windows
+
+The Windows adapter may use Windows console, process, filesystem, and secure
+storage mechanisms, but their native values do not enter portable shell
+semantics.
+
+- Drive letters, UNC spellings, `\\?\` paths, Win32 handles, alternate data
+  streams, reparse points, file attributes, access-control lists, and
+  case-insensitive lookup are available only through explicit provider or
+  Windows-extension contracts.
+- A current directory grant has a provider-supplied display identity. It is not
+  `%CD%`, a drive-relative path, or an inherited process working directory.
+- The provider must preserve ordinal capability names even when the underlying
+  filesystem normally folds case. Two portable names cannot silently alias one
+  native object.
+- Windows CRLF presentation does not change captured Windvale LF output. A
+  console adapter may render LF appropriately without rewriting redirected or
+  hashed output bytes.
+- Windows command-line quoting, `%VAR%` expansion, PowerShell expressions,
+  `.exe` suffix inference, file associations, and `PATHEXT` are not Shell syntax
+  or command discovery.
+- Console control events and process termination are translated into typed
+  cooperative cancellation or distinct forced termination. They are not exposed
+  as portable signals.
+- A Windows-native application is launched only by an explicitly scoped adapter
+  and manifest. Typing a path to an `.exe` does not make it a Windvale command.
+
+Windows Terminal, ConPTY, or another presentation mechanism can improve native
+integration, but no one of them is required by the semantic shell contract.
+Interactive terminal capabilities are reported explicitly so redirected,
+headless, and test sessions do not pretend to have cursor or resize authority.
+
+### Linux
+
+The Linux adapter may use TTY/PTTY, process, filesystem, and secure storage
+mechanisms without importing POSIX shell behavior.
+
+- `/` paths, file descriptors, inode numbers, mount namespaces, ownership and
+  mode bits, symlinks, device nodes, and case-sensitive native lookup are exposed
+  only through explicit provider or Linux-extension contracts.
+- `fork`, inherited descriptors, ambient current directories, environment
+  inheritance, sessions, process groups, and POSIX signals are not foundational
+  Windvale launch or job semantics.
+- Bash quoting, globbing, `$VAR`, command substitution, shebang lookup, executable
+  mode bits, and `PATH` scanning are not Shell syntax or command discovery.
+- A TTY adapter translates bytes and control keys into versioned terminal events.
+  CLI applications do not parse `termios` state or ANSI input unless they request
+  a separately scoped compatibility interface.
+- LF is already a natural terminal convention on Linux, but output remains
+  defined by Windvale rather than by libc, locale, or terminal settings.
+- Cooperative cancellation and provider loss remain typed outcomes; they are not
+  reduced to numeric POSIX signal exits.
+
+A separately packaged POSIX-compatibility shell or application adapter may be a
+future Linux product feature. It does not alter the Windvale Shell grammar or
+grant native process authority to ordinary portable commands.
+
+### Windvale OS
+
+Windvale OS is the native integration target but does not receive exceptions to
+the shell boundary.
+
+- The shell remains an ordinary verified user-space application. It is not init,
+  a kernel monitor, terminal driver, package service, or service manager.
+- The first normal terminal is expected to use isolated serial mechanics and one
+  terminal session while the independent kernel emergency sink remains usable
+  after shell or service failure.
+- The terminal service publishes bounded text, key, resize, interrupt,
+  end-of-input, and disconnect events. The shell never receives scan codes,
+  interrupt-controller state, or device registers.
+- The user-space resolver selects an exact installed command generation. The
+  service manager admits an immutable launch plan and creates a clean process in
+  a bounded resource domain.
+- Filesystem operations go through isolated services and generation-safe
+  directory/file capabilities. The kernel does not parse paths or implement
+  shell redirection.
+- Runtime choice—interpreter, JIT, install-time cache, or AOT—does not change
+  command identity, arguments, capability behavior, output, or completion.
+- Shell failure may allow a supervised replacement shell to attach to a surviving
+  terminal session. It must not remove the emergency sink or silently inherit
+  the previous shell's grants.
+
+The current OS proves protected processes, endpoints, a directory-service slice,
+bounded scheduling evidence, and exact WVB execution; it does not yet implement
+the dynamic launch, resource-domain, isolated normal input/output, package
+resolver, or terminal-session prerequisites needed by Shell 1. A host shell may
+advance the portable implementation first, but host completion is not evidence
+that the in-OS service path exists.
+
+### Browser and WebAssembly
+
+The browser profile should exercise the same shell and applications while
+respecting the browser's containment and lifecycle model.
+
+- The shell and every launched command run off the UI thread. The page owns
+  presentation only; expensive or hostile Windvale work remains in bounded
+  workers.
+- A command worker receives copied immutable request bytes, exact artifact
+  identities, declared grants, and resource limits. It receives no DOM, browser
+  console, cookies, network authority, extension API, or ambient origin storage.
+- OPFS and session memory are provider implementations. Applications see only
+  versioned directory/file capabilities with explicit snapshot, mutation,
+  durability, quota, and provider-loss behavior.
+- Origin identity, browser profile, private-browsing mode, storage eviction, tab
+  closure, refresh, and service-worker replacement are not portable filesystem
+  semantics. Their effects surface as absence, revocation, provider loss, or a
+  new session generation.
+- Browser workers are not portable process identities. Cooperative cancellation
+  is requested through the semantic provider; worker termination is reported as
+  forced termination or provider loss and triggers complete host-side cleanup.
+- Browser timers, event-loop scheduling, background throttling, and page
+  visibility cannot define deadlines or resource accounting. The host adapter
+  reports its supported deadline/meter profile explicitly.
+- WebAssembly linear memory, imports, traps, and JavaScript exceptions never
+  become Windvale application errors directly. The runtime validates envelopes
+  and maps only specified outcomes into structured completion.
+- The first shell profile must not require WebAssembly threads, shared memory,
+  cross-origin isolation, synchronous filesystem access, or a service worker.
+  Later accelerated profiles may declare those requirements explicitly.
+- A digest-verified static package may supply the initial shell and command
+  generation. OPFS filenames, URLs, cache entries, and fetched response order are
+  acquisition details rather than executable identity.
+
+The browser terminal may offer graphical editing, tabs, clipboard actions, and
+resize events, but those features are optional terminal capabilities. Clipboard,
+file-picker, download, upload, drag-and-drop, and network access require separate
+user-mediated grants and are never implied by the shell's presence on a web page.
+
+## Cross-host provider rules
+
+### Terminal and presentation
+
+The semantic terminal contract publishes typed events and receives presentation
+operations. Host adapters may render colors, fonts, cursor shapes, and window
+chrome differently. They must preserve ordered text/key events, bounded resize
+coalescing, interrupt, end-of-input, disconnect, and strict UTF-8 behavior.
+
+Prompt wording and portable diagnostics should be deterministic when captured.
+Purely visual styling is not part of captured output. Terminal dimensions are
+positive bounded character cells when available; lack of dimensions is explicit
+rather than replaced by a guessed host default.
+
+### Files and current location
+
+Portable commands operate on capability-relative names and objects rather than
+native absolute paths. The current location combines one directory capability
+with an informational display identity. Passing that identity back to a provider
+does not recreate authority.
+
+Shared filesystem contracts specify name encoding, case comparison, segment
+rules, ordering, object kinds, snapshot or live behavior, partial progress,
+durability, revocation, and provider loss. Stronger Windows, Linux, Windvale OS,
+or browser guarantees use separate interfaces. The current read-only directory
+capability's ordinal single-segment snapshot is a suitable early `file-read`
+input but is not yet a general current-directory or enumeration contract.
+
+### Launch, cancellation, and teardown
+
+Windows processes, Linux processes, Windvale OS processes, and browser workers
+have different mechanics. The shell sees one semantic launch/observation model:
+exact admitted image, immutable inputs, granted providers, resource ceilings,
+foreground attachment, typed cancellation, structured completion, and proof of
+cleanup.
+
+An adapter must not implement clean spawn by leaking its own environment,
+handles, file descriptors, credentials, working directory, browser globals, or
+service endpoints. If a host cannot prove complete cleanup, completion reports
+that fact rather than pretending the command exited normally.
+
+### Streams and pipelines
+
+Native pipes, OS endpoints, and browser message channels can implement the same
+bounded directional byte-stream contract, but none defines it. Every adapter
+must preserve accepted-prefix progress, backpressure, end-of-stream, peer loss,
+cancellation, and teardown behavior. Browser message copying, Windows pipe
+buffering, Linux pipe sizes, and Windvale OS endpoint queues are not observable
+portable constants.
+
+Shell 2 cannot be declared cross-host compatible until the same pipeline
+fixtures pass through all claimed adapters, including a slow reader, early
+reader exit, writer failure, cancellation under backpressure, provider loss,
+and aggregate resource cleanup.
+
+### History, configuration, and host integration
+
+History and configuration are optional bounded stores, not discovered dotfiles,
+registry keys, environment variables, or browser local-storage conventions. One
+portable record format may be used when its security, versioning, atomicity, and
+recovery behavior are specified. A host may present native settings UI around
+that provider without changing shell-visible values.
+
+Default startup performs no hidden execution. Host integration packages may add
+commands or aliases through the active generation, but cannot inject shell code,
+change grammar, or gain authority merely because they were installed by the
+operating system or browser site.
+
+## Compatibility qualification matrix
+
+The same fixtures should be executed through each claimed profile:
+
+| Evidence | Windows | Linux | Windvale OS | Browser/WebAssembly |
+| --- | :---: | :---: | :---: | :---: |
+| Exact Shell 1 parse and diagnostics | required | required | required | required |
+| Exact active-generation command resolution | required | required | required | required |
+| Exact argument vector and `--` preservation | required | required | required | required |
+| Exact portable text-output bytes and structured completion | required | required | required | required |
+| Capability refusal before entry | required | required | required | required |
+| Read-only directory snapshot command | required | required | required | required |
+| Cooperative cancellation | required | required | required | required |
+| Forced termination distinguished from cancellation | required | required | required | required |
+| Provider loss and stale-generation rejection | required | required | required | required |
+| Resource exhaustion with bounded diagnostics and cleanup | required | required | required | required |
+| Host-specific command accurately reported unavailable elsewhere | required | required | required | required |
+| Pipeline backpressure and aggregate teardown | Shell 2 | Shell 2 | Shell 2 | Shell 2 |
+
+Qualification records identify the exact shell WVB, command WVBs, active
+generation, runtime/provider versions, input fixtures, output hashes, structured
+results, and resource ceilings. Windows/Linux agreement alone supports permanent
+host evidence but not Windvale OS or browser qualification. Browser qualification
+names each tested engine family; one Chromium result is not a claim about every
+WebAssembly engine.
 
 ## Responsibility boundary
 
@@ -542,6 +871,14 @@ before their contracts are implemented:
   limits?
 - Which current-location navigation operations can preserve directory-capability
   semantics across Windows, Linux, Windvale OS, and browser providers?
+- What is the smallest versioned terminal, resolver, launch, observation,
+  directory, and storage provider profile required to call Shell 1 usable?
+- How does an offline browser acquire and activate its first digest-verified
+  shell generation without making a URL, cache entry, or OPFS name executable
+  identity?
+- Which Windows terminal, Linux terminal, browser engine, and Windvale OS serial
+  profiles form the first claimed compatibility matrix, and which remain
+  development-only evidence?
 - Which application is the first genuine structured-record producer/consumer
   pair, and does it justify typed pipelines?
 - Should `command-plan` only validate identities and grants, or also support a
