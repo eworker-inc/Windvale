@@ -69,6 +69,28 @@ Only root function exports are emitted, in canonical function order, and they ta
 
 WVSD constant entries participate in source validation and name lookup but are excluded from every WVB runtime section. A constant read has already become an ordinary typed literal or enum WVIR operation. Even an `export const` declaration creates no WVB export or storage identity in this root-only slice.
 
+## Closed-world reachability evidence
+
+`Compilerˉanalyzeˉsourceˉwvbˉreachability` provides deterministic, analysis-only
+evidence for application-size and compiler-performance work. It does not change the
+canonical output of `Compilerˉcompileˉsourceˉwvb`.
+
+Every exported function owned by the WVSS root module is a reachability root. A
+bounded work queue visits each reachable function at most once and follows only
+validated direct `Callˉfunction` WVIR targets. This makes recursion and call cycles
+finite without a repeated whole-program fixed-point scan. The result reports root,
+reachable, unreachable, total-call, reachable-call, total-code-byte,
+reachable-code-byte, and unreachable-code-byte counts. Its one-byte-per-WVSD-entry
+map is indexed by the validated source symbol directory; function entries contain
+one when reachable and zero otherwise.
+
+Unreachable functions still pass source, symbol, binding, typed-WVIR, and WVB
+operation/shape analysis. An invalid or unsupported body therefore cannot become
+acceptable merely because no export calls it. A future pruning mode must preserve
+that validation boundary, remap retained call targets and referenced data through
+explicit canonical tables, preserve every root export, and prove reproducible bytes
+and equivalent retained behavior before it can replace complete emission.
+
 ## Nominal type translation
 
 WVSD assigns canonical nominal indices independently of source order or module ownership: records sorted by ordinal name first, then enums sorted by ordinal name. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.

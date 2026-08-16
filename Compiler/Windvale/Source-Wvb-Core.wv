@@ -107,6 +107,23 @@ export record Compilerˉsourceˉwvbˉsummary {
     Failureˉoperation: u32;
 }
 
+export record Compilerˉsourceˉwvbˉreachability {
+    Status: Compilerˉsourceˉwvbˉstatus;
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
+    Functions: u32;
+    Roots: u32;
+    Reachable: u32;
+    Unreachable: u32;
+    Calls: u32;
+    Reachableˉcalls: u32;
+    Codeˉbytes: u32;
+    Reachableˉcodeˉbytes: u32;
+    Unreachableˉcodeˉbytes: u32;
+    Map: bytes;
+    Failureˉfunction: u32;
+    Failureˉoperation: u32;
+}
+
 export fn Compilerˉsourceˉwvbˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -121,6 +138,31 @@ export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
     return Compilerˉsourceˉwvbˉsummary(
         Status,
         Wirˉstatus,
+        0u32,
+        0u32,
+        Compilerˉsourceˉwvbˉempty(Input),
+        Function,
+        Operation
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉreachabilityˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉwvbˉstatus,
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
+    Function: u32,
+    Operation: u32
+) -> Compilerˉsourceˉwvbˉreachability {
+    return Compilerˉsourceˉwvbˉreachability(
+        Status,
+        Wirˉstatus,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
         0u32,
         0u32,
         Compilerˉsourceˉwvbˉempty(Input),
@@ -2848,6 +2890,285 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Analysis.Failureˉoperation,
         Hasˉcollections,
         Hasˉoperators
+    );
+}
+
+export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
+    Input: bytes
+) -> Compilerˉsourceˉwvbˉreachability {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
+    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Wirˉsummary.Status,
+            Wirˉsummary.Failureˉfunction,
+            0u32
+        );
+    }
+
+    let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(Input, Scan, Symbols);
+    let Functionˉorder: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉfunctionˉorder(Orders);
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    let Emptyˉmap: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Entries);
+    if !Emptyˉmap.Valid {
+        return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
+            Wirˉsummary.Status,
+            0u32,
+            0u32
+        );
+    }
+
+    var Map: bytes = Emptyˉmap.Value;
+    var Queue: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Roots: u32 = 0u32;
+    var Reachable: u32 = 0u32;
+    var Functionˉrank: u32 = 0u32;
+    while Functionˉrank < Symbols.Functions {
+        let Rootˉfunction: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Functionˉorder, Functionˉrank
+        );
+        if Compilerˉsourceˉwvbˉsymbolˉmodule(Symbols, Rootˉfunction) == 0u32 {
+            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉisˉexported(
+                Symbols.Lookup, Rootˉfunction
+            ) {
+                let Rootˉmarked: Byteˉconstruction.Foundationˉbytesˉresult =
+                    Byteˉconstruction.Foundationˉbytesˉreplace(
+                        Map, Rootˉfunction, 1u32, Bytesˉfromˉu8(1u8)
+                    );
+                if !Rootˉmarked.Valid {
+                    return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+                        Input,
+                        Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
+                        Wirˉsummary.Status,
+                        Functionˉrank,
+                        0u32
+                    );
+                }
+                Map = Rootˉmarked.Value;
+                Queue = Bytesˉconcat(
+                    Queue, Bytesˉfromˉu32ˉlittle(Rootˉfunction)
+                );
+                Roots = Roots + 1u32;
+                Reachable = Reachable + 1u32;
+            }
+        }
+        Functionˉrank = Functionˉrank + 1u32;
+    }
+
+    let Wir: bytes = Wirˉsummary.Directory;
+    let Blocksˉoffset: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
+    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    var Reachableˉcodeˉbytes: u32 = 0u32;
+    var Reachableˉcalls: u32 = 0u32;
+    var Queueˉindex: u32 = 0u32;
+    while Queueˉindex < Reachable {
+        let Reachableˉfunction: u32 = Bytesˉreadˉu32ˉlittle(
+            Queue, Queueˉindex * 4u32
+        );
+        let Reachableˉanalysis: Compilerˉsourceˉwvbˉanalysis =
+            Compilerˉsourceˉwvbˉanalyzeˉfunction(
+                Wir, Reachableˉfunction,
+                Symbols.Records, Symbols.Enums, Symbols.Variants
+            );
+        if Reachableˉanalysis.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+                Input,
+                Reachableˉanalysis.Status,
+                Wirˉsummary.Status,
+                Compilerˉsourceˉwvbˉorderedˉrank(
+                    Functionˉorder, Reachableˉfunction
+                ),
+                Reachableˉanalysis.Failureˉoperation
+            );
+        }
+        if Reachableˉcodeˉbytes >
+            16777216u32 - Reachableˉanalysis.Codeˉlength {
+            return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
+                Wirˉsummary.Status,
+                Compilerˉsourceˉwvbˉorderedˉrank(
+                    Functionˉorder, Reachableˉfunction
+                ),
+                Reachableˉanalysis.Failureˉoperation
+            );
+        }
+        Reachableˉcodeˉbytes =
+            Reachableˉcodeˉbytes + Reachableˉanalysis.Codeˉlength;
+
+        let Reachableˉfunctionˉentry: u32 =
+            48u32 + Reachableˉfunction * 48u32;
+        let Reachableˉfirstˉblock: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Reachableˉfunctionˉentry + 4u32
+        );
+        let Reachableˉblockˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Reachableˉfunctionˉentry + 8u32
+        );
+        var Reachableˉblock: u32 = 0u32;
+        while Reachableˉblock < Reachableˉblockˉcount {
+            let Reachableˉblockˉentry: u32 = Blocksˉoffset +
+                (Reachableˉfirstˉblock + Reachableˉblock) * 36u32;
+            let Reachableˉfirstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Reachableˉblockˉentry + 12u32
+            );
+            let Reachableˉoperationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Reachableˉblockˉentry + 16u32
+            );
+            var Reachableˉinˉblock: u32 = 0u32;
+            while Reachableˉinˉblock < Reachableˉoperationˉcount {
+                let Reachableˉoperationˉentry: u32 = Operationsˉoffset +
+                    (Reachableˉfirstˉoperation + Reachableˉinˉblock) * 48u32;
+                if Bytesˉreadˉu32ˉlittle(
+                    Wir, Reachableˉoperationˉentry + 12u32
+                ) == 62u32 {
+                    Reachableˉcalls = Reachableˉcalls + 1u32;
+                    let Reachableˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                        Wir, Reachableˉoperationˉentry + 32u32
+                    );
+                    if Bytesˉreadˉu8(Map, Reachableˉtarget) == 0u8 {
+                        let Reachableˉmarked: Byteˉconstruction.Foundationˉbytesˉresult =
+                            Byteˉconstruction.Foundationˉbytesˉreplace(
+                                Map, Reachableˉtarget,
+                                1u32, Bytesˉfromˉu8(1u8)
+                            );
+                        if !Reachableˉmarked.Valid {
+                            return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+                                Input,
+                                Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
+                                Wirˉsummary.Status,
+                                Compilerˉsourceˉwvbˉorderedˉrank(
+                                    Functionˉorder, Reachableˉfunction
+                                ),
+                                Reachableˉfirstˉoperation + Reachableˉinˉblock
+                            );
+                        }
+                        Map = Reachableˉmarked.Value;
+                        Queue = Bytesˉconcat(
+                            Queue, Bytesˉfromˉu32ˉlittle(Reachableˉtarget)
+                        );
+                        Reachable = Reachable + 1u32;
+                    }
+                }
+                Reachableˉinˉblock = Reachableˉinˉblock + 1u32;
+            }
+            Reachableˉblock = Reachableˉblock + 1u32;
+        }
+        Queueˉindex = Queueˉindex + 1u32;
+    }
+
+    var Unreachableˉcodeˉbytes: u32 = 0u32;
+    var Unreachableˉcalls: u32 = 0u32;
+    Functionˉrank = 0u32;
+    while Functionˉrank < Symbols.Functions {
+        let Unreachableˉfunction: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Functionˉorder, Functionˉrank
+        );
+        if Bytesˉreadˉu8(Map, Unreachableˉfunction) == 0u8 {
+            let Unreachableˉanalysis: Compilerˉsourceˉwvbˉanalysis =
+                Compilerˉsourceˉwvbˉanalyzeˉfunction(
+                    Wir, Unreachableˉfunction,
+                    Symbols.Records, Symbols.Enums, Symbols.Variants
+                );
+            if Unreachableˉanalysis.Status !=
+                Compilerˉsourceˉwvbˉstatus.Valid {
+                return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+                    Input,
+                    Unreachableˉanalysis.Status,
+                    Wirˉsummary.Status,
+                    Functionˉrank,
+                    Unreachableˉanalysis.Failureˉoperation
+                );
+            }
+            if Unreachableˉcodeˉbytes >
+                16777216u32 - Unreachableˉanalysis.Codeˉlength {
+                return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+                    Input,
+                    Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
+                    Wirˉsummary.Status,
+                    Functionˉrank,
+                    Unreachableˉanalysis.Failureˉoperation
+                );
+            }
+            Unreachableˉcodeˉbytes =
+                Unreachableˉcodeˉbytes + Unreachableˉanalysis.Codeˉlength;
+
+            let Unreachableˉfunctionˉentry: u32 =
+                48u32 + Unreachableˉfunction * 48u32;
+            let Unreachableˉfirstˉblock: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Unreachableˉfunctionˉentry + 4u32
+            );
+            let Unreachableˉblockˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Unreachableˉfunctionˉentry + 8u32
+            );
+            var Unreachableˉblock: u32 = 0u32;
+            while Unreachableˉblock < Unreachableˉblockˉcount {
+                let Unreachableˉblockˉentry: u32 = Blocksˉoffset +
+                    (Unreachableˉfirstˉblock + Unreachableˉblock) * 36u32;
+                let Unreachableˉfirstˉoperation: u32 =
+                    Bytesˉreadˉu32ˉlittle(
+                        Wir, Unreachableˉblockˉentry + 12u32
+                    );
+                let Unreachableˉoperationˉcount: u32 =
+                    Bytesˉreadˉu32ˉlittle(
+                        Wir, Unreachableˉblockˉentry + 16u32
+                    );
+                var Unreachableˉinˉblock: u32 = 0u32;
+                while Unreachableˉinˉblock < Unreachableˉoperationˉcount {
+                    let Unreachableˉoperationˉentry: u32 = Operationsˉoffset +
+                        (Unreachableˉfirstˉoperation + Unreachableˉinˉblock) *
+                        48u32;
+                    if Bytesˉreadˉu32ˉlittle(
+                        Wir, Unreachableˉoperationˉentry + 12u32
+                    ) == 62u32 {
+                        Unreachableˉcalls = Unreachableˉcalls + 1u32;
+                    }
+                    Unreachableˉinˉblock = Unreachableˉinˉblock + 1u32;
+                }
+                Unreachableˉblock = Unreachableˉblock + 1u32;
+            }
+        }
+        Functionˉrank = Functionˉrank + 1u32;
+    }
+
+    if Reachableˉcodeˉbytes > 16777216u32 - Unreachableˉcodeˉbytes {
+        return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
+            Wirˉsummary.Status,
+            Symbols.Functions,
+            Wirˉsummary.Operations
+        );
+    }
+    return Compilerˉsourceˉwvbˉreachability(
+        Compilerˉsourceˉwvbˉstatus.Valid,
+        Wirˉsummary.Status,
+        Symbols.Functions,
+        Roots,
+        Reachable,
+        Symbols.Functions - Reachable,
+        Reachableˉcalls + Unreachableˉcalls,
+        Reachableˉcalls,
+        Reachableˉcodeˉbytes + Unreachableˉcodeˉbytes,
+        Reachableˉcodeˉbytes,
+        Unreachableˉcodeˉbytes,
+        Map,
+        Symbols.Functions,
+        Wirˉsummary.Operations
     );
 }
 
