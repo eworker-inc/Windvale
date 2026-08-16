@@ -2,12 +2,13 @@
 
 ## Status
 
-- Date: 2026-08-15
-- Status: parser implementation candidate verified on Windows; permanent
-  interactive shell prerequisites remain incomplete
+- Date: 2026-08-16
+- Status: parser and first external application pass paired hosted evidence;
+  permanent interactive shell prerequisites remain incomplete
 - Architecture: [Windvale shell](../Architecture/Windvale-Shell.md)
 - Accepted first contract: [Windvale Shell 1](../../Specifications/Windvale-Shell-1.md)
 - Parser decision: [Decision 0602](../Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md)
+- First application decision: [Decision 0606](../Decisions/0606-First-Windvale-Echo-Application.md)
 - Accepted boundary: [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md)
 
 This plan answers what must be decided, specified, implemented, and verified
@@ -18,19 +19,22 @@ repository milestone and does not claim that an unavailable OS mechanism exists.
 ## Readiness summary
 
 The capability-free Shell 1 parser is implemented under its accepted grammar.
-Its 47-case focused owner passes on Windows and constructs Windows and Linux
-hosted images; independent Linux execution and browser evidence remain pending.
-The project is not yet ready to implement or qualify the complete permanent
-interactive shell.
+Its 47-case focused owner passes independently on Windows and Debian, and an
+11-check bounded WebAssembly smoke agrees in Node 24 and Chromium 151. The first
+real catalog application, `echo`, also passes a nine-case exact hosted owner on
+Windows and Debian. It is not yet a Windvale package or active-generation
+command. The project is not ready to qualify the complete permanent interactive
+shell.
 
 | Boundary | Current readiness | Meaning |
 | --- | --- | --- |
 | Product architecture | Accepted | Permanent terminal/shell/application split and Shell 1 parser choices are recorded in Decisions 0191 and 0602 |
-| Parser grammar | Implemented candidate | Input, quotes, escapes, limits, names, aliases, diagnostics, and exact offsets pass the 47-case Windows owner |
+| Parser grammar | Implemented paired candidate | Input, quotes, escapes, limits, names, aliases, diagnostics, and exact offsets pass the 47-case Windows/Debian owner plus an 11-check bounded browser smoke |
 | Windvale value model | Proven for parser slice | One immutable scan plus indexed word views and explicit materialization compiles and executes without a hidden host collection |
 | Terminal input/editing | Not implemented | No standard terminal session or request/reply editing contract exists |
 | Command metadata | Partial bootstrap evidence | Generation 1 resolves exact commands, but general split launch/presentation metadata is incomplete |
-| Dynamic launch/observation | Not general | The host dispatcher executes two fixed profiles; Windvale OS and browser lack the permanent general provider |
+| First external application | Implemented hosted candidate | `echo` has one exact WVB, a three-capability directory, paired native applications, and nine paired execution cases; package/generation launch remains pending |
+| Dynamic launch/observation | Not general | The host dispatcher executes two older fixed profiles; `echo`, Windvale OS, and the browser lack the permanent general provider |
 | Standard byte streams | Not implemented | Existing console output is text-oriented; real `file-read`/`cat` requires exact byte output |
 | Read-only directory | Useful first candidate | Exact immutable single-segment reads exist; general enumeration/navigation do not |
 | Windows/Linux hosts | Strong bootstrap base | Arguments, output, package identities, runtime, and fixed dispatch evidence exist |
@@ -217,9 +221,11 @@ put the missing semantics into a permanent JavaScript or native shell core.
 
 Current result: implemented in `Libraries/Shell/Shell-1-Parser.wv`. The focused
 owner proves deterministic library/test WVBs and test WVOs, all 47 cases on
-Windows, and construction of both hosted target images. Independent Linux
-execution, the reference-interpreter route, and browser WebAssembly-hosted
-execution remain promotion evidence rather than completed claims.
+Windows and Debian, and construction of both hosted target images. An exact
+11-check smoke over the same implementation also passes the pinned WebAssembly
+interpreter in Node 24 and Chromium 151. The reference-interpreter route and
+complete 47-case browser corpus remain promotion evidence rather than completed
+claims.
 
 - implement the Shell 1 parser as a focused Windvale library;
 - return structured statuses and spans/views without I/O;
@@ -231,7 +237,15 @@ execution remain promotion evidence rather than completed claims.
 This slice is safe to begin first. It does not need terminal input or process
 launch and makes no interactive-shell claim.
 
-### Slice 2: capability-free command launch proof
+### Slice 2: bounded command launch proof
+
+Current result: the real `Applications/Shell/Echo.wv` entry point and Project 2
+manifest are implemented. Its exact WVB declares only `console.write_line`,
+`process.argument`, and `process.argument_count`; exact Windows and Linux hosted
+applications pass nine current-host behavior and resource-boundary cases on
+both hosts. Windvale package/lock/provenance records, an active generation,
+resolver selection, approval/launch records, and dispatcher integration remain
+pending, so this is an application proof rather than a command-launch proof.
 
 - package a real Windvale `echo` application;
 - place its exact identity in a test active generation;
@@ -361,7 +375,10 @@ The complete native corpus now passes independently on Windows and Debian. An
 11-check WebAssembly smoke over the same parser also passes in Node 24 and named
 Chromium 151 without widening browser limits. Complete 47-case browser and
 Windvale OS execution remain separate promotion evidence; they do not block the
-next capability-free resolver/launch composition slice.
+next bounded resolver/launch composition slice. The first external-application
+gate is also satisfied by the paired `echo-application` owner; this does not
+satisfy the package, identity-substitution, capability-mismatch, or cleanup
+requirements for complete Slice 2.
 
 The hosted interactive shell is ready when terminal/session, command metadata,
 resolver, semantic launch/observation, structured completion, standard byte

@@ -829,7 +829,8 @@ The current browser Workbench can become an early proving host without being
 misrepresented as Windvale OS:
 
 1. retain its JavaScript command line as a labeled bootstrap controller;
-2. implement one real Windvale command application, initially `file-read`/`cat`;
+2. retain the paired hosted `echo` application as the first application proof,
+   then implement `file-read`/`cat` after standard byte output exists;
 3. bind immutable arguments, exact byte output, and one read-only browser
    workspace directory capability in a disposable worker;
 4. launch an exact verified WVB identity instead of executing a JavaScript

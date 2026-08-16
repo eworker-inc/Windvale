@@ -9,10 +9,13 @@ constructs both hosted target images, and executes an exact 11-check bounded
 smoke WVB through the pinned WebAssembly interpreter. A named Chromium 151 run
 reproduces the Node 24 WebAssembly result and counters. The complete 47-case
 corpus has not yet run in a browser, so this remains parser implementation
-evidence rather than complete browser conformance. This specification does not
-claim an implemented interactive shell, terminal service, command metadata
-format, dynamic launcher, standard byte stream, browser command worker, or
-Windvale OS service.
+evidence rather than complete browser conformance. The first catalog entry,
+`echo`, is now a real hosted Windvale application under
+[Decision 0606](../Documents/Decisions/0606-First-Windvale-Echo-Application.md)
+with paired native evidence. It is not yet an active-generation command. This
+specification does not claim an implemented interactive shell, terminal service,
+complete command metadata, dynamic launcher, standard byte stream, browser
+command worker, or Windvale OS service.
 
 The product intent and cross-host boundary are defined by the
 [Windvale shell architecture](../Documents/Architecture/Windvale-Shell.md).
@@ -291,6 +294,12 @@ its own specification or existing reusable contract. `file-read` cannot be
 implemented under only `console.write_line`. If standard byte output is absent,
 an interim strict-text tool must be named `file-show` and cannot satisfy the
 `file-read`/`cat` qualification case.
+
+The implemented `echo` entry point is `Applications/Shell/Echo.wv`. Its WVB
+declares exactly standard line output plus immutable argument and argument-count
+access, and its paired hosted owner proves the selected byte behavior and
+argument ceilings. Resolution, approval, launch, and completion remain separate
+Shell 1 boundaries and are not implemented by that application.
 
 ## Resolution and launch separation
 

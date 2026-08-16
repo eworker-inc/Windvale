@@ -1,0 +1,27 @@
+module Windvaleˉecho profile hosted;
+
+capability console.write_line;
+capability process.argument;
+capability process.argument_count;
+
+enum Windvaleˉechoˉposition {
+    First = 0;
+    Following = 1;
+}
+
+export fn Main() -> i32 {
+    let Count: u32 = process.argument_count();
+    var Index: u32 = 0u32;
+    var Output: text = "";
+    var Position: Windvaleˉechoˉposition = Windvaleˉechoˉposition.First;
+    while Index < Count {
+        if Position == Windvaleˉechoˉposition.Following {
+            Output = Textˉconcat(Output, " ");
+        }
+        Output = Textˉconcat(Output, process.argument(Index));
+        Position = Windvaleˉechoˉposition.Following;
+        Index = Index + 1u32;
+    }
+    console.write_line(Output);
+    return 0;
+}

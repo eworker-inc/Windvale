@@ -479,7 +479,9 @@ function Add-Native-Tool-Suite {
         Add-Suite $SuiteByCommand[$Stem]
         return
     }
-    if ($Stem -eq 'Create-Wvdb-Query-Fixture') {
+    if ($Stem -eq 'Verify-Echo-Application') {
+        Add-Suite 'echo-application'
+    } elseif ($Stem -eq 'Create-Wvdb-Query-Fixture') {
         Add-Suite 'wvdb-query-capability'
     } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
         Add-Suite @('release-envelope', 'offline-package-stage')
@@ -1042,6 +1044,17 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Shell-1.md'
     )) {
         Add-Suite 'shell-one-parser'
+        if ($Path -eq 'Specifications/Windvale-Shell-1.md') {
+            Add-Suite 'echo-application'
+        }
+    } elseif ($Path -in @(
+        'Applications/Shell/Echo.wv',
+        'Projects/Applications/Windvale-Echo.wvproj'
+    )) {
+        Add-Suite 'echo-application'
+        if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
+            Add-Suite 'workspace-project2'
+        }
     } elseif ($Path -in @(
         'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
         'Projects/Libraries/Windvale-Library-Installation-Generation.wvproj',
