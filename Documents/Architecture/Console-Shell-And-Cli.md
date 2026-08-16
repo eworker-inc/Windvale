@@ -4,6 +4,11 @@
 
 Accepted future architecture under [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended first semantic records for review. No terminal-input service, shell, standard-input stream, pipeline, redirection, job-control, or Windvale OS CLI application contract is implemented yet. Current behavior remains the bounded hosted output and argument contracts plus the qualified Probe-40 OS baseline.
 
+The focused [Windvale shell product and architecture](Windvale-Shell.md) guide
+elaborates the intended cross-host shell experience, command naming and aliases,
+discovery, portable ownership boundary, Workbench transition, and staged delivery
+without changing this document's accepted terminal, launch, or authority split.
+
 ## Recommendation
 
 Windvale should provide a small capability-native command environment rather than reproduce POSIX shell semantics, PowerShell's object/runtime model, or a privileged kernel monitor. The design has four independent layers:
