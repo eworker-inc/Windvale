@@ -5,7 +5,7 @@
 - Advances: external-model gateway production path
 - Contract: [supervised external-model gateway](../../Specifications/Supervised-External-Model-Gateway.md)
 - Builds on: [Decision 0604](0604-First-Protected-Provider-Credential-Custody.md)
-- Advanced by: [Decision 0646](0646-First-Native-External-Model-Gateway-Bridge.md)
+- Advanced by: [Decision 0647](0647-First-Native-External-Model-Gateway-Bridge.md)
 
 ## Context
 
@@ -53,7 +53,7 @@ visible models or request bounded non-streaming text without receiving network
 or credential authority. The supervised child gives credential replacement and
 provider restart a concrete generation/teardown boundary.
 
-Decision 0646 adds the first native capability/timer bridge. Complete production
+Decision 0647 adds the first native capability/timer bridge. Complete production
 promotion still requires operational
 key rotation/recovery, and an explicitly authorized live interoperability smoke
 remain. The first child is serial and non-streaming and does not implement model

@@ -3,7 +3,7 @@
 ## Status and purpose
 
 The bridge selected by
-[Decision 0646](../Documents/Decisions/0646-First-Native-External-Model-Gateway-Bridge.md)
+[Decision 0647](../Documents/Decisions/0647-First-Native-External-Model-Gateway-Bridge.md)
 connects the existing ABI-23 `model.catalog_v1` and `model.inference_v1`
 provider calls to the
 [supervised external-model gateway](Supervised-External-Model-Gateway.md).

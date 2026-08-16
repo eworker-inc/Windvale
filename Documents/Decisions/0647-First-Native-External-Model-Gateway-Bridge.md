@@ -1,4 +1,4 @@
-# Decision 0646: First native external-model gateway bridge
+# Decision 0647: First native external-model gateway bridge
 
 - Date: 2026-08-16
 - Status: Implemented candidate; Windows execution complete, independent Linux execution pending

@@ -13,7 +13,7 @@
   [Decision 0603](../Decisions/0603-First-Bounded-Https-Client.md),
   [Decision 0604](../Decisions/0604-First-Protected-Provider-Credential-Custody.md),
   [Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md),
-  and [Decision 0646](../Decisions/0646-First-Native-External-Model-Gateway-Bridge.md).
+  and [Decision 0647](../Decisions/0647-First-Native-External-Model-Gateway-Bridge.md).
   Resolver/TCP, TLS, bounded HTTPS, and protected credential custody have
   independent Windows/Linux execution evidence, as does the supervised
   external-model gateway. The first model-only native capability/timer bridge
@@ -292,7 +292,7 @@ No deterministic case reads a real key or contacts the public Internet.
 ### Native external-model gateway bridge
 
 Status: implemented candidate under
-[Decision 0646](../Decisions/0646-First-Native-External-Model-Gateway-Bridge.md);
+[Decision 0647](../Decisions/0647-First-Native-External-Model-Gateway-Bridge.md);
 Windows execution is complete and independent Linux execution remains pending.
 
 The bridge binds the existing ABI-23 catalog/inference entries to the protected
