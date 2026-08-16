@@ -36,6 +36,11 @@ WVB linking remain later contracts.
   submission. It owns no
   credentials, network access, JSON, live provider adapter, or model-routing
   policy.
+- `Network/` contains capability-free public network values and policy.
+  `Address-Authority.wv` owns canonical IPv4/IPv6 values, prefixes, scoped
+  endpoints, canonical service names, exact peer selectors, bounded grants,
+  and fail-closed rights reduction. It owns no resolver, socket, TLS, HTTP,
+  interface discovery, or host authority.
 - `Platform/` contains application-facing adapters over semantic capabilities. `Platform/Models/Bound-Model-Provider.wv` validates canonical requests before dispatch and independently admits catalog and inference responses from one bound provider. `Platform/Resources/Hosted-Resource-Store.wv` obtains store bytes through the bounded `file.read_bytes` bootstrap leaf and delegates format policy to Foundation. `Platform/Filesystem/Read-Only-Directory.wv` owns a typed 3 KiB read-at API over one pre-bound immutable directory instance. `Platform/Storage/Random-Access-Storage.wv` owns the typed mutable `u64` storage-resource boundary. `Platform/Database/Random-Access-Page.wv` composes that boundary with the portable page core while preserving distinct page and provider failures. `Platform/Database/Durable-Database-Engine.wv` owns exact header admission, current selection, bounded tail recovery, and reopen validation. `Platform/Database/Durable-Tree-Reader.wv` performs at most 32 provider-backed page visits while proving the selected generation, page graph, node kinds, and inherited key range. `Platform/Database/Durable-Tree-Writer.wv` performs one validated read per admitted level, closes provider-borrow and arena-tail ownership seams, invokes the portable transaction, and executes bounded publication without retrying uncertain mutation. `Platform/Database/Native-Hosted-Snapshot-Page.wv` is the narrow native transition provider: it obtains one bounded immutable host snapshot through `file.read_bytes`, then admits one checked page through the same portable core. `Platform/Database/Read-Only-Wvdb.wv` composes the immutable directory provider with the portable experimental WVDB reader while keeping storage and database failures distinct and owning the complete public failure vocabulary exposed by its facade.
 - `Protocol/` is reserved until a reusable bounded provider/service wire contract moves here from a concrete implementation.
 - `System/` is reserved until a reusable privileged kernel, driver, or machine API has an implemented owner and contract.
@@ -82,6 +87,7 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Native-Hosted-Snapshot-Page` | `Nativeˉhostedˉsnapshotˉpage` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Wvdb` | `Readˉonlyˉwvdb` | hosted / `filesystem.directory_read_v1` |
 | `Windvale-Library-Bounded-Operation-Core` | `Windvaleˉboundedˉoperationˉcore` | portable / none |
+| `Windvale-Library-Network-Address-Authority` | `Windvaleˉnetworkˉaddressˉauthority` | portable / none |
 | `Windvale-Library-Model-Protocol` | `Windvaleˉmodelˉprotocol` | portable / none |
 | `Windvale-Library-Scripted-Model-Provider` | `Windvaleˉscriptedˉmodelˉprovider` | portable / none |
 | `Windvale-Library-Bound-Model-Provider` | `Boundˉmodelˉprovider` | hosted / `model.catalog_v1`, `model.inference_v1` |
@@ -96,7 +102,9 @@ reconstructs that compiler natively before building them. Promoting that
 verified compiler generation into the ordinary front door is a separate
 product-identity milestone. The bounded operation core uses that current
 nested-record closure and has its own deterministic native owner,
-`Test-Bounded-Operation-Core`. All three suites avoid .NET and C#.
+`Test-Bounded-Operation-Core`. The first network value/permission module also
+uses that current closure and is owned by `Test-Network-Address-Authority`.
+All four suites avoid .NET and C#.
 
 ## Module names and local namespaces
 

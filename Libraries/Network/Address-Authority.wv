@@ -1,0 +1,812 @@
+module Windvaleˉnetworkˉaddressˉauthority profile portable;
+
+const IPV4_BYTES: u32 = 4u32;
+const IPV6_BYTES: u32 = 16u32;
+const IPV6_GROUPS: u32 = 8u32;
+const SERVICE_NAME_MAXIMUM_BYTES: u32 = 253u32;
+const SERVICE_LABEL_MAXIMUM_BYTES: u32 = 63u32;
+const PORT_MAXIMUM: u32 = 65535u32;
+
+export enum Networkˉerror {
+    Valid = 0;
+    Invalidˉaddress = 1;
+    Noncanonicalˉaddress = 2;
+    Invalidˉprefix = 3;
+    Hostˉbitsˉset = 4;
+    Invalidˉscope = 5;
+    Invalidˉport = 6;
+    Invalidˉserviceˉname = 7;
+    Noncanonicalˉserviceˉname = 8;
+    Ambiguousˉserviceˉname = 9;
+    Invalidˉselector = 10;
+    Invalidˉtransport = 11;
+    Invalidˉdirection = 12;
+    Invalidˉlimit = 13;
+    Invalidˉlifetime = 14;
+}
+
+export enum Networkˉaddressˉkind {
+    Invalid = 0;
+    Ipv4 = 1;
+    Ipv6 = 2;
+}
+
+export enum Networkˉscope {
+    Invalid = 0;
+    Global = 1;
+    Unspecified = 2;
+    Loopback = 3;
+    Linkˉlocal = 4;
+    Multicast = 5;
+}
+
+export enum Networkˉselectorˉkind {
+    Invalid = 0;
+    Service = 1;
+    Prefix = 2;
+}
+
+export enum Networkˉtransport {
+    Invalid = 0;
+    Tcp = 1;
+    Udp = 2;
+    Any = 3;
+}
+
+export enum Networkˉdirection {
+    Invalid = 0;
+    Outbound = 1;
+    Listen = 2;
+    Any = 3;
+}
+
+export record Networkˉaddress {
+    Error: Networkˉerror;
+    Kind: Networkˉaddressˉkind;
+    Value: bytes;
+}
+
+export record Networkˉtext {
+    Error: Networkˉerror;
+    Value: text;
+}
+
+export record Networkˉprefix {
+    Error: Networkˉerror;
+    Address: Networkˉaddress;
+    Length: u32;
+}
+
+export record Networkˉendpoint {
+    Error: Networkˉerror;
+    Address: Networkˉaddress;
+    Port: u32;
+    Interface: u64;
+}
+
+export record Networkˉserviceˉname {
+    Error: Networkˉerror;
+    Value: bytes;
+}
+
+export record Networkˉgrant {
+    Error: Networkˉerror;
+    Kind: Networkˉselectorˉkind;
+    Service: bytes;
+    Addressˉkind: Networkˉaddressˉkind;
+    Address: bytes;
+    Prefixˉlength: u32;
+    Transport: Networkˉtransport;
+    Direction: Networkˉdirection;
+    Firstˉport: u32;
+    Lastˉport: u32;
+    Interface: u64;
+    Maximumˉconnections: u32;
+    Maximumˉqueuedˉbytes: u32;
+    Maximumˉtransferˉbytes: u64;
+    Maximumˉdeadlineˉspan: u64;
+    Expiresˉat: u64;
+}
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Byteˉfromˉu32(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+fn Appendˉascii(Value: bytes, Character: u32) -> bytes {
+    return Bytesˉconcat(Value, Byteˉfromˉu32(Character));
+}
+
+fn Byteˉat(Value: bytes, Index: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index));
+}
+
+fn Bytesˉsame(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Byteˉat(Left, Index) != Byteˉat(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Invalidˉaddress(Error: Networkˉerror) -> Networkˉaddress {
+    return Networkˉaddress(Error, Networkˉaddressˉkind.Invalid, Emptyˉbytes());
+}
+
+fn Addressˉvalid(Address: Networkˉaddress) -> bool {
+    if Address.Error != Networkˉerror.Valid { return false; }
+    if Address.Kind == Networkˉaddressˉkind.Ipv4 {
+        return Bytesˉlength(Address.Value) == IPV4_BYTES;
+    }
+    if Address.Kind == Networkˉaddressˉkind.Ipv6 {
+        return Bytesˉlength(Address.Value) == IPV6_BYTES;
+    }
+    return false;
+}
+
+export fn Networkˉaddressˉfromˉbytes(
+    Kind: Networkˉaddressˉkind,
+    Value: bytes
+) -> Networkˉaddress {
+    if Kind == Networkˉaddressˉkind.Ipv4 && Bytesˉlength(Value) == IPV4_BYTES {
+        return Networkˉaddress(Networkˉerror.Valid, Kind, Value);
+    }
+    if Kind == Networkˉaddressˉkind.Ipv6 && Bytesˉlength(Value) == IPV6_BYTES {
+        return Networkˉaddress(Networkˉerror.Valid, Kind, Value);
+    }
+    return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+}
+
+fn Appendˉdecimal(Value: bytes, Number: u32) -> bytes {
+    var Result: bytes = Value;
+    if Number >= 100u32 {
+        Result = Appendˉascii(Result, 48u32 + Number / 100u32);
+        Result = Appendˉascii(Result, 48u32 + (Number / 10u32) % 10u32);
+    } else if Number >= 10u32 {
+        Result = Appendˉascii(Result, 48u32 + Number / 10u32);
+    }
+    return Appendˉascii(Result, 48u32 + Number % 10u32);
+}
+
+fn Ipv4ˉdigitˉat(Input: bytes, Cursor: u32, Length: u32) -> bool {
+    if Cursor >= Length { return false; }
+    let Character: u32 = Byteˉat(Input, Cursor);
+    return Character >= 48u32 && Character <= 57u32;
+}
+
+fn Ipv4ˉparseˉraw(Input: bytes) -> Networkˉaddress {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 7u32 || Length > 15u32 {
+        return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+    }
+    var Output: bytes = Emptyˉbytes();
+    var Cursor: u32 = 0u32;
+    var Component: u32 = 0u32;
+    while Component < 4u32 {
+        if Cursor >= Length { return Invalidˉaddress(Networkˉerror.Invalidˉaddress); }
+        let Start: u32 = Cursor;
+        var Number: u32 = 0u32;
+        while Ipv4ˉdigitˉat(Input, Cursor, Length) {
+            if Cursor - Start == 3u32 {
+                return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+            }
+            Number = Number * 10u32 + Byteˉat(Input, Cursor) - 48u32;
+            if Number > 255u32 {
+                return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+            }
+            Cursor = Cursor + 1u32;
+        }
+        if Cursor == Start { return Invalidˉaddress(Networkˉerror.Invalidˉaddress); }
+        if Cursor - Start > 1u32 && Byteˉat(Input, Start) == 48u32 {
+            return Invalidˉaddress(Networkˉerror.Noncanonicalˉaddress);
+        }
+        Output = Bytesˉconcat(Output, Byteˉfromˉu32(Number));
+        Component = Component + 1u32;
+        if Component < 4u32 {
+            if Cursor >= Length || Byteˉat(Input, Cursor) != 46u32 {
+                return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+            }
+            Cursor = Cursor + 1u32;
+        }
+    }
+    if Cursor != Length { return Invalidˉaddress(Networkˉerror.Invalidˉaddress); }
+    return Networkˉaddress(
+        Networkˉerror.Valid, Networkˉaddressˉkind.Ipv4, Output
+    );
+}
+
+fn Ipv4ˉformatˉbytes(Address: Networkˉaddress) -> bytes {
+    var Output: bytes = Emptyˉbytes();
+    var Index: u32 = 0u32;
+    while Index < IPV4_BYTES {
+        if Index != 0u32 { Output = Appendˉascii(Output, 46u32); }
+        Output = Appendˉdecimal(Output, Byteˉat(Address.Value, Index));
+        Index = Index + 1u32;
+    }
+    return Output;
+}
+
+fn Hexˉvalue(Character: u32) -> u32 {
+    if Character >= 48u32 && Character <= 57u32 { return Character - 48u32; }
+    if Character >= 97u32 && Character <= 102u32 { return Character - 87u32; }
+    if Character >= 65u32 && Character <= 70u32 { return Character - 55u32; }
+    return 16u32;
+}
+
+fn Appendˉhexˉgroup(Output: bytes, Group: u32) -> bytes {
+    var Result: bytes = Output;
+    var Divisor: u32 = 4096u32;
+    var Started: bool = false;
+    while Divisor > 0u32 {
+        let Digit: u32 = (Group / Divisor) % 16u32;
+        if Digit != 0u32 || Started || Divisor == 1u32 {
+            var Character: u32 = 48u32 + Digit;
+            if Digit >= 10u32 { Character = 87u32 + Digit; }
+            Result = Appendˉascii(Result, Character);
+            Started = true;
+        }
+        Divisor = Divisor / 16u32;
+    }
+    return Result;
+}
+
+fn Ipv6ˉgroup(Address: bytes, Index: u32) -> u32 {
+    return Byteˉat(Address, Index * 2u32) * 256u32 +
+        Byteˉat(Address, Index * 2u32 + 1u32);
+}
+
+fn Ipv6ˉgroupˉcharacter(Input: bytes, Cursor: u32, Length: u32) -> bool {
+    if Cursor >= Length { return false; }
+    return Byteˉat(Input, Cursor) != 58u32;
+}
+
+fn Ipv6ˉzeroˉgroup(Address: bytes, Index: u32) -> bool {
+    if Index >= IPV6_GROUPS { return false; }
+    return Ipv6ˉgroup(Address, Index) == 0u32;
+}
+
+fn Ipv6ˉparseˉraw(Input: bytes) -> Networkˉaddress {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 2u32 || Length > 39u32 {
+        return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+    }
+    var Parsed: bytes = Emptyˉbytes();
+    var Cursor: u32 = 0u32;
+    var Groupˉcount: u32 = 0u32;
+    var Compression: u32 = 9u32;
+    if Byteˉat(Input, 0u32) == 58u32 {
+        if Length < 2u32 || Byteˉat(Input, 1u32) != 58u32 {
+            return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+        }
+        Compression = 0u32;
+        Cursor = 2u32;
+    }
+    while Cursor < Length {
+        if Groupˉcount >= IPV6_GROUPS {
+            return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+        }
+        let Start: u32 = Cursor;
+        var Group: u32 = 0u32;
+        while Ipv6ˉgroupˉcharacter(Input, Cursor, Length) {
+            if Cursor - Start == 4u32 || Hexˉvalue(Byteˉat(Input, Cursor)) == 16u32 {
+                return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+            }
+            Group = Group * 16u32 + Hexˉvalue(Byteˉat(Input, Cursor));
+            Cursor = Cursor + 1u32;
+        }
+        if Cursor == Start { return Invalidˉaddress(Networkˉerror.Invalidˉaddress); }
+        Parsed = Bytesˉconcat(Parsed, Byteˉfromˉu32(Group / 256u32));
+        Parsed = Bytesˉconcat(Parsed, Byteˉfromˉu32(Group % 256u32));
+        Groupˉcount = Groupˉcount + 1u32;
+        if Cursor < Length {
+            if Cursor + 1u32 < Length && Byteˉat(Input, Cursor + 1u32) == 58u32 {
+                if Compression != 9u32 {
+                    return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+                }
+                Compression = Groupˉcount;
+                Cursor = Cursor + 2u32;
+            } else {
+                Cursor = Cursor + 1u32;
+                if Cursor == Length {
+                    return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+                }
+            }
+        }
+    }
+    if Compression == 9u32 && Groupˉcount != IPV6_GROUPS {
+        return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+    }
+    if Compression != 9u32 && Groupˉcount >= IPV6_GROUPS {
+        return Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+    }
+    var Output: bytes = Emptyˉbytes();
+    var Groupˉindex: u32 = 0u32;
+    var Parsedˉindex: u32 = 0u32;
+    let Inserted: u32 = IPV6_GROUPS - Groupˉcount;
+    while Groupˉindex < IPV6_GROUPS {
+        if Compression != 9u32 && Groupˉindex >= Compression &&
+            Groupˉindex < Compression + Inserted {
+            Output = Bytesˉconcat(Output, Byteˉfromˉu32(0u32));
+            Output = Bytesˉconcat(Output, Byteˉfromˉu32(0u32));
+        } else {
+            Output = Bytesˉconcat(
+                Output, Bytesˉslice(Parsed, Parsedˉindex * 2u32, 2u32)
+            );
+            Parsedˉindex = Parsedˉindex + 1u32;
+        }
+        Groupˉindex = Groupˉindex + 1u32;
+    }
+    return Networkˉaddress(
+        Networkˉerror.Valid, Networkˉaddressˉkind.Ipv6, Output
+    );
+}
+
+fn Ipv6ˉformatˉbytes(Address: Networkˉaddress) -> bytes {
+    var Bestˉstart: u32 = 8u32;
+    var Bestˉlength: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < IPV6_GROUPS {
+        var Run: u32 = 0u32;
+        while Ipv6ˉzeroˉgroup(Address.Value, Index + Run) {
+            Run = Run + 1u32;
+        }
+        if Run >= 2u32 && Run > Bestˉlength {
+            Bestˉstart = Index;
+            Bestˉlength = Run;
+        }
+        if Run == 0u32 { Index = Index + 1u32; }
+        else { Index = Index + Run; }
+    }
+    var Output: bytes = Emptyˉbytes();
+    Index = 0u32;
+    while Index < IPV6_GROUPS {
+        if Index == Bestˉstart {
+            Output = Appendˉascii(Output, 58u32);
+            Output = Appendˉascii(Output, 58u32);
+            Index = Index + Bestˉlength;
+        } else {
+            if Bytesˉlength(Output) != 0u32 &&
+                Byteˉat(Output, Bytesˉlength(Output) - 1u32) != 58u32 {
+                Output = Appendˉascii(Output, 58u32);
+            }
+            Output = Appendˉhexˉgroup(Output, Ipv6ˉgroup(Address.Value, Index));
+            Index = Index + 1u32;
+        }
+    }
+    return Output;
+}
+
+export fn Networkˉaddressˉparse(Input: text) -> Networkˉaddress {
+    let Encoded: bytes = Textˉtoˉutf8(Input);
+    var Parsed: Networkˉaddress = Invalidˉaddress(Networkˉerror.Invalidˉaddress);
+    var Hasˉcolon: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Encoded) {
+        if Byteˉat(Encoded, Index) == 58u32 { Hasˉcolon = true; }
+        Index = Index + 1u32;
+    }
+    if Hasˉcolon { Parsed = Ipv6ˉparseˉraw(Encoded); }
+    else { Parsed = Ipv4ˉparseˉraw(Encoded); }
+    if Parsed.Error != Networkˉerror.Valid { return Parsed; }
+    var Canonical: bytes = Ipv4ˉformatˉbytes(Parsed);
+    if Parsed.Kind == Networkˉaddressˉkind.Ipv6 {
+        Canonical = Ipv6ˉformatˉbytes(Parsed);
+    }
+    if !Bytesˉsame(Encoded, Canonical) {
+        return Invalidˉaddress(Networkˉerror.Noncanonicalˉaddress);
+    }
+    return Parsed;
+}
+
+export fn Networkˉaddressˉdisplay(Address: Networkˉaddress) -> Networkˉtext {
+    if !Addressˉvalid(Address) {
+        return Networkˉtext(Networkˉerror.Invalidˉaddress, "");
+    }
+    if Address.Kind == Networkˉaddressˉkind.Ipv4 {
+        return Networkˉtext(
+            Networkˉerror.Valid, Textˉfromˉutf8(Ipv4ˉformatˉbytes(Address))
+        );
+    }
+    return Networkˉtext(
+        Networkˉerror.Valid, Textˉfromˉutf8(Ipv6ˉformatˉbytes(Address))
+    );
+}
+
+export fn Networkˉaddressˉsame(Left: Networkˉaddress, Right: Networkˉaddress) -> bool {
+    return Addressˉvalid(Left) && Addressˉvalid(Right) && Left.Kind == Right.Kind &&
+        Bytesˉsame(Left.Value, Right.Value);
+}
+
+export fn Networkˉaddressˉscope(Address: Networkˉaddress) -> Networkˉscope {
+    if !Addressˉvalid(Address) { return Networkˉscope.Invalid; }
+    if Address.Kind == Networkˉaddressˉkind.Ipv4 {
+        let First: u32 = Byteˉat(Address.Value, 0u32);
+        if First == 0u32 { return Networkˉscope.Unspecified; }
+        if First == 127u32 { return Networkˉscope.Loopback; }
+        if First == 169u32 && Byteˉat(Address.Value, 1u32) == 254u32 {
+            return Networkˉscope.Linkˉlocal;
+        }
+        if First >= 224u32 && First <= 239u32 {
+            return Networkˉscope.Multicast;
+        }
+        return Networkˉscope.Global;
+    }
+    var Zero: bool = true;
+    var Index: u32 = 0u32;
+    while Index < 15u32 {
+        if Byteˉat(Address.Value, Index) != 0u32 { Zero = false; }
+        Index = Index + 1u32;
+    }
+    if Zero && Byteˉat(Address.Value, 15u32) == 0u32 {
+        return Networkˉscope.Unspecified;
+    }
+    if Zero && Byteˉat(Address.Value, 15u32) == 1u32 {
+        return Networkˉscope.Loopback;
+    }
+    if Byteˉat(Address.Value, 0u32) == 255u32 {
+        return Networkˉscope.Multicast;
+    }
+    if Byteˉat(Address.Value, 0u32) == 254u32 &&
+        (Byteˉat(Address.Value, 1u32) & 192u32) == 128u32 {
+        return Networkˉscope.Linkˉlocal;
+    }
+    return Networkˉscope.Global;
+}
+
+export fn Networkˉprefixˉcreate(Address: Networkˉaddress, Length: u32) -> Networkˉprefix {
+    if !Addressˉvalid(Address) {
+        return Networkˉprefix(Networkˉerror.Invalidˉaddress, Address, 0u32);
+    }
+    var Maximum: u32 = 32u32;
+    if Address.Kind == Networkˉaddressˉkind.Ipv6 { Maximum = 128u32; }
+    if Length > Maximum {
+        return Networkˉprefix(Networkˉerror.Invalidˉprefix, Address, Length);
+    }
+    let Full: u32 = Length / 8u32;
+    let Remaining: u32 = Length % 8u32;
+    var Index: u32 = Full;
+    if Remaining != 0u32 {
+        let Hostˉmask: u32 = 255u32 >> Remaining;
+        if (Byteˉat(Address.Value, Index) & Hostˉmask) != 0u32 {
+            return Networkˉprefix(Networkˉerror.Hostˉbitsˉset, Address, Length);
+        }
+        Index = Index + 1u32;
+    }
+    while Index < Bytesˉlength(Address.Value) {
+        if Byteˉat(Address.Value, Index) != 0u32 {
+            return Networkˉprefix(Networkˉerror.Hostˉbitsˉset, Address, Length);
+        }
+        Index = Index + 1u32;
+    }
+    return Networkˉprefix(Networkˉerror.Valid, Address, Length);
+}
+
+export fn Networkˉprefixˉcontains(Prefix: Networkˉprefix, Address: Networkˉaddress) -> bool {
+    let Verified: Networkˉprefix = Networkˉprefixˉcreate(Prefix.Address, Prefix.Length);
+    if Prefix.Error != Networkˉerror.Valid || Verified.Error != Networkˉerror.Valid ||
+        !Addressˉvalid(Address) ||
+        Prefix.Address.Kind != Address.Kind { return false; }
+    let Full: u32 = Prefix.Length / 8u32;
+    let Remaining: u32 = Prefix.Length % 8u32;
+    var Index: u32 = 0u32;
+    while Index < Full {
+        if Byteˉat(Prefix.Address.Value, Index) != Byteˉat(Address.Value, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    if Remaining != 0u32 {
+        let Mask: u32 = (255u32 << (8u32 - Remaining)) & 255u32;
+        if (Byteˉat(Prefix.Address.Value, Full) & Mask) !=
+            (Byteˉat(Address.Value, Full) & Mask) { return false; }
+    }
+    return true;
+}
+
+export fn Networkˉendpointˉcreate(
+    Address: Networkˉaddress,
+    Port: u32,
+    Interface: u64
+) -> Networkˉendpoint {
+    if !Addressˉvalid(Address) {
+        return Networkˉendpoint(Networkˉerror.Invalidˉaddress, Address, 0u32, 0u64);
+    }
+    if Port == 0u32 || Port > PORT_MAXIMUM {
+        return Networkˉendpoint(Networkˉerror.Invalidˉport, Address, Port, Interface);
+    }
+    let Scope: Networkˉscope = Networkˉaddressˉscope(Address);
+    if Scope == Networkˉscope.Unspecified ||
+        Scope == Networkˉscope.Multicast {
+        return Networkˉendpoint(Networkˉerror.Invalidˉscope, Address, Port, Interface);
+    }
+    if Address.Kind == Networkˉaddressˉkind.Ipv6 &&
+        Scope == Networkˉscope.Linkˉlocal {
+        if Interface == 0u64 {
+            return Networkˉendpoint(Networkˉerror.Invalidˉscope, Address, Port, Interface);
+        }
+    } else if Interface != 0u64 {
+        return Networkˉendpoint(Networkˉerror.Invalidˉscope, Address, Port, Interface);
+    }
+    return Networkˉendpoint(Networkˉerror.Valid, Address, Port, Interface);
+}
+
+fn Serviceˉbytesˉerror(Value: bytes) -> Networkˉerror {
+    let Length: u32 = Bytesˉlength(Value);
+    if Length == 0u32 || Length > SERVICE_NAME_MAXIMUM_BYTES {
+        return Networkˉerror.Invalidˉserviceˉname;
+    }
+    var Labelˉlength: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u32 = Byteˉat(Value, Index);
+        if Character == 46u32 {
+            if Labelˉlength == 0u32 || Byteˉat(Value, Index - 1u32) == 45u32 {
+                return Networkˉerror.Invalidˉserviceˉname;
+            }
+            Labelˉlength = 0u32;
+        } else {
+            if Character >= 65u32 && Character <= 90u32 {
+                return Networkˉerror.Noncanonicalˉserviceˉname;
+            }
+            if !((Character >= 97u32 && Character <= 122u32) ||
+                (Character >= 48u32 && Character <= 57u32) || Character == 45u32) {
+                return Networkˉerror.Invalidˉserviceˉname;
+            }
+            if Labelˉlength == 0u32 && Character == 45u32 {
+                return Networkˉerror.Invalidˉserviceˉname;
+            }
+            Labelˉlength = Labelˉlength + 1u32;
+            if Labelˉlength > SERVICE_LABEL_MAXIMUM_BYTES {
+                return Networkˉerror.Invalidˉserviceˉname;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    if Labelˉlength == 0u32 || Byteˉat(Value, Length - 1u32) == 45u32 {
+        return Networkˉerror.Invalidˉserviceˉname;
+    }
+    let Numeric: Networkˉaddress = Ipv4ˉparseˉraw(Value);
+    if Numeric.Error == Networkˉerror.Valid {
+        return Networkˉerror.Ambiguousˉserviceˉname;
+    }
+    return Networkˉerror.Valid;
+}
+
+export fn Networkˉserviceˉnameˉcreate(Input: text) -> Networkˉserviceˉname {
+    let Value: bytes = Textˉtoˉutf8(Input);
+    let Error: Networkˉerror = Serviceˉbytesˉerror(Value);
+    if Error != Networkˉerror.Valid {
+        return Networkˉserviceˉname(Error, Emptyˉbytes());
+    }
+    return Networkˉserviceˉname(Networkˉerror.Valid, Value);
+}
+
+fn Emptyˉgrant(Error: Networkˉerror) -> Networkˉgrant {
+    return Networkˉgrant(
+        Error, Networkˉselectorˉkind.Invalid, Emptyˉbytes(),
+        Networkˉaddressˉkind.Invalid, Emptyˉbytes(), 0u32,
+        Networkˉtransport.Invalid, Networkˉdirection.Invalid,
+        0u32, 0u32, 0u64, 0u32, 0u32, 0u64, 0u64, 0u64
+    );
+}
+
+fn Transportˉvalid(Value: Networkˉtransport) -> bool {
+    return Value == Networkˉtransport.Tcp || Value == Networkˉtransport.Udp ||
+        Value == Networkˉtransport.Any;
+}
+
+fn Directionˉvalid(Value: Networkˉdirection) -> bool {
+    return Value == Networkˉdirection.Outbound || Value == Networkˉdirection.Listen ||
+        Value == Networkˉdirection.Any;
+}
+
+fn Grantˉlimitsˉvalid(
+    Firstˉport: u32,
+    Lastˉport: u32,
+    Maximumˉconnections: u32,
+    Maximumˉqueuedˉbytes: u32,
+    Maximumˉtransferˉbytes: u64,
+    Maximumˉdeadlineˉspan: u64,
+    Expiresˉat: u64
+) -> Networkˉerror {
+    if Firstˉport == 0u32 || Lastˉport > PORT_MAXIMUM || Firstˉport > Lastˉport {
+        return Networkˉerror.Invalidˉport;
+    }
+    if Maximumˉconnections == 0u32 || Maximumˉqueuedˉbytes == 0u32 ||
+        Maximumˉtransferˉbytes == 0u64 || Maximumˉdeadlineˉspan == 0u64 {
+        return Networkˉerror.Invalidˉlimit;
+    }
+    if Expiresˉat == 0u64 { return Networkˉerror.Invalidˉlifetime; }
+    return Networkˉerror.Valid;
+}
+
+export fn Networkˉserviceˉgrantˉcreate(
+    Service: Networkˉserviceˉname,
+    Transport: Networkˉtransport,
+    Direction: Networkˉdirection,
+    Firstˉport: u32,
+    Lastˉport: u32,
+    Maximumˉconnections: u32,
+    Maximumˉqueuedˉbytes: u32,
+    Maximumˉtransferˉbytes: u64,
+    Maximumˉdeadlineˉspan: u64,
+    Expiresˉat: u64
+) -> Networkˉgrant {
+    if Service.Error != Networkˉerror.Valid ||
+        Serviceˉbytesˉerror(Service.Value) != Networkˉerror.Valid {
+        return Emptyˉgrant(Networkˉerror.Invalidˉserviceˉname);
+    }
+    if !Transportˉvalid(Transport) { return Emptyˉgrant(Networkˉerror.Invalidˉtransport); }
+    if !Directionˉvalid(Direction) { return Emptyˉgrant(Networkˉerror.Invalidˉdirection); }
+    let Error: Networkˉerror = Grantˉlimitsˉvalid(
+        Firstˉport, Lastˉport, Maximumˉconnections, Maximumˉqueuedˉbytes,
+        Maximumˉtransferˉbytes, Maximumˉdeadlineˉspan, Expiresˉat
+    );
+    if Error != Networkˉerror.Valid { return Emptyˉgrant(Error); }
+    return Networkˉgrant(
+        Networkˉerror.Valid, Networkˉselectorˉkind.Service, Service.Value,
+        Networkˉaddressˉkind.Invalid, Emptyˉbytes(), 0u32, Transport, Direction,
+        Firstˉport, Lastˉport, 0u64, Maximumˉconnections, Maximumˉqueuedˉbytes,
+        Maximumˉtransferˉbytes, Maximumˉdeadlineˉspan, Expiresˉat
+    );
+}
+
+export fn Networkˉprefixˉgrantˉcreate(
+    Prefix: Networkˉprefix,
+    Transport: Networkˉtransport,
+    Direction: Networkˉdirection,
+    Firstˉport: u32,
+    Lastˉport: u32,
+    Interface: u64,
+    Maximumˉconnections: u32,
+    Maximumˉqueuedˉbytes: u32,
+    Maximumˉtransferˉbytes: u64,
+    Maximumˉdeadlineˉspan: u64,
+    Expiresˉat: u64
+) -> Networkˉgrant {
+    let Verifiedˉprefix: Networkˉprefix = Networkˉprefixˉcreate(
+        Prefix.Address, Prefix.Length
+    );
+    if Prefix.Error != Networkˉerror.Valid || Verifiedˉprefix.Error != Networkˉerror.Valid {
+        return Emptyˉgrant(Networkˉerror.Invalidˉprefix);
+    }
+    if !Transportˉvalid(Transport) { return Emptyˉgrant(Networkˉerror.Invalidˉtransport); }
+    if !Directionˉvalid(Direction) { return Emptyˉgrant(Networkˉerror.Invalidˉdirection); }
+    if Interface != 0u64 && Prefix.Address.Kind != Networkˉaddressˉkind.Ipv6 {
+        return Emptyˉgrant(Networkˉerror.Invalidˉscope);
+    }
+    if Interface != 0u64 && (Prefix.Length < 10u32 ||
+        Byteˉat(Prefix.Address.Value, 0u32) != 254u32 ||
+        (Byteˉat(Prefix.Address.Value, 1u32) & 192u32) != 128u32) {
+        return Emptyˉgrant(Networkˉerror.Invalidˉscope);
+    }
+    let Error: Networkˉerror = Grantˉlimitsˉvalid(
+        Firstˉport, Lastˉport, Maximumˉconnections, Maximumˉqueuedˉbytes,
+        Maximumˉtransferˉbytes, Maximumˉdeadlineˉspan, Expiresˉat
+    );
+    if Error != Networkˉerror.Valid { return Emptyˉgrant(Error); }
+    return Networkˉgrant(
+        Networkˉerror.Valid, Networkˉselectorˉkind.Prefix, Emptyˉbytes(),
+        Prefix.Address.Kind, Prefix.Address.Value, Prefix.Length, Transport, Direction,
+        Firstˉport, Lastˉport, Interface, Maximumˉconnections,
+        Maximumˉqueuedˉbytes, Maximumˉtransferˉbytes,
+        Maximumˉdeadlineˉspan, Expiresˉat
+    );
+}
+
+fn Transportˉnarrows(Child: Networkˉtransport, Parent: Networkˉtransport) -> bool {
+    return Child == Parent || Parent == Networkˉtransport.Any;
+}
+
+fn Directionˉnarrows(Child: Networkˉdirection, Parent: Networkˉdirection) -> bool {
+    return Child == Parent || Parent == Networkˉdirection.Any;
+}
+
+fn Grantˉvalid(Grant: Networkˉgrant) -> bool {
+    if Grant.Error != Networkˉerror.Valid || !Transportˉvalid(Grant.Transport) ||
+        !Directionˉvalid(Grant.Direction) { return false; }
+    if Grantˉlimitsˉvalid(
+        Grant.Firstˉport, Grant.Lastˉport, Grant.Maximumˉconnections,
+        Grant.Maximumˉqueuedˉbytes, Grant.Maximumˉtransferˉbytes,
+        Grant.Maximumˉdeadlineˉspan, Grant.Expiresˉat
+    ) != Networkˉerror.Valid { return false; }
+    if Grant.Kind == Networkˉselectorˉkind.Service {
+        return Serviceˉbytesˉerror(Grant.Service) == Networkˉerror.Valid &&
+            Grant.Addressˉkind == Networkˉaddressˉkind.Invalid &&
+            Bytesˉlength(Grant.Address) == 0u32 && Grant.Interface == 0u64;
+    }
+    if Grant.Kind == Networkˉselectorˉkind.Prefix {
+        let Address: Networkˉaddress = Networkˉaddressˉfromˉbytes(
+            Grant.Addressˉkind, Grant.Address
+        );
+        let Prefix: Networkˉprefix = Networkˉprefixˉcreate(Address, Grant.Prefixˉlength);
+        if Bytesˉlength(Grant.Service) != 0u32 || Prefix.Error != Networkˉerror.Valid {
+            return false;
+        }
+        if Grant.Interface != 0u64 {
+            if Grant.Addressˉkind != Networkˉaddressˉkind.Ipv6 ||
+                Grant.Prefixˉlength < 10u32 || Byteˉat(Grant.Address, 0u32) != 254u32 ||
+                (Byteˉat(Grant.Address, 1u32) & 192u32) != 128u32 { return false; }
+        }
+        return true;
+    }
+    return false;
+}
+
+export fn Networkˉgrantˉnarrows(Child: Networkˉgrant, Parent: Networkˉgrant) -> bool {
+    if !Grantˉvalid(Child) || !Grantˉvalid(Parent) || Child.Kind != Parent.Kind {
+        return false;
+    }
+    if !Transportˉnarrows(Child.Transport, Parent.Transport) ||
+        !Directionˉnarrows(Child.Direction, Parent.Direction) ||
+        Child.Firstˉport < Parent.Firstˉport || Child.Lastˉport > Parent.Lastˉport ||
+        (Parent.Interface != 0u64 && Child.Interface != Parent.Interface) ||
+        Child.Maximumˉconnections > Parent.Maximumˉconnections ||
+        Child.Maximumˉqueuedˉbytes > Parent.Maximumˉqueuedˉbytes ||
+        Child.Maximumˉtransferˉbytes > Parent.Maximumˉtransferˉbytes ||
+        Child.Maximumˉdeadlineˉspan > Parent.Maximumˉdeadlineˉspan ||
+        Child.Expiresˉat > Parent.Expiresˉat { return false; }
+    if Child.Kind == Networkˉselectorˉkind.Service {
+        return Bytesˉsame(Child.Service, Parent.Service);
+    }
+    if Child.Addressˉkind != Parent.Addressˉkind ||
+        Child.Prefixˉlength < Parent.Prefixˉlength { return false; }
+    let Parentˉprefix: Networkˉprefix = Networkˉprefixˉcreate(
+        Networkˉaddressˉfromˉbytes(Parent.Addressˉkind, Parent.Address),
+        Parent.Prefixˉlength
+    );
+    return Networkˉprefixˉcontains(
+        Parentˉprefix,
+        Networkˉaddressˉfromˉbytes(Child.Addressˉkind, Child.Address)
+    );
+}
+
+export fn Networkˉgrantˉallowsˉservice(
+    Grant: Networkˉgrant,
+    Service: Networkˉserviceˉname,
+    Port: u32,
+    Transport: Networkˉtransport,
+    Direction: Networkˉdirection,
+    Now: u64
+) -> bool {
+    return Grantˉvalid(Grant) && Grant.Kind == Networkˉselectorˉkind.Service &&
+        Service.Error == Networkˉerror.Valid &&
+        Serviceˉbytesˉerror(Service.Value) == Networkˉerror.Valid &&
+        Bytesˉsame(Grant.Service, Service.Value) &&
+        Port >= Grant.Firstˉport && Port <= Grant.Lastˉport &&
+        Transport != Networkˉtransport.Any && Transportˉnarrows(Transport, Grant.Transport) &&
+        Direction != Networkˉdirection.Any && Directionˉnarrows(Direction, Grant.Direction) &&
+        Now < Grant.Expiresˉat;
+}
+
+export fn Networkˉgrantˉallowsˉendpoint(
+    Grant: Networkˉgrant,
+    Endpoint: Networkˉendpoint,
+    Transport: Networkˉtransport,
+    Direction: Networkˉdirection,
+    Now: u64
+) -> bool {
+    let Verifiedˉendpoint: Networkˉendpoint = Networkˉendpointˉcreate(
+        Endpoint.Address, Endpoint.Port, Endpoint.Interface
+    );
+    if !Grantˉvalid(Grant) || Grant.Kind != Networkˉselectorˉkind.Prefix ||
+        Endpoint.Error != Networkˉerror.Valid || Verifiedˉendpoint.Error != Networkˉerror.Valid ||
+        Transport == Networkˉtransport.Any ||
+        Direction == Networkˉdirection.Any || Now >= Grant.Expiresˉat { return false; }
+    if Endpoint.Port < Grant.Firstˉport || Endpoint.Port > Grant.Lastˉport ||
+        !Transportˉnarrows(Transport, Grant.Transport) ||
+        !Directionˉnarrows(Direction, Grant.Direction) ||
+        (Grant.Interface != 0u64 && Endpoint.Interface != Grant.Interface) { return false; }
+    let Prefix: Networkˉprefix = Networkˉprefixˉcreate(
+        Networkˉaddressˉfromˉbytes(Grant.Addressˉkind, Grant.Address),
+        Grant.Prefixˉlength
+    );
+    return Networkˉprefixˉcontains(Prefix, Endpoint.Address);
+}

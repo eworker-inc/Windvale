@@ -1,0 +1,258 @@
+module Windvaleˉnetworkˉaddressˉauthorityˉselfˉtest profile portable;
+
+import Windvaleˉnetworkˉaddressˉauthority as Network;
+
+fn Textˉsame(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    if Bytesˉlength(Leftˉbytes) != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Leftˉbytes) {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) != Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Addressˉerror(Input: text) -> Network.Networkˉerror {
+    let Parsed: Network.Networkˉaddress = Network.Networkˉaddressˉparse(Input);
+    return Parsed.Error;
+}
+
+fn Endpointˉerror(
+    Address: Network.Networkˉaddress,
+    Port: u32,
+    Interface: u64
+) -> Network.Networkˉerror {
+    let Endpoint: Network.Networkˉendpoint =
+        Network.Networkˉendpointˉcreate(Address, Port, Interface);
+    return Endpoint.Error;
+}
+
+fn Serviceˉerror(Input: text) -> Network.Networkˉerror {
+    let Service: Network.Networkˉserviceˉname =
+        Network.Networkˉserviceˉnameˉcreate(Input);
+    return Service.Error;
+}
+
+fn Ipv4ˉcase() -> bool {
+    let Address: Network.Networkˉaddress = Network.Networkˉaddressˉparse("192.0.2.255");
+    let Display: Network.Networkˉtext = Network.Networkˉaddressˉdisplay(Address);
+    return Address.Error == Network.Networkˉerror.Valid &&
+        Address.Kind == Network.Networkˉaddressˉkind.Ipv4 &&
+        Bytesˉlength(Address.Value) == 4u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Address.Value, 3u32)) == 255u32 &&
+        Display.Error == Network.Networkˉerror.Valid && Textˉsame(Display.Value, "192.0.2.255");
+}
+
+fn Ipv4ˉinvalidˉcase() -> bool {
+    return Addressˉerror("192.0.2") ==
+            Network.Networkˉerror.Invalidˉaddress &&
+        Addressˉerror("192.0.2.256") ==
+            Network.Networkˉerror.Invalidˉaddress &&
+        Addressˉerror("192.00.2.1") ==
+            Network.Networkˉerror.Noncanonicalˉaddress &&
+        Addressˉerror("+1.2.3.4") ==
+            Network.Networkˉerror.Invalidˉaddress;
+}
+
+fn Ipv6ˉcase() -> bool {
+    let Address: Network.Networkˉaddress =
+        Network.Networkˉaddressˉparse("2001:db8::ff00:42:8329");
+    let Display: Network.Networkˉtext = Network.Networkˉaddressˉdisplay(Address);
+    let Zero: Network.Networkˉaddress = Network.Networkˉaddressˉparse("::");
+    let Loopback: Network.Networkˉaddress = Network.Networkˉaddressˉparse("::1");
+    return Address.Error == Network.Networkˉerror.Valid &&
+        Bytesˉlength(Address.Value) == 16u32 && Textˉsame(Display.Value, "2001:db8::ff00:42:8329") &&
+        Zero.Error == Network.Networkˉerror.Valid &&
+        Network.Networkˉaddressˉscope(Zero) == Network.Networkˉscope.Unspecified &&
+        Loopback.Error == Network.Networkˉerror.Valid &&
+        Network.Networkˉaddressˉscope(Loopback) == Network.Networkˉscope.Loopback;
+}
+
+fn Ipv6ˉcanonicalˉcase() -> bool {
+    return Addressˉerror("2001:0db8::1") ==
+            Network.Networkˉerror.Noncanonicalˉaddress &&
+        Addressˉerror("2001:DB8::1") ==
+            Network.Networkˉerror.Noncanonicalˉaddress &&
+        Addressˉerror("2001:db8:0:0:1:0:0:1") ==
+            Network.Networkˉerror.Noncanonicalˉaddress &&
+        Addressˉerror("2001:db8::0:1") ==
+            Network.Networkˉerror.Noncanonicalˉaddress &&
+        Addressˉerror("2001::db8::1") ==
+            Network.Networkˉerror.Invalidˉaddress;
+}
+
+fn Prefixˉcase() -> bool {
+    let Base: Network.Networkˉaddress = Network.Networkˉaddressˉparse("192.0.2.0");
+    let Prefix: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(Base, 24u32);
+    let Inside: Network.Networkˉaddress = Network.Networkˉaddressˉparse("192.0.2.42");
+    let Outside: Network.Networkˉaddress = Network.Networkˉaddressˉparse("192.0.3.1");
+    let Dirty: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(Inside, 24u32);
+    let Overflow: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(Base, 33u32);
+    let Forged: Network.Networkˉprefix = Network.Networkˉprefix(
+        Network.Networkˉerror.Valid, Inside, 24u32
+    );
+    return Prefix.Error == Network.Networkˉerror.Valid &&
+        Network.Networkˉprefixˉcontains(Prefix, Inside) &&
+        !Network.Networkˉprefixˉcontains(Prefix, Outside) &&
+        !Network.Networkˉprefixˉcontains(Forged, Inside) &&
+        Dirty.Error == Network.Networkˉerror.Hostˉbitsˉset &&
+        Overflow.Error == Network.Networkˉerror.Invalidˉprefix;
+}
+
+fn Scopeˉcase() -> bool {
+    let Link: Network.Networkˉaddress = Network.Networkˉaddressˉparse("fe80::1");
+    let Global: Network.Networkˉaddress = Network.Networkˉaddressˉparse("2001:db8::1");
+    let Scoped: Network.Networkˉendpoint = Network.Networkˉendpointˉcreate(Link, 443u32, 7u64);
+    return Network.Networkˉaddressˉscope(Link) == Network.Networkˉscope.Linkˉlocal &&
+        Scoped.Error == Network.Networkˉerror.Valid && Scoped.Interface == 7u64 &&
+        Endpointˉerror(Link, 443u32, 0u64) == Network.Networkˉerror.Invalidˉscope &&
+        Endpointˉerror(Global, 443u32, 7u64) == Network.Networkˉerror.Invalidˉscope;
+}
+
+fn Portˉcase() -> bool {
+    let Address: Network.Networkˉaddress = Network.Networkˉaddressˉparse("192.0.2.1");
+    return Endpointˉerror(Address, 1u32, 0u64) == Network.Networkˉerror.Valid &&
+        Endpointˉerror(Address, 65535u32, 0u64) == Network.Networkˉerror.Valid &&
+        Endpointˉerror(Address, 0u32, 0u64) == Network.Networkˉerror.Invalidˉport &&
+        Endpointˉerror(Address, 65536u32, 0u64) == Network.Networkˉerror.Invalidˉport;
+}
+
+fn Serviceˉcase() -> bool {
+    return Serviceˉerror("api.openai.com") == Network.Networkˉerror.Valid &&
+        Serviceˉerror("api.anthropic.com") == Network.Networkˉerror.Valid &&
+        Serviceˉerror("generativelanguage.googleapis.com") == Network.Networkˉerror.Valid &&
+        Serviceˉerror("API.OPENAI.COM") == Network.Networkˉerror.Noncanonicalˉserviceˉname &&
+        Serviceˉerror("-api.example") == Network.Networkˉerror.Invalidˉserviceˉname &&
+        Serviceˉerror("192.0.2.1") == Network.Networkˉerror.Ambiguousˉserviceˉname;
+}
+
+fn Parentˉgrant() -> Network.Networkˉgrant {
+    return Network.Networkˉserviceˉgrantˉcreate(
+        Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+        Network.Networkˉtransport.Any, Network.Networkˉdirection.Any,
+        443u32, 8443u32, 4u32, 65536u32, 1048576u64, 30000u64, 1000u64
+    );
+}
+
+fn Serviceˉgrantˉcase() -> bool {
+    let Grant: Network.Networkˉgrant = Parentˉgrant();
+    let Forgedˉservice: Network.Networkˉserviceˉname =
+        Network.Networkˉserviceˉname(
+            Network.Networkˉerror.Valid, Textˉtoˉutf8("API.OPENAI.COM")
+        );
+    let Forgedˉgrant: Network.Networkˉgrant = Network.Networkˉserviceˉgrantˉcreate(
+        Forgedˉservice, Network.Networkˉtransport.Tcp,
+        Network.Networkˉdirection.Outbound, 443u32, 443u32,
+        1u32, 4096u32, 65536u64, 5000u64, 900u64
+    );
+    return Grant.Error == Network.Networkˉerror.Valid &&
+        Forgedˉgrant.Error == Network.Networkˉerror.Invalidˉserviceˉname &&
+        Network.Networkˉgrantˉallowsˉservice(
+            Grant, Network.Networkˉserviceˉnameˉcreate("api.openai.com"), 443u32,
+            Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound, 999u64
+        ) &&
+        !Network.Networkˉgrantˉallowsˉservice(
+            Grant, Network.Networkˉserviceˉnameˉcreate("api.anthropic.com"), 443u32,
+            Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound, 10u64
+        ) &&
+        !Network.Networkˉgrantˉallowsˉservice(
+            Grant, Network.Networkˉserviceˉnameˉcreate("api.openai.com"), 443u32,
+            Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound, 1000u64
+        );
+}
+
+fn Narrowˉserviceˉcase() -> bool {
+    let Child: Network.Networkˉgrant = Network.Networkˉserviceˉgrantˉcreate(
+        Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+        Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 1u32, 4096u32, 65536u64, 5000u64, 900u64
+    );
+    let Wider: Network.Networkˉgrant = Network.Networkˉserviceˉgrantˉcreate(
+        Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+        Network.Networkˉtransport.Any, Network.Networkˉdirection.Any,
+        1u32, 65535u32, 5u32, 65536u32, 1048576u64, 30000u64, 1001u64
+    );
+    let Other: Network.Networkˉgrant = Network.Networkˉserviceˉgrantˉcreate(
+        Network.Networkˉserviceˉnameˉcreate("api.anthropic.com"),
+        Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 1u32, 4096u32, 65536u64, 5000u64, 900u64
+    );
+    return Network.Networkˉgrantˉnarrows(Child, Parentˉgrant()) &&
+        !Network.Networkˉgrantˉnarrows(Wider, Parentˉgrant()) &&
+        !Network.Networkˉgrantˉnarrows(Other, Parentˉgrant());
+}
+
+fn Prefixˉgrantˉcase() -> bool {
+    let Parentˉprefix: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(
+        Network.Networkˉaddressˉparse("2001:db8::"), 32u32
+    );
+    let Childˉprefix: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(
+        Network.Networkˉaddressˉparse("2001:db8:1::"), 48u32
+    );
+    let Parent: Network.Networkˉgrant = Network.Networkˉprefixˉgrantˉcreate(
+        Parentˉprefix, Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 0u64, 4u32, 65536u32, 1048576u64, 30000u64, 1000u64
+    );
+    let Child: Network.Networkˉgrant = Network.Networkˉprefixˉgrantˉcreate(
+        Childˉprefix, Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 0u64, 1u32, 4096u32, 65536u64, 5000u64, 900u64
+    );
+    let Endpoint: Network.Networkˉendpoint = Network.Networkˉendpointˉcreate(
+        Network.Networkˉaddressˉparse("2001:db8:1::42"), 443u32, 0u64
+    );
+    let Invalidˉinterface: Network.Networkˉgrant = Network.Networkˉprefixˉgrantˉcreate(
+        Childˉprefix, Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 7u64, 1u32, 4096u32, 65536u64, 5000u64, 900u64
+    );
+    return Parent.Error == Network.Networkˉerror.Valid && Child.Error == Network.Networkˉerror.Valid &&
+        Invalidˉinterface.Error == Network.Networkˉerror.Invalidˉscope &&
+        Network.Networkˉgrantˉnarrows(Child, Parent) &&
+        Network.Networkˉgrantˉallowsˉendpoint(
+            Child, Endpoint, Network.Networkˉtransport.Tcp,
+            Network.Networkˉdirection.Outbound, 899u64
+        );
+}
+
+fn Selectorˉseparationˉcase() -> bool {
+    let Prefix: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(
+        Network.Networkˉaddressˉparse("192.0.2.0"), 24u32
+    );
+    let Numeric: Network.Networkˉgrant = Network.Networkˉprefixˉgrantˉcreate(
+        Prefix, Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 0u64, 1u32, 4096u32, 65536u64, 5000u64, 900u64
+    );
+    let Address: Network.Networkˉaddress = Network.Networkˉaddressˉparse("192.0.2.1");
+    let Forgedˉendpoint: Network.Networkˉendpoint = Network.Networkˉendpoint(
+        Network.Networkˉerror.Valid, Address, 0u32, 0u64
+    );
+    return !Network.Networkˉgrantˉnarrows(Numeric, Parentˉgrant()) &&
+        !Network.Networkˉgrantˉallowsˉendpoint(
+            Numeric, Forgedˉendpoint, Network.Networkˉtransport.Tcp,
+            Network.Networkˉdirection.Outbound, 10u64
+        ) &&
+        !Network.Networkˉgrantˉallowsˉendpoint(
+            Parentˉgrant(), Network.Networkˉendpointˉcreate(
+                Network.Networkˉaddressˉparse("192.0.2.1"), 443u32, 0u64
+            ), Network.Networkˉtransport.Tcp, Network.Networkˉdirection.Outbound, 10u64
+        );
+}
+
+export fn Main() -> i32 {
+    if !Ipv4ˉcase() { return 1; }
+    if !Ipv4ˉinvalidˉcase() { return 2; }
+    if !Ipv6ˉcase() { return 3; }
+    if !Ipv6ˉcanonicalˉcase() { return 4; }
+    if !Prefixˉcase() { return 5; }
+    if !Scopeˉcase() { return 6; }
+    if !Portˉcase() { return 7; }
+    if !Serviceˉcase() { return 8; }
+    if !Serviceˉgrantˉcase() { return 9; }
+    if !Narrowˉserviceˉcase() { return 10; }
+    if !Prefixˉgrantˉcase() { return 11; }
+    if !Selectorˉseparationˉcase() { return 12; }
+    return 42;
+}

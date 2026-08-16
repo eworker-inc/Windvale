@@ -7,6 +7,8 @@
 > [Decision 0585](../Decisions/0585-Catchable-Model-Provider-Lifecycle-Results.md).
 > Shared network slice 1 is implemented under
 > [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
+> Shared network slice 2 is implemented under
+> [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md).
 > Live network, credential, and provider-adapter slices remain proposals. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
@@ -71,6 +73,12 @@ deterministically. It also contains the hosted `model.catalog_v1` and
 `model.inference_v1` capability seam, strict facade, native lowering, exact
 scripted provider table, and current-host executable test with cross-host image
 construction.
+
+The shared network foundation now also has executable deadline/cancellation and
+address/endpoint/authority cores. A future binding can therefore restrict a
+provider to its exact service name, outbound TCP port 443, connection/byte/
+deadline limits, and monotonic expiry without converting DNS output into ambient
+numeric authority.
 
 This checkpoint is intentionally not a live adapter. It does not contact
 OpenAI, Anthropic, Google, or another provider, read an API key, parse provider

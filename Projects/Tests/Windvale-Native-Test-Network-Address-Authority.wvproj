@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Network/Address-Authority-Self-Test.wv"
+source "Libraries/Network/Address-Authority.wv"
+emit wvb

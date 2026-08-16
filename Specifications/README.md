@@ -86,6 +86,11 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Provider-neutral model protocol version 1](Windvale-Model-Protocol.md)
 - [Bound hosted model provider](Windvale-Bound-Model-Provider.md)
 
+## Networking
+
+- [Bounded operation, deadline, cancellation, and teardown core](Bounded-Operation-Core.md)
+- [Canonical addresses, endpoints, service names, and reducible grants](Network-Address-Authority.md)
+
 ## Assembly, objects, and linking
 
 - [WVO object core](Wvo-Object-Core.md)

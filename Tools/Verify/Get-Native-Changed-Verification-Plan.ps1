@@ -786,6 +786,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'operation-core'
     } elseif ($Path -in @(
+        'Libraries/Network/Address-Authority.wv',
+        'Projects/Libraries/Windvale-Library-Network-Address-Authority.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Network-Address-Authority.wvproj',
+        'Tests/Fixtures/Network/Address-Authority-Self-Test.wv',
+        'Specifications/Network-Address-Authority.md'
+    )) {
+        Add-Suite 'network-authority'
+    } elseif ($Path -in @(
         'Libraries/Platform/Models/Bound-Model-Provider.wv',
         'Projects/Libraries/Windvale-Library-Bound-Model-Provider.wvproj',
         'Projects/Tests/Windvale-Native-Test-Hosted-Model-Provider.wvproj',

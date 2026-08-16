@@ -3,8 +3,9 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Active implementation; slice 1 is implemented under
+- Status: Active implementation; slices 1 and 2 are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
+  and [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
   and no network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -151,12 +152,18 @@ providers remain slice 4 work; this slice is the capability-free semantic core.
 
 ### Network slice 2: address, endpoint, and authority model
 
+Status: implemented candidate under [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md).
+
 Implement strict IPv4 and IPv6 text/binary conversion, prefixes, scoped endpoints,
 ports, service names, peer rules, and rights reduction. Include canonical display
 only where its exact form is specified.
 
 Exit gate: published protocol vectors plus boundary, malformed, noncanonical,
 scope, prefix, overflow, and grant-narrowing cases agree on Windows and Linux.
+
+The portable implementation and twelve-group focused owner now cover that
+surface, execute on Windows, and construct the exact Linux image. Independent
+Linux execution is still required before the complete exit gate is claimed.
 
 ### Network slice 3: deterministic link and packet core
 
