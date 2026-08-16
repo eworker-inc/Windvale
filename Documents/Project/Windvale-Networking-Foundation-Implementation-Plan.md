@@ -14,9 +14,8 @@
   [Decision 0604](../Decisions/0604-First-Protected-Provider-Credential-Custody.md),
   and [Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md).
   Resolver/TCP, TLS, bounded HTTPS, and protected credential custody have
-  independent Windows/Linux execution evidence. The supervised external-model
-  gateway has isolated Windows evidence; its independent Linux execution and the
-  native capability bridge remain pending, so no
+  independent Windows/Linux execution evidence, as does the supervised
+  external-model gateway. The native capability bridge remains pending, so no
   production network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -278,7 +277,8 @@ generation check. Sixteen isolated cases use fake keys and no public network.
 
 Status: hosted bootstrap candidate implemented under
 [Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md);
-independent Linux execution and native capability binding remain pending.
+independent Windows/Linux execution is complete and native capability binding
+remains pending.
 
 One empty-environment child owns the encrypted startup/unlock exchange, exact
 provider and credential generations, three fixed provider mappings, bounded
@@ -327,8 +327,8 @@ and cryptographic vectors.
 The `v0.1.0` offline installer and release subset is complete, and Decisions
 0598, 0599, and 0603 through 0605 now supply shared retrieval and the selected
 external-model gateway candidate. Preserve the implemented slice 1 and slice 2
-candidates, close the gateway's independent Linux evidence, then bind the
-supervised providers and gateway through the native capability table and timer
+candidates, then bind the supervised providers and gateway through the native
+capability table and timer
 contract without weakening the
 separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking

@@ -1,7 +1,7 @@
 # Decision 0605: First supervised external-model gateway
 
 - Date: 2026-08-16
-- Status: Implemented candidate with isolated Windows evidence
+- Status: Implemented candidate with independent Windows/Linux evidence
 - Advances: external-model gateway production path
 - Contract: [supervised external-model gateway](../../Specifications/Supervised-External-Model-Gateway.md)
 - Builds on: [Decision 0604](0604-First-Protected-Provider-Credential-Custody.md)
@@ -52,8 +52,8 @@ visible models or request bounded non-streaming text without receiving network
 or credential authority. The supervised child gives credential replacement and
 provider restart a concrete generation/teardown boundary.
 
-This is not yet a complete production promotion. Independent Linux execution,
-the native capability/timer bridge, launcher-owned secret delivery, operational
+This is not yet a complete production promotion. The native capability/timer
+bridge, launcher-owned secret delivery, operational
 key rotation/recovery, and an explicitly authorized live interoperability smoke
 remain. The first child is serial and non-streaming and does not implement model
 routing, fallback, tool calls, images, files, audio, provider conversations, or

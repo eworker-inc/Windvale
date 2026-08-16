@@ -127,9 +127,9 @@ provider error without another connection.
 
 All fixtures are synthetic. The owner reads no real credential, writes no
 plaintext credential file, follows no redirect, and makes no public-network call.
-The current evidence is Windows; the same owner must pass independently on Linux
-before the gateway becomes dual-host evidence. A separately authorized live smoke
-can show current provider interoperability but is never deterministic acceptance.
+The same source and owner passed independently on Windows and Linux. A separately
+authorized live smoke can show current provider interoperability but is never
+deterministic acceptance.
 
 ## Deferred production boundary
 

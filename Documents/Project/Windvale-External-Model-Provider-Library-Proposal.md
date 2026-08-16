@@ -13,7 +13,7 @@
 > implemented with independent Windows/Linux evidence under Decisions 0598,
 > 0599, and 0603. Protected provider credential custody is an implemented
 > dual-host candidate under Decision 0604. The three-provider supervised gateway
-> is an implemented Windows-evidenced candidate under Decision 0605.
+> is an implemented dual-host candidate under Decision 0605.
 > The build-restricted model slice 3 reference oracle is implemented under
 > [Decision 0597](../Decisions/0597-First-External-Model-Reference-Oracle.md)
 > for OpenAI, Anthropic, and Google; its deterministic evidence makes no live
@@ -21,7 +21,7 @@
 > [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
 > selects one live provider adapter and the local gateway that owns it as required
 > Milestone 5 work. The hosted network, credential, and adapter implementation
-> now exists; Linux gateway evidence, native binding, and an opt-in live smoke
+> now exists; native binding and an opt-in live smoke
 > remain pending. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
@@ -479,8 +479,8 @@ bridge-lifecycle results, bounded operation/deadline/cancellation core, network
 authority and reliable-stream semantics, and the three-provider reference
 oracle. The real Windows/Linux resolver/TCP and TLS providers plus the first
 bounded HTTPS client, protected credential custody, and supervised gateway now
-exist. Close the gateway's Linux evidence, then bind it to the native capability
-and timer seam. Keep the oracle's provider mappings as independent differential
+exist. Bind the gateway to the native capability and timer seam next. Keep the
+oracle's provider mappings as independent differential
 evidence above those shared
 contracts rather than adding model-specific network calls.
 Decision 0595 makes one live adapter and its separately installable gateway a
