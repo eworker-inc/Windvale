@@ -1,0 +1,60 @@
+module X64ˉprocessˉclientˉreturnˉinitˉtransferˉemission profile portable;
+
+data Clientˉreturnˉinitˉtransfer: bytes = [
+    101, 129, 60, 37, 16, 0, 0, 0, 2, 0, 0, 0, 15, 133, 0, 0,
+    0, 0, 101, 129, 60, 37, 20, 0, 0, 0, 5, 0, 0, 0, 15, 133,
+    0, 0, 0, 0, 101, 129, 60, 37, 168, 0, 0, 0, 1, 0, 0, 0,
+    15, 133, 0, 0, 0, 0, 101, 129, 60, 37, 204, 0, 0, 0, 3, 0,
+    0, 0, 15, 133, 0, 0, 0, 0, 77, 141, 148, 36, 32, 4, 0, 0,
+    65, 129, 122, 16, 2, 0, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129,
+    122, 40, 2, 0, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 122, 52,
+    1, 0, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 122, 60, 55, 0,
+    0, 0, 15, 133, 0, 0, 0, 0, 15, 1, 248, 76, 139, 172, 36, 184,
+    0, 0, 0, 65, 199, 133, 20, 0, 0, 0, 1, 0, 0, 0, 65, 199,
+    133, 204, 0, 0, 0, 0, 0, 0, 0, 232, 0, 0, 0, 0, 77, 133,
+    237, 15, 132, 0, 0, 0, 0, 65, 129, 189, 24, 0, 0, 0, 1, 0,
+    0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 189, 0, 1, 0, 0, 1,
+    0, 0, 0, 15, 133, 0, 0, 0, 0, 73, 139, 133, 64, 0, 0, 0,
+    232, 0, 0, 0, 0, 73, 59, 133, 64, 0, 0, 0, 15, 133, 0, 0,
+    0, 0, 76, 137, 232, 72, 137, 194, 72, 193, 234, 32, 185, 2, 1, 0,
+    192, 15, 48, 72, 141, 21, 0, 0, 0, 0, 73, 137, 149, 136, 0, 0,
+    0, 65, 199, 133, 20, 0, 0, 0, 2, 0, 0, 0, 65, 199, 133, 204,
+    0, 0, 0, 0, 0, 0, 0, 184, 55, 0, 0, 0, 73, 139, 141, 152,
+    0, 0, 0, 77, 139, 157, 160, 0, 0, 0, 73, 139, 149, 88, 0, 0,
+    0, 73, 139, 165, 144, 0, 0, 0, 72, 15, 7
+];
+data Internalˉfields: bytes = [
+    14, 0, 0, 0, 32, 0, 0, 0, 50, 0, 0, 0, 68, 0, 0, 0,
+    90, 0, 0, 0, 104, 0, 0, 0, 118, 0, 0, 0, 132, 0, 0, 0,
+    170, 0, 0, 0, 179, 0, 0, 0, 196, 0, 0, 0, 213, 0, 0, 0,
+    238, 0, 0, 0, 6, 1, 0, 0
+];
+data Internalˉdisplacements: bytes = [
+    31, 75, 0, 0, 13, 75, 0, 0, 251, 74, 0, 0, 233, 74, 0, 0,
+    211, 74, 0, 0, 197, 74, 0, 0, 183, 74, 0, 0, 169, 74, 0, 0,
+    134, 198, 255, 255, 122, 74, 0, 0, 105, 74, 0, 0, 88, 74, 0, 0,
+    63, 74, 0, 0, 65, 0, 0, 0
+];
+
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉbytes() -> bytes {
+    return Clientˉreturnˉinitˉtransfer;
+}
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉexternalˉfield() -> u32 {
+    return 225u32;
+}
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉexternalˉsymbol() -> u32 {
+    return 17u32;
+}
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉinternalˉfields() -> bytes {
+    return Internalˉfields;
+}
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉinternalˉdisplacements()
+    -> bytes {
+    return Internalˉdisplacements;
+}
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉfixtureˉoffset() -> u32 {
+    return 14577u32;
+}
+export fn X64ˉprocessˉclientˉreturnˉinitˉtransferˉfixtureˉend() -> u32 {
+    return 14908u32;
+}

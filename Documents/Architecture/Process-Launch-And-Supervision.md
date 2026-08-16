@@ -173,6 +173,10 @@ only the admitted client role and generation from the fixed dispatcher,
 reactivates its checked page table, binds GS and continuation ownership, loads
 the private user context, and performs `sysretq`, advancing ownership through
 byte 14,576.
+On client return, the machine checks the client syscall/thread state and
+init-owned process record, moves the client to waiting, dispatches only the
+admitted init generation, reactivates its checked page table, restores its saved
+user context, and performs `sysretq`, advancing ownership through byte 14,907.
 
 The first restart policies are deliberately small:
 
