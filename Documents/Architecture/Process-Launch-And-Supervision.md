@@ -168,6 +168,11 @@ backing-record transaction validates the exact program/budget record geometry
 and their retained store/directory bindings, including identity, generation,
 rights, owner, page-table, and empty mutable-state fields. Together they close
 client-resource validation through byte 14,402 before context transfer.
+The client-transfer transaction then leaves the returning init context, accepts
+only the admitted client role and generation from the fixed dispatcher,
+reactivates its checked page table, binds GS and continuation ownership, loads
+the private user context, and performs `sysretq`, advancing ownership through
+byte 14,576.
 
 The first restart policies are deliberately small:
 

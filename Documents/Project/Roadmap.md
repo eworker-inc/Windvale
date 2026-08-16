@@ -616,8 +616,9 @@ provenance, revocation, and consensus boundaries are named.
   provider-return/init transfer reaches byte 13,447. Checked init return and
   generation-one program-resource validation reach byte 13,786. Budget-resource
   and retained store/directory backing validation now reach byte 14,402.
-  Remaining client transfer, syscall/exception handler bodies, teardown, and live
-  QEMU evidence remain.
+  Guarded client user-context transfer now reaches byte 14,576. Remaining client
+  return, syscall/exception handler bodies, teardown, and live QEMU evidence
+  remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,
   syscall entry, and dynamic executable/object allocation remain before later
