@@ -96,6 +96,8 @@ It uses fake credentials and an isolated HTTPS supervisor, writes no plaintext
 credential file, performs no public-network call, and exports no secret.
 
 The owner has independent Windows and Linux execution evidence for the same
-source. OS keyrings, HSMs, interactive prompting, rotation publication,
-recovery, backup, and launcher-owned long-term operational custody remain
-separate work. The supervised gateway now owns the live lease in its child.
+source. The separate [hosted model chat command](Hosted-Model-Chat-Command.md)
+now provides confirmed masked creation and masked launcher unlock. OS keyrings,
+HSMs, rotation publication, recovery, backup, and launcher-owned long-term
+operational custody remain separate work. The supervised gateway owns the live
+lease in its child.

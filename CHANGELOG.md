@@ -8,6 +8,9 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Added the first user-facing hosted model chat command with masked WVSC
+  credential setup and unlock, OpenAI/Anthropic/Google catalog discovery,
+  bounded multi-turn conversation, typed failures, and no automatic retries.
 - Added the hosted `standard_output.write_v1` provider contract, a portable
   20-case hostile-response decoder, Windows/Linux byte-output leaves, and the
   ordinary `file-read` application. Its 32-case owner proves exact arbitrary

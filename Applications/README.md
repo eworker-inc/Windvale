@@ -6,8 +6,8 @@ This tree owns useful deployable Windvale entry points. Applications are distinc
 from reusable code in `Foundation/` and `Libraries/`, developer commands in
 `Tools/`, and illustrative or conformance programs in `Examples/` and `Tests/`.
 
-The first applications are `Database/Wvdb-Query.wv`, `Shell/Echo.wv`, and
-`Shell/File-Read.wv`.
+The first applications are `Database/Wvdb-Query.wv`, `Shell/Echo.wv`,
+`Shell/File-Read.wv`, and the hosted `Model-Chat/Windvale-Model-Chat.mjs`.
 `Wvdb-Query` reads one bounded immutable WVDB snapshot through
 `filesystem.directory_read_v1`; `Echo` is the first ordinary application in the
 accepted Windvale Shell 1 catalog.
@@ -94,3 +94,27 @@ and lock metadata live under `Distribution/Applications/`. The current native
 package front door deterministically builds and inspects the canonical WVB on
 Windows and Linux. The focused capability owner also binds the rights-reduced
 read-only directory provider and executes the application on both hosts.
+
+## Model chat
+
+`Windvale-Model-Chat` is the first user-facing command over the protected,
+supervised external-model gateway. It creates and inspects passphrase-protected
+credentials, lists models, and runs a bounded serial chat with one exact OpenAI,
+Anthropic, or Google model over authenticated HTTPS.
+
+On Windows:
+
+```text
+Applications\Model-Chat\Windvale-Model-Chat.cmd --help
+Applications\Model-Chat\Windvale-Model-Chat.cmd credential create --provider openai --output openai.wvsc
+Applications\Model-Chat\Windvale-Model-Chat.cmd models --credential openai.wvsc
+Applications\Model-Chat\Windvale-Model-Chat.cmd chat --credential openai.wvsc --model <model-id>
+```
+
+On Linux, invoke the corresponding
+`Applications/Model-Chat/Windvale-Model-Chat.sh` commands. API credentials and
+passphrases are accepted only through masked terminal prompts; there is no
+secret-bearing option or environment fallback. The command retains at most 32
+messages and 16 KiB of canonical history, removes only complete oldest turns,
+and never retries an uncertain submission. See the exact
+[hosted command contract](../Specifications/Hosted-Model-Chat-Command.md).

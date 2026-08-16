@@ -1329,6 +1329,15 @@ foreach ($Path in $Paths) {
             'Specifications/Protected-Provider-Credential.md'
     )) {
         Add-Suite 'protected-credential'
+    } elseif ($Path.StartsWith('Applications/Model-Chat/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Runtime/Hosted/Models/External-Model-Gateway-Client.mjs',
+            'Tools/Models/Test-Model-Chat.mjs',
+            'Tools/Native/Test-Model-Chat.cmd',
+            'Tools/Native/Test-Model-Chat.sh',
+            'Specifications/Hosted-Model-Chat-Command.md'
+        )) {
+        Add-Suite 'model-chat'
     } elseif ($Path -in @(
             'Runtime/Hosted/Models/Native-External-Model-Gateway-Supervisor.mjs',
             'Runtime/Native/X64-External-Model-Gateway-Host.wva',

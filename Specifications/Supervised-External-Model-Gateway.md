@@ -136,8 +136,10 @@ deterministic acceptance.
 The child still runs on the hosted Node bootstrap and uses the previously
 implemented supervised resolver/TCP/TLS providers beneath bounded HTTPS. The
 first [native capability/timer bridge](Native-External-Model-Gateway-Bridge.md)
-now binds a model-only worker through dedicated supervised pipes. A general
-launcher/service-manager binding, OS-keyring or HSM custody, protected interactive unlock channel, operational
+binds a model-only worker through dedicated supervised pipes. The separate
+[hosted model chat command](Hosted-Model-Chat-Command.md) adds the first masked
+interactive setup/unlock and user-facing serial consumer. A general installed
+launcher/service-manager binding, OS-keyring or HSM custody, operational
 rotation/recovery, live provider smoke, streaming output, concurrency, and
-multi-provider routing remain separate work. None permits credentials, endpoints,
-or raw JSON to enter the portable model protocol.
+multi-provider routing remain separate work. None permits credentials,
+endpoints, or raw JSON to enter the portable model protocol.

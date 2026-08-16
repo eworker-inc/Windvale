@@ -1668,6 +1668,23 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'hosted model chat owner'
+        Paths = @(
+            'Applications/Model-Chat/Model-Chat-Core.mjs',
+            'Applications/Model-Chat/Windvale-Model-Chat.mjs',
+            'Applications/Model-Chat/Windvale-Model-Chat.cmd',
+            'Applications/Model-Chat/Windvale-Model-Chat.sh',
+            'Runtime/Hosted/Models/External-Model-Gateway-Client.mjs',
+            'Tools/Models/Test-Model-Chat.mjs',
+            'Tools/Native/Test-Model-Chat.cmd',
+            'Tools/Native/Test-Model-Chat.sh',
+            'Specifications/Hosted-Model-Chat-Command.md'
+        )
+        Suites = @('model-chat')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'native external model gateway owner'
         Paths = @(
             'Runtime/Hosted/Models/Native-External-Model-Gateway-Supervisor.mjs',
@@ -2726,9 +2743,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 98 -or
+if ($VerificationOwnerLines.Count -ne 99 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 97-owner inventory differs.'
+    throw 'The native verification-owner header or exact 98-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2766,7 +2783,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4522 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4543 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
