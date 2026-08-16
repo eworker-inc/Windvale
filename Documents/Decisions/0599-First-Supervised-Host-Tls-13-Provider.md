@@ -1,7 +1,7 @@
 # Decision 0599: First supervised host TLS 1.3 provider
 
 - Date: 2026-08-15
-- Status: Implemented bootstrap candidate with isolated Windows evidence
+- Status: Implemented bootstrap candidate with isolated Windows and Linux evidence
 - Advances: secure-transport portion of network slice 4
 - Contract: [host TLS provider](../../Specifications/Host-Tls-Provider.md)
 - Builds on: [Decision 0598](0598-First-Supervised-Host-Resolver-And-Stream-Provider.md)
@@ -47,12 +47,12 @@ origin authority, monotonic deadlines, byte budgets, half-close, indeterminate
 write, and provider-loss behavior from the underlying host provider.
 
 This is a bootstrap candidate rather than final production secure transport.
-The current evidence is Windows until the shared owner executes independently
-on Linux. Authentication, protocol, and connection failures currently collapse
+The shared owner passed independently on Windows and Ubuntu in verification run
+31921483457. Authentication, protocol, and connection failures currently collapse
 to one non-sensitive unavailable status. A native capability/timer bridge,
 typed secure peer evidence, explicit trust/protocol failure results, and later
-Node-free platform leaves remain production-promotion work. HTTP, credentials,
-and the model gateway are still absent.
+Node-free platform leaves remain production-promotion work. Bounded HTTP is now
+implemented under Decision 0600; credentials and the model gateway remain absent.
 
 ## Reconsideration triggers
 

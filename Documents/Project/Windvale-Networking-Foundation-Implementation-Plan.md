@@ -3,16 +3,17 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Active implementation; slices 1 and 2, the Layer 3 contract core, and
-  the first supervised resolver/TCP and TLS 1.3 bootstrap providers are implemented candidates under
+- Status: Active implementation; slices 1, 2, and 5, the Layer 3 contract core,
+  and the first supervised resolver/TCP and TLS 1.3 bootstrap providers are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
   [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
   [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
   [Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md),
-  and [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md).
-  Resolver/TCP has independent Windows/Linux execution evidence. TLS has
-  isolated Windows evidence; its independent Linux execution and the native
-  capability bridge remain pending, so no
+  [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md),
+  and [Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md).
+  Resolver/TCP and TLS have independent Windows/Linux execution evidence.
+  Bounded HTTPS has isolated Windows evidence; its independent Linux execution
+  and the native capability bridge remain pending, so no
   production network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -231,11 +232,15 @@ required by this slice's exit gate.
 
 The supervised TLS provider fixes TLS 1.3, exact service identity, ALPN, trust
 generation, and trust-snapshot digest above the same bounded stream. Fifteen
-isolated cases pass on Windows with only in-memory ephemeral key material.
-Independent Linux execution, typed peer evidence, capability/timer binding, and
+isolated cases pass independently on Windows and Linux with only in-memory
+ephemeral key material. Typed peer evidence, capability/timer binding, and
 native secure-transport leaves remain required before production promotion.
 
 ### Network slice 5: shared secure HTTP retrieval
+
+Status: hosted bootstrap candidate implemented under
+[Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md); independent
+Linux execution and native binding remain pending.
 
 Implement the portable HTTP client and bounded streaming response body above the
 secure-stream provider. Do not expose cookies, credential discovery, proxy
@@ -245,6 +250,12 @@ retry in version 1.
 Exit gate: an isolated deterministic server covers response fragmentation, header
 and body limits, content-length agreement, selected chunking behavior, redirects,
 downgrade refusal, truncation, excess bytes, cancellation, and connection loss.
+
+The first client binds one exact service and target set, performs one GET or
+POST per TLS connection, owns authority and length headers, and accepts only one
+canonical content length or selected chunked framing. Twenty-nine cases cover
+strict parsing plus real isolated TLS peers. It follows no redirect, performs no
+decompression or retry, and receives no credential.
 
 ### Network slice 6: package-source integration
 
@@ -283,12 +294,12 @@ and cryptographic vectors.
 
 ## Immediate recommendation
 
-The `v0.1.0` offline installer and release subset is complete, and Decisions 0598 and 0599
-now supplies two selected Milestone 5 consumers: official package retrieval and
+The `v0.1.0` offline installer and release subset is complete, and Decisions
+0598 through 0600 now supply two selected Milestone 5 consumers: official package retrieval and
 the external-model gateway. Preserve the implemented slice 1 and slice 2
-candidates, close TLS's independent Linux execution gap, bind the supervised
-providers through the native capability table and timer contract, then advance
-shared bounded HTTP framing without weakening the
+candidates, close bounded HTTPS's independent Linux execution gap, bind the
+supervised providers through the native capability table and timer contract,
+then advance credential custody and the model gateway without weakening the
 separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking
 does not claim completion of the independent Windvale OS packet, driver, or TCP

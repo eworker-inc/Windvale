@@ -872,6 +872,14 @@ foreach ($Path in $Paths) {
         'Specifications/Host-Tls-Provider.md'
     )) {
         Add-Suite 'host-tls-provider'
+    } elseif ($Path.StartsWith('Runtime/Hosted/Http/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Tools/Network/Test-Bounded-Https.mjs',
+            'Tools/Native/Test-Bounded-Https.cmd',
+            'Tools/Native/Test-Bounded-Https.sh',
+            'Specifications/Bounded-Https.md'
+        )) {
+        Add-Suite 'bounded-https'
     } elseif ($Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-Host-Network-Provider.cmd',

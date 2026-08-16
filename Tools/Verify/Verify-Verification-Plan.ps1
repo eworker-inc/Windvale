@@ -1205,6 +1205,20 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'bounded HTTPS owner'
+        Paths = @(
+            'Runtime/Hosted/Http/Bounded-Http1.mjs',
+            'Runtime/Hosted/Http/Bounded-Https-Client.mjs',
+            'Tools/Network/Test-Bounded-Https.mjs',
+            'Tools/Native/Test-Bounded-Https.cmd',
+            'Tools/Native/Test-Bounded-Https.sh',
+            'Specifications/Bounded-Https.md'
+        )
+        Suites = @('bounded-https')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'hosted model provider owner'
         Paths = @(
             'Libraries/Platform/Models/Bound-Model-Provider.wv',
@@ -1878,7 +1892,7 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 77 -or
+if ($VerificationOwnerLines.Count -ne 78 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
     throw 'The native verification-owner header or exact 75-owner inventory differs.'
 }
@@ -1918,7 +1932,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3664 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3693 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

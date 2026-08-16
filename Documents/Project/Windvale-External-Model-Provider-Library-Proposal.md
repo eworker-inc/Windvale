@@ -9,6 +9,9 @@
 > [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
 > Shared network slice 2 is implemented under
 > [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md).
+> The supervised resolver/TCP, TLS 1.3, and bounded HTTPS bootstrap path is
+> implemented under Decisions 0598 through 0600, with bounded HTTPS awaiting its
+> independent Linux execution result.
 > The build-restricted model slice 3 reference oracle is implemented under
 > [Decision 0597](../Decisions/0597-First-External-Model-Reference-Oracle.md)
 > for OpenAI, Anthropic, and Google; its deterministic evidence makes no live
@@ -335,7 +338,7 @@ expectations. An adapter never silently sends the prompt to another provider.
 | Rights-limited provider state | [`Windvale-Native-Capability-Provider-Table`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) | Partially ready; one provider per capability identity is practical. |
 | Native provider invocation | [`Windvale-Native-Provider-Call`](../../Specifications/Windvale-Native-Provider-Call.md) | Implemented for exact one-cell catalog and inference calls. |
 | JSON request and hostile-response codec | Windvale has deterministic JSON-style text quoting, not a general JSON value/parser contract | Not ready; provider JSON belongs first in the host adapter and needs bounded parsing. |
-| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The operation, authority, and stream cores are implemented; the supervised [host network](../../Specifications/Host-Network-Provider.md) and [TLS 1.3](../../Specifications/Host-Tls-Provider.md) providers execute against isolated peers | Resolver/TCP is dual-host verified and TLS has Windows evidence; Linux TLS execution, native binding, bounded HTTP, and production promotion remain pending. |
+| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The operation, authority, and stream cores plus supervised [host network](../../Specifications/Host-Network-Provider.md), [TLS 1.3](../../Specifications/Host-Tls-Provider.md), and [bounded HTTPS](../../Specifications/Bounded-Https.md) execute against isolated peers | Resolver/TCP and TLS are dual-host verified; HTTPS has Windows evidence while Linux execution, native binding, and production promotion remain pending. |
 | Production API-key custody | Identity/trust architecture exists; no production key store or secret provider is implemented | Not ready. |
 | Multiple simultaneous provider instances | Typed capability values and nominal provider signatures are future work | Not ready; use separate launches first. |
 | Streaming and concurrent inference | General structured tasks, cancellation, channels, and concurrent provider calls are absent or proposed | Not ready and outside version 1. |
@@ -471,9 +474,9 @@ A numbered decision is required before accepting:
 Continue from the implemented protocol, offline hosted seam, catchable
 bridge-lifecycle results, bounded operation/deadline/cancellation core, network
 authority and reliable-stream semantics, and the three-provider reference
-oracle. The real Windows/Linux resolver/TCP provider and first supervised TLS
-1.3 provider now exist. Close TLS's Linux evidence, then implement bounded HTTP
-and production credential custody. Reuse the oracle's provider mappings above those shared
+oracle. The real Windows/Linux resolver/TCP and TLS providers plus the first
+bounded HTTPS client now exist. Close HTTPS's Linux evidence, then implement
+production credential custody. Reuse the oracle's provider mappings above those shared
 contracts rather than adding model-specific network calls.
 Decision 0595 makes one live adapter and its separately installable gateway a
 Milestone 5 release requirement rather than optional integration evidence.

@@ -7,8 +7,8 @@ The hosted TLS bootstrap provider selected by
 turns the exact outbound service binding from the
 [host network provider](Host-Network-Provider.md) into an authenticated TLS 1.3
 byte stream. It runs in a separately supervised Node child on Windows and
-Linux. The current accepted local evidence is Windows; independent Linux
-execution remains required before a dual-host claim.
+Linux. The shared owner passed independently on Windows and Ubuntu in
+verification run 31921483457.
 
 The provider is enough to begin bounded HTTP framing against an isolated HTTPS
 peer. It is not yet the final native secure-stream capability, public-network
@@ -107,6 +107,7 @@ The accepted summary includes `public-network=0`, `credentials=0`, and
 
 Independent Linux execution, the Windvale capability-table and monotonic-timer
 bridge, explicit secure-stream peer-evidence records, and eventual Node-free
-platform leaves remain open. Bounded HTTP/1.1 is the next higher layer. Public
+platform leaves remain open. Bounded HTTP/1.1 is implemented separately under
+[Decision 0600](../Documents/Decisions/0600-First-Bounded-Https-Client.md). Public
 model access additionally requires protected credential custody, provider JSON
 admission, supervision, quotas, and opt-in live smoke evidence.
