@@ -1,0 +1,47 @@
+module Windvaleˉdatabaseˉlocalˉcontrol profile portable;
+
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+fn Empty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+export fn Databaseˉlocalˉcancel(
+    Session: Contracts.Databaseˉlocalˉsession,
+    Request: u64
+) -> Contracts.Databaseˉlocalˉresult {
+    if Session.Status != Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉget &&
+            Session.Status !=
+                Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉput ||
+        Session.Activeˉrequest != Request {
+        return Contracts.Databaseˉlocalˉresult(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            Request,
+            0u64,
+            Empty()
+        );
+    }
+    let Ready: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Ready,
+            Session.Databaseˉidentityˉhigh,
+            Session.Databaseˉidentityˉlow,
+            Session.Pageˉsize,
+            Session.Current,
+            Session.Activeˉrequest + 1u64,
+            0u64,
+            Session.Reopenˉmustˉadvance
+        );
+    return Contracts.Databaseˉlocalˉresult(
+        Contracts.Databaseˉlocalˉserviceˉstatus.Cancelled,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Ready,
+        Request,
+        0u64,
+        Empty()
+    );
+}

@@ -1,0 +1,70 @@
+module Windvaleˉdatabaseˉlocalˉcontracts profile portable;
+
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+export enum Databaseˉlocalˉsessionˉstatus {
+    Closed = 0;
+    Ready = 1;
+    Busyˉget = 2;
+    Busyˉput = 3;
+    Reopenˉrequired = 4;
+    Failed = 5;
+}
+
+export enum Databaseˉlocalˉserviceˉstatus {
+    Opened = 0;
+    Getˉprepared = 1;
+    Putˉprepared = 2;
+    Found = 3;
+    Missing = 4;
+    Putˉcommitted = 5;
+    Rejected = 6;
+    Cancelled = 7;
+    Reopened = 8;
+    Closed = 9;
+    Invalidˉsession = 10;
+    Invalidˉrequest = 11;
+    Encodingˉfailure = 12;
+    Invalidˉvalue = 13;
+    Reopenˉrequired = 14;
+    Failed = 15;
+}
+
+export enum Databaseˉlocalˉcompletion {
+    Found = 0;
+    Missing = 1;
+    Putˉcommitted = 2;
+    Rejected = 3;
+    Reopenˉrequired = 4;
+    Failed = 5;
+}
+
+export record Databaseˉlocalˉsession {
+    Status: Databaseˉlocalˉsessionˉstatus;
+    Databaseˉidentityˉhigh: u64;
+    Databaseˉidentityˉlow: u64;
+    Pageˉsize: u32;
+    Current: Superblock.Databaseˉsuperblockˉselection;
+    Nextˉrequest: u64;
+    Activeˉrequest: u64;
+    Reopenˉmustˉadvance: bool;
+}
+
+export record Databaseˉlocalˉrequest {
+    Status: Databaseˉlocalˉserviceˉstatus;
+    Logicalˉerror: Logical.Databaseˉlogicalˉerror;
+    Session: Databaseˉlocalˉsession;
+    Request: u64;
+    Key: bytes;
+    Value: bytes;
+}
+
+export record Databaseˉlocalˉresult {
+    Status: Databaseˉlocalˉserviceˉstatus;
+    Logicalˉerror: Logical.Databaseˉlogicalˉerror;
+    Session: Databaseˉlocalˉsession;
+    Request: u64;
+    Schema: u64;
+    Payload: bytes;
+}

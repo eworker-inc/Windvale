@@ -1,0 +1,155 @@
+module Windvaleˉdatabaseˉlocalˉsession profile portable;
+
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+fn Empty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Invalidˉcurrent() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselect(Empty(), Empty(), 0u64);
+}
+
+fn Invalidˉsession() -> Contracts.Databaseˉlocalˉsession {
+    return Contracts.Databaseˉlocalˉsession(
+        Contracts.Databaseˉlocalˉsessionˉstatus.Closed,
+        0u64,
+        0u64,
+        0u32,
+        Invalidˉcurrent(),
+        0u64,
+        0u64,
+        false
+    );
+}
+
+fn Failure(
+    Status: Contracts.Databaseˉlocalˉserviceˉstatus,
+    Session: Contracts.Databaseˉlocalˉsession
+) -> Contracts.Databaseˉlocalˉresult {
+    return Contracts.Databaseˉlocalˉresult(
+        Status,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Session,
+        0u64,
+        0u64,
+        Empty()
+    );
+}
+
+export fn Databaseˉlocalˉsessionˉopen(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Pageˉsize: u32,
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> Contracts.Databaseˉlocalˉresult {
+    if Databaseˉidentityˉhigh == 0u64 && Databaseˉidentityˉlow == 0u64 ||
+        Pageˉsize == 0u32 {
+        return Failure(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Invalidˉsession()
+        );
+    }
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 ||
+        Current.Databaseˉidentityˉhigh != Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Databaseˉidentityˉlow ||
+        Current.Pageˉsize != Pageˉsize {
+        return Failure(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Invalidˉsession()
+        );
+    }
+    let Session: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Ready,
+            Databaseˉidentityˉhigh,
+            Databaseˉidentityˉlow,
+            Pageˉsize,
+            Current,
+            1u64,
+            0u64,
+            false
+        );
+    return Contracts.Databaseˉlocalˉresult(
+        Contracts.Databaseˉlocalˉserviceˉstatus.Opened,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Session,
+        0u64,
+        0u64,
+        Empty()
+    );
+}
+
+export fn Databaseˉlocalˉsessionˉreopen(
+    Session: Contracts.Databaseˉlocalˉsession,
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> Contracts.Databaseˉlocalˉresult {
+    let Previous: Superblock.Databaseˉsuperblockˉselection = Session.Current;
+    if Session.Status !=
+            Contracts.Databaseˉlocalˉsessionˉstatus.Reopenˉrequired ||
+        Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 ||
+        Current.Databaseˉidentityˉhigh != Session.Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Session.Databaseˉidentityˉlow ||
+        Current.Pageˉsize != Session.Pageˉsize ||
+        Current.Generation < Previous.Generation ||
+        Current.Committedˉsequence < Previous.Committedˉsequence ||
+        Session.Reopenˉmustˉadvance &&
+            (Current.Generation <= Previous.Generation ||
+                Current.Committedˉsequence <= Previous.Committedˉsequence) {
+        return Failure(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Session
+        );
+    }
+    let Ready: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Ready,
+            Session.Databaseˉidentityˉhigh,
+            Session.Databaseˉidentityˉlow,
+            Session.Pageˉsize,
+            Current,
+            Session.Nextˉrequest,
+            0u64,
+            false
+        );
+    return Contracts.Databaseˉlocalˉresult(
+        Contracts.Databaseˉlocalˉserviceˉstatus.Reopened,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Ready,
+        0u64,
+        0u64,
+        Empty()
+    );
+}
+
+export fn Databaseˉlocalˉsessionˉclose(
+    Session: Contracts.Databaseˉlocalˉsession
+) -> Contracts.Databaseˉlocalˉresult {
+    if Session.Status == Contracts.Databaseˉlocalˉsessionˉstatus.Closed ||
+        Session.Status == Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉget ||
+        Session.Status == Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉput {
+        return Failure(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Session
+        );
+    }
+    let Closed: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Closed,
+            Session.Databaseˉidentityˉhigh,
+            Session.Databaseˉidentityˉlow,
+            Session.Pageˉsize,
+            Session.Current,
+            Session.Nextˉrequest,
+            0u64,
+            Session.Reopenˉmustˉadvance
+        );
+    return Failure(Contracts.Databaseˉlocalˉserviceˉstatus.Closed, Closed);
+}

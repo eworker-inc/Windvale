@@ -19,7 +19,7 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=17
+        selected_cases=18
         ;;
     tree-node|logical-record|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
         selected_cases=1
@@ -28,6 +28,9 @@ case "$development_target" in
         selected_cases=2
         ;;
     host-root-writer)
+        selected_cases=2
+        ;;
+    host-local-service)
         selected_cases=2
         ;;
     engine|host-tree-writer)
@@ -68,11 +71,13 @@ lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
 project_checkpoint_host_storage=NotRun
 project_checkpoint_host_root_writer=NotRun
+project_checkpoint_host_local_service=NotRun
 project_checkpoint_host_tree_reader=NotRun
 project_checkpoint_engine=NotRun
 project_checkpoint_host_tree_writer=NotRun
 application_checkpoint_host_storage=NotRun
 application_checkpoint_host_root_writer=NotRun
+application_checkpoint_host_local_service=NotRun
 application_checkpoint_host_tree_reader=NotRun
 application_checkpoint_engine=NotRun
 application_checkpoint_host_tree_writer=NotRun
@@ -682,6 +687,127 @@ verify_host_root_writer_interruption() {
     cmp --silent -- "$committed" "$scenario_storage" || return 1
 }
 
+build_host_local_component() {
+    local project_path=$1 component=$2 linux_application=$3
+    local first_wvb="$temporary_directory/HostLocal-$component-First.wvb"
+    local second_wvb="$temporary_directory/HostLocal-$component-Second.wvb"
+    local first_wvo="$temporary_directory/HostLocal-$component-First.wvo"
+    local second_wvo="$temporary_directory/HostLocal-$component-Second.wvo"
+    local common="$temporary_directory/HostStorage-Common-First.wvo"
+    local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
+    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
+    local linux_image="$temporary_directory/HostLocal-$component-Linux.bin"
+    local linux_image_prefix="$temporary_directory/HostLocal-$component-Linux-Image"
+    local linux_map="$temporary_directory/HostLocal-$component-Linux.map"
+    local windows_image="$temporary_directory/HostLocal-$component-Windows.bin"
+    local windows_image_prefix="$temporary_directory/HostLocal-$component-Windows-Image"
+    local windows_map="$temporary_directory/HostLocal-$component-Windows.map"
+    local windows_application="$temporary_directory/HostLocal-$component.exe"
+    host_local_component_project_checkpoint=Rebuilt
+    host_local_component_application_checkpoint=Rebuilt
+
+    if ((development == 1)); then
+        local cache_report="$temporary_directory/HostLocal-$component-Cache.txt"
+        "$script_directory/Build-Cached-Project-Object.sh" \
+            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+            > "$cache_report" || return $?
+        host_local_component_project_checkpoint=$(sed -n \
+            's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
+            "$cache_report")
+        [[ $host_local_component_project_checkpoint == Created ||
+            $host_local_component_project_checkpoint == Hit ]] || return 1
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
+        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
+        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    fi
+    [[ -f $common && -f $linux_platform ]] || return 1
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+        >"$linux_map" || return $?
+    local linux_entry
+    linux_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$linux_map")
+    case "$linux_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
+    if ((development == 1)); then
+        local application_report="$temporary_directory/HostLocal-$component-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux > "$application_report" || return $?
+        host_local_component_application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$application_report")
+        [[ $host_local_component_application_checkpoint == Created ||
+            $host_local_component_application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux >/dev/null || return $?
+        [[ -f $windows_platform ]] || return 1
+        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+            "$windows_image" "$first_wvo" "$common" "$windows_platform" \
+            >"$windows_map" || return $?
+        local windows_entry
+        windows_entry=$(sed -n \
+            's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+            "$windows_map")
+        case "$windows_entry" in
+            ''|*[!0-9]*) return 1 ;;
+        esac
+        cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
+            "$windows_application" windows >/dev/null || return $?
+    fi
+}
+
+verify_host_local_service() {
+    local put_project=$1 get_project=$2
+    local put_application="$temporary_directory/HostLocal-Put.elf"
+    local get_application="$temporary_directory/HostLocal-Get.elf"
+    local initial_file="$temporary_directory/HostStorage-Run/Windvale-Database-Storage.initial"
+    local run_directory="$temporary_directory/HostLocalService-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local committed_file="$run_directory/Windvale-Database-Storage.committed"
+
+    build_host_local_component "$put_project" Put "$put_application" || return $?
+    local put_project_checkpoint=$host_local_component_project_checkpoint
+    local put_application_checkpoint=$host_local_component_application_checkpoint
+    build_host_local_component "$get_project" Get "$get_application" || return $?
+    local get_project_checkpoint=$host_local_component_project_checkpoint
+    local get_application_checkpoint=$host_local_component_application_checkpoint
+
+    [[ -f $initial_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+    cp -- "$initial_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$put_application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native local-service put returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 12800 ]] || return 1
+    cp -- "$storage_file" "$committed_file" || return $?
+    (cd -- "$run_directory" && "$get_application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native local-service restart get returned $application_result, expected 0." >&2
+        return 1
+    fi
+    cmp --silent -- "$committed_file" "$storage_file" || return 1
+    if ((development == 1)); then
+        project_checkpoint_host_local_service="Put:$put_project_checkpoint,Get:$get_project_checkpoint"
+        application_checkpoint_host_local_service="Put:$put_application_checkpoint,Get:$get_application_checkpoint"
+    fi
+}
+
 verify_host_tree_reader() {
     local project_path=$1
     local first_wvb="$temporary_directory/HostTreeReader-First.wvb"
@@ -1160,11 +1286,12 @@ verify_development_target() {
 verify_development_host_targets() {
     host_storage_elapsed_ms=0
     host_root_writer_elapsed_ms=0
+    host_local_service_elapsed_ms=0
     host_tree_reader_elapsed_ms=0
     engine_elapsed_ms=0
     host_tree_writer_elapsed_ms=0
     case "$development_target" in
-        all|host-storage|host-root-writer|host-tree-reader|engine|host-tree-writer) ;;
+        all|host-storage|host-root-writer|host-local-service|host-tree-reader|engine|host-tree-writer) ;;
         *) return 0 ;;
     esac
 
@@ -1193,6 +1320,22 @@ verify_development_host_targets() {
         host_root_writer_elapsed_ms=$(((SECONDS - host_root_writer_start) * 1000))
         echo "PASS  native database storage development step=host-root-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_root_writer_elapsed_ms project=$project_checkpoint_host_root_writer application=$application_checkpoint_host_root_writer"
         [[ $development_target != host-root-writer ]] || return 0
+    fi
+
+    if [[ $development_target == all ||
+        $development_target == host-local-service ]]; then
+        progress_current=$((progress_current + 1))
+        host_local_service_start=$SECONDS
+        echo "START native database storage development step=host-local-service item=$progress_current/$progress_total target=$development_target"
+        verify_host_local_service \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj" \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj" || {
+                echo 'The native database storage development host-local-service stage failed.' >&2
+                return 1
+            }
+        host_local_service_elapsed_ms=$(((SECONDS - host_local_service_start) * 1000))
+        echo "PASS  native database storage development step=host-local-service item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_local_service_elapsed_ms project=$project_checkpoint_host_local_service application=$application_checkpoint_host_local_service"
+        [[ $development_target != host-local-service ]] || return 0
     fi
 
     progress_current=$((progress_current + 1))
@@ -1262,8 +1405,8 @@ if ((development == 1)); then
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     verify_development_host_targets || exit $?
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
-    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
+    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
     exit 0
 fi
 
@@ -1311,10 +1454,13 @@ verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
 verify_host_root_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj" || exit $?
+verify_host_local_service \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj" || exit $?
 verify_host_tree_reader \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
 verify_host_engine \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || exit $?
 verify_host_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || exit $?
-echo 'native database storage status=Passed cases=26 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=27 local-results=0 cross-host-images=Verified'

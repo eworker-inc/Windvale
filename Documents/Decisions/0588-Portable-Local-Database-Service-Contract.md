@@ -28,7 +28,8 @@ segmentable before host adapters are composed.
   confirmed commit.
 - Make cancellation explicit and never turn uncertain mutation into replay.
 - Keep lifecycle, reader, writer, storage binding, networking, and arbitration
-  outside this module so each hosted adapter can remain independently bounded.
+  outside the portable contract so each hosted adapter can remain independently
+  bounded.
 - Add a dedicated `local-service` target to both database development owners
   and the changed-file planner.
 
@@ -40,9 +41,10 @@ The next hosted milestone can be split into lifecycle, reader, depth-one writer,
 and depth-two-through-eight writer components while preserving one session
 protocol.
 
-This decision does not claim that a hosted database server exists. In
-particular, fresh bootstrap databases still need a separately bounded
-depth-one writer publication adapter before the first service put can execute.
+[Decision 0599](0599-Hosted-Local-Database-Service-Composition.md) later splits
+the same state machine into shared contracts plus focused session, put, get,
+and control modules and binds it to real hosted storage. The split changes code
+composition and memory cost, not the session semantics accepted here.
 
 ## Reconsideration triggers
 

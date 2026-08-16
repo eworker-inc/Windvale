@@ -1,0 +1,262 @@
+module Durableˉlocalˉrootˉput profile hosted;
+
+import Durableˉrootˉwriter as Writer;
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlocalˉput as Put;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+export enum Databaseˉdurableˉlocalˉputˉstatus {
+    Committed = 0;
+    Rejected = 1;
+    Reopenˉrequired = 2;
+    Failed = 3;
+    Invalidˉrequest = 4;
+}
+
+export record Databaseˉdurableˉlocalˉputˉresult {
+    Status: Databaseˉdurableˉlocalˉputˉstatus;
+    Service: Contracts.Databaseˉlocalˉresult;
+    Writerˉstatus: Writer.Databaseˉdurableˉrootˉupsertˉstatus;
+    Actions: u32;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+}
+
+fn Databaseˉdurableˉlocalˉputˉoutcome(
+    Status: Databaseˉdurableˉlocalˉputˉstatus,
+    Serviceˉresult: Contracts.Databaseˉlocalˉresult,
+    Writerˉstatus: Writer.Databaseˉdurableˉrootˉupsertˉstatus,
+    Actions: u32,
+    Targetˉgeneration: u64,
+    Targetˉsequence: u64,
+    Targetˉlength: u64
+) -> Databaseˉdurableˉlocalˉputˉresult {
+    return Databaseˉdurableˉlocalˉputˉresult(
+        Status,
+        Serviceˉresult,
+        Writerˉstatus,
+        Actions,
+        Targetˉgeneration,
+        Targetˉsequence,
+        Targetˉlength
+    );
+}
+
+export fn Databaseˉdurableˉlocalˉput(
+    Session: Contracts.Databaseˉlocalˉsession,
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉlocalˉputˉresult {
+    let Prepared: Contracts.Databaseˉlocalˉrequest =
+        Put.Databaseˉlocalˉputˉprepare(
+            Session,
+            Session.Nextˉrequest,
+            Collection,
+            Identity,
+            Schema,
+            Payload
+        );
+    if Prepared.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Putˉprepared {
+        return Databaseˉdurableˉlocalˉputˉoutcome(
+            Databaseˉdurableˉlocalˉputˉstatus.Invalidˉrequest,
+            Contracts.Databaseˉlocalˉresult(
+                Prepared.Status,
+                Prepared.Logicalˉerror,
+                Prepared.Session,
+                Prepared.Request,
+                0u64,
+                Prepared.Value
+            ),
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Invalidˉcurrent,
+            0u32,
+            0u64,
+            0u64,
+            0u64
+        );
+    }
+    let Written: Writer.Databaseˉdurableˉrootˉupsertˉresult =
+        Writer.Databaseˉdurableˉrootˉupsert(
+            Prepared.Session.Current,
+            Prepared.Key,
+            Prepared.Value,
+            Maximumˉactions
+        );
+    if Written.Status ==
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Committed {
+        return Databaseˉdurableˉlocalˉputˉoutcome(
+            Databaseˉdurableˉlocalˉputˉstatus.Committed,
+            Put.Databaseˉlocalˉputˉcomplete(
+                Prepared,
+                Contracts.Databaseˉlocalˉcompletion.Putˉcommitted
+            ),
+            Written.Status,
+            Written.Actions,
+            Written.Targetˉgeneration,
+            Written.Targetˉsequence,
+            Written.Targetˉlength
+        );
+    }
+    if Written.Actions > 0u32 ||
+        Written.Status == Writer.Databaseˉdurableˉrootˉupsertˉstatus.Active ||
+        Written.Status == Writer.Databaseˉdurableˉrootˉupsertˉstatus.Aborted ||
+        Written.Status == Writer.Databaseˉdurableˉrootˉupsertˉstatus.Recover ||
+        Written.Status ==
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Changedˉsnapshot ||
+        Written.Status ==
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Publicationˉfailure {
+        return Databaseˉdurableˉlocalˉputˉoutcome(
+            Databaseˉdurableˉlocalˉputˉstatus.Reopenˉrequired,
+            Put.Databaseˉlocalˉputˉcomplete(
+                Prepared,
+                Contracts.Databaseˉlocalˉcompletion.Reopenˉrequired
+            ),
+            Written.Status,
+            Written.Actions,
+            Written.Targetˉgeneration,
+            Written.Targetˉsequence,
+            Written.Targetˉlength
+        );
+    }
+    if Written.Status ==
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Unsupportedˉdepth ||
+        Written.Status ==
+                Writer.Databaseˉdurableˉrootˉupsertˉstatus.Transactionˉfailure &&
+            Written.Nodeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Full {
+        return Databaseˉdurableˉlocalˉputˉoutcome(
+            Databaseˉdurableˉlocalˉputˉstatus.Rejected,
+            Put.Databaseˉlocalˉputˉcomplete(
+                Prepared,
+                Contracts.Databaseˉlocalˉcompletion.Rejected
+            ),
+            Written.Status,
+            Written.Actions,
+            Written.Targetˉgeneration,
+            Written.Targetˉsequence,
+            Written.Targetˉlength
+        );
+    }
+    return Databaseˉdurableˉlocalˉputˉoutcome(
+        Databaseˉdurableˉlocalˉputˉstatus.Failed,
+        Put.Databaseˉlocalˉputˉcomplete(
+            Prepared,
+            Contracts.Databaseˉlocalˉcompletion.Failed
+        ),
+        Written.Status,
+        Written.Actions,
+        Written.Targetˉgeneration,
+        Written.Targetˉsequence,
+        Written.Targetˉlength
+    );
+}
+
+export fn Databaseˉdurableˉlocalˉrootˉputˉopen(
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉlocalˉputˉresult {
+    let Empty: bytes = Textˉtoˉutf8("");
+    let Invalidˉcurrent: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(Empty, Empty, 0u64);
+    let Invalidˉsession: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Closed,
+            0u64,
+            0u64,
+            0u32,
+            Invalidˉcurrent,
+            0u64,
+            0u64,
+            false
+        );
+    let Invalidˉservice: Contracts.Databaseˉlocalˉresult =
+        Contracts.Databaseˉlocalˉresult(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Invalidˉsession,
+            0u64,
+            0u64,
+            Empty
+        );
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 || Description.Storageˉlength < 512u64 {
+        return Databaseˉdurableˉlocalˉputˉresult(
+            Databaseˉdurableˉlocalˉputˉstatus.Failed,
+            Invalidˉservice,
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Storageˉfailure,
+            0u32,
+            0u64,
+            0u64,
+            0u64
+        );
+    }
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        0u64,
+        512u32
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Header.Generation != Description.Generation ||
+        Header.Storageˉlength != Description.Storageˉlength ||
+        Bytesˉlength(Header.Value) != 512u32 {
+        return Databaseˉdurableˉlocalˉputˉresult(
+            Databaseˉdurableˉlocalˉputˉstatus.Failed,
+            Invalidˉservice,
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Storageˉfailure,
+            0u32,
+            0u64,
+            0u64,
+            0u64
+        );
+    }
+    let Current: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Bytesˉslice(Header.Value, 0u32, 256u32),
+            Bytesˉslice(Header.Value, 256u32, 256u32),
+            Description.Storageˉlength
+        );
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉdurableˉlocalˉputˉresult(
+            Databaseˉdurableˉlocalˉputˉstatus.Failed,
+            Invalidˉservice,
+            Writer.Databaseˉdurableˉrootˉupsertˉstatus.Invalidˉcurrent,
+            0u32,
+            0u64,
+            0u64,
+            0u64
+        );
+    }
+    let Ready: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Ready,
+            Current.Databaseˉidentityˉhigh,
+            Current.Databaseˉidentityˉlow,
+            Current.Pageˉsize,
+            Current,
+            1u64,
+            0u64,
+            false
+        );
+    return Databaseˉdurableˉlocalˉput(
+        Ready,
+        Collection,
+        Identity,
+        Schema,
+        Payload,
+        Maximumˉactions
+    );
+}

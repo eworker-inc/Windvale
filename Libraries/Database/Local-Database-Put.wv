@@ -1,0 +1,142 @@
+module Windvaleˉdatabaseˉlocalˉput profile portable;
+
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Result(
+    Status: Contracts.Databaseˉlocalˉserviceˉstatus,
+    Session: Contracts.Databaseˉlocalˉsession,
+    Request: u64
+) -> Contracts.Databaseˉlocalˉresult {
+    return Contracts.Databaseˉlocalˉresult(
+        Status,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Session,
+        Request,
+        0u64,
+        Empty()
+    );
+}
+
+export fn Databaseˉlocalˉputˉprepare(
+    Session: Contracts.Databaseˉlocalˉsession,
+    Request: u64,
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes
+) -> Contracts.Databaseˉlocalˉrequest {
+    if Session.Status != Contracts.Databaseˉlocalˉsessionˉstatus.Ready ||
+        Request == 0u64 || Request != Session.Nextˉrequest ||
+        Request == U64_MAXIMUM {
+        return Contracts.Databaseˉlocalˉrequest(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Session,
+            Request,
+            Empty(),
+            Empty()
+        );
+    }
+    let Prepared: Logical.Databaseˉlogicalˉput =
+        Logical.Databaseˉlogicalˉputˉprepare(
+            Collection,
+            Identity,
+            Schema,
+            Payload
+        );
+    if Prepared.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Contracts.Databaseˉlocalˉrequest(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Encodingˉfailure,
+            Prepared.Error,
+            Session,
+            Request,
+            Empty(),
+            Empty()
+        );
+    }
+    let Busy: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉput,
+            Session.Databaseˉidentityˉhigh,
+            Session.Databaseˉidentityˉlow,
+            Session.Pageˉsize,
+            Session.Current,
+            Session.Nextˉrequest,
+            Request,
+            Session.Reopenˉmustˉadvance
+        );
+    return Contracts.Databaseˉlocalˉrequest(
+        Contracts.Databaseˉlocalˉserviceˉstatus.Putˉprepared,
+        Logical.Databaseˉlogicalˉerror.Valid,
+        Busy,
+        Request,
+        Prepared.Key,
+        Prepared.Value
+    );
+}
+
+export fn Databaseˉlocalˉputˉcomplete(
+    Prepared: Contracts.Databaseˉlocalˉrequest,
+    Completion: Contracts.Databaseˉlocalˉcompletion
+) -> Contracts.Databaseˉlocalˉresult {
+    let Session: Contracts.Databaseˉlocalˉsession = Prepared.Session;
+    if Prepared.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Putˉprepared ||
+        Session.Status != Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉput ||
+        Session.Activeˉrequest != Prepared.Request {
+        return Result(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest,
+            Session,
+            Prepared.Request
+        );
+    }
+    if Completion == Contracts.Databaseˉlocalˉcompletion.Putˉcommitted ||
+        Completion == Contracts.Databaseˉlocalˉcompletion.Reopenˉrequired {
+        let Reopen: Contracts.Databaseˉlocalˉsession =
+            Contracts.Databaseˉlocalˉsession(
+                Contracts.Databaseˉlocalˉsessionˉstatus.Reopenˉrequired,
+                Session.Databaseˉidentityˉhigh,
+                Session.Databaseˉidentityˉlow,
+                Session.Pageˉsize,
+                Session.Current,
+                Session.Activeˉrequest + 1u64,
+                0u64,
+                Completion == Contracts.Databaseˉlocalˉcompletion.Putˉcommitted
+            );
+        var Reopenˉstatus: Contracts.Databaseˉlocalˉserviceˉstatus =
+            Contracts.Databaseˉlocalˉserviceˉstatus.Reopenˉrequired;
+        if Completion == Contracts.Databaseˉlocalˉcompletion.Putˉcommitted {
+            Reopenˉstatus =
+                Contracts.Databaseˉlocalˉserviceˉstatus.Putˉcommitted;
+        }
+        return Result(Reopenˉstatus, Reopen, Prepared.Request);
+    }
+    var Sessionˉstatus: Contracts.Databaseˉlocalˉsessionˉstatus =
+        Contracts.Databaseˉlocalˉsessionˉstatus.Failed;
+    var Status: Contracts.Databaseˉlocalˉserviceˉstatus =
+        Contracts.Databaseˉlocalˉserviceˉstatus.Failed;
+    if Completion == Contracts.Databaseˉlocalˉcompletion.Rejected {
+        Sessionˉstatus = Contracts.Databaseˉlocalˉsessionˉstatus.Ready;
+        Status = Contracts.Databaseˉlocalˉserviceˉstatus.Rejected;
+    }
+    let Completed: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Sessionˉstatus,
+            Session.Databaseˉidentityˉhigh,
+            Session.Databaseˉidentityˉlow,
+            Session.Pageˉsize,
+            Session.Current,
+            Session.Activeˉrequest + 1u64,
+            0u64,
+            Session.Reopenˉmustˉadvance
+        );
+    return Result(Status, Completed, Prepared.Request);
+}

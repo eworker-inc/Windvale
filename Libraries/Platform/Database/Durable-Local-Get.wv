@@ -1,0 +1,67 @@
+module Durableˉlocalˉget profile hosted;
+
+import Durableˉtreeˉreader as Reader;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlocalˉget as Get;
+
+capability storage.random_access_v1;
+
+export record Databaseˉdurableˉlocalˉgetˉresult {
+    Service: Contracts.Databaseˉlocalˉresult;
+    Readerˉstatus: Reader.Databaseˉdurableˉtreeˉlookupˉstatus;
+    Pageˉvisits: u32;
+}
+
+export fn Databaseˉdurableˉlocalˉget(
+    Session: Contracts.Databaseˉlocalˉsession,
+    Collection: u64,
+    Identity: bytes
+) -> Databaseˉdurableˉlocalˉgetˉresult {
+    let Prepared: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
+            Session,
+            Session.Nextˉrequest,
+            Collection,
+            Identity
+        );
+    if Prepared.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Getˉprepared {
+        return Databaseˉdurableˉlocalˉgetˉresult(
+            Contracts.Databaseˉlocalˉresult(
+                Prepared.Status,
+                Prepared.Logicalˉerror,
+                Prepared.Session,
+                Prepared.Request,
+                0u64,
+                Prepared.Value
+            ),
+            Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Invalidˉcurrent,
+            0u32
+        );
+    }
+    let Lookup: Reader.Databaseˉdurableˉtreeˉlookupˉresult =
+        Reader.Databaseˉdurableˉtreeˉlookup(
+            Prepared.Session.Current,
+            Prepared.Key
+        );
+    var Completion: Contracts.Databaseˉlocalˉcompletion =
+        Contracts.Databaseˉlocalˉcompletion.Failed;
+    if Lookup.Status == Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Found {
+        Completion = Contracts.Databaseˉlocalˉcompletion.Found;
+    } else if Lookup.Status ==
+            Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Missing {
+        Completion = Contracts.Databaseˉlocalˉcompletion.Missing;
+    } else if Lookup.Status ==
+            Reader.Databaseˉdurableˉtreeˉlookupˉstatus.Changedˉsnapshot {
+        Completion = Contracts.Databaseˉlocalˉcompletion.Reopenˉrequired;
+    }
+    return Databaseˉdurableˉlocalˉgetˉresult(
+        Get.Databaseˉlocalˉgetˉcomplete(
+            Prepared,
+            Completion,
+            Lookup.Value
+        ),
+        Lookup.Status,
+        Lookup.Pageˉvisits
+    );
+}

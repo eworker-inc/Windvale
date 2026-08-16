@@ -1,7 +1,11 @@
 module Localˉdatabaseˉserviceˉselfˉtest profile portable;
 
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
-import Windvaleˉdatabaseˉlocalˉservice as Service;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlocalˉcontrol as Control;
+import Windvaleˉdatabaseˉlocalˉget as Get;
+import Windvaleˉdatabaseˉlocalˉput as Put;
+import Windvaleˉdatabaseˉlocalˉsession as Session;
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 
 fn Empty() -> bytes {
@@ -58,111 +62,111 @@ fn Current(
 }
 
 fn Expectˉready(
-    Session: Service.Databaseˉlocalˉsession,
+    Session: Contracts.Databaseˉlocalˉsession,
     Next: u64
 ) -> bool {
-    return Session.Status == Service.Databaseˉlocalˉsessionˉstatus.Ready &&
+    return Session.Status == Contracts.Databaseˉlocalˉsessionˉstatus.Ready &&
         Session.Nextˉrequest == Next && Session.Activeˉrequest == 0u64;
 }
 
 export fn Main() -> i32 {
     let First: Superblock.Databaseˉsuperblockˉselection =
         Current(1u64, 2u64, 1u64, 0u64, 0u64, 1u64, 4608u64);
-    let Invalid: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉopen(
+    let Invalid: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉopen(
             9u64,
             2u64,
             4096u32,
             First
         );
-    let Invalidˉsession: Service.Databaseˉlocalˉsession = Invalid.Session;
+    let Invalidˉsession: Contracts.Databaseˉlocalˉsession = Invalid.Session;
     if Invalid.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession ||
         Invalidˉsession.Status !=
-            Service.Databaseˉlocalˉsessionˉstatus.Closed {
+            Contracts.Databaseˉlocalˉsessionˉstatus.Closed {
         return 1;
     }
-    let Opened: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉopen(
+    let Opened: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉopen(
             1u64,
             2u64,
             4096u32,
             First
         );
-    if Opened.Status != Service.Databaseˉlocalˉserviceˉstatus.Opened ||
+    if Opened.Status != Contracts.Databaseˉlocalˉserviceˉstatus.Opened ||
         !Expectˉready(Opened.Session, 1u64) {
         return 2;
     }
-    let Uncertainˉget: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Uncertainˉget: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Opened.Session,
             1u64,
             3u64,
             Textˉtoˉutf8("record")
         );
-    let Uncertain: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉgetˉcomplete(
+    let Uncertain: Contracts.Databaseˉlocalˉresult =
+        Get.Databaseˉlocalˉgetˉcomplete(
             Uncertainˉget,
-            Service.Databaseˉlocalˉcompletion.Reopenˉrequired,
+            Contracts.Databaseˉlocalˉcompletion.Reopenˉrequired,
             Empty()
         );
-    let Uncertainˉsession: Service.Databaseˉlocalˉsession =
+    let Uncertainˉsession: Contracts.Databaseˉlocalˉsession =
         Uncertain.Session;
     if Uncertain.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Reopenˉrequired ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Reopenˉrequired ||
         Uncertainˉsession.Reopenˉmustˉadvance {
         return 19;
     }
-    let Uncertainˉreopened: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉreopen(Uncertain.Session, First);
+    let Uncertainˉreopened: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉreopen(Uncertain.Session, First);
     if Uncertainˉreopened.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Reopened ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Reopened ||
         !Expectˉready(Uncertainˉreopened.Session, 2u64) {
         return 20;
     }
-    let Wrongˉrequest: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Wrongˉrequest: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Opened.Session,
             2u64,
             3u64,
             Textˉtoˉutf8("record")
         );
     if Wrongˉrequest.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest ||
         !Expectˉready(Wrongˉrequest.Session, 1u64) {
         return 3;
     }
-    let Badˉcollection: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Badˉcollection: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Opened.Session,
             1u64,
             0u64,
             Textˉtoˉutf8("record")
         );
     if Badˉcollection.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Encodingˉfailure ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Encodingˉfailure ||
         Badˉcollection.Logicalˉerror !=
             Logical.Databaseˉlogicalˉerror.Invalidˉcollection ||
         !Expectˉready(Badˉcollection.Session, 1u64) {
         return 4;
     }
-    let Getˉone: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Getˉone: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Opened.Session,
             1u64,
             3u64,
             Textˉtoˉutf8("record")
         );
-    let Getˉoneˉsession: Service.Databaseˉlocalˉsession = Getˉone.Session;
+    let Getˉoneˉsession: Contracts.Databaseˉlocalˉsession = Getˉone.Session;
     if Getˉone.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Getˉprepared ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Getˉprepared ||
         Getˉoneˉsession.Status !=
-            Service.Databaseˉlocalˉsessionˉstatus.Busyˉget ||
+            Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉget ||
         Bytesˉlength(Getˉone.Key) == 0u32 {
         return 5;
     }
-    let Concurrent: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉputˉprepare(
+    let Concurrent: Contracts.Databaseˉlocalˉrequest =
+        Put.Databaseˉlocalˉputˉprepare(
             Getˉone.Session,
             1u64,
             3u64,
@@ -171,24 +175,24 @@ export fn Main() -> i32 {
             Textˉtoˉutf8("value")
         );
     if Concurrent.Status !=
-        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
+        Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
         return 6;
     }
-    let Wrongˉcancel: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉcancel(Getˉone.Session, 2u64);
+    let Wrongˉcancel: Contracts.Databaseˉlocalˉresult =
+        Control.Databaseˉlocalˉcancel(Getˉone.Session, 2u64);
     if Wrongˉcancel.Status !=
-        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
+        Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
         return 7;
     }
-    let Cancelled: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉcancel(Getˉone.Session, 1u64);
+    let Cancelled: Contracts.Databaseˉlocalˉresult =
+        Control.Databaseˉlocalˉcancel(Getˉone.Session, 1u64);
     if Cancelled.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Cancelled ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Cancelled ||
         !Expectˉready(Cancelled.Session, 2u64) {
         return 8;
     }
-    let Put: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉputˉprepare(
+    let Put: Contracts.Databaseˉlocalˉrequest =
+        Put.Databaseˉlocalˉputˉprepare(
             Cancelled.Session,
             2u64,
             3u64,
@@ -196,73 +200,73 @@ export fn Main() -> i32 {
             7u64,
             Textˉtoˉutf8("value")
         );
-    let Putˉsession: Service.Databaseˉlocalˉsession = Put.Session;
-    if Put.Status != Service.Databaseˉlocalˉserviceˉstatus.Putˉprepared ||
+    let Putˉsession: Contracts.Databaseˉlocalˉsession = Put.Session;
+    if Put.Status != Contracts.Databaseˉlocalˉserviceˉstatus.Putˉprepared ||
         Putˉsession.Status !=
-            Service.Databaseˉlocalˉsessionˉstatus.Busyˉput ||
+            Contracts.Databaseˉlocalˉsessionˉstatus.Busyˉput ||
         Bytesˉlength(Put.Key) == 0u32 || Bytesˉlength(Put.Value) == 0u32 {
         return 9;
     }
-    let Prematureˉclose: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉclose(Put.Session);
+    let Prematureˉclose: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉclose(Put.Session);
     if Prematureˉclose.Status !=
-        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
+        Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
         return 10;
     }
-    let Committed: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉputˉcomplete(
+    let Committed: Contracts.Databaseˉlocalˉresult =
+        Put.Databaseˉlocalˉputˉcomplete(
             Put,
-            Service.Databaseˉlocalˉcompletion.Putˉcommitted
+            Contracts.Databaseˉlocalˉcompletion.Putˉcommitted
         );
-    let Committedˉsession: Service.Databaseˉlocalˉsession =
+    let Committedˉsession: Contracts.Databaseˉlocalˉsession =
         Committed.Session;
     if Committed.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Putˉcommitted ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Putˉcommitted ||
         Committedˉsession.Status !=
-            Service.Databaseˉlocalˉsessionˉstatus.Reopenˉrequired ||
+            Contracts.Databaseˉlocalˉsessionˉstatus.Reopenˉrequired ||
         Committedˉsession.Nextˉrequest != 3u64 ||
         !Committedˉsession.Reopenˉmustˉadvance {
         return 11;
     }
-    let Whileˉreopen: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Whileˉreopen: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Committed.Session,
             3u64,
             3u64,
             Textˉtoˉutf8("record")
         );
     if Whileˉreopen.Status !=
-        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
+        Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉrequest {
         return 12;
     }
-    let Sameˉreopen: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉreopen(Committed.Session, First);
+    let Sameˉreopen: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉreopen(Committed.Session, First);
     if Sameˉreopen.Status !=
-        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
+        Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
         return 21;
     }
     let Wrongˉcurrent: Superblock.Databaseˉsuperblockˉselection =
         Current(9u64, 2u64, 2u64, 1u64, 1u64, 3u64, 12800u64);
-    let Wrongˉreopen: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉreopen(
+    let Wrongˉreopen: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉreopen(
             Committed.Session,
             Wrongˉcurrent
         );
     if Wrongˉreopen.Status !=
-        Service.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
+        Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession {
         return 13;
     }
     let Second: Superblock.Databaseˉsuperblockˉselection =
         Current(1u64, 2u64, 2u64, 1u64, 1u64, 3u64, 12800u64);
-    let Reopened: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉreopen(Committed.Session, Second);
+    let Reopened: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉreopen(Committed.Session, Second);
     if Reopened.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Reopened ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Reopened ||
         !Expectˉready(Reopened.Session, 3u64) {
         return 14;
     }
-    let Getˉfound: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Getˉfound: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Reopened.Session,
             3u64,
             3u64,
@@ -273,63 +277,63 @@ export fn Main() -> i32 {
             7u64,
             Textˉtoˉutf8("value")
         );
-    let Found: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉgetˉcomplete(
+    let Found: Contracts.Databaseˉlocalˉresult =
+        Get.Databaseˉlocalˉgetˉcomplete(
             Getˉfound,
-            Service.Databaseˉlocalˉcompletion.Found,
+            Contracts.Databaseˉlocalˉcompletion.Found,
             Encoded.Bytes
         );
-    if Found.Status != Service.Databaseˉlocalˉserviceˉstatus.Found ||
+    if Found.Status != Contracts.Databaseˉlocalˉserviceˉstatus.Found ||
         Found.Schema != 7u64 ||
         !Bytesˉequal(Found.Payload, Textˉtoˉutf8("value")) ||
         !Expectˉready(Found.Session, 4u64) {
         return 15;
     }
-    let Getˉmissing: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Getˉmissing: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Found.Session,
             4u64,
             3u64,
             Textˉtoˉutf8("missing")
         );
-    let Missing: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉgetˉcomplete(
+    let Missing: Contracts.Databaseˉlocalˉresult =
+        Get.Databaseˉlocalˉgetˉcomplete(
             Getˉmissing,
-            Service.Databaseˉlocalˉcompletion.Missing,
+            Contracts.Databaseˉlocalˉcompletion.Missing,
             Empty()
         );
-    if Missing.Status != Service.Databaseˉlocalˉserviceˉstatus.Missing ||
+    if Missing.Status != Contracts.Databaseˉlocalˉserviceˉstatus.Missing ||
         !Expectˉready(Missing.Session, 5u64) {
         return 16;
     }
-    let Getˉinvalid: Service.Databaseˉlocalˉrequest =
-        Service.Databaseˉlocalˉgetˉprepare(
+    let Getˉinvalid: Contracts.Databaseˉlocalˉrequest =
+        Get.Databaseˉlocalˉgetˉprepare(
             Missing.Session,
             5u64,
             3u64,
             Textˉtoˉutf8("invalid")
         );
-    let Invalidˉvalue: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉgetˉcomplete(
+    let Invalidˉvalue: Contracts.Databaseˉlocalˉresult =
+        Get.Databaseˉlocalˉgetˉcomplete(
             Getˉinvalid,
-            Service.Databaseˉlocalˉcompletion.Found,
+            Contracts.Databaseˉlocalˉcompletion.Found,
             Textˉtoˉutf8("bad")
         );
-    let Invalidˉvalueˉsession: Service.Databaseˉlocalˉsession =
+    let Invalidˉvalueˉsession: Contracts.Databaseˉlocalˉsession =
         Invalidˉvalue.Session;
     if Invalidˉvalue.Status !=
-            Service.Databaseˉlocalˉserviceˉstatus.Invalidˉvalue ||
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉvalue ||
         Invalidˉvalueˉsession.Status !=
-            Service.Databaseˉlocalˉsessionˉstatus.Failed ||
+            Contracts.Databaseˉlocalˉsessionˉstatus.Failed ||
         Invalidˉvalueˉsession.Nextˉrequest != 6u64 {
         return 17;
     }
-    let Closed: Service.Databaseˉlocalˉresult =
-        Service.Databaseˉlocalˉsessionˉclose(Invalidˉvalue.Session);
-    let Closedˉsession: Service.Databaseˉlocalˉsession = Closed.Session;
-    if Closed.Status != Service.Databaseˉlocalˉserviceˉstatus.Closed ||
+    let Closed: Contracts.Databaseˉlocalˉresult =
+        Session.Databaseˉlocalˉsessionˉclose(Invalidˉvalue.Session);
+    let Closedˉsession: Contracts.Databaseˉlocalˉsession = Closed.Session;
+    if Closed.Status != Contracts.Databaseˉlocalˉserviceˉstatus.Closed ||
         Closedˉsession.Status !=
-            Service.Databaseˉlocalˉsessionˉstatus.Closed {
+            Contracts.Databaseˉlocalˉsessionˉstatus.Closed {
         return 18;
     }
     return 0;

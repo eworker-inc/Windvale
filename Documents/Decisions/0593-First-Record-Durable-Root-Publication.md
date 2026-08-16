@@ -34,9 +34,9 @@ owned the correct record replacement and two-page commit construction.
 ## Consequences
 
 A canonical empty database can now accept one real durable record, restart, and
-read that exact value back. The remaining local-server work is composition: map
-the portable service's prepared request to the depth-one or multi-level writer,
-then reopen the session on the newly selected superblock.
+read that exact value back. [Decision 0599](0599-Hosted-Local-Database-Service-Composition.md)
+later maps this writer to the portable put contract and proves logical get after
+process restart. Multi-level write dispatch remains separate.
 
 The root writer rejects a full-page split rather than silently selecting a
 different transaction. A later dispatcher must route that case to the existing

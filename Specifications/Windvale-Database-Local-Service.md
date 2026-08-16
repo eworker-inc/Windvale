@@ -2,10 +2,23 @@
 
 ## Status and scope
 
-`Windvaleˉdatabaseˉlocalˉservice` is the portable session and request contract
-for one locally bound database instance. It owns no capability and performs no
-storage I/O. Hosted lifecycle, reader, and writer adapters must supply admitted
-superblock selections and explicit completion outcomes.
+The local database service is split into small portable modules so an
+application includes only the code it uses:
+
+- `Windvaleˉdatabaseˉlocalˉcontracts` owns the shared session, request, result,
+  status, and completion types;
+- `Windvaleˉdatabaseˉlocalˉsession` owns open, reopen, and close;
+- `Windvaleˉdatabaseˉlocalˉput` owns put preparation and completion;
+- `Windvaleˉdatabaseˉlocalˉget` owns get preparation and completion; and
+- `Windvaleˉdatabaseˉlocalˉcontrol` owns cancellation before provider
+  acceptance.
+
+These modules form one portable contract for one locally bound database
+instance. They own no capability and perform no storage I/O. Hosted lifecycle,
+reader, and writer adapters supply admitted superblock selections and explicit
+completion outcomes. The split is part of the performance and memory contract:
+unused get, put, or lifecycle code must not be forced into a focused native
+application.
 
 The first profile is deliberately sequential: one session, one request in
 flight, and monotonically increasing nonzero `u64` request identities. It does
@@ -57,7 +70,12 @@ strict advancement after confirmed commit, same-snapshot admission after an
 uncertain completion, malformed-value failure, and close behavior. Both host
 scripts own the same portable project.
 
-Hosted storage binding, lifecycle/read/write adapters, first-write publication,
-recovery orchestration, collection allocation, delete, queries, transactions,
+The `host-local-service` owner starts with the canonical empty database, calls
+the hosted logical put adapter, starts a separate process, calls the hosted
+logical get adapter, and proves that the read leaves the committed file byte
+for byte unchanged. The focused put and get objects are reported separately so
+object growth remains visible.
+
+Recovery orchestration, collection allocation, delete, queries, transactions,
 authentication, networking, and multi-client arbitration remain separate
 contracts.

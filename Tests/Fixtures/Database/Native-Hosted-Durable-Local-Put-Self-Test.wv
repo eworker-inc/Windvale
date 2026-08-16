@@ -1,0 +1,27 @@
+module Nativeˉhostedˉdurableˉlocalˉputˉselfˉtest profile hosted;
+
+import Durableˉlocalˉrootˉput as Put;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+
+capability storage.random_access_v1;
+
+export fn Main() -> i32 {
+    let Written: Put.Databaseˉdurableˉlocalˉputˉresult =
+        Put.Databaseˉdurableˉlocalˉrootˉputˉopen(
+            7u64,
+            Textˉtoˉutf8("customer-1"),
+            3u64,
+            Textˉtoˉutf8("stored-through-local-service"),
+            4u32
+        );
+    if Written.Status != Put.Databaseˉdurableˉlocalˉputˉstatus.Committed ||
+        Written.Service.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Putˉcommitted ||
+        Written.Service.Session.Status !=
+            Contracts.Databaseˉlocalˉsessionˉstatus.Reopenˉrequired ||
+        Written.Actions != 4u32 || Written.Targetˉgeneration != 2u64 ||
+        Written.Targetˉsequence != 1u64 || Written.Targetˉlength != 12800u64 {
+        return 1;
+    }
+    return 0;
+}

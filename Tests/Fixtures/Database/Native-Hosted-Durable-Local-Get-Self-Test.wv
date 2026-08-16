@@ -1,0 +1,62 @@
+module Nativeˉhostedˉdurableˉlocalˉgetˉselfˉtest profile hosted;
+
+import Durableˉlocalˉget as Get;
+import Durableˉlocalˉopen as Open;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+
+capability storage.random_access_v1;
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    let Opened: Open.Databaseˉdurableˉlocalˉopenˉresult =
+        Open.Databaseˉdurableˉlocalˉopen();
+    if Opened.Status != Open.Databaseˉdurableˉlocalˉopenˉstatus.Opened ||
+        Opened.Service.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Opened ||
+        Opened.Service.Session.Current.Generation != 2u64 ||
+        Opened.Service.Session.Current.Committedˉsequence != 1u64 {
+        return 1;
+    }
+    let Found: Get.Databaseˉdurableˉlocalˉgetˉresult =
+        Get.Databaseˉdurableˉlocalˉget(
+            Opened.Service.Session,
+            7u64,
+            Textˉtoˉutf8("customer-1")
+        );
+    if Found.Service.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Found ||
+        Found.Service.Schema != 3u64 || Found.Pageˉvisits != 1u32 ||
+        !Bytesˉequal(
+            Found.Service.Payload,
+            Textˉtoˉutf8("stored-through-local-service")
+        ) {
+        return 2;
+    }
+    let Missing: Get.Databaseˉdurableˉlocalˉgetˉresult =
+        Get.Databaseˉdurableˉlocalˉget(
+            Found.Service.Session,
+            7u64,
+            Textˉtoˉutf8("customer-missing")
+        );
+    if Missing.Service.Status !=
+            Contracts.Databaseˉlocalˉserviceˉstatus.Missing ||
+        Missing.Service.Session.Status !=
+            Contracts.Databaseˉlocalˉsessionˉstatus.Ready ||
+        Missing.Service.Session.Nextˉrequest != 3u64 ||
+        Missing.Pageˉvisits != 1u32 {
+        return 3;
+    }
+    return 0;
+}

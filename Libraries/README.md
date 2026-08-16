@@ -73,7 +73,11 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Database-Depth-Three-Root-Growth` | `Windvaleˉdatabaseˉdepthˉthreeˉrootˉgrowth` | portable / none |
 | `Windvale-Library-Database-Depth-Three-Upsert` | `Windvaleˉdatabaseˉdepthˉthreeˉupsert` | portable / none |
 | `Windvale-Library-Database-Tree-Path-Upsert` | `Windvaleˉdatabaseˉtreeˉpathˉupsert` | portable / none |
-| `Windvale-Library-Local-Database-Service` | `Windvaleˉdatabaseˉlocalˉservice` | portable / none |
+| `Windvale-Library-Local-Database-Contracts` | `Windvaleˉdatabaseˉlocalˉcontracts` | portable / none |
+| `Windvale-Library-Local-Database-Session` | `Windvaleˉdatabaseˉlocalˉsession` | portable / none |
+| `Windvale-Library-Local-Database-Put` | `Windvaleˉdatabaseˉlocalˉput` | portable / none |
+| `Windvale-Library-Local-Database-Get` | `Windvaleˉdatabaseˉlocalˉget` | portable / none |
+| `Windvale-Library-Local-Database-Control` | `Windvaleˉdatabaseˉlocalˉcontrol` | portable / none |
 | `Windvale-Library-Wvdb-Reader` | `Windvaleˉdatabaseˉreader` | portable / none |
 | `Windvale-Library-Hosted-Resource-Store` | `Hostedˉresourceˉstore` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Directory` | `Readˉonlyˉdirectory` | hosted / `filesystem.directory_read_v1` |
@@ -83,6 +87,9 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Durable-Database-Engine` | `Durableˉdatabaseˉengine` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Tree-Reader` | `Durableˉtreeˉreader` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Root-Writer` | `Durableˉrootˉwriter` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Durable-Local-Open` | `Durableˉlocalˉopen` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Durable-Local-Root-Put` | `Durableˉlocalˉrootˉput` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Durable-Local-Get` | `Durableˉlocalˉget` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Tree-Writer` | `Durableˉtreeˉwriter` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Native-Hosted-Snapshot-Page` | `Nativeˉhostedˉsnapshotˉpage` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Wvdb` | `Readˉonlyˉwvdb` | hosted / `filesystem.directory_read_v1` |

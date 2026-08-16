@@ -1,0 +1,131 @@
+module Durableˉlocalˉopen profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+capability storage.random_access_v1;
+
+export enum Databaseˉdurableˉlocalˉopenˉstatus {
+    Opened = 0;
+    Storageˉfailure = 1;
+    Invalidˉdatabase = 2;
+    Changedˉsnapshot = 3;
+}
+
+export record Databaseˉdurableˉlocalˉopenˉresult {
+    Status: Databaseˉdurableˉlocalˉopenˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Service: Contracts.Databaseˉlocalˉresult;
+}
+
+fn Databaseˉdurableˉlocalˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉlocalˉinvalidˉcurrent()
+    -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselect(
+        Databaseˉdurableˉlocalˉempty(),
+        Databaseˉdurableˉlocalˉempty(),
+        0u64
+    );
+}
+
+fn Databaseˉdurableˉlocalˉfailure(
+    Status: Databaseˉdurableˉlocalˉopenˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus
+) -> Databaseˉdurableˉlocalˉopenˉresult {
+    let Invalid: Superblock.Databaseˉsuperblockˉselection =
+        Databaseˉdurableˉlocalˉinvalidˉcurrent();
+    let Closed: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Closed,
+            0u64,
+            0u64,
+            0u32,
+            Invalid,
+            0u64,
+            0u64,
+            false
+        );
+    return Databaseˉdurableˉlocalˉopenˉresult(
+        Status,
+        Storageˉstatus,
+        Contracts.Databaseˉlocalˉresult(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Invalidˉsession,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Closed,
+            0u64,
+            0u64,
+            Databaseˉdurableˉlocalˉempty()
+        )
+    );
+}
+
+export fn Databaseˉdurableˉlocalˉopen()
+    -> Databaseˉdurableˉlocalˉopenˉresult {
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 || Description.Storageˉlength < 512u64 {
+        return Databaseˉdurableˉlocalˉfailure(
+            Databaseˉdurableˉlocalˉopenˉstatus.Storageˉfailure,
+            Description.Status
+        );
+    }
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        0u64,
+        512u32
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Header.Generation != Description.Generation ||
+        Header.Storageˉlength != Description.Storageˉlength ||
+        Bytesˉlength(Header.Value) != 512u32 {
+        var Status: Databaseˉdurableˉlocalˉopenˉstatus =
+            Databaseˉdurableˉlocalˉopenˉstatus.Storageˉfailure;
+        if Header.Status == Storage.Storageˉstatus.Valid {
+            Status = Databaseˉdurableˉlocalˉopenˉstatus.Changedˉsnapshot;
+        }
+        return Databaseˉdurableˉlocalˉfailure(Status, Header.Status);
+    }
+    let Current: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Bytesˉslice(Header.Value, 0u32, 256u32),
+            Bytesˉslice(Header.Value, 256u32, 256u32),
+            Description.Storageˉlength
+        );
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉdurableˉlocalˉfailure(
+            Databaseˉdurableˉlocalˉopenˉstatus.Invalidˉdatabase,
+            Storage.Storageˉstatus.Valid
+        );
+    }
+    let Ready: Contracts.Databaseˉlocalˉsession =
+        Contracts.Databaseˉlocalˉsession(
+            Contracts.Databaseˉlocalˉsessionˉstatus.Ready,
+            Current.Databaseˉidentityˉhigh,
+            Current.Databaseˉidentityˉlow,
+            Current.Pageˉsize,
+            Current,
+            1u64,
+            0u64,
+            false
+        );
+    return Databaseˉdurableˉlocalˉopenˉresult(
+        Databaseˉdurableˉlocalˉopenˉstatus.Opened,
+        Storage.Storageˉstatus.Valid,
+        Contracts.Databaseˉlocalˉresult(
+            Contracts.Databaseˉlocalˉserviceˉstatus.Opened,
+            Logical.Databaseˉlogicalˉerror.Valid,
+            Ready,
+            0u64,
+            0u64,
+            Databaseˉdurableˉlocalˉempty()
+        )
+    );
+}

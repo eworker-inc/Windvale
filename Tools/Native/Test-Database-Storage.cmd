@@ -24,7 +24,7 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=17"
+set "SelectedCases=18"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
     tree-node logical-record local-service collection-catalog bootstrap single-leaf
@@ -33,6 +33,7 @@ for %%T in (
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
 if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-root-writer" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="host-local-service" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="engine" set "SelectedCases=3"
 if /I "%DevelopmentTarget%"=="host-tree-writer" set "SelectedCases=3"
 if not defined SelectedCases goto :usage
@@ -57,11 +58,13 @@ set "WorkspaceResource=%WorkspacePath:\=/%"
 set "Result=1"
 set "ProjectCheckpointHostStorage=NotRun"
 set "ProjectCheckpointHostRootWriter=NotRun"
+set "ProjectCheckpointHostLocalService=NotRun"
 set "ProjectCheckpointHostTreeReader=NotRun"
 set "ProjectCheckpointEngine=NotRun"
 set "ProjectCheckpointHostTreeWriter=NotRun"
 set "ApplicationCheckpointHostStorage=NotRun"
 set "ApplicationCheckpointHostRootWriter=NotRun"
+set "ApplicationCheckpointHostLocalService=NotRun"
 set "ApplicationCheckpointHostTreeReader=NotRun"
 set "ApplicationCheckpointEngine=NotRun"
 set "ApplicationCheckpointHostTreeWriter=NotRun"
@@ -142,6 +145,7 @@ if "%Development%"=="1" (
     call :elapsed_milliseconds PortableStart PortableEnd PortableElapsedMs
     set "HostStorageElapsedMs=0"
     set "HostRootWriterElapsedMs=0"
+    set "HostLocalServiceElapsedMs=0"
     set "HostTreeReaderElapsedMs=0"
     set "EngineElapsedMs=0"
     set "HostTreeWriterElapsedMs=0"
@@ -219,6 +223,10 @@ if errorlevel 1 goto :cleanup
 call :verify_host_root_writer ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Writer.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_local_service ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Put.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Get.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_host_tree_reader ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
 if errorlevel 1 goto :cleanup
@@ -241,11 +249,11 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
+    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
+    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=26 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=27 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
@@ -263,6 +271,7 @@ exit /b 0
 if /I "%DevelopmentTarget%"=="all" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-storage" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-root-writer" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="host-local-service" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-tree-reader" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="engine" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_storage
@@ -284,6 +293,7 @@ if /I "%DevelopmentTarget%"=="host-storage" exit /b 0
 
 if /I "%DevelopmentTarget%"=="all" goto :development_run_host_root_writer
 if /I "%DevelopmentTarget%"=="host-root-writer" goto :development_run_host_root_writer
+if /I "%DevelopmentTarget%"=="host-local-service" goto :development_run_host_local_service
 goto :development_run_host_tree_reader
 
 :development_run_host_root_writer
@@ -299,6 +309,25 @@ call :read_clock HostRootWriterEnd
 call :elapsed_milliseconds HostRootWriterStart HostRootWriterEnd HostRootWriterElapsedMs
 call echo PASS  native database storage development step=host-root-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostRootWriterElapsedMs%% project=%%ProjectCheckpointHostRootWriter%% application=%%ApplicationCheckpointHostRootWriter%%
 if /I "%DevelopmentTarget%"=="host-root-writer" exit /b 0
+
+if /I "%DevelopmentTarget%"=="all" goto :development_run_host_local_service
+goto :development_run_host_tree_reader
+
+:development_run_host_local_service
+set /a ProgressCurrent+=1
+call :read_clock HostLocalServiceStart
+call echo START native database storage development step=host-local-service item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_host_local_service ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Put.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Get.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development host-local-service stage failed.
+    exit /b 1
+)
+call :read_clock HostLocalServiceEnd
+call :elapsed_milliseconds HostLocalServiceStart HostLocalServiceEnd HostLocalServiceElapsedMs
+call echo PASS  native database storage development step=host-local-service item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostLocalServiceElapsedMs%% project=%%ProjectCheckpointHostLocalService%% application=%%ApplicationCheckpointHostLocalService%%
+if /I "%DevelopmentTarget%"=="host-local-service" exit /b 0
 
 :development_run_host_tree_reader
 
@@ -677,6 +706,148 @@ popd
 if not "%ApplicationResult%"=="0" exit /b 1
 for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="12800" exit /b 1
 fc /b "%Committed%" "%ScenarioStorage%" >nul || exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_local_service
+setlocal EnableExtensions DisableDelayedExpansion
+set "PutProject=%~f1"
+set "GetProject=%~f2"
+set "PutApplication=%TemporaryDirectory%\HostLocal-Put.exe"
+set "GetApplication=%TemporaryDirectory%\HostLocal-Get.exe"
+set "InitialFile=%TemporaryDirectory%\HostStorage-Run\Windvale-Database-Storage.initial"
+set "RunDirectory=%TemporaryDirectory%\HostLocalService-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+set "HostLocalCheckpoint=Rebuilt"
+set "HostLocalApplicationCheckpoint=Rebuilt"
+
+call :build_host_local_component "%PutProject%" Put "%PutApplication%"
+if errorlevel 1 exit /b 1
+call :build_host_local_component "%GetProject%" Get "%GetApplication%"
+if errorlevel 1 exit /b 1
+
+if "%Development%"=="1" (
+    set "PutProjectCheckpoint="
+    set "GetProjectCheckpoint="
+    set "PutApplicationCheckpoint="
+    set "GetApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-Put-Cache.txt"') do set "PutProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-Get-Cache.txt"') do set "GetProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-Put-Application-Cache.txt"') do set "PutApplicationCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-Get-Application-Cache.txt"') do set "GetApplicationCheckpoint=%%S"
+    if not defined PutProjectCheckpoint exit /b 1
+    if not defined GetProjectCheckpoint exit /b 1
+    if not defined PutApplicationCheckpoint exit /b 1
+    if not defined GetApplicationCheckpoint exit /b 1
+    call set "HostLocalCheckpoint=Put:%%PutProjectCheckpoint%%,Get:%%GetProjectCheckpoint%%"
+    call set "HostLocalApplicationCheckpoint=Put:%%PutApplicationCheckpoint%%,Get:%%GetApplicationCheckpoint%%"
+)
+
+if not exist "%InitialFile%" exit /b 1
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%InitialFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%PutApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native local-service put returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="12800" exit /b 1
+copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%GetApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native local-service restart get returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
+
+if "%Development%"=="1" (
+    endlocal & set "ProjectCheckpointHostLocalService=%HostLocalCheckpoint%" & set "ApplicationCheckpointHostLocalService=%HostLocalApplicationCheckpoint%"
+    exit /b 0
+)
+endlocal
+exit /b 0
+
+:build_host_local_component
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "Component=%~2"
+set "WindowsApplication=%~f3"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\HostLocal-%Component%-First.wvb"
+set "SecondWvb=%TemporaryDirectory%\HostLocal-%Component%-Second.wvb"
+set "FirstWvbResource=%FirstWvb:\=/%"
+set "SecondWvbResource=%SecondWvb:\=/%"
+set "FirstWvo=%TemporaryDirectory%\HostLocal-%Component%-First.wvo"
+set "SecondWvo=%TemporaryDirectory%\HostLocal-%Component%-Second.wvo"
+set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
+set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
+set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
+set "WindowsImage=%TemporaryDirectory%\HostLocal-%Component%-Windows.bin"
+set "WindowsImagePrefix=%TemporaryDirectory%\HostLocal-%Component%-Windows-Image"
+set "WindowsMap=%TemporaryDirectory%\HostLocal-%Component%-Windows.map"
+set "LinuxImage=%TemporaryDirectory%\HostLocal-%Component%-Linux.bin"
+set "LinuxImagePrefix=%TemporaryDirectory%\HostLocal-%Component%-Linux-Image"
+set "LinuxMap=%TemporaryDirectory%\HostLocal-%Component%-Linux.map"
+set "LinuxApplication=%TemporaryDirectory%\HostLocal-%Component%.elf"
+
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+        >"%TemporaryDirectory%\HostLocal-%Component%-Cache.txt"
+    if errorlevel 1 exit /b 1
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvb%" "%SecondWvb%" >nul || exit /b 1
+    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul || exit /b 1
+    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul || exit /b 1
+    fc /b "%FirstWvo%" "%SecondWvo%" >nul || exit /b 1
+)
+if not exist "%Common%" exit /b 1
+if not exist "%WindowsPlatform%" exit /b 1
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if errorlevel 1 exit /b 1
+set "WindowsEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
+if not defined WindowsEntry exit /b 1
+echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul || exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >"%TemporaryDirectory%\HostLocal-%Component%-Application-Cache.txt"
+    if errorlevel 1 exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
+        "%WindowsApplication%" windows >nul
+    if errorlevel 1 exit /b 1
+    if not exist "%LinuxPlatform%" exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+        Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
+        "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
+    if errorlevel 1 exit /b 1
+    set "LinuxEntry="
+    for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
+    if not defined LinuxEntry exit /b 1
+    call echo(%%LinuxEntry%%^| findstr /r /x "[0-9][0-9]*" ^>nul || exit /b 1
+    copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%LinuxImagePrefix%" 1 %%LinuxEntry%% ^
+        "%LinuxApplication%" linux >nul
+    if errorlevel 1 exit /b 1
+)
 endlocal
 exit /b 0
 
