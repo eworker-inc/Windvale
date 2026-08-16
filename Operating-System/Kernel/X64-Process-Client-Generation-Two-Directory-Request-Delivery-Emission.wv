@@ -1,0 +1,51 @@
+module Generationˉtwoˉdirectoryˉrequestˉemission profile portable;
+
+import X64ˉprocessˉclientˉdirectoryˉrequestˉdeliveryˉemission as Base;
+
+data Internalˉdisplacements: bytes = [
+    39, 22, 0, 0, 21, 22, 0, 0, 3, 22, 0, 0, 241, 21, 0, 0,
+    219, 21, 0, 0, 205, 21, 0, 0, 191, 21, 0, 0, 177, 21, 0, 0,
+    142, 145, 255, 255, 130, 21, 0, 0, 113, 21, 0, 0, 96, 21, 0, 0,
+    71, 21, 0, 0, 65, 0, 0, 0
+];
+
+export fn Generationˉtwoˉdirectoryˉrequestˉbytes()
+    -> bytes {
+    let Original: bytes =
+        Base.X64ˉprocessˉclientˉdirectoryˉrequestˉdeliveryˉbytes();
+    let Generation: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(2u32), 0u32, 1u32);
+    return Bytesˉconcat(
+        Bytesˉslice(Original, 0u32, 112u32),
+        Bytesˉconcat(Generation, Bytesˉslice(Original, 113u32, 218u32))
+    );
+}
+
+export fn Generationˉtwoˉdirectoryˉrequestˉexternalˉfield()
+    -> u32 {
+    return Base.X64ˉprocessˉclientˉdirectoryˉrequestˉdeliveryˉexternalˉfield();
+}
+
+export fn Generationˉtwoˉdirectoryˉrequestˉexternalˉsymbol()
+    -> u32 {
+    return Base.X64ˉprocessˉclientˉdirectoryˉrequestˉdeliveryˉexternalˉsymbol();
+}
+
+export fn Generationˉtwoˉdirectoryˉrequestˉinternalˉfields()
+    -> bytes {
+    return Base.X64ˉprocessˉclientˉdirectoryˉrequestˉdeliveryˉinternalˉfields();
+}
+
+export fn Generationˉtwoˉdirectoryˉrequestˉinternalˉdisplacements()
+    -> bytes {
+    return Internalˉdisplacements;
+}
+
+export fn Generationˉtwoˉdirectoryˉrequestˉfixtureˉoffset()
+    -> u32 {
+    return 28137u32;
+}
+
+export fn Generationˉtwoˉdirectoryˉrequestˉfixtureˉend()
+    -> u32 {
+    return 28468u32;
+}

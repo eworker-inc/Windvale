@@ -656,4 +656,15 @@ verify "$work/ClientGenerationTwoReplyDelivery.bin" 50531 0e71455553ace04236eb3c
 verify "$work/ClientGenerationTwoReplyDelivery.elf" 57456 28c971ed9dde6f9cacd76ff459dca8f4780af9f816da92d6d125d62d6870f2ab || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReplyDelivery.bin" 0 "$work/ClientGenerationTwoReplyDelivery.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReplyDelivery.exe" 52224 d6d0b0071c2487f30be46aca7b68b64b783a85ca4dc9075fffea6d54418d34a9 || exit 1
-echo 'native os x64 code emission status=Passed projects=50 cases=300 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99 cross-host-images=Verified source-owned-bytes=28137 relocation-fields=275'
+echo 'step=client-generation-two-directory-request-delivery item=51/51'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wvproj" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryRequestDelivery.wvb" 4613 6a481e470606ca5ce95bbc280e5f71f1288d0f20a6cba414960c61bd84f0285e || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvb" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryRequestDelivery.wvo" 36875 704d2e157f4834debb907f43767b173a5a6f361086774071eb191dd40f636f44 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoDirectoryRequestDelivery.bin" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryRequestDelivery.bin" 36099 7a634cdf03181dd7cfdc292662410b9f964f0ef122ef3db9a714c15e30cc5d95 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoDirectoryRequestDelivery.bin" 0 "$work/ClientGenerationTwoDirectoryRequestDelivery.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryRequestDelivery.elf" 41072 f9cdb5012700df4645d4aa892be1409274b35f440b281aab9f45890b2223efd2 || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoDirectoryRequestDelivery.bin" 0 "$work/ClientGenerationTwoDirectoryRequestDelivery.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryRequestDelivery.exe" 37888 b56d474e69dead5e916d662ad224567ce5c69b20104cf833e062f3f913d039bb || exit 1
+echo 'native os x64 code emission status=Passed projects=51 cases=306 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100 cross-host-images=Verified source-owned-bytes=28468 relocation-fields=290'

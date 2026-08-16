@@ -276,6 +276,12 @@ generation 2. Reply ownership, dispatcher/page-table activation, context
 restoration, result 116, and the client `sysretq` remain shared. Source
 ownership reaches byte 28,136.
 
+The next 331-byte directory-request delivery derives its checked generation-one
+constructor with only the selected provider generation advanced to 2. The
+client syscall/thread checks, exact queued 37-byte request, dispatcher and
+page-table activation, context restoration, and provider `sysretq` remain
+shared. Source ownership reaches byte 28,467.
+
 The first restart policies are deliberately small:
 
 - `Never`;

@@ -1164,7 +1164,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReplyDelivery.elf" 57456 28c971ed9dde6f9cacd76ff459dca8f4780af9f816da92d6d125d62d6870f2ab
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=50 cases=300 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99 cross-host-images=Verified source-owned-bytes=28137 relocation-fields=275
+echo step=client-generation-two-directory-request-delivery item=51/51
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wvproj" "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvb" 4613 6a481e470606ca5ce95bbc280e5f71f1288d0f20a6cba414960c61bd84f0285e
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvb" "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvo" 36875 704d2e157f4834debb907f43767b173a5a6f361086774071eb191dd40f636f44
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoDirectoryRequestDelivery.bin" "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.bin" 36099 7a634cdf03181dd7cfdc292662410b9f964f0ef122ef3db9a714c15e30cc5d95
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoDirectoryRequestDelivery.bin" 0 "%Work%\ClientGenerationTwoDirectoryRequestDelivery.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoDirectoryRequestDelivery.exe" >nul
+if not "%ERRORLEVEL%"=="100" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.exe" 37888 b56d474e69dead5e916d662ad224567ce5c69b20104cf833e062f3f913d039bb
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoDirectoryRequestDelivery.bin" 0 "%Work%\ClientGenerationTwoDirectoryRequestDelivery.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.elf" 41072 f9cdb5012700df4645d4aa892be1409274b35f440b281aab9f45890b2223efd2
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=51 cases=306 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100 cross-host-images=Verified source-owned-bytes=28468 relocation-fields=290
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

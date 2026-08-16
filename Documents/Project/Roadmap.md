@@ -644,6 +644,8 @@ provenance, revocation, and consensus boundaries are named.
   zero to the client and reaches byte 27,805.
   The adapted client reply delivery for operation 8 and generation-2 retained,
   thread, and selected state now returns result 116 and reaches byte 28,136.
+  The adapted directory-request delivery now selects provider generation 2,
+  returns the exact 37-byte request result, and reaches byte 28,467.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

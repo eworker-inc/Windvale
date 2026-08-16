@@ -1,0 +1,4 @@
+windvale-project 2
+root "Operating-System/Kernel/X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wv"
+source "Operating-System/Kernel/X64-Process-Client-Directory-Request-Delivery-Emission.wv"
+emit wvb
