@@ -1300,10 +1300,13 @@ $NativeCases = @(
         Name = 'OS FAT32 block-read ownership'
         Paths = @(
             'Operating-System/Services/Fat32-Block-Read-Transaction.wv',
+            'Operating-System/Services/Fat32-Block-Provider-Protocol.wv',
             'Projects/Operating-System/Windvale-Os-Fat32-Block-Read-Transaction.wvproj',
+            'Projects/Operating-System/Windvale-Os-Fat32-Block-Provider-Protocol.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Fat32-Block-Read-Transaction.wvproj',
             'Tests/Fixtures/Operating-System/Os-Fat32-Block-Read-Transaction-Self-Test.wv',
-            'Specifications/Windvale-Os-Fat32-Block-Read-Transaction.md'
+            'Specifications/Windvale-Os-Fat32-Block-Read-Transaction.md',
+            'Specifications/Windvale-Os-Fat32-Block-Provider-Protocol.md'
         )
         Suites = @('os-fat32-block-read', 'native-u64-lowering')
         Gaps = @()
@@ -2589,7 +2592,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4351 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4359 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

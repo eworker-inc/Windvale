@@ -1,6 +1,7 @@
 module Osˉfat32ˉblockˉreadˉtransactionˉselfˉtest profile portable;
 
 import Fat32ˉblockˉreadˉtransaction as Block;
+import Fat32ˉblockˉproviderˉprotocol as Protocol;
 
 data Empty: bytes = [];
 
@@ -55,6 +56,33 @@ fn Resultˉstatus(
             Plan, Generation, Provider, Value
         );
     return Result.Status;
+}
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Appendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Response(
+    Plan: Block.Fat32ˉblockˉreadˉplan,
+    Reference: u64,
+    Status: u32,
+    Value: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1346524759u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 48u32 + Bytesˉlength(Value));
+    Result = Appendˉu32(Result, Plan.Generation);
+    Result = Appendˉu32(Result, Plan.Sequence);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu64(Result, Plan.Deviceˉsector);
+    Result = Appendˉu32(Result, Plan.Sectorˉcount);
+    Result = Appendˉu32(Result, Plan.Byteˉcount);
+    Result = Appendˉu64(Result, Reference);
+    return Bytesˉconcat(Result, Value);
 }
 
 export fn Main() -> i32 {
@@ -118,5 +146,45 @@ export fn Main() -> i32 {
         Plan, 7u32, Block.Fat32ˉblockˉproviderˉstatus.Complete,
         Payload(512u32)
     ) != Block.Fat32ˉblockˉresultˉstatus.Invalidˉpayload { return 15; }
+    let Request: bytes = Protocol.Fat32ˉblockˉproviderˉrequest(Plan, 55u64);
+    if Bytesˉlength(Request) != 48u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 0u32) != 1380079191u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 16u32) != 9u32 ||
+        Bytesˉreadˉu64ˉlittle(Request, 24u32) != 33u64 ||
+        Bytesˉreadˉu64ˉlittle(Request, 40u32) != 55u64 { return 16; }
+    if Bytesˉlength(
+        Protocol.Fat32ˉblockˉproviderˉrequest(Plan, 0u64)
+    ) != 0u32 { return 17; }
+    let Completeˉresponse: bytes = Response(
+        Plan, 55u64, 0u32, Payload(1024u32)
+    );
+    if !Protocol.Fat32ˉblockˉproviderˉresponseˉisˉvalid(
+        Plan, 55u64, Completeˉresponse
+    ) { return 18; }
+    let Exchange: Block.Fat32ˉblockˉreadˉresult =
+        Protocol.Fat32ˉblockˉproviderˉfinish(
+            Plan, 55u64, 7u32, Completeˉresponse
+        );
+    if Exchange.Status != Block.Fat32ˉblockˉresultˉstatus.Complete ||
+        Bytesˉlength(Exchange.Payload) != 1024u32 { return 19; }
+    if Protocol.Fat32ˉblockˉproviderˉresponseˉisˉvalid(
+        Plan, 56u64, Completeˉresponse
+    ) { return 20; }
+    let Unavailable: Block.Fat32ˉblockˉreadˉresult =
+        Protocol.Fat32ˉblockˉproviderˉfinish(
+            Plan, 55u64, 7u32, Response(Plan, 55u64, 1u32, Empty)
+        );
+    if Unavailable.Status !=
+        Block.Fat32ˉblockˉresultˉstatus.Unavailable { return 21; }
+    let Lost: Block.Fat32ˉblockˉreadˉresult =
+        Protocol.Fat32ˉblockˉproviderˉfinish(
+            Plan, 55u64, 7u32, Response(Plan, 55u64, 2u32, Empty)
+        );
+    if Lost.Status != Block.Fat32ˉblockˉresultˉstatus.Providerˉlost {
+        return 22;
+    }
+    if Protocol.Fat32ˉblockˉproviderˉresponseˉisˉvalid(
+        Plan, 55u64, Response(Plan, 55u64, 1u32, Payload(1u32))
+    ) { return 23; }
     return 47;
 }

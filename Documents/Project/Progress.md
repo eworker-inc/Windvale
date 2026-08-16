@@ -86,7 +86,9 @@ and rejects cycles, truncation, trailing entries, and work beyond 4,096
 clusters. All 45 focused cases pass; exact block-provider reads and directory/
 file parsing remain next. A separate 14-case block-read transaction now bounds
 the granted device extent, read right, generation, sequence, eight-sector
-ceiling, and exact completion bytes; live provider IPC remains pending.
+ceiling, and exact completion bytes. Its owner now has 22 cases and composes
+the exact `WVBR 1`/`WVBP 1` provider messages; endpoint execution remains
+pending.
 
 ## .NET retirement result
 

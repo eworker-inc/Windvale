@@ -22,7 +22,8 @@ and transfer size are checked before a driver or provider is invoked.
 
 The 5,036-byte policy WVB has SHA-256
 `8e6d447b4ee2bcbb6b549d37d42d1093ac7c1aa18ffacaa3f2e09bb4fcc913b5`.
-Its 14-case native owner returns 47 and pins paired Windows/Linux images.
+Its composed 22-case native owner returns 47 and pins paired Windows/Linux
+images, including the successor provider wire protocol.
 
 ## Consequences
 

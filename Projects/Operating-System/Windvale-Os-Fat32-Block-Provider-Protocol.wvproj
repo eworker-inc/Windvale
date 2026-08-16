@@ -1,0 +1,4 @@
+windvale-project 2
+root "Operating-System/Services/Fat32-Block-Provider-Protocol.wv"
+source "Operating-System/Services/Fat32-Block-Read-Transaction.wv"
+emit wvb

@@ -1,0 +1,107 @@
+module Fat32ˉblockˉproviderˉprotocol profile portable;
+
+import Fat32ˉblockˉreadˉtransaction as Block;
+
+const FAT32_BLOCK_REQUEST_MAGIC: u32 = 1380079191u32;
+const FAT32_BLOCK_RESPONSE_MAGIC: u32 = 1346524759u32;
+const FAT32_BLOCK_HEADER_BYTES: u32 = 48u32;
+data Empty: bytes = [];
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Appendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+export fn Fat32ˉblockˉproviderˉrequest(
+    Plan: Block.Fat32ˉblockˉreadˉplan,
+    Blockˉreference: u64
+) -> bytes {
+    if Plan.Status != Block.Fat32ˉblockˉplanˉstatus.Valid ||
+        Blockˉreference == 0u64 {
+        return Empty;
+    }
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(FAT32_BLOCK_REQUEST_MAGIC);
+    Request = Appendˉu32(Request, 1u32);
+    Request = Appendˉu32(Request, FAT32_BLOCK_HEADER_BYTES);
+    Request = Appendˉu32(Request, Plan.Generation);
+    Request = Appendˉu32(Request, Plan.Sequence);
+    Request = Appendˉu32(Request, Plan.Sectorˉcount);
+    Request = Appendˉu64(Request, Plan.Deviceˉsector);
+    Request = Appendˉu32(Request, Plan.Byteˉcount);
+    Request = Appendˉu32(Request, 0u32);
+    return Appendˉu64(Request, Blockˉreference);
+}
+
+export fn Fat32ˉblockˉproviderˉresponseˉisˉvalid(
+    Plan: Block.Fat32ˉblockˉreadˉplan,
+    Blockˉreference: u64,
+    Response: bytes
+) -> bool {
+    if Plan.Status != Block.Fat32ˉblockˉplanˉstatus.Valid ||
+        Blockˉreference == 0u64 { return false; }
+    let Total: u32 = Bytesˉlength(Response);
+    if Total < FAT32_BLOCK_HEADER_BYTES ||
+        Total > FAT32_BLOCK_HEADER_BYTES + 4096u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) !=
+            FAT32_BLOCK_RESPONSE_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Total ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != Plan.Generation ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != Plan.Sequence ||
+        Bytesˉreadˉu64ˉlittle(Response, 24u32) != Plan.Deviceˉsector ||
+        Bytesˉreadˉu32ˉlittle(Response, 32u32) != Plan.Sectorˉcount ||
+        Bytesˉreadˉu32ˉlittle(Response, 36u32) != Plan.Byteˉcount ||
+        Bytesˉreadˉu64ˉlittle(Response, 40u32) != Blockˉreference {
+        return false;
+    }
+    let Providerˉstatus: u32 = Bytesˉreadˉu32ˉlittle(Response, 20u32);
+    if Providerˉstatus > 2u32 { return false; }
+    if Providerˉstatus == 0u32 {
+        return Total == FAT32_BLOCK_HEADER_BYTES + Plan.Byteˉcount;
+    }
+    return Total == FAT32_BLOCK_HEADER_BYTES;
+}
+
+fn Fat32ˉblockˉproviderˉstatus(
+    Value: u32
+) -> Block.Fat32ˉblockˉproviderˉstatus {
+    if Value == 1u32 {
+        return Block.Fat32ˉblockˉproviderˉstatus.Unavailable;
+    }
+    if Value == 2u32 {
+        return Block.Fat32ˉblockˉproviderˉstatus.Providerˉlost;
+    }
+    return Block.Fat32ˉblockˉproviderˉstatus.Complete;
+}
+
+export fn Fat32ˉblockˉproviderˉfinish(
+    Plan: Block.Fat32ˉblockˉreadˉplan,
+    Blockˉreference: u64,
+    Currentˉgeneration: u32,
+    Response: bytes
+) -> Block.Fat32ˉblockˉreadˉresult {
+    if !Fat32ˉblockˉproviderˉresponseˉisˉvalid(
+        Plan, Blockˉreference, Response
+    ) {
+        return Block.Fat32ˉblockˉreadˉcomplete(
+            Plan, Currentˉgeneration,
+            Block.Fat32ˉblockˉproviderˉstatus.Complete, Empty
+        );
+    }
+    let Providerˉstatus: Block.Fat32ˉblockˉproviderˉstatus =
+        Fat32ˉblockˉproviderˉstatus(
+            Bytesˉreadˉu32ˉlittle(Response, 20u32)
+        );
+    var Payload: bytes = Empty;
+    if Providerˉstatus == Block.Fat32ˉblockˉproviderˉstatus.Complete {
+        Payload = Bytesˉslice(
+            Response, FAT32_BLOCK_HEADER_BYTES, Plan.Byteˉcount
+        );
+    }
+    return Block.Fat32ˉblockˉreadˉcomplete(
+        Plan, Currentˉgeneration, Providerˉstatus, Payload
+    );
+}
