@@ -1,0 +1,4 @@
+windvale-project 2
+root "Libraries/Database/Json-Protocol.wv"
+source "Libraries/Database/Json-Value.wv"
+emit wvb

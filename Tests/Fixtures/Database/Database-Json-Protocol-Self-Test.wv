@@ -1,0 +1,251 @@
+module Windvaleˉnativeˉtestˉdatabaseˉjsonˉprotocol profile portable;
+
+import Windvaleˉdatabaseˉjsonˉprotocol as Protocol;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Repeat(Value: bytes, Count: u32) -> bytes {
+    var Remaining: u32 = Count;
+    var Chunk: bytes = Value;
+    var Result: bytes = Empty();
+    while Remaining != 0u32 {
+        if Remaining % 2u32 == 1u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining != 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+
+fn Requestˉerror(Value: text) -> Protocol.Databaseˉjsonˉprotocolˉerror {
+    let Result: Protocol.Databaseˉjsonˉprotocolˉrequest =
+        Protocol.Databaseˉjsonˉprotocolˉrequestˉdecode(Textˉtoˉutf8(Value));
+    return Result.Error;
+}
+
+fn Responseˉerror(Value: text) -> Protocol.Databaseˉjsonˉprotocolˉerror {
+    let Result: Protocol.Databaseˉjsonˉprotocolˉresponse =
+        Protocol.Databaseˉjsonˉprotocolˉresponseˉdecode(Textˉtoˉutf8(Value));
+    return Result.Error;
+}
+
+fn Requestˉdecode() -> i32 {
+    let Body: bytes = Textˉtoˉutf8("{\"collection\":\"users\",\"key\":\"1\"}");
+    let Input: bytes = Textˉtoˉutf8(
+        "{\"contractVersion\":1,\"requestId\":\"req-1\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":2500,\"minimumCommittedSequence\":18446744073709551615,\"body\":{\"collection\":\"users\",\"key\":\"1\"}}"
+    );
+    let Result: Protocol.Databaseˉjsonˉprotocolˉrequest =
+        Protocol.Databaseˉjsonˉprotocolˉrequestˉdecode(Input);
+    if Result.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Valid ||
+        Result.Operation != Protocol.Databaseˉjsonˉprotocolˉoperation.Get ||
+        !Same(Result.Requestˉid, Textˉtoˉutf8("req-1")) ||
+        !Same(Result.Databaseˉid, Textˉtoˉutf8("main")) ||
+        Result.Deadlineˉmilliseconds != 2500u32 ||
+        !Result.Hasˉminimumˉcommittedˉsequence ||
+        Result.Minimumˉcommittedˉsequence != 18446744073709551615u64 ||
+        !Same(
+            Bytesˉslice(Result.Bytes, Result.Bodyˉoffset, Result.Bodyˉlength),
+            Body
+        ) {
+        return 1;
+    }
+    let Escaped: Protocol.Databaseˉjsonˉprotocolˉrequest =
+        Protocol.Databaseˉjsonˉprotocolˉrequestˉdecode(Textˉtoˉutf8(
+            "{\"contractVersion\":1,\"request\\u0049d\":\"r@1\",\"databaseId\":\"db-1\",\"operation\":\"ping\",\"deadlineMilliseconds\":0,\"body\":{}}"
+        ));
+    if Escaped.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Valid ||
+        Escaped.Operation != Protocol.Databaseˉjsonˉprotocolˉoperation.Ping ||
+        Escaped.Hasˉminimumˉcommittedˉsequence {
+        return 2;
+    }
+    return 0;
+}
+
+fn Requestˉrejections() -> i32 {
+    if Requestˉerror("[]") !=
+        Protocol.Databaseˉjsonˉprotocolˉerror.Envelopeˉnotˉobject {
+        return 1;
+    }
+    if Requestˉerror("{") !=
+        Protocol.Databaseˉjsonˉprotocolˉerror.Jsonˉinvalid {
+        return 2;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1,\"body\":{},\"extra\":0}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Unknownˉmember {
+        return 3;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Missingˉmember {
+        return 4;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":2,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉcontract {
+        return 5;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"-bad\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉrequestˉid {
+        return 6;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"Main\",\"operation\":\"get\",\"deadlineMilliseconds\":1,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉdatabaseˉid {
+        return 7;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"merge\",\"deadlineMilliseconds\":1,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉoperation {
+        return 8;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":300001,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉdeadline {
+        return 9;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1.0,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉdeadline {
+        return 10;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1,\"minimumCommittedSequence\":18446744073709551616,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉsequence {
+        return 11;
+    }
+    if Requestˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"databaseId\":\"main\",\"operation\":\"get\",\"deadlineMilliseconds\":1,\"body\":[]}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Bodyˉnotˉobject {
+        return 12;
+    }
+    return 0;
+}
+
+fn Requestˉencode() -> i32 {
+    let Encoded: Protocol.Databaseˉjsonˉprotocolˉencoding =
+        Protocol.Databaseˉjsonˉprotocolˉrequestˉencode(
+            Textˉtoˉutf8("req:7"),
+            Textˉtoˉutf8("main"),
+            Protocol.Databaseˉjsonˉprotocolˉoperation.Transaction,
+            300000u32,
+            true,
+            99u64,
+            Textˉtoˉutf8("{\"items\":[1,{\"x\":true}]}")
+        );
+    if Encoded.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Valid ||
+        !Same(
+            Encoded.Bytes,
+            Textˉtoˉutf8(
+                "{\"contractVersion\":1,\"requestId\":\"req:7\",\"databaseId\":\"main\",\"operation\":\"transaction\",\"deadlineMilliseconds\":300000,\"minimumCommittedSequence\":99,\"body\":{\"items\":[1,{\"x\":true}]}}"
+            )
+        ) {
+        return 1;
+    }
+    let Roundtrip: Protocol.Databaseˉjsonˉprotocolˉrequest =
+        Protocol.Databaseˉjsonˉprotocolˉrequestˉdecode(Encoded.Bytes);
+    if Roundtrip.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Valid ||
+        Roundtrip.Minimumˉcommittedˉsequence != 99u64 {
+        return 2;
+    }
+    let Largeˉbody: bytes = Bytesˉconcat(
+        Repeat(Textˉtoˉutf8(" "), 4100u32),
+        Bytesˉconcat(
+            Bytesˉconcat(
+                Textˉtoˉutf8("{\"x\":\""),
+                Repeat(Textˉtoˉutf8("a"), 61400u32)
+            ),
+            Textˉtoˉutf8("\"}")
+        )
+    );
+    let Large: Protocol.Databaseˉjsonˉprotocolˉencoding =
+        Protocol.Databaseˉjsonˉprotocolˉrequestˉencode(
+            Textˉtoˉutf8("r"),
+            Textˉtoˉutf8("main"),
+            Protocol.Databaseˉjsonˉprotocolˉoperation.Put,
+            1u32,
+            false,
+            0u64,
+            Largeˉbody
+        );
+    if Large.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Tooˉlarge {
+        return 3;
+    }
+    return 0;
+}
+
+fn Responseˉcontract() -> i32 {
+    let Encoded: Protocol.Databaseˉjsonˉprotocolˉencoding =
+        Protocol.Databaseˉjsonˉprotocolˉresponseˉencode(
+            Textˉtoˉutf8("req-9"),
+            Protocol.Databaseˉjsonˉprotocolˉstatus.Error,
+            18446744073709551615u64,
+            Textˉtoˉutf8("{\"code\":\"row_not_found\",\"retryable\":false,\"ambiguous\":false}")
+        );
+    if Encoded.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Valid ||
+        !Same(
+            Encoded.Bytes,
+            Textˉtoˉutf8(
+                "{\"contractVersion\":1,\"requestId\":\"req-9\",\"status\":\"error\",\"observedCommittedSequence\":18446744073709551615,\"body\":{\"code\":\"row_not_found\",\"retryable\":false,\"ambiguous\":false}}"
+            )
+        ) {
+        return 1;
+    }
+    let Decoded: Protocol.Databaseˉjsonˉprotocolˉresponse =
+        Protocol.Databaseˉjsonˉprotocolˉresponseˉdecode(Encoded.Bytes);
+    if Decoded.Error != Protocol.Databaseˉjsonˉprotocolˉerror.Valid ||
+        Decoded.Status != Protocol.Databaseˉjsonˉprotocolˉstatus.Error ||
+        Decoded.Observedˉcommittedˉsequence != 18446744073709551615u64 {
+        return 2;
+    }
+    if Responseˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"status\":\"busy\",\"observedCommittedSequence\":0,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉstatus {
+        return 3;
+    }
+    if Responseˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"status\":\"ok\",\"observedCommittedSequence\":-1,\"body\":{}}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Invalidˉsequence {
+        return 4;
+    }
+    if Responseˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"status\":\"ok\",\"observedCommittedSequence\":0,\"body\":null}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Bodyˉnotˉobject {
+        return 5;
+    }
+    if Responseˉerror(
+            "{\"contractVersion\":1,\"requestId\":\"r\",\"status\":\"ok\",\"observedCommittedSequence\":0,\"body\":{},\"extra\":0}"
+        ) != Protocol.Databaseˉjsonˉprotocolˉerror.Unknownˉmember {
+        return 6;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Decode: i32 = Requestˉdecode();
+    if Decode != 0 { return 100 + Decode; }
+    let Rejections: i32 = Requestˉrejections();
+    if Rejections != 0 { return 200 + Rejections; }
+    let Encode: i32 = Requestˉencode();
+    if Encode != 0 { return 300 + Encode; }
+    let Response: i32 = Responseˉcontract();
+    if Response != 0 { return 400 + Response; }
+    return 0;
+}

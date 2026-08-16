@@ -1,0 +1,830 @@
+module Windvaleˉdatabaseˉjsonˉprotocol profile portable;
+
+import Windvaleˉdatabaseˉjsonˉvalue as Json;
+
+const DATABASE_JSON_PROTOCOL_MAXIMUM_BYTES: u32 = 65536u32;
+const DATABASE_JSON_PROTOCOL_MAXIMUM_REQUEST_ID_BYTES: u32 = 128u32;
+const DATABASE_JSON_PROTOCOL_MAXIMUM_DATABASE_ID_BYTES: u32 = 64u32;
+const DATABASE_JSON_PROTOCOL_MAXIMUM_DEADLINE_MILLISECONDS: u32 = 300000u32;
+
+export enum Databaseˉjsonˉprotocolˉerror {
+    Valid = 0;
+    Jsonˉinvalid = 1;
+    Envelopeˉnotˉobject = 2;
+    Unknownˉmember = 3;
+    Missingˉmember = 4;
+    Invalidˉcontract = 5;
+    Invalidˉrequestˉid = 6;
+    Invalidˉdatabaseˉid = 7;
+    Invalidˉoperation = 8;
+    Invalidˉdeadline = 9;
+    Invalidˉsequence = 10;
+    Bodyˉnotˉobject = 11;
+    Invalidˉstatus = 12;
+    Tooˉlarge = 13;
+}
+
+export enum Databaseˉjsonˉprotocolˉoperation {
+    Invalid = 0;
+    Ping = 1;
+    Get = 2;
+    Put = 3;
+    Delete = 4;
+    Scan = 5;
+    Transaction = 6;
+    Query = 7;
+}
+
+export enum Databaseˉjsonˉprotocolˉstatus {
+    Invalid = 0;
+    Ok = 1;
+    Error = 2;
+}
+
+export record Databaseˉjsonˉprotocolˉrequest {
+    Error: Databaseˉjsonˉprotocolˉerror;
+    Jsonˉerror: Json.Databaseˉjsonˉerror;
+    Failureˉoffset: u32;
+    Operation: Databaseˉjsonˉprotocolˉoperation;
+    Requestˉid: bytes;
+    Databaseˉid: bytes;
+    Deadlineˉmilliseconds: u32;
+    Hasˉminimumˉcommittedˉsequence: bool;
+    Minimumˉcommittedˉsequence: u64;
+    Bodyˉoffset: u32;
+    Bodyˉlength: u32;
+    Bytes: bytes;
+}
+
+export record Databaseˉjsonˉprotocolˉresponse {
+    Error: Databaseˉjsonˉprotocolˉerror;
+    Jsonˉerror: Json.Databaseˉjsonˉerror;
+    Failureˉoffset: u32;
+    Status: Databaseˉjsonˉprotocolˉstatus;
+    Requestˉid: bytes;
+    Observedˉcommittedˉsequence: u64;
+    Bodyˉoffset: u32;
+    Bodyˉlength: u32;
+    Bytes: bytes;
+}
+
+export record Databaseˉjsonˉprotocolˉencoding {
+    Error: Databaseˉjsonˉprotocolˉerror;
+    Bytes: bytes;
+}
+
+record Databaseˉjsonˉprotocolˉspan {
+    Start: u32;
+    Length: u32;
+}
+
+record Databaseˉjsonˉprotocolˉu64ˉresult {
+    Valid: bool;
+    Value: u64;
+}
+
+fn Databaseˉjsonˉprotocolˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉjsonˉprotocolˉbyte(Input: bytes, Offset: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+}
+
+fn Databaseˉjsonˉprotocolˉbyteˉfromˉu32(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+fn Databaseˉjsonˉprotocolˉu32ˉfromˉu64(Value: u64) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Value), 0u32);
+}
+
+fn Databaseˉjsonˉprotocolˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉjsonˉprotocolˉspace(Value: u32) -> bool {
+    return Value == 32u32 || Value == 9u32 ||
+        Value == 10u32 || Value == 13u32;
+}
+
+fn Databaseˉjsonˉprotocolˉskipˉspace(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Offset;
+    while Cursor < Total {
+        if !Databaseˉjsonˉprotocolˉspace(
+                Databaseˉjsonˉprotocolˉbyte(Input, Cursor)) {
+            break;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Cursor;
+}
+
+fn Databaseˉjsonˉprotocolˉstringˉend(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Offset + 1u32;
+    while Cursor < Total {
+        let Value: u32 = Databaseˉjsonˉprotocolˉbyte(Input, Cursor);
+        if Value == 34u32 { return Cursor + 1u32; }
+        if Value == 92u32 { Cursor = Cursor + 1u32; }
+        Cursor = Cursor + 1u32;
+    }
+    return Total;
+}
+
+fn Databaseˉjsonˉprotocolˉvalueˉend(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    let First: u32 = Databaseˉjsonˉprotocolˉbyte(Input, Offset);
+    if First == 34u32 {
+        return Databaseˉjsonˉprotocolˉstringˉend(Input, Offset);
+    }
+    if First != 123u32 && First != 91u32 {
+        var Scalar: u32 = Offset;
+        while Scalar < Total {
+            let Scalarˉvalue: u32 = Databaseˉjsonˉprotocolˉbyte(Input, Scalar);
+            if Scalarˉvalue == 44u32 || Scalarˉvalue == 125u32 ||
+                Databaseˉjsonˉprotocolˉspace(Scalarˉvalue) {
+                break;
+            }
+            Scalar = Scalar + 1u32;
+        }
+        return Scalar;
+    }
+    var Depth: u32 = 1u32;
+    var Cursor: u32 = Offset + 1u32;
+    while Cursor < Total {
+        let Containerˉvalue: u32 = Databaseˉjsonˉprotocolˉbyte(Input, Cursor);
+        if Containerˉvalue == 34u32 {
+            Cursor = Databaseˉjsonˉprotocolˉstringˉend(Input, Cursor);
+        } else {
+            if Containerˉvalue == 123u32 || Containerˉvalue == 91u32 {
+                Depth = Depth + 1u32;
+            }
+            if Containerˉvalue == 125u32 || Containerˉvalue == 93u32 {
+                Depth = Depth - 1u32;
+                if Depth == 0u32 { return Cursor + 1u32; }
+            }
+            Cursor = Cursor + 1u32;
+        }
+    }
+    return Total;
+}
+
+fn Databaseˉjsonˉprotocolˉdecodedˉstring(
+    Input: bytes,
+    Span: Databaseˉjsonˉprotocolˉspan
+) -> bytes {
+    let Raw: bytes = Bytesˉslice(Input, Span.Start, Span.Length);
+    let Decoded: Json.Databaseˉjsonˉstringˉresult =
+        Json.Databaseˉjsonˉstringˉdecode(Raw);
+    return Decoded.Bytes;
+}
+
+fn Databaseˉjsonˉprotocolˉrequestˉfailure(
+    Error: Databaseˉjsonˉprotocolˉerror,
+    Jsonˉerror: Json.Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉprotocolˉrequest {
+    let Empty: bytes = Databaseˉjsonˉprotocolˉempty();
+    return Databaseˉjsonˉprotocolˉrequest(
+        Error,
+        Jsonˉerror,
+        Offset,
+        Databaseˉjsonˉprotocolˉoperation.Invalid,
+        Empty,
+        Empty,
+        0u32,
+        false,
+        0u64,
+        0u32,
+        0u32,
+        Empty
+    );
+}
+
+fn Databaseˉjsonˉprotocolˉresponseˉfailure(
+    Error: Databaseˉjsonˉprotocolˉerror,
+    Jsonˉerror: Json.Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉprotocolˉresponse {
+    let Empty: bytes = Databaseˉjsonˉprotocolˉempty();
+    return Databaseˉjsonˉprotocolˉresponse(
+        Error,
+        Jsonˉerror,
+        Offset,
+        Databaseˉjsonˉprotocolˉstatus.Invalid,
+        Empty,
+        0u64,
+        0u32,
+        0u32,
+        Empty
+    );
+}
+
+fn Databaseˉjsonˉprotocolˉrequestˉidˉvalid(Value: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Value);
+    if Total == 0u32 || Total > DATABASE_JSON_PROTOCOL_MAXIMUM_REQUEST_ID_BYTES {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        let Byte: u32 = Databaseˉjsonˉprotocolˉbyte(Value, Index);
+        let Alpha: bool = (Byte >= 65u32 && Byte <= 90u32) ||
+            (Byte >= 97u32 && Byte <= 122u32);
+        let Digit: bool = Byte >= 48u32 && Byte <= 57u32;
+        if !Alpha && !Digit {
+            if Index == 0u32 || (Byte != 46u32 && Byte != 95u32 &&
+                    Byte != 58u32 && Byte != 64u32 && Byte != 45u32) {
+                return false;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉjsonˉprotocolˉdatabaseˉidˉvalid(Value: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Value);
+    if Total == 0u32 || Total > DATABASE_JSON_PROTOCOL_MAXIMUM_DATABASE_ID_BYTES {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        let Byte: u32 = Databaseˉjsonˉprotocolˉbyte(Value, Index);
+        let Lower: bool = Byte >= 97u32 && Byte <= 122u32;
+        let Digit: bool = Byte >= 48u32 && Byte <= 57u32;
+        if !Lower && (Index == 0u32 || (!Digit && Byte != 46u32 &&
+                Byte != 95u32 && Byte != 45u32)) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉjsonˉprotocolˉoperationˉfromˉbytes(
+    Value: bytes
+) -> Databaseˉjsonˉprotocolˉoperation {
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("ping")) {
+        return Databaseˉjsonˉprotocolˉoperation.Ping;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("get")) {
+        return Databaseˉjsonˉprotocolˉoperation.Get;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("put")) {
+        return Databaseˉjsonˉprotocolˉoperation.Put;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("delete")) {
+        return Databaseˉjsonˉprotocolˉoperation.Delete;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("scan")) {
+        return Databaseˉjsonˉprotocolˉoperation.Scan;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("transaction")) {
+        return Databaseˉjsonˉprotocolˉoperation.Transaction;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Value, Textˉtoˉutf8("query")) {
+        return Databaseˉjsonˉprotocolˉoperation.Query;
+    }
+    return Databaseˉjsonˉprotocolˉoperation.Invalid;
+}
+
+fn Databaseˉjsonˉprotocolˉoperationˉbytes(
+    Value: Databaseˉjsonˉprotocolˉoperation
+) -> bytes {
+    if Value == Databaseˉjsonˉprotocolˉoperation.Ping {
+        return Textˉtoˉutf8("ping");
+    }
+    if Value == Databaseˉjsonˉprotocolˉoperation.Get {
+        return Textˉtoˉutf8("get");
+    }
+    if Value == Databaseˉjsonˉprotocolˉoperation.Put {
+        return Textˉtoˉutf8("put");
+    }
+    if Value == Databaseˉjsonˉprotocolˉoperation.Delete {
+        return Textˉtoˉutf8("delete");
+    }
+    if Value == Databaseˉjsonˉprotocolˉoperation.Scan {
+        return Textˉtoˉutf8("scan");
+    }
+    if Value == Databaseˉjsonˉprotocolˉoperation.Transaction {
+        return Textˉtoˉutf8("transaction");
+    }
+    if Value == Databaseˉjsonˉprotocolˉoperation.Query {
+        return Textˉtoˉutf8("query");
+    }
+    return Databaseˉjsonˉprotocolˉempty();
+}
+
+fn Databaseˉjsonˉprotocolˉu64ˉparse(
+    Input: bytes,
+    Span: Databaseˉjsonˉprotocolˉspan
+) -> Databaseˉjsonˉprotocolˉu64ˉresult {
+    if Span.Length == 0u32 {
+        return Databaseˉjsonˉprotocolˉu64ˉresult(false, 0u64);
+    }
+    if Span.Length > 1u32 && Databaseˉjsonˉprotocolˉbyte(Input, Span.Start) == 48u32 {
+        return Databaseˉjsonˉprotocolˉu64ˉresult(false, 0u64);
+    }
+    var Value: u64 = 0u64;
+    var Index: u32 = 0u32;
+    while Index < Span.Length {
+        let Byte: u32 = Databaseˉjsonˉprotocolˉbyte(Input, Span.Start + Index);
+        if Byte < 48u32 || Byte > 57u32 {
+            return Databaseˉjsonˉprotocolˉu64ˉresult(false, 0u64);
+        }
+        let Digit: u64 = U64ˉfromˉu32(Byte - 48u32);
+        if Value > 1844674407370955161u64 {
+            return Databaseˉjsonˉprotocolˉu64ˉresult(false, 0u64);
+        }
+        if Value == 1844674407370955161u64 && Digit > 5u64 {
+            return Databaseˉjsonˉprotocolˉu64ˉresult(false, 0u64);
+        }
+        Value = Value * 10u64 + Digit;
+        Index = Index + 1u32;
+    }
+    return Databaseˉjsonˉprotocolˉu64ˉresult(true, Value);
+}
+
+fn Databaseˉjsonˉprotocolˉu64ˉbytes(Value: u64) -> bytes {
+    if Value == 0u64 { return Textˉtoˉutf8("0"); }
+    var Remaining: u64 = Value;
+    var Reverse: bytes = Databaseˉjsonˉprotocolˉempty();
+    while Remaining != 0u64 {
+        let Digit: u32 = Databaseˉjsonˉprotocolˉu32ˉfromˉu64(
+            Remaining % 10u64
+        );
+        Reverse = Bytesˉconcat(
+            Reverse,
+            Databaseˉjsonˉprotocolˉbyteˉfromˉu32(48u32 + Digit)
+        );
+        Remaining = Remaining / 10u64;
+    }
+    var Result: bytes = Databaseˉjsonˉprotocolˉempty();
+    var Index: u32 = Bytesˉlength(Reverse);
+    while Index != 0u32 {
+        Index = Index - 1u32;
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Bytesˉreadˉu8(Reverse, Index)));
+    }
+    return Result;
+}
+
+fn Databaseˉjsonˉprotocolˉbodyˉobject(
+    Input: bytes,
+    Span: Databaseˉjsonˉprotocolˉspan
+) -> bool {
+    let Start: u32 = Databaseˉjsonˉprotocolˉskipˉspace(Input, Span.Start);
+    return Start < Span.Start + Span.Length &&
+        Databaseˉjsonˉprotocolˉbyte(Input, Start) == 123u32;
+}
+
+export fn Databaseˉjsonˉprotocolˉrequestˉdecode(
+    Input: bytes
+) -> Databaseˉjsonˉprotocolˉrequest {
+    let Admitted: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Input);
+    if Admitted.Error != Json.Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Jsonˉinvalid,
+            Admitted.Error,
+            Admitted.Failureˉoffset
+        );
+    }
+    if Admitted.Kind != Json.Databaseˉjsonˉkind.Object {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Envelopeˉnotˉobject,
+            Json.Databaseˉjsonˉerror.Valid,
+            0u32
+        );
+    }
+    let Bytes: bytes = Admitted.Bytes;
+    let Total: u32 = Bytesˉlength(Bytes);
+    var Cursor: u32 = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, 0u32) + 1u32;
+    var Contract: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Requestˉidˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Databaseˉidˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Operationˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Deadlineˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Minimumˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Bodyˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Members: u32 = 0u32;
+    while Cursor < Total {
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Cursor);
+        if Databaseˉjsonˉprotocolˉbyte(Bytes, Cursor) == 125u32 { break; }
+        let Nameˉstart: u32 = Cursor;
+        let Nameˉend: u32 = Databaseˉjsonˉprotocolˉstringˉend(Bytes, Cursor);
+        let Name: bytes = Databaseˉjsonˉprotocolˉdecodedˉstring(
+            Bytes,
+            Databaseˉjsonˉprotocolˉspan(
+                Nameˉstart,
+                Nameˉend - Nameˉstart
+            )
+        );
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Nameˉend) + 1u32;
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Cursor);
+        let Valueˉstart: u32 = Cursor;
+        let Valueˉend: u32 = Databaseˉjsonˉprotocolˉvalueˉend(Bytes, Cursor);
+        let Span: Databaseˉjsonˉprotocolˉspan =
+            Databaseˉjsonˉprotocolˉspan(Valueˉstart, Valueˉend - Valueˉstart);
+        if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("contractVersion")) {
+            Contract = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("requestId")) {
+            Requestˉidˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("databaseId")) {
+            Databaseˉidˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("operation")) {
+            Operationˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("deadlineMilliseconds")) {
+            Deadlineˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("minimumCommittedSequence")) {
+            Minimumˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("body")) {
+            Bodyˉspan = Span;
+        } else {
+            return Databaseˉjsonˉprotocolˉrequestˉfailure(
+                Databaseˉjsonˉprotocolˉerror.Unknownˉmember,
+                Json.Databaseˉjsonˉerror.Valid,
+                Nameˉstart
+            );
+        }
+        Members = Members + 1u32;
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Valueˉend);
+        if Databaseˉjsonˉprotocolˉbyte(Bytes, Cursor) == 44u32 {
+            Cursor = Cursor + 1u32;
+        } else {
+            break;
+        }
+    }
+    if Members < 6u32 || Contract.Length == 0u32 || Requestˉidˉspan.Length == 0u32 ||
+        Databaseˉidˉspan.Length == 0u32 || Operationˉspan.Length == 0u32 ||
+        Deadlineˉspan.Length == 0u32 || Bodyˉspan.Length == 0u32 {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Missingˉmember,
+            Json.Databaseˉjsonˉerror.Valid,
+            Cursor
+        );
+    }
+    if Contract.Length != 1u32 || Databaseˉjsonˉprotocolˉbyte(Bytes, Contract.Start) != 49u32 {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉcontract,
+            Json.Databaseˉjsonˉerror.Valid,
+            Contract.Start
+        );
+    }
+    let Requestˉid: bytes = Databaseˉjsonˉprotocolˉdecodedˉstring(Bytes, Requestˉidˉspan);
+    if !Databaseˉjsonˉprotocolˉrequestˉidˉvalid(Requestˉid) {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉrequestˉid,
+            Json.Databaseˉjsonˉerror.Valid,
+            Requestˉidˉspan.Start
+        );
+    }
+    let Databaseˉid: bytes = Databaseˉjsonˉprotocolˉdecodedˉstring(Bytes, Databaseˉidˉspan);
+    if !Databaseˉjsonˉprotocolˉdatabaseˉidˉvalid(Databaseˉid) {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉdatabaseˉid,
+            Json.Databaseˉjsonˉerror.Valid,
+            Databaseˉidˉspan.Start
+        );
+    }
+    let Operation: Databaseˉjsonˉprotocolˉoperation =
+        Databaseˉjsonˉprotocolˉoperationˉfromˉbytes(
+            Databaseˉjsonˉprotocolˉdecodedˉstring(Bytes, Operationˉspan)
+        );
+    if Operation == Databaseˉjsonˉprotocolˉoperation.Invalid {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉoperation,
+            Json.Databaseˉjsonˉerror.Valid,
+            Operationˉspan.Start
+        );
+    }
+    let Deadlineˉparsed: Databaseˉjsonˉprotocolˉu64ˉresult =
+        Databaseˉjsonˉprotocolˉu64ˉparse(Bytes, Deadlineˉspan);
+    if !Deadlineˉparsed.Valid {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉdeadline,
+            Json.Databaseˉjsonˉerror.Valid,
+            Deadlineˉspan.Start
+        );
+    }
+    if Deadlineˉparsed.Value >
+        U64ˉfromˉu32(DATABASE_JSON_PROTOCOL_MAXIMUM_DEADLINE_MILLISECONDS) {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉdeadline,
+            Json.Databaseˉjsonˉerror.Valid,
+            Deadlineˉspan.Start
+        );
+    }
+    var Minimumˉvalue: u64 = 0u64;
+    if Minimumˉspan.Length != 0u32 {
+        let Minimumˉparsed: Databaseˉjsonˉprotocolˉu64ˉresult =
+            Databaseˉjsonˉprotocolˉu64ˉparse(Bytes, Minimumˉspan);
+        if !Minimumˉparsed.Valid {
+            return Databaseˉjsonˉprotocolˉrequestˉfailure(
+                Databaseˉjsonˉprotocolˉerror.Invalidˉsequence,
+                Json.Databaseˉjsonˉerror.Valid,
+                Minimumˉspan.Start
+            );
+        }
+        Minimumˉvalue = Minimumˉparsed.Value;
+    }
+    if !Databaseˉjsonˉprotocolˉbodyˉobject(Bytes, Bodyˉspan) {
+        return Databaseˉjsonˉprotocolˉrequestˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Bodyˉnotˉobject,
+            Json.Databaseˉjsonˉerror.Valid,
+            Bodyˉspan.Start
+        );
+    }
+    return Databaseˉjsonˉprotocolˉrequest(
+        Databaseˉjsonˉprotocolˉerror.Valid,
+        Json.Databaseˉjsonˉerror.Valid,
+        0u32,
+        Operation,
+        Requestˉid,
+        Databaseˉid,
+        Databaseˉjsonˉprotocolˉu32ˉfromˉu64(Deadlineˉparsed.Value),
+        Minimumˉspan.Length != 0u32,
+        Minimumˉvalue,
+        Bodyˉspan.Start,
+        Bodyˉspan.Length,
+        Bytes
+    );
+}
+
+export fn Databaseˉjsonˉprotocolˉresponseˉdecode(
+    Input: bytes
+) -> Databaseˉjsonˉprotocolˉresponse {
+    let Admitted: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Input);
+    if Admitted.Error != Json.Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Jsonˉinvalid,
+            Admitted.Error,
+            Admitted.Failureˉoffset
+        );
+    }
+    if Admitted.Kind != Json.Databaseˉjsonˉkind.Object {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Envelopeˉnotˉobject,
+            Json.Databaseˉjsonˉerror.Valid,
+            0u32
+        );
+    }
+    let Bytes: bytes = Admitted.Bytes;
+    let Total: u32 = Bytesˉlength(Bytes);
+    var Cursor: u32 = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, 0u32) + 1u32;
+    var Contract: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Requestˉidˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Statusˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Sequenceˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Bodyˉspan: Databaseˉjsonˉprotocolˉspan = Databaseˉjsonˉprotocolˉspan(0u32, 0u32);
+    var Members: u32 = 0u32;
+    while Cursor < Total {
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Cursor);
+        if Databaseˉjsonˉprotocolˉbyte(Bytes, Cursor) == 125u32 { break; }
+        let Nameˉstart: u32 = Cursor;
+        let Nameˉend: u32 = Databaseˉjsonˉprotocolˉstringˉend(Bytes, Cursor);
+        let Name: bytes = Databaseˉjsonˉprotocolˉdecodedˉstring(
+            Bytes,
+            Databaseˉjsonˉprotocolˉspan(
+                Nameˉstart,
+                Nameˉend - Nameˉstart
+            )
+        );
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Nameˉend) + 1u32;
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Cursor);
+        let Valueˉstart: u32 = Cursor;
+        let Valueˉend: u32 = Databaseˉjsonˉprotocolˉvalueˉend(Bytes, Cursor);
+        let Span: Databaseˉjsonˉprotocolˉspan =
+            Databaseˉjsonˉprotocolˉspan(Valueˉstart, Valueˉend - Valueˉstart);
+        if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("contractVersion")) {
+            Contract = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("requestId")) {
+            Requestˉidˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("status")) {
+            Statusˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("observedCommittedSequence")) {
+            Sequenceˉspan = Span;
+        } else if Databaseˉjsonˉprotocolˉsame(Name, Textˉtoˉutf8("body")) {
+            Bodyˉspan = Span;
+        } else {
+            return Databaseˉjsonˉprotocolˉresponseˉfailure(
+                Databaseˉjsonˉprotocolˉerror.Unknownˉmember,
+                Json.Databaseˉjsonˉerror.Valid,
+                Nameˉstart
+            );
+        }
+        Members = Members + 1u32;
+        Cursor = Databaseˉjsonˉprotocolˉskipˉspace(Bytes, Valueˉend);
+        if Databaseˉjsonˉprotocolˉbyte(Bytes, Cursor) == 44u32 {
+            Cursor = Cursor + 1u32;
+        } else {
+            break;
+        }
+    }
+    if Members != 5u32 || Contract.Length == 0u32 || Requestˉidˉspan.Length == 0u32 ||
+        Statusˉspan.Length == 0u32 || Sequenceˉspan.Length == 0u32 || Bodyˉspan.Length == 0u32 {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Missingˉmember,
+            Json.Databaseˉjsonˉerror.Valid,
+            Cursor
+        );
+    }
+    if Contract.Length != 1u32 || Databaseˉjsonˉprotocolˉbyte(Bytes, Contract.Start) != 49u32 {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉcontract,
+            Json.Databaseˉjsonˉerror.Valid,
+            Contract.Start
+        );
+    }
+    let Requestˉid: bytes = Databaseˉjsonˉprotocolˉdecodedˉstring(Bytes, Requestˉidˉspan);
+    if !Databaseˉjsonˉprotocolˉrequestˉidˉvalid(Requestˉid) {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉrequestˉid,
+            Json.Databaseˉjsonˉerror.Valid,
+            Requestˉidˉspan.Start
+        );
+    }
+    let Statusˉbytes: bytes = Databaseˉjsonˉprotocolˉdecodedˉstring(Bytes, Statusˉspan);
+    var Status: Databaseˉjsonˉprotocolˉstatus = Databaseˉjsonˉprotocolˉstatus.Invalid;
+    if Databaseˉjsonˉprotocolˉsame(Statusˉbytes, Textˉtoˉutf8("ok")) {
+        Status = Databaseˉjsonˉprotocolˉstatus.Ok;
+    }
+    if Databaseˉjsonˉprotocolˉsame(Statusˉbytes, Textˉtoˉutf8("error")) {
+        Status = Databaseˉjsonˉprotocolˉstatus.Error;
+    }
+    if Status == Databaseˉjsonˉprotocolˉstatus.Invalid {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉstatus,
+            Json.Databaseˉjsonˉerror.Valid,
+            Statusˉspan.Start
+        );
+    }
+    let Sequenceˉparsed: Databaseˉjsonˉprotocolˉu64ˉresult =
+        Databaseˉjsonˉprotocolˉu64ˉparse(Bytes, Sequenceˉspan);
+    if !Sequenceˉparsed.Valid {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉsequence,
+            Json.Databaseˉjsonˉerror.Valid,
+            Sequenceˉspan.Start
+        );
+    }
+    if !Databaseˉjsonˉprotocolˉbodyˉobject(Bytes, Bodyˉspan) {
+        return Databaseˉjsonˉprotocolˉresponseˉfailure(
+            Databaseˉjsonˉprotocolˉerror.Bodyˉnotˉobject,
+            Json.Databaseˉjsonˉerror.Valid,
+            Bodyˉspan.Start
+        );
+    }
+    return Databaseˉjsonˉprotocolˉresponse(
+        Databaseˉjsonˉprotocolˉerror.Valid,
+        Json.Databaseˉjsonˉerror.Valid,
+        0u32,
+        Status,
+        Requestˉid,
+        Sequenceˉparsed.Value,
+        Bodyˉspan.Start,
+        Bodyˉspan.Length,
+        Bytes
+    );
+}
+
+export fn Databaseˉjsonˉprotocolˉrequestˉencode(
+    Requestˉid: bytes,
+    Databaseˉid: bytes,
+    Operation: Databaseˉjsonˉprotocolˉoperation,
+    Deadlineˉmilliseconds: u32,
+    Hasˉminimumˉcommittedˉsequence: bool,
+    Minimumˉcommittedˉsequence: u64,
+    Body: bytes
+) -> Databaseˉjsonˉprotocolˉencoding {
+    if !Databaseˉjsonˉprotocolˉrequestˉidˉvalid(Requestˉid) {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉrequestˉid,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    if !Databaseˉjsonˉprotocolˉdatabaseˉidˉvalid(Databaseˉid) {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉdatabaseˉid,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    let Operationˉbytes: bytes = Databaseˉjsonˉprotocolˉoperationˉbytes(Operation);
+    if Bytesˉlength(Operationˉbytes) == 0u32 {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉoperation,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    if Deadlineˉmilliseconds > DATABASE_JSON_PROTOCOL_MAXIMUM_DEADLINE_MILLISECONDS {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉdeadline,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    let Bodyˉadmitted: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Body);
+    if Bodyˉadmitted.Error != Json.Databaseˉjsonˉerror.Valid ||
+        Bodyˉadmitted.Kind != Json.Databaseˉjsonˉkind.Object {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Bodyˉnotˉobject,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    var Result: bytes = Textˉtoˉutf8("{\"contractVersion\":1,\"requestId\":\"");
+    Result = Bytesˉconcat(Result, Requestˉid);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("\",\"databaseId\":\""));
+    Result = Bytesˉconcat(Result, Databaseˉid);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("\",\"operation\":\""));
+    Result = Bytesˉconcat(Result, Operationˉbytes);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("\",\"deadlineMilliseconds\":"));
+    Result = Bytesˉconcat(
+        Result,
+        Databaseˉjsonˉprotocolˉu64ˉbytes(U64ˉfromˉu32(Deadlineˉmilliseconds))
+    );
+    if Hasˉminimumˉcommittedˉsequence {
+        Result = Bytesˉconcat(Result, Textˉtoˉutf8(",\"minimumCommittedSequence\":"));
+        Result = Bytesˉconcat(
+            Result,
+            Databaseˉjsonˉprotocolˉu64ˉbytes(Minimumˉcommittedˉsequence)
+        );
+    }
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8(",\"body\":"));
+    Result = Bytesˉconcat(Result, Bodyˉadmitted.Bytes);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("}"));
+    if Bytesˉlength(Result) > DATABASE_JSON_PROTOCOL_MAXIMUM_BYTES {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Tooˉlarge,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    return Databaseˉjsonˉprotocolˉencoding(
+        Databaseˉjsonˉprotocolˉerror.Valid,
+        Result
+    );
+}
+
+export fn Databaseˉjsonˉprotocolˉresponseˉencode(
+    Requestˉid: bytes,
+    Status: Databaseˉjsonˉprotocolˉstatus,
+    Observedˉcommittedˉsequence: u64,
+    Body: bytes
+) -> Databaseˉjsonˉprotocolˉencoding {
+    if !Databaseˉjsonˉprotocolˉrequestˉidˉvalid(Requestˉid) {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉrequestˉid,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    var Statusˉbytes: bytes = Databaseˉjsonˉprotocolˉempty();
+    if Status == Databaseˉjsonˉprotocolˉstatus.Ok {
+        Statusˉbytes = Textˉtoˉutf8("ok");
+    }
+    if Status == Databaseˉjsonˉprotocolˉstatus.Error {
+        Statusˉbytes = Textˉtoˉutf8("error");
+    }
+    if Bytesˉlength(Statusˉbytes) == 0u32 {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Invalidˉstatus,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    let Bodyˉadmitted: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Body);
+    if Bodyˉadmitted.Error != Json.Databaseˉjsonˉerror.Valid ||
+        Bodyˉadmitted.Kind != Json.Databaseˉjsonˉkind.Object {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Bodyˉnotˉobject,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    var Result: bytes = Textˉtoˉutf8("{\"contractVersion\":1,\"requestId\":\"");
+    Result = Bytesˉconcat(Result, Requestˉid);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("\",\"status\":\""));
+    Result = Bytesˉconcat(Result, Statusˉbytes);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("\",\"observedCommittedSequence\":"));
+    Result = Bytesˉconcat(
+        Result,
+        Databaseˉjsonˉprotocolˉu64ˉbytes(Observedˉcommittedˉsequence)
+    );
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8(",\"body\":"));
+    Result = Bytesˉconcat(Result, Bodyˉadmitted.Bytes);
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8("}"));
+    if Bytesˉlength(Result) > DATABASE_JSON_PROTOCOL_MAXIMUM_BYTES {
+        return Databaseˉjsonˉprotocolˉencoding(
+            Databaseˉjsonˉprotocolˉerror.Tooˉlarge,
+            Databaseˉjsonˉprotocolˉempty()
+        );
+    }
+    return Databaseˉjsonˉprotocolˉencoding(
+        Databaseˉjsonˉprotocolˉerror.Valid,
+        Result
+    );
+}

@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Json-Protocol-Self-Test.wv"
+source "Libraries/Database/Json-Protocol.wv"
+source "Libraries/Database/Json-Value.wv"
+emit wvb

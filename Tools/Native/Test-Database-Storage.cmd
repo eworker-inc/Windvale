@@ -24,14 +24,15 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=20"
+set "SelectedCases=21"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
-    tree-node logical-record typed-row json-value local-service collection-catalog bootstrap single-leaf
+    tree-node logical-record typed-row json-value json-protocol local-service collection-catalog bootstrap single-leaf
     branch-split root-split depth-two depth-three depth-three-upsert
     tree-path-upsert host-storage
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
 if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="json" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-root-writer" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-local-service" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="engine" set "SelectedCases=3"
@@ -123,7 +124,9 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TypedRow typed-row "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Typed-Row.wvproj"
     if errorlevel 1 goto :cleanup
-    call :verify_development_target JsonValue json-value "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Value.wvproj"
+    call :verify_development_target JsonValue json-value "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Value.wvproj" json
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target JsonProtocol json-protocol "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Protocol.wvproj" json
     if errorlevel 1 goto :cleanup
     call :verify_development_target LocalService local-service "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Local-Database-Service.wvproj"
     if errorlevel 1 goto :cleanup
@@ -184,6 +187,9 @@ call :verify_target TypedRow ^
 if errorlevel 1 goto :cleanup
 call :verify_target JsonValue ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Value.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target JsonProtocol ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Protocol.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target LocalService ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Local-Database-Service.wvproj"
@@ -272,11 +278,11 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=29 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=30 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
-if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" exit /b 0
+if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" if /I not "%DevelopmentTarget%"=="%~4" exit /b 0
 set /a ProgressCurrent+=1
 call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
 call :verify_target "%~1" "%~3"
