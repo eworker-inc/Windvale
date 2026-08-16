@@ -582,6 +582,7 @@ foreach ($ProjectPath in $DatabaseDevelopmentProjects) {
     }
 }
 foreach ($RuntimePath in @(
+    'Runtime/Native/X64-Segmented-Hosted-Main-Trampoline.wva',
     'Runtime/Native/X64-Random-Access-Storage-Host.wva',
     'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
     'Runtime/Native/Linux-X64-Random-Access-Storage.wva'
@@ -898,6 +899,12 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction'
+        )
+    } elseif ($Stem -eq 'Compose-Segmented-Hosted-Overlay') {
+        Add-Suite @(
+            'database-storage',
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
         )
     } elseif ($Stem -in @(
         'Construct-Segmented-Compiler-Toolset',
@@ -1907,6 +1914,7 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-Execution-Context-9-Core.wvproj',
         'Runtime/Windvale/Native-Execution-Context-9-Bridge.wv',
         'Runtime/Windvale/Native-Execution-Context-9.wvproj',
+        'Runtime/Native/X64-Segmented-Hosted-Main-Trampoline.wva',
         'Runtime/Native/X64-Random-Access-Storage-Describe-Probe.wva',
         'Runtime/Native/X64-Random-Access-Storage-Host.wva',
         'Runtime/Native/Windows-X64-Random-Access-Storage.wva',
@@ -2680,6 +2688,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'compiler-reconstruction'
         } elseif ($Path -in @(
             'Specifications/Windvale-Linking.md',
+            'Specifications/Windvale-Segmented-Hosted-Overlay.md',
             'Specifications/Windvale-Native-Hosted-Container-Packaging.md'
         )) {
             Add-Suite @(
@@ -2694,6 +2703,9 @@ foreach ($Path in $Paths) {
                 )
             } else {
                 Add-Linker-Suites
+                if ($Path -eq 'Specifications/Windvale-Segmented-Hosted-Overlay.md') {
+                    Add-Suite 'database-storage'
+                }
             }
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-To-Wvo.md') {
             Add-Suite 'wvb-to-wvo-reconstruction'

@@ -469,14 +469,18 @@ $NativeCases = @(
         Paths = @(
             'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv',
             'Linker/Windvale/Compiler-Image-Transport-Resources.wv',
-            'Specifications/Windvale-Linking.md'
+            'Specifications/Windvale-Linking.md',
+            'Specifications/Windvale-Segmented-Hosted-Overlay.md',
+            'Tools/Native/Compose-Segmented-Hosted-Overlay.ps1',
+            'Runtime/Native/X64-Segmented-Hosted-Main-Trampoline.wva'
         )
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction',
             'linker-rejections',
             'linker-hostile',
-            'linker-map-limit'
+            'linker-map-limit',
+            'database-storage'
         )
         Gaps = @()
         VerifyPlan = $false

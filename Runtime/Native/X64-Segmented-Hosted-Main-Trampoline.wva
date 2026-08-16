@@ -1,0 +1,14 @@
+windvale-assembly 1
+
+# A segmented hosted overlay links native capability providers independently
+# from the already verified large Windvale application image. The overlay
+# composer replaces only this relative-jump placeholder so a provider call to
+# Main transfers to the application entry while preserving its return address.
+symbol export function Main in .text
+
+section code .text align 16
+define Main
+label Main_trampoline
+jump_label Main_trampoline
+end define
+end section

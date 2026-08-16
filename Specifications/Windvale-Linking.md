@@ -242,8 +242,8 @@ file output. The existing hosted-container layout additionally carries its
 canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
-The exact 75,553-byte tool WVB has SHA-256
-`5795ccd8f12266f0228b7191680dc6881f5a09ddb81973ee6225d24fa38a60bb`.
+The exact 75,666-byte tool WVB has SHA-256
+`1a1614c4010baf47f5f1766de5f71806356ec14fa8f5bc67a62b5b2342269edd`.
 Its canonical repository source closure is
 `Projects/Linker/Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -262,10 +262,10 @@ path recorded by Decision 0496. That path consumes the retained candidate
 toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
-The Windows candidate is 852,480 bytes at SHA-256
-`bbef433e11eb63d265cee5a7439d5e500163a27723d72ac7a805fb7eb0181844`;
-the Linux candidate is 851,968 bytes at SHA-256
-`0762483a8c4d68bdb246100f757890a1ee22b42e1b2f4b67cd08d1d2d102aa0b`.
+The Windows candidate is 854,016 bytes at SHA-256
+`e467d211d141ab75b838ece9b3c4625b6b5b2768b63dcacadd040368844e18db`;
+the Linux candidate is 856,064 bytes at SHA-256
+`7ef825a8054cb8f63c10c957b234f9c371fe1507d7ee20f3e6dbabf73e550cb2`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process
@@ -334,6 +334,21 @@ Image-input mode reuses the exact fixed-service, evidence, metadata, runtime,
 layout, bundle, source-set, segment, manifest, and durable publication chain of
 ordinary hosted packaging. It does not lower or link again, and it has no
 fallback to Stage 0 or the whole-value lowerer.
+
+### Segmented hosted storage overlay
+
+Large database verification applications use the narrow composition contract
+in `Specifications/Windvale-Segmented-Hosted-Overlay.md`. The already verified
+compiler image remains unchanged. The ordinary Wv linker validates and lays
+out the common provider, selected host provider, and one exact `Main`
+trampoline after that image; composition patches only the trampoline's signed
+relative jump back to the compiler image entry. The provider must fit in the
+unused tail of the last canonical fragment, so the existing one-through-eight
+fragment and 32 MiB limits remain unchanged.
+
+This boundary supplies hosted storage code, not storage authority. The hosted
+container still binds the provider table and its one rights-limited storage
+object under the existing profile contract.
 
 ## Deliberate omissions
 

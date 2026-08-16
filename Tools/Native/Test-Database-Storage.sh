@@ -872,6 +872,10 @@ verify_host_root_split_writer() {
 
 build_host_local_component() {
     local project_path=$1 component=$2 linux_application=$3
+    if [[ $component == LogicalTreePut ]]; then
+        build_host_segmented_component "$project_path" "$component" "$linux_application"
+        return $?
+    fi
     local first_wvb="$temporary_directory/HostLocal-$component-First.wvb"
     local second_wvb="$temporary_directory/HostLocal-$component-Second.wvb"
     local first_wvo="$temporary_directory/HostLocal-$component-First.wvo"
@@ -947,6 +951,73 @@ build_host_local_component() {
         cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
         "$script_directory/Package-Hosted-Wvb.sh" image 6 \
             "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
+            "$windows_application" windows >/dev/null || return $?
+    fi
+}
+
+build_host_segmented_component() {
+    local project_path=$1 component=$2 linux_application=$3
+    local first_wvb="$temporary_directory/HostLocal-$component-First.wvb"
+    local object_prefix="$temporary_directory/HostLocal-$component-Object"
+    local object_manifest="$temporary_directory/HostLocal-$component-Object.wvop"
+    local staged_prefix="$temporary_directory/HostLocal-$component-Staged"
+    local staged_manifest="$temporary_directory/HostLocal-$component-Staged.wvli"
+    local canonical_prefix="$temporary_directory/HostLocal-$component-Canonical"
+    local canonical_manifest="$temporary_directory/HostLocal-$component-Canonical.wvli"
+    local common="$temporary_directory/HostStorage-Common-First.wvo"
+    local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
+    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
+    local linux_prefix="$temporary_directory/HostLocal-$component-Linux-Image"
+    local windows_prefix="$temporary_directory/HostLocal-$component-Windows-Image"
+    local windows_application="$temporary_directory/HostLocal-$component.exe"
+    local overlay_report="$temporary_directory/HostLocal-$component-Linux-Overlay.txt"
+
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" \
+        "$first_wvb" >/dev/null || return $?
+    "$script_directory/Stage-Compiler-Wvb.sh" \
+        "$first_wvb" "$object_prefix" "$object_manifest" >/dev/null || return $?
+    "$script_directory/Link-Staged-Compiler-Wvo.sh" \
+        "$object_prefix" "$object_manifest" "$staged_prefix" "$staged_manifest" \
+        >/dev/null || return $?
+    "$script_directory/Transport-Compiler-Image.sh" \
+        "$staged_prefix" "$staged_manifest" "$canonical_prefix" "$canonical_manifest" \
+        >/dev/null || return $?
+    [[ -f $common && -f $linux_platform ]] || return 1
+    "$script_directory/Compose-Segmented-Hosted-Overlay.sh" \
+        "$canonical_prefix" "$canonical_manifest" "$common" "$linux_platform" \
+        "$linux_prefix" >"$overlay_report" || return $?
+    local fragment_count linux_entry
+    fragment_count=$(sed -n 's/^segmented hosted overlay status=Valid .* fragments=\([1-8]\) .*$/\1/p' "$overlay_report")
+    linux_entry=$(sed -n 's/^segmented hosted overlay status=Valid .* provider-entry=\([0-9][0-9]*\) .*$/\1/p' "$overlay_report")
+    case "$fragment_count" in [1-8]) ;; *) return 1 ;; esac
+    case "$linux_entry" in ''|*[!0-9]*) return 1 ;; esac
+    host_local_component_project_checkpoint=Segmented
+    host_local_component_application_checkpoint=Rebuilt
+
+    if ((development == 1)); then
+        local application_report="$temporary_directory/HostLocal-$component-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$linux_prefix" "$fragment_count" "$linux_entry" \
+            "$linux_application" linux >"$application_report" || return $?
+        host_local_component_application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$application_report")
+        [[ $host_local_component_application_checkpoint == Created ||
+            $host_local_component_application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$linux_prefix" "$fragment_count" "$linux_entry" \
+            "$linux_application" linux >/dev/null || return $?
+        [[ -f $windows_platform ]] || return 1
+        local windows_report="$temporary_directory/HostLocal-$component-Windows-Overlay.txt"
+        "$script_directory/Compose-Segmented-Hosted-Overlay.sh" \
+            "$canonical_prefix" "$canonical_manifest" "$common" "$windows_platform" \
+            "$windows_prefix" >"$windows_report" || return $?
+        local windows_entry
+        windows_entry=$(sed -n 's/^segmented hosted overlay status=Valid .* provider-entry=\([0-9][0-9]*\) .*$/\1/p' "$windows_report")
+        case "$windows_entry" in ''|*[!0-9]*) return 1 ;; esac
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$windows_prefix" "$fragment_count" "$windows_entry" \
             "$windows_application" windows >/dev/null || return $?
     fi
 }
@@ -1409,21 +1480,7 @@ verify_host_engine_recovery() {
 
 verify_host_tree_writer() {
     local project_path=$1
-    local first_wvb="$temporary_directory/HostTreeWriter-First.wvb"
-    local second_wvb="$temporary_directory/HostTreeWriter-Second.wvb"
-    local first_wvo="$temporary_directory/HostTreeWriter-First.wvo"
-    local second_wvo="$temporary_directory/HostTreeWriter-Second.wvo"
-    local common="$temporary_directory/HostStorage-Common-First.wvo"
-    local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
-    local linux_image="$temporary_directory/HostTreeWriter-Linux.bin"
-    local linux_image_prefix="$temporary_directory/HostTreeWriter-Linux-Image"
-    local linux_map="$temporary_directory/HostTreeWriter-Linux.map"
     local linux_application="$temporary_directory/HostTreeWriter.elf"
-    local windows_image="$temporary_directory/HostTreeWriter-Windows.bin"
-    local windows_image_prefix="$temporary_directory/HostTreeWriter-Windows-Image"
-    local windows_map="$temporary_directory/HostTreeWriter-Windows.map"
-    local windows_application="$temporary_directory/HostTreeWriter.exe"
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
     local run_directory="$temporary_directory/HostTreeWriter-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
@@ -1431,52 +1488,9 @@ verify_host_tree_writer() {
     local host_tree_writer_checkpoint=Rebuilt
     local host_tree_writer_application_checkpoint=Rebuilt
 
-    if ((development == 1)); then
-        local cache_report="$temporary_directory/HostTreeWriter-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
-            > "$cache_report" || return $?
-        host_tree_writer_checkpoint=$(sed -n \
-            's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
-            "$cache_report")
-        [[ $host_tree_writer_checkpoint == Created ||
-            $host_tree_writer_checkpoint == Hit ]] || return 1
-    else
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
-    fi
-    [[ -f $common && -f $linux_platform ]] || return 1
-
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
-        >"$linux_map" || return $?
-    local linux_entry
-    linux_entry=$(sed -n \
-        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-        "$linux_map")
-    case "$linux_entry" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
-    cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
-    if ((development == 1)); then
-        local application_cache_report="$temporary_directory/HostTreeWriter-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
-            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
-            "$linux_application" linux > "$application_cache_report" || return $?
-        host_tree_writer_application_checkpoint=$(sed -n \
-            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
-            "$application_cache_report")
-        [[ $host_tree_writer_application_checkpoint == Created ||
-            $host_tree_writer_application_checkpoint == Hit ]] || return 1
-    else
-        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
-            "$linux_application" linux >/dev/null || return $?
-    fi
+    build_host_segmented_component "$project_path" HostTreeWriter "$linux_application" || return $?
+    host_tree_writer_checkpoint=$host_local_component_project_checkpoint
+    host_tree_writer_application_checkpoint=$host_local_component_application_checkpoint
 
     [[ -f $depth_two_committed_file ]] || return 1
     mkdir -- "$run_directory" || return $?
@@ -1503,21 +1517,6 @@ verify_host_tree_writer() {
         application_checkpoint_host_tree_writer=$host_tree_writer_application_checkpoint
         return 0
     fi
-    [[ -f $windows_platform ]] || return 1
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$windows_image" "$first_wvo" "$common" "$windows_platform" \
-        >"$windows_map" || return $?
-    local windows_entry
-    windows_entry=$(sed -n \
-        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-        "$windows_map")
-    case "$windows_entry" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
-    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
-        "$windows_application" windows >/dev/null || return $?
 }
 
 verify_host_logical_tree_writer() {

@@ -4,7 +4,7 @@
   "provenanceDecision": "0423",
   "qualification": "pending",
   "moduleConstruction": "native-qualified-front-door",
-  "constructionDecision": "0583",
+  "constructionDecision": "0723",
   "applicationConstruction": "native-segmented-self-reconstruction",
   "artifacts": [
     {
@@ -35,24 +35,24 @@
       "name": "compiler-image-staging-wvb",
       "path": "Compiler-Image-Staging.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 75553,
-      "sha256": "5795ccd8f12266f0228b7191680dc6881f5a09ddb81973ee6225d24fa38a60bb",
+      "bytes": 75666,
+      "sha256": "1a1614c4010baf47f5f1766de5f71806356ec14fa8f5bc67a62b5b2342269edd",
       "sourceProject": "Windvale-Compiler-Image-Staging.wvproj"
     },
     {
       "name": "windows-x64-compiler-image-staging",
       "path": "windows-x64-wvlinkstage.exe",
       "target": "windows-x64-compiler-image-staging-v1",
-      "bytes": 852480,
-      "sha256": "bbef433e11eb63d265cee5a7439d5e500163a27723d72ac7a805fb7eb0181844",
+      "bytes": 854016,
+      "sha256": "e467d211d141ab75b838ece9b3c4625b6b5b2768b63dcacadd040368844e18db",
       "sourceWvb": "Compiler-Image-Staging.wvb"
     },
     {
       "name": "linux-x64-compiler-image-staging",
       "path": "linux-x64-wvlinkstage.elf",
       "target": "linux-x64-compiler-image-staging-v1",
-      "bytes": 851968,
-      "sha256": "0762483a8c4d68bdb246100f757890a1ee22b42e1b2f4b67cd08d1d2d102aa0b",
+      "bytes": 856064,
+      "sha256": "7ef825a8054cb8f63c10c957b234f9c371fe1507d7ee20f3e6dbabf73e550cb2",
       "sourceWvb": "Compiler-Image-Staging.wvb"
     },
     {

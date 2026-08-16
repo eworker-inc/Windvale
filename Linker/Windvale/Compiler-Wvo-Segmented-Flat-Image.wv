@@ -223,7 +223,8 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
             Readˉonlyˉstart,
             Envelopeˉsummary.Symbolˉposition
         );
-        if Readˉonlyˉchunks == 0u32 {
+        if Envelopeˉsummary.Readˉonlyˉbytes > 0u32 &&
+            Readˉonlyˉchunks == 0u32 {
             return Invalidˉplan(
                 Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange
             );

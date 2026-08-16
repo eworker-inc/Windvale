@@ -1093,12 +1093,13 @@ popd
 if not "%ApplicationResult%"=="0" exit /b 1
 fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
 
-if "%Development%"=="1" (
-    call set "CombinedProject=%%ProjectCheckpointHostRootWriter%%,Fill:%%FillProjectCheckpoint%%,Split:%%SplitProjectCheckpoint%%,Get:%%GetProjectCheckpoint%%"
-    call set "CombinedApplication=%%ApplicationCheckpointHostRootWriter%%,Fill:%%FillApplicationCheckpoint%%,Split:%%SplitApplicationCheckpoint%%,Get:%%GetApplicationCheckpoint%%"
-    endlocal & set "ProjectCheckpointHostRootWriter=%CombinedProject%" & set "ApplicationCheckpointHostRootWriter=%CombinedApplication%"
-    exit /b 0
-)
+if not "%Development%"=="1" goto :verify_host_root_split_writer_complete
+call set "CombinedProject=%%ProjectCheckpointHostRootWriter%%,Fill:%%FillProjectCheckpoint%%,Split:%%SplitProjectCheckpoint%%,Get:%%GetProjectCheckpoint%%"
+call set "CombinedApplication=%%ApplicationCheckpointHostRootWriter%%,Fill:%%FillApplicationCheckpoint%%,Split:%%SplitApplicationCheckpoint%%,Get:%%GetApplicationCheckpoint%%"
+endlocal & set "ProjectCheckpointHostRootWriter=%CombinedProject%" & set "ApplicationCheckpointHostRootWriter=%CombinedApplication%"
+exit /b 0
+
+:verify_host_root_split_writer_complete
 endlocal
 exit /b 0
 
@@ -1124,6 +1125,12 @@ set "LinuxImage=%TemporaryDirectory%\HostLocal-%Component%-Linux.bin"
 set "LinuxImagePrefix=%TemporaryDirectory%\HostLocal-%Component%-Linux-Image"
 set "LinuxMap=%TemporaryDirectory%\HostLocal-%Component%-Linux.map"
 set "LinuxApplication=%TemporaryDirectory%\HostLocal-%Component%.elf"
+
+if /I "%Component%"=="LogicalTreePut" (
+    endlocal
+    call :build_host_segmented_component "%~f1" "%~2" "%~f3"
+    exit /b
+)
 
 if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
@@ -1173,6 +1180,82 @@ if "%Development%"=="1" (
     copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
     call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
         "%FirstWvb%" "%LinuxImagePrefix%" 1 %%LinuxEntry%% ^
+        "%LinuxApplication%" linux >nul
+    if errorlevel 1 exit /b 1
+)
+endlocal
+exit /b 0
+
+:build_host_segmented_component
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "Component=%~2"
+set "WindowsApplication=%~f3"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\HostLocal-%Component%-First.wvb"
+set "ObjectPrefix=%TemporaryDirectory%\HostLocal-%Component%-Object"
+set "ObjectManifest=%TemporaryDirectory%\HostLocal-%Component%-Object.wvop"
+set "StagedPrefix=%TemporaryDirectory%\HostLocal-%Component%-Staged"
+set "StagedManifest=%TemporaryDirectory%\HostLocal-%Component%-Staged.wvli"
+set "CanonicalPrefix=%TemporaryDirectory%\HostLocal-%Component%-Canonical"
+set "CanonicalManifest=%TemporaryDirectory%\HostLocal-%Component%-Canonical.wvli"
+set "WindowsPrefix=%TemporaryDirectory%\HostLocal-%Component%-Windows-Image"
+set "LinuxPrefix=%TemporaryDirectory%\HostLocal-%Component%-Linux-Image"
+set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
+set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
+set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
+set "LinuxApplication=%TemporaryDirectory%\HostLocal-%Component%.elf"
+set "ApplicationReport=%TemporaryDirectory%\HostLocal-%Component%-Application-Cache.txt"
+set "OverlayReport=%TemporaryDirectory%\HostLocal-%Component%-Windows-Overlay.txt"
+
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
+    "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
+    "%ObjectPrefix%" "%ObjectManifest%" "%StagedPrefix%" "%StagedManifest%" >nul
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
+    "%StagedPrefix%" "%StagedManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >nul
+if errorlevel 1 exit /b 1
+if not exist "%Common%" exit /b 1
+if not exist "%WindowsPlatform%" exit /b 1
+call "%RepositoryRoot%\Tools\Native\Compose-Segmented-Hosted-Overlay.cmd" ^
+    "%CanonicalPrefix%" "%CanonicalManifest%" "%Common%" "%WindowsPlatform%" ^
+    "%WindowsPrefix%" >"%OverlayReport%"
+if errorlevel 1 exit /b 1
+set "FragmentCount="
+set "WindowsEntry="
+for /f "tokens=13,17 delims== " %%F in ('findstr /b /c:"segmented hosted overlay status=Valid " "%OverlayReport%"') do (
+    set "FragmentCount=%%F"
+    set "WindowsEntry=%%G"
+)
+if not defined FragmentCount exit /b 1
+if not defined WindowsEntry exit /b 1
+echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || exit /b 1
+echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%WindowsPrefix%" %FragmentCount% %WindowsEntry% ^
+        "%WindowsApplication%" windows >"%ApplicationReport%"
+    if errorlevel 1 exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%WindowsPrefix%" %FragmentCount% %WindowsEntry% ^
+        "%WindowsApplication%" windows >nul
+    if errorlevel 1 exit /b 1
+    if not exist "%LinuxPlatform%" exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Compose-Segmented-Hosted-Overlay.cmd" ^
+        "%CanonicalPrefix%" "%CanonicalManifest%" "%Common%" "%LinuxPlatform%" ^
+        "%LinuxPrefix%" >"%TemporaryDirectory%\HostLocal-%Component%-Linux-Overlay.txt"
+    if errorlevel 1 exit /b 1
+    set "LinuxEntry="
+    for /f "tokens=17 delims== " %%E in ('findstr /b /c:"segmented hosted overlay status=Valid " "%TemporaryDirectory%\HostLocal-%Component%-Linux-Overlay.txt"') do set "LinuxEntry=%%E"
+    if not defined LinuxEntry exit /b 1
+    call echo(%%LinuxEntry%%^| findstr /r /x "[0-9][0-9]*" ^>nul || exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%LinuxPrefix%" %FragmentCount% %%LinuxEntry%% ^
         "%LinuxApplication%" linux >nul
     if errorlevel 1 exit /b 1
 )
@@ -1662,24 +1745,7 @@ exit /b 0
 :verify_host_tree_writer
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
-set "ProjectResource=%ProjectPath:\=/%"
-set "FirstWvb=%TemporaryDirectory%\HostTreeWriter-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\HostTreeWriter-Second.wvb"
-set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
-set "FirstWvo=%TemporaryDirectory%\HostTreeWriter-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\HostTreeWriter-Second.wvo"
-set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
-set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
-set "WindowsImage=%TemporaryDirectory%\HostTreeWriter-Windows.bin"
-set "WindowsImagePrefix=%TemporaryDirectory%\HostTreeWriter-Windows-Image"
-set "WindowsMap=%TemporaryDirectory%\HostTreeWriter-Windows.map"
 set "WindowsApplication=%TemporaryDirectory%\HostTreeWriter.exe"
-set "LinuxImage=%TemporaryDirectory%\HostTreeWriter-Linux.bin"
-set "LinuxImagePrefix=%TemporaryDirectory%\HostTreeWriter-Linux-Image"
-set "LinuxMap=%TemporaryDirectory%\HostTreeWriter-Linux.map"
-set "LinuxApplication=%TemporaryDirectory%\HostTreeWriter.elf"
 set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
 set "RunDirectory=%TemporaryDirectory%\HostTreeWriter-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
@@ -1687,56 +1753,13 @@ set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
 set "HostTreeWriterCheckpoint=Rebuilt"
 set "HostTreeWriterApplicationCheckpoint=Rebuilt"
 
-if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
-        >"%TemporaryDirectory%\HostTreeWriter-Cache.txt"
-    if errorlevel 1 (
-        >&2 echo The native host tree-writer project-object checkpoint failed.
-        exit /b 1
-    )
-    set "HostTreeWriterCheckpoint="
-    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostTreeWriter-Cache.txt"') do set "HostTreeWriterCheckpoint=%%S"
-    if not defined HostTreeWriterCheckpoint exit /b 1
-) else (
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul
-    if errorlevel 1 exit /b 1
-    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-    if errorlevel 1 exit /b 1
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul
-    if errorlevel 1 exit /b 1
-)
-if not exist "%Common%" exit /b 1
-if not exist "%WindowsPlatform%" exit /b 1
-
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
-    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+call :build_host_segmented_component "%ProjectPath%" HostTreeWriter "%WindowsApplication%"
 if errorlevel 1 exit /b 1
-set "WindowsEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
-if not defined WindowsEntry exit /b 1
-echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
-copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul || exit /b 1
+set "HostTreeWriterCheckpoint=Segmented"
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
-        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
-        "%WindowsApplication%" windows >"%TemporaryDirectory%\HostTreeWriter-Application-Cache.txt"
-    if errorlevel 1 exit /b 1
     set "HostTreeWriterApplicationCheckpoint="
-    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostTreeWriter-Application-Cache.txt"') do set "HostTreeWriterApplicationCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-HostTreeWriter-Application-Cache.txt"') do set "HostTreeWriterApplicationCheckpoint=%%S"
     if not defined HostTreeWriterApplicationCheckpoint exit /b 1
-) else (
-    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-        "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
-        "%WindowsApplication%" windows >nul
-    if errorlevel 1 exit /b 1
 )
 
 if not exist "%DepthTwoCommittedFile%" exit /b 1
@@ -1768,20 +1791,6 @@ if "%Development%"=="1" (
     endlocal & set "ProjectCheckpointHostTreeWriter=%HostTreeWriterCheckpoint%" & set "ApplicationCheckpointHostTreeWriter=%HostTreeWriterApplicationCheckpoint%"
     exit /b 0
 )
-if not exist "%LinuxPlatform%" exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
-    "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
-if errorlevel 1 exit /b 1
-set "LinuxEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
-if not defined LinuxEntry exit /b 1
-echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
-copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
-    "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
 endlocal
 exit /b 0
 
@@ -1831,11 +1840,10 @@ call :build_host_local_component "%GetProject%" LogicalTreeGet "%GetApplication%
 if errorlevel 1 exit /b 1
 
 if "%Development%"=="1" (
-    set "PutProjectCheckpoint="
+    set "PutProjectCheckpoint=Segmented"
     set "GetProjectCheckpoint="
     set "PutApplicationCheckpoint="
     set "GetApplicationCheckpoint="
-    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreePut-Cache.txt"') do set "PutProjectCheckpoint=%%S"
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreeGet-Cache.txt"') do set "GetProjectCheckpoint=%%S"
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreePut-Application-Cache.txt"') do set "PutApplicationCheckpoint=%%S"
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreeGet-Application-Cache.txt"') do set "GetApplicationCheckpoint=%%S"
@@ -1868,12 +1876,13 @@ if not "%ApplicationResult%"=="0" (
 )
 fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
 
-if "%Development%"=="1" (
-    call set "CombinedProject=%%ProjectCheckpointHostTreeWriter%%,LogicalPut:%%PutProjectCheckpoint%%,LogicalGet:%%GetProjectCheckpoint%%"
-    call set "CombinedApplication=%%ApplicationCheckpointHostTreeWriter%%,LogicalPut:%%PutApplicationCheckpoint%%,LogicalGet:%%GetApplicationCheckpoint%%"
-    endlocal & set "ProjectCheckpointHostTreeWriter=%CombinedProject%" & set "ApplicationCheckpointHostTreeWriter=%CombinedApplication%"
-    exit /b 0
-)
+if not "%Development%"=="1" goto :verify_host_logical_tree_writer_complete
+call set "CombinedProject=%%ProjectCheckpointHostTreeWriter%%,LogicalPut:%%PutProjectCheckpoint%%,LogicalGet:%%GetProjectCheckpoint%%"
+call set "CombinedApplication=%%ApplicationCheckpointHostTreeWriter%%,LogicalPut:%%PutApplicationCheckpoint%%,LogicalGet:%%GetApplicationCheckpoint%%"
+endlocal & set "ProjectCheckpointHostTreeWriter=%CombinedProject%" & set "ApplicationCheckpointHostTreeWriter=%CombinedApplication%"
+exit /b 0
+
+:verify_host_logical_tree_writer_complete
 endlocal
 exit /b 0
 
