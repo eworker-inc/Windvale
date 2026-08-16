@@ -228,6 +228,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [x86-64 thread and timer-state emission](Windvale-Os-X64-Process-Thread-Timer-State-Emission.md)
 - [x86-64 timer activation emission](Windvale-Os-X64-Process-Timer-Activation-Emission.md)
 - [x86-64 provider user-transfer emission](Windvale-Os-X64-Process-Provider-User-Transfer-Emission.md)
+- [x86-64 provider-return and init-transfer emission](Windvale-Os-X64-Process-Provider-Return-Init-Transfer-Emission.md)
 - [x86-64 directory-provider allocation emission](Windvale-Os-X64-Process-Directory-Allocation-Emission.md)
 - [x86-64 directory-provider record emission](Windvale-Os-X64-Process-Directory-Record-Emission.md)
 - [x86-64 directory-provider paging emission](Windvale-Os-X64-Process-Directory-Paging-Emission.md)

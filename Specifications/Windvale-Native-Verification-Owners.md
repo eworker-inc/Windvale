@@ -16,8 +16,8 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 
 ## Registry identity and grammar
 
-`Tests/Native/Verification-Owners.txt` is 11,148 LF-only bytes with SHA-256
-`552af879c5f2655045ff40aa68cd8a06dfae3b2be1b706e57d7c5d41ff9675c2`.
+`Tests/Native/Verification-Owners.txt` is 11,152 LF-only bytes with SHA-256
+`0f471a68c60a4579adb816ea4792173df95fb3301b9453f9b5a043f117cdd2a3`.
 Its first line is exactly:
 
 ```text
@@ -34,12 +34,12 @@ The digest fixes owner order, commands, declared case counts, qualification
 allocation, and accepted terminal summaries. Each command stem resolves under
 `Tools/Native` to matching Windows `.cmd` and Linux `.sh` commands.
 
-The current registry contains exactly 90 owners and 4,088 declared cases:
+The current registry contains exactly 90 owners and 4,094 declared cases:
 
 | Qualification shard | Owners | Cases |
 | ---: | ---: | ---: |
 | 1 | 1 | 28 |
-| 2 | 25 | 1,582 |
+| 2 | 25 | 1,588 |
 | 3 | 28 | 1,318 |
 | 4 | 36 | 1,160 |
 

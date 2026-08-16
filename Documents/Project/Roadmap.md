@@ -612,8 +612,9 @@ provenance, revocation, and consensus boundaries are named.
   Privileged GDT/TSS, four IDT gates, feature admission, and syscall-MSR setup
   then reach byte 12,082; three private thread records plus bounded timer state
   reach byte 12,872. Timer activation and rollback reach byte 12,997, and the
-  guarded provider user-context transfer reaches byte 13,168. Remaining
-  provider/client readiness, syscall/exception handler bodies, teardown, and live
+  guarded provider user-context transfer reaches byte 13,168, and checked
+  provider-return/init transfer reaches byte 13,447. Remaining client transfer,
+  syscall/exception handler bodies, teardown, and live
   QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

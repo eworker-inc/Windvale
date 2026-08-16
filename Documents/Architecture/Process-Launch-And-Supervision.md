@@ -153,6 +153,10 @@ transfers through the explicit resume boundary through byte 12,997.
 The selected directory-provider thread is then reacquired and checked before its
 page table, GS ownership, kernel continuation, and admitted user context are
 loaded for the first `sysretq`, advancing ownership through byte 13,168.
+On provider return, the machine validates the provider thread and process,
+selects only the admitted init thread, revalidates its page table, binds its GS
+and continuation state, and performs the next `sysretq`, advancing ownership
+through byte 13,447.
 
 The first restart policies are deliberately small:
 

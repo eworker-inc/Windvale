@@ -1,0 +1,58 @@
+module Osˉx64ˉprocessˉproviderˉreturnˉinitˉtransferˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉproviderˉreturnˉinitˉtransferˉemission as Transfer;
+
+export fn Main() -> i32 {
+    let Code: bytes =
+        Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉbytes();
+    let Fields: bytes =
+        Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉinternalˉfields();
+    let Displacements: bytes =
+        Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉinternalˉdisplacements();
+    if Bytesˉlength(Code) != 279u32 { return 1; }
+    if Bytesˉlength(Fields) != 48u32 { return 2; }
+    if Bytesˉlength(Displacements) != 48u32 { return 3; }
+    if Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉexternalˉfield() !=
+        164u32 { return 4; }
+    if Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉexternalˉsymbol() !=
+        17u32 { return 5; }
+    if Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉfixtureˉoffset() !=
+        13169u32 { return 6; }
+    if Transfer.X64ˉprocessˉproviderˉreturnˉinitˉtransferˉfixtureˉend() !=
+        13448u32 { return 7; }
+    if Bytesˉreadˉu32ˉlittle(Code, 164u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Displacements, 24u32) != 4294954051u32 {
+        return 8;
+    }
+    var Index: u32 = 0u32;
+    while Index < 12u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 { return 9; }
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Index != 6u32 {
+            var Expected: u32 = 33826u32;
+            if Index == 11u32 { Expected = 13448u32; }
+            if 13169u32 + Field + 4u32 + Displacement != Expected {
+                return 10;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 279u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 51262u32 || Hashˉone != 12774u32 ||
+        Hashˉtwo != 23u32 || Hashˉthree != 12208u32 { return 11; }
+    return 76;
+}
