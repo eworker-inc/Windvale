@@ -32,4 +32,4 @@ trap cleanup EXIT
 [[ $(<"$work/Lifecycle.out") == 'Result: 49' ]] || exit 1
 [[ ! -s $work/Lifecycle.err ]] || exit 1
 
-echo 'native os provider launch transaction status=Passed projects=3 behavior=13 cases=18'
+echo 'native os provider launch transaction status=Passed projects=3 behavior=14 cases=26'

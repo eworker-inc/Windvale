@@ -1,6 +1,7 @@
 module Osˉproviderˉlaunchˉtransactionˉselfˉtest profile portable;
 
 import Providerˉlaunchˉtransactionˉpolicy as Provider;
+import Providerˉmachineˉbindingˉpolicy as Binding;
 
 data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 81, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 data Networkˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 3, 0, 0, 0, 5, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 0, 42, 0, 1, 0, 3, 0, 0, 0, 1, 0, 0, 0, 96, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 15, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -107,8 +108,60 @@ fn Rejectionsˉpass() -> bool {
         Failedˉinitialization.Committedˉpages == 0u32;
 }
 
+fn Filesystemˉconsumerˉbindingˉpasses() -> bool {
+    let Success: Binding.Filesystemˉconsumerˉbindingˉstatus =
+        Binding.Filesystemˉconsumerˉbindingˉstatus(
+            131072u32, 196610u32, 131075u32, 131075u32, 65540u32,
+            true, true, true, true, 47u32, 10u32, 6u32, 17u32
+        );
+    if Success != Binding.Filesystemˉconsumerˉbindingˉstatus.Success {
+        return false;
+    }
+    if Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131073u32, 196610u32, 131075u32, 131075u32, 65540u32,
+        true, true, true, true, 47u32, 10u32, 6u32, 17u32
+    ) != Binding.Filesystemˉconsumerˉbindingˉstatus.Invalidˉendpoint {
+        return false;
+    }
+    if Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131072u32, 196610u32, 65537u32, 131075u32, 65540u32,
+        true, true, true, true, 47u32, 10u32, 6u32, 17u32
+    ) != Binding.Filesystemˉconsumerˉbindingˉstatus.Invalidˉconsumer {
+        return false;
+    }
+    if Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131072u32, 196610u32, 131075u32, 131075u32, 65538u32,
+        true, true, true, true, 47u32, 10u32, 6u32, 17u32
+    ) != Binding.Filesystemˉconsumerˉbindingˉstatus.Invalidˉdomain {
+        return false;
+    }
+    if Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131072u32, 196610u32, 131075u32, 131075u32, 65540u32,
+        false, true, true, true, 47u32, 10u32, 6u32, 17u32
+    ) != Binding.Filesystemˉconsumerˉbindingˉstatus.Providerˉnotˉready {
+        return false;
+    }
+    if Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131072u32, 196610u32, 131075u32, 131075u32, 65540u32,
+        true, false, true, true, 47u32, 10u32, 6u32, 17u32
+    ) != Binding.Filesystemˉconsumerˉbindingˉstatus.Processˉslotˉlive {
+        return false;
+    }
+    if Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131072u32, 196610u32, 131075u32, 131075u32, 65540u32,
+        true, true, true, true, 47u32, 10u32, 5u32, 17u32
+    ) != Binding.Filesystemˉconsumerˉbindingˉstatus.Invalidˉgeometry {
+        return false;
+    }
+    return Binding.Filesystemˉconsumerˉbindingˉstatus(
+        131072u32, 196610u32, 131075u32, 131075u32, 65540u32,
+        true, true, true, true, 47u32, 10u32, 6u32, 46u32
+    ) == Binding.Filesystemˉconsumerˉbindingˉstatus.Invalidˉrights;
+}
+
 export fn Main() -> i32 {
     if !Profilesˉpass() { return 1; }
     if !Rejectionsˉpass() { return 2; }
+    if !Filesystemˉconsumerˉbindingˉpasses() { return 3; }
     return 48;
 }

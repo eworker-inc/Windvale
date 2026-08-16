@@ -7,6 +7,14 @@ export enum Providerˉmachineˉbindingˉstatus {
     Endpointˉslotˉopen = 7;
 }
 
+export enum Filesystemˉconsumerˉbindingˉstatus {
+    Success = 0; Invalidˉendpoint = 1; Invalidˉprovider = 2;
+    Invalidˉconsumer = 3; Invalidˉmemory = 4; Invalidˉdomain = 5;
+    Providerˉnotˉready = 6; Processˉslotˉlive = 7;
+    Memoryˉslotˉlive = 8; Domainˉslotˉlive = 9;
+    Invalidˉgeometry = 10; Invalidˉrights = 11;
+}
+
 export fn Providerˉmachineˉbindingˉstatus(
     Role: u32,
     Requestˉreference: u32,
@@ -51,4 +59,64 @@ export fn Providerˉmachineˉbindingˉstatus(
         return Providerˉmachineˉbindingˉstatus.Endpointˉslotˉopen;
     }
     return Providerˉmachineˉbindingˉstatus.Success;
+}
+
+export fn Filesystemˉconsumerˉbindingˉstatus(
+    Endpointˉreference: u32,
+    Providerˉprocessˉreference: u32,
+    Consumerˉprocessˉreference: u32,
+    Consumerˉmemoryˉreference: u32,
+    Consumerˉdomainˉreference: u32,
+    Providerˉready: bool,
+    Consumerˉprocessˉslotˉreleased: bool,
+    Consumerˉmemoryˉslotˉreleased: bool,
+    Consumerˉdomainˉslotˉterminal: bool,
+    Availableˉpages: u32,
+    Physicalˉpages: u32,
+    Userˉpages: u32,
+    Endpointˉrights: u32
+) -> Filesystemˉconsumerˉbindingˉstatus {
+    if Endpointˉreference != 131072u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉendpoint;
+    }
+    if Providerˉprocessˉreference != 196610u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉprovider;
+    }
+    // The exited directory process is the only surviving recyclable process
+    // slot. Generation two of identifier 3 is never a stale provider identity.
+    if Consumerˉprocessˉreference != 131075u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉconsumer;
+    }
+    if Consumerˉmemoryˉreference != 131075u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉmemory;
+    }
+    // The application remains outside provider domain 0x00010002 and the
+    // later network domain 0x00010003.
+    if Consumerˉdomainˉreference != 65540u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉdomain;
+    }
+    if !Providerˉready {
+        return Filesystemˉconsumerˉbindingˉstatus.Providerˉnotˉready;
+    }
+    if !Consumerˉprocessˉslotˉreleased {
+        return Filesystemˉconsumerˉbindingˉstatus.Processˉslotˉlive;
+    }
+    if !Consumerˉmemoryˉslotˉreleased {
+        return Filesystemˉconsumerˉbindingˉstatus.Memoryˉslotˉlive;
+    }
+    if !Consumerˉdomainˉslotˉterminal {
+        return Filesystemˉconsumerˉbindingˉstatus.Domainˉslotˉlive;
+    }
+    // Releasing the ten-page directory object raises the current 37 free
+    // pages to 47. The consumer reuses ten: four kernel paging and six user.
+    if Availableˉpages != 47u32 || Physicalˉpages != 10u32 ||
+        Userˉpages != 6u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉgeometry;
+    }
+    // Rights 17 are call/receive-result only; provider rights 46 must not be
+    // copied into the application.
+    if Endpointˉrights != 17u32 {
+        return Filesystemˉconsumerˉbindingˉstatus.Invalidˉrights;
+    }
+    return Filesystemˉconsumerˉbindingˉstatus.Success;
 }

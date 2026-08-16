@@ -190,6 +190,14 @@ finalization for traffic, real FAT32 media identity,
 context entry, request/reply execution, complete failed-construction rollback,
 and teardown remain open.
 
+The consumer-machine preflight now rejects exited init and selects terminal
+directory process/memory identifier 3 as generation 2 (`131075`). Its separate
+domain `65540` will charge one process and six user pages, while filesystem
+endpoint `131072` remains owned and charged by the provider domain. Rights 17
+are the only accepted consumer authority. Live work still must select exact
+retired ledger bytes, release/rebuild the ten-page machine, bind client and
+domain atomically, and enter both sides.
+
 ### Filesystem slice 6: optional format adapters or native format decision
 
 Select read-only ext4/NTFS adapters or a Windvale-native format only from a named

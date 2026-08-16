@@ -38,7 +38,7 @@ set /p "Actual=" <"%Work%\Lifecycle.out"
 if not "%Actual%"=="Result: 49" goto :cleanup
 for %%E in ("%Work%\Lifecycle.err") do if not "%%~zE"=="0" goto :cleanup
 
-echo native os provider launch transaction status=Passed projects=3 behavior=13 cases=18
+echo native os provider launch transaction status=Passed projects=3 behavior=14 cases=26
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

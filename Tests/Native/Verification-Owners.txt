@@ -49,7 +49,7 @@ os-x64-code-emission|Test-Os-X64-Code-Emission|336|2|native os x64 code emission
 os-resource-domain|Test-Os-Resource-Domain|10|2|native os resource domain status=Passed projects=2 behavior=1 cases=10
 os-application-launch|Test-Os-Application-Launch|69|2|native os application launch status=Passed projects=7 native-leaves=3 behavior=8 cases=69 local-results=47,48,49 cross-host-images=Verified
 os-provider-images|Test-Os-Provider-Images|8|2|native os provider images status=Passed services=2 readiness=2 cases=8
-os-provider-launch-transaction|Test-Os-Provider-Launch-Transaction|18|2|native os provider launch transaction status=Passed projects=3 behavior=13 cases=18
+os-provider-launch-transaction|Test-Os-Provider-Launch-Transaction|26|2|native os provider launch transaction status=Passed projects=3 behavior=14 cases=26
 os-endpoint-transfer|Test-Os-Endpoint-Transfer-Profile|29|3|native os endpoint transfer profiles status=Passed projects=2 cases=29 profiles=3 max-pages=17 local-result=47 cross-host-images=Verified
 filesystem-semantics|Test-Filesystem-Semantics|18|3|native filesystem semantics status=Passed cases=18 local-result=42 cross-host-images=Verified
 os-filesystem-service|Test-Os-Filesystem-Service|19|2|native os filesystem service status=Passed cases=19 local-result=43 cross-host-images=Verified

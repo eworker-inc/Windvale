@@ -77,3 +77,14 @@ records. The endpoint is deliberately provider-only with client reference 0.
 It is not resolved for traffic, the thread is not entered, and no request is
 dispatched. The next privileged slice must bind a surviving consumer before
 first entry and one bounded filesystem request.
+
+The following consumer-machine policy selects that survivor without yet
+mutating the guest. It recycles terminal directory process/memory identifier 3
+as generation-two reference `131075`, assigns separate application domain
+`65540`, and requires exact post-release capacity 47 for a ten-page machine:
+four kernel paging pages plus six domain-charged user pages. Endpoint
+`131072` remains provider-owned and gains only rights 17 at the consumer; the
+consumer domain owns zero endpoints. Stale init, a non-ready provider, live
+reusable slots, wrong geometry, and provider rights 46 are rejected. Exact
+domain-record storage, private machine construction, atomic client binding,
+entry, I/O, rollback, and teardown remain live integration work.
