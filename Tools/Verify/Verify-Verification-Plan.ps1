@@ -1175,7 +1175,7 @@ $NativeCases = @(
             'Tools/Native/Test-Bounded-Operation-Core.sh',
             'Specifications/Bounded-Operation-Core.md'
         )
-        Suites = @('operation-core')
+        Suites = @('operation-core', 'network-connect-stream')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1190,7 +1190,22 @@ $NativeCases = @(
             'Tools/Native/Test-Network-Address-Authority.sh',
             'Specifications/Network-Address-Authority.md'
         )
-        Suites = @('network-authority')
+        Suites = @('network-authority', 'network-connect-stream')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'network connect stream owner'
+        Paths = @(
+            'Libraries/Network/Connect-Stream-Core.wv',
+            'Projects/Libraries/Windvale-Library-Network-Connect-Stream-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Network-Connect-Stream-Core.wvproj',
+            'Tests/Fixtures/Network/Connect-Stream-Core-Self-Test.wv',
+            'Tools/Native/Test-Network-Connect-Stream-Core.cmd',
+            'Tools/Native/Test-Network-Connect-Stream-Core.sh',
+            'Specifications/Network-Connect-Stream-Core.md'
+        )
+        Suites = @('network-connect-stream')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1780,9 +1795,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 72 -or
+if ($VerificationOwnerLines.Count -ne 73 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 71-owner inventory differs.'
+    throw 'The native verification-owner header or exact 72-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1820,7 +1835,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3580 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3593 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -1,0 +1,6 @@
+windvale-project 2
+root "Tests/Fixtures/Network/Connect-Stream-Core-Self-Test.wv"
+source "Libraries/Foundation/Operations/Bounded-Operation-Core.wv"
+source "Libraries/Network/Address-Authority.wv"
+source "Libraries/Network/Connect-Stream-Core.wv"
+emit wvb

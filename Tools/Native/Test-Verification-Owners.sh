@@ -33,7 +33,7 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Verification-Owners.txt"
-plan_digest=b4256b6ce77470e79bc421ac8d3984fd7261726a9b65e9bf8bc8286b6919e376
+plan_digest=915f7b8420bae44aed708940c57edf47b25fdf12b0459ab12d40b0a9f4a1c4ec
 
 check_hash() {
     local path=$1

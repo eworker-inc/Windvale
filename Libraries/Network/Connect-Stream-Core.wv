@@ -1,0 +1,765 @@
+module Windvaleˉnetworkˉconnectˉstreamˉcore profile portable;
+
+import Windvaleˉboundedˉoperationˉcore as Operation;
+import Windvaleˉnetworkˉaddressˉauthority as Network;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Networkˉconnectˉerror {
+    Valid = 0;
+    Unauthorized = 1;
+    Invalidˉtarget = 2;
+    Invalidˉresolution = 3;
+    Invalidˉconnection = 4;
+    Invalidˉdeadline = 5;
+    Invalidˉstate = 6;
+    Invalidˉevent = 7;
+    Invalidˉlimit = 8;
+    Expired = 9;
+    Arithmeticˉoverflow = 10;
+}
+
+export enum Networkˉconnectˉphase {
+    Invalid = 0;
+    Resolving = 1;
+    Connecting = 2;
+    Connected = 3;
+    Terminal = 4;
+}
+
+export record Networkˉconnectˉstate {
+    Error: Networkˉconnectˉerror;
+    Accepted: bool;
+    Phase: Networkˉconnectˉphase;
+    Grant: Network.Networkˉgrant;
+    Service: Network.Networkˉserviceˉname;
+    Endpoint: Network.Networkˉendpoint;
+    Resolutionˉgeneration: u64;
+    Operation: Operation.Operationˉstate;
+    Connectionˉidentity: u64;
+    Connectionˉgeneration: u64;
+}
+
+export record Networkˉconnectˉtransition {
+    Error: Networkˉconnectˉerror;
+    Applied: bool;
+    State: Networkˉconnectˉstate;
+}
+
+export enum Networkˉstreamˉerror {
+    Valid = 0;
+    Invalidˉconnection = 1;
+    Invalidˉgeneration = 2;
+    Invalidˉstate = 3;
+    Invalidˉevent = 4;
+    Invalidˉdeadline = 5;
+    Invalidˉlimit = 6;
+    Expired = 7;
+    Arithmeticˉoverflow = 8;
+}
+
+export enum Networkˉstreamˉphase {
+    Invalid = 0;
+    Open = 1;
+    Peerˉclosed = 2;
+    Localˉclosed = 3;
+    Closed = 4;
+    Reset = 5;
+    Providerˉlost = 6;
+    Stale = 7;
+    Tornˉdown = 8;
+    Writeˉindeterminate = 9;
+}
+
+export enum Networkˉstreamˉproviderˉevent {
+    Reset = 1;
+    Providerˉloss = 2;
+    Providerˉrestart = 3;
+    Teardown = 4;
+}
+
+export record Networkˉstreamˉstate {
+    Error: Networkˉstreamˉerror;
+    Phase: Networkˉstreamˉphase;
+    Providerˉidentity: u64;
+    Providerˉgeneration: u64;
+    Connectionˉidentity: u64;
+    Connectionˉgeneration: u64;
+    Maximumˉqueuedˉbytes: u32;
+    Maximumˉtransferˉbytes: u64;
+    Maximumˉdeadlineˉspan: u64;
+    Expiresˉat: u64;
+    Acceptedˉwriteˉbytes: u64;
+    Deliveredˉreadˉbytes: u64;
+    Write: Operation.Operationˉstate;
+    Read: Operation.Operationˉstate;
+}
+
+export record Networkˉstreamˉtransition {
+    Error: Networkˉstreamˉerror;
+    Applied: bool;
+    State: Networkˉstreamˉstate;
+}
+
+fn Emptyˉservice() -> Network.Networkˉserviceˉname {
+    return Network.Networkˉserviceˉnameˉcreate("");
+}
+
+fn Emptyˉendpoint() -> Network.Networkˉendpoint {
+    return Network.Networkˉendpointˉcreate(
+        Network.Networkˉaddressˉparse(""), 0u32, 0u64
+    );
+}
+
+fn Emptyˉoperation() -> Operation.Operationˉstate {
+    return Operation.Operationˉbegin(
+        0u64, 0u64, 0u64, 0u64,
+        Operation.Operationˉclockˉcreate(0u64, 0u64),
+        0u64, 0u64, false
+    );
+}
+
+fn Connectˉfailure(
+    Error: Networkˉconnectˉerror,
+    Grant: Network.Networkˉgrant
+) -> Networkˉconnectˉstate {
+    return Networkˉconnectˉstate(
+        Error, false, Networkˉconnectˉphase.Invalid, Grant,
+        Emptyˉservice(), Emptyˉendpoint(), 0u64, Emptyˉoperation(), 0u64, 0u64
+    );
+}
+
+fn Connectˉtransitionˉfailure(
+    State: Networkˉconnectˉstate,
+    Error: Networkˉconnectˉerror
+) -> Networkˉconnectˉtransition {
+    return Networkˉconnectˉtransition(Error, false, State);
+}
+
+fn Deadlineˉvalid(
+    Grant: Network.Networkˉgrant,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64
+) -> bool {
+    if Clock.Error != Operation.Operationˉerror.Valid || Clock.Generation == 0u64 {
+        return false;
+    }
+    if Deadline > Grant.Expiresˉat { return false; }
+    if Deadline > Clock.Tick &&
+        Deadline - Clock.Tick > Grant.Maximumˉdeadlineˉspan { return false; }
+    return true;
+}
+
+fn Connectˉbegin(
+    Grant: Network.Networkˉgrant,
+    Service: Network.Networkˉserviceˉname,
+    Endpoint: Network.Networkˉendpoint,
+    Phase: Networkˉconnectˉphase,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64
+) -> Networkˉconnectˉstate {
+    if !Deadlineˉvalid(Grant, Clock, Deadline) {
+        return Connectˉfailure(Networkˉconnectˉerror.Invalidˉdeadline, Grant);
+    }
+    let State: Operation.Operationˉstate = Operation.Operationˉbegin(
+        Providerˉidentity, Providerˉgeneration,
+        Operationˉidentity, Operationˉgeneration,
+        Clock, Deadline, 0u64, false
+    );
+    if State.Error != Operation.Operationˉerror.Valid {
+        return Connectˉfailure(Networkˉconnectˉerror.Invalidˉconnection, Grant);
+    }
+    var Connectˉphase: Networkˉconnectˉphase = Phase;
+    if !State.Accepted { Connectˉphase = Networkˉconnectˉphase.Terminal; }
+    return Networkˉconnectˉstate(
+        Networkˉconnectˉerror.Valid, State.Accepted, Connectˉphase, Grant,
+        Service, Endpoint, 0u64, State, 0u64, 0u64
+    );
+}
+
+export fn Networkˉconnectˉserviceˉbegin(
+    Grant: Network.Networkˉgrant,
+    Service: Network.Networkˉserviceˉname,
+    Port: u32,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64
+) -> Networkˉconnectˉstate {
+    if !Network.Networkˉgrantˉallowsˉservice(
+        Grant, Service, Port, Network.Networkˉtransport.Tcp,
+        Network.Networkˉdirection.Outbound, Clock.Tick
+    ) {
+        return Connectˉfailure(Networkˉconnectˉerror.Unauthorized, Grant);
+    }
+    let Placeholder: Network.Networkˉendpoint = Network.Networkˉendpoint(
+        Network.Networkˉerror.Invalidˉaddress,
+        Network.Networkˉaddressˉparse(""), Port, 0u64
+    );
+    return Connectˉbegin(
+        Grant, Service, Placeholder, Networkˉconnectˉphase.Resolving,
+        Providerˉidentity, Providerˉgeneration,
+        Operationˉidentity, Operationˉgeneration, Clock, Deadline
+    );
+}
+
+export fn Networkˉconnectˉendpointˉbegin(
+    Grant: Network.Networkˉgrant,
+    Endpoint: Network.Networkˉendpoint,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64
+) -> Networkˉconnectˉstate {
+    if !Network.Networkˉgrantˉallowsˉendpoint(
+        Grant, Endpoint, Network.Networkˉtransport.Tcp,
+        Network.Networkˉdirection.Outbound, Clock.Tick
+    ) {
+        return Connectˉfailure(Networkˉconnectˉerror.Unauthorized, Grant);
+    }
+    return Connectˉbegin(
+        Grant, Emptyˉservice(), Endpoint, Networkˉconnectˉphase.Connecting,
+        Providerˉidentity, Providerˉgeneration,
+        Operationˉidentity, Operationˉgeneration, Clock, Deadline
+    );
+}
+
+export fn Networkˉconnectˉdispatch(
+    State: Networkˉconnectˉstate,
+    Clock: Operation.Operationˉclock
+) -> Networkˉconnectˉtransition {
+    if State.Error != Networkˉconnectˉerror.Valid || !State.Accepted ||
+        (State.Phase != Networkˉconnectˉphase.Resolving &&
+        State.Phase != Networkˉconnectˉphase.Connecting) {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉstate);
+    }
+    let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State.Operation, Clock,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Dispatch, State.Operation, 0u64
+        )
+    );
+    if !Advanced.Applied {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉevent);
+    }
+    return Networkˉconnectˉtransition(
+        Networkˉconnectˉerror.Valid, true,
+        Networkˉconnectˉstate(
+            Networkˉconnectˉerror.Valid, true, State.Phase, State.Grant,
+            State.Service, State.Endpoint, State.Resolutionˉgeneration,
+            Advanced.State, 0u64, 0u64
+        )
+    );
+}
+
+export fn Networkˉconnectˉselectˉresolved(
+    State: Networkˉconnectˉstate,
+    Resolutionˉgeneration: u64,
+    Endpoint: Network.Networkˉendpoint
+) -> Networkˉconnectˉtransition {
+    if State.Error != Networkˉconnectˉerror.Valid || !State.Accepted ||
+        State.Phase != Networkˉconnectˉphase.Resolving {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉstate);
+    }
+    let Verified: Network.Networkˉendpoint = Network.Networkˉendpointˉcreate(
+        Endpoint.Address, Endpoint.Port, Endpoint.Interface
+    );
+    if Resolutionˉgeneration == 0u64 ||
+        Endpoint.Error != Network.Networkˉerror.Valid ||
+        Verified.Error != Network.Networkˉerror.Valid ||
+        Endpoint.Port != State.Endpoint.Port {
+        return Connectˉtransitionˉfailure(
+            State, Networkˉconnectˉerror.Invalidˉresolution
+        );
+    }
+    return Networkˉconnectˉtransition(
+        Networkˉconnectˉerror.Valid, true,
+        Networkˉconnectˉstate(
+            Networkˉconnectˉerror.Valid, true,
+            Networkˉconnectˉphase.Connecting, State.Grant,
+            State.Service, Endpoint, Resolutionˉgeneration,
+            State.Operation, 0u64, 0u64
+        )
+    );
+}
+
+fn Connectˉterminal(
+    State: Networkˉconnectˉstate,
+    Operationˉstate: Operation.Operationˉstate
+) -> Networkˉconnectˉtransition {
+    return Networkˉconnectˉtransition(
+        Networkˉconnectˉerror.Valid, true,
+        Networkˉconnectˉstate(
+            Networkˉconnectˉerror.Valid, State.Accepted,
+            Networkˉconnectˉphase.Terminal, State.Grant,
+            State.Service, State.Endpoint, State.Resolutionˉgeneration,
+            Operationˉstate, 0u64, 0u64
+        )
+    );
+}
+
+export fn Networkˉconnectˉcomplete(
+    State: Networkˉconnectˉstate,
+    Clock: Operation.Operationˉclock,
+    Connectionˉidentity: u64,
+    Connectionˉgeneration: u64
+) -> Networkˉconnectˉtransition {
+    if State.Error != Networkˉconnectˉerror.Valid || !State.Accepted ||
+        State.Phase != Networkˉconnectˉphase.Connecting {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉstate);
+    }
+    if Connectionˉidentity == 0u64 || Connectionˉgeneration == 0u64 {
+        return Connectˉtransitionˉfailure(
+            State, Networkˉconnectˉerror.Invalidˉconnection
+        );
+    }
+    let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State.Operation, Clock,
+        Operation.Operationˉeventˉcreate(
+            Operation.Operationˉeventˉkind.Complete, State.Operation, 0u64
+        )
+    );
+    if !Advanced.Applied {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉevent);
+    }
+    if Advanced.State.Outcome != Operation.Operationˉoutcome.Completed {
+        return Connectˉterminal(State, Advanced.State);
+    }
+    return Networkˉconnectˉtransition(
+        Networkˉconnectˉerror.Valid, true,
+        Networkˉconnectˉstate(
+            Networkˉconnectˉerror.Valid, true,
+            Networkˉconnectˉphase.Connected, State.Grant,
+            State.Service, State.Endpoint, State.Resolutionˉgeneration,
+            Advanced.State, Connectionˉidentity, Connectionˉgeneration
+        )
+    );
+}
+
+export fn Networkˉconnectˉinterrupt(
+    State: Networkˉconnectˉstate,
+    Clock: Operation.Operationˉclock,
+    Kind: Operation.Operationˉeventˉkind,
+    Value: u64
+) -> Networkˉconnectˉtransition {
+    if State.Error != Networkˉconnectˉerror.Valid || !State.Accepted ||
+        (State.Phase != Networkˉconnectˉphase.Resolving &&
+        State.Phase != Networkˉconnectˉphase.Connecting) {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉstate);
+    }
+    if Kind != Operation.Operationˉeventˉkind.Reject &&
+        Kind != Operation.Operationˉeventˉkind.Cancel &&
+        Kind != Operation.Operationˉeventˉkind.Providerˉloss &&
+        Kind != Operation.Operationˉeventˉkind.Providerˉrestart {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉevent);
+    }
+    let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State.Operation, Clock,
+        Operation.Operationˉeventˉcreate(Kind, State.Operation, Value)
+    );
+    if !Advanced.Applied {
+        return Connectˉtransitionˉfailure(State, Networkˉconnectˉerror.Invalidˉevent);
+    }
+    return Connectˉterminal(State, Advanced.State);
+}
+
+fn Streamˉfailure(Error: Networkˉstreamˉerror) -> Networkˉstreamˉstate {
+    return Networkˉstreamˉstate(
+        Error, Networkˉstreamˉphase.Invalid,
+        0u64, 0u64, 0u64, 0u64, 0u32, 0u64, 0u64, 0u64,
+        0u64, 0u64, Emptyˉoperation(), Emptyˉoperation()
+    );
+}
+
+fn Streamˉtransitionˉfailure(
+    State: Networkˉstreamˉstate,
+    Error: Networkˉstreamˉerror
+) -> Networkˉstreamˉtransition {
+    return Networkˉstreamˉtransition(Error, false, State);
+}
+
+fn Operationˉactive(State: Operation.Operationˉstate) -> bool {
+    return State.Error == Operation.Operationˉerror.Valid && State.Accepted &&
+        State.Phase != Operation.Operationˉphase.Terminal;
+}
+
+fn Streamˉwith(
+    State: Networkˉstreamˉstate,
+    Phase: Networkˉstreamˉphase,
+    Acceptedˉwriteˉbytes: u64,
+    Deliveredˉreadˉbytes: u64,
+    Write: Operation.Operationˉstate,
+    Read: Operation.Operationˉstate
+) -> Networkˉstreamˉstate {
+    return Networkˉstreamˉstate(
+        Networkˉstreamˉerror.Valid, Phase,
+        State.Providerˉidentity, State.Providerˉgeneration,
+        State.Connectionˉidentity, State.Connectionˉgeneration,
+        State.Maximumˉqueuedˉbytes, State.Maximumˉtransferˉbytes,
+        State.Maximumˉdeadlineˉspan, State.Expiresˉat,
+        Acceptedˉwriteˉbytes, Deliveredˉreadˉbytes, Write, Read
+    );
+}
+
+export fn Networkˉstreamˉopen(
+    Connected: Networkˉconnectˉstate,
+    Now: u64
+) -> Networkˉstreamˉstate {
+    if Connected.Error != Networkˉconnectˉerror.Valid ||
+        Connected.Phase != Networkˉconnectˉphase.Connected ||
+        Connected.Operation.Outcome != Operation.Operationˉoutcome.Completed ||
+        Connected.Connectionˉidentity == 0u64 ||
+        Connected.Connectionˉgeneration == 0u64 {
+        return Streamˉfailure(Networkˉstreamˉerror.Invalidˉconnection);
+    }
+    if Now >= Connected.Grant.Expiresˉat {
+        return Streamˉfailure(Networkˉstreamˉerror.Expired);
+    }
+    if Connected.Grant.Maximumˉqueuedˉbytes == 0u32 ||
+        Connected.Grant.Maximumˉtransferˉbytes == 0u64 ||
+        Connected.Grant.Maximumˉdeadlineˉspan == 0u64 {
+        return Streamˉfailure(Networkˉstreamˉerror.Invalidˉlimit);
+    }
+    return Networkˉstreamˉstate(
+        Networkˉstreamˉerror.Valid, Networkˉstreamˉphase.Open,
+        Connected.Operation.Providerˉidentity,
+        Connected.Operation.Providerˉgeneration,
+        Connected.Connectionˉidentity, Connected.Connectionˉgeneration,
+        Connected.Grant.Maximumˉqueuedˉbytes,
+        Connected.Grant.Maximumˉtransferˉbytes,
+        Connected.Grant.Maximumˉdeadlineˉspan,
+        Connected.Grant.Expiresˉat,
+        0u64, 0u64, Emptyˉoperation(), Emptyˉoperation()
+    );
+}
+
+fn Streamˉtransferˉused(State: Networkˉstreamˉstate) -> u64 {
+    return State.Acceptedˉwriteˉbytes + State.Deliveredˉreadˉbytes;
+}
+
+fn Streamˉtotalsˉvalid(State: Networkˉstreamˉstate) -> bool {
+    return State.Acceptedˉwriteˉbytes <= State.Maximumˉtransferˉbytes &&
+        State.Deliveredˉreadˉbytes <=
+            State.Maximumˉtransferˉbytes - State.Acceptedˉwriteˉbytes;
+}
+
+fn Streamˉqueued(State: Networkˉstreamˉstate) -> u64 {
+    var Queued: u64 = 0u64;
+    if Operationˉactive(State.Write) {
+        Queued = Queued + State.Write.Progressˉlimit - State.Write.Progress;
+    }
+    if Operationˉactive(State.Read) {
+        Queued = Queued + State.Read.Progressˉlimit - State.Read.Progress;
+    }
+    return Queued;
+}
+
+fn Streamˉrequestˉerror(
+    State: Networkˉstreamˉstate,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64,
+    Requested: u64
+) -> Networkˉstreamˉerror {
+    if State.Error != Networkˉstreamˉerror.Valid || !Streamˉtotalsˉvalid(State) ||
+        State.Phase == Networkˉstreamˉphase.Invalid ||
+        State.Phase == Networkˉstreamˉphase.Closed ||
+        State.Phase == Networkˉstreamˉphase.Reset ||
+        State.Phase == Networkˉstreamˉphase.Providerˉlost ||
+        State.Phase == Networkˉstreamˉphase.Stale ||
+        State.Phase == Networkˉstreamˉphase.Tornˉdown ||
+        State.Phase == Networkˉstreamˉphase.Writeˉindeterminate {
+        return Networkˉstreamˉerror.Invalidˉstate;
+    }
+    if Clock.Error != Operation.Operationˉerror.Valid ||
+        Clock.Generation == 0u64 || Clock.Tick >= State.Expiresˉat {
+        return Networkˉstreamˉerror.Expired;
+    }
+    if Deadline > State.Expiresˉat ||
+        (Deadline > Clock.Tick &&
+        Deadline - Clock.Tick > State.Maximumˉdeadlineˉspan) {
+        return Networkˉstreamˉerror.Invalidˉdeadline;
+    }
+    if Requested == 0u64 ||
+        Requested > U64ˉfromˉu32(State.Maximumˉqueuedˉbytes) ||
+        Streamˉqueued(State) > U64_MAXIMUM - Requested ||
+        Streamˉqueued(State) + Requested >
+            U64ˉfromˉu32(State.Maximumˉqueuedˉbytes) {
+        return Networkˉstreamˉerror.Invalidˉlimit;
+    }
+    let Used: u64 = Streamˉtransferˉused(State);
+    if Used > State.Maximumˉtransferˉbytes ||
+        Requested > State.Maximumˉtransferˉbytes - Used {
+        return Networkˉstreamˉerror.Invalidˉlimit;
+    }
+    return Networkˉstreamˉerror.Valid;
+}
+
+export fn Networkˉstreamˉwriteˉbegin(
+    State: Networkˉstreamˉstate,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64,
+    Requested: u64
+) -> Networkˉstreamˉtransition {
+    if State.Phase != Networkˉstreamˉphase.Open &&
+        State.Phase != Networkˉstreamˉphase.Peerˉclosed {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉstate);
+    }
+    if Operationˉactive(State.Write) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉstate);
+    }
+    let Error: Networkˉstreamˉerror = Streamˉrequestˉerror(
+        State, Clock, Deadline, Requested
+    );
+    if Error != Networkˉstreamˉerror.Valid {
+        return Streamˉtransitionˉfailure(State, Error);
+    }
+    let Write: Operation.Operationˉstate = Operation.Operationˉbegin(
+        State.Providerˉidentity, State.Providerˉgeneration,
+        Operationˉidentity, Operationˉgeneration,
+        Clock, Deadline, Requested, true
+    );
+    if Write.Error != Operation.Operationˉerror.Valid {
+        return Streamˉtransitionˉfailure(
+            State, Networkˉstreamˉerror.Invalidˉevent
+        );
+    }
+    return Networkˉstreamˉtransition(
+        Networkˉstreamˉerror.Valid, true,
+        Streamˉwith(
+            State, State.Phase, State.Acceptedˉwriteˉbytes,
+            State.Deliveredˉreadˉbytes, Write, State.Read
+        )
+    );
+}
+
+export fn Networkˉstreamˉreadˉbegin(
+    State: Networkˉstreamˉstate,
+    Operationˉidentity: u64,
+    Operationˉgeneration: u64,
+    Clock: Operation.Operationˉclock,
+    Deadline: u64,
+    Requested: u64
+) -> Networkˉstreamˉtransition {
+    if State.Phase != Networkˉstreamˉphase.Open &&
+        State.Phase != Networkˉstreamˉphase.Localˉclosed {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉstate);
+    }
+    if Operationˉactive(State.Read) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉstate);
+    }
+    let Error: Networkˉstreamˉerror = Streamˉrequestˉerror(
+        State, Clock, Deadline, Requested
+    );
+    if Error != Networkˉstreamˉerror.Valid {
+        return Streamˉtransitionˉfailure(State, Error);
+    }
+    let Read: Operation.Operationˉstate = Operation.Operationˉbegin(
+        State.Providerˉidentity, State.Providerˉgeneration,
+        Operationˉidentity, Operationˉgeneration,
+        Clock, Deadline, Requested, false
+    );
+    if Read.Error != Operation.Operationˉerror.Valid {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    return Networkˉstreamˉtransition(
+        Networkˉstreamˉerror.Valid, true,
+        Streamˉwith(
+            State, State.Phase, State.Acceptedˉwriteˉbytes,
+            State.Deliveredˉreadˉbytes, State.Write, Read
+        )
+    );
+}
+
+fn Streamˉeventˉidentityˉvalid(
+    State: Networkˉstreamˉstate,
+    Connectionˉidentity: u64,
+    Connectionˉgeneration: u64
+) -> bool {
+    return Connectionˉidentity == State.Connectionˉidentity &&
+        Connectionˉgeneration == State.Connectionˉgeneration;
+}
+
+export fn Networkˉstreamˉwriteˉadvance(
+    State: Networkˉstreamˉstate,
+    Clock: Operation.Operationˉclock,
+    Event: Operation.Operationˉevent,
+    Connectionˉidentity: u64,
+    Connectionˉgeneration: u64
+) -> Networkˉstreamˉtransition {
+    if !Streamˉtotalsˉvalid(State) || !Operationˉactive(State.Write) ||
+        !Streamˉeventˉidentityˉvalid(
+            State, Connectionˉidentity, Connectionˉgeneration
+        ) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State.Write, Clock, Event
+    );
+    if !Advanced.Applied {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    let Delta: u64 = Advanced.State.Progress - State.Write.Progress;
+    if State.Acceptedˉwriteˉbytes > U64_MAXIMUM - Delta {
+        return Streamˉtransitionˉfailure(
+            State, Networkˉstreamˉerror.Arithmeticˉoverflow
+        );
+    }
+    var Phase: Networkˉstreamˉphase = State.Phase;
+    if Advanced.State.Outcome == Operation.Operationˉoutcome.Submissionˉindeterminate {
+        Phase = Networkˉstreamˉphase.Writeˉindeterminate;
+    } else if Advanced.State.Outcome == Operation.Operationˉoutcome.Providerˉlost {
+        Phase = Networkˉstreamˉphase.Providerˉlost;
+    } else if Advanced.State.Outcome == Operation.Operationˉoutcome.Stale {
+        Phase = Networkˉstreamˉphase.Stale;
+    }
+    return Networkˉstreamˉtransition(
+        Networkˉstreamˉerror.Valid, true,
+        Streamˉwith(
+            State, Phase, State.Acceptedˉwriteˉbytes + Delta,
+            State.Deliveredˉreadˉbytes, Advanced.State, State.Read
+        )
+    );
+}
+
+export fn Networkˉstreamˉreadˉadvance(
+    State: Networkˉstreamˉstate,
+    Clock: Operation.Operationˉclock,
+    Event: Operation.Operationˉevent,
+    Connectionˉidentity: u64,
+    Connectionˉgeneration: u64,
+    Peerˉclosed: bool
+) -> Networkˉstreamˉtransition {
+    if !Streamˉtotalsˉvalid(State) || !Operationˉactive(State.Read) ||
+        !Streamˉeventˉidentityˉvalid(
+            State, Connectionˉidentity, Connectionˉgeneration
+        ) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    if Peerˉclosed && Event.Kind != Operation.Operationˉeventˉkind.Complete {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    if Event.Kind == Operation.Operationˉeventˉkind.Complete &&
+        Event.Value == 0u64 && !Peerˉclosed {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    let Advanced: Operation.Operationˉtransition = Operation.Operationˉadvance(
+        State.Read, Clock, Event
+    );
+    if !Advanced.Applied {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    let Delta: u64 = Advanced.State.Progress - State.Read.Progress;
+    if State.Deliveredˉreadˉbytes > U64_MAXIMUM - Delta {
+        return Streamˉtransitionˉfailure(
+            State, Networkˉstreamˉerror.Arithmeticˉoverflow
+        );
+    }
+    var Phase: Networkˉstreamˉphase = State.Phase;
+    if Advanced.State.Outcome == Operation.Operationˉoutcome.Providerˉlost {
+        Phase = Networkˉstreamˉphase.Providerˉlost;
+    } else if Advanced.State.Outcome == Operation.Operationˉoutcome.Stale {
+        Phase = Networkˉstreamˉphase.Stale;
+    } else if Peerˉclosed &&
+        Advanced.State.Outcome == Operation.Operationˉoutcome.Completed {
+        if State.Phase == Networkˉstreamˉphase.Localˉclosed {
+            Phase = Networkˉstreamˉphase.Closed;
+        } else {
+            Phase = Networkˉstreamˉphase.Peerˉclosed;
+        }
+    }
+    return Networkˉstreamˉtransition(
+        Networkˉstreamˉerror.Valid, true,
+        Streamˉwith(
+            State, Phase, State.Acceptedˉwriteˉbytes,
+            State.Deliveredˉreadˉbytes + Delta, State.Write, Advanced.State
+        )
+    );
+}
+
+export fn Networkˉstreamˉlocalˉshutdown(
+    State: Networkˉstreamˉstate
+) -> Networkˉstreamˉtransition {
+    if Operationˉactive(State.Write) ||
+        (State.Phase != Networkˉstreamˉphase.Open &&
+        State.Phase != Networkˉstreamˉphase.Peerˉclosed) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉstate);
+    }
+    var Phase: Networkˉstreamˉphase = Networkˉstreamˉphase.Localˉclosed;
+    if State.Phase == Networkˉstreamˉphase.Peerˉclosed {
+        Phase = Networkˉstreamˉphase.Closed;
+    }
+    return Networkˉstreamˉtransition(
+        Networkˉstreamˉerror.Valid, true,
+        Streamˉwith(
+            State, Phase, State.Acceptedˉwriteˉbytes,
+            State.Deliveredˉreadˉbytes, State.Write, State.Read
+        )
+    );
+}
+
+export fn Networkˉstreamˉproviderˉtransition(
+    State: Networkˉstreamˉstate,
+    Providerˉidentity: u64,
+    Providerˉgeneration: u64,
+    Connectionˉidentity: u64,
+    Connectionˉgeneration: u64,
+    Event: Networkˉstreamˉproviderˉevent,
+    Newˉproviderˉgeneration: u64
+) -> Networkˉstreamˉtransition {
+    if State.Error != Networkˉstreamˉerror.Valid || !Streamˉtotalsˉvalid(State) ||
+        State.Phase == Networkˉstreamˉphase.Invalid ||
+        State.Phase == Networkˉstreamˉphase.Closed ||
+        State.Phase == Networkˉstreamˉphase.Reset ||
+        State.Phase == Networkˉstreamˉphase.Providerˉlost ||
+        State.Phase == Networkˉstreamˉphase.Stale ||
+        State.Phase == Networkˉstreamˉphase.Tornˉdown ||
+        State.Phase == Networkˉstreamˉphase.Writeˉindeterminate {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉstate);
+    }
+    if Providerˉidentity != State.Providerˉidentity ||
+        Providerˉgeneration != State.Providerˉgeneration ||
+        !Streamˉeventˉidentityˉvalid(
+            State, Connectionˉidentity, Connectionˉgeneration
+        ) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉgeneration);
+    }
+    if Event == Networkˉstreamˉproviderˉevent.Providerˉrestart &&
+        (Newˉproviderˉgeneration == 0u64 ||
+        Newˉproviderˉgeneration == State.Providerˉgeneration) {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉgeneration);
+    }
+    if Event != Networkˉstreamˉproviderˉevent.Reset &&
+        Event != Networkˉstreamˉproviderˉevent.Providerˉloss &&
+        Event != Networkˉstreamˉproviderˉevent.Providerˉrestart &&
+        Event != Networkˉstreamˉproviderˉevent.Teardown {
+        return Streamˉtransitionˉfailure(State, Networkˉstreamˉerror.Invalidˉevent);
+    }
+    var Phase: Networkˉstreamˉphase = Networkˉstreamˉphase.Reset;
+    if Event == Networkˉstreamˉproviderˉevent.Providerˉloss {
+        Phase = Networkˉstreamˉphase.Providerˉlost;
+    } else if Event == Networkˉstreamˉproviderˉevent.Providerˉrestart {
+        Phase = Networkˉstreamˉphase.Stale;
+    } else if Event == Networkˉstreamˉproviderˉevent.Teardown {
+        Phase = Networkˉstreamˉphase.Tornˉdown;
+    }
+    if Operationˉactive(State.Write) {
+        Phase = Networkˉstreamˉphase.Writeˉindeterminate;
+    }
+    return Networkˉstreamˉtransition(
+        Networkˉstreamˉerror.Valid, true,
+        Streamˉwith(
+            State, Phase, State.Acceptedˉwriteˉbytes,
+            State.Deliveredˉreadˉbytes, State.Write, State.Read
+        )
+    );
+}

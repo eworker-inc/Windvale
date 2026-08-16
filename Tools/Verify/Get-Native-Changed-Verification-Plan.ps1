@@ -784,7 +784,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Network/Bounded-Operation-Core-Self-Test.wv',
         'Specifications/Bounded-Operation-Core.md'
     )) {
-        Add-Suite 'operation-core'
+        Add-Suite @('operation-core', 'network-connect-stream')
     } elseif ($Path -in @(
         'Libraries/Network/Address-Authority.wv',
         'Projects/Libraries/Windvale-Library-Network-Address-Authority.wvproj',
@@ -792,7 +792,15 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Network/Address-Authority-Self-Test.wv',
         'Specifications/Network-Address-Authority.md'
     )) {
-        Add-Suite 'network-authority'
+        Add-Suite @('network-authority', 'network-connect-stream')
+    } elseif ($Path -in @(
+        'Libraries/Network/Connect-Stream-Core.wv',
+        'Projects/Libraries/Windvale-Library-Network-Connect-Stream-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Network-Connect-Stream-Core.wvproj',
+        'Tests/Fixtures/Network/Connect-Stream-Core-Self-Test.wv',
+        'Specifications/Network-Connect-Stream-Core.md'
+    )) {
+        Add-Suite 'network-connect-stream'
     } elseif ($Path -in @(
         'Libraries/Platform/Models/Bound-Model-Provider.wv',
         'Projects/Libraries/Windvale-Library-Bound-Model-Provider.wvproj',

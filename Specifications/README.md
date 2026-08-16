@@ -90,6 +90,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 
 - [Bounded operation, deadline, cancellation, and teardown core](Bounded-Operation-Core.md)
 - [Canonical addresses, endpoints, service names, and reducible grants](Network-Address-Authority.md)
+- [Resolve/connect and reliable byte-stream semantic core](Network-Connect-Stream-Core.md)
 
 ## Assembly, objects, and linking
 

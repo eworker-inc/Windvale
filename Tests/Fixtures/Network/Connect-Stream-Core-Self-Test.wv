@@ -1,0 +1,342 @@
+module Windvaleˉnetworkˉconnectˉstreamˉcoreˉselfˉtest profile portable;
+
+import Windvaleˉboundedˉoperationˉcore as Operation;
+import Windvaleˉnetworkˉaddressˉauthority as Network;
+import Windvaleˉnetworkˉconnectˉstreamˉcore as Stream;
+
+fn Clockˉat(Tick: u64) -> Operation.Operationˉclock {
+    return Operation.Operationˉclockˉcreate(5u64, Tick);
+}
+
+fn Serviceˉgrant(
+    Queued: u32,
+    Transfer: u64,
+    Expires: u64
+) -> Network.Networkˉgrant {
+    return Network.Networkˉserviceˉgrantˉcreate(
+        Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+        Network.Networkˉtransport.Tcp,
+        Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 1u32, Queued, Transfer, 50u64, Expires
+    );
+}
+
+fn Selectedˉendpoint() -> Network.Networkˉendpoint {
+    return Network.Networkˉendpointˉcreate(
+        Network.Networkˉaddressˉparse("192.0.2.42"), 443u32, 0u64
+    );
+}
+
+fn Connectedˉwith(
+    Grant: Network.Networkˉgrant,
+    Connectionˉidentity: u64
+) -> Stream.Networkˉconnectˉstate {
+    let Begun: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Grant, Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+            443u32, 7u64, 3u64, 11u64, 1u64, Clockˉat(10u64), 40u64
+        );
+    let Dispatched: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉdispatch(Begun, Clockˉat(11u64));
+    let Selected: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉselectˉresolved(
+            Dispatched.State, 9u64, Selectedˉendpoint()
+        );
+    let Completed: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉcomplete(
+            Selected.State, Clockˉat(12u64), Connectionˉidentity, 4u64
+        );
+    return Completed.State;
+}
+
+fn Openˉstream() -> Stream.Networkˉstreamˉstate {
+    return Stream.Networkˉstreamˉopen(
+        Connectedˉwith(Serviceˉgrant(16u32, 64u64, 100u64), 19u64),
+        12u64
+    );
+}
+
+fn Advanceˉwrite(
+    State: Stream.Networkˉstreamˉstate,
+    Tick: u64,
+    Kind: Operation.Operationˉeventˉkind,
+    Value: u64
+) -> Stream.Networkˉstreamˉtransition {
+    return Stream.Networkˉstreamˉwriteˉadvance(
+        State, Clockˉat(Tick),
+        Operation.Operationˉeventˉcreate(Kind, State.Write, Value),
+        19u64, 4u64
+    );
+}
+
+fn Advanceˉread(
+    State: Stream.Networkˉstreamˉstate,
+    Tick: u64,
+    Kind: Operation.Operationˉeventˉkind,
+    Value: u64,
+    Peerˉclosed: bool
+) -> Stream.Networkˉstreamˉtransition {
+    return Stream.Networkˉstreamˉreadˉadvance(
+        State, Clockˉat(Tick),
+        Operation.Operationˉeventˉcreate(Kind, State.Read, Value),
+        19u64, 4u64, Peerˉclosed
+    );
+}
+
+fn Serviceˉconnectˉcase() -> bool {
+    let Begun: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Serviceˉgrant(16u32, 64u64, 100u64),
+            Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+            443u32, 7u64, 3u64, 1u64, 1u64, Clockˉat(10u64), 40u64
+        );
+    let Selected: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉselectˉresolved(
+            Begun, 2u64, Selectedˉendpoint()
+        );
+    return Begun.Error == Stream.Networkˉconnectˉerror.Valid && Begun.Accepted &&
+        Begun.Phase == Stream.Networkˉconnectˉphase.Resolving &&
+        Selected.Applied && Selected.State.Phase == Stream.Networkˉconnectˉphase.Connecting &&
+        Selected.State.Resolutionˉgeneration == 2u64;
+}
+
+fn Unauthorizedˉserviceˉcase() -> bool {
+    let Denied: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Serviceˉgrant(16u32, 64u64, 100u64),
+            Network.Networkˉserviceˉnameˉcreate("api.anthropic.com"),
+            443u32, 7u64, 3u64, 2u64, 1u64, Clockˉat(10u64), 40u64
+        );
+    return Denied.Error == Stream.Networkˉconnectˉerror.Unauthorized &&
+        !Denied.Accepted;
+}
+
+fn Endpointˉconnectˉcase() -> bool {
+    let Prefix: Network.Networkˉprefix = Network.Networkˉprefixˉcreate(
+        Network.Networkˉaddressˉparse("192.0.2.0"), 24u32
+    );
+    let Grant: Network.Networkˉgrant = Network.Networkˉprefixˉgrantˉcreate(
+        Prefix, Network.Networkˉtransport.Tcp,
+        Network.Networkˉdirection.Outbound,
+        443u32, 443u32, 0u64, 1u32, 16u32, 64u64, 50u64, 100u64
+    );
+    let Allowed: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉendpointˉbegin(
+            Grant, Selectedˉendpoint(), 7u64, 3u64, 3u64, 1u64,
+            Clockˉat(10u64), 40u64
+        );
+    let Outside: Network.Networkˉendpoint = Network.Networkˉendpointˉcreate(
+        Network.Networkˉaddressˉparse("198.51.100.1"), 443u32, 0u64
+    );
+    let Denied: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉendpointˉbegin(
+            Grant, Outside, 7u64, 3u64, 4u64, 1u64,
+            Clockˉat(10u64), 40u64
+        );
+    return Allowed.Accepted &&
+        Allowed.Phase == Stream.Networkˉconnectˉphase.Connecting &&
+        Allowed.Resolutionˉgeneration == 0u64 &&
+        Denied.Error == Stream.Networkˉconnectˉerror.Unauthorized;
+}
+
+fn Deadlineˉcase() -> bool {
+    let Grant: Network.Networkˉgrant = Serviceˉgrant(16u32, 64u64, 100u64);
+    let Tooˉlong: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Grant, Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+            443u32, 7u64, 3u64, 5u64, 1u64, Clockˉat(10u64), 61u64
+        );
+    let Expired: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Grant, Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+            443u32, 7u64, 3u64, 6u64, 1u64, Clockˉat(100u64), 100u64
+        );
+    return Tooˉlong.Error == Stream.Networkˉconnectˉerror.Invalidˉdeadline &&
+        Expired.Error == Stream.Networkˉconnectˉerror.Unauthorized;
+}
+
+fn Resolutionˉcase() -> bool {
+    let Begun: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Serviceˉgrant(16u32, 64u64, 100u64),
+            Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+            443u32, 7u64, 3u64, 7u64, 1u64, Clockˉat(10u64), 40u64
+        );
+    let Wrongˉport: Network.Networkˉendpoint = Network.Networkˉendpointˉcreate(
+        Network.Networkˉaddressˉparse("192.0.2.42"), 8443u32, 0u64
+    );
+    let Zero: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉselectˉresolved(Begun, 0u64, Selectedˉendpoint());
+    let Wrong: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉselectˉresolved(Begun, 2u64, Wrongˉport);
+    return !Zero.Applied &&
+        Zero.Error == Stream.Networkˉconnectˉerror.Invalidˉresolution &&
+        !Wrong.Applied &&
+        Wrong.Error == Stream.Networkˉconnectˉerror.Invalidˉresolution;
+}
+
+fn Completionˉcase() -> bool {
+    let Connected: Stream.Networkˉconnectˉstate = Connectedˉwith(
+        Serviceˉgrant(16u32, 64u64, 100u64), 19u64
+    );
+    return Connected.Phase == Stream.Networkˉconnectˉphase.Connected &&
+        Connected.Connectionˉidentity == 19u64 &&
+        Connected.Connectionˉgeneration == 4u64 &&
+        Connected.Operation.Outcome == Operation.Operationˉoutcome.Completed;
+}
+
+fn Connectˉinterruptionˉcase() -> bool {
+    let Begun: Stream.Networkˉconnectˉstate =
+        Stream.Networkˉconnectˉserviceˉbegin(
+            Serviceˉgrant(16u32, 64u64, 100u64),
+            Network.Networkˉserviceˉnameˉcreate("api.openai.com"),
+            443u32, 7u64, 3u64, 8u64, 1u64, Clockˉat(10u64), 40u64
+        );
+    let Cancelled: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉinterrupt(
+            Begun, Clockˉat(11u64),
+            Operation.Operationˉeventˉkind.Cancel, 0u64
+        );
+    let Invalid: Stream.Networkˉconnectˉtransition =
+        Stream.Networkˉconnectˉinterrupt(
+            Begun, Clockˉat(11u64),
+            Operation.Operationˉeventˉkind.Complete, 0u64
+        );
+    return Cancelled.Applied &&
+        Cancelled.State.Phase == Stream.Networkˉconnectˉphase.Terminal &&
+        Cancelled.State.Operation.Outcome == Operation.Operationˉoutcome.Cancelled &&
+        !Invalid.Applied && Invalid.Error == Stream.Networkˉconnectˉerror.Invalidˉevent;
+}
+
+fn Streamˉopenˉcase() -> bool {
+    let State: Stream.Networkˉstreamˉstate = Openˉstream();
+    let Expired: Stream.Networkˉstreamˉstate = Stream.Networkˉstreamˉopen(
+        Connectedˉwith(Serviceˉgrant(16u32, 64u64, 100u64), 20u64), 100u64
+    );
+    return State.Error == Stream.Networkˉstreamˉerror.Valid &&
+        State.Phase == Stream.Networkˉstreamˉphase.Open &&
+        State.Providerˉgeneration == 3u64 &&
+        Expired.Error == Stream.Networkˉstreamˉerror.Expired;
+}
+
+fn Partialˉwriteˉcase() -> bool {
+    let Begun: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉwriteˉbegin(
+            Openˉstream(), 21u64, 1u64, Clockˉat(13u64), 30u64, 8u64
+        );
+    let Dispatched: Stream.Networkˉstreamˉtransition = Advanceˉwrite(
+        Begun.State, 14u64, Operation.Operationˉeventˉkind.Dispatch, 0u64
+    );
+    let Partial: Stream.Networkˉstreamˉtransition = Advanceˉwrite(
+        Dispatched.State, 15u64, Operation.Operationˉeventˉkind.Progress, 3u64
+    );
+    let Completed: Stream.Networkˉstreamˉtransition = Advanceˉwrite(
+        Partial.State, 16u64, Operation.Operationˉeventˉkind.Complete, 5u64
+    );
+    return Partial.State.Acceptedˉwriteˉbytes == 3u64 &&
+        Completed.State.Acceptedˉwriteˉbytes == 5u64 &&
+        Completed.State.Write.Outcome == Operation.Operationˉoutcome.Completed &&
+        Completed.State.Write.Progress == 5u64;
+}
+
+fn Indeterminateˉwriteˉcase() -> bool {
+    let Begun: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉwriteˉbegin(
+            Openˉstream(), 22u64, 1u64, Clockˉat(13u64), 30u64, 8u64
+        );
+    let Dispatched: Stream.Networkˉstreamˉtransition = Advanceˉwrite(
+        Begun.State, 14u64, Operation.Operationˉeventˉkind.Dispatch, 0u64
+    );
+    let Cancelled: Stream.Networkˉstreamˉtransition = Advanceˉwrite(
+        Dispatched.State, 15u64, Operation.Operationˉeventˉkind.Cancel, 0u64
+    );
+    return Cancelled.Applied &&
+        Cancelled.State.Phase == Stream.Networkˉstreamˉphase.Writeˉindeterminate &&
+        Cancelled.State.Write.Outcome ==
+            Operation.Operationˉoutcome.Submissionˉindeterminate;
+}
+
+fn Readˉcloseˉcase() -> bool {
+    let Begun: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉreadˉbegin(
+            Openˉstream(), 23u64, 1u64, Clockˉat(13u64), 30u64, 8u64
+        );
+    let Dispatched: Stream.Networkˉstreamˉtransition = Advanceˉread(
+        Begun.State, 14u64, Operation.Operationˉeventˉkind.Dispatch, 0u64, false
+    );
+    let Partial: Stream.Networkˉstreamˉtransition = Advanceˉread(
+        Dispatched.State, 15u64, Operation.Operationˉeventˉkind.Progress, 2u64, false
+    );
+    let Completed: Stream.Networkˉstreamˉtransition = Advanceˉread(
+        Partial.State, 16u64, Operation.Operationˉeventˉkind.Complete, 5u64, true
+    );
+    let Closed: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉlocalˉshutdown(Completed.State);
+    return Completed.State.Deliveredˉreadˉbytes == 5u64 &&
+        Completed.State.Phase == Stream.Networkˉstreamˉphase.Peerˉclosed &&
+        Closed.Applied && Closed.State.Phase == Stream.Networkˉstreamˉphase.Closed;
+}
+
+fn Limitˉcase() -> bool {
+    let Small: Stream.Networkˉstreamˉstate = Stream.Networkˉstreamˉopen(
+        Connectedˉwith(Serviceˉgrant(8u32, 10u64, 100u64), 19u64), 12u64
+    );
+    let Write: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉwriteˉbegin(
+            Small, 24u64, 1u64, Clockˉat(13u64), 30u64, 6u64
+        );
+    let Read: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉreadˉbegin(
+            Write.State, 25u64, 1u64, Clockˉat(13u64), 30u64, 3u64
+        );
+    let Tooˉlong: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉreadˉbegin(
+            Small, 26u64, 1u64, Clockˉat(13u64), 64u64, 1u64
+        );
+    return !Read.Applied && Read.Error == Stream.Networkˉstreamˉerror.Invalidˉlimit &&
+        !Tooˉlong.Applied &&
+        Tooˉlong.Error == Stream.Networkˉstreamˉerror.Invalidˉdeadline;
+}
+
+fn Providerˉlifecycleˉcase() -> bool {
+    let Wrong: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉproviderˉtransition(
+            Openˉstream(), 7u64, 4u64, 19u64, 4u64,
+            Stream.Networkˉstreamˉproviderˉevent.Providerˉrestart, 5u64
+        );
+    let Restarted: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉproviderˉtransition(
+            Openˉstream(), 7u64, 3u64, 19u64, 4u64,
+            Stream.Networkˉstreamˉproviderˉevent.Providerˉrestart, 5u64
+        );
+    let Pending: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉwriteˉbegin(
+            Openˉstream(), 27u64, 1u64, Clockˉat(13u64), 30u64, 4u64
+        );
+    let Lost: Stream.Networkˉstreamˉtransition =
+        Stream.Networkˉstreamˉproviderˉtransition(
+            Pending.State, 7u64, 3u64, 19u64, 4u64,
+            Stream.Networkˉstreamˉproviderˉevent.Providerˉloss, 0u64
+        );
+    return !Wrong.Applied &&
+        Wrong.Error == Stream.Networkˉstreamˉerror.Invalidˉgeneration &&
+        Restarted.State.Phase == Stream.Networkˉstreamˉphase.Stale &&
+        Lost.State.Phase == Stream.Networkˉstreamˉphase.Writeˉindeterminate;
+}
+
+export fn Main() -> i32 {
+    if !Serviceˉconnectˉcase() { return 1; }
+    if !Unauthorizedˉserviceˉcase() { return 2; }
+    if !Endpointˉconnectˉcase() { return 3; }
+    if !Deadlineˉcase() { return 4; }
+    if !Resolutionˉcase() { return 5; }
+    if !Completionˉcase() { return 6; }
+    if !Connectˉinterruptionˉcase() { return 7; }
+    if !Streamˉopenˉcase() { return 8; }
+    if !Partialˉwriteˉcase() { return 9; }
+    if !Indeterminateˉwriteˉcase() { return 10; }
+    if !Readˉcloseˉcase() { return 11; }
+    if !Limitˉcase() { return 12; }
+    if !Providerˉlifecycleˉcase() { return 13; }
+    return 42;
+}

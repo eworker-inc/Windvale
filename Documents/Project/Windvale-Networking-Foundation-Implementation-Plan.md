@@ -3,9 +3,11 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Active implementation; slices 1 and 2 are implemented candidates under
+- Status: Active implementation; slices 1 and 2 plus the Layer 3 contract core
+  are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
-  and [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
+  [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
+  and [Decision 0595](../Decisions/0595-First-Resolve-Connect-And-Reliable-Stream-Core.md),
   and no network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -166,6 +168,26 @@ scope, prefix, overflow, and grant-narrowing cases agree on Windows and Linux.
 The portable implementation and twelve-group focused owner now cover that
 surface, execute on Windows, and construct the exact Linux image. Independent
 Linux execution is still required before the complete exit gate is claimed.
+
+### Network Layer 3 contract core: resolve/connect and reliable stream
+
+Status: implemented candidate under
+[Decision 0595](../Decisions/0595-First-Resolve-Connect-And-Reliable-Stream-Core.md).
+
+Implement the capability-free provider target for one authorized resolve/connect
+operation and one bounded reliable stream. It keeps name resolution and address
+selection in one decision, composes common operation deadlines/cancellation,
+reports exact local write acceptance and read delivery, preserves half-close,
+and terminates on indeterminate writes or stale provider generations.
+
+This does not replace ordered slice 3 packet work and does not claim a host
+network capability. It removes semantic invention from slice 4: Windows, Linux,
+and later Windvale OS providers now have one exact contract to implement.
+
+Exit gate: thirteen deterministic groups cover authorization, selection,
+deadlines, partial I/O, half-close, limits, generation changes, and teardown.
+The focused Windows path executes and constructs the Linux image; independent
+Linux execution remains required for cross-host qualification.
 
 ### Network slice 3: deterministic link and packet core
 
