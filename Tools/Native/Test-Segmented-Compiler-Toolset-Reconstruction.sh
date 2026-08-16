@@ -78,9 +78,9 @@ compiler_wvb="$test_directory/Compiler-Build-Driver.wvb"
     "$compiler_wvb" >"$test_directory/Compiler-Build.out" \
     2>"$test_directory/Compiler-Build.err" || fail
 [[ ! -s $test_directory/Compiler-Build.err ]] || fail
-[[ $(stat -c %s -- "$compiler_wvb") == 1153758 ]] || fail
+[[ $(stat -c %s -- "$compiler_wvb") == 1155121 ]] || fail
 printf '%s  %s\n' \
-    31c7e5292f607b3b88153ef64a14c64bae438fcfbca75b8495ffba2a5cb991bb \
+    0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 \
     "$compiler_wvb" | sha256sum --check --strict --quiet || fail
 chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
 "$test_directory/linux-x64-wvstage.elf" "$compiler_wvb" \
@@ -89,7 +89,7 @@ chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
     2>"$test_directory/Compiler-Stage.err" || fail
 [[ ! -s $test_directory/Compiler-Stage.err ]] || fail
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=30148873 chunks=39 manifest-bytes=492' \
+    'native x64 staging status=Complete object-bytes=30158719 chunks=39 manifest-bytes=492' \
     "$test_directory/Compiler-Stage.out" >/dev/null || fail
 pass 'compiler-scale WVB staging'
 

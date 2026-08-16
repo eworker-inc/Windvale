@@ -62,6 +62,7 @@ set "ProgressCurrent=1"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
+set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
 
 :allocate
 set "TemporaryDirectory=%TEMP%\windvale-database-storage-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -74,6 +75,11 @@ set "LowererWvb=%TemporaryDirectory%\Lowerer.wvb"
 set "Lowerer=%TemporaryDirectory%\Lowerer.exe"
 set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%WorkspacePath:\=/%"
+set "TemporaryResource=%TemporaryDirectory:\=/%"
+set "BuildDriverProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
+set "BuildDriverProjectResource=%BuildDriverProject:\=/%"
+set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
+set "LowererProjectResource=%LowererProject:\=/%"
 set "Result=1"
 set "ProjectCheckpointHostStorage=NotRun"
 set "ProjectCheckpointHostRootWriter=NotRun"
@@ -109,23 +115,25 @@ if "%Development%"=="1" (
     call :prepare_cached_build_driver "%BuildDriverWvb%"
     if errorlevel 1 goto :cleanup
     set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
-    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7483904 496d9e00c682af316b69c0e7639858fa0da171b4d467c4838b1ed774ac18b4cc
+    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7491072 85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3
     if errorlevel 1 goto :cleanup
 ) else (
-    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-        "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
-        "%BuildDriverWvb%" >nul
+    "%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
+        "%BuildDriverProjectResource%" "%TemporaryResource%/Build-Driver.wvb" >nul
+    if errorlevel 1 goto :cleanup
+    call :verify_file "%BuildDriverWvb%" 1155121 0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02
     if errorlevel 1 goto :cleanup
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-        2 "%BuildDriverWvb%" "%BuildDriver%" >nul
+        2 "%BuildDriverWvb%" "%BuildDriver%" --development-cache >nul
     if errorlevel 1 goto :cleanup
 
-    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-        "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
-        "%LowererWvb%" >nul
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
+        "%LowererProjectResource%" "%TemporaryResource%/Lowerer.wvb" >nul
+    if errorlevel 1 goto :cleanup
+    call :verify_file "%LowererWvb%" 522025 318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6
     if errorlevel 1 goto :cleanup
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-        6 "%LowererWvb%" "%Lowerer%" >nul
+        6 "%LowererWvb%" "%Lowerer%" --development-cache >nul
     if errorlevel 1 goto :cleanup
 )
 

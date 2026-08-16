@@ -126,6 +126,7 @@ build_driver="$temporary_directory/Build-Driver.elf"
 lowerer_wvb="$temporary_directory/Lowerer.wvb"
 lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
+front_door="$repository_root/Artifacts/Native-Front-Door/linux-x64/wvbuild.elf"
 project_checkpoint_host_storage=NotRun
 project_checkpoint_host_root_writer=NotRun
 project_checkpoint_host_local_service=NotRun
@@ -259,20 +260,24 @@ if ((development == 1)); then
     [[ $project_wvb_checkpoint == Created || $project_wvb_checkpoint == Hit ]] || exit 1
     prepare_cached_build_driver "$build_driver_wvb" || exit $?
     lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
-    verify_file "$lowerer" 7483392 \
-        30ffb3ce953b173d1bbee77c8e440e901806a676f7ec17683b5cfe3953ebb441 || exit $?
+    verify_file "$lowerer" 7491584 \
+        deb75ead2af0d06d2357cdf88d8cf58fefd284bf4834e6489198b517f3a4908e || exit $?
 else
-    "$script_directory/Build-Wvb.sh" \
+    "$front_door" --workspace "$workspace_path" --project \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
         "$build_driver_wvb" >/dev/null || exit $?
+    verify_file "$build_driver_wvb" 1155121 \
+        0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 || exit $?
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-        2 "$build_driver_wvb" "$build_driver" >/dev/null || exit $?
+        2 "$build_driver_wvb" "$build_driver" --development-cache >/dev/null || exit $?
 
-    "$script_directory/Build-Wvb.sh" \
+    "$build_driver" --workspace "$workspace_path" --project \
         "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
         "$lowerer_wvb" >/dev/null || exit $?
+    verify_file "$lowerer_wvb" 522025 \
+        318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6 || exit $?
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-        6 "$lowerer_wvb" "$lowerer" >/dev/null || exit $?
+        6 "$lowerer_wvb" "$lowerer" --development-cache >/dev/null || exit $?
 fi
 
 if ((development == 1)); then
@@ -1970,4 +1975,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=53 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=54 local-results=0 cross-host-images=Verified'

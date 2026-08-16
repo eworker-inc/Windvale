@@ -80,7 +80,7 @@ model-chat|Test-Model-Chat|21|4|model chat status=Passed providers=3 cases=21 li
 native-external-model-gateway|Test-Native-External-Model-Gateway|14|4|native external model gateway status=Passed cases=14 local-result=0 cross-host-images=Verified public-network=0 real-credentials=0
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|32|1|native database storage status=Passed cases=32 local-results=0 cross-host-images=Verified
+database-storage|Test-Database-Storage|54|1|native database storage status=Passed cases=54 local-results=0 cross-host-images=Verified
 workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11
@@ -93,7 +93,7 @@ installation-command-dispatch|Test-Installation-Command-Dispatch|9|4|native inst
 installation-generation-publication|Test-Installation-Generation-Publication|8|3|native installation generation publication status=Passed cases=8 generation=c8b8daac8f5298b8c3cab1ba46312ddbe09d6f1718972599872eb901a482f261 bytes=377
 package-bundle|Test-Package-Bundle|12|3|native package bundle status=Passed cases=12 applications=2 bundles=2 objects=9 shared=1 idempotent=Verified
 installers|Test-Installers|8|3|native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified
-wvdb-query-capability|Test-Wvdb-Query-Native-Capability|5|3|native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified
+wvdb-query-capability|Test-Wvdb-Query-Native-Capability|6|3|native wvdb query capability status=Passed cases=6 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified
 release-envelope|Test-Release-Envelope|17|4|native release envelope status=Passed cases=17 signatures=4 artifacts=12 packages=2 protected-private-keys=2
 offline-package-stage|Test-Offline-Package-Stage|8|4|native offline package stage status=Passed cases=8 packages=2 policy-records=8 generations=2 published=1 artifacts=14 deterministic=Verified tamper=Rejected
 wvdb-approval|Test-Wvdb-Approval-Records|13|4|native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1

@@ -50,6 +50,15 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   lifecycle and 13-case uninstall owners pass on Windows and Linux in GitHub run
   `31906316540`.
 
+### Changed
+
+- Refreshed the exact segmented staging-producer and WVB-to-WVO candidate
+  families after adding hosted byte output, while retaining the byte-identical
+  unaffected fixtures. Owners that need the current compiler now reconstruct
+  and verify its exact WVB intermediates from the pinned raw native front door;
+  the database-storage and WVDB Query registry declarations are aligned with
+  their existing 54- and six-case cross-host owners.
+
 ## 0.1.0 — 2026-08-15
 
 ### Released

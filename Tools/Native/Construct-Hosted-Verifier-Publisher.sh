@@ -235,8 +235,8 @@ check_file "$construction/SHA256SUMS" 5064 \
 check_file "$publisher_wvb" "$publisher_wvb_bytes" "$publisher_wvb_sha256" \
     'publisher WVB' || exit $?
 if [[ $role == wvo-publisher || $role == console-application-publisher ]]; then
-    check_file "$raw_lowerer" 7483392 \
-        30ffb3ce953b173d1bbee77c8e440e901806a676f7ec17683b5cfe3953ebb441 \
+    check_file "$raw_lowerer" 7491584 \
+        deb75ead2af0d06d2357cdf88d8cf58fefd284bf4834e6489198b517f3a4908e \
         'raw native WVB-to-WVO lowerer' || exit $?
 fi
 check_file "$service_root/$console_leaf" "$console_bytes" "$console_sha256" \

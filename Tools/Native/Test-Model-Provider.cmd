@@ -9,11 +9,13 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
+set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
 
 :allocate
 set "Work=%TEMP%\windvale-model-provider-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
+set "WorkResource=%Work:\=/%"
 set "Result=1"
 
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
@@ -26,10 +28,13 @@ set "ModelProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Hosted-Mo
 set "ModelProjectResource=%ModelProject:\=/%"
 
 echo START native model provider phase=tools item=1/4
-call "%Native%\Build-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" >nul || goto :cleanup
+"%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
+    "%BuildProjectResource%" "%WorkResource%/Build-Driver.wvb" >nul || goto :cleanup
+call :verify_file "%Work%\Build-Driver.wvb" 1155121 0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LowererProjectResource%" "%Work%/Lowerer.wvb" >nul || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" >nul || goto :cleanup
+call :verify_file "%Work%\Lowerer.wvb" 522025 318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6 || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
 echo PASS  native model provider phase=tools item=1/4
 
 echo START native model provider phase=compile item=2/4
@@ -68,3 +73,9 @@ if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
 echo native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
 exit /b 0
+
+:verify_file
+if not exist "%~1" exit /b 1
+for %%F in ("%~1") do if not "%%~zF"=="%~2" exit /b 1
+certutil -hashfile "%~1" SHA256 | findstr /I /C:"%~3" >nul
+exit /b %ERRORLEVEL%
