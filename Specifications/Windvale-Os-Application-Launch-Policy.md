@@ -8,8 +8,10 @@ function composes with resource-domain policy 1 and
 application-machine-construction policy 1 before the process machine publishes
 either client. Syscall operation 8 is now the first fixed application-start
 entry: it derives the current init context, accounts the call, snapshots one
-64-byte request from the current user page, and erases the kernel snapshot
-before returning. It is not a package resolver, general process creator,
+64-byte request from the current user page, matches the already constructed
+generation-1 child against fixed `WVPROC17` publication evidence, returns child
+reference `65538`, and erases the kernel snapshot before returning. It is not a
+package resolver, general process creator,
 service manager, or claim that arbitrary applications can now be started. The separate
 [`WVSR 1`](Windvale-Os-Application-Start-Request.md) decoder now validates one
 fixed serialized application profile before calling this typed ABI.
@@ -77,19 +79,21 @@ exact two-process/22-page/two-endpoint baseline.
 
 The composed WVB returns token 97 only after the boot-service envelope and both
 launch transactions admit. Its 699,394-byte link-facing object remains inside
-the fixed 772 KiB supervisor RX window. The normal 1,692,160-byte
+the fixed 772 KiB supervisor RX window. The normal 1,693,184-byte
 current-Windows-host Probe 40 image at SHA-256
-`6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354`
+`e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c`
 passes the pinned QEMU/OVMF gate through application execution and
 guest-controlled shutdown.
 
 ## Focused evidence and limits
 
 The `os-application-launch` native owner builds the admission policies,
-serialized request decoder, user-copy boundary, and derived syscall context and
-executes focused behavior programs covering 61 cases: every `WVSR 1`
+serialized request decoder, user-copy boundary, derived syscall context, and
+fixed-child publication leaf and executes focused behavior programs covering
+69 cases: every `WVSR 1`
 structural status and typed handoff,
-nine copy/window/caller cases, plus
+nine copy/window/caller cases, exact publication plus seven fail-closed
+publication cases, plus
 unsupported-version, unauthorized-caller, stale-publication, malformed-plan,
 wrong-domain, and rights-profile rejection before exposure; successful
 reserve/construct/publish with exact domain charge; failed construction with
@@ -102,6 +106,8 @@ Policy 1 does not resolve packages, load an arbitrary image, allocate or map
 machine objects dynamically, transfer/move
 capabilities, accept variable total resource charges, expose
 cancellation/completion, or accept callers other than fixed init generation 1.
-Operation 8 currently ends after checked context loading and snapshot
-admission; connecting the admitted request to private machine construction and
-charge-backed publication is the next slice.
+Operation 8 publishes only the preconstructed generation-1 child already
+admitted by the boot process policy; it does not dynamically allocate, map, or
+enter another machine. The retained init image does not yet issue the request.
+Making init invoke operation 8 and replacing the fixed record match with a
+general private construction transaction are separate successor slices.

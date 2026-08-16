@@ -52,6 +52,18 @@ verify "$work/Start-Context-Test.exe" 6144 9eafbb07a397add4056cc1fbc5711ae367cff
 verify "$work/Start-Context-Test.elf" 12400 aadcfe6c45fd1240fb04e7a016126efd7033db2f135f5eacdf61ad7baeba532f || exit $?
 "$work/Start-Context-Test.elf" >/dev/null
 [[ $? -eq 48 ]] || exit 1
+"$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Kernel/X64-Application-Start-Publication.wva" "$work/Start-Publication.wvo" >/dev/null || exit $?
+verify "$work/Start-Publication.wvo" 585 0c73a88e301ce3fd321da2369661def3ae7c5e644e6a1ac0498fee6e7ad3d37a || exit $?
+"$script_directory/Assemble-Wva.sh" "$repository_root/Tests/Native/X64-Application-Start-Publication-Self-Test.wva" "$work/Start-Publication-Test.wvo" >/dev/null || exit $?
+verify "$work/Start-Publication-Test.wvo" 1448 6d28470798ac07b1a82d0aba114c1c4528c4a60314fb6261873a6f07f7c554f0 || exit $?
+"$script_directory/Link-Wvo.sh" 0 Main "$work/Start-Publication-Test.bin" "$work/Start-Publication-Test.wvo" "$work/Start-Publication.wvo" >/dev/null || exit $?
+verify "$work/Start-Publication-Test.bin" 1536 3f356a1341d2c659704edd539c61bcd499ca7b6915dce8f6973493f4dc8385c0 || exit $?
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Start-Publication-Test.bin" 0 "$work/Start-Publication-Test.exe" >/dev/null || exit $?
+verify "$work/Start-Publication-Test.exe" 3584 9939a21884ceef96411af06d7e51e9122c6ed8fcdf2f896f8968f240ac8c2113 || exit $?
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/Start-Publication-Test.bin" 0 "$work/Start-Publication-Test.elf" >/dev/null || exit $?
+verify "$work/Start-Publication-Test.elf" 8304 dab397ff6ebbbb0d302ccdda81833d61559af6797c029a3cc867400d66d63bf1 || exit $?
+"$work/Start-Publication-Test.elf" >/dev/null
+[[ $? -eq 49 ]] || exit 1
 "$script_directory/Run-Wvb.sh" "$work/Test.wvb" >"$work/Run.out" 2>"$work/Run.err" || exit $?
 [[ $(<"$work/Run.out") == 'Result: 42' ]] || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
@@ -67,4 +79,4 @@ verify "$work/Start-Context-Test.elf" 12400 aadcfe6c45fd1240fb04e7a016126efd7033
 "$script_directory/Run-Wvb.sh" "$work/Machine-Test.wvb" >"$work/Machine-Run.out" 2>"$work/Machine-Run.err" || exit $?
 [[ $(<"$work/Machine-Run.out") == 'Result: 43' ]] || exit 1
 [[ ! -s $work/Machine-Run.err ]] || exit 1
-echo 'native os application launch status=Passed projects=7 native-leaves=2 behavior=7 cases=61 local-results=47,48 cross-host-images=Verified'
+echo 'native os application launch status=Passed projects=7 native-leaves=3 behavior=8 cases=69 local-results=47,48,49 cross-host-images=Verified'

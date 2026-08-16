@@ -65,7 +65,7 @@ export fn Buildˉfirstˉsections(
     );
     Result = Append(Result, Encodeˉsection(
         ".text.process.application_start",
-        1u8, 16u32, 192u32, Handlerˉbytes
+        1u8, 16u32, 262u32, Handlerˉbytes
     ));
     Result = Append(Result, Encodeˉsection(
         ".rodata.ainit", 2u8, 16u32, 5159u32, Init
@@ -137,7 +137,7 @@ export fn Buildˉsymbols() -> bytes {
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_application_start_syscall_handler",
-        2u8, 1u8, 1u32, 0u32, 192u32
+        2u8, 1u8, 1u32, 0u32, 262u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_enter",
@@ -163,6 +163,9 @@ export fn Buildˉsymbols() -> bytes {
     ));
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_release_memory_object"
+    ));
+    Result = Append(Result, Importˉfunction(
+        "Windvale_kernel_x64_application_start_publication"
     ));
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_x64_application_start_syscall_context"

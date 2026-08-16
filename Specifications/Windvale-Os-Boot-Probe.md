@@ -24,9 +24,9 @@ Current native `main` image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 1,692,160 | `6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354` | 0 |
-| `invalid-opcode` | 1,692,160 | `7eadb0fa7ab96611a3cbe259c9860b7da381011e4dda80fd8e18535eaa71ca1b` | 3 |
-| `general-protection` | 1,692,160 | `5f9dcaaaeaa2a179ec348a417752b62853876f22124bf61ec16f7ef11a3bf9e2` | 3 |
+| `normal` | 1,693,184 | `e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c` | 0 |
+| `invalid-opcode` | 1,693,184 | `f7e72f53641b5f545d133a5c0a5912d2949671ae0dfe816985493323ba0d5df1` | 3 |
+| `general-protection` | 1,693,184 | `9be38b55f9710b38e871751e682d1181922ee5cc804022310e82fe62b5096b11` | 3 |
 
 The current native builder does not construct `user-fault` or `service-fault`; changes to their retained source seams are therefore an explicit changed-file verification gap rather than falsely covered by the normal probe owner.
 
@@ -117,7 +117,7 @@ $efi = Join-Path $env:TEMP 'Windvale-Probe40-normal.efi'
 Tools\Native\Build-Os-Probe.cmd $efi normal
 pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
     -EfiPath $efi `
-    -ExpectedEfiSha256 6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354 `
+    -ExpectedEfiSha256 e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c `
     -Scenario normal
 ```
 
@@ -129,4 +129,4 @@ Harness diagnostics remain `WVOS3001` build failure, `WVOS3002` start failure, `
 
 ## Deliberate non-claims
 
-Probe 40 does not authenticate firmware CRCs, own general physical memory, coalesce or scatter allocations, load arbitrary WVB, provide complete in-guest verification, publish executable memory, JIT, provide a public timer/time API, prioritize, handle delayed/lost/wrapped ticks, enter idle, guarantee general wake latency, schedule multiple threads, expose a general dynamic resource-domain or application-launch API, discover or publicly create endpoints, supervise or restart services, move capabilities, accept arbitrary page totals or images in machine-construction policy 1, accept arbitrary stores or snapshots in its bounded guest seam, launch a filesystem or network provider, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network devices or packet transport, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Operation 8 now provides a fixed init-only entry and checked request snapshot, but the retained init does not invoke it yet and it does not publish a child. Its fixed boot-service envelope, two fixed versioned launch requests, bounded variable machine layout, domain transcript, three memory objects, four-tick timer sequence, and one-thread-per-process dispatcher remain internal evidence. The recovery release preserves the replaced Stage 0 emitters for historical reconstruction only.
+Probe 40 does not authenticate firmware CRCs, own general physical memory, coalesce or scatter allocations, load arbitrary WVB, provide complete in-guest verification, publish executable memory, JIT, provide a public timer/time API, prioritize, handle delayed/lost/wrapped ticks, enter idle, guarantee general wake latency, schedule multiple threads, expose a general dynamic resource-domain or application-launch API, discover or publicly create endpoints, supervise or restart services, move capabilities, accept arbitrary page totals or images in machine-construction policy 1, accept arbitrary stores or snapshots in its bounded guest seam, launch a filesystem or network provider, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network devices or packet transport, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Operation 8 now provides a fixed init-only entry, checked request snapshot, and fail-closed publication of the already constructed generation-1 child as reference `65538`; the retained init does not invoke it yet, and no arbitrary machine is allocated or entered. Its fixed boot-service envelope, two fixed versioned launch requests, bounded variable machine layout, domain transcript, three memory objects, four-tick timer sequence, and one-thread-per-process dispatcher remain internal evidence. The recovery release preserves the replaced Stage 0 emitters for historical reconstruction only.

@@ -2642,6 +2642,7 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tests/Native/Malformed-Wvb/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
     } elseif ($Path -in @(
+        'Tests/Native/X64-Application-Start-Publication-Self-Test.wva',
         'Tests/Native/X64-Application-Start-User-Copy-Self-Test.wva',
         'Tests/Native/X64-Application-Start-Syscall-Context-Self-Test.wva'
     )) {

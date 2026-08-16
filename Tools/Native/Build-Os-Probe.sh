@@ -11,25 +11,25 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354
-        efi_bytes=1692160
-        code_tail_offset=786992
+        efi_digest=e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c
+        efi_bytes=1693184
+        code_tail_offset=787552
         ;;
     invalid-opcode)
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=7eadb0fa7ab96611a3cbe259c9860b7da381011e4dda80fd8e18535eaa71ca1b
-        efi_bytes=1692160
-        code_tail_offset=787008
+        efi_digest=f7e72f53641b5f545d133a5c0a5912d2949671ae0dfe816985493323ba0d5df1
+        efi_bytes=1693184
+        code_tail_offset=787568
         ;;
     general-protection)
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=5f9dcaaaeaa2a179ec348a417752b62853876f22124bf61ec16f7ef11a3bf9e2
-        efi_bytes=1692160
-        code_tail_offset=787008
+        efi_digest=9be38b55f9710b38e871751e682d1181922ee5cc804022310e82fe62b5096b11
+        efi_bytes=1693184
+        code_tail_offset=787568
         ;;
     *)
         echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
@@ -190,9 +190,9 @@ if ! "$script_directory/Build-Os-Process-Object.sh" \
     cat -- "$work/05.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/05-process.wvo") -ne 951843 ]] ||
+if [[ $(wc -c < "$work/05-process.wvo") -ne 952002 ]] ||
     ! printf '%s  %s\n' \
-        '2ea81c1e4e5bbeb2656dd3a938b330f391fd3749b54a6b4f5cafde45af1e74b2' \
+        'c4606029a8af59770b2022f710b26fcd6d4207dba9d9d939c25faf423ee96d50' \
         "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process object is invalid.' >&2
     exit 1
@@ -210,9 +210,16 @@ if ! "$script_directory/Assemble-Wva.sh" \
     cat -- "$work/15.log" >&2
     exit 1
 fi
-if ! printf '%s  %s\n%s  %s\n' \
+if ! "$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Operating-System/Kernel/X64-Application-Start-Publication.wva" \
+    "$work/16-application-start-publication.wvo" >"$work/16.log" 2>&1; then
+    cat -- "$work/16.log" >&2
+    exit 1
+fi
+if ! printf '%s  %s\n%s  %s\n%s  %s\n' \
     'd639056eb9831f89ef3baa33b06b522437d2da4444f74e2db1d58229656dc04b' "$work/14-application-start-context.wvo" \
-    '74978b1f6124517b44205cba52aaf6c161cf5d00e39ff9ab3ad883d527c87ddb' "$work/15-application-start-copy.wvo" |
+    '74978b1f6124517b44205cba52aaf6c161cf5d00e39ff9ab3ad883d527c87ddb' "$work/15-application-start-copy.wvo" \
+    '0c73a88e301ce3fd321da2369661def3ae7c5e644e6a1ac0498fee6e7ad3d37a' "$work/16-application-start-publication.wvo" |
     sha256sum --check --strict --quiet; then
     echo 'A native Probe 40 application-start object is invalid.' >&2
     exit 1
@@ -288,6 +295,7 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/05-process.wvo" \
     "$work/14-application-start-context.wvo" \
     "$work/15-application-start-copy.wvo" \
+    "$work/16-application-start-publication.wvo" \
     "$work/06-memory-object-shims.wvo" \
     "$work/07-timer-shims.wvo" \
     "$work/08-memory.wvo" \
@@ -303,7 +311,7 @@ if ! grep -Fxq 'entry name=Windvale_boot_probe address=0' "$work/Link.map"; then
     echo 'The native Probe 40 linker reported an unexpected entry.' >&2
     exit 1
 fi
-if ! grep -Fxq "section index=17 input=15 source-index=1 kind=code name=.text.support image-offset=$code_tail_offset address=$code_tail_offset memory-bytes=23 data-bytes=23 alignment=16" "$work/Link.map"; then
+if ! grep -Fxq "section index=18 input=16 source-index=1 kind=code name=.text.support image-offset=$code_tail_offset address=$code_tail_offset memory-bytes=23 data-bytes=23 alignment=16" "$work/Link.map"; then
     echo 'The native Probe 40 linker reported an unexpected supervisor code boundary.' >&2
     exit 1
 fi

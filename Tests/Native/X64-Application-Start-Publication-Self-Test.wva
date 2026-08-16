@@ -1,0 +1,232 @@
+windvale-assembly 1
+
+symbol local data Application_start_publication_request in .rodata
+symbol export function Main in .text
+symbol import function Windvale_kernel_x64_application_start_publication
+
+section code .text align 16
+define Main
+push r12
+push r13
+push r14
+push r15
+load_address r12 Application_start_publication_request
+
+# The exact admitted request plus exact fixed WVPROC17 evidence publishes the
+# generation-1 child reference.
+move rcx r12
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996695
+or rdx rax
+move_u32 r8d 288
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 1
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 2
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 17
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 65538
+branch not_equal application_start_publication_test_1
+
+# Each kernel-derived evidence pair is independently fail closed.
+move rcx r12
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996694
+or rdx rax
+move_u32 r8d 288
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 1
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 2
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 17
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 7
+branch not_equal application_start_publication_test_2
+
+move rcx r12
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996695
+or rdx rax
+move_u32 r8d 289
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 1
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 2
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 17
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 7
+branch not_equal application_start_publication_test_3
+
+move rcx r12
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996695
+or rdx rax
+move_u32 r8d 288
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 2
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 2
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 17
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 7
+branch not_equal application_start_publication_test_4
+
+move rcx r12
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996695
+or rdx rax
+move_u32 r8d 288
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 1
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 3
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 17
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 7
+branch not_equal application_start_publication_test_5
+
+move rcx r12
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996695
+or rdx rax
+move_u32 r8d 288
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 1
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 2
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 18
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 7
+branch not_equal application_start_publication_test_6
+
+# Null and drifted admitted snapshots never expose the child.
+move_u32 ecx 0
+move_u32 edx 0
+move_u32 r8d 0
+move_u32 r9d 0
+move_u32 r10d 0
+move_u32 r11d 0
+call Windvale_kernel_x64_application_start_publication
+compare_i32 eax 7
+branch not_equal application_start_publication_test_7
+
+subtract_i32 rsp 64
+move r13 rsp
+move r14 r12
+move r15 r13
+move_u32 ecx 8
+label application_start_publication_copy
+load_memory_u64 rax r14 none 1 0
+store_memory_u64 r15 none 1 0 rax
+add_i32 r14 8
+add_i32 r15 8
+subtract_i32 ecx 1
+branch not_equal application_start_publication_copy
+move_u32 eax 123
+store_memory_u32 r13 none 1 40 eax
+move rcx r13
+move_u32 edx 925975375
+shift_left rdx 32
+move_u32 eax 1380996695
+or rdx rax
+move_u32 r8d 288
+shift_left r8 32
+or_i32 r8 17
+move_u32 r9d 1
+shift_left r9 32
+or_i32 r9 1
+move_u32 r10d 2
+shift_left r10 32
+or_i32 r10 2
+move_u32 r11d 17
+shift_left r11 32
+or_i32 r11 1
+call Windvale_kernel_x64_application_start_publication
+add_i32 rsp 64
+compare_i32 eax 7
+branch not_equal application_start_publication_test_8
+
+move_u32 eax 49
+jump_label application_start_publication_return
+label application_start_publication_test_1
+move_u32 eax 1
+jump_label application_start_publication_return
+label application_start_publication_test_2
+move_u32 eax 2
+jump_label application_start_publication_return
+label application_start_publication_test_3
+move_u32 eax 3
+jump_label application_start_publication_return
+label application_start_publication_test_4
+move_u32 eax 4
+jump_label application_start_publication_return
+label application_start_publication_test_5
+move_u32 eax 5
+jump_label application_start_publication_return
+label application_start_publication_test_6
+move_u32 eax 6
+jump_label application_start_publication_return
+label application_start_publication_test_7
+move_u32 eax 7
+jump_label application_start_publication_return
+label application_start_publication_test_8
+move_u32 eax 8
+label application_start_publication_return
+pop r15
+pop r14
+pop r13
+pop r12
+return
+end define
+end section
+
+section rodata .rodata align 16
+define Application_start_publication_request
+bytes 87 86 83 82 1 0 0 0 64 0 0 0 1 0 0 0
+bytes 1 0 1 0 1 0 1 0 1 0 1 0 40 0 1 0
+bytes 1 0 0 0 1 0 0 0 122 0 0 0 0 0 0 0
+bytes 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+end define
+end section

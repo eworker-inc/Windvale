@@ -54,19 +54,19 @@
       "name": "process-object",
       "project": "Windvale-Os-Process-Object-Tool.wvproj",
       "module": "Process-Object-Tool.wvb",
-      "moduleBytes": 18560,
-      "moduleSha256": "eb99f4b0ab3e58632548cb80b485b7728991ad847caa02c8060551bb56b92a65",
+      "moduleBytes": 18867,
+      "moduleSha256": "95fcdd0d4bf0b1f7e962a8a0f6ca06dcd0bffc9102c3b8fdfcd5e6e002e4d937",
       "windows": "windows-x64-process-object.exe",
-      "windowsBytes": 232960,
-      "windowsSha256": "bcfc1c85a137055b4f4782a1bd572585385d660113049bbd0f28067553af2195",
+      "windowsBytes": 236032,
+      "windowsSha256": "004cf05250441bf01275d234439e0256adc91c63f837cd0f9e1cc7020d609687",
       "linux": "linux-x64-process-object.elf",
-      "linuxBytes": 233472,
-      "linuxSha256": "6df3a641f26c2d126914995c1a594723ecef8c41f8905f1078392dc888932541"
+      "linuxBytes": 237568,
+      "linuxSha256": "7a4ca2175cc34970d5500b77871074ffb8d2dd1082bbab2544ce18c618fe5437"
     }
   ],
   "output": {
     "name": "05-process.wvo",
-    "bytes": 951843,
-    "sha256": "2ea81c1e4e5bbeb2656dd3a938b330f391fd3749b54a6b4f5cafde45af1e74b2"
+    "bytes": 952002,
+    "sha256": "c4606029a8af59770b2022f710b26fcd6d4207dba9d9d939c25faf423ee96d50"
   }
 }

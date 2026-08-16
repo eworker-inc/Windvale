@@ -662,9 +662,11 @@ provenance, revocation, and consensus boundaries are named.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check, exact serialized decoder, immutable user-window
-  copy, and independent caller check are implemented. The x86-64 page-access
-  adapter, syscall entry, and dynamic executable/object allocation remain
-  before later isolated services can rely on it.
+  copy, independent caller check, x86-64 page-access adapter, operation-8
+  syscall entry, and fixed checked child publication are implemented. Init
+  invocation and dynamic executable/object allocation remain before arbitrary
+  applications can rely on it; the fixed publication is sufficient to begin
+  launching the already boot-linked isolated providers.
 - Then advance the selected [filesystem plan](Windvale-Filesystem-Implementation-Plan.md):
   shared semantics, Windows/Linux host adapters, bounded Windvale OS service
   IPC, and one FAT32-backed guest provider before optional NTFS/ext4 adapters or

@@ -11,25 +11,25 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=6da0c529425e3d301657501411573b268e64d4c13347d8ae74c9fcb7a45cb354"
-    set "EfiBytes=1692160"
-    set "CodeTailOffset=786992"
+    set "EfiDigest=e3ac1ee784ce4ccd00821ff87e0931b73397d70974867343248ff632ab20641c"
+    set "EfiBytes=1693184"
+    set "CodeTailOffset=787552"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=7eadb0fa7ab96611a3cbe259c9860b7da381011e4dda80fd8e18535eaa71ca1b"
-    set "EfiBytes=1692160"
-    set "CodeTailOffset=787008"
+    set "EfiDigest=f7e72f53641b5f545d133a5c0a5912d2949671ae0dfe816985493323ba0d5df1"
+    set "EfiBytes=1693184"
+    set "CodeTailOffset=787568"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=5f9dcaaaeaa2a179ec348a417752b62853876f22124bf61ec16f7ef11a3bf9e2"
-    set "EfiBytes=1692160"
-    set "CodeTailOffset=787008"
+    set "EfiDigest=9be38b55f9710b38e871751e682d1181922ee5cc804022310e82fe62b5096b11"
+    set "EfiBytes=1693184"
+    set "CodeTailOffset=787568"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -122,7 +122,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 951843 2ea81c1e4e5bbeb2656dd3a938b330f391fd3749b54a6b4f5cafde45af1e74b2
+call :verify "%Work%\05-process.wvo" 952002 c4606029a8af59770b2022f710b26fcd6d4207dba9d9d939c25faf423ee96d50
 if errorlevel 1 goto :failure
 
 set "FailureStep=application-start-context"
@@ -134,6 +134,11 @@ set "FailureStep=application-start-copy"
 cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Application-Start-User-Copy.wva" "%Work%\15-application-start-copy.wvo" >"%Work%\15.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\15-application-start-copy.wvo" 799 74978b1f6124517b44205cba52aaf6c161cf5d00e39ff9ab3ad883d527c87ddb
+if errorlevel 1 goto :failure
+set "FailureStep=application-start-publication"
+cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Application-Start-Publication.wva" "%Work%\16-application-start-publication.wvo" >"%Work%\16.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\16-application-start-publication.wvo" 585 0c73a88e301ce3fd321da2369661def3ae7c5e644e6a1ac0498fee6e7ad3d37a
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"
@@ -196,6 +201,7 @@ cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
     "%Work%\05-process.wvo" ^
     "%Work%\14-application-start-context.wvo" ^
     "%Work%\15-application-start-copy.wvo" ^
+    "%Work%\16-application-start-publication.wvo" ^
     "%Work%\06-memory-object-shims.wvo" ^
     "%Work%\07-timer-shims.wvo" ^
     "%Work%\08-memory.wvo" ^
@@ -248,6 +254,7 @@ if exist "%Work%\12.log" type "%Work%\12.log" 1>&2
 if exist "%Work%\13.log" type "%Work%\13.log" 1>&2
 if exist "%Work%\14.log" type "%Work%\14.log" 1>&2
 if exist "%Work%\15.log" type "%Work%\15.log" 1>&2
+if exist "%Work%\16.log" type "%Work%\16.log" 1>&2
 if exist "%Work%\Link.map" type "%Work%\Link.map" 1>&2
 if exist "%Work%\Package.log" type "%Work%\Package.log" 1>&2
 if exist "%Work%\Probe40.efi" (

@@ -1,0 +1,106 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_x64_application_start_publication in .text
+
+section code .text align 16
+define Windvale_kernel_x64_application_start_publication
+# RCX is the admitted kernel snapshot. RDX, R8, R9, R10, and R11 are
+# kernel-derived pairs from the fixed child's WVPROC17 record: magic,
+# version/bytes, process/thread state, process/thread identity, and
+# generation/rights. Success publishes child reference 65538; status 7 keeps
+# a missing or drifted machine private.
+test rcx rcx
+branch equal application_start_publication_rejected
+
+load_memory_u32 eax rcx none 1 0
+compare_i32 eax 1381193303
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 4
+compare_i32 eax 1
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 8
+compare_i32 eax 64
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 12
+compare_i32 eax 1
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 16
+compare_i32 eax 65537
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 20
+compare_i32 eax 65537
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 24
+compare_i32 eax 65537
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 28
+compare_i32 eax 65576
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 32
+compare_i32 eax 1
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 36
+compare_i32 eax 1
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 40
+compare_i32 eax 122
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 44
+test eax eax
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 48
+compare_i32 eax 4
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 52
+test eax eax
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 56
+test eax eax
+branch not_equal application_start_publication_rejected
+load_memory_u32 eax rcx none 1 60
+test eax eax
+branch not_equal application_start_publication_rejected
+
+move eax edx
+compare_i32 eax 1380996695
+branch not_equal application_start_publication_rejected
+shift_right rdx 32
+compare_i32 edx 925975375
+branch not_equal application_start_publication_rejected
+
+move eax r8d
+compare_i32 eax 17
+branch not_equal application_start_publication_rejected
+shift_right r8 32
+compare_i32 r8d 288
+branch not_equal application_start_publication_rejected
+
+move eax r9d
+compare_i32 eax 1
+branch not_equal application_start_publication_rejected
+shift_right r9 32
+compare_i32 r9d 1
+branch not_equal application_start_publication_rejected
+
+move eax r10d
+compare_i32 eax 2
+branch not_equal application_start_publication_rejected
+shift_right r10 32
+compare_i32 r10d 2
+branch not_equal application_start_publication_rejected
+
+move eax r11d
+compare_i32 eax 1
+branch not_equal application_start_publication_rejected
+shift_right r11 32
+compare_i32 r11d 17
+branch not_equal application_start_publication_rejected
+
+move_u32 eax 65538
+return
+
+label application_start_publication_rejected
+move_u32 eax 7
+return
+end define
+end section

@@ -72,6 +72,28 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Start-Context-Test.elf" 12400 aadcfe6c45fd1240fb04e7a016126efd7033db2f135f5eacdf61ad7baeba532f
 if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Kernel\X64-Application-Start-Publication.wva" "%Work%\Start-Publication.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\Start-Publication.wvo" 585 0c73a88e301ce3fd321da2369661def3ae7c5e644e6a1ac0498fee6e7ad3d37a
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%RepositoryRoot%\Tests\Native\X64-Application-Start-Publication-Self-Test.wva" "%Work%\Start-Publication-Test.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\Start-Publication-Test.wvo" 1448 6d28470798ac07b1a82d0aba114c1c4528c4a60314fb6261873a6f07f7c554f0
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\Start-Publication-Test.bin" "%Work%\Start-Publication-Test.wvo" "%Work%\Start-Publication.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\Start-Publication-Test.bin" 1536 3f356a1341d2c659704edd539c61bcd499ca7b6915dce8f6973493f4dc8385c0
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\Start-Publication-Test.bin" 0 "%Work%\Start-Publication-Test.exe" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\Start-Publication-Test.exe" 3584 9939a21884ceef96411af06d7e51e9122c6ed8fcdf2f896f8968f240ac8c2113
+if errorlevel 1 goto :cleanup
+"%Work%\Start-Publication-Test.exe" >nul
+if not "%ERRORLEVEL%"=="49" goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\Start-Publication-Test.bin" 0 "%Work%\Start-Publication-Test.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\Start-Publication-Test.elf" 8304 dab397ff6ebbbb0d302ccdda81833d61559af6797c029a3cc867400d66d63bf1
+if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Run-Wvb.cmd" "%Work%\Test.wvb" >"%Work%\Run.out" 2>"%Work%\Run.err"
 if errorlevel 1 goto :cleanup
 set "Actual="
@@ -102,7 +124,7 @@ set "Actual="
 set /p "Actual=" <"%Work%\Machine-Run.out"
 if not "%Actual%"=="Result: 43" goto :cleanup
 for %%E in ("%Work%\Machine-Run.err") do if not "%%~zE"=="0" goto :cleanup
-echo native os application launch status=Passed projects=7 native-leaves=2 behavior=7 cases=61 local-results=47,48 cross-host-images=Verified
+echo native os application launch status=Passed projects=7 native-leaves=3 behavior=8 cases=69 local-results=47,48,49 cross-host-images=Verified
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"
