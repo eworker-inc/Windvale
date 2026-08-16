@@ -2,7 +2,7 @@ module Windvaleˉdatabaseˉtransactionˉleafˉgroups profile portable;
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
-import Windvaleˉdatabaseˉtransactionˉleafˉrewrite as Rewrite;
+import Windvaleˉdatabaseˉtransactionˉleafˉpartition as Partition;
 import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
 import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
@@ -10,20 +10,21 @@ import Windvaleˉdatabaseˉtreeˉnode as Tree;
 const DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES: u32 = 32u32;
 const DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES: u32 = 24u32;
 const DATABASE_TRANSACTION_LEAF_GROUPS_MAGIC: u32 = 1196185175u32;
-const DATABASE_TRANSACTION_LEAF_GROUPS_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_LEAF_GROUPS_VERSION: u32 = 2u32;
 const DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES: u32 = 24u32;
+const DATABASE_TRANSACTION_LEAF_GROUPS_MAXIMUM_BYTES: u32 = 4194304u32;
 
 export enum Databaseˉtransactionˉleafˉgroupˉstatus {
     Invalid = 0;
     Unchanged = 1;
     Rewritten = 2;
-    Splitˉrequired = 3;
+    Partitioned = 3;
 }
 
 export enum Databaseˉtransactionˉleafˉgroupsˉerror {
     Valid = 0;
     Invalidˉpaths = 1;
-    Rewriteˉfailed = 2;
+    Partitionˉfailed = 2;
 }
 
 export enum Databaseˉtransactionˉleafˉgroupˉreadˉerror {
@@ -46,12 +47,13 @@ export record Databaseˉtransactionˉleafˉgroupsˉresult {
     Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror;
     Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror;
     Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
-    Rewriteˉerror: Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror;
+    Partitionˉerror: Partition.Databaseˉtransactionˉleafˉpartitionˉerror;
     Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
     Failedˉgroup: u32;
     Groupˉcount: u32;
     Changedˉgroupˉcount: u32;
-    Splitˉgroupˉcount: u32;
+    Partitionedˉgroupˉcount: u32;
+    Outputˉleafˉcount: u32;
     Appliedˉcount: u32;
     Putˉcount: u32;
     Deletedˉcount: u32;
@@ -65,6 +67,7 @@ export record Databaseˉtransactionˉleafˉgroup {
     Mutationˉcount: u32;
     Status: Databaseˉtransactionˉleafˉgroupˉstatus;
     Entryˉcount: u32;
+    Replacementˉleafˉcount: u32;
     Payload: bytes;
 }
 
@@ -81,14 +84,14 @@ fn Databaseˉtransactionˉleafˉgroupsˉfailure(
     Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror,
     Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror,
     Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
-    Rewriteˉerror: Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror,
+    Partitionˉerror: Partition.Databaseˉtransactionˉleafˉpartitionˉerror,
     Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
     Failedˉgroup: u32
 ) -> Databaseˉtransactionˉleafˉgroupsˉresult {
     return Databaseˉtransactionˉleafˉgroupsˉresult(
-        Error, Pathsˉerror, Mutationsˉerror, Pageˉerror, Rewriteˉerror,
+        Error, Pathsˉerror, Mutationsˉerror, Pageˉerror, Partitionˉerror,
         Nodeˉerror, Failedˉgroup,
-        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
         Databaseˉtransactionˉleafˉgroupsˉempty()
     );
 }
@@ -99,7 +102,7 @@ fn Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
     return Databaseˉtransactionˉleafˉgroup(
         Error, 0u64, 0u32, 0u32,
         Databaseˉtransactionˉleafˉgroupˉstatus.Invalid,
-        0u32, Databaseˉtransactionˉleafˉgroupsˉempty()
+        0u32, 0u32, Databaseˉtransactionˉleafˉgroupsˉempty()
     );
 }
 
@@ -119,7 +122,7 @@ fn Databaseˉtransactionˉleafˉgroupˉstatusˉraw(
 ) -> u32 {
     if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged { return 1u32; }
     if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten { return 2u32; }
-    if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired { return 3u32; }
+    if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Partitioned { return 3u32; }
     return 0u32;
 }
 
@@ -128,7 +131,7 @@ fn Databaseˉtransactionˉleafˉgroupˉstatusˉfromˉraw(
 ) -> Databaseˉtransactionˉleafˉgroupˉstatus {
     if Raw == 1u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged; }
     if Raw == 2u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten; }
-    if Raw == 3u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired; }
+    if Raw == 3u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Partitioned; }
     return Databaseˉtransactionˉleafˉgroupˉstatus.Invalid;
 }
 
@@ -203,7 +206,7 @@ export fn Databaseˉtransactionˉleafˉgroupsˉplan(
         return Databaseˉtransactionˉleafˉgroupsˉfailure(
             Databaseˉtransactionˉleafˉgroupsˉerror.Invalidˉpaths,
             Validated.Error, Validated.Mutationsˉerror, Validated.Pageˉerror,
-            Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid,
+            Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid,
             Validated.Nodeˉerror, Validated.Failedˉpath
         );
     }
@@ -214,7 +217,8 @@ export fn Databaseˉtransactionˉleafˉgroupsˉplan(
     var Mutationˉcursor: u32 = DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES;
     var Groupˉcount: u32 = 0u32;
     var Changedˉcount: u32 = 0u32;
-    var Splitˉcount: u32 = 0u32;
+    var Partitionedˉcount: u32 = 0u32;
+    var Outputˉleafˉcount: u32 = 0u32;
     var Appliedˉcount: u32 = 0u32;
     var Putˉcount: u32 = 0u32;
     var Deletedˉcount: u32 = 0u32;
@@ -249,45 +253,46 @@ export fn Databaseˉtransactionˉleafˉgroupsˉplan(
                     Mutationˉcursor - Firstˉcursor
                 )
             );
-        let Rewritten: Rewrite.Databaseˉtransactionˉleafˉrewrite =
-            Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(
+        let Partitioned: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+            Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
                 Leaf.Payload,
                 Groupˉencoding.Bytes,
                 Current.Pageˉsize - 128u32
             );
+        if Partitioned.Error !=
+                Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid {
+            return Databaseˉtransactionˉleafˉgroupsˉfailure(
+                Databaseˉtransactionˉleafˉgroupsˉerror.Partitionˉfailed,
+                Paths.Databaseˉtransactionˉpathsˉerror.Valid,
+                Partitioned.Mutationsˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Partitioned.Error, Partitioned.Nodeˉerror, Groupˉcount
+            );
+        }
         var Status: Databaseˉtransactionˉleafˉgroupˉstatus =
             Databaseˉtransactionˉleafˉgroupˉstatus.Invalid;
         var Payload: bytes = Databaseˉtransactionˉleafˉgroupsˉempty();
-        var Entryˉcount: u32 = 0u32;
-        if Rewritten.Error == Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Full {
-            Status = Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired;
-            Splitˉcount = Splitˉcount + 1u32;
-        } else if Rewritten.Error == Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid {
-            Entryˉcount = Rewritten.Entryˉcount;
-            Appliedˉcount = Appliedˉcount + Rewritten.Appliedˉcount;
-            Putˉcount = Putˉcount + Rewritten.Putˉcount;
-            Deletedˉcount = Deletedˉcount + Rewritten.Deletedˉcount;
-            if Rewritten.Changed {
+        Appliedˉcount = Appliedˉcount + Partitioned.Appliedˉcount;
+        Putˉcount = Putˉcount + Partitioned.Putˉcount;
+        Deletedˉcount = Deletedˉcount + Partitioned.Deletedˉcount;
+        if Partitioned.Changed {
+            Payload = Partitioned.Bytes;
+            Changedˉcount = Changedˉcount + 1u32;
+            Outputˉleafˉcount = Outputˉleafˉcount + Partitioned.Leafˉcount;
+            if Partitioned.Leafˉcount == 1u32 {
                 Status = Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten;
-                Payload = Rewritten.Bytes;
-                Changedˉcount = Changedˉcount + 1u32;
             } else {
-                Status = Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged;
+                Status = Databaseˉtransactionˉleafˉgroupˉstatus.Partitioned;
+                Partitionedˉcount = Partitionedˉcount + 1u32;
             }
         } else {
-            return Databaseˉtransactionˉleafˉgroupsˉfailure(
-                Databaseˉtransactionˉleafˉgroupsˉerror.Rewriteˉfailed,
-                Paths.Databaseˉtransactionˉpathsˉerror.Valid,
-                Rewritten.Mutationsˉerror,
-                Page.Databaseˉdurableˉpageˉerror.Valid,
-                Rewritten.Error, Rewritten.Nodeˉerror, Groupˉcount
-            );
+            Status = Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged;
         }
         Result = Bytesˉconcat(
             Result,
             Databaseˉtransactionˉleafˉgroupˉencode(
                 Leaf.Pageˉidentifier, Firstˉmutation, Groupˉmutations,
-                Status, Entryˉcount, Payload
+                Status, Partitioned.Entryˉcount, Payload
             )
         );
         Groupˉcount = Groupˉcount + 1u32;
@@ -297,10 +302,10 @@ export fn Databaseˉtransactionˉleafˉgroupsˉplan(
         Paths.Databaseˉtransactionˉpathsˉerror.Valid,
         Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
         Page.Databaseˉdurableˉpageˉerror.Valid,
-        Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid,
+        Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid,
         Tree.Databaseˉtreeˉnodeˉerror.Valid,
-        0u32, Groupˉcount, Changedˉcount, Splitˉcount,
-        Appliedˉcount, Putˉcount, Deletedˉcount,
+        0u32, Groupˉcount, Changedˉcount, Partitionedˉcount,
+        Outputˉleafˉcount, Appliedˉcount, Putˉcount, Deletedˉcount,
         Databaseˉtransactionˉleafˉgroupsˉencode(Groupˉcount, Result)
     );
 }
@@ -310,7 +315,8 @@ export fn Databaseˉtransactionˉleafˉgroupˉread(
     Requested: u32
 ) -> Databaseˉtransactionˉleafˉgroup {
     let Total: u32 = Bytesˉlength(Input);
-    if Total < DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES {
+    if Total < DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES ||
+        Total > DATABASE_TRANSACTION_LEAF_GROUPS_MAXIMUM_BYTES {
         return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
             Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉlength
         );
@@ -386,10 +392,10 @@ export fn Databaseˉtransactionˉleafˉgroupˉread(
                 Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉlength
             );
         }
-        if Status != Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten &&
-            Payloadˉlength != 0u32 ||
-            Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten &&
-            Payloadˉlength == 0u32 {
+        if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged &&
+                Payloadˉlength != 0u32 ||
+            Status != Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged &&
+                Payloadˉlength == 0u32 {
             return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
                 Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload
             );
@@ -399,29 +405,28 @@ export fn Databaseˉtransactionˉleafˉgroupˉread(
             Cursor + DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES,
             Payloadˉlength
         );
-        if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired &&
-            Entryˉcount != 0u32 {
-            return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
-                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload
-            );
-        }
-        if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten {
-            let Node: Tree.Databaseˉtreeˉnodeˉresult =
-                Tree.Databaseˉtreeˉnodeˉdecode(Payload);
-            if Payloadˉlength > 65408u32 ||
-                Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
-                Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
-                Node.Entryˉcount != Entryˉcount {
+        var Replacementˉleafˉcount: u32 = 0u32;
+        if Status != Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged {
+            let Decoded: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+                Partition.Databaseˉtransactionˉleafˉpartitionˉdecode(Payload);
+            if Decoded.Error !=
+                    Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+                !Decoded.Changed || Decoded.Entryˉcount != Entryˉcount ||
+                Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten &&
+                    Decoded.Leafˉcount != 1u32 ||
+                Status == Databaseˉtransactionˉleafˉgroupˉstatus.Partitioned &&
+                    Decoded.Leafˉcount <= 1u32 {
                 return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
                     Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload
                 );
             }
+            Replacementˉleafˉcount = Decoded.Leafˉcount;
         }
         if Index == Requested {
             Requestedˉresult = Databaseˉtransactionˉleafˉgroup(
                 Databaseˉtransactionˉleafˉgroupˉreadˉerror.Valid,
                 Leafˉpage, Firstˉmutation, Mutationˉcount,
-                Status, Entryˉcount, Payload
+                Status, Entryˉcount, Replacementˉleafˉcount, Payload
             );
         }
         Cursor = Cursor + DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES + Payloadˉlength;

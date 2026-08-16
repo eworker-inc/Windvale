@@ -2652,14 +2652,14 @@ if (!$DatabaseDevelopmentRequiresAllTargets -and
     $DatabaseDevelopmentTarget = 'transaction'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
-    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-rewrite') -and
-    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups')) {
-    $DatabaseDevelopmentTarget = 'transaction-leaf-rewrite'
-} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
-    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-paths') -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups')) {
     $DatabaseDevelopmentTarget = 'transaction-paths'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-partition') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-leaf-groups')) {
+    $DatabaseDevelopmentTarget = 'transaction-leaf-partition'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
     $SelectedDatabaseDevelopmentTargets.Contains('query-ir') -and

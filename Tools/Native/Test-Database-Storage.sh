@@ -21,10 +21,10 @@ case "$development_target" in
     all)
         selected_cases=31
         ;;
-    tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-groups|transaction-leaf-partition|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
+    tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-rewrite|transaction-leaf-groups|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
         ;;
-    transaction-leaf-rewrite|transaction-paths)
+    transaction-paths|transaction-leaf-partition)
         selected_cases=2
         ;;
     transaction)
@@ -1637,7 +1637,7 @@ if ((development == 1)); then
     verify_development_target TransactionPaths transaction-paths \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj" transaction || exit $?
     verify_development_target TransactionLeafGroups transaction-leaf-groups \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj" transaction transaction-leaf-rewrite transaction-paths || exit $?
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj" transaction transaction-paths transaction-leaf-partition || exit $?
     verify_development_target TransactionLeafPartition transaction-leaf-partition \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj" transaction || exit $?
     verify_development_target QueryIr query-ir \

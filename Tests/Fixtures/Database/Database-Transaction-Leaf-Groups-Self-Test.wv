@@ -3,6 +3,7 @@ module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉgroups profile porta
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉtransactionˉleafˉgroups as Groups;
+import Windvaleˉdatabaseˉtransactionˉleafˉpartition as Partition;
 import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
 import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
@@ -138,7 +139,8 @@ fn Twoˉleafˉcontract() -> i32 {
         Groups.Databaseˉtransactionˉleafˉgroupsˉplan(Current(), Mutations, Input);
     if First.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Valid ||
         First.Groupˉcount != 2u32 || First.Changedˉgroupˉcount != 2u32 ||
-        First.Splitˉgroupˉcount != 0u32 || First.Appliedˉcount != 3u32 ||
+        First.Partitionedˉgroupˉcount != 0u32 || First.Outputˉleafˉcount != 2u32 ||
+        First.Appliedˉcount != 3u32 ||
         First.Putˉcount != 2u32 || First.Deletedˉcount != 1u32 ||
         !Same(First.Bytes, Second.Bytes) {
         return 1;
@@ -155,22 +157,26 @@ fn Twoˉleafˉcontract() -> i32 {
         Leftˉgroup.Leafˉpage != 8u64 || Leftˉgroup.Firstˉmutation != 0u32 ||
         Leftˉgroup.Mutationˉcount != 2u32 ||
         Leftˉgroup.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten ||
-        Leftˉgroup.Entryˉcount != 1u32 ||
+        Leftˉgroup.Entryˉcount != 1u32 || Leftˉgroup.Replacementˉleafˉcount != 1u32 ||
         Rightˉgroup.Error != Groups.Databaseˉtransactionˉleafˉgroupˉreadˉerror.Valid ||
         Rightˉgroup.Leafˉpage != 9u64 || Rightˉgroup.Firstˉmutation != 2u32 ||
         Rightˉgroup.Mutationˉcount != 1u32 ||
         Rightˉgroup.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten ||
-        Rightˉgroup.Entryˉcount != 2u32 {
+        Rightˉgroup.Entryˉcount != 2u32 || Rightˉgroup.Replacementˉleafˉcount != 1u32 {
         return 2;
     }
+    let Leftˉleaf: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Leftˉgroup.Payload, 0u32);
+    let Rightˉleaf: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Rightˉgroup.Payload, 0u32);
     let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
-        Tree.Databaseˉtreeˉleafˉlookup(Leftˉgroup.Payload, Bytesˉfromˉu8(1u8));
+        Tree.Databaseˉtreeˉleafˉlookup(Leftˉleaf.Payload, Bytesˉfromˉu8(1u8));
     let Two: Tree.Databaseˉtreeˉleafˉlookupˉresult =
-        Tree.Databaseˉtreeˉleafˉlookup(Leftˉgroup.Payload, Bytesˉfromˉu8(2u8));
+        Tree.Databaseˉtreeˉleafˉlookup(Leftˉleaf.Payload, Bytesˉfromˉu8(2u8));
     let Six: Tree.Databaseˉtreeˉleafˉlookupˉresult =
-        Tree.Databaseˉtreeˉleafˉlookup(Rightˉgroup.Payload, Bytesˉfromˉu8(6u8));
+        Tree.Databaseˉtreeˉleafˉlookup(Rightˉleaf.Payload, Bytesˉfromˉu8(6u8));
     let Seven: Tree.Databaseˉtreeˉleafˉlookupˉresult =
-        Tree.Databaseˉtreeˉleafˉlookup(Rightˉgroup.Payload, Bytesˉfromˉu8(7u8));
+        Tree.Databaseˉtreeˉleafˉlookup(Rightˉleaf.Payload, Bytesˉfromˉu8(7u8));
     if !One.Found || Bytesˉreadˉu8(One.Value, 0u32) != 10u8 ||
         Two.Found || !Six.Found || Bytesˉreadˉu8(Six.Value, 0u32) != 60u8 ||
         !Seven.Found || Bytesˉreadˉu8(Seven.Value, 0u32) != 7u8 {
@@ -189,31 +195,50 @@ fn Unchangedˉcontract() -> i32 {
         Groups.Databaseˉtransactionˉleafˉgroupˉread(Result.Bytes, 0u32);
     if Result.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Valid ||
         Result.Groupˉcount != 1u32 || Result.Changedˉgroupˉcount != 0u32 ||
-        Result.Appliedˉcount != 0u32 ||
+        Result.Outputˉleafˉcount != 0u32 || Result.Appliedˉcount != 0u32 ||
         Group.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged ||
-        Group.Entryˉcount != 2u32 || Bytesˉlength(Group.Payload) != 0u32 {
+        Group.Entryˉcount != 2u32 || Group.Replacementˉleafˉcount != 0u32 ||
+        Bytesˉlength(Group.Payload) != 0u32 {
         return 1;
     }
     return 0;
 }
 
-fn Splitˉcontract() -> i32 {
+fn Partitionedˉcontract() -> i32 {
     var Large: bytes = Bytesˉfromˉu64ˉlittle(1u64);
-    while Bytesˉlength(Large) < 4096u32 {
+    while Bytesˉlength(Large) < 1024u32 {
         Large = Bytesˉconcat(Large, Large);
     }
-    let Mutations: bytes = Mutationˉset(1u32, Put(3u8, Large));
+    Large = Bytesˉslice(Large, 0u32, 1000u32);
+    let Mutations: bytes = Mutationˉset(
+        4u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Put(0u8, Large), Put(1u8, Large)),
+            Bytesˉconcat(Put(3u8, Large), Put(4u8, Large))
+        )
+    );
+    let Path: bytes = Leftˉpath();
+    let Input: bytes = Bytesˉconcat(
+        Bytesˉconcat(Path, Path), Bytesˉconcat(Path, Path)
+    );
     let Result: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
         Groups.Databaseˉtransactionˉleafˉgroupsˉplan(
-            Current(), Mutations, Leftˉpath()
+            Current(), Mutations, Input
         );
     let Group: Groups.Databaseˉtransactionˉleafˉgroup =
         Groups.Databaseˉtransactionˉleafˉgroupˉread(Result.Bytes, 0u32);
+    let First: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Group.Payload, 0u32);
+    let Second: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Group.Payload, 1u32);
     if Result.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Valid ||
-        Result.Groupˉcount != 1u32 || Result.Splitˉgroupˉcount != 1u32 ||
-        Result.Changedˉgroupˉcount != 0u32 || Result.Appliedˉcount != 0u32 ||
-        Group.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired ||
-        Group.Entryˉcount != 0u32 || Bytesˉlength(Group.Payload) != 0u32 {
+        Result.Groupˉcount != 1u32 || Result.Partitionedˉgroupˉcount != 1u32 ||
+        Result.Changedˉgroupˉcount != 1u32 || Result.Outputˉleafˉcount != 2u32 ||
+        Result.Appliedˉcount != 4u32 || Result.Putˉcount != 4u32 ||
+        Group.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Partitioned ||
+        Group.Entryˉcount != 5u32 || Group.Replacementˉleafˉcount != 2u32 ||
+        First.Entryˉcount != 4u32 || Second.Entryˉcount != 1u32 ||
+        Bytesˉreadˉu8(Second.Separator, 0u32) != 4u8 {
         return 1;
     }
     return 0;
@@ -263,8 +288,8 @@ export fn Main() -> i32 {
     if Twoˉleaf != 0 { return 100 + Twoˉleaf; }
     let Unchanged: i32 = Unchangedˉcontract();
     if Unchanged != 0 { return 200 + Unchanged; }
-    let Split: i32 = Splitˉcontract();
-    if Split != 0 { return 300 + Split; }
+    let Partitioned: i32 = Partitionedˉcontract();
+    if Partitioned != 0 { return 300 + Partitioned; }
     let Rejection: i32 = Rejectionˉcontract();
     if Rejection != 0 { return 400 + Rejection; }
     return 0;
