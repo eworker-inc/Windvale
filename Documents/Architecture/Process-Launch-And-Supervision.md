@@ -182,6 +182,10 @@ syscall/thread state and retained 116-byte reply record, clears the channel
 publication state, dispatches only the admitted init generation, restores its
 checked saved context, and returns zero through `sysretq`, advancing ownership
 through byte 15,243.
+The client reply-delivery transaction then checks the complementary
+syscall/thread state and init-owned reply record, dispatches only the admitted
+client generation, restores its checked saved context, and returns the exact
+116-byte result through `sysretq`, advancing ownership through byte 15,574.
 
 The first restart policies are deliberately small:
 
