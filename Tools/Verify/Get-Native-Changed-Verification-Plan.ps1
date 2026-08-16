@@ -62,6 +62,93 @@ foreach ($Line in @($OsX64CodeEmissionDevelopmentLines | Select-Object -Skip 1))
             $TargetName)
     }
 }
+$LibraryDevelopmentEligible = $true
+$LibraryDevelopmentRequiresAllTargets = $false
+$SelectedLibraryDevelopmentTargets =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$LibraryDevelopmentTargetsByPath = @{}
+$LibraryDevelopmentPlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Library-Development-Targets.txt'
+$LibraryDevelopmentLines = if (
+    Test-Path -LiteralPath $LibraryDevelopmentPlan -PathType Leaf) {
+    @(Get-Content -LiteralPath $LibraryDevelopmentPlan)
+} else {
+    @()
+}
+$LibraryDevelopmentTargetNames =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$LibraryDevelopmentTargetProjects =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$LibraryDevelopmentKindCounts = @{ project = 0; conformance = 0; negative = 0 }
+if ($LibraryDevelopmentLines.Count -ne 30 -or
+    $LibraryDevelopmentLines[0] -ne 'windvale-library-development-targets 1') {
+    $LibraryDevelopmentEligible = $false
+}
+foreach ($Line in @($LibraryDevelopmentLines | Select-Object -Skip 1)) {
+    $Fields = $Line.Split('|')
+    if ($Fields.Count -ne 3 -or
+        $Fields[0] -notmatch '^[a-z0-9][a-z0-9-]*$' -or
+        !$LibraryDevelopmentKindCounts.ContainsKey($Fields[1]) -or
+        $Fields[2] -notmatch
+            '^(?:Projects/Libraries|Projects/Tests|Tests/Fixtures/Libraries)/.+\.wvproj$' -or
+        !$LibraryDevelopmentTargetProjects.Add($Fields[2])) {
+        $LibraryDevelopmentEligible = $false
+        continue
+    }
+    $TargetName = $Fields[0]
+    $ExpectedKind = if ($Fields[2].StartsWith(
+            'Projects/Libraries/', [StringComparison]::Ordinal) -or
+        $Fields[2].EndsWith('-Import-Smoke.wvproj', [StringComparison]::Ordinal)) {
+        'project'
+    } elseif ($Fields[2].StartsWith(
+            'Projects/Tests/', [StringComparison]::Ordinal)) {
+        'conformance'
+    } else {
+        'negative'
+    }
+    if ($Fields[1] -ne $ExpectedKind) {
+        $LibraryDevelopmentEligible = $false
+        continue
+    }
+    $null = $LibraryDevelopmentTargetNames.Add($TargetName)
+    $LibraryDevelopmentKindCounts[$Fields[1]]++
+    $TargetPaths = @($Fields[2])
+    $TargetProjectAbsolute = Join-Path $RepositoryRoot $Fields[2]
+    if (!(Test-Path -LiteralPath $TargetProjectAbsolute -PathType Leaf)) {
+        $LibraryDevelopmentEligible = $false
+        continue
+    }
+    $TargetPaths += @(
+        Get-Content -LiteralPath $TargetProjectAbsolute |
+            ForEach-Object {
+                if ($_ -match '^(?:root|source) "([^"\r\n]+)"$') {
+                    $Matches[1]
+                }
+            }
+    )
+    foreach ($TargetPath in $TargetPaths) {
+        if (!$LibraryDevelopmentTargetsByPath.ContainsKey($TargetPath)) {
+            $LibraryDevelopmentTargetsByPath[$TargetPath] =
+                [System.Collections.Generic.HashSet[string]]::new(
+                    [StringComparer]::Ordinal)
+        }
+        $null = $LibraryDevelopmentTargetsByPath[$TargetPath].Add($TargetName)
+    }
+}
+if (!$LibraryDevelopmentTargetNames.SetEquals([string[]]@(
+        'capability-rejections',
+        'durability',
+        'models',
+        'page-storage',
+        'read-only-wvdb',
+        'resource-store',
+        'storage-geometry'
+    )) -or
+    $LibraryDevelopmentKindCounts.project -ne 19 -or
+    $LibraryDevelopmentKindCounts.conformance -ne 8 -or
+    $LibraryDevelopmentKindCounts.negative -ne 2) {
+    $LibraryDevelopmentEligible = $false
+}
 $DatabaseStorageDevelopmentEligible = $true
 $DatabaseDevelopmentRequiresAllTargets = $false
 $SelectedDatabaseDevelopmentTargets = [System.Collections.Generic.HashSet[string]]::new(
@@ -755,6 +842,12 @@ function Add-Suite {
         if (!$KnownSuites.Contains($SuiteName)) {
             throw "Unknown native verification owner '$SuiteName'."
         }
+        if ($SuiteName -eq 'libraries' -and
+            ![string]::IsNullOrWhiteSpace($script:CurrentChangedPath) -and
+            !$LibraryDevelopmentTargetsByPath.ContainsKey(
+                $script:CurrentChangedPath)) {
+            $script:LibraryDevelopmentRequiresAllTargets = $true
+        }
         $null = $SelectedSuites.Add($SuiteName)
     }
 }
@@ -1155,6 +1248,7 @@ if ($Paths.Count -eq 0) {
 }
 
 foreach ($Path in $Paths) {
+    $script:CurrentChangedPath = $Path
     if ($OsX64CodeEmissionDevelopmentTargetsByPath.ContainsKey($Path)) {
         foreach ($OsX64Target in
             $OsX64CodeEmissionDevelopmentTargetsByPath[$Path]) {
@@ -1166,6 +1260,11 @@ foreach ($Path in $Paths) {
             'Tools/Native/Test-Os-X64-Code-Emission.sh'
         )) {
         $OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
+    }
+    if ($LibraryDevelopmentTargetsByPath.ContainsKey($Path)) {
+        foreach ($LibraryTarget in $LibraryDevelopmentTargetsByPath[$Path]) {
+            $null = $SelectedLibraryDevelopmentTargets.Add($LibraryTarget)
+        }
     }
     if ($DatabaseDevelopmentTargetsByPath.ContainsKey($Path)) {
         foreach ($DatabaseTarget in $DatabaseDevelopmentTargetsByPath[$Path]) {
@@ -1207,6 +1306,7 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
         'Specifications/Windvale-Native-Verification-Owners.md',
         'Tests/Native/Retirement-Suite.txt',
+        'Tests/Native/Library-Development-Targets.txt',
         'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt',
         'Tests/Native/Verification-Owners.txt',
         'Tests/Native/Development-Owner-Dependencies.txt',
@@ -3267,6 +3367,11 @@ if (!$OsX64CodeEmissionDevelopmentRequiresAllTargets -and
         $SelectedOsX64CodeEmissionDevelopmentTargets
     )[0]
 }
+$LibraryDevelopmentTarget = 'all'
+if (!$LibraryDevelopmentRequiresAllTargets -and
+    $SelectedLibraryDevelopmentTargets.Count -eq 1) {
+    $LibraryDevelopmentTarget = @($SelectedLibraryDevelopmentTargets)[0]
+}
 if (!$Quiet) {
     Write-Host "Native owners: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
@@ -3275,6 +3380,7 @@ if (!$Quiet) {
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
     Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
     Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
+    Write-Host "Library development target: $LibraryDevelopmentTarget"
     Write-Host "Database storage development checkpoint: $((
         $SelectedSuites.Contains('database-storage') -and
         $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
@@ -3293,6 +3399,11 @@ if ($PassThru) {
             $OsX64CodeEmissionDevelopmentEligible -and
             $OsX64CodeEmissionDevelopmentTarget -ne 'all')
         OsX64CodeEmissionDevelopmentTarget = $OsX64CodeEmissionDevelopmentTarget
+        UseLibraryDevelopment = (
+            $SelectedSuites.Contains('libraries') -and
+            $LibraryDevelopmentEligible -and
+            $LibraryDevelopmentTarget -ne 'all')
+        LibraryDevelopmentTarget = $LibraryDevelopmentTarget
         UseDatabaseStorageDevelopment = (
             $SelectedSuites.Contains('database-storage') -and
             $DatabaseStorageDevelopmentEligible)

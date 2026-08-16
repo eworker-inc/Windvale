@@ -18,6 +18,8 @@ values, and returns:
 - whether verification-plan and managed-entry inventory checks are required; and
 - the OS x64 code-emission development target when every affected input belongs
   to one declared project closure, otherwise `all`;
+- the library development target when every input that selects the library owner
+  belongs to one declared dependency cluster, otherwise `all`;
 - the database development target when exactly one declared test-project closure
   owns all affected database inputs, otherwise `all`; and
 - the normalized changed-path count.
@@ -35,8 +37,12 @@ is reserved for the final grouped gate, not used as changed-file fallback.
 
 The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace
 containment, deterministic source ordering, and native publication. The `libraries`
-lane owns the seven reusable library projects plus capability-bearing composition
-and database conformance consumers. The `packages` lane owns the WVDB Query
+lane owns 19 reusable or importing projects, eight conformance builds, and two
+capability/profile rejection projects. Its development manifest groups those 29
+projects into seven dependency clusters and derives each cluster's inputs from
+the project declarations. One unambiguous cluster may run independently;
+shared, multiple, owner, and unmapped owner inputs retain the complete lane. The
+`packages` lane owns the WVDB Query
 application, its exact Package 1 / Lock 1 metadata, Project 2 input, locked library
 parts, native package front doors, deterministic output identity, capability
 inspection, negative admission, and failed-output preservation.

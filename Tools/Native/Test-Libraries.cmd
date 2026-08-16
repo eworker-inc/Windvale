@@ -1,10 +1,19 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-if not "%~1"=="" (
-    >&2 echo Usage: Tools\Native\Test-Libraries.cmd
-    exit /b 64
-)
+set "DevelopmentTarget="
+if "%~1"=="" goto :arguments_complete
+if /i not "%~1"=="--development-target" goto :usage
+if "%~2"=="" goto :usage
+if not "%~3"=="" goto :usage
+set "DevelopmentTarget=%~2"
+goto :arguments_complete
+
+:usage
+>&2 echo Usage: Tools\Native\Test-Libraries.cmd [--development-target ^<target^>]
+exit /b 64
+
+:arguments_complete
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -14,6 +23,8 @@ set "TemporaryDirectory=%TEMP%\windvale-libraries-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 set "Result=1"
+
+if defined DevelopmentTarget goto :development
 
 for %%P in (
     Windvale-Library-Resource-Store
@@ -86,6 +97,71 @@ for %%N in (
 
 echo native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 set "Result=0"
+goto :cleanup
+
+:development
+set "TargetPlan=%RepositoryRoot%\Tests\Native\Library-Development-Targets.txt"
+if not exist "%TargetPlan%" (
+    >&2 echo Missing library development-target manifest.
+    goto :cleanup
+)
+set "TargetHeader="
+for /f "usebackq delims=" %%H in ("%TargetPlan%") do (
+    set "TargetHeader=%%H"
+    goto :target_header_read
+)
+:target_header_read
+if not "%TargetHeader%"=="windvale-library-development-targets 1" (
+    >&2 echo Invalid library development-target manifest.
+    goto :cleanup
+)
+set "DevelopmentProjects=0"
+set "DevelopmentConformance=0"
+set "DevelopmentNegative=0"
+set "DevelopmentCases=0"
+set "DevelopmentFailed=0"
+for /f "usebackq tokens=1,2,* delims=|" %%A in ("%TargetPlan%") do (
+    if "%%A"=="%DevelopmentTarget%" call :run_development_entry "%%B" "%%C"
+)
+if "%DevelopmentCases%"=="0" (
+    >&2 echo Unknown library development target: %DevelopmentTarget%
+    set "Result=64"
+    goto :cleanup
+)
+if not "%DevelopmentFailed%"=="0" goto :cleanup
+echo native libraries development status=Passed target=%DevelopmentTarget% projects=%DevelopmentProjects% conformance-builds=%DevelopmentConformance% negative=%DevelopmentNegative% cases=%DevelopmentCases%
+set "Result=0"
+goto :cleanup
+
+:run_development_entry
+set /a DevelopmentCases+=1
+if /i "%~1"=="project" set /a DevelopmentProjects+=1
+if /i "%~1"=="conformance" set /a DevelopmentConformance+=1
+if /i "%~1"=="negative" goto :run_development_negative
+if /i not "%~1"=="project" if /i not "%~1"=="conformance" (
+    >&2 echo Invalid library development-target kind: %~1
+    set "DevelopmentFailed=1"
+    exit /b 0
+)
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\%~2" ^
+    "%TemporaryDirectory%\development-%DevelopmentCases%.wvb" >nul
+if errorlevel 1 (
+    >&2 echo Native library development project failed: %~2
+    set "DevelopmentFailed=1"
+)
+exit /b 0
+
+:run_development_negative
+set /a DevelopmentNegative+=1
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\%~2" ^
+    "%TemporaryDirectory%\development-%DevelopmentCases%.wvb" ^
+    >"%TemporaryDirectory%\development-%DevelopmentCases%.out" ^
+    2>"%TemporaryDirectory%\development-%DevelopmentCases%.err"
+if not errorlevel 1 set "DevelopmentFailed=1"
+if exist "%TemporaryDirectory%\development-%DevelopmentCases%.wvb" set "DevelopmentFailed=1"
+exit /b 0
 
 :cleanup
 if exist "%TemporaryDirectory%\." (

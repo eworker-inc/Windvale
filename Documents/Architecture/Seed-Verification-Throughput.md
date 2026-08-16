@@ -225,6 +225,16 @@ syntax validation. The complete Windows owner passed all 56 projects and 336
 cases in 115,333 ms, making the measured 3,622 ms middle-target owner 31.84
 times faster without changing the complete route.
 
+The library development owner now selects one of seven dependency clusters from
+a canonical 29-project manifest. The planner derives each cluster's source
+closure from its Project 2 declarations; shared, multi-cluster, owner, and
+otherwise ambiguous changes retain the complete route. On the measured Windows
+host, the three-case `models` target completed in 4,320 ms and the largest
+nine-case `page-storage` target completed in 5,878 ms, compared with 26,348 ms
+for the unchanged complete owner. That is a 6.10-fold speedup for the model
+cluster and 4.48-fold for the page/storage cluster without removing the full
+29-case qualification route.
+
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.

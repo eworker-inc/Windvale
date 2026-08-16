@@ -1828,6 +1828,8 @@ $NativeCases = @(
         Suites = @('libraries', 'packages')
         Gaps = @()
         VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'read-only-wvdb'
     },
     @{
         Name = 'focused database tree-leaf operations owner'
@@ -2204,6 +2206,8 @@ $NativeCases = @(
         Suites = @('database-superblock', 'database-durable-commit', 'libraries')
         Gaps = @()
         VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'durability'
     },
     @{
         Name = 'durable database commit owner'
@@ -2216,6 +2220,8 @@ $NativeCases = @(
         Suites = @('database-durable-commit', 'database-storage', 'libraries')
         Gaps = @()
         VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'durability'
     },
     @{
         Name = 'durable database commit project owner'
@@ -2231,6 +2237,8 @@ $NativeCases = @(
         )
         Gaps = @()
         VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'durability'
     },
     @{
         Name = 'database storage publication and recovery owner'
@@ -2851,6 +2859,59 @@ $NativeCases = @(
         OsX64Target = 'all'
     },
     @{
+        Name = 'library development target manifest'
+        Paths = @('Tests/Native/Library-Development-Targets.txt')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'library exact development target'
+        Paths = @('Libraries/Models/Scripted-Model-Provider.wv')
+        Suites = @('model-provider', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'models'
+    },
+    @{
+        Name = 'library same-target closure'
+        Paths = @(
+            'Libraries/Models/Model-Protocol.wv',
+            'Libraries/Models/Scripted-Model-Provider.wv',
+            'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj'
+        )
+        Suites = @('model-provider', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'models'
+    },
+    @{
+        Name = 'library multiple development targets'
+        Paths = @(
+            'Libraries/Database/Storage-Geometry.wv',
+            'Libraries/Models/Model-Protocol.wv'
+        )
+        Suites = @('model-provider', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryDevelopment = $false
+        LibraryTarget = 'all'
+    },
+    @{
+        Name = 'library owner change stays complete'
+        Paths = @(
+            'Tools/Native/Test-Libraries.cmd',
+            'Libraries/Models/Scripted-Model-Provider.wv'
+        )
+        Suites = @('model-provider', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryDevelopment = $false
+        LibraryTarget = 'all'
+    },
+    @{
         Name = 'combined deterministic order'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
         Suites = @(
@@ -3037,6 +3098,115 @@ foreach ($TargetName in $OsX64TargetNames) {
     }
 }
 
+$LibraryTargetPlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Library-Development-Targets.txt'
+$LibraryTargetLines = @(Get-Content -LiteralPath $LibraryTargetPlan)
+if ($LibraryTargetLines.Count -ne 30 -or
+    $LibraryTargetLines[0] -ne 'windvale-library-development-targets 1') {
+    throw 'The library development-target inventory differs.'
+}
+$LibraryTargetNames = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$LibraryTargetProjects = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$LibraryTargetKindCounts = @{ project = 0; conformance = 0; negative = 0 }
+foreach ($Line in @($LibraryTargetLines | Select-Object -Skip 1)) {
+    $Fields = $Line.Split('|')
+    if ($Fields.Count -ne 3 -or
+        !$LibraryTargetKindCounts.ContainsKey($Fields[1]) -or
+        !$LibraryTargetProjects.Add($Fields[2])) {
+        throw "Invalid or duplicate library development target: $Line"
+    }
+    $ExpectedKind = if ($Fields[2].StartsWith(
+            'Projects/Libraries/', [StringComparison]::Ordinal) -or
+        $Fields[2].EndsWith('-Import-Smoke.wvproj', [StringComparison]::Ordinal)) {
+        'project'
+    } elseif ($Fields[2].StartsWith(
+            'Projects/Tests/', [StringComparison]::Ordinal)) {
+        'conformance'
+    } else {
+        'negative'
+    }
+    if ($Fields[1] -ne $ExpectedKind) {
+        throw "Library development-target evidence kind differs: $Line"
+    }
+    $null = $LibraryTargetNames.Add($Fields[0])
+    $LibraryTargetKindCounts[$Fields[1]]++
+    $ProjectPath = Join-Path $RepositoryRoot $Fields[2]
+    if (!(Test-Path -LiteralPath $ProjectPath -PathType Leaf)) {
+        throw "Missing library development project: $($Fields[2])"
+    }
+    foreach ($InputPath in @(
+        Get-Content -LiteralPath $ProjectPath |
+            ForEach-Object {
+                if ($_ -match '^(?:root|source) "([^"\r\n]+)"$') {
+                    $Matches[1]
+                }
+            }
+    )) {
+        if (!(Test-Path -LiteralPath (Join-Path $RepositoryRoot $InputPath) -PathType Leaf)) {
+            throw "Missing library development input: $InputPath"
+        }
+    }
+}
+$ExpectedLibraryTargetProjects = [string[]]@(
+    'Projects/Libraries/Windvale-Library-Resource-Store.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Storage-Geometry.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Storage-Page.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Durable-Superblock.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Durable-Page.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Durable-Commit-Record.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Commit-Publication.wvproj',
+    'Projects/Libraries/Windvale-Library-Wvdb-Reader.wvproj',
+    'Projects/Libraries/Windvale-Library-Hosted-Resource-Store.wvproj',
+    'Projects/Libraries/Windvale-Library-Read-Only-Directory.wvproj',
+    'Projects/Libraries/Windvale-Library-Random-Access-Storage.wvproj',
+    'Projects/Libraries/Windvale-Library-Random-Access-Database-Page.wvproj',
+    'Projects/Libraries/Windvale-Library-Native-Hosted-Snapshot-Page.wvproj',
+    'Projects/Libraries/Windvale-Library-Read-Only-Wvdb.wvproj',
+    'Projects/Libraries/Windvale-Library-Model-Protocol.wvproj',
+    'Projects/Libraries/Windvale-Library-Scripted-Model-Provider.wvproj',
+    'Tests/Fixtures/Libraries/Directory-Import-Smoke.wvproj',
+    'Tests/Fixtures/Libraries/Random-Access-Page-Import-Smoke.wvproj',
+    'Tests/Fixtures/Libraries/Random-Access-Storage-Import-Smoke.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Geometry.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Storage-Page.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Storage-Page-Accept.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Native-Hosted-Snapshot-Page.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Reader.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj',
+    'Tests/Fixtures/Libraries/Capability-Import-No-Root-Declaration.wvproj',
+    'Tests/Fixtures/Libraries/Capability-Profile-Rejection.wvproj'
+)
+if (!$LibraryTargetNames.SetEquals([string[]]@(
+        'capability-rejections',
+        'durability',
+        'models',
+        'page-storage',
+        'read-only-wvdb',
+        'resource-store',
+        'storage-geometry'
+    )) -or
+    !$LibraryTargetProjects.SetEquals($ExpectedLibraryTargetProjects) -or
+    $LibraryTargetKindCounts.project -ne 19 -or
+    $LibraryTargetKindCounts.conformance -ne 8 -or
+    $LibraryTargetKindCounts.negative -ne 2) {
+    throw 'The library development-target names or evidence totals differ.'
+}
+$LibraryWindowsOwner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Libraries.cmd')
+$LibraryLinuxOwner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Libraries.sh')
+foreach ($OwnerText in @($LibraryWindowsOwner, $LibraryLinuxOwner)) {
+    if (!$OwnerText.Contains('Library-Development-Targets.txt') -or
+        !$OwnerText.Contains('--development-target') -or
+        !$OwnerText.Contains('native libraries development status=Passed')) {
+        throw 'A library owner does not implement the development-target contract.'
+    }
+}
+
 foreach ($Case in $Cases) {
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet
     if (
@@ -3078,6 +3248,13 @@ foreach ($Case in $NativeCases) {
     $OsX64DevelopmentDiffers = (
         $Case.ContainsKey('OsX64Development') -and
         $Plan.UseOsX64CodeEmissionDevelopment -ne $Case.OsX64Development)
+    $ExpectedLibraryDevelopment = if ($Case.ContainsKey('LibraryDevelopment')) {
+        $Case.LibraryDevelopment
+    } else {
+        $false
+    }
+    $LibraryDevelopmentDiffers = (
+        $Plan.UseLibraryDevelopment -ne $ExpectedLibraryDevelopment)
     $ExpectedOsX64Target = if ($Case.ContainsKey('OsX64Target')) {
         $Case.OsX64Target
     } else {
@@ -3085,6 +3262,13 @@ foreach ($Case in $NativeCases) {
     }
     $OsX64TargetDiffers = (
         $Plan.OsX64CodeEmissionDevelopmentTarget -ne $ExpectedOsX64Target)
+    $ExpectedLibraryTarget = if ($Case.ContainsKey('LibraryTarget')) {
+        $Case.LibraryTarget
+    } else {
+        'all'
+    }
+    $LibraryTargetDiffers = (
+        $Plan.LibraryDevelopmentTarget -ne $ExpectedLibraryTarget)
     $ExpectedDatabaseTarget = if ($Case.ContainsKey('DatabaseTarget')) {
         $Case.DatabaseTarget
     } else {
@@ -3106,6 +3290,8 @@ foreach ($Case in $NativeCases) {
         $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification -or
         $OsX64DevelopmentDiffers -or
         $OsX64TargetDiffers -or
+        $LibraryDevelopmentDiffers -or
+        $LibraryTargetDiffers -or
         $DatabaseDevelopmentDiffers -or
         $DatabaseTargetDiffers
     ) {
@@ -3122,6 +3308,8 @@ foreach ($Case in $NativeCases) {
             "verify-github=$($Plan.RunGitHubQualificationVerification), " +
             "os-x64-development=$($Plan.UseOsX64CodeEmissionDevelopment), " +
             "os-x64-target=$($Plan.OsX64CodeEmissionDevelopmentTarget), " +
+            "library-development=$($Plan.UseLibraryDevelopment), " +
+            "library-target=$($Plan.LibraryDevelopmentTarget), " +
             "database-development=$($Plan.UseDatabaseStorageDevelopment), " +
             "database-target=$($Plan.DatabaseStorageDevelopmentTarget)."
         )

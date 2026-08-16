@@ -155,6 +155,18 @@ if ($Plan.Scope -eq 'website') {
                     'Native owner database-storage mode=development-checkpoint ' +
                     "target=$DatabaseTarget")
                 & $DevelopmentOwner --development-target $DatabaseTarget
+            } elseif ($Suite -eq 'libraries' -and
+                $NativePlan.UseLibraryDevelopment) {
+                $DevelopmentOwner = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Libraries.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Libraries.sh'
+                }
+                $LibraryTarget = $NativePlan.LibraryDevelopmentTarget
+                Write-Host (
+                    'Native owner libraries mode=development-target ' +
+                    "target=$LibraryTarget")
+                & $DevelopmentOwner --development-target $LibraryTarget
             } elseif ($Suite -eq 'os-x64-code-emission' -and
                 $NativePlan.UseOsX64CodeEmissionDevelopment) {
                 $DevelopmentOwner = if ($IsWindowsHost) {
