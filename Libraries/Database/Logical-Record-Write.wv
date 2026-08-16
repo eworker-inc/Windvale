@@ -1,0 +1,105 @@
+module Windvaleˉdatabaseˉlogicalˉrecordˉwrite profile portable;
+
+const DATABASE_LOGICAL_WRITE_KEY_MAGIC: u32 = 1380669015u32;
+const DATABASE_LOGICAL_WRITE_RECORD_MAGIC: u32 = 1146246743u32;
+const DATABASE_LOGICAL_WRITE_VERSION: u32 = 1u32;
+const DATABASE_LOGICAL_WRITE_HEADER_BYTES: u32 = 32u32;
+const DATABASE_LOGICAL_WRITE_MAXIMUM_IDENTITY_BYTES: u32 = 4064u32;
+const DATABASE_LOGICAL_WRITE_MAXIMUM_PAYLOAD_BYTES: u32 = 61408u32;
+
+export enum Databaseˉlogicalˉwriteˉerror {
+    Valid = 0;
+    Invalidˉcollection = 1;
+    Invalidˉidentityˉlength = 2;
+    Invalidˉschema = 3;
+    Invalidˉpayloadˉlength = 4;
+}
+
+export record Databaseˉlogicalˉwrite {
+    Error: Databaseˉlogicalˉwriteˉerror;
+    Key: bytes;
+    Value: bytes;
+}
+
+fn Databaseˉlogicalˉwriteˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Databaseˉlogicalˉwriteˉfailure(
+    Input: bytes,
+    Error: Databaseˉlogicalˉwriteˉerror
+) -> Databaseˉlogicalˉwrite {
+    let Empty: bytes = Databaseˉlogicalˉwriteˉempty(Input);
+    return Databaseˉlogicalˉwrite(Error, Empty, Empty);
+}
+
+export fn Databaseˉlogicalˉwriteˉprepare(
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes
+) -> Databaseˉlogicalˉwrite {
+    if Collection == 0u64 {
+        return Databaseˉlogicalˉwriteˉfailure(
+            Identity,
+            Databaseˉlogicalˉwriteˉerror.Invalidˉcollection
+        );
+    }
+    let Identityˉlength: u32 = Bytesˉlength(Identity);
+    if Identityˉlength == 0u32 ||
+        Identityˉlength > DATABASE_LOGICAL_WRITE_MAXIMUM_IDENTITY_BYTES {
+        return Databaseˉlogicalˉwriteˉfailure(
+            Identity,
+            Databaseˉlogicalˉwriteˉerror.Invalidˉidentityˉlength
+        );
+    }
+    if Schema == 0u64 {
+        return Databaseˉlogicalˉwriteˉfailure(
+            Identity,
+            Databaseˉlogicalˉwriteˉerror.Invalidˉschema
+        );
+    }
+    let Payloadˉlength: u32 = Bytesˉlength(Payload);
+    if Payloadˉlength > DATABASE_LOGICAL_WRITE_MAXIMUM_PAYLOAD_BYTES {
+        return Databaseˉlogicalˉwriteˉfailure(
+            Identity,
+            Databaseˉlogicalˉwriteˉerror.Invalidˉpayloadˉlength
+        );
+    }
+    var Key: bytes =
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_WRITE_KEY_MAGIC);
+    Key = Bytesˉconcat(
+        Key,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_WRITE_VERSION)
+    );
+    Key = Bytesˉconcat(
+        Key,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_WRITE_HEADER_BYTES)
+    );
+    Key = Bytesˉconcat(Key, Bytesˉfromˉu32ˉlittle(2u32));
+    Key = Bytesˉconcat(Key, Bytesˉfromˉu64ˉlittle(Collection));
+    Key = Bytesˉconcat(Key, Bytesˉfromˉu32ˉlittle(Identityˉlength));
+    Key = Bytesˉconcat(Key, Bytesˉfromˉu32ˉlittle(0u32));
+    Key = Bytesˉconcat(Key, Identity);
+
+    var Value: bytes =
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_WRITE_RECORD_MAGIC);
+    Value = Bytesˉconcat(
+        Value,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_WRITE_VERSION)
+    );
+    Value = Bytesˉconcat(
+        Value,
+        Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_WRITE_HEADER_BYTES)
+    );
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Schema));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Payloadˉlength));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Payload);
+    return Databaseˉlogicalˉwrite(
+        Databaseˉlogicalˉwriteˉerror.Valid,
+        Key,
+        Value
+    );
+}

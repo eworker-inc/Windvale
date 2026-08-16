@@ -3,6 +3,7 @@
 ## Status
 
 - Hosted coordinator: `Libraries/Platform/Database/Durable-Tree-Writer.wv`
+- Logical coordinator: `Libraries/Platform/Database/Durable-Logical-Tree-Writer.wv`
 - Capability: `storage.random_access_v1`
 - Portable transaction: `Libraries/Database/Tree-Path-Upsert.wv`
 - Evidence: focused Windows native execution; independent Linux execution pending
@@ -57,6 +58,20 @@ storage failure, changed snapshot, provider page failure, malformed durable
 page, invalid node or graph, portable transaction rejection, and publication
 failure while preserving the relevant lower-layer errors.
 
+## Logical write projection
+
+`Databaseˉdurableˉlogicalˉtreeˉupsert` accepts collection identity, opaque
+record identity, schema identity, payload, and an action bound. It prepares the
+canonical `WVKR 1` key and `WVRD 1` envelope through the focused write codec,
+then passes those bytes unchanged to the hosted tree writer. Invalid logical
+input produces a typed logical error and performs no provider action.
+
+The projection deliberately does not include open, session, or read code. The
+2026-08-15 Windows build is 4,166,878 object bytes, leaving 27,426 bytes below
+the 4 MiB object limit. The independent restart reader is 2,374,656 object
+bytes. Keeping write and read projections separate bounds loaded code and
+avoids turning total database history into a memory requirement.
+
 ## Verification
 
 The hosted writer fixture starts from the committed depth-two generation
@@ -66,6 +81,12 @@ log 7, generation 3, sequence 2, and committed length 33,280. It decodes the
 new leaf and root, checks predecessor ownership, key/value lookup, and routing,
 then proves a stable reopen does not change bytes.
 
+The logical fixture starts from the same committed depth-two generation,
+writes collection `7`, identity `customer-1`, schema `3`, and payload
+`stored-through-logical-tree-writer`, then exits. A separate get fixture opens
+generation 3, performs a two-page lookup, validates the schema and payload,
+checks a missing identity, and leaves the 33,280-byte file byte-identical.
+
 For each publication boundary zero through four, the fixture reopens a marked
 tail, runs recovery, republishes with the selected action bound, restarts, and
 converges on the same committed generation. The Windows database development
@@ -74,5 +95,5 @@ owner passes eleven targets. Paired-host qualification remains pending.
 ## Exclusions
 
 This milestone does not own server listening, sessions, authentication,
-catalogs, row codecs, query planning, concurrent writers, delete/merge,
+catalogs, schema bodies, query planning, concurrent writers, delete/merge,
 reclamation, range cursors, snapshot pinning, or automatic retry.

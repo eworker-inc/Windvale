@@ -13,6 +13,7 @@ source "Libraries/Database/Durable-Superblock.wv"
 source "Libraries/Database/Local-Database-Contracts.wv"
 source "Libraries/Database/Local-Database-Get.wv"
 source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
 source "Libraries/Database/Storage-Page.wv"
 source "Libraries/Database/Tree-Node.wv"
 emit wvb

@@ -7,4 +7,5 @@ source "Libraries/Platform/Storage/Random-Access-Storage.wv"
 source "Libraries/Database/Durable-Superblock.wv"
 source "Libraries/Database/Local-Database-Contracts.wv"
 source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
 emit wvb

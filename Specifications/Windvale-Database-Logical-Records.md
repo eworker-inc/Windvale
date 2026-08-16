@@ -7,6 +7,11 @@ between application record identities and `WVTN 1` tree bytes. It defines one
 canonical collection/record key format, one typed record envelope, and bounded
 get/put preparation. It performs no storage I/O and grants no authority.
 
+`Windvaleˉdatabaseˉlogicalˉrecordˉwrite` is the focused write-only part of the
+same contract. The complete codec delegates put preparation to it, so focused
+writers and complete readers cannot disagree about durable key or value bytes.
+The split is a code-size and memory boundary, not a second format.
+
 The current format version is `1`. Every multi-byte scalar is little-endian.
 Decoders require exact length and reject malformed, oversized, truncated, or
 trailing input before returning any admitted bytes.
@@ -90,6 +95,11 @@ collection anchors, get/put key agreement, empty payload admission, maximum
 4,096-byte keys, maximum 61,440-byte values, and typed malformed-input
 rejections. It is an owned target of both database-storage modes on Windows
 and Linux.
+
+The hosted logical tree-writer fixture also prepares a record through the
+write-only module, commits it into a depth-two tree, then starts an independent
+reader process. That reader admits the complete record envelope, verifies the
+schema and payload, and proves the read did not alter the database bytes.
 
 ## Exclusions
 

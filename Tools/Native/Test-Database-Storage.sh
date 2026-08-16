@@ -1252,6 +1252,46 @@ verify_host_tree_writer() {
         "$windows_application" windows >/dev/null || return $?
 }
 
+verify_host_logical_tree_writer() {
+    local put_project=$1 get_project=$2
+    local put_application="$temporary_directory/HostLocal-LogicalTreePut.elf"
+    local get_application="$temporary_directory/HostLocal-LogicalTreeGet.elf"
+    local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
+    local run_directory="$temporary_directory/HostLogicalTree-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local committed_file="$run_directory/Windvale-Database-Storage.committed"
+
+    build_host_local_component "$put_project" LogicalTreePut "$put_application" || return $?
+    local put_project_checkpoint=$host_local_component_project_checkpoint
+    local put_application_checkpoint=$host_local_component_application_checkpoint
+    build_host_local_component "$get_project" LogicalTreeGet "$get_application" || return $?
+    local get_project_checkpoint=$host_local_component_project_checkpoint
+    local get_application_checkpoint=$host_local_component_application_checkpoint
+
+    [[ -f $depth_two_committed_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+    cp -- "$depth_two_committed_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$put_application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native logical tree-writer put returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 33280 ]] || return 1
+    cp -- "$storage_file" "$committed_file" || return $?
+    (cd -- "$run_directory" && "$get_application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native logical tree-writer restart get returned $application_result, expected 0." >&2
+        return 1
+    fi
+    cmp --silent -- "$committed_file" "$storage_file" || return 1
+    if ((development == 1)); then
+        project_checkpoint_host_tree_writer+=",LogicalPut:$put_project_checkpoint,LogicalGet:$get_project_checkpoint"
+        application_checkpoint_host_tree_writer+=",LogicalPut:$put_application_checkpoint,LogicalGet:$get_application_checkpoint"
+    fi
+}
+
 verify_host_tree_writer_interruption() {
     local application=$1 committed=$2 step=$3 scenario_root=$4
     local scenario_directory="$scenario_root/HostTreeWriter-Interruption-$step"
@@ -1372,6 +1412,12 @@ verify_development_host_targets() {
             echo 'The native database storage development host-tree-writer stage failed.' >&2
             return 1
         }
+    verify_host_logical_tree_writer \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || {
+            echo 'The native database storage development logical tree-writer stage failed.' >&2
+            return 1
+        }
     host_tree_writer_elapsed_ms=$(((SECONDS - host_tree_writer_start) * 1000))
     echo "PASS  native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_writer_elapsed_ms project=$project_checkpoint_host_tree_writer application=$application_checkpoint_host_tree_writer"
 }
@@ -1463,4 +1509,7 @@ verify_host_engine \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || exit $?
 verify_host_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || exit $?
+verify_host_logical_tree_writer \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
 echo 'native database storage status=Passed cases=27 local-results=0 cross-host-images=Verified'

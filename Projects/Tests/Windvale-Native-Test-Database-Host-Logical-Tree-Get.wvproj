@@ -1,5 +1,7 @@
 windvale-project 2
-root "Libraries/Platform/Database/Durable-Local-Get.wv"
+root "Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Get-Self-Test.wv"
+source "Libraries/Platform/Database/Durable-Local-Get.wv"
+source "Libraries/Platform/Database/Durable-Local-Open.wv"
 source "Libraries/Platform/Database/Durable-Tree-Reader.wv"
 source "Foundation/Byte-Construction.wv"
 source "Foundation/Sha256-Compression.wv"

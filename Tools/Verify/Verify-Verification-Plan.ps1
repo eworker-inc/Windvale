@@ -1376,6 +1376,7 @@ $NativeCases = @(
             'Libraries/Database/Tree-Path-Upsert.wv',
             'Libraries/Database/Tree-Node.wv',
             'Libraries/Database/Logical-Record.wv',
+            'Libraries/Database/Logical-Record-Write.wv',
             'Libraries/Database/Local-Database-Contracts.wv',
             'Libraries/Database/Local-Database-Session.wv',
             'Libraries/Database/Local-Database-Put.wv',
@@ -1393,6 +1394,7 @@ $NativeCases = @(
             'Libraries/Platform/Database/Durable-Local-Root-Put.wv',
             'Libraries/Platform/Database/Durable-Local-Get.wv',
             'Libraries/Platform/Database/Durable-Tree-Writer.wv',
+            'Libraries/Platform/Database/Durable-Logical-Tree-Writer.wv',
             'Tests/Fixtures/Database/Database-Storage-Publication-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv',
@@ -1410,6 +1412,8 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Native-Hosted-Durable-Local-Put-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Local-Get-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Writer-Self-Test.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Writer-Self-Test.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Get-Self-Test.wv',
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
             'Specifications/Windvale-Database-Logical-Records.md',
             'Specifications/Windvale-Database-Collection-Catalog.md',
@@ -1458,6 +1462,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Durable-Local-Root-Put.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Local-Get.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Logical-Tree-Writer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
@@ -1474,7 +1479,9 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj',
-            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj'
         )
         Suites = @('database-storage', 'workspace-project2', 'libraries')
         Gaps = @()

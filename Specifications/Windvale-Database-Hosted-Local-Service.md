@@ -12,6 +12,11 @@ adapter uses the bounded durable tree reader and therefore reads every admitted
 tree depth. A full depth-one root is rejected for later routing to the existing
 root-split and multi-level writer contracts; it is never silently retried.
 
+The separate logical tree-writer projection now supports canonical logical
+puts for admitted depth-two-through-eight snapshots. It is intentionally not
+folded into this session adapter yet: choosing the depth-one, root-split, or
+multi-level writer is the next bounded dispatcher milestone.
+
 ## Open, put, restart, and get
 
 Open describes one provider snapshot, reads exactly the 512-byte dual
@@ -53,3 +58,7 @@ committed image, starts a distinct get process, verifies schema and payload,
 checks a missing logical identity, and proves the get did not change any byte.
 The root-writer owner separately retains all five publication-interruption
 boundaries used by this adapter.
+
+The `host-tree-writer` owner additionally proves a depth-two logical put and a
+separate restart read. It reports focused project and hosted-application cache
+states so unchanged verification does not rebuild either projection.

@@ -1,4 +1,5 @@
 windvale-project 2
 root "Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv"
 source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
 emit wvb

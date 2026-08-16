@@ -10,4 +10,5 @@ source "Libraries/Database/Local-Database-Get.wv"
 source "Libraries/Database/Local-Database-Put.wv"
 source "Libraries/Database/Local-Database-Session.wv"
 source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
 emit wvb

@@ -236,6 +236,10 @@ if errorlevel 1 goto :cleanup
 call :verify_host_tree_writer ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_logical_tree_writer ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -365,6 +369,13 @@ call echo START native database storage development step=host-tree-writer item=%
 call :verify_host_tree_writer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
 if errorlevel 1 (
     >&2 echo The native database storage development host-tree-writer stage failed.
+    exit /b 1
+)
+call :verify_host_logical_tree_writer ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development logical tree-writer stage failed.
     exit /b 1
 )
 call :read_clock HostTreeWriterEnd
@@ -1348,6 +1359,69 @@ set "ApplicationResult=%ERRORLEVEL%"
 popd
 if not "%ApplicationResult%"=="0" exit /b 1
 for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="33280" exit /b 1
+endlocal
+exit /b 0
+
+:verify_host_logical_tree_writer
+setlocal EnableExtensions DisableDelayedExpansion
+set "PutProject=%~f1"
+set "GetProject=%~f2"
+set "PutApplication=%TemporaryDirectory%\HostLogicalTree-Put.exe"
+set "GetApplication=%TemporaryDirectory%\HostLogicalTree-Get.exe"
+set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
+set "RunDirectory=%TemporaryDirectory%\HostLogicalTree-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+
+call :build_host_local_component "%PutProject%" LogicalTreePut "%PutApplication%"
+if errorlevel 1 exit /b 1
+call :build_host_local_component "%GetProject%" LogicalTreeGet "%GetApplication%"
+if errorlevel 1 exit /b 1
+
+if "%Development%"=="1" (
+    set "PutProjectCheckpoint="
+    set "GetProjectCheckpoint="
+    set "PutApplicationCheckpoint="
+    set "GetApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreePut-Cache.txt"') do set "PutProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreeGet-Cache.txt"') do set "GetProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreePut-Application-Cache.txt"') do set "PutApplicationCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-LogicalTreeGet-Application-Cache.txt"') do set "GetApplicationCheckpoint=%%S"
+    if not defined PutProjectCheckpoint exit /b 1
+    if not defined GetProjectCheckpoint exit /b 1
+    if not defined PutApplicationCheckpoint exit /b 1
+    if not defined GetApplicationCheckpoint exit /b 1
+)
+
+if not exist "%DepthTwoCommittedFile%" exit /b 1
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%DepthTwoCommittedFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%PutApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native logical tree-writer put returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="33280" exit /b 1
+copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%GetApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native logical tree-writer restart get returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
+
+if "%Development%"=="1" (
+    call set "CombinedProject=%%ProjectCheckpointHostTreeWriter%%,LogicalPut:%%PutProjectCheckpoint%%,LogicalGet:%%GetProjectCheckpoint%%"
+    call set "CombinedApplication=%%ApplicationCheckpointHostTreeWriter%%,LogicalPut:%%PutApplicationCheckpoint%%,LogicalGet:%%GetApplicationCheckpoint%%"
+    endlocal & set "ProjectCheckpointHostTreeWriter=%CombinedProject%" & set "ApplicationCheckpointHostTreeWriter=%CombinedApplication%"
+    exit /b 0
+)
 endlocal
 exit /b 0
 

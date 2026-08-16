@@ -6,4 +6,5 @@ source "Foundation/Sha256-Streaming.wv"
 source "Libraries/Database/Durable-Superblock.wv"
 source "Libraries/Database/Local-Database-Contracts.wv"
 source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
 emit wvb

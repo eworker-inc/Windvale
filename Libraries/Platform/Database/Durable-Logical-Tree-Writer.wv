@@ -1,0 +1,50 @@
+module Durableˉlogicalˉtreeˉwriter profile hosted;
+
+import Durableˉtreeˉwriter as Writer;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Logical;
+
+capability storage.random_access_v1;
+
+export record Databaseˉdurableˉlogicalˉtreeˉupsertˉresult {
+    Logicalˉerror: Logical.Databaseˉlogicalˉwriteˉerror;
+    Writer: Writer.Databaseˉdurableˉtreeˉupsertˉresult;
+}
+
+export fn Databaseˉdurableˉlogicalˉtreeˉupsert(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉlogicalˉtreeˉupsertˉresult {
+    let Prepared: Logical.Databaseˉlogicalˉwrite =
+        Logical.Databaseˉlogicalˉwriteˉprepare(
+            Collection,
+            Identity,
+            Schema,
+            Payload
+        );
+    if Prepared.Error != Logical.Databaseˉlogicalˉwriteˉerror.Valid {
+        let Empty: bytes = Bytesˉslice(Identity, 0u32, 0u32);
+        return Databaseˉdurableˉlogicalˉtreeˉupsertˉresult(
+            Prepared.Error,
+            Writer.Databaseˉdurableˉtreeˉupsert(
+                Current,
+                Empty,
+                Empty,
+                0u32
+            )
+        );
+    }
+    return Databaseˉdurableˉlogicalˉtreeˉupsertˉresult(
+        Logical.Databaseˉlogicalˉwriteˉerror.Valid,
+        Writer.Databaseˉdurableˉtreeˉupsert(
+            Current,
+            Prepared.Key,
+            Prepared.Value,
+            Maximumˉactions
+        )
+    );
+}

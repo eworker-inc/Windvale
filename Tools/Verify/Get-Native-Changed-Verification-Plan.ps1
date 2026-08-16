@@ -93,6 +93,34 @@ if (Test-Path -LiteralPath $HostLocalGetAbsolute -PathType Leaf) {
 } else {
     $DatabaseStorageDevelopmentEligible = $false
 }
+$HostLogicalTreeProjects = @(
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj'
+)
+foreach ($HostLogicalTreeProject in $HostLogicalTreeProjects) {
+    $HostLogicalTreeAbsolute = Join-Path $RepositoryRoot $HostLogicalTreeProject
+    if (Test-Path -LiteralPath $HostLogicalTreeAbsolute -PathType Leaf) {
+        foreach ($TargetPath in @(
+            $HostLogicalTreeProject
+            Get-Content -LiteralPath $HostLogicalTreeAbsolute |
+                ForEach-Object {
+                    if ($_ -match '^(?:root|source) "([^"\r\n]+)"$') {
+                        $Matches[1]
+                    }
+                }
+        )) {
+            if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TargetPath)) {
+                $DatabaseDevelopmentTargetsByPath[$TargetPath] =
+                    [System.Collections.Generic.HashSet[string]]::new(
+                        [StringComparer]::Ordinal)
+            }
+            $null = $DatabaseDevelopmentTargetsByPath[$TargetPath].Add(
+                'host-tree-writer')
+        }
+    } else {
+        $DatabaseStorageDevelopmentEligible = $false
+    }
+}
 $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Bootstrap.md' = @('bootstrap', 'engine')
     'Specifications/Windvale-Database-Collection-Catalog.md' = @('collection-catalog')
@@ -129,6 +157,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Durable-Local-Root-Put.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Local-Get.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Logical-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
     'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj',
@@ -147,7 +176,9 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
-    'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj'
 )
 foreach ($ProjectPath in $DatabaseDevelopmentProjects) {
     $null = $DatabaseDevelopmentPaths.Add($ProjectPath)
@@ -1048,6 +1079,8 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Local-Put-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Local-Get-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Writer-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Writer-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Get-Self-Test.wv' -or
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Tests/Fixtures/Database/Native-Capability-Provider-Table-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-X64-Provider-Call-Self-Test.wv' -or
@@ -1077,6 +1110,8 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj' -or
@@ -1127,10 +1162,12 @@ foreach ($Path in $Paths) {
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Root-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Logical-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Root-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Local-', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Writer', [StringComparison]::Ordinal) -or
+            $Path.Contains('Host-Logical-Tree-', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Hosted-Durable-Storage', [StringComparison]::Ordinal) -or
             $Path.Contains('Database-Host-Storage', [StringComparison]::Ordinal)) {
             if ($DatabaseDevelopmentPaths.Contains($Path)) {
@@ -2162,6 +2199,8 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj',
         'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj',
         'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj',
         'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj'

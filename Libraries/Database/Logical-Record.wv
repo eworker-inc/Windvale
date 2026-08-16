@@ -1,5 +1,7 @@
 module Windvaleˉdatabaseˉlogicalˉrecord profile portable;
 
+import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Write;
+
 const DATABASE_LOGICAL_KEY_MAGIC: u32 = 1380669015u32;
 const DATABASE_LOGICAL_RECORD_MAGIC: u32 = 1146246743u32;
 const DATABASE_LOGICAL_VERSION: u32 = 1u32;
@@ -388,23 +390,39 @@ export fn Databaseˉlogicalˉputˉprepare(
     Schema: u64,
     Payload: bytes
 ) -> Databaseˉlogicalˉput {
-    let Key: Databaseˉlogicalˉkeyˉresult =
-        Databaseˉlogicalˉkeyˉencode(
-            Databaseˉlogicalˉkeyˉkind.Record,
+    let Prepared: Write.Databaseˉlogicalˉwrite =
+        Write.Databaseˉlogicalˉwriteˉprepare(
             Collection,
-            Identity
+            Identity,
+            Schema,
+            Payload
         );
-    if Key.Error != Databaseˉlogicalˉerror.Valid {
-        return Databaseˉlogicalˉputˉfailure(Key.Error);
+    if Prepared.Error ==
+            Write.Databaseˉlogicalˉwriteˉerror.Invalidˉcollection {
+        return Databaseˉlogicalˉputˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉcollection
+        );
     }
-    let Value: Databaseˉlogicalˉrecordˉresult =
-        Databaseˉlogicalˉrecordˉencode(Schema, Payload);
-    if Value.Error != Databaseˉlogicalˉerror.Valid {
-        return Databaseˉlogicalˉputˉfailure(Value.Error);
+    if Prepared.Error ==
+            Write.Databaseˉlogicalˉwriteˉerror.Invalidˉidentityˉlength {
+        return Databaseˉlogicalˉputˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉidentityˉlength
+        );
+    }
+    if Prepared.Error == Write.Databaseˉlogicalˉwriteˉerror.Invalidˉschema {
+        return Databaseˉlogicalˉputˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉschema
+        );
+    }
+    if Prepared.Error ==
+            Write.Databaseˉlogicalˉwriteˉerror.Invalidˉpayloadˉlength {
+        return Databaseˉlogicalˉputˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉpayloadˉlength
+        );
     }
     return Databaseˉlogicalˉput(
         Databaseˉlogicalˉerror.Valid,
-        Key.Bytes,
-        Value.Bytes
+        Prepared.Key,
+        Prepared.Value
     );
 }
