@@ -205,6 +205,13 @@ every transient IPC field, and returning both endpoints to a closed state. This
 advances ownership through byte 17,923 without yet claiming memory reclamation
 or generation-2 reconstruction.
 
+The following reclamation preflight activates the selected client's address
+space and revalidates both closed endpoint/channel records, the empty channel
+backing, dormant compatibility arena, retained program/store/directory
+descriptors, their exact hashes and mappings, and selected exiting-client state.
+It advances checked ownership through byte 19,525 while keeping memory release
+and all object reuse outside the admitted transaction.
+
 The first restart policies are deliberately small:
 
 - `Never`;

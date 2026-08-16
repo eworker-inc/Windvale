@@ -502,4 +502,17 @@ verify "$work/ClientCleanup.elf" 28784 78130c20bab66eb81a42700f6a0c77c89db51457e
 [[ $? -eq 87 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientCleanup.bin" 0 "$work/ClientCleanup.exe" >/dev/null || exit $?
 verify "$work/ClientCleanup.exe" 25088 d231f32c41c0ef2d7493180edfeb3edb8f04aed8b1ccb1d5711b8772b0fc28eb || exit 1
-echo 'native os x64 code emission status=Passed projects=38 cases=228 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87 cross-host-images=Verified source-owned-bytes=17924 relocation-fields=107'
+echo 'step=client-reclamation-preflight item=39/39'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Reclamation-Preflight-Emission.wvproj" "$work/ClientReclamationPreflight.wvb" >/dev/null || exit $?
+verify "$work/ClientReclamationPreflight.wvb" 5489 de9965e67eb1a0607567d4506ca8569083ef025244501b855a786cee37d781c2 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientReclamationPreflight.wvb" "$work/ClientReclamationPreflight.wvo" >/dev/null || exit $?
+verify "$work/ClientReclamationPreflight.wvo" 26770 0a8c3132e27a04d24eb4611cbc6850f3e5706d24f4f8d0b5e63637a56ba367df || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientReclamationPreflight.bin" "$work/ClientReclamationPreflight.wvo" >/dev/null || exit $?
+verify "$work/ClientReclamationPreflight.bin" 26282 710c3e5954f04ad8b344b8828c6b3e5cf37cc0c3e947e966df8ec55e9fca75ef || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientReclamationPreflight.bin" 0 "$work/ClientReclamationPreflight.elf" >/dev/null || exit $?
+verify "$work/ClientReclamationPreflight.elf" 32880 2098fc92bf5a58448256beefb52207fda7aa974941b26567ee9941df496e0ed1 || exit 1
+"$work/ClientReclamationPreflight.elf" >/dev/null
+[[ $? -eq 88 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientReclamationPreflight.bin" 0 "$work/ClientReclamationPreflight.exe" >/dev/null || exit $?
+verify "$work/ClientReclamationPreflight.exe" 28160 ec6e05d9b84fa9364a18c6e423a9966eb961fcddfb8252fbaeab9b36ddfb2859 || exit 1
+echo 'native os x64 code emission status=Passed projects=39 cases=234 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88 cross-host-images=Verified source-owned-bytes=19526 relocation-fields=108'

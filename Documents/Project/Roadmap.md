@@ -624,8 +624,9 @@ provenance, revocation, and consensus boundaries are named.
   resume for the 3,096-byte reply reach byte 16,241, and exact client delivery
   reaches byte 16,572, completing the first directory round trip.
   Checked generation-1 client completion, endpoint-alias removal, complete IPC
-  scrubbing, and endpoint closure now reach byte 17,923. Memory reclamation and
-  generation-2 reconstruction remain before later lifecycle and handler work.
+  scrubbing, and endpoint closure reach byte 17,923. A fail-closed retained-state
+  reclamation preflight now reaches byte 19,525. Memory release and generation-2
+  allocation/reconstruction remain before later lifecycle and handler work.
   syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

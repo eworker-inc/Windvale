@@ -1,0 +1,47 @@
+module Osˉx64ˉprocessˉclientˉreclamationˉpreflightˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉreclamationˉpreflightˉemission as Preflight;
+
+export fn Main() -> i32 {
+    let Code: bytes = Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉbytes();
+    let Fields: bytes =
+        Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉfailureˉfields();
+    let Displacements: bytes =
+        Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 1602u32 || Bytesˉlength(Fields) != 396u32 ||
+        Bytesˉlength(Displacements) != 396u32 ||
+        Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉexternalˉfield() != 19u32 ||
+        Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉexternalˉsymbol() != 17u32 ||
+        Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉfixtureˉoffset() != 17924u32 ||
+        Preflight.X64ˉprocessˉclientˉreclamationˉpreflightˉfixtureˉend() != 19526u32 {
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Code, 19u32) != 0u32 { return 2; }
+    var Index: u32 = 0u32;
+    while Index < 99u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 ||
+            17924u32 + Field + 4u32 + Displacement != 33826u32 {
+            return 3;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 1602u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 21464u32 || Hashˉone != 8806u32 ||
+        Hashˉtwo != 53869u32 || Hashˉthree != 32852u32 { return 4; }
+    return 88;
+}

@@ -888,7 +888,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientCleanup.elf" 28784 78130c20bab66eb81a42700f6a0c77c89db51457e56c808d674e7f7b1a9e495a
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=38 cases=228 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87 cross-host-images=Verified source-owned-bytes=17924 relocation-fields=107
+echo step=client-reclamation-preflight item=39/39
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Reclamation-Preflight-Emission.wvproj" "%Work%\ClientReclamationPreflight.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientReclamationPreflight.wvb" 5489 de9965e67eb1a0607567d4506ca8569083ef025244501b855a786cee37d781c2
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientReclamationPreflight.wvb" "%Work%\ClientReclamationPreflight.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientReclamationPreflight.wvo" 26770 0a8c3132e27a04d24eb4611cbc6850f3e5706d24f4f8d0b5e63637a56ba367df
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientReclamationPreflight.bin" "%Work%\ClientReclamationPreflight.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientReclamationPreflight.bin" 26282 710c3e5954f04ad8b344b8828c6b3e5cf37cc0c3e947e966df8ec55e9fca75ef
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientReclamationPreflight.bin" 0 "%Work%\ClientReclamationPreflight.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientReclamationPreflight.exe" >nul
+if not "%ERRORLEVEL%"=="88" goto :cleanup
+call :verify "%Work%\ClientReclamationPreflight.exe" 28160 ec6e05d9b84fa9364a18c6e423a9966eb961fcddfb8252fbaeab9b36ddfb2859
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientReclamationPreflight.bin" 0 "%Work%\ClientReclamationPreflight.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientReclamationPreflight.elf" 32880 2098fc92bf5a58448256beefb52207fda7aa974941b26567ee9941df496e0ed1
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=39 cases=234 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88 cross-host-images=Verified source-owned-bytes=19526 relocation-fields=108
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"
