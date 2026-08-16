@@ -116,9 +116,9 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Bindings-Core.wvb`: 545,459 bytes, SHA-256 `cb150812dd5838ae427687f19eefcc77d07e01eaea5821f1b20a92b03c3b0dbc`.
-- `Source-Bindings-Demo.wvb`: 551,186 bytes, SHA-256 `527e5588728764ec58580a969fef7a888473ac034074378f1de94014e8c27c59`.
-- `Source-Bindings-Tool.wvb`: 545,484 bytes, SHA-256 `d6371a386ea64f9836a5b1382142508a69e609c8315f620aef8f44d991b9890f`.
+- `Source-Bindings-Core.wvb`: 546,089 bytes, SHA-256 `0483adc7bbbd6d90c4399a337cc013cbaf5e6bf66565d96f0b0c586483b2b495`.
+- `Source-Bindings-Demo.wvb`: 552,329 bytes, SHA-256 `1b18d50f8a71585eed3400cd16093d8185dc376c9133d4a21a6a2deed7b9c414`.
+- `Source-Bindings-Tool.wvb`: 546,114 bytes, SHA-256 `70fe5dda33829666001bc46e6217b8893b31db11467ade53e33fd57dbdd6eef0`.
 
 These are local deterministic WVLB 1.1 candidate identities; they do not claim cross-host requalification.
 

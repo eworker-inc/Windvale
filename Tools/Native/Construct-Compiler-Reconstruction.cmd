@@ -53,7 +53,7 @@ for /f "tokens=9,11 delims== " %%E in ('findstr /b /c:"compiler image transport 
     set "NativeEntry=%%E"
     set "FragmentCount=%%F"
 )
-if not "%NativeEntry%"=="43146" goto :cleanup
+if not "%NativeEntry%"=="51356" goto :cleanup
 if not "%FragmentCount%"=="7" goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 1 ^
@@ -65,14 +65,14 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 1 ^
     >"%TemporaryDirectory%\Linux.txt" 2>"%TemporaryDirectory%\Linux.err"
 if errorlevel 1 goto :cleanup
 
-call :verify_file "%Wvb%" 929711 79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 "current compiler WVB"
+call :verify_file "%Wvb%" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 "current compiler WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Windows%" 27904000 e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455 "Windows current compiler"
+call :verify_file "%Windows%" 27678720 6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8 "Windows current compiler"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Linux%" 27906048 e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2 "Linux current compiler"
+call :verify_file "%Linux%" 27680768 7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37 "Linux current compiler"
 if errorlevel 1 goto :cleanup
 
-echo native compiler reconstruction status=Complete compiler-bytes=929711 native-bytes=27872534 entry-offset=43146 chunks=7
+echo native compiler reconstruction status=Complete compiler-bytes=923818 native-bytes=27647511 entry-offset=51356 chunks=7
 set "Result=0"
 
 :cleanup

@@ -35,8 +35,8 @@ verify_file "$work/Resolver.wvb" 60732 \
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 283725 \
-    6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 || exit 1
+verify_file "$work/Writer.wvb" 284755 \
+    ccffc57e6a18b7a14b2aeecc0ff5ef38a0a9bd8206ea429ebf9d9b93c678296c || exit 1
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" linux || exit $?
 

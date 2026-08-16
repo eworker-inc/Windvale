@@ -9,33 +9,33 @@
   "sourceProject": "Windvale-Compiler.wvproj",
   "sourceProjectBytes": 649,
   "sourceProjectSha256": "a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05",
-  "nativeImageBytes": 27872534,
-  "nativeImageSha256": "f84c08841f13233797df0db5eb5db3211664e5d2b2bafb35b81f903211dc5953",
-  "nativeEntryOffset": 43146,
+  "nativeImageBytes": 27647511,
+  "nativeImageSha256": "8f808c868da20fe8ffbe01a40cd8473f0cb570e825283bb938a2e37668470c8e",
+  "nativeEntryOffset": 51356,
   "canonicalImageChunks": 7,
   "artifacts": [
     {
       "name": "current-compiler-wvb",
       "path": "Wvb/Windvale-Compiler.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 929711,
-      "sha256": "79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91",
+      "bytes": 923818,
+      "sha256": "49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2",
       "sourceProject": "Windvale-Compiler.wvproj"
     },
     {
       "name": "windows-x64-current-compiler",
       "path": "windows-x64/wvcompiler.exe",
       "target": "windows-x64-console-v3",
-      "bytes": 27904000,
-      "sha256": "e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455",
+      "bytes": 27678720,
+      "sha256": "6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8",
       "sourceWvb": "Wvb/Windvale-Compiler.wvb"
     },
     {
       "name": "linux-x64-current-compiler",
       "path": "linux-x64/wvcompiler.elf",
       "target": "linux-x64-console-v3",
-      "bytes": 27906048,
-      "sha256": "e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2",
+      "bytes": 27680768,
+      "sha256": "7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37",
       "sourceWvb": "Wvb/Windvale-Compiler.wvb"
     }
   ]

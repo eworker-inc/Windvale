@@ -40,11 +40,14 @@ evidence, copy those two directories from the promoted seed release into a fresh
 location and pass that copied location rather than the checkout's `Artifacts`
 directory.
 
-The repinned candidate command must complete native publication of 929,711 bytes
-with SHA-256
-`79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
+The seed first emits the transitional 947,975-byte Stage 1 WVB at SHA-256
+`c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb`.
+The launcher packages that private compiler and uses it once to emit the
+fixed-point Stage 2 candidate. Native publication must complete at 923,818
+bytes with SHA-256
+`49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2`.
 Its exact compiler status summary is
-`source wvb status=Valid functions=428 code-bytes=766777 module-bytes=929711`.
+`source wvb status=Valid functions=414 code-bytes=761807 module-bytes=923818`.
 Decision 0494 reconstructs the downstream paired applications without executing
 them; Decision 0492 owns the hosted-container toolset.
 

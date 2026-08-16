@@ -40,14 +40,32 @@ if errorlevel 1 exit /b 1
 set "TemporaryDirectory=%TEMP%\windvale-native-compiler-bootstrap-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
+set "Stage1=%TemporaryDirectory%\Stage1.wvb"
+set "Stage1Compiler=%TemporaryDirectory%\Stage1-Compiler.exe"
 set "Candidate=%TemporaryDirectory%\Candidate.wvb"
 
 call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
-    "%Compiler%" "%SourceRoot%" "%Candidate%"
+    "%Compiler%" "%SourceRoot%" "%Stage1%"
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
 
-call :verify_file "%Candidate%" 929711 79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 "bootstrapped compiler WVB"
+call :verify_file "%Stage1%" 947975 c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb "transitional Stage 1 compiler WVB"
+if errorlevel 1 (
+    set "Result=1"
+    goto :cleanup
+)
+
+call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
+    1 "%Stage1%" "%Stage1Compiler%"
+set "Result=%ERRORLEVEL%"
+if not "%Result%"=="0" goto :cleanup
+
+call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
+    "%Stage1Compiler%" "%SourceRoot%" "%Candidate%"
+set "Result=%ERRORLEVEL%"
+if not "%Result%"=="0" goto :cleanup
+
+call :verify_file "%Candidate%" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 "fixed-point Stage 2 compiler WVB"
 if errorlevel 1 (
     set "Result=1"
     goto :cleanup
@@ -57,7 +75,7 @@ if errorlevel 1 (
 set "Result=%ERRORLEVEL%"
 
 :cleanup
-if exist "%Candidate%" del /f /q "%Candidate%" >nul 2>nul
+del /f /q "%Stage1%" "%Stage1Compiler%" "%Candidate%" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%
 

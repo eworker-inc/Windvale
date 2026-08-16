@@ -67,11 +67,13 @@ verify_file "$project" 649 \
 
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-native-compiler-bootstrap.XXXXXXXX") || exit 1
+stage1="$temporary_directory/Stage1.wvb"
+stage1_compiler="$temporary_directory/Stage1-Compiler.elf"
 candidate="$temporary_directory/Candidate.wvb"
 cleanup() {
     case "$temporary_directory" in
         "$temporary_root"/windvale-native-compiler-bootstrap.*)
-            rm -f -- "$candidate"
+            rm -f -- "$stage1" "$stage1_compiler" "$candidate"
             rmdir -- "$temporary_directory"
             ;;
         *)
@@ -83,13 +85,20 @@ cleanup() {
 trap cleanup EXIT
 
 "$script_directory/Compile-Compiler-Source-Set.sh" \
-    "$compiler" "$source_root" "$candidate"
+    "$compiler" "$source_root" "$stage1"
 result=$?
 if [[ $result -ne 0 ]]; then
     exit "$result"
 fi
 
-verify_file "$candidate" 929711 \
-    79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 \
-    'bootstrapped compiler WVB' || exit 1
+verify_file "$stage1" 947975 \
+    c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb \
+    'transitional Stage 1 compiler WVB' || exit 1
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" \
+    1 "$stage1" "$stage1_compiler" || exit $?
+"$script_directory/Compile-Compiler-Source-Set.sh" \
+    "$stage1_compiler" "$source_root" "$candidate" || exit $?
+verify_file "$candidate" 923818 \
+    49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 \
+    'fixed-point Stage 2 compiler WVB' || exit 1
 "$publisher" "$candidate" "$output_path"

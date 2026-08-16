@@ -63,13 +63,17 @@ The Windvale decoder validates:
 This decoder is deliberately a structural inspector, not an alternate semantic verifier. The mandatory compiler-aligned verifier owns canonical declaration ordering, identifier grammar, recognized capability signatures, nominal-reference identity, stack typing, branch boundaries, reachable control flow, exact maximum-stack calculation, and all instruction reference checks. Its native application is the ordinary gate; the C# implementation remains the frozen Stage 0 recovery and differential oracle while retirement is in progress.
 
 Decision 0519 makes `Projects/Examples/Windvale-Wvb-Inspector.wvproj` the normal broad-script
-construction contract. The exact 39-function, 59,277-code-byte product is
-76,527 bytes with SHA-256
-`293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`;
+construction contract. The exact 61-function, 74,726-code-byte product is
+94,327 bytes with SHA-256
+`3d407d210a1de517746b46cbd389fdf8c4efe9cc266f3db342fe369ccd06bfff`;
 native verification and inspection precede every retained behavior case. This
 transfers product identity only. Capability refusal, self-test, hosted valid and
 malformed input, interpreter/JIT/AOT agreement, and Stage 0 oracle behavior
 remain separately owned until their native execution lanes are cut over.
+
+The digest-bound native front door and locked WVB Inspector package retain the
+previously qualified 76,527-byte artifact until a separate promotion decision;
+source reconstruction does not silently replace that frozen product.
 
 Decision 0520 transfers three ordinary executions to the pinned host
 application: the no-argument self-test, complete canonical Sum report, and exact

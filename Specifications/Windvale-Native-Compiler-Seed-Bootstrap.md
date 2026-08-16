@@ -26,11 +26,13 @@ The seed compiler source is the qualified semantic-freeze tree at commit
 `3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35` remains the exact Stage 0 recovery
 state for the last 921,900-byte convergence candidate. Decision 0491 repins the
 ordinary bootstrap contract to the current explicit inventory in
-`Projects/Examples/Windvale-Compiler.wvproj`. Decision 0529's native-only
-capability-composition refresh, extended by Decision 0536's nested-record source
-support, now produces exactly 929,711 bytes with
+`Projects/Examples/Windvale-Compiler.wvproj`. With Decision 0713's capability
+catalog extension, the seed emits a transitional 947,975-byte Stage 1 WVB at
 SHA-256
-`79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
+`c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb`.
+The launcher packages that private compiler and uses it once to emit the stable
+923,818-byte Stage 2 WVB at SHA-256
+`49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2`.
 Decision 0494 retains the unqualified current WVB and paired reconstruction in
 `Artifacts/Native-Compiler-Reconstruction-Candidate`; exact checkpoint
 qualification remains pending on both hosts.
@@ -52,15 +54,17 @@ Each launcher:
 1. admits the exact seed WVB, current-host seed compiler, qualified native
    publisher, and compiler project manifest by length and SHA-256;
 2. passes the fixed project inventory to the seed compiler in manifest order;
-3. writes only a process-private candidate;
-4. requires the exact accepted compiler WVB length and SHA-256; and
+3. requires the exact transitional Stage 1 identity, packages it through the
+   pinned segmented compiler profile, and repeats the fixed source invocation;
+4. requires the exact fixed-point Stage 2 compiler WVB length and SHA-256; and
 5. invokes the qualified native publisher, which repeats compiler-aligned
    verification and atomically replaces the requested output.
 
 Any identity, compilation, verification, or publication failure preserves an
-existing destination. The launchers remove their private candidate on success or
-failure. They do not parse project syntax, discover sources, infer imports, lower
-native applications, or install host dependencies.
+existing destination. The launchers remove both private generations and their
+private compiler on success or failure. They do not parse project syntax,
+discover sources, infer imports, or install host dependencies; the explicit
+promotion uses the already pinned segmented native compiler packager.
 
 ## Bounded source-WVB product launchers
 
@@ -104,22 +108,21 @@ called complete.
 
 ## Native self-convergence coordinator
 
-The ordinary bootstrap verification entry points require more than a one-stage
-seed rebuild. `Tools/Native/Verify-Compiler-Convergence.cmd` and `.sh` admit the
-native verifier, build and publish Stage 1 through the seed launchers, package
-that exact WVB through the segmented compiler-WVB profile, execute the newly
-packaged Stage 1 compiler over the canonical project inventory, independently
-verify Stage 2, and require complete Stage 1/Stage 2 byte equality.
+The ordinary bootstrap verification entry points require more than the internal
+seed-to-fixed-point promotion. `Tools/Native/Verify-Compiler-Convergence.cmd`
+and `.sh` admit the native verifier, build and publish the fixed-point compiler
+through the seed launchers, package that exact WVB through the segmented
+compiler-WVB profile, execute it over the canonical project inventory,
+independently verify the next generation, and require complete byte equality.
 
 `Tools/Native/Compile-Compiler-Source-Set.cmd` and `.sh` own the exact ordered
 source invocation shared by the seed and convergence routes. They do not discover
 files, parse the project, or weaken the project-manifest identity check.
 
-The coordinators are repinned to require identical 929,711-byte outputs at
+The coordinators are repinned to require identical 923,818-byte outputs at
 SHA-256
-`79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
-That long Stage 1/Stage 2 route was not rerun for Decisions 0491 through 0494.
-The current toolset and paired compiler applications are now reconstructed, but
-Windows and Linux execution, exact equality, and promotion remain part of the
-grouped retirement qualification; the earlier 921,900-byte result remains the
-last qualified convergence evidence.
+`49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2`.
+The current toolset and paired compiler applications are reconstructed as
+unqualified candidates. Exact equality on Windows and Linux and promotion remain
+part of the grouped retirement qualification; a local or focused pass does not
+replace a named qualification decision.

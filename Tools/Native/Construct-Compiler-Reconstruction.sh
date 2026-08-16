@@ -56,7 +56,7 @@ canonical_manifest="$temporary_directory/Canonical.wvli"
 transport_line=$(sed -n '/^compiler image transport status=Complete /p' "$temporary_directory/Transport.txt")
 native_entry=$(printf '%s\n' "$transport_line" | sed -n 's/^.* entry-offset=\([0-9][0-9]*\) chunks=.*$/\1/p')
 fragment_count=$(printf '%s\n' "$transport_line" | sed -n 's/^.* chunks=\([1-8]\) manifest-bytes=.*$/\1/p')
-if [[ $native_entry != 43146 || $fragment_count != 7 ]]; then
+if [[ $native_entry != 51356 || $fragment_count != 7 ]]; then
     echo 'The canonical compiler image identity is invalid.' >&2
     exit 1
 fi
@@ -83,11 +83,11 @@ verify_file() {
     [[ $actual_sha256 == "$expected_sha256" ]]
 }
 
-verify_file "$wvb" 929711 \
-    79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 || exit 1
-verify_file "$windows" 27904000 \
-    e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455 || exit 1
-verify_file "$linux" 27906048 \
-    e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2 || exit 1
+verify_file "$wvb" 923818 \
+    49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 || exit 1
+verify_file "$windows" 27678720 \
+    6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8 || exit 1
+verify_file "$linux" 27680768 \
+    7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37 || exit 1
 
-echo 'native compiler reconstruction status=Complete compiler-bytes=929711 native-bytes=27872534 entry-offset=43146 chunks=7'
+echo 'native compiler reconstruction status=Complete compiler-bytes=923818 native-bytes=27647511 entry-offset=51356 chunks=7'

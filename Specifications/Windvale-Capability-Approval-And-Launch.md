@@ -50,7 +50,7 @@ is standard line output plus immutable argument value/count snapshots. Absence
 and the explicit denials leave it without diagnostics, filesystem, environment,
 network, process-launch, clock, or entropy authority. Its exact identity is 793
 bytes with SHA-256
-`f65c1b3638c1e222b69c617d9c9866d069525c5bf01954496a0fa9f2dd4d636e`.
+`cf2bf11b8b737466fad088e383004ee3fbdef45609ff046022fa6bf4a5c232b9`.
 
 ## Target launch records
 
@@ -98,7 +98,7 @@ the Linux record is 996 bytes with SHA-256
 
 Launch Record 3 is the first direct native-host profile with a variable-length
 argument vector. It binds the exact 17,009-byte Bundle 1 with SHA-256
-`e8fdafd1b2577079e15e085c8640c7d175d0cfe0e60b43580d73e1e88148d385`,
+`9abc97a4088ed60ba26015909ed4375ce92e27e9280fbe8be892c1b14ee7eb85`,
 Lock 1, approval, 927-byte WVB, named `Main` entry, and target host application.
 Provider table 3 has exactly three ordered bindings: standard output with LF
 line behavior, immutable argument values, and the count from that same snapshot.
@@ -111,9 +111,9 @@ ambient filesystem, mutation, diagnostic output, environment, network,
 process-launch, clock, and entropy providers.
 
 The Windows Launch Record 3 is 918 bytes with SHA-256
-`cf33ad3586f0cda9e29f8e206611951eea556f8fd81540ab504264809a491c94`;
+`39839a75c852c46eec896bfe47f8c43228d5e2fff650a722ea72f08f55e7a8b8`;
 the Linux record is 914 bytes with SHA-256
-`a31e3a61ac79b4a324f64079f0bd5d967add0ff7c37673c6f5296419a81692a3`.
+`1010e131f66c45dec68b29b2f2797bc6ef47c4c6c3b83554f1e0872949a670fb`.
 Their exact host applications are respectively 22,016 and 24,576 bytes. These
 records describe one Echo command profile; they do not establish a general
 dynamic provider-table grammar.

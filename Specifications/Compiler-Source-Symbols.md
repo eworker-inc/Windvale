@@ -125,9 +125,9 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and retained qualified evidence
 
-- `Source-Symbols-Core.wvb`: 442,471 bytes, SHA-256 `29cdfca436073bf628fa92a10f70915f14bdbcddffb659b25dec793722790e2b`.
-- `Source-Symbols-Demo.wvb`: 453,357 bytes, SHA-256 `b4aed72b84f8c23f3f391b663d1c87a27912bfff355e3f1def848f057b5e8e65`.
-- `Source-Symbols-Tool.wvb`: 441,304 bytes, SHA-256 `01b96a2a6f2d6f1d0210e57020b928f4dad5b3ac1407fd0e0a04b875048f87e7`.
+- `Source-Symbols-Core.wvb`: 443,101 bytes, SHA-256 `0bd60b09b03599eaa0f06ba26744ff3cb8eb57c894d3a778dae0278aabc98ece`.
+- `Source-Symbols-Demo.wvb`: 453,987 bytes, SHA-256 `fdd2ec523624f50f6bd1a2348835d0d7c2bdb75864fb972027f221ffb54ab9ec`.
+- `Source-Symbols-Tool.wvb`: 441,934 bytes, SHA-256 `11367a1536a2435e122db795d83c9b25cef94fe5e8c6da0af6d0d70c0b467083`.
 
 Decision 0517 reproduces all three identities through the current-Windows
 native Project front door and natively inspects the core portable type/export

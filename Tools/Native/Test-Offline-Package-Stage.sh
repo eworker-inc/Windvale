@@ -37,13 +37,13 @@ echo 'native offline package stage step=build-tools item=1/8'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 283725 \
-    6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 || exit 1
+verify_file "$work/Writer.wvb" 284755 \
+    ccffc57e6a18b7a14b2aeecc0ff5ef38a0a9bd8206ea429ebf9d9b93c678296c || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 303018 \
-    1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c || exit 1
+verify_file "$work/Verifier.wvb" 304048 \
+    1e37b48c182690b600d1310feb7d057ef337ebc4f962499eeb031116f22e64d8 || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj" \
     "$work/Generation-Verifier.wvb" || exit $?

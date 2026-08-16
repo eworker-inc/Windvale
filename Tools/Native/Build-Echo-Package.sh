@@ -33,11 +33,11 @@ reject_lock() {
     exit 1
 }
 
-verify_file "$lock" 940 948a7ee6e1cddf54b5cec274862b5a17882b271f827f61a8cd0f6649865e65f6 || reject_lock
+verify_file "$lock" 940 b2bd85d1f76d062c45a8f5ee8ce531b87aeaf499440f1fdf52a4a8a5aca317f3 || reject_lock
 verify_file "$manifest" 333 27d32dc98d1c2d57792f0a37b173a77d5dab465e005bc9c47fd8fd086c8b6234 || reject_lock
 verify_file "$repository_root/Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 || reject_lock
-verify_file "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" 929711 79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 || reject_lock
-verify_file "$compiler" 27906048 e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2 || reject_lock
+verify_file "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 || reject_lock
+verify_file "$compiler" 27680768 7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37 || reject_lock
 verify_file "$publisher" 1541109 7bf4593566401853ab7f551ca5d45125ac0ea3a6c4e34315703785ed7d6cdfb6 || reject_lock
 verify_file "$repository_root/Projects/Applications/Windvale-Echo.wvproj" 62 bf5b476f36512f48c0798fc1683708872500094e6a853ba6274d3ee7a8b3c6ef || reject_lock
 verify_file "$repository_root/Applications/Shell/Echo.wv" 845 f843e69b9549a890aa808331f6ef503941c0a1d5240ecd5859e46f6f8ae044c7 || reject_lock
