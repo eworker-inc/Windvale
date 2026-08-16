@@ -217,7 +217,8 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
         Expected =
             "83ae0bf695dec2396d311deaa484de5530aa1b35f7a3f77922a1ca800fb614a7";
     }
-    if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+    if Expectedˉprofile == 4u32 || Expectedˉprofile == 5u32 ||
+        Expectedˉprofile == 6u32 ||
         Expectedˉprofile == 7u32 {
         Count = 29u32;
         Expected =
@@ -239,13 +240,15 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
     var Index: u32 = 0u32;
     while Index < Count {
         var Patch: u32 = Linuxˉverifierˉpatch(Index);
-        if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+        if Expectedˉprofile == 4u32 || Expectedˉprofile == 5u32 ||
+            Expectedˉprofile == 6u32 ||
             Expectedˉprofile == 7u32 {
             Patch = Linuxˉinspectorˉpatch(Index);
         }
         if Value.Target == 1u32 {
             Patch = Windowsˉverifierˉpatch(Index);
-            if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+            if Expectedˉprofile == 4u32 || Expectedˉprofile == 5u32 ||
+                Expectedˉprofile == 6u32 ||
                 Expectedˉprofile == 7u32 {
                 Patch = Windowsˉinspectorˉpatch(Index);
             }

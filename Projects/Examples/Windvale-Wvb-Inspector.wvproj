@@ -1,3 +1,4 @@
 windvale-project 2
 root "Examples/Foundation/Wv-Dump-Core.wv"
+source "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv"
 emit wvb

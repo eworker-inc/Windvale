@@ -154,11 +154,16 @@ The earlier apparent binding-evidence ceiling was an unreachable-module
 diagnostic hidden by the old build report, not a real capacity limit. The
 normalizer uses private bounded byte tuples so the complete build driver stays
 within the native x64 runtime encoding's existing 64-record ceiling; the
-source-built model-provider path proves native staging and execution. The
-digest-pinned ordinary verifier and inspector still require artifact promotion;
-publisher and package consumers retain the absent form for their owner-sized
-migrations, and the inspector's attempted source integration remains rejected
-after a Windows file-report crash.
+source-built model-provider path proves native staging and execution. Decision
+0593 advances the next consumer: the source inspector now validates and
+normalizes present metadata, and a focused profile-4 owner reconstructs the
+Windows application deterministically and executes both absent and present
+fixtures. The same investigation fixed alias discovery for a metadata-bearing
+root that imports another module; header metadata is skipped before import
+scanning, with a two-module binding regression. The digest-pinned ordinary
+verifier and inspector still require artifact promotion, the new Linux owner
+mirror still needs execution from the same commit, and publisher and package
+consumers retain the absent form for their owner-sized migrations.
 Production migration is therefore not ready to become a repository-wide source
 rewrite; the focused metadata fixture remains the replacement-form proof input.
 
@@ -172,9 +177,11 @@ Advance the migration in this order:
    and required-capability mismatch; lowerer coverage is complete and the
    portable normalization contract now has deterministic/malformed consumer
    cases, and the source verifier consumes its normalized view;
-3. prove one current package application through source compilation, WVB
+3. 🟡 prove one current package application through source compilation, WVB
    verification and inspection, native lowering, packaging, and execution with
-   the replacement header on Windows and Linux;
+   the replacement header on Windows and Linux; source verification, lowering,
+   profile-4 inspection, and Windows execution have focused evidence, while one
+   package's complete dual-host path and artifact promotion remain pending;
 4. migrate that package's reachable libraries, then the remaining repository
    source in owner-sized coherent batches with exact artifact updates; and
 5. remove the legacy source spelling only after every maintained target and

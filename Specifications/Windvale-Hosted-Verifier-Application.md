@@ -52,13 +52,15 @@ wvverify <module.wvb>
 
 Success writes `wvb status=Valid profile=compiler-aligned` plus LF to standard output and returns `0`. Rejection writes one stable phase line to standard error and returns `1`. Invalid invocation writes the usage line to standard error and returns `64`.
 
-The canonical WVB inspector project is [`Projects/Examples/Windvale-Wvb-Inspector.wvproj`](../Projects/Examples/Windvale-Wvb-Inspector.wvproj), which reuses the checked-in Windvale source `Examples/Foundation/Wv-Dump-Core.wv` without a second implementation. Its invocation is:
+The canonical WVB inspector project is [`Projects/Examples/Windvale-Wvb-Inspector.wvproj`](../Projects/Examples/Windvale-Wvb-Inspector.wvproj), which reuses the checked-in Windvale source `Examples/Foundation/Wv-Dump-Core.wv` without a second implementation and imports the same portable metadata normalizer as the compiler-aligned verifier. Its invocation is:
 
 ```text
 wvdump <module.wvb>
 ```
 
-Success writes the deterministic [`wvdump 1`](Wv-Dump-Report.md) line report and returns `0`. Structural rejection writes one stable diagnostic and returns `2`; invalid invocation returns `64`. Ordinary inspection first runs `wvverify` and invokes `wvdump` only after semantic acceptance.
+Success writes the deterministic [`wvdump 1`](Wv-Dump-Report.md) line report and returns `0`. Structural or metadata rejection writes one stable diagnostic and returns `2`; invalid invocation returns `64`. The inspector validates the source envelope before testing metadata presence. Present metadata is independently validated and normalized into an immutable absent-form view before the existing report parser runs; the report therefore describes executable module semantics and does not silently discard unvalidated admission metadata. Ordinary inspection first runs `wvverify` and invokes `wvdump` only after semantic acceptance.
+
+The `wvb-inspector-reconstruction` owner constructs the six current hosted-verifier tools, builds and lowers the inspector, composes the profile-4 application twice, requires byte-identical output, and executes it against both the retained absent-form fixture and the exact 369-byte metadata-present fixture. Its Windows execution is current local evidence; the Linux mirror must pass from the same commit before cross-host conformance or candidate promotion is claimed.
 
 The WVO profile packages [`Projects/Object-Model/Windvale-Wvo-Object.wvproj`](../Projects/Object-Model/Windvale-Wvo-Object.wvproj) under the separately specified [native WVO inspector contract](Windvale-Native-Wvo-Inspector.md). It uses the same eleven-service read-only startup as `wvdump`, but profile 6 binds the canonical `Wvoˉobjectˉcore` identity and its `verify`/`inspect` command contract. Profile 7 packages [`Projects/Tools/Windvale-Console-Application-Verifier.wvproj`](../Projects/Tools/Windvale-Console-Application-Verifier.wvproj) with the same eleven services and reads exactly two immutable application chunks before performing the portable console-application verification plan.
 

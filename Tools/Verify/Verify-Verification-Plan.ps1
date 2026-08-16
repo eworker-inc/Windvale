@@ -494,6 +494,7 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wvb-to-wvo-reconstruction',
+            'wvb-inspector-reconstruction',
             'unsafe-wvb',
             'wvb-containment',
             'model-provider',
@@ -552,6 +553,7 @@ $NativeCases = @(
             'wvb-to-wvo-reconstruction',
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
+            'wvb-inspector-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -632,6 +634,7 @@ $NativeCases = @(
         Suites = @(
             'seed-native-front-door',
             'wvb-runner-reconstruction',
+            'wvb-inspector-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -697,6 +700,7 @@ $NativeCases = @(
         Suites = @(
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
+            'wvb-inspector-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -728,6 +732,7 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-runner-reconstruction',
+            'wvb-inspector-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -869,7 +874,7 @@ $NativeCases = @(
             'Examples/Foundation/Wv-Dump-Core.wv',
             'Projects/Examples/Windvale-Wvb-Inspector.wvproj'
         )
-        Suites = @('seed', 'seed-native-front-door')
+        Suites = @('seed', 'seed-native-front-door', 'wvb-inspector-reconstruction')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1031,6 +1036,7 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-runner-reconstruction',
+            'wvb-inspector-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -1825,9 +1831,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 75 -or
+if ($VerificationOwnerLines.Count -ne 76 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 74-owner inventory differs.'
+    throw 'The native verification-owner header or exact 75-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1865,7 +1871,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3642 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3647 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -38,7 +38,7 @@ fn Usage() -> i32 {
         "       wvhostverifierbundle wvb-runner <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <text-concat> <i32-format> <u32-format> <request.wvsq>"
     );
     diagnostic.write_line(
-        "       wvhostverifierbundle <wvo-inspector|console-verifier> <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <enum-name> <text-concat> <text-quote> <i32-format> <u32-format> <request.wvsq>"
+        "       wvhostverifierbundle <wvb-inspector|wvo-inspector|console-verifier> <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <enum-name> <text-concat> <text-quote> <i32-format> <u32-format> <request.wvsq>"
     );
     return 64;
 }
@@ -70,7 +70,8 @@ export fn Main() -> i32 {
         Outputˉindex = 11u32;
     }
     if Arguments == 14u32 {
-        if !Pathsˉareˉequal(process.argument(0u32), "wvo-inspector") &&
+        if !Pathsˉareˉequal(process.argument(0u32), "wvb-inspector") &&
+            !Pathsˉareˉequal(process.argument(0u32), "wvo-inspector") &&
             !Pathsˉareˉequal(process.argument(0u32), "console-verifier") {
             return Usage();
         }

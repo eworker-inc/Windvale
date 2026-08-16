@@ -155,5 +155,14 @@ export fn Main() -> i32 {
     );
     if Symbolˉfailure.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Sourceˉsymbols { return 40; }
     if Symbolˉfailure.Symbolˉstatus != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 41; }
+
+    let Metadataˉimport: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(
+            Sourceˉbindingsˉtwo(
+                "module Bindingsˉmetadataˉroot; platform linux, windows; authority application; import Bindingsˉmetadataˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Value(); }",
+                "module Bindingsˉmetadataˉdependency profile portable; export fn Value() -> i32 { return 42; }"
+            )
+        );
+    if Metadataˉimport.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid { return 42; }
     return 0;
 }

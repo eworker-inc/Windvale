@@ -1,5 +1,7 @@
 module Wvˉdumpˉcore profile hosted;
 
+import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
+
 capability console.write_line;
 capability diagnostic.write_line;
 capability file.read_bytes;
@@ -1606,6 +1608,18 @@ fn Runˉselfˉtests() -> i32 {
     return 0;
 }
 
+fn Moduleˉmetadataˉisˉpresent(Input: bytes) -> bool {
+    let Moduleˉsection: Wvbˉsection = Findˉsection(Input, 0u32);
+    if Moduleˉsection.Payloadˉlength < 6u32 { return false; }
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Moduleˉsection.Payloadˉoffset + 1u32
+    );
+    if Nameˉlength > Moduleˉsection.Payloadˉlength - 6u32 { return false; }
+    let Metadataˉoffset: u32 =
+        Moduleˉsection.Payloadˉoffset + 5u32 + Nameˉlength;
+    return Bytesˉreadˉu8(Input, Metadataˉoffset) == 1u8;
+}
+
 fn Runˉfileˉinspection() -> i32 {
     if process.argument_count() != 1u32 {
         diagnostic.write_line("Usage: wvdump <module.wvb>");
@@ -1613,7 +1627,21 @@ fn Runˉfileˉinspection() -> i32 {
     }
 
     let Inputˉpath: text = process.argument(0u32);
-    let Input: bytes = file.read_bytes(Inputˉpath);
+    let Source: bytes = file.read_bytes(Inputˉpath);
+    let Sourceˉresult: Wvbˉinspection = Inspectˉwvbˉenvelope(Source);
+    if Sourceˉresult.Status != Wvbˉstatus.Valid {
+        diagnostic.write_line(Describeˉinspection(Sourceˉresult));
+        return 2;
+    }
+
+    var Input: bytes = Source;
+    if Moduleˉmetadataˉisˉpresent(Source) {
+        Input = Metadataˉnormalization.Windvaleˉwvbˉmetadataˉnormalize(Source);
+        if Bytesˉlength(Input) == 0u32 {
+            diagnostic.write_line("Invalidˉmetadata sections=1 offset=20");
+            return 2;
+        }
+    }
     let Result: Wvbˉinspection = Inspectˉwvbˉenvelope(Input);
     let Description: text = Describeˉinspection(Result);
     if Result.Status != Wvbˉstatus.Valid {

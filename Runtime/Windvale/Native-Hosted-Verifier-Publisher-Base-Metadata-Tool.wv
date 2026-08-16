@@ -33,6 +33,8 @@ export fn Main() -> i32 {
     if Arguments == 5u32 {
         if Textˉequals(process.argument(0u32), "publisher-admission") {
             Profile = 8u32;
+        } else if Textˉequals(process.argument(0u32), "wvb-inspector") {
+            Profile = 4u32;
         } else if Textˉequals(process.argument(0u32), "wvb-runner") {
             Profile = 5u32;
         } else if Textˉequals(process.argument(0u32), "console-verifier") {

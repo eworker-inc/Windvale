@@ -8,6 +8,7 @@ segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Recons
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|6|3|Tests: 6, Passed: 6, Failed: 0
 wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
 wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
+wvb-inspector-reconstruction|Test-Wvb-Inspector-Reconstruction|4|3|Tests: 4, Passed: 4, Failed: 0
 wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
 console-verifier-reconstruction|Test-Console-Verifier-Reconstruction|3|2|Tests: 3, Passed: 3, Failed: 0
 console-publisher-reconstruction|Test-Console-Application-Publisher-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
@@ -56,7 +57,7 @@ network-connect-stream|Test-Network-Connect-Stream-Core|13|4|native network conn
 host-network-provider|Test-Host-Network-Provider|25|4|host network provider status=Passed platforms=2 cases=25 current-host=Verified public-network=0 credentials=0
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|24|1|native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified
+database-storage|Test-Database-Storage|25|1|native database storage status=Passed cases=25 local-results=0 cross-host-images=Verified
 workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11

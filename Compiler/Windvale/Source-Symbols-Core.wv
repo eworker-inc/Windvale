@@ -693,7 +693,13 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
             let Aliasˉimport: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
                 Aliasˉview.Source, Aliasˉcursor, Aliasˉline, Aliasˉcolumn, false
             );
-            if Aliasˉimport.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
+            if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(
+                Aliasˉimport
+            ) {
+                Aliasˉcursor = Aliasˉimport.Nextˉoffset;
+                Aliasˉline = Aliasˉimport.Nextˉline;
+                Aliasˉcolumn = Aliasˉimport.Nextˉcolumn;
+            } else if Aliasˉimport.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
                 Readingˉaliases = false;
             } else {
                 let Imported: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch = Sourceˉgraph.Compilerˉsourceˉgraphˉfind(

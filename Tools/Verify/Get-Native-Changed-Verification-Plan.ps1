@@ -294,6 +294,7 @@ function Add-Console-Packager-Reconstruction-Suites {
 function Add-Hosted-Publisher-Suites {
     Add-Suite @(
         'wvb-runner-reconstruction',
+        'wvb-inspector-reconstruction',
         'wvo-inspector-reconstruction',
         'wvo-publisher-reconstruction',
         'console-publisher-reconstruction',
@@ -769,7 +770,7 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
     )) {
         Add-Bytecode-Suites
-        Add-Suite @('libraries', 'model-provider')
+        Add-Suite @('libraries', 'model-provider', 'wvb-inspector-reconstruction')
         if ($Path -in @(
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
@@ -2121,6 +2122,12 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'seed'
         Add-Suite 'seed-native-front-door'
+        if ($Path -in @(
+            'Examples/Foundation/Wv-Dump-Core.wv',
+            'Projects/Examples/Windvale-Wvb-Inspector.wvproj'
+        )) {
+            Add-Suite 'wvb-inspector-reconstruction'
+        }
         if ($Path -in @(
             'Examples/Seed/Sum-Data.wv',
             'Examples/Seed/Sum-Data.wvproj'

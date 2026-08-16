@@ -92,10 +92,12 @@ export fn Nativeˉhostedˉverifierˉserviceˉaddressˉforˉidentity(
     if Bytesˉlength(Runtime) != 4096u32 { return 0u32; }
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 516u32);
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 564u32);
-    if ((Profile == 6u32 || Profile == 7u32) && Count != 11u32) ||
+    if ((Profile == 4u32 || Profile == 6u32 || Profile == 7u32) &&
+            Count != 11u32) ||
         (Profile == 5u32 && Count != 9u32) ||
         ((Profile == 2u32 || Profile == 8u32) && Count != 6u32) ||
-        (Profile != 2u32 && Profile != 5u32 && Profile != 6u32 &&
+        (Profile != 2u32 && Profile != 4u32 && Profile != 5u32 &&
+            Profile != 6u32 &&
             Profile != 7u32 && Profile != 8u32) ||
         Identity == 0u32 {
         return 0u32;
@@ -154,7 +156,8 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
 
     if Target == 1u32 {
         var Startupˉbytes: u32 = 1301u32;
-        if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+        if Expectedˉprofile == 4u32 || Expectedˉprofile == 5u32 ||
+            Expectedˉprofile == 6u32 ||
             Expectedˉprofile == 7u32 {
             Startupˉbytes = 1376u32;
         }
@@ -195,7 +198,8 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
     }
     let Linuxˉtextˉfile: u32 = 4096u32 + Bundleˉbytes;
     var Linuxˉstartupˉbytes: u32 = 668u32;
-    if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+    if Expectedˉprofile == 4u32 || Expectedˉprofile == 5u32 ||
+        Expectedˉprofile == 6u32 ||
         Expectedˉprofile == 7u32 {
         Linuxˉstartupˉbytes = 743u32;
     }

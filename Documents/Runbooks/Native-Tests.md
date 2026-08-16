@@ -643,7 +643,7 @@ managed recovery step to the native development path.
 
 ## Current boundary
 
-The 70-owner, 3,568-case registry is the complete native qualification plan,
+The 75-owner, 3,647-case registry is the complete native qualification plan,
 not an inner-loop repository verifier. It covers result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, OS, package, database, and AOT-chain contracts.

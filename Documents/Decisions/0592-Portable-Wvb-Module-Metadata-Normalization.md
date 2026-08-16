@@ -1,8 +1,9 @@
 # Decision 0592: Portable WVB Module Metadata Normalization Contract
 
-- Status: Implemented in the source verifier and build driver; pinned front-door promotion pending
+- Status: Implemented in the source verifier and build driver; inspector advanced by Decision 0593; pinned front-door promotion pending
 - Date: 2026-08-15
 - Advances: Decision 0571
+- Advanced by: Decision 0593
 - Contract: [Seed bytecode](../../Specifications/Seed-Bytecode.md)
 
 ## Context
