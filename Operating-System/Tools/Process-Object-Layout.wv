@@ -72,15 +72,15 @@ export fn Buildˉfirstˉsections(
     ));
     Result = Append(Result, Encodeˉsection(
         ".text.process.filesystem.image",
-        1u8, 16u32, 58u32, Filesystemˉimageˉconstructor
+        1u8, 16u32, 59u32, Filesystemˉimageˉconstructor
     ));
     Result = Append(Result, Encodeˉsection(
         ".text.process.filesystem.paging",
-        1u8, 16u32, 3342u32, Filesystemˉpagingˉconstructor
+        1u8, 16u32, 3343u32, Filesystemˉpagingˉconstructor
     ));
     Result = Append(Result, Encodeˉsection(
         ".text.process.filesystem.record",
-        1u8, 16u32, 462u32, Filesystemˉrecordˉconstructor
+        1u8, 16u32, 463u32, Filesystemˉrecordˉconstructor
     ));
     Result = Append(Result, Encodeˉsection(
         ".rodata.ainit", 2u8, 16u32, 5159u32, Init
@@ -164,15 +164,15 @@ export fn Buildˉsymbols() -> bytes {
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_filesystem_image",
-        2u8, 1u8, 2u32, 0u32, 58u32
+        2u8, 1u8, 2u32, 0u32, 59u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_filesystem_paging",
-        2u8, 1u8, 3u32, 0u32, 3342u32
+        2u8, 1u8, 3u32, 0u32, 3343u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_filesystem_record",
-        2u8, 1u8, 4u32, 0u32, 462u32
+        2u8, 1u8, 4u32, 0u32, 463u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_syscall",
@@ -211,6 +211,9 @@ export fn Buildˉsymbols() -> bytes {
     ));
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_x64_process_exception_6_entry"
+    ));
+    Result = Append(Result, Importˉfunction(
+        "Windvale_kernel_x64_process_filesystem_construct"
     ));
     Result = Append(Result, Importˉfunction(
         "Windvale_kernel_x64_timer_arm"

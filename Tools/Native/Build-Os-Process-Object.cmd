@@ -27,7 +27,7 @@ call :verify "%Toolset%\windows-x64-process-resource-store.exe" 50688 28275579df
 if errorlevel 1 goto :invalid_toolset
 call :verify "%Toolset%\windows-x64-process-directory-snapshot.exe" 46592 73ba3ee9460bd8915e6f05031f44cd963aecf60d424544f48cf57ed9912c2779
 if errorlevel 1 goto :invalid_toolset
-call :verify "%Toolset%\windows-x64-process-object.exe" 570880 0e16e17232a46f8757264596e9d7317b8f0b24546340e6502caacfa01fa68af0
+call :verify "%Toolset%\windows-x64-process-object.exe" 590336 aa22ee8ba084abb737cae8beed1601c051494c1ff91f85d0d663f099431f0963
 if errorlevel 1 goto :invalid_toolset
 call :verify "%Toolset%\normal-x64-process.bin" 46678 112dd0cb06de269e069436720876829313fb0a20546d1d7b38ea336fea26e6fd
 if errorlevel 1 goto :invalid_toolset
@@ -198,7 +198,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=build-process-object"
 "%Toolset%\windows-x64-process-object.exe" "%Toolset%\normal-x64-process.bin" "%Work%\Init.bin" "%Work%\Client.bin" "%Work%\Program.wvb" "%Work%\Resources.wvrs" "%Work%\Directory.wvds" "%Work%\Directory.bin" "%Work%\Filesystem.bin" "%Work%\Network.bin" "%Work%\Process.wvo" >"%Work%\Process-Object.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process.wvo" 956230 6c54a37dbe4e08d43068fed9bfb98edea536ae097666fa2c793a1c1bea9f9ac3
+call :verify "%Work%\Process.wvo" 956321 9f310ad538580bbc00f5dcf38428eac7daef78a5f78fc1bc95b22a4b4dad7b45
 if errorlevel 1 goto :failure
 call "%Native%\Verify-Wvo.cmd" "%Work%\Process.wvo" >"%Work%\Verify-Process.log" 2>&1
 if errorlevel 1 goto :failure

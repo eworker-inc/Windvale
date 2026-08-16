@@ -28,7 +28,7 @@ verify_identity() {
 verify_identity "$toolset/linux-x64-boot-resource-object.elf" 389120 21f15f20769465b6b9c2272147a00f995e455b9e6fd2db354772bf932fc7194b || exit 1
 verify_identity "$toolset/linux-x64-process-resource-store.elf" 49152 8707ca6ce129a2c7c3cb33586444201088cfd764d12742658638821c8c014bcd || exit 1
 verify_identity "$toolset/linux-x64-process-directory-snapshot.elf" 49152 d5f97d27d6f51b88d9b552abc007d4e0a8fe7b32c153b5f24ae13f57fc33fdc4 || exit 1
-verify_identity "$toolset/linux-x64-process-object.elf" 569344 abb6610c5bafef6ceb5f1dcd6fcaf24f1d8a7ec12cba269e15c39d9c3b33e6c0 || exit 1
+verify_identity "$toolset/linux-x64-process-object.elf" 589824 84adab05a71b98da34a3891fe17a58fd061d0216c49530312c8921074dfdea57 || exit 1
 verify_identity "$toolset/normal-x64-process.bin" 46678 112dd0cb06de269e069436720876829313fb0a20546d1d7b38ea336fea26e6fd || exit 1
 
 work=$(mktemp -d "$output_directory/.windvale-os-process-object.XXXXXXXX") || exit 1
@@ -122,6 +122,6 @@ run_logged Directory-Snapshot.log "$toolset/linux-x64-process-directory-snapshot
 verify_identity "$work/Directory.wvds" 3184 0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a || exit 1
 
 run_logged Process-Object.log "$toolset/linux-x64-process-object.elf" "$toolset/normal-x64-process.bin" "$work/Init.bin" "$work/Client.bin" "$work/Program.wvb" "$work/Resources.wvrs" "$work/Directory.wvds" "$work/Directory.bin" "$work/Filesystem.bin" "$work/Network.bin" "$work/Process.wvo"
-verify_identity "$work/Process.wvo" 956230 6c54a37dbe4e08d43068fed9bfb98edea536ae097666fa2c793a1c1bea9f9ac3 || exit 1
+verify_identity "$work/Process.wvo" 956321 9f310ad538580bbc00f5dcf38428eac7daef78a5f78fc1bc95b22a4b4dad7b45 || exit 1
 run_logged Verify-Process.log "$script_directory/Verify-Wvo.sh" "$work/Process.wvo"
 run_logged Publish.log "$script_directory/Publish-Wvo.sh" "$work/Process.wvo" "$output"

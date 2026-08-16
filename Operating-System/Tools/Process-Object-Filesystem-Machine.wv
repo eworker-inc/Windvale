@@ -18,6 +18,8 @@ data Emptyˉconfigurationˉdigest: bytes = [
     164, 149, 153, 27, 120, 82, 184, 85
 ];
 
+data Return: bytes = [195];
+
 export fn Isˉvalid() -> bool {
     return Recordˉemission.X64ˉprocessˉfilesystemˉrecordˉisˉvalid(
         Serviceˉdigest, Emptyˉconfigurationˉdigest
@@ -26,15 +28,23 @@ export fn Isˉvalid() -> bool {
 }
 
 export fn Image() -> bytes {
-    return Imageˉemission.X64ˉprocessˉfilesystemˉimageˉbytes(195657u32);
+    return Bytesˉconcat(
+        Imageˉemission.X64ˉprocessˉfilesystemˉimageˉbytes(195657u32),
+        Return
+    );
 }
 
 export fn Paging() -> bytes {
-    return Pagingˉemission.X64ˉprocessˉfilesystemˉpagingˉbytes();
+    return Bytesˉconcat(
+        Pagingˉemission.X64ˉprocessˉfilesystemˉpagingˉbytes(), Return
+    );
 }
 
 export fn Record() -> bytes {
-    return Recordˉemission.X64ˉprocessˉfilesystemˉrecordˉbytes(
-        Serviceˉdigest, Emptyˉconfigurationˉdigest
+    return Bytesˉconcat(
+        Recordˉemission.X64ˉprocessˉfilesystemˉrecordˉbytes(
+            Serviceˉdigest, Emptyˉconfigurationˉdigest
+        ),
+        Return
     );
 }

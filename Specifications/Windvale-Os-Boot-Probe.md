@@ -16,17 +16,17 @@ The canonical 816-byte `Function-Only.wv` WVB remains the embedded admission ide
 
 The separate directory service is a 473-byte WVB with SHA-256 `33b0e425bd6e2a1cd6ae8f95d4645748a6031b93684a9b1ac4d0e56e8408bef7`. Its WVA entry, exact preemption probe, and ABI-22 object link to a 3,911-byte image with SHA-256 `f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb`. The machine seam pins and revalidates that complete image and exact preemption-function bytes before publication.
 
-The native Probe object and process-object producers create the loader, fixed-page memory leaf, exception, paging, admission bridge, process machine, retained bridge/support, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. The 956,230-byte process object at SHA-256 `6c54a37dbe4e08d43068fed9bfb98edea536ae097666fa2c793a1c1bea9f9ac3` now exports the source-owned filesystem image, paging, and record constructors. They link at addresses 780,192, 780,256, and 783,600, but the boot path does not call them. The separately assembled 2,538-byte memory-object WVA has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; the retained 1,202-byte timer WVA has SHA-256 `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`. The immutable Stage 0 recovery release preserves the former construction path and historical differential provenance; it is not invoked by ordinary `main` construction.
+The native Probe object and process-object producers create the loader, fixed-page memory leaf, exception, paging, admission bridge, process machine, retained bridge/support, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. The 956,321-byte process object at SHA-256 `9f310ad538580bbc00f5dcf38428eac7daef78a5f78fc1bc95b22a4b4dad7b45` exports callable source-owned filesystem image, paging, and record constructors at addresses 780,192, 780,256, and 783,600. A separately assembled 1,068-byte WVA transaction at SHA-256 `755278057f3415f0ed1661364c2be636efb879875f0a9a74bd5d3a0f9238b763` releases the terminal generation-two client, allocates process/object generation 3 at the same root, invokes those constructors, and validates the resulting private machine. It deliberately does not publish its domain charge, bind an endpoint, create runnable work, or enter the provider. The separately assembled 2,538-byte memory-object WVA has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; the retained 1,202-byte timer WVA has SHA-256 `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`. The immutable Stage 0 recovery release preserves the former construction path and historical differential provenance; it is not invoked by ordinary `main` construction.
 
-The linked executable code ends at byte 791,447 and fits the fixed 794,624-byte supervisor RX window. Init and the directory service each fit two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
+The linked executable code ends at byte 791,991 and fits the fixed 794,624-byte supervisor RX window. Init and the directory service each fit two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
 Current native `main` image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 1,696,768 | `e9a113b0b108a9da0bf31a0802d1fa7ae58f4c1888a1e30a0eb7d090732d40d9` | 0 |
-| `invalid-opcode` | 1,696,768 | `af1cacbc0d139958e6f8d083d68493b35e4987a8a843939506e27f9595a133e2` | 3 |
-| `general-protection` | 1,696,768 | `eea4961a1a4b2287737ccd238f088b53ae4274714bf2c88f5a2ef0f7c4bdb384` | 3 |
+| `normal` | 1,697,280 | `be0f0f168bd801489737f60fa0ebef436f62b764175683dfbe8782a1c69588c1` | 0 |
+| `invalid-opcode` | 1,697,280 | `ad38552ad37ac444d8d0443c5942eb60fec5171a9cbddea6144b0f57c109aa7c` | 3 |
+| `general-protection` | 1,697,280 | `9f7c9d9d7ec36a3d8ed0c714fe7d32bc33bae27eb453db9bf8fe51c79d327acc` | 3 |
 
 The current native builder does not construct `user-fault` or `service-fault`; changes to their retained source seams are therefore an explicit changed-file verification gap rather than falsely covered by the normal probe owner.
 
@@ -60,8 +60,11 @@ Admission 4 requires token 73 for the exact 816-byte canonical WVB 1.11 module. 
 8. enters client generation 1, completes both service exchanges and interpretation, and returns `6`;
 9. clears transient state, cleans aliases/publications, reloads init's CR3, releases client pages 25 through 146 while the later directory object remains live, and first-fits the identical root under generation 2;
 10. rebinds both endpoints, repeats grant, service exchanges, interpretation, result, and cleanup under generation 2;
-11. resumes and exits both providers with exact endpoint accounting; and
-12. runs the retained native probe and compiler-generated system-profile Main.
+11. resumes and exits both providers with exact endpoint accounting;
+12. releases the terminal generation-two client allocation, first-fits its root
+    as generation 3, constructs and validates the private 85-page filesystem
+    machine without endpoint, charge, runnable-thread, or entry publication; and
+13. runs the retained native probe and compiler-generated system-profile Main.
 
 The dispatcher still scans exactly three validated records from a persistent round-robin cursor. It selects only a ready thread in a ready or running process and updates the cursor to the following slot. Every workload entry and explicit wake uses that decision. Probe 39's retained timer experiment is private evidence over the same logical order, not a public run queue or a claim that the retained workload is generally preemptive.
 
@@ -117,7 +120,7 @@ $efi = Join-Path $env:TEMP 'Windvale-Probe40-normal.efi'
 Tools\Native\Build-Os-Probe.cmd $efi normal
 pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
     -EfiPath $efi `
-    -ExpectedEfiSha256 e9a113b0b108a9da0bf31a0802d1fa7ae58f4c1888a1e30a0eb7d090732d40d9 `
+    -ExpectedEfiSha256 be0f0f168bd801489737f60fa0ebef436f62b764175683dfbe8782a1c69588c1 `
     -Scenario normal
 ```
 
@@ -129,4 +132,4 @@ Harness diagnostics remain `WVOS3001` build failure, `WVOS3002` start failure, `
 
 ## Deliberate non-claims
 
-Probe 40 does not authenticate firmware CRCs, own general physical memory, coalesce or scatter allocations, load arbitrary WVB, provide complete in-guest verification, publish executable memory, JIT, provide a public timer/time API, prioritize, handle delayed/lost/wrapped ticks, enter idle, guarantee general wake latency, schedule multiple threads, expose a general dynamic resource-domain or application-launch API, discover or publicly create endpoints, supervise or restart services, move capabilities, accept arbitrary page totals or images in machine-construction policy 1, accept arbitrary stores or snapshots in its bounded guest seam, launch a filesystem or network provider, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network devices or packet transport, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Operation 8 now provides a fixed init-only entry, checked request snapshot, and fail-closed publication of the already constructed generation-1 child as reference `65538`; the retained init does not invoke it yet, and no arbitrary machine is allocated or entered. The filesystem image and three machine constructors are boot-linked but not allocated, invoked, published, or entered. Its fixed boot-service envelope, two fixed versioned launch requests, bounded variable machine layout, domain transcript, three memory objects, four-tick timer sequence, and one-thread-per-process dispatcher remain internal evidence. The recovery release preserves the replaced Stage 0 emitters for historical reconstruction only.
+Probe 40 does not authenticate firmware CRCs, own general physical memory, coalesce or scatter allocations, load arbitrary WVB, provide complete in-guest verification, publish executable memory, JIT, provide a public timer/time API, prioritize, handle delayed/lost/wrapped ticks, enter idle, guarantee general wake latency, schedule multiple threads, expose a general dynamic resource-domain or application-launch API, discover or publicly create endpoints, supervise or restart services, move capabilities, accept arbitrary page totals or images in machine-construction policy 1, accept arbitrary stores or snapshots in its bounded guest seam, publish or enter a filesystem or network provider, enumerate directories, implement nested paths/handles/mounts/packages/block storage/writable state/network devices or packet transport, handle concurrent calls, perform SMP shootdown, or qualify Hyper-V/physical hardware. Operation 8 now provides a fixed init-only entry, checked request snapshot, and fail-closed publication of the already constructed generation-1 child as reference `65538`; the retained init does not invoke it yet, and no arbitrary machine is allocated or entered. The filesystem image and three callable machine constructors are boot-linked, allocated, and invoked only as a private generation-three construction. No endpoint generation, domain charge, ready thread, provider entry, or filesystem request is published. Its fixed boot-service envelope, two fixed versioned launch requests, bounded variable machine layout, domain transcript, private fourth memory-object generation, four-tick timer sequence, and one-thread-per-process dispatcher remain internal evidence. The recovery release preserves the replaced Stage 0 emitters for historical reconstruction only.

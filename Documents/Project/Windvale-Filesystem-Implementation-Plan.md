@@ -163,8 +163,12 @@ executable launch, and capability publication remain required.
 
 The first separate filesystem user image now builds deterministically, returns
 readiness token 46, and waits on endpoint `131072`. The current process-object
-constructor embeds the immutable image in the boot object, but Probe 40 does not
-yet allocate its domain, map it, bind its endpoint, publish it, or launch it.
+constructor embeds the immutable image in the boot object. Probe 40 now releases
+the terminal generation-two client, first-fits process/object generation 3 at
+the same root, allocates its exact 85-page extent, and invokes the image,
+W^X-paging, record, and native-context constructors. This transaction remains
+private and non-runnable: it does not bind an endpoint, publish a resource-domain
+charge, create a ready thread, enter the provider, or accept a request.
 Provider launch transaction 1 now admits its exact 48 RX plus 33 private-page
 partition, including a disjoint 17-page transfer region and 16-page stack, one
 process, one endpoint, readiness publication, rollback, stale
@@ -172,14 +176,16 @@ rejection, and zero-charge teardown. The first machine-binding policy now
 selects sequential reuse of released process/object slot 2 as generation 3 and
 closed resource-endpoint slot 0 as generation 2; the embedded service waits on
 that exact endpoint. The generation-three record, W^X paging, service copy, and
-native-context constructor bytes are now source-owned and pass a focused
-three-case cross-host packaging owner. The process object now links and exports
-those constructors, and the complete Probe 40 QEMU gate passes with the
-expanded paging boundary. Their allocation is 85 physical pages:
-four kernel-only paging pages plus 81 charged user pages (48 RX image, 17 RW/NX
-context/transfer, and 16 disjoint RW/NX stack pages). Constructor invocation,
-real configuration/media identity, record publication, endpoint advance,
-context entry, request/reply execution, and teardown remain open.
+native-context constructor bytes are source-owned and pass a focused three-case
+cross-host packaging owner. The process object exports callable forms at
+unchanged link addresses, and the complete normal plus two terminal-fault Probe
+40 QEMU gate passes after their private invocation. The allocation contains four
+kernel-only paging pages plus 81 future domain-charged user pages (48 RX image,
+17 RW/NX context/transfer, and 16 disjoint RW/NX stack pages); those 81 pages are
+not yet published as a live domain charge. Real FAT32 configuration/media
+identity, atomic domain/record publication, endpoint generation advance and
+binding, a fresh ready thread, context entry, request/reply execution, and
+teardown remain open.
 
 ### Filesystem slice 6: optional format adapters or native format decision
 

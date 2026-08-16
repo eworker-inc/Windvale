@@ -1,0 +1,35 @@
+module Processˉobjectˉfilesystemˉconstruction profile portable;
+
+data Retainedˉresult: bytes = [184, 6, 0, 0, 0];
+data Constructionˉcall: bytes = [232, 0, 0, 0, 0];
+
+fn Equalˉbytes(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Patch(Code: bytes) -> bytes {
+    if Bytesˉlength(Code) != 46678u32 ||
+        Bytesˉlength(Retainedˉresult) != 5u32 ||
+        Bytesˉlength(Constructionˉcall) != 5u32 ||
+        !Equalˉbytes(
+            Bytesˉslice(Code, 33801u32, 5u32), Retainedˉresult
+        ) {
+        return Bytesˉslice(Code, 0u32, 0u32);
+    }
+    return Bytesˉconcat(
+        Bytesˉslice(Code, 0u32, 33801u32),
+        Bytesˉconcat(
+            Constructionˉcall,
+            Bytesˉslice(Code, 33806u32, 12872u32)
+        )
+    );
+}

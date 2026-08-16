@@ -1,0 +1,142 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_x64_process_filesystem_construct in .text
+symbol import function Windvale_kernel_allocate_memory_object
+symbol import function Windvale_kernel_release_memory_object
+symbol import function Windvale_kernel_x64_process_filesystem_image
+symbol import function Windvale_kernel_x64_process_filesystem_paging
+symbol import function Windvale_kernel_x64_process_filesystem_record
+
+section code .text align 16
+define Windvale_kernel_x64_process_filesystem_construct
+# R12 is the validated WVKMEM17 state after generation-two client completion.
+# The leaf releases reference 0x00020002, first-fit allocates generation three
+# as 0x00030002, constructs its non-runnable image/page tables/record, and returns
+# the retained process result 6. It does not bind an endpoint or enter user mode.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+move rbp r12
+compare_i32 rbp 0
+branch equal filesystem_construct_failure
+
+# Retire the exact generation-two client memory object. The release leaf
+# validates the complete object vector, ownership bitmap, and zeroing boundary.
+move rcx rbp
+move rdx rbp
+add_i32 rdx 3472
+move_u32 r8d 131074
+call Windvale_kernel_release_memory_object
+compare_i32 rax 0
+branch equal filesystem_construct_failure
+move r15 rax
+load_memory_u64 rax rbp none 1 32
+compare_i32 rax 13
+branch not_equal filesystem_construct_failure
+load_memory_u64 rax rbp none 1 40
+compare_i32 rax 122
+branch not_equal filesystem_construct_failure
+
+# Reuse the released slot under generation three. The 85 physical pages contain
+# four kernel-only paging pages and the charged 81-page provider partition.
+move rcx rbp
+move rdx rbp
+add_i32 rdx 3472
+move_u32 r8d 196610
+move_u32 r9d 85
+call Windvale_kernel_allocate_memory_object
+compare_i32 rax 0
+branch equal filesystem_construct_failure
+compare rax r15
+branch not_equal filesystem_construct_failure
+move r14 rax
+move rbx rax
+and_i32 rbx 4095
+branch not_equal filesystem_construct_failure
+load_memory_u64 rax rbp none 1 40
+compare_i32 rax 37
+branch not_equal filesystem_construct_failure
+
+# The constructors share the retained architecture-private register contract:
+# R12 is WVKMEM17, R13 is process slot 2, and R14 is the 85-page extent.
+move r12 rbp
+move r13 rbp
+add_i32 r13 768
+call Windvale_kernel_x64_process_filesystem_image
+call Windvale_kernel_x64_process_filesystem_paging
+call Windvale_kernel_x64_process_filesystem_record
+
+# Revalidate the public object and process identities before returning. The
+# existing generation-two thread remains terminal, so this slice is not yet a
+# runnable publication.
+load_memory_u32 eax rbp none 1 3472
+move_u32 edx 1162696279
+compare eax edx
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 3488
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 3492
+compare_i32 eax 196610
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 3500
+compare_i32 eax 85
+branch not_equal filesystem_construct_failure
+load_memory_u64 rax rbp none 1 3520
+compare rax r14
+branch not_equal filesystem_construct_failure
+
+load_memory_u32 eax rbp none 1 768
+move_u32 edx 1380996695
+compare eax edx
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 772
+move_u32 edx 925975375
+compare eax edx
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 776
+compare_i32 eax 17
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 784
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 788
+compare_i32 eax 3
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 792
+compare_i32 eax 2
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 796
+compare_i32 eax 2
+branch not_equal filesystem_construct_failure
+load_memory_u64 rax rbp none 1 832
+compare rax r14
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 864
+compare_i32 eax 81
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 1016
+compare_i32 eax 48
+branch not_equal filesystem_construct_failure
+move_u32 eax 6
+jump_label filesystem_construct_return
+
+label filesystem_construct_failure
+move_u32 eax 0
+label filesystem_construct_return
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section
