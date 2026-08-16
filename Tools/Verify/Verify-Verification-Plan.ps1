@@ -2796,6 +2796,61 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'OS x64 code-emission development target manifest'
+        Paths = @('Tests/Native/Os-X64-Code-Emission-Development-Targets.txt')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'OS x64 code-emission exact development target'
+        Paths = @(
+            'Operating-System/Kernel/X64-Process-Client-Generation-Two-Reentry-Emission.wv'
+        )
+        Suites = @('os-x64-code-emission')
+        Gaps = @()
+        VerifyPlan = $false
+        OsX64Development = $true
+        OsX64Target = 'process-client-generation-two-reentry'
+    },
+    @{
+        Name = 'OS x64 code-emission same-target closure'
+        Paths = @(
+            'Operating-System/Kernel/X64-Process-Client-Generation-Two-Reentry-Emission.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Generation-Two-Reentry-Emission-Self-Test.wv',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reentry-Emission.wvproj'
+        )
+        Suites = @('os-x64-code-emission')
+        Gaps = @()
+        VerifyPlan = $false
+        OsX64Development = $true
+        OsX64Target = 'process-client-generation-two-reentry'
+    },
+    @{
+        Name = 'OS x64 code-emission multiple development targets'
+        Paths = @(
+            'Operating-System/Kernel/X64-Process-Client-Generation-Two-Reentry-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Generation-Two-Paging-Emission.wv'
+        )
+        Suites = @('os-x64-code-emission')
+        Gaps = @()
+        VerifyPlan = $false
+        OsX64Development = $false
+        OsX64Target = 'all'
+    },
+    @{
+        Name = 'OS x64 code-emission owner change stays complete'
+        Paths = @(
+            'Tools/Native/Test-Os-X64-Code-Emission.cmd',
+            'Operating-System/Kernel/X64-Process-Client-Generation-Two-Reentry-Emission.wv'
+        )
+        Suites = @('os-x64-code-emission')
+        Gaps = @()
+        VerifyPlan = $false
+        OsX64Development = $false
+        OsX64Target = 'all'
+    },
+    @{
         Name = 'combined deterministic order'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
         Suites = @(
@@ -2920,6 +2975,68 @@ foreach ($Entry in $LinuxArtifactIndex) {
     }
 }
 
+$OsX64TargetPlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt'
+$OsX64TargetLines = @(Get-Content -LiteralPath $OsX64TargetPlan)
+if ($OsX64TargetLines.Count -ne 57 -or
+    $OsX64TargetLines[0] -ne
+        'windvale-os-x64-code-emission-development-targets 1') {
+    throw 'The OS x64 code-emission development-target inventory differs.'
+}
+$OsX64TargetNames = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$OsX64TargetProjects = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($Line in @($OsX64TargetLines | Select-Object -Skip 1)) {
+    $Fields = $Line.Split('|')
+    if ($Fields.Count -lt 4 -or $Fields.Count -gt 5 -or
+        !$OsX64TargetNames.Add($Fields[0]) -or
+        !$OsX64TargetProjects.Add($Fields[1])) {
+        throw "Invalid or duplicate OS x64 code-emission development target: $Line"
+    }
+    $ProjectLeaf = [IO.Path]::GetFileName($Fields[1])
+    $ExpectedTarget = $ProjectLeaf.Substring(
+        'Windvale-Native-Test-Os-X64-'.Length,
+        $ProjectLeaf.Length -
+            'Windvale-Native-Test-Os-X64-'.Length -
+            '-Emission.wvproj'.Length).ToLowerInvariant()
+    if ($Fields[0] -ne $ExpectedTarget) {
+        throw "OS x64 code-emission target name differs from its project: $Line"
+    }
+    foreach ($InputPath in @($Fields | Select-Object -Skip 1)) {
+        if (!(Test-Path -LiteralPath (Join-Path $RepositoryRoot $InputPath) -PathType Leaf)) {
+            throw "Missing OS x64 code-emission development input: $InputPath"
+        }
+    }
+    $ProjectDeclarations = @(
+        Get-Content -LiteralPath (Join-Path $RepositoryRoot $Fields[1]) |
+            ForEach-Object {
+                if ($_ -match '^(?:root|source) "([^"\r\n]+)"$') {
+                    $Matches[1]
+                }
+            }
+    )
+    if (!([System.Linq.Enumerable]::SequenceEqual(
+            [string[]]$ProjectDeclarations,
+            [string[]]@($Fields | Select-Object -Skip 2)))) {
+        throw "OS x64 code-emission project closure differs: $($Fields[1])"
+    }
+}
+$OsX64WindowsOwner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.cmd')
+$OsX64LinuxOwner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.sh')
+foreach ($TargetName in $OsX64TargetNames) {
+    if ([regex]::Matches(
+            $OsX64WindowsOwner,
+            [regex]::Escape('"%DevelopmentTarget%"=="' + $TargetName + '"')).Count -ne 1 -or
+        [regex]::Matches(
+            $OsX64LinuxOwner,
+            [regex]::Escape("selected '$TargetName'")).Count -ne 1) {
+        throw "OS x64 code-emission owner selection differs: $TargetName"
+    }
+}
+
 foreach ($Case in $Cases) {
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet
     if (
@@ -2958,6 +3075,16 @@ foreach ($Case in $NativeCases) {
     $DatabaseDevelopmentDiffers = (
         $Case.ContainsKey('DatabaseDevelopment') -and
         $Plan.UseDatabaseStorageDevelopment -ne $Case.DatabaseDevelopment)
+    $OsX64DevelopmentDiffers = (
+        $Case.ContainsKey('OsX64Development') -and
+        $Plan.UseOsX64CodeEmissionDevelopment -ne $Case.OsX64Development)
+    $ExpectedOsX64Target = if ($Case.ContainsKey('OsX64Target')) {
+        $Case.OsX64Target
+    } else {
+        'all'
+    }
+    $OsX64TargetDiffers = (
+        $Plan.OsX64CodeEmissionDevelopmentTarget -ne $ExpectedOsX64Target)
     $ExpectedDatabaseTarget = if ($Case.ContainsKey('DatabaseTarget')) {
         $Case.DatabaseTarget
     } else {
@@ -2977,6 +3104,8 @@ foreach ($Case in $NativeCases) {
             $ExpectedWebAssemblyEngineVerification -or
         $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification -or
         $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification -or
+        $OsX64DevelopmentDiffers -or
+        $OsX64TargetDiffers -or
         $DatabaseDevelopmentDiffers -or
         $DatabaseTargetDiffers
     ) {
@@ -2991,6 +3120,8 @@ foreach ($Case in $NativeCases) {
             "verify-webassembly-engine=$($Plan.RunWebAssemblyEngineVerification), " +
             "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
             "verify-github=$($Plan.RunGitHubQualificationVerification), " +
+            "os-x64-development=$($Plan.UseOsX64CodeEmissionDevelopment), " +
+            "os-x64-target=$($Plan.OsX64CodeEmissionDevelopmentTarget), " +
             "database-development=$($Plan.UseDatabaseStorageDevelopment), " +
             "database-target=$($Plan.DatabaseStorageDevelopmentTarget)."
         )

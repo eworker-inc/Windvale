@@ -155,6 +155,18 @@ if ($Plan.Scope -eq 'website') {
                     'Native owner database-storage mode=development-checkpoint ' +
                     "target=$DatabaseTarget")
                 & $DevelopmentOwner --development-target $DatabaseTarget
+            } elseif ($Suite -eq 'os-x64-code-emission' -and
+                $NativePlan.UseOsX64CodeEmissionDevelopment) {
+                $DevelopmentOwner = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.sh'
+                }
+                $OsX64Target = $NativePlan.OsX64CodeEmissionDevelopmentTarget
+                Write-Host (
+                    'Native owner os-x64-code-emission mode=development-target ' +
+                    "target=$OsX64Target")
+                & $DevelopmentOwner --development-target $OsX64Target
             } else {
                 & $Coordinator --filter $Suite
             }

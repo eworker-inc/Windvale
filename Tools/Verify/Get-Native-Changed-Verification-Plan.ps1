@@ -18,6 +18,50 @@ $RunPlanVerification = $false
 $RunWebAssemblyVerification = $false
 $RunWebAssemblyEngineVerification = $false
 $RunGitHubQualificationVerification = $false
+$OsX64CodeEmissionDevelopmentEligible = $true
+$OsX64CodeEmissionDevelopmentRequiresAllTargets = $false
+$SelectedOsX64CodeEmissionDevelopmentTargets =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$OsX64CodeEmissionDevelopmentTargetsByPath = @{}
+$OsX64CodeEmissionDevelopmentPlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt'
+$OsX64CodeEmissionDevelopmentLines = if (
+    Test-Path -LiteralPath $OsX64CodeEmissionDevelopmentPlan -PathType Leaf) {
+    @(Get-Content -LiteralPath $OsX64CodeEmissionDevelopmentPlan)
+} else {
+    @()
+}
+$OsX64CodeEmissionDevelopmentTargetNames =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$OsX64CodeEmissionDevelopmentTargetProjects =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+if ($OsX64CodeEmissionDevelopmentLines.Count -ne 57 -or
+    $OsX64CodeEmissionDevelopmentLines[0] -ne
+        'windvale-os-x64-code-emission-development-targets 1') {
+    $OsX64CodeEmissionDevelopmentEligible = $false
+}
+foreach ($Line in @($OsX64CodeEmissionDevelopmentLines | Select-Object -Skip 1)) {
+    $Fields = $Line.Split('|')
+    if ($Fields.Count -lt 4 -or $Fields.Count -gt 5 -or
+        $Fields[0] -notmatch '^[a-z0-9][a-z0-9-]*$' -or
+        $Fields[1] -notmatch
+            '^Projects/Tests/Windvale-Native-Test-Os-X64-.+-Emission\.wvproj$' -or
+        !$OsX64CodeEmissionDevelopmentTargetNames.Add($Fields[0]) -or
+        !$OsX64CodeEmissionDevelopmentTargetProjects.Add($Fields[1])) {
+        $OsX64CodeEmissionDevelopmentEligible = $false
+        continue
+    }
+    $TargetName = $Fields[0]
+    foreach ($TargetPath in @($Fields | Select-Object -Skip 1)) {
+        if (!$OsX64CodeEmissionDevelopmentTargetsByPath.ContainsKey($TargetPath)) {
+            $OsX64CodeEmissionDevelopmentTargetsByPath[$TargetPath] =
+                [System.Collections.Generic.HashSet[string]]::new(
+                    [StringComparer]::Ordinal)
+        }
+        $null = $OsX64CodeEmissionDevelopmentTargetsByPath[$TargetPath].Add(
+            $TargetName)
+    }
+}
 $DatabaseStorageDevelopmentEligible = $true
 $DatabaseDevelopmentRequiresAllTargets = $false
 $SelectedDatabaseDevelopmentTargets = [System.Collections.Generic.HashSet[string]]::new(
@@ -1111,6 +1155,18 @@ if ($Paths.Count -eq 0) {
 }
 
 foreach ($Path in $Paths) {
+    if ($OsX64CodeEmissionDevelopmentTargetsByPath.ContainsKey($Path)) {
+        foreach ($OsX64Target in
+            $OsX64CodeEmissionDevelopmentTargetsByPath[$Path]) {
+            $null = $SelectedOsX64CodeEmissionDevelopmentTargets.Add($OsX64Target)
+        }
+    } elseif ($Path -match 'X64-(?:Code|Process-.+)-Emission' -or
+        $Path -in @(
+            'Tools/Native/Test-Os-X64-Code-Emission.cmd',
+            'Tools/Native/Test-Os-X64-Code-Emission.sh'
+        )) {
+        $OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
+    }
     if ($DatabaseDevelopmentTargetsByPath.ContainsKey($Path)) {
         foreach ($DatabaseTarget in $DatabaseDevelopmentTargetsByPath[$Path]) {
             $null = $SelectedDatabaseDevelopmentTargets.Add($DatabaseTarget)
@@ -1151,6 +1207,7 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
         'Specifications/Windvale-Native-Verification-Owners.md',
         'Tests/Native/Retirement-Suite.txt',
+        'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt',
         'Tests/Native/Verification-Owners.txt',
         'Tests/Native/Development-Owner-Dependencies.txt',
         'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
@@ -3203,6 +3260,13 @@ if (!$DatabaseDevelopmentRequiresAllTargets -and
             Where-Object { $SelectedDatabaseDevelopmentTargets.Contains($_) }
     )[0]
 }
+$OsX64CodeEmissionDevelopmentTarget = 'all'
+if (!$OsX64CodeEmissionDevelopmentRequiresAllTargets -and
+    $SelectedOsX64CodeEmissionDevelopmentTargets.Count -eq 1) {
+    $OsX64CodeEmissionDevelopmentTarget = @(
+        $SelectedOsX64CodeEmissionDevelopmentTargets
+    )[0]
+}
 if (!$Quiet) {
     Write-Host "Native owners: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
@@ -3210,6 +3274,7 @@ if (!$Quiet) {
     Write-Host "WebAssembly engine verification: $($RunWebAssemblyEngineVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
     Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
+    Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
     Write-Host "Database storage development checkpoint: $((
         $SelectedSuites.Contains('database-storage') -and
         $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
@@ -3223,6 +3288,11 @@ if ($PassThru) {
         RunWebAssemblyEngineVerification = $RunWebAssemblyEngineVerification
         RunWebAssemblyVerification = $RunWebAssemblyVerification
         RunGitHubQualificationVerification = $RunGitHubQualificationVerification
+        UseOsX64CodeEmissionDevelopment = (
+            $SelectedSuites.Contains('os-x64-code-emission') -and
+            $OsX64CodeEmissionDevelopmentEligible -and
+            $OsX64CodeEmissionDevelopmentTarget -ne 'all')
+        OsX64CodeEmissionDevelopmentTarget = $OsX64CodeEmissionDevelopmentTarget
         UseDatabaseStorageDevelopment = (
             $SelectedSuites.Contains('database-storage') -and
             $DatabaseStorageDevelopmentEligible)

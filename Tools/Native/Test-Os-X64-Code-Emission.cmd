@@ -1,6 +1,13 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if not "%~1"=="" exit /b 64
+set "DevelopmentTarget="
+if "%~1"=="" goto :arguments_ready
+if /I not "%~1"=="--development-target" exit /b 64
+if "%~2"=="" exit /b 64
+if not "%~3"=="" exit /b 64
+set "DevelopmentTarget=%~2"
+echo(%DevelopmentTarget%| findstr /r /i /x "[a-z0-9][a-z0-9-]*" >nul || exit /b 64
+:arguments_ready
 set "RepositoryRoot=%~dp0\..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 goto :allocate
@@ -14,6 +21,9 @@ set "Work=%TEMP%\windvale-os-x64-code-emission-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
 set "Status=1"
+set "Selected=0"
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="code" goto :after_code
+set /a Selected+=1 >nul
 echo step=code-emission item=1/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Code-Emission.wvproj" "%Work%\Test.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -37,6 +47,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Test.elf" 192624 6ed4a40989e0f33e6461d36f2dc8402894ff9e3d9b8417978159cc40df89b300
 if errorlevel 1 goto :cleanup
+:after_code
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-entry" goto :after_process-entry
+set /a Selected+=1 >nul
 echo step=process-entry item=2/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Entry-Emission.wvproj" "%Work%\Entry.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -60,6 +73,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Entry.elf" 299120 81733b1d317d4df43f3b46a1ebdb4e620d5fd38771a734834efc7c3ae1d4dd61
 if errorlevel 1 goto :cleanup
+:after_process-entry
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-coordinator" goto :after_process-coordinator
+set /a Selected+=1 >nul
 echo step=process-coordinator item=3/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Coordinator-Emission.wvproj" "%Work%\Coordinator.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -83,6 +99,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Coordinator.elf" 254064 8c160bc19330784ca82ca837d5a33fe93fe44fc5701cf491c661b1d06e728318
 if errorlevel 1 goto :cleanup
+:after_process-coordinator
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-endpoint" goto :after_process-endpoint
+set /a Selected+=1 >nul
 echo step=process-endpoint item=4/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Endpoint-Emission.wvproj" "%Work%\Endpoint.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -106,6 +125,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Endpoint.elf" 217200 b649ba1abe8db582942085afc90b14ad8d9cd44b542d232df3b7ea19f8a7eb2f
 if errorlevel 1 goto :cleanup
+:after_process-endpoint
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-memory-allocation" goto :after_process-memory-allocation
+set /a Selected+=1 >nul
 echo step=init-allocation item=5/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Memory-Allocation-Emission.wvproj" "%Work%\Allocation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -129,6 +151,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Allocation.elf" 209008 197947667b10fc4bb9a4df15117a0f34f9ff1237a950408679cf9c729fb008c8
 if errorlevel 1 goto :cleanup
+:after_process-memory-allocation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-record" goto :after_process-record
+set /a Selected+=1 >nul
 echo step=init-record item=6/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Record-Emission.wvproj" "%Work%\Record.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -152,6 +177,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Record.elf" 241776 1ecaa2ac3dda959a632b88c753d4189ecd3213a2f04c69c886f5bc0f11db23c0
 if errorlevel 1 goto :cleanup
+:after_process-record
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-paging" goto :after_process-paging
+set /a Selected+=1 >nul
 echo step=init-paging item=7/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Paging-Emission.wvproj" "%Work%\Paging.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -175,6 +203,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Paging.elf" 213104 fd20a386a8a0e03a9efce86444498e119f7dffbd67263c3845659d1a7f949ef2
 if errorlevel 1 goto :cleanup
+:after_process-paging
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-image" goto :after_process-image
+set /a Selected+=1 >nul
 echo step=init-image item=8/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Image-Emission.wvproj" "%Work%\Image.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -198,6 +229,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Image.elf" 217200 58b42db3daa211c10f79426dae970fb635233ec19e7f135a1e54ed963e526a87
 if errorlevel 1 goto :cleanup
+:after_process-image
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-reservation" goto :after_process-client-reservation
+set /a Selected+=1 >nul
 echo step=client-reservation item=9/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Reservation-Emission.wvproj" "%Work%\ClientReservation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -221,6 +255,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientReservation.elf" 217200 547f5351c84530e41436b51f03b25680f1added815d6238998dc5fe7915e0684
 if errorlevel 1 goto :cleanup
+:after_process-client-reservation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-directory-allocation" goto :after_process-directory-allocation
+set /a Selected+=1 >nul
 echo step=directory-allocation item=10/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Allocation-Emission.wvproj" "%Work%\DirectoryAllocation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -244,6 +281,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryAllocation.elf" 213104 551df680881fb91b911caa77f92cb60e02e5f68c11544ea24ffe9b3b634486a3
 if errorlevel 1 goto :cleanup
+:after_process-directory-allocation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-directory-record" goto :after_process-directory-record
+set /a Selected+=1 >nul
 echo step=directory-record item=11/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Record-Emission.wvproj" "%Work%\DirectoryRecord.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -267,6 +307,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryRecord.elf" 241776 b4c32f4820655131c2ba596f8003d78c3ffd16179a599c4f4fe77c9e36267e23
 if errorlevel 1 goto :cleanup
+:after_process-directory-record
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-directory-paging" goto :after_process-directory-paging
+set /a Selected+=1 >nul
 echo step=directory-paging item=12/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Paging-Emission.wvproj" "%Work%\DirectoryPaging.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -290,6 +333,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryPaging.elf" 209008 303eada707e4868fba8406ccc304e5764ce069d156808d6f44245e98629fb0d9
 if errorlevel 1 goto :cleanup
+:after_process-directory-paging
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-directory-image" goto :after_process-directory-image
+set /a Selected+=1 >nul
 echo step=directory-image item=13/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Image-Emission.wvproj" "%Work%\DirectoryImage.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -313,6 +359,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryImage.elf" 209008 4c66120f10ba53e10cf1e7e31ca600eef51d47874b5f629aec0f8c46091bef98
 if errorlevel 1 goto :cleanup
+:after_process-directory-image
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-record" goto :after_process-client-record
+set /a Selected+=1 >nul
 echo step=client-record item=14/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Record-Emission.wvproj" "%Work%\ClientRecord.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -336,6 +385,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientRecord.elf" 254064 08911fe6297712035388dd9ae1baaa9e03ddb6d905fd82aba485a33dc192f484
 if errorlevel 1 goto :cleanup
+:after_process-client-record
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-paging" goto :after_process-client-paging
+set /a Selected+=1 >nul
 echo step=client-paging item=15/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Paging-Emission.wvproj" "%Work%\ClientPaging.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -359,6 +411,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientPaging.elf" 209008 bd58157bc0b8023ea2a413c50a5b275bf958b256d08fcbb310a8abb96cca740e
 if errorlevel 1 goto :cleanup
+:after_process-client-paging
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-image" goto :after_process-client-image
+set /a Selected+=1 >nul
 echo step=client-image item=16/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Image-Emission.wvproj" "%Work%\ClientImage.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -382,6 +437,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientImage.elf" 192624 a2b3880da1d0bdefaf491717d180bb638118d9b706f550f2100b7e596382c1fe
 if errorlevel 1 goto :cleanup
+:after_process-client-image
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-program-resource" goto :after_process-client-program-resource
+set /a Selected+=1 >nul
 echo step=client-program-resource item=17/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Program-Resource-Emission.wvproj" "%Work%\ClientProgramResource.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -405,6 +463,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientProgramResource.elf" 172144 d8b7bf66d482a976a7ecec2b3c0d408c52d942e0b0c75360883cf117aab3d72f
 if errorlevel 1 goto :cleanup
+:after_process-client-program-resource
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-budget-resource" goto :after_process-client-budget-resource
+set /a Selected+=1 >nul
 echo step=client-budget-resource item=18/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Budget-Resource-Emission.wvproj" "%Work%\ClientBudgetResource.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -428,6 +489,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientBudgetResource.elf" 172144 7461b66d1b74e3dbab07f682d00627c16b32bd1a15a99beef52a8da2aeeb288f
 if errorlevel 1 goto :cleanup
+:after_process-client-budget-resource
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-store-resource" goto :after_process-client-store-resource
+set /a Selected+=1 >nul
 echo step=client-store-resource item=19/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Store-Resource-Emission.wvproj" "%Work%\ClientStoreResource.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -451,6 +515,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientStoreResource.elf" 172144 96d9d990d5500af4975c54083e76a4837b2915cb873c390d0e32c7650bcb1987
 if errorlevel 1 goto :cleanup
+:after_process-client-store-resource
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-directory-resource" goto :after_process-client-directory-resource
+set /a Selected+=1 >nul
 echo step=client-directory-resource item=20/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Directory-Resource-Emission.wvproj" "%Work%\ClientDirectoryResource.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -474,6 +541,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientDirectoryResource.elf" 172144 d7addd829407b5ef37500c9f54ee08d194858c5bef28497b94e0cca2769fc1aa
 if errorlevel 1 goto :cleanup
+:after_process-client-directory-resource
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-store-validation" goto :after_process-client-store-validation
+set /a Selected+=1 >nul
 echo step=client-store-validation item=21/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Store-Validation-Emission.wvproj" "%Work%\ClientStoreValidation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -497,6 +567,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientStoreValidation.elf" 69744 96f3b1fb420ac01b38c553051c88a2d9fca453d11cd417e99e8c8ae1aff6a699
 if errorlevel 1 goto :cleanup
+:after_process-client-store-validation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-directory-validation" goto :after_process-client-directory-validation
+set /a Selected+=1 >nul
 echo step=client-directory-validation item=22/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Directory-Validation-Emission.wvproj" "%Work%\ClientDirectoryValidation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -520,6 +593,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientDirectoryValidation.elf" 69744 60b016054f3205ad2726548b7ddc17d463179a9b7d204066addf63b1dd9c8d51
 if errorlevel 1 goto :cleanup
+:after_process-client-directory-validation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-privileged-entry" goto :after_process-privileged-entry
+set /a Selected+=1 >nul
 echo step=privileged-entry item=23/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Privileged-Entry-Emission.wvproj" "%Work%\PrivilegedEntry.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -543,6 +619,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\PrivilegedEntry.elf" 57456 4b1a3da08c2a9cd0c21d56ff44f1288dc5e92010191fdd6c53c83536b81bc6ed
 if errorlevel 1 goto :cleanup
+:after_process-privileged-entry
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-thread-timer-state" goto :after_process-thread-timer-state
+set /a Selected+=1 >nul
 echo step=thread-timer-state item=24/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Thread-Timer-State-Emission.wvproj" "%Work%\ThreadTimer.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -566,6 +645,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ThreadTimer.elf" 20592 bc928927aa085143e3c021941edaa88e4017d801d2ee492e67a9b87d5aab87b3
 if errorlevel 1 goto :cleanup
+:after_process-thread-timer-state
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-timer-activation" goto :after_process-timer-activation
+set /a Selected+=1 >nul
 echo step=timer-activation item=25/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Timer-Activation-Emission.wvproj" "%Work%\TimerActivation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -589,6 +671,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\TimerActivation.elf" 53360 35f3ece863faf0eb9d93c29b8d98dfc19f209637bb0c35f5519506e6c88c6e08
 if errorlevel 1 goto :cleanup
+:after_process-timer-activation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-provider-user-transfer" goto :after_process-provider-user-transfer
+set /a Selected+=1 >nul
 echo step=provider-user-transfer item=26/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Provider-User-Transfer-Emission.wvproj" "%Work%\ProviderTransfer.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -612,6 +697,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ProviderTransfer.elf" 41072 408af2b3e7d77567424a5aafe93eb0c2b185b13d60071e36e6181bb2e125f007
 if errorlevel 1 goto :cleanup
+:after_process-provider-user-transfer
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-provider-return-init-transfer" goto :after_process-provider-return-init-transfer
+set /a Selected+=1 >nul
 echo step=provider-return-init-transfer item=27/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Provider-Return-Init-Transfer-Emission.wvproj" "%Work%\ProviderReturn.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -635,6 +723,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ProviderReturn.elf" 32880 e6ad54583fbcdb6f5c020a1748caa02dd037af37522b46ea7fe149620662130f
 if errorlevel 1 goto :cleanup
+:after_process-provider-return-init-transfer
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-init-return-program-validation" goto :after_process-init-return-program-validation
+set /a Selected+=1 >nul
 echo step=init-return-program-validation item=28/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Init-Return-Program-Validation-Emission.wvproj" "%Work%\InitReturn.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -658,6 +749,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\InitReturn.elf" 28784 d044ea33bb2a76f23ff8e621bd4ce5004afd53970d3b9cc07b96008afb566a93
 if errorlevel 1 goto :cleanup
+:after_process-init-return-program-validation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-init-return-budget-validation" goto :after_process-init-return-budget-validation
+set /a Selected+=1 >nul
 echo step=init-return-budget-validation item=29/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Init-Return-Budget-Validation-Emission.wvproj" "%Work%\BudgetValidation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -681,6 +775,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\BudgetValidation.elf" 28784 eadb2564cbeebee10cfd58cca34378b65adaeb9ea6f8cf5832abfbf02d23bc9c
 if errorlevel 1 goto :cleanup
+:after_process-init-return-budget-validation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-init-return-store-directory-validation" goto :after_process-init-return-store-directory-validation
+set /a Selected+=1 >nul
 echo step=init-return-store-directory-validation item=30/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Init-Return-Store-Directory-Validation-Emission.wvproj" "%Work%\StoreDirectoryValidation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -704,6 +801,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\StoreDirectoryValidation.elf" 28784 04c59fa6379fe7f833450b1d56fff045ca5fbc7a2f62f8f319a2eccde5d89c2c
 if errorlevel 1 goto :cleanup
+:after_process-init-return-store-directory-validation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-user-transfer" goto :after_process-client-user-transfer
+set /a Selected+=1 >nul
 echo step=client-user-transfer item=31/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-User-Transfer-Emission.wvproj" "%Work%\ClientTransfer.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -727,6 +827,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientTransfer.elf" 41072 4ad53750962c1363f1c1460253c0d917139e581efac4df436c4979c4f60e82d4
 if errorlevel 1 goto :cleanup
+:after_process-client-user-transfer
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-return-init-transfer" goto :after_process-client-return-init-transfer
+set /a Selected+=1 >nul
 echo step=client-return-init-transfer item=32/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Return-Init-Transfer-Emission.wvproj" "%Work%\ClientReturn.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -750,6 +853,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientReturn.elf" 32880 b2a09c2ee5aaa2255866247c6ca5ba22ca5526f3dd2dedce9c67832cc89f2213
 if errorlevel 1 goto :cleanup
+:after_process-client-return-init-transfer
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-init-reply-publish-resume" goto :after_process-init-reply-publish-resume
+set /a Selected+=1 >nul
 echo step=init-reply-publish-resume item=33/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Init-Reply-Publish-Resume-Emission.wvproj" "%Work%\InitReply.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -773,6 +879,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\InitReply.elf" 32880 72993c6a4b09d484d56d414b8d41b0ec900c748ce20314eb4a57bee8763c1f4c
 if errorlevel 1 goto :cleanup
+:after_process-init-reply-publish-resume
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-reply-delivery" goto :after_process-client-reply-delivery
+set /a Selected+=1 >nul
 echo step=client-reply-delivery item=34/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Reply-Delivery-Emission.wvproj" "%Work%\ReplyDelivery.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -796,6 +905,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ReplyDelivery.elf" 32880 1bce868f6b93bfafc8433cf501678736bef090a2511dd7c835eef9f8be6733c2
 if errorlevel 1 goto :cleanup
+:after_process-client-reply-delivery
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-directory-request-delivery" goto :after_process-client-directory-request-delivery
+set /a Selected+=1 >nul
 echo step=client-directory-request-delivery item=35/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Directory-Request-Delivery-Emission.wvproj" "%Work%\DirectoryRequest.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -819,6 +931,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryRequest.elf" 32880 cc01218d71949cf91c0088b584e5ea931e656fe8fce71307fc2c5394e2802f46
 if errorlevel 1 goto :cleanup
+:after_process-client-directory-request-delivery
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-directory-reply-publish-resume" goto :after_process-directory-reply-publish-resume
+set /a Selected+=1 >nul
 echo step=directory-reply-publish-resume item=36/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Reply-Publish-Resume-Emission.wvproj" "%Work%\DirectoryReply.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -842,6 +957,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryReply.elf" 32880 b59095e5d2aeecb446bc702960a6996bfa14f9844e5fed112d962b72aa7d68f9
 if errorlevel 1 goto :cleanup
+:after_process-directory-reply-publish-resume
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-directory-reply-delivery" goto :after_process-client-directory-reply-delivery
+set /a Selected+=1 >nul
 echo step=client-directory-reply-delivery item=37/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Directory-Reply-Delivery-Emission.wvproj" "%Work%\ClientDirectoryReply.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -865,6 +983,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientDirectoryReply.elf" 32880 8007f75463e70308075dd76ae5fdfd0adee0d4a2a30118e8978ec22cc432fce6
 if errorlevel 1 goto :cleanup
+:after_process-client-directory-reply-delivery
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-completion-cleanup" goto :after_process-client-completion-cleanup
+set /a Selected+=1 >nul
 echo step=client-completion-cleanup item=38/38
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Completion-Cleanup-Emission.wvproj" "%Work%\ClientCleanup.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -888,6 +1009,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientCleanup.elf" 28784 78130c20bab66eb81a42700f6a0c77c89db51457e56c808d674e7f7b1a9e495a
 if errorlevel 1 goto :cleanup
+:after_process-client-completion-cleanup
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-reclamation-preflight" goto :after_process-client-reclamation-preflight
+set /a Selected+=1 >nul
 echo step=client-reclamation-preflight item=39/39
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Reclamation-Preflight-Emission.wvproj" "%Work%\ClientReclamationPreflight.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -911,6 +1035,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientReclamationPreflight.elf" 32880 2098fc92bf5a58448256beefb52207fda7aa974941b26567ee9941df496e0ed1
 if errorlevel 1 goto :cleanup
+:after_process-client-reclamation-preflight
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-memory-recycle" goto :after_process-client-memory-recycle
+set /a Selected+=1 >nul
 echo step=client-memory-recycle item=40/40
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Memory-Recycle-Emission.wvproj" "%Work%\ClientMemoryRecycle.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -934,6 +1061,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientMemoryRecycle.elf" 41072 5215b6db9ae314e336946db9af0be94a1b83be919a6adde2404e064053cdb315
 if errorlevel 1 goto :cleanup
+:after_process-client-memory-recycle
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-record" goto :after_process-client-generation-two-record
+set /a Selected+=1 >nul
 echo step=client-generation-two-record item=41/41
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Record-Emission.wvproj" "%Work%\ClientGenerationTwoRecord.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -957,6 +1087,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoRecord.elf" 20592 aa3700448dfb9d450afc48c64ed20d49f19ad780efe8ecd29031ecbdbba2c7b2
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-record
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-paging" goto :after_process-client-generation-two-paging
+set /a Selected+=1 >nul
 echo step=client-generation-two-paging item=42/42
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Paging-Emission.wvproj" "%Work%\ClientGenerationTwoPaging.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -980,6 +1113,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoPaging.elf" 209008 bae80f3e33d79d1446cd54af10c066da7d2bcdb2e95f74ddd4b32eab2d9a1511
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-paging
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-image" goto :after_process-client-generation-two-image
+set /a Selected+=1 >nul
 echo step=client-generation-two-image item=43/43
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Image-Emission.wvproj" "%Work%\ClientGenerationTwoImage.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1003,6 +1139,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoImage.elf" 192624 fb2d1a9b64f06b8068602e05fe23d710c0e8e45ae1ff06803489c8f31bc6ad4e
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-image
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-endpoint-rebind" goto :after_process-client-generation-two-endpoint-rebind
+set /a Selected+=1 >nul
 echo step=client-generation-two-endpoint-rebind item=44/44
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.wvproj" "%Work%\ClientGenerationTwoEndpointRebind.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1026,6 +1165,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoEndpointRebind.elf" 28784 522929410889169de460c55c4f936027c1f2c508c9541cd4f845d439bba3a22d
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-endpoint-rebind
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-reentry" goto :after_process-client-generation-two-reentry
+set /a Selected+=1 >nul
 echo step=client-generation-two-reentry item=45/45
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reentry-Emission.wvproj" "%Work%\ClientGenerationTwoReentry.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1049,6 +1191,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReentry.elf" 28784 4c810ad307e38c6db1264147f23d5e51f3f89375648fcc7813ac4c6ab6e590ea
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-reentry
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-return-validation" goto :after_process-client-generation-two-return-validation
+set /a Selected+=1 >nul
 echo step=client-generation-two-return-validation item=46/46
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Return-Validation-Emission.wvproj" "%Work%\ClientGenerationTwoReturnValidation.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1072,6 +1217,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReturnValidation.elf" 28784 6e04e1f5c7420df1f91a0df1f1085bd8af15b428bd79a7108a8390d604de7926
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-return-validation
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-user-transfer" goto :after_process-client-generation-two-user-transfer
+set /a Selected+=1 >nul
 echo step=client-generation-two-user-transfer item=47/47
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-User-Transfer-Emission.wvproj" "%Work%\ClientGenerationTwoUserTransfer.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1095,6 +1243,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoUserTransfer.elf" 53360 9a9c9e5ebed6472e6eed72f2d002c72e52629657a579c50c73fc917604790de9
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-user-transfer
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-return-init-transfer" goto :after_process-client-generation-two-return-init-transfer
+set /a Selected+=1 >nul
 echo step=client-generation-two-return-init-transfer item=48/48
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Return-Init-Transfer-Emission.wvproj" "%Work%\ClientGenerationTwoReturnInitTransfer.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1118,6 +1269,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.elf" 41072 e57c926117d430ea068b294ec5d9bce0fe35bdf24a0463b15721bdd9b86f5775
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-return-init-transfer
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-init-reply-publish-resume" goto :after_process-client-generation-two-init-reply-publish-resume
+set /a Selected+=1 >nul
 echo step=client-generation-two-init-reply-publish-resume item=49/49
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Init-Reply-Publish-Resume-Emission.wvproj" "%Work%\ClientGenerationTwoInitReplyPublishResume.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1141,6 +1295,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoInitReplyPublishResume.elf" 49264 205324fcae6d30ae3f1f09a4971f452728487a4c37d6090cddb827b62db8f65b
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-init-reply-publish-resume
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-reply-delivery" goto :after_process-client-generation-two-reply-delivery
+set /a Selected+=1 >nul
 echo step=client-generation-two-reply-delivery item=50/50
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reply-Delivery-Emission.wvproj" "%Work%\ClientGenerationTwoReplyDelivery.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1164,6 +1321,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReplyDelivery.elf" 57456 28c971ed9dde6f9cacd76ff459dca8f4780af9f816da92d6d125d62d6870f2ab
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-reply-delivery
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-directory-request-delivery" goto :after_process-client-generation-two-directory-request-delivery
+set /a Selected+=1 >nul
 echo step=client-generation-two-directory-request-delivery item=51/51
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wvproj" "%Work%\ClientGenerationTwoDirectoryRequestDelivery.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1187,6 +1347,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.elf" 41072 f9cdb5012700df4645d4aa892be1409274b35f440b281aab9f45890b2223efd2
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-directory-request-delivery
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-directory-generation-two-reply-publish-resume" goto :after_process-directory-generation-two-reply-publish-resume
+set /a Selected+=1 >nul
 echo step=directory-generation-two-reply-publish-resume item=52/52
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wvproj" "%Work%\DirectoryGenerationTwoReply.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1210,6 +1373,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\DirectoryGenerationTwoReply.elf" 49264 d555b8543d60d8fc56fd7f19de40b00757a842afe5e6b19f4a5292a25e5b2e57
 if errorlevel 1 goto :cleanup
+:after_process-directory-generation-two-reply-publish-resume
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-directory-reply-lifecycle" goto :after_process-client-generation-two-directory-reply-lifecycle
+set /a Selected+=1 >nul
 echo step=client-generation-two-directory-reply-lifecycle item=53/53
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.wvproj" "%Work%\ClientGenerationTwoDirectoryReplyLifecycle.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1233,6 +1399,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoDirectoryReplyLifecycle.elf" 36976 eb19da01012c6a39b12522d791363f3fdee488337b323af638167ecd3c997fdb
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-directory-reply-lifecycle
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-completion-cleanup" goto :after_process-client-generation-two-completion-cleanup
+set /a Selected+=1 >nul
 echo step=client-generation-two-completion-cleanup item=54/54
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wvproj" "%Work%\ClientGenerationTwoCompletionCleanup.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1256,6 +1425,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoCompletionCleanup.elf" 45168 1bb369e9fc5ba9c86b24e3ce8b2b8ab4a9d87d98aa1869807969092577c115fc
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-completion-cleanup
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-client-generation-two-completion-finalize-resume" goto :after_process-client-generation-two-completion-finalize-resume
+set /a Selected+=1 >nul
 echo step=client-generation-two-completion-finalize-resume item=55/55
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Finalize-Resume-Emission.wvproj" "%Work%\ClientGenerationTwoCompletionFinalizeResume.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1279,6 +1451,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoCompletionFinalizeResume.elf" 36976 4d8a0ee872b154f36c4729ca353bb059fba14988c69fe36dc647c1dc2883ca94
 if errorlevel 1 goto :cleanup
+:after_process-client-generation-two-completion-finalize-resume
+if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="process-final-state-validation-epilogue" goto :after_process-final-state-validation-epilogue
+set /a Selected+=1 >nul
 echo step=process-final-state-validation-epilogue item=56/56
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Final-State-Validation-Epilogue-Emission.wvproj" "%Work%\FinalStateEpilogue.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -1302,7 +1477,17 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\FinalStateEpilogue.elf" 36976 c9552badd8d0e6f603eae6f7e161168144b8a90baaa18416a222032c864eb12a
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
+:after_process-final-state-validation-epilogue
+if defined DevelopmentTarget if "%Selected%"=="0" (
+    >&2 echo Unknown OS x64 code-emission development target: %DevelopmentTarget%
+    set "Status=64"
+    goto :cleanup
+)
+if defined DevelopmentTarget (
+    echo native os x64 code emission development status=Passed target=%DevelopmentTarget% projects=1 cases=6 cross-host-images=Verified
+) else (
+    echo native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
+)
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

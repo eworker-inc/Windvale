@@ -213,6 +213,18 @@ and workflow checks, all eight database behaviors, and cleanup. The selected
 scope skipped qualification. This closes the five-minute ordinary-feedback
 target without turning a cached development result into qualification evidence.
 
+The OS x64 code-emission development path is target-aware as well. Its canonical
+manifest maps 56 independent project closures. One leaf source, fixture, or
+project selects one six-check target; shared inputs, multiple targets, owner
+changes, and qualification retain the complete 56-project, 336-case owner. On
+the measured Windows host, first, middle, and final targets completed in 3,476
+ms, 3,622 ms, and 3,041 ms, and the complete changed-file front door for the
+middle target completed in 4,866 ms. Linux target execution remains independent
+host evidence rather than an inference from Windows; the paired shell passed
+syntax validation. The complete Windows owner passed all 56 projects and 336
+cases in 115,333 ms, making the measured 3,622 ms middle-target owner 31.84
+times faster without changing the complete route.
+
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.

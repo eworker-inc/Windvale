@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -uo pipefail
-[[ $# -eq 0 ]] || exit 64
+development_target=
+case $# in
+    0) ;;
+    2)
+        [[ $1 == '--development-target' && $2 =~ ^[a-z0-9][a-z0-9-]*$ ]] || exit 64
+        development_target=$2
+        ;;
+    *) exit 64 ;;
+esac
+selected() { [[ -z $development_target || $development_target == "$1" ]]; }
+selected_count=0
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 temporary_root=${TMPDIR:-/tmp}
@@ -8,7 +18,9 @@ work=$(mktemp -d "$temporary_root/windvale-os-x64-code-emission.XXXXXXXX") || ex
 cleanup() { case "$work" in "$temporary_root"/windvale-os-x64-code-emission.*) rm -f -- "$work"/*; rmdir -- "$work" ;; *) return 1 ;; esac; }
 trap cleanup EXIT
 verify() { local path=$1 bytes=$2 digest=$3; [[ $(wc -c < "$path") -eq $bytes ]] && printf '%s  %s\n' "$digest" "$path" | sha256sum --check --strict --quiet; }
-echo 'step=code-emission item=1/38'
+if selected 'code'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=code-emission item=1/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Code-Emission.wvproj" "$work/Test.wvb" >/dev/null || exit $?
 verify "$work/Test.wvb" 13597 3bdfd99bb37c4ff037a2d57bfdd89e67a2f190df77f113b50effba1f9c6bd24f || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Test.wvb" "$work/Test.wvo" >/dev/null || exit $?
@@ -21,7 +33,10 @@ verify "$work/Test.elf" 192624 6ed4a40989e0f33e6461d36f2dc8402894ff9e3d9b8417978
 [[ $? -eq 50 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Test.bin" 0 "$work/Test.exe" >/dev/null || exit $?
 verify "$work/Test.exe" 188416 2904c72b25c1d827b0547e839bc5b237694db3e6b4b52de182d774ec83853bec || exit 1
-echo 'step=process-entry item=2/38'
+fi
+if selected 'process-entry'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=process-entry item=2/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Entry-Emission.wvproj" "$work/Entry.wvb" >/dev/null || exit $?
 verify "$work/Entry.wvb" 18819 3d830d8788372bfb35e59f86f1cd2fce4bcbab38536d3e1da287f4cac4d15749 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Entry.wvb" "$work/Entry.wvo" >/dev/null || exit $?
@@ -34,7 +49,10 @@ verify "$work/Entry.elf" 299120 81733b1d317d4df43f3b46a1ebdb4e620d5fd38771a73483
 [[ $? -eq 51 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Entry.bin" 0 "$work/Entry.exe" >/dev/null || exit $?
 verify "$work/Entry.exe" 292864 89e0cb8b18666d51ebf7176a913523927f91b1e816a489ad755d891cdc394f30 || exit 1
-echo 'step=process-coordinator item=3/38'
+fi
+if selected 'process-coordinator'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=process-coordinator item=3/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Coordinator-Emission.wvproj" "$work/Coordinator.wvb" >/dev/null || exit $?
 verify "$work/Coordinator.wvb" 17360 da3d04e734f6057ce9665e1e1c48d6c9dfcdbe0a9396cd1a94397ac4d284a203 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Coordinator.wvb" "$work/Coordinator.wvo" >/dev/null || exit $?
@@ -47,7 +65,10 @@ verify "$work/Coordinator.elf" 254064 8c160bc19330784ca82ca837d5a33fe93fe44fc570
 [[ $? -eq 52 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Coordinator.bin" 0 "$work/Coordinator.exe" >/dev/null || exit $?
 verify "$work/Coordinator.exe" 251392 128269a0d5cedd8e2eed4ab4a569b355a1811b2300fd7b16a36078f3eee15c36 || exit 1
-echo 'step=process-endpoint item=4/38'
+fi
+if selected 'process-endpoint'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=process-endpoint item=4/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Endpoint-Emission.wvproj" "$work/Endpoint.wvb" >/dev/null || exit $?
 verify "$work/Endpoint.wvb" 14386 2d9bdb6b1705bdc0e2e2f3a9b5e5e98224545abc1730ced3c5f55ec0a5cd1391 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Endpoint.wvb" "$work/Endpoint.wvo" >/dev/null || exit $?
@@ -60,7 +81,10 @@ verify "$work/Endpoint.elf" 217200 b649ba1abe8db582942085afc90b14ad8d9cd44b542d2
 [[ $? -eq 53 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Endpoint.bin" 0 "$work/Endpoint.exe" >/dev/null || exit $?
 verify "$work/Endpoint.exe" 213504 bb53be86bb8351e805fd0919c6b0836efb483894c36568a6b38dde039a369b20 || exit 1
-echo 'step=init-allocation item=5/38'
+fi
+if selected 'process-memory-allocation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-allocation item=5/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Memory-Allocation-Emission.wvproj" "$work/Allocation.wvb" >/dev/null || exit $?
 verify "$work/Allocation.wvb" 14586 1baa66d77b35db8c2629c0cc2478e29b716739b5ad2c3a2a9096ad9439011112 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Allocation.wvb" "$work/Allocation.wvo" >/dev/null || exit $?
@@ -73,7 +97,10 @@ verify "$work/Allocation.elf" 209008 197947667b10fc4bb9a4df15117a0f34f9ff1237a95
 [[ $? -eq 54 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Allocation.bin" 0 "$work/Allocation.exe" >/dev/null || exit $?
 verify "$work/Allocation.exe" 205312 fe1aa700ae411cc3f02277bc13cc8980721fe62aa03f08b0862d81f5bf9e6270 || exit 1
-echo 'step=init-record item=6/38'
+fi
+if selected 'process-record'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-record item=6/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Record-Emission.wvproj" "$work/Record.wvb" >/dev/null || exit $?
 verify "$work/Record.wvb" 16069 be44b1d300abd532a5689755f9ab9ed75b49e7e4954395d3626ee175b9b97e13 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Record.wvb" "$work/Record.wvo" >/dev/null || exit $?
@@ -86,7 +113,10 @@ verify "$work/Record.elf" 241776 1ecaa2ac3dda959a632b88c753d4189ecd3213a2f04c69c
 [[ $? -eq 55 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Record.bin" 0 "$work/Record.exe" >/dev/null || exit $?
 verify "$work/Record.exe" 236032 693ce53db751bd537ade2933adc8f688ff42492aad6091e005ea9b6391d7ff16 || exit 1
-echo 'step=init-paging item=7/38'
+fi
+if selected 'process-paging'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-paging item=7/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Paging-Emission.wvproj" "$work/Paging.wvb" >/dev/null || exit $?
 verify "$work/Paging.wvb" 14379 e2f712fb99ecc186211c957a4bdf9f9b0991ad7c735dcb8d47c643e85f9fd50d || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Paging.wvb" "$work/Paging.wvo" >/dev/null || exit $?
@@ -99,7 +129,10 @@ verify "$work/Paging.elf" 213104 fd20a386a8a0e03a9efce86444498e119f7dffbd67263c3
 [[ $? -eq 56 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Paging.bin" 0 "$work/Paging.exe" >/dev/null || exit $?
 verify "$work/Paging.exe" 206848 857d384d8e62ccfb435986c4b607d8a7615b9d9bc8c78d1bd73efa38f0dc832e || exit 1
-echo 'step=init-image item=8/38'
+fi
+if selected 'process-image'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-image item=8/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Image-Emission.wvproj" "$work/Image.wvb" >/dev/null || exit $?
 verify "$work/Image.wvb" 16434 3207175a3928407f8b0fb1976e8f55c3643ffa5f0555a46fa9379354d90c0ae1 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Image.wvb" "$work/Image.wvo" >/dev/null || exit $?
@@ -112,7 +145,10 @@ verify "$work/Image.elf" 217200 58b42db3daa211c10f79426dae970fb635233ec19e7f135a
 [[ $? -eq 57 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/Image.bin" 0 "$work/Image.exe" >/dev/null || exit $?
 verify "$work/Image.exe" 212480 722e4d867408a750d534ddd2ca55b43512ef934d68fd66aaf8e8ba1411d6c8e7 || exit 1
-echo 'step=client-reservation item=9/38'
+fi
+if selected 'process-client-reservation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-reservation item=9/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Reservation-Emission.wvproj" "$work/ClientReservation.wvb" >/dev/null || exit $?
 verify "$work/ClientReservation.wvb" 14957 bd9bd8bb378642e707e5a328a783dd42df20457aa04c967fcbf63cf8845678b4 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientReservation.wvb" "$work/ClientReservation.wvo" >/dev/null || exit $?
@@ -125,7 +161,10 @@ verify "$work/ClientReservation.elf" 217200 547f5351c84530e41436b51f03b25680f1ad
 [[ $? -eq 58 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientReservation.bin" 0 "$work/ClientReservation.exe" >/dev/null || exit $?
 verify "$work/ClientReservation.exe" 211968 b98c4e3351ea369e6eb70fb8476b03d61300065ae0b57e0d860de458a955196f || exit 1
-echo 'step=directory-allocation item=10/38'
+fi
+if selected 'process-directory-allocation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=directory-allocation item=10/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Allocation-Emission.wvproj" "$work/DirectoryAllocation.wvb" >/dev/null || exit $?
 verify "$work/DirectoryAllocation.wvb" 14733 c75790ba9823172830b6da72f83a77ce9de2014e0ac9ce4730283a21e261d76f || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryAllocation.wvb" "$work/DirectoryAllocation.wvo" >/dev/null || exit $?
@@ -138,7 +177,10 @@ verify "$work/DirectoryAllocation.elf" 213104 551df680881fb91b911caa77f92cb60e02
 [[ $? -eq 59 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryAllocation.bin" 0 "$work/DirectoryAllocation.exe" >/dev/null || exit $?
 verify "$work/DirectoryAllocation.exe" 207872 45d79cbb35032809d41adb4711803772dad0f07a8696674614e832c651748d75 || exit 1
-echo 'step=directory-record item=11/38'
+fi
+if selected 'process-directory-record'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=directory-record item=11/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Record-Emission.wvproj" "$work/DirectoryRecord.wvb" >/dev/null || exit $?
 verify "$work/DirectoryRecord.wvb" 16076 b549bbb7566023e09cb8dfa65ad774c6c99a6d4cb4b5f7239d0be317833d40b3 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryRecord.wvb" "$work/DirectoryRecord.wvo" >/dev/null || exit $?
@@ -151,7 +193,10 @@ verify "$work/DirectoryRecord.elf" 241776 b4c32f4820655131c2ba596f8003d78c3ffd16
 [[ $? -eq 60 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryRecord.bin" 0 "$work/DirectoryRecord.exe" >/dev/null || exit $?
 verify "$work/DirectoryRecord.exe" 236032 865f82f369212f100f46d8e630bfef5a1aa5468e211ac8e15258bfe7c95f4b19 || exit 1
-echo 'step=directory-paging item=12/38'
+fi
+if selected 'process-directory-paging'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=directory-paging item=12/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Paging-Emission.wvproj" "$work/DirectoryPaging.wvb" >/dev/null || exit $?
 verify "$work/DirectoryPaging.wvb" 14228 caba027a75434fc07c2f44cafead16f595e7ce4fc13a84864041204d24cd5c17 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryPaging.wvb" "$work/DirectoryPaging.wvo" >/dev/null || exit $?
@@ -164,7 +209,10 @@ verify "$work/DirectoryPaging.elf" 209008 303eada707e4868fba8406ccc304e5764ce069
 [[ $? -eq 61 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryPaging.bin" 0 "$work/DirectoryPaging.exe" >/dev/null || exit $?
 verify "$work/DirectoryPaging.exe" 203776 0308cf1a5d01eeb2d463f43bc4ea3b3993f4922b5732cee7e8b23964e2d001c0 || exit 1
-echo 'step=directory-image item=13/38'
+fi
+if selected 'process-directory-image'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=directory-image item=13/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Image-Emission.wvproj" "$work/DirectoryImage.wvb" >/dev/null || exit $?
 verify "$work/DirectoryImage.wvb" 15098 589034ed2ae906ba8c96ebedb3e583decb9d9181527b70b389d64296f66a4171 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryImage.wvb" "$work/DirectoryImage.wvo" >/dev/null || exit $?
@@ -177,7 +225,10 @@ verify "$work/DirectoryImage.elf" 209008 4c66120f10ba53e10cf1e7e31ca600eef51d478
 [[ $? -eq 62 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryImage.bin" 0 "$work/DirectoryImage.exe" >/dev/null || exit $?
 verify "$work/DirectoryImage.exe" 204288 b20d649b83c3b3ca54550118f77c7775a4937d789f0c08832c03444861c68fbd || exit 1
-echo 'step=client-record item=14/38'
+fi
+if selected 'process-client-record'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-record item=14/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Record-Emission.wvproj" "$work/ClientRecord.wvb" >/dev/null || exit $?
 verify "$work/ClientRecord.wvb" 16843 6182088b7f1ae89766d2a8cb20b2b022a4ca54571ba63312c7111379c1b15ef3 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientRecord.wvb" "$work/ClientRecord.wvo" >/dev/null || exit $?
@@ -190,7 +241,10 @@ verify "$work/ClientRecord.elf" 254064 08911fe6297712035388dd9ae1baaa9e03ddb6d90
 [[ $? -eq 63 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientRecord.bin" 0 "$work/ClientRecord.exe" >/dev/null || exit $?
 verify "$work/ClientRecord.exe" 251392 2cbedd60fd226415ba274cffb121b7c39505fa74a6ed854fa628770d844d406b || exit 1
-echo 'step=client-paging item=15/38'
+fi
+if selected 'process-client-paging'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-paging item=15/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Paging-Emission.wvproj" "$work/ClientPaging.wvb" >/dev/null || exit $?
 verify "$work/ClientPaging.wvb" 14563 b848688f23ff1e1750044eaec3b4f1837454f7a0c73938699435ce56f81b8fe9 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientPaging.wvb" "$work/ClientPaging.wvo" >/dev/null || exit $?
@@ -203,7 +257,10 @@ verify "$work/ClientPaging.elf" 209008 bd58157bc0b8023ea2a413c50a5b275bf958b256d
 [[ $? -eq 64 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientPaging.bin" 0 "$work/ClientPaging.exe" >/dev/null || exit $?
 verify "$work/ClientPaging.exe" 206336 5e67969e9047f8b5d71ec79d0de6c86bfdaa77905fac314d12a6ab9d8e7cced7 || exit 1
-echo 'step=client-image item=16/38'
+fi
+if selected 'process-client-image'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-image item=16/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Image-Emission.wvproj" "$work/ClientImage.wvb" >/dev/null || exit $?
 verify "$work/ClientImage.wvb" 13798 e45446f9c0aa6d8806c3427d2aa3900266067112ff90c29b8d0dea2ea4f4aafd || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientImage.wvb" "$work/ClientImage.wvo" >/dev/null || exit $?
@@ -216,7 +273,10 @@ verify "$work/ClientImage.elf" 192624 a2b3880da1d0bdefaf491717d180bb638118d9b706
 [[ $? -eq 65 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientImage.bin" 0 "$work/ClientImage.exe" >/dev/null || exit $?
 verify "$work/ClientImage.exe" 187904 741049bdb17717f89fc617322a5aa07fe94a4e2c2e3e1286a5a83d62b285067f || exit 1
-echo 'step=client-program-resource item=17/38'
+fi
+if selected 'process-client-program-resource'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-program-resource item=17/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Program-Resource-Emission.wvproj" "$work/ClientProgramResource.wvb" >/dev/null || exit $?
 verify "$work/ClientProgramResource.wvb" 12763 d0c7e8f7890e6cbc0168dfe122564b48f03a2c4d5bfb658e4e20a9c4ec4e85a1 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientProgramResource.wvb" "$work/ClientProgramResource.wvo" >/dev/null || exit $?
@@ -229,7 +289,10 @@ verify "$work/ClientProgramResource.elf" 172144 d8b7bf66d482a976a7ecec2b3c0d408c
 [[ $? -eq 66 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientProgramResource.bin" 0 "$work/ClientProgramResource.exe" >/dev/null || exit $?
 verify "$work/ClientProgramResource.exe" 168960 ac00e3dc1267d2c1c5ce11e389ea93711297930a7b99c1fb061d148b3c001f49 || exit 1
-echo 'step=client-budget-resource item=18/38'
+fi
+if selected 'process-client-budget-resource'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-budget-resource item=18/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Budget-Resource-Emission.wvproj" "$work/ClientBudgetResource.wvb" >/dev/null || exit $?
 verify "$work/ClientBudgetResource.wvb" 12586 080eec8cd90b5364bc374eed8fdd3dae520ce7ee9bfb48c0ff30e08aa7150939 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientBudgetResource.wvb" "$work/ClientBudgetResource.wvo" >/dev/null || exit $?
@@ -242,7 +305,10 @@ verify "$work/ClientBudgetResource.elf" 172144 7461b66d1b74e3dbab07f682d00627c16
 [[ $? -eq 67 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientBudgetResource.bin" 0 "$work/ClientBudgetResource.exe" >/dev/null || exit $?
 verify "$work/ClientBudgetResource.exe" 166400 577eb58b87816cc15004096f1a20b5e042e3196b5ee3b71af691e91f89f92725 || exit 1
-echo 'step=client-store-resource item=19/38'
+fi
+if selected 'process-client-store-resource'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-store-resource item=19/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Store-Resource-Emission.wvproj" "$work/ClientStoreResource.wvb" >/dev/null || exit $?
 verify "$work/ClientStoreResource.wvb" 12594 e367cd4e99c842b1e18e9eba459ce034263b3cd6add89ee5d15153015e10dde6 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientStoreResource.wvb" "$work/ClientStoreResource.wvo" >/dev/null || exit $?
@@ -255,7 +321,10 @@ verify "$work/ClientStoreResource.elf" 172144 96d9d990d5500af4975c54083e76a4837b
 [[ $? -eq 68 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientStoreResource.bin" 0 "$work/ClientStoreResource.exe" >/dev/null || exit $?
 verify "$work/ClientStoreResource.exe" 166400 28d3812b8a5a627eda4a4c8eeb854a4ca266da49c35eef07997affcb05edc9ec || exit 1
-echo 'step=client-directory-resource item=20/38'
+fi
+if selected 'process-client-directory-resource'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-directory-resource item=20/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Directory-Resource-Emission.wvproj" "$work/ClientDirectoryResource.wvb" >/dev/null || exit $?
 verify "$work/ClientDirectoryResource.wvb" 12601 64cf8e6b7241e7fab1aa79d32977bdeb52efd72a376ac96a978093599a7c1c5e || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientDirectoryResource.wvb" "$work/ClientDirectoryResource.wvo" >/dev/null || exit $?
@@ -268,7 +337,10 @@ verify "$work/ClientDirectoryResource.elf" 172144 d7addd829407b5ef37500c9f54ee08
 [[ $? -eq 69 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientDirectoryResource.bin" 0 "$work/ClientDirectoryResource.exe" >/dev/null || exit $?
 verify "$work/ClientDirectoryResource.exe" 166400 8d6d31d9d7ba4f221fe331274e926c41310492f3b94eceb7dac9030c47df365f || exit 1
-echo 'step=client-store-validation item=21/38'
+fi
+if selected 'process-client-store-validation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-store-validation item=21/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Store-Validation-Emission.wvproj" "$work/ClientStoreValidation.wvb" >/dev/null || exit $?
 verify "$work/ClientStoreValidation.wvb" 4504 8e0e5c8b0dcc5d58c6f89a517af6ae1bcc30fcf99da2e63fef09892d67c81ead || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientStoreValidation.wvb" "$work/ClientStoreValidation.wvo" >/dev/null || exit $?
@@ -281,7 +353,10 @@ verify "$work/ClientStoreValidation.elf" 69744 96f3b1fb420ac01b38c553051c88a2d9f
 [[ $? -eq 70 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientStoreValidation.bin" 0 "$work/ClientStoreValidation.exe" >/dev/null || exit $?
 verify "$work/ClientStoreValidation.exe" 63488 ec3353bc21a776fdb2970e709cf9ba1282e33d3f42e086c27054d925b2cf105f || exit 1
-echo 'step=client-directory-validation item=22/38'
+fi
+if selected 'process-client-directory-validation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-directory-validation item=22/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Directory-Validation-Emission.wvproj" "$work/ClientDirectoryValidation.wvb" >/dev/null || exit $?
 verify "$work/ClientDirectoryValidation.wvb" 4544 9d04682e657cb5f3dbf2c1ce505e144458c2348c9248cb0862393b4ae143c23a || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientDirectoryValidation.wvb" "$work/ClientDirectoryValidation.wvo" >/dev/null || exit $?
@@ -294,7 +369,10 @@ verify "$work/ClientDirectoryValidation.elf" 69744 60b016054f3205ad2726548b7ddc1
 [[ $? -eq 71 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientDirectoryValidation.bin" 0 "$work/ClientDirectoryValidation.exe" >/dev/null || exit $?
 verify "$work/ClientDirectoryValidation.exe" 64000 7a0b611673c9d8aeea54a3e78ea8030f67d99cfce2de4c54cb0f99fe238c30d7 || exit 1
-echo 'step=privileged-entry item=23/38'
+fi
+if selected 'process-privileged-entry'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=privileged-entry item=23/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Privileged-Entry-Emission.wvproj" "$work/PrivilegedEntry.wvb" >/dev/null || exit $?
 verify "$work/PrivilegedEntry.wvb" 5205 ea4cd3684fc0a0cc87957bbed1a57d4e8e83848182b48d113d6ebbe230c133a5 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/PrivilegedEntry.wvb" "$work/PrivilegedEntry.wvo" >/dev/null || exit $?
@@ -307,7 +385,10 @@ verify "$work/PrivilegedEntry.elf" 57456 4b1a3da08c2a9cd0c21d56ff44f1288dc5e9201
 [[ $? -eq 72 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/PrivilegedEntry.bin" 0 "$work/PrivilegedEntry.exe" >/dev/null || exit $?
 verify "$work/PrivilegedEntry.exe" 52736 0361f3a1d4be66ca32455a4fc3b103bbd0453380c8d26713cefc7cc37aadc901 || exit 1
-echo 'step=thread-timer-state item=24/38'
+fi
+if selected 'process-thread-timer-state'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=thread-timer-state item=24/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Thread-Timer-State-Emission.wvproj" "$work/ThreadTimer.wvb" >/dev/null || exit $?
 verify "$work/ThreadTimer.wvb" 2526 5341e329f3df812aa7ea81cd8505c95ddc27e3531cbda6a65b6bb3fbf0235d70 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ThreadTimer.wvb" "$work/ThreadTimer.wvo" >/dev/null || exit $?
@@ -320,7 +401,10 @@ verify "$work/ThreadTimer.elf" 20592 bc928927aa085143e3c021941edaa88e4017d801d2e
 [[ $? -eq 73 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ThreadTimer.bin" 0 "$work/ThreadTimer.exe" >/dev/null || exit $?
 verify "$work/ThreadTimer.exe" 16384 7327ad985bd44588276c526ba2aac21336df53d5484be3309f48a2deb7d3ddf7 || exit 1
-echo 'step=timer-activation item=25/38'
+fi
+if selected 'process-timer-activation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=timer-activation item=25/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Timer-Activation-Emission.wvproj" "$work/TimerActivation.wvb" >/dev/null || exit $?
 verify "$work/TimerActivation.wvb" 4446 0b95cf7586b996922129d2199bec80051253c14e15f2c263c19a65c07547fc09 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/TimerActivation.wvb" "$work/TimerActivation.wvo" >/dev/null || exit $?
@@ -333,7 +417,10 @@ verify "$work/TimerActivation.elf" 53360 35f3ece863faf0eb9d93c29b8d98dfc19f20963
 [[ $? -eq 74 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/TimerActivation.bin" 0 "$work/TimerActivation.exe" >/dev/null || exit $?
 verify "$work/TimerActivation.exe" 47616 c906ae32935fe03af5670398fb52e61284d13981b67635790ab6073edaaf725d || exit 1
-echo 'step=provider-user-transfer item=26/38'
+fi
+if selected 'process-provider-user-transfer'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=provider-user-transfer item=26/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Provider-User-Transfer-Emission.wvproj" "$work/ProviderTransfer.wvb" >/dev/null || exit $?
 verify "$work/ProviderTransfer.wvb" 3860 afc6b4cf959b85feba02abf7f4ade0dc264a7626d6330cfb5eb53ae682e09c28 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ProviderTransfer.wvb" "$work/ProviderTransfer.wvo" >/dev/null || exit $?
@@ -346,7 +433,10 @@ verify "$work/ProviderTransfer.elf" 41072 408af2b3e7d77567424a5aafe93eb0c2b185b1
 [[ $? -eq 75 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ProviderTransfer.bin" 0 "$work/ProviderTransfer.exe" >/dev/null || exit $?
 verify "$work/ProviderTransfer.exe" 37376 df51b14ee5f4845a3962333235abba10ea59f64fd21bb3df98965c932538d768 || exit 1
-echo 'step=provider-return-init-transfer item=27/38'
+fi
+if selected 'process-provider-return-init-transfer'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=provider-return-init-transfer item=27/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Provider-Return-Init-Transfer-Emission.wvproj" "$work/ProviderReturn.wvb" >/dev/null || exit $?
 verify "$work/ProviderReturn.wvb" 3645 4f7ba1ef897096f9ae461539edde3f67f5fc2754fc2068533796ed35b6d72e18 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ProviderReturn.wvb" "$work/ProviderReturn.wvo" >/dev/null || exit $?
@@ -359,7 +449,10 @@ verify "$work/ProviderReturn.elf" 32880 e6ad54583fbcdb6f5c020a1748caa02dd037af37
 [[ $? -eq 76 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ProviderReturn.bin" 0 "$work/ProviderReturn.exe" >/dev/null || exit $?
 verify "$work/ProviderReturn.exe" 27648 36ba9a985fd48c19dcca036d88ee0dde1c8dde33b426c8582e8d7788a817931c || exit 1
-echo 'step=init-return-program-validation item=28/38'
+fi
+if selected 'process-init-return-program-validation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-return-program-validation item=28/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Init-Return-Program-Validation-Emission.wvproj" "$work/InitReturn.wvb" >/dev/null || exit $?
 verify "$work/InitReturn.wvb" 3198 6c2bf662aa5156f525b21a011753174816c63526db82894032cec825cca0155f || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/InitReturn.wvb" "$work/InitReturn.wvo" >/dev/null || exit $?
@@ -372,7 +465,10 @@ verify "$work/InitReturn.elf" 28784 d044ea33bb2a76f23ff8e621bd4ce5004afd53970d3b
 [[ $? -eq 77 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/InitReturn.bin" 0 "$work/InitReturn.exe" >/dev/null || exit $?
 verify "$work/InitReturn.exe" 23552 e72ef5b51f5b2adc6e3b26cd1983953ad96f28a4eeb9bc2490fe540106e8dff9 || exit 1
-echo 'step=init-return-budget-validation item=29/38'
+fi
+if selected 'process-init-return-budget-validation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-return-budget-validation item=29/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Init-Return-Budget-Validation-Emission.wvproj" "$work/BudgetValidation.wvb" >/dev/null || exit $?
 verify "$work/BudgetValidation.wvb" 3019 947de07e02a5abeb8424f71ddb32188f1b1698a60a9a0f69eafdf05bb60e6940 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/BudgetValidation.wvb" "$work/BudgetValidation.wvo" >/dev/null || exit $?
@@ -385,7 +481,10 @@ verify "$work/BudgetValidation.elf" 28784 eadb2564cbeebee10cfd58cca34378b65adaeb
 [[ $? -eq 78 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/BudgetValidation.bin" 0 "$work/BudgetValidation.exe" >/dev/null || exit $?
 verify "$work/BudgetValidation.exe" 23040 ea17483f317867ed5162ca463ff54622f169a331efa4028fb00eff47a2693e9e || exit 1
-echo 'step=init-return-store-directory-validation item=30/38'
+fi
+if selected 'process-init-return-store-directory-validation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-return-store-directory-validation item=30/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Init-Return-Store-Directory-Validation-Emission.wvproj" "$work/StoreDirectoryValidation.wvb" >/dev/null || exit $?
 verify "$work/StoreDirectoryValidation.wvb" 3267 296e72a6601c2364b1ad6215f69a7a3ac9f69b85ebcedc458e4524c7decaa05e || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/StoreDirectoryValidation.wvb" "$work/StoreDirectoryValidation.wvo" >/dev/null || exit $?
@@ -398,7 +497,10 @@ verify "$work/StoreDirectoryValidation.elf" 28784 04c59fa6379fe7f833450b1d56fff0
 [[ $? -eq 79 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/StoreDirectoryValidation.bin" 0 "$work/StoreDirectoryValidation.exe" >/dev/null || exit $?
 verify "$work/StoreDirectoryValidation.exe" 23552 ce5ebb7565f1bd26a3648f8d735d0646b3d9450b8ff890b322f5eaebc0710fe5 || exit 1
-echo 'step=client-user-transfer item=31/38'
+fi
+if selected 'process-client-user-transfer'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-user-transfer item=31/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-User-Transfer-Emission.wvproj" "$work/ClientTransfer.wvb" >/dev/null || exit $?
 verify "$work/ClientTransfer.wvb" 3861 396c95aacd156af86f6b56d2461a255de115cd5292267035a7d4e5ae4f2ea8a1 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientTransfer.wvb" "$work/ClientTransfer.wvo" >/dev/null || exit $?
@@ -411,7 +513,10 @@ verify "$work/ClientTransfer.elf" 41072 4ad53750962c1363f1c1460253c0d917139e581e
 [[ $? -eq 80 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientTransfer.bin" 0 "$work/ClientTransfer.exe" >/dev/null || exit $?
 verify "$work/ClientTransfer.exe" 37376 67eb2ded3d5b168c75b6b8300b30e026f5bf46110fed521f517277e69522effc || exit 1
-echo 'step=client-return-init-transfer item=32/38'
+fi
+if selected 'process-client-return-init-transfer'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-return-init-transfer item=32/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Return-Init-Transfer-Emission.wvproj" "$work/ClientReturn.wvb" >/dev/null || exit $?
 verify "$work/ClientReturn.wvb" 3813 96456642337d7eaf7ef4c8c497eb3f262fd6722ac71f0efe18b6ee9e12f84950 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientReturn.wvb" "$work/ClientReturn.wvo" >/dev/null || exit $?
@@ -424,7 +529,10 @@ verify "$work/ClientReturn.elf" 32880 b2a09c2ee5aaa2255866247c6ca5ba22ca5526f3dd
 [[ $? -eq 81 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientReturn.bin" 0 "$work/ClientReturn.exe" >/dev/null || exit $?
 verify "$work/ClientReturn.exe" 28160 cf8fe7a00c3b5bd183bedb6a9878d8f1d2aad32f83d98fecf7700b3a3d10c553 || exit 1
-echo 'step=init-reply-publish-resume item=33/38'
+fi
+if selected 'process-init-reply-publish-resume'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=init-reply-publish-resume item=33/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Init-Reply-Publish-Resume-Emission.wvproj" "$work/InitReply.wvb" >/dev/null || exit $?
 verify "$work/InitReply.wvb" 3816 8f23f7f711f25908c4910ed5de9b2c4097d28d0ae6c1fdc57a0cbffb6cf5c92b || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/InitReply.wvb" "$work/InitReply.wvo" >/dev/null || exit $?
@@ -437,7 +545,10 @@ verify "$work/InitReply.elf" 32880 72993c6a4b09d484d56d414b8d41b0ec900c748ce2031
 [[ $? -eq 82 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/InitReply.bin" 0 "$work/InitReply.exe" >/dev/null || exit $?
 verify "$work/InitReply.exe" 28160 68370c479947101120bc84ef6e910aa9b1b8d3f74f42d201934a8144c25f38d2 || exit 1
-echo 'step=client-reply-delivery item=34/38'
+fi
+if selected 'process-client-reply-delivery'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-reply-delivery item=34/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Reply-Delivery-Emission.wvproj" "$work/ReplyDelivery.wvb" >/dev/null || exit $?
 verify "$work/ReplyDelivery.wvb" 3806 668972466f58918a5d13930fdce2ff160d56d25d45907cd0d17214b2689cf44f || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ReplyDelivery.wvb" "$work/ReplyDelivery.wvo" >/dev/null || exit $?
@@ -450,7 +561,10 @@ verify "$work/ReplyDelivery.elf" 32880 1bce868f6b93bfafc8433cf501678736bef090a25
 [[ $? -eq 83 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ReplyDelivery.bin" 0 "$work/ReplyDelivery.exe" >/dev/null || exit $?
 verify "$work/ReplyDelivery.exe" 28160 11d820588e286c52ea4c6374a5e99c80c5803ed1840a9bce9833053fd9b4baa5 || exit 1
-echo 'step=client-directory-request-delivery item=35/38'
+fi
+if selected 'process-client-directory-request-delivery'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-directory-request-delivery item=35/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Directory-Request-Delivery-Emission.wvproj" "$work/DirectoryRequest.wvb" >/dev/null || exit $?
 verify "$work/DirectoryRequest.wvb" 3819 a7df225a45ad90cd6667ddbcea1c8005fb0f9f66fab8b48d5eb5b33d60be1a66 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryRequest.wvb" "$work/DirectoryRequest.wvo" >/dev/null || exit $?
@@ -463,7 +577,10 @@ verify "$work/DirectoryRequest.elf" 32880 cc01218d71949cf91c0088b584e5ea931e656f
 [[ $? -eq 84 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryRequest.bin" 0 "$work/DirectoryRequest.exe" >/dev/null || exit $?
 verify "$work/DirectoryRequest.exe" 28160 5ccda5639fa6b8350bcac8b64cd1c54f144463962932f16198ea8f31c6c4da88 || exit 1
-echo 'step=directory-reply-publish-resume item=36/38'
+fi
+if selected 'process-directory-reply-publish-resume'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=directory-reply-publish-resume item=36/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Reply-Publish-Resume-Emission.wvproj" "$work/DirectoryReply.wvb" >/dev/null || exit $?
 verify "$work/DirectoryReply.wvb" 3821 025112005cf1f4be915800b7ca53852ffbee06ee3abeb7d58b5143ecfdc55976 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryReply.wvb" "$work/DirectoryReply.wvo" >/dev/null || exit $?
@@ -476,7 +593,10 @@ verify "$work/DirectoryReply.elf" 32880 b59095e5d2aeecb446bc702960a6996bfa14f984
 [[ $? -eq 85 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryReply.bin" 0 "$work/DirectoryReply.exe" >/dev/null || exit $?
 verify "$work/DirectoryReply.exe" 28160 7f6bf894790451deaa44c6da79431164b7263e129d615f2cf6a6ebad0daff22c || exit 1
-echo 'step=client-directory-reply-delivery item=37/38'
+fi
+if selected 'process-client-directory-reply-delivery'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-directory-reply-delivery item=37/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Directory-Reply-Delivery-Emission.wvproj" "$work/ClientDirectoryReply.wvb" >/dev/null || exit $?
 verify "$work/ClientDirectoryReply.wvb" 3817 c4a7768ab78055fb79a299e4208da0e98c64513f29888308bf9a84e6cfef8bfa || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientDirectoryReply.wvb" "$work/ClientDirectoryReply.wvo" >/dev/null || exit $?
@@ -489,7 +609,10 @@ verify "$work/ClientDirectoryReply.elf" 32880 8007f75463e70308075dd76ae5fdfd0ade
 [[ $? -eq 86 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientDirectoryReply.bin" 0 "$work/ClientDirectoryReply.exe" >/dev/null || exit $?
 verify "$work/ClientDirectoryReply.exe" 28160 c48b5fa577d9f715be43e69d4d22fa7374700e602867636ffd29c0663b3d32a3 || exit 1
-echo 'step=client-completion-cleanup item=38/38'
+fi
+if selected 'process-client-completion-cleanup'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-completion-cleanup item=38/38'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Completion-Cleanup-Emission.wvproj" "$work/ClientCleanup.wvb" >/dev/null || exit $?
 verify "$work/ClientCleanup.wvb" 4541 36b58e50809e26264419c1fca7e429b337fb08f71f4da91fc5a9887cb05306e2 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientCleanup.wvb" "$work/ClientCleanup.wvo" >/dev/null || exit $?
@@ -502,7 +625,10 @@ verify "$work/ClientCleanup.elf" 28784 78130c20bab66eb81a42700f6a0c77c89db51457e
 [[ $? -eq 87 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientCleanup.bin" 0 "$work/ClientCleanup.exe" >/dev/null || exit $?
 verify "$work/ClientCleanup.exe" 25088 d231f32c41c0ef2d7493180edfeb3edb8f04aed8b1ccb1d5711b8772b0fc28eb || exit 1
-echo 'step=client-reclamation-preflight item=39/39'
+fi
+if selected 'process-client-reclamation-preflight'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-reclamation-preflight item=39/39'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Reclamation-Preflight-Emission.wvproj" "$work/ClientReclamationPreflight.wvb" >/dev/null || exit $?
 verify "$work/ClientReclamationPreflight.wvb" 5489 de9965e67eb1a0607567d4506ca8569083ef025244501b855a786cee37d781c2 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientReclamationPreflight.wvb" "$work/ClientReclamationPreflight.wvo" >/dev/null || exit $?
@@ -515,7 +641,10 @@ verify "$work/ClientReclamationPreflight.elf" 32880 2098fc92bf5a58448256beefb522
 [[ $? -eq 88 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientReclamationPreflight.bin" 0 "$work/ClientReclamationPreflight.exe" >/dev/null || exit $?
 verify "$work/ClientReclamationPreflight.exe" 28160 ec6e05d9b84fa9364a18c6e423a9966eb961fcddfb8252fbaeab9b36ddfb2859 || exit 1
-echo 'step=client-memory-recycle item=40/40'
+fi
+if selected 'process-client-memory-recycle'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-memory-recycle item=40/40'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Memory-Recycle-Emission.wvproj" "$work/ClientMemoryRecycle.wvb" >/dev/null || exit $?
 verify "$work/ClientMemoryRecycle.wvb" 4205 6d43607fde70e4debb388d504d5197f5810377958917ca49c10d31bf3988907d || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientMemoryRecycle.wvb" "$work/ClientMemoryRecycle.wvo" >/dev/null || exit $?
@@ -528,7 +657,10 @@ verify "$work/ClientMemoryRecycle.elf" 41072 5215b6db9ae314e336946db9af0be94a1b8
 [[ $? -eq 89 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientMemoryRecycle.bin" 0 "$work/ClientMemoryRecycle.exe" >/dev/null || exit $?
 verify "$work/ClientMemoryRecycle.exe" 36352 bd784204bcb993dd642d1122038af4add3efaf0b68dd695c57cf5be5b7bc402c || exit 1
-echo 'step=client-generation-two-record item=41/41'
+fi
+if selected 'process-client-generation-two-record'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-record item=41/41'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Record-Emission.wvproj" "$work/ClientGenerationTwoRecord.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoRecord.wvb" 2246 408a51f39da581efc0ece5c54ba34207c553c82186cc218ae98c64e2a3b30030 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoRecord.wvb" "$work/ClientGenerationTwoRecord.wvo" >/dev/null || exit $?
@@ -541,7 +673,10 @@ verify "$work/ClientGenerationTwoRecord.elf" 20592 aa3700448dfb9d450afc48c64ed20
 [[ $? -eq 90 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoRecord.bin" 0 "$work/ClientGenerationTwoRecord.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoRecord.exe" 15872 9ad20271c35b181ead51fd1ff3d84e3d8f83cf44183092c601c72f81a644b85c || exit 1
-echo 'step=client-generation-two-paging item=42/42'
+fi
+if selected 'process-client-generation-two-paging'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-paging item=42/42'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Paging-Emission.wvproj" "$work/ClientGenerationTwoPaging.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoPaging.wvb" 14544 f7e189d04bdf740c5c1b2224c5872a2e3c0159e6408dd4de69dbd6ab3a1db9f2 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoPaging.wvb" "$work/ClientGenerationTwoPaging.wvo" >/dev/null || exit $?
@@ -554,7 +689,10 @@ verify "$work/ClientGenerationTwoPaging.elf" 209008 bae80f3e33d79d1446cd54af10c0
 [[ $? -eq 91 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoPaging.bin" 0 "$work/ClientGenerationTwoPaging.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoPaging.exe" 206336 62c74695812eec852cf3dddee37cec39596da28397e0f2abdbaf28e8475119c2 || exit 1
-echo 'step=client-generation-two-image item=43/43'
+fi
+if selected 'process-client-generation-two-image'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-image item=43/43'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Image-Emission.wvproj" "$work/ClientGenerationTwoImage.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoImage.wvb" 13762 8758de24cc2954212d55bedab76d3746cfb584313bd455e11f2a0461fba40b1e || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoImage.wvb" "$work/ClientGenerationTwoImage.wvo" >/dev/null || exit $?
@@ -567,7 +705,10 @@ verify "$work/ClientGenerationTwoImage.elf" 192624 fb2d1a9b64f06b8068602e05fe23d
 [[ $? -eq 92 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoImage.bin" 0 "$work/ClientGenerationTwoImage.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoImage.exe" 187904 a78e65b9424e4a10dc65cbf0f5cf5268a3ec04b39bdac854023b9fe35fb46386 || exit 1
-echo 'step=client-generation-two-endpoint-rebind item=44/44'
+fi
+if selected 'process-client-generation-two-endpoint-rebind'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-endpoint-rebind item=44/44'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.wvproj" "$work/ClientGenerationTwoEndpointRebind.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoEndpointRebind.wvb" 3388 66c40838688bf09ec245b38b98196d13f62073119afee66b295e526aabc18d52 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoEndpointRebind.wvb" "$work/ClientGenerationTwoEndpointRebind.wvo" >/dev/null || exit $?
@@ -580,7 +721,10 @@ verify "$work/ClientGenerationTwoEndpointRebind.elf" 28784 522929410889169de460c
 [[ $? -eq 93 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoEndpointRebind.bin" 0 "$work/ClientGenerationTwoEndpointRebind.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoEndpointRebind.exe" 23552 edae8ea5a71adfa34652e80f3daa68c0e39ee0e5aff825b329239e58b2077374 || exit 1
-echo 'step=client-generation-two-reentry item=45/45'
+fi
+if selected 'process-client-generation-two-reentry'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-reentry item=45/45'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reentry-Emission.wvproj" "$work/ClientGenerationTwoReentry.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReentry.wvb" 3518 835c7a03de1da731172f5e5d8b515c18f5dc62a40ca030351be90ee9ed6760a3 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoReentry.wvb" "$work/ClientGenerationTwoReentry.wvo" >/dev/null || exit $?
@@ -593,7 +737,10 @@ verify "$work/ClientGenerationTwoReentry.elf" 28784 4c810ad307e38c6db1264147f23d
 [[ $? -eq 94 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReentry.bin" 0 "$work/ClientGenerationTwoReentry.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReentry.exe" 25600 1cad43b99f4712ea1779d4bbc34238e02be1e1974cbcdaaa3957db83f7c64bcb || exit 1
-echo 'step=client-generation-two-return-validation item=46/46'
+fi
+if selected 'process-client-generation-two-return-validation'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-return-validation item=46/46'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Return-Validation-Emission.wvproj" "$work/ClientGenerationTwoReturnValidation.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReturnValidation.wvb" 4209 8bcbfd66daed3fb0b92c3977374725df6264e0c591444f7d40528badb2aeb1c9 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoReturnValidation.wvb" "$work/ClientGenerationTwoReturnValidation.wvo" >/dev/null || exit $?
@@ -606,7 +753,10 @@ verify "$work/ClientGenerationTwoReturnValidation.elf" 28784 6e04e1f5c7420df1f91
 [[ $? -eq 95 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReturnValidation.bin" 0 "$work/ClientGenerationTwoReturnValidation.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReturnValidation.exe" 24576 a26c69002b00dd46f04000ee40f2e6f4603033d2bd5028c171cd0f81dd5114f2 || exit 1
-echo 'step=client-generation-two-user-transfer item=47/47'
+fi
+if selected 'process-client-generation-two-user-transfer'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-user-transfer item=47/47'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-User-Transfer-Emission.wvproj" "$work/ClientGenerationTwoUserTransfer.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoUserTransfer.wvb" 4631 42360bdbb290b1bdbd404aaacccbaeb5ac39fc594a9816d0387b4b62a628550f || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoUserTransfer.wvb" "$work/ClientGenerationTwoUserTransfer.wvo" >/dev/null || exit $?
@@ -619,7 +769,10 @@ verify "$work/ClientGenerationTwoUserTransfer.elf" 53360 9a9c9e5ebed6472e6eed72f
 [[ $? -eq 96 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoUserTransfer.bin" 0 "$work/ClientGenerationTwoUserTransfer.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoUserTransfer.exe" 47104 1fa2d7a6e9b1764dba3c3212ea4ec4c74cecbf5a79b6351a703e6cbe5571f7a7 || exit 1
-echo 'step=client-generation-two-return-init-transfer item=48/48'
+fi
+if selected 'process-client-generation-two-return-init-transfer'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-return-init-transfer item=48/48'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Return-Init-Transfer-Emission.wvproj" "$work/ClientGenerationTwoReturnInitTransfer.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReturnInitTransfer.wvb" 4615 b40078fd3d2d928280b697af647bca5a6b399eae9de598e1c43672289f33abcb || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoReturnInitTransfer.wvb" "$work/ClientGenerationTwoReturnInitTransfer.wvo" >/dev/null || exit $?
@@ -632,7 +785,10 @@ verify "$work/ClientGenerationTwoReturnInitTransfer.elf" 41072 e57c926117d430ea0
 [[ $? -eq 97 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReturnInitTransfer.bin" 0 "$work/ClientGenerationTwoReturnInitTransfer.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReturnInitTransfer.exe" 37888 31a60d1b18a4bdb2f73b37e8e7141dcb9891196812101ba26cfcafbcaafbcbff || exit 1
-echo 'step=client-generation-two-init-reply-publish-resume item=49/49'
+fi
+if selected 'process-client-generation-two-init-reply-publish-resume'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-init-reply-publish-resume item=49/49'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Init-Reply-Publish-Resume-Emission.wvproj" "$work/ClientGenerationTwoInitReplyPublishResume.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoInitReplyPublishResume.wvb" 4944 1aa2e1875648d7bbf0e6db9328719682990c59518a27d5fe8d55950d639cee05 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoInitReplyPublishResume.wvb" "$work/ClientGenerationTwoInitReplyPublishResume.wvo" >/dev/null || exit $?
@@ -645,7 +801,10 @@ verify "$work/ClientGenerationTwoInitReplyPublishResume.elf" 49264 205324fcae6d3
 [[ $? -eq 98 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoInitReplyPublishResume.bin" 0 "$work/ClientGenerationTwoInitReplyPublishResume.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoInitReplyPublishResume.exe" 43520 d99e034e63f3cdd9d4571d44684bfe7ef16da45caee09bd2c7a6a1bceca28b3d || exit 1
-echo 'step=client-generation-two-reply-delivery item=50/50'
+fi
+if selected 'process-client-generation-two-reply-delivery'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-reply-delivery item=50/50'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reply-Delivery-Emission.wvproj" "$work/ClientGenerationTwoReplyDelivery.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReplyDelivery.wvb" 5404 af84e26fb039d5b9d0e87f29665dbe6c4a8058f802dda1c94ec24836e95527bc || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoReplyDelivery.wvb" "$work/ClientGenerationTwoReplyDelivery.wvo" >/dev/null || exit $?
@@ -656,7 +815,10 @@ verify "$work/ClientGenerationTwoReplyDelivery.bin" 50531 0e71455553ace04236eb3c
 verify "$work/ClientGenerationTwoReplyDelivery.elf" 57456 28c971ed9dde6f9cacd76ff459dca8f4780af9f816da92d6d125d62d6870f2ab || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReplyDelivery.bin" 0 "$work/ClientGenerationTwoReplyDelivery.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReplyDelivery.exe" 52224 d6d0b0071c2487f30be46aca7b68b64b783a85ca4dc9075fffea6d54418d34a9 || exit 1
-echo 'step=client-generation-two-directory-request-delivery item=51/51'
+fi
+if selected 'process-client-generation-two-directory-request-delivery'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-directory-request-delivery item=51/51'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wvproj" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoDirectoryRequestDelivery.wvb" 4613 6a481e470606ca5ce95bbc280e5f71f1288d0f20a6cba414960c61bd84f0285e || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvb" "$work/ClientGenerationTwoDirectoryRequestDelivery.wvo" >/dev/null || exit $?
@@ -667,7 +829,10 @@ verify "$work/ClientGenerationTwoDirectoryRequestDelivery.bin" 36099 7a634cdf031
 verify "$work/ClientGenerationTwoDirectoryRequestDelivery.elf" 41072 f9cdb5012700df4645d4aa892be1409274b35f440b281aab9f45890b2223efd2 || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoDirectoryRequestDelivery.bin" 0 "$work/ClientGenerationTwoDirectoryRequestDelivery.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoDirectoryRequestDelivery.exe" 37888 b56d474e69dead5e916d662ad224567ce5c69b20104cf833e062f3f913d039bb || exit 1
-echo 'step=directory-generation-two-reply-publish-resume item=52/52'
+fi
+if selected 'process-directory-generation-two-reply-publish-resume'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=directory-generation-two-reply-publish-resume item=52/52'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wvproj" "$work/DirectoryGenerationTwoReply.wvb" >/dev/null || exit $?
 verify "$work/DirectoryGenerationTwoReply.wvb" 4915 1724f0265104808a3f30920fef11a41afce50e48902a51ba3801bb3c4ba57273 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/DirectoryGenerationTwoReply.wvb" "$work/DirectoryGenerationTwoReply.wvo" >/dev/null || exit $?
@@ -678,7 +843,10 @@ verify "$work/DirectoryGenerationTwoReply.bin" 41656 ecec624e5629baf150816131233
 verify "$work/DirectoryGenerationTwoReply.elf" 49264 d555b8543d60d8fc56fd7f19de40b00757a842afe5e6b19f4a5292a25e5b2e57 || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryGenerationTwoReply.bin" 0 "$work/DirectoryGenerationTwoReply.exe" >/dev/null || exit $?
 verify "$work/DirectoryGenerationTwoReply.exe" 43520 0d2288f7b5c856943350db3ce475dc620c6aef2c5b63ab385e1a62163d757a8b || exit 1
-echo 'step=client-generation-two-directory-reply-lifecycle item=53/53'
+fi
+if selected 'process-client-generation-two-directory-reply-lifecycle'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-directory-reply-lifecycle item=53/53'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.wvproj" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvb" 4847 ed735a92c2b8f058536762898ffc0f181b958bfb61aeb99e87d98f0b633d20fa || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvb" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvo" >/dev/null || exit $?
@@ -689,7 +857,10 @@ verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 31119 9b512b17b828
 verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.elf" 36976 eb19da01012c6a39b12522d791363f3fdee488337b323af638167ecd3c997fdb || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 0 "$work/ClientGenerationTwoDirectoryReplyLifecycle.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.exe" 32768 25a67bbfdc92654cb380de563cb4bf13870467aed19288921162a229ae104242 || exit 1
-echo 'step=client-generation-two-completion-cleanup item=54/54'
+fi
+if selected 'process-client-generation-two-completion-cleanup'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-completion-cleanup item=54/54'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wvproj" "$work/ClientGenerationTwoCompletionCleanup.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoCompletionCleanup.wvb" 5638 0aa64fc109b1bad64986997e9aa6131d28b6aac3dc48cd3ee0d6bdab35625e8a || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoCompletionCleanup.wvb" "$work/ClientGenerationTwoCompletionCleanup.wvo" >/dev/null || exit $?
@@ -702,7 +873,10 @@ verify "$work/ClientGenerationTwoCompletionCleanup.elf" 45168 1bb369e9fc5ba9c86b
 [[ $? -eq 103 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoCompletionCleanup.bin" 0 "$work/ClientGenerationTwoCompletionCleanup.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoCompletionCleanup.exe" 38912 bb3580e5c672489611ee805b1cc667ac6998dd3ae91fca09623632a9a245ff17 || exit 1
-echo 'step=client-generation-two-completion-finalize-resume item=55/55'
+fi
+if selected 'process-client-generation-two-completion-finalize-resume'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=client-generation-two-completion-finalize-resume item=55/55'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Finalize-Resume-Emission.wvproj" "$work/ClientGenerationTwoCompletionFinalizeResume.wvb" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoCompletionFinalizeResume.wvb" 4591 adacbec69e9034caf7ee75bdea4fb23e889741d4ed7b8fa39f3c1dd79dda6b43 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoCompletionFinalizeResume.wvb" "$work/ClientGenerationTwoCompletionFinalizeResume.wvo" >/dev/null || exit $?
@@ -715,7 +889,10 @@ verify "$work/ClientGenerationTwoCompletionFinalizeResume.elf" 36976 4d8a0ee872b
 [[ $? -eq 104 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoCompletionFinalizeResume.bin" 0 "$work/ClientGenerationTwoCompletionFinalizeResume.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoCompletionFinalizeResume.exe" 33792 8bd78651e27f4fe68f67cc69c802605db7ddec7f15e124af71605ac0ca02b45f || exit 1
-echo 'step=process-final-state-validation-epilogue item=56/56'
+fi
+if selected 'process-final-state-validation-epilogue'; then
+    selected_count=$((selected_count + 1))
+    echo 'step=process-final-state-validation-epilogue item=56/56'
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Final-State-Validation-Epilogue-Emission.wvproj" "$work/FinalStateEpilogue.wvb" >/dev/null || exit $?
 verify "$work/FinalStateEpilogue.wvb" 7636 9c1b7b9123c6d6e65ee1de415e4f62c3b3e21a5e69ee545e5df122514a843f92 || exit 1
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/FinalStateEpilogue.wvb" "$work/FinalStateEpilogue.wvo" >/dev/null || exit $?
@@ -728,4 +905,13 @@ verify "$work/FinalStateEpilogue.elf" 36976 c9552badd8d0e6f603eae6f7e161168144b8
 [[ $? -eq 105 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/FinalStateEpilogue.bin" 0 "$work/FinalStateEpilogue.exe" >/dev/null || exit $?
 verify "$work/FinalStateEpilogue.exe" 34304 8e06129e570b04da298ca216599dbc997838b9f257afeee961a1397bbe88f7ac || exit 1
-echo 'native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569'
+fi
+if [[ -n $development_target ]]; then
+    if ((selected_count != 1)); then
+        echo "Unknown OS x64 code-emission development target: $development_target" >&2
+        exit 64
+    fi
+    echo "native os x64 code emission development status=Passed target=$development_target projects=1 cases=6 cross-host-images=Verified"
+else
+    echo 'native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569'
+fi
