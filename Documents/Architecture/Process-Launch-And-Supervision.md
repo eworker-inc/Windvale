@@ -177,6 +177,11 @@ On client return, the machine checks the client syscall/thread state and
 init-owned process record, moves the client to waiting, dispatches only the
 admitted init generation, reactivates its checked page table, restores its saved
 user context, and performs `sysretq`, advancing ownership through byte 14,907.
+The following init reply-publication completion validates the exact returning
+syscall/thread state and retained 116-byte reply record, clears the channel
+publication state, dispatches only the admitted init generation, restores its
+checked saved context, and returns zero through `sysretq`, advancing ownership
+through byte 15,243.
 
 The first restart policies are deliberately small:
 

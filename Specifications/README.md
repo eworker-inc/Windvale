@@ -236,6 +236,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [x86-64 init-return store/directory validation emission](Windvale-Os-X64-Process-Init-Return-Store-Directory-Validation-Emission.md)
 - [x86-64 client user-transfer emission](Windvale-Os-X64-Process-Client-User-Transfer-Emission.md)
 - [x86-64 client-return and init-transfer emission](Windvale-Os-X64-Process-Client-Return-Init-Transfer-Emission.md)
+- [x86-64 init reply-publication resume emission](Windvale-Os-X64-Process-Init-Reply-Publish-Resume-Emission.md)
 - [x86-64 directory-provider allocation emission](Windvale-Os-X64-Process-Directory-Allocation-Emission.md)
 - [x86-64 directory-provider record emission](Windvale-Os-X64-Process-Directory-Record-Emission.md)
 - [x86-64 directory-provider paging emission](Windvale-Os-X64-Process-Directory-Paging-Emission.md)
