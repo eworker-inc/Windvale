@@ -169,11 +169,9 @@ check_file "$test_directory/Publisher-Promoter.bin" 658339 \
     2> "$test_directory/Wvb-Publisher-Build.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Build.err" \
     'WVB publisher source build wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvb" 163300 \
-    9ebfe92eef070dfdcf18c4d176b5f32f64ad3f80751340b8a59ab2f1d567ec2a \
-    'native-built WVB publisher WVB' || fail
-cmp --silent "$construction/Wvb-Publisher.wvb" \
-    "$test_directory/Wvb-Publisher.wvb" || fail
+check_file "$test_directory/Wvb-Publisher.wvb" 181772 \
+    c90f5325ea409d0710254812e1d434cce712de68385dec74d23eef5a475cf3c4 \
+    'metadata-aware WVB publisher candidate' || fail
 "$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" \
     "$test_directory/Wvb-Publisher.wvb" \
     "$test_directory/Wvb-Publisher.wvo" \
@@ -181,11 +179,9 @@ cmp --silent "$construction/Wvb-Publisher.wvb" \
     2> "$test_directory/Wvb-Publisher-Lower.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Lower.err" \
     'WVB publisher native lowering wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvo" 1349361 \
-    43a594776b4e280575ac14e2866b4708961dd1290d643b41779a4933a8ba5991 \
-    'native-lowered WVB publisher WVO' || fail
-cmp --silent "$construction/Wvb-Publisher.wvo" \
-    "$test_directory/Wvb-Publisher.wvo" || fail
+check_file "$test_directory/Wvb-Publisher.wvo" 1523708 \
+    c1ce50f68e12dc94e56fa848c6f09f707ad117294af5e19f15659b7901c0bf35 \
+    'metadata-aware WVB publisher object candidate' || fail
 "$repository_root/Tools/Native/Link-Wvo.sh" 0 Main \
     "$test_directory/Wvb-Publisher.bin" "$test_directory/Wvb-Publisher.wvo" \
     > "$test_directory/Wvb-Publisher-Link.out" \
@@ -194,10 +190,10 @@ check_empty "$test_directory/Wvb-Publisher-Link.err" \
     'WVB publisher native link wrote a diagnostic' || fail
 grep -Fx 'entry name=Main address=0' \
     "$test_directory/Wvb-Publisher-Link.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.bin" 1347597 \
-    3d419d28b606408e7b2430cceacf4c0b7b109bcd511df4e98ca0d41b871f1c2d \
-    'linked WVB publisher fragment' || fail
-pass 'publisher construction inventory'
+check_file "$test_directory/Wvb-Publisher.bin" 1520746 \
+    98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a \
+    'linked metadata-aware WVB publisher fragment' || fail
+pass 'publisher source candidate and retained construction inventory'
 
 total=$((total + 1))
 "$repository_root/Tools/Native/Construct-Hosted-Verifier-Publisher.sh" windows \

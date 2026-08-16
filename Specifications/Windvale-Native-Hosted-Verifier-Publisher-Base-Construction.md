@@ -116,9 +116,13 @@ artifacts. It also rebuilds and lowers the distinct publisher promoter, links
 `Main` at 1,178, requires the exact 658,339-byte fragment, constructs both exact
 promoter applications, installs both publisher subjects through the promoter,
 and runs the installed current-host publisher through one verifier installation.
-It additionally rebuilds and lowers the WVB publisher, constructs both exact
-role-2 applications, and executes the current-host candidate on a canonical
-portable WVB without loading .NET.
+It additionally rebuilds, lowers, and links the exact current metadata-aware WVB
+publisher source candidate. That candidate is deliberately compared to its own
+recorded identities rather than the preceding variant-2 artifacts. The owner
+then separately constructs both retained exact role-2 applications and executes
+the current-host retained candidate on a canonical portable WVB without loading
+.NET. Refreshing variant 2 remains a distinct artifact-coherence and promotion
+boundary.
 
 The separate `wvo-publisher-reconstruction` lane owns the role-3 candidate
 inventory and exact native WVB plus paired-application reconstruction. It uses
