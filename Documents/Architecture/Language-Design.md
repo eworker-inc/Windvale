@@ -304,11 +304,14 @@ runtime by implication.
 
 ## Evolution order
 
-The first eight slices are implemented. Their complete WVB 1.11 semantic-freeze
-baseline passed the paired Windows and Debian Qualification gate under
+The first eight source-language slices are implemented. Their complete WVB 1.11
+semantic-freeze baseline passed the paired Windows and Debian Qualification gate
+under
 [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md).
-That source/WVB qualification does not widen the explicitly narrower native,
-WebAssembly, or Windvale OS execution profiles:
+The package/library product baseline in step 9 is also complete under
+[Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md).
+These results do not widen the explicitly narrower native, WebAssembly, or
+Windvale OS execution profiles:
 
 1. Local inference, typed constants, trailing commas, named records, and `else if`.
 2. `break`, `continue`, `&&`, `||`, and mutable-local `+=`, `-=`, and `*=`.
@@ -318,7 +321,7 @@ WebAssembly, or Windvale OS execution profiles:
 6. Payload variants and typed recoverable results.
 7. Bounded sequences/builders, consuming freeze, and bounded `for`.
 8. Division/remainder, unsigned bitwise/shifts, and text/bytes equality.
-9. A package/library product baseline using current source semantics.
+9. A package/library product baseline using current source semantics (complete).
 10. Typed capability references and scoped ownership where an exact close contract
     exists.
 11. Narrow result propagation and one bounded associative collection, each only
