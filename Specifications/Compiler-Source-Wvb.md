@@ -32,6 +32,11 @@ The hosted `Source-Wvb-Tool` selects
 memory adapter retains the complete-emission entry point until its response-level
 consumers gain equivalent optimized-output conformance evidence.
 
+The hosted tool accepts an optional leading `--complete` argument before the root
+source path. This differential and diagnostic mode selects complete emission from
+the same executable; absence of the argument remains the optimized application
+publication path.
+
 The returned `WVCO 1` value has this exact little-endian layout:
 
 | Offset | Size | Field |
@@ -104,12 +109,13 @@ order, and emits every root export at its retained rank. Unreachable functions
 still undergo operation, shape, temporary-slot, parameter, local, return, and
 metadata validation, but contribute no Functions metadata or Code bytes.
 
-Text decoding and explicit data encoding are validated over the complete source
-closure before publication. A second reachable-only text plan then omits synthetic
-literal data used exclusively by unreachable functions. The reachable-function
-scan also retains only explicit data targeted by `Bytesˉconstant`, `Dataˉlength`,
-`Dataˉloadˉi32`, or a text literal that reuses an explicit text declaration. The
-filtered canonical data order remaps explicit and synthetic values into one ordinal
+One text-planning traversal decodes and validates literals over the complete source
+closure while retaining synthetic values only for reachable functions. The
+reachable-function scan retains only explicit data targeted by `Bytesˉconstant`,
+`Dataˉlength`, `Dataˉloadˉi32`, or a text literal that reuses an explicit text
+declaration. Retained explicit declarations are validated while they are encoded;
+omitted declarations are validated once without adding payload bytes. The filtered
+canonical data order remaps explicit and synthetic values into one ordinal
 namespace. Nominal Types remain complete in this slice; pruning them requires a
 separate referenced-type closure. Identical optimized inputs produce identical
 retained order, section contents, and bytes.
@@ -117,6 +123,9 @@ retained order, section contents, and bytes.
 The optimized compiler derives reachability from the same validated source scan,
 symbol directory, WVIR summary, and canonical orders already prepared for emission.
 It does not rebuild those whole-program models through the public analysis adapter.
+Normal optimized compilation uses map-only call traversal because function encoding
+already performs the complete operation and shape validation pass. The public
+reachability-analysis API retains its full per-function code-size attribution.
 
 ## Nominal type translation
 
@@ -206,6 +215,14 @@ one data entry in 308 bytes with SHA-256
 `d2f8b67a3a83f393fba16d4f1294000d631e401abd0c4fdde521c9654407b02a`.
 The optimized module passes the compiler-aligned verifier and executes with result
 `42` in the native WVB runner.
+
+An alternating two-pair Windows hosted-tool measurement over the complete
+13-module compiler-tool closure observed optimized compilation averaging 49.17
+seconds and complete emission averaging 51.79 seconds, a 5.1% reduction. The
+optimized closure contains 415 instead of 442 functions and is 926,872 instead of
+951,029 bytes, a 2.54% reduction. Both runs in each mode produced identical SHA-256
+values; timing is performance evidence for this implementation and machine, not a
+portable semantic guarantee or a fixed threshold.
 
 `Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers inferred record, enum, and text locals; named literals; canonical record/enum grouping and ordering; every primitive record field plus enum fields; nominal parameters/results/locals/temporaries; multiline trailing commas; and all six nominal WVIR operations. Both backends produce the exact 1,782-byte WVB module with SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`; it executes with result `11`.
 
