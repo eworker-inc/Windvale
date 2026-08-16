@@ -539,6 +539,8 @@ function Add-Os-Suite {
         Add-Suite 'os-provider-launch-transaction'
     } elseif ($Path -match '(?:Filesystem|Network)-Process-Service|Provider-Images') {
         Add-Suite @('os-provider-images', 'os-application-launch')
+    } elseif ($Path -match 'Fat32-Volume-Admission') {
+        Add-Suite @('os-fat32-volume', 'native-u64-lowering')
     } elseif ($Path -match 'Filesystem-(?:Service|Provider)') {
         Add-Suite @('os-filesystem-service', 'native-u64-lowering')
     } elseif ($Path -match 'Application-(?:Launch|Machine-Construction|Start-(?:Request|User-Copy))|Service-Launch') {
@@ -2205,6 +2207,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'os-x64-code-emission'
         } elseif ($Path.Contains('Provider-Launch-', [StringComparison]::Ordinal)) {
             Add-Suite 'os-provider-launch-transaction'
+        } elseif ($Path.Contains('Fat32-Volume-Admission', [StringComparison]::Ordinal)) {
+            Add-Suite @('os-fat32-volume', 'native-u64-lowering')
         } elseif ($Path.Contains('Filesystem-Service', [StringComparison]::Ordinal)) {
             Add-Suite @('os-filesystem-service', 'native-u64-lowering')
         } elseif ($Path.Contains('Application-Launch', [StringComparison]::Ordinal) -or

@@ -272,6 +272,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [x86-64 directory-provider image emission](Windvale-Os-X64-Process-Directory-Image-Emission.md)
 - [Filesystem semantic core](Windvale-Filesystem-Semantics.md)
 - [OS filesystem service protocol](Windvale-Os-Filesystem-Service.md)
+- [OS FAT32 volume admission](Windvale-Os-Fat32-Volume-Admission.md)
 - [Bounded operation model](Windvale-Bounded-Operation.md)
 - [Network address and authority model](Windvale-Network-Authority.md)
 - [OS boot service composition policy](Windvale-Os-Boot-Service-Composition.md)

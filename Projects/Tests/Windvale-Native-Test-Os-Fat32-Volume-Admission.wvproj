@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Fat32-Volume-Admission-Self-Test.wv"
+source "Operating-System/Services/Fat32-Volume-Admission.wv"
+emit wvb

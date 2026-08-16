@@ -1,0 +1,166 @@
+module Fat32ˉvolumeˉadmission profile portable;
+
+const FAT32_BOOT_SECTOR_BYTES: u32 = 512u32;
+const FAT32_BYTES_PER_SECTOR: u32 = 512u32;
+const FAT32_MINIMUM_CLUSTERS: u64 = 65525u64;
+const FAT32_MAXIMUM_CLUSTERS: u64 = 268435445u64;
+data Fat32ˉtypeˉlabel: bytes = [70,65,84,51,50,32,32,32];
+
+export enum Fat32ˉvolumeˉstatus {
+    Valid = 0; Invalidˉsize = 1; Invalidˉsignature = 2;
+    Invalidˉsectorˉgeometry = 3; Invalidˉreservedˉarea = 4;
+    Invalidˉfatˉcount = 5; Invalidˉlegacyˉfields = 6;
+    Invalidˉvolumeˉsize = 7; Invalidˉfatˉgeometry = 8;
+    Invalidˉclusterˉcount = 9; Invalidˉrootˉcluster = 10;
+    Invalidˉmetadataˉsector = 11; Unsupportedˉversion = 12;
+}
+
+export record Fat32ˉvolumeˉgeometry {
+    Status: Fat32ˉvolumeˉstatus;
+    Bytesˉperˉsector: u32;
+    Sectorsˉperˉcluster: u32;
+    Reservedˉsectors: u32;
+    Fatˉcount: u32;
+    Fatˉsectors: u32;
+    Totalˉsectors: u64;
+    Firstˉdataˉsector: u64;
+    Dataˉsectors: u64;
+    Clusterˉcount: u64;
+    Rootˉcluster: u32;
+}
+
+fn Invalid(Status: Fat32ˉvolumeˉstatus) -> Fat32ˉvolumeˉgeometry {
+    return Fat32ˉvolumeˉgeometry(
+        Status, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u64, 0u64, 0u64, 0u64, 0u32
+    );
+}
+
+fn Fat32ˉsectorsˉperˉclusterˉisˉvalid(Value: u32) -> bool {
+    return Value == 1u32 || Value == 2u32 || Value == 4u32 ||
+        Value == 8u32 || Value == 16u32 || Value == 32u32 ||
+        Value == 64u32 || Value == 128u32;
+}
+
+fn Fat32ˉtypeˉlabelˉisˉvalid(Bootˉsector: bytes) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        if Bytesˉreadˉu8(Bootˉsector, 82u32 + Index) !=
+            Bytesˉreadˉu8(Fat32ˉtypeˉlabel, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Fat32ˉreservedˉfieldsˉareˉvalid(Bootˉsector: bytes) -> bool {
+    var Offset: u32 = 52u32;
+    while Offset < 64u32 {
+        if Bytesˉreadˉu8(Bootˉsector, Offset) != 0u8 { return false; }
+        Offset = Offset + 1u32;
+    }
+    return Bytesˉreadˉu8(Bootˉsector, 65u32) == 0u8;
+}
+
+export fn Fat32ˉvolumeˉadmit(
+    Bootˉsector: bytes,
+    Deviceˉsectors: u64
+) -> Fat32ˉvolumeˉgeometry {
+    if Bytesˉlength(Bootˉsector) != FAT32_BOOT_SECTOR_BYTES {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉsize);
+    }
+    if Bytesˉreadˉu8(Bootˉsector, 510u32) != 85u8 ||
+        Bytesˉreadˉu8(Bootˉsector, 511u32) != 170u8 ||
+        Bytesˉreadˉu8(Bootˉsector, 66u32) != 41u8 ||
+        !Fat32ˉtypeˉlabelˉisˉvalid(Bootˉsector) {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉsignature);
+    }
+    let Bytesˉperˉsector: u32 =
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 11u32);
+    let Sectorsˉperˉcluster: u32 =
+        U32ˉfromˉu8(Bytesˉreadˉu8(Bootˉsector, 13u32));
+    if Bytesˉperˉsector != FAT32_BYTES_PER_SECTOR ||
+        !Fat32ˉsectorsˉperˉclusterˉisˉvalid(Sectorsˉperˉcluster) {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉsectorˉgeometry);
+    }
+    let Reservedˉsectors: u32 =
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 14u32);
+    if Reservedˉsectors == 0u32 {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉreservedˉarea);
+    }
+    let Fatˉcount: u32 =
+        U32ˉfromˉu8(Bytesˉreadˉu8(Bootˉsector, 16u32));
+    if Fatˉcount == 0u32 || Fatˉcount > 2u32 {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉfatˉcount);
+    }
+    let Extendedˉflags: u32 =
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 40u32);
+    if (Extendedˉflags & 65392u32) != 0u32 ||
+        ((Extendedˉflags & 128u32) == 0u32 &&
+            (Extendedˉflags & 15u32) != 0u32) ||
+        ((Extendedˉflags & 128u32) != 0u32 &&
+            (Extendedˉflags & 15u32) >= Fatˉcount) {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry);
+    }
+    if Bytesˉreadˉu16ˉlittle(Bootˉsector, 17u32) != 0u32 ||
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 19u32) != 0u32 ||
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 22u32) != 0u32 {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉlegacyˉfields);
+    }
+    if !Fat32ˉreservedˉfieldsˉareˉvalid(Bootˉsector) {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉreservedˉarea);
+    }
+    if Bytesˉreadˉu16ˉlittle(Bootˉsector, 42u32) != 0u32 {
+        return Invalid(Fat32ˉvolumeˉstatus.Unsupportedˉversion);
+    }
+    let Totalˉsectorsˉnarrow: u32 =
+        Bytesˉreadˉu32ˉlittle(Bootˉsector, 32u32);
+    let Totalˉsectors: u64 = U64ˉfromˉu32(Totalˉsectorsˉnarrow);
+    if Totalˉsectors == 0u64 || Totalˉsectors != Deviceˉsectors {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉvolumeˉsize);
+    }
+    let Fatˉsectors: u32 =
+        Bytesˉreadˉu32ˉlittle(Bootˉsector, 36u32);
+    if Fatˉsectors == 0u32 {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry);
+    }
+    let Fatˉarea: u64 = U64ˉfromˉu32(Fatˉcount) *
+        U64ˉfromˉu32(Fatˉsectors);
+    let Firstˉdataˉsector: u64 =
+        U64ˉfromˉu32(Reservedˉsectors) + Fatˉarea;
+    if Firstˉdataˉsector >= Totalˉsectors {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry);
+    }
+    let Dataˉsectors: u64 = Totalˉsectors - Firstˉdataˉsector;
+    let Clusterˉcount: u64 = Dataˉsectors /
+        U64ˉfromˉu32(Sectorsˉperˉcluster);
+    if Clusterˉcount < FAT32_MINIMUM_CLUSTERS ||
+        Clusterˉcount > FAT32_MAXIMUM_CLUSTERS {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉclusterˉcount);
+    }
+    let Fatˉentries: u64 =
+        U64ˉfromˉu32(Fatˉsectors) * 128u64;
+    if Fatˉentries < Clusterˉcount + 2u64 {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry);
+    }
+    let Rootˉcluster: u32 =
+        Bytesˉreadˉu32ˉlittle(Bootˉsector, 44u32);
+    if Rootˉcluster < 2u32 ||
+        U64ˉfromˉu32(Rootˉcluster) >= Clusterˉcount + 2u64 {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉrootˉcluster);
+    }
+    let Informationˉsector: u32 =
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 48u32);
+    let Backupˉsector: u32 =
+        Bytesˉreadˉu16ˉlittle(Bootˉsector, 50u32);
+    if Informationˉsector == 0u32 ||
+        Informationˉsector >= Reservedˉsectors ||
+        (Backupˉsector != 0u32 && Backupˉsector >= Reservedˉsectors) {
+        return Invalid(Fat32ˉvolumeˉstatus.Invalidˉmetadataˉsector);
+    }
+    return Fat32ˉvolumeˉgeometry(
+        Fat32ˉvolumeˉstatus.Valid,
+        Bytesˉperˉsector, Sectorsˉperˉcluster, Reservedˉsectors,
+        Fatˉcount, Fatˉsectors, Totalˉsectors, Firstˉdataˉsector,
+        Dataˉsectors, Clusterˉcount, Rootˉcluster
+    );
+}

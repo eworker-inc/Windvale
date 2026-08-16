@@ -1,0 +1,118 @@
+module Osˉfat32ˉvolumeˉadmissionˉselfˉtest profile portable;
+
+import Fat32ˉvolumeˉadmission as Fat32;
+
+data Validˉbootˉsector: bytes = [
+    235,88,144,0,0,0,0,0,0,0,0,0,2,1,32,0,2,0,0,0,0,248,0,0,63,0,255,0,0,0,0,0,
+    112,17,1,0,27,2,0,0,0,0,0,0,2,0,0,0,1,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    128,0,41,120,86,52,18,87,73,78,68,86,65,76,69,32,32,32,70,65,84,51,50,32,32,32,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,85,170
+];
+
+fn Replaceˉbytes(Input: bytes, Offset: u32, Value: bytes) -> bytes {
+    let Tailˉoffset: u32 = Offset + Bytesˉlength(Value);
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Tailˉoffset, Bytesˉlength(Input) - Tailˉoffset)
+    );
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Replaceˉbytes(Input, Offset, Bytesˉfromˉu8(Value));
+}
+
+fn Replaceˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replaceˉbytes(Input, Offset, Bytesˉfromˉu16ˉlittle(Value));
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replaceˉbytes(Input, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Status(
+    Input: bytes,
+    Sectors: u64
+) -> Fat32.Fat32ˉvolumeˉstatus {
+    let Geometry: Fat32.Fat32ˉvolumeˉgeometry =
+        Fat32.Fat32ˉvolumeˉadmit(Input, Sectors);
+    return Geometry.Status;
+}
+
+export fn Main() -> i32 {
+    let Valid: bytes = Validˉbootˉsector;
+    let Geometry: Fat32.Fat32ˉvolumeˉgeometry =
+        Fat32.Fat32ˉvolumeˉadmit(Valid, 70000u64);
+    if Geometry.Status != Fat32.Fat32ˉvolumeˉstatus.Valid { return 101; }
+    if Geometry.Bytesˉperˉsector != 512u32 { return 102; }
+    if Geometry.Sectorsˉperˉcluster != 1u32 { return 103; }
+    if Geometry.Reservedˉsectors != 32u32 { return 104; }
+    if Geometry.Fatˉcount != 2u32 { return 105; }
+    if Geometry.Fatˉsectors != 539u32 { return 106; }
+    if Geometry.Totalˉsectors != 70000u64 { return 107; }
+    if Geometry.Firstˉdataˉsector != 1110u64 { return 108; }
+    if Geometry.Dataˉsectors != 68890u64 { return 109; }
+    if Geometry.Clusterˉcount != 68890u64 { return 110; }
+    if Geometry.Rootˉcluster != 2u32 { return 111; }
+    if Status(Bytesˉslice(Valid, 0u32, 511u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsize { return 2; }
+    if Status(Replaceˉu8(Valid, 510u32, 0u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsignature { return 3; }
+    if Status(Replaceˉu8(Valid, 66u32, 40u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsignature { return 4; }
+    if Status(Replaceˉu8(Valid, 82u32, 88u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsignature { return 5; }
+    if Status(Replaceˉu16(Valid, 11u32, 4096u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsectorˉgeometry { return 6; }
+    if Status(Replaceˉu8(Valid, 13u32, 0u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsectorˉgeometry { return 7; }
+    if Status(Replaceˉu8(Valid, 13u32, 3u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉsectorˉgeometry { return 8; }
+    if Status(Replaceˉu16(Valid, 14u32, 0u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉreservedˉarea { return 9; }
+    if Status(Replaceˉu8(Valid, 16u32, 3u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉfatˉcount { return 10; }
+    if Status(Replaceˉu16(Valid, 17u32, 1u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉlegacyˉfields { return 11; }
+    if Status(Replaceˉu16(Valid, 19u32, 1u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉlegacyˉfields { return 12; }
+    if Status(Replaceˉu16(Valid, 22u32, 1u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉlegacyˉfields { return 13; }
+    if Status(Replaceˉu16(Valid, 42u32, 1u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Unsupportedˉversion { return 14; }
+    if Status(Valid, 69999u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉvolumeˉsize { return 15; }
+    if Status(Replaceˉu32(Valid, 36u32, 0u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry { return 16; }
+    let Small: bytes = Replaceˉu32(Valid, 32u32, 65000u32);
+    if Status(Small, 65000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉclusterˉcount { return 17; }
+    if Status(Replaceˉu32(Valid, 44u32, 70000u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉrootˉcluster { return 18; }
+    if Status(Replaceˉu16(Valid, 48u32, 32u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉmetadataˉsector { return 19; }
+    if Status(Replaceˉu16(Valid, 50u32, 32u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉmetadataˉsector { return 20; }
+    if Status(Replaceˉu16(Valid, 50u32, 0u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Valid { return 21; }
+    if Status(Replaceˉu8(Valid, 52u32, 1u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉreservedˉarea { return 22; }
+    if Status(Replaceˉu8(Valid, 65u32, 1u8), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉreservedˉarea { return 23; }
+    if Status(Replaceˉu16(Valid, 40u32, 16u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry { return 24; }
+    if Status(Replaceˉu16(Valid, 40u32, 130u32), 70000u64) !=
+        Fat32.Fat32ˉvolumeˉstatus.Invalidˉfatˉgeometry { return 25; }
+    return 47;
+}

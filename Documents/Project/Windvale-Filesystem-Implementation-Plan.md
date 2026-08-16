@@ -87,12 +87,21 @@ The first capacity-one handle state now separately proves ownership, profile
 rights, generation reuse, stale rejection, close, and peer-exit reclamation;
 dispatch and multi-client queueing remain open.
 
-### Filesystem slice 4: block and FAT32 provider
+### Filesystem slice 4: block and FAT32 provider — volume admission implemented candidate
 
 Add one isolated block-device path and a bounded FAT32 service. Qualify malformed
 boot sectors, directories, cluster chains, cycles, oversized geometry, media
 removal, interrupted mutation, and deterministic read-only images before any
 writable profile is enabled.
+
+FAT32 volume admission 1 now checks the exact 512-byte boot sector against an
+independently supplied device extent, derives all geometry in `u64`, requires
+FAT capacity for the complete legal FAT32 cluster range, and bounds the root,
+FSInfo, backup, reserved fields, and active-FAT selection. Twenty-five focused
+cases pass in paired native images.
+FSInfo/backup content validation, FAT entry reads, chain-cycle detection,
+directory parsing, block capability binding, media removal, and file data reads
+remain before slice 4 is complete.
 
 ### Filesystem slice 5: boot and application integration
 
