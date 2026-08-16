@@ -1824,6 +1824,19 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-leaf-groups'
     },
     @{
+        Name = 'focused database transaction-leaf-partition owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Leaf-Partition.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Leaf-Partition-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Leaf-Partition.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-leaf-partition'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',

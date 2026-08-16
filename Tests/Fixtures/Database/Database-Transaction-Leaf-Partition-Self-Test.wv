@@ -1,0 +1,339 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉpartition profile portable;
+
+import Windvaleˉdatabaseˉtransactionˉleafˉpartition as Partition;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Leafˉput(Input: bytes, Key: u8, Value: u8, Maximum: u32) -> bytes {
+    let Result: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Input, Bytesˉfromˉu8(Key), Bytesˉfromˉu8(Value), Maximum
+        );
+    return Result.Bytes;
+}
+
+fn Leafˉtwo(Maximum: u32) -> bytes {
+    return Leafˉput(Leafˉput(Empty(), 1u8, 1u8, Maximum), 2u8, 2u8, Maximum);
+}
+
+fn Leafˉthree(Maximum: u32) -> bytes {
+    return Leafˉput(Leafˉtwo(Maximum), 4u8, 4u8, Maximum);
+}
+
+fn Leafˉsix(Maximum: u32) -> bytes {
+    var Result: bytes = Leafˉtwo(Maximum);
+    Result = Leafˉput(Result, 3u8, 3u8, Maximum);
+    Result = Leafˉput(Result, 4u8, 4u8, Maximum);
+    Result = Leafˉput(Result, 5u8, 5u8, Maximum);
+    return Leafˉput(Result, 6u8, 6u8, Maximum);
+}
+
+fn Put(Key: u8, Value: bytes) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Value
+        );
+    return Result.Bytes;
+}
+
+fn Putˉu8(Key: u8, Value: u8) -> bytes {
+    return Put(Key, Bytesˉfromˉu8(Value));
+}
+
+fn Delete(Key: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉdelete(Bytesˉfromˉu8(Key));
+    return Result.Bytes;
+}
+
+fn Mutationˉset(Count: u32, Entries: bytes) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(Count, Entries);
+    return Result.Bytes;
+}
+
+fn Twenty(Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(U32ˉfromˉu8(Value))),
+            Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(U32ˉfromˉu8(Value)))
+        ),
+        Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Value))
+    );
+}
+
+fn Ordinaryˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(
+        4u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Putˉu8(1u8, 10u8), Delete(2u8)),
+            Bytesˉconcat(Putˉu8(3u8, 30u8), Delete(9u8))
+        )
+    );
+    let First: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉthree(256u32), Mutations, 256u32
+        );
+    let Second: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉthree(256u32), Mutations, 256u32
+        );
+    if First.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        !First.Changed || First.Leafˉcount != 1u32 || First.Entryˉcount != 3u32 ||
+        First.Appliedˉcount != 3u32 || First.Putˉcount != 2u32 ||
+        First.Deletedˉcount != 1u32 || !Same(First.Bytes, Second.Bytes) {
+        return 1;
+    }
+    let Leaf: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(First.Bytes, 0u32);
+    if Leaf.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        Bytesˉlength(Leaf.Separator) != 0u32 || Leaf.Entryˉcount != 3u32 {
+        return 2;
+    }
+    let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(1u8));
+    let Two: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(2u8));
+    let Three: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(3u8));
+    let Four: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(4u8));
+    if !One.Found || Bytesˉreadˉu8(One.Value, 0u32) != 10u8 || Two.Found ||
+        !Three.Found || Bytesˉreadˉu8(Three.Value, 0u32) != 30u8 || !Four.Found {
+        return 3;
+    }
+    return 0;
+}
+
+fn Noˉchangeˉcontract() -> i32 {
+    let Input: bytes = Leafˉtwo(256u32);
+    let Mutations: bytes = Mutationˉset(
+        2u32, Bytesˉconcat(Delete(8u8), Delete(9u8))
+    );
+    let Result: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Input, Mutations, 256u32
+        );
+    let Leaf: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 0u32);
+    if Result.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        Result.Changed || Result.Appliedˉcount != 0u32 ||
+        Result.Leafˉcount != 1u32 || !Same(Input, Leaf.Payload) {
+        return 1;
+    }
+    return 0;
+}
+
+fn Multipleˉleavesˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(
+        4u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Put(3u8, Twenty(3u8)), Put(4u8, Twenty(4u8))),
+            Bytesˉconcat(Put(5u8, Twenty(5u8)), Put(6u8, Twenty(6u8)))
+        )
+    );
+    let Result: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉtwo(96u32), Mutations, 96u32
+        );
+    if Result.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        !Result.Changed || Result.Leafˉcount != 3u32 ||
+        Result.Entryˉcount != 6u32 || Result.Appliedˉcount != 4u32 ||
+        Result.Putˉcount != 4u32 || Result.Deletedˉcount != 0u32 {
+        return 1;
+    }
+    let First: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 0u32);
+    let Second: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 1u32);
+    let Third: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 2u32);
+    if First.Entryˉcount != 3u32 || Bytesˉlength(First.Separator) != 0u32 ||
+        Second.Entryˉcount != 2u32 || Bytesˉreadˉu8(Second.Separator, 0u32) != 4u8 ||
+        Third.Entryˉcount != 1u32 || Bytesˉreadˉu8(Third.Separator, 0u32) != 6u8 {
+        return 2;
+    }
+    let Three: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(First.Payload, Bytesˉfromˉu8(3u8));
+    let Four: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Second.Payload, Bytesˉfromˉu8(4u8));
+    let Six: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Third.Payload, Bytesˉfromˉu8(6u8));
+    if !Three.Found || !Four.Found || !Six.Found { return 3; }
+    return 0;
+}
+
+fn Emptyˉleafˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(
+        2u32, Bytesˉconcat(Delete(1u8), Delete(2u8))
+    );
+    let Result: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉtwo(96u32), Mutations, 96u32
+        );
+    let Leaf: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 0u32);
+    let Node: Tree.Databaseˉtreeˉnodeˉresult = Tree.Databaseˉtreeˉnodeˉdecode(Leaf.Payload);
+    if Result.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        Result.Leafˉcount != 1u32 || Result.Entryˉcount != 0u32 ||
+        Result.Appliedˉcount != 2u32 || Result.Deletedˉcount != 2u32 ||
+        Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid || Node.Entryˉcount != 0u32 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Finalˉstateˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(
+        4u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Put(0u8, Twenty(0u8)), Delete(1u8)),
+            Bytesˉconcat(Delete(2u8), Delete(3u8))
+        )
+    );
+    let Result: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉsix(96u32), Mutations, 96u32
+        );
+    if Result.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        Result.Leafˉcount != 1u32 || Result.Entryˉcount != 4u32 ||
+        Result.Appliedˉcount != 4u32 || Result.Putˉcount != 1u32 ||
+        Result.Deletedˉcount != 3u32 {
+        return 1;
+    }
+    let Leaf: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 0u32);
+    let Zero: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(0u8));
+    let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(1u8));
+    let Six: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leaf.Payload, Bytesˉfromˉu8(6u8));
+    if !Zero.Found || One.Found || !Six.Found { return 2; }
+    return 0;
+}
+
+fn Maximumˉleavesˉcontract() -> i32 {
+    var Value: bytes = Bytesˉfromˉu64ˉlittle(1u64);
+    while Bytesˉlength(Value) < 64u32 { Value = Bytesˉconcat(Value, Value); }
+    Value = Bytesˉslice(Value, 0u32, 52u32);
+    var Entries: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let Mutation: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+            Transaction.Databaseˉtransactionˉmutationˉput(
+                Bytesˉfromˉu32ˉlittle(Index), Value
+            );
+        Entries = Bytesˉconcat(Entries, Mutation.Bytes);
+        Index = Index + 1u32;
+    }
+    let Mutations: bytes = Mutationˉset(32u32, Entries);
+    let Initial: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu32ˉlittle(32u32), Empty(), 96u32
+        );
+    let Result: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Initial.Bytes, Mutations, 96u32
+        );
+    if Result.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        Result.Leafˉcount != 33u32 || Result.Entryˉcount != 33u32 ||
+        Result.Appliedˉcount != 32u32 || Result.Putˉcount != 32u32 {
+        return 1;
+    }
+    let Last: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Result.Bytes, 32u32);
+    if Last.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Valid ||
+        Last.Entryˉcount != 1u32 || Bytesˉreadˉu32ˉlittle(Last.Separator, 0u32) != 32u32 {
+        return 2;
+    }
+    return 0;
+}
+
+fn Rejectionˉcontract() -> i32 {
+    var Large: bytes = Bytesˉfromˉu64ˉlittle(1u64);
+    while Bytesˉlength(Large) < 64u32 { Large = Bytesˉconcat(Large, Large); }
+    let Full: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉtwo(96u32), Mutationˉset(1u32, Put(3u8, Large)), 96u32
+        );
+    if Full.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Full ||
+        Full.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Full ||
+        Full.Leafˉcount != 0u32 || Bytesˉlength(Full.Bytes) != 0u32 {
+        return 1;
+    }
+    let Invalidˉmutations: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉtwo(96u32), Empty(), 96u32
+        );
+    let Invalidˉleaf: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Empty(), Mutationˉset(1u32, Delete(1u8)), 96u32
+        );
+    let Invalidˉmaximum: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉtwo(96u32), Mutationˉset(1u32, Delete(1u8)), 31u32
+        );
+    if Invalidˉmutations.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Invalidˉmutations ||
+        Invalidˉleaf.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Invalidˉleaf ||
+        Invalidˉmaximum.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Invalidˉmaximumˉpayload {
+        return 2;
+    }
+    let Valid: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉapply(
+            Leafˉtwo(96u32), Mutationˉset(1u32, Delete(1u8)), 96u32
+        );
+    let Corrupt: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(0u8),
+        Bytesˉslice(Valid.Bytes, 1u32, Bytesˉlength(Valid.Bytes) - 1u32)
+    );
+    let Invalidˉformat: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉdecode(Corrupt);
+    let Trailing: Partition.Databaseˉtransactionˉleafˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉdecode(
+            Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8))
+        );
+    let Invalidˉindex: Partition.Databaseˉtransactionˉleafˉpartitionˉleaf =
+        Partition.Databaseˉtransactionˉleafˉpartitionˉread(Valid.Bytes, 1u32);
+    if Invalidˉformat.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Invalidˉmagic ||
+        Trailing.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Invalidˉtotalˉlength ||
+        Invalidˉindex.Error != Partition.Databaseˉtransactionˉleafˉpartitionˉerror.Invalidˉindex {
+        return 3;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Ordinary: i32 = Ordinaryˉcontract();
+    if Ordinary != 0 { return 100 + Ordinary; }
+    let Noˉchange: i32 = Noˉchangeˉcontract();
+    if Noˉchange != 0 { return 200 + Noˉchange; }
+    let Multiple: i32 = Multipleˉleavesˉcontract();
+    if Multiple != 0 { return 300 + Multiple; }
+    let Emptyˉleaf: i32 = Emptyˉleafˉcontract();
+    if Emptyˉleaf != 0 { return 400 + Emptyˉleaf; }
+    let Finalˉstate: i32 = Finalˉstateˉcontract();
+    if Finalˉstate != 0 { return 450 + Finalˉstate; }
+    let Maximumˉleaves: i32 = Maximumˉleavesˉcontract();
+    if Maximumˉleaves != 0 { return 475 + Maximumˉleaves; }
+    let Rejection: i32 = Rejectionˉcontract();
+    if Rejection != 0 { return 500 + Rejection; }
+    return 0;
+}

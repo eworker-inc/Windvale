@@ -86,7 +86,9 @@ an invalid group index, inconsistent total length, and a corrupt rewritten leaf.
 
 ## Exclusions and next step
 
-This plan does not split a leaf, assign new page identities, merge shared
-ancestors, write storage, or publish a transaction. The next planner handles
-split-required groups and constructs one bottom-up replacement tree shared by
-all groups. One commit batch must then publish every replacement atomically.
+This plan does not assign new page identities, merge shared ancestors, write
+storage, or publish a transaction. The
+[bulk leaf partitioner](Windvale-Database-Transaction-Leaf-Partition.md) now
+handles one split-required group as a complete final state and can emit more
+than two leaves. The next planner applies that operation to every group and
+constructs one bottom-up replacement tree before one atomic commit batch.
