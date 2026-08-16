@@ -28,6 +28,29 @@ through the Windvale-written resolver and the guarded Windows/Linux dispatcher.
 The separate ten-case `echo-command-launch` owner proves execution, rejection,
 and private-host cleanup. An interactive shell remains a later integration.
 
+The native Echo PE and ELF are standalone application hosts: a person may start
+the exact file directly with arguments, and the running process does not need
+`wv`, .NET, or a bytecode interpreter. Direct execution proves Echo's behavior
+and fixed rights-reduced provider set, but it does not perform installed active-
+generation selection, package/approval/launch identity admission, or rollback.
+
+For `0.2.0`, Echo still needs the installed product launch integration:
+
+1. expose `wv run echo -- <arguments>` through the installed client;
+2. replace caller-supplied development object paths and the Node.js dispatcher
+   with durable-store lookup and the native guarded launcher;
+3. install a non-conflicting `wv-echo` shim that carries only the canonical
+   command identity and delegates to that same launcher; and
+4. prove direct, explicit-client, and shim execution on Windows and Debian with
+   identical application results and protected-launch contracts.
+
+The host shim cannot portably claim the bare name `echo`: PowerShell, CMD, Bash,
+and common Unix shells already reserve it as an alias or builtin. Bare
+`echo hello` remains the intended spelling inside Windvale Shell, where the
+Windvale command catalog owns resolution. This naming constraint does not make
+the Echo application dependent on `wv`; it only separates a standalone process
+from installed command selection and policy enforcement.
+
 ## File read
 
 `file-read <name>` copies one named immutable-directory file to standard output

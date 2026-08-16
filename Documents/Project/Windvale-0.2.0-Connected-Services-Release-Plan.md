@@ -201,6 +201,37 @@ wv rollback <package-or-generation>
 wv uninstall <package>
 ```
 
+### Application commands and standalone hosts
+
+The `0.2.0` client must make installed applications usable without requiring a
+person to type the general `wv` front door for every invocation. The release
+therefore includes the following bounded command-launch slice:
+
+- package and install Echo's existing standalone Windows PE and Linux ELF hosts;
+  those native applications do not load `wv`, .NET, or a WVB interpreter after
+  launch;
+- implement `wv run echo -- <arguments>` through the active generation as the
+  explicit universal form;
+- install one non-conflicting per-application shim, initially `wv-echo`, that
+  contains only the canonical `echo` command identity and delegates to the same
+  verified native launcher;
+- replace the development Node.js dispatcher with the installed native launcher,
+  resolve bundle, approval, launch, and host identities from the durable object
+  store rather than caller-supplied paths, and preserve exact argument limits,
+  capability reduction, private-host publication, exit status, and cleanup;
+- prove direct standalone execution separately from protected installed-command
+  execution on Windows and Debian; and
+- keep exact `echo hello` syntax as a Windvale Shell command-resolution result.
+  PowerShell, CMD, Bash, and common Unix shells already reserve or alias `echo`,
+  so replacing their builtins is neither a portable installer promise nor a
+  `0.2.0` host-release requirement.
+
+The shim removes `wv` from the user's command line, not from the security model.
+It cannot point directly at a mutable package directory, carry package-manager
+authority, or bypass active-generation, package, approval, executable, target,
+capability, argument, and resource admission. Once the admitted native host is
+started, the application is independent of the launcher for its execution.
+
 The bootstrap scripts remain the first-install convenience entry points. They
 download the bounded verifier and signed release inputs, establish the current
 terminal `PATH`, and install the core generation. The installed `wv` client then
@@ -335,15 +366,20 @@ proves all of the following:
    install, activate, upgrade, roll back, and uninstall without ambient trust;
 7. the equivalent offline route yields identical admitted objects and logical
    generations;
-8. one real external-model adapter lists visible models and completes one
+8. Echo runs directly as a standalone native host, through `wv run echo --`, and
+   through its installed protected shim; the latter two routes resolve the same
+   active command and enforce the same approval, launch, capability, argument,
+   identity, exit-status, and cleanup contracts without a production Node.js
+   dispatcher;
+9. one real external-model adapter lists visible models and completes one
    bounded text request through the local gateway without exposing its key;
-9. deterministic isolated tests cover hostile network, repository, service,
+10. deterministic isolated tests cover hostile network, repository, service,
    database, model, interruption, cancellation, and teardown cases;
-10. installer and service removal preserve application data by default and an
+11. installer and service removal preserve application data by default and an
     independently checked purge removes only explicitly owned targets;
-11. release documentation names every experimental compatibility boundary and
+12. release documentation names every experimental compatibility boundary and
     the exact ready Windvale OS standing; and
-12. the frozen source state passes the deliberate complete Windows/Debian
+13. the frozen source state passes the deliberate complete Windows/Debian
     Qualification gate before signing and publishing `v0.2.0`.
 
 ## Explicit non-goals
