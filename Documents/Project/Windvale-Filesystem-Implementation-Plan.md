@@ -182,10 +182,11 @@ native-context constructor bytes are source-owned and pass a focused three-case
 cross-host packaging owner. The process object exports callable forms at
 unchanged link addresses, and the complete normal plus two terminal-fault Probe
 40 QEMU gate passes after their private invocation. The allocation contains four
-kernel-only paging pages plus 81 future domain-charged user pages (48 RX image,
-17 RW/NX context/transfer, and 16 disjoint RW/NX stack pages); those 81 pages are
-not yet published in a durable live domain ledger. A surviving consumer
-capability, endpoint finalization for traffic, real FAT32 media identity,
+kernel-only paging pages plus 81 domain-charged user pages (48 RX image, 17
+RW/NX context/transfer, and 16 disjoint RW/NX stack pages). Exact terminal
+directory-endpoint reuse now publishes their durable live `1/81/1` filesystem
+domain ledger before readiness. A surviving consumer capability, endpoint
+finalization for traffic, real FAT32 media identity,
 context entry, request/reply execution, complete failed-construction rollback,
 and teardown remain open.
 

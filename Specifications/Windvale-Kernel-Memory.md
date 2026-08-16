@@ -30,7 +30,7 @@ The complete 643,072-byte arena is zeroed before publication. Stack top is `aren
 | `25..146` | client memory object `65538`, 122 pages |
 | `147..156` | directory memory object `65539`, 10 pages |
 
-The fixed allocator advances its retained bootstrap cursor to 13. Object allocation does not reinterpret that cursor: first-fit scans the bitmap from page 5, while the free-page field tracks aggregate availability. After all three retained objects are active, free pages are zero. Releasing client generation 1 restores 122 free pages without changing the directory pages or raw cursor; generation 2 reference `131074` reuses pages `25..146` and returns free pages to zero. The current filesystem-publication successor releases terminal generation 2, then first-fits generation 3 reference `196610` as 85 pages at the same root, leaving 37 free pages without changing the directory object or raw cursor. It publishes process/thread readiness but does not yet create a durable resource-domain ledger for the 81 user pages.
+The fixed allocator advances its retained bootstrap cursor to 13. Object allocation does not reinterpret that cursor: first-fit scans the bitmap from page 5, while the free-page field tracks aggregate availability. After all three retained objects are active, free pages are zero. Releasing client generation 1 restores 122 free pages without changing the directory pages or raw cursor; generation 2 reference `131074` reuses pages `25..146` and returns free pages to zero. The current filesystem-publication successor releases terminal generation 2, then first-fits generation 3 reference `196610` as 85 pages at the same root, leaving 37 free pages without changing the directory object or raw cursor. It publishes a durable domain charge for the 81 user pages before process/thread readiness.
 
 The provider/client page contents and mappings remain those in [Windvale-Protected-Process.md](Windvale-Protected-Process.md). The inherited four-page kernel stack and six-page client stack remain fixed evidence.
 
@@ -59,7 +59,8 @@ The complete state-page layout is disjoint:
 | `0x100..0x21F` | init `WVPROC17` |
 | `0x220..0x2D7` | private GDT, GDTR, and TSS |
 | `0x300..0x41F` | current client `WVPROC17` |
-| `0x420..0x89F` | two channels, two endpoints, four resources, and directory `WVPROC17` |
+| `0x420..0x85F` | two channels, live resource endpoint, four resources, and directory `WVPROC17` |
+| `0x860..0x89F` | filesystem `WVDOM001`, after exact terminal directory-endpoint reuse |
 | `0x8A0..0xB9F` | three private `WVTHR001` contexts and `WVTIME01` |
 | `0xBA0..0xBB3` | 160-bit allocation bitmap |
 | `0xBC0..0xC5C` | 157-byte page-owner table |

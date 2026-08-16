@@ -66,12 +66,14 @@ The filesystem and network images are boot-linked. The three filesystem
 machine constructors are additionally exported at link addresses 780,192,
 780,256, and 783,600. The WVA transaction now releases generation 2, allocates
 generation 3 at the same root, calls all three constructors, reconstructs
-endpoint slot 0 and its empty channel, creates a fresh thread, and finally
-publishes endpoint, thread, then process ready state. Endpoint `131072` is
-provider-side only: its provider is `196610` and its client reference is zero.
+endpoint slot 0 and its empty channel, replaces the exactly terminal directory
+endpoint with a durable filesystem domain ledger, creates a fresh thread, and
+finally publishes domain, endpoint, thread, then process ready state. Endpoint
+`131072` is provider-side only: its provider is `196610` and its client
+reference is zero.
 The boot path does not dispatch the fresh thread after publication. Consumer
-capability binding, a durable 81-page domain ledger, provider entry, request
-execution, rollback after a post-constructor failure, and teardown remain the
+capability binding, provider entry, request execution, rollback after a
+post-constructor failure, and teardown remain the
 next launch-integration boundary.
 Only the retained `.text.process` input remains a reviewed architecture
 fixture. The ordinary producer checks its former dispatch bytes before

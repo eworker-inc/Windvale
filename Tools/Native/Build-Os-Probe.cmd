@@ -11,25 +11,25 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=6ffec58edefd6c09c7c552858316da1be02cbceb515715bea36ac5ef0a140018"
-    set "EfiBytes=1698304"
-    set "CodeTailOffset=793072"
+    set "EfiDigest=0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2"
+    set "EfiBytes=1698816"
+    set "CodeTailOffset=793552"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=84d0c66f9b6a0ea7ed4c1f3c9416884d80481d42117693298b96baa71e888e3c"
-    set "EfiBytes=1698304"
-    set "CodeTailOffset=793088"
+    set "EfiDigest=14cd177057858acd35023abd558e54670ca0e4c80122f43a7f7671f5a767ae6a"
+    set "EfiBytes=1698816"
+    set "CodeTailOffset=793568"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=9f0d51b6f057387f01e054ab22167fc261981748d5d593f37e6aee26256ef740"
-    set "EfiBytes=1698304"
-    set "CodeTailOffset=793088"
+    set "EfiDigest=cda36c9cdea101c81199ccd16422d1285b157e6f1dc8b69819280ccb6755d351"
+    set "EfiBytes=1698816"
+    set "CodeTailOffset=793568"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -143,7 +143,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=filesystem-construction"
 cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Process-Filesystem-Construction.wva" "%Work%\17-filesystem-construction.wvo" >"%Work%\17.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\17-filesystem-construction.wvo" 2167 63c9c8397cf86b9f8af08b616b1152a287789fa77002d00bcac789dbf1bb180d
+call :verify "%Work%\17-filesystem-construction.wvo" 2654 51a7302bfe8f5565cb9e17522a4d042b618df2903944f2c567b46c9193d002d8
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"

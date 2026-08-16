@@ -1240,10 +1240,13 @@ $NativeCases = @(
         Name = 'OS resource-domain policy ownership'
         Paths = @(
             'Operating-System/Kernel/Resource-Domain-Policy.wv',
+            'Operating-System/Kernel/Resource-Domain-Record.wv',
             'Projects/Operating-System/Windvale-Os-Resource-Domain-Policy.wvproj',
+            'Projects/Operating-System/Windvale-Os-Resource-Domain-Record.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Resource-Domain.wvproj',
             'Tests/Fixtures/Operating-System/Os-Resource-Domain-Self-Test.wv',
-            'Specifications/Windvale-Os-Resource-Domain-Policy.md'
+            'Specifications/Windvale-Os-Resource-Domain-Policy.md',
+            'Specifications/Windvale-Os-Resource-Domain-Record.md'
         )
         Suites = @('os-resource-domain')
         Gaps = @()
@@ -2870,7 +2873,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4599 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4607 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

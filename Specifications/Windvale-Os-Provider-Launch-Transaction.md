@@ -71,9 +71,9 @@ slot. The generation-three filesystem record, W^X page tables, service copy,
 and context setup are source-owned by a focused three-case owner, including the
 exact 85-physical/81-user-page distinction. The fixture now consumes those
 constructors, performs the third allocation generation, binds the exact launch
-request digest, advances endpoint slot 0 to generation 2, and publishes fresh
-ready thread and process records. The endpoint is deliberately provider-only
-with client reference 0. It is not resolved for traffic, the thread is not
-entered, the 81-page charge has no durable kernel ledger, and no request is
-dispatched. The next privileged slice must bind a surviving consumer and domain
-record atomically before first entry and one bounded filesystem request.
+request digest, advances endpoint slot 0 to generation 2, and publishes a
+durable `1/81/1` filesystem domain ledger plus fresh ready thread and process
+records. The endpoint is deliberately provider-only with client reference 0.
+It is not resolved for traffic, the thread is not entered, and no request is
+dispatched. The next privileged slice must bind a surviving consumer before
+first entry and one bounded filesystem request.

@@ -11,25 +11,25 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=6ffec58edefd6c09c7c552858316da1be02cbceb515715bea36ac5ef0a140018
-        efi_bytes=1698304
-        code_tail_offset=793072
+        efi_digest=0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2
+        efi_bytes=1698816
+        code_tail_offset=793552
         ;;
     invalid-opcode)
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=84d0c66f9b6a0ea7ed4c1f3c9416884d80481d42117693298b96baa71e888e3c
-        efi_bytes=1698304
-        code_tail_offset=793088
+        efi_digest=14cd177057858acd35023abd558e54670ca0e4c80122f43a7f7671f5a767ae6a
+        efi_bytes=1698816
+        code_tail_offset=793568
         ;;
     general-protection)
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=9f0d51b6f057387f01e054ab22167fc261981748d5d593f37e6aee26256ef740
-        efi_bytes=1698304
-        code_tail_offset=793088
+        efi_digest=cda36c9cdea101c81199ccd16422d1285b157e6f1dc8b69819280ccb6755d351
+        efi_bytes=1698816
+        code_tail_offset=793568
         ;;
     *)
         echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
@@ -230,9 +230,9 @@ if ! printf '%s  %s\n%s  %s\n%s  %s\n' \
     echo 'A native Probe 40 application-start object is invalid.' >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/17-filesystem-construction.wvo") -ne 2167 ]] ||
+if [[ $(wc -c < "$work/17-filesystem-construction.wvo") -ne 2654 ]] ||
     ! printf '%s  %s\n' \
-        '63c9c8397cf86b9f8af08b616b1152a287789fa77002d00bcac789dbf1bb180d' \
+        '51a7302bfe8f5565cb9e17522a4d042b618df2903944f2c567b46c9193d002d8' \
         "$work/17-filesystem-construction.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 filesystem-construction object is invalid.' >&2
     exit 1

@@ -6,10 +6,10 @@ This contract source-owns the generation-three filesystem provider's record,
 page-table, image-copy, native-context, endpoint, and initial-thread
 construction bytes. The current boot object links callable forms of the three
 generated constructors and invokes them after an exact 85-page
-generation-three allocation. The WVA transaction then publishes a provider-side
-generation-two endpoint, a fresh ready thread, and the ready process record. It
-does not bind a consumer capability, publish a durable domain ledger, enter the
-provider, or execute a request.
+generation-three allocation. The WVA transaction then publishes a durable
+filesystem domain ledger, provider-side generation-two endpoint, fresh ready
+thread, and ready process record. It does not bind a consumer capability, enter
+the provider, or execute a request.
 
 The machine reuses released process/object slot 2 as process reference
 `196610` and closed resource-endpoint slot 0 as endpoint reference `131072`.
@@ -60,8 +60,8 @@ bytes, and rejects zero or more than 196,608 bytes. The 956,321-byte process
 object exports the image, paging, and record constructors at section addresses
 780,192, 780,256, and 783,600 respectively, with SHA-256
 `ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1`.
-The separately assembled 2,167-byte construction transaction has SHA-256
-`63c9c8397cf86b9f8af08b616b1152a287789fa77002d00bcac789dbf1bb180d`.
+The separately assembled 2,654-byte construction transaction has SHA-256
+`51a7302bfe8f5565cb9e17522a4d042b618df2903944f2c567b46c9193d002d8`.
 
 ## Deterministic evidence and remaining boundary
 
@@ -84,13 +84,14 @@ and `621ed9294cafae354b4b20099cb8bc0ef1f5fc1a5f1593b9efade98ce2aceee4`.
 The native results are 50, 51, and 52.
 
 The constructors and provider-side publication execute in deterministic
-1,698,304-byte Probe 40 images, and pinned QEMU completes the normal and two
-terminal fault paths with paging version 7 active. Endpoint `131072` now names
+1,698,816-byte Probe 40 images, and pinned QEMU completes the normal and two
+terminal fault paths with paging version 7 active. Exact validation of the
+terminal directory endpoint permits its 64-byte state slot to become the live
+filesystem domain record with committed use `1/81/1`. Endpoint `131072` names
 generation 2, provider `196610`, client 0, and one empty retained channel. A
 fresh generation-three thread and process are ready, but the boot path does not
 dispatch them after publication. Integration still must bind a real surviving
-consumer, finalize the endpoint for traffic, add durable 81-page domain
-accounting, bind FAT32 media identity, enter the service context, and execute
-one bounded request/reply lifecycle. Complete rollback of the unpublished
-generation-three allocation after a post-constructor validation failure also
-remains open.
+consumer, finalize the endpoint for traffic, bind FAT32 media identity, enter
+the service context, and execute one bounded request/reply lifecycle. Complete
+rollback of the unpublished generation-three allocation after a
+post-constructor validation failure also remains open.

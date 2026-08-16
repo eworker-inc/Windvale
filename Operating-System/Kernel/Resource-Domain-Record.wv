@@ -1,0 +1,74 @@
+module Resourceˉdomainˉrecord profile portable;
+
+const RESOURCE_DOMAIN_MAGIC_LOW: u32 = 1329878615u32;
+const RESOURCE_DOMAIN_MAGIC_HIGH: u32 = 825241677u32;
+const RESOURCE_DOMAIN_BYTES: u32 = 64u32;
+
+export enum Resourceˉdomainˉrecordˉstatus {
+    Valid = 0; Invalidˉsize = 1; Invalidˉmagic = 2;
+    Invalidˉversion = 3; Invalidˉheader = 4;
+    Invalidˉidentity = 5; Invalidˉlimits = 6;
+    Invalidˉreservation = 7; Invalidˉcommit = 8;
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Filesystemˉresourceˉdomainˉrecord() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(RESOURCE_DOMAIN_MAGIC_LOW);
+    Result = Appendˉu32(Result, RESOURCE_DOMAIN_MAGIC_HIGH);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, RESOURCE_DOMAIN_BYTES);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 65538u32);
+    Result = Appendˉu32(Result, 196610u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 81u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 81u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+export fn Filesystemˉresourceˉdomainˉrecordˉstatus(
+    Input: bytes
+) -> Resourceˉdomainˉrecordˉstatus {
+    if Bytesˉlength(Input) != RESOURCE_DOMAIN_BYTES {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉsize;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != RESOURCE_DOMAIN_MAGIC_LOW ||
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) != RESOURCE_DOMAIN_MAGIC_HIGH {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉmagic;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 1u32 {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉversion;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != RESOURCE_DOMAIN_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 16u32) != 0u32 {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉheader;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != 65538u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) != 196610u32 {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉidentity;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 81u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 1u32 {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉlimits;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 52u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 56u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 60u32) != 0u32 {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉreservation;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 40u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 81u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) != 1u32 {
+        return Resourceˉdomainˉrecordˉstatus.Invalidˉcommit;
+    }
+    return Resourceˉdomainˉrecordˉstatus.Valid;
+}

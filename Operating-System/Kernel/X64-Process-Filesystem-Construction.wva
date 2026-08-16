@@ -12,8 +12,9 @@ define Windvale_kernel_x64_process_filesystem_construct
 # R12 is the validated WVKMEM17 state after generation-two client completion.
 # The leaf releases reference 0x00020002, first-fit allocates generation three
 # as 0x00030002, constructs its image/page tables/record, then atomically
-# publishes a provider-only generation-two endpoint and fresh ready thread. It
-# does not bind a consumer capability, enter user mode, or accept a request.
+# publishes a durable filesystem domain ledger, provider-only generation-two
+# endpoint, and fresh ready thread. It does not bind a consumer capability,
+# enter user mode, or accept a request.
 push rbx
 push rbp
 push rsi
@@ -76,6 +77,59 @@ load_memory_u32 eax rbp none 1 1224
 compare_i32 eax 1
 branch not_equal filesystem_construct_failure
 load_memory_u32 eax rbp none 1 1228
+test eax eax
+branch not_equal filesystem_construct_failure
+
+# Require the terminal directory endpoint before reusing its exact 64-byte slot
+# as the filesystem domain ledger. The retained channel remains separate and is
+# not reinterpreted.
+load_memory_u32 eax rbp none 1 2144
+move_u32 edx 1313166935
+compare eax edx
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2148
+move_u32 edx 825249860
+compare eax edx
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2152
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2156
+compare_i32 eax 64
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2160
+compare_i32 eax 2
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2164
+compare_i32 eax 65537
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2168
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2172
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2176
+compare_i32 eax 65539
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2180
+compare_i32 eax 131074
+branch not_equal filesystem_construct_failure
+load_memory_u64 rax rbp none 1 2184
+move rdx rbp
+add_i32 rdx 2032
+compare rax rdx
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2192
+compare_i32 eax 6
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2196
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2200
+compare_i32 eax 1
+branch not_equal filesystem_construct_failure
+load_memory_u32 eax rbp none 1 2204
 test eax eax
 branch not_equal filesystem_construct_failure
 
@@ -230,6 +284,39 @@ move_u32 edx 4109160220
 compare eax edx
 branch not_equal filesystem_construct_failure
 
+# Replace the retired directory endpoint with a private 64-byte WVDOM001
+# ledger. Its two magic words remain zero until the final publication commit.
+move rdi rbp
+add_i32 rdi 2144
+move_u32 ecx 8
+move_u32 eax 0
+label filesystem_domain_clear
+store_memory_u64 rdi none 1 0 rax
+add_i32 rdi 8
+subtract_i32 ecx 1
+branch not_equal filesystem_domain_clear
+move rdi rbp
+add_i32 rdi 2144
+move_u32 eax 1
+store_memory_u32 rdi none 1 8 eax
+move_u32 eax 64
+store_memory_u32 rdi none 1 12 eax
+move_u32 eax 65538
+store_memory_u32 rdi none 1 20 eax
+move_u32 eax 196610
+store_memory_u32 rdi none 1 24 eax
+move_u32 eax 1
+store_memory_u32 rdi none 1 28 eax
+move_u32 eax 81
+store_memory_u32 rdi none 1 32 eax
+move_u32 eax 1
+store_memory_u32 rdi none 1 36 eax
+store_memory_u32 rdi none 1 40 eax
+move_u32 eax 81
+store_memory_u32 rdi none 1 44 eax
+move_u32 eax 1
+store_memory_u32 rdi none 1 48 eax
+
 # Clear the retired channel and construct one empty capacity-one WVCHAN04.
 move rdi rbp
 add_i32 rdi 1056
@@ -329,11 +416,16 @@ move_u32 eax 27
 store_memory_u64 rdi none 1 216 rax
 
 # Finish the private process record, then publish only after every record is
-# complete: endpoint, thread, then process. No consumer capability is present,
-# so the ready provider cannot receive work.
+# complete: domain magic, endpoint, thread, then process. The second magic word
+# is the domain publication point. No consumer capability is present, so the
+# ready provider cannot receive work.
 move rax rbp
 add_i32 rax 20480
 store_memory_u64 rbp none 1 896 rax
+move_u32 eax 1329878615
+store_memory_u32 rbp none 1 2144 eax
+move_u32 eax 825241677
+store_memory_u32 rbp none 1 2148 eax
 move_u32 eax 1
 store_memory_u32 rbp none 1 1184 eax
 store_memory_u32 rbp none 1 2456 eax

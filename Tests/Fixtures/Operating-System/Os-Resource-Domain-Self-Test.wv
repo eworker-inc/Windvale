@@ -1,7 +1,74 @@
 module Osˉresourceˉdomainˉselfˉtest profile portable;
 import Resourceˉdomainˉpolicy as Domain;
+import Resourceˉdomainˉrecord as Record;
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+        )
+    );
+}
 
 export fn Main() -> i32 {
+    let Filesystemˉrecord: bytes = Record.Filesystemˉresourceˉdomainˉrecord();
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(Filesystemˉrecord) !=
+        Record.Resourceˉdomainˉrecordˉstatus.Valid ||
+        Bytesˉlength(Filesystemˉrecord) != 64u32 {
+        return 18;
+    }
+    let Truncated: bytes = Bytesˉslice(Filesystemˉrecord, 0u32, 63u32);
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(Truncated) !=
+        Record.Resourceˉdomainˉrecordˉstatus.Invalidˉsize {
+        return 19;
+    }
+    let Wrongˉmagic: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉslice(Filesystemˉrecord, 4u32, 60u32)
+    );
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(Wrongˉmagic) !=
+        Record.Resourceˉdomainˉrecordˉstatus.Invalidˉmagic {
+        return 20;
+    }
+    let Oversized: bytes = Bytesˉconcat(
+        Filesystemˉrecord, Bytesˉfromˉu32ˉlittle(0u32)
+    );
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(Oversized) !=
+        Record.Resourceˉdomainˉrecordˉstatus.Invalidˉsize {
+        return 21;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(
+        Replaceˉu32(Filesystemˉrecord, 8u32, 2u32)
+    ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉversion {
+        return 22;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(
+        Replaceˉu32(Filesystemˉrecord, 16u32, 1u32)
+    ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉheader {
+        return 23;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(
+        Replaceˉu32(Filesystemˉrecord, 20u32, 0u32)
+    ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉidentity {
+        return 24;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(
+        Replaceˉu32(Filesystemˉrecord, 32u32, 80u32)
+    ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉlimits {
+        return 25;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(
+        Replaceˉu32(Filesystemˉrecord, 52u32, 1u32)
+    ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉreservation {
+        return 26;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(
+        Replaceˉu32(Filesystemˉrecord, 44u32, 80u32)
+    ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉcommit {
+        return 27;
+    }
     let Invalid: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(0u32, 1u32, 3u32, 144u32, 2u32);
     if Invalid.Status != Domain.Resourceˉdomainˉstatus.Invalidˉdomain { return 1; }
     let Created: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
