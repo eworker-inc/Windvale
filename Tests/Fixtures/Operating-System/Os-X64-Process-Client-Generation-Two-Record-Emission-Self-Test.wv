@@ -1,0 +1,30 @@
+module Osˉx64ˉprocessˉclientˉgenerationˉtwoˉrecordˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉgenerationˉtwoˉrecordˉemission as Record;
+
+export fn Main() -> i32 {
+    let Code: bytes = Record.X64ˉprocessˉclientˉgenerationˉtwoˉrecordˉbytes();
+    if Bytesˉlength(Code) != 499u32 ||
+        Record.X64ˉprocessˉclientˉgenerationˉtwoˉrecordˉfixtureˉoffset() != 19742u32 ||
+        Record.X64ˉprocessˉclientˉgenerationˉtwoˉrecordˉfixtureˉend() != 20241u32 {
+        return 1;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 499u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 61988u32 || Hashˉone != 2526u32 ||
+        Hashˉtwo != 15485u32 || Hashˉthree != 2397u32 {
+        return 2;
+    }
+    return 90;
+}

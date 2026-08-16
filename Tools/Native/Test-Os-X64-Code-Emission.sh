@@ -528,4 +528,17 @@ verify "$work/ClientMemoryRecycle.elf" 41072 5215b6db9ae314e336946db9af0be94a1b8
 [[ $? -eq 89 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientMemoryRecycle.bin" 0 "$work/ClientMemoryRecycle.exe" >/dev/null || exit $?
 verify "$work/ClientMemoryRecycle.exe" 36352 bd784204bcb993dd642d1122038af4add3efaf0b68dd695c57cf5be5b7bc402c || exit 1
-echo 'native os x64 code emission status=Passed projects=40 cases=240 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89 cross-host-images=Verified source-owned-bytes=19742 relocation-fields=120'
+echo 'step=client-generation-two-record item=41/41'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Record-Emission.wvproj" "$work/ClientGenerationTwoRecord.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoRecord.wvb" 2246 408a51f39da581efc0ece5c54ba34207c553c82186cc218ae98c64e2a3b30030 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoRecord.wvb" "$work/ClientGenerationTwoRecord.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoRecord.wvo" 14191 7355afeb166ae3502a7f6f33cb213060b09568b1e79fddd390757e3ac8f118c6 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoRecord.bin" "$work/ClientGenerationTwoRecord.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoRecord.bin" 13939 64ed64bf5378380c8300f3577031f212602b10bbfd88fbec79f9054a12289241 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoRecord.bin" 0 "$work/ClientGenerationTwoRecord.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoRecord.elf" 20592 aa3700448dfb9d450afc48c64ed20d49f19ad780efe8ecd29031ecbdbba2c7b2 || exit 1
+"$work/ClientGenerationTwoRecord.elf" >/dev/null
+[[ $? -eq 90 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoRecord.bin" 0 "$work/ClientGenerationTwoRecord.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoRecord.exe" 15872 9ad20271c35b181ead51fd1ff3d84e3d8f83cf44183092c601c72f81a644b85c || exit 1
+echo 'native os x64 code emission status=Passed projects=41 cases=246 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90 cross-host-images=Verified source-owned-bytes=20241 relocation-fields=120'

@@ -218,6 +218,12 @@ its distinct reference, repeats the alignment and identity-window checks, and
 requires the same physical root. Ownership reaches byte 19,741; no generation-2
 record or mapping is published until the following reconstruction transactions.
 
+Generation-2 reconstruction begins by clearing the entire retained client
+record and rebuilding its generation, fixed identity, resource bounds, pinned
+image digests, private extent addresses, and retained service endpoint bindings.
+The record remains private through byte 20,240; paging and ready publication
+remain later transactions.
+
 The first restart policies are deliberately small:
 
 - `Never`;

@@ -934,7 +934,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientMemoryRecycle.elf" 41072 5215b6db9ae314e336946db9af0be94a1b83be919a6adde2404e064053cdb315
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=40 cases=240 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89 cross-host-images=Verified source-owned-bytes=19742 relocation-fields=120
+echo step=client-generation-two-record item=41/41
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Record-Emission.wvproj" "%Work%\ClientGenerationTwoRecord.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoRecord.wvb" 2246 408a51f39da581efc0ece5c54ba34207c553c82186cc218ae98c64e2a3b30030
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoRecord.wvb" "%Work%\ClientGenerationTwoRecord.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoRecord.wvo" 14191 7355afeb166ae3502a7f6f33cb213060b09568b1e79fddd390757e3ac8f118c6
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoRecord.bin" "%Work%\ClientGenerationTwoRecord.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoRecord.bin" 13939 64ed64bf5378380c8300f3577031f212602b10bbfd88fbec79f9054a12289241
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoRecord.bin" 0 "%Work%\ClientGenerationTwoRecord.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoRecord.exe" >nul
+if not "%ERRORLEVEL%"=="90" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoRecord.exe" 15872 9ad20271c35b181ead51fd1ff3d84e3d8f83cf44183092c601c72f81a644b85c
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoRecord.bin" 0 "%Work%\ClientGenerationTwoRecord.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoRecord.elf" 20592 aa3700448dfb9d450afc48c64ed20d49f19ad780efe8ecd29031ecbdbba2c7b2
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=41 cases=246 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90 cross-host-images=Verified source-owned-bytes=20241 relocation-fields=120
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"
