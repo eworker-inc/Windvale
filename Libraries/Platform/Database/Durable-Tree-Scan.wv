@@ -1,0 +1,596 @@
+module Durableˉtreeˉscan profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtreeˉleafˉscan as Leafˉscan;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+const DATABASE_TREE_SCAN_HEADER_BYTES: u64 = 512u64;
+const DATABASE_TREE_SCAN_MAXIMUM_DEPTH: u32 = 32u32;
+const DATABASE_TREE_SCAN_MAXIMUM_KEY_BYTES: u32 = 4096u32;
+const DATABASE_TREE_SCAN_MAXIMUM_ROWS: u32 = 500u32;
+
+export enum Databaseˉdurableˉtreeˉscanˉstatus {
+    Page = 0;
+    Complete = 1;
+    Invalidˉcurrent = 2;
+    Invalidˉbounds = 3;
+    Invalidˉlimit = 4;
+    Invalidˉsnapshot = 5;
+    Unsupportedˉdepth = 6;
+    Pageˉfailure = 7;
+    Invalidˉdurableˉpage = 8;
+    Invalidˉnode = 9;
+    Invalidˉgraph = 10;
+    Changedˉsnapshot = 11;
+}
+
+export record Databaseˉdurableˉtreeˉscanˉsnapshot {
+    Active: bool;
+    Databaseˉgeneration: u64;
+    Committedˉsequence: u64;
+    Rootˉpage: u64;
+    Providerˉgeneration: u64;
+    Providerˉlength: u64;
+}
+
+export record Databaseˉdurableˉtreeˉscanˉresult {
+    Status: Databaseˉdurableˉtreeˉscanˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Storageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Scanˉerror: Leafˉscan.Databaseˉtreeˉleafˉscanˉerror;
+    Pageˉvisits: u32;
+    Pageˉidentifier: u64;
+    Count: u32;
+    Examined: u32;
+    Hasˉmore: bool;
+    Entries: bytes;
+    Lastˉkey: bytes;
+    Hasˉresume: bool;
+    Resume: bytes;
+    Resumeˉinclusive: bool;
+    Snapshot: Databaseˉdurableˉtreeˉscanˉsnapshot;
+}
+
+fn Databaseˉdurableˉtreeˉscanˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉtreeˉscanˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    let Prefixed: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Prefixed, 1u32, Length);
+}
+
+export fn Databaseˉdurableˉtreeˉscanˉbegin()
+    -> Databaseˉdurableˉtreeˉscanˉsnapshot {
+    return Databaseˉdurableˉtreeˉscanˉsnapshot(
+        false,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+fn Databaseˉdurableˉtreeˉscanˉfailure(
+    Status: Databaseˉdurableˉtreeˉscanˉstatus,
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus,
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror,
+    Storageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Scanˉerror: Leafˉscan.Databaseˉtreeˉleafˉscanˉerror,
+    Pageˉvisits: u32,
+    Pageˉidentifier: u64,
+    Snapshot: Databaseˉdurableˉtreeˉscanˉsnapshot
+) -> Databaseˉdurableˉtreeˉscanˉresult {
+    let Empty: bytes = Databaseˉdurableˉtreeˉscanˉempty();
+    return Databaseˉdurableˉtreeˉscanˉresult(
+        Status,
+        Readˉstatus,
+        Readˉerror,
+        Storageˉerror,
+        Pageˉerror,
+        Nodeˉerror,
+        Scanˉerror,
+        Pageˉvisits,
+        Pageˉidentifier,
+        0u32,
+        0u32,
+        false,
+        Empty,
+        Empty,
+        false,
+        Empty,
+        false,
+        Snapshot
+    );
+}
+
+fn Databaseˉdurableˉtreeˉscanˉoutcome(
+    Status: Databaseˉdurableˉtreeˉscanˉstatus,
+    Pageˉvisits: u32,
+    Pageˉidentifier: u64,
+    Count: u32,
+    Examined: u32,
+    Hasˉmore: bool,
+    Entries: bytes,
+    Lastˉkey: bytes,
+    Hasˉresume: bool,
+    Resume: bytes,
+    Resumeˉinclusive: bool,
+    Snapshot: Databaseˉdurableˉtreeˉscanˉsnapshot
+) -> Databaseˉdurableˉtreeˉscanˉresult {
+    return Databaseˉdurableˉtreeˉscanˉresult(
+        Status,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+        Pageˉvisits,
+        Pageˉidentifier,
+        Count,
+        Examined,
+        Hasˉmore,
+        Entries,
+        Lastˉkey,
+        Hasˉresume,
+        Resume,
+        Resumeˉinclusive,
+        Snapshot
+    );
+}
+
+export fn Databaseˉdurableˉtreeˉscanˉpage(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Hasˉstart: bool,
+    Start: bytes,
+    Startˉinclusive: bool,
+    Hasˉend: bool,
+    End: bytes,
+    Endˉinclusive: bool,
+    Limit: u32,
+    Snapshot: Databaseˉdurableˉtreeˉscanˉsnapshot
+) -> Databaseˉdurableˉtreeˉscanˉresult {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid {
+        return Databaseˉdurableˉtreeˉscanˉfailure(
+            Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉcurrent,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+            0u32,
+            Current.Rootˉpage,
+            Snapshot
+        );
+    }
+    if Limit == 0u32 || Limit > DATABASE_TREE_SCAN_MAXIMUM_ROWS {
+        return Databaseˉdurableˉtreeˉscanˉfailure(
+            Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉlimit,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉlimit,
+            0u32,
+            Current.Rootˉpage,
+            Snapshot
+        );
+    }
+    var Boundsˉerror: Leafˉscan.Databaseˉtreeˉleafˉscanˉerror =
+        Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid;
+    if Hasˉstart && (Bytesˉlength(Start) == 0u32 ||
+            Bytesˉlength(Start) > DATABASE_TREE_SCAN_MAXIMUM_KEY_BYTES) ||
+        !Hasˉstart && (Bytesˉlength(Start) != 0u32 || Startˉinclusive) {
+        Boundsˉerror =
+            Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉstart;
+    } else if Hasˉend && (Bytesˉlength(End) == 0u32 ||
+            Bytesˉlength(End) > DATABASE_TREE_SCAN_MAXIMUM_KEY_BYTES) ||
+        !Hasˉend && (Bytesˉlength(End) != 0u32 || Endˉinclusive) {
+        Boundsˉerror = Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉend;
+    } else if Hasˉstart && Hasˉend && Tree.Databaseˉtreeˉkeyˉcompare(
+            Start,
+            End
+        ) == Tree.Databaseˉtreeˉkeyˉorder.Greater {
+        Boundsˉerror =
+            Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉrange;
+    }
+    if Boundsˉerror != Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid {
+        return Databaseˉdurableˉtreeˉscanˉfailure(
+            Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉbounds,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Boundsˉerror,
+            0u32,
+            Current.Rootˉpage,
+            Snapshot
+        );
+    }
+    if !Snapshot.Active &&
+            (Snapshot.Databaseˉgeneration != 0u64 ||
+            Snapshot.Committedˉsequence != 0u64 ||
+            Snapshot.Rootˉpage != 0u64 ||
+            Snapshot.Providerˉgeneration != 0u64 ||
+            Snapshot.Providerˉlength != 0u64) ||
+        Snapshot.Active &&
+            (Snapshot.Databaseˉgeneration != Current.Generation ||
+            Snapshot.Committedˉsequence != Current.Committedˉsequence ||
+            Snapshot.Rootˉpage != Current.Rootˉpage ||
+            Snapshot.Providerˉgeneration == 0u64 ||
+            Snapshot.Providerˉlength < Current.Committedˉlength) {
+        return Databaseˉdurableˉtreeˉscanˉfailure(
+            Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉsnapshot,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+            0u32,
+            Current.Rootˉpage,
+            Snapshot
+        );
+    }
+    if Current.Rootˉdepth == 0u32 ||
+        Current.Rootˉdepth > DATABASE_TREE_SCAN_MAXIMUM_DEPTH {
+        return Databaseˉdurableˉtreeˉscanˉfailure(
+            Databaseˉdurableˉtreeˉscanˉstatus.Unsupportedˉdepth,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+            0u32,
+            Current.Rootˉpage,
+            Snapshot
+        );
+    }
+
+    var Routeˉkey: bytes = Bytesˉfromˉu8(0u8);
+    if Hasˉstart { Routeˉkey = Start; }
+    var Pageˉidentifier: u64 = Current.Rootˉpage;
+    var Remainingˉdepth: u32 = Current.Rootˉdepth;
+    var Visits: u32 = 0u32;
+    var Hasˉlower: bool = false;
+    var Lower: bytes = Databaseˉdurableˉtreeˉscanˉempty();
+    var Hasˉupper: bool = false;
+    var Upper: bytes = Databaseˉdurableˉtreeˉscanˉempty();
+    var Providerˉgeneration: u64 = Snapshot.Providerˉgeneration;
+    var Providerˉlength: u64 = Snapshot.Providerˉlength;
+    while Remainingˉdepth > 0u32 {
+        if Pageˉidentifier >= Current.Pageˉcount {
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉgraph,
+                Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+                Pageˉreader.Databaseˉpageˉerror.None,
+                Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Snapshot
+            );
+        }
+        let Read: Pageˉreader.Databaseˉpageˉreadˉresult =
+            Pageˉreader.Databaseˉstorageˉreadˉpage(
+                DATABASE_TREE_SCAN_HEADER_BYTES,
+                Current.Pageˉsize,
+                Pageˉidentifier
+            );
+        Visits = Visits + 1u32;
+        if Read.Status != Pageˉreader.Databaseˉpageˉreadˉstatus.Valid {
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Pageˉfailure,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Snapshot
+            );
+        }
+        if Visits == 1u32 && !Snapshot.Active {
+            Providerˉgeneration = Read.Generation;
+            Providerˉlength = Read.Storageˉlength;
+            if Providerˉgeneration == 0u64 ||
+                Providerˉlength < Current.Committedˉlength {
+                return Databaseˉdurableˉtreeˉscanˉfailure(
+                    Databaseˉdurableˉtreeˉscanˉstatus.Changedˉsnapshot,
+                    Read.Status,
+                    Read.Pageˉerror,
+                    Read.Storageˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                    Visits,
+                    Pageˉidentifier,
+                    Snapshot
+                );
+            }
+        } else if Read.Generation != Providerˉgeneration ||
+            Read.Storageˉlength != Providerˉlength {
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Changedˉsnapshot,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Snapshot
+            );
+        }
+        let Activeˉsnapshot: Databaseˉdurableˉtreeˉscanˉsnapshot =
+            Databaseˉdurableˉtreeˉscanˉsnapshot(
+                true,
+                Current.Generation,
+                Current.Committedˉsequence,
+                Current.Rootˉpage,
+                Providerˉgeneration,
+                Providerˉlength
+            );
+        let Durable: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Read.Value);
+        if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉdurableˉpage,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Durable.Error,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Activeˉsnapshot
+            );
+        }
+        if Durable.Pageˉidentifier != Pageˉidentifier ||
+            Durable.Pageˉsize != Current.Pageˉsize ||
+            Durable.Generation > Current.Generation ||
+            Durable.Commitˉsequence > Current.Committedˉsequence ||
+            Visits == 1u32 &&
+                (Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+                Durable.Generation != Current.Generation ||
+                Durable.Commitˉsequence != Current.Committedˉsequence) ||
+            Visits > 1u32 && Remainingˉdepth == 1u32 &&
+                Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+            Visits > 1u32 && Remainingˉdepth > 1u32 &&
+                Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Branch {
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉgraph,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Activeˉsnapshot
+            );
+        }
+        if Visits == 1u32 && Remainingˉdepth == 1u32 &&
+            Durable.Itemˉcount == 0u32 &&
+            Bytesˉlength(Durable.Payload) == 0u32 {
+            if Current.Generation == 1u64 &&
+                Current.Committedˉsequence == 0u64 &&
+                Current.Rootˉpage == 0u64 {
+                let Empty: bytes = Databaseˉdurableˉtreeˉscanˉempty();
+                return Databaseˉdurableˉtreeˉscanˉoutcome(
+                    Databaseˉdurableˉtreeˉscanˉstatus.Complete,
+                    Visits,
+                    Pageˉidentifier,
+                    0u32,
+                    0u32,
+                    false,
+                    Empty,
+                    Empty,
+                    false,
+                    Empty,
+                    false,
+                    Activeˉsnapshot
+                );
+            }
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉnode,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉlength,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Activeˉsnapshot
+            );
+        }
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Durable.Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Node.Entryˉcount != Durable.Itemˉcount {
+            var Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Node.Error;
+            if Nodeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Nodeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉcount;
+            }
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉnode,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Nodeˉerror,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Activeˉsnapshot
+            );
+        }
+        if Remainingˉdepth == 1u32 {
+            let Rangeˉerror: Tree.Databaseˉtreeˉnodeˉerror =
+                Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+                    Durable.Payload,
+                    Hasˉlower,
+                    Lower,
+                    Hasˉupper,
+                    Upper
+                );
+            if Rangeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉdurableˉtreeˉscanˉfailure(
+                    Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉgraph,
+                    Read.Status,
+                    Read.Pageˉerror,
+                    Read.Storageˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Rangeˉerror,
+                    Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                    Visits,
+                    Pageˉidentifier,
+                    Activeˉsnapshot
+                );
+            }
+            let Selected: Leafˉscan.Databaseˉtreeˉleafˉscanˉresult =
+                Leafˉscan.Databaseˉtreeˉleafˉscan(
+                    Durable.Payload,
+                    Hasˉstart,
+                    Start,
+                    Startˉinclusive,
+                    Hasˉend,
+                    End,
+                    Endˉinclusive,
+                    Limit
+                );
+            if Selected.Error !=
+                    Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid {
+                return Databaseˉdurableˉtreeˉscanˉfailure(
+                    Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉnode,
+                    Read.Status,
+                    Read.Pageˉerror,
+                    Read.Storageˉerror,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Selected.Nodeˉerror,
+                    Selected.Error,
+                    Visits,
+                    Pageˉidentifier,
+                    Activeˉsnapshot
+                );
+            }
+            var Hasˉresume: bool = false;
+            var Resume: bytes = Databaseˉdurableˉtreeˉscanˉempty();
+            var Resumeˉinclusive: bool = false;
+            if Selected.Hasˉmore {
+                Hasˉresume = true;
+                Resume = Databaseˉdurableˉtreeˉscanˉcopy(
+                    Selected.Lastˉkey
+                );
+            } else if Hasˉupper {
+                var Continue: bool = true;
+                if Hasˉend {
+                    let Endˉorder: Tree.Databaseˉtreeˉkeyˉorder =
+                        Tree.Databaseˉtreeˉkeyˉcompare(Upper, End);
+                    if Endˉorder == Tree.Databaseˉtreeˉkeyˉorder.Greater ||
+                        Endˉorder == Tree.Databaseˉtreeˉkeyˉorder.Equal &&
+                            !Endˉinclusive {
+                        Continue = false;
+                    }
+                }
+                if Continue {
+                    Hasˉresume = true;
+                    Resume = Databaseˉdurableˉtreeˉscanˉcopy(Upper);
+                    Resumeˉinclusive = true;
+                }
+            }
+            var Status: Databaseˉdurableˉtreeˉscanˉstatus =
+                Databaseˉdurableˉtreeˉscanˉstatus.Complete;
+            if Hasˉresume {
+                Status = Databaseˉdurableˉtreeˉscanˉstatus.Page;
+            }
+            return Databaseˉdurableˉtreeˉscanˉoutcome(
+                Status,
+                Visits,
+                Pageˉidentifier,
+                Selected.Count,
+                Selected.Examined,
+                Hasˉresume,
+                Selected.Entries,
+                Selected.Lastˉkey,
+                Hasˉresume,
+                Resume,
+                Resumeˉinclusive,
+                Activeˉsnapshot
+            );
+        }
+        let Route: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+            Tree.Databaseˉtreeˉbranchˉroute(
+                Durable.Payload,
+                Routeˉkey,
+                Hasˉlower,
+                Lower,
+                Hasˉupper,
+                Upper
+            );
+        if Route.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Route.Child >= Durable.Pageˉidentifier ||
+            Route.Child >= Current.Pageˉcount {
+            var Routeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Route.Error;
+            if Routeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Routeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild;
+            }
+            return Databaseˉdurableˉtreeˉscanˉfailure(
+                Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉgraph,
+                Read.Status,
+                Read.Pageˉerror,
+                Read.Storageˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Routeˉerror,
+                Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+                Visits,
+                Pageˉidentifier,
+                Activeˉsnapshot
+            );
+        }
+        Pageˉidentifier = Route.Child;
+        Hasˉlower = Route.Hasˉlower;
+        Lower = Route.Lower;
+        Hasˉupper = Route.Hasˉupper;
+        Upper = Route.Upper;
+        Remainingˉdepth = Remainingˉdepth - 1u32;
+    }
+    return Databaseˉdurableˉtreeˉscanˉfailure(
+        Databaseˉdurableˉtreeˉscanˉstatus.Unsupportedˉdepth,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Leafˉscan.Databaseˉtreeˉleafˉscanˉerror.Valid,
+        Visits,
+        Pageˉidentifier,
+        Snapshot
+    );
+}

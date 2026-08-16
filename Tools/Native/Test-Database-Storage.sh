@@ -19,13 +19,19 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=23
+        selected_cases=24
         ;;
     tree-node|logical-record|typed-row|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
         selected_cases=1
         ;;
     host-tree-reader)
         selected_cases=2
+        ;;
+    tree-scan)
+        selected_cases=4
+        ;;
+    host-tree-scan)
+        selected_cases=3
         ;;
     json)
         selected_cases=2
@@ -85,12 +91,14 @@ project_checkpoint_host_storage=NotRun
 project_checkpoint_host_root_writer=NotRun
 project_checkpoint_host_local_service=NotRun
 project_checkpoint_host_tree_reader=NotRun
+project_checkpoint_host_tree_scan=NotRun
 project_checkpoint_engine=NotRun
 project_checkpoint_host_tree_writer=NotRun
 application_checkpoint_host_storage=NotRun
 application_checkpoint_host_root_writer=NotRun
 application_checkpoint_host_local_service=NotRun
 application_checkpoint_host_tree_reader=NotRun
+application_checkpoint_host_tree_scan=NotRun
 application_checkpoint_engine=NotRun
 application_checkpoint_host_tree_writer=NotRun
 project_wvb_checkpoint=NotRun
@@ -816,6 +824,42 @@ build_host_local_component() {
     fi
 }
 
+verify_host_tree_scan() {
+    local project_path=$1
+    local application="$temporary_directory/HostLocal-TreeScan.elf"
+    local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
+    local updated_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.committed"
+    local run_directory="$temporary_directory/HostTreeScan-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local before_file="$run_directory/Windvale-Database-Storage.before"
+
+    build_host_local_component "$project_path" TreeScan "$application" || return $?
+    project_checkpoint_host_tree_scan=$host_local_component_project_checkpoint
+    application_checkpoint_host_tree_scan=$host_local_component_application_checkpoint
+    [[ -f $depth_two_committed_file && -f $updated_committed_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+
+    cp -- "$depth_two_committed_file" "$storage_file" || return $?
+    cp -- "$storage_file" "$before_file" || return $?
+    (cd -- "$run_directory" && "$application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host tree-scan committed-generation run returned $application_result, expected 0." >&2
+        return 1
+    fi
+    cmp --silent -- "$before_file" "$storage_file" || return 1
+
+    cp -- "$updated_committed_file" "$storage_file" || return $?
+    cp -- "$storage_file" "$before_file" || return $?
+    (cd -- "$run_directory" && "$application" >/dev/null)
+    application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host tree-scan updated-generation run returned $application_result, expected 0." >&2
+        return 1
+    fi
+    cmp --silent -- "$before_file" "$storage_file" || return 1
+}
+
 verify_host_local_service() {
     local put_project=$1 get_project=$2
     local put_application="$temporary_directory/HostLocal-Put.elf"
@@ -1383,10 +1427,11 @@ verify_development_host_targets() {
     host_root_writer_elapsed_ms=0
     host_local_service_elapsed_ms=0
     host_tree_reader_elapsed_ms=0
+    host_tree_scan_elapsed_ms=0
     engine_elapsed_ms=0
     host_tree_writer_elapsed_ms=0
     case "$development_target" in
-        all|host-storage|host-root-writer|host-local-service|host-tree-reader|engine|host-tree-writer) ;;
+        all|host-storage|host-root-writer|host-local-service|host-tree-reader|host-tree-scan|tree-scan|engine|host-tree-writer) ;;
         *) return 0 ;;
     esac
 
@@ -1452,6 +1497,23 @@ verify_development_host_targets() {
     echo "PASS  native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_reader_elapsed_ms project=$project_checkpoint_host_tree_reader application=$application_checkpoint_host_tree_reader"
     [[ $development_target != host-tree-reader ]] || return 0
 
+    if [[ $development_target == all ||
+        $development_target == host-tree-scan ||
+        $development_target == tree-scan ]]; then
+        progress_current=$((progress_current + 1))
+        host_tree_scan_start=$SECONDS
+        echo "START native database storage development step=host-tree-scan item=$progress_current/$progress_total target=$development_target"
+        verify_host_tree_scan \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj" || {
+                echo 'The native database storage development host-tree-scan stage failed.' >&2
+                return 1
+            }
+        host_tree_scan_elapsed_ms=$(((SECONDS - host_tree_scan_start) * 1000))
+        echo "PASS  native database storage development step=host-tree-scan item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_scan_elapsed_ms project=$project_checkpoint_host_tree_scan application=$application_checkpoint_host_tree_scan"
+        [[ $development_target != host-tree-scan &&
+            $development_target != tree-scan ]] || return 0
+    fi
+
     if [[ $development_target != host-tree-writer ]]; then
         progress_current=$((progress_current + 1))
         engine_start=$SECONDS
@@ -1487,7 +1549,7 @@ verify_development_host_targets() {
 if ((development == 1)); then
     portable_start=$SECONDS
     verify_development_target TreeNode tree-node \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" tree-scan || exit $?
     verify_development_target LogicalRecord logical-record \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
     verify_development_target TypedRow typed-row \
@@ -1523,8 +1585,8 @@ if ((development == 1)); then
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     verify_development_host_targets || exit $?
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
-    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
+    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms host-tree-scan-ms=$host_tree_scan_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
     exit 0
 fi
 
@@ -1591,6 +1653,8 @@ verify_host_local_service \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj" || exit $?
 verify_host_tree_reader \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
+verify_host_tree_scan \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj" || exit $?
 verify_host_engine \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || exit $?
 verify_host_tree_writer \
@@ -1598,4 +1662,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=32 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=33 local-results=0 cross-host-images=Verified'

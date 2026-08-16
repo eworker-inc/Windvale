@@ -13,19 +13,17 @@ project="$project_directory/$(basename -- "$1")"
 output_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 1
 output_wvb="$output_directory/$(basename -- "$2")"
 key_tool="$script_directory/Get-Native-Project-Cache-Key.mjs"
-builder="$script_directory/Build-Wvb.sh"
-verifier="$script_directory/Verify-Wvb.sh"
 front_door="$repository_root/Artifacts/Native-Front-Door"
 inventory="$front_door/SHA256SUMS"
 build_driver="$front_door/linux-x64/wvbuild.elf"
-publisher="$front_door/linux-x64/wvpublish.elf"
+workspace="$repository_root/Windvale.wvws"
 
-for candidate in "$project" "$key_tool" "$builder" "$verifier" \
-    "$inventory" "$build_driver" "$publisher"; do
+for candidate in "$project" "$key_tool" \
+    "$inventory" "$build_driver" "$workspace"; do
     [[ -f $candidate ]] || exit 1
 done
-checkpoint_key=$(node "$key_tool" project-wvb-v1 "$project" "$builder" \
-    "$inventory" "$build_driver" "$publisher") || exit $?
+checkpoint_key=$(node "$key_tool" project-wvb-v2 "$project" \
+    "$inventory" "$build_driver") || exit $?
 [[ $checkpoint_key =~ ^[0-9a-f]{64}$ ]] || exit 1
 
 if [[ -n ${WINDVALE_NATIVE_CACHE_ROOT:-} ]]; then
@@ -37,7 +35,7 @@ fi
 mkdir -p -- "$checkpoint_root_input" || exit 1
 checkpoint_root=$(CDPATH= cd -- "$checkpoint_root_input" && pwd -P) || exit 1
 [[ -z $(find "$checkpoint_root" -type l -print -quit) ]] || exit 1
-checkpoint_family="$checkpoint_root/project-wvb-v1/linux-x64"
+checkpoint_family="$checkpoint_root/project-wvb-v2/linux-x64"
 mkdir -p -- "$checkpoint_family" || exit 1
 [[ ! -L $checkpoint_family ]] || exit 1
 
@@ -79,13 +77,13 @@ if [[ ! -e $checkpoint_directory ]]; then
     checkpoint_temporary=$(mktemp -d "$checkpoint_family/.new-$checkpoint_key.XXXXXXXX") || exit 1
     candidate_wvb="$checkpoint_temporary/Product.wvb"
     build_log="$checkpoint_temporary/Build.log"
-    if ! "$builder" "$project" "$candidate_wvb" >"$build_log" 2>&1; then
+    if ! "$build_driver" --workspace "$workspace" --project "$project" \
+        "$candidate_wvb" >"$build_log" 2>&1; then
         echo 'The project-WVB cache build failed.' >&2
         cat -- "$build_log" >&2
         exit 1
     fi
     rm -f -- "$build_log"
-    "$verifier" "$candidate_wvb" >/dev/null || exit $?
     measure_file "$candidate_wvb" || exit 1
     candidate_bytes=$measured_bytes
     candidate_sha256=$measured_sha256
@@ -102,5 +100,4 @@ fi
 validate_checkpoint || exit 1
 cp -- "$checkpoint_wvb" "$output_wvb" || exit 1
 cmp --silent -- "$checkpoint_wvb" "$output_wvb" || exit 1
-"$verifier" "$output_wvb" >/dev/null || exit $?
 echo "native project wvb cache status=$checkpoint_status key=$checkpoint_key"

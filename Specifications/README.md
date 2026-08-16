@@ -72,6 +72,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Depth-three root growth and deterministic internal branch split](Windvale-Database-Depth-Three-Root-Growth.md)
 - [Existing depth-three upsert and bounded split propagation](Windvale-Database-Depth-Three-Upsert.md)
 - [Bounded owned tree-path mutation](Windvale-Database-Tree-Path-Upsert.md)
+- [Committed-generation durable range scan](Windvale-Database-Durable-Range-Scan.md)
 - [Provider-driven durable tree writer](Windvale-Database-Hosted-Tree-Writer.md)
 - [Hosted depth-one root writer](Windvale-Database-Hosted-Root-Writer.md)
 - [Single-writer database engine lifecycle](Windvale-Database-Engine-Lifecycle.md)

@@ -1,0 +1,300 @@
+module Nativeˉhostedˉdurableˉtreeˉscanˉselfˉtest profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Durableˉtreeˉscan as Scan;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+capability storage.random_access_v1;
+
+const COMMITTED_LENGTH: u64 = 20992u64;
+const UPDATED_LENGTH: u64 = 33280u64;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Selectˉcurrent(
+    Description: Storage.Storageˉresult
+) -> Superblock.Databaseˉsuperblockˉselection {
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        0u64,
+        512u32
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Bytesˉlength(Header.Value) != 512u32 {
+        return Superblock.Databaseˉsuperblockˉselect(
+            Emptyˉbytes(),
+            Emptyˉbytes(),
+            Description.Storageˉlength
+        );
+    }
+    return Superblock.Databaseˉsuperblockˉselect(
+        Bytesˉslice(Header.Value, 0u32, 256u32),
+        Bytesˉslice(Header.Value, 256u32, 256u32),
+        Description.Storageˉlength
+    );
+}
+
+export fn Main() -> i32 {
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 ||
+        Description.Storageˉlength != COMMITTED_LENGTH &&
+            Description.Storageˉlength != UPDATED_LENGTH {
+        return 1;
+    }
+    let Current: Superblock.Databaseˉsuperblockˉselection =
+        Selectˉcurrent(Description);
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Rootˉdepth != 2u32 || Current.Tailˉbytes != 0u64 {
+        return 2;
+    }
+    var Rightˉpage: u64 = 2u64;
+    var Rightˉcount: u32 = 2u32;
+    var Rightˉbytes: u32 = 26u32;
+    if Description.Storageˉlength == UPDATED_LENGTH {
+        Rightˉpage = 5u64;
+        Rightˉcount = 3u32;
+        Rightˉbytes = 39u32;
+    }
+
+    let Initial: Scan.Databaseˉdurableˉtreeˉscanˉsnapshot =
+        Scan.Databaseˉdurableˉtreeˉscanˉbegin();
+    let First: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            false,
+            Emptyˉbytes(),
+            false,
+            false,
+            Emptyˉbytes(),
+            false,
+            500u32,
+            Initial
+        );
+    if First.Status != Scan.Databaseˉdurableˉtreeˉscanˉstatus.Page ||
+        First.Pageˉvisits != 2u32 || First.Pageˉidentifier != 1u64 ||
+        First.Count != 1u32 || First.Examined != 1u32 ||
+        !First.Hasˉmore || !First.Hasˉresume ||
+        !First.Resumeˉinclusive ||
+        Bytesˉlength(First.Entries) != 13u32 ||
+        Bytesˉreadˉu8(First.Entries, 8u32) != 1u8 ||
+        Bytesˉreadˉi32ˉlittle(First.Entries, 9u32) != 10 ||
+        Bytesˉlength(First.Resume) != 1u32 ||
+        Bytesˉreadˉu8(First.Resume, 0u32) != 2u8 ||
+        !First.Snapshot.Active ||
+        First.Snapshot.Databaseˉgeneration != Current.Generation ||
+        First.Snapshot.Committedˉsequence != Current.Committedˉsequence ||
+        First.Snapshot.Rootˉpage != Current.Rootˉpage ||
+        First.Snapshot.Providerˉgeneration == 0u64 ||
+        First.Snapshot.Providerˉlength != Description.Storageˉlength {
+        return 3;
+    }
+    let Second: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            true,
+            First.Resume,
+            First.Resumeˉinclusive,
+            false,
+            Emptyˉbytes(),
+            false,
+            500u32,
+            First.Snapshot
+        );
+    if Second.Status != Scan.Databaseˉdurableˉtreeˉscanˉstatus.Complete ||
+        Second.Pageˉvisits != 2u32 ||
+        Second.Pageˉidentifier != Rightˉpage ||
+        Second.Count != Rightˉcount || Second.Examined != Rightˉcount ||
+        Second.Hasˉmore || Second.Hasˉresume ||
+        Bytesˉlength(Second.Entries) != Rightˉbytes ||
+        Bytesˉreadˉu8(Second.Entries, 8u32) != 2u8 ||
+        Bytesˉreadˉu8(Second.Entries, 21u32) != 3u8 {
+        return 4;
+    }
+    if Rightˉcount == 3u32 &&
+        Bytesˉreadˉu8(Second.Entries, 34u32) != 4u8 {
+        return 5;
+    }
+
+    let Boundedˉfirst: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            true,
+            Key(1u8),
+            false,
+            true,
+            Key(3u8),
+            true,
+            500u32,
+            Initial
+        );
+    if Boundedˉfirst.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Page ||
+        Boundedˉfirst.Count != 0u32 || !Boundedˉfirst.Hasˉresume ||
+        !Boundedˉfirst.Resumeˉinclusive ||
+        Bytesˉreadˉu8(Boundedˉfirst.Resume, 0u32) != 2u8 {
+        return 6;
+    }
+    let Boundedˉsecond: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            true,
+            Boundedˉfirst.Resume,
+            Boundedˉfirst.Resumeˉinclusive,
+            true,
+            Key(3u8),
+            true,
+            500u32,
+            Boundedˉfirst.Snapshot
+        );
+    if Boundedˉsecond.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Complete ||
+        Boundedˉsecond.Count != 2u32 || Boundedˉsecond.Hasˉresume ||
+        Bytesˉreadˉu8(Boundedˉsecond.Entries, 8u32) != 2u8 ||
+        Bytesˉreadˉu8(Boundedˉsecond.Entries, 21u32) != 3u8 {
+        return 7;
+    }
+
+    let Limitedˉfirst: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            false,
+            Emptyˉbytes(),
+            false,
+            true,
+            Key(3u8),
+            true,
+            1u32,
+            Initial
+        );
+    let Limitedˉsecond: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            true,
+            Limitedˉfirst.Resume,
+            Limitedˉfirst.Resumeˉinclusive,
+            true,
+            Key(3u8),
+            true,
+            1u32,
+            Limitedˉfirst.Snapshot
+        );
+    if Limitedˉsecond.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Page ||
+        Limitedˉsecond.Count != 1u32 || Limitedˉsecond.Examined != 2u32 ||
+        !Limitedˉsecond.Hasˉresume ||
+        Limitedˉsecond.Resumeˉinclusive ||
+        Bytesˉreadˉu8(Limitedˉsecond.Resume, 0u32) != 2u8 {
+        return 8;
+    }
+    let Limitedˉthird: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            true,
+            Limitedˉsecond.Resume,
+            Limitedˉsecond.Resumeˉinclusive,
+            true,
+            Key(3u8),
+            true,
+            1u32,
+            Limitedˉsecond.Snapshot
+        );
+    if Limitedˉthird.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Complete ||
+        Limitedˉthird.Count != 1u32 || Limitedˉthird.Hasˉresume ||
+        Bytesˉreadˉu8(Limitedˉthird.Entries, 8u32) != 3u8 {
+        return 9;
+    }
+
+    let Invalidˉlimit: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            false,
+            Emptyˉbytes(),
+            false,
+            false,
+            Emptyˉbytes(),
+            false,
+            0u32,
+            Initial
+        );
+    let Invalidˉbounds: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            false,
+            Key(1u8),
+            false,
+            false,
+            Emptyˉbytes(),
+            false,
+            1u32,
+            Initial
+        );
+    if Invalidˉlimit.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉlimit ||
+        Invalidˉlimit.Pageˉvisits != 0u32 ||
+        Invalidˉbounds.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉbounds ||
+        Invalidˉbounds.Pageˉvisits != 0u32 {
+        return 10;
+    }
+    let Wrongˉcurrent: Scan.Databaseˉdurableˉtreeˉscanˉsnapshot =
+        Scan.Databaseˉdurableˉtreeˉscanˉsnapshot(
+            true,
+            Current.Generation + 1u64,
+            Current.Committedˉsequence,
+            Current.Rootˉpage,
+            First.Snapshot.Providerˉgeneration,
+            First.Snapshot.Providerˉlength
+        );
+    let Invalidˉsnapshot: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            false,
+            Emptyˉbytes(),
+            false,
+            false,
+            Emptyˉbytes(),
+            false,
+            1u32,
+            Wrongˉcurrent
+        );
+    let Wrongˉprovider: Scan.Databaseˉdurableˉtreeˉscanˉsnapshot =
+        Scan.Databaseˉdurableˉtreeˉscanˉsnapshot(
+            true,
+            Current.Generation,
+            Current.Committedˉsequence,
+            Current.Rootˉpage,
+            First.Snapshot.Providerˉgeneration + 1u64,
+            First.Snapshot.Providerˉlength
+        );
+    let Changedˉsnapshot: Scan.Databaseˉdurableˉtreeˉscanˉresult =
+        Scan.Databaseˉdurableˉtreeˉscanˉpage(
+            Current,
+            false,
+            Emptyˉbytes(),
+            false,
+            false,
+            Emptyˉbytes(),
+            false,
+            1u32,
+            Wrongˉprovider
+        );
+    if Invalidˉsnapshot.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Invalidˉsnapshot ||
+        Invalidˉsnapshot.Pageˉvisits != 0u32 ||
+        Changedˉsnapshot.Status !=
+            Scan.Databaseˉdurableˉtreeˉscanˉstatus.Changedˉsnapshot ||
+        Changedˉsnapshot.Pageˉvisits != 1u32 {
+        return 11;
+    }
+    return 0;
+}

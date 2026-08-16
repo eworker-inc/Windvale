@@ -1624,7 +1624,22 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
-        DatabaseTarget = 'tree-node'
+        DatabaseTarget = 'tree-scan'
+    },
+    @{
+        Name = 'focused database durable range-scan owner'
+        Paths = @(
+            'Libraries/Platform/Database/Durable-Tree-Scan.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Scan-Self-Test.wv',
+            'Specifications/Windvale-Database-Durable-Range-Scan.md',
+            'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'host-tree-scan'
     },
     @{
         Name = 'focused database lifecycle owner'
@@ -1784,6 +1799,7 @@ $NativeCases = @(
             'Libraries/Platform/Database/Durable-Database-Engine.wv',
             'Libraries/Platform/Database/Durable-Database-Lifecycle.wv',
             'Libraries/Platform/Database/Durable-Tree-Reader.wv',
+            'Libraries/Platform/Database/Durable-Tree-Scan.wv',
             'Libraries/Platform/Database/Durable-Root-Writer.wv',
             'Libraries/Platform/Database/Durable-Root-Split-Writer.wv',
             'Libraries/Platform/Database/Durable-Local-Open.wv',
@@ -1809,6 +1825,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Database-Engine-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Reader-Self-Test.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Scan-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Writer-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Fill-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Split-Writer-Self-Test.wv',
@@ -1828,6 +1845,7 @@ $NativeCases = @(
             'Specifications/Windvale-Database-Collection-Catalog.md',
             'Specifications/Windvale-Database-Bootstrap.md',
             'Specifications/Windvale-Database-Tree-Path-Upsert.md',
+            'Specifications/Windvale-Database-Durable-Range-Scan.md',
             'Specifications/Windvale-Database-Engine-Lifecycle.md',
             'Specifications/Windvale-Database-Hosted-Root-Writer.md',
             'Specifications/Windvale-Database-Hosted-Root-Split-Writer.md',
@@ -1876,6 +1894,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Durable-Database-Engine.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Database-Lifecycle.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Tree-Reader.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Root-Writer.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Root-Split-Writer.wvproj',
             'Projects/Libraries/Windvale-Library-Durable-Local-Open.wvproj',
@@ -1901,6 +1920,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj',

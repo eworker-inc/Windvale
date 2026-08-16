@@ -11,21 +11,21 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Project=%~f1"
 set "OutputWvb=%~f2"
 set "KeyTool=%RepositoryRoot%\Tools\Native\Get-Native-Project-Cache-Key.mjs"
-set "Builder=%RepositoryRoot%\Tools\Native\Build-Wvb.cmd"
-set "Verifier=%RepositoryRoot%\Tools\Native\Verify-Wvb.cmd"
 set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door"
 set "Inventory=%FrontDoor%\SHA256SUMS"
 set "BuildDriver=%FrontDoor%\windows-x64\wvbuild.exe"
-set "Publisher=%FrontDoor%\windows-x64\wvpublish.exe"
+set "Workspace=%RepositoryRoot%\Windvale.wvws"
+set "WorkspaceResource=%Workspace:\=/%"
+set "ProjectResource=%Project:\=/%"
 
-for %%F in ("%Project%" "%KeyTool%" "%Builder%" "%Verifier%" "%Inventory%" "%BuildDriver%" "%Publisher%") do if not exist "%%~fF" exit /b 1
+for %%F in ("%Project%" "%KeyTool%" "%Inventory%" "%BuildDriver%" "%Workspace%") do if not exist "%%~fF" exit /b 1
 for %%D in ("%OutputWvb%") do if not exist "%%~dpD." exit /b 1
 
 :allocate_key
 set "KeyOutput=%TEMP%\windvale-project-wvb-cache-key-%RANDOM%-%RANDOM%-%RANDOM%.txt"
 if exist "%KeyOutput%" goto :allocate_key
-node "%KeyTool%" project-wvb-v1 "%Project%" "%Builder%" "%Inventory%" ^
-    "%BuildDriver%" "%Publisher%" >"%KeyOutput%"
+node "%KeyTool%" project-wvb-v2 "%Project%" "%Inventory%" ^
+    "%BuildDriver%" >"%KeyOutput%"
 if errorlevel 1 goto :key_failed
 set "CheckpointKey="
 set /p CheckpointKey=<"%KeyOutput%"
@@ -44,7 +44,7 @@ for %%R in ("%CheckpointRoot%") do set "CheckpointRoot=%%~fR"
 if not exist "%CheckpointRoot%\." mkdir "%CheckpointRoot%" || exit /b 1
 fsutil reparsepoint query "%CheckpointRoot%" >nul 2>nul
 if not errorlevel 1 exit /b 1
-set "CheckpointProductRoot=%CheckpointRoot%\project-wvb-v1"
+set "CheckpointProductRoot=%CheckpointRoot%\project-wvb-v2"
 if not exist "%CheckpointProductRoot%\." mkdir "%CheckpointProductRoot%" || exit /b 1
 fsutil reparsepoint query "%CheckpointProductRoot%" >nul 2>nul
 if not errorlevel 1 exit /b 1
@@ -64,16 +64,16 @@ set "CheckpointTemporary=%CheckpointFamily%\.new-%CheckpointKey%-%RANDOM%-%RANDO
 if exist "%CheckpointTemporary%\." goto :allocate_checkpoint
 mkdir "%CheckpointTemporary%" || exit /b 1
 set "CandidateWvb=%CheckpointTemporary%\Product.wvb"
+set "CandidateResource=%CandidateWvb:\=/%"
 set "BuildLog=%CheckpointTemporary%\Build.log"
-call "%Builder%" "%Project%" "%CandidateWvb%" >"%BuildLog%" 2>&1
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
+    "%ProjectResource%" "%CandidateResource%" >"%BuildLog%" 2>&1
 if errorlevel 1 (
     >&2 echo The project-WVB cache build failed.
     if exist "%BuildLog%" type "%BuildLog%" >&2
     exit /b 1
 )
 del /f /q "%BuildLog%" >nul 2>nul
-call "%Verifier%" "%CandidateWvb%" >nul
-if errorlevel 1 exit /b 1
 call :measure_file "%CandidateWvb%" CandidateBytes CandidateSha256
 if errorlevel 1 exit /b 1
 >"%CheckpointTemporary%\Checkpoint.txt" echo windvale-native-project-wvb-checkpoint 1
@@ -111,7 +111,6 @@ if not "%ManifestResult%"=="0" exit /b 1
 
 copy /b /y "%CheckpointWvb%" "%OutputWvb%" >nul || exit /b 1
 fc /b "%CheckpointWvb%" "%OutputWvb%" >nul || exit /b 1
-call "%Verifier%" "%OutputWvb%" >nul || exit /b 1
 echo native project wvb cache status=%CheckpointStatus% key=%CheckpointKey%
 exit /b 0
 

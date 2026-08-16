@@ -156,17 +156,22 @@ also requires executable mode on both the checkpoint and materialized copy.
 ## Project-WVB key and record
 
 `Build-Cached-Project-Wvb` invokes the existing
-`Get-Native-Project-Cache-Key.mjs` framing with namespace `project-wvb-v1`.
+`Get-Native-Project-Cache-Key.mjs` framing with namespace `project-wvb-v2`.
 After the format, namespace, workspace, project identity and bytes, and declared
 root/source closure, the ordered producers are:
 
-1. exact current-host `Build-Wvb` launcher;
-2. exact native-front-door `SHA256SUMS` inventory;
-3. exact current-host native build-driver application; and
-4. exact current-host native WVB publisher application.
+1. exact native-front-door `SHA256SUMS` inventory; and
+2. exact current-host native build-driver application.
+
+The build driver writes only into a fresh private checkpoint candidate
+directory after its mandatory compiler-aligned verification succeeds. The
+cache hashes that candidate and atomically moves the complete directory into
+the shared family. This avoids routing a private compiler-scale cache candidate
+through the general WVB publisher and read-only front door, whose independent
+ordinary-module size envelopes are narrower than the compiler build.
 
 The resulting lowercase 64-hex key names
-`project-wvb-v1/<host-family>/<key>`. The WVB checkpoint record contains exactly
+`project-wvb-v2/<host-family>/<key>`. The WVB checkpoint record contains exactly
 four ASCII lines:
 
 ```text
@@ -178,9 +183,9 @@ wvb-sha256 <64-lowercase-hex>
 
 The record is at most 1,024 bytes. The WVB is nonempty and at most 67,108,864
 bytes. Every hit rejects links, recomputes the size and digest, compares the
-complete expected record, materializes a fresh byte-identical copy, and invokes
-the current native `Verify-Wvb` front door. The verifier remains a current
-admission boundary rather than key material.
+complete expected record, and materializes a fresh byte-identical copy. The
+keyed build driver and its mandatory verification are the admission boundary;
+the cache does not reinterpret or execute the WVB.
 
 ## Linked-image key and record
 

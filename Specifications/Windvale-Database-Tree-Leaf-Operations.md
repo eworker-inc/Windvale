@@ -72,8 +72,10 @@ The durable reader first routes the start key to one leaf with inherited
 lower-inclusive and upper-exclusive bounds. When the leaf is exhausted, that
 upper separator is the inclusive start key for routing the next leaf from the
 same committed root. This permits bounded traversal without sibling pointers
-or arithmetic successor keys. Cross-leaf orchestration, cursors bound to a
-committed generation, and reverse scans remain the next layer.
+or arithmetic successor keys. The
+[durable range scanner](Windvale-Database-Durable-Range-Scan.md) now owns this
+cross-leaf orchestration and binds every page to one committed database and
+provider snapshot. Reverse scans remain the next traversal layer.
 
 ## Verification
 
