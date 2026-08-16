@@ -1,0 +1,61 @@
+module Osˉx64ˉprocessˉclientˉmemoryˉrecycleˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉmemoryˉrecycleˉemission as Recycle;
+
+export fn Main() -> i32 {
+    let Code: bytes = Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉbytes();
+    let Externalˉfields: bytes =
+        Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉexternalˉfields();
+    let Externalˉsymbols: bytes =
+        Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉexternalˉsymbols();
+    let Failureˉfields: bytes =
+        Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉfailureˉfields();
+    let Displacements: bytes =
+        Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 216u32 ||
+        Bytesˉlength(Externalˉfields) != 8u32 ||
+        Bytesˉlength(Externalˉsymbols) != 8u32 ||
+        Bytesˉlength(Failureˉfields) != 40u32 ||
+        Bytesˉlength(Displacements) != 40u32 ||
+        Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉfixtureˉoffset() != 19526u32 ||
+        Recycle.X64ˉprocessˉclientˉmemoryˉrecycleˉfixtureˉend() != 19742u32 {
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Externalˉfields, 0u32) != 60u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 0u32) != 15u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉfields, 4u32) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 4u32) != 13u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 60u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 128u32) != 0u32 {
+        return 2;
+    }
+    var Index: u32 = 0u32;
+    while Index < 10u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Failureˉfields, Index * 4u32);
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 ||
+            19526u32 + Field + 4u32 + Displacement != 33826u32 {
+            return 3;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 216u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 29266u32 || Hashˉone != 29524u32 ||
+        Hashˉtwo != 14477u32 || Hashˉthree != 58531u32 {
+        return 4;
+    }
+    return 89;
+}

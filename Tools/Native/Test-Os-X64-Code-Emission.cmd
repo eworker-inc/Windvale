@@ -911,7 +911,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientReclamationPreflight.elf" 32880 2098fc92bf5a58448256beefb52207fda7aa974941b26567ee9941df496e0ed1
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=39 cases=234 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88 cross-host-images=Verified source-owned-bytes=19526 relocation-fields=108
+echo step=client-memory-recycle item=40/40
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Memory-Recycle-Emission.wvproj" "%Work%\ClientMemoryRecycle.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientMemoryRecycle.wvb" 4205 6d43607fde70e4debb388d504d5197f5810377958917ca49c10d31bf3988907d
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientMemoryRecycle.wvb" "%Work%\ClientMemoryRecycle.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientMemoryRecycle.wvo" 34800 a4a98e1a839f6423f7bfb8b37a9a419725b91a7f5523f080dc46defb98d9ec8b
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientMemoryRecycle.bin" "%Work%\ClientMemoryRecycle.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientMemoryRecycle.bin" 34312 159a99df77bee31b100b2aacfd5e659b24aa1134a7a239f5d615ecb3af01b310
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientMemoryRecycle.bin" 0 "%Work%\ClientMemoryRecycle.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientMemoryRecycle.exe" >nul
+if not "%ERRORLEVEL%"=="89" goto :cleanup
+call :verify "%Work%\ClientMemoryRecycle.exe" 36352 bd784204bcb993dd642d1122038af4add3efaf0b68dd695c57cf5be5b7bc402c
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientMemoryRecycle.bin" 0 "%Work%\ClientMemoryRecycle.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientMemoryRecycle.elf" 41072 5215b6db9ae314e336946db9af0be94a1b83be919a6adde2404e064053cdb315
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=40 cases=240 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89 cross-host-images=Verified source-owned-bytes=19742 relocation-fields=120
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

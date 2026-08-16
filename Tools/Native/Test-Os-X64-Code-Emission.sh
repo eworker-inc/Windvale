@@ -515,4 +515,17 @@ verify "$work/ClientReclamationPreflight.elf" 32880 2098fc92bf5a58448256beefb522
 [[ $? -eq 88 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientReclamationPreflight.bin" 0 "$work/ClientReclamationPreflight.exe" >/dev/null || exit $?
 verify "$work/ClientReclamationPreflight.exe" 28160 ec6e05d9b84fa9364a18c6e423a9966eb961fcddfb8252fbaeab9b36ddfb2859 || exit 1
-echo 'native os x64 code emission status=Passed projects=39 cases=234 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88 cross-host-images=Verified source-owned-bytes=19526 relocation-fields=108'
+echo 'step=client-memory-recycle item=40/40'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Memory-Recycle-Emission.wvproj" "$work/ClientMemoryRecycle.wvb" >/dev/null || exit $?
+verify "$work/ClientMemoryRecycle.wvb" 4205 6d43607fde70e4debb388d504d5197f5810377958917ca49c10d31bf3988907d || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientMemoryRecycle.wvb" "$work/ClientMemoryRecycle.wvo" >/dev/null || exit $?
+verify "$work/ClientMemoryRecycle.wvo" 34800 a4a98e1a839f6423f7bfb8b37a9a419725b91a7f5523f080dc46defb98d9ec8b || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientMemoryRecycle.bin" "$work/ClientMemoryRecycle.wvo" >/dev/null || exit $?
+verify "$work/ClientMemoryRecycle.bin" 34312 159a99df77bee31b100b2aacfd5e659b24aa1134a7a239f5d615ecb3af01b310 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientMemoryRecycle.bin" 0 "$work/ClientMemoryRecycle.elf" >/dev/null || exit $?
+verify "$work/ClientMemoryRecycle.elf" 41072 5215b6db9ae314e336946db9af0be94a1b83be919a6adde2404e064053cdb315 || exit 1
+"$work/ClientMemoryRecycle.elf" >/dev/null
+[[ $? -eq 89 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientMemoryRecycle.bin" 0 "$work/ClientMemoryRecycle.exe" >/dev/null || exit $?
+verify "$work/ClientMemoryRecycle.exe" 36352 bd784204bcb993dd642d1122038af4add3efaf0b68dd695c57cf5be5b7bc402c || exit 1
+echo 'native os x64 code emission status=Passed projects=40 cases=240 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89 cross-host-images=Verified source-owned-bytes=19742 relocation-fields=120'

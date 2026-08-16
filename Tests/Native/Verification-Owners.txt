@@ -44,7 +44,7 @@ os-probe-object|Test-Os-Probe-Object-Producer|11|3|Tests: 11, Passed: 11, Failed
 os-kernel-target|Test-Os-Kernel-Target|7|2|Tests: 7, Passed: 7, Failed: 0
 os-process-policy|Test-Os-Process-Policy-Object|2|3|Tests: 2, Passed: 2, Failed: 0
 os-process-object|Test-Os-Process-Object|2|4|Tests: 2, Passed: 2, Failed: 0
-os-x64-code-emission|Test-Os-X64-Code-Emission|234|2|native os x64 code emission status=Passed projects=39 cases=234 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88 cross-host-images=Verified source-owned-bytes=19526 relocation-fields=108
+os-x64-code-emission|Test-Os-X64-Code-Emission|240|2|native os x64 code emission status=Passed projects=40 cases=240 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89 cross-host-images=Verified source-owned-bytes=19742 relocation-fields=120
 os-resource-domain|Test-Os-Resource-Domain|2|2|native os resource domain status=Passed projects=1 behavior=1 cases=2
 os-application-launch|Test-Os-Application-Launch|32|2|native os application launch status=Passed projects=6 behavior=4 cases=32
 os-provider-images|Test-Os-Provider-Images|8|2|native os provider images status=Passed services=2 readiness=2 cases=8

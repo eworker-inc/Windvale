@@ -212,6 +212,12 @@ descriptors, their exact hashes and mappings, and selected exiting-client state.
 It advances checked ownership through byte 19,525 while keeping memory release
 and all object reuse outside the admitted transaction.
 
+The admitted recycle transaction then releases exactly generation 1's 122-page
+object, checks restored allocator cursor/free state, requests generation 2 under
+its distinct reference, repeats the alignment and identity-window checks, and
+requires the same physical root. Ownership reaches byte 19,741; no generation-2
+record or mapping is published until the following reconstruction transactions.
+
 The first restart policies are deliberately small:
 
 - `Never`;
