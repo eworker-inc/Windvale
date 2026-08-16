@@ -1215,14 +1215,24 @@ $NativeCases = @(
         Name = 'OS application-launch policy ownership'
         Paths = @(
             'Operating-System/Kernel/Application-Launch-Policy.wv',
+            'Operating-System/Kernel/Application-Start-Request.wv',
+            'Operating-System/Kernel/Application-Start-User-Copy.wv',
             'Operating-System/Kernel/Application-Machine-Construction-Policy.wv',
             'Projects/Operating-System/Windvale-Os-Application-Launch-Policy.wvproj',
+            'Projects/Operating-System/Windvale-Os-Application-Start-Request.wvproj',
+            'Projects/Operating-System/Windvale-Os-Application-Start-User-Copy.wvproj',
             'Projects/Operating-System/Windvale-Os-Application-Machine-Construction-Policy.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Application-Launch.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Application-Start-Request.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Application-Start-User-Copy.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Application-Machine-Construction.wvproj',
             'Tests/Fixtures/Operating-System/Os-Application-Launch-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-Application-Start-Request-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-Application-Start-User-Copy-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-Application-Machine-Construction-Self-Test.wv',
-            'Specifications/Windvale-Os-Application-Launch-Policy.md'
+            'Specifications/Windvale-Os-Application-Launch-Policy.md',
+            'Specifications/Windvale-Os-Application-Start-Request.md',
+            'Specifications/Windvale-Os-Application-Start-User-Copy.md'
         )
         Suites = @('os-process-policy', 'os-application-launch', 'os-probe')
         Gaps = @()
@@ -2506,7 +2516,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4272 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4281 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

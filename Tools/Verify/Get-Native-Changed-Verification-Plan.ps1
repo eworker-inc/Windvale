@@ -527,7 +527,7 @@ function Add-Os-Suite {
         Add-Suite @('os-provider-images', 'os-application-launch')
     } elseif ($Path -match 'Filesystem-(?:Service|Provider)') {
         Add-Suite @('os-filesystem-service', 'native-u64-lowering')
-    } elseif ($Path -match 'Application-(?:Launch|Machine-Construction)|Service-Launch') {
+    } elseif ($Path -match 'Application-(?:Launch|Machine-Construction|Start-(?:Request|User-Copy))|Service-Launch') {
         Add-Suite @('os-application-launch', 'os-process-policy', 'os-probe')
     } elseif ($Path -match 'Resource-Domain') {
         Add-Suite 'os-resource-domain'
@@ -2190,6 +2190,7 @@ foreach ($Path in $Paths) {
         } elseif ($Path.Contains('Filesystem-Service', [StringComparison]::Ordinal)) {
             Add-Suite @('os-filesystem-service', 'native-u64-lowering')
         } elseif ($Path.Contains('Application-Launch', [StringComparison]::Ordinal) -or
+            $Path.Contains('Application-Start-', [StringComparison]::Ordinal) -or
             $Path.Contains('Application-Machine-Construction', [StringComparison]::Ordinal)) {
             Add-Suite 'os-application-launch'
         } elseif ($Path.Contains('Resource-Domain', [StringComparison]::Ordinal)) {

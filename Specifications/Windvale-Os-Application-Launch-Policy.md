@@ -11,6 +11,11 @@ public syscall ABI, package resolver, general process creator, service manager,
 or claim that arbitrary applications can now be started. The separate
 [`WVSR 1`](Windvale-Os-Application-Start-Request.md) decoder now validates one
 fixed serialized application profile before calling this typed ABI.
+The architecture-neutral
+[`application-start user-copy policy 1`](Windvale-Os-Application-Start-User-Copy.md)
+now copies that exact value, bounds it to an admitted window, and checks the
+encoded caller against a separately supplied current-caller identity before
+the decoder runs.
 
 LaunchPlan1 deliberately freezes the measured first consumer. An accepted
 request binds version `1`, init caller reference `65537`, domain reference
@@ -78,9 +83,10 @@ guest-controlled shutdown.
 
 ## Focused evidence and limits
 
-The `os-application-launch` native owner builds the admission policies and
-serialized request decoder and executes three behavior programs covering 20
-cases: every `WVSR 1` structural status and typed handoff plus
+The `os-application-launch` native owner builds the admission policies,
+serialized request decoder, and user-copy boundary and executes five behavior
+programs covering 41 cases: every `WVSR 1` structural status and typed handoff,
+nine copy/window/caller cases, plus
 unsupported-version, unauthorized-caller, stale-publication, malformed-plan,
 wrong-domain, and rights-profile rejection before exposure; successful
 reserve/construct/publish with exact domain charge; failed construction with
@@ -90,7 +96,9 @@ the same module composes into token 97; `os-process-object` pins the measured
 context; and `os-probe` pins all three EFI constructions.
 
 Policy 1 does not resolve packages, load an arbitrary image, allocate or map
-machine objects dynamically, copy user memory, transfer/move capabilities,
-accept variable total resource charges, expose
-cancellation/completion, or provide a user-callable launch syscall. Those are
-successor slices, not implied behavior.
+machine objects dynamically, read live x86-64 user pages, transfer/move
+capabilities, accept variable total resource charges, expose
+cancellation/completion, or provide a user-callable launch syscall. The
+portable user-copy policy proves copy-before-parse over an admitted bytes
+window; architecture-specific page access and syscall entry remain successor
+slices, not implied behavior.

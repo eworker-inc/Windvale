@@ -16,6 +16,8 @@ trap cleanup EXIT
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Application-Start-Request.wvproj" "$work/Request.wvb" >/dev/null || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Application-Launch.wvproj" "$work/Test.wvb" >/dev/null || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Application-Start-Request.wvproj" "$work/Request-Test.wvb" >/dev/null || exit $?
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Application-Start-User-Copy.wvproj" "$work/Copy-Policy.wvb" >/dev/null || exit $?
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Application-Start-User-Copy.wvproj" "$work/Copy-Test.wvb" >/dev/null || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Service-Launch-Policy.wvproj" "$work/Service-Policy.wvb" >/dev/null || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Service-Launch.wvproj" "$work/Service-Test.wvb" >/dev/null || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Application-Machine-Construction-Policy.wvproj" "$work/Machine-Policy.wvb" >/dev/null || exit $?
@@ -26,10 +28,13 @@ trap cleanup EXIT
 "$script_directory/Run-Wvb.sh" "$work/Request-Test.wvb" >"$work/Request-Run.out" 2>"$work/Request-Run.err" || exit $?
 [[ $(<"$work/Request-Run.out") == 'Result: 44' ]] || exit 1
 [[ ! -s $work/Request-Run.err ]] || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Copy-Test.wvb" >"$work/Copy-Run.out" 2>"$work/Copy-Run.err" || exit $?
+[[ $(<"$work/Copy-Run.out") == 'Result: 46' ]] || exit 1
+[[ ! -s $work/Copy-Run.err ]] || exit 1
 "$script_directory/Run-Wvb.sh" "$work/Service-Test.wvb" >"$work/Service-Run.out" 2>"$work/Service-Run.err" || exit $?
 [[ $(<"$work/Service-Run.out") == 'Result: 45' ]] || exit 1
 [[ ! -s $work/Service-Run.err ]] || exit 1
 "$script_directory/Run-Wvb.sh" "$work/Machine-Test.wvb" >"$work/Machine-Run.out" 2>"$work/Machine-Run.err" || exit $?
 [[ $(<"$work/Machine-Run.out") == 'Result: 43' ]] || exit 1
 [[ ! -s $work/Machine-Run.err ]] || exit 1
-echo 'native os application launch status=Passed projects=6 behavior=4 cases=32'
+echo 'native os application launch status=Passed projects=7 behavior=5 cases=41'

@@ -1,0 +1,5 @@
+windvale-project 2
+root "Operating-System/Kernel/Application-Start-User-Copy.wv"
+source "Operating-System/Kernel/Application-Launch-Policy.wv"
+source "Operating-System/Kernel/Application-Start-Request.wv"
+emit wvb

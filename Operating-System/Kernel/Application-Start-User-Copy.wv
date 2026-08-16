@@ -1,0 +1,83 @@
+module Applicationˉstartˉuserˉcopy profile portable;
+
+import Applicationˉlaunchˉpolicy as Launch;
+import Applicationˉstartˉrequest as Start;
+
+const APPLICATION_START_REQUEST_BYTES: u32 = 64u32;
+data Emptyˉrequest: bytes = [];
+
+export enum Applicationˉstartˉcopyˉstatus {
+    Copied = 0; Invalidˉsize = 1; Invalidˉwindow = 2;
+    Invalidˉrange = 3;
+}
+
+export record Applicationˉstartˉcopyˉresult {
+    Status: Applicationˉstartˉcopyˉstatus;
+    Request: bytes;
+}
+
+fn Reject(
+    Status: Applicationˉstartˉcopyˉstatus
+) -> Applicationˉstartˉcopyˉresult {
+    return Applicationˉstartˉcopyˉresult(Status, Emptyˉrequest);
+}
+
+export fn Applicationˉstartˉcopyˉfromˉuser(
+    Userˉmemory: bytes,
+    Windowˉoffset: u32,
+    Windowˉbytes: u32,
+    Bufferˉoffset: u32,
+    Bufferˉbytes: u32
+) -> Applicationˉstartˉcopyˉresult {
+    if Bufferˉbytes != APPLICATION_START_REQUEST_BYTES {
+        return Reject(Applicationˉstartˉcopyˉstatus.Invalidˉsize);
+    }
+    let Memoryˉbytes: u32 = Bytesˉlength(Userˉmemory);
+    if Windowˉoffset > Memoryˉbytes ||
+        Windowˉbytes > Memoryˉbytes - Windowˉoffset {
+        return Reject(Applicationˉstartˉcopyˉstatus.Invalidˉwindow);
+    }
+    if Bufferˉoffset < Windowˉoffset {
+        return Reject(Applicationˉstartˉcopyˉstatus.Invalidˉrange);
+    }
+    let Relativeˉoffset: u32 = Bufferˉoffset - Windowˉoffset;
+    if Relativeˉoffset > Windowˉbytes ||
+        Bufferˉbytes > Windowˉbytes - Relativeˉoffset {
+        return Reject(Applicationˉstartˉcopyˉstatus.Invalidˉrange);
+    }
+    return Applicationˉstartˉcopyˉresult(
+        Applicationˉstartˉcopyˉstatus.Copied,
+        Bytesˉslice(Userˉmemory, Bufferˉoffset, Bufferˉbytes)
+    );
+}
+
+export fn Applicationˉstartˉcopyˉandˉadmit(
+    Userˉmemory: bytes,
+    Windowˉoffset: u32,
+    Windowˉbytes: u32,
+    Bufferˉoffset: u32,
+    Bufferˉbytes: u32,
+    Currentˉcallerˉreference: u32
+) -> Launch.Applicationˉlaunchˉtransition {
+    let Copy: Applicationˉstartˉcopyˉresult =
+        Applicationˉstartˉcopyˉfromˉuser(
+            Userˉmemory, Windowˉoffset, Windowˉbytes,
+            Bufferˉoffset, Bufferˉbytes
+        );
+    if Copy.Status != Applicationˉstartˉcopyˉstatus.Copied {
+        return Launch.Applicationˉlaunchˉtransition(
+            Launch.Applicationˉlaunchˉstatus.Invalidˉplan,
+            Launch.Applicationˉlaunchˉstate.Rejected,
+            0u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Copy.Request, 20u32) !=
+        Currentˉcallerˉreference {
+        return Launch.Applicationˉlaunchˉtransition(
+            Launch.Applicationˉlaunchˉstatus.Invalidˉcaller,
+            Launch.Applicationˉlaunchˉstate.Rejected,
+            0u32
+        );
+    }
+    return Start.Applicationˉstartˉrequestˉadmit(Copy.Request);
+}

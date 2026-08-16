@@ -49,8 +49,12 @@ The focused launch owner now covers 20 cases, including every structural status,
 successful typed handoff, stale executable rejection, and a zero-reference
 malformed result.
 
-A future syscall must copy the complete request into kernel-owned memory before
-calling this decoder and must separately define syscall number/registers,
-caller derivation, completion, cancellation, and fault behavior. Service launch
-requires a successor request version with named filesystem/network executable,
-endpoint, capability, and resource profiles; version 1 rejects those roles.
+The implemented [user-copy policy](Windvale-Os-Application-Start-User-Copy.md)
+now copies the complete request into an immutable value, checks an admitted
+window with subtraction-first arithmetic, and compares the encoded caller with
+an independently supplied current-caller identity before calling this decoder.
+The future x86-64 adapter must still define the syscall number/registers,
+derive that caller from the current process, safely read live user pages, and
+define completion, cancellation, and fault behavior. Service launch requires a
+successor request version with named filesystem/network executable, endpoint,
+capability, and resource profiles; version 1 rejects those roles.

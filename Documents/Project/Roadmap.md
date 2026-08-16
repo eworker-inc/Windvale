@@ -661,9 +661,10 @@ provenance, revocation, and consensus boundaries are named.
   completes source ownership of all 33,826 process-machine bytes.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
-  executable-publication check are implemented; checked user-buffer decoding,
-  syscall entry, and dynamic executable/object allocation remain before later
-  isolated services can rely on it.
+  executable-publication check, exact serialized decoder, immutable user-window
+  copy, and independent caller check are implemented. The x86-64 page-access
+  adapter, syscall entry, and dynamic executable/object allocation remain
+  before later isolated services can rely on it.
 - Then advance the selected [filesystem plan](Windvale-Filesystem-Implementation-Plan.md):
   shared semantics, Windows/Linux host adapters, bounded Windvale OS service
   IPC, and one FAT32-backed guest provider before optional NTFS/ext4 adapters or

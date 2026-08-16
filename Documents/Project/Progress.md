@@ -69,6 +69,13 @@ process-machine bytes and 569 relocation fields. This closes the reconstruction
 boundary; integrated boot-image and live QEMU application execution remain the
 next evidence gate.
 
+The architecture-neutral application-start boundary now copies the exact
+64-byte `WVSR 1` request from an admitted byte window into an immutable value,
+uses subtraction-first range checks, and rejects caller impersonation before
+decoding. Its nine focused cases advance the application-launch owner to 41.
+An x86-64 live-user-page adapter and public start syscall remain pending; this
+slice does not yet make arbitrary applications launchable.
+
 ## .NET retirement result
 
 `████████████████████  8/8 conditions qualified — complete`

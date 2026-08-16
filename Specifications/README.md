@@ -211,6 +211,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [OS resource-domain policy](Windvale-Os-Resource-Domain-Policy.md)
 - [OS application-launch policy](Windvale-Os-Application-Launch-Policy.md)
 - [OS application-start request](Windvale-Os-Application-Start-Request.md)
+- [OS application-start user-copy policy](Windvale-Os-Application-Start-User-Copy.md)
 - [OS service-launch policy](Windvale-Os-Service-Launch-Policy.md)
 - [OS provider process images](Windvale-Os-Provider-Process-Images.md)
 - [OS provider launch transaction](Windvale-Os-Provider-Launch-Transaction.md)

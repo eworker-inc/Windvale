@@ -1,0 +1,79 @@
+module Osˉapplicationˉstartˉuserˉcopyˉselfˉtest profile portable;
+
+import Applicationˉlaunchˉpolicy as Launch;
+import Applicationˉstartˉuserˉcopy as Copy;
+
+data Prefix: bytes = [9,8,7,6,5,4,3,2];
+data Suffix: bytes = [1,3,5,7,9,11,13,15];
+data Validˉrequest: bytes = [87,86,83,82,1,0,0,0,64,0,0,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,40,0,1,0,1,0,0,0,1,0,0,0,122,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+data Wrongˉmagic: bytes = [88,86,83,82,1,0,0,0,64,0,0,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,40,0,1,0,1,0,0,0,1,0,0,0,122,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+
+export fn Main() -> i32 {
+    let Memory: bytes = Bytesˉconcat(
+        Prefix, Bytesˉconcat(Validˉrequest, Suffix)
+    );
+    let Copied: Copy.Applicationˉstartˉcopyˉresult =
+        Copy.Applicationˉstartˉcopyˉfromˉuser(Memory, 8u32, 64u32, 8u32, 64u32);
+    if Copied.Status != Copy.Applicationˉstartˉcopyˉstatus.Copied ||
+        Bytesˉlength(Copied.Request) != 64u32 ||
+        Bytesˉreadˉu32ˉlittle(Copied.Request, 0u32) != 1381193303u32 ||
+        Bytesˉreadˉu32ˉlittle(Copied.Request, 60u32) != 0u32 { return 1; }
+    let Accepted: Launch.Applicationˉlaunchˉtransition =
+        Copy.Applicationˉstartˉcopyˉandˉadmit(
+            Memory, 8u32, 64u32, 8u32, 64u32, 65537u32
+        );
+    if Accepted.Status != Launch.Applicationˉlaunchˉstatus.Success ||
+        Accepted.State != Launch.Applicationˉlaunchˉstate.Planned ||
+        Accepted.Planˉreference != 65537u32 { return 2; }
+    let Impersonated: Launch.Applicationˉlaunchˉtransition =
+        Copy.Applicationˉstartˉcopyˉandˉadmit(
+            Memory, 8u32, 64u32, 8u32, 64u32, 65538u32
+        );
+    if Impersonated.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉcaller ||
+        Impersonated.State != Launch.Applicationˉlaunchˉstate.Rejected ||
+        Impersonated.Planˉreference != 0u32 { return 3; }
+    let Invalidˉsize: Copy.Applicationˉstartˉcopyˉresult =
+        Copy.Applicationˉstartˉcopyˉfromˉuser(
+            Memory, 8u32, 64u32, 8u32, 63u32
+        );
+    if Invalidˉsize.Status != Copy.Applicationˉstartˉcopyˉstatus.Invalidˉsize {
+        return 4;
+    }
+    let Invalidˉwindowˉoffset: Copy.Applicationˉstartˉcopyˉresult =
+        Copy.Applicationˉstartˉcopyˉfromˉuser(
+            Memory, 81u32, 0u32, 81u32, 64u32
+        );
+    if Invalidˉwindowˉoffset.Status !=
+        Copy.Applicationˉstartˉcopyˉstatus.Invalidˉwindow { return 5; }
+    let Invalidˉwindowˉbytes: Copy.Applicationˉstartˉcopyˉresult =
+        Copy.Applicationˉstartˉcopyˉfromˉuser(
+            Memory, 8u32, 73u32, 8u32, 64u32
+        );
+    if Invalidˉwindowˉbytes.Status !=
+        Copy.Applicationˉstartˉcopyˉstatus.Invalidˉwindow { return 6; }
+    let Beforeˉwindow: Copy.Applicationˉstartˉcopyˉresult =
+        Copy.Applicationˉstartˉcopyˉfromˉuser(
+            Memory, 8u32, 64u32, 7u32, 64u32
+        );
+    if Beforeˉwindow.Status != Copy.Applicationˉstartˉcopyˉstatus.Invalidˉrange {
+        return 7;
+    }
+    let Afterˉwindow: Copy.Applicationˉstartˉcopyˉresult =
+        Copy.Applicationˉstartˉcopyˉfromˉuser(
+            Memory, 8u32, 64u32, 9u32, 64u32
+        );
+    if Afterˉwindow.Status != Copy.Applicationˉstartˉcopyˉstatus.Invalidˉrange {
+        return 8;
+    }
+    let Malformedˉmemory: bytes = Bytesˉconcat(
+        Prefix, Bytesˉconcat(Wrongˉmagic, Suffix)
+    );
+    let Malformed: Launch.Applicationˉlaunchˉtransition =
+        Copy.Applicationˉstartˉcopyˉandˉadmit(
+            Malformedˉmemory, 8u32, 64u32, 8u32, 64u32, 65537u32
+        );
+    if Malformed.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉplan ||
+        Malformed.State != Launch.Applicationˉlaunchˉstate.Rejected ||
+        Malformed.Planˉreference != 0u32 { return 9; }
+    return 46;
+}
