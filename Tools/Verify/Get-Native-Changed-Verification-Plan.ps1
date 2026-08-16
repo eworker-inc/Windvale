@@ -65,6 +65,7 @@ $DatabaseDevelopmentTargetProjects = [ordered]@{
     'host-tree-scan' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj'
     'engine' = 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj'
     'host-tree-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
+    'persistent-transaction-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj'
 }
 $DatabaseDevelopmentTargetsByPath = @{}
 foreach ($TargetEntry in $DatabaseDevelopmentTargetProjects.GetEnumerator()) {
@@ -311,6 +312,36 @@ foreach ($DatabaseDevelopmentPath in @($DatabaseDevelopmentTargetsByPath.Keys)) 
             'transaction-commit')
     }
 }
+$PersistentTransactionWriterBoundaryPaths =
+    [System.Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::Ordinal)
+foreach ($PersistentTransactionWriterPath in @(
+    'Libraries/Platform/Database/Durable-Transaction-Writer.wv',
+    'Libraries/Platform/Database/Durable-Persistent-Transaction-Writer.wv',
+    'Projects/Libraries/Windvale-Library-Durable-Transaction-Writer.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Persistent-Transaction-Writer.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj',
+    'Tests/Fixtures/Database/Native-Hosted-Persistent-Transaction-Writer-Self-Test.wv',
+    'Specifications/Windvale-Database-Persistent-Transaction-Writer.md'
+)) {
+    $null = $PersistentTransactionWriterBoundaryPaths.Add(
+        $PersistentTransactionWriterPath)
+    if (!$DatabaseDevelopmentTargetsByPath.ContainsKey(
+            $PersistentTransactionWriterPath)) {
+        $DatabaseDevelopmentTargetsByPath[$PersistentTransactionWriterPath] =
+            [System.Collections.Generic.HashSet[string]]::new(
+                [StringComparer]::Ordinal)
+    }
+    $null = $DatabaseDevelopmentTargetsByPath[
+        $PersistentTransactionWriterPath].Add('persistent-transaction-writer')
+}
+foreach ($DatabaseDevelopmentPath in @($DatabaseDevelopmentTargetsByPath.Keys)) {
+    if (!$PersistentTransactionWriterBoundaryPaths.Contains(
+            $DatabaseDevelopmentPath)) {
+        $null = $DatabaseDevelopmentTargetsByPath[
+            $DatabaseDevelopmentPath].Remove('persistent-transaction-writer')
+    }
+}
 $DurableTreeScanProject =
     'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj'
 if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($DurableTreeScanProject)) {
@@ -464,6 +495,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Hosted-Root-Writer.md' = @('host-root-writer')
     'Specifications/Windvale-Database-Hosted-Root-Split-Writer.md' = @('host-root-writer')
     'Specifications/Windvale-Database-Hosted-Tree-Writer.md' = @('host-tree-writer')
+    'Specifications/Windvale-Database-Persistent-Transaction-Writer.md' = @('persistent-transaction-writer')
 }
 $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
@@ -515,6 +547,8 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Durable-Local-Get.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Logical-Tree-Writer.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Transaction-Writer.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Persistent-Transaction-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
@@ -566,7 +600,8 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
-    'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj'
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj'
 )
 foreach ($ProjectPath in $DatabaseDevelopmentProjects) {
     $null = $DatabaseDevelopmentPaths.Add($ProjectPath)
@@ -632,7 +667,8 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Engine-Lifecycle.md',
     'Specifications/Windvale-Database-Hosted-Root-Writer.md',
     'Specifications/Windvale-Database-Hosted-Local-Service.md',
-    'Specifications/Windvale-Database-Hosted-Tree-Writer.md'
+    'Specifications/Windvale-Database-Hosted-Tree-Writer.md',
+    'Specifications/Windvale-Database-Persistent-Transaction-Writer.md'
 )) {
     $null = $DatabaseDevelopmentPaths.Add($ContractPath)
 }
@@ -1561,6 +1597,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Transaction-Root-Growth', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Tree-Completion', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Commit', [StringComparison]::Ordinal) -or
+            $Path.Contains('Transaction-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
             $Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
             $Path.Contains('Json-Value', [StringComparison]::Ordinal) -or
@@ -1686,6 +1723,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Writer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Writer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Get-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Persistent-Transaction-Writer-Self-Test.wv' -or
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Tests/Fixtures/Database/Native-Capability-Provider-Table-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-X64-Provider-Call-Self-Test.wv' -or
@@ -1742,6 +1780,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj' -or
@@ -1802,6 +1841,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Transaction-Root-Growth', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Tree-Completion', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Commit', [StringComparison]::Ordinal) -or
+            $Path.Contains('Transaction-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
             ($Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
                 $Path -eq 'Specifications/Windvale-Database-Sql.md') -or

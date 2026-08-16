@@ -24,7 +24,7 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=47"
+set "SelectedCases=48"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
     tree-node logical-record typed-row transaction-mutations transaction-leaf-rewrite query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
@@ -56,6 +56,7 @@ if /I "%DevelopmentTarget%"=="host-root-writer" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-local-service" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="engine" set "SelectedCases=3"
 if /I "%DevelopmentTarget%"=="host-tree-writer" set "SelectedCases=3"
+if /I "%DevelopmentTarget%"=="persistent-transaction-writer" set "SelectedCases=3"
 if not defined SelectedCases goto :usage
 if "%PrepareOnly%"=="1" set "SelectedCases=0"
 set /a ProgressTotal=SelectedCases+1
@@ -90,6 +91,7 @@ set "ProjectCheckpointHostTreeScan=NotRun"
 set "ProjectCheckpointHostTreeDelete=NotRun"
 set "ProjectCheckpointEngine=NotRun"
 set "ProjectCheckpointHostTreeWriter=NotRun"
+set "ProjectCheckpointPersistentTransactionWriter=NotRun"
 set "ApplicationCheckpointHostStorage=NotRun"
 set "ApplicationCheckpointHostRootWriter=NotRun"
 set "ApplicationCheckpointHostLocalService=NotRun"
@@ -98,6 +100,7 @@ set "ApplicationCheckpointHostTreeScan=NotRun"
 set "ApplicationCheckpointHostTreeDelete=NotRun"
 set "ApplicationCheckpointEngine=NotRun"
 set "ApplicationCheckpointHostTreeWriter=NotRun"
+set "ApplicationCheckpointPersistentTransactionWriter=NotRun"
 set "ProjectWvbCheckpoint=NotRun"
 set "PortableProjectCheckpoints="
 set "PortableApplicationCheckpoints="
@@ -237,6 +240,7 @@ if "%Development%"=="1" (
     set "HostTreeDeleteElapsedMs=0"
     set "EngineElapsedMs=0"
     set "HostTreeWriterElapsedMs=0"
+    set "PersistentTransactionWriterElapsedMs=0"
     call :verify_development_host_targets
     if errorlevel 1 goto :cleanup
     call :read_clock DevelopmentEnd
@@ -420,6 +424,9 @@ call :verify_host_logical_tree_writer ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_persistent_transaction_writer ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj"
+if errorlevel 1 goto :cleanup
 
 set "Result=0"
 
@@ -433,11 +440,11 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-delete-ms=%HostTreeDeleteElapsedMs% host-tree-scan-ms=%HostTreeScanElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
+    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-delete-ms=%HostTreeDeleteElapsedMs% host-tree-scan-ms=%HostTreeScanElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% persistent-transaction-writer-ms=%PersistentTransactionWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
+    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter%,PersistentTransactionWriter:%ProjectCheckpointPersistentTransactionWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%,PersistentTransactionWriter:%ApplicationCheckpointPersistentTransactionWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=56 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
@@ -479,6 +486,7 @@ if /I "%DevelopmentTarget%"=="host-tree-scan" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="tree-scan" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="engine" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="persistent-transaction-writer" goto :development_run_host_storage
 exit /b 0
 
 :development_run_host_storage
@@ -556,6 +564,7 @@ call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderE
 call echo PASS  native database storage development step=host-tree-reader item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeReaderElapsedMs%% project=%%ProjectCheckpointHostTreeReader%% application=%%ApplicationCheckpointHostTreeReader%%
 if /I "%DevelopmentTarget%"=="host-tree-reader" exit /b 0
 if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_tree_writer
+if /I "%DevelopmentTarget%"=="persistent-transaction-writer" goto :development_run_persistent_transaction_writer
 
 if /I "%DevelopmentTarget%"=="all" goto :development_run_host_tree_delete
 if /I "%DevelopmentTarget%"=="host-tree-delete" goto :development_run_host_tree_delete
@@ -631,6 +640,20 @@ if errorlevel 1 (
 call :read_clock HostTreeWriterEnd
 call :elapsed_milliseconds HostTreeWriterStart HostTreeWriterEnd HostTreeWriterElapsedMs
 call echo PASS  native database storage development step=host-tree-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeWriterElapsedMs%% project=%%ProjectCheckpointHostTreeWriter%% application=%%ApplicationCheckpointHostTreeWriter%%
+if /I "%DevelopmentTarget%"=="host-tree-writer" exit /b 0
+
+:development_run_persistent_transaction_writer
+set /a ProgressCurrent+=1
+call :read_clock PersistentTransactionWriterStart
+call echo START native database storage development step=persistent-transaction-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_persistent_transaction_writer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development persistent transaction-writer stage failed.
+    exit /b 1
+)
+call :read_clock PersistentTransactionWriterEnd
+call :elapsed_milliseconds PersistentTransactionWriterStart PersistentTransactionWriterEnd PersistentTransactionWriterElapsedMs
+call echo PASS  native database storage development step=persistent-transaction-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%PersistentTransactionWriterElapsedMs%% project=%%ProjectCheckpointPersistentTransactionWriter%% application=%%ApplicationCheckpointPersistentTransactionWriter%%
 exit /b 0
 
 :verify_host_storage
@@ -1820,6 +1843,45 @@ set "ApplicationResult=%ERRORLEVEL%"
 popd
 if not "%ApplicationResult%"=="0" exit /b 1
 for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="33280" exit /b 1
+endlocal
+exit /b 0
+
+:verify_persistent_transaction_writer
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "WindowsApplication=%TemporaryDirectory%\PersistentTransactionWriter.exe"
+set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
+set "RunDirectory=%TemporaryDirectory%\PersistentTransactionWriter-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "PersistentTransactionWriterCheckpoint=Segmented"
+set "PersistentTransactionWriterApplicationCheckpoint=Rebuilt"
+
+call :build_host_segmented_component "%ProjectPath%" PersistentTransactionWriter "%WindowsApplication%"
+if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    set "PersistentTransactionWriterApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-PersistentTransactionWriter-Application-Cache.txt"') do set "PersistentTransactionWriterApplicationCheckpoint=%%S"
+    if not defined PersistentTransactionWriterApplicationCheckpoint exit /b 1
+)
+
+if not exist "%DepthTwoCommittedFile%" exit /b 1
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%DepthTwoCommittedFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native persistent transaction-writer returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%DepthTwoCommittedFile%") do set "InitialBytes=%%~zF"
+for %%F in ("%StorageFile%") do set "CommittedBytes=%%~zF"
+if %CommittedBytes% LEQ %InitialBytes% exit /b 1
+if "%Development%"=="1" (
+    endlocal & set "ProjectCheckpointPersistentTransactionWriter=%PersistentTransactionWriterCheckpoint%" & set "ApplicationCheckpointPersistentTransactionWriter=%PersistentTransactionWriterApplicationCheckpoint%"
+    exit /b 0
+)
 endlocal
 exit /b 0
 

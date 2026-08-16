@@ -96,8 +96,10 @@ fixture turns seven tree pages into an eight-page append, verifies the compact
 record, target superblock, exact publication coordinates, deterministic replay,
 and logical no-op.
 
-The next milestone is the persistent hosted writer loop: freshly select the
-snapshot, gather bounded paths, call this coordinator, execute the four durable
-actions, reopen after uncertain results, and expose stable request timing and
-memory counters. The fair EWDB, PostgreSQL, and SQLite comparison follows that
-persistent path rather than measuring compiler or process startup.
+The [persistent hosted transaction writer](Windvale-Database-Persistent-Transaction-Writer.md)
+now gathers bounded paths, calls this coordinator, executes the four durable
+actions, requires reopen after a commit or uncertain result, and exposes stable
+request, I/O, tick, and logical retained-byte counters. A serialized writer
+queue and group commit remain separate concurrency work. The fair EWDB,
+PostgreSQL, and SQLite comparison follows the server path rather than measuring
+compiler or process startup.

@@ -88,11 +88,11 @@ for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 31791 a4ecd63b37f004310e458d41361a694dbaac47ffb056b949f5f1352f7d6ff64c "hosted enum-request WVB"
+call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 42088 ede2310a39e4963d517834ef6bc800b27dcaf91dca7fe9602627dc7567650f85 "hosted enum-request WVB"
 if errorlevel 1 exit /b 1
-call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 343040 da15dcbab81b206a8bc47b23188b5c4e19da6219523483df8754f3dfe7340cde "hosted enum-request Windows application"
+call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 461824 1089a5c07290d1b7707e0b16ca30692c68435defcda51b7b0ace4de280ffddbc "hosted enum-request Windows application"
 if errorlevel 1 exit /b 1
-call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 344064 f11fa229adfd1ac4c0ca97c77e376ef426d0f59ed5c66958c36c27fad0337cfd "hosted enum-request Linux application"
+call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 462848 01d0d02ce041fd85e7aea537d21ad466600f32da050f41d20bb24c957ae04e21 "hosted enum-request Linux application"
 if errorlevel 1 exit /b 1
 call :verify_file "%ConsoleService%" %ConsoleServiceBytes% %ConsoleServiceSha256% "console service"
 if errorlevel 1 exit /b 1

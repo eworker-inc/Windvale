@@ -44,6 +44,10 @@ export fn Compilerˉnativeˉx64ˉtypesˉlimit() -> u32 {
     return 128u32;
 }
 
+export fn Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() -> u32 {
+    return 116u32;
+}
+
 fn Identifierˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
     if Length == 0u32 { return false; }
     if Length > 255u32 { return false; }
@@ -152,6 +156,12 @@ export fn Compilerˉnativeˉx64ˉenumˉtypeˉindex(
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex: u32) -> u8 {
+    if Typeˉindex >= 64u32 {
+        return Bytesˉreadˉu8(
+            Bytesˉfromˉu32ˉlittle(12u32 + Typeˉindex - 64u32),
+            0u32
+        );
+    }
     return Bytesˉreadˉu8(
         Bytesˉfromˉu32ˉlittle(192u32 + Typeˉindex),
         0u32
@@ -176,12 +186,17 @@ export fn Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type: u8) -> bool {
     // internal predicate lets locals, calls, returns, and liveness share the
     // same bounded backing allocator.
     if Compilerˉnativeˉx64ˉtypeˉisˉvariant(Type) { return true; }
-    return U32ˉfromˉu8(Type) >= 192u32;
+    let Numeric: u32 = U32ˉfromˉu8(Type);
+    if Numeric >= 192u32 { return true; }
+    return Numeric >= 12u32 && Numeric < 64u32;
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type: u8) -> u32 {
     if Compilerˉnativeˉx64ˉtypeˉisˉvariant(Type) {
         return U32ˉfromˉu8(Type) - 64u32;
+    }
+    if U32ˉfromˉu8(Type) < 64u32 {
+        return 64u32 + U32ˉfromˉu8(Type) - 12u32;
     }
     return U32ˉfromˉu8(Type) - 192u32;
 }
@@ -332,7 +347,9 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         Priorˉkind = Kind;
         if Kind == 1u8 {
             Records = Records + 1u32;
-            if Records > 64u32 { return Invalid(Input); }
+            if Records > Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() {
+                return Invalid(Input);
+            }
         } else if Kind == 2u8 {
             Enums = Enums + 1u32;
             if Enums > 64u32 { return Invalid(Input); }
@@ -673,7 +690,7 @@ fn Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
     Rootˉtype: u32,
     Depth: u32
 ) -> u32 {
-    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 || Depth >= 64u32 {
+    if Typeˉindex >= Types.Count || Depth >= 64u32 {
         return 0u32;
     }
     let Kind: u8 = Compilerˉnativeˉx64ˉtypeˉkind(
@@ -683,6 +700,11 @@ fn Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
     if Kind != 1u8 && Kind != 3u8 {
         return 0u32;
     }
+    if Kind == 1u8 && Typeˉindex >=
+            Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() {
+        return 0u32;
+    }
+    if Kind == 3u8 && Typeˉindex >= 64u32 { return 0u32; }
     if Depth > 0u32 && Typeˉindex == Rootˉtype { return 0u32; }
     if Kind == 3u8 {
         return Compilerˉnativeˉx64ˉvariantˉwidthˉfrom(
@@ -816,10 +838,16 @@ fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
     Typeˉindex: u32,
     Depth: u32
 ) -> bool {
-    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 || Depth >= 64u32 {
+    if Typeˉindex >= Types.Count || Depth >= 64u32 {
         return false;
     }
-    if Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) == 3u8 {
+    let Kind: u8 = Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex);
+    if Kind == 1u8 && Typeˉindex >=
+            Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() {
+        return false;
+    }
+    if Kind == 3u8 && Typeˉindex >= 64u32 { return false; }
+    if Kind == 3u8 {
         return Compilerˉnativeˉx64ˉvariantˉhasˉdescriptorsˉfrom(
             Input,
             Types,

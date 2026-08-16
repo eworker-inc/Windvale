@@ -97,6 +97,12 @@ combined reader/writer object exceeds it. This physical segmentation does not
 change the common engine state or database semantics and avoids treating an
 object-limit increase or premature dynamic linker as part of the database API.
 
+The [persistent transaction writer](Windvale-Database-Persistent-Transaction-Writer.md)
+composes a ready selection with provider-backed path discovery and one atomic
+multi-record publication. After a commit or uncertain provider mutation, its
+session requires this lifecycle boundary to reopen and recover before another
+request is admitted.
+
 ## Failure vocabulary
 
 Typed status distinguishes storage failure, header read failure, no valid or

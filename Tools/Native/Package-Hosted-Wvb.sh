@@ -102,9 +102,9 @@ verify_file "$toolset/SHA256SUMS" 6927 3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1
 }
-verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 31791 a4ecd63b37f004310e458d41361a694dbaac47ffb056b949f5f1352f7d6ff64c 'hosted enum-request WVB' || exit 1
-verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 343040 da15dcbab81b206a8bc47b23188b5c4e19da6219523483df8754f3dfe7340cde 'hosted enum-request Windows application' || exit 1
-verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 344064 f11fa229adfd1ac4c0ca97c77e376ef426d0f59ed5c66958c36c27fad0337cfd 'hosted enum-request Linux application' || exit 1
+verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 42088 ede2310a39e4963d517834ef6bc800b27dcaf91dca7fe9602627dc7567650f85 'hosted enum-request WVB' || exit 1
+verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 461824 1089a5c07290d1b7707e0b16ca30692c68435defcda51b7b0ace4de280ffddbc 'hosted enum-request Windows application' || exit 1
+verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 462848 01d0d02ce041fd85e7aea537d21ad466600f32da050f41d20bb24c957ae04e21 'hosted enum-request Linux application' || exit 1
 verify_file "$console_service" "$console_service_bytes" "$console_service_sha256" 'console service' || exit 1
 verify_file "$service_root/Native-X64-Argument-Count-Service.bin" 5 2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829 'argument-count service' || exit 1
 verify_file "$service_root/Native-X64-Argument-Service.bin" 70 2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1 'argument service' || exit 1

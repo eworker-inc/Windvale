@@ -55,11 +55,11 @@ call :construct_pair Transport "%TransportWvb%" ^
     "%OutputRoot%\linux-x64-wvimagetransport.elf"
 if errorlevel 1 goto :cleanup
 
-call :verify_file "%WvoStagingWvb%" 531428 f91201a25fa18a673fa2e3c2df50f5c822b53b6e63849a7f18a4cea29480073f "WVO staging producer WVB"
+call :verify_file "%WvoStagingWvb%" 532490 72d738268580584b967deca648bb12bc80bf3243d10600921dfc8ddf670be623 "WVO staging producer WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 7749120 5a22020cd5000ede860cf069bcfe2054b630ad2aea4fda2ef668ef37ac5b973e "Windows WVO staging producer"
+call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 7756800 6cc939dc3f3e319f036d633626e867078c490564db83814add90b31936bc2bfd "Windows WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 7749632 bd20ddf6fcd703a69b376f8cee0d05fa00c3cb0d4682b0156b02bacaed7d1475 "Linux WVO staging producer"
+call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 7757824 7b9d1b1124b0d7cb09bc9b3d9bfd7c916e7272a40d3e029a39b444c788e1b758 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ImageStagingWvb%" 75666 1a1614c4010baf47f5f1766de5f71806356ec14fa8f5bc67a62b5b2342269edd "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup

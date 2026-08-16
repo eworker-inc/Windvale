@@ -1,0 +1,371 @@
+module Durableˉtransactionˉwriter profile hosted;
+
+import Durableˉtreeˉpath as Path;
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Randomˉaccessˉstorage as Storage;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉtransactionˉcommit as Commit;
+import Windvaleˉdatabaseˉtransactionˉmutations as Mutations;
+import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+const DATABASE_TRANSACTION_WRITER_MAXIMUM_DEPTH: u32 = 8u32;
+const DATABASE_TRANSACTION_WRITER_MAXIMUM_RETAINED_BYTES: u32 = 4194304u32;
+
+export enum Databaseˉdurableˉtransactionˉwriteˉstatus {
+    Committed = 0;
+    Noˉchange = 1;
+    Active = 2;
+    Aborted = 3;
+    Recover = 4;
+    Invalidˉcurrent = 5;
+    Invalidˉmutations = 6;
+    Resourceˉlimit = 7;
+    Storageˉfailure = 8;
+    Changedˉsnapshot = 9;
+    Pathˉfailure = 10;
+    Transactionˉfailure = 11;
+    Publicationˉfailure = 12;
+}
+
+export record Databaseˉdurableˉtransactionˉwriteˉresult {
+    Status: Databaseˉdurableˉtransactionˉwriteˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Mutationsˉerror: Mutations.Databaseˉtransactionˉmutationsˉerror;
+    Pathˉstatus: Path.Databaseˉdurableˉtreeˉpathˉstatus;
+    Pathˉreadˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Pathˉreadˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Pathˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror;
+    Commitˉerror: Commit.Databaseˉtransactionˉcommitˉerror;
+    Publicationˉstatus: Publication.Databaseˉstorageˉpublicationˉstatus;
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror;
+    Mutationˉcount: u32;
+    Uniqueˉleafˉcount: u32;
+    Pathˉvisits: u32;
+    Pathˉbytes: u32;
+    Readˉbytes: u64;
+    Actions: u32;
+    Generatedˉpages: u32;
+    Appendˉbytes: u32;
+    Retainedˉbyteˉbound: u64;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+}
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Emptyˉpath() -> Path.Databaseˉdurableˉtreeˉpathˉresult {
+    return Path.Databaseˉdurableˉtreeˉpathˉresult(
+        Path.Databaseˉdurableˉtreeˉpathˉstatus.Invalidˉcurrent,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Path.Databaseˉdurableˉtreeˉpathˉerror.Valid,
+        0u32,
+        Empty()
+    );
+}
+
+fn Result(
+    Status: Databaseˉdurableˉtransactionˉwriteˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Mutationsˉerror: Mutations.Databaseˉtransactionˉmutationsˉerror,
+    Pathˉresult: Path.Databaseˉdurableˉtreeˉpathˉresult,
+    Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror,
+    Commitˉerror: Commit.Databaseˉtransactionˉcommitˉerror,
+    Publicationˉstatus: Publication.Databaseˉstorageˉpublicationˉstatus,
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror,
+    Mutationˉcount: u32,
+    Uniqueˉleafˉcount: u32,
+    Pathˉvisits: u32,
+    Pathˉbytes: u32,
+    Readˉbytes: u64,
+    Actions: u32,
+    Generatedˉpages: u32,
+    Appendˉbytes: u32,
+    Retainedˉbyteˉbound: u64,
+    Targetˉgeneration: u64,
+    Targetˉsequence: u64,
+    Targetˉlength: u64
+) -> Databaseˉdurableˉtransactionˉwriteˉresult {
+    return Databaseˉdurableˉtransactionˉwriteˉresult(
+        Status, Storageˉstatus, Mutationsˉerror,
+        Pathˉresult.Status, Pathˉresult.Readˉstatus,
+        Pathˉresult.Readˉerror, Pathˉresult.Readˉstorageˉerror,
+        Pathˉresult.Pageˉerror, Pathˉresult.Nodeˉerror,
+        Pathsˉerror, Commitˉerror, Publicationˉstatus, Publicationˉerror,
+        Mutationˉcount, Uniqueˉleafˉcount, Pathˉvisits, Pathˉbytes,
+        Readˉbytes, Actions, Generatedˉpages, Appendˉbytes,
+        Retainedˉbyteˉbound, Targetˉgeneration, Targetˉsequence,
+        Targetˉlength
+    );
+}
+
+fn Failure(
+    Status: Databaseˉdurableˉtransactionˉwriteˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Mutationsˉerror: Mutations.Databaseˉtransactionˉmutationsˉerror,
+    Pathˉresult: Path.Databaseˉdurableˉtreeˉpathˉresult,
+    Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror,
+    Commitˉerror: Commit.Databaseˉtransactionˉcommitˉerror,
+    Mutationˉcount: u32,
+    Pathˉvisits: u32,
+    Pathˉbytes: u32,
+    Readˉbytes: u64
+) -> Databaseˉdurableˉtransactionˉwriteˉresult {
+    return Result(
+        Status, Storageˉstatus, Mutationsˉerror, Pathˉresult,
+        Pathsˉerror, Commitˉerror,
+        Publication.Databaseˉstorageˉpublicationˉstatus.Invalid,
+        Publication.Databaseˉstorageˉpublicationˉerror.None,
+        Mutationˉcount, 0u32, Pathˉvisits, Pathˉbytes, Readˉbytes,
+        0u32, 0u32, 0u32,
+        U64ˉfromˉu32(Bytesˉlength(Empty())), 0u64, 0u64, 0u64
+    );
+}
+
+export fn Databaseˉdurableˉtransactionˉwrite(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutationˉbytes: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉtransactionˉwriteˉresult {
+    let Emptyˉpathˉresult: Path.Databaseˉdurableˉtreeˉpathˉresult =
+        Emptyˉpath();
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 || Current.Rootˉdepth == 0u32 ||
+        Current.Rootˉdepth > DATABASE_TRANSACTION_WRITER_MAXIMUM_DEPTH {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Invalidˉcurrent,
+            Storage.Storageˉstatus.Valid,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Emptyˉpathˉresult,
+            Paths.Databaseˉtransactionˉpathsˉerror.Invalidˉcurrent,
+            Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            0u32, 0u32, 0u32, 0u64
+        );
+    }
+    let Decoded: Mutations.Databaseˉtransactionˉmutationsˉresult =
+        Mutations.Databaseˉtransactionˉmutationsˉdecode(Mutationˉbytes);
+    if Decoded.Error !=
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Invalidˉmutations,
+            Storage.Storageˉstatus.Valid, Decoded.Error,
+            Emptyˉpathˉresult,
+            Paths.Databaseˉtransactionˉpathsˉerror.Invalidˉmutations,
+            Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            0u32, 0u32, 0u32, 0u64
+        );
+    }
+    let Requiredˉpathˉbytes: u32 =
+        Decoded.Count * Current.Rootˉdepth * Current.Pageˉsize;
+    if Requiredˉpathˉbytes >
+            DATABASE_TRANSACTION_WRITER_MAXIMUM_RETAINED_BYTES {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Resourceˉlimit,
+            Storage.Storageˉstatus.Valid,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Emptyˉpathˉresult,
+            Paths.Databaseˉtransactionˉpathsˉerror.Invalidˉlength,
+            Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            Decoded.Count, 0u32, 0u32, 0u64
+        );
+    }
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Storageˉfailure,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Emptyˉpathˉresult,
+            Paths.Databaseˉtransactionˉpathsˉerror.Valid,
+            Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            Decoded.Count, 0u32, 0u32, 0u64
+        );
+    }
+    if Description.Storageˉlength != Current.Committedˉlength {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Changedˉsnapshot,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Emptyˉpathˉresult,
+            Paths.Databaseˉtransactionˉpathsˉerror.Pathˉmismatch,
+            Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            Decoded.Count, 0u32, 0u32, 0u64
+        );
+    }
+
+    var Gathered: bytes = Empty();
+    var Visits: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Lastˉpath: Path.Databaseˉdurableˉtreeˉpathˉresult = Emptyˉpathˉresult;
+    while Index < Decoded.Count {
+        let Mutation: Mutations.Databaseˉtransactionˉmutationˉresult =
+            Mutations.Databaseˉtransactionˉmutationsˉread(
+                Decoded.Bytes, Index
+            );
+        Lastˉpath = Path.Databaseˉdurableˉtreeˉpathˉcollect(
+            Current, Description, Mutation.Key
+        );
+        Visits = Visits + Lastˉpath.Visits;
+        if Lastˉpath.Status !=
+                Path.Databaseˉdurableˉtreeˉpathˉstatus.Active {
+            var Failureˉstatus: Databaseˉdurableˉtransactionˉwriteˉstatus =
+                Databaseˉdurableˉtransactionˉwriteˉstatus.Pathˉfailure;
+            if Lastˉpath.Status ==
+                    Path.Databaseˉdurableˉtreeˉpathˉstatus.Changedˉsnapshot {
+                Failureˉstatus =
+                    Databaseˉdurableˉtransactionˉwriteˉstatus.Changedˉsnapshot;
+            }
+            return Failure(
+                Failureˉstatus, Description.Status,
+                Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+                Lastˉpath,
+                Paths.Databaseˉtransactionˉpathsˉerror.Pathˉmismatch,
+                Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+                Decoded.Count, Visits, Bytesˉlength(Gathered),
+                U64ˉfromˉu32(Visits) * U64ˉfromˉu32(Current.Pageˉsize)
+            );
+        }
+        Gathered = Bytesˉconcat(Gathered, Lastˉpath.Pages);
+        Index = Index + 1u32;
+    }
+    let Validatedˉpaths: Paths.Databaseˉtransactionˉpathsˉresult =
+        Paths.Databaseˉtransactionˉpathsˉvalidate(
+            Current, Decoded.Bytes, Gathered
+        );
+    let Readˉbytes: u64 =
+        U64ˉfromˉu32(Visits) * U64ˉfromˉu32(Current.Pageˉsize);
+    if Validatedˉpaths.Error != Paths.Databaseˉtransactionˉpathsˉerror.Valid {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Pathˉfailure,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Lastˉpath, Validatedˉpaths.Error,
+            Commit.Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            Decoded.Count, Visits, Bytesˉlength(Gathered), Readˉbytes
+        );
+    }
+    let Planned: Commit.Databaseˉtransactionˉcommitˉresult =
+        Commit.Databaseˉtransactionˉcommitˉplan(
+            Current, Decoded.Bytes, Validatedˉpaths.Bytes
+        );
+    if Planned.Error != Commit.Databaseˉtransactionˉcommitˉerror.Valid {
+        return Failure(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Transactionˉfailure,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Lastˉpath, Validatedˉpaths.Error, Planned.Error,
+            Decoded.Count, Visits, Bytesˉlength(Gathered), Readˉbytes
+        );
+    }
+    let Appendˉbytes: u32 = Bytesˉlength(Planned.Commit.Pages);
+    let Retainedˉbound: u64 = U64ˉfromˉu32(Bytesˉlength(Decoded.Bytes)) +
+        U64ˉfromˉu32(Bytesˉlength(Validatedˉpaths.Bytes)) +
+        U64ˉfromˉu32(Bytesˉlength(Planned.Completion.Pages)) +
+        U64ˉfromˉu32(Appendˉbytes) +
+        U64ˉfromˉu32(Bytesˉlength(Planned.Commit.Superblock));
+    if Retainedˉbound >
+            U64ˉfromˉu32(DATABASE_TRANSACTION_WRITER_MAXIMUM_RETAINED_BYTES) {
+        return Result(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Resourceˉlimit,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Lastˉpath, Validatedˉpaths.Error, Planned.Error,
+            Publication.Databaseˉstorageˉpublicationˉstatus.Invalid,
+            Publication.Databaseˉstorageˉpublicationˉerror.Invalidˉpageˉbytes,
+            Decoded.Count, Validatedˉpaths.Uniqueˉleafˉcount,
+            Visits, Bytesˉlength(Gathered), Readˉbytes, 0u32,
+            Planned.Completion.Pageˉcount, Appendˉbytes, Retainedˉbound,
+            Planned.Completion.Targetˉgeneration,
+            Planned.Completion.Targetˉsequence,
+            Planned.Commit.Targetˉlength
+        );
+    }
+    if !Planned.Changed {
+        return Result(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Noˉchange,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Lastˉpath, Validatedˉpaths.Error, Planned.Error,
+            Publication.Databaseˉstorageˉpublicationˉstatus.Invalid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            Decoded.Count, Validatedˉpaths.Uniqueˉleafˉcount,
+            Visits, Bytesˉlength(Gathered), Readˉbytes, 0u32,
+            0u32, 0u32, Retainedˉbound,
+            Current.Generation, Current.Committedˉsequence,
+            Current.Committedˉlength
+        );
+    }
+    let Initial: Publication.Databaseˉstorageˉpublication =
+        Publication.Databaseˉstorageˉpublicationˉbegin(
+            Planned.Commit.Publication,
+            Description.Generation,
+            Current.Tailˉbytes,
+            Description.Storageˉlength,
+            Planned.Commit.Pages,
+            Planned.Commit.Superblock
+        );
+    if Initial.Status !=
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        return Result(
+            Databaseˉdurableˉtransactionˉwriteˉstatus.Publicationˉfailure,
+            Description.Status,
+            Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Lastˉpath, Validatedˉpaths.Error, Planned.Error,
+            Initial.Status, Initial.Error,
+            Decoded.Count, Validatedˉpaths.Uniqueˉleafˉcount,
+            Visits, Bytesˉlength(Gathered), Readˉbytes, 0u32,
+            Planned.Completion.Pageˉcount, Appendˉbytes, Retainedˉbound,
+            Planned.Commit.Targetˉgeneration,
+            Planned.Commit.Targetˉsequence,
+            Planned.Commit.Targetˉlength
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(
+            Initial, Maximumˉactions
+        );
+    var Status: Databaseˉdurableˉtransactionˉwriteˉstatus =
+        Databaseˉdurableˉtransactionˉwriteˉstatus.Publicationˉfailure;
+    if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
+        Status = Databaseˉdurableˉtransactionˉwriteˉstatus.Committed;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        Status = Databaseˉdurableˉtransactionˉwriteˉstatus.Active;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Status = Databaseˉdurableˉtransactionˉwriteˉstatus.Aborted;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Recover {
+        Status = Databaseˉdurableˉtransactionˉwriteˉstatus.Recover;
+    }
+    return Result(
+        Status, Description.Status,
+        Mutations.Databaseˉtransactionˉmutationsˉerror.Valid,
+        Lastˉpath, Validatedˉpaths.Error, Planned.Error,
+        Execution.State.Status, Execution.State.Error,
+        Decoded.Count, Validatedˉpaths.Uniqueˉleafˉcount,
+        Visits, Bytesˉlength(Gathered), Readˉbytes, Execution.Actions,
+        Planned.Completion.Pageˉcount, Appendˉbytes, Retainedˉbound,
+        Planned.Commit.Targetˉgeneration,
+        Planned.Commit.Targetˉsequence,
+        Planned.Commit.Targetˉlength
+    );
+}

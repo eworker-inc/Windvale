@@ -2120,6 +2120,23 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-commit'
     },
     @{
+        Name = 'focused persistent database transaction-writer owner'
+        Paths = @(
+            'Libraries/Platform/Database/Durable-Transaction-Writer.wv',
+            'Libraries/Platform/Database/Durable-Persistent-Transaction-Writer.wv',
+            'Projects/Libraries/Windvale-Library-Durable-Transaction-Writer.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Persistent-Transaction-Writer.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj',
+            'Tests/Fixtures/Database/Native-Hosted-Persistent-Transaction-Writer-Self-Test.wv',
+            'Specifications/Windvale-Database-Persistent-Transaction-Writer.md'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'persistent-transaction-writer'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',

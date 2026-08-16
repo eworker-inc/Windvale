@@ -19,7 +19,7 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=47
+        selected_cases=48
         ;;
     tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
@@ -93,7 +93,7 @@ case "$development_target" in
     host-local-service)
         selected_cases=2
         ;;
-    engine|host-tree-writer)
+    engine|host-tree-writer|persistent-transaction-writer)
         selected_cases=3
         ;;
     *)
@@ -138,6 +138,7 @@ project_checkpoint_host_tree_scan=NotRun
 project_checkpoint_host_tree_delete=NotRun
 project_checkpoint_engine=NotRun
 project_checkpoint_host_tree_writer=NotRun
+project_checkpoint_persistent_transaction_writer=NotRun
 application_checkpoint_host_storage=NotRun
 application_checkpoint_host_root_writer=NotRun
 application_checkpoint_host_local_service=NotRun
@@ -146,6 +147,7 @@ application_checkpoint_host_tree_scan=NotRun
 application_checkpoint_host_tree_delete=NotRun
 application_checkpoint_engine=NotRun
 application_checkpoint_host_tree_writer=NotRun
+application_checkpoint_persistent_transaction_writer=NotRun
 project_wvb_checkpoint=NotRun
 portable_project_checkpoints=
 portable_application_checkpoints=
@@ -1577,6 +1579,35 @@ verify_host_tree_writer_interruption() {
     [[ $(wc -c < "$scenario_storage") -eq 33280 ]] || return 1
 }
 
+verify_persistent_transaction_writer() {
+    local project_path=$1
+    local linux_application="$temporary_directory/PersistentTransactionWriter.elf"
+    local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
+    local run_directory="$temporary_directory/PersistentTransactionWriter-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local writer_project_checkpoint=Segmented
+    local writer_application_checkpoint=Rebuilt
+
+    build_host_segmented_component \
+        "$project_path" PersistentTransactionWriter "$linux_application" || return $?
+    writer_application_checkpoint=$host_local_component_application_checkpoint
+
+    [[ -f $depth_two_committed_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+    cp -- "$depth_two_committed_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native persistent transaction-writer returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -gt $(wc -c < "$depth_two_committed_file") ]] || return 1
+    if ((development == 1)); then
+        project_checkpoint_persistent_transaction_writer=$writer_project_checkpoint
+        application_checkpoint_persistent_transaction_writer=$writer_application_checkpoint
+    fi
+}
+
 verify_development_target() {
     local label=$1 target=$2 project=$3 group selected=0
     shift 3
@@ -1626,8 +1657,9 @@ verify_development_host_targets() {
     host_tree_scan_elapsed_ms=0
     engine_elapsed_ms=0
     host_tree_writer_elapsed_ms=0
+    persistent_transaction_writer_elapsed_ms=0
     case "$development_target" in
-        all|host-storage|host-root-writer|host-local-service|host-tree-reader|host-tree-delete|host-tree-scan|tree-scan|engine|host-tree-writer) ;;
+        all|host-storage|host-root-writer|host-local-service|host-tree-reader|host-tree-delete|host-tree-scan|tree-scan|engine|host-tree-writer|persistent-transaction-writer) ;;
         *) return 0 ;;
     esac
 
@@ -1693,6 +1725,20 @@ verify_development_host_targets() {
     echo "PASS  native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_reader_elapsed_ms project=$project_checkpoint_host_tree_reader application=$application_checkpoint_host_tree_reader"
     [[ $development_target != host-tree-reader ]] || return 0
 
+    if [[ $development_target == persistent-transaction-writer ]]; then
+        progress_current=$((progress_current + 1))
+        persistent_transaction_writer_start=$SECONDS
+        echo "START native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target"
+        verify_persistent_transaction_writer \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || {
+                echo 'The native database storage development persistent transaction-writer stage failed.' >&2
+                return 1
+            }
+        persistent_transaction_writer_elapsed_ms=$(((SECONDS - persistent_transaction_writer_start) * 1000))
+        echo "PASS  native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$persistent_transaction_writer_elapsed_ms project=$project_checkpoint_persistent_transaction_writer application=$application_checkpoint_persistent_transaction_writer"
+        return 0
+    fi
+
     if [[ $development_target == all ||
         $development_target == host-tree-delete ]]; then
         progress_current=$((progress_current + 1))
@@ -1755,6 +1801,18 @@ verify_development_host_targets() {
         }
     host_tree_writer_elapsed_ms=$(((SECONDS - host_tree_writer_start) * 1000))
     echo "PASS  native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_writer_elapsed_ms project=$project_checkpoint_host_tree_writer application=$application_checkpoint_host_tree_writer"
+    [[ $development_target != host-tree-writer ]] || return 0
+
+    progress_current=$((progress_current + 1))
+    persistent_transaction_writer_start=$SECONDS
+    echo "START native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target"
+    verify_persistent_transaction_writer \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || {
+            echo 'The native database storage development persistent transaction-writer stage failed.' >&2
+            return 1
+        }
+    persistent_transaction_writer_elapsed_ms=$(((SECONDS - persistent_transaction_writer_start) * 1000))
+    echo "PASS  native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$persistent_transaction_writer_elapsed_ms project=$project_checkpoint_persistent_transaction_writer application=$application_checkpoint_persistent_transaction_writer"
 }
 
 if ((development == 1)); then
@@ -1864,8 +1922,8 @@ if ((development == 1)); then
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     verify_development_host_targets || exit $?
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
-    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms host-tree-delete-ms=$host_tree_delete_elapsed_ms host-tree-scan-ms=$host_tree_scan_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeDelete:$project_checkpoint_host_tree_delete,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeDelete:$application_checkpoint_host_tree_delete,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
+    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms host-tree-delete-ms=$host_tree_delete_elapsed_ms host-tree-scan-ms=$host_tree_scan_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms persistent-transaction-writer-ms=$persistent_transaction_writer_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeDelete:$project_checkpoint_host_tree_delete,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer,PersistentTransactionWriter:$project_checkpoint_persistent_transaction_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeDelete:$application_checkpoint_host_tree_delete,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer,PersistentTransactionWriter:$application_checkpoint_persistent_transaction_writer"
     exit 0
 fi
 
@@ -1987,4 +2045,6 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=56 local-results=0 cross-host-images=Verified'
+verify_persistent_transaction_writer \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || exit $?
+echo 'native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified'

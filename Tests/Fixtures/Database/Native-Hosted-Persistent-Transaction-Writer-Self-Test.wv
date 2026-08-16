@@ -1,0 +1,223 @@
+module Nativeˉhostedˉpersistentˉtransactionˉwriterˉselfˉtest profile hosted;
+
+import Durableˉpersistentˉtransactionˉwriter as Persistent;
+import Durableˉtransactionˉwriter as Writer;
+import Durableˉtreeˉpath as Path;
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉmutations as Mutations;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Key(Value: u8) -> bytes {
+    return Bytesˉfromˉu8(Value);
+}
+
+fn Value(Value: i32) -> bytes {
+    return Bytesˉfromˉi32ˉlittle(Value);
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 || Description.Storageˉlength < 512u64 {
+        return Superblock.Databaseˉsuperblockˉselect(
+            Empty(), Empty(), Description.Storageˉlength
+        );
+    }
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation, 0u64, 512u32
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Header.Generation != Description.Generation ||
+        Header.Storageˉlength != Description.Storageˉlength ||
+        Bytesˉlength(Header.Value) != 512u32 {
+        return Superblock.Databaseˉsuperblockˉselect(
+            Empty(), Empty(), Description.Storageˉlength
+        );
+    }
+    return Superblock.Databaseˉsuperblockˉselect(
+        Bytesˉslice(Header.Value, 0u32, 256u32),
+        Bytesˉslice(Header.Value, 256u32, 256u32),
+        Description.Storageˉlength
+    );
+}
+
+fn Hasˉvalue(
+    Currentˉselection: Superblock.Databaseˉsuperblockˉselection,
+    Key: bytes,
+    Expected: bytes
+) -> bool {
+    let Collected: Path.Databaseˉdurableˉtreeˉpathˉresult =
+        Path.Databaseˉdurableˉtreeˉpathˉcollect(
+            Currentˉselection, Storage.Storageˉdescribe(), Key
+        );
+    if Collected.Status != Path.Databaseˉdurableˉtreeˉpathˉstatus.Active ||
+        Collected.Visits == 0u32 {
+        return false;
+    }
+    let Lastˉoffset: u32 =
+        (Collected.Visits - 1u32) * Currentˉselection.Pageˉsize;
+    let Durable: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(
+                Collected.Pages, Lastˉoffset, Currentˉselection.Pageˉsize
+            )
+        );
+    if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf {
+        return false;
+    }
+    let Lookup: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Durable.Payload, Key);
+    return Lookup.Error == Tree.Databaseˉtreeˉnodeˉerror.Valid &&
+        Lookup.Found && Same(Lookup.Value, Expected);
+}
+
+export fn Main() -> i32 {
+    let Initial: Superblock.Databaseˉsuperblockˉselection = Current();
+    if Initial.Status != Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Initial.Rootˉdepth != 2u32 {
+        return 1;
+    }
+    let First: Mutations.Databaseˉtransactionˉmutationˉcomponent =
+        Mutations.Databaseˉtransactionˉmutationˉput(
+            Key(1u8), Value(100)
+        );
+    let Second: Mutations.Databaseˉtransactionˉmutationˉcomponent =
+        Mutations.Databaseˉtransactionˉmutationˉput(
+            Key(4u8), Value(40)
+        );
+    if First.Error != Mutations.Databaseˉtransactionˉmutationsˉerror.Valid ||
+        Second.Error != Mutations.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return 2;
+    }
+    let Encoded: Mutations.Databaseˉtransactionˉmutationsˉresult =
+        Mutations.Databaseˉtransactionˉmutationsˉencode(
+            2u32, Bytesˉconcat(First.Bytes, Second.Bytes)
+        );
+    if Encoded.Error != Mutations.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return 3;
+    }
+
+    var Session: Persistent.Databaseˉpersistentˉwriterˉsession =
+        Persistent.Databaseˉpersistentˉwriterˉopen(Initial);
+    if Session.Status != Persistent.Databaseˉpersistentˉwriterˉstatus.Ready ||
+        Session.Nextˉrequest != 1u64 {
+        return 4;
+    }
+    let Firstˉexecution: Persistent.Databaseˉpersistentˉwriterˉexecution =
+        Persistent.Databaseˉpersistentˉwriterˉexecute(
+            Session, 1u64, 100u64, Encoded.Bytes, 8u32
+        );
+    if !Firstˉexecution.Accepted ||
+        Firstˉexecution.Writer.Status !=
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Committed ||
+        Firstˉexecution.Writer.Mutationˉcount != 2u32 ||
+        Firstˉexecution.Writer.Uniqueˉleafˉcount != 2u32 ||
+        Firstˉexecution.Writer.Pathˉvisits != 4u32 ||
+        Firstˉexecution.Writer.Readˉbytes != 16384u64 ||
+        Firstˉexecution.Writer.Actions != 4u32 ||
+        Firstˉexecution.Writer.Generatedˉpages == 0u32 ||
+        Firstˉexecution.Writer.Appendˉbytes == 0u32 ||
+        Firstˉexecution.Writer.Retainedˉbyteˉbound == 0u64 {
+        return 5;
+    }
+    Session = Persistent.Databaseˉpersistentˉwriterˉfinish(
+        Session, Firstˉexecution, 175u64
+    );
+    if Session.Status !=
+            Persistent.Databaseˉpersistentˉwriterˉstatus.Reopenˉrequired ||
+        !Session.Reopenˉmustˉadvance || Session.Nextˉrequest != 2u64 ||
+        Session.Metrics.Requests != 1u64 ||
+        Session.Metrics.Committed != 1u64 ||
+        Session.Metrics.Reopenˉrequired != 1u64 ||
+        Session.Metrics.Totalˉticks != 75u64 ||
+        Session.Metrics.Lastˉticks != 75u64 {
+        return 6;
+    }
+
+    let Reopened: Superblock.Databaseˉsuperblockˉselection = Current();
+    if Reopened.Status != Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Reopened.Generation !=
+            Firstˉexecution.Writer.Targetˉgeneration ||
+        Reopened.Committedˉsequence !=
+            Firstˉexecution.Writer.Targetˉsequence ||
+        Reopened.Committedˉlength !=
+            Firstˉexecution.Writer.Targetˉlength {
+        return 7;
+    }
+    Session = Persistent.Databaseˉpersistentˉwriterˉreopen(
+        Session, Reopened, false, 0u32
+    );
+    if Session.Status != Persistent.Databaseˉpersistentˉwriterˉstatus.Ready ||
+        Session.Metrics.Reopens != 1u64 ||
+        Session.Metrics.Recoveries != 0u64 {
+        return 8;
+    }
+    if !Hasˉvalue(
+            Session.Current, Key(1u8), Value(100)
+        ) ||
+        !Hasˉvalue(
+            Session.Current, Key(4u8), Value(40)
+        ) {
+        return 9;
+    }
+
+    let Secondˉexecution: Persistent.Databaseˉpersistentˉwriterˉexecution =
+        Persistent.Databaseˉpersistentˉwriterˉexecute(
+            Session, 2u64, 200u64, Encoded.Bytes, 8u32
+        );
+    if !Secondˉexecution.Accepted ||
+        Secondˉexecution.Writer.Status !=
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Noˉchange ||
+        Secondˉexecution.Writer.Actions != 0u32 ||
+        Secondˉexecution.Writer.Pathˉvisits != 4u32 {
+        return 10;
+    }
+    Session = Persistent.Databaseˉpersistentˉwriterˉfinish(
+        Session, Secondˉexecution, 210u64
+    );
+    if Session.Status != Persistent.Databaseˉpersistentˉwriterˉstatus.Ready ||
+        Session.Nextˉrequest != 3u64 ||
+        Session.Metrics.Requests != 2u64 ||
+        Session.Metrics.Committed != 1u64 ||
+        Session.Metrics.Noˉchange != 1u64 ||
+        Session.Metrics.Rejected != 0u64 ||
+        Session.Metrics.Reopens != 1u64 ||
+        Session.Metrics.Providerˉcalls != 14u64 ||
+        Session.Metrics.Pathˉvisits != 8u64 ||
+        Session.Metrics.Readˉbytes != 32768u64 ||
+        Session.Metrics.Publicationˉactions != 4u64 ||
+        Session.Metrics.Appendˉbytes !=
+            U64ˉfromˉu32(Firstˉexecution.Writer.Appendˉbytes) ||
+        Session.Metrics.Retainedˉbyteˉhighˉwater == 0u64 ||
+        Session.Metrics.Totalˉticks != 85u64 ||
+        Session.Metrics.Lastˉticks != 10u64 {
+        return 11;
+    }
+    Session = Persistent.Databaseˉpersistentˉwriterˉclose(Session);
+    if Session.Status != Persistent.Databaseˉpersistentˉwriterˉstatus.Closed {
+        return 12;
+    }
+    return 0;
+}

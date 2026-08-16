@@ -1,0 +1,299 @@
+module Durableˉpersistentˉtransactionˉwriter profile hosted;
+
+import Durableˉtransactionˉwriter as Writer;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+capability storage.random_access_v1;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉpersistentˉwriterˉstatus {
+    Ready = 0;
+    Reopenˉrequired = 1;
+    Failed = 2;
+    Closed = 3;
+}
+
+export record Databaseˉpersistentˉwriterˉmetrics {
+    Requests: u64;
+    Committed: u64;
+    Noˉchange: u64;
+    Rejected: u64;
+    Reopenˉrequired: u64;
+    Reopens: u64;
+    Recoveries: u64;
+    Recoveryˉactions: u64;
+    Providerˉcalls: u64;
+    Pathˉvisits: u64;
+    Readˉbytes: u64;
+    Publicationˉactions: u64;
+    Appendˉbytes: u64;
+    Retainedˉbyteˉhighˉwater: u64;
+    Totalˉticks: u64;
+    Lastˉticks: u64;
+}
+
+export record Databaseˉpersistentˉwriterˉsession {
+    Status: Databaseˉpersistentˉwriterˉstatus;
+    Current: Superblock.Databaseˉsuperblockˉselection;
+    Nextˉrequest: u64;
+    Reopenˉmustˉadvance: bool;
+    Metrics: Databaseˉpersistentˉwriterˉmetrics;
+}
+
+export record Databaseˉpersistentˉwriterˉexecution {
+    Accepted: bool;
+    Request: u64;
+    Startedˉtick: u64;
+    Writer: Writer.Databaseˉdurableˉtransactionˉwriteˉresult;
+}
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Addˉsaturating(Left: u64, Right: u64) -> u64 {
+    if Left > U64_MAXIMUM - Right { return U64_MAXIMUM; }
+    return Left + Right;
+}
+
+fn Incrementˉsaturating(Value: u64) -> u64 {
+    if Value == U64_MAXIMUM { return U64_MAXIMUM; }
+    return Value + 1u64;
+}
+
+fn Metricsˉempty() -> Databaseˉpersistentˉwriterˉmetrics {
+    return Databaseˉpersistentˉwriterˉmetrics(
+        0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64,
+        0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64
+    );
+}
+
+fn Currentˉvalid(Current: Superblock.Databaseˉsuperblockˉselection) -> bool {
+    return Current.Status ==
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid &&
+        Current.Tailˉbytes == 0u64 && Current.Rootˉdepth > 0u32 &&
+        Current.Rootˉdepth <= 8u32;
+}
+
+fn Session(
+    Status: Databaseˉpersistentˉwriterˉstatus,
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Nextˉrequest: u64,
+    Reopenˉmustˉadvance: bool,
+    Metrics: Databaseˉpersistentˉwriterˉmetrics
+) -> Databaseˉpersistentˉwriterˉsession {
+    return Databaseˉpersistentˉwriterˉsession(
+        Status, Current, Nextˉrequest, Reopenˉmustˉadvance, Metrics
+    );
+}
+
+export fn Databaseˉpersistentˉwriterˉopen(
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> Databaseˉpersistentˉwriterˉsession {
+    var Status: Databaseˉpersistentˉwriterˉstatus =
+        Databaseˉpersistentˉwriterˉstatus.Failed;
+    var Next: u64 = 0u64;
+    if Currentˉvalid(Current) {
+        Status = Databaseˉpersistentˉwriterˉstatus.Ready;
+        Next = 1u64;
+    }
+    return Session(Status, Current, Next, false, Metricsˉempty());
+}
+
+export fn Databaseˉpersistentˉwriterˉexecute(
+    Input: Databaseˉpersistentˉwriterˉsession,
+    Request: u64,
+    Startedˉtick: u64,
+    Mutations: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉpersistentˉwriterˉexecution {
+    if Input.Status != Databaseˉpersistentˉwriterˉstatus.Ready ||
+        Request == 0u64 || Request != Input.Nextˉrequest ||
+        Request == U64_MAXIMUM {
+        return Databaseˉpersistentˉwriterˉexecution(
+            false,
+            Request,
+            Startedˉtick,
+            Writer.Databaseˉdurableˉtransactionˉwrite(
+                Input.Current, Empty(), 0u32
+            )
+        );
+    }
+    return Databaseˉpersistentˉwriterˉexecution(
+        true,
+        Request,
+        Startedˉtick,
+        Writer.Databaseˉdurableˉtransactionˉwrite(
+            Input.Current, Mutations, Maximumˉactions
+        )
+    );
+}
+
+fn Providerˉcalls(
+    Result: Writer.Databaseˉdurableˉtransactionˉwriteˉresult
+) -> u64 {
+    var Calls: u64 = U64ˉfromˉu32(Result.Pathˉvisits) +
+        U64ˉfromˉu32(Result.Actions);
+    if Result.Status !=
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Invalidˉcurrent &&
+        Result.Status !=
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Invalidˉmutations &&
+        (Result.Status !=
+                Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Resourceˉlimit ||
+            Result.Pathˉvisits > 0u32) {
+        Calls = Calls + 1u64;
+    }
+    return Calls;
+}
+
+export fn Databaseˉpersistentˉwriterˉfinish(
+    Input: Databaseˉpersistentˉwriterˉsession,
+    Execution: Databaseˉpersistentˉwriterˉexecution,
+    Finishedˉtick: u64
+) -> Databaseˉpersistentˉwriterˉsession {
+    if !Execution.Accepted ||
+        Input.Status != Databaseˉpersistentˉwriterˉstatus.Ready ||
+        Input.Nextˉrequest != Execution.Request ||
+        Finishedˉtick < Execution.Startedˉtick {
+        return Session(
+            Databaseˉpersistentˉwriterˉstatus.Failed,
+            Input.Current, Input.Nextˉrequest,
+            Input.Reopenˉmustˉadvance, Input.Metrics
+        );
+    }
+    let Result: Writer.Databaseˉdurableˉtransactionˉwriteˉresult =
+        Execution.Writer;
+    let Duration: u64 = Finishedˉtick - Execution.Startedˉtick;
+    var Committed: u64 = Input.Metrics.Committed;
+    var Noˉchange: u64 = Input.Metrics.Noˉchange;
+    var Rejected: u64 = Input.Metrics.Rejected;
+    var Reopenˉrequired: u64 = Input.Metrics.Reopenˉrequired;
+    var Status: Databaseˉpersistentˉwriterˉstatus =
+        Databaseˉpersistentˉwriterˉstatus.Failed;
+    var Mustˉadvance: bool = false;
+    if Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Committed {
+        Committed = Incrementˉsaturating(Committed);
+        Reopenˉrequired = Incrementˉsaturating(Reopenˉrequired);
+        Status = Databaseˉpersistentˉwriterˉstatus.Reopenˉrequired;
+        Mustˉadvance = true;
+    } else if Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Noˉchange {
+        Noˉchange = Incrementˉsaturating(Noˉchange);
+        Status = Databaseˉpersistentˉwriterˉstatus.Ready;
+    } else if Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Invalidˉmutations ||
+        Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Resourceˉlimit {
+        Rejected = Incrementˉsaturating(Rejected);
+        Status = Databaseˉpersistentˉwriterˉstatus.Ready;
+    } else if Result.Actions > 0u32 ||
+        Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Active ||
+        Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Aborted ||
+        Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Recover ||
+        Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Changedˉsnapshot ||
+        Result.Status ==
+            Writer.Databaseˉdurableˉtransactionˉwriteˉstatus.Publicationˉfailure {
+        Reopenˉrequired = Incrementˉsaturating(Reopenˉrequired);
+        Status = Databaseˉpersistentˉwriterˉstatus.Reopenˉrequired;
+    }
+    var Highˉwater: u64 = Input.Metrics.Retainedˉbyteˉhighˉwater;
+    if Result.Retainedˉbyteˉbound > Highˉwater {
+        Highˉwater = Result.Retainedˉbyteˉbound;
+    }
+    let Updated: Databaseˉpersistentˉwriterˉmetrics =
+        Databaseˉpersistentˉwriterˉmetrics(
+            Incrementˉsaturating(Input.Metrics.Requests),
+            Committed, Noˉchange, Rejected, Reopenˉrequired,
+            Input.Metrics.Reopens, Input.Metrics.Recoveries,
+            Input.Metrics.Recoveryˉactions,
+            Addˉsaturating(
+                Input.Metrics.Providerˉcalls, Providerˉcalls(Result)
+            ),
+            Addˉsaturating(
+                Input.Metrics.Pathˉvisits,
+                U64ˉfromˉu32(Result.Pathˉvisits)
+            ),
+            Addˉsaturating(Input.Metrics.Readˉbytes, Result.Readˉbytes),
+            Addˉsaturating(
+                Input.Metrics.Publicationˉactions,
+                U64ˉfromˉu32(Result.Actions)
+            ),
+            Addˉsaturating(
+                Input.Metrics.Appendˉbytes,
+                U64ˉfromˉu32(Result.Appendˉbytes)
+            ),
+            Highˉwater,
+            Addˉsaturating(Input.Metrics.Totalˉticks, Duration),
+            Duration
+        );
+    return Session(
+        Status, Input.Current, Input.Nextˉrequest + 1u64,
+        Mustˉadvance, Updated
+    );
+}
+
+export fn Databaseˉpersistentˉwriterˉreopen(
+    Input: Databaseˉpersistentˉwriterˉsession,
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Recovered: bool,
+    Recoveryˉactions: u32
+) -> Databaseˉpersistentˉwriterˉsession {
+    let Before: Superblock.Databaseˉsuperblockˉselection = Input.Current;
+    if Input.Status !=
+            Databaseˉpersistentˉwriterˉstatus.Reopenˉrequired ||
+        !Currentˉvalid(Current) ||
+        Current.Databaseˉidentityˉhigh != Before.Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Before.Databaseˉidentityˉlow ||
+        Current.Pageˉsize != Before.Pageˉsize ||
+        Current.Generation < Before.Generation ||
+        Current.Committedˉsequence < Before.Committedˉsequence ||
+        Input.Reopenˉmustˉadvance &&
+            (Current.Generation <= Before.Generation ||
+                Current.Committedˉsequence <= Before.Committedˉsequence) {
+        return Session(
+            Databaseˉpersistentˉwriterˉstatus.Failed,
+            Before, Input.Nextˉrequest,
+            Input.Reopenˉmustˉadvance, Input.Metrics
+        );
+    }
+    var Recoveries: u64 = Input.Metrics.Recoveries;
+    if Recovered {
+        Recoveries = Incrementˉsaturating(Recoveries);
+    }
+    let Updated: Databaseˉpersistentˉwriterˉmetrics =
+        Databaseˉpersistentˉwriterˉmetrics(
+            Input.Metrics.Requests, Input.Metrics.Committed,
+            Input.Metrics.Noˉchange, Input.Metrics.Rejected,
+            Input.Metrics.Reopenˉrequired,
+            Incrementˉsaturating(Input.Metrics.Reopens), Recoveries,
+            Addˉsaturating(
+                Input.Metrics.Recoveryˉactions,
+                U64ˉfromˉu32(Recoveryˉactions)
+            ),
+            Input.Metrics.Providerˉcalls, Input.Metrics.Pathˉvisits,
+            Input.Metrics.Readˉbytes, Input.Metrics.Publicationˉactions,
+            Input.Metrics.Appendˉbytes,
+            Input.Metrics.Retainedˉbyteˉhighˉwater,
+            Input.Metrics.Totalˉticks, Input.Metrics.Lastˉticks
+        );
+    return Session(
+        Databaseˉpersistentˉwriterˉstatus.Ready,
+        Current, Input.Nextˉrequest, false, Updated
+    );
+}
+
+export fn Databaseˉpersistentˉwriterˉclose(
+    Input: Databaseˉpersistentˉwriterˉsession
+) -> Databaseˉpersistentˉwriterˉsession {
+    return Session(
+        Databaseˉpersistentˉwriterˉstatus.Closed,
+        Input.Current, Input.Nextˉrequest,
+        Input.Reopenˉmustˉadvance, Input.Metrics
+    );
+}
