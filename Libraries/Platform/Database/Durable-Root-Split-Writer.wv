@@ -1,0 +1,390 @@
+module Durableˉrootˉsplitˉwriter profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Randomˉaccessˉstorage as Storage;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Logical;
+import Windvaleˉdatabaseˉrootˉsplitˉupsert as Split;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+const DATABASE_ROOT_SPLIT_WRITER_HEADER_BYTES: u64 = 512u64;
+const DATABASE_ROOT_SPLIT_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉdurableˉrootˉsplitˉstatus {
+    Committed = 0;
+    Active = 1;
+    Aborted = 2;
+    Recover = 3;
+    Invalidˉcurrent = 4;
+    Invalidˉkey = 5;
+    Unsupportedˉdepth = 6;
+    Storageˉfailure = 7;
+    Changedˉsnapshot = 8;
+    Pageˉfailure = 9;
+    Invalidˉdurableˉpage = 10;
+    Transactionˉfailure = 11;
+    Publicationˉfailure = 12;
+}
+
+export record Databaseˉdurableˉrootˉsplitˉresult {
+    Status: Databaseˉdurableˉrootˉsplitˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Transactionˉerror: Split.Databaseˉrootˉsplitˉupsertˉerror;
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror;
+    Pageˉvisits: u32;
+    Actions: u32;
+    Leftˉentries: u32;
+    Rightˉentries: u32;
+    Rootˉpage: u64;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+    Publicationˉstate: Publication.Databaseˉstorageˉpublication;
+}
+
+export record Databaseˉdurableˉlogicalˉrootˉsplitˉresult {
+    Logicalˉerror: Logical.Databaseˉlogicalˉwriteˉerror;
+    Writer: Databaseˉdurableˉrootˉsplitˉresult;
+}
+
+fn Databaseˉdurableˉrootˉsplitˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉrootˉsplitˉinvalidˉpublication()
+    -> Publication.Databaseˉstorageˉpublication {
+    let Rejected: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉreject(
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉcurrent
+        );
+    return Publication.Databaseˉstorageˉpublicationˉbegin(
+        Rejected.Publication,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉrootˉsplitˉempty(),
+        Databaseˉdurableˉrootˉsplitˉempty()
+    );
+}
+
+fn Databaseˉdurableˉrootˉsplitˉfailure(
+    Status: Databaseˉdurableˉrootˉsplitˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus,
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror,
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Transactionˉerror: Split.Databaseˉrootˉsplitˉupsertˉerror,
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror,
+    Pageˉvisits: u32
+) -> Databaseˉdurableˉrootˉsplitˉresult {
+    return Databaseˉdurableˉrootˉsplitˉresult(
+        Status,
+        Storageˉstatus,
+        Readˉstatus,
+        Readˉerror,
+        Readˉstorageˉerror,
+        Pageˉerror,
+        Nodeˉerror,
+        Transactionˉerror,
+        Publicationˉerror,
+        Pageˉvisits,
+        0u32,
+        0u32,
+        0u32,
+        DATABASE_ROOT_SPLIT_WRITER_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉrootˉsplitˉinvalidˉpublication()
+    );
+}
+
+fn Databaseˉdurableˉrootˉsplitˉtransactionˉfailure(
+    Transaction: Split.Databaseˉrootˉsplitˉupsert
+) -> Databaseˉdurableˉrootˉsplitˉresult {
+    return Databaseˉdurableˉrootˉsplitˉfailure(
+        Databaseˉdurableˉrootˉsplitˉstatus.Transactionˉfailure,
+        Storage.Storageˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Transaction.Commit.Pageˉerror,
+        Transaction.Nodeˉerror,
+        Transaction.Error,
+        Publication.Databaseˉstorageˉpublicationˉerror.None,
+        1u32
+    );
+}
+
+fn Databaseˉdurableˉrootˉsplitˉoutcome(
+    Status: Databaseˉdurableˉrootˉsplitˉstatus,
+    Transaction: Split.Databaseˉrootˉsplitˉupsert,
+    Execution: Executor.Databaseˉstorageˉpublicationˉexecution
+) -> Databaseˉdurableˉrootˉsplitˉresult {
+    return Databaseˉdurableˉrootˉsplitˉresult(
+        Status,
+        Storage.Storageˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Split.Databaseˉrootˉsplitˉupsertˉerror.Valid,
+        Execution.State.Error,
+        1u32,
+        Execution.Actions,
+        Transaction.Leftˉentryˉcount,
+        Transaction.Rightˉentryˉcount,
+        Transaction.Rootˉpage,
+        Transaction.Commit.Targetˉgeneration,
+        Transaction.Commit.Targetˉsequence,
+        Transaction.Commit.Targetˉlength,
+        Execution.State
+    );
+}
+
+export fn Databaseˉdurableˉrootˉsplitˉupsert(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Key: bytes,
+    Value: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉrootˉsplitˉresult {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Invalidˉcurrent,
+            Storage.Storageˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Invalidˉcurrent,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            0u32
+        );
+    }
+    if Bytesˉlength(Key) == 0u32 || Bytesˉlength(Key) > 4096u32 {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Invalidˉkey,
+            Storage.Storageˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Invalidˉnode,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            0u32
+        );
+    }
+    if Current.Rootˉdepth != 1u32 {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Unsupportedˉdepth,
+            Storage.Storageˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Invalidˉcurrent,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            0u32
+        );
+    }
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Storageˉfailure,
+            Description.Status,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            0u32
+        );
+    }
+    if Description.Storageˉlength != Current.Committedˉlength {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Changedˉsnapshot,
+            Description.Status,
+            Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+            Pageˉreader.Databaseˉpageˉerror.None,
+            Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.Changedˉstorage,
+            0u32
+        );
+    }
+    let Read: Pageˉreader.Databaseˉpageˉreadˉresult =
+        Pageˉreader.Databaseˉstorageˉreadˉpage(
+            DATABASE_ROOT_SPLIT_WRITER_HEADER_BYTES,
+            Current.Pageˉsize,
+            Current.Rootˉpage
+        );
+    if Read.Status != Pageˉreader.Databaseˉpageˉreadˉstatus.Valid {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Pageˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Read.Status,
+            Read.Pageˉerror,
+            Read.Storageˉerror,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            1u32
+        );
+    }
+    if Read.Generation != Description.Generation ||
+        Read.Storageˉlength != Description.Storageˉlength {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Changedˉsnapshot,
+            Storage.Storageˉstatus.Valid,
+            Read.Status,
+            Read.Pageˉerror,
+            Read.Storageˉerror,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.Changedˉstorage,
+            1u32
+        );
+    }
+    let Decoded: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Read.Value);
+    if Decoded.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Invalidˉdurableˉpage,
+            Storage.Storageˉstatus.Valid,
+            Read.Status,
+            Read.Pageˉerror,
+            Read.Storageˉerror,
+            Decoded.Error,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Invalidˉrootˉpage,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            1u32
+        );
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉownedˉcopy(Decoded);
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Invalidˉdurableˉpage,
+            Storage.Storageˉstatus.Valid,
+            Read.Status,
+            Read.Pageˉerror,
+            Read.Storageˉerror,
+            Root.Error,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Invalidˉrootˉpage,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            1u32
+        );
+    }
+    let Transaction: Split.Databaseˉrootˉsplitˉupsert =
+        Split.Databaseˉrootˉsplitˉupsertˉbegin(Current, Root, Key, Value);
+    if Transaction.Error != Split.Databaseˉrootˉsplitˉupsertˉerror.Valid {
+        return Databaseˉdurableˉrootˉsplitˉtransactionˉfailure(Transaction);
+    }
+    let Initial: Publication.Databaseˉstorageˉpublication =
+        Publication.Databaseˉstorageˉpublicationˉbegin(
+            Transaction.Commit.Publication,
+            Description.Generation,
+            Current.Tailˉbytes,
+            Description.Storageˉlength,
+            Transaction.Commit.Pages,
+            Transaction.Commit.Superblock
+        );
+    if Initial.Status != Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        return Databaseˉdurableˉrootˉsplitˉfailure(
+            Databaseˉdurableˉrootˉsplitˉstatus.Publicationˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Read.Status,
+            Read.Pageˉerror,
+            Read.Storageˉerror,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            Split.Databaseˉrootˉsplitˉupsertˉerror.Valid,
+            Initial.Error,
+            1u32
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(Initial, Maximumˉactions);
+    var Resultˉstatus: Databaseˉdurableˉrootˉsplitˉstatus =
+        Databaseˉdurableˉrootˉsplitˉstatus.Publicationˉfailure;
+    if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
+        Resultˉstatus = Databaseˉdurableˉrootˉsplitˉstatus.Committed;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        Resultˉstatus = Databaseˉdurableˉrootˉsplitˉstatus.Active;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Resultˉstatus = Databaseˉdurableˉrootˉsplitˉstatus.Aborted;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Recover {
+        Resultˉstatus = Databaseˉdurableˉrootˉsplitˉstatus.Recover;
+    }
+    return Databaseˉdurableˉrootˉsplitˉoutcome(
+        Resultˉstatus,
+        Transaction,
+        Execution
+    );
+}
+
+export fn Databaseˉdurableˉlogicalˉrootˉsplitˉupsert(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Collection: u64,
+    Identity: bytes,
+    Schema: u64,
+    Payload: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉlogicalˉrootˉsplitˉresult {
+    let Prepared: Logical.Databaseˉlogicalˉwrite =
+        Logical.Databaseˉlogicalˉwriteˉprepare(
+            Collection,
+            Identity,
+            Schema,
+            Payload
+        );
+    if Prepared.Error != Logical.Databaseˉlogicalˉwriteˉerror.Valid {
+        let Empty: bytes = Bytesˉslice(Identity, 0u32, 0u32);
+        return Databaseˉdurableˉlogicalˉrootˉsplitˉresult(
+            Prepared.Error,
+            Databaseˉdurableˉrootˉsplitˉupsert(Current, Empty, Empty, 0u32)
+        );
+    }
+    return Databaseˉdurableˉlogicalˉrootˉsplitˉresult(
+        Logical.Databaseˉlogicalˉwriteˉerror.Valid,
+        Databaseˉdurableˉrootˉsplitˉupsert(
+            Current,
+            Prepared.Key,
+            Prepared.Value,
+            Maximumˉactions
+        )
+    );
+}

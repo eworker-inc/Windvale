@@ -687,6 +687,42 @@ verify_host_root_writer_interruption() {
     cmp --silent -- "$committed" "$scenario_storage" || return 1
 }
 
+verify_host_root_split_writer() {
+    local fill_project=$1 split_project=$2 get_project=$3
+    local fill_application="$temporary_directory/HostLocal-RootFill.elf"
+    local split_application="$temporary_directory/HostLocal-RootSplit.elf"
+    local get_application="$temporary_directory/HostLocal-RootSplitGet.elf"
+    local initial_file="$temporary_directory/HostStorage-Run/Windvale-Database-Storage.initial"
+    local run_directory="$temporary_directory/HostRootSplit-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local committed_file="$run_directory/Windvale-Database-Storage.committed"
+
+    build_host_local_component "$fill_project" RootFill "$fill_application" || return $?
+    local fill_project_checkpoint=$host_local_component_project_checkpoint
+    local fill_application_checkpoint=$host_local_component_application_checkpoint
+    build_host_local_component "$split_project" RootSplit "$split_application" || return $?
+    local split_project_checkpoint=$host_local_component_project_checkpoint
+    local split_application_checkpoint=$host_local_component_application_checkpoint
+    build_host_local_component "$get_project" RootSplitGet "$get_application" || return $?
+    local get_project_checkpoint=$host_local_component_project_checkpoint
+    local get_application_checkpoint=$host_local_component_application_checkpoint
+
+    [[ -f $initial_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+    cp -- "$initial_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$fill_application" >/dev/null) || return $?
+    [[ $(wc -c < "$storage_file") -eq 12800 ]] || return 1
+    (cd -- "$run_directory" && "$split_application" >/dev/null) || return $?
+    [[ $(wc -c < "$storage_file") -eq 29184 ]] || return 1
+    cp -- "$storage_file" "$committed_file" || return $?
+    (cd -- "$run_directory" && "$get_application" >/dev/null) || return $?
+    cmp --silent -- "$committed_file" "$storage_file" || return 1
+    if ((development == 1)); then
+        project_checkpoint_host_root_writer+=",Fill:$fill_project_checkpoint,Split:$split_project_checkpoint,Get:$get_project_checkpoint"
+        application_checkpoint_host_root_writer+=",Fill:$fill_application_checkpoint,Split:$split_application_checkpoint,Get:$get_application_checkpoint"
+    fi
+}
+
 build_host_local_component() {
     local project_path=$1 component=$2 linux_application=$3
     local first_wvb="$temporary_directory/HostLocal-$component-First.wvb"
@@ -1357,6 +1393,13 @@ verify_development_host_targets() {
                 echo 'The native database storage development host-root-writer stage failed.' >&2
                 return 1
             }
+        verify_host_root_split_writer \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj" \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj" \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || {
+                echo 'The native database storage development root-split writer stage failed.' >&2
+                return 1
+            }
         host_root_writer_elapsed_ms=$(((SECONDS - host_root_writer_start) * 1000))
         echo "PASS  native database storage development step=host-root-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_root_writer_elapsed_ms project=$project_checkpoint_host_root_writer application=$application_checkpoint_host_root_writer"
         [[ $development_target != host-root-writer ]] || return 0
@@ -1500,6 +1543,10 @@ verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
 verify_host_root_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj" || exit $?
+verify_host_root_split_writer \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
 verify_host_local_service \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj" || exit $?

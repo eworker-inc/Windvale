@@ -121,6 +121,34 @@ foreach ($HostLogicalTreeProject in $HostLogicalTreeProjects) {
         $DatabaseStorageDevelopmentEligible = $false
     }
 }
+$HostRootSplitProjects = @(
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj'
+)
+foreach ($HostRootSplitProject in $HostRootSplitProjects) {
+    $HostRootSplitAbsolute = Join-Path $RepositoryRoot $HostRootSplitProject
+    if (Test-Path -LiteralPath $HostRootSplitAbsolute -PathType Leaf) {
+        foreach ($TargetPath in @(
+            $HostRootSplitProject
+            Get-Content -LiteralPath $HostRootSplitAbsolute |
+                ForEach-Object {
+                    if ($_ -match '^(?:root|source) "([^"\r\n]+)"$') {
+                        $Matches[1]
+                    }
+                }
+        )) {
+            if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TargetPath)) {
+                $DatabaseDevelopmentTargetsByPath[$TargetPath] =
+                    [System.Collections.Generic.HashSet[string]]::new(
+                        [StringComparer]::Ordinal)
+            }
+            $null = $DatabaseDevelopmentTargetsByPath[$TargetPath].Add(
+                'host-root-writer')
+        }
+    } else {
+        $DatabaseStorageDevelopmentEligible = $false
+    }
+}
 $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Bootstrap.md' = @('bootstrap', 'engine')
     'Specifications/Windvale-Database-Collection-Catalog.md' = @('collection-catalog')
@@ -134,6 +162,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Tree-Path-Upsert.md' = @('tree-path-upsert')
     'Specifications/Windvale-Database-Engine-Lifecycle.md' = @('engine')
     'Specifications/Windvale-Database-Hosted-Root-Writer.md' = @('host-root-writer')
+    'Specifications/Windvale-Database-Hosted-Root-Split-Writer.md' = @('host-root-writer')
     'Specifications/Windvale-Database-Hosted-Tree-Writer.md' = @('host-tree-writer')
 }
 $DatabaseDevelopmentProjects = @(
@@ -153,6 +182,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Durable-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Database-Lifecycle.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Root-Writer.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Root-Split-Writer.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Local-Open.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Local-Root-Put.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Local-Get.wvproj',
@@ -172,6 +202,8 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
@@ -1084,6 +1116,8 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Database-Engine-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Reader-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Writer-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Fill-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Split-Writer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Local-Put-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Local-Get-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Writer-Self-Test.wv' -or
@@ -1115,6 +1149,8 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj' -or
@@ -1169,10 +1205,13 @@ foreach ($Path in $Paths) {
             $Path.Contains('Durable-Database-Lifecycle', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Root-Writer', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Root-Split-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Logical-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Root-Writer', [StringComparison]::Ordinal) -or
+            $Path.Contains('Host-Root-Fill', [StringComparison]::Ordinal) -or
+            $Path.Contains('Host-Root-Split-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Local-', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Logical-Tree-', [StringComparison]::Ordinal) -or
@@ -2206,6 +2245,8 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj',

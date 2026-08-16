@@ -223,6 +223,11 @@ if errorlevel 1 goto :cleanup
 call :verify_host_root_writer ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Writer.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_root_split_writer ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Fill.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_host_local_service ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Put.wvproj" ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Get.wvproj"
@@ -307,6 +312,14 @@ call echo START native database storage development step=host-root-writer item=%
 call :verify_host_root_writer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Writer.wvproj"
 if errorlevel 1 (
     >&2 echo The native database storage development host-root-writer stage failed.
+    exit /b 1
+)
+call :verify_host_root_split_writer ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Fill.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development root-split writer stage failed.
     exit /b 1
 )
 call :read_clock HostRootWriterEnd
@@ -780,6 +793,73 @@ fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
 
 if "%Development%"=="1" (
     endlocal & set "ProjectCheckpointHostLocalService=%HostLocalCheckpoint%" & set "ApplicationCheckpointHostLocalService=%HostLocalApplicationCheckpoint%"
+    exit /b 0
+)
+endlocal
+exit /b 0
+
+:verify_host_root_split_writer
+setlocal EnableExtensions DisableDelayedExpansion
+set "FillProject=%~f1"
+set "SplitProject=%~f2"
+set "GetProject=%~f3"
+set "FillApplication=%TemporaryDirectory%\HostRootSplit-Fill.exe"
+set "SplitApplication=%TemporaryDirectory%\HostRootSplit-Write.exe"
+set "GetApplication=%TemporaryDirectory%\HostRootSplit-Get.exe"
+set "InitialFile=%TemporaryDirectory%\HostStorage-Run\Windvale-Database-Storage.initial"
+set "RunDirectory=%TemporaryDirectory%\HostRootSplit-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+
+call :build_host_local_component "%FillProject%" RootFill "%FillApplication%"
+if errorlevel 1 exit /b 1
+call :build_host_local_component "%SplitProject%" RootSplit "%SplitApplication%"
+if errorlevel 1 exit /b 1
+call :build_host_local_component "%GetProject%" RootSplitGet "%GetApplication%"
+if errorlevel 1 exit /b 1
+
+if "%Development%"=="1" (
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-RootFill-Cache.txt"') do set "FillProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-RootSplit-Cache.txt"') do set "SplitProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-RootSplitGet-Cache.txt"') do set "GetProjectCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-RootFill-Application-Cache.txt"') do set "FillApplicationCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-RootSplit-Application-Cache.txt"') do set "SplitApplicationCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-RootSplitGet-Application-Cache.txt"') do set "GetApplicationCheckpoint=%%S"
+    if not defined FillProjectCheckpoint exit /b 1
+    if not defined SplitProjectCheckpoint exit /b 1
+    if not defined GetProjectCheckpoint exit /b 1
+    if not defined FillApplicationCheckpoint exit /b 1
+    if not defined SplitApplicationCheckpoint exit /b 1
+    if not defined GetApplicationCheckpoint exit /b 1
+)
+
+if not exist "%InitialFile%" exit /b 1
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%InitialFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%FillApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+for %%F in ("%StorageFile%") do if not "%%~zF"=="12800" exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%SplitApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+for %%F in ("%StorageFile%") do if not "%%~zF"=="29184" exit /b 1
+copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%GetApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
+
+if "%Development%"=="1" (
+    call set "CombinedProject=%%ProjectCheckpointHostRootWriter%%,Fill:%%FillProjectCheckpoint%%,Split:%%SplitProjectCheckpoint%%,Get:%%GetProjectCheckpoint%%"
+    call set "CombinedApplication=%%ApplicationCheckpointHostRootWriter%%,Fill:%%FillApplicationCheckpoint%%,Split:%%SplitApplicationCheckpoint%%,Get:%%GetApplicationCheckpoint%%"
+    endlocal & set "ProjectCheckpointHostRootWriter=%CombinedProject%" & set "ApplicationCheckpointHostRootWriter=%CombinedApplication%"
     exit /b 0
 )
 endlocal

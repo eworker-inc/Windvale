@@ -1,0 +1,80 @@
+module Nativeˉhostedˉdurableˉrootˉsplitˉwriterˉselfˉtest profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Durableˉrootˉsplitˉwriter as Writer;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Logical;
+
+capability storage.random_access_v1;
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Selectˉcurrent(
+    Description: Storage.Storageˉresult
+) -> Superblock.Databaseˉsuperblockˉselection {
+    let Header: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Description.Generation,
+        0u64,
+        512u32
+    );
+    if Header.Status != Storage.Storageˉstatus.Valid ||
+        Header.Generation != Description.Generation ||
+        Header.Storageˉlength != Description.Storageˉlength ||
+        Bytesˉlength(Header.Value) != 512u32 {
+        return Superblock.Databaseˉsuperblockˉselect(
+            Emptyˉbytes(),
+            Emptyˉbytes(),
+            Description.Storageˉlength
+        );
+    }
+    return Superblock.Databaseˉsuperblockˉselect(
+        Bytesˉslice(Header.Value, 0u32, 256u32),
+        Bytesˉslice(Header.Value, 256u32, 256u32),
+        Description.Storageˉlength
+    );
+}
+
+export fn Main() -> i32 {
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 ||
+        Description.Storageˉlength != 12800u64 {
+        return 1;
+    }
+    let Current: Superblock.Databaseˉsuperblockˉselection =
+        Selectˉcurrent(Description);
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Generation != 2u64 ||
+        Current.Committedˉsequence != 1u64 ||
+        Current.Rootˉdepth != 1u32 {
+        return 2;
+    }
+    let Result: Writer.Databaseˉdurableˉlogicalˉrootˉsplitˉresult =
+        Writer.Databaseˉdurableˉlogicalˉrootˉsplitˉupsert(
+            Current,
+            7u64,
+            Textˉtoˉutf8("customer-1"),
+            3u64,
+            Textˉtoˉutf8("stored-through-logical-tree-writer"),
+            4u32
+        );
+    if Result.Logicalˉerror !=
+            Logical.Databaseˉlogicalˉwriteˉerror.Valid ||
+        Result.Writer.Status !=
+            Writer.Databaseˉdurableˉrootˉsplitˉstatus.Committed ||
+        Result.Writer.Pageˉvisits != 1u32 ||
+        Result.Writer.Actions != 4u32 ||
+        Result.Writer.Leftˉentries != 1u32 ||
+        Result.Writer.Rightˉentries != 1u32 ||
+        Result.Writer.Rootˉpage != 5u64 ||
+        Result.Writer.Targetˉgeneration != 3u64 ||
+        Result.Writer.Targetˉsequence != 2u64 ||
+        Result.Writer.Targetˉlength != 29184u64 {
+        return 3;
+    }
+    return 0;
+}

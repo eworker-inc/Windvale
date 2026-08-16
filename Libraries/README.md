@@ -87,6 +87,7 @@ native build inputs for the current reusable modules:
 | `Windvale-Library-Durable-Database-Engine` | `Durableˉdatabaseˉengine` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Tree-Reader` | `Durableˉtreeˉreader` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Root-Writer` | `Durableˉrootˉwriter` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Durable-Root-Split-Writer` | `Durableˉrootˉsplitˉwriter` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Local-Open` | `Durableˉlocalˉopen` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Local-Root-Put` | `Durableˉlocalˉrootˉput` | hosted / `storage.random_access_v1` |
 | `Windvale-Library-Durable-Local-Get` | `Durableˉlocalˉget` | hosted / `storage.random_access_v1` |

@@ -61,7 +61,8 @@ superblock, then converges byte-for-byte on the same committed image.
 
 ## Exclusions
 
-This writer does not split a full root, dispatch to the multi-level writer,
+This writer does not split a full root; that transition belongs to the focused
+hosted root-split writer. It does not dispatch to the multi-level writer,
 bind the portable local-service session, allocate collections, delete records,
 reclaim pages, arbitrate concurrent writers, authenticate clients, or listen on
 a network endpoint.
