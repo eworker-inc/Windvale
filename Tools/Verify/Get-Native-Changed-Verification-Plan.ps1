@@ -809,6 +809,13 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Bound-Model-Provider.md'
     )) {
         Add-Suite 'model-provider'
+    } elseif ($Path.StartsWith('Tools/Models/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Tools/Native/Test-External-Model-Reference.cmd',
+            'Tools/Native/Test-External-Model-Reference.sh',
+            'Specifications/Windvale-External-Model-Reference.md'
+        )) {
+        Add-Suite 'external-model-reference'
     } elseif ($Path -in @(
         'Libraries/Models/Model-Protocol.wv',
         'Libraries/Models/Scripted-Model-Provider.wv',

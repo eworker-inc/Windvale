@@ -1,4 +1,4 @@
-# Decision 0595: First resolve/connect and reliable-stream core
+# Decision 0596: First resolve/connect and reliable-stream core
 
 - Date: 2026-08-15
 - Status: Implemented candidate with focused Windows execution evidence

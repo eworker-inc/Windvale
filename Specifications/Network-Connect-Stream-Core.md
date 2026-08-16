@@ -3,7 +3,7 @@
 ## Status
 
 Implemented candidate under
-[Decision 0595](../Documents/Decisions/0595-First-Resolve-Connect-And-Reliable-Stream-Core.md).
+[Decision 0596](../Documents/Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md).
 
 ## Purpose and boundary
 

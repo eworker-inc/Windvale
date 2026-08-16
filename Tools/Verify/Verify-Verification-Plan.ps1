@@ -1144,6 +1144,20 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'external model reference owner'
+        Paths = @(
+            'Tools/Models/External-Model-Reference-Core.mjs',
+            'Tools/Models/External-Model-Reference.mjs',
+            'Tools/Models/Test-External-Model-Reference.mjs',
+            'Tools/Native/Test-External-Model-Reference.cmd',
+            'Tools/Native/Test-External-Model-Reference.sh',
+            'Specifications/Windvale-External-Model-Reference.md'
+        )
+        Suites = @('external-model-reference')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'hosted model provider owner'
         Paths = @(
             'Libraries/Platform/Models/Bound-Model-Provider.wv',
@@ -1795,9 +1809,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 73 -or
+if ($VerificationOwnerLines.Count -ne 74 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 72-owner inventory differs.'
+    throw 'The native verification-owner header or exact 73-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1835,7 +1849,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3593 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3617 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

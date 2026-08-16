@@ -8,13 +8,15 @@ This specification defines the implemented capability-free `WVMM 1`, `WVMQ 1`,
 text conversations, describe catalog and non-streaming generation operations,
 and independently admit provider-neutral results.
 
-This is not a public-network API, JSON mapping, credential contract, or claim
-that Windvale can contact an external provider. The deterministic
+This is not itself a public-network API, JSON mapping, credential contract, or
+claim that the Windvale runtime can contact an external provider. The deterministic
 `Scriptedˉmodelˉprovider` is a capability-free corpus provider. The implemented
 [bound hosted facade](Windvale-Bound-Model-Provider.md) preserves this protocol
-through an offline native capability seam. A future live adapter must separately
-earn network, credential, cancellation, transport-completion, and malformed-JSON
-evidence.
+through an offline native capability seam. The separate
+[developer reference oracle](Windvale-External-Model-Reference.md) can map these
+records to three public providers through host Node HTTPS. A production live
+adapter must separately earn network, credential, cancellation,
+transport-completion, and malformed-JSON evidence.
 
 All integers are unsigned little-endian. All reserved fields are zero. Every
 decoder requires the declared total to equal the complete supplied value and
@@ -171,7 +173,8 @@ The two separately authorized catalog and inference operations over
 `bytes -> bytes`, native provider-call lowering, rights-limited binding, strict
 facade admission, and borrowed-response rule are implemented by Decision 0583.
 Decision 0585 adds the first catchable bridge-lifecycle and uncertain-submission
-results. The live seam still requires HTTPS/HTTP, secret custody,
+results. Decision 0597 adds a host-Node reference mapping without changing this
+portable contract. The production live seam still requires HTTPS/HTTP, secret custody,
 deadlines/cancellation, provider-specific transport evidence, and bounded JSON mapping. No
 API key, endpoint, unrestricted header map, provider SDK object, or raw JSON
 belongs in these portable records.

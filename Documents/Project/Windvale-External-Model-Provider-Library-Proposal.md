@@ -9,6 +9,10 @@
 > [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
 > Shared network slice 2 is implemented under
 > [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md).
+> The build-restricted model slice 3 reference oracle is implemented under
+> [Decision 0597](../Decisions/0597-First-External-Model-Reference-Oracle.md)
+> for OpenAI, Anthropic, and Google; its deterministic evidence makes no live
+> call and it is not the production Windvale gateway.
 > [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
 > selects one live provider adapter and the local gateway that owns it as required
 > Milestone 5 work; the live network, credential, and adapter implementation is
@@ -83,10 +87,12 @@ provider to its exact service name, outbound TCP port 443, connection/byte/
 deadline limits, and monotonic expiry without converting DNS output into ambient
 numeric authority.
 
-This checkpoint is intentionally not a live adapter. It does not contact
-OpenAI, Anthropic, Google, or another provider, read an API key, parse provider
-JSON, or claim HTTPS/cancellation evidence. Those remain slices 3 through 5
-below.
+The build-restricted reference tool can now contact OpenAI, Anthropic, or Google
+over the host Node HTTPS implementation when an operator explicitly invokes it
+with the provider's environment credential. It parses bounded provider JSON and
+emits the same canonical records. This does not make it a production adapter or
+claim Windvale-native HTTPS, trust, cancellation, or credential-custody
+evidence. Those production boundaries remain slices 4 and 5 below.
 
 ## Current external API landscape
 
@@ -385,13 +391,14 @@ trap when no trustworthy response can be published.
 
 ### Model slice 3: optional external reference oracle
 
-Status: deferred; no repository credential is read and no live API is called.
+Status: implemented candidate under Decision 0597 with 24 deterministic
+offline cases; no repository credential is read and no live smoke was run.
 
-A build-restricted Node reference tool may translate the canonical envelopes to
-one real provider using the host's HTTPS and JSON implementation. This can
-validate mapping assumptions and capture redacted, hand-admitted structural
-fixtures. It is not a runtime dependency, portable implementation, production
-credential store, or semantic oracle.
+A build-restricted Node reference tool translates the canonical envelopes to
+OpenAI Responses, Anthropic Messages, or Google `generateContent` using the
+host's HTTPS and JSON implementation. It validates mapping assumptions without
+becoming a runtime dependency, portable implementation, production credential
+store, or semantic oracle.
 
 Exit gate: an explicitly enabled smoke can list and invoke one allow-listed
 model without logging secrets or prompt bodies by default; deterministic tests
@@ -462,10 +469,12 @@ A numbered decision is required before accepting:
 ## Immediate recommendation
 
 Continue from the implemented protocol, offline hosted seam, catchable
-bridge-lifecycle results, and bounded operation/deadline/cancellation core. The
-next useful shared infrastructure is slice 2's strict network authority model,
-then native timer/stream/secure-transport providers, credential custody, and
-bounded hostile JSON parsing.
+bridge-lifecycle results, bounded operation/deadline/cancellation core, network
+authority and reliable-stream semantics, and the three-provider reference
+oracle. The next shared infrastructure is a real Windows/Linux resolver and
+stream provider, followed by secure transport, bounded HTTP, and production
+credential custody. Reuse the oracle's provider mappings above those shared
+contracts rather than adding model-specific network calls.
 Decision 0595 makes one live adapter and its separately installable gateway a
 Milestone 5 release requirement rather than optional integration evidence.
 OpenAI remains a reasonable first candidate, not a portable semantic choice.

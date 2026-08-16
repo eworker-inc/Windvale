@@ -7,7 +7,7 @@
   are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
   [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
-  and [Decision 0595](../Decisions/0595-First-Resolve-Connect-And-Reliable-Stream-Core.md),
+  and [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
   and no network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -172,7 +172,7 @@ Linux execution is still required before the complete exit gate is claimed.
 ### Network Layer 3 contract core: resolve/connect and reliable stream
 
 Status: implemented candidate under
-[Decision 0595](../Decisions/0595-First-Resolve-Connect-And-Reliable-Stream-Core.md).
+[Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md).
 
 Implement the capability-free provider target for one authorized resolve/connect
 operation and one bounded reliable stream. It keeps name resolution and address
@@ -259,7 +259,7 @@ and cryptographic vectors.
 
 ## Immediate recommendation
 
-The `v0.1.0` offline installer and release subset is complete, and Decision 0595
+The `v0.1.0` offline installer and release subset is complete, and Decision 0596
 now supplies two selected Milestone 5 consumers: official package retrieval and
 the external-model gateway. Preserve the implemented slice 1 and slice 2
 candidates, close slice 2's independent Linux execution, and advance the
