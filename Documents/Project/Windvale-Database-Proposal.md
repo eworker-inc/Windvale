@@ -11,6 +11,11 @@
   accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
+- Milestone 5 product boundary: [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
+  selects a full Windvale-native rewrite of the database portion of EWorker Data
+  Service as a separately installable service; the exact reference revision,
+  parity inventory, migration contract, and remaining implementation must still
+  be completed before a server claim is made
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
 
 ## Purpose

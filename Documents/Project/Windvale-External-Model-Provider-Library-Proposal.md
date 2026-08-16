@@ -9,7 +9,10 @@
 > [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
 > Shared network slice 2 is implemented under
 > [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md).
-> Live network, credential, and provider-adapter slices remain proposals. The provider survey is a
+> [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
+> selects one live provider adapter and the local gateway that owns it as required
+> Milestone 5 work; the live network, credential, and adapter implementation is
+> still pending. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
 
@@ -396,8 +399,8 @@ continue to pass offline when the provider is unavailable or changes.
 
 ### Model slice 4: production hosted adapter
 
-Status: deferred pending shared networking, trust, cancellation, and secret
-custody.
+Status: selected for Milestone 5 under Decision 0595; implementation remains
+pending shared networking, trust, cancellation, and secret custody.
 
 After the shared networking plan reaches its secure HTTP gate and production
 secret custody exists, implement one provider adapter end to end. OpenAI is a
@@ -463,6 +466,9 @@ bridge-lifecycle results, and bounded operation/deadline/cancellation core. The
 next useful shared infrastructure is slice 2's strict network authority model,
 then native timer/stream/secure-transport providers, credential custody, and
 bounded hostile JSON parsing.
-Treat a live reference adapter as optional integration evidence. Do not describe
-Windvale as able to contact external models until secure HTTP, credential, and
-live-adapter gates have actually passed.
+Decision 0595 makes one live adapter and its separately installable gateway a
+Milestone 5 release requirement rather than optional integration evidence.
+OpenAI remains a reasonable first candidate, not a portable semantic choice.
+Do not describe Windvale as able to contact external models until secure HTTP,
+credential-custody, deterministic adapter, and opt-in live-smoke gates have
+actually passed.

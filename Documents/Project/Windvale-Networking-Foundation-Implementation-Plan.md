@@ -10,6 +10,8 @@
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
 - First package consumer: [package-system implementation plan](Windvale-Package-System-Implementation-Plan.md)
+- Selected release consumers: the official package source and external-model
+  gateway in the [Windvale 0.2.0 connected-services release plan](Windvale-0.2.0-Connected-Services-Release-Plan.md)
 
 This plan makes networking a permanent Windvale platform facility rather than a
 private downloader hidden inside `wv`. The offline package system does not wait
@@ -235,10 +237,12 @@ and cryptographic vectors.
 
 ## Immediate recommendation
 
-The `v0.1.0` offline installer and release subset is complete. Do not make
-networking the next milestone automatically. If a selected product requires
-online retrieval, start network slice 1 and then slice 2 as shared infrastructure,
-not as a competing package-client implementation. Do not add a synchronous
-`download(url)` host call or package-specific HTTPS capability. The first real
-online package request should arrive only after the common operation model,
-secure-stream boundary, and shared HTTP framing exist.
+The `v0.1.0` offline installer and release subset is complete, and Decision 0595
+now supplies two selected Milestone 5 consumers: official package retrieval and
+the external-model gateway. Preserve the implemented slice 1 and slice 2
+candidates, close slice 2's independent Linux execution, and advance the
+required native timer/stream/secure-transport providers and shared bounded HTTP
+framing without weakening the separately owned deterministic packet work. Do not add a synchronous
+`download(url)` host call or package-specific HTTPS capability. Host networking
+does not claim completion of the independent Windvale OS packet, driver, or TCP
+workstream.

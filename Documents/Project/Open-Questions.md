@@ -1,7 +1,7 @@
 # Windvale open questions
 
-> Status: Active unresolved choices after completed Milestones 1 through 4 and
-> the signed `v0.1.0` preview.
+> Status: Active unresolved choices after completed Milestones 1 through 4, the
+> signed `v0.1.0` preview, and selection of Milestone 5 / `v0.2.0`.
 > Detailed recommendations live in architecture documents; this file lists only
 > questions that can change the active roadmap or its next bounded slices.
 
@@ -35,6 +35,11 @@ The following are no longer open project questions:
   `v0.2.0` release. Decisions 0578 and 0580 close its paired activation,
   rollback, and safe-uninstall evidence in GitHub run `31906316540`; OS-1 and
   database work remain independent.
+- [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
+  selects the native database service, Windows/Debian service lifecycle,
+  official connected installer/repository, and one real external-model gateway
+  as the required `v0.2.0` product gate. OS work continues independently and is
+  included only to its ready, accurately qualified boundary at freeze.
 
 Historical documents that predate those decisions must not present them as
 unfinished work.
@@ -55,8 +60,12 @@ unfinished work.
 
 ### Durable application and database
 
-- How much repeated depth-three update, reclamation, and restart recovery does
-  the application actually need before broader database work should wait?
+- Which exact EWorker Data Service repository/tag and licensing record define
+  the database parity baseline?
+- Which legacy file/protocol behaviors require direct compatibility, which need
+  migration only, and which are intentionally replaced?
+- Which finite client concurrency, query/index, transaction, backup/restore,
+  repair, and migration rows belong to the required `0.2.0` parity profile?
 
 ### Windvale OS launch and service slice
 
@@ -91,14 +100,15 @@ The durable direction is in
 [Packages-Releases-And-Recovery.md](../Architecture/Packages-Releases-And-Recovery.md).
 The active questions are:
 
-- When a second preview is prepared, is one replacement release key beneath a
+- Is one replacement release key beneath a
   new root-signed policy sufficient, or does operational experience justify a
   threshold/root-rotation successor contract?
-- Which two real packages are sufficient to prove a general offline resolver,
-  generation inventory, activation recovery, and rollback without adding a
-  registry?
-- Which exact launcher boundary binds a selected generation and its approvals
-  without giving the package client ambient process or filesystem authority?
+- What exact freshness clock, high-water state, redirect policy, and revocation
+  record are sufficient for the first official online repository?
+- Which stable bootstrap URL and release-asset hosts fit the first rights-limited
+  network grant without making transport location an authority source?
+- Which service upgrade health result permits activation to remain current, and
+  which database-format minimum version must block package rollback?
 
 ## Agent runtime and digital subconscious questions
 

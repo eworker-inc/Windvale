@@ -1,15 +1,19 @@
 # Windvale development roadmap
 
 > Status: Active dependency-based forward plan after completed Milestones 1
-> through 4 and the signed `v0.1.0` preview on 15 August 2026.
+> through 4, the signed `v0.1.0` preview, and selection of Milestone 5 / the
+> future `v0.2.0` connected-services preview on 15 August 2026.
 
 ## Current planning boundary
 
 Preserve the completed 0.1 product path and Milestone 4 offline lifecycle while
-selecting the next product milestone deliberately. OS-1 continues as an
-independent launch-and-service track; database work may also advance
-independently. Neither became a package-lifecycle dependency merely because the
-work overlapped in time.
+executing the selected
+[Windvale 0.2.0 connected-services plan](Windvale-0.2.0-Connected-Services-Release-Plan.md).
+Milestone 5 requires the native EWorker database rewrite, Windows/Debian host
+service lifecycle, official connected package repository, and one real
+external-model gateway. OS-1 continues independently; ready qualified OS work
+is represented accurately at release freeze but unfinished OS work does not
+block the host preview.
 
 Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
@@ -136,6 +140,7 @@ deliberate selection for later releases and promotions.
 | Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
 | Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
 | Milestone 4: offline package lifecycle | ✅ Complete | Two-package admission, immutable generations, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall pass on Windows and Linux in run `31906316540`. |
+| Milestone 5: Windvale 0.2.0 connected services | 🎯 Selected | Complete the native database service, host service manager, signed online repository/installer, and one external-model gateway under Decision 0595. |
 | Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
 
 The completed 0.1 product path was:
@@ -211,6 +216,40 @@ jobs took 1 minute 11 seconds and 38 seconds respectively, and the aggregate gat
 passed. Milestone 4 is closed without a `v0.2.0` tag or release. Signed
 revocation/minimum-version policy belongs to the later security/update boundary
 and is not silently approximated by this offline gate.
+
+## Milestone 5: Windvale 0.2.0 connected services — selected
+
+[Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
+selects one integrated user outcome: bootstrap Windvale online on Windows or
+Debian, install signed packages from the official repository, register and run
+the native Windvale Database Service, and call one external model through a
+local provider-neutral gateway. The complete requirements and dependency map
+live in the
+[canonical release plan](Windvale-0.2.0-Connected-Services-Release-Plan.md).
+
+The database is the database portion of EWorker Data Service rewritten in
+Windvale. Its separate C# implementation supplies a pinned feature inventory,
+provenance input, fixtures, and differential oracle only; managed source and
+runtime do not return to Windvale `main` or ship as the `0.2.0` database.
+
+The milestone has four required product lanes:
+
+1. the selected full native database-service parity profile;
+2. portable `wv service` lifecycle over Windows SCM and Debian `systemd`;
+3. shared secure networking plus an official signed online package repository
+   with offline-equivalent object identity; and
+4. one real external-model adapter behind the local gateway.
+
+These lanes use focused development owners and may complete in parallel. The
+release tag waits for their integrated gate, safe installer/service
+upgrade/rollback/removal, deterministic hostile-input evidence, complete
+Windows/Debian qualification, and signed release envelope. No `v0.2.0` tag
+exists yet.
+
+OS-1 remains a parallel track. Accepted source present at freeze belongs to the
+release source state; an OS image or broader OS claim is published only if its
+own named gate is ready. OS incompleteness neither blocks the host release nor
+becomes an undocumented success claim.
 
 ## Milestone 2: package-backed host application — complete
 
@@ -462,12 +501,14 @@ provenance, revocation, and consensus boundaries are named.
 
 ### Database and storage
 
-- Use the package-backed application as the priority selector.
-- Complete repeated depth-three operation, reclamation, and recovery only to
-  the extent needed for a durable useful workload.
-- Do not begin SQL, a server protocol, broad concurrency, or a public product
-  identity before the bounded storage and capability contracts are useful end
-  to end.
+- Use the pinned EWorker Data Service parity ledger and native service product
+  as the priority selectors.
+- Complete engine, record, query, transaction, recovery, migration, operations,
+  protocol, and concurrency work only for a classified release requirement or
+  an independently accepted reusable contract.
+- Do not silently inherit the C# file format, wire protocol, managed runtime, or
+  every historical feature. Preserve required compatibility through an explicit
+  format, adapter, or migration decision with independent evidence.
 
 ### Agent runtime
 
@@ -545,9 +586,12 @@ provenance, revocation, and consensus boundaries are named.
 
 ### Browser, networking, shell, and virtualization
 
-These remain accepted or proposed future lanes in their architecture documents.
-They may receive bounded experiments, but they do not displace the product
-critical path or parallel OS-1 track without a direct product or recovery need.
+Hosted resolver/secure-stream/HTTP work is now on the Milestone 5 critical path
+for the official repository and external-model gateway. Browser Workbench may
+consume only the local gateway and never owns provider credentials. Shell,
+virtualization, and the Windvale OS packet/device path retain their independent
+architecture gates and do not become release blockers without another direct
+product or recovery need.
 
 ## Verification policy
 

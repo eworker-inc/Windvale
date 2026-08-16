@@ -54,6 +54,15 @@ valuable but was not a prerequisite for this host-product preview. Later preview
 would normally be `v0.2.0`, `v0.3.0`, and so on—not “release 2” without a
 compatibility meaning.
 
+[Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
+now selects `v0.2.0` as the connected-services preview: native database service,
+Windows/Debian service management, official signed online repository/installer,
+and one real external-model gateway. Selection reserves the version but does not
+create a tag or release. Internal artifacts may use `0.2.0-dev.<n>`; published
+integration previews may use immutable `v0.2.0-alpha.<n>`,
+`v0.2.0-beta.<n>`, and `v0.2.0-rc.<n>` annotated tags. Only the frozen candidate
+that passes the complete release gate receives `v0.2.0`.
+
 `v0.1.0` must publish installable per-user Windows and Linux artifacts for
 Windvale and its core tools. The base installation includes the launcher/client,
 offline verifier, compiler, assembler, linker, runtime, and inspectors. WVDB

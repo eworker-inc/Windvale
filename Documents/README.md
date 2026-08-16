@@ -25,6 +25,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
 - [Release names and tags](Project/Release-Names-And-Tags.md) — separate recovery archives, qualified baselines, and `v0.y.z` product promises
+- [Windvale 0.2.0 connected-services release plan](Project/Windvale-0.2.0-Connected-Services-Release-Plan.md) — selected database-service rewrite, Windows/Debian service lifecycle, connected installer and official repository, external-model gateway, release gates, and nonblocking OS inclusion policy
 - [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced native-only tree and immutable Stage 0 recovery identity
 - [Native verification owners](Decisions/0589-Separate-Historical-Retirement-From-Live-Native-Verification.md) — frozen `v0.1.0` retirement evidence, a current 70-owner registry, focused development selection, and explicit qualification
 - [Measured native retirement sharding](Decisions/0550-Measured-Native-Retirement-Sharding.md) — historical cold four-way host sharding and exact 52-suite/3,287-case qualification evidence

@@ -8,6 +8,12 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Selected Milestone 5 as the future `v0.2.0` connected-services preview: a
+  Windvale-native rewrite of the database portion of EWorker Data Service,
+  portable Windows/Debian service lifecycle, a signed connected installer and
+  official repository, and one provider-neutral external-model gateway. Windvale
+  OS continues independently and contributes only exact qualified artifacts ready
+  at release freeze; no `v0.2.0` tag has been created.
 - Selected the offline package lifecycle as Milestone 4 without assigning a
   `v0.2.0` release, while keeping OS-1 and database work independent.
 - Added the portable Generation 1 / Activation 1 contract, Windvale-native

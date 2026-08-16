@@ -3,7 +3,8 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Milestone 4 complete after the signed `v0.1.0` preview; the broader package-system plan remains active
+- Status: Milestone 4 complete after the signed `v0.1.0` preview; Decision 0595
+  selects the official connected source and installer upgrade as Milestone 5 work
 - Product direction: [packages, releases, updates, and recovery](../Architecture/Packages-Releases-And-Recovery.md)
 - Official-source proposal: [hybrid Windvale endpoint and immutable GitHub archive](Windvale-Package-Source-Proposal.md)
 - Proposed formats and transactions: [release discovery](../Architecture/Windvale-Release-Discovery.md) and [bundle and installation](../Architecture/Windvale-Package-Bundle-And-Installation.md)
@@ -24,7 +25,7 @@ generation activation/rollback, online source, or self-updating client.
 | 5. Immutable local object store | 🔵 Milestone 2 subset complete |
 | 6. Generations, approvals, activation, and rollback | 🔵 Portable Generation 1 / Activation 1 candidate plus approval/launch records |
 | 7. Native launcher and `wv` client bootstrap | 🔵 Installer/bootstrap subset complete |
-| 8. Official network source | ○ Open |
+| 8. Official network source | 🎯 Selected for Milestone 5; implementation open |
 | 9. SDK release and qualification | 🔵 `v0.1.0` release subset complete |
 
 ## End-state requirements
@@ -392,7 +393,10 @@ verified dispatch, interruption recovery, rollback, and safe uninstall.
 
 ### Slice 8: official network source
 
-Standing: **open** and deliberately independent of the next offline lifecycle.
+Standing: **selected for Milestone 5 and open** under
+[Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md).
+The completed offline lifecycle remains the admission and recovery foundation;
+online retrieval must yield the same verified objects and generations.
 
 Add qualified civil time, resolver, secure connection, HTTP retrieval, TLS trust,
 bounded redirects, and streaming download behind explicit package-manager host
