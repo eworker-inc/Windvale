@@ -51,10 +51,10 @@ windows_entry=$(sed -n 's/^entry name=Model_gateway_host_entry address=//p' "$wo
 linux_entry=$(sed -n 's/^entry name=Model_gateway_host_entry address=//p' "$work/Linux-Link.txt")
 [[ $windows_entry =~ ^[0-9]+$ && $linux_entry =~ ^[0-9]+$ ]] || exit 1
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
-    "$repository_root/Artifacts/Wvb-To-Wvo-Candidate.wvb" "$work/Windows-Image" 1 \
+    "$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.wvb" "$work/Windows-Image" 1 \
     "$windows_entry" "$work/Model-Worker.exe" windows >/dev/null || exit $?
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
-    "$repository_root/Artifacts/Wvb-To-Wvo-Candidate.wvb" "$work/Linux-Image" 1 \
+    "$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.wvb" "$work/Linux-Image" 1 \
     "$linux_entry" "$work/Model-Worker.elf" linux >/dev/null || exit $?
 echo 'PASS  native external model gateway phase=images item=3/4'
 

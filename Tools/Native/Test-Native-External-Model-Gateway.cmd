@@ -41,8 +41,8 @@ for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Model_gateway_host
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Model_gateway_host_entry address=" "%Work%\Linux-Link.txt"') do set "LinuxEntry=%%E"
 if not defined WindowsEntry goto :cleanup
 if not defined LinuxEntry goto :cleanup
-call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%RepositoryRoot%\Artifacts\Wvb-To-Wvo-Candidate.wvb" "%Work%\Windows-Image" 1 %WindowsEntry% "%Work%\Model-Worker.exe" windows >nul || goto :cleanup
-call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%RepositoryRoot%\Artifacts\Wvb-To-Wvo-Candidate.wvb" "%Work%\Linux-Image" 1 %LinuxEntry% "%Work%\Model-Worker.elf" linux >nul || goto :cleanup
+call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.wvb" "%Work%\Windows-Image" 1 %WindowsEntry% "%Work%\Model-Worker.exe" windows >nul || goto :cleanup
+call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.wvb" "%Work%\Linux-Image" 1 %LinuxEntry% "%Work%\Model-Worker.elf" linux >nul || goto :cleanup
 echo PASS  native external model gateway phase=images item=3/4
 
 echo START native external model gateway phase=execute item=4/4
