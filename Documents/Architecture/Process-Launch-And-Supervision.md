@@ -186,6 +186,11 @@ The client reply-delivery transaction then checks the complementary
 syscall/thread state and init-owned reply record, dispatches only the admitted
 client generation, restores its checked saved context, and returns the exact
 116-byte result through `sysretq`, advancing ownership through byte 15,574.
+The following directory-request delivery checks the client's directory-call
+state and exact 37-byte queued request, dispatches only the admitted isolated
+directory-provider generation, restores its checked saved context, and returns
+the exact request length through `sysretq`, advancing ownership through byte
+15,905.
 
 The first restart policies are deliberately small:
 
