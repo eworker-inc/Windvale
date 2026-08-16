@@ -24,14 +24,15 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=24"
+set "SelectedCases=26"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
     tree-node logical-record typed-row query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
     branch-split root-split depth-two depth-three depth-three-upsert
-    tree-path-upsert host-storage
+    tree-path-upsert tree-path-delete host-storage
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
 if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="host-tree-delete" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="host-tree-scan" set "SelectedCases=3"
 if /I "%DevelopmentTarget%"=="tree-scan" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="json" set "SelectedCases=2"
@@ -67,6 +68,7 @@ set "ProjectCheckpointHostRootWriter=NotRun"
 set "ProjectCheckpointHostLocalService=NotRun"
 set "ProjectCheckpointHostTreeReader=NotRun"
 set "ProjectCheckpointHostTreeScan=NotRun"
+set "ProjectCheckpointHostTreeDelete=NotRun"
 set "ProjectCheckpointEngine=NotRun"
 set "ProjectCheckpointHostTreeWriter=NotRun"
 set "ApplicationCheckpointHostStorage=NotRun"
@@ -74,6 +76,7 @@ set "ApplicationCheckpointHostRootWriter=NotRun"
 set "ApplicationCheckpointHostLocalService=NotRun"
 set "ApplicationCheckpointHostTreeReader=NotRun"
 set "ApplicationCheckpointHostTreeScan=NotRun"
+set "ApplicationCheckpointHostTreeDelete=NotRun"
 set "ApplicationCheckpointEngine=NotRun"
 set "ApplicationCheckpointHostTreeWriter=NotRun"
 set "ProjectWvbCheckpoint=NotRun"
@@ -159,6 +162,8 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TreePathUpsert tree-path-upsert "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj"
     if errorlevel 1 goto :cleanup
+    call :verify_development_target TreePathDelete tree-path-delete "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Delete.wvproj" host-tree-delete
+    if errorlevel 1 goto :cleanup
     call :read_clock PortableEnd
     call :elapsed_milliseconds PortableStart PortableEnd PortableElapsedMs
     set "HostStorageElapsedMs=0"
@@ -166,6 +171,7 @@ if "%Development%"=="1" (
     set "HostLocalServiceElapsedMs=0"
     set "HostTreeReaderElapsedMs=0"
     set "HostTreeScanElapsedMs=0"
+    set "HostTreeDeleteElapsedMs=0"
     set "EngineElapsedMs=0"
     set "HostTreeWriterElapsedMs=0"
     call :verify_development_host_targets
@@ -239,6 +245,9 @@ if errorlevel 1 goto :cleanup
 call :verify_target TreePathUpsert ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target TreePathDelete ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Delete.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target ProviderTable ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
 if errorlevel 1 goto :cleanup
@@ -269,6 +278,9 @@ if errorlevel 1 goto :cleanup
 call :verify_host_tree_reader ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_host_tree_delete ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Delete.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_host_tree_scan ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Scan.wvproj"
 if errorlevel 1 goto :cleanup
@@ -295,11 +307,11 @@ if "%PrepareOnly%"=="1" (
     exit /b 0
 )
 if "%Development%"=="1" (
-    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-scan-ms=%HostTreeScanElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
+    echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-delete-ms=%HostTreeDeleteElapsedMs% host-tree-scan-ms=%HostTreeScanElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
+    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=33 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=35 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
@@ -319,6 +331,7 @@ if /I "%DevelopmentTarget%"=="host-storage" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-root-writer" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-local-service" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-tree-reader" goto :development_run_host_storage
+if /I "%DevelopmentTarget%"=="host-tree-delete" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="host-tree-scan" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="tree-scan" goto :development_run_host_storage
 if /I "%DevelopmentTarget%"=="engine" goto :development_run_host_storage
@@ -400,6 +413,26 @@ call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderE
 call echo PASS  native database storage development step=host-tree-reader item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeReaderElapsedMs%% project=%%ProjectCheckpointHostTreeReader%% application=%%ApplicationCheckpointHostTreeReader%%
 if /I "%DevelopmentTarget%"=="host-tree-reader" exit /b 0
 if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_tree_writer
+
+if /I "%DevelopmentTarget%"=="all" goto :development_run_host_tree_delete
+if /I "%DevelopmentTarget%"=="host-tree-delete" goto :development_run_host_tree_delete
+goto :development_choose_host_tree_scan
+
+:development_run_host_tree_delete
+set /a ProgressCurrent+=1
+call :read_clock HostTreeDeleteStart
+call echo START native database storage development step=host-tree-delete item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_host_tree_delete "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Delete.wvproj"
+if errorlevel 1 (
+    >&2 echo The native database storage development host-tree-delete stage failed.
+    exit /b 1
+)
+call :read_clock HostTreeDeleteEnd
+call :elapsed_milliseconds HostTreeDeleteStart HostTreeDeleteEnd HostTreeDeleteElapsedMs
+call echo PASS  native database storage development step=host-tree-delete item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeDeleteElapsedMs%% project=%%ProjectCheckpointHostTreeDelete%% application=%%ApplicationCheckpointHostTreeDelete%%
+if /I "%DevelopmentTarget%"=="host-tree-delete" exit /b 0
+
+:development_choose_host_tree_scan
 
 if /I "%DevelopmentTarget%"=="all" goto :development_run_host_tree_scan
 if /I "%DevelopmentTarget%"=="host-tree-scan" goto :development_run_host_tree_scan
@@ -1000,6 +1033,86 @@ if "%Development%"=="1" (
         "%LinuxApplication%" linux >nul
     if errorlevel 1 exit /b 1
 )
+endlocal
+exit /b 0
+
+:verify_host_tree_delete
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "WindowsApplication=%TemporaryDirectory%\HostLocal-TreeDelete.exe"
+set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
+set "RunDirectory=%TemporaryDirectory%\HostTreeDelete-Run"
+set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
+set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
+set "HostTreeDeleteCheckpoint=Rebuilt"
+set "HostTreeDeleteApplicationCheckpoint=Rebuilt"
+
+call :build_host_local_component "%ProjectPath%" TreeDelete "%WindowsApplication%"
+if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostLocal-TreeDelete-Cache.txt"') do set "HostTreeDeleteCheckpoint=%%S"
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-TreeDelete-Application-Cache.txt"') do set "HostTreeDeleteApplicationCheckpoint=%%S"
+    if not defined HostTreeDeleteCheckpoint exit /b 1
+    if not defined HostTreeDeleteApplicationCheckpoint exit /b 1
+)
+if not exist "%DepthTwoCommittedFile%" exit /b 1
+mkdir "%RunDirectory%" || exit /b 1
+copy /b "%DepthTwoCommittedFile%" "%StorageFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" (
+    >&2 echo The native host tree-delete publication returned %ApplicationResult%, expected 0.
+    exit /b 1
+)
+for %%F in ("%StorageFile%") do if not "%%~zF"=="33280" exit /b 1
+copy /b "%StorageFile%" "%CommittedFile%" >nul || exit /b 1
+pushd "%RunDirectory%" || exit /b 1
+"%WindowsApplication%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+fc /b "%CommittedFile%" "%StorageFile%" >nul || exit /b 1
+for %%S in (0 1 2 3 4) do (
+    call :verify_host_tree_delete_interruption ^
+        "%WindowsApplication%" "%DepthTwoCommittedFile%" %%S
+    if errorlevel 1 exit /b 1
+)
+
+if "%Development%"=="1" (
+    endlocal & set "ProjectCheckpointHostTreeDelete=%HostTreeDeleteCheckpoint%" & set "ApplicationCheckpointHostTreeDelete=%HostTreeDeleteApplicationCheckpoint%"
+    exit /b 0
+)
+endlocal
+exit /b 0
+
+:verify_host_tree_delete_interruption
+setlocal EnableExtensions DisableDelayedExpansion
+set "Application=%~f1"
+set "Committed=%~f2"
+set "Step=%~3"
+set "ScenarioDirectory=%TemporaryDirectory%\HostTreeDelete-Interruption-%Step%"
+set "ScenarioStorage=%ScenarioDirectory%\Windvale-Database-Storage.bin"
+mkdir "%ScenarioDirectory%" || exit /b 1
+copy /b "%Committed%" "%ScenarioStorage%" >nul || exit /b 1
+set /a MarkerLength=20993+Step
+fsutil file seteof "%ScenarioStorage%" %MarkerLength% >nul || exit /b 1
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+set /a ExpectedResult=110+Step
+if not "%ApplicationResult%"=="%ExpectedResult%" (
+    >&2 echo The native host tree-delete interruption %Step% returned %ApplicationResult%, expected %ExpectedResult%.
+    exit /b 1
+)
+pushd "%ScenarioDirectory%" || exit /b 1
+"%Application%" >nul
+set "ApplicationResult=%ERRORLEVEL%"
+popd
+if not "%ApplicationResult%"=="0" exit /b 1
+for %%F in ("%ScenarioStorage%") do if not "%%~zF"=="33280" exit /b 1
 endlocal
 exit /b 0
 

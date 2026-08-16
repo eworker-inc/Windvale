@@ -1658,6 +1658,28 @@ $NativeCases = @(
         DatabaseTarget = 'host-tree-scan'
     },
     @{
+        Name = 'focused database durable tree-delete owner'
+        Paths = @(
+            'Libraries/Database/Tree-Path-Delete.wv',
+            'Libraries/Platform/Database/Durable-Tree-Path.wv',
+            'Libraries/Platform/Database/Durable-Tree-Delete.wv',
+            'Tests/Fixtures/Database/Database-Tree-Path-Delete-Self-Test.wv',
+            'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Delete-Self-Test.wv',
+            'Specifications/Windvale-Database-Tree-Path-Delete.md',
+            'Specifications/Windvale-Database-Hosted-Tree-Delete.md',
+            'Projects/Libraries/Windvale-Library-Database-Tree-Path-Delete.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Tree-Path.wvproj',
+            'Projects/Libraries/Windvale-Library-Durable-Tree-Delete.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'host-tree-delete'
+    },
+    @{
         Name = 'focused database lifecycle owner'
         Paths = @('Libraries/Platform/Database/Durable-Database-Lifecycle.wv')
         Suites = @('database-storage', 'libraries')

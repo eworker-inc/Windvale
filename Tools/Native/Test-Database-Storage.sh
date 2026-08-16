@@ -19,13 +19,16 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=24
+        selected_cases=26
         ;;
-    tree-node|logical-record|typed-row|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
+    tree-node|logical-record|typed-row|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
         ;;
     host-tree-reader)
         selected_cases=2
+        ;;
+    host-tree-delete)
+        selected_cases=4
         ;;
     tree-scan)
         selected_cases=4
@@ -92,6 +95,7 @@ project_checkpoint_host_root_writer=NotRun
 project_checkpoint_host_local_service=NotRun
 project_checkpoint_host_tree_reader=NotRun
 project_checkpoint_host_tree_scan=NotRun
+project_checkpoint_host_tree_delete=NotRun
 project_checkpoint_engine=NotRun
 project_checkpoint_host_tree_writer=NotRun
 application_checkpoint_host_storage=NotRun
@@ -99,6 +103,7 @@ application_checkpoint_host_root_writer=NotRun
 application_checkpoint_host_local_service=NotRun
 application_checkpoint_host_tree_reader=NotRun
 application_checkpoint_host_tree_scan=NotRun
+application_checkpoint_host_tree_delete=NotRun
 application_checkpoint_engine=NotRun
 application_checkpoint_host_tree_writer=NotRun
 project_wvb_checkpoint=NotRun
@@ -824,6 +829,55 @@ build_host_local_component() {
     fi
 }
 
+verify_host_tree_delete_interruption() {
+    local application=$1 committed=$2 step=$3
+    local scenario_directory="$temporary_directory/HostTreeDelete-Interruption-$step"
+    local scenario_storage="$scenario_directory/Windvale-Database-Storage.bin"
+    mkdir -- "$scenario_directory" || return $?
+    cp -- "$committed" "$scenario_storage" || return $?
+    truncate -s $((20993 + step)) -- "$scenario_storage" || return $?
+    (cd -- "$scenario_directory" && "$application" >/dev/null)
+    local application_result=$?
+    local expected_result=$((110 + step))
+    if [[ $application_result -ne $expected_result ]]; then
+        echo "The native host tree-delete interruption $step returned $application_result, expected $expected_result." >&2
+        return 1
+    fi
+    (cd -- "$scenario_directory" && "$application" >/dev/null) || return $?
+    [[ $(wc -c < "$scenario_storage") -eq 33280 ]] || return 1
+}
+
+verify_host_tree_delete() {
+    local project_path=$1
+    local application="$temporary_directory/HostLocal-TreeDelete.elf"
+    local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
+    local run_directory="$temporary_directory/HostTreeDelete-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local committed_file="$run_directory/Windvale-Database-Storage.committed"
+
+    build_host_local_component "$project_path" TreeDelete "$application" || return $?
+    project_checkpoint_host_tree_delete=$host_local_component_project_checkpoint
+    application_checkpoint_host_tree_delete=$host_local_component_application_checkpoint
+    [[ -f $depth_two_committed_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+    cp -- "$depth_two_committed_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host tree-delete publication returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 33280 ]] || return 1
+    cp -- "$storage_file" "$committed_file" || return $?
+    (cd -- "$run_directory" && "$application" >/dev/null) || return $?
+    cmp --silent -- "$committed_file" "$storage_file" || return 1
+    local step
+    for step in 0 1 2 3 4; do
+        verify_host_tree_delete_interruption \
+            "$application" "$depth_two_committed_file" "$step" || return $?
+    done
+}
+
 verify_host_tree_scan() {
     local project_path=$1
     local application="$temporary_directory/HostLocal-TreeScan.elf"
@@ -1427,11 +1481,12 @@ verify_development_host_targets() {
     host_root_writer_elapsed_ms=0
     host_local_service_elapsed_ms=0
     host_tree_reader_elapsed_ms=0
+    host_tree_delete_elapsed_ms=0
     host_tree_scan_elapsed_ms=0
     engine_elapsed_ms=0
     host_tree_writer_elapsed_ms=0
     case "$development_target" in
-        all|host-storage|host-root-writer|host-local-service|host-tree-reader|host-tree-scan|tree-scan|engine|host-tree-writer) ;;
+        all|host-storage|host-root-writer|host-local-service|host-tree-reader|host-tree-delete|host-tree-scan|tree-scan|engine|host-tree-writer) ;;
         *) return 0 ;;
     esac
 
@@ -1496,6 +1551,21 @@ verify_development_host_targets() {
     host_tree_reader_elapsed_ms=$(((SECONDS - host_tree_reader_start) * 1000))
     echo "PASS  native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_reader_elapsed_ms project=$project_checkpoint_host_tree_reader application=$application_checkpoint_host_tree_reader"
     [[ $development_target != host-tree-reader ]] || return 0
+
+    if [[ $development_target == all ||
+        $development_target == host-tree-delete ]]; then
+        progress_current=$((progress_current + 1))
+        host_tree_delete_start=$SECONDS
+        echo "START native database storage development step=host-tree-delete item=$progress_current/$progress_total target=$development_target"
+        verify_host_tree_delete \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj" || {
+                echo 'The native database storage development host-tree-delete stage failed.' >&2
+                return 1
+            }
+        host_tree_delete_elapsed_ms=$(((SECONDS - host_tree_delete_start) * 1000))
+        echo "PASS  native database storage development step=host-tree-delete item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_delete_elapsed_ms project=$project_checkpoint_host_tree_delete application=$application_checkpoint_host_tree_delete"
+        [[ $development_target != host-tree-delete ]] || return 0
+    fi
 
     if [[ $development_target == all ||
         $development_target == host-tree-scan ||
@@ -1582,11 +1652,13 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
     verify_development_target TreePathUpsert tree-path-upsert \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || exit $?
+    verify_development_target TreePathDelete tree-path-delete \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj" host-tree-delete || exit $?
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     verify_development_host_targets || exit $?
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
-    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms host-tree-scan-ms=$host_tree_scan_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
+    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms host-tree-delete-ms=$host_tree_delete_elapsed_ms host-tree-scan-ms=$host_tree_scan_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeDelete:$project_checkpoint_host_tree_delete,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeDelete:$application_checkpoint_host_tree_delete,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
     exit 0
 fi
 
@@ -1632,6 +1704,8 @@ verify_target DepthThreeUpsert \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
 verify_target TreePathUpsert \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || exit $?
+verify_target TreePathDelete \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj" || exit $?
 verify_target ProviderTable \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
 verify_target ProviderCall \
@@ -1653,6 +1727,8 @@ verify_host_local_service \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj" || exit $?
 verify_host_tree_reader \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
+verify_host_tree_delete \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj" || exit $?
 verify_host_tree_scan \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj" || exit $?
 verify_host_engine \
@@ -1662,4 +1738,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=33 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=35 local-results=0 cross-host-images=Verified'

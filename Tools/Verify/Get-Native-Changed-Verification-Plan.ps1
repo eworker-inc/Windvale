@@ -42,10 +42,12 @@ $DatabaseDevelopmentTargetProjects = [ordered]@{
     'depth-three' = 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj'
     'depth-three-upsert' = 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj'
     'tree-path-upsert' = 'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj'
+    'tree-path-delete' = 'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj'
     'host-storage' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj'
     'host-root-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj'
     'host-local-service' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj'
     'host-tree-reader' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj'
+    'host-tree-delete' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj'
     'host-tree-scan' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj'
     'engine' = 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj'
     'host-tree-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
@@ -95,6 +97,19 @@ if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($DurableTreeScanProject)) {
 }
 $null = $DatabaseDevelopmentTargetsByPath[$DurableTreeScanProject].Add(
     'host-tree-scan')
+foreach ($HostTreeDeleteProject in @(
+    'Projects/Libraries/Windvale-Library-Database-Tree-Path-Delete.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Tree-Path.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Tree-Delete.wvproj'
+)) {
+    if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($HostTreeDeleteProject)) {
+        $DatabaseDevelopmentTargetsByPath[$HostTreeDeleteProject] =
+            [System.Collections.Generic.HashSet[string]]::new(
+                [StringComparer]::Ordinal)
+    }
+    $null = $DatabaseDevelopmentTargetsByPath[$HostTreeDeleteProject].Add(
+        'host-tree-delete')
+}
 $HostLocalGetProject =
     'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj'
 $HostLocalGetAbsolute = Join-Path $RepositoryRoot $HostLocalGetProject
@@ -201,10 +216,12 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Tree-Node.md' = @('tree-node')
     'Specifications/Windvale-Database-Tree-Leaf-Operations.md' = @('tree-node')
     'Specifications/Windvale-Database-Durable-Range-Scan.md' = @('host-tree-scan')
+    'Specifications/Windvale-Database-Hosted-Tree-Delete.md' = @('host-tree-delete')
     'Specifications/Windvale-Database-Depth-Two-Upsert.md' = @('depth-two')
     'Specifications/Windvale-Database-Depth-Three-Root-Growth.md' = @('depth-three')
     'Specifications/Windvale-Database-Depth-Three-Upsert.md' = @('depth-three-upsert')
     'Specifications/Windvale-Database-Tree-Path-Upsert.md' = @('tree-path-upsert')
+    'Specifications/Windvale-Database-Tree-Path-Delete.md' = @('tree-path-delete')
     'Specifications/Windvale-Database-Engine-Lifecycle.md' = @('engine')
     'Specifications/Windvale-Database-Hosted-Root-Writer.md' = @('host-root-writer')
     'Specifications/Windvale-Database-Hosted-Root-Split-Writer.md' = @('host-root-writer')
@@ -214,6 +231,9 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Tree-Leaf-Scan.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Tree-Path-Delete.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Tree-Path.wvproj',
+    'Projects/Libraries/Windvale-Library-Durable-Tree-Delete.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Collection-Catalog.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
@@ -259,6 +279,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj',
@@ -267,6 +288,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
@@ -311,10 +333,12 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Tree-Node.md',
     'Specifications/Windvale-Database-Tree-Leaf-Operations.md',
     'Specifications/Windvale-Database-Durable-Range-Scan.md',
+    'Specifications/Windvale-Database-Hosted-Tree-Delete.md',
     'Specifications/Windvale-Database-Depth-Two-Upsert.md',
     'Specifications/Windvale-Database-Depth-Three-Root-Growth.md',
     'Specifications/Windvale-Database-Depth-Three-Upsert.md',
     'Specifications/Windvale-Database-Tree-Path-Upsert.md',
+    'Specifications/Windvale-Database-Tree-Path-Delete.md',
     'Specifications/Windvale-Database-Engine-Lifecycle.md',
     'Specifications/Windvale-Database-Hosted-Root-Writer.md',
     'Specifications/Windvale-Database-Hosted-Local-Service.md',
@@ -1154,6 +1178,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Depth-Three-Root-Growth', [StringComparison]::Ordinal) -or
             $Path.Contains('Depth-Three-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Path-Delete', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Leaf-Scan', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
@@ -1172,6 +1197,8 @@ foreach ($Path in $Paths) {
             $Path.Contains('Durable-Database-Lifecycle', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Scan', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Tree-Path', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Tree-Delete', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Root-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Native-Capability-Provider-Table', [StringComparison]::Ordinal)) {
@@ -1250,10 +1277,12 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Depth-Three-Root-Growth-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Depth-Three-Upsert-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Tree-Path-Upsert-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Tree-Path-Delete-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Storage-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Database-Engine-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Reader-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Scan-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Tree-Delete-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Writer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Fill-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Native-Hosted-Durable-Root-Split-Writer-Self-Test.wv' -or
@@ -1289,10 +1318,12 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj' -or
@@ -1339,6 +1370,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Depth-Three-Root-Growth', [StringComparison]::Ordinal) -or
             $Path.Contains('Depth-Three-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Path-Delete', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Leaf-Scan', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Leaf-Operations', [StringComparison]::Ordinal) -or
@@ -1359,12 +1391,15 @@ foreach ($Path in $Paths) {
             $Path.Contains('Durable-Database-Lifecycle', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Scan', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Tree-Path', [StringComparison]::Ordinal) -or
+            $Path.Contains('Durable-Tree-Delete', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Root-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Root-Split-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Logical-Tree-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Reader', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Tree-Scan', [StringComparison]::Ordinal) -or
+            $Path.Contains('Host-Tree-Delete', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Root-Writer', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Root-Fill', [StringComparison]::Ordinal) -or
             $Path.Contains('Host-Root-Split-Writer', [StringComparison]::Ordinal) -or
@@ -2435,9 +2470,11 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj',
         'Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj',
@@ -2543,6 +2580,11 @@ if (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Contains('tree-node') -and
     $SelectedDatabaseDevelopmentTargets.Contains('host-tree-scan')) {
     $DatabaseDevelopmentTarget = 'tree-scan'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
+    $SelectedDatabaseDevelopmentTargets.Contains('tree-path-delete') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('host-tree-delete')) {
+    $DatabaseDevelopmentTarget = 'host-tree-delete'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 1) {
     $DatabaseDevelopmentTarget = @(

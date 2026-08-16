@@ -1,0 +1,361 @@
+module Durableˉtreeˉdelete profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Randomˉaccessˉstorage as Storage;
+import Durableˉtreeˉpath as Durableˉpath;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+import Windvaleˉdatabaseˉtreeˉpathˉdelete as Transaction;
+
+capability storage.random_access_v1;
+
+const DATABASE_TREE_DELETE_MINIMUM_DEPTH: u32 = 2u32;
+const DATABASE_TREE_DELETE_MAXIMUM_DEPTH: u32 = 8u32;
+const DATABASE_TREE_DELETE_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉdurableˉtreeˉdeleteˉstatus {
+    Committed = 0;
+    Missing = 1;
+    Active = 2;
+    Aborted = 3;
+    Recover = 4;
+    Invalidˉcurrent = 5;
+    Invalidˉkey = 6;
+    Unsupportedˉdepth = 7;
+    Storageˉfailure = 8;
+    Changedˉsnapshot = 9;
+    Pageˉfailure = 10;
+    Invalidˉdurableˉpage = 11;
+    Invalidˉnode = 12;
+    Invalidˉgraph = 13;
+    Transactionˉfailure = 14;
+    Publicationˉfailure = 15;
+}
+
+export record Databaseˉdurableˉtreeˉdeleteˉresult {
+    Status: Databaseˉdurableˉtreeˉdeleteˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Transactionˉerror: Transaction.Databaseˉtreeˉpathˉdeleteˉerror;
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror;
+    Pathˉpages: u32;
+    Actions: u32;
+    Found: bool;
+    Rootˉpage: u64;
+    Rootˉdepth: u32;
+    Dataˉpageˉcount: u32;
+    Publicationˉstate: Publication.Databaseˉstorageˉpublication;
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉinvalidˉpublication()
+    -> Publication.Databaseˉstorageˉpublication {
+    let Rejected: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉreject(
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉcurrent
+        );
+    return Publication.Databaseˉstorageˉpublicationˉbegin(
+        Rejected.Publication,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉtreeˉdeleteˉempty(),
+        Databaseˉdurableˉtreeˉdeleteˉempty()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉemptyˉpath(
+    Status: Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus,
+    Error: Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror
+) -> Durableˉpath.Databaseˉdurableˉtreeˉpathˉresult {
+    return Durableˉpath.Databaseˉdurableˉtreeˉpathˉresult(
+        Status,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Error,
+        0u32,
+        Databaseˉdurableˉtreeˉdeleteˉempty()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉpathˉstatus(
+    Status: Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus
+) -> Databaseˉdurableˉtreeˉdeleteˉstatus {
+    if Status == Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Invalidˉcurrent {
+        return Databaseˉdurableˉtreeˉdeleteˉstatus.Invalidˉcurrent;
+    }
+    if Status == Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Pageˉfailure {
+        return Databaseˉdurableˉtreeˉdeleteˉstatus.Pageˉfailure;
+    }
+    if Status == Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Changedˉsnapshot {
+        return Databaseˉdurableˉtreeˉdeleteˉstatus.Changedˉsnapshot;
+    }
+    if Status ==
+            Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Invalidˉdurableˉpage {
+        return Databaseˉdurableˉtreeˉdeleteˉstatus.Invalidˉdurableˉpage;
+    }
+    if Status == Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Invalidˉnode {
+        return Databaseˉdurableˉtreeˉdeleteˉstatus.Invalidˉnode;
+    }
+    if Status == Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Invalidˉgraph {
+        return Databaseˉdurableˉtreeˉdeleteˉstatus.Invalidˉgraph;
+    }
+    return Databaseˉdurableˉtreeˉdeleteˉstatus.Transactionˉfailure;
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉpathˉerror(
+    Error: Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror
+) -> Transaction.Databaseˉtreeˉpathˉdeleteˉerror {
+    if Error == Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Invalidˉpage {
+        return Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉpage;
+    }
+    if Error == Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Pathˉmismatch {
+        return Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Pathˉmismatch;
+    }
+    if Error == Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Invalidˉnode {
+        return Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉnode;
+    }
+    if Error == Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Invalidˉroute {
+        return Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉroute;
+    }
+    if Error == Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Invalidˉrange {
+        return Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉrange;
+    }
+    return Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Valid;
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉfailure(
+    Status: Databaseˉdurableˉtreeˉdeleteˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus,
+    Path: Durableˉpath.Databaseˉdurableˉtreeˉpathˉresult,
+    Transactionˉerror: Transaction.Databaseˉtreeˉpathˉdeleteˉerror,
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror
+) -> Databaseˉdurableˉtreeˉdeleteˉresult {
+    return Databaseˉdurableˉtreeˉdeleteˉresult(
+        Status,
+        Storageˉstatus,
+        Path.Readˉstatus,
+        Path.Readˉerror,
+        Path.Readˉstorageˉerror,
+        Path.Pageˉerror,
+        Path.Nodeˉerror,
+        Transactionˉerror,
+        Publicationˉerror,
+        Path.Visits,
+        0u32,
+        false,
+        DATABASE_TREE_DELETE_NO_PAGE,
+        0u32,
+        0u32,
+        Databaseˉdurableˉtreeˉdeleteˉinvalidˉpublication()
+    );
+}
+
+fn Databaseˉdurableˉtreeˉdeleteˉoutcome(
+    Status: Databaseˉdurableˉtreeˉdeleteˉstatus,
+    Deletion: Transaction.Databaseˉtreeˉpathˉdelete,
+    Execution: Executor.Databaseˉstorageˉpublicationˉexecution,
+    Pathˉpages: u32
+) -> Databaseˉdurableˉtreeˉdeleteˉresult {
+    return Databaseˉdurableˉtreeˉdeleteˉresult(
+        Status,
+        Storage.Storageˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Valid,
+        Execution.State.Error,
+        Pathˉpages,
+        Execution.Actions,
+        Deletion.Found,
+        Deletion.Rootˉpage,
+        Deletion.Rootˉdepth,
+        Deletion.Dataˉpageˉcount,
+        Execution.State
+    );
+}
+
+export fn Databaseˉdurableˉtreeˉdelete(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Key: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉtreeˉdeleteˉresult {
+    let Emptyˉpath: Durableˉpath.Databaseˉdurableˉtreeˉpathˉresult =
+        Databaseˉdurableˉtreeˉdeleteˉemptyˉpath(
+            Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Invalidˉcurrent,
+            Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Valid
+        );
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Invalidˉcurrent,
+            Storage.Storageˉstatus.Valid,
+            Emptyˉpath,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉcurrent,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if Bytesˉlength(Key) == 0u32 || Bytesˉlength(Key) > 4096u32 {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Invalidˉkey,
+            Storage.Storageˉstatus.Valid,
+            Emptyˉpath,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉdelete,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if Current.Rootˉdepth < DATABASE_TREE_DELETE_MINIMUM_DEPTH ||
+        Current.Rootˉdepth > DATABASE_TREE_DELETE_MAXIMUM_DEPTH {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Unsupportedˉdepth,
+            Storage.Storageˉstatus.Valid,
+            Emptyˉpath,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Unsupportedˉdepth,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Storageˉfailure,
+            Description.Status,
+            Emptyˉpath,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if Description.Storageˉlength != Current.Committedˉlength {
+        let Changedˉpath: Durableˉpath.Databaseˉdurableˉtreeˉpathˉresult =
+            Databaseˉdurableˉtreeˉdeleteˉemptyˉpath(
+                Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Changedˉsnapshot,
+                Durableˉpath.Databaseˉdurableˉtreeˉpathˉerror.Pathˉmismatch
+            );
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Changedˉsnapshot,
+            Description.Status,
+            Changedˉpath,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Pathˉmismatch,
+            Publication.Databaseˉstorageˉpublicationˉerror.Changedˉstorage
+        );
+    }
+    let Path: Durableˉpath.Databaseˉdurableˉtreeˉpathˉresult =
+        Durableˉpath.Databaseˉdurableˉtreeˉpathˉcollect(Current, Description, Key);
+    if Path.Status != Durableˉpath.Databaseˉdurableˉtreeˉpathˉstatus.Active {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉpathˉstatus(Path.Status),
+            Storage.Storageˉstatus.Valid,
+            Path,
+            Databaseˉdurableˉtreeˉdeleteˉpathˉerror(Path.Error),
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    let Deletion: Transaction.Databaseˉtreeˉpathˉdelete =
+        Transaction.Databaseˉtreeˉpathˉdeleteˉbegin(Current, Path.Pages, Key);
+    if Deletion.Error != Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Valid {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Transactionˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Path,
+            Deletion.Error,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    if !Deletion.Found {
+        if Deletion.Hasˉcommit {
+            return Databaseˉdurableˉtreeˉdeleteˉfailure(
+                Databaseˉdurableˉtreeˉdeleteˉstatus.Transactionˉfailure,
+                Storage.Storageˉstatus.Valid,
+                Path,
+                Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉcommit,
+                Publication.Databaseˉstorageˉpublicationˉerror.None
+            );
+        }
+        return Databaseˉdurableˉtreeˉdeleteˉresult(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Missing,
+            Storage.Storageˉstatus.Valid,
+            Path.Readˉstatus,
+            Path.Readˉerror,
+            Path.Readˉstorageˉerror,
+            Path.Pageˉerror,
+            Path.Nodeˉerror,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Valid,
+            Publication.Databaseˉstorageˉpublicationˉerror.None,
+            Path.Visits,
+            0u32,
+            false,
+            Current.Rootˉpage,
+            Current.Rootˉdepth,
+            0u32,
+            Databaseˉdurableˉtreeˉdeleteˉinvalidˉpublication()
+        );
+    }
+    if !Deletion.Hasˉcommit {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Transactionˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Path,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Invalidˉcommit,
+            Publication.Databaseˉstorageˉpublicationˉerror.None
+        );
+    }
+    let Initial: Publication.Databaseˉstorageˉpublication =
+        Publication.Databaseˉstorageˉpublicationˉbegin(
+            Deletion.Commit.Publication,
+            Description.Generation,
+            Current.Tailˉbytes,
+            Description.Storageˉlength,
+            Deletion.Commit.Pages,
+            Deletion.Commit.Superblock
+        );
+    if Initial.Status != Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        return Databaseˉdurableˉtreeˉdeleteˉfailure(
+            Databaseˉdurableˉtreeˉdeleteˉstatus.Publicationˉfailure,
+            Storage.Storageˉstatus.Valid,
+            Path,
+            Transaction.Databaseˉtreeˉpathˉdeleteˉerror.Valid,
+            Initial.Error
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(Initial, Maximumˉactions);
+    var Resultˉstatus: Databaseˉdurableˉtreeˉdeleteˉstatus =
+        Databaseˉdurableˉtreeˉdeleteˉstatus.Publicationˉfailure;
+    if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
+        Resultˉstatus = Databaseˉdurableˉtreeˉdeleteˉstatus.Committed;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        Resultˉstatus = Databaseˉdurableˉtreeˉdeleteˉstatus.Active;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Resultˉstatus = Databaseˉdurableˉtreeˉdeleteˉstatus.Aborted;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Recover {
+        Resultˉstatus = Databaseˉdurableˉtreeˉdeleteˉstatus.Recover;
+    }
+    return Databaseˉdurableˉtreeˉdeleteˉoutcome(
+        Resultˉstatus,
+        Deletion,
+        Execution,
+        Path.Visits
+    );
+}
