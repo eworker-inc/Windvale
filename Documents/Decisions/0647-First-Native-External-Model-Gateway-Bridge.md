@@ -1,7 +1,7 @@
 # Decision 0647: First native external-model gateway bridge
 
 - Date: 2026-08-16
-- Status: Implemented candidate; Windows execution complete, independent Linux execution pending
+- Status: Implemented candidate with independent Windows/Linux evidence
 - Advances: external-model gateway production path
 - Contract: [native external-model gateway bridge](../../Specifications/Native-External-Model-Gateway-Bridge.md)
 - Builds on: [Decision 0605](0605-First-Supervised-External-Model-Gateway.md)
@@ -52,7 +52,8 @@ run proves the complete process/pipe/credential/gateway/native path without a
 public request, and the owner constructs both host images from identical shared
 objects.
 
-Independent Linux execution remains required before dual-host qualification.
+The exact source passed the focused Windows and Linux development owners plus
+the aggregate gate in [GitHub run 31926249574](https://github.com/eworker-inc/Windvale/actions/runs/31926249574).
 The dedicated-standard-channel worker is intentionally narrower than a general
 application host. A later service manager can bind separate inherited channels,
 and operational secret input can move to an OS keyring, HSM, or protected

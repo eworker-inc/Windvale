@@ -16,9 +16,8 @@
   and [Decision 0647](../Decisions/0647-First-Native-External-Model-Gateway-Bridge.md).
   Resolver/TCP, TLS, bounded HTTPS, and protected credential custody have
   independent Windows/Linux execution evidence, as does the supervised
-  external-model gateway. The first model-only native capability/timer bridge
-  executes on Windows and constructs the Linux image; independent Linux evidence
-  remains pending, so no complete production network promotion is yet claimed
+  external-model gateway and the first model-only native capability/timer
+  bridge. Operational promotion gates remain explicit rather than build claims
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
 - First package consumer: [package-system implementation plan](Windvale-Package-System-Implementation-Plan.md)
@@ -292,15 +291,17 @@ No deterministic case reads a real key or contacts the public Internet.
 ### Native external-model gateway bridge
 
 Status: implemented candidate under
-[Decision 0647](../Decisions/0647-First-Native-External-Model-Gateway-Bridge.md);
-Windows execution is complete and independent Linux execution remains pending.
+[Decision 0647](../Decisions/0647-First-Native-External-Model-Gateway-Bridge.md)
+with independent Windows/Linux execution.
 
 The bridge binds the existing ABI-23 catalog/inference entries to the protected
 gateway through a model-only native worker with dedicated pipes. Platform WVA
 leaves perform exact bounded reads/writes while the launcher owns readiness,
 operation/lifetime timers, diagnostics, and joint teardown. Fourteen isolated
 cases assemble and admit the shared host and both leaves, construct both hosted
-images, and execute one canonical stale request without public networking.
+images, and execute one canonical stale request without public networking. The
+exact source passed both focused hosts and the aggregate gate in
+[GitHub run 31926249574](https://github.com/eworker-inc/Windvale/actions/runs/31926249574).
 
 ### Network slice 6: package-source integration
 

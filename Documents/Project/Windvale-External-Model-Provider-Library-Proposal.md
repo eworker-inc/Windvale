@@ -341,7 +341,7 @@ expectations. An adapter never silently sends the prompt to another provider.
 | Rights-limited provider state | [`Windvale-Native-Capability-Provider-Table`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) | Partially ready; one provider per capability identity is practical. |
 | Native provider invocation | [`Windvale-Native-Provider-Call`](../../Specifications/Windvale-Native-Provider-Call.md) | Implemented for exact one-cell catalog and inference calls. |
 | JSON request and hostile-response codec | The supervised hosted gateway constructs fixed provider JSON and admits strict UTF-8 JSON only after HTTPS byte limits | Implemented candidate for the three selected non-streaming text profiles; portable general JSON is not implied. |
-| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The operation, authority, and stream cores plus supervised [host network](../../Specifications/Host-Network-Provider.md), [TLS 1.3](../../Specifications/Host-Tls-Provider.md), [bounded HTTPS](../../Specifications/Bounded-Https.md), and the [native model bridge](../../Specifications/Native-External-Model-Gateway-Bridge.md) execute against isolated peers | Resolver/TCP, TLS, and HTTPS are dual-host verified; the model-only native binding executes on Windows and awaits independent Linux evidence. |
+| HTTPS, HTTP, resolver, trust, deadlines, and cancellation | The operation, authority, and stream cores plus supervised [host network](../../Specifications/Host-Network-Provider.md), [TLS 1.3](../../Specifications/Host-Tls-Provider.md), [bounded HTTPS](../../Specifications/Bounded-Https.md), and the [native model bridge](../../Specifications/Native-External-Model-Gateway-Bridge.md) execute against isolated peers | Resolver/TCP, TLS, HTTPS, and the model-only native binding have independent Windows/Linux evidence. |
 | Production API-key custody | The hosted [protected provider credential](../../Specifications/Protected-Provider-Credential.md) wrapper and revocable fixed-origin lease have dual-host evidence and are owned by the supervised child | Implemented hosted candidate; launcher unlock and OS-keyring/HSM custody remain later work. |
 | Multiple simultaneous provider instances | Typed capability values and nominal provider signatures are future work | Not ready; use separate launches first. |
 | Streaming and concurrent inference | General structured tasks, cancellation, channels, and concurrent provider calls are absent or proposed | Not ready and outside version 1. |
@@ -412,9 +412,9 @@ continue to pass offline when the provider is unavailable or changes.
 
 ### Model slice 4: production hosted adapter
 
-Status: implemented hosted candidate under Decisions 0603 through 0606 for
-OpenAI, Anthropic, and Google; native Windows composition is complete and
-independent Linux execution remains pending.
+Status: implemented hosted candidate under Decisions 0603 through 0605 and
+0647 for OpenAI, Anthropic, and Google, with independent Windows/Linux native
+composition evidence.
 
 The shared networking, bounded HTTP, protected custody, fixed provider mappings,
 and model-only ABI-23 bridge now compose end to end. Deterministic acceptance
