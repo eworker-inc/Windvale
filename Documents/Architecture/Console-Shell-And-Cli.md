@@ -8,7 +8,7 @@ The focused [Windvale shell product and architecture](Windvale-Shell.md) guide
 elaborates the intended cross-host shell experience, command naming and aliases,
 discovery, portable ownership boundary, Workbench transition, and staged delivery
 without changing this document's accepted terminal, launch, or authority split.
-Its proposed [Shell 1 contract](../Project/Windvale-Shell-1-Proposal.md) and
+Its accepted [Shell 1 contract](../../Specifications/Windvale-Shell-1.md) and
 [implementation-readiness plan](../Project/Windvale-Shell-Implementation-Readiness.md)
 select a reviewable parser candidate while keeping absent terminal, launch,
 stream, browser, and Windvale OS prerequisites explicit.

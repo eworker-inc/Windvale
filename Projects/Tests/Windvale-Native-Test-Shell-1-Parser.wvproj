@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Shell/Shell-1-Parser-Self-Test.wv"
+source "Libraries/Shell/Shell-1-Parser.wv"
+emit wvb

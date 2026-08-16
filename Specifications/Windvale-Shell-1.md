@@ -1,20 +1,22 @@
-# Windvale Shell 1 contract proposal
+# Windvale Shell 1
 
 ## Status
 
-Proposed pre-implementation contract. This document makes the first parser and
-command boundary precise enough for review and fixture construction. It does not
-claim an implemented shell, terminal service, command metadata format, dynamic
-launcher, standard byte stream, browser command worker, or Windvale OS service.
-A named decision must accept the durable grammar and diagnostic contract before
-an implementation is promoted as Shell 1.
+Accepted parser and command contract with an implemented portable parser
+candidate under
+[Decision 0602](../Documents/Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md).
+The focused owner currently has isolated Windows execution evidence over 47
+cases and constructs both hosted target images. This specification does not
+claim an implemented interactive shell, terminal service, command
+metadata format, dynamic launcher, standard byte stream, browser command worker,
+or Windvale OS service.
 
 The product intent and cross-host boundary are defined by the
-[Windvale shell architecture](../Architecture/Windvale-Shell.md).
-The [implementation-readiness plan](Windvale-Shell-Implementation-Readiness.md)
+[Windvale shell architecture](../Documents/Architecture/Windvale-Shell.md).
+The [implementation-readiness plan](../Documents/Project/Windvale-Shell-Implementation-Readiness.md)
 identifies prerequisites and the safe implementation order. Existing immutable
 application-argument limits remain defined by
-[hosted resources](../../Specifications/Hosted-Resources.md).
+[hosted resources](Hosted-Resources.md).
 
 ## Scope
 
@@ -78,8 +80,9 @@ The grammar is described over decoded Unicode scalar values. `space` is U+0020
 and `tab` is U+0009.
 
 ```text
-line          = separators? (word (separators word)*)? separators?
+line          = separators? (command (separators word)*)? separators?
 separators    = (space | tab)+
+command       = unquoted
 word          = unquoted | single-quoted | double-quoted
 single-quoted = "'" single-value* "'"
 double-quoted = '"' double-item* '"'
@@ -96,6 +99,11 @@ Words do not concatenate. After a closing quote, the next scalar must be a
 separator or end of input. Before an opening quote, the parser must be at the
 beginning of a word. For example, `ab"cd"`, `"ab"cd`, and `'ab'"cd"` are
 rejected rather than joined.
+
+The command word is always unquoted. A quote at the beginning of word zero is a
+syntactically complete word form but fails command spelling with `WVSH1010` at
+the opening quote. Quoting changes argument boundaries only; it cannot hide or
+construct an executable identity.
 
 Empty quoted words are valid arguments:
 
@@ -208,9 +216,16 @@ input or an encoded result envelope if current source collection support cannot
 own a bounded text vector; either representation must preserve this logical
 result exactly.
 
+The implemented source representation is one `Windvaleˉshellˉoneˉscan` plus
+`Windvaleˉshellˉoneˉwordˉat` indexed views over the immutable input.
+`Windvaleˉshellˉoneˉwordˉbytes` explicitly materializes a selected word and
+decodes double-quote escapes; `Windvaleˉshellˉoneˉcanonicalˉcommand` applies the
+fixed `cat` alias. These functions are capability-free and retain no global or
+host-owned collection.
+
 ## Parser diagnostics
 
-The proposed diagnostic family is:
+The diagnostic family is:
 
 | Code | Meaning | Offset |
 | --- | --- | --- |
@@ -259,7 +274,7 @@ Shell 1 has no `cd`. `pwd` does not prove or recreate directory authority.
 
 ## Initial external command catalog
 
-The proposed qualification catalog is:
+The selected first qualification catalog is:
 
 | Command | Purpose | Minimum authority |
 | --- | --- | --- |
@@ -386,16 +401,17 @@ Typed record streams wait for real versioned producers and consumers.
 Every addition requires a new grammar version or an extension proven not to
 reinterpret any valid Shell 1 line.
 
-## Promotion gate
+## Implementation and qualification boundary
 
-This proposal becomes an accepted Shell 1 contract only after:
+The capability-free parser may be implemented and verified independently of the
+terminal, resolver, launch, stream, and completion providers. Its current source
+representation may expose an immutable scan plus indexed word views and a
+materializer instead of allocating a hidden host collection, provided it
+preserves the logical result above.
 
-1. the command-name, quoting, limit, alias, built-in, and native-execution choices
-   are recorded in a named decision;
-2. parser result ownership is implementable in current Windvale source without
-   a hidden host collection or exception dependency;
-3. every diagnostic and boundary fixture is reviewed;
-4. the terminal, resolver, launch, stream, and completion prerequisites are
-   either accepted or explicitly separated from parser-only implementation; and
-5. Windows/Linux paired evidence plus browser evidence reproduce the exact pure
-   parser results before an interactive portability claim is made.
+Current-host execution and construction of both hosted target images prove one
+native implementation slice. Independent Windows and Linux execution plus
+browser WebAssembly-hosted execution must reproduce the same fixtures before a
+cross-host parser-conformance claim. An interactive Shell 1 claim additionally
+requires the separately accepted terminal, resolver, launch, stream, and
+completion contracts.

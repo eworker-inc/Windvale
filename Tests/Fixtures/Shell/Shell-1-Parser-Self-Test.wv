@@ -1,0 +1,596 @@
+module Windvaleˉshellˉoneˉparserˉselfˉtest profile portable;
+
+import Windvaleˉshellˉoneˉparser as Shell;
+
+fn Emptyˉbytes() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Byte(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+fn Append(Left: bytes, Right: bytes) -> bytes {
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Bytesˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Total {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+fn Repeatˉbyte(Value: u32, Count: u32) -> bytes {
+    var Result: bytes = Emptyˉbytes();
+    var Chunk: bytes = Byte(Value);
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 == 1u32 {
+            Result = Append(Result, Chunk);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 { Chunk = Append(Chunk, Chunk); }
+    }
+    return Result;
+}
+
+fn Scanˉis(
+    Input: bytes,
+    Status: Shell.Windvaleˉshellˉoneˉstatus,
+    Words: u32,
+    Offset: u32
+) -> bool {
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    return Scan.Status == Status && Scan.Words == Words &&
+        Scan.Failureˉoffset == Offset;
+}
+
+fn Textˉscanˉis(
+    Input: text,
+    Status: Shell.Windvaleˉshellˉoneˉstatus,
+    Words: u32,
+    Offset: u32
+) -> bool {
+    return Scanˉis(Textˉtoˉutf8(Input), Status, Words, Offset);
+}
+
+fn Wordˉvalueˉis(Input: bytes, Index: u32, Expected: bytes) -> bool {
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Word: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Scan, Index);
+    return Word.Found && Bytesˉsame(
+        Shell.Windvaleˉshellˉoneˉwordˉbytes(Input, Word), Expected
+    );
+}
+
+fn Argumentsˉline(Arguments: u32) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("echo");
+    var Index: u32 = 0u32;
+    while Index < Arguments {
+        Result = Append(Result, Textˉtoˉutf8(" a"));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Escapeˉinput(Suffix: u32) -> bytes {
+    var Input: bytes = Textˉtoˉutf8("echo ");
+    Input = Append(Input, Byte(34u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(Suffix));
+    return Append(Input, Byte(34u32));
+}
+
+fn Escapeˉcase(Suffix: u32, Expected: u32) -> bool {
+    let Input: bytes = Escapeˉinput(Suffix);
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Valid, 2u32, 0u32
+    ) && Wordˉvalueˉis(Input, 1u32, Byte(Expected));
+}
+
+fn Invalidˉsequenceˉtwo(First: u32, Second: u32) -> bytes {
+    return Append(Byte(First), Byte(Second));
+}
+
+fn Invalidˉsequenceˉthree(
+    First: u32,
+    Second: u32,
+    Third: u32
+) -> bytes {
+    return Append(Append(Byte(First), Byte(Second)), Byte(Third));
+}
+
+fn Invalidˉsequenceˉfour(
+    First: u32,
+    Second: u32,
+    Third: u32,
+    Fourth: u32
+) -> bytes {
+    return Append(
+        Append(Byte(First), Byte(Second)), Append(Byte(Third), Byte(Fourth))
+    );
+}
+
+fn Reservedˉvalue(Index: u32) -> u32 {
+    if Index == 0u32 { return 59u32; }
+    if Index == 1u32 { return 124u32; }
+    if Index == 2u32 { return 60u32; }
+    if Index == 3u32 { return 62u32; }
+    if Index == 4u32 { return 38u32; }
+    if Index == 5u32 { return 36u32; }
+    if Index == 6u32 { return 96u32; }
+    if Index == 7u32 { return 40u32; }
+    if Index == 8u32 { return 41u32; }
+    return 92u32;
+}
+
+fn Emptyˉcase() -> bool {
+    return Textˉscanˉis(
+        "", Shell.Windvaleˉshellˉoneˉstatus.Empty, 0u32, 0u32
+    ) && Textˉscanˉis(
+        "   ", Shell.Windvaleˉshellˉoneˉstatus.Empty, 0u32, 0u32
+    ) && Textˉscanˉis(
+        "\t", Shell.Windvaleˉshellˉoneˉstatus.Empty, 0u32, 0u32
+    );
+}
+
+fn Basicˉcase() -> bool {
+    return Textˉscanˉis(
+        "echo alpha beta", Shell.Windvaleˉshellˉoneˉstatus.Valid, 3u32, 0u32
+    );
+}
+
+fn Surroundingˉseparatorsˉcase() -> bool {
+    return Textˉscanˉis(
+        " \techo alpha\t ", Shell.Windvaleˉshellˉoneˉstatus.Valid, 2u32, 0u32
+    );
+}
+
+fn Maximumˉwordsˉcase() -> bool {
+    return Scanˉis(
+        Argumentsˉline(67u32), Shell.Windvaleˉshellˉoneˉstatus.Valid,
+        68u32, 0u32
+    );
+}
+
+fn Tooˉmanyˉwordsˉcase() -> bool {
+    return Scanˉis(
+        Argumentsˉline(68u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Tooˉmanyˉwords, 0u32, 139u32
+    );
+}
+
+fn Emptyˉquotedˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo \"\" ''");
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Valid, 3u32, 0u32
+    ) && Wordˉvalueˉis(Input, 1u32, Emptyˉbytes()) &&
+        Wordˉvalueˉis(Input, 2u32, Emptyˉbytes());
+}
+
+fn Singleˉquotedˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo 'a b'");
+    return Wordˉvalueˉis(Input, 1u32, Textˉtoˉutf8("a b"));
+}
+
+fn Combinedˉescapesˉcase() -> bool {
+    var Input: bytes = Textˉtoˉutf8("echo ");
+    Input = Append(Input, Byte(34u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(34u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(110u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(114u32));
+    Input = Append(Input, Byte(92u32));
+    Input = Append(Input, Byte(116u32));
+    Input = Append(Input, Byte(34u32));
+    var Expected: bytes = Byte(92u32);
+    Expected = Append(Expected, Byte(34u32));
+    Expected = Append(Expected, Byte(10u32));
+    Expected = Append(Expected, Byte(13u32));
+    Expected = Append(Expected, Byte(9u32));
+    return Wordˉvalueˉis(Input, 1u32, Expected);
+}
+
+fn Unicodeˉwidthsˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo 'aé€😀'");
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Valid, 2u32, 0u32
+    ) && Wordˉvalueˉis(Input, 1u32, Textˉtoˉutf8("aé€😀"));
+}
+
+fn Maximumˉlineˉcase() -> bool {
+    let Input: bytes = Repeatˉbyte(97u32, 4096u32);
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Word: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Scan, 0u32);
+    return Scan.Status == Shell.Windvaleˉshellˉoneˉstatus.Valid &&
+        Scan.Words == 1u32 && Word.Found && Word.Decodedˉlength == 4096u32;
+}
+
+fn Tooˉlongˉcase() -> bool {
+    return Scanˉis(
+        Repeatˉbyte(97u32, 4097u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Inputˉtooˉlong, 0u32, 4096u32
+    );
+}
+
+fn Invalidˉutf8ˉleadˉcase() -> bool {
+    return Scanˉis(
+        Byte(128u32), Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8,
+        0u32, 0u32
+    );
+}
+
+fn Invalidˉutf8ˉcontinuationˉcase() -> bool {
+    return Scanˉis(
+        Invalidˉsequenceˉtwo(194u32, 32u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 1u32
+    ) && Scanˉis(
+        Invalidˉsequenceˉthree(225u32, 128u32, 32u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 2u32
+    );
+}
+
+fn Invalidˉutf8ˉoverlongˉcase() -> bool {
+    return Scanˉis(
+        Invalidˉsequenceˉtwo(192u32, 175u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 0u32
+    ) && Scanˉis(
+        Invalidˉsequenceˉthree(224u32, 128u32, 128u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 1u32
+    );
+}
+
+fn Invalidˉutf8ˉsurrogateˉcase() -> bool {
+    return Scanˉis(
+        Invalidˉsequenceˉthree(237u32, 160u32, 128u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 1u32
+    );
+}
+
+fn Invalidˉutf8ˉrangeˉcase() -> bool {
+    return Scanˉis(
+        Invalidˉsequenceˉfour(244u32, 144u32, 128u32, 128u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 1u32
+    );
+}
+
+fn Invalidˉutf8ˉtruncatedˉcase() -> bool {
+    return Scanˉis(
+        Invalidˉsequenceˉthree(240u32, 144u32, 128u32),
+        Shell.Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32, 3u32
+    );
+}
+
+fn Literalˉcontrolsˉcase() -> bool {
+    var Value: u32 = 0u32;
+    while Value <= 31u32 {
+        if Value != 9u32 {
+            let Input: bytes = Append(Textˉtoˉutf8("echo "), Byte(Value));
+            if !Scanˉis(
+                Input, Shell.Windvaleˉshellˉoneˉstatus.Forbiddenˉcontrol,
+                0u32, 5u32
+            ) { return false; }
+        }
+        Value = Value + 1u32;
+    }
+    return Scanˉis(
+        Append(Textˉtoˉutf8("echo "), Byte(127u32)),
+        Shell.Windvaleˉshellˉoneˉstatus.Forbiddenˉcontrol, 0u32, 5u32
+    );
+}
+
+fn Quotedˉtabˉcontrolˉcase() -> bool {
+    var Input: bytes = Textˉtoˉutf8("echo \"");
+    Input = Append(Input, Byte(9u32));
+    Input = Append(Input, Byte(34u32));
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Forbiddenˉcontrol,
+        0u32, 6u32
+    );
+}
+
+fn Reservedˉoperatorsˉcase() -> bool {
+    var Index: u32 = 0u32;
+    while Index < 10u32 {
+        let Input: bytes = Append(
+            Textˉtoˉutf8("echo "), Byte(Reservedˉvalue(Index))
+        );
+        if !Scanˉis(
+            Input, Shell.Windvaleˉshellˉoneˉstatus.Reservedˉoperator,
+            0u32, 5u32
+        ) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Unclosedˉsingleˉcase() -> bool {
+    return Textˉscanˉis(
+        "echo 'x", Shell.Windvaleˉshellˉoneˉstatus.Unclosedˉsingleˉquote,
+        0u32, 7u32
+    );
+}
+
+fn Unclosedˉdoubleˉcase() -> bool {
+    return Textˉscanˉis(
+        "echo \"x", Shell.Windvaleˉshellˉoneˉstatus.Unclosedˉdoubleˉquote,
+        0u32, 7u32
+    );
+}
+
+fn Incompleteˉescapeˉcase() -> bool {
+    var Input: bytes = Textˉtoˉutf8("echo \"x");
+    Input = Append(Input, Byte(92u32));
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Invalidˉescape, 0u32, 7u32
+    );
+}
+
+fn Invalidˉescapeˉcase() -> bool {
+    return Scanˉis(
+        Escapeˉinput(113u32), Shell.Windvaleˉshellˉoneˉstatus.Invalidˉescape,
+        0u32, 6u32
+    );
+}
+
+fn Quoteˉconcatenationˉcase() -> bool {
+    return Textˉscanˉis(
+        "echo ab\"cd\"", Shell.Windvaleˉshellˉoneˉstatus.Missingˉseparator,
+        0u32, 7u32
+    ) && Textˉscanˉis(
+        "echo \"ab\"cd", Shell.Windvaleˉshellˉoneˉstatus.Missingˉseparator,
+        0u32, 9u32
+    ) && Textˉscanˉis(
+        "echo 'ab'\"cd\"", Shell.Windvaleˉshellˉoneˉstatus.Missingˉseparator,
+        0u32, 9u32
+    );
+}
+
+fn Validˉcommandsˉcase() -> bool {
+    return Textˉscanˉis(
+        "a", Shell.Windvaleˉshellˉoneˉstatus.Valid, 1u32, 0u32
+    ) && Textˉscanˉis(
+        "a1", Shell.Windvaleˉshellˉoneˉstatus.Valid, 1u32, 0u32
+    ) && Textˉscanˉis(
+        "a-b2-c3", Shell.Windvaleˉshellˉoneˉstatus.Valid, 1u32, 0u32
+    );
+}
+
+fn Uppercaseˉcommandˉcase() -> bool {
+    return Textˉscanˉis(
+        "Echo", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 0u32
+    );
+}
+
+fn Nonasciiˉcommandˉcase() -> bool {
+    return Textˉscanˉis(
+        "écho", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 0u32
+    );
+}
+
+fn Hyphenˉfailuresˉcase() -> bool {
+    return Textˉscanˉis(
+        "-echo", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 0u32
+    ) && Textˉscanˉis(
+        "echo-", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 4u32
+    ) && Textˉscanˉis(
+        "echo--x", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 5u32
+    );
+}
+
+fn Punctuationˉcommandˉcase() -> bool {
+    return Textˉscanˉis(
+        "echo.x", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 4u32
+    );
+}
+
+fn Quotedˉcommandˉcase() -> bool {
+    return Textˉscanˉis(
+        "\"echo\"", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 0u32
+    ) && Textˉscanˉis(
+        "''", Shell.Windvaleˉshellˉoneˉstatus.Invalidˉcommand,
+        0u32, 0u32
+    );
+}
+
+fn Grammarˉprecedenceˉcase() -> bool {
+    return Textˉscanˉis(
+        "Echo ;", Shell.Windvaleˉshellˉoneˉstatus.Reservedˉoperator,
+        0u32, 5u32
+    );
+}
+
+fn Doubleˉdashˉargumentˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo --");
+    return Wordˉvalueˉis(Input, 1u32, Textˉtoˉutf8("--"));
+}
+
+fn Hostˉlookingˉargumentsˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8(
+        "echo 'C:\\Work\\Input.wvb' '/tmp/input.wvb'"
+    );
+    return Wordˉvalueˉis(
+        Input, 1u32, Textˉtoˉutf8("C:\\Work\\Input.wvb")
+    ) && Wordˉvalueˉis(
+        Input, 2u32, Textˉtoˉutf8("/tmp/input.wvb")
+    );
+}
+
+fn Reservedˉquotedˉandˉhashˉcase() -> bool {
+    var Reserved: bytes = Emptyˉbytes();
+    var Index: u32 = 0u32;
+    while Index < 10u32 {
+        Reserved = Append(Reserved, Byte(Reservedˉvalue(Index)));
+        Index = Index + 1u32;
+    }
+    var Input: bytes = Textˉtoˉutf8("echo '");
+    Input = Append(Input, Reserved);
+    Input = Append(Input, Textˉtoˉutf8("' #"));
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Valid, 3u32, 0u32
+    ) && Wordˉvalueˉis(Input, 1u32, Reserved) &&
+        Wordˉvalueˉis(Input, 2u32, Textˉtoˉutf8("#"));
+}
+
+fn Aliasˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("cat file.wvb");
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    return Bytesˉsame(
+        Shell.Windvaleˉshellˉoneˉcanonicalˉcommand(Input, Scan),
+        Textˉtoˉutf8("file-read")
+    );
+}
+
+fn Canonicalˉunchangedˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo");
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    return Bytesˉsame(
+        Shell.Windvaleˉshellˉoneˉcanonicalˉcommand(Input, Scan),
+        Textˉtoˉutf8("echo")
+    );
+}
+
+fn Wordˉviewˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("  echo\t'a b' \"c\\td\"  ");
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Command: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Scan, 0u32);
+    let Single: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Scan, 1u32);
+    let Double: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Scan, 2u32);
+    return Command.Found &&
+        Command.Kind == Shell.Windvaleˉshellˉoneˉwordˉkind.Unquoted &&
+        Command.Offset == 2u32 && Command.Length == 4u32 &&
+        Single.Kind == Shell.Windvaleˉshellˉoneˉwordˉkind.Singleˉquoted &&
+        Single.Offset == 7u32 && Single.Length == 5u32 &&
+        Double.Kind == Shell.Windvaleˉshellˉoneˉwordˉkind.Doubleˉquoted &&
+        Double.Offset == 13u32 && Double.Length == 6u32 &&
+        Double.Contentˉoffset == 14u32 && Double.Contentˉlength == 4u32 &&
+        Double.Decodedˉlength == 3u32 && Double.Nextˉoffset == 19u32;
+}
+
+fn Wordˉoutˉofˉrangeˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo a");
+    let Valid: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Invalid: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Textˉtoˉutf8("Echo"));
+    let Missing: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Valid, 2u32);
+    let Rejected: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Invalid, 0u32);
+    return !Missing.Found && !Rejected.Found;
+}
+
+fn Determinismˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo 'alpha beta' \"c\\td\"");
+    let First: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Second: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    let Firstˉword: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, First, 2u32);
+    let Secondˉword: Shell.Windvaleˉshellˉoneˉword =
+        Shell.Windvaleˉshellˉoneˉwordˉat(Input, Second, 2u32);
+    return First.Status == Second.Status && First.Words == Second.Words &&
+        First.Failureˉoffset == Second.Failureˉoffset &&
+        Firstˉword.Offset == Secondˉword.Offset &&
+        Firstˉword.Length == Secondˉword.Length &&
+        Bytesˉsame(
+            Shell.Windvaleˉshellˉoneˉwordˉbytes(Input, Firstˉword),
+            Shell.Windvaleˉshellˉoneˉwordˉbytes(Input, Secondˉword)
+        );
+}
+
+fn Emptyˉcanonicalˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("  ");
+    let Scan: Shell.Windvaleˉshellˉoneˉscan =
+        Shell.Windvaleˉshellˉoneˉscanˉline(Input);
+    return Bytesˉlength(
+        Shell.Windvaleˉshellˉoneˉcanonicalˉcommand(Input, Scan)
+    ) == 0u32;
+}
+
+fn Tabˉseparatorˉcase() -> bool {
+    let Input: bytes = Textˉtoˉutf8("echo\talpha\tbeta");
+    return Scanˉis(
+        Input, Shell.Windvaleˉshellˉoneˉstatus.Valid, 3u32, 0u32
+    ) && Wordˉvalueˉis(Input, 2u32, Textˉtoˉutf8("beta"));
+}
+
+export fn Main() -> i32 {
+    if !Emptyˉcase() { return 101; }
+    if !Basicˉcase() { return 102; }
+    if !Surroundingˉseparatorsˉcase() { return 103; }
+    if !Maximumˉwordsˉcase() { return 104; }
+    if !Tooˉmanyˉwordsˉcase() { return 105; }
+    if !Emptyˉquotedˉcase() { return 106; }
+    if !Singleˉquotedˉcase() { return 107; }
+    if !Escapeˉcase(92u32, 92u32) { return 108; }
+    if !Escapeˉcase(34u32, 34u32) { return 109; }
+    if !Escapeˉcase(110u32, 10u32) { return 110; }
+    if !Escapeˉcase(114u32, 13u32) { return 111; }
+    if !Escapeˉcase(116u32, 9u32) { return 112; }
+    if !Combinedˉescapesˉcase() { return 113; }
+    if !Unicodeˉwidthsˉcase() { return 114; }
+    if !Maximumˉlineˉcase() { return 115; }
+    if !Tooˉlongˉcase() { return 116; }
+    if !Invalidˉutf8ˉleadˉcase() { return 117; }
+    if !Invalidˉutf8ˉcontinuationˉcase() { return 118; }
+    if !Invalidˉutf8ˉoverlongˉcase() { return 119; }
+    if !Invalidˉutf8ˉsurrogateˉcase() { return 120; }
+    if !Invalidˉutf8ˉrangeˉcase() { return 121; }
+    if !Invalidˉutf8ˉtruncatedˉcase() { return 122; }
+    if !Literalˉcontrolsˉcase() { return 123; }
+    if !Quotedˉtabˉcontrolˉcase() { return 124; }
+    if !Reservedˉoperatorsˉcase() { return 125; }
+    if !Unclosedˉsingleˉcase() { return 126; }
+    if !Unclosedˉdoubleˉcase() { return 127; }
+    if !Incompleteˉescapeˉcase() { return 128; }
+    if !Invalidˉescapeˉcase() { return 129; }
+    if !Quoteˉconcatenationˉcase() { return 130; }
+    if !Validˉcommandsˉcase() { return 131; }
+    if !Uppercaseˉcommandˉcase() { return 132; }
+    if !Nonasciiˉcommandˉcase() { return 133; }
+    if !Hyphenˉfailuresˉcase() { return 134; }
+    if !Punctuationˉcommandˉcase() { return 135; }
+    if !Quotedˉcommandˉcase() { return 136; }
+    if !Grammarˉprecedenceˉcase() { return 137; }
+    if !Doubleˉdashˉargumentˉcase() { return 138; }
+    if !Hostˉlookingˉargumentsˉcase() { return 139; }
+    if !Reservedˉquotedˉandˉhashˉcase() { return 140; }
+    if !Aliasˉcase() { return 141; }
+    if !Canonicalˉunchangedˉcase() { return 142; }
+    if !Wordˉviewˉcase() { return 143; }
+    if !Wordˉoutˉofˉrangeˉcase() { return 144; }
+    if !Determinismˉcase() { return 145; }
+    if !Emptyˉcanonicalˉcase() { return 146; }
+    if !Tabˉseparatorˉcase() { return 147; }
+    return 42;
+}

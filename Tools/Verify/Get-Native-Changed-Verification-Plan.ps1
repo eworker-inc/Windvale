@@ -943,6 +943,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite @('model-provider', 'workspace-project2', 'libraries')
     } elseif ($Path -in @(
+        'Libraries/Shell/Shell-1-Parser.wv',
+        'Projects/Libraries/Windvale-Library-Shell-1-Parser.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Shell-1-Parser.wvproj',
+        'Tests/Fixtures/Shell/Shell-1-Parser-Self-Test.wv',
+        'Specifications/Windvale-Shell-1.md'
+    )) {
+        Add-Suite 'shell-one-parser'
+    } elseif ($Path -in @(
         'Projects/Libraries/Windvale-Library-Canonical-Package-Text.wvproj',
         'Projects/Libraries/Windvale-Library-Installation-Generation.wvproj',
         'Projects/Libraries/Windvale-Library-Package-Consistency.wvproj',

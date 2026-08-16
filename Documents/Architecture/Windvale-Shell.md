@@ -23,7 +23,7 @@ WebAssembly's possible status as a permanent host remains a separate product
 decision; this document defines what compatibility would require from that host.
 
 The exact proposed first grammar and command boundary are extracted into
-[Windvale Shell 1](../Project/Windvale-Shell-1-Proposal.md). The ordered
+[Windvale Shell 1](../../Specifications/Windvale-Shell-1.md). The ordered
 [implementation-readiness plan](../Project/Windvale-Shell-Implementation-Readiness.md)
 separates work that can begin with current portable facilities from terminal,
 launch, stream, browser, and Windvale OS prerequisites that remain absent.
@@ -849,11 +849,11 @@ bootstrap JavaScript shell into a competing permanent command environment.
 - review representative interactive sessions for files, packages, processes,
   compilation, denial, cancellation, and provider loss;
 - retain the selected one-token canonical names and fixed versioned aliases;
-- review and accept the proposed Shell 1 grammar, limits, diagnostics, and first
-  catalog;
+- preserve the accepted Shell 1 grammar, limits, diagnostics, and first catalog;
 - specify the terminal exchange, split command metadata, resolver request,
   semantic launch request, byte streams, and structured completion;
-- build host-independent parser and resolver conformance fixtures.
+- extend the implemented host-independent parser fixtures with separate resolver
+  conformance fixtures when that contract is accepted.
 
 ### First real command path
 
@@ -867,9 +867,9 @@ bootstrap JavaScript shell into a competing permanent command environment.
 
 ### Shell 1
 
-- implement the portable parser, discovery, help, fixed aliases, fixed current
-  location, exact resolution, foreground launch, cancellation, and structured
-  status;
+- retain the implemented portable parser while adding discovery, help, fixed
+  current location, exact resolution, foreground launch, cancellation, and
+  structured status;
 - bind it first to the host terminal and browser terminal adapters;
 - bind the same shell to Windvale OS after its terminal-input, resource-domain,
   and dynamic-launch prerequisites are qualified; and

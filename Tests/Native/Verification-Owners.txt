@@ -52,6 +52,7 @@ native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Pass
 model-provider|Test-Model-Provider|11|4|native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
 external-model-reference|Test-External-Model-Reference|24|4|external model reference status=Passed providers=3 cases=24 live-calls=0 secrets=0
 operation-core|Test-Bounded-Operation-Core|10|4|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
+shell-one-parser|Test-Shell-1-Parser|47|4|native shell 1 parser status=Passed cases=47 local-result=42 cross-host-images=Verified
 network-authority|Test-Network-Address-Authority|12|4|native network authority status=Passed cases=12 local-result=42 cross-host-images=Verified
 network-connect-stream|Test-Network-Connect-Stream-Core|13|4|native network connect stream status=Passed cases=13 local-result=42 cross-host-images=Verified
 host-network-provider|Test-Host-Network-Provider|25|4|host network provider status=Passed platforms=2 cases=25 current-host=Verified public-network=0 credentials=0

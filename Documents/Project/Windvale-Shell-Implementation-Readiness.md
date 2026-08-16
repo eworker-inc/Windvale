@@ -3,10 +3,11 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: pre-implementation plan; parser design candidate available, permanent
-  interactive shell prerequisites incomplete
+- Status: parser implementation candidate verified on Windows; permanent
+  interactive shell prerequisites remain incomplete
 - Architecture: [Windvale shell](../Architecture/Windvale-Shell.md)
-- Proposed first contract: [Windvale Shell 1](Windvale-Shell-1-Proposal.md)
+- Accepted first contract: [Windvale Shell 1](../../Specifications/Windvale-Shell-1.md)
+- Parser decision: [Decision 0602](../Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md)
 - Accepted boundary: [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md)
 
 This plan answers what must be decided, specified, implemented, and verified
@@ -16,15 +17,17 @@ repository milestone and does not claim that an unavailable OS mechanism exists.
 
 ## Readiness summary
 
-The project is ready to implement and cross-host test the capability-free Shell
-1 parser after its proposed grammar is accepted. It is not yet ready to implement
-or qualify the complete permanent interactive shell.
+The capability-free Shell 1 parser is implemented under its accepted grammar.
+Its 47-case focused owner passes on Windows and constructs Windows and Linux
+hosted images; independent Linux execution and browser evidence remain pending.
+The project is not yet ready to implement or qualify the complete permanent
+interactive shell.
 
 | Boundary | Current readiness | Meaning |
 | --- | --- | --- |
-| Product architecture | Ready for focused decision | Permanent terminal/shell/application split is accepted; detailed Shell 1 choices are now proposed |
-| Parser grammar | Proposed exact candidate | Input, quotes, escapes, limits, names, aliases, and diagnostics are written but not accepted or implemented |
-| Windvale value model | Needs a focused proof | The parser must represent up to 68 words and recoverable failures without a hidden host collection |
+| Product architecture | Accepted | Permanent terminal/shell/application split and Shell 1 parser choices are recorded in Decisions 0191 and 0602 |
+| Parser grammar | Implemented candidate | Input, quotes, escapes, limits, names, aliases, diagnostics, and exact offsets pass the 47-case Windows owner |
+| Windvale value model | Proven for parser slice | One immutable scan plus indexed word views and explicit materialization compiles and executes without a hidden host collection |
 | Terminal input/editing | Not implemented | No standard terminal session or request/reply editing contract exists |
 | Command metadata | Partial bootstrap evidence | Generation 1 resolves exact commands, but general split launch/presentation metadata is incomplete |
 | Dynamic launch/observation | Not general | The host dispatcher executes two fixed profiles; Windvale OS and browser lack the permanent general provider |
@@ -36,8 +39,7 @@ or qualify the complete permanent interactive shell.
 
 ## Product-owner decisions before implementation
 
-The project owner should explicitly approve or revise these choices before the
-parser contract is accepted:
+Decision 0602 accepts these choices for Shell 1:
 
 1. **One-token Shell 1 commands.** Use `file-read` as canonical syntax and `cat`
    as a fixed alias. Multiword `file read` remains grouped help only.
@@ -58,18 +60,18 @@ parser contract is accepted:
 8. **WebAssembly remains a named host profile.** A Chromium result is browser
    development evidence, not a universal browser or permanent-host claim.
 
-Acceptance should be a dated decision because command parsing, compatibility,
-authority, and application identity are durable public behavior.
+Changes to these choices require a superseding dated decision because command
+parsing, compatibility, authority, and application identity are durable public
+behavior.
 
 ## Required contract work
 
 ### 1. Accept Shell 1 grammar and diagnostics
 
-Review every example and boundary in the proposed Shell 1 specification. Resolve
-the exact quote/escape behavior, reserved operator set, one-token command rule,
-4,096-byte line limit, 68-word limit, fixed alias table, and `WVSH1xxx`
-diagnostics. Confirm that a future grammar can extend rather than reinterpret
-valid Shell 1 lines.
+The accepted Shell 1 specification fixes the quote/escape behavior, reserved
+operator set, unquoted one-token command rule, 4,096-byte line limit, 68-word
+limit, fixed alias table, and `WVSH1xxx` diagnostics. A future grammar must
+extend rather than reinterpret valid Shell 1 lines.
 
 Deliverables:
 
@@ -213,6 +215,12 @@ put the missing semantics into a permanent JavaScript or native shell core.
 
 ### Slice 1: capability-free parser
 
+Current result: implemented in `Libraries/Shell/Shell-1-Parser.wv`. The focused
+owner proves deterministic library/test WVBs and test WVOs, all 47 cases on
+Windows, and construction of both hosted target images. Independent Linux
+execution, the reference-interpreter route, and browser WebAssembly-hosted
+execution remain promotion evidence rather than completed claims.
+
 - implement the Shell 1 parser as a focused Windvale library;
 - return structured statuses and spans/views without I/O;
 - compile it through the current native source front door;
@@ -346,9 +354,10 @@ contract rather than compensating inside the shell.
 
 ## Definition of ready to implement
 
-The capability-free parser is ready when the owner choices are accepted, the
-result representation is proven, diagnostics are reserved, fixtures are
-reviewed, and a native verification owner is assigned.
+The capability-free parser implementation gate is satisfied: owner choices are
+accepted, the result representation is proven, diagnostics are reserved, the
+47-case fixtures are reviewed, and `shell-one-parser` owns native verification.
+Cross-host and browser promotion evidence remains separate.
 
 The hosted interactive shell is ready when terminal/session, command metadata,
 resolver, semantic launch/observation, structured completion, standard byte

@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 15 August 2026
+> Status snapshot: 16 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -46,6 +46,7 @@ ready, accurately labelled work at release freeze.
 | Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key trees, provider-backed reads, interruption recovery, a portable sequential local-service session, and hosted first-record publication that survives restart at every write boundary. | Compose the local service with lifecycle, reader, depth-one writer, and existing multi-level writer adapters before networking or multi-client arbitration. |
 | Windvale OS | 🔵 | OS-1 owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption, and generation-safe non-tail memory objects; the current native candidate also gates its fixed three-process path through exact ResourceDomain1 process/page/endpoint accounting and terminal zero charge. | Advance the fixed accounting gate into one atomic dynamic launch/supervision slice before broad shell, networking, or driver work. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
+| Windvale Shell | 🚧 | [Decision 0602](../Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md) accepts Shell 1 and the capability-free Windvale parser passes 47 cases on Windows while deterministically constructing both hosted target images. This is parser evidence, not an interactive or in-OS shell. | Execute the same owner independently on Linux and through the browser runtime, then compose the first capability-free `echo` resolution/launch proof. |
 | Public project and release foundation | ✅ | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier are published with the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve the published evidence and define the next preview from new product pressure rather than reopening 0.1.0. |
 
 ## .NET retirement result
@@ -62,7 +63,7 @@ ready, accurately labelled work at release freeze.
 | Exact selected-release recovery | **2/2 hosts** |
 | Published and independently retained recovery assets | **13/13** |
 
-Current work uses a separate 70-owner, 3,568-case native verification registry.
+Current work uses a separate 79-owner, 3,756-case native verification registry.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 

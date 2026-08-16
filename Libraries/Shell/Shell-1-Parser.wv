@@ -1,0 +1,590 @@
+module Windvaleˉshellˉoneˉparser profile portable;
+
+const MAXIMUM_LINE_BYTES: u32 = 4096u32;
+const MAXIMUM_WORDS: u32 = 68u32;
+
+export enum Windvaleˉshellˉoneˉstatus {
+    Valid = 0;
+    Empty = 1;
+    Invalidˉutf8 = 1001;
+    Inputˉtooˉlong = 1002;
+    Forbiddenˉcontrol = 1003;
+    Unclosedˉsingleˉquote = 1004;
+    Unclosedˉdoubleˉquote = 1005;
+    Invalidˉescape = 1006;
+    Reservedˉoperator = 1007;
+    Tooˉmanyˉwords = 1008;
+    Missingˉseparator = 1009;
+    Invalidˉcommand = 1010;
+}
+
+export enum Windvaleˉshellˉoneˉwordˉkind {
+    Invalid = 0;
+    Unquoted = 1;
+    Singleˉquoted = 2;
+    Doubleˉquoted = 3;
+}
+
+export record Windvaleˉshellˉoneˉscan {
+    Status: Windvaleˉshellˉoneˉstatus;
+    Words: u32;
+    Failureˉoffset: u32;
+}
+
+export record Windvaleˉshellˉoneˉword {
+    Found: bool;
+    Kind: Windvaleˉshellˉoneˉwordˉkind;
+    Offset: u32;
+    Length: u32;
+    Contentˉoffset: u32;
+    Contentˉlength: u32;
+    Decodedˉlength: u32;
+    Nextˉoffset: u32;
+}
+
+record Windvaleˉshellˉoneˉutf8ˉscan {
+    Valid: bool;
+    Failureˉoffset: u32;
+}
+
+record Windvaleˉshellˉoneˉlexedˉword {
+    Status: Windvaleˉshellˉoneˉstatus;
+    Kind: Windvaleˉshellˉoneˉwordˉkind;
+    Offset: u32;
+    Length: u32;
+    Contentˉoffset: u32;
+    Contentˉlength: u32;
+    Decodedˉlength: u32;
+    Nextˉoffset: u32;
+    Failureˉoffset: u32;
+}
+
+fn Emptyˉbytes() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Byteˉat(Input: bytes, Offset: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+}
+
+fn Bytesˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Total {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+fn Isˉseparator(Value: u32) -> bool {
+    return Value == 32u32 || Value == 9u32;
+}
+
+fn Isˉcontrol(Value: u32) -> bool {
+    return Value <= 31u32 || Value == 127u32;
+}
+
+fn Isˉcontinuation(Value: u32) -> bool {
+    return Value >= 128u32 && Value <= 191u32;
+}
+
+fn Isˉreserved(Value: u32) -> bool {
+    return Value == 59u32 || Value == 124u32 || Value == 60u32 ||
+        Value == 62u32 || Value == 38u32 || Value == 36u32 ||
+        Value == 96u32 || Value == 40u32 || Value == 41u32 ||
+        Value == 92u32;
+}
+
+fn Invalidˉutf8(Offset: u32) -> Windvaleˉshellˉoneˉutf8ˉscan {
+    return Windvaleˉshellˉoneˉutf8ˉscan(false, Offset);
+}
+
+fn Validateˉutf8(Input: bytes) -> Windvaleˉshellˉoneˉutf8ˉscan {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Total {
+        let First: u32 = Byteˉat(Input, Cursor);
+        if First <= 127u32 {
+            Cursor = Cursor + 1u32;
+        } else if First >= 194u32 && First <= 223u32 {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 1u32)) {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            Cursor = Cursor + 2u32;
+        } else if First == 224u32 {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            let Secondˉe0: u32 = Byteˉat(Input, Cursor + 1u32);
+            if Secondˉe0 < 160u32 || Secondˉe0 > 191u32 {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            if Cursor + 2u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 2u32)) {
+                return Invalidˉutf8(Cursor + 2u32);
+            }
+            Cursor = Cursor + 3u32;
+        } else if (First >= 225u32 && First <= 236u32) ||
+            (First >= 238u32 && First <= 239u32) {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 1u32)) {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            if Cursor + 2u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 2u32)) {
+                return Invalidˉutf8(Cursor + 2u32);
+            }
+            Cursor = Cursor + 3u32;
+        } else if First == 237u32 {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            let Secondˉed: u32 = Byteˉat(Input, Cursor + 1u32);
+            if Secondˉed < 128u32 || Secondˉed > 159u32 {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            if Cursor + 2u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 2u32)) {
+                return Invalidˉutf8(Cursor + 2u32);
+            }
+            Cursor = Cursor + 3u32;
+        } else if First == 240u32 {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            let Secondˉf0: u32 = Byteˉat(Input, Cursor + 1u32);
+            if Secondˉf0 < 144u32 || Secondˉf0 > 191u32 {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            if Cursor + 2u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 2u32)) {
+                return Invalidˉutf8(Cursor + 2u32);
+            }
+            if Cursor + 3u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 3u32)) {
+                return Invalidˉutf8(Cursor + 3u32);
+            }
+            Cursor = Cursor + 4u32;
+        } else if First >= 241u32 && First <= 243u32 {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 1u32)) {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            if Cursor + 2u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 2u32)) {
+                return Invalidˉutf8(Cursor + 2u32);
+            }
+            if Cursor + 3u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 3u32)) {
+                return Invalidˉutf8(Cursor + 3u32);
+            }
+            Cursor = Cursor + 4u32;
+        } else if First == 244u32 {
+            if Cursor + 1u32 >= Total { return Invalidˉutf8(Total); }
+            let Secondˉf4: u32 = Byteˉat(Input, Cursor + 1u32);
+            if Secondˉf4 < 128u32 || Secondˉf4 > 143u32 {
+                return Invalidˉutf8(Cursor + 1u32);
+            }
+            if Cursor + 2u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 2u32)) {
+                return Invalidˉutf8(Cursor + 2u32);
+            }
+            if Cursor + 3u32 >= Total { return Invalidˉutf8(Total); }
+            if !Isˉcontinuation(Byteˉat(Input, Cursor + 3u32)) {
+                return Invalidˉutf8(Cursor + 3u32);
+            }
+            Cursor = Cursor + 4u32;
+        } else {
+            return Invalidˉutf8(Cursor);
+        }
+    }
+    return Windvaleˉshellˉoneˉutf8ˉscan(true, 0u32);
+}
+
+fn Failedˉword(
+    Status: Windvaleˉshellˉoneˉstatus,
+    Offset: u32
+) -> Windvaleˉshellˉoneˉlexedˉword {
+    return Windvaleˉshellˉoneˉlexedˉword(
+        Status, Windvaleˉshellˉoneˉwordˉkind.Invalid,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Offset
+    );
+}
+
+fn Completeˉword(
+    Kind: Windvaleˉshellˉoneˉwordˉkind,
+    Offset: u32,
+    Length: u32,
+    Contentˉoffset: u32,
+    Contentˉlength: u32,
+    Decodedˉlength: u32,
+    Nextˉoffset: u32
+) -> Windvaleˉshellˉoneˉlexedˉword {
+    return Windvaleˉshellˉoneˉlexedˉword(
+        Windvaleˉshellˉoneˉstatus.Valid, Kind, Offset, Length,
+        Contentˉoffset, Contentˉlength, Decodedˉlength, Nextˉoffset, 0u32
+    );
+}
+
+fn Scanˉsingleˉquoted(
+    Input: bytes,
+    Start: u32
+) -> Windvaleˉshellˉoneˉlexedˉword {
+    let Total: u32 = Bytesˉlength(Input);
+    let Contentˉoffset: u32 = Start + 1u32;
+    var Cursor: u32 = Contentˉoffset;
+    while Cursor < Total {
+        let Value: u32 = Byteˉat(Input, Cursor);
+        if Value == 39u32 {
+            let Next: u32 = Cursor + 1u32;
+            if Next < Total && !Isˉseparator(Byteˉat(Input, Next)) {
+                return Failedˉword(
+                    Windvaleˉshellˉoneˉstatus.Missingˉseparator, Next
+                );
+            }
+            return Completeˉword(
+                Windvaleˉshellˉoneˉwordˉkind.Singleˉquoted,
+                Start, Next - Start, Contentˉoffset, Cursor - Contentˉoffset,
+                Cursor - Contentˉoffset, Next
+            );
+        }
+        if Isˉcontrol(Value) {
+            return Failedˉword(
+                Windvaleˉshellˉoneˉstatus.Forbiddenˉcontrol, Cursor
+            );
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Failedˉword(
+        Windvaleˉshellˉoneˉstatus.Unclosedˉsingleˉquote, Total
+    );
+}
+
+fn Isˉescapeˉsuffix(Value: u32) -> bool {
+    return Value == 92u32 || Value == 34u32 || Value == 110u32 ||
+        Value == 114u32 || Value == 116u32;
+}
+
+fn Scanˉdoubleˉquoted(
+    Input: bytes,
+    Start: u32
+) -> Windvaleˉshellˉoneˉlexedˉword {
+    let Total: u32 = Bytesˉlength(Input);
+    let Contentˉoffset: u32 = Start + 1u32;
+    var Cursor: u32 = Contentˉoffset;
+    var Decodedˉlength: u32 = 0u32;
+    while Cursor < Total {
+        let Value: u32 = Byteˉat(Input, Cursor);
+        if Value == 34u32 {
+            let Next: u32 = Cursor + 1u32;
+            if Next < Total && !Isˉseparator(Byteˉat(Input, Next)) {
+                return Failedˉword(
+                    Windvaleˉshellˉoneˉstatus.Missingˉseparator, Next
+                );
+            }
+            return Completeˉword(
+                Windvaleˉshellˉoneˉwordˉkind.Doubleˉquoted,
+                Start, Next - Start, Contentˉoffset, Cursor - Contentˉoffset,
+                Decodedˉlength, Next
+            );
+        }
+        if Value == 92u32 {
+            if Cursor + 1u32 >= Total {
+                return Failedˉword(
+                    Windvaleˉshellˉoneˉstatus.Invalidˉescape, Cursor
+                );
+            }
+            if !Isˉescapeˉsuffix(Byteˉat(Input, Cursor + 1u32)) {
+                return Failedˉword(
+                    Windvaleˉshellˉoneˉstatus.Invalidˉescape, Cursor
+                );
+            }
+            Cursor = Cursor + 2u32;
+            Decodedˉlength = Decodedˉlength + 1u32;
+        } else {
+            if Isˉcontrol(Value) {
+                return Failedˉword(
+                    Windvaleˉshellˉoneˉstatus.Forbiddenˉcontrol, Cursor
+                );
+            }
+            Cursor = Cursor + 1u32;
+            Decodedˉlength = Decodedˉlength + 1u32;
+        }
+    }
+    return Failedˉword(
+        Windvaleˉshellˉoneˉstatus.Unclosedˉdoubleˉquote, Total
+    );
+}
+
+fn Scanˉunquoted(
+    Input: bytes,
+    Start: u32
+) -> Windvaleˉshellˉoneˉlexedˉword {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start;
+    while Cursor < Total {
+        let Value: u32 = Byteˉat(Input, Cursor);
+        if Isˉseparator(Value) {
+            return Completeˉword(
+                Windvaleˉshellˉoneˉwordˉkind.Unquoted,
+                Start, Cursor - Start, Start, Cursor - Start,
+                Cursor - Start, Cursor
+            );
+        }
+        if Isˉcontrol(Value) {
+            return Failedˉword(
+                Windvaleˉshellˉoneˉstatus.Forbiddenˉcontrol, Cursor
+            );
+        }
+        if Value == 39u32 || Value == 34u32 {
+            return Failedˉword(
+                Windvaleˉshellˉoneˉstatus.Missingˉseparator, Cursor
+            );
+        }
+        if Isˉreserved(Value) {
+            return Failedˉword(
+                Windvaleˉshellˉoneˉstatus.Reservedˉoperator, Cursor
+            );
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Completeˉword(
+        Windvaleˉshellˉoneˉwordˉkind.Unquoted,
+        Start, Total - Start, Start, Total - Start, Total - Start, Total
+    );
+}
+
+fn Scanˉword(
+    Input: bytes,
+    Start: u32
+) -> Windvaleˉshellˉoneˉlexedˉword {
+    let Total: u32 = Bytesˉlength(Input);
+    if Start >= Total {
+        return Failedˉword(Windvaleˉshellˉoneˉstatus.Empty, Start);
+    }
+    let First: u32 = Byteˉat(Input, Start);
+    if First == 39u32 { return Scanˉsingleˉquoted(Input, Start); }
+    if First == 34u32 { return Scanˉdoubleˉquoted(Input, Start); }
+    return Scanˉunquoted(Input, Start);
+}
+
+fn Commandˉfailureˉoffset(
+    Input: bytes,
+    Command: Windvaleˉshellˉoneˉlexedˉword
+) -> u32 {
+    if Command.Kind != Windvaleˉshellˉoneˉwordˉkind.Unquoted {
+        return Command.Offset;
+    }
+    let End: u32 = Command.Offset + Command.Length;
+    var Cursor: u32 = Command.Offset;
+    var Previousˉdash: bool = false;
+    while Cursor < End {
+        let Value: u32 = Byteˉat(Input, Cursor);
+        if Cursor == Command.Offset {
+            if Value < 97u32 || Value > 122u32 { return Cursor; }
+        } else if Value >= 97u32 && Value <= 122u32 {
+            Previousˉdash = false;
+        } else if Value >= 48u32 && Value <= 57u32 {
+            Previousˉdash = false;
+        } else if Value == 45u32 {
+            if Previousˉdash || Cursor + 1u32 == End { return Cursor; }
+            Previousˉdash = true;
+        } else {
+            return Cursor;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return End;
+}
+
+fn Commandˉisˉvalid(
+    Input: bytes,
+    Command: Windvaleˉshellˉoneˉlexedˉword
+) -> bool {
+    return Commandˉfailureˉoffset(Input, Command) ==
+        Command.Offset + Command.Length;
+}
+
+export fn Windvaleˉshellˉoneˉscanˉline(
+    Input: bytes
+) -> Windvaleˉshellˉoneˉscan {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > MAXIMUM_LINE_BYTES {
+        return Windvaleˉshellˉoneˉscan(
+            Windvaleˉshellˉoneˉstatus.Inputˉtooˉlong, 0u32,
+            MAXIMUM_LINE_BYTES
+        );
+    }
+
+    let Utf8: Windvaleˉshellˉoneˉutf8ˉscan = Validateˉutf8(Input);
+    if !Utf8.Valid {
+        return Windvaleˉshellˉoneˉscan(
+            Windvaleˉshellˉoneˉstatus.Invalidˉutf8, 0u32,
+            Utf8.Failureˉoffset
+        );
+    }
+
+    var Cursor: u32 = 0u32;
+    while Cursor < Total {
+        if !Isˉseparator(Byteˉat(Input, Cursor)) { break; }
+        Cursor = Cursor + 1u32;
+    }
+    if Cursor == Total {
+        return Windvaleˉshellˉoneˉscan(
+            Windvaleˉshellˉoneˉstatus.Empty, 0u32, 0u32
+        );
+    }
+
+    let Commandˉoffset: u32 = Cursor;
+    var Words: u32 = 0u32;
+    while Cursor < Total {
+        if Words == MAXIMUM_WORDS {
+            return Windvaleˉshellˉoneˉscan(
+                Windvaleˉshellˉoneˉstatus.Tooˉmanyˉwords, 0u32, Cursor
+            );
+        }
+        let Word: Windvaleˉshellˉoneˉlexedˉword = Scanˉword(Input, Cursor);
+        if Word.Status != Windvaleˉshellˉoneˉstatus.Valid {
+            return Windvaleˉshellˉoneˉscan(
+                Word.Status, 0u32, Word.Failureˉoffset
+            );
+        }
+        Words = Words + 1u32;
+        Cursor = Word.Nextˉoffset;
+        while Cursor < Total {
+            if !Isˉseparator(Byteˉat(Input, Cursor)) { break; }
+            Cursor = Cursor + 1u32;
+        }
+    }
+
+    let Command: Windvaleˉshellˉoneˉlexedˉword =
+        Scanˉword(Input, Commandˉoffset);
+    if !Commandˉisˉvalid(Input, Command) {
+        return Windvaleˉshellˉoneˉscan(
+            Windvaleˉshellˉoneˉstatus.Invalidˉcommand, 0u32,
+            Commandˉfailureˉoffset(Input, Command)
+        );
+    }
+    return Windvaleˉshellˉoneˉscan(
+        Windvaleˉshellˉoneˉstatus.Valid, Words, 0u32
+    );
+}
+
+fn Invalidˉword() -> Windvaleˉshellˉoneˉword {
+    return Windvaleˉshellˉoneˉword(
+        false, Windvaleˉshellˉoneˉwordˉkind.Invalid,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Publicˉword(
+    Word: Windvaleˉshellˉoneˉlexedˉword
+) -> Windvaleˉshellˉoneˉword {
+    return Windvaleˉshellˉoneˉword(
+        true, Word.Kind, Word.Offset, Word.Length, Word.Contentˉoffset,
+        Word.Contentˉlength, Word.Decodedˉlength, Word.Nextˉoffset
+    );
+}
+
+export fn Windvaleˉshellˉoneˉwordˉat(
+    Input: bytes,
+    Scan: Windvaleˉshellˉoneˉscan,
+    Index: u32
+) -> Windvaleˉshellˉoneˉword {
+    if Scan.Status != Windvaleˉshellˉoneˉstatus.Valid || Index >= Scan.Words {
+        return Invalidˉword();
+    }
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Total {
+        if !Isˉseparator(Byteˉat(Input, Cursor)) { break; }
+        Cursor = Cursor + 1u32;
+    }
+    var Current: u32 = 0u32;
+    while Cursor < Total {
+        let Word: Windvaleˉshellˉoneˉlexedˉword = Scanˉword(Input, Cursor);
+        if Word.Status != Windvaleˉshellˉoneˉstatus.Valid {
+            return Invalidˉword();
+        }
+        if Current == Index { return Publicˉword(Word); }
+        Current = Current + 1u32;
+        Cursor = Word.Nextˉoffset;
+        while Cursor < Total {
+            if !Isˉseparator(Byteˉat(Input, Cursor)) { break; }
+            Cursor = Cursor + 1u32;
+        }
+    }
+    return Invalidˉword();
+}
+
+fn Wordˉspanˉisˉvalid(
+    Input: bytes,
+    Word: Windvaleˉshellˉoneˉword
+) -> bool {
+    if !Word.Found { return false; }
+    let Total: u32 = Bytesˉlength(Input);
+    if Word.Offset > Total || Word.Length > Total - Word.Offset {
+        return false;
+    }
+    if Word.Contentˉoffset < Word.Offset || Word.Contentˉoffset > Total {
+        return false;
+    }
+    if Word.Contentˉlength > Total - Word.Contentˉoffset { return false; }
+    return Word.Contentˉoffset + Word.Contentˉlength <=
+        Word.Offset + Word.Length;
+}
+
+fn Decodedˉescape(Value: u32) -> u8 {
+    if Value == 110u32 { return 10u8; }
+    if Value == 114u32 { return 13u8; }
+    if Value == 116u32 { return 9u8; }
+    if Value == 34u32 { return 34u8; }
+    return 92u8;
+}
+
+export fn Windvaleˉshellˉoneˉwordˉbytes(
+    Input: bytes,
+    Word: Windvaleˉshellˉoneˉword
+) -> bytes {
+    if !Wordˉspanˉisˉvalid(Input, Word) { return Emptyˉbytes(); }
+    if Word.Kind == Windvaleˉshellˉoneˉwordˉkind.Unquoted ||
+        Word.Kind == Windvaleˉshellˉoneˉwordˉkind.Singleˉquoted {
+        return Bytesˉslice(Input, Word.Contentˉoffset, Word.Contentˉlength);
+    }
+    if Word.Kind != Windvaleˉshellˉoneˉwordˉkind.Doubleˉquoted {
+        return Emptyˉbytes();
+    }
+
+    let End: u32 = Word.Contentˉoffset + Word.Contentˉlength;
+    var Cursor: u32 = Word.Contentˉoffset;
+    var Result: bytes = Emptyˉbytes();
+    while Cursor < End {
+        let Value: u32 = Byteˉat(Input, Cursor);
+        if Value == 92u32 {
+            if Cursor + 1u32 >= End { return Emptyˉbytes(); }
+            let Suffix: u32 = Byteˉat(Input, Cursor + 1u32);
+            if !Isˉescapeˉsuffix(Suffix) { return Emptyˉbytes(); }
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Decodedˉescape(Suffix)));
+            Cursor = Cursor + 2u32;
+        } else {
+            Result = Bytesˉconcat(
+                Result, Bytesˉslice(Input, Cursor, 1u32)
+            );
+            Cursor = Cursor + 1u32;
+        }
+    }
+    return Result;
+}
+
+export fn Windvaleˉshellˉoneˉcanonicalˉcommand(
+    Input: bytes,
+    Scan: Windvaleˉshellˉoneˉscan
+) -> bytes {
+    let Command: Windvaleˉshellˉoneˉword =
+        Windvaleˉshellˉoneˉwordˉat(Input, Scan, 0u32);
+    if !Command.Found { return Emptyˉbytes(); }
+    let Value: bytes = Windvaleˉshellˉoneˉwordˉbytes(Input, Command);
+    if Bytesˉsame(Value, Textˉtoˉutf8("cat")) {
+        return Textˉtoˉutf8("file-read");
+    }
+    return Value;
+}
