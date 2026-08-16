@@ -19,9 +19,9 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=18
+        selected_cases=19
         ;;
-    tree-node|logical-record|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
+    tree-node|logical-record|typed-row|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
         selected_cases=1
         ;;
     host-tree-reader)
@@ -1471,6 +1471,8 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
     verify_development_target LogicalRecord logical-record \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
+    verify_development_target TypedRow typed-row \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
     verify_development_target LocalService local-service \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj" || exit $?
     verify_development_target CollectionCatalog collection-catalog \
@@ -1511,6 +1513,8 @@ verify_target TreeNode \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
 verify_target LogicalRecord \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
+verify_target TypedRow \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
 verify_target LocalService \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj" || exit $?
 verify_target CollectionCatalog \
@@ -1559,4 +1563,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=27 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=28 local-results=0 cross-host-images=Verified'

@@ -144,6 +144,22 @@ fn Keyˉcontract() -> i32 {
         Bytesˉlength(Collectionˉdecoded.Identity) != 0u32 {
         return 3;
     }
+    let Schema: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Schema,
+            7u64,
+            Bytesˉfromˉu64ˉlittle(9u64)
+        );
+    let Schemaˉdecoded: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Schema.Bytes);
+    if Schema.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Bytesˉlength(Schema.Bytes) != 40u32 ||
+        Bytesˉreadˉu32ˉlittle(Schema.Bytes, 12u32) != 3u32 ||
+        Schemaˉdecoded.Kind != Logical.Databaseˉlogicalˉkeyˉkind.Schema ||
+        Schemaˉdecoded.Collection != 7u64 ||
+        Bytesˉreadˉu64ˉlittle(Schemaˉdecoded.Identity, 0u32) != 9u64 {
+        return 4;
+    }
     return 0;
 }
 
@@ -250,7 +266,7 @@ fn Keyˉrejections() -> i32 {
             Withˉu32(Valid.Bytes, 8u32, 28u32)
         ) != Logical.Databaseˉlogicalˉerror.Invalidˉheaderˉsize ||
         Keyˉdecodeˉerror(
-            Withˉu32(Valid.Bytes, 12u32, 3u32)
+            Withˉu32(Valid.Bytes, 12u32, 4u32)
         ) != Logical.Databaseˉlogicalˉerror.Invalidˉkind ||
         Keyˉdecodeˉerror(
             Withˉu64(Valid.Bytes, 16u32, 0u64)
@@ -266,6 +282,12 @@ fn Keyˉrejections() -> i32 {
         Bytesˉlength(Valid.Bytes) - 1u32
     );
     let Trailing: bytes = Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8));
+    let Schema: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Schema,
+            2u64,
+            Bytesˉfromˉu64ˉlittle(3u64)
+        );
     if Keyˉdecodeˉerror(Truncated) !=
             Logical.Databaseˉlogicalˉerror.Truncated ||
         Keyˉdecodeˉerror(Trailing) !=
@@ -279,7 +301,19 @@ fn Keyˉrejections() -> i32 {
             Logical.Databaseˉlogicalˉkeyˉkind.Collection,
             2u64,
             Identity
-        ) != Logical.Databaseˉlogicalˉerror.Invalidˉidentityˉlength {
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉidentityˉlength ||
+        Keyˉencodeˉerror(
+            Logical.Databaseˉlogicalˉkeyˉkind.Schema,
+            2u64,
+            Bytesˉfromˉu64ˉlittle(0u64)
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉschema ||
+        Keyˉencodeˉerror(
+            Logical.Databaseˉlogicalˉkeyˉkind.Schema,
+            2u64,
+            Identity
+        ) != Logical.Databaseˉlogicalˉerror.Invalidˉidentityˉlength ||
+        Keyˉdecodeˉerror(Withˉu64(Schema.Bytes, 32u32, 0u64)) !=
+            Logical.Databaseˉlogicalˉerror.Invalidˉschema {
         return 2;
     }
     let Maximum: Logical.Databaseˉlogicalˉkeyˉresult =

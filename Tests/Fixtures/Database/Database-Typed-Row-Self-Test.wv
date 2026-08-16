@@ -1,0 +1,615 @@
+module Databaseˉtypedˉrowˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+import Windvaleˉdatabaseˉtypedˉrow as Typed;
+
+data Invalidˉutf8: bytes = [192, 128];
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu32ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Withˉu64(Input: bytes, Offset: u32, Value: u64) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 8u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu64ˉlittle(Value)),
+        Bytesˉslice(
+            Input,
+            Suffixˉoffset,
+            Bytesˉlength(Input) - Suffixˉoffset
+        )
+    );
+}
+
+fn Schemaˉdecodeˉerror(Input: bytes) -> Schema.Databaseˉschemaˉerror {
+    let Result: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Input);
+    return Result.Error;
+}
+
+fn Schemaˉfieldˉencodeˉerror(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Nullable: bool,
+    Maximum: u32,
+    Name: bytes
+) -> Schema.Databaseˉschemaˉerror {
+    let Result: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Kind,
+            Nullable,
+            Maximum,
+            Name
+        );
+    return Result.Error;
+}
+
+fn Schemaˉencodeˉerror(
+    Collection: u64,
+    Identity: u64,
+    Fields: bytes
+) -> Schema.Databaseˉschemaˉerror {
+    let Result: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(Collection, Identity, Fields);
+    return Result.Error;
+}
+
+fn Schemaˉadmitˉerror(
+    Key: bytes,
+    Value: bytes
+) -> Schema.Databaseˉschemaˉerror {
+    let Result: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉadmit(Key, Value);
+    return Result.Error;
+}
+
+fn Typedˉrowˉdecodeˉerror(
+    Definition: bytes,
+    Row: bytes
+) -> Typed.Databaseˉtypedˉrowˉerror {
+    let Result: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉdecode(Definition, Row);
+    return Result.Error;
+}
+
+fn Typedˉvalueˉencodeˉerror(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> Typed.Databaseˉtypedˉrowˉerror {
+    let Result: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(Kind, Null, Data);
+    return Result.Error;
+}
+
+fn Typedˉrowˉencodeˉerror(
+    Definition: bytes,
+    Values: bytes
+) -> Typed.Databaseˉtypedˉrowˉerror {
+    let Result: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(Definition, Values);
+    return Result.Error;
+}
+
+fn Typedˉadmitˉerror(
+    Definition: bytes,
+    Logicalˉrecord: bytes
+) -> Typed.Databaseˉtypedˉrowˉerror {
+    let Result: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉadmit(Definition, Logicalˉrecord);
+    return Result.Error;
+}
+
+fn Fields() -> bytes {
+    let Active: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            1u32,
+            Textˉtoˉutf8("active")
+        );
+    let Balance: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Schema.Databaseˉfieldˉkind.I64,
+            true,
+            8u32,
+            Textˉtoˉutf8("balance")
+        );
+    let Name: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            16u32,
+            Textˉtoˉutf8("name")
+        );
+    let Data: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Schema.Databaseˉfieldˉkind.Bytes,
+            false,
+            4u32,
+            Textˉtoˉutf8("data")
+        );
+    return Bytesˉconcat(
+        Bytesˉconcat(Active.Bytes, Balance.Bytes),
+        Bytesˉconcat(Name.Bytes, Data.Bytes)
+    );
+}
+
+fn Values() -> bytes {
+    let Active: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            Bytesˉfromˉu8(1u8)
+        );
+    let Balance: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.I64,
+            true,
+            Emptyˉbytes()
+        );
+    let Name: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            Textˉtoˉutf8("Ada")
+        );
+    let Data: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Bytes,
+            false,
+            Bytesˉconcat(Bytesˉfromˉu8(7u8), Bytesˉfromˉu8(8u8))
+        );
+    return Bytesˉconcat(
+        Bytesˉconcat(Active.Bytes, Balance.Bytes),
+        Bytesˉconcat(Name.Bytes, Data.Bytes)
+    );
+}
+
+fn Fieldsˉwithˉcount(Count: u32) -> bytes {
+    var Result: bytes = Emptyˉbytes();
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Field: Schema.Databaseˉschemaˉfieldˉresult =
+            Schema.Databaseˉschemaˉfieldˉencode(
+                Schema.Databaseˉfieldˉkind.Bytes,
+                true,
+                1u32,
+                Textˉtoˉutf8(U32ˉformat(Index))
+            );
+        Result = Bytesˉconcat(Result, Field.Bytes);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Schemaˉcontract() -> i32 {
+    let Fieldˉbytes: bytes = Fields();
+    let Encoded: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fieldˉbytes);
+    if Encoded.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 133u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1129535063u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 48u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 12u32) != 0u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 16u32) != 7u64 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 24u32) != 9u64 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 32u32) != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 36u32) != 85u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 40u32) != 0u64 {
+        return 1;
+    }
+    let Decoded: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Encoded.Bytes);
+    let Deterministic: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fieldˉbytes);
+    if Decoded.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Decoded.Collection != 7u64 ||
+        Decoded.Schema != 9u64 ||
+        Decoded.Fieldˉcount != 4u32 ||
+        !Bytesˉequal(Decoded.Fields, Fieldˉbytes) ||
+        !Bytesˉequal(Deterministic.Bytes, Encoded.Bytes) {
+        return 2;
+    }
+    let First: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉat(Decoded.Fields, 0u32);
+    let Second: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉat(Decoded.Fields, First.Next);
+    if First.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        First.Kind != Schema.Databaseˉfieldˉkind.Boolean ||
+        First.Nullable || First.Maximum != 1u32 ||
+        !Bytesˉequal(First.Name, Textˉtoˉutf8("active")) ||
+        Second.Kind != Schema.Databaseˉfieldˉkind.I64 ||
+        !Second.Nullable || Second.Maximum != 8u32 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Schemaˉoperations() -> i32 {
+    let Put: Schema.Databaseˉschemaˉput =
+        Schema.Databaseˉschemaˉputˉprepare(7u64, 9u64, Fields());
+    let Read: Schema.Databaseˉschemaˉread =
+        Schema.Databaseˉschemaˉreadˉprepare(7u64, 9u64);
+    if Put.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Read.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        !Bytesˉequal(Put.Key, Read.Key) ||
+        Bytesˉlength(Put.Key) != 40u32 {
+        return 1;
+    }
+    let Key: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Put.Key);
+    let Admitted: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉadmit(Put.Key, Put.Value);
+    if Key.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Key.Kind != Logical.Databaseˉlogicalˉkeyˉkind.Schema ||
+        Bytesˉreadˉu64ˉlittle(Key.Identity, 0u32) != 9u64 ||
+        Admitted.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Admitted.Collection != 7u64 || Admitted.Schema != 9u64 {
+        return 2;
+    }
+    let Other: Schema.Databaseˉschemaˉread =
+        Schema.Databaseˉschemaˉreadˉprepare(7u64, 10u64);
+    if Schemaˉadmitˉerror(Other.Key, Put.Value) !=
+        Schema.Databaseˉschemaˉerror.Identityˉmismatch {
+        return 3;
+    }
+    return 0;
+}
+
+fn Schemaˉrejections() -> i32 {
+    let Valid: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fields());
+    if Schemaˉdecodeˉerror(Emptyˉbytes()) !=
+            Schema.Databaseˉschemaˉerror.Invalidˉlength ||
+        Schemaˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 0u32, 0u32)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉmagic ||
+        Schemaˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 4u32, 2u32)
+        ) != Schema.Databaseˉschemaˉerror.Unsupportedˉversion ||
+        Schemaˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 8u32, 44u32)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉheaderˉsize ||
+        Schemaˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 12u32, 1u32)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉflags ||
+        Schemaˉdecodeˉerror(
+            Withˉu64(Valid.Bytes, 16u32, 0u64)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉcollection ||
+        Schemaˉdecodeˉerror(
+            Withˉu64(Valid.Bytes, 24u32, 0u64)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉschema ||
+        Schemaˉdecodeˉerror(
+            Withˉu32(Valid.Bytes, 32u32, 3u32)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉfieldˉcount ||
+        Schemaˉdecodeˉerror(
+            Withˉu64(Valid.Bytes, 40u32, 1u64)
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉreserved {
+        return 1;
+    }
+    let Truncated: bytes = Bytesˉslice(
+        Valid.Bytes,
+        0u32,
+        Bytesˉlength(Valid.Bytes) - 1u32
+    );
+    let Trailing: bytes = Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8));
+    if Schemaˉdecodeˉerror(Truncated) !=
+            Schema.Databaseˉschemaˉerror.Truncated ||
+        Schemaˉdecodeˉerror(Trailing) !=
+            Schema.Databaseˉschemaˉerror.Trailingˉbytes ||
+        Schemaˉfieldˉencodeˉerror(
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            2u32,
+            Textˉtoˉutf8("x")
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉfieldˉmaximum ||
+        Schemaˉfieldˉencodeˉerror(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            1u32,
+            Invalidˉutf8
+        ) != Schema.Databaseˉschemaˉerror.Invalidˉfieldˉnameˉencoding {
+        return 2;
+    }
+    let One: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Schema.Databaseˉfieldˉkind.Bytes,
+            true,
+            1u32,
+            Textˉtoˉutf8("same")
+        );
+    if Schemaˉencodeˉerror(
+        7u64,
+        9u64,
+        Bytesˉconcat(One.Bytes, One.Bytes)
+    ) != Schema.Databaseˉschemaˉerror.Duplicateˉfieldˉname {
+        return 3;
+    }
+    let Maximum: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fieldsˉwithˉcount(64u32));
+    let Oversized: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fieldsˉwithˉcount(65u32));
+    if Maximum.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Maximum.Fieldˉcount != 64u32 ||
+        Oversized.Error != Schema.Databaseˉschemaˉerror.Invalidˉfieldˉcount {
+        return 4;
+    }
+    return 0;
+}
+
+fn Rowˉcontract() -> i32 {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fields());
+    let Valueˉbytes: bytes = Values();
+    let Encoded: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(Definition.Bytes, Valueˉbytes);
+    if Encoded.Error != Typed.Databaseˉtypedˉrowˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 102u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1381258839u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 16u32) != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 20u32) != 70u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 24u32) != 0u64 {
+        return 1;
+    }
+    let Decoded: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉdecode(Definition.Bytes, Encoded.Bytes);
+    let Deterministic: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(Definition.Bytes, Valueˉbytes);
+    if Decoded.Error != Typed.Databaseˉtypedˉrowˉerror.Valid ||
+        Decoded.Schema != 9u64 || Decoded.Fieldˉcount != 4u32 ||
+        !Bytesˉequal(Decoded.Values, Valueˉbytes) ||
+        !Bytesˉequal(Deterministic.Bytes, Encoded.Bytes) {
+        return 2;
+    }
+    let First: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉat(Decoded.Values, 0u32);
+    let Second: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉat(Decoded.Values, First.Next);
+    if First.Kind != Schema.Databaseˉfieldˉkind.Boolean || First.Null ||
+        Bytesˉreadˉu8(First.Data, 0u32) != 1u8 ||
+        Second.Kind != Schema.Databaseˉfieldˉkind.I64 || !Second.Null ||
+        Bytesˉlength(Second.Data) != 0u32 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Rowˉoperations() -> i32 {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fields());
+    let Put: Typed.Databaseˉtypedˉput =
+        Typed.Databaseˉtypedˉputˉprepare(
+            7u64,
+            Textˉtoˉutf8("record-1"),
+            Definition.Bytes,
+            Values()
+        );
+    if Put.Error != Typed.Databaseˉtypedˉrowˉerror.Valid ||
+        Bytesˉlength(Put.Value) != 134u32 {
+        return 1;
+    }
+    let Admitted: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉadmit(Definition.Bytes, Put.Value);
+    if Admitted.Error != Typed.Databaseˉtypedˉrowˉerror.Valid ||
+        Admitted.Schema != 9u64 || Admitted.Fieldˉcount != 4u32 {
+        return 2;
+    }
+    let Other: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉencode(10u64, Admitted.Bytes);
+    if Typedˉadmitˉerror(Definition.Bytes, Other.Bytes) !=
+        Typed.Databaseˉtypedˉrowˉerror.Schemaˉmismatch {
+        return 3;
+    }
+    return 0;
+}
+
+fn Rowˉrejections() -> i32 {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fields());
+    let Valid: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(Definition.Bytes, Values());
+    if Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Emptyˉbytes()
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉlength ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Withˉu32(Valid.Bytes, 0u32, 0u32)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉmagic ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Withˉu32(Valid.Bytes, 4u32, 2u32)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Unsupportedˉversion ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Withˉu32(Valid.Bytes, 8u32, 28u32)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉheaderˉsize ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Withˉu32(Valid.Bytes, 12u32, 1u32)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉflags ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Withˉu32(Valid.Bytes, 16u32, 3u32)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉfieldˉcount ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Withˉu64(Valid.Bytes, 24u32, 1u64)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉreserved {
+        return 1;
+    }
+    let Truncated: bytes = Bytesˉslice(
+        Valid.Bytes,
+        0u32,
+        Bytesˉlength(Valid.Bytes) - 1u32
+    );
+    let Trailing: bytes = Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8));
+    if Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Truncated
+        ) != Typed.Databaseˉtypedˉrowˉerror.Truncated ||
+        Typedˉrowˉdecodeˉerror(
+            Definition.Bytes,
+            Trailing
+        ) != Typed.Databaseˉtypedˉrowˉerror.Trailingˉbytes ||
+        Typedˉvalueˉencodeˉerror(
+            Schema.Databaseˉfieldˉkind.Boolean,
+            false,
+            Bytesˉfromˉu8(2u8)
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉboolean ||
+        Typedˉvalueˉencodeˉerror(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            Invalidˉutf8
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉtext {
+        return 2;
+    }
+    let Wrongˉkind: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Bytes,
+            false,
+            Bytesˉfromˉu8(1u8)
+        );
+    let Rest: bytes = Bytesˉslice(
+        Values(),
+        17u32,
+        Bytesˉlength(Values()) - 17u32
+    );
+    if Typedˉrowˉencodeˉerror(
+        Definition.Bytes,
+        Bytesˉconcat(Wrongˉkind.Bytes, Rest)
+    ) != Typed.Databaseˉtypedˉrowˉerror.Kindˉmismatch {
+        return 3;
+    }
+    let Nullˉactive: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Boolean,
+            true,
+            Emptyˉbytes()
+        );
+    if Typedˉrowˉencodeˉerror(
+        Definition.Bytes,
+        Bytesˉconcat(Nullˉactive.Bytes, Rest)
+    ) != Typed.Databaseˉtypedˉrowˉerror.Nullˉnotˉallowed {
+        return 4;
+    }
+    let Longˉname: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            Zeroes(17u32)
+        );
+    let Prefix: bytes = Bytesˉslice(Values(), 0u32, 33u32);
+    let Data: bytes = Bytesˉslice(
+        Values(),
+        52u32,
+        Bytesˉlength(Values()) - 52u32
+    );
+    if Typedˉrowˉencodeˉerror(
+        Definition.Bytes,
+        Bytesˉconcat(Bytesˉconcat(Prefix, Longˉname.Bytes), Data)
+    ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉvalueˉlength {
+        return 5;
+    }
+    let Maximumˉfield: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            61360u32,
+            Textˉtoˉutf8("body")
+        );
+    let Maximumˉschema: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 11u64, Maximumˉfield.Bytes);
+    let Maximumˉvalue: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            Zeroes(61360u32)
+        );
+    let Oversizedˉvalue: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(
+            Schema.Databaseˉfieldˉkind.Text,
+            false,
+            Zeroes(61361u32)
+        );
+    let Maximumˉrow: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(
+            Maximumˉschema.Bytes,
+            Maximumˉvalue.Bytes
+        );
+    if Maximumˉrow.Error != Typed.Databaseˉtypedˉrowˉerror.Valid ||
+        Bytesˉlength(Maximumˉrow.Bytes) != 61408u32 ||
+        Typedˉrowˉencodeˉerror(
+            Maximumˉschema.Bytes,
+            Oversizedˉvalue.Bytes
+        ) != Typed.Databaseˉtypedˉrowˉerror.Invalidˉvalueˉbytes {
+        return 6;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Schemaˉcodec: i32 = Schemaˉcontract();
+    if Schemaˉcodec != 0 { return 10 + Schemaˉcodec; }
+    let Schemaˉoperation: i32 = Schemaˉoperations();
+    if Schemaˉoperation != 0 { return 20 + Schemaˉoperation; }
+    let Schemaˉrejection: i32 = Schemaˉrejections();
+    if Schemaˉrejection != 0 { return 30 + Schemaˉrejection; }
+    let Rowˉcodec: i32 = Rowˉcontract();
+    if Rowˉcodec != 0 { return 40 + Rowˉcodec; }
+    let Rowˉoperation: i32 = Rowˉoperations();
+    if Rowˉoperation != 0 { return 50 + Rowˉoperation; }
+    let Rowˉrejection: i32 = Rowˉrejections();
+    if Rowˉrejection != 0 { return 60 + Rowˉrejection; }
+    return 0;
+}

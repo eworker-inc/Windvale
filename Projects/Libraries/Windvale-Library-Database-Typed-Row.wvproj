@@ -1,0 +1,6 @@
+windvale-project 2
+root "Libraries/Database/Typed-Row.wv"
+source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
+source "Libraries/Database/Schema-Definition.wv"
+emit wvb

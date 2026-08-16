@@ -14,6 +14,7 @@ const DATABASE_LOGICAL_MAXIMUM_PAYLOAD_BYTES: u32 = 61408u32;
 export enum Databaseˉlogicalˉkeyˉkind {
     Collection = 1;
     Record = 2;
+    Schema = 3;
 }
 
 export enum Databaseˉlogicalˉerror {
@@ -114,6 +115,7 @@ fn Databaseˉlogicalˉkindˉfromˉu32(
     Value: u32
 ) -> Databaseˉlogicalˉkeyˉkind {
     if Value == 2u32 { return Databaseˉlogicalˉkeyˉkind.Record; }
+    if Value == 3u32 { return Databaseˉlogicalˉkeyˉkind.Schema; }
     return Databaseˉlogicalˉkeyˉkind.Collection;
 }
 
@@ -131,14 +133,23 @@ export fn Databaseˉlogicalˉkeyˉencode(
     if Identityˉlength > DATABASE_LOGICAL_MAXIMUM_IDENTITY_BYTES ||
         Kind == Databaseˉlogicalˉkeyˉkind.Record &&
             Identityˉlength == 0u32 ||
+        Kind == Databaseˉlogicalˉkeyˉkind.Schema &&
+            Identityˉlength != 8u32 ||
         Kind == Databaseˉlogicalˉkeyˉkind.Collection &&
             Identityˉlength != 0u32 {
         return Databaseˉlogicalˉkeyˉfailure(
             Databaseˉlogicalˉerror.Invalidˉidentityˉlength
         );
     }
+    if Kind == Databaseˉlogicalˉkeyˉkind.Schema &&
+        Bytesˉreadˉu64ˉlittle(Identity, 0u32) == 0u64 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉschema
+        );
+    }
     var Rawˉkind: u32 = 1u32;
     if Kind == Databaseˉlogicalˉkeyˉkind.Record { Rawˉkind = 2u32; }
+    if Kind == Databaseˉlogicalˉkeyˉkind.Schema { Rawˉkind = 3u32; }
     var Encoded: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_LOGICAL_KEY_MAGIC);
     Encoded = Bytesˉconcat(
         Encoded,
@@ -192,7 +203,7 @@ export fn Databaseˉlogicalˉkeyˉdecode(
         );
     }
     let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
-    if Rawˉkind != 1u32 && Rawˉkind != 2u32 {
+    if Rawˉkind != 1u32 && Rawˉkind != 2u32 && Rawˉkind != 3u32 {
         return Databaseˉlogicalˉkeyˉfailure(
             Databaseˉlogicalˉerror.Invalidˉkind
         );
@@ -206,6 +217,7 @@ export fn Databaseˉlogicalˉkeyˉdecode(
     let Identityˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
     if Identityˉlength > DATABASE_LOGICAL_MAXIMUM_IDENTITY_BYTES ||
         Rawˉkind == 2u32 && Identityˉlength == 0u32 ||
+        Rawˉkind == 3u32 && Identityˉlength != 8u32 ||
         Rawˉkind == 1u32 && Identityˉlength != 0u32 {
         return Databaseˉlogicalˉkeyˉfailure(
             Databaseˉlogicalˉerror.Invalidˉidentityˉlength
@@ -225,6 +237,12 @@ export fn Databaseˉlogicalˉkeyˉdecode(
     if Total > Expected {
         return Databaseˉlogicalˉkeyˉfailure(
             Databaseˉlogicalˉerror.Trailingˉbytes
+        );
+    }
+    if Rawˉkind == 3u32 &&
+        Bytesˉreadˉu64ˉlittle(Input, DATABASE_LOGICAL_HEADER_BYTES) == 0u64 {
+        return Databaseˉlogicalˉkeyˉfailure(
+            Databaseˉlogicalˉerror.Invalidˉschema
         );
     }
     let Kind: Databaseˉlogicalˉkeyˉkind =

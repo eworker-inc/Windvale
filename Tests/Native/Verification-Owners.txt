@@ -62,7 +62,7 @@ protected-credential|Test-Protected-Credential|16|4|protected credential status=
 external-model-gateway|Test-External-Model-Gateway|30|4|external model gateway status=Passed providers=3 cases=30 child-process=Verified differential=Verified public-network=0 real-credentials=0
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|27|1|native database storage status=Passed cases=27 local-results=0 cross-host-images=Verified
+database-storage|Test-Database-Storage|28|1|native database storage status=Passed cases=28 local-results=0 cross-host-images=Verified
 workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11

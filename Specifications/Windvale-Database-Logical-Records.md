@@ -25,7 +25,7 @@ Every key begins with this exact 32-byte header:
 | 0 | 4 | Magic | `WVKR` (`0x524b5657` as a little-endian `u32`) |
 | 4 | 4 | Version | `1` |
 | 8 | 4 | Header bytes | `32` |
-| 12 | 4 | Kind | collection `1` or record `2` |
+| 12 | 4 | Kind | collection `1`, record `2`, or schema `3` |
 | 16 | 8 | Collection identity | nonzero `u64` |
 | 24 | 4 | Identity bytes | exact trailing byte count |
 | 28 | 4 | Reserved | zero |
@@ -33,7 +33,9 @@ Every key begins with this exact 32-byte header:
 A collection key has kind `1`, zero identity bytes, and an exact total length
 of 32 bytes. A record key has kind `2`, one through 4,064 opaque identity
 bytes, and an exact total length of 33 through 4,096 bytes. The limits match
-the implemented `WVTN 1` maximum key size.
+the implemented `WVTN 1` maximum key size. A schema key has kind `3`, exactly
+eight identity bytes containing its nonzero little-endian schema identity, and
+an exact total length of 40 bytes.
 
 The common header and collection field make record keys for one collection a
 contiguous bytewise prefix group. The `u64` collection field is intentionally
@@ -41,9 +43,9 @@ little-endian like the rest of the durable stack; this version does not promise
 numeric collection ordering across different collection identities. Identity
 bytes are opaque and have no text normalization or host-locale behavior.
 
-Collection keys reserve a deterministic metadata anchor without defining the
-metadata value. Catalog naming, schema definitions, and migration policy are a
-later contract.
+Collection keys reserve a deterministic catalog anchor. Schema keys reserve
+collection-scoped definitions without colliding with application record
+identities. Schema migration policy remains a separate contract.
 
 ## Record envelope
 
@@ -91,10 +93,10 @@ bytes, so a caller cannot accidentally submit a partially prepared put.
 ## Verification
 
 The portable native fixture proves exact headers, deterministic encode/decode,
-collection anchors, get/put key agreement, empty payload admission, maximum
-4,096-byte keys, maximum 61,440-byte values, and typed malformed-input
-rejections. It is an owned target of both database-storage modes on Windows
-and Linux.
+collection anchors, collection-scoped schema keys, get/put key agreement,
+empty payload admission, maximum 4,096-byte keys, maximum 61,440-byte values,
+and typed malformed-input rejections. It is an owned target of both
+database-storage modes on Windows and Linux.
 
 The hosted logical tree-writer fixture also prepares a record through the
 write-only module, commits it into a depth-two tree, then starts an independent
@@ -103,7 +105,8 @@ schema and payload, and proves the read did not alter the database bytes.
 
 ## Exclusions
 
-This contract does not define collection names or descriptors, schema bodies,
-indexes, queries, deletes, compare-and-swap, multi-record transactions,
+This contract does not itself define collection names, descriptors, or schema
+bodies; those are separate formats layered on its keys and values. It does not
+define indexes, queries, deletes, compare-and-swap, multi-record transactions,
 sessions, networking, authentication, concurrent readers, writer arbitration,
 reclamation, or migration between format versions.

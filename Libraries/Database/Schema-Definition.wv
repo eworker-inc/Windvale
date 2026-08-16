@@ -1,0 +1,657 @@
+module Windvaleˉdatabaseˉschemaˉdefinition profile portable;
+
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+
+const DATABASE_SCHEMA_MAGIC: u32 = 1129535063u32;
+const DATABASE_SCHEMA_VERSION: u32 = 1u32;
+const DATABASE_SCHEMA_HEADER_BYTES: u32 = 48u32;
+const DATABASE_SCHEMA_FIELD_HEADER_BYTES: u32 = 16u32;
+const DATABASE_SCHEMA_MAXIMUM_FIELDS: u32 = 64u32;
+const DATABASE_SCHEMA_MAXIMUM_NAME_BYTES: u32 = 128u32;
+const DATABASE_SCHEMA_MAXIMUM_FIELD_BYTES: u32 = 9216u32;
+const DATABASE_SCHEMA_MAXIMUM_BYTES: u32 = 9264u32;
+const DATABASE_SCHEMA_MAXIMUM_VALUE_BYTES: u32 = 61408u32;
+
+export enum Databaseˉfieldˉkind {
+    Boolean = 1;
+    I64 = 2;
+    U64 = 3;
+    Text = 4;
+    Bytes = 5;
+}
+
+export enum Databaseˉschemaˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheaderˉsize = 4;
+    Invalidˉflags = 5;
+    Invalidˉcollection = 6;
+    Invalidˉschema = 7;
+    Invalidˉfieldˉcount = 8;
+    Invalidˉfieldˉbytes = 9;
+    Invalidˉfieldˉkind = 10;
+    Invalidˉfieldˉflags = 11;
+    Invalidˉfieldˉmaximum = 12;
+    Invalidˉfieldˉnameˉlength = 13;
+    Invalidˉfieldˉnameˉencoding = 14;
+    Duplicateˉfieldˉname = 15;
+    Invalidˉreserved = 16;
+    Truncated = 17;
+    Trailingˉbytes = 18;
+    Invalidˉkey = 19;
+    Identityˉmismatch = 20;
+}
+
+export record Databaseˉschemaˉfieldˉresult {
+    Error: Databaseˉschemaˉerror;
+    Kind: Databaseˉfieldˉkind;
+    Nullable: bool;
+    Maximum: u32;
+    Name: bytes;
+    Bytes: bytes;
+    Next: u32;
+}
+
+export record Databaseˉschemaˉfieldˉshapeˉresult {
+    Error: Databaseˉschemaˉerror;
+    Kind: Databaseˉfieldˉkind;
+    Nullable: bool;
+    Maximum: u32;
+    Next: u32;
+}
+
+record Databaseˉschemaˉfieldˉscanˉresult {
+    Error: Databaseˉschemaˉerror;
+    Kind: Databaseˉfieldˉkind;
+    Nullable: bool;
+    Maximum: u32;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Next: u32;
+}
+
+record Databaseˉschemaˉfieldsˉresult {
+    Error: Databaseˉschemaˉerror;
+    Count: u32;
+}
+
+export record Databaseˉschemaˉresult {
+    Error: Databaseˉschemaˉerror;
+    Collection: u64;
+    Schema: u64;
+    Fieldˉcount: u32;
+    Fields: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉschemaˉread {
+    Error: Databaseˉschemaˉerror;
+    Key: bytes;
+}
+
+export record Databaseˉschemaˉput {
+    Error: Databaseˉschemaˉerror;
+    Key: bytes;
+    Value: bytes;
+}
+
+fn Databaseˉschemaˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉschemaˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return Databaseˉschemaˉempty(); }
+    let Owned: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Owned, 1u32, Length);
+}
+
+fn Databaseˉschemaˉfieldˉfailure(
+    Error: Databaseˉschemaˉerror
+) -> Databaseˉschemaˉfieldˉresult {
+    return Databaseˉschemaˉfieldˉresult(
+        Error,
+        Databaseˉfieldˉkind.Boolean,
+        false,
+        0u32,
+        Databaseˉschemaˉempty(),
+        Databaseˉschemaˉempty(),
+        0u32
+    );
+}
+
+fn Databaseˉschemaˉfieldˉshapeˉfailure(
+    Error: Databaseˉschemaˉerror
+) -> Databaseˉschemaˉfieldˉshapeˉresult {
+    return Databaseˉschemaˉfieldˉshapeˉresult(
+        Error,
+        Databaseˉfieldˉkind.Boolean,
+        false,
+        0u32,
+        0u32
+    );
+}
+
+fn Databaseˉschemaˉfieldˉscanˉfailure(
+    Error: Databaseˉschemaˉerror
+) -> Databaseˉschemaˉfieldˉscanˉresult {
+    return Databaseˉschemaˉfieldˉscanˉresult(
+        Error,
+        Databaseˉfieldˉkind.Boolean,
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Databaseˉschemaˉfailure(
+    Error: Databaseˉschemaˉerror
+) -> Databaseˉschemaˉresult {
+    return Databaseˉschemaˉresult(
+        Error,
+        0u64,
+        0u64,
+        0u32,
+        Databaseˉschemaˉempty(),
+        Databaseˉschemaˉempty()
+    );
+}
+
+fn Databaseˉschemaˉreadˉfailure(
+    Error: Databaseˉschemaˉerror
+) -> Databaseˉschemaˉread {
+    return Databaseˉschemaˉread(Error, Databaseˉschemaˉempty());
+}
+
+fn Databaseˉschemaˉputˉfailure(
+    Error: Databaseˉschemaˉerror
+) -> Databaseˉschemaˉput {
+    return Databaseˉschemaˉput(
+        Error,
+        Databaseˉschemaˉempty(),
+        Databaseˉschemaˉempty()
+    );
+}
+
+fn Databaseˉschemaˉkindˉraw(Kind: Databaseˉfieldˉkind) -> u32 {
+    if Kind == Databaseˉfieldˉkind.I64 { return 2u32; }
+    if Kind == Databaseˉfieldˉkind.U64 { return 3u32; }
+    if Kind == Databaseˉfieldˉkind.Text { return 4u32; }
+    if Kind == Databaseˉfieldˉkind.Bytes { return 5u32; }
+    return 1u32;
+}
+
+fn Databaseˉschemaˉkindˉfromˉraw(Value: u32) -> Databaseˉfieldˉkind {
+    if Value == 2u32 { return Databaseˉfieldˉkind.I64; }
+    if Value == 3u32 { return Databaseˉfieldˉkind.U64; }
+    if Value == 4u32 { return Databaseˉfieldˉkind.Text; }
+    if Value == 5u32 { return Databaseˉfieldˉkind.Bytes; }
+    return Databaseˉfieldˉkind.Boolean;
+}
+
+fn Databaseˉschemaˉmaximumˉvalid(
+    Kind: Databaseˉfieldˉkind,
+    Maximum: u32
+) -> bool {
+    if Kind == Databaseˉfieldˉkind.Boolean { return Maximum == 1u32; }
+    if Kind == Databaseˉfieldˉkind.I64 || Kind == Databaseˉfieldˉkind.U64 {
+        return Maximum == 8u32;
+    }
+    return Maximum > 0u32 && Maximum <= DATABASE_SCHEMA_MAXIMUM_VALUE_BYTES;
+}
+
+export fn Databaseˉschemaˉfieldˉencode(
+    Kind: Databaseˉfieldˉkind,
+    Nullable: bool,
+    Maximum: u32,
+    Name: bytes
+) -> Databaseˉschemaˉfieldˉresult {
+    if !Databaseˉschemaˉmaximumˉvalid(Kind, Maximum) {
+        return Databaseˉschemaˉfieldˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉmaximum
+        );
+    }
+    let Nameˉlength: u32 = Bytesˉlength(Name);
+    if Nameˉlength == 0u32 ||
+        Nameˉlength > DATABASE_SCHEMA_MAXIMUM_NAME_BYTES {
+        return Databaseˉschemaˉfieldˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉnameˉlength
+        );
+    }
+    if !Textˉutf8ˉisˉvalid(Name) {
+        return Databaseˉschemaˉfieldˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉnameˉencoding
+        );
+    }
+    var Flags: u32 = 0u32;
+    if Nullable { Flags = 1u32; }
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(
+        Databaseˉschemaˉkindˉraw(Kind)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Flags));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Maximum));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Nameˉlength));
+    Encoded = Bytesˉconcat(Encoded, Name);
+    return Databaseˉschemaˉfieldˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Kind,
+        Nullable,
+        Maximum,
+        Databaseˉschemaˉcopy(Name),
+        Encoded,
+        Bytesˉlength(Encoded)
+    );
+}
+
+fn Databaseˉschemaˉfieldˉscanˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉschemaˉfieldˉscanˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total || Total - Offset < DATABASE_SCHEMA_FIELD_HEADER_BYTES {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Truncated
+        );
+    }
+    let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Rawˉkind == 0u32 || Rawˉkind > 5u32 {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉkind
+        );
+    }
+    let Rawˉflags: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32);
+    if Rawˉflags > 1u32 {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉflags
+        );
+    }
+    let Kind: Databaseˉfieldˉkind =
+        Databaseˉschemaˉkindˉfromˉraw(Rawˉkind);
+    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+    if !Databaseˉschemaˉmaximumˉvalid(Kind, Maximum) {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉmaximum
+        );
+    }
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32);
+    if Nameˉlength == 0u32 ||
+        Nameˉlength > DATABASE_SCHEMA_MAXIMUM_NAME_BYTES {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉnameˉlength
+        );
+    }
+    let Remaining: u32 = Total - Offset - DATABASE_SCHEMA_FIELD_HEADER_BYTES;
+    if Nameˉlength > Remaining {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Truncated
+        );
+    }
+    let Length: u32 = DATABASE_SCHEMA_FIELD_HEADER_BYTES + Nameˉlength;
+    let Name: bytes = Bytesˉslice(
+        Input,
+        Offset + DATABASE_SCHEMA_FIELD_HEADER_BYTES,
+        Nameˉlength
+    );
+    if !Textˉutf8ˉisˉvalid(Name) {
+        return Databaseˉschemaˉfieldˉscanˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉnameˉencoding
+        );
+    }
+    return Databaseˉschemaˉfieldˉscanˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Kind,
+        Rawˉflags == 1u32,
+        Maximum,
+        Offset + DATABASE_SCHEMA_FIELD_HEADER_BYTES,
+        Nameˉlength,
+        Offset + Length
+    );
+}
+
+export fn Databaseˉschemaˉfieldˉshapeˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉschemaˉfieldˉshapeˉresult {
+    let Scanned: Databaseˉschemaˉfieldˉscanˉresult =
+        Databaseˉschemaˉfieldˉscanˉat(Input, Offset);
+    if Scanned.Error != Databaseˉschemaˉerror.Valid {
+        return Databaseˉschemaˉfieldˉshapeˉfailure(Scanned.Error);
+    }
+    return Databaseˉschemaˉfieldˉshapeˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Scanned.Kind,
+        Scanned.Nullable,
+        Scanned.Maximum,
+        Scanned.Next
+    );
+}
+
+export fn Databaseˉschemaˉfieldˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉschemaˉfieldˉresult {
+    let Scanned: Databaseˉschemaˉfieldˉscanˉresult =
+        Databaseˉschemaˉfieldˉscanˉat(Input, Offset);
+    if Scanned.Error != Databaseˉschemaˉerror.Valid {
+        return Databaseˉschemaˉfieldˉfailure(Scanned.Error);
+    }
+    let Name: bytes = Bytesˉslice(
+        Input,
+        Scanned.Nameˉoffset,
+        Scanned.Nameˉlength
+    );
+    return Databaseˉschemaˉfieldˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Scanned.Kind,
+        Scanned.Nullable,
+        Scanned.Maximum,
+        Databaseˉschemaˉcopy(Name),
+        Databaseˉschemaˉcopy(
+            Bytesˉslice(Input, Offset, Scanned.Next - Offset)
+        ),
+        Scanned.Next
+    );
+}
+
+export fn Databaseˉschemaˉfieldˉdecode(
+    Input: bytes
+) -> Databaseˉschemaˉfieldˉresult {
+    let Result: Databaseˉschemaˉfieldˉresult =
+        Databaseˉschemaˉfieldˉat(Input, 0u32);
+    if Result.Error != Databaseˉschemaˉerror.Valid { return Result; }
+    if Result.Next != Bytesˉlength(Input) {
+        return Databaseˉschemaˉfieldˉfailure(
+            Databaseˉschemaˉerror.Trailingˉbytes
+        );
+    }
+    return Result;
+}
+
+fn Databaseˉschemaˉnameˉexists(
+    Fields: bytes,
+    End: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < End {
+        let Priorˉnameˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Fields, Cursor + 12u32);
+        if Priorˉnameˉlength == Nameˉlength {
+            var Equal: bool = true;
+            var Index: u32 = 0u32;
+            while Index < Nameˉlength {
+                if Bytesˉreadˉu8(
+                    Fields,
+                    Cursor + DATABASE_SCHEMA_FIELD_HEADER_BYTES + Index
+                ) != Bytesˉreadˉu8(Fields, Nameˉoffset + Index) {
+                    Equal = false;
+                    Index = Nameˉlength;
+                } else {
+                    Index = Index + 1u32;
+                }
+            }
+            if Equal { return true; }
+        }
+        Cursor = Cursor + DATABASE_SCHEMA_FIELD_HEADER_BYTES +
+            Priorˉnameˉlength;
+    }
+    return false;
+}
+
+fn Databaseˉschemaˉfieldsˉinspect(
+    Fields: bytes
+) -> Databaseˉschemaˉfieldsˉresult {
+    let Total: u32 = Bytesˉlength(Fields);
+    if Total == 0u32 || Total > DATABASE_SCHEMA_MAXIMUM_FIELD_BYTES {
+        return Databaseˉschemaˉfieldsˉresult(
+            Databaseˉschemaˉerror.Invalidˉfieldˉbytes,
+            0u32
+        );
+    }
+    var Cursor: u32 = 0u32;
+    var Count: u32 = 0u32;
+    while Cursor < Total {
+        if Count == DATABASE_SCHEMA_MAXIMUM_FIELDS {
+            return Databaseˉschemaˉfieldsˉresult(
+                Databaseˉschemaˉerror.Invalidˉfieldˉcount,
+                0u32
+            );
+        }
+        let Field: Databaseˉschemaˉfieldˉscanˉresult =
+            Databaseˉschemaˉfieldˉscanˉat(Fields, Cursor);
+        if Field.Error != Databaseˉschemaˉerror.Valid {
+            return Databaseˉschemaˉfieldsˉresult(Field.Error, 0u32);
+        }
+        if Databaseˉschemaˉnameˉexists(
+            Fields,
+            Cursor,
+            Field.Nameˉoffset,
+            Field.Nameˉlength
+        ) {
+            return Databaseˉschemaˉfieldsˉresult(
+                Databaseˉschemaˉerror.Duplicateˉfieldˉname,
+                0u32
+            );
+        }
+        Cursor = Field.Next;
+        Count = Count + 1u32;
+    }
+    return Databaseˉschemaˉfieldsˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Count
+    );
+}
+
+export fn Databaseˉschemaˉencode(
+    Collection: u64,
+    Schema: u64,
+    Fields: bytes
+) -> Databaseˉschemaˉresult {
+    if Collection == 0u64 {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉcollection
+        );
+    }
+    if Schema == 0u64 {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉschema
+        );
+    }
+    let Inspected: Databaseˉschemaˉfieldsˉresult =
+        Databaseˉschemaˉfieldsˉinspect(Fields);
+    if Inspected.Error != Databaseˉschemaˉerror.Valid {
+        return Databaseˉschemaˉfailure(Inspected.Error);
+    }
+    let Fieldˉbytes: u32 = Bytesˉlength(Fields);
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_SCHEMA_MAGIC);
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_SCHEMA_VERSION)
+    );
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_SCHEMA_HEADER_BYTES)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Collection));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Schema));
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(Inspected.Count)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Fieldˉbytes));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(0u64));
+    Encoded = Bytesˉconcat(Encoded, Fields);
+    return Databaseˉschemaˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Collection,
+        Schema,
+        Inspected.Count,
+        Databaseˉschemaˉcopy(Fields),
+        Encoded
+    );
+}
+
+export fn Databaseˉschemaˉdecode(
+    Input: bytes
+) -> Databaseˉschemaˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_SCHEMA_HEADER_BYTES ||
+        Total > DATABASE_SCHEMA_MAXIMUM_BYTES {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_SCHEMA_MAGIC {
+        return Databaseˉschemaˉfailure(Databaseˉschemaˉerror.Invalidˉmagic);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_SCHEMA_VERSION {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_SCHEMA_HEADER_BYTES {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉheaderˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉschemaˉfailure(Databaseˉschemaˉerror.Invalidˉflags);
+    }
+    let Collection: u64 = Bytesˉreadˉu64ˉlittle(Input, 16u32);
+    if Collection == 0u64 {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉcollection
+        );
+    }
+    let Schema: u64 = Bytesˉreadˉu64ˉlittle(Input, 24u32);
+    if Schema == 0u64 {
+        return Databaseˉschemaˉfailure(Databaseˉschemaˉerror.Invalidˉschema);
+    }
+    let Fieldˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Fieldˉcount == 0u32 || Fieldˉcount > DATABASE_SCHEMA_MAXIMUM_FIELDS {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉcount
+        );
+    }
+    let Fieldˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    if Fieldˉbytes == 0u32 || Fieldˉbytes > DATABASE_SCHEMA_MAXIMUM_FIELD_BYTES {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉbytes
+        );
+    }
+    if Bytesˉreadˉu64ˉlittle(Input, 40u32) != 0u64 {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉreserved
+        );
+    }
+    let Expected: u32 = DATABASE_SCHEMA_HEADER_BYTES + Fieldˉbytes;
+    if Total < Expected {
+        return Databaseˉschemaˉfailure(Databaseˉschemaˉerror.Truncated);
+    }
+    if Total > Expected {
+        return Databaseˉschemaˉfailure(Databaseˉschemaˉerror.Trailingˉbytes);
+    }
+    let Fields: bytes = Bytesˉslice(
+        Input,
+        DATABASE_SCHEMA_HEADER_BYTES,
+        Fieldˉbytes
+    );
+    let Inspected: Databaseˉschemaˉfieldsˉresult =
+        Databaseˉschemaˉfieldsˉinspect(Fields);
+    if Inspected.Error != Databaseˉschemaˉerror.Valid {
+        return Databaseˉschemaˉfailure(Inspected.Error);
+    }
+    if Inspected.Count != Fieldˉcount {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Invalidˉfieldˉcount
+        );
+    }
+    return Databaseˉschemaˉresult(
+        Databaseˉschemaˉerror.Valid,
+        Collection,
+        Schema,
+        Fieldˉcount,
+        Databaseˉschemaˉcopy(Fields),
+        Databaseˉschemaˉcopy(Input)
+    );
+}
+
+export fn Databaseˉschemaˉreadˉprepare(
+    Collection: u64,
+    Schema: u64
+) -> Databaseˉschemaˉread {
+    if Collection == 0u64 {
+        return Databaseˉschemaˉreadˉfailure(
+            Databaseˉschemaˉerror.Invalidˉcollection
+        );
+    }
+    if Schema == 0u64 {
+        return Databaseˉschemaˉreadˉfailure(
+            Databaseˉschemaˉerror.Invalidˉschema
+        );
+    }
+    let Key: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉencode(
+            Logical.Databaseˉlogicalˉkeyˉkind.Schema,
+            Collection,
+            Bytesˉfromˉu64ˉlittle(Schema)
+        );
+    if Key.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Databaseˉschemaˉreadˉfailure(
+            Databaseˉschemaˉerror.Invalidˉkey
+        );
+    }
+    return Databaseˉschemaˉread(Databaseˉschemaˉerror.Valid, Key.Bytes);
+}
+
+export fn Databaseˉschemaˉputˉprepare(
+    Collection: u64,
+    Schema: u64,
+    Fields: bytes
+) -> Databaseˉschemaˉput {
+    let Read: Databaseˉschemaˉread =
+        Databaseˉschemaˉreadˉprepare(Collection, Schema);
+    if Read.Error != Databaseˉschemaˉerror.Valid {
+        return Databaseˉschemaˉputˉfailure(Read.Error);
+    }
+    let Value: Databaseˉschemaˉresult =
+        Databaseˉschemaˉencode(Collection, Schema, Fields);
+    if Value.Error != Databaseˉschemaˉerror.Valid {
+        return Databaseˉschemaˉputˉfailure(Value.Error);
+    }
+    return Databaseˉschemaˉput(
+        Databaseˉschemaˉerror.Valid,
+        Read.Key,
+        Value.Bytes
+    );
+}
+
+export fn Databaseˉschemaˉadmit(
+    Keyˉbytes: bytes,
+    Valueˉbytes: bytes
+) -> Databaseˉschemaˉresult {
+    let Key: Logical.Databaseˉlogicalˉkeyˉresult =
+        Logical.Databaseˉlogicalˉkeyˉdecode(Keyˉbytes);
+    if Key.Error != Logical.Databaseˉlogicalˉerror.Valid ||
+        Key.Kind != Logical.Databaseˉlogicalˉkeyˉkind.Schema ||
+        Bytesˉlength(Key.Identity) != 8u32 {
+        return Databaseˉschemaˉfailure(Databaseˉschemaˉerror.Invalidˉkey);
+    }
+    let Value: Databaseˉschemaˉresult =
+        Databaseˉschemaˉdecode(Valueˉbytes);
+    if Value.Error != Databaseˉschemaˉerror.Valid { return Value; }
+    if Key.Collection != Value.Collection ||
+        Bytesˉreadˉu64ˉlittle(Key.Identity, 0u32) != Value.Schema {
+        return Databaseˉschemaˉfailure(
+            Databaseˉschemaˉerror.Identityˉmismatch
+        );
+    }
+    return Value;
+}

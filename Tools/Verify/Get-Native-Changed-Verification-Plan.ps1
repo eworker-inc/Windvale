@@ -27,6 +27,7 @@ $DatabaseDevelopmentPaths = [System.Collections.Generic.HashSet[string]]::new(
 $DatabaseDevelopmentTargetProjects = [ordered]@{
     'tree-node' = 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj'
     'logical-record' = 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj'
+    'typed-row' = 'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj'
     'local-service' = 'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj'
     'collection-catalog' = 'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj'
     'bootstrap' = 'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj'
@@ -165,6 +166,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Bootstrap.md' = @('bootstrap', 'engine')
     'Specifications/Windvale-Database-Collection-Catalog.md' = @('collection-catalog')
     'Specifications/Windvale-Database-Logical-Records.md' = @('logical-record')
+    'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md' = @('typed-row')
     'Specifications/Windvale-Database-Local-Service.md' = @('local-service', 'host-local-service')
     'Specifications/Windvale-Database-Hosted-Local-Service.md' = @('host-local-service')
     'Specifications/Windvale-Database-Tree-Node.md' = @('tree-node')
@@ -181,6 +183,8 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Collection-Catalog.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
     'Projects/Libraries/Windvale-Library-Local-Database-Contracts.wvproj',
     'Projects/Libraries/Windvale-Library-Local-Database-Session.wvproj',
     'Projects/Libraries/Windvale-Library-Local-Database-Put.wvproj',
@@ -202,6 +206,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Durable-Logical-Tree-Writer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
     'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj',
@@ -254,6 +259,7 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Bootstrap.md',
     'Specifications/Windvale-Database-Collection-Catalog.md',
     'Specifications/Windvale-Database-Logical-Records.md',
+    'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md',
     'Specifications/Windvale-Database-Local-Service.md',
     'Specifications/Windvale-Database-Tree-Node.md',
     'Specifications/Windvale-Database-Depth-Two-Upsert.md',
@@ -1061,6 +1067,8 @@ foreach ($Path in $Paths) {
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
+            $Path.Contains('Schema-Definition', [StringComparison]::Ordinal) -or
+            $Path.Contains('Typed-Row', [StringComparison]::Ordinal) -or
             $Path.Contains('Local-Database-', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Local-', [StringComparison]::Ordinal) -or
             $Path.Contains('Collection-Catalog', [StringComparison]::Ordinal) -or
@@ -1132,6 +1140,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Local-Database-Service-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Collection-Catalog-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Bootstrap-Self-Test.wv' -or
@@ -1165,6 +1174,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj' -or
@@ -1226,6 +1236,8 @@ foreach ($Path in $Paths) {
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
+            $Path.Contains('Schema-Definition', [StringComparison]::Ordinal) -or
+            $Path.Contains('Typed-Row', [StringComparison]::Ordinal) -or
             $Path.Contains('Local-Database-', [StringComparison]::Ordinal) -or
             $Path.Contains('Durable-Local-', [StringComparison]::Ordinal) -or
             $Path.Contains('Collection-Catalog', [StringComparison]::Ordinal) -or

@@ -1340,6 +1340,20 @@ $NativeCases = @(
         DatabaseTarget = 'logical-record'
     },
     @{
+        Name = 'focused database typed-row owner'
+        Paths = @(
+            'Libraries/Database/Schema-Definition.wv',
+            'Libraries/Database/Typed-Row.wv',
+            'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv',
+            'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'typed-row'
+    },
+    @{
         Name = 'native lowerer rejection specification owner'
         Paths = @('Specifications/Windvale-Native-Wvb-To-Wvo-Rejection-Tests.md')
         Suites = @('lowerer-rejections')
@@ -1394,6 +1408,8 @@ $NativeCases = @(
             'Libraries/Database/Tree-Node.wv',
             'Libraries/Database/Logical-Record.wv',
             'Libraries/Database/Logical-Record-Write.wv',
+            'Libraries/Database/Schema-Definition.wv',
+            'Libraries/Database/Typed-Row.wv',
             'Libraries/Database/Local-Database-Contracts.wv',
             'Libraries/Database/Local-Database-Session.wv',
             'Libraries/Database/Local-Database-Put.wv',
@@ -1418,6 +1434,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Collection-Catalog-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Bootstrap-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Root-Split-Self-Test.wv',
@@ -1436,6 +1453,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Get-Self-Test.wv',
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
             'Specifications/Windvale-Database-Logical-Records.md',
+            'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md',
             'Specifications/Windvale-Database-Collection-Catalog.md',
             'Specifications/Windvale-Database-Bootstrap.md',
             'Specifications/Windvale-Database-Tree-Path-Upsert.md',
@@ -1468,6 +1486,8 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Tree-Path-Upsert.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
             'Projects/Libraries/Windvale-Library-Local-Database-Contracts.wvproj',
             'Projects/Libraries/Windvale-Library-Local-Database-Session.wvproj',
             'Projects/Libraries/Windvale-Library-Local-Database-Put.wvproj',
@@ -1492,6 +1512,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj',
@@ -1978,7 +1999,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3786 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3787 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

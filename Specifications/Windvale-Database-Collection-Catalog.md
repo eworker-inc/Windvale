@@ -34,7 +34,8 @@ truncated, or trailing input and return owned admitted bytes.
 Collection identity is repeated in the value deliberately. Admission decodes
 the `WVKR 1` collection key and `WVCL 1` value independently, then rejects an
 identity mismatch. Primary schema identity supplies the default schema for
-record writes; schema contents and migration remain separate contracts.
+record writes; [`WVSC 1`](Windvale-Database-Typed-Rows-And-Schemas.md) defines
+the collection-scoped schema body, while migration remains a separate contract.
 
 ## Typed operations
 
@@ -69,6 +70,7 @@ hosts.
 
 ## Exclusions
 
-This contract does not define schema bodies, a name-to-identity index, atomic
+This contract does not itself define schema bodies; `WVSC 1` layers them on
+schema keys. It does not define a name-to-identity index, atomic
 create-if-absent, deletion, migration, indexes, queries, sessions, networking,
 authentication, concurrent writers, reclamation, or database bootstrap.

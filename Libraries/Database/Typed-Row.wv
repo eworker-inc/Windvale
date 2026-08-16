@@ -1,0 +1,538 @@
+module Windvaleˉdatabaseˉtypedˉrow profile portable;
+
+import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+
+const DATABASE_TYPED_ROW_MAGIC: u32 = 1381258839u32;
+const DATABASE_TYPED_ROW_VERSION: u32 = 1u32;
+const DATABASE_TYPED_ROW_HEADER_BYTES: u32 = 32u32;
+const DATABASE_TYPED_VALUE_HEADER_BYTES: u32 = 16u32;
+const DATABASE_TYPED_ROW_MAXIMUM_BYTES: u32 = 61408u32;
+const DATABASE_TYPED_ROW_MAXIMUM_VALUE_BYTES: u32 = 61376u32;
+
+export enum Databaseˉtypedˉrowˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheaderˉsize = 4;
+    Invalidˉflags = 5;
+    Invalidˉfieldˉcount = 6;
+    Invalidˉvalueˉbytes = 7;
+    Invalidˉreserved = 8;
+    Invalidˉschema = 9;
+    Invalidˉvalueˉkind = 10;
+    Invalidˉvalueˉflags = 11;
+    Invalidˉvalueˉlength = 12;
+    Invalidˉboolean = 13;
+    Invalidˉtext = 14;
+    Kindˉmismatch = 15;
+    Nullˉnotˉallowed = 16;
+    Schemaˉmismatch = 17;
+    Truncated = 18;
+    Trailingˉbytes = 19;
+    Invalidˉlogicalˉrecord = 20;
+}
+
+export record Databaseˉtypedˉvalueˉresult {
+    Error: Databaseˉtypedˉrowˉerror;
+    Kind: Schema.Databaseˉfieldˉkind;
+    Null: bool;
+    Data: bytes;
+    Bytes: bytes;
+    Next: u32;
+}
+
+record Databaseˉtypedˉvaluesˉresult {
+    Error: Databaseˉtypedˉrowˉerror;
+    Count: u32;
+}
+
+export record Databaseˉtypedˉrowˉresult {
+    Error: Databaseˉtypedˉrowˉerror;
+    Schema: u64;
+    Fieldˉcount: u32;
+    Values: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉtypedˉput {
+    Error: Databaseˉtypedˉrowˉerror;
+    Key: bytes;
+    Value: bytes;
+}
+
+fn Databaseˉtypedˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉtypedˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return Databaseˉtypedˉempty(); }
+    let Owned: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Input);
+    return Bytesˉslice(Owned, 1u32, Length);
+}
+
+fn Databaseˉtypedˉkindˉraw(Kind: Schema.Databaseˉfieldˉkind) -> u32 {
+    if Kind == Schema.Databaseˉfieldˉkind.I64 { return 2u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.U64 { return 3u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.Text { return 4u32; }
+    if Kind == Schema.Databaseˉfieldˉkind.Bytes { return 5u32; }
+    return 1u32;
+}
+
+fn Databaseˉtypedˉkindˉfromˉraw(
+    Value: u32
+) -> Schema.Databaseˉfieldˉkind {
+    if Value == 2u32 { return Schema.Databaseˉfieldˉkind.I64; }
+    if Value == 3u32 { return Schema.Databaseˉfieldˉkind.U64; }
+    if Value == 4u32 { return Schema.Databaseˉfieldˉkind.Text; }
+    if Value == 5u32 { return Schema.Databaseˉfieldˉkind.Bytes; }
+    return Schema.Databaseˉfieldˉkind.Boolean;
+}
+
+fn Databaseˉtypedˉvalueˉfailure(
+    Error: Databaseˉtypedˉrowˉerror
+) -> Databaseˉtypedˉvalueˉresult {
+    return Databaseˉtypedˉvalueˉresult(
+        Error,
+        Schema.Databaseˉfieldˉkind.Boolean,
+        false,
+        Databaseˉtypedˉempty(),
+        Databaseˉtypedˉempty(),
+        0u32
+    );
+}
+
+fn Databaseˉtypedˉrowˉfailure(
+    Error: Databaseˉtypedˉrowˉerror
+) -> Databaseˉtypedˉrowˉresult {
+    return Databaseˉtypedˉrowˉresult(
+        Error,
+        0u64,
+        0u32,
+        Databaseˉtypedˉempty(),
+        Databaseˉtypedˉempty()
+    );
+}
+
+fn Databaseˉtypedˉputˉfailure(
+    Error: Databaseˉtypedˉrowˉerror
+) -> Databaseˉtypedˉput {
+    return Databaseˉtypedˉput(
+        Error,
+        Databaseˉtypedˉempty(),
+        Databaseˉtypedˉempty()
+    );
+}
+
+fn Databaseˉtypedˉdataˉerror(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> Databaseˉtypedˉrowˉerror {
+    let Length: u32 = Bytesˉlength(Data);
+    if Null {
+        if Length != 0u32 {
+            return Databaseˉtypedˉrowˉerror.Invalidˉvalueˉlength;
+        }
+        return Databaseˉtypedˉrowˉerror.Valid;
+    }
+    if Kind == Schema.Databaseˉfieldˉkind.Boolean {
+        if Length != 1u32 {
+            return Databaseˉtypedˉrowˉerror.Invalidˉvalueˉlength;
+        }
+        let Value: u8 = Bytesˉreadˉu8(Data, 0u32);
+        if Value != 0u8 && Value != 1u8 {
+            return Databaseˉtypedˉrowˉerror.Invalidˉboolean;
+        }
+    }
+    if Kind == Schema.Databaseˉfieldˉkind.I64 ||
+        Kind == Schema.Databaseˉfieldˉkind.U64 {
+        if Length != 8u32 {
+            return Databaseˉtypedˉrowˉerror.Invalidˉvalueˉlength;
+        }
+    }
+    if Kind == Schema.Databaseˉfieldˉkind.Text &&
+        !Textˉutf8ˉisˉvalid(Data) {
+        return Databaseˉtypedˉrowˉerror.Invalidˉtext;
+    }
+    return Databaseˉtypedˉrowˉerror.Valid;
+}
+
+export fn Databaseˉtypedˉvalueˉencode(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> Databaseˉtypedˉvalueˉresult {
+    let Error: Databaseˉtypedˉrowˉerror =
+        Databaseˉtypedˉdataˉerror(Kind, Null, Data);
+    if Error != Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉtypedˉvalueˉfailure(Error);
+    }
+    var Flags: u32 = 0u32;
+    if Null { Flags = 1u32; }
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(
+        Databaseˉtypedˉkindˉraw(Kind)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Flags));
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data))
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Data);
+    return Databaseˉtypedˉvalueˉresult(
+        Databaseˉtypedˉrowˉerror.Valid,
+        Kind,
+        Null,
+        Databaseˉtypedˉcopy(Data),
+        Encoded,
+        Bytesˉlength(Encoded)
+    );
+}
+
+export fn Databaseˉtypedˉvalueˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉtypedˉvalueˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total || Total - Offset < DATABASE_TYPED_VALUE_HEADER_BYTES {
+        return Databaseˉtypedˉvalueˉfailure(
+            Databaseˉtypedˉrowˉerror.Truncated
+        );
+    }
+    let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Rawˉkind == 0u32 || Rawˉkind > 5u32 {
+        return Databaseˉtypedˉvalueˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉvalueˉkind
+        );
+    }
+    let Rawˉflags: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32);
+    if Rawˉflags > 1u32 {
+        return Databaseˉtypedˉvalueˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉvalueˉflags
+        );
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+    let Remaining: u32 = Total - Offset - DATABASE_TYPED_VALUE_HEADER_BYTES;
+    if Length > Remaining {
+        return Databaseˉtypedˉvalueˉfailure(
+            Databaseˉtypedˉrowˉerror.Truncated
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32) != 0u32 {
+        return Databaseˉtypedˉvalueˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉreserved
+        );
+    }
+    let Kind: Schema.Databaseˉfieldˉkind =
+        Databaseˉtypedˉkindˉfromˉraw(Rawˉkind);
+    let Null: bool = Rawˉflags == 1u32;
+    let Data: bytes = Bytesˉslice(
+        Input,
+        Offset + DATABASE_TYPED_VALUE_HEADER_BYTES,
+        Length
+    );
+    let Error: Databaseˉtypedˉrowˉerror =
+        Databaseˉtypedˉdataˉerror(Kind, Null, Data);
+    if Error != Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉtypedˉvalueˉfailure(Error);
+    }
+    let Totalˉlength: u32 = DATABASE_TYPED_VALUE_HEADER_BYTES + Length;
+    return Databaseˉtypedˉvalueˉresult(
+        Databaseˉtypedˉrowˉerror.Valid,
+        Kind,
+        Null,
+        Databaseˉtypedˉcopy(Data),
+        Databaseˉtypedˉcopy(Bytesˉslice(Input, Offset, Totalˉlength)),
+        Offset + Totalˉlength
+    );
+}
+
+export fn Databaseˉtypedˉvalueˉdecode(
+    Input: bytes
+) -> Databaseˉtypedˉvalueˉresult {
+    let Result: Databaseˉtypedˉvalueˉresult =
+        Databaseˉtypedˉvalueˉat(Input, 0u32);
+    if Result.Error != Databaseˉtypedˉrowˉerror.Valid { return Result; }
+    if Result.Next != Bytesˉlength(Input) {
+        return Databaseˉtypedˉvalueˉfailure(
+            Databaseˉtypedˉrowˉerror.Trailingˉbytes
+        );
+    }
+    return Result;
+}
+
+fn Databaseˉtypedˉvaluesˉinspect(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Values: bytes
+) -> Databaseˉtypedˉvaluesˉresult {
+    let Total: u32 = Bytesˉlength(Values);
+    if Total > DATABASE_TYPED_ROW_MAXIMUM_VALUE_BYTES {
+        return Databaseˉtypedˉvaluesˉresult(
+            Databaseˉtypedˉrowˉerror.Invalidˉvalueˉbytes,
+            0u32
+        );
+    }
+    var Fieldˉcursor: u32 = 0u32;
+    var Valueˉcursor: u32 = 0u32;
+    var Count: u32 = 0u32;
+    while Count < Definition.Fieldˉcount {
+        let Field: Schema.Databaseˉschemaˉfieldˉshapeˉresult =
+            Schema.Databaseˉschemaˉfieldˉshapeˉat(
+                Definition.Fields,
+                Fieldˉcursor
+            );
+        if Field.Error != Schema.Databaseˉschemaˉerror.Valid {
+            return Databaseˉtypedˉvaluesˉresult(
+                Databaseˉtypedˉrowˉerror.Invalidˉschema,
+                0u32
+            );
+        }
+        let Value: Databaseˉtypedˉvalueˉresult =
+            Databaseˉtypedˉvalueˉat(Values, Valueˉcursor);
+        if Value.Error != Databaseˉtypedˉrowˉerror.Valid {
+            return Databaseˉtypedˉvaluesˉresult(Value.Error, 0u32);
+        }
+        if Value.Kind != Field.Kind {
+            return Databaseˉtypedˉvaluesˉresult(
+                Databaseˉtypedˉrowˉerror.Kindˉmismatch,
+                0u32
+            );
+        }
+        if Value.Null && !Field.Nullable {
+            return Databaseˉtypedˉvaluesˉresult(
+                Databaseˉtypedˉrowˉerror.Nullˉnotˉallowed,
+                0u32
+            );
+        }
+        if !Value.Null && Bytesˉlength(Value.Data) > Field.Maximum {
+            return Databaseˉtypedˉvaluesˉresult(
+                Databaseˉtypedˉrowˉerror.Invalidˉvalueˉlength,
+                0u32
+            );
+        }
+        Fieldˉcursor = Field.Next;
+        Valueˉcursor = Value.Next;
+        Count = Count + 1u32;
+    }
+    if Valueˉcursor < Total {
+        return Databaseˉtypedˉvaluesˉresult(
+            Databaseˉtypedˉrowˉerror.Trailingˉbytes,
+            0u32
+        );
+    }
+    return Databaseˉtypedˉvaluesˉresult(
+        Databaseˉtypedˉrowˉerror.Valid,
+        Count
+    );
+}
+
+fn Databaseˉtypedˉrowˉencodeˉadmitted(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Values: bytes
+) -> Databaseˉtypedˉrowˉresult {
+    let Inspected: Databaseˉtypedˉvaluesˉresult =
+        Databaseˉtypedˉvaluesˉinspect(Definition, Values);
+    if Inspected.Error != Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉtypedˉrowˉfailure(Inspected.Error);
+    }
+    let Valueˉbytes: u32 = Bytesˉlength(Values);
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TYPED_ROW_MAGIC);
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_TYPED_ROW_VERSION)
+    );
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(DATABASE_TYPED_ROW_HEADER_BYTES)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(
+        Encoded,
+        Bytesˉfromˉu32ˉlittle(Inspected.Count)
+    );
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Valueˉbytes));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(0u64));
+    Encoded = Bytesˉconcat(Encoded, Values);
+    return Databaseˉtypedˉrowˉresult(
+        Databaseˉtypedˉrowˉerror.Valid,
+        Definition.Schema,
+        Inspected.Count,
+        Databaseˉtypedˉcopy(Values),
+        Encoded
+    );
+}
+
+export fn Databaseˉtypedˉrowˉencode(
+    Schemaˉbytes: bytes,
+    Values: bytes
+) -> Databaseˉtypedˉrowˉresult {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Definition.Error != Schema.Databaseˉschemaˉerror.Valid {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉschema
+        );
+    }
+    return Databaseˉtypedˉrowˉencodeˉadmitted(Definition, Values);
+}
+
+fn Databaseˉtypedˉrowˉdecodeˉadmitted(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Input: bytes
+) -> Databaseˉtypedˉrowˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TYPED_ROW_HEADER_BYTES ||
+        Total > DATABASE_TYPED_ROW_MAXIMUM_BYTES {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TYPED_ROW_MAGIC {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TYPED_ROW_VERSION {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+        DATABASE_TYPED_ROW_HEADER_BYTES {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉheaderˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉflags
+        );
+    }
+    let Fieldˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Fieldˉcount != Definition.Fieldˉcount {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉfieldˉcount
+        );
+    }
+    let Valueˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Valueˉbytes > DATABASE_TYPED_ROW_MAXIMUM_VALUE_BYTES {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉvalueˉbytes
+        );
+    }
+    if Bytesˉreadˉu64ˉlittle(Input, 24u32) != 0u64 {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉreserved
+        );
+    }
+    let Expected: u32 = DATABASE_TYPED_ROW_HEADER_BYTES + Valueˉbytes;
+    if Total < Expected {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Truncated
+        );
+    }
+    if Total > Expected {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Trailingˉbytes
+        );
+    }
+    let Values: bytes = Bytesˉslice(
+        Input,
+        DATABASE_TYPED_ROW_HEADER_BYTES,
+        Valueˉbytes
+    );
+    let Inspected: Databaseˉtypedˉvaluesˉresult =
+        Databaseˉtypedˉvaluesˉinspect(Definition, Values);
+    if Inspected.Error != Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉtypedˉrowˉfailure(Inspected.Error);
+    }
+    return Databaseˉtypedˉrowˉresult(
+        Databaseˉtypedˉrowˉerror.Valid,
+        Definition.Schema,
+        Fieldˉcount,
+        Databaseˉtypedˉcopy(Values),
+        Databaseˉtypedˉcopy(Input)
+    );
+}
+
+export fn Databaseˉtypedˉrowˉdecode(
+    Schemaˉbytes: bytes,
+    Input: bytes
+) -> Databaseˉtypedˉrowˉresult {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Definition.Error != Schema.Databaseˉschemaˉerror.Valid {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉschema
+        );
+    }
+    return Databaseˉtypedˉrowˉdecodeˉadmitted(Definition, Input);
+}
+
+export fn Databaseˉtypedˉputˉprepare(
+    Collection: u64,
+    Identity: bytes,
+    Schemaˉbytes: bytes,
+    Values: bytes
+) -> Databaseˉtypedˉput {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Definition.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Definition.Collection != Collection {
+        return Databaseˉtypedˉputˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉschema
+        );
+    }
+    let Row: Databaseˉtypedˉrowˉresult =
+        Databaseˉtypedˉrowˉencodeˉadmitted(Definition, Values);
+    if Row.Error != Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉtypedˉputˉfailure(Row.Error);
+    }
+    let Prepared: Logical.Databaseˉlogicalˉput =
+        Logical.Databaseˉlogicalˉputˉprepare(
+            Collection,
+            Identity,
+            Definition.Schema,
+            Row.Bytes
+        );
+    if Prepared.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Databaseˉtypedˉputˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉlogicalˉrecord
+        );
+    }
+    return Databaseˉtypedˉput(
+        Databaseˉtypedˉrowˉerror.Valid,
+        Prepared.Key,
+        Prepared.Value
+    );
+}
+
+export fn Databaseˉtypedˉadmit(
+    Schemaˉbytes: bytes,
+    Logicalˉbytes: bytes
+) -> Databaseˉtypedˉrowˉresult {
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Definition.Error != Schema.Databaseˉschemaˉerror.Valid {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉschema
+        );
+    }
+    let Record: Logical.Databaseˉlogicalˉrecordˉresult =
+        Logical.Databaseˉlogicalˉrecordˉdecode(Logicalˉbytes);
+    if Record.Error != Logical.Databaseˉlogicalˉerror.Valid {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Invalidˉlogicalˉrecord
+        );
+    }
+    if Record.Schema != Definition.Schema {
+        return Databaseˉtypedˉrowˉfailure(
+            Databaseˉtypedˉrowˉerror.Schemaˉmismatch
+        );
+    }
+    return Databaseˉtypedˉrowˉdecodeˉadmitted(Definition, Record.Payload);
+}
