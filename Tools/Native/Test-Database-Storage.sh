@@ -19,12 +19,15 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=16
+        selected_cases=17
         ;;
     tree-node|logical-record|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
         selected_cases=1
         ;;
     host-tree-reader)
+        selected_cases=2
+        ;;
+    host-root-writer)
         selected_cases=2
         ;;
     engine|host-tree-writer)
@@ -64,10 +67,12 @@ lowerer_wvb="$temporary_directory/Lowerer.wvb"
 lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
 project_checkpoint_host_storage=NotRun
+project_checkpoint_host_root_writer=NotRun
 project_checkpoint_host_tree_reader=NotRun
 project_checkpoint_engine=NotRun
 project_checkpoint_host_tree_writer=NotRun
 application_checkpoint_host_storage=NotRun
+application_checkpoint_host_root_writer=NotRun
 application_checkpoint_host_tree_reader=NotRun
 application_checkpoint_engine=NotRun
 application_checkpoint_host_tree_writer=NotRun
@@ -543,6 +548,138 @@ verify_host_storage() {
     "$script_directory/Package-Hosted-Wvb.sh" image 6 \
         "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
         "$windows_application" windows >/dev/null || return $?
+}
+
+verify_host_root_writer() {
+    local project_path=$1
+    local first_wvb="$temporary_directory/HostRootWriter-First.wvb"
+    local second_wvb="$temporary_directory/HostRootWriter-Second.wvb"
+    local first_wvo="$temporary_directory/HostRootWriter-First.wvo"
+    local second_wvo="$temporary_directory/HostRootWriter-Second.wvo"
+    local common="$temporary_directory/HostStorage-Common-First.wvo"
+    local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
+    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
+    local linux_image="$temporary_directory/HostRootWriter-Linux.bin"
+    local linux_image_prefix="$temporary_directory/HostRootWriter-Linux-Image"
+    local linux_map="$temporary_directory/HostRootWriter-Linux.map"
+    local linux_application="$temporary_directory/HostRootWriter.elf"
+    local windows_image="$temporary_directory/HostRootWriter-Windows.bin"
+    local windows_image_prefix="$temporary_directory/HostRootWriter-Windows-Image"
+    local windows_map="$temporary_directory/HostRootWriter-Windows.map"
+    local windows_application="$temporary_directory/HostRootWriter.exe"
+    local initial_file="$temporary_directory/HostStorage-Run/Windvale-Database-Storage.initial"
+    local run_directory="$temporary_directory/HostRootWriter-Run"
+    local storage_file="$run_directory/Windvale-Database-Storage.bin"
+    local committed_file="$run_directory/Windvale-Database-Storage.committed"
+    local host_root_writer_checkpoint=Rebuilt
+    local host_root_writer_application_checkpoint=Rebuilt
+
+    if ((development == 1)); then
+        local cache_report="$temporary_directory/HostRootWriter-Cache.txt"
+        "$script_directory/Build-Cached-Project-Object.sh" \
+            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+            > "$cache_report" || return $?
+        host_root_writer_checkpoint=$(sed -n \
+            's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
+            "$cache_report")
+        [[ $host_root_writer_checkpoint == Created ||
+            $host_root_writer_checkpoint == Hit ]] || return 1
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
+        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
+        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    fi
+    [[ -f $common && -f $linux_platform ]] || return 1
+
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+        >"$linux_map" || return $?
+    local linux_entry
+    linux_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$linux_map")
+    case "$linux_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
+    if ((development == 1)); then
+        local application_cache_report="$temporary_directory/HostRootWriter-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux > "$application_cache_report" || return $?
+        host_root_writer_application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$application_cache_report")
+        [[ $host_root_writer_application_checkpoint == Created ||
+            $host_root_writer_application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
+            "$linux_application" linux >/dev/null || return $?
+    fi
+
+    [[ -f $initial_file ]] || return 1
+    mkdir -- "$run_directory" || return $?
+    cp -- "$initial_file" "$storage_file" || return $?
+    (cd -- "$run_directory" && "$linux_application" >/dev/null)
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The native host root-writer publication returned $application_result, expected 0." >&2
+        return 1
+    fi
+    [[ $(wc -c < "$storage_file") -eq 12800 ]] || return 1
+    cp -- "$storage_file" "$committed_file" || return $?
+    (cd -- "$run_directory" && "$linux_application" >/dev/null) || return $?
+    cmp --silent -- "$committed_file" "$storage_file" || return 1
+    local step
+    for step in 0 1 2 3 4; do
+        verify_host_root_writer_interruption \
+            "$linux_application" "$initial_file" "$committed_file" "$step" \
+            "$temporary_directory" || return $?
+    done
+
+    if ((development == 1)); then
+        project_checkpoint_host_root_writer=$host_root_writer_checkpoint
+        application_checkpoint_host_root_writer=$host_root_writer_application_checkpoint
+        return 0
+    fi
+    [[ -f $windows_platform ]] || return 1
+    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+        "$windows_image" "$first_wvo" "$common" "$windows_platform" \
+        >"$windows_map" || return $?
+    local windows_entry
+    windows_entry=$(sed -n \
+        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
+        "$windows_map")
+    case "$windows_entry" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
+    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
+        "$windows_application" windows >/dev/null || return $?
+}
+
+verify_host_root_writer_interruption() {
+    local application=$1 initial=$2 committed=$3 step=$4 scenario_root=$5
+    local scenario_directory="$scenario_root/HostRootWriter-Interruption-$step"
+    local scenario_storage="$scenario_directory/Windvale-Database-Storage.bin"
+    mkdir -- "$scenario_directory" || return $?
+    cp -- "$initial" "$scenario_storage" || return $?
+    truncate -s $((4609 + step)) -- "$scenario_storage" || return $?
+    (cd -- "$scenario_directory" && "$application" >/dev/null)
+    local application_result=$?
+    local expected_result=$((100 + step))
+    if [[ $application_result -ne $expected_result ]]; then
+        echo "The native host root-writer interruption $step returned $application_result, expected $expected_result." >&2
+        return 1
+    fi
+    (cd -- "$scenario_directory" && "$application" >/dev/null) || return $?
+    [[ $(wc -c < "$scenario_storage") -eq 12800 ]] || return 1
+    cmp --silent -- "$committed" "$scenario_storage" || return 1
 }
 
 verify_host_tree_reader() {
@@ -1022,11 +1159,12 @@ verify_development_target() {
 
 verify_development_host_targets() {
     host_storage_elapsed_ms=0
+    host_root_writer_elapsed_ms=0
     host_tree_reader_elapsed_ms=0
     engine_elapsed_ms=0
     host_tree_writer_elapsed_ms=0
     case "$development_target" in
-        all|host-storage|host-tree-reader|engine|host-tree-writer) ;;
+        all|host-storage|host-root-writer|host-tree-reader|engine|host-tree-writer) ;;
         *) return 0 ;;
     esac
 
@@ -1041,6 +1179,21 @@ verify_development_host_targets() {
     host_storage_elapsed_ms=$(((SECONDS - host_storage_start) * 1000))
     echo "PASS  native database storage development step=host-storage item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_storage_elapsed_ms project=$project_checkpoint_host_storage application=$application_checkpoint_host_storage"
     [[ $development_target != host-storage ]] || return 0
+
+    if [[ $development_target == all ||
+        $development_target == host-root-writer ]]; then
+        progress_current=$((progress_current + 1))
+        host_root_writer_start=$SECONDS
+        echo "START native database storage development step=host-root-writer item=$progress_current/$progress_total target=$development_target"
+        verify_host_root_writer \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj" || {
+                echo 'The native database storage development host-root-writer stage failed.' >&2
+                return 1
+            }
+        host_root_writer_elapsed_ms=$(((SECONDS - host_root_writer_start) * 1000))
+        echo "PASS  native database storage development step=host-root-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_root_writer_elapsed_ms project=$project_checkpoint_host_root_writer application=$application_checkpoint_host_root_writer"
+        [[ $development_target != host-root-writer ]] || return 0
+    fi
 
     progress_current=$((progress_current + 1))
     host_tree_reader_start=$SECONDS
@@ -1109,8 +1262,8 @@ if ((development == 1)); then
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     verify_development_host_targets || exit $?
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
-    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
+    echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms total-ms=$development_elapsed_ms"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostTreeReader:$project_checkpoint_host_tree_reader,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostTreeReader:$application_checkpoint_host_tree_reader,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer"
     exit 0
 fi
 
@@ -1156,10 +1309,12 @@ verify_storage_lowering \
     "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
 verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
+verify_host_root_writer \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj" || exit $?
 verify_host_tree_reader \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
 verify_host_engine \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || exit $?
 verify_host_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || exit $?
-echo 'native database storage status=Passed cases=25 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=26 local-results=0 cross-host-images=Verified'

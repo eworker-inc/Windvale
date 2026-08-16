@@ -71,6 +71,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Existing depth-three upsert and bounded split propagation](Windvale-Database-Depth-Three-Upsert.md)
 - [Bounded owned tree-path upsert](Windvale-Database-Tree-Path-Upsert.md)
 - [Provider-driven durable tree writer](Windvale-Database-Hosted-Tree-Writer.md)
+- [Hosted depth-one root writer](Windvale-Database-Hosted-Root-Writer.md)
 - [Single-writer database engine lifecycle](Windvale-Database-Engine-Lifecycle.md)
 - [Canonical logical database records](Windvale-Database-Logical-Records.md)
 - [Persistent collection catalog](Windvale-Database-Collection-Catalog.md)

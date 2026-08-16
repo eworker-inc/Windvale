@@ -25,6 +25,14 @@ Windvale is a source-available experiment in constructing a small computing stac
 - Long-running repository scripts should emit bounded phase or item progress before buffered summaries so a person can distinguish active work from a stalled process. Prefer stable `step=<name>`, `item=<current>/<total>`, or percentage fields that automation can ignore safely.
 - Update the phase count when scope changes materially, and make clear whether a failure is local to the current phase or invalidates earlier completed evidence.
 
+## Communication clarity
+
+- Lead with the practical outcome in plain language before implementation detail.
+- Explain unavoidable technical terms when they first appear, and use a concrete example or short analogy when it makes the boundary easier to understand.
+- Clearly separate what already works, what is still missing, and what will be built next.
+- Present complex work in layers: first the product behavior, then the safety or performance reason, and finally the internal mechanism for readers who need it.
+- Keep explanations simple without weakening exact contracts, evidence, limitations, or failure behavior.
+
 ## Performance and memory discipline
 
 - Treat performance and memory use as product requirements across Windvale-generated code, compilers, runtimes, verifiers, development workflows, tests, repository tools, and applications.

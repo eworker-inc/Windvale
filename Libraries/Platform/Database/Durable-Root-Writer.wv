@@ -1,0 +1,368 @@
+module Durableˉrootˉwriter profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
+import Randomˉaccessˉstorage as Storage;
+import Durableˉstorageˉexecutor as Executor;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉsingleˉleafˉupsert as Upsert;
+import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Commit;
+import Windvaleˉdatabaseˉstorageˉpublication as Publication;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+capability storage.random_access_v1;
+
+const DATABASE_ROOT_WRITER_HEADER_BYTES: u64 = 512u64;
+const DATABASE_ROOT_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉdurableˉrootˉupsertˉstatus {
+    Committed = 0;
+    Active = 1;
+    Aborted = 2;
+    Recover = 3;
+    Invalidˉcurrent = 4;
+    Invalidˉkey = 5;
+    Unsupportedˉdepth = 6;
+    Storageˉfailure = 7;
+    Changedˉsnapshot = 8;
+    Pageˉfailure = 9;
+    Invalidˉdurableˉpage = 10;
+    Transactionˉfailure = 11;
+    Publicationˉfailure = 12;
+}
+
+export record Databaseˉdurableˉrootˉupsertˉresult {
+    Status: Databaseˉdurableˉrootˉupsertˉstatus;
+    Storageˉstatus: Storage.Storageˉstatus;
+    Readˉstatus: Pageˉreader.Databaseˉpageˉreadˉstatus;
+    Readˉerror: Pageˉreader.Databaseˉpageˉerror;
+    Readˉstorageˉerror: Pageˉreader.Databaseˉpageˉstorageˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Transactionˉerror: Upsert.Databaseˉsingleˉleafˉupsertˉerror;
+    Commitˉerror: Commit.Databaseˉsingleˉwriterˉcommitˉerror;
+    Publicationˉerror: Publication.Databaseˉstorageˉpublicationˉerror;
+    Pageˉvisits: u32;
+    Actions: u32;
+    Replaced: bool;
+    Entryˉcount: u32;
+    Rootˉpage: u64;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+    Publicationˉstate: Publication.Databaseˉstorageˉpublication;
+}
+
+fn Databaseˉdurableˉrootˉwriterˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉrootˉwriterˉinvalidˉpublication()
+    -> Publication.Databaseˉstorageˉpublication {
+    let Rejected: Commit.Databaseˉsingleˉwriterˉcommit =
+        Commit.Databaseˉsingleˉwriterˉcommitˉreject(
+            Commit.Databaseˉsingleˉwriterˉcommitˉerror.Invalidˉcurrent
+        );
+    return Publication.Databaseˉstorageˉpublicationˉbegin(
+        Rejected.Publication,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉrootˉwriterˉempty(),
+        Databaseˉdurableˉrootˉwriterˉempty()
+    );
+}
+
+fn Databaseˉdurableˉrootˉwriterˉfailure(
+    Status: Databaseˉdurableˉrootˉupsertˉstatus,
+    Storageˉstatus: Storage.Storageˉstatus
+) -> Databaseˉdurableˉrootˉupsertˉresult {
+    return Databaseˉdurableˉrootˉupsertˉresult(
+        Status,
+        Storageˉstatus,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Upsert.Databaseˉsingleˉleafˉupsertˉerror.Valid,
+        Commit.Databaseˉsingleˉwriterˉcommitˉerror.Valid,
+        Publication.Databaseˉstorageˉpublicationˉerror.None,
+        0u32,
+        0u32,
+        false,
+        0u32,
+        DATABASE_ROOT_WRITER_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉrootˉwriterˉinvalidˉpublication()
+    );
+}
+
+fn Databaseˉdurableˉrootˉwriterˉreadˉfailure(
+    Status: Databaseˉdurableˉrootˉupsertˉstatus,
+    Read: Pageˉreader.Databaseˉpageˉreadˉresult
+) -> Databaseˉdurableˉrootˉupsertˉresult {
+    return Databaseˉdurableˉrootˉupsertˉresult(
+        Status,
+        Storage.Storageˉstatus.Valid,
+        Read.Status,
+        Read.Pageˉerror,
+        Read.Storageˉerror,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Upsert.Databaseˉsingleˉleafˉupsertˉerror.Valid,
+        Commit.Databaseˉsingleˉwriterˉcommitˉerror.Valid,
+        Publication.Databaseˉstorageˉpublicationˉerror.None,
+        1u32,
+        0u32,
+        false,
+        0u32,
+        DATABASE_ROOT_WRITER_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉrootˉwriterˉinvalidˉpublication()
+    );
+}
+
+fn Databaseˉdurableˉrootˉwriterˉpageˉfailure(
+    Read: Pageˉreader.Databaseˉpageˉreadˉresult,
+    Error: Page.Databaseˉdurableˉpageˉerror
+) -> Databaseˉdurableˉrootˉupsertˉresult {
+    let Failure: Databaseˉdurableˉrootˉupsertˉresult =
+        Databaseˉdurableˉrootˉwriterˉreadˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Invalidˉdurableˉpage,
+            Read
+        );
+    return Databaseˉdurableˉrootˉupsertˉresult(
+        Failure.Status,
+        Failure.Storageˉstatus,
+        Failure.Readˉstatus,
+        Failure.Readˉerror,
+        Failure.Readˉstorageˉerror,
+        Error,
+        Failure.Nodeˉerror,
+        Failure.Transactionˉerror,
+        Failure.Commitˉerror,
+        Failure.Publicationˉerror,
+        Failure.Pageˉvisits,
+        Failure.Actions,
+        Failure.Replaced,
+        Failure.Entryˉcount,
+        Failure.Rootˉpage,
+        Failure.Targetˉgeneration,
+        Failure.Targetˉsequence,
+        Failure.Targetˉlength,
+        Failure.Publicationˉstate
+    );
+}
+
+fn Databaseˉdurableˉrootˉwriterˉtransactionˉfailure(
+    Transaction: Upsert.Databaseˉsingleˉleafˉupsert
+) -> Databaseˉdurableˉrootˉupsertˉresult {
+    let Commitˉstate: Commit.Databaseˉsingleˉwriterˉcommit =
+        Transaction.Transaction;
+    return Databaseˉdurableˉrootˉupsertˉresult(
+        Databaseˉdurableˉrootˉupsertˉstatus.Transactionˉfailure,
+        Storage.Storageˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Transaction.Nodeˉerror,
+        Transaction.Error,
+        Commitˉstate.Error,
+        Publication.Databaseˉstorageˉpublicationˉerror.None,
+        1u32,
+        0u32,
+        false,
+        0u32,
+        DATABASE_ROOT_WRITER_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        Databaseˉdurableˉrootˉwriterˉinvalidˉpublication()
+    );
+}
+
+fn Databaseˉdurableˉrootˉwriterˉoutcome(
+    Status: Databaseˉdurableˉrootˉupsertˉstatus,
+    Transaction: Upsert.Databaseˉsingleˉleafˉupsert,
+    Execution: Executor.Databaseˉstorageˉpublicationˉexecution
+) -> Databaseˉdurableˉrootˉupsertˉresult {
+    let Commitˉstate: Commit.Databaseˉsingleˉwriterˉcommit =
+        Transaction.Transaction;
+    return Databaseˉdurableˉrootˉupsertˉresult(
+        Status,
+        Storage.Storageˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉreadˉstatus.Valid,
+        Pageˉreader.Databaseˉpageˉerror.None,
+        Pageˉreader.Databaseˉpageˉstorageˉerror.None,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Upsert.Databaseˉsingleˉleafˉupsertˉerror.Valid,
+        Commit.Databaseˉsingleˉwriterˉcommitˉerror.Valid,
+        Execution.State.Error,
+        1u32,
+        Execution.Actions,
+        Transaction.Replaced,
+        Transaction.Entryˉcount,
+        Commitˉstate.Rootˉpage,
+        Commitˉstate.Targetˉgeneration,
+        Commitˉstate.Targetˉsequence,
+        Commitˉstate.Targetˉlength,
+        Execution.State
+    );
+}
+
+export fn Databaseˉdurableˉrootˉupsert(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Key: bytes,
+    Value: bytes,
+    Maximumˉactions: u32
+) -> Databaseˉdurableˉrootˉupsertˉresult {
+    if Current.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Tailˉbytes != 0u64 {
+        return Databaseˉdurableˉrootˉwriterˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Invalidˉcurrent,
+            Storage.Storageˉstatus.Valid
+        );
+    }
+    if Bytesˉlength(Key) == 0u32 || Bytesˉlength(Key) > 4096u32 {
+        return Databaseˉdurableˉrootˉwriterˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Invalidˉkey,
+            Storage.Storageˉstatus.Valid
+        );
+    }
+    if Current.Rootˉdepth != 1u32 {
+        return Databaseˉdurableˉrootˉwriterˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Unsupportedˉdepth,
+            Storage.Storageˉstatus.Valid
+        );
+    }
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid ||
+        Description.Generation == 0u64 {
+        return Databaseˉdurableˉrootˉwriterˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Storageˉfailure,
+            Description.Status
+        );
+    }
+    if Description.Storageˉlength != Current.Committedˉlength {
+        return Databaseˉdurableˉrootˉwriterˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Changedˉsnapshot,
+            Description.Status
+        );
+    }
+    let Read: Pageˉreader.Databaseˉpageˉreadˉresult =
+        Pageˉreader.Databaseˉstorageˉreadˉpage(
+            DATABASE_ROOT_WRITER_HEADER_BYTES,
+            Current.Pageˉsize,
+            Current.Rootˉpage
+        );
+    if Read.Status != Pageˉreader.Databaseˉpageˉreadˉstatus.Valid {
+        return Databaseˉdurableˉrootˉwriterˉreadˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Pageˉfailure,
+            Read
+        );
+    }
+    if Read.Generation != Description.Generation ||
+        Read.Storageˉlength != Description.Storageˉlength {
+        return Databaseˉdurableˉrootˉwriterˉreadˉfailure(
+            Databaseˉdurableˉrootˉupsertˉstatus.Changedˉsnapshot,
+            Read
+        );
+    }
+    let Decoded: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Read.Value);
+    if Decoded.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉrootˉwriterˉpageˉfailure(
+            Read,
+            Decoded.Error
+        );
+    }
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉownedˉcopy(Decoded);
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉrootˉwriterˉpageˉfailure(Read, Root.Error);
+    }
+    let Transaction: Upsert.Databaseˉsingleˉleafˉupsert =
+        Upsert.Databaseˉsingleˉleafˉupsertˉbegin(
+            Current,
+            Root,
+            Key,
+            Value
+        );
+    if Transaction.Error !=
+        Upsert.Databaseˉsingleˉleafˉupsertˉerror.Valid {
+        return Databaseˉdurableˉrootˉwriterˉtransactionˉfailure(Transaction);
+    }
+    let Commitˉstate: Commit.Databaseˉsingleˉwriterˉcommit =
+        Transaction.Transaction;
+    let Initial: Publication.Databaseˉstorageˉpublication =
+        Publication.Databaseˉstorageˉpublicationˉbegin(
+            Commitˉstate.Publication,
+            Description.Generation,
+            Current.Tailˉbytes,
+            Description.Storageˉlength,
+            Commitˉstate.Pages,
+            Commitˉstate.Superblock
+        );
+    if Initial.Status != Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        let Failed: Databaseˉdurableˉrootˉupsertˉresult =
+            Databaseˉdurableˉrootˉwriterˉfailure(
+                Databaseˉdurableˉrootˉupsertˉstatus.Publicationˉfailure,
+                Storage.Storageˉstatus.Valid
+            );
+        return Databaseˉdurableˉrootˉupsertˉresult(
+            Failed.Status,
+            Failed.Storageˉstatus,
+            Failed.Readˉstatus,
+            Failed.Readˉerror,
+            Failed.Readˉstorageˉerror,
+            Failed.Pageˉerror,
+            Failed.Nodeˉerror,
+            Failed.Transactionˉerror,
+            Failed.Commitˉerror,
+            Initial.Error,
+            1u32,
+            0u32,
+            Transaction.Replaced,
+            Transaction.Entryˉcount,
+            Commitˉstate.Rootˉpage,
+            Commitˉstate.Targetˉgeneration,
+            Commitˉstate.Targetˉsequence,
+            Commitˉstate.Targetˉlength,
+            Initial
+        );
+    }
+    let Execution: Executor.Databaseˉstorageˉpublicationˉexecution =
+        Executor.Databaseˉstorageˉpublicationˉexecute(
+            Initial,
+            Maximumˉactions
+        );
+    var Resultˉstatus: Databaseˉdurableˉrootˉupsertˉstatus =
+        Databaseˉdurableˉrootˉupsertˉstatus.Publicationˉfailure;
+    if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Committed {
+        Resultˉstatus = Databaseˉdurableˉrootˉupsertˉstatus.Committed;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Active {
+        Resultˉstatus = Databaseˉdurableˉrootˉupsertˉstatus.Active;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Resultˉstatus = Databaseˉdurableˉrootˉupsertˉstatus.Aborted;
+    } else if Execution.State.Status ==
+            Publication.Databaseˉstorageˉpublicationˉstatus.Recover {
+        Resultˉstatus = Databaseˉdurableˉrootˉupsertˉstatus.Recover;
+    }
+    return Databaseˉdurableˉrootˉwriterˉoutcome(
+        Resultˉstatus,
+        Transaction,
+        Execution
+    );
+}
