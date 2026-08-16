@@ -957,7 +957,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoRecord.elf" 20592 aa3700448dfb9d450afc48c64ed20d49f19ad780efe8ecd29031ecbdbba2c7b2
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=41 cases=246 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90 cross-host-images=Verified source-owned-bytes=20241 relocation-fields=120
+echo step=client-generation-two-paging item=42/42
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Paging-Emission.wvproj" "%Work%\ClientGenerationTwoPaging.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoPaging.wvb" 14544 f7e189d04bdf740c5c1b2224c5872a2e3c0159e6408dd4de69dbd6ab3a1db9f2
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoPaging.wvb" "%Work%\ClientGenerationTwoPaging.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoPaging.wvo" 206347 1b56fd5301900cdcc756da7c84af1bec5ff4f509363806d4c9c58ad3e2b1448d
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoPaging.bin" "%Work%\ClientGenerationTwoPaging.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoPaging.bin" 204475 443cd01a8a604ff67e41d52a7f52fe8821dd8ae9dbe54708756e98e0c362a087
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoPaging.bin" 0 "%Work%\ClientGenerationTwoPaging.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoPaging.exe" >nul
+if not "%ERRORLEVEL%"=="91" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoPaging.exe" 206336 62c74695812eec852cf3dddee37cec39596da28397e0f2abdbaf28e8475119c2
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoPaging.bin" 0 "%Work%\ClientGenerationTwoPaging.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoPaging.elf" 209008 bae80f3e33d79d1446cd54af10c066da7d2bcdb2e95f74ddd4b32eab2d9a1511
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=42 cases=252 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91 cross-host-images=Verified source-owned-bytes=24989 relocation-fields=120
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

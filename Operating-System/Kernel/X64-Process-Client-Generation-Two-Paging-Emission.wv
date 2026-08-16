@@ -1,0 +1,9 @@
+module X64ˉprocessˉclientˉgenerationˉtwoˉpagingˉemission profile portable;
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉpagingˉfixtureˉoffset() -> u32 {
+    return 20241u32;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉpagingˉfixtureˉend() -> u32 {
+    return 24989u32;
+}

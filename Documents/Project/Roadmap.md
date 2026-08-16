@@ -628,7 +628,8 @@ provenance, revocation, and consensus boundaries are named.
   reclamation preflight reaches byte 19,525. Checked release, allocator-state
   restoration, and same-root generation-2 allocation now reach byte 19,741.
   Private generation-2 client-record reconstruction now reaches byte 20,240.
-  Paging, resources, context, rebinding, and re-entry remain before later work.
+  Exact checked paging reuse now reaches byte 24,988. Images, resources,
+  context, rebinding, and re-entry remain before later work.
   syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

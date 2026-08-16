@@ -224,6 +224,12 @@ image digests, private extent addresses, and retained service endpoint bindings.
 The record remains private through byte 20,240; paging and ready publication
 remain later transactions.
 
+The following generation-2 paging region intentionally reuses the exact
+generation-1 constructor: retained kernel tables, null hole, private lower
+hierarchy, read/execute code, writable/NX stack/data/response pages, and two
+guard entries are byte-identical. This advances ownership through byte 24,988
+without introducing a second paging policy.
+
 The first restart policies are deliberately small:
 
 - `Never`;
