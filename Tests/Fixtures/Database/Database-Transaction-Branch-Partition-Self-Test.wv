@@ -1,0 +1,271 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpartition profile portable;
+
+import Windvaleˉdatabaseˉtransactionˉbranchˉpartition as Partition;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const TREE_MAGIC: u32 = 1314149975u32;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Entry(Separator: u8, Child: u64) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Child));
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Separator));
+}
+
+fn Branch(Entries: u32, Rightmost: u64, Body: bytes) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(TREE_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entries));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32 + Bytesˉlength(Body)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Rightmost));
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Threeˉchildren() -> bytes {
+    return Branch(
+        2u32, 7u64,
+        Bytesˉconcat(Entry(10u8, 5u64), Entry(20u8, 3u64))
+    );
+}
+
+fn Twoˉchildren() -> bytes {
+    return Branch(1u32, 2u64, Entry(10u8, 1u64));
+}
+
+fn Child(Page: u64, Hasˉseparator: bool, Separator: u8) -> bytes {
+    var Key: bytes = Empty();
+    if Hasˉseparator { Key = Bytesˉfromˉu8(Separator); }
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+            Page, Key
+        );
+    return Result.Bytes;
+}
+
+fn Group(Original: u64, First: u64, Count: u32, Children: bytes) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+            Original, First, Count, Children
+        );
+    return Result.Bytes;
+}
+
+fn Plan(
+    Groupˉcount: u32,
+    Replacementˉcount: u32,
+    First: u64,
+    Groups: bytes
+) -> Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult {
+    return Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+        Groupˉcount, Replacementˉcount, First, Groups
+    );
+}
+
+fn Bulkˉreplacementˉcontract() -> i32 {
+    let Leftˉchildren: bytes = Bytesˉconcat(
+        Child(100u64, false, 0u8), Child(101u64, true, 5u8)
+    );
+    let Rightˉchildren: bytes = Child(102u64, false, 0u8);
+    let Replaced: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Plan(
+            2u32, 3u32, 100u64,
+            Bytesˉconcat(
+                Group(5u64, 100u64, 2u32, Leftˉchildren),
+                Group(7u64, 102u64, 1u32, Rightˉchildren)
+            )
+        );
+    let Firstˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+            Replaced.Bytes, 0u32
+        );
+    let Secondˉchild: Replacements.Databaseˉtransactionˉchildˉreplacementˉchild =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉread(
+            Firstˉgroup, 1u32
+        );
+    let Result: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Threeˉchildren(), Replaced.Bytes, 256u32
+        );
+    let Output: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(Result.Bytes, 0u32);
+    let Low: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Output.Payload, Bytesˉfromˉu8(1u8), false, Empty(), false, Empty()
+        );
+    let Five: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Output.Payload, Bytesˉfromˉu8(5u8), false, Empty(), false, Empty()
+        );
+    let Middle: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Output.Payload, Bytesˉfromˉu8(15u8), false, Empty(), false, Empty()
+        );
+    let High: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Output.Payload, Bytesˉfromˉu8(25u8), false, Empty(), false, Empty()
+        );
+    if Replaced.Error != Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid ||
+        Replaced.Groupˉcount != 2u32 || Replaced.Replacementˉcount != 3u32 ||
+        Bytesˉlength(Replaced.Bytes) == 0u32 {
+        return 1;
+    }
+    if
+        Firstˉgroup.Originalˉchild != 5u64 || Firstˉgroup.Replacementˉcount != 2u32 ||
+        Secondˉchild.Pageˉidentifier != 101u64 ||
+        Bytesˉreadˉu8(Secondˉchild.Separator, 0u32) != 5u8 {
+        return 2;
+    }
+    if Result.Error == Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Missingˉchild {
+        return 5;
+    }
+    if Result.Error == Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉrange {
+        return 6;
+    }
+    if Result.Error == Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉoutput {
+        return 7;
+    }
+    if Result.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+        return 3;
+    }
+    if Result.Branchˉcount != 1u32 { return 8; }
+    if Result.Entryˉcount != 3u32 { return 9; }
+    if Result.Appliedˉgroupˉcount != 2u32 { return 10; }
+    if Output.Entryˉcount != 3u32 {
+        return 11;
+    }
+    if
+        Low.Child != 100u64 || Five.Child != 101u64 ||
+        Middle.Child != 3u64 || High.Child != 102u64 {
+        return 4;
+    }
+    return 0;
+}
+
+fn Partitionˉcontract() -> i32 {
+    let Children: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Child(100u64, false, 0u8), Child(101u64, true, 1u8)
+        ),
+        Bytesˉconcat(
+            Child(102u64, true, 2u8), Child(103u64, true, 3u8)
+        )
+    );
+    let Replaced: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Plan(1u32, 4u32, 100u64, Group(1u64, 100u64, 4u32, Children));
+    let First: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Replaced.Bytes, 80u32
+        );
+    let Second: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Replaced.Bytes, 80u32
+        );
+    let Left: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(First.Bytes, 0u32);
+    let Right: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(First.Bytes, 1u32);
+    let Leftˉnode: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Left.Payload);
+    let Rightˉnode: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Right.Payload);
+    if First.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid ||
+        First.Branchˉcount != 2u32 || First.Entryˉcount != 4u32 ||
+        !Same(First.Bytes, Second.Bytes) ||
+        Left.Entryˉcount != 2u32 || Bytesˉlength(Left.Separator) != 0u32 ||
+        Leftˉnode.Rightmostˉchild != 102u64 || Right.Entryˉcount != 1u32 ||
+        Bytesˉreadˉu8(Right.Separator, 0u32) != 3u8 ||
+        Rightˉnode.Rightmostˉchild != 2u64 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Rejectionˉcontract() -> i32 {
+    let Missingˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Plan(1u32, 1u32, 100u64, Group(9u64, 100u64, 1u32, Child(100u64, false, 0u8)));
+    let Missing: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Missingˉplan.Bytes, 80u32
+        );
+    let Rangeˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Plan(
+            1u32, 2u32, 100u64,
+            Group(
+                1u64, 100u64, 2u32,
+                Bytesˉconcat(Child(100u64, false, 0u8), Child(101u64, true, 11u8))
+            )
+        );
+    let Range: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Rangeˉplan.Bytes, 80u32
+        );
+    let Tightˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Plan(
+            1u32, 2u32, 100u64,
+            Group(
+                1u64, 100u64, 2u32,
+                Bytesˉconcat(Child(100u64, false, 0u8), Child(101u64, true, 1u8))
+            )
+        );
+    let Tight: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Tightˉplan.Bytes, 50u32
+        );
+    let Badˉreplacement: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(0u8),
+        Bytesˉslice(Tightˉplan.Bytes, 1u32, Bytesˉlength(Tightˉplan.Bytes) - 1u32)
+    );
+    let Invalid: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Badˉreplacement, 80u32
+        );
+    let Valid: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉapply(
+            Twoˉchildren(), Tightˉplan.Bytes, 80u32
+        );
+    let Trailing: Partition.Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉdecode(
+            Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8))
+        );
+    let Invalidˉindex: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+        Partition.Databaseˉtransactionˉbranchˉpartitionˉread(Valid.Bytes, 1u32);
+    if Missing.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Missingˉchild ||
+        Range.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉrange ||
+        Tight.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Cannotˉpartition ||
+        Invalid.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉreplacements ||
+        Trailing.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉtotalˉlength ||
+        Invalidˉindex.Error != Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉindex {
+        return 1;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Bulk: i32 = Bulkˉreplacementˉcontract();
+    if Bulk != 0 { return 100 + Bulk; }
+    let Split: i32 = Partitionˉcontract();
+    if Split != 0 { return 200 + Split; }
+    let Rejection: i32 = Rejectionˉcontract();
+    if Rejection != 0 { return 300 + Rejection; }
+    return 0;
+}

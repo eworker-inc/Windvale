@@ -1,0 +1,429 @@
+module Windvaleˉdatabaseˉtransactionˉchildˉreplacements profile portable;
+
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAGIC: u32 = 1380144727u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES: u32 = 40u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES: u32 = 24u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES: u32 = 16u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_BYTES: u32 = 524288u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUPS: u32 = 32u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_CHILDREN: u32 = 64u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE: u64 = 18446744073709551615u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉtransactionˉchildˉreplacementsˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉflags = 5;
+    Invalidˉcount = 6;
+    Invalidˉtotalˉlength = 7;
+    Invalidˉgroup = 8;
+    Invalidˉchild = 9;
+    Invalidˉseparator = 10;
+    Invalidˉindex = 11;
+}
+
+export record Databaseˉtransactionˉchildˉreplacementsˉresult {
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Groupˉcount: u32;
+    Replacementˉcount: u32;
+    Firstˉpage: u64;
+    Map: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉtransactionˉchildˉreplacementˉcomponent {
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Count: u32;
+    Bytes: bytes;
+}
+
+export record Databaseˉtransactionˉchildˉreplacementˉgroup {
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Originalˉchild: u64;
+    Firstˉpage: u64;
+    Replacementˉcount: u32;
+    Body: bytes;
+}
+
+export record Databaseˉtransactionˉchildˉreplacementˉchild {
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Pageˉidentifier: u64;
+    Separator: bytes;
+}
+
+fn Databaseˉtransactionˉchildˉreplacementsˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉchildˉreplacementsˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 {
+        return Databaseˉtransactionˉchildˉreplacementsˉempty();
+    }
+    return Bytesˉslice(Bytesˉconcat(Bytesˉfromˉu8(0u8), Input), 1u32, Total);
+}
+
+fn Databaseˉtransactionˉchildˉreplacementsˉfailure(
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror
+) -> Databaseˉtransactionˉchildˉreplacementsˉresult {
+    let Empty: bytes = Databaseˉtransactionˉchildˉreplacementsˉempty();
+    return Databaseˉtransactionˉchildˉreplacementsˉresult(
+        Error, 0u32, 0u32, DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE,
+        Empty, Empty
+    );
+}
+
+fn Databaseˉtransactionˉchildˉreplacementˉcomponentˉfailure(
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror
+) -> Databaseˉtransactionˉchildˉreplacementˉcomponent {
+    return Databaseˉtransactionˉchildˉreplacementˉcomponent(
+        Error, 0u32, Databaseˉtransactionˉchildˉreplacementsˉempty()
+    );
+}
+
+export fn Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+    Pageˉidentifier: u64,
+    Separator: bytes
+) -> Databaseˉtransactionˉchildˉreplacementˉcomponent {
+    if Pageˉidentifier == DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE {
+        return Databaseˉtransactionˉchildˉreplacementˉcomponentˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉchild
+        );
+    }
+    if Bytesˉlength(Separator) > 4096u32 {
+        return Databaseˉtransactionˉchildˉreplacementˉcomponentˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉseparator
+        );
+    }
+    var Result: bytes = Bytesˉfromˉu64ˉlittle(Pageˉidentifier);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Separator)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Separator);
+    return Databaseˉtransactionˉchildˉreplacementˉcomponent(
+        Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        1u32, Result
+    );
+}
+
+fn Databaseˉtransactionˉchildˉreplacementˉgroupˉbodyˉvalid(
+    Firstˉpage: u64,
+    Count: u32,
+    Children: bytes
+) -> bool {
+    if Count == 0u32 || Count > 33u32 ||
+        Firstˉpage == DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE ||
+        Firstˉpage > U64_MAXIMUM - U64ˉfromˉu32(Count) {
+        return false;
+    }
+    let Total: u32 = Bytesˉlength(Children);
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Previousˉseparator: bytes = Databaseˉtransactionˉchildˉreplacementsˉempty();
+    while Index < Count {
+        if Cursor > Total ||
+            Total - Cursor < DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES {
+            return false;
+        }
+        let Pageˉidentifier: u64 = Bytesˉreadˉu64ˉlittle(Children, Cursor);
+        let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Children, Cursor + 8u32);
+        if Separatorˉlength > 4096u32 ||
+            Separatorˉlength > Total - Cursor - DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES ||
+            Bytesˉreadˉu32ˉlittle(Children, Cursor + 12u32) != 0u32 ||
+            Pageˉidentifier != Firstˉpage + U64ˉfromˉu32(Index) ||
+            Index == 0u32 && Separatorˉlength != 0u32 ||
+            Index > 0u32 && Separatorˉlength == 0u32 {
+            return false;
+        }
+        let Separator: bytes = Bytesˉslice(
+            Children,
+            Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES,
+            Separatorˉlength
+        );
+        if Index > 1u32 && Tree.Databaseˉtreeˉkeyˉcompare(
+                Previousˉseparator, Separator
+            ) != Tree.Databaseˉtreeˉkeyˉorder.Less {
+            return false;
+        }
+        if Index > 0u32 { Previousˉseparator = Separator; }
+        Cursor = Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES + Separatorˉlength;
+        Index = Index + 1u32;
+    }
+    return Cursor == Total;
+}
+
+export fn Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+    Originalˉchild: u64,
+    Firstˉpage: u64,
+    Count: u32,
+    Children: bytes
+) -> Databaseˉtransactionˉchildˉreplacementˉcomponent {
+    if Originalˉchild == DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE ||
+        Originalˉchild >= Firstˉpage ||
+        !Databaseˉtransactionˉchildˉreplacementˉgroupˉbodyˉvalid(
+            Firstˉpage, Count, Children
+        ) {
+        return Databaseˉtransactionˉchildˉreplacementˉcomponentˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉgroup
+        );
+    }
+    var Result: bytes = Bytesˉfromˉu64ˉlittle(Originalˉchild);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Firstˉpage));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Count));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Children)));
+    Result = Bytesˉconcat(Result, Children);
+    return Databaseˉtransactionˉchildˉreplacementˉcomponent(
+        Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        1u32, Result
+    );
+}
+
+export fn Databaseˉtransactionˉchildˉreplacementsˉencode(
+    Groupˉcount: u32,
+    Replacementˉcount: u32,
+    Firstˉpage: u64,
+    Groups: bytes
+) -> Databaseˉtransactionˉchildˉreplacementsˉresult {
+    if Groupˉcount == 0u32 ||
+        Groupˉcount > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUPS ||
+        Replacementˉcount == 0u32 ||
+        Replacementˉcount > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_CHILDREN ||
+        Firstˉpage == DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE ||
+        Firstˉpage > U64_MAXIMUM - U64ˉfromˉu32(Replacementˉcount) {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉcount
+        );
+    }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_CHILD_REPLACEMENTS_VERSION));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Groupˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Replacementˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Groups)));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES + Bytesˉlength(Groups)
+        )
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Firstˉpage));
+    return Databaseˉtransactionˉchildˉreplacementsˉdecode(
+        Bytesˉconcat(Result, Groups)
+    );
+}
+
+export fn Databaseˉtransactionˉchildˉreplacementsˉdecode(
+    Input: bytes
+) -> Databaseˉtransactionˉchildˉreplacementsˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES ||
+        Total > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAGIC {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TRANSACTION_CHILD_REPLACEMENTS_VERSION {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉheader
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉflags
+        );
+    }
+    let Groupˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Replacementˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Mapˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Firstˉpage: u64 = Bytesˉreadˉu64ˉlittle(Input, 32u32);
+    if Groupˉcount == 0u32 ||
+        Groupˉcount > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUPS ||
+        Replacementˉcount == 0u32 ||
+        Replacementˉcount > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_CHILDREN ||
+        Firstˉpage == DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE ||
+        Firstˉpage > U64_MAXIMUM - U64ˉfromˉu32(Replacementˉcount) ||
+        Mapˉlength != Total - DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉcount
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != Total {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉtotalˉlength
+        );
+    }
+    let Map: bytes = Bytesˉslice(
+        Input, DATABASE_TRANSACTION_CHILD_REPLACEMENTS_HEADER_BYTES, Mapˉlength
+    );
+    var Cursor: u32 = 0u32;
+    var Groupˉindex: u32 = 0u32;
+    var Counted: u32 = 0u32;
+    var Expectedˉpage: u64 = Firstˉpage;
+    while Groupˉindex < Groupˉcount {
+        if Cursor > Mapˉlength ||
+            Mapˉlength - Cursor < DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES {
+            return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+                Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉgroup
+            );
+        }
+        let Original: u64 = Bytesˉreadˉu64ˉlittle(Map, Cursor);
+        let Groupˉfirst: u64 = Bytesˉreadˉu64ˉlittle(Map, Cursor + 8u32);
+        let Groupˉchildren: u32 = Bytesˉreadˉu32ˉlittle(Map, Cursor + 16u32);
+        let Bodyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Map, Cursor + 20u32);
+        var Scanˉcursor: u32 = 0u32;
+        var Scanˉindex: u32 = 0u32;
+        var Duplicate: bool = false;
+        while Scanˉindex < Groupˉindex {
+            if Bytesˉreadˉu64ˉlittle(Map, Scanˉcursor) == Original {
+                Duplicate = true;
+            }
+            Scanˉcursor = Scanˉcursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES +
+                Bytesˉreadˉu32ˉlittle(Map, Scanˉcursor + 20u32);
+            Scanˉindex = Scanˉindex + 1u32;
+        }
+        if Original >= Firstˉpage || Groupˉfirst != Expectedˉpage ||
+            Groupˉchildren == 0u32 || Groupˉchildren > 33u32 ||
+            Groupˉchildren > Replacementˉcount - Counted || Duplicate ||
+            Bodyˉlength > Mapˉlength - Cursor - DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES {
+            return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+                Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉgroup
+            );
+        }
+        let Body: bytes = Bytesˉslice(
+            Map, Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES, Bodyˉlength
+        );
+        if !Databaseˉtransactionˉchildˉreplacementˉgroupˉbodyˉvalid(
+            Groupˉfirst, Groupˉchildren, Body
+        ) {
+            return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+                Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉchild
+            );
+        }
+        Counted = Counted + Groupˉchildren;
+        Expectedˉpage = Expectedˉpage + U64ˉfromˉu32(Groupˉchildren);
+        Cursor = Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES + Bodyˉlength;
+        Groupˉindex = Groupˉindex + 1u32;
+    }
+    if Cursor != Mapˉlength || Counted != Replacementˉcount {
+        return Databaseˉtransactionˉchildˉreplacementsˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉgroup
+        );
+    }
+    return Databaseˉtransactionˉchildˉreplacementsˉresult(
+        Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        Groupˉcount, Replacementˉcount, Firstˉpage,
+        Databaseˉtransactionˉchildˉreplacementsˉcopy(Map),
+        Databaseˉtransactionˉchildˉreplacementsˉcopy(Input)
+    );
+}
+
+fn Databaseˉtransactionˉchildˉreplacementˉgroupˉfailure(
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror
+) -> Databaseˉtransactionˉchildˉreplacementˉgroup {
+    return Databaseˉtransactionˉchildˉreplacementˉgroup(
+        Error, 0u64, 0u64, 0u32,
+        Databaseˉtransactionˉchildˉreplacementsˉempty()
+    );
+}
+
+export fn Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉtransactionˉchildˉreplacementˉgroup {
+    let Decoded: Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Databaseˉtransactionˉchildˉreplacementsˉdecode(Input);
+    if Decoded.Error != Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+        return Databaseˉtransactionˉchildˉreplacementˉgroupˉfailure(Decoded.Error);
+    }
+    if Requested >= Decoded.Groupˉcount {
+        return Databaseˉtransactionˉchildˉreplacementˉgroupˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉindex
+        );
+    }
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Decoded.Groupˉcount {
+        let Bodyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Decoded.Map, Cursor + 20u32);
+        if Index == Requested {
+            return Databaseˉtransactionˉchildˉreplacementˉgroup(
+                Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+                Bytesˉreadˉu64ˉlittle(Decoded.Map, Cursor),
+                Bytesˉreadˉu64ˉlittle(Decoded.Map, Cursor + 8u32),
+                Bytesˉreadˉu32ˉlittle(Decoded.Map, Cursor + 16u32),
+                Databaseˉtransactionˉchildˉreplacementsˉcopy(
+                    Bytesˉslice(
+                        Decoded.Map,
+                        Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES,
+                        Bodyˉlength
+                    )
+                )
+            );
+        }
+        Cursor = Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES + Bodyˉlength;
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉchildˉreplacementˉgroupˉfailure(
+        Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉindex
+    );
+}
+
+fn Databaseˉtransactionˉchildˉreplacementˉchildˉfailure(
+    Error: Databaseˉtransactionˉchildˉreplacementsˉerror
+) -> Databaseˉtransactionˉchildˉreplacementˉchild {
+    return Databaseˉtransactionˉchildˉreplacementˉchild(
+        Error, 0u64, Databaseˉtransactionˉchildˉreplacementsˉempty()
+    );
+}
+
+export fn Databaseˉtransactionˉchildˉreplacementˉchildˉread(
+    Group: Databaseˉtransactionˉchildˉreplacementˉgroup,
+    Requested: u32
+) -> Databaseˉtransactionˉchildˉreplacementˉchild {
+    if Group.Error != Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+        return Databaseˉtransactionˉchildˉreplacementˉchildˉfailure(Group.Error);
+    }
+    if Requested >= Group.Replacementˉcount {
+        return Databaseˉtransactionˉchildˉreplacementˉchildˉfailure(
+            Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉindex
+        );
+    }
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Group.Replacementˉcount {
+        let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Group.Body, Cursor + 8u32);
+        if Index == Requested {
+            return Databaseˉtransactionˉchildˉreplacementˉchild(
+                Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+                Bytesˉreadˉu64ˉlittle(Group.Body, Cursor),
+                Databaseˉtransactionˉchildˉreplacementsˉcopy(
+                    Bytesˉslice(
+                        Group.Body,
+                        Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES,
+                        Separatorˉlength
+                    )
+                )
+            );
+        }
+        Cursor = Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES + Separatorˉlength;
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉchildˉreplacementˉchildˉfailure(
+        Databaseˉtransactionˉchildˉreplacementsˉerror.Invalidˉindex
+    );
+}

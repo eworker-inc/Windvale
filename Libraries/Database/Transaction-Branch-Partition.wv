@@ -1,0 +1,747 @@
+module Windvaleˉdatabaseˉtransactionˉbranchˉpartition profile portable;
+
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TRANSACTION_BRANCH_PARTITION_MAGIC: u32 = 1346524759u32;
+const DATABASE_TRANSACTION_BRANCH_PARTITION_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES: u32 = 40u32;
+const DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES: u32 = 16u32;
+const DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_BYTES: u32 = 5242880u32;
+const DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_BRANCHES: u32 = 64u32;
+const DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_ENTRIES: u32 = 4159u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES: u32 = 24u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES: u32 = 16u32;
+const DATABASE_TREE_NODE_MAGIC: u32 = 1314149975u32;
+const DATABASE_TREE_NODE_VERSION: u32 = 1u32;
+const DATABASE_TREE_NODE_HEADER_BYTES: u32 = 32u32;
+const DATABASE_TREE_NODE_MAXIMUM_BYTES: u32 = 65408u32;
+const DATABASE_TREE_NODE_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉtransactionˉbranchˉpartitionˉerror {
+    Valid = 0;
+    Invalidˉreplacements = 1;
+    Invalidˉbranch = 2;
+    Invalidˉmaximumˉpayload = 3;
+    Missingˉchild = 4;
+    Invalidˉrange = 5;
+    Full = 6;
+    Cannotˉpartition = 7;
+    Invalidˉoutput = 8;
+    Invalidˉlength = 9;
+    Invalidˉmagic = 10;
+    Unsupportedˉversion = 11;
+    Invalidˉheader = 12;
+    Invalidˉflags = 13;
+    Invalidˉcount = 14;
+    Invalidˉtotalˉlength = 15;
+    Invalidˉpartition = 16;
+    Invalidˉindex = 17;
+}
+
+export record Databaseˉtransactionˉbranchˉpartitionˉresult {
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror;
+    Replacementsˉerror: Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Branchˉcount: u32;
+    Entryˉcount: u32;
+    Appliedˉgroupˉcount: u32;
+    Maximumˉpayload: u32;
+    Bytes: bytes;
+}
+
+export record Databaseˉtransactionˉbranchˉpartitionˉbranch {
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Separator: bytes;
+    Entryˉcount: u32;
+    Payload: bytes;
+}
+
+record Databaseˉtransactionˉbranchˉreplacementˉmatch {
+    Found: bool;
+    Count: u32;
+    Body: bytes;
+}
+
+record Databaseˉtransactionˉbranchˉreplacementˉchild {
+    Pageˉidentifier: u64;
+    Separator: bytes;
+    Next: u32;
+}
+
+record Databaseˉtransactionˉbranchˉpartitionˉcomponent {
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror;
+    Entryˉcount: u32;
+    Bytes: bytes;
+}
+
+record Databaseˉtransactionˉbranchˉentry {
+    Child: u64;
+    Separator: bytes;
+    Bytes: bytes;
+    Next: u32;
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 { return Databaseˉtransactionˉbranchˉpartitionˉempty(); }
+    return Bytesˉslice(Bytesˉconcat(Bytesˉfromˉu8(0u8), Input), 1u32, Total);
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉfailure(
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror,
+    Replacementsˉerror: Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtransactionˉbranchˉpartitionˉresult {
+    return Databaseˉtransactionˉbranchˉpartitionˉresult(
+        Error, Replacementsˉerror, Nodeˉerror,
+        0u32, 0u32, 0u32, 0u32,
+        Databaseˉtransactionˉbranchˉpartitionˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror
+) -> Databaseˉtransactionˉbranchˉpartitionˉresult {
+    return Databaseˉtransactionˉbranchˉpartitionˉfailure(
+        Error,
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉreplacementˉlookup(
+    Map: bytes,
+    Groupˉcount: u32,
+    Originalˉchild: u64
+) -> Databaseˉtransactionˉbranchˉreplacementˉmatch {
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Groupˉcount {
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Map, Cursor + 16u32);
+        let Bodyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Map, Cursor + 20u32);
+        if Bytesˉreadˉu64ˉlittle(Map, Cursor) == Originalˉchild {
+            return Databaseˉtransactionˉbranchˉreplacementˉmatch(
+                true, Count,
+                Bytesˉslice(
+                    Map, Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES,
+                    Bodyˉlength
+                )
+            );
+        }
+        Cursor = Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES + Bodyˉlength;
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉbranchˉreplacementˉmatch(
+        false, 0u32, Databaseˉtransactionˉbranchˉpartitionˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉreplacementˉchildˉread(
+    Body: bytes,
+    Cursor: u32
+) -> Databaseˉtransactionˉbranchˉreplacementˉchild {
+    let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Body, Cursor + 8u32);
+    return Databaseˉtransactionˉbranchˉreplacementˉchild(
+        Bytesˉreadˉu64ˉlittle(Body, Cursor),
+        Bytesˉslice(
+            Body, Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES,
+            Separatorˉlength
+        ),
+        Cursor + DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES + Separatorˉlength
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉentryˉencode(
+    Separator: bytes,
+    Child: u64
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Separator));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Child));
+    return Bytesˉconcat(Result, Separator);
+}
+
+fn Databaseˉtransactionˉbranchˉentryˉread(
+    Body: bytes,
+    Cursor: u32
+) -> Databaseˉtransactionˉbranchˉentry {
+    let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Body, Cursor);
+    let Next: u32 = Cursor + 16u32 + Separatorˉlength;
+    return Databaseˉtransactionˉbranchˉentry(
+        Bytesˉreadˉu64ˉlittle(Body, Cursor + 8u32),
+        Bytesˉslice(Body, Cursor + 16u32, Separatorˉlength),
+        Bytesˉslice(Body, Cursor, Next - Cursor),
+        Next
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉnodeˉbytes(
+    Entryˉcount: u32,
+    Rightmostˉchild: u64,
+    Body: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_VERSION));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entryˉcount));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(DATABASE_TREE_NODE_HEADER_BYTES + Bytesˉlength(Body))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Rightmostˉchild));
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉrecord(
+    Separator: bytes,
+    Entryˉcount: u32,
+    Payload: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Separator));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entryˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Payload)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Separator);
+    return Bytesˉconcat(Result, Payload);
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉcomponentˉfailure(
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror
+) -> Databaseˉtransactionˉbranchˉpartitionˉcomponent {
+    return Databaseˉtransactionˉbranchˉpartitionˉcomponent(
+        Error, 0u32, Databaseˉtransactionˉbranchˉpartitionˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉfinalize(
+    Separator: bytes,
+    Body: bytes,
+    Entryˉcount: u32,
+    Rightmostˉchild: u64,
+    Maximumˉpayload: u32
+) -> Databaseˉtransactionˉbranchˉpartitionˉcomponent {
+    if Entryˉcount == 0u32 || Entryˉcount > 4096u32 ||
+        Rightmostˉchild == DATABASE_TREE_NODE_NO_PAGE ||
+        DATABASE_TREE_NODE_HEADER_BYTES + Bytesˉlength(Body) > Maximumˉpayload {
+        return Databaseˉtransactionˉbranchˉpartitionˉcomponentˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Cannotˉpartition
+        );
+    }
+    let Payload: bytes = Databaseˉtransactionˉbranchˉnodeˉbytes(
+        Entryˉcount, Rightmostˉchild, Body
+    );
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+        Node.Entryˉcount != Entryˉcount {
+        return Databaseˉtransactionˉbranchˉpartitionˉcomponentˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉoutput
+        );
+    }
+    return Databaseˉtransactionˉbranchˉpartitionˉcomponent(
+        Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+        Entryˉcount,
+        Databaseˉtransactionˉbranchˉpartitionˉrecord(
+            Separator, Entryˉcount, Node.Bytes
+        )
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉencode(
+    Branchˉcount: u32,
+    Entryˉcount: u32,
+    Appliedˉgroupˉcount: u32,
+    Maximumˉpayload: u32,
+    Branches: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_BRANCH_PARTITION_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_BRANCH_PARTITION_VERSION));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Branchˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entryˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Appliedˉgroupˉcount));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES + Bytesˉlength(Branches)
+        )
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Maximumˉpayload));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Result, Branches);
+}
+
+export fn Databaseˉtransactionˉbranchˉpartitionˉapply(
+    Input: bytes,
+    Replacementsˉbytes: bytes,
+    Maximumˉpayload: u32
+) -> Databaseˉtransactionˉbranchˉpartitionˉresult {
+    let Replacementˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉdecode(
+            Replacementsˉbytes
+        );
+    if Replacementˉplan.Error !=
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+        return Databaseˉtransactionˉbranchˉpartitionˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉreplacements,
+            Replacementˉplan.Error,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Maximumˉpayload < DATABASE_TREE_NODE_HEADER_BYTES ||
+        Maximumˉpayload > DATABASE_TREE_NODE_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉmaximumˉpayload
+        );
+    }
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Input);
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch {
+        var Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Node.Error;
+        if Nodeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            Nodeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind;
+        }
+        return Databaseˉtransactionˉbranchˉpartitionˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉbranch,
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+            Nodeˉerror
+        );
+    }
+    if Bytesˉlength(Input) > Maximumˉpayload {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Full
+        );
+    }
+    let Finalˉcount: u32 = Node.Entryˉcount +
+        Replacementˉplan.Replacementˉcount - Replacementˉplan.Groupˉcount;
+    if Finalˉcount > DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_ENTRIES {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Full
+        );
+    }
+
+    var Finalˉbody: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+    var Finalˉrightmost: u64 = DATABASE_TREE_NODE_NO_PAGE;
+    var Originalˉcursor: u32 = DATABASE_TREE_NODE_HEADER_BYTES;
+    var Childˉindex: u32 = 0u32;
+    var Applied: u32 = 0u32;
+    var Hasˉlower: bool = false;
+    var Lower: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+    while Childˉindex <= Node.Entryˉcount {
+        var Originalˉchild: u64 = Node.Rightmostˉchild;
+        var Hasˉupper: bool = false;
+        var Upper: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+        if Childˉindex < Node.Entryˉcount {
+            let Originalˉseparatorˉlength: u32 =
+                Bytesˉreadˉu32ˉlittle(Input, Originalˉcursor);
+            Originalˉchild = Bytesˉreadˉu64ˉlittle(
+                Input, Originalˉcursor + 8u32
+            );
+            Hasˉupper = true;
+            Upper = Bytesˉslice(
+                Input, Originalˉcursor + 16u32, Originalˉseparatorˉlength
+            );
+            Originalˉcursor = Originalˉcursor + 16u32 + Originalˉseparatorˉlength;
+        }
+        if Originalˉchild >= Replacementˉplan.Firstˉpage {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Missingˉchild
+            );
+        }
+        let Match: Databaseˉtransactionˉbranchˉreplacementˉmatch =
+            Databaseˉtransactionˉbranchˉreplacementˉlookup(
+                Replacementˉplan.Map,
+                Replacementˉplan.Groupˉcount,
+                Originalˉchild
+            );
+        var Resultˉchild: u64 = Originalˉchild;
+        if Match.Found {
+            var Replacementˉcursor: u32 = 0u32;
+            let First: Databaseˉtransactionˉbranchˉreplacementˉchild =
+                Databaseˉtransactionˉbranchˉreplacementˉchildˉread(
+                    Match.Body, Replacementˉcursor
+                );
+            Resultˉchild = First.Pageˉidentifier;
+            Replacementˉcursor = First.Next;
+            var Replacementˉindex: u32 = 1u32;
+            var Previousˉinserted: bytes = Lower;
+            var Hasˉpreviousˉinserted: bool = Hasˉlower;
+            while Replacementˉindex < Match.Count {
+                let Replacementˉchild: Databaseˉtransactionˉbranchˉreplacementˉchild =
+                    Databaseˉtransactionˉbranchˉreplacementˉchildˉread(
+                        Match.Body, Replacementˉcursor
+                    );
+                if Hasˉpreviousˉinserted && Tree.Databaseˉtreeˉkeyˉcompare(
+                        Previousˉinserted, Replacementˉchild.Separator
+                    ) != Tree.Databaseˉtreeˉkeyˉorder.Less ||
+                    Hasˉupper && Tree.Databaseˉtreeˉkeyˉcompare(
+                        Replacementˉchild.Separator, Upper
+                    ) != Tree.Databaseˉtreeˉkeyˉorder.Less {
+                    return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                        Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉrange
+                    );
+                }
+                Finalˉbody = Bytesˉconcat(
+                    Finalˉbody,
+                    Databaseˉtransactionˉbranchˉentryˉencode(
+                        Replacementˉchild.Separator, Resultˉchild
+                    )
+                );
+                Resultˉchild = Replacementˉchild.Pageˉidentifier;
+                Previousˉinserted = Replacementˉchild.Separator;
+                Hasˉpreviousˉinserted = true;
+                Replacementˉcursor = Replacementˉchild.Next;
+                Replacementˉindex = Replacementˉindex + 1u32;
+            }
+            Applied = Applied + 1u32;
+        }
+        if Hasˉupper {
+            Finalˉbody = Bytesˉconcat(
+                Finalˉbody,
+                Databaseˉtransactionˉbranchˉentryˉencode(Upper, Resultˉchild)
+            );
+            Lower = Upper;
+            Hasˉlower = true;
+        } else {
+            Finalˉrightmost = Resultˉchild;
+        }
+        Childˉindex = Childˉindex + 1u32;
+    }
+    if Applied != Replacementˉplan.Groupˉcount ||
+        Finalˉrightmost == DATABASE_TREE_NODE_NO_PAGE {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Missingˉchild
+        );
+    }
+
+    var Branches: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+    var Branchˉcount: u32 = 0u32;
+    if DATABASE_TREE_NODE_HEADER_BYTES + Bytesˉlength(Finalˉbody) <= Maximumˉpayload {
+        let Single: Databaseˉtransactionˉbranchˉpartitionˉcomponent =
+            Databaseˉtransactionˉbranchˉpartitionˉfinalize(
+                Databaseˉtransactionˉbranchˉpartitionˉempty(),
+                Finalˉbody, Finalˉcount, Finalˉrightmost, Maximumˉpayload
+            );
+        if Single.Error != Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(Single.Error);
+        }
+        Branches = Single.Bytes;
+        Branchˉcount = 1u32;
+    } else {
+        var Cursor: u32 = 0u32;
+        var Index: u32 = 0u32;
+        var Segmentˉseparator: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+        var Segmentˉbody: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+        var Segmentˉcount: u32 = 0u32;
+        var Lastˉoffset: u32 = 0u32;
+        var Lastˉchild: u64 = 0u64;
+        var Lastˉseparator: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+        while Index < Finalˉcount {
+            let Entry: Databaseˉtransactionˉbranchˉentry =
+                Databaseˉtransactionˉbranchˉentryˉread(Finalˉbody, Cursor);
+            if DATABASE_TREE_NODE_HEADER_BYTES + Bytesˉlength(Segmentˉbody) +
+                    Bytesˉlength(Entry.Bytes) <= Maximumˉpayload {
+                Lastˉoffset = Bytesˉlength(Segmentˉbody);
+                Lastˉchild = Entry.Child;
+                Lastˉseparator = Entry.Separator;
+                Segmentˉbody = Bytesˉconcat(Segmentˉbody, Entry.Bytes);
+                Segmentˉcount = Segmentˉcount + 1u32;
+                Cursor = Entry.Next;
+                Index = Index + 1u32;
+            } else if Segmentˉcount == 0u32 {
+                return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                    Databaseˉtransactionˉbranchˉpartitionˉerror.Full
+                );
+            } else if Index < Finalˉcount - 1u32 {
+                let Completed: Databaseˉtransactionˉbranchˉpartitionˉcomponent =
+                    Databaseˉtransactionˉbranchˉpartitionˉfinalize(
+                        Segmentˉseparator, Segmentˉbody, Segmentˉcount,
+                        Entry.Child, Maximumˉpayload
+                    );
+                if Completed.Error != Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+                    return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(Completed.Error);
+                }
+                Branches = Bytesˉconcat(Branches, Completed.Bytes);
+                Branchˉcount = Branchˉcount + 1u32;
+                Segmentˉseparator = Entry.Separator;
+                Segmentˉbody = Databaseˉtransactionˉbranchˉpartitionˉempty();
+                Segmentˉcount = 0u32;
+                Cursor = Entry.Next;
+                Index = Index + 1u32;
+            } else {
+                if Segmentˉcount < 2u32 {
+                    return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                        Databaseˉtransactionˉbranchˉpartitionˉerror.Cannotˉpartition
+                    );
+                }
+                let Leftˉbody: bytes = Bytesˉslice(Segmentˉbody, 0u32, Lastˉoffset);
+                let Left: Databaseˉtransactionˉbranchˉpartitionˉcomponent =
+                    Databaseˉtransactionˉbranchˉpartitionˉfinalize(
+                        Segmentˉseparator, Leftˉbody, Segmentˉcount - 1u32,
+                        Lastˉchild, Maximumˉpayload
+                    );
+                if Left.Error != Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+                    return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(Left.Error);
+                }
+                Branches = Bytesˉconcat(Branches, Left.Bytes);
+                Branchˉcount = Branchˉcount + 1u32;
+                Segmentˉseparator = Lastˉseparator;
+                Segmentˉbody = Entry.Bytes;
+                Segmentˉcount = 1u32;
+                Lastˉoffset = 0u32;
+                Lastˉchild = Entry.Child;
+                Lastˉseparator = Entry.Separator;
+                Cursor = Entry.Next;
+                Index = Index + 1u32;
+            }
+            if Branchˉcount >= DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_BRANCHES {
+                return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                    Databaseˉtransactionˉbranchˉpartitionˉerror.Full
+                );
+            }
+        }
+        let Final: Databaseˉtransactionˉbranchˉpartitionˉcomponent =
+            Databaseˉtransactionˉbranchˉpartitionˉfinalize(
+                Segmentˉseparator, Segmentˉbody, Segmentˉcount,
+                Finalˉrightmost, Maximumˉpayload
+            );
+        if Final.Error != Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(Final.Error);
+        }
+        Branches = Bytesˉconcat(Branches, Final.Bytes);
+        Branchˉcount = Branchˉcount + 1u32;
+    }
+    let Encoded: bytes = Databaseˉtransactionˉbranchˉpartitionˉencode(
+        Branchˉcount, Finalˉcount, Applied, Maximumˉpayload, Branches
+    );
+    let Checked: Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Databaseˉtransactionˉbranchˉpartitionˉdecode(Encoded);
+    if Checked.Error != Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉoutput
+        );
+    }
+    return Checked;
+}
+
+export fn Databaseˉtransactionˉbranchˉpartitionˉdecode(
+    Input: bytes
+) -> Databaseˉtransactionˉbranchˉpartitionˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES ||
+        Total > DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TRANSACTION_BRANCH_PARTITION_MAGIC {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TRANSACTION_BRANCH_PARTITION_VERSION {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉheader
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 1u32 {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉflags
+        );
+    }
+    let Branchˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Appliedˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Maximumˉpayload: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Branchˉcount == 0u32 ||
+        Branchˉcount > DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_BRANCHES ||
+        Entryˉcount == 0u32 ||
+        Entryˉcount > DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_ENTRIES ||
+        Appliedˉcount == 0u32 || Appliedˉcount > 32u32 ||
+        Maximumˉpayload < DATABASE_TREE_NODE_HEADER_BYTES ||
+        Maximumˉpayload > DATABASE_TREE_NODE_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉcount
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != Total {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉtotalˉlength
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Countedˉentries: u32 = 0u32;
+    var Previousˉlast: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+    while Index < Branchˉcount {
+        if Cursor > Total ||
+            Total - Cursor < DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉpartition
+            );
+        }
+        let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Partitionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        if Separatorˉlength > 4096u32 ||
+            Payloadˉlength < DATABASE_TREE_NODE_HEADER_BYTES ||
+            Payloadˉlength > Maximumˉpayload ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32) != 0u32 ||
+            Separatorˉlength > Total - Cursor - DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES ||
+            Payloadˉlength > Total - Cursor - DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES - Separatorˉlength ||
+            Index == 0u32 && Separatorˉlength != 0u32 ||
+            Index > 0u32 && Separatorˉlength == 0u32 || Partitionˉentries == 0u32 {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉpartition
+            );
+        }
+        let Separator: bytes = Bytesˉslice(
+            Input, Cursor + DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES,
+            Separatorˉlength
+        );
+        let Payload: bytes = Bytesˉslice(
+            Input,
+            Cursor + DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES + Separatorˉlength,
+            Payloadˉlength
+        );
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+            Node.Entryˉcount != Partitionˉentries {
+            return Databaseˉtransactionˉbranchˉpartitionˉfailure(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉpartition,
+                Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+                Node.Error
+            );
+        }
+        let Firstˉlength: u32 = Bytesˉreadˉu32ˉlittle(Payload, DATABASE_TREE_NODE_HEADER_BYTES);
+        let First: bytes = Bytesˉslice(
+            Payload, DATABASE_TREE_NODE_HEADER_BYTES + 16u32, Firstˉlength
+        );
+        var Nodeˉcursor: u32 = DATABASE_TREE_NODE_HEADER_BYTES;
+        var Nodeˉindex: u32 = 0u32;
+        var Last: bytes = First;
+        while Nodeˉindex < Node.Entryˉcount {
+            let Nodeˉseparatorˉlength: u32 =
+                Bytesˉreadˉu32ˉlittle(Payload, Nodeˉcursor);
+            Last = Bytesˉslice(
+                Payload, Nodeˉcursor + 16u32, Nodeˉseparatorˉlength
+            );
+            Nodeˉcursor = Nodeˉcursor + 16u32 + Nodeˉseparatorˉlength;
+            Nodeˉindex = Nodeˉindex + 1u32;
+        }
+        if Index > 0u32 && (
+                Tree.Databaseˉtreeˉkeyˉcompare(Previousˉlast, Separator) !=
+                    Tree.Databaseˉtreeˉkeyˉorder.Less ||
+                Tree.Databaseˉtreeˉkeyˉcompare(Separator, First) !=
+                    Tree.Databaseˉtreeˉkeyˉorder.Less
+            ) {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉpartition
+            );
+        }
+        if Countedˉentries > DATABASE_TRANSACTION_BRANCH_PARTITION_MAXIMUM_ENTRIES - Partitionˉentries {
+            return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉcount
+            );
+        }
+        Countedˉentries = Countedˉentries + Partitionˉentries;
+        Previousˉlast = Last;
+        Cursor = Cursor + DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES +
+            Separatorˉlength + Payloadˉlength;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total || Countedˉentries + Branchˉcount - 1u32 != Entryˉcount {
+        return Databaseˉtransactionˉbranchˉpartitionˉsimpleˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉpartition
+        );
+    }
+    return Databaseˉtransactionˉbranchˉpartitionˉresult(
+        Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Branchˉcount, Entryˉcount, Appliedˉcount, Maximumˉpayload,
+        Databaseˉtransactionˉbranchˉpartitionˉcopy(Input)
+    );
+}
+
+fn Databaseˉtransactionˉbranchˉpartitionˉbranchˉfailure(
+    Error: Databaseˉtransactionˉbranchˉpartitionˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtransactionˉbranchˉpartitionˉbranch {
+    let Empty: bytes = Databaseˉtransactionˉbranchˉpartitionˉempty();
+    return Databaseˉtransactionˉbranchˉpartitionˉbranch(
+        Error, Nodeˉerror, Empty, 0u32, Empty
+    );
+}
+
+export fn Databaseˉtransactionˉbranchˉpartitionˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉtransactionˉbranchˉpartitionˉbranch {
+    let Decoded: Databaseˉtransactionˉbranchˉpartitionˉresult =
+        Databaseˉtransactionˉbranchˉpartitionˉdecode(Input);
+    if Decoded.Error != Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+        return Databaseˉtransactionˉbranchˉpartitionˉbranchˉfailure(
+            Decoded.Error, Decoded.Nodeˉerror
+        );
+    }
+    if Requested >= Decoded.Branchˉcount {
+        return Databaseˉtransactionˉbranchˉpartitionˉbranchˉfailure(
+            Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉindex,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_BRANCH_PARTITION_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    while Index < Decoded.Branchˉcount {
+        let Separatorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor);
+        let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 4u32);
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Decoded.Bytes, Cursor + 8u32);
+        if Index == Requested {
+            return Databaseˉtransactionˉbranchˉpartitionˉbranch(
+                Databaseˉtransactionˉbranchˉpartitionˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                Databaseˉtransactionˉbranchˉpartitionˉcopy(
+                    Bytesˉslice(
+                        Decoded.Bytes,
+                        Cursor + DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES,
+                        Separatorˉlength
+                    )
+                ),
+                Entryˉcount,
+                Databaseˉtransactionˉbranchˉpartitionˉcopy(
+                    Bytesˉslice(
+                        Decoded.Bytes,
+                        Cursor + DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES + Separatorˉlength,
+                        Payloadˉlength
+                    )
+                )
+            );
+        }
+        Cursor = Cursor + DATABASE_TRANSACTION_BRANCH_PARTITION_RECORD_BYTES +
+            Separatorˉlength + Payloadˉlength;
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉbranchˉpartitionˉbranchˉfailure(
+        Databaseˉtransactionˉbranchˉpartitionˉerror.Invalidˉindex,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid
+    );
+}

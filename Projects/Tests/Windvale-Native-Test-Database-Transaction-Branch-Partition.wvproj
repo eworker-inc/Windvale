@@ -1,0 +1,6 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Transaction-Branch-Partition-Self-Test.wv"
+source "Libraries/Database/Transaction-Branch-Partition.wv"
+source "Libraries/Database/Transaction-Child-Replacements.wv"
+source "Libraries/Database/Tree-Node.wv"
+emit wvb

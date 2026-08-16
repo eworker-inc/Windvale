@@ -1893,6 +1893,21 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-leaf-pages'
     },
     @{
+        Name = 'focused database transaction-branch-partition owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Child-Replacements.wv',
+            'Libraries/Database/Transaction-Branch-Partition.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Branch-Partition-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Child-Replacements.md',
+            'Specifications/Windvale-Database-Transaction-Branch-Partition.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-branch-partition'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',
