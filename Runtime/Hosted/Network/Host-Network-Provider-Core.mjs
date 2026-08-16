@@ -138,7 +138,15 @@ function Resolveˉaddresses(DefaultResolver, Service, Deadline) {
     });
 }
 
-function Connectˉaddresses(Addresses, Port, Deadline, MaximumQueuedBytes, SocketFactory) {
+function Connectˉaddresses(
+    Addresses,
+    Port,
+    Deadline,
+    MaximumQueuedBytes,
+    SocketFactory,
+    SocketReadyEvent,
+    ValidateConnectedSocket,
+) {
     return new Promise((Resolve, Reject) => {
         const Sockets = new Set();
         const LaunchTimers = new Set();
@@ -185,11 +193,23 @@ function Connectˉaddresses(Addresses, Port, Deadline, MaximumQueuedBytes, Socke
                 return;
             }
             Sockets.add(Socket);
-            Socket.once("connect", () => {
+            let SocketFinished = false;
+            Socket.once(SocketReadyEvent, () => {
                 if (Settled) {
                     Socket.destroy();
                     return;
                 }
+                try { ValidateConnectedSocket(Socket); } catch {
+                    SocketFinished = true;
+                    Failed += 1;
+                    Sockets.delete(Socket);
+                    Socket.destroy();
+                    if (Launched === Addresses.length && Failed === Addresses.length) {
+                        Completeˉfailure(Hostˉnetworkˉstatus.Unavailable);
+                    }
+                    return;
+                }
+                SocketFinished = true;
                 Settled = true;
                 clearTimeout(DeadlineTimer);
                 for (const Timer of LaunchTimers) clearTimeout(Timer);
@@ -197,6 +217,8 @@ function Connectˉaddresses(Addresses, Port, Deadline, MaximumQueuedBytes, Socke
                 Resolve(Socket);
             });
             Socket.once("error", () => {
+                if (SocketFinished) return;
+                SocketFinished = true;
                 Failed += 1;
                 Sockets.delete(Socket);
                 if (!Settled && Launched === Addresses.length && Failed === Addresses.length) {
@@ -230,6 +252,8 @@ export class Hostˉnetworkˉprovider {
         maximumLifetimeMilliseconds = 3_600_000,
         resolver = dns.lookup,
         socketFactory = net.createConnection,
+        socketReadyEvent = "connect",
+        validateConnectedSocket = () => {},
     }) {
         if (!Canonicalˉservice(service)) throw new Error("Service authority is invalid.");
         this.service = service;
@@ -244,11 +268,15 @@ export class Hostˉnetworkˉprovider {
         this.expiresAt = process.hrtime.bigint() + BigInt(Positiveˉinteger(
             maximumLifetimeMilliseconds, 86_400_000, "Provider lifetime",
         )) * 1_000_000n;
-        if (typeof resolver !== "function" || typeof socketFactory !== "function") {
+        if (typeof resolver !== "function" || typeof socketFactory !== "function" ||
+            !["connect", "secureConnect"].includes(socketReadyEvent) ||
+            typeof validateConnectedSocket !== "function") {
             throw new Error("Host-network mechanism is invalid.");
         }
         this.resolver = resolver;
         this.socketFactory = socketFactory;
+        this.socketReadyEvent = socketReadyEvent;
+        this.validateConnectedSocket = validateConnectedSocket;
         this.connections = new Map();
         this.nextConnectionId = 1n;
         this.activeConnects = 0;
@@ -325,6 +353,8 @@ export class Hostˉnetworkˉprovider {
                 Request.deadlineNanoseconds,
                 this.maximumQueuedBytes,
                 this.socketFactory,
+                this.socketReadyEvent,
+                this.validateConnectedSocket,
             );
         } finally {
             this.activeConnects -= 1;

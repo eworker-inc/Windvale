@@ -4,13 +4,15 @@
 
 - Date: 2026-08-15
 - Status: Active implementation; slices 1 and 2, the Layer 3 contract core, and
-  the first supervised slice 4 bootstrap provider are implemented candidates under
+  the first supervised resolver/TCP and TLS 1.3 bootstrap providers are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
   [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
   [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
-  and [Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md).
-  The hosted provider has isolated Windows execution evidence; independent
-  Linux execution and the native capability bridge remain pending, so no
+  [Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md),
+  and [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md).
+  Resolver/TCP has independent Windows/Linux execution evidence. TLS has
+  isolated Windows evidence; its independent Linux execution and the native
+  capability bridge remain pending, so no
   production network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -205,7 +207,8 @@ MTU change, exhaustion, reset, and provider loss without using the public Intern
 ### Network slice 4: host semantic providers
 
 Status: bootstrap mechanism implemented under
-[Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md);
+[Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md)
+and [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md);
 production bridge and promotion remain pending.
 
 Bind constrained Windows and Linux resolver/connect, stream, datagram, monotonic
@@ -222,9 +225,15 @@ The first supervised provider now binds one exact service/port and finite
 connection, byte, deadline, and lifetime limits. It performs host `getaddrinfo`
 and real TCP connect/read/write/half-close through pinned Node in a child with an
 empty environment and strict `WVNR/WVNS 1` framing. Twenty-five isolated
-loopback cases pass on Windows. The source and owner are shared with Linux, but
-independent Linux execution, the Windvale capability-table/timer bridge, and
-thin Node-free Winsock/Linux leaves remain required by this slice's exit gate.
+loopback cases pass independently on Windows and Linux. The Windvale
+capability-table/timer bridge and thin Node-free Winsock/Linux leaves remain
+required by this slice's exit gate.
+
+The supervised TLS provider fixes TLS 1.3, exact service identity, ALPN, trust
+generation, and trust-snapshot digest above the same bounded stream. Fifteen
+isolated cases pass on Windows with only in-memory ephemeral key material.
+Independent Linux execution, typed peer evidence, capability/timer binding, and
+native secure-transport leaves remain required before production promotion.
 
 ### Network slice 5: shared secure HTTP retrieval
 
@@ -274,12 +283,12 @@ and cryptographic vectors.
 
 ## Immediate recommendation
 
-The `v0.1.0` offline installer and release subset is complete, and Decision 0598
+The `v0.1.0` offline installer and release subset is complete, and Decisions 0598 and 0599
 now supplies two selected Milestone 5 consumers: official package retrieval and
 the external-model gateway. Preserve the implemented slice 1 and slice 2
-candidates, close the independent Linux execution gaps, bind the supervised
-host provider through the native capability table and timer contract, then
-advance secure transport and shared bounded HTTP framing without weakening the
+candidates, close TLS's independent Linux execution gap, bind the supervised
+providers through the native capability table and timer contract, then advance
+shared bounded HTTP framing without weakening the
 separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking
 does not claim completion of the independent Windvale OS packet, driver, or TCP

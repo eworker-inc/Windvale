@@ -846,14 +846,38 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Bound-Model-Provider.md'
     )) {
         Add-Suite 'model-provider'
-    } elseif ($Path.StartsWith('Runtime/Hosted/Network/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
+    } elseif ($Path -in @(
+        'Runtime/Hosted/Network/Host-Network-Protocol.mjs',
+        'Runtime/Hosted/Network/Host-Network-Provider-Core.mjs',
+        'Runtime/Hosted/Network/Host-Network-Provider-Process.mjs',
+        'Runtime/Hosted/Network/Host-Network-Supervisor.mjs'
+    )) {
+        Add-Suite @('host-network-provider', 'host-tls-provider')
+    } elseif ($Path -in @(
+        'Runtime/Hosted/Network/Host-Network-Provider.mjs',
+        'Tools/Network/Test-Host-Network-Provider.mjs',
+        'Tools/Native/Test-Host-Network-Provider.cmd',
+        'Tools/Native/Test-Host-Network-Provider.sh',
+        'Specifications/Host-Network-Provider.md'
+    )) {
+        Add-Suite 'host-network-provider'
+    } elseif ($Path -in @(
+        'Runtime/Hosted/Network/Host-Tls-Provider-Core.mjs',
+        'Runtime/Hosted/Network/Host-Tls-Provider.mjs',
+        'Runtime/Hosted/Network/Host-Tls-Supervisor.mjs',
+        'Tools/Network/Ephemeral-Tls-Fixture.mjs',
+        'Tools/Network/Test-Host-Tls-Provider.mjs',
+        'Tools/Native/Test-Host-Tls-Provider.cmd',
+        'Tools/Native/Test-Host-Tls-Provider.sh',
+        'Specifications/Host-Tls-Provider.md'
+    )) {
+        Add-Suite 'host-tls-provider'
+    } elseif ($Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-Host-Network-Provider.cmd',
-            'Tools/Native/Test-Host-Network-Provider.sh',
-            'Specifications/Host-Network-Provider.md'
+            'Tools/Native/Test-Host-Network-Provider.sh'
         )) {
-        Add-Suite 'host-network-provider'
+        Add-Suite @('host-network-provider', 'host-tls-provider')
     } elseif ($Path.StartsWith('Tools/Models/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-External-Model-Reference.cmd',

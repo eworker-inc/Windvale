@@ -1,7 +1,7 @@
 # Decision 0598: First supervised host resolver and stream provider
 
 - Date: 2026-08-15
-- Status: Implemented bootstrap candidate with isolated Windows execution evidence
+- Status: Implemented bootstrap candidate with isolated Windows and Linux execution evidence
 - Advances: network slice 4 in the
   [networking-foundation plan](../Project/Windvale-Networking-Foundation-Implementation-Plan.md)
 - Contract: [host network provider](../../Specifications/Host-Network-Provider.md)
@@ -56,14 +56,14 @@ supervision contract would expose mechanism without an authority boundary.
 
 Windows and Linux now have one executable hosted resolver/TCP mechanism and a
 supervisor protocol that can be connected to the Windvale provider table. The
-current source runs on both host Node runtimes; the accepted local evidence is
-Windows only until the Linux owner executes independently.
+focused owner passed independently on Windows and Ubuntu in verification run
+31920690046.
 
 This is not completion of production network slice 4. Node is a temporary
 bootstrap host adapter, not the semantic definition or final native runtime
 leaf. The next work must bind the protocol through the Windvale capability
-table and timer contract, obtain independent Linux execution, and replace or
-qualify the Node mechanism with thin Winsock and Linux native leaves in the
+table and timer contract and replace or qualify the Node mechanism with thin
+Winsock and Linux native leaves in the
 hosted executable container. TLS, trust, entropy, HTTP, credential custody, and
 the model gateway remain above that boundary.
 

@@ -35,7 +35,14 @@ export class Hostˉnetworkˉsupervisor {
         maximumTransferBytes = 16_777_216n,
         maximumOperationMilliseconds = 30_000,
         maximumLifetimeMilliseconds = 3_600_000,
+        providerPath = PROVIDER_PATH,
+        providerArguments = [],
     }) {
+        if (typeof providerPath !== "string" || providerPath.length < 1 ||
+            !Array.isArray(providerArguments) ||
+            providerArguments.some(Value => typeof Value !== "string")) {
+            throw new Error("Host-network provider launch is invalid.");
+        }
         this.generation = generation;
         this.maximumOperationMilliseconds = maximumOperationMilliseconds;
         this.nextRequestId = 1n;
@@ -44,7 +51,7 @@ export class Hostˉnetworkˉsupervisor {
         this.closed = false;
         this.stderrBytes = 0;
         const Arguments = [
-            PROVIDER_PATH,
+            providerPath,
             "--service", service,
             "--port", Decimal(port, 65_535, "Port authority"),
             "--generation", U64(generation, "Provider generation"),
@@ -53,6 +60,7 @@ export class Hostˉnetworkˉsupervisor {
             "--max-transfer-bytes", U64(maximumTransferBytes, "Transfer limit"),
             "--max-operation-ms", Decimal(maximumOperationMilliseconds, 300_000, "Operation span"),
             "--max-lifetime-ms", Decimal(maximumLifetimeMilliseconds, 86_400_000, "Provider lifetime"),
+            ...providerArguments,
         ];
         this.child = spawn(process.execPath, Arguments, {
             stdio: ["pipe", "pipe", "pipe"],

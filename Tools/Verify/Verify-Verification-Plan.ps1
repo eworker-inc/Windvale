@@ -1164,18 +1164,43 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'host network provider owner'
+        Name = 'shared host stream mechanism owners'
         Paths = @(
             'Runtime/Hosted/Network/Host-Network-Protocol.mjs',
             'Runtime/Hosted/Network/Host-Network-Provider-Core.mjs',
+            'Runtime/Hosted/Network/Host-Network-Provider-Process.mjs',
+            'Runtime/Hosted/Network/Host-Network-Supervisor.mjs'
+        )
+        Suites = @('host-network-provider', 'host-tls-provider')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'host network provider owner'
+        Paths = @(
             'Runtime/Hosted/Network/Host-Network-Provider.mjs',
-            'Runtime/Hosted/Network/Host-Network-Supervisor.mjs',
             'Tools/Network/Test-Host-Network-Provider.mjs',
             'Tools/Native/Test-Host-Network-Provider.cmd',
             'Tools/Native/Test-Host-Network-Provider.sh',
             'Specifications/Host-Network-Provider.md'
         )
         Suites = @('host-network-provider')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'host TLS provider owner'
+        Paths = @(
+            'Runtime/Hosted/Network/Host-Tls-Provider-Core.mjs',
+            'Runtime/Hosted/Network/Host-Tls-Provider.mjs',
+            'Runtime/Hosted/Network/Host-Tls-Supervisor.mjs',
+            'Tools/Network/Ephemeral-Tls-Fixture.mjs',
+            'Tools/Network/Test-Host-Tls-Provider.mjs',
+            'Tools/Native/Test-Host-Tls-Provider.cmd',
+            'Tools/Native/Test-Host-Tls-Provider.sh',
+            'Specifications/Host-Tls-Provider.md'
+        )
+        Suites = @('host-tls-provider')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1853,7 +1878,7 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 76 -or
+if ($VerificationOwnerLines.Count -ne 77 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
     throw 'The native verification-owner header or exact 75-owner inventory differs.'
 }
@@ -1893,7 +1918,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3649 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3664 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

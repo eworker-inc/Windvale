@@ -87,6 +87,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Bound hosted model provider](Windvale-Bound-Model-Provider.md)
 - [External-model reference oracle](Windvale-External-Model-Reference.md)
 - [Supervised host network provider](Host-Network-Provider.md)
+- [Supervised host TLS 1.3 provider](Host-Tls-Provider.md)
 
 ## Networking
 

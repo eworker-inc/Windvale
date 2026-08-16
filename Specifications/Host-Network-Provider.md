@@ -16,9 +16,9 @@ uses operating-system name-resolution facilities and `getaddrinfo`, while
 client sockets, write completion, paused reads, errors, and half-close. These
 mechanisms are host implementation details, not Windvale semantics.
 
-The current local evidence is Windows. The same owner and source are selected
-for Linux, but an independent Linux execution result is still required. The
-provider is a bootstrap mechanism pending a provider-table bridge, native timer
+The same owner and source passed independently on Windows and Ubuntu in
+verification run 31920690046. The provider is a bootstrap mechanism pending a
+provider-table bridge, native timer
 binding, and Node-free Winsock/Linux leaves; it is not yet a production network
 slice completion claim.
 
