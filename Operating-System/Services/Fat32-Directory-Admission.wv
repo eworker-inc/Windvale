@@ -1,0 +1,161 @@
+module Fat32ˉdirectoryˉadmission profile portable;
+
+const DIRECTORY_ENTRY_BYTES: u32 = 32u32;
+const MAXIMUM_DIRECTORY_ENTRIES: u32 = 4096u32;
+const MAXIMUM_DATA_CLUSTER: u32 = 268435439u32;
+
+export enum Fat32ˉdirectoryˉstatus {
+    Found = 0; Missing = 1; Invalidˉinput = 2;
+    Invalidˉtarget = 3; Budgetˉexceeded = 4;
+    Invalidˉentry = 5; Duplicate = 6; Truncated = 7;
+}
+
+export enum Fat32ˉdirectoryˉkind {
+    None = 0; File = 1; Directory = 2;
+}
+
+export record Fat32ˉdirectoryˉresult {
+    Status: Fat32ˉdirectoryˉstatus;
+    Kind: Fat32ˉdirectoryˉkind;
+    Entryˉindex: u32;
+    Firstˉcluster: u32;
+    Fileˉsize: u32;
+}
+
+fn Result(Status: Fat32ˉdirectoryˉstatus) -> Fat32ˉdirectoryˉresult {
+    return Fat32ˉdirectoryˉresult(
+        Status, Fat32ˉdirectoryˉkind.None, 0u32, 0u32, 0u32
+    );
+}
+
+fn Targetˉisˉvalid(Target: bytes) -> bool {
+    if Bytesˉlength(Target) != 11u32 ||
+        Bytesˉreadˉu8(Target, 0u32) == 32u8 { return false; }
+    var Index: u32 = 0u32;
+    var Padding: bool = false;
+    while Index < 11u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Target, Index));
+        if Index == 8u32 { Padding = false; }
+        if Value == 32u32 {
+            Padding = true;
+        } else {
+            if Padding { return false; }
+            if !((Value >= 65u32 && Value <= 90u32) ||
+                (Value >= 48u32 && Value <= 57u32) ||
+                Value == 45u32 || Value == 95u32) { return false; }
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Nameˉmatches(Input: bytes, Offset: u32, Target: bytes) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 11u32 {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Target, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Fat32ˉdirectoryˉlookup(
+    Input: bytes,
+    Target: bytes,
+    Maximumˉentries: u32,
+    Chainˉcomplete: bool
+) -> Fat32ˉdirectoryˉresult {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 || Length % DIRECTORY_ENTRY_BYTES != 0u32 {
+        return Result(Fat32ˉdirectoryˉstatus.Invalidˉinput);
+    }
+    if !Targetˉisˉvalid(Target) {
+        return Result(Fat32ˉdirectoryˉstatus.Invalidˉtarget);
+    }
+    let Entries: u32 = Length / DIRECTORY_ENTRY_BYTES;
+    if Maximumˉentries == 0u32 ||
+        Maximumˉentries > MAXIMUM_DIRECTORY_ENTRIES ||
+        Entries > Maximumˉentries {
+        return Result(Fat32ˉdirectoryˉstatus.Budgetˉexceeded);
+    }
+    var Found: bool = false;
+    var Foundˉkind: Fat32ˉdirectoryˉkind = Fat32ˉdirectoryˉkind.None;
+    var Foundˉindex: u32 = 0u32;
+    var Foundˉcluster: u32 = 0u32;
+    var Foundˉsize: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Entries {
+        let Offset: u32 = Index * DIRECTORY_ENTRY_BYTES;
+        let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+        if First == 0u32 {
+            if Found {
+                return Fat32ˉdirectoryˉresult(
+                    Fat32ˉdirectoryˉstatus.Found, Foundˉkind,
+                    Foundˉindex, Foundˉcluster, Foundˉsize
+                );
+            }
+            return Result(Fat32ˉdirectoryˉstatus.Missing);
+        }
+        if First != 229u32 {
+            let Attributes: u32 =
+                U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 11u32));
+            if Attributes != 15u32 {
+                if (Attributes & 192u32) != 0u32 ||
+                    ((Attributes & 8u32) != 0u32 &&
+                    (Attributes & 16u32) != 0u32) {
+                    return Result(Fat32ˉdirectoryˉstatus.Invalidˉentry);
+                }
+                let High: u32 = Bytesˉreadˉu16ˉlittle(Input, Offset + 20u32);
+                let Low: u32 = Bytesˉreadˉu16ˉlittle(Input, Offset + 26u32);
+                if (High & 61440u32) != 0u32 {
+                    return Result(Fat32ˉdirectoryˉstatus.Invalidˉentry);
+                }
+                let Cluster: u32 = High * 65536u32 + Low;
+                let Size: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 28u32);
+                if Cluster != 0u32 &&
+                    (Cluster < 2u32 || Cluster > MAXIMUM_DATA_CLUSTER) {
+                    return Result(Fat32ˉdirectoryˉstatus.Invalidˉentry);
+                }
+                if (Attributes & 8u32) != 0u32 {
+                    if Cluster != 0u32 || Size != 0u32 {
+                        return Result(Fat32ˉdirectoryˉstatus.Invalidˉentry);
+                    }
+                } else {
+                    var Kind: Fat32ˉdirectoryˉkind =
+                        Fat32ˉdirectoryˉkind.File;
+                    if (Attributes & 16u32) != 0u32 {
+                        Kind = Fat32ˉdirectoryˉkind.Directory;
+                        if Cluster < 2u32 || Size != 0u32 {
+                            return Result(
+                                Fat32ˉdirectoryˉstatus.Invalidˉentry
+                            );
+                        }
+                    } else if Size != 0u32 && Cluster < 2u32 {
+                        return Result(Fat32ˉdirectoryˉstatus.Invalidˉentry);
+                    }
+                    if Nameˉmatches(Input, Offset, Target) {
+                        if Found {
+                            return Result(Fat32ˉdirectoryˉstatus.Duplicate);
+                        }
+                        Found = true;
+                        Foundˉkind = Kind;
+                        Foundˉindex = Index;
+                        Foundˉcluster = Cluster;
+                        Foundˉsize = Size;
+                    }
+                }
+            }
+        }
+        Index = Index + 1u32;
+    }
+    if !Chainˉcomplete {
+        return Result(Fat32ˉdirectoryˉstatus.Truncated);
+    }
+    if Found {
+        return Fat32ˉdirectoryˉresult(
+            Fat32ˉdirectoryˉstatus.Found, Foundˉkind,
+            Foundˉindex, Foundˉcluster, Foundˉsize
+        );
+    }
+    return Result(Fat32ˉdirectoryˉstatus.Missing);
+}

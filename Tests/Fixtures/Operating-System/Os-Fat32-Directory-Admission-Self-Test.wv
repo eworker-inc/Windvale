@@ -1,0 +1,140 @@
+module Osˉfat32ˉdirectoryˉadmissionˉselfˉtest profile portable;
+
+import Fat32ˉdirectoryˉadmission as Directory;
+
+data Target: bytes = [75,69,82,78,69,76,32,32,87,86,66];
+data Other: bytes = [79,84,72,69,82,32,32,32,66,73,78];
+data Lowercase: bytes = [107,69,82,78,69,76,32,32,87,86,66];
+data Emptyˉentry: bytes = [
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+];
+
+fn Replaceˉbytes(Input: bytes, Offset: u32, Value: bytes) -> bytes {
+    let Tail: u32 = Offset + Bytesˉlength(Value);
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Tail, Bytesˉlength(Input) - Tail)
+    );
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Replaceˉbytes(Input, Offset, Bytesˉfromˉu8(Value));
+}
+
+fn Replaceˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replaceˉbytes(Input, Offset, Bytesˉfromˉu16ˉlittle(Value));
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replaceˉbytes(Input, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Entry(Name: bytes, Attributes: u8, Cluster: u32, Size: u32) -> bytes {
+    var Value: bytes = Emptyˉentry;
+    Value = Replaceˉbytes(Value, 0u32, Name);
+    Value = Replaceˉu8(Value, 11u32, Attributes);
+    Value = Replaceˉu16(Value, 20u32, Cluster / 65536u32);
+    Value = Replaceˉu16(Value, 26u32, Cluster % 65536u32);
+    return Replaceˉu32(Value, 28u32, Size);
+}
+
+fn Status(
+    Input: bytes,
+    Name: bytes,
+    Maximum: u32,
+    Complete: bool
+) -> Directory.Fat32ˉdirectoryˉstatus {
+    let Result: Directory.Fat32ˉdirectoryˉresult =
+        Directory.Fat32ˉdirectoryˉlookup(
+            Input, Name, Maximum, Complete
+        );
+    return Result.Status;
+}
+
+export fn Main() -> i32 {
+    let Foundˉdirectory: bytes = Bytesˉconcat(
+        Entry(Other, 15u8, 0u32, 0u32),
+        Bytesˉconcat(Entry(Target, 32u8, 5u32, 3072u32), Emptyˉentry)
+    );
+    let File: Directory.Fat32ˉdirectoryˉresult =
+        Directory.Fat32ˉdirectoryˉlookup(
+            Foundˉdirectory, Target, 3u32, false
+        );
+    if File.Status != Directory.Fat32ˉdirectoryˉstatus.Found ||
+        File.Kind != Directory.Fat32ˉdirectoryˉkind.File ||
+        File.Entryˉindex != 1u32 || File.Firstˉcluster != 5u32 ||
+        File.Fileˉsize != 3072u32 { return 2; }
+    if Status(
+        Bytesˉconcat(Entry(Other, 32u8, 4u32, 1u32), Emptyˉentry),
+        Target, 2u32, false
+    ) != Directory.Fat32ˉdirectoryˉstatus.Missing { return 3; }
+    if Status(
+        Bytesˉslice(Emptyˉentry, 0u32, 31u32), Target, 1u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉinput { return 4; }
+    if Status(Emptyˉentry, Lowercase, 1u32, true) !=
+        Directory.Fat32ˉdirectoryˉstatus.Invalidˉtarget { return 5; }
+    if Status(Emptyˉentry, Target, 0u32, true) !=
+        Directory.Fat32ˉdirectoryˉstatus.Budgetˉexceeded { return 6; }
+    if Status(Foundˉdirectory, Target, 2u32, true) !=
+        Directory.Fat32ˉdirectoryˉstatus.Budgetˉexceeded { return 7; }
+    if Status(
+        Bytesˉconcat(Entry(Other, 64u8, 4u32, 1u32), Emptyˉentry),
+        Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 8; }
+    if Status(
+        Bytesˉconcat(Entry(Other, 32u8, 0u32, 1u32), Emptyˉentry),
+        Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 9; }
+    let Folder: Directory.Fat32ˉdirectoryˉresult =
+        Directory.Fat32ˉdirectoryˉlookup(
+            Bytesˉconcat(Entry(Target, 16u8, 2u32, 0u32), Emptyˉentry),
+            Target, 2u32, true
+        );
+    if Folder.Status != Directory.Fat32ˉdirectoryˉstatus.Found ||
+        Folder.Kind != Directory.Fat32ˉdirectoryˉkind.Directory { return 10; }
+    if Status(
+        Bytesˉconcat(Entry(Target, 16u8, 0u32, 0u32), Emptyˉentry),
+        Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 11; }
+    if Status(
+        Bytesˉconcat(Entry(Target, 16u8, 2u32, 1u32), Emptyˉentry),
+        Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 12; }
+    if Status(
+        Bytesˉconcat(
+            Entry(Target, 32u8, 5u32, 1u32),
+            Bytesˉconcat(Entry(Target, 32u8, 6u32, 1u32), Emptyˉentry)
+        ), Target, 3u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Duplicate { return 13; }
+    if Status(Entry(Target, 32u8, 5u32, 1u32), Target, 1u32, false) !=
+        Directory.Fat32ˉdirectoryˉstatus.Truncated { return 14; }
+    if Status(Entry(Target, 32u8, 5u32, 1u32), Target, 1u32, true) !=
+        Directory.Fat32ˉdirectoryˉstatus.Found { return 15; }
+    let Deleted: bytes = Replaceˉu8(
+        Entry(Target, 32u8, 5u32, 1u32), 0u32, 229u8
+    );
+    if Status(Bytesˉconcat(Deleted, Emptyˉentry), Target, 2u32, true) !=
+        Directory.Fat32ˉdirectoryˉstatus.Missing { return 16; }
+    if Status(
+        Bytesˉconcat(
+            Entry(Other, 8u8, 0u32, 0u32),
+            Bytesˉconcat(Entry(Target, 32u8, 5u32, 1u32), Emptyˉentry)
+        ), Target, 3u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Found { return 17; }
+    if Status(
+        Bytesˉconcat(
+            Entry(Target, 32u8, 4026531845u32, 1u32), Emptyˉentry
+        ), Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 18; }
+    if Status(
+        Bytesˉconcat(Entry(Other, 24u8, 0u32, 0u32), Emptyˉentry),
+        Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 19; }
+    if Status(
+        Bytesˉconcat(
+            Entry(Target, 32u8, 268435447u32, 1u32), Emptyˉentry
+        ), Target, 2u32, true
+    ) != Directory.Fat32ˉdirectoryˉstatus.Invalidˉentry { return 20; }
+    return 47;
+}

@@ -51,7 +51,8 @@ geometry, first and second FAT location, high-nibble masking, alternate EOC,
 free, reserved, bad, out-of-range, cyclic, truncated, trailing, malformed, and
 over-budget traces.
 
-This slice does not perform block I/O, compare mirrored FAT copies, preserve a
-trace across provider restart, parse directories, or read cluster data. Those
-remain service-composition work rather than properties of this pure admission
-boundary.
+Directory-entry admission is implemented as a separate consumer of completed
+cluster data. This slice does not perform block I/O, compare mirrored FAT
+copies, preserve a trace across provider restart, assemble long names, or read
+file data. Those remain service-composition work rather than properties of this
+pure admission boundary.

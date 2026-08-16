@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Fat32-Directory-Admission-Self-Test.wv"
+source "Operating-System/Services/Fat32-Directory-Admission.wv"
+emit wvb

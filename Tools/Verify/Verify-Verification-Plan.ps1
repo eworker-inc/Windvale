@@ -1285,12 +1285,17 @@ $NativeCases = @(
         Paths = @(
             'Operating-System/Services/Fat32-Volume-Admission.wv',
             'Operating-System/Services/Fat32-Cluster-Chain.wv',
+            'Operating-System/Services/Fat32-Directory-Admission.wv',
             'Projects/Operating-System/Windvale-Os-Fat32-Volume-Admission.wvproj',
             'Projects/Operating-System/Windvale-Os-Fat32-Cluster-Chain.wvproj',
+            'Projects/Operating-System/Windvale-Os-Fat32-Directory-Admission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Fat32-Volume-Admission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Fat32-Directory-Admission.wvproj',
             'Tests/Fixtures/Operating-System/Os-Fat32-Volume-Admission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-Fat32-Directory-Admission-Self-Test.wv',
             'Specifications/Windvale-Os-Fat32-Volume-Admission.md',
-            'Specifications/Windvale-Os-Fat32-Cluster-Chain.md'
+            'Specifications/Windvale-Os-Fat32-Cluster-Chain.md',
+            'Specifications/Windvale-Os-Fat32-Directory-Admission.md'
         )
         Suites = @('os-fat32-volume', 'native-u64-lowering')
         Gaps = @()
@@ -2608,7 +2613,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4374 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4393 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

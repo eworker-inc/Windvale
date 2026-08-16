@@ -274,6 +274,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [OS filesystem service protocol](Windvale-Os-Filesystem-Service.md)
 - [OS FAT32 volume admission](Windvale-Os-Fat32-Volume-Admission.md)
 - [OS FAT32 cluster-chain admission](Windvale-Os-Fat32-Cluster-Chain.md)
+- [OS FAT32 directory admission](Windvale-Os-Fat32-Directory-Admission.md)
 - [OS FAT32 block-read transaction](Windvale-Os-Fat32-Block-Read-Transaction.md)
 - [OS FAT32 block-provider protocol](Windvale-Os-Fat32-Block-Provider-Protocol.md)
 - [OS FAT32 block-exchange state](Windvale-Os-Fat32-Block-Exchange-State.md)

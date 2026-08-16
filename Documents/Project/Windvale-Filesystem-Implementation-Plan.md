@@ -102,9 +102,12 @@ volume cases pass. Cluster-chain admission 1 now locates selected-FAT entries,
 masks the reserved high nibble, classifies every special value, rejects cycles
 and truncated/trailing traces, and enforces a caller-selected ceiling no larger
 than 4,096 clusters. The combined 45-case owner passes in paired native images.
-FSInfo/backup content validation, mirrored-FAT comparison, directory parsing,
-live block-provider IPC, media removal, and file data reads remain before slice
-4 is complete. Block-read transaction 1 now admits a generation-safe,
+FSInfo/backup content validation, mirrored-FAT comparison, long-name/path
+mapping, live block-provider IPC, media removal, and file data reads remain
+before slice 4 is complete. Short-directory admission now bounds one through
+4,096 entries, validates attributes and cluster/size fields, distinguishes
+files and directories, detects duplicate targets, and separates an end marker
+from an incomplete chain. Block-read transaction 1 admits a generation-safe,
 rights-limited sector grant, plans at most eight exact sectors, and distinguishes
 stale, unavailable, lost-provider, and invalid-payload completion. Its 14-case
 native owner passes; this is policy evidence rather than a hardware-driver

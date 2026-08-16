@@ -90,7 +90,10 @@ ceiling, and exact completion bytes. Its 37-case owner composes the exact
 `WVBR 1`/`WVBP 1` provider messages with a capacity-one exchange lifecycle.
 Construction, dispatch, exact-once completion, pre/post-dispatch cancellation,
 peer loss, and teardown are bounded; the privileged endpoint syscall adapter,
-block driver, and directory/file data reads remain pending.
+block driver, and file data reads remain pending. Short-directory admission now
+scans at most 4,096 exact entries, rejects inconsistent attributes and cluster
+fields, distinguishes files and directories, and detects duplicate or
+truncated targets. VFAT long-name/Unicode mapping remains explicit future work.
 
 ## .NET retirement result
 
