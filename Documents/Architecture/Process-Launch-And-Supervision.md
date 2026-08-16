@@ -270,6 +270,12 @@ constructor with operation 7 and retained client generation 2. Channel clearing,
 dispatcher/page-table activation, GS/continuation publication, zero completion,
 and the client `sysretq` remain shared. Source ownership reaches byte 27,805.
 
+The following 331-byte client reply delivery derives the checked generation-one
+constructor with operation 8 and retained, thread, and selected client
+generation 2. Reply ownership, dispatcher/page-table activation, context
+restoration, result 116, and the client `sysretq` remain shared. Source
+ownership reaches byte 28,136.
+
 The first restart policies are deliberately small:
 
 - `Never`;

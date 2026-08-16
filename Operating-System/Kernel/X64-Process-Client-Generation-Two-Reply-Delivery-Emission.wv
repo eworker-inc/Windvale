@@ -1,0 +1,63 @@
+module X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉemission profile portable;
+
+import X64ˉprocessˉclientˉreplyˉdeliveryˉemission as Base;
+
+data Internalˉdisplacements: bytes = [
+    114, 23, 0, 0, 96, 23, 0, 0, 78, 23, 0, 0, 60, 23, 0, 0,
+    38, 23, 0, 0, 24, 23, 0, 0, 10, 23, 0, 0, 252, 22, 0, 0,
+    217, 146, 255, 255, 205, 22, 0, 0, 188, 22, 0, 0, 171, 22, 0, 0,
+    146, 22, 0, 0, 65, 0, 0, 0
+];
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉbytes()
+    -> bytes {
+    let Original: bytes = Base.X64ˉprocessˉclientˉreplyˉdeliveryˉbytes();
+    let Operation: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(8u32), 0u32, 1u32);
+    let Generation: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(2u32), 0u32, 1u32);
+    var Result: bytes = Bytesˉconcat(
+        Bytesˉslice(Original, 0u32, 44u32),
+        Bytesˉconcat(Operation, Bytesˉslice(Original, 45u32, 67u32))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉconcat(Generation, Bytesˉslice(Original, 113u32, 13u32))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉconcat(Generation, Bytesˉslice(Original, 127u32, 80u32))
+    );
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(Generation, Bytesˉslice(Original, 208u32, 123u32))
+    );
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉexternalˉfield()
+    -> u32 {
+    return Base.X64ˉprocessˉclientˉreplyˉdeliveryˉexternalˉfield();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉexternalˉsymbol()
+    -> u32 {
+    return Base.X64ˉprocessˉclientˉreplyˉdeliveryˉexternalˉsymbol();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉinternalˉfields()
+    -> bytes {
+    return Base.X64ˉprocessˉclientˉreplyˉdeliveryˉinternalˉfields();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉinternalˉdisplacements()
+    -> bytes {
+    return Internalˉdisplacements;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉfixtureˉoffset()
+    -> u32 {
+    return 27806u32;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreplyˉdeliveryˉfixtureˉend()
+    -> u32 {
+    return 28137u32;
+}
