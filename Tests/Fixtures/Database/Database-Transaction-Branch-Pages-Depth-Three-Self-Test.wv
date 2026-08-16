@@ -1,0 +1,167 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉdepthˉthree profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉbranchˉpages as BranchPages;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 3u64, 3u64, 2u64, 12u64, 11u64, 1u64, 13u64,
+        53760u64, PAGE_SIZE, 3u32
+    );
+}
+
+fn Leaf(First: u8, Second: u8) -> bytes {
+    let One: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu8(First), Bytesˉfromˉu8(First), MAXIMUM_PAYLOAD
+        );
+    let Two: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            One.Bytes, Bytesˉfromˉu8(Second), Bytesˉfromˉu8(Second), MAXIMUM_PAYLOAD
+        );
+    return Two.Bytes;
+}
+
+fn Branch(Separator: u8, Left: u64, Right: u64) -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Bytesˉfromˉu8(Separator), Left, Right, MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Durable(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Identifier: u64,
+    Payload: bytes
+) -> bytes {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Kind, PAGE_SIZE, Identifier, 3u64, 2u64, NO_PAGE,
+                Node.Entryˉcount, Payload
+            )
+        );
+    return Result.Bytes;
+}
+
+fn Root() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Root, 12u64,
+        Branch(5u8, 10u64, 11u64)
+    );
+}
+
+fn Leftˉparent() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, 10u64,
+        Branch(3u8, 8u64, 9u64)
+    );
+}
+
+fn Rightˉparent() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, 11u64,
+        Branch(8u8, 6u64, 7u64)
+    );
+}
+
+fn Leafˉpage(Identifier: u64, First: u8, Second: u8) -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Leaf, Identifier, Leaf(First, Second)
+    );
+}
+
+fn Leftˉpath() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Root(), Leftˉparent()), Leafˉpage(8u64, 1u8, 2u8)
+    );
+}
+
+fn Rightˉpath() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Root(), Rightˉparent()), Leafˉpage(7u64, 8u8, 9u8)
+    );
+}
+
+fn Put(Key: u8, Value: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Bytesˉfromˉu8(Value)
+        );
+    return Result.Bytes;
+}
+
+fn Mutations() -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32, Bytesˉconcat(Put(1u8, 10u8), Put(8u8, 80u8))
+        );
+    return Result.Bytes;
+}
+
+export fn Main() -> i32 {
+    let Result: BranchPages.Databaseˉtransactionˉbranchˉpagesˉresult =
+        BranchPages.Databaseˉtransactionˉbranchˉpagesˉplan(
+            Current(), Mutations(), Bytesˉconcat(Leftˉpath(), Rightˉpath())
+        );
+    let Firstˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+            Result.Replacements, 0u32
+        );
+    let Secondˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+            Result.Replacements, 1u32
+        );
+    let Left: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Bytesˉslice(Result.Pages, 0u32, PAGE_SIZE));
+    let Right: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Bytesˉslice(Result.Pages, PAGE_SIZE, PAGE_SIZE));
+    let Leftˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Left.Payload, Bytesˉfromˉu8(1u8),
+            false, Empty(), true, Bytesˉfromˉu8(5u8)
+        );
+    let Rightˉroute: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Right.Payload, Bytesˉfromˉu8(8u8),
+            true, Bytesˉfromˉu8(5u8), false, Empty()
+        );
+    if Result.Error != BranchPages.Databaseˉtransactionˉbranchˉpagesˉerror.Valid ||
+        !Result.Changed || Result.Rootˉready || Result.Rootˉpage != NO_PAGE ||
+        Result.Rootˉdepth != 3u32 || Result.Parentˉgroupˉcount != 2u32 ||
+        Result.Branchˉpageˉcount != 2u32 || Result.Leafˉdataˉpageˉcount != 2u32 ||
+        Result.Firstˉallocationˉpage != 13u64 || Result.Firstˉpage != 15u64 ||
+        Firstˉgroup.Originalˉchild != 10u64 || Firstˉgroup.Firstˉpage != 15u64 ||
+        Secondˉgroup.Originalˉchild != 11u64 || Secondˉgroup.Firstˉpage != 16u64 {
+        return 1;
+    }
+    if Left.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Right.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Left.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Right.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Left.Pageˉidentifier != 15u64 || Right.Pageˉidentifier != 16u64 ||
+        Left.Previousˉpage != 10u64 || Right.Previousˉpage != 11u64 ||
+        Leftˉroute.Child != 13u64 || Rightˉroute.Child != 14u64 {
+        return 2;
+    }
+    return 0;
+}

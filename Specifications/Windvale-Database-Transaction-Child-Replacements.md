@@ -5,7 +5,8 @@
 - Version: `WVCR 1`
 - Profile: portable
 - Maximum replacement groups: 32
-- Maximum new children: 64
+- Maximum new children per group: 64
+- Maximum new children per level: 95
 - Maximum encoded bytes: 524,288
 - Evidence: focused Windows native execution; independent Linux execution pending
 
@@ -13,7 +14,7 @@
 
 `WVCR 1` is the small generic handoff between one rewritten tree level and the
 parent level above it. Each group says that one old child page is replaced by
-one through 33 consecutive new child pages. The first new child inherits the
+one through 64 consecutive new child pages. The first new child inherits the
 old lower bound. Every later child carries the separator that divides it from
 the previous replacement.
 
@@ -32,7 +33,7 @@ The 40-byte little-endian header is:
 | 8 | `u32` | header length `40` |
 | 12 | `u32` | flags, zero |
 | 16 | `u32` | replacement-group count, 1 through 32 |
-| 20 | `u32` | total new-child count, 1 through 64 |
+| 20 | `u32` | total new-child count, 1 through 95 |
 | 24 | `u32` | following map length |
 | 28 | `u32` | total encoded length |
 | 32 | `u64` | first new page identity |
@@ -43,7 +44,7 @@ Each group has a 24-byte header:
 | ---: | --- | --- |
 | 0 | `u64` | original child page |
 | 8 | `u64` | first replacement page |
-| 16 | `u32` | replacement count, 1 through 33 |
+| 16 | `u32` | replacement count, 1 through 64 |
 | 20 | `u32` | following child-record length |
 
 Each child record has a 16-byte header followed by separator bytes:
@@ -67,7 +68,7 @@ nonconsecutive new pages, bad separator order, arithmetic exhaustion, count
 mismatch, and trailing bytes. Component builders validate their own bounded
 child or group bytes; the final encoder revalidates all groups together.
 
-The map is linear in at most 64 new children. Public group and child readers
+The map is linear in at most 95 new children. Public group and child readers
 return owned slices only after complete validation.
 
 ## Next use

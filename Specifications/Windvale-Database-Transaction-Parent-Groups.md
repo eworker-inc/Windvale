@@ -34,10 +34,10 @@ same parent identity are combined. This is complete because ordered B+tree
 children owned by one parent form one contiguous key range. Each parent is
 rebuilt exactly once, even when several of its children change.
 
-Parent output remains logical `WVBP 1` payload. The next level allocator will
-assign consecutive durable branch-page identities, encode checksummed `WVPG
-1` pages, and convert the promoted separators into the same generic `WVCR 1`
-shape for the next ancestor level.
+Parent output remains logical `WVBP 1` payload. `WVBD 1` assigns consecutive
+durable branch-page identities, encodes checksummed `WVPG 1` pages, and
+converts the promoted separators into the same generic `WVCR 1` shape for the
+next ancestor level.
 
 ## `WVPP 1` encoding
 
@@ -101,7 +101,7 @@ leaf identities, no-change output, invalid depth, malformed paths, trailing
 bytes, truncated and oversized envelopes, bad magic and version, inconsistent
 counts, invalid indexes, and a non-adjacent duplicate-parent attack.
 
-The next milestone assigns durable identities to every output branch,
-constructs checksummed branch pages, and emits one replacement plan for the
-next ancestor level. Repeating that operation reaches the root; only then can
-one compact log and one inactive superblock publish the complete transaction.
+`WVBD 1` now assigns durable identities to every output branch and emits one
+replacement plan for the next ancestor level. The next milestone repeats
+grouping and allocation until it reaches or grows the root; only then can one
+compact log and one inactive superblock publish the complete transaction.

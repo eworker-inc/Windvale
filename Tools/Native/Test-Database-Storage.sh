@@ -19,22 +19,28 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=34
+        selected_cases=37
         ;;
-    tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-rewrite|transaction-parent-groups|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
+    tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
         ;;
-    transaction-leaf-pages|transaction-branch-partition)
-        selected_cases=2
-        ;;
-    transaction-leaf-groups)
+    transaction-branch-pages)
         selected_cases=3
         ;;
-    transaction-paths|transaction-leaf-partition)
+    transaction-parent-groups)
         selected_cases=4
         ;;
-    transaction)
+    transaction-leaf-pages|transaction-branch-partition)
+        selected_cases=5
+        ;;
+    transaction-leaf-groups)
+        selected_cases=6
+        ;;
+    transaction-paths|transaction-leaf-partition)
         selected_cases=7
+        ;;
+    transaction)
+        selected_cases=10
         ;;
     host-tree-reader)
         selected_cases=2
@@ -1654,6 +1660,18 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj" \
         transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
         transaction-leaf-pages transaction-branch-partition || exit $?
+    verify_development_target TransactionBranchPages transaction-branch-pages \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj" \
+        transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
+        transaction-leaf-pages transaction-branch-partition transaction-parent-groups || exit $?
+    verify_development_target TransactionBranchPagesValidation transaction-branch-pages \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj" \
+        transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
+        transaction-leaf-pages transaction-branch-partition transaction-parent-groups || exit $?
+    verify_development_target TransactionBranchPagesDepthThree transaction-branch-pages \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj" \
+        transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
+        transaction-leaf-pages transaction-branch-partition transaction-parent-groups || exit $?
     verify_development_target QueryIr query-ir \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql || exit $?
     verify_development_target SqlLowerer sql-lowerer \
@@ -1722,6 +1740,12 @@ verify_target TransactionBranchPartition \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj" || exit $?
 verify_target TransactionParentGroups \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj" || exit $?
+verify_target TransactionBranchPages \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj" || exit $?
+verify_target TransactionBranchPagesValidation \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj" || exit $?
+verify_target TransactionBranchPagesDepthThree \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj" || exit $?
 verify_target QueryIr \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" || exit $?
 verify_target SqlLowerer \
@@ -1784,4 +1808,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=42 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=45 local-results=0 cross-host-images=Verified'

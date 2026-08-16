@@ -9,7 +9,8 @@ const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES: u32 = 24u32;
 const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_CHILD_BYTES: u32 = 16u32;
 const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_BYTES: u32 = 524288u32;
 const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUPS: u32 = 32u32;
-const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_CHILDREN: u32 = 64u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_CHILDREN: u32 = 95u32;
+const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUP_CHILDREN: u32 = 64u32;
 const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
@@ -116,7 +117,8 @@ fn Databaseˉtransactionˉchildˉreplacementˉgroupˉbodyˉvalid(
     Count: u32,
     Children: bytes
 ) -> bool {
-    if Count == 0u32 || Count > 33u32 ||
+    if Count == 0u32 ||
+        Count > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUP_CHILDREN ||
         Firstˉpage == DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE ||
         Firstˉpage > U64_MAXIMUM - U64ˉfromˉu32(Count) {
         return false;
@@ -298,7 +300,8 @@ export fn Databaseˉtransactionˉchildˉreplacementsˉdecode(
             Scanˉindex = Scanˉindex + 1u32;
         }
         if Original >= Firstˉpage || Groupˉfirst != Expectedˉpage ||
-            Groupˉchildren == 0u32 || Groupˉchildren > 33u32 ||
+            Groupˉchildren == 0u32 ||
+            Groupˉchildren > DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUP_CHILDREN ||
             Groupˉchildren > Replacementˉcount - Counted || Duplicate ||
             Bodyˉlength > Mapˉlength - Cursor - DATABASE_TRANSACTION_CHILD_REPLACEMENTS_GROUP_BYTES {
             return Databaseˉtransactionˉchildˉreplacementsˉfailure(

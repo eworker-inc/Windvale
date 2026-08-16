@@ -62,6 +62,17 @@ fn Child(Page: u64, Hasˉseparator: bool, Separator: u8) -> bytes {
     return Result.Bytes;
 }
 
+fn Indexedˉchild(Page: u64, Separator: u32) -> bytes {
+    let Key: bytes = Bytesˉslice(
+        Bytesˉfromˉu32ˉlittle(Separator), 0u32, 1u32
+    );
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+            Page, Key
+        );
+    return Result.Bytes;
+}
+
 fn Group(Original: u64, First: u64, Count: u32, Children: bytes) -> bytes {
     let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
         Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
@@ -200,6 +211,61 @@ fn Partitionˉcontract() -> i32 {
     return 0;
 }
 
+fn Replacementˉlimitˉcontract() -> i32 {
+    var Firstˉchildren: bytes = Child(100u64, false, 0u8);
+    var Firstˉindex: u32 = 1u32;
+    while Firstˉindex < 64u32 {
+        Firstˉchildren = Bytesˉconcat(
+            Firstˉchildren,
+            Indexedˉchild(
+                100u64 + U64ˉfromˉu32(Firstˉindex), Firstˉindex
+            )
+        );
+        Firstˉindex = Firstˉindex + 1u32;
+    }
+    var Secondˉchildren: bytes = Child(164u64, false, 0u8);
+    var Secondˉindex: u32 = 1u32;
+    while Secondˉindex < 31u32 {
+        Secondˉchildren = Bytesˉconcat(
+            Secondˉchildren,
+            Indexedˉchild(
+                164u64 + U64ˉfromˉu32(Secondˉindex), Secondˉindex
+            )
+        );
+        Secondˉindex = Secondˉindex + 1u32;
+    }
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Plan(
+            2u32, 95u32, 100u64,
+            Bytesˉconcat(
+                Group(1u64, 100u64, 64u32, Firstˉchildren),
+                Group(2u64, 164u64, 31u32, Secondˉchildren)
+            )
+        );
+    let Firstˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+            Result.Bytes, 0u32
+        );
+    let Lastˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+            Result.Bytes, 1u32
+        );
+    let Lastˉchild: Replacements.Databaseˉtransactionˉchildˉreplacementˉchild =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉread(
+            Lastˉgroup, 30u32
+        );
+    if Result.Error !=
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid ||
+        Result.Groupˉcount != 2u32 || Result.Replacementˉcount != 95u32 ||
+        Firstˉgroup.Replacementˉcount != 64u32 ||
+        Lastˉgroup.Firstˉpage != 164u64 ||
+        Lastˉchild.Pageˉidentifier != 194u64 ||
+        Bytesˉreadˉu8(Lastˉchild.Separator, 0u32) != 30u8 {
+        return 1;
+    }
+    return 0;
+}
+
 fn Rejectionˉcontract() -> i32 {
     let Missingˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
         Plan(1u32, 1u32, 100u64, Group(9u64, 100u64, 1u32, Child(100u64, false, 0u8)));
@@ -265,6 +331,8 @@ export fn Main() -> i32 {
     if Bulk != 0 { return 100 + Bulk; }
     let Split: i32 = Partitionˉcontract();
     if Split != 0 { return 200 + Split; }
+    let Limits: i32 = Replacementˉlimitˉcontract();
+    if Limits != 0 { return 250 + Limits; }
     let Rejection: i32 = Rejectionˉcontract();
     if Rejection != 0 { return 300 + Rejection; }
     return 0;
