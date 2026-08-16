@@ -59,8 +59,10 @@ syntax evidence does not substitute for independent Linux behavior execution.
 One manifest row is now the source of truth for a target's dependency closure
 and exact output evidence. New targets no longer require two copied command
 bodies, and paired-host operation order is reviewable in two small executors.
-The complete owner still rebuilds all projects and is not expected to become
-materially faster merely from this structural refactor.
+The complete owner still rebuilds all projects.
+[Decision 0736](0736-Reuse-Os-X64-Verification-Trust-Checks.md) subsequently
+removes repeated trust and workspace checks around those builds without changing
+the manifest or evidence boundary.
 
 The manifest is wider and therefore requires strict validation. A manifest edit
 selects planner verification and the complete owner, and the planner verifier

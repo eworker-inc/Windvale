@@ -136,6 +136,13 @@ declared checks; qualification and no-argument owner execution retain all 56
 projects and 336 cases. A change to the manifest itself selects planner
 verification plus that complete owner.
 
+Within one owner invocation, the paired OS x64 executors may stage private
+copies of their pinned tools, validate those staged identities and workspace
+containment once, and then process the selected rows. Every row still receives
+independent native tool processes, candidate paths, immutable publication,
+local execution, and exact final-byte checks. Session-scoped trust reuse must
+not become a persistent compiler service.
+
 ## Dispatch contract
 
 For lightweight and website changes, `Verify-Changed.ps1` retains the existing

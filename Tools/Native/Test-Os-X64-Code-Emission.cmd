@@ -29,11 +29,40 @@ if not "%TargetHeader%"=="windvale-os-x64-code-emission-development-targets 2" (
     exit /b 1
 )
 
+set "BuildDriverSource=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
+set "WvbPublisherSource=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvpublish.exe"
+set "LowererSource=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
+set "WvoPublisherSource=%RepositoryRoot%\Artifacts\Native-Wvo-Publisher-Candidate\windows-x64-wvopublish.exe"
+set "LinkerSource=%RepositoryRoot%\Artifacts\Native-Wv-Linker-Candidate\Wv-Linker.exe"
+set "PackagerSource=%RepositoryRoot%\Artifacts\Native-Console-Packager-Candidate\Console-Packager.exe"
+set "ConsolePublisherSource=%RepositoryRoot%\Artifacts\Native-Console-Application-Publisher-Candidate\windows-x64-wvappublish.exe"
+set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
+if not exist "%WorkspacePath%" (
+    >&2 echo The native workspace marker is missing.
+    exit /b 1
+)
+fsutil reparsepoint query "%RepositoryRoot%" >nul 2>nul
+if not errorlevel 1 (
+    >&2 echo The native workspace root must not be a reparse point.
+    exit /b 1
+)
+for /f "delims=" %%L in ('dir /a:l /s /b "%RepositoryRoot%" 2^>nul') do (
+    >&2 echo The native workspace must not contain a reparse point: %%L
+    exit /b 1
+)
+set "WorkspaceResource=%WorkspacePath:\=/%"
+goto :allocate
+
 :allocate
 set "Work=%TEMP%\windvale-os-x64-code-emission-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
 set "Result=1"
+call :stage_toolchain
+if errorlevel 1 (
+    >&2 echo The Windows native OS x64 verification toolchain digest is invalid.
+    goto :cleanup
+)
 set "TotalProjects=0"
 set "Selected=0"
 
@@ -95,32 +124,47 @@ call :run_case
 exit /b %ERRORLEVEL%
 
 :run_case
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\%CaseProject%" "%Work%\%CaseArtifact%.wvb" >nul
+set "CaseProjectPath=%RepositoryRoot%\%CaseProject%"
+for %%P in ("%CaseProjectPath%") do set "CaseProjectPath=%%~fP"
+set "CaseProjectResource=%CaseProjectPath:\=/%"
+set "CandidateWvb=%Work%\%CaseArtifact%.candidate.wvb"
+set "CandidateWvbResource=%CandidateWvb:\=/%"
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
+    "%CaseProjectResource%" "%CandidateWvbResource%" >nul
+if errorlevel 1 exit /b 1
+"%WvbPublisher%" "%CandidateWvb%" "%Work%\%CaseArtifact%.wvb" >nul
 if errorlevel 1 exit /b 1
 call :verify "%Work%\%CaseArtifact%.wvb" "%CaseWvbBytes%" "%CaseWvbSha256%"
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
-    "%Work%\%CaseArtifact%.wvb" "%Work%\%CaseArtifact%.wvo" >nul
+set "CandidateWvo=%Work%\%CaseArtifact%.candidate.wvo"
+"%Lowerer%" "%Work%\%CaseArtifact%.wvb" "%CandidateWvo%" >nul
+if errorlevel 1 exit /b 1
+"%WvoPublisher%" "%CandidateWvo%" "%Work%\%CaseArtifact%.wvo" >nul
 if errorlevel 1 exit /b 1
 call :verify "%Work%\%CaseArtifact%.wvo" "%CaseWvoBytes%" "%CaseWvoSha256%"
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" ^
+"%Linker%" ^
     0 Main "%Work%\%CaseArtifact%.bin" "%Work%\%CaseArtifact%.wvo" >nul
 if errorlevel 1 exit /b 1
 call :verify "%Work%\%CaseArtifact%.bin" "%CaseBinBytes%" "%CaseBinSha256%"
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" ^
+set "CandidateExe=%Work%\%CaseArtifact%.candidate.exe"
+"%Packager%" ^
     windows-x64-console-v1 "%Work%\%CaseArtifact%.bin" 0 ^
-    "%Work%\%CaseArtifact%.exe" >nul
+    "%CandidateExe%" >nul
+if errorlevel 1 exit /b 1
+"%ConsolePublisher%" "%CandidateExe%" "%Work%\%CaseArtifact%.exe" >nul
 if errorlevel 1 exit /b 1
 call "%Work%\%CaseArtifact%.exe" >nul
 if not "%ERRORLEVEL%"=="%CaseExpectedExit%" exit /b 1
 call :verify "%Work%\%CaseArtifact%.exe" "%CaseWindowsBytes%" "%CaseWindowsSha256%"
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" ^
+set "CandidateElf=%Work%\%CaseArtifact%.candidate.elf"
+"%Packager%" ^
     linux-x64-console-v1 "%Work%\%CaseArtifact%.bin" 0 ^
-    "%Work%\%CaseArtifact%.elf" >nul
+    "%CandidateElf%" >nul
+if errorlevel 1 exit /b 1
+"%ConsolePublisher%" "%CandidateElf%" "%Work%\%CaseArtifact%.elf" >nul
 if errorlevel 1 exit /b 1
 call :verify "%Work%\%CaseArtifact%.elf" "%CaseLinuxBytes%" "%CaseLinuxSha256%"
 exit /b %ERRORLEVEL%
@@ -130,6 +174,35 @@ if not exist "%~1" exit /b 1
 for %%F in ("%~1") do if not "%%~zF"=="%~2" exit /b 1
 certutil -hashfile "%~1" SHA256 | findstr /i /x /c:"%~3" >nul
 exit /b %ERRORLEVEL%
+
+:verify_digest
+if not exist "%~1" exit /b 1
+certutil -hashfile "%~1" SHA256 | findstr /i /x /c:"%~2" >nul
+exit /b %ERRORLEVEL%
+
+:stage_toolchain
+copy /b "%BuildDriverSource%" "%Work%\wvbuild.exe" >nul || exit /b 1
+copy /b "%WvbPublisherSource%" "%Work%\wvpublish.exe" >nul || exit /b 1
+copy /b "%LowererSource%" "%Work%\Wvb-To-Wvo.exe" >nul || exit /b 1
+copy /b "%WvoPublisherSource%" "%Work%\wvopublish.exe" >nul || exit /b 1
+copy /b "%LinkerSource%" "%Work%\Wv-Linker.exe" >nul || exit /b 1
+copy /b "%PackagerSource%" "%Work%\Console-Packager.exe" >nul || exit /b 1
+copy /b "%ConsolePublisherSource%" "%Work%\wvappublish.exe" >nul || exit /b 1
+set "BuildDriver=%Work%\wvbuild.exe"
+set "WvbPublisher=%Work%\wvpublish.exe"
+set "Lowerer=%Work%\Wvb-To-Wvo.exe"
+set "WvoPublisher=%Work%\wvopublish.exe"
+set "Linker=%Work%\Wv-Linker.exe"
+set "Packager=%Work%\Console-Packager.exe"
+set "ConsolePublisher=%Work%\wvappublish.exe"
+call :verify_digest "%BuildDriver%" 65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec || exit /b 1
+call :verify_digest "%WvbPublisher%" b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421 || exit /b 1
+call :verify_digest "%Lowerer%" 85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3 || exit /b 1
+call :verify_digest "%WvoPublisher%" 76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910 || exit /b 1
+call :verify_digest "%Linker%" f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0 || exit /b 1
+call :verify_digest "%Packager%" 0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2 || exit /b 1
+call :verify_digest "%ConsolePublisher%" 0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e || exit /b 1
+exit /b 0
 
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

@@ -14,6 +14,14 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 target_plan=$repository_root/Tests/Native/Os-X64-Code-Emission-Development-Targets.txt
+front_door=$repository_root/Artifacts/Native-Front-Door
+build_driver=$front_door/linux-x64/wvbuild.elf
+wvb_publisher=$front_door/linux-x64/wvpublish.elf
+lowerer=$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf
+wvo_publisher=$repository_root/Artifacts/Native-Wvo-Publisher-Candidate/linux-x64-wvopublish.elf
+linker=$repository_root/Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.elf
+packager=$repository_root/Artifacts/Native-Console-Packager-Candidate/Console-Packager.elf
+console_publisher=$repository_root/Artifacts/Native-Console-Application-Publisher-Candidate/linux-x64-wvappublish.elf
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-os-x64-code-emission.XXXXXXXX") || exit 1
 cleanup() {
@@ -34,24 +42,41 @@ verify() {
             sha256sum --check --strict --quiet
 }
 
+verify_tool() {
+    local path=$1 digest=$2
+    printf '%s  %s\n' "$digest" "$path" |
+        sha256sum --check --strict --quiet
+}
+
 run_case() {
-    "$script_directory/Build-Wvb.sh" \
-        "$repository_root/$project" "$work/$artifact.wvb" >/dev/null || return $?
+    local candidate_wvb=$work/$artifact.candidate.wvb
+    local candidate_wvo=$work/$artifact.candidate.wvo
+    local candidate_exe=$work/$artifact.candidate.exe
+    local candidate_elf=$work/$artifact.candidate.elf
+    "$build_driver" --workspace "$workspace_path" \
+        --project "$repository_root/$project" "$candidate_wvb" >/dev/null || return $?
+    "$wvb_publisher" "$candidate_wvb" "$work/$artifact.wvb" >/dev/null || return $?
     verify "$work/$artifact.wvb" "$wvb_bytes" "$wvb_sha256" || return 1
-    "$script_directory/Lower-Wvb-To-Wvo.sh" \
-        "$work/$artifact.wvb" "$work/$artifact.wvo" >/dev/null || return $?
+    "$lowerer" "$work/$artifact.wvb" "$candidate_wvo" >/dev/null || return $?
+    "$wvo_publisher" "$candidate_wvo" "$work/$artifact.wvo" >/dev/null || return $?
     verify "$work/$artifact.wvo" "$wvo_bytes" "$wvo_sha256" || return 1
-    "$script_directory/Link-Wvo.sh" \
-        0 Main "$work/$artifact.bin" "$work/$artifact.wvo" >/dev/null || return $?
+    "$linker" 0 Main "$work/$artifact.bin" "$work/$artifact.wvo" >/dev/null
+    local linker_status=$?
+    if ((linker_status != 0)); then
+        ((linker_status == 73)) && return 1
+        return "$linker_status"
+    fi
     verify "$work/$artifact.bin" "$bin_bytes" "$bin_sha256" || return 1
-    "$script_directory/Package-Console.sh" \
-        linux-x64-console-v1 "$work/$artifact.bin" 0 "$work/$artifact.elf" \
+    "$packager" linux-x64-console-v1 "$work/$artifact.bin" 0 "$candidate_elf" \
+        >/dev/null || return $?
+    "$console_publisher" "$candidate_elf" "$work/$artifact.elf" \
         >/dev/null || return $?
     verify "$work/$artifact.elf" "$linux_bytes" "$linux_sha256" || return 1
     "$work/$artifact.elf" >/dev/null
     [[ $? -eq $expected_exit ]] || return 1
-    "$script_directory/Package-Console.sh" \
-        windows-x64-console-v1 "$work/$artifact.bin" 0 "$work/$artifact.exe" \
+    "$packager" windows-x64-console-v1 "$work/$artifact.bin" 0 "$candidate_exe" \
+        >/dev/null || return $?
+    "$console_publisher" "$candidate_exe" "$work/$artifact.exe" \
         >/dev/null || return $?
     verify "$work/$artifact.exe" "$windows_bytes" "$windows_sha256" || return 1
 }
@@ -65,6 +90,46 @@ IFS= read -r target_header <"$target_plan"
     echo 'Invalid OS x64 code-emission target manifest.' >&2
     exit 1
 }
+if ! (cd -- "$front_door" && sha256sum --check --strict --quiet SHA256SUMS); then
+    echo 'The Linux native-front-door artifact inventory is invalid.' >&2
+    exit 1
+fi
+if ! cp -- "$build_driver" "$work/wvbuild.elf" ||
+    ! cp -- "$wvb_publisher" "$work/wvpublish.elf" ||
+    ! cp -- "$lowerer" "$work/Wvb-To-Wvo.elf" ||
+    ! cp -- "$wvo_publisher" "$work/wvopublish.elf" ||
+    ! cp -- "$linker" "$work/Wv-Linker.elf" ||
+    ! cp -- "$packager" "$work/Console-Packager.elf" ||
+    ! cp -- "$console_publisher" "$work/wvappublish.elf"; then
+    echo 'The Linux native OS x64 verification toolchain could not be staged.' >&2
+    exit 1
+fi
+build_driver=$work/wvbuild.elf
+wvb_publisher=$work/wvpublish.elf
+lowerer=$work/Wvb-To-Wvo.elf
+wvo_publisher=$work/wvopublish.elf
+linker=$work/Wv-Linker.elf
+packager=$work/Console-Packager.elf
+console_publisher=$work/wvappublish.elf
+if ! verify_tool "$build_driver" d228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969 ||
+    ! verify_tool "$wvb_publisher" b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af ||
+    ! verify_tool "$lowerer" deb75ead2af0d06d2357cdf88d8cf58fefd284bf4834e6489198b517f3a4908e ||
+    ! verify_tool "$wvo_publisher" 2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2 ||
+    ! verify_tool "$linker" 8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a ||
+    ! verify_tool "$packager" d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af ||
+    ! verify_tool "$console_publisher" e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925; then
+    echo 'The Linux native OS x64 verification toolchain digest is invalid.' >&2
+    exit 1
+fi
+workspace_path=$repository_root/Windvale.wvws
+[[ -f $workspace_path ]] || {
+    echo 'The native workspace marker is missing.' >&2
+    exit 1
+}
+if [[ -L $repository_root ]] || [[ -n $(find "$repository_root" -type l -print -quit) ]]; then
+    echo 'The native workspace must not contain symbolic links.' >&2
+    exit 1
+fi
 
 declare -A seen_targets=()
 declare -A seen_artifacts=()

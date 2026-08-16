@@ -3114,14 +3114,43 @@ $OsX64OwnerContracts = @(
             'windvale-os-x64-code-emission-development-targets 2',
             ':consider_case',
             ':run_case',
+            ':stage_toolchain',
             '%CaseProject%',
             '%CaseArtifact%',
-            '%CaseExpectedExit%'
+            '%CaseExpectedExit%',
+            'wvbuild.exe',
+            'wvpublish.exe',
+            'Wvb-To-Wvo.exe',
+            'windows-x64-wvopublish.exe',
+            'Wv-Linker.exe',
+            'Console-Packager.exe',
+            'windows-x64-wvappublish.exe',
+            '65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec',
+            'b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421',
+            '85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3',
+            '76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910',
+            'f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0',
+            '0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2',
+            '0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e',
+            'copy /b "%BuildDriverSource%" "%Work%\wvbuild.exe"',
+            'fsutil reparsepoint query',
+            'dir /a:l /s /b',
+            '"%BuildDriver%" --workspace',
+            '"%WvbPublisher%" "%CandidateWvb%"',
+            '"%Lowerer%" "%Work%\%CaseArtifact%.wvb"',
+            '"%WvoPublisher%" "%CandidateWvo%"',
+            '"%Linker%" ^',
+            '"%ConsolePublisher%" "%CandidateExe%"',
+            '"%ConsolePublisher%" "%CandidateElf%"'
         )
-        Build = 'Build-Wvb\.cmd'
-        Lower = 'Lower-Wvb-To-Wvo\.cmd'
-        Link = 'Link-Wvo\.cmd'
-        Package = 'Package-Console\.cmd'
+        Forbidden = @(
+            'Build-Wvb.cmd',
+            'Lower-Wvb-To-Wvo.cmd',
+            'Link-Wvo.cmd',
+            'Package-Console.cmd',
+            'Publish-Wvo.cmd',
+            'Publish-Console.cmd'
+        )
         LegacySelector = 'if defined DevelopmentTarget if /I not "%DevelopmentTarget%"=="[a-z]'
     },
     @{
@@ -3133,12 +3162,40 @@ $OsX64OwnerContracts = @(
             'run_case()',
             '$repository_root/$project',
             '$work/$artifact',
-            '$expected_exit'
+            '$expected_exit',
+            'linux-x64/wvbuild.elf',
+            'linux-x64/wvpublish.elf',
+            'Wvb-To-Wvo.elf',
+            'linux-x64-wvopublish.elf',
+            'Wv-Linker.elf',
+            'Console-Packager.elf',
+            'linux-x64-wvappublish.elf',
+            'd228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969',
+            'b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af',
+            'deb75ead2af0d06d2357cdf88d8cf58fefd284bf4834e6489198b517f3a4908e',
+            '2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2',
+            '8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a',
+            'd399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af',
+            'e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925',
+            'cp -- "$build_driver" "$work/wvbuild.elf"',
+            'sha256sum --check --strict --quiet SHA256SUMS',
+            'find "$repository_root" -type l -print -quit',
+            '"$build_driver" --workspace',
+            '"$wvb_publisher" "$candidate_wvb"',
+            '"$lowerer" "$work/$artifact.wvb"',
+            '"$wvo_publisher" "$candidate_wvo"',
+            '"$linker" 0 Main',
+            '"$console_publisher" "$candidate_exe"',
+            '"$console_publisher" "$candidate_elf"'
         )
-        Build = 'Build-Wvb\.sh'
-        Lower = 'Lower-Wvb-To-Wvo\.sh'
-        Link = 'Link-Wvo\.sh'
-        Package = 'Package-Console\.sh'
+        Forbidden = @(
+            'Build-Wvb.sh',
+            'Lower-Wvb-To-Wvo.sh',
+            'Link-Wvo.sh',
+            'Package-Console.sh',
+            'Publish-Wvo.sh',
+            'Publish-Console.sh'
+        )
         LegacySelector = "if selected '[a-z]"
     }
 )
@@ -3148,16 +3205,9 @@ foreach ($OwnerContract in $OsX64OwnerContracts) {
             throw "$($OwnerContract.Host) OS x64 code-emission owner is missing '$Fragment'."
         }
     }
-    foreach ($CommandContract in @(
-        @{ Pattern = $OwnerContract.Build; Count = 1 },
-        @{ Pattern = $OwnerContract.Lower; Count = 1 },
-        @{ Pattern = $OwnerContract.Link; Count = 1 },
-        @{ Pattern = $OwnerContract.Package; Count = 2 }
-    )) {
-        if ([regex]::Matches(
-                $OwnerContract.Text,
-                $CommandContract.Pattern).Count -ne $CommandContract.Count) {
-            throw "$($OwnerContract.Host) OS x64 code-emission generic command count differs."
+    foreach ($Fragment in $OwnerContract.Forbidden) {
+        if ($OwnerContract.Text.Contains($Fragment, [StringComparison]::Ordinal)) {
+            throw "$($OwnerContract.Host) OS x64 code-emission owner still invokes '$Fragment'."
         }
     }
     if ([regex]::IsMatch(

@@ -234,6 +234,16 @@ changes while retaining the complete owner. The generic Linux path also executes
 all 56 local containers; it closes four copied-body omissions that had packaged
 and hashed an ELF without performing the declared current-host execution.
 
+One owner invocation now treats those tools as a bounded verified session. It
+stages and checks seven private native tool snapshots and verifies workspace
+containment once, then gives every target independent compiler, lowerer, linker,
+packager, and publisher processes plus separate candidate paths. This retains
+immutable publication and per-target exact hashes without repeating 504 Windows
+tool hashes and 56 workspace scans. The measured complete Windows owner fell
+from 129,638 ms to 82,557 ms, a 36.32 percent reduction and 1.57-fold speedup.
+This does not yet reuse compiler state across project requests; doing so requires
+a versioned multi-request driver or dependency-aware compiler cache.
+
 The library development owner now selects one of seven dependency clusters from
 a canonical 29-project manifest. The planner derives each cluster's source
 closure from its Project 2 declarations; shared, multi-cluster, owner, and
