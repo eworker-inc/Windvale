@@ -447,7 +447,7 @@ function Add-Hosted-Publisher-Suites {
 
 function Add-Os-Suite {
     param([Parameter(Mandatory)][string]$Path)
-    if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Init-Reply-Publish-Resume|Directory-Reply-Publish-Resume|Init-Return-(?:Program-Validation|Budget-Validation|Store-Directory-Validation)|Provider-(?:User-Transfer|Return-Init-Transfer)|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|User-Transfer|Return-Init-Transfer|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Delivery|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image)))-Emission') {
+    if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Init-Reply-Publish-Resume|Directory-Reply-Publish-Resume|Init-Return-(?:Program-Validation|Budget-Validation|Store-Directory-Validation)|Provider-(?:User-Transfer|Return-Init-Transfer)|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|User-Transfer|Return-Init-Transfer|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Delivery|Completion-Cleanup|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image)))-Emission') {
         Add-Suite 'os-x64-code-emission'
     } elseif ($Path -match 'Provider-Launch-(?:Transaction|Lifecycle)') {
         Add-Suite 'os-provider-launch-transaction'
@@ -2078,7 +2078,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Tests/Fixtures/Operating-System/Os-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Os-', [StringComparison]::Ordinal)) {
-        if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Init-Reply-Publish-Resume|Directory-Reply-Publish-Resume|Init-Return-(?:Program-Validation|Budget-Validation|Store-Directory-Validation)|Provider-(?:User-Transfer|Return-Init-Transfer)|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|User-Transfer|Return-Init-Transfer|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Delivery|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image)))-Emission') {
+        if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Init-Reply-Publish-Resume|Directory-Reply-Publish-Resume|Init-Return-(?:Program-Validation|Budget-Validation|Store-Directory-Validation)|Provider-(?:User-Transfer|Return-Init-Transfer)|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|User-Transfer|Return-Init-Transfer|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Delivery|Completion-Cleanup|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image)))-Emission') {
             Add-Suite 'os-x64-code-emission'
         } elseif ($Path.Contains('Provider-Launch-', [StringComparison]::Ordinal)) {
             Add-Suite 'os-provider-launch-transaction'

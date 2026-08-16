@@ -198,6 +198,12 @@ returns zero through `sysretq`, advancing ownership through byte 16,241.
 The complementary delivery then validates that reply, dispatches only the
 admitted client generation, restores its checked context, and returns the exact
 3,096-byte result through `sysretq`, advancing ownership through byte 16,572.
+The first-client completion transaction then validates the exiting process,
+dormant compatibility arena, both endpoint/channel generations, mappings, and
+retained message geometry before removing both endpoint PTE aliases, scrubbing
+every transient IPC field, and returning both endpoints to a closed state. This
+advances ownership through byte 17,923 without yet claiming memory reclamation
+or generation-2 reconstruction.
 
 The first restart policies are deliberately small:
 
