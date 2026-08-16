@@ -247,6 +247,12 @@ the first generation-2 `sysretq`. Source ownership now reaches byte 25,953. This
 is deterministic machine-code evidence, not yet live guest execution evidence;
 the resumed handler and subsequent lifecycle remain outside the owned prefix.
 
+The resumed handler then validates processor/GS state, completion counters,
+both retained resource descriptors, generation-bounded references, page-table
+entries, backing-object aliases, and per-resource context records. This advances
+source ownership through byte 26,964, immediately before the next `swapgs` and
+dispatcher call.
+
 The first restart policies are deliberately small:
 
 - `Never`;

@@ -189,7 +189,7 @@ with a bounded restart or deliberate terminal result.
 - ✅ Portable Windvale modules → bounded WebAssembly compiler/interpreter → static browser worker.
 - ✅ Canonical WVB → admitted guest resource → protected Windvale OS execution for the qualified examples.
 - ✅ Package manifest and lock → admitted immutable bundle/store → rights-limited WVDB Query execution on Windows and Linux.
-- 🚧 Probe 40 fixed ResourceDomain1 + versioned executable-publication/machine admission → checked start syscall and dynamic allocation → generation-2 reconstruction and source-owned `sysretq` → supervised live isolated provider.
+- 🚧 Probe 40 fixed ResourceDomain1 + versioned executable-publication/machine admission → checked start syscall and dynamic allocation → generation-2 reconstruction, source-owned `sysretq`, and resumed return validation → supervised live isolated provider.
 - ✅ Qualified product artifacts → signed release envelope → offline-verifiable Windvale 0.1 preview.
 
 ## Reading the evidence

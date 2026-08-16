@@ -634,6 +634,8 @@ provenance, revocation, and consensus boundaries are named.
   Checked two-endpoint generation-2 rebinding now reaches byte 25,512.
   Checked memory/resource transition and generation-2 re-entry now execute the
   first generation-2 `sysretq` and reach byte 25,953.
+  Resumed processor/resource/mapping/alias validation now reaches byte 26,964,
+  immediately before the next dispatcher crossing.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

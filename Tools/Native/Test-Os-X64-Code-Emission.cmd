@@ -1049,7 +1049,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReentry.elf" 28784 4c810ad307e38c6db1264147f23d5e51f3f89375648fcc7813ac4c6ab6e590ea
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=45 cases=270 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94 cross-host-images=Verified source-owned-bytes=25954 relocation-fields=163
+echo step=client-generation-two-return-validation item=46/46
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Return-Validation-Emission.wvproj" "%Work%\ClientGenerationTwoReturnValidation.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnValidation.wvb" 4209 8bcbfd66daed3fb0b92c3977374725df6264e0c591444f7d40528badb2aeb1c9
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoReturnValidation.wvb" "%Work%\ClientGenerationTwoReturnValidation.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnValidation.wvo" 23047 8907202105823e1a422036ddd2f93cd578cbdc205f1fc6457f2fb3e08705edc2
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoReturnValidation.bin" "%Work%\ClientGenerationTwoReturnValidation.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnValidation.bin" 22627 976c872494037a1f83428cfbcd7d6b80f581469d6c59d473bc2ddfaf7202ad19
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoReturnValidation.bin" 0 "%Work%\ClientGenerationTwoReturnValidation.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoReturnValidation.exe" >nul
+if not "%ERRORLEVEL%"=="95" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnValidation.exe" 24576 a26c69002b00dd46f04000ee40f2e6f4603033d2bd5028c171cd0f81dd5114f2
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoReturnValidation.bin" 0 "%Work%\ClientGenerationTwoReturnValidation.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnValidation.elf" 28784 6e04e1f5c7420df1f91a0df1f1085bd8af15b428bd79a7108a8390d604de7926
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=46 cases=276 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95 cross-host-images=Verified source-owned-bytes=26965 relocation-fields=223
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

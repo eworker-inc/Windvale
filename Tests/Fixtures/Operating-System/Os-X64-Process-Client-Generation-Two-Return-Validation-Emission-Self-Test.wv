@@ -1,0 +1,49 @@
+module Osˉx64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉemission as Validation;
+
+export fn Main() -> i32 {
+    let Code: bytes =
+        Validation.X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉbytes();
+    let Fields: bytes =
+        Validation.X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉfailureˉfields();
+    let Displacements: bytes =
+        Validation.X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 1011u32 || Bytesˉlength(Fields) != 240u32 ||
+        Bytesˉlength(Displacements) != 240u32 ||
+        Validation.X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉfixtureˉoffset() !=
+            25954u32 ||
+        Validation.X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉvalidationˉfixtureˉend() !=
+            26965u32 {
+        return 1;
+    }
+    var Index: u32 = 0u32;
+    while Index < 60u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 ||
+            25954u32 + Field + 4u32 + Displacement != 33826u32 {
+            return 2;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 1011u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 46920u32 || Hashˉone != 32963u32 ||
+        Hashˉtwo != 33596u32 || Hashˉthree != 42833u32 {
+        return 3;
+    }
+    return 95;
+}
