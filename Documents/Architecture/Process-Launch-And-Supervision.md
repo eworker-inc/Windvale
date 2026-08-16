@@ -288,6 +288,11 @@ generation-one constructor with operation 4 and selected provider generation
 activation, context restoration, zero completion, and provider `sysretq`
 remain shared. Source ownership reaches byte 28,803.
 
+The next 671-byte lifecycle transaction validates the complete directory
+endpoint and reply state, publishes its resolved transition, scrubs the request
+channel, advances bounded lifecycle counters, and only then dispatches client
+generation 2 with result 3,096. Source ownership reaches byte 29,474.
+
 The first restart policies are deliberately small:
 
 - `Never`;

@@ -648,6 +648,9 @@ provenance, revocation, and consensus boundaries are named.
   returns the exact 37-byte request result, and reaches byte 28,467.
   The adapted provider reply now validates operation 4 and generation 2,
   publishes the exact 3,096-byte reply, and reaches byte 28,803.
+  The checked endpoint lifecycle then publishes resolution, scrubs the request,
+  advances bounded state, delivers 3,096 bytes to client generation 2, and
+  reaches byte 29,474.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

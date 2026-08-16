@@ -49,6 +49,11 @@ ready, accurately labelled work at release freeze.
 | Windvale Shell | 🚧 | [Decision 0602](../Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md) accepts Shell 1; its capability-free parser passes all 47 native cases independently on Windows and Debian, and an exact 11-check WVB smoke agrees in Node 24 and Chromium 151. This is parser evidence, not complete browser conformance or an interactive/in-OS shell. | Compose the first capability-free `echo` resolution/launch proof while retaining the complete 47-case browser corpus as a promotion gate. |
 | Public project and release foundation | ✅ | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier are published with the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve the published evidence and define the next preview from new product pressure rather than reopening 0.1.0. |
 
+The latest OS machine slice extends the table's checkpoint through byte 29,474
+and 334 relocation fields by validating/publishing the directory endpoint,
+scrubbing the completed request channel, advancing bounded lifecycle state, and
+delivering the exact 3,096-byte result to client generation 2.
+
 ## .NET retirement result
 
 `████████████████████  8/8 conditions qualified — complete`

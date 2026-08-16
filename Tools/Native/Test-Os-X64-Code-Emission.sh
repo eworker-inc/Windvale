@@ -678,4 +678,15 @@ verify "$work/DirectoryGenerationTwoReply.bin" 41656 ecec624e5629baf150816131233
 verify "$work/DirectoryGenerationTwoReply.elf" 49264 d555b8543d60d8fc56fd7f19de40b00757a842afe5e6b19f4a5292a25e5b2e57 || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/DirectoryGenerationTwoReply.bin" 0 "$work/DirectoryGenerationTwoReply.exe" >/dev/null || exit $?
 verify "$work/DirectoryGenerationTwoReply.exe" 43520 0d2288f7b5c856943350db3ce475dc620c6aef2c5b63ab385e1a62163d757a8b || exit 1
-echo 'native os x64 code emission status=Passed projects=52 cases=312 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101 cross-host-images=Verified source-owned-bytes=28804 relocation-fields=305'
+echo 'step=client-generation-two-directory-reply-lifecycle item=53/53'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.wvproj" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvb" 4847 ed735a92c2b8f058536762898ffc0f181b958bfb61aeb99e87d98f0b633d20fa || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvb" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvo" 31607 27c90523ef44d616e69f4fbd71f7f2122bc07d612c5b9760cdc778dc3223b247 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" "$work/ClientGenerationTwoDirectoryReplyLifecycle.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 31119 9b512b17b8286592b3b22f519458e000497d7bb68070e00f27f01293d9189c89 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 0 "$work/ClientGenerationTwoDirectoryReplyLifecycle.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.elf" 36976 eb19da01012c6a39b12522d791363f3fdee488337b323af638167ecd3c997fdb || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 0 "$work/ClientGenerationTwoDirectoryReplyLifecycle.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.exe" 32768 25a67bbfdc92654cb380de563cb4bf13870467aed19288921162a229ae104242 || exit 1
+echo 'native os x64 code emission status=Passed projects=53 cases=318 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102 cross-host-images=Verified source-owned-bytes=29475 relocation-fields=334'

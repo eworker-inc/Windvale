@@ -376,6 +376,11 @@ exact 3,096-byte reply, zero resume, and provider `sysretq`. Current source
 ownership reaches byte 28,803 with 305 relocation fields; client reply delivery
 and the later lifecycle remain.
 
+[Decision 0683](../Decisions/0683-Own-Generation-Two-Directory-Reply-Lifecycle.md)
+adds the inseparable endpoint publication, request-channel scrub, bounded
+lifecycle advancement, and exact 3,096-byte delivery to client generation 2.
+Current ownership reaches byte 29,474 with 334 relocation fields.
+
 This sequence may interleave with native Windows/Linux work. .NET retirement is complete in `main`, and host-built AOT evidence still does not count as in-guest verification.
 
 ## Deliberately deferred choices
