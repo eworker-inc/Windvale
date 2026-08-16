@@ -82,9 +82,10 @@ export fn Main() -> i32 {
         diagnostic.write_line("source wvb status=Sourceˉwir wir-status=Sourceˉbindings");
         return 64;
     }
-    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
-        Compilerˉsourceˉwvbˉtoolˉinput(Modules)
-    );
+    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+            Compilerˉsourceˉwvbˉtoolˉinput(Modules)
+        );
     if Summary.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉwvbˉtoolˉfailure(Summary));
         return 1;

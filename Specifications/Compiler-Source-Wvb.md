@@ -27,6 +27,11 @@ Main(Input: bytes) -> bytes
 
 `Input` is one complete canonical WVSS 1 value. The adapter passes it unchanged to `Compilerˉcompileˉsourceˉwvb`; it does not resolve paths, enumerate files, read process arguments, write output, or print diagnostics. `Projects/Compiler/Windvale-Compiler-Memory.wvproj` builds the adapter with the same compiler-core source inventory as the hosted tool.
 
+The hosted `Source-Wvb-Tool` selects
+`Compilerˉcompileˉsourceˉwvbˉoptimized` for application publication. The portable
+memory adapter retains the complete-emission entry point until its response-level
+consumers gain equivalent optimized-output conformance evidence.
+
 The returned `WVCO 1` value has this exact little-endian layout:
 
 | Offset | Size | Field |
@@ -191,6 +196,16 @@ A separate control-flow oracle compiles nested `&&`/`||` precedence, a skipped o
 `Tests/Fixtures/Source-Wvb/Function-Only.wv` retains the original four-function primitive/control-flow baseline while using storage-free typed constants, inferred mutable numeric locals, and multiline trailing commas. Both backends produce the exact 816-byte WVB 1.11 module with SHA-256 `28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936`; it executes with result `6`.
 
 `Tests/Fixtures/Source-Wvb/Data-And-Text.wv` deliberately interleaves unsorted functions and static data. It covers inferred integer, text, and bytes locals; signed integer arrays; multiline trailing commas; explicit and synthetic text; literal reuse; a synthetic-name collision; escaped Unicode and a surrogate pair; Foundation intrinsics; remapped data references; and remapped calls. Both backends produce the exact 1,652-byte WVB module with SHA-256 `8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc`; it executes with result `13`.
+
+`Tests/Fixtures/Source-Wvb/Pruning.wv` is the closed-world optimization oracle. Its
+complete form contains four functions and two data entries in 395 bytes with
+SHA-256 `42810451eb302f79d0c167eda3fe62b681277661b277a06badcffd177aba5f35`.
+The hosted optimized compiler removes `Dead`, removes `Deadˉvalues`, remaps the
+retained call and data indices, and deterministically produces three functions and
+one data entry in 308 bytes with SHA-256
+`d2f8b67a3a83f393fba16d4f1294000d631e401abd0c4fdde521c9654407b02a`.
+The optimized module passes the compiler-aligned verifier and executes with result
+`42` in the native WVB runner.
 
 `Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers inferred record, enum, and text locals; named literals; canonical record/enum grouping and ordering; every primitive record field plus enum fields; nominal parameters/results/locals/temporaries; multiline trailing commas; and all six nominal WVIR operations. Both backends produce the exact 1,782-byte WVB module with SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`; it executes with result `11`.
 

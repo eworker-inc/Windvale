@@ -1,0 +1,25 @@
+module Sourceˉwvbˉpruning profile portable;
+
+data Deadˉvalues: [i32] = [
+    1,
+];
+
+data Usedˉvalues: [i32] = [
+    42,
+];
+
+fn Dead() -> i32 {
+    return Deadˉvalues[0];
+}
+
+fn Leaf() -> i32 {
+    return Usedˉvalues[0];
+}
+
+fn Middle() -> i32 {
+    return Leaf();
+}
+
+export fn Main() -> i32 {
+    return Middle();
+}
