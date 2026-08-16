@@ -69,6 +69,18 @@ export fn Main() -> i32 {
     ) != Record.Resourceˉdomainˉrecordˉstatus.Invalidˉcommit {
         return 27;
     }
+    let Consumerˉrecord: bytes =
+        Record.Filesystemˉconsumerˉresourceˉdomainˉrecord();
+    if Bytesˉlength(Consumerˉrecord) != 64u32 ||
+        Record.Filesystemˉconsumerˉresourceˉdomainˉrecordˉstatus(
+            Consumerˉrecord
+        ) != Record.Resourceˉdomainˉrecordˉstatus.Valid {
+        return 28;
+    }
+    if Record.Filesystemˉresourceˉdomainˉrecordˉstatus(Consumerˉrecord) !=
+        Record.Resourceˉdomainˉrecordˉstatus.Invalidˉidentity {
+        return 29;
+    }
     let Invalid: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(0u32, 1u32, 3u32, 144u32, 2u32);
     if Invalid.Status != Domain.Resourceˉdomainˉstatus.Invalidˉdomain { return 1; }
     let Created: Domain.Resourceˉdomainˉtransition = Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);

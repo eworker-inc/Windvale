@@ -20,7 +20,7 @@ set "Actual="
 set /p "Actual=" <"%Work%\Run.out"
 if not "%Actual%"=="Result: 42" goto :cleanup
 for %%E in ("%Work%\Run.err") do if not "%%~zE"=="0" goto :cleanup
-echo native os resource domain status=Passed projects=2 behavior=1 cases=10
+echo native os resource domain status=Passed projects=2 behavior=2 cases=12
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

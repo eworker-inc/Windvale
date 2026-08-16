@@ -43,6 +43,22 @@ kernel-only paging pages and charges its 81 user-owned pages. The single
 endpoint charge covers provider-side endpoint reference `131072`; client 0
 still grants no consumer authority.
 
+The selected filesystem consumer uses the same versioned encoding with these
+field substitutions:
+
+| Field | Consumer value |
+| --- | ---: |
+| domain reference | `65540` |
+| owner process reference | `131075` |
+| process limit / committed | `1 / 1` |
+| user-page limit / committed | `6 / 6` |
+| endpoint limit / committed | `0 / 0` |
+
+The consumer owns a rights-limited capability to the provider-owned endpoint;
+it does not own or charge the endpoint object. Its kernel-state storage is not
+yet selected or published. Live construction must validate a terminal record
+slot before writing these bytes.
+
 ## Publication and lifetime
 
 Construction clears the retired 64-byte slot and writes every non-magic field
@@ -63,10 +79,10 @@ record as a network record.
 
 [`Resource-Domain-Record.wv`](../Operating-System/Kernel/Resource-Domain-Record.wv)
 constructs and validates the exact record. The `os-resource-domain` owner
-builds the policy and record as separate Project 2 modules and executes exact,
-truncated, oversized, wrong-magic, version, header, identity, limit,
-reservation, and committed-use record cases alongside the policy lifecycle
-cases.
+builds the policy and record as separate Project 2 modules and executes both
+exact filesystem records, cross-profile identity rejection, and truncated,
+oversized, wrong-magic, version, header, identity, limit, reservation, and
+committed-use cases alongside the policy lifecycle cases.
 The boot construction independently preflights the retired endpoint and writes
 the same bytes in the live kernel state page.
 

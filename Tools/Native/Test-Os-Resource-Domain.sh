@@ -18,4 +18,4 @@ trap cleanup EXIT
 "$script_directory/Run-Wvb.sh" "$work/Test.wvb" >"$work/Run.out" 2>"$work/Run.err" || exit $?
 [[ $(<"$work/Run.out") == 'Result: 42' ]] || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
-echo 'native os resource domain status=Passed projects=2 behavior=1 cases=10'
+echo 'native os resource domain status=Passed projects=2 behavior=2 cases=12'

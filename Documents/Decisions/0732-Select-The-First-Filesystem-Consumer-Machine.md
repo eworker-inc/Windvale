@@ -48,6 +48,11 @@ endpoint or domain, a provider that is not ready, a live process/memory/domain
 slot, wrong page geometry, and provider-strength rights. The focused provider
 launch owner now passes 26 cases across 14 behavior groups.
 
+The portable domain-record module now constructs and validates the exact
+64-byte consumer `WVDOM001` value for domain `65540`, owner `131075`, and
+committed use `1/6/0`. This defines bytes only; it does not select or overwrite
+a kernel-state slot.
+
 No EFI identity changes in this slice. No directory memory is released, no
 consumer record or domain ledger is written, endpoint client remains 0, and no
 provider or application thread is entered. The next machine slice must select

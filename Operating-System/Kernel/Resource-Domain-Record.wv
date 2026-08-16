@@ -15,27 +15,44 @@ fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
     return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
 }
 
-export fn Filesystemˉresourceˉdomainˉrecord() -> bytes {
+fn Buildˉresourceˉdomainˉrecord(
+    Domainˉreference: u32,
+    Ownerˉprocessˉreference: u32,
+    Userˉpages: u32,
+    Endpoints: u32
+) -> bytes {
     var Result: bytes = Bytesˉfromˉu32ˉlittle(RESOURCE_DOMAIN_MAGIC_LOW);
     Result = Appendˉu32(Result, RESOURCE_DOMAIN_MAGIC_HIGH);
     Result = Appendˉu32(Result, 1u32);
     Result = Appendˉu32(Result, RESOURCE_DOMAIN_BYTES);
     Result = Appendˉu32(Result, 0u32);
-    Result = Appendˉu32(Result, 65538u32);
-    Result = Appendˉu32(Result, 196610u32);
+    Result = Appendˉu32(Result, Domainˉreference);
+    Result = Appendˉu32(Result, Ownerˉprocessˉreference);
     Result = Appendˉu32(Result, 1u32);
-    Result = Appendˉu32(Result, 81u32);
+    Result = Appendˉu32(Result, Userˉpages);
+    Result = Appendˉu32(Result, Endpoints);
     Result = Appendˉu32(Result, 1u32);
-    Result = Appendˉu32(Result, 1u32);
-    Result = Appendˉu32(Result, 81u32);
-    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Userˉpages);
+    Result = Appendˉu32(Result, Endpoints);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, 0u32);
     return Appendˉu32(Result, 0u32);
 }
 
-export fn Filesystemˉresourceˉdomainˉrecordˉstatus(
-    Input: bytes
+export fn Filesystemˉresourceˉdomainˉrecord() -> bytes {
+    return Buildˉresourceˉdomainˉrecord(65538u32, 196610u32, 81u32, 1u32);
+}
+
+export fn Filesystemˉconsumerˉresourceˉdomainˉrecord() -> bytes {
+    return Buildˉresourceˉdomainˉrecord(65540u32, 131075u32, 6u32, 0u32);
+}
+
+fn Resourceˉdomainˉrecordˉstatus(
+    Input: bytes,
+    Expectedˉdomain: u32,
+    Expectedˉowner: u32,
+    Expectedˉpages: u32,
+    Expectedˉendpoints: u32
 ) -> Resourceˉdomainˉrecordˉstatus {
     if Bytesˉlength(Input) != RESOURCE_DOMAIN_BYTES {
         return Resourceˉdomainˉrecordˉstatus.Invalidˉsize;
@@ -51,13 +68,13 @@ export fn Filesystemˉresourceˉdomainˉrecordˉstatus(
         Bytesˉreadˉu32ˉlittle(Input, 16u32) != 0u32 {
         return Resourceˉdomainˉrecordˉstatus.Invalidˉheader;
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != 65538u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 24u32) != 196610u32 {
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != Expectedˉdomain ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) != Expectedˉowner {
         return Resourceˉdomainˉrecordˉstatus.Invalidˉidentity;
     }
     if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 81u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 1u32 {
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != Expectedˉpages ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != Expectedˉendpoints {
         return Resourceˉdomainˉrecordˉstatus.Invalidˉlimits;
     }
     if Bytesˉreadˉu32ˉlittle(Input, 52u32) != 0u32 ||
@@ -66,9 +83,25 @@ export fn Filesystemˉresourceˉdomainˉrecordˉstatus(
         return Resourceˉdomainˉrecordˉstatus.Invalidˉreservation;
     }
     if Bytesˉreadˉu32ˉlittle(Input, 40u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 81u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 48u32) != 1u32 {
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != Expectedˉpages ||
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) != Expectedˉendpoints {
         return Resourceˉdomainˉrecordˉstatus.Invalidˉcommit;
     }
     return Resourceˉdomainˉrecordˉstatus.Valid;
+}
+
+export fn Filesystemˉresourceˉdomainˉrecordˉstatus(
+    Input: bytes
+) -> Resourceˉdomainˉrecordˉstatus {
+    return Resourceˉdomainˉrecordˉstatus(
+        Input, 65538u32, 196610u32, 81u32, 1u32
+    );
+}
+
+export fn Filesystemˉconsumerˉresourceˉdomainˉrecordˉstatus(
+    Input: bytes
+) -> Resourceˉdomainˉrecordˉstatus {
+    return Resourceˉdomainˉrecordˉstatus(
+        Input, 65540u32, 131075u32, 6u32, 0u32
+    );
 }
