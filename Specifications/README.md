@@ -92,6 +92,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Bounded HTTPS version 1](Bounded-Https.md)
 - [Protected provider credential version 1](Protected-Provider-Credential.md)
 - [Supervised external-model gateway version 1](Supervised-External-Model-Gateway.md)
+- [Native external-model gateway bridge version 1](Native-External-Model-Gateway-Bridge.md)
 
 ## Networking
 

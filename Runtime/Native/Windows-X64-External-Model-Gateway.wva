@@ -1,0 +1,326 @@
+windvale-assembly 1
+
+# Windows x64 leaf for supervisor-dedicated model worker pipes. It reuses the
+# admitted hosted container's ReadFile/WriteFile functions and resolves only
+# GetStdHandle from that same already admitted KERNEL32 image.
+symbol local data Model_gateway_windows_name_get_std_handle in .rodata
+symbol local function Model_gateway_windows_resolve in .text
+symbol export function Model_gateway_platform_open in .text
+symbol export function Model_gateway_platform_read in .text
+symbol export function Model_gateway_platform_write in .text
+
+section code .text align 16
+define Model_gateway_windows_resolve
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 16
+move r12 r8
+and_i32 r12 -65536
+move r13 r9
+move r14d r10d
+xor r15d r15d
+
+label Model_gateway_windows_resolve_base
+compare_i32 r15d 64
+branch above_equal Model_gateway_windows_resolve_failure
+load_memory_u16 ax r12 none 1 0
+compare_i16 ax 23117
+branch not_equal Model_gateway_windows_resolve_previous
+load_memory_u32 eax r12 none 1 60
+compare_i32 eax 64
+branch below Model_gateway_windows_resolve_previous
+compare_i32 eax 4096
+branch above Model_gateway_windows_resolve_previous
+move rdx r12
+add rdx rax
+load_memory_u32 ecx rdx none 1 0
+compare_i32 ecx 17744
+branch not_equal Model_gateway_windows_resolve_previous
+load_memory_u16 cx rdx none 1 24
+compare_i16 cx 523
+branch not_equal Model_gateway_windows_resolve_previous
+load_memory_u32 edi rdx none 1 80
+compare_i32 edi 4096
+branch below Model_gateway_windows_resolve_failure
+load_memory_u32 eax rdx none 1 136
+load_memory_u32 ecx rdx none 1 140
+test eax eax
+branch equal Model_gateway_windows_resolve_failure
+test ecx ecx
+branch equal Model_gateway_windows_resolve_failure
+store_memory_u32 rsp none 1 0 eax
+add ecx eax
+branch below Model_gateway_windows_resolve_failure
+compare ecx edi
+branch above Model_gateway_windows_resolve_failure
+store_memory_u32 rsp none 1 8 ecx
+move r8 r12
+add r8 rax
+
+load_memory_u32 r10d r8 none 1 20
+load_memory_u32 r15d r8 none 1 24
+test r10d r10d
+branch equal Model_gateway_windows_resolve_failure
+test r15d r15d
+branch equal Model_gateway_windows_resolve_failure
+compare_i32 r10d 65536
+branch above Model_gateway_windows_resolve_failure
+compare_i32 r15d 65536
+branch above Model_gateway_windows_resolve_failure
+
+load_memory_u32 eax r8 none 1 28
+move ecx r10d
+shift_left rcx 2
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Model_gateway_windows_resolve_failure
+add rax r12
+move rbx rax
+
+load_memory_u32 eax r8 none 1 32
+move ecx r15d
+shift_left rcx 2
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Model_gateway_windows_resolve_failure
+add rax r12
+move rbp rax
+
+load_memory_u32 eax r8 none 1 36
+move ecx r15d
+shift_left rcx 1
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Model_gateway_windows_resolve_failure
+add rax r12
+move rsi rax
+
+xor r11d r11d
+label Model_gateway_windows_resolve_name
+compare r11d r15d
+branch above_equal Model_gateway_windows_resolve_failure
+load_memory_u32 eax rbp r11 4 0
+move ecx r14d
+add_i32 ecx 1
+move r9 rax
+add r9 rcx
+compare r9 rdi
+branch above Model_gateway_windows_resolve_next
+add rax r12
+move rdx rax
+xor ecx ecx
+
+label Model_gateway_windows_resolve_compare
+compare ecx r14d
+branch above_equal Model_gateway_windows_resolve_terminator
+load_memory_u8 al rdx rcx 1 0
+load_memory_u8 r8b r13 rcx 1 0
+compare al r8b
+branch not_equal Model_gateway_windows_resolve_next
+add_i32 ecx 1
+jump_label Model_gateway_windows_resolve_compare
+
+label Model_gateway_windows_resolve_terminator
+load_memory_u8 al rdx rcx 1 0
+test al al
+branch not_equal Model_gateway_windows_resolve_next
+load_memory_u16 ax rsi r11 2 0
+zero_extend_u16 eax ax
+compare eax r10d
+branch above_equal Model_gateway_windows_resolve_failure
+load_memory_u32 eax rbx rax 4 0
+compare eax edi
+branch above_equal Model_gateway_windows_resolve_failure
+load_memory_u32 ecx rsp none 1 0
+compare eax ecx
+branch below Model_gateway_windows_resolve_found
+load_memory_u32 ecx rsp none 1 8
+compare eax ecx
+branch below Model_gateway_windows_resolve_failure
+
+label Model_gateway_windows_resolve_found
+add rax r12
+jump_label Model_gateway_windows_resolve_complete
+label Model_gateway_windows_resolve_next
+add_i32 r11d 1
+jump_label Model_gateway_windows_resolve_name
+label Model_gateway_windows_resolve_previous
+subtract_i32 r12 65536
+add_i32 r15d 1
+jump_label Model_gateway_windows_resolve_base
+label Model_gateway_windows_resolve_failure
+xor eax eax
+label Model_gateway_windows_resolve_complete
+add_i32 rsp 16
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+define Model_gateway_platform_open
+push rbx
+push r12
+push r13
+subtract_i32 rsp 32
+move r12 r8
+move r13 r9
+load_memory_u64 rax r13 none 1 88
+test rax rax
+branch equal Model_gateway_windows_open_failure
+load_memory_u64 rbx rax none 1 40
+test rbx rbx
+branch equal Model_gateway_windows_open_failure
+load_memory_u64 rcx rax none 1 24
+test rcx rcx
+branch equal Model_gateway_windows_open_failure
+compare_i32 rcx -1
+branch equal Model_gateway_windows_open_failure
+store_memory_u64 r12 none 1 8 rcx
+store_memory_u64 r12 none 1 24 rbx
+
+load_memory_u64 rax r13 none 1 96
+test rax rax
+branch equal Model_gateway_windows_open_failure
+load_memory_u64 rcx rax none 1 104
+test rcx rcx
+branch equal Model_gateway_windows_open_failure
+store_memory_u64 r12 none 1 16 rcx
+
+move r8 rbx
+load_address r9 Model_gateway_windows_name_get_std_handle
+move_u32 r10d 12
+call Model_gateway_windows_resolve
+test rax rax
+branch equal Model_gateway_windows_open_failure
+move_i32 ecx -10
+call_register rax
+test rax rax
+branch equal Model_gateway_windows_open_failure
+compare_i32 rax -1
+branch equal Model_gateway_windows_open_failure
+store_memory_u64 r12 none 1 0 rax
+xor eax eax
+jump_label Model_gateway_windows_open_complete
+label Model_gateway_windows_open_failure
+move_u32 eax 1
+label Model_gateway_windows_open_complete
+add_i32 rsp 32
+pop r13
+pop r12
+pop rbx
+return
+end define
+
+define Model_gateway_platform_read
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 56
+move r12 r8
+move r13 r9
+move r14d r10d
+load_memory_u64 r15 r12 none 1 16
+label Model_gateway_windows_read_next
+test r14d r14d
+branch equal Model_gateway_windows_read_complete
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rcx r12 none 1 0
+move rdx r13
+move r8d r14d
+move r9 rsp
+add_i32 r9 40
+call_register r15
+test eax eax
+branch equal Model_gateway_windows_read_failure
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch equal Model_gateway_windows_read_failure
+compare eax r14d
+branch above Model_gateway_windows_read_failure
+add r13 rax
+subtract r14d eax
+jump_label Model_gateway_windows_read_next
+label Model_gateway_windows_read_complete
+xor eax eax
+jump_label Model_gateway_windows_read_return
+label Model_gateway_windows_read_failure
+move_u32 eax 1
+label Model_gateway_windows_read_return
+add_i32 rsp 56
+pop r15
+pop r14
+pop r13
+pop r12
+return
+end define
+
+define Model_gateway_platform_write
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 56
+move r12 r8
+move r13 r9
+move r14d r10d
+load_memory_u64 r15 r12 none 1 24
+label Model_gateway_windows_write_next
+test r14d r14d
+branch equal Model_gateway_windows_write_complete
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rcx r12 none 1 8
+move rdx r13
+move r8d r14d
+move r9 rsp
+add_i32 r9 40
+call_register r15
+test eax eax
+branch equal Model_gateway_windows_write_failure
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch equal Model_gateway_windows_write_failure
+compare eax r14d
+branch above Model_gateway_windows_write_failure
+add r13 rax
+subtract r14d eax
+jump_label Model_gateway_windows_write_next
+label Model_gateway_windows_write_complete
+xor eax eax
+jump_label Model_gateway_windows_write_return
+label Model_gateway_windows_write_failure
+move_u32 eax 1
+label Model_gateway_windows_write_return
+add_i32 rsp 56
+pop r15
+pop r14
+pop r13
+pop r12
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Model_gateway_windows_name_get_std_handle
+bytes 71 101 116 83 116 100 72 97 110 100 108 101
+end define
+end section

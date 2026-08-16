@@ -135,8 +135,9 @@ deterministic acceptance.
 
 The child still runs on the hosted Node bootstrap and uses the previously
 implemented supervised resolver/TCP/TLS providers beneath bounded HTTPS. The
-Windvale native capability/timer bridge, launcher/service-manager binding,
-OS-keyring or HSM custody, protected interactive unlock channel, operational
+first [native capability/timer bridge](Native-External-Model-Gateway-Bridge.md)
+now binds a model-only worker through dedicated supervised pipes. A general
+launcher/service-manager binding, OS-keyring or HSM custody, protected interactive unlock channel, operational
 rotation/recovery, live provider smoke, streaming output, concurrency, and
 multi-provider routing remain separate work. None permits credentials, endpoints,
 or raw JSON to enter the portable model protocol.

@@ -1,0 +1,95 @@
+windvale-assembly 1
+
+# Independent ABI-23 probe for the live model-gateway host. It issues one
+# canonical stale-generation request through the inference entry and accepts
+# only the matching canonical WVMG lifecycle response.
+symbol local data Model_gateway_probe_request in .rodata
+symbol export function Main in .text
+
+section code .text align 16
+define Main
+push rbx
+push r15
+subtract_i32 rsp 128
+move r15 rdx
+
+xor rax rax
+xor ecx ecx
+label Model_gateway_probe_clear
+compare_i32 ecx 96
+branch above_equal Model_gateway_probe_call
+store_memory_u64 rsp rcx 1 32 rax
+add_i32 ecx 8
+jump_label Model_gateway_probe_clear
+
+label Model_gateway_probe_call
+load_address rax Model_gateway_probe_request
+store_memory_u64 rsp none 1 48 rax
+move_u32 eax 84
+store_memory_u32 rsp none 1 56 eax
+load_memory_u64 rbx r15 none 1 128
+test rbx rbx
+branch equal Model_gateway_probe_failure
+load_memory_u64 rax rbx none 1 64
+test rax rax
+branch equal Model_gateway_probe_failure
+load_memory_u64 r8 rbx none 1 72
+test r8 r8
+branch equal Model_gateway_probe_failure
+move rcx rsp
+add_i32 rcx 32
+move_u32 edx 1
+move r9 rsp
+add_i32 r9 48
+call_register rax
+test eax eax
+branch not_equal Model_gateway_probe_failure
+
+load_memory_u64 rbx rsp none 1 32
+test rbx rbx
+branch equal Model_gateway_probe_failure
+load_memory_u32 ecx rsp none 1 40
+compare_i32 ecx 64
+branch below Model_gateway_probe_failure
+compare_i32 ecx 1048576
+branch above Model_gateway_probe_failure
+load_memory_u32 eax rsp none 1 44
+test eax eax
+branch not_equal Model_gateway_probe_failure
+load_memory_u32 eax rbx none 1 0
+compare_i32 eax 1196250711
+branch not_equal Model_gateway_probe_failure
+load_memory_u32 eax rbx none 1 4
+compare_i32 eax 1
+branch not_equal Model_gateway_probe_failure
+load_memory_u32 eax rbx none 1 8
+compare eax ecx
+branch not_equal Model_gateway_probe_failure
+load_memory_u32 eax rbx none 1 12
+compare_i32 eax 9
+branch not_equal Model_gateway_probe_failure
+load_memory_u64 rax rbx none 1 16
+compare_i32 rax 701
+branch not_equal Model_gateway_probe_failure
+xor eax eax
+jump_label Model_gateway_probe_return
+
+label Model_gateway_probe_failure
+move_u32 eax 1
+label Model_gateway_probe_return
+add_i32 rsp 128
+pop r15
+pop rbx
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Model_gateway_probe_request
+bytes 87 86 77 81 1 0 0 0 84 0 0 0 2 0 0 0 189 2 0 0
+bytes 0 0 0 0 22 0 0 0 0 0 0 0 64 0 0 0 8 0 0 0
+bytes 28 0 0 0 0 0 0 0 103 112 116 45 116 101 115 116 87 86 77 77
+bytes 1 0 0 0 28 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
+bytes 116 101 115 116
+end define
+end section

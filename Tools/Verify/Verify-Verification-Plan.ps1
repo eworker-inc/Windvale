@@ -1417,7 +1417,26 @@ $NativeCases = @(
             'Tools/Native/Test-External-Model-Gateway.sh',
             'Specifications/Supervised-External-Model-Gateway.md'
         )
-        Suites = @('external-model-gateway')
+        Suites = @('external-model-gateway', 'native-external-model-gateway')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native external model gateway owner'
+        Paths = @(
+            'Runtime/Hosted/Models/Native-External-Model-Gateway-Supervisor.mjs',
+            'Runtime/Native/X64-External-Model-Gateway-Host.wva',
+            'Runtime/Native/Windows-X64-External-Model-Gateway.wva',
+            'Runtime/Native/Linux-X64-External-Model-Gateway.wva',
+            'Tests/Native/X64-External-Model-Gateway-Probe.wva',
+            'Tools/Models/Fixtures/Native-Model-Gateway-Peer.mjs',
+            'Tools/Models/Test-Native-External-Model-Gateway-Supervisor.mjs',
+            'Tools/Models/Test-Native-External-Model-Gateway-Execution.mjs',
+            'Tools/Native/Test-Native-External-Model-Gateway.cmd',
+            'Tools/Native/Test-Native-External-Model-Gateway.sh',
+            'Specifications/Native-External-Model-Gateway-Bridge.md'
+        )
+        Suites = @('native-external-model-gateway')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2132,9 +2151,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 89 -or
+if ($VerificationOwnerLines.Count -ne 90 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 88-owner inventory differs.'
+    throw 'The native verification-owner header or exact 89-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2172,7 +2191,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4065 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4079 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

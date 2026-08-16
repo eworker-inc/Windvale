@@ -12,11 +12,13 @@
   [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md),
   [Decision 0603](../Decisions/0603-First-Bounded-Https-Client.md),
   [Decision 0604](../Decisions/0604-First-Protected-Provider-Credential-Custody.md),
-  and [Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md).
+  [Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md),
+  and [Decision 0646](../Decisions/0646-First-Native-External-Model-Gateway-Bridge.md).
   Resolver/TCP, TLS, bounded HTTPS, and protected credential custody have
   independent Windows/Linux execution evidence, as does the supervised
-  external-model gateway. The native capability bridge remains pending, so no
-  production network capability is yet claimed
+  external-model gateway. The first model-only native capability/timer bridge
+  executes on Windows and constructs the Linux image; independent Linux evidence
+  remains pending, so no complete production network promotion is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
 - First package consumer: [package-system implementation plan](Windvale-Package-System-Implementation-Plan.md)
@@ -286,6 +288,19 @@ JSON admission, shared HTTPS, and canonical model responses. Thirty isolated
 cases cover the core and child boundary, including differential output against
 the reference oracle and real credential-to-HTTPS composition with fake data.
 No deterministic case reads a real key or contacts the public Internet.
+
+### Native external-model gateway bridge
+
+Status: implemented candidate under
+[Decision 0646](../Decisions/0646-First-Native-External-Model-Gateway-Bridge.md);
+Windows execution is complete and independent Linux execution remains pending.
+
+The bridge binds the existing ABI-23 catalog/inference entries to the protected
+gateway through a model-only native worker with dedicated pipes. Platform WVA
+leaves perform exact bounded reads/writes while the launcher owns readiness,
+operation/lifetime timers, diagnostics, and joint teardown. Fourteen isolated
+cases assemble and admit the shared host and both leaves, construct both hosted
+images, and execute one canonical stale request without public networking.
 
 ### Network slice 6: package-source integration
 

@@ -985,6 +985,20 @@ foreach ($Path in $Paths) {
             'Specifications/Protected-Provider-Credential.md'
     )) {
         Add-Suite 'protected-credential'
+    } elseif ($Path -in @(
+            'Runtime/Hosted/Models/Native-External-Model-Gateway-Supervisor.mjs',
+            'Runtime/Native/X64-External-Model-Gateway-Host.wva',
+            'Runtime/Native/Windows-X64-External-Model-Gateway.wva',
+            'Runtime/Native/Linux-X64-External-Model-Gateway.wva',
+            'Tests/Native/X64-External-Model-Gateway-Probe.wva',
+            'Tools/Models/Fixtures/Native-Model-Gateway-Peer.mjs',
+            'Tools/Models/Test-Native-External-Model-Gateway-Supervisor.mjs',
+            'Tools/Models/Test-Native-External-Model-Gateway-Execution.mjs',
+            'Tools/Native/Test-Native-External-Model-Gateway.cmd',
+            'Tools/Native/Test-Native-External-Model-Gateway.sh',
+            'Specifications/Native-External-Model-Gateway-Bridge.md'
+        )) {
+        Add-Suite 'native-external-model-gateway'
     } elseif ($Path.StartsWith('Runtime/Hosted/Models/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Models/Test-External-Model-Gateway-Core.mjs',
@@ -993,7 +1007,7 @@ foreach ($Path in $Paths) {
             'Tools/Native/Test-External-Model-Gateway.sh',
             'Specifications/Supervised-External-Model-Gateway.md'
         )) {
-        Add-Suite 'external-model-gateway'
+        Add-Suite @('external-model-gateway', 'native-external-model-gateway')
     } elseif ($Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-Host-Network-Provider.cmd',

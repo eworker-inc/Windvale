@@ -1,0 +1,95 @@
+windvale-assembly 1
+
+# Linux x64 leaf for the supervisor-dedicated model worker pipes. File
+# descriptors zero and one are process-private transport authority, not
+# portable console or ambient network authority.
+symbol export function Model_gateway_platform_open in .text
+symbol export function Model_gateway_platform_read in .text
+symbol export function Model_gateway_platform_write in .text
+
+section code .text align 16
+define Model_gateway_platform_open
+move_u32 eax 0
+store_memory_u64 r8 none 1 0 rax
+move_u32 eax 1
+store_memory_u64 r8 none 1 8 rax
+xor eax eax
+return
+end define
+
+define Model_gateway_platform_read
+push r12
+push r13
+push r14
+move r12 r9
+move r13d r10d
+load_memory_u64 r14 r8 none 1 0
+label Model_gateway_linux_read_next
+test r13d r13d
+branch equal Model_gateway_linux_read_complete
+move rdi r14
+move rsi r12
+move edx r13d
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Model_gateway_linux_read_next
+compare_i32 rax -4095
+branch above_equal Model_gateway_linux_read_failure
+test rax rax
+branch equal Model_gateway_linux_read_failure
+compare rax r13
+branch above Model_gateway_linux_read_failure
+add r12 rax
+subtract r13 rax
+jump_label Model_gateway_linux_read_next
+label Model_gateway_linux_read_complete
+xor eax eax
+jump_label Model_gateway_linux_read_return
+label Model_gateway_linux_read_failure
+move_u32 eax 1
+label Model_gateway_linux_read_return
+pop r14
+pop r13
+pop r12
+return
+end define
+
+define Model_gateway_platform_write
+push r12
+push r13
+push r14
+move r12 r9
+move r13d r10d
+load_memory_u64 r14 r8 none 1 8
+label Model_gateway_linux_write_next
+test r13d r13d
+branch equal Model_gateway_linux_write_complete
+move rdi r14
+move rsi r12
+move edx r13d
+move_u32 eax 1
+syscall
+compare_i32 rax -4
+branch equal Model_gateway_linux_write_next
+compare_i32 rax -4095
+branch above_equal Model_gateway_linux_write_failure
+test rax rax
+branch equal Model_gateway_linux_write_failure
+compare rax r13
+branch above Model_gateway_linux_write_failure
+add r12 rax
+subtract r13 rax
+jump_label Model_gateway_linux_write_next
+label Model_gateway_linux_write_complete
+xor eax eax
+jump_label Model_gateway_linux_write_return
+label Model_gateway_linux_write_failure
+move_u32 eax 1
+label Model_gateway_linux_write_return
+pop r14
+pop r13
+pop r12
+return
+end define
+end section
