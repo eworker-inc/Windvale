@@ -1,6 +1,7 @@
 module Processˉobjectˉtool profile hosted;
 
 import Processˉobjectˉapplicationˉstart as Applicationˉstartˉobject;
+import Processˉobjectˉfilesystemˉmachine as Filesystemˉmachine;
 import Processˉobjectˉlayout as Layout;
 import Processˉobjectˉrelocations as Relocations;
 
@@ -22,9 +23,9 @@ fn Buildˉobject(Sections: bytes, Symbols: bytes, Relocationˉbytes: bytes) -> b
     Header = Bytesˉconcat(Header, Bytesˉfromˉu8(1u8));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu8(0u8));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(11u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(30u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(59u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(14u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(33u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(60u32));
     return Bytesˉconcat(
         Bytesˉconcat(Header, Sections),
         Bytesˉconcat(Symbols, Relocationˉbytes)
@@ -69,9 +70,29 @@ export fn Main() -> i32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
+    if !Filesystemˉmachine.Isˉvalid() {
+        diagnostic.write_line("process object status=Rejected");
+        return 1;
+    }
+    let Filesystemˉimageˉconstructor: bytes = Filesystemˉmachine.Image();
+    let Filesystemˉpagingˉconstructor: bytes = Filesystemˉmachine.Paging();
+    let Filesystemˉrecordˉconstructor: bytes = Filesystemˉmachine.Record();
+    if Bytesˉlength(Filesystemˉimageˉconstructor) != 58u32 ||
+        Bytesˉlength(Filesystemˉpagingˉconstructor) != 3342u32 ||
+        Bytesˉlength(Filesystemˉrecordˉconstructor) != 462u32 {
+        diagnostic.write_line("process object status=Rejected");
+        return 1;
+    }
     let Sections: bytes = Bytesˉconcat(
         Layout.Buildˉfirstˉsections(
-            Patchedˉcode, Handler, Init, Client, Program
+            Patchedˉcode,
+            Handler,
+            Filesystemˉimageˉconstructor,
+            Filesystemˉpagingˉconstructor,
+            Filesystemˉrecordˉconstructor,
+            Init,
+            Client,
+            Program
         ),
         Layout.Buildˉfinalˉsections(
             Store, Snapshot, Directory, Filesystem, Network
@@ -79,14 +100,14 @@ export fn Main() -> i32 {
     );
     let Symbols: bytes = Layout.Buildˉsymbols();
     let Relocationˉbytes: bytes = Relocations.Buildˉrelocations();
-    if Bytesˉlength(Sections) != 949102u32 ||
-        Bytesˉlength(Symbols) != 1696u32 ||
-        Bytesˉlength(Relocationˉbytes) != 1180u32 {
+    if Bytesˉlength(Sections) != 953116u32 ||
+        Bytesˉlength(Symbols) != 1890u32 ||
+        Bytesˉlength(Relocationˉbytes) != 1200u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
     let Result: bytes = Buildˉobject(Sections, Symbols, Relocationˉbytes);
-    if Bytesˉlength(Result) != 952002u32 {
+    if Bytesˉlength(Result) != 956230u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }

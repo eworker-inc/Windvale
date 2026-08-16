@@ -173,9 +173,11 @@ selects sequential reuse of released process/object slot 2 as generation 3 and
 closed resource-endpoint slot 0 as generation 2; the embedded service waits on
 that exact endpoint. The generation-three record, W^X paging, service copy, and
 native-context constructor bytes are now source-owned and pass a focused
-three-case cross-host packaging owner. Their allocation is 85 physical pages:
+three-case cross-host packaging owner. The process object now links and exports
+those constructors, and the complete Probe 40 QEMU gate passes with the
+expanded paging boundary. Their allocation is 85 physical pages:
 four kernel-only paging pages plus 81 charged user pages (48 RX image, 17 RW/NX
-context/transfer, and 16 disjoint RW/NX stack pages). Boot-object composition,
+context/transfer, and 16 disjoint RW/NX stack pages). Constructor invocation,
 real configuration/media identity, record publication, endpoint advance,
 context entry, request/reply execution, and teardown remain open.
 

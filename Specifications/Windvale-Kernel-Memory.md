@@ -55,7 +55,7 @@ The complete state-page layout is disjoint:
 | Interval | Record |
 | --- | --- |
 | `0x040..0x06F` | `WVKHAND1` |
-| `0x080...` | `WVKPAG06` |
+| `0x080...` | `WVKPAG07` |
 | `0x100..0x21F` | init `WVPROC17` |
 | `0x220..0x2D7` | private GDT, GDTR, and TSS |
 | `0x300..0x41F` | current client `WVPROC17` |

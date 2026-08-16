@@ -11,25 +11,25 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=4d25d5105149b6b819ff35e41e027ecf351d04ba865dc7c6f3bd6c18a77bcbce
-        efi_bytes=1693184
-        code_tail_offset=787552
+        efi_digest=e9a113b0b108a9da0bf31a0802d1fa7ae58f4c1888a1e30a0eb7d090732d40d9
+        efi_bytes=1696768
+        code_tail_offset=791424
         ;;
     invalid-opcode)
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=05ac3cc2d3a6337a2838f507e5a15b10755e3e6775fc6160850fc3ea4a338f31
-        efi_bytes=1693184
-        code_tail_offset=787568
+        efi_digest=af1cacbc0d139958e6f8d083d68493b35e4987a8a843939506e27f9595a133e2
+        efi_bytes=1696768
+        code_tail_offset=791440
         ;;
     general-protection)
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=34862977a74940f31829c7b5d9aee684bb5d9fdade4ce9e3eba9e830811c3a8d
-        efi_bytes=1693184
-        code_tail_offset=787568
+        efi_digest=eea4961a1a4b2287737ccd238f088b53ae4274714bf2c88f5a2ef0f7c4bdb384
+        efi_bytes=1696768
+        code_tail_offset=791440
         ;;
     *)
         echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
@@ -190,9 +190,9 @@ if ! "$script_directory/Build-Os-Process-Object.sh" \
     cat -- "$work/05.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/05-process.wvo") -ne 952002 ]] ||
+if [[ $(wc -c < "$work/05-process.wvo") -ne 956230 ]] ||
     ! printf '%s  %s\n' \
-        '5a6feaaf9be084e83b539080a14949809dcd3e3d99fca514a57b6f931af6d263' \
+        '6c54a37dbe4e08d43068fed9bfb98edea536ae097666fa2c793a1c1bea9f9ac3' \
         "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process object is invalid.' >&2
     exit 1
@@ -273,7 +273,7 @@ if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
     'e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344' "$work/07-timer-shims.wvo" \
     "$memory_digest" "$work/08-memory.wvo" \
     '9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c' "$work/09-exceptions.wvo" \
-    '5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b' "$work/10-paging.wvo" \
+    'a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871' "$work/10-paging.wvo" \
     '271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d' "$work/12-wvb-admission-bridge.wvo" \
     '472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b' "$work/13-native-bridge-and-support.wvo" \
     '845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193' "$work/11-kernel-shims.wvo" |

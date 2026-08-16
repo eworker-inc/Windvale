@@ -1,6 +1,6 @@
 # Decision 0726: Source-own the generation-three filesystem machine
 
-- Status: Accepted; boot integration pending
+- Status: Accepted; constructors boot-linked by [Decision 0728](0728-Boot-Link-The-Filesystem-Machine.md)
 - Date: 2026-08-16
 - Contract: [x86-64 filesystem-machine emission](../../Specifications/Windvale-Os-X64-Process-Filesystem-Machine-Emission.md)
 
@@ -32,11 +32,11 @@ existing owner.
 ## Consequences
 
 The next privileged boot slice can compose exact verified constructor bytes
-instead of hand-maintained byte literals. The implementation still makes no
-live-provider claim: the boot object has not yet allocated the extent, invoked
-the constructors, advanced the endpoint, published the record, or entered the
-service. The empty configuration digest remains an explicit placeholder until
-the FAT32 image/configuration identity is admitted.
+instead of hand-maintained byte literals. Decision 0728 links those bytes but
+makes no live-provider claim: the boot object has not yet allocated the extent,
+invoked the constructors, advanced the endpoint, published the record, or
+entered the service. The empty configuration digest remains an explicit
+placeholder until the FAT32 image/configuration identity is admitted.
 
 The constructor allocates 85 physical pages while accounting 81 user pages.
 Review and tests must preserve this distinction or reject the construction.

@@ -16,7 +16,7 @@ if "%~1"=="exceptions" (
     set "ExpectedDigest=472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b"
 ) else if "%~1"=="paging" (
     set "ExpectedBytes=1292"
-    set "ExpectedDigest=5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b"
+    set "ExpectedDigest=a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871"
 ) else if "%~1"=="memory" (
     set "ExpectedBytes=1529"
     set "ExpectedDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
@@ -78,7 +78,7 @@ if "%~1"=="loader" (
 ) else (
     set "Producer=%RepositoryRoot%\Artifacts\Native-Os-Probe-Object-Producer-Candidate\windows-x64-os-probe-object.exe"
     set "ProducerBytes=461312"
-    set "ProducerDigest=e8b631d301e8ee47c121fd6778eddc444debcdfcbb63b2d3a9f312306f58d38b"
+    set "ProducerDigest=0693b72ec5ed81dc9acdb32d48cf79be229df80c31d005d066e21ef33a5b6550"
 )
 if not exist "%Producer%" (
     >&2 echo The Windows native OS Probe object producer is missing.

@@ -27,69 +27,70 @@ fn Add(Result: bytes, Offset: u32, Symbol: u32) -> bytes {
 }
 
 export fn Buildˉrelocations() -> bytes {
-    var Result: bytes = Encodeˉrelocation(0u32, 1311u32, 15u32);
-    Result = Add(Result, 1896u32, 14u32);
+    var Result: bytes = Encodeˉrelocation(0u32, 1311u32, 18u32);
+    Result = Add(Result, 1896u32, 17u32);
     Result = Add(Result, 2952u32, 0u32);
     Result = Add(Result, 2974u32, 2u32);
     Result = Add(Result, 2996u32, 3u32);
     Result = Add(Result, 3018u32, 5u32);
-    Result = Add(Result, 3130u32, 14u32);
-    Result = Add(Result, 3248u32, 14u32);
+    Result = Add(Result, 3130u32, 17u32);
+    Result = Add(Result, 3248u32, 17u32);
     Result = Add(Result, 4228u32, 6u32);
     Result = Add(Result, 4250u32, 4u32);
     Result = Add(Result, 9610u32, 1u32);
-    Result = Add(Result, 11622u32, 23u32);
-    Result = Add(Result, 11697u32, 21u32);
-    Result = Add(Result, 11772u32, 22u32);
-    Result = Add(Result, 11847u32, 25u32);
-    Result = Add(Result, 12911u32, 20u32);
-    Result = Add(Result, 12957u32, 24u32);
-    Result = Add(Result, 12994u32, 28u32);
-    Result = Add(Result, 13054u32, 20u32);
-    Result = Add(Result, 13333u32, 20u32);
-    Result = Add(Result, 14462u32, 20u32);
-    Result = Add(Result, 14802u32, 20u32);
-    Result = Add(Result, 15141u32, 20u32);
-    Result = Add(Result, 15469u32, 20u32);
-    Result = Add(Result, 15800u32, 20u32);
-    Result = Add(Result, 16139u32, 20u32);
-    Result = Add(Result, 16467u32, 20u32);
-    Result = Add(Result, 17943u32, 20u32);
-    Result = Add(Result, 19586u32, 16u32);
-    Result = Add(Result, 19654u32, 14u32);
+    Result = Add(Result, 11622u32, 26u32);
+    Result = Add(Result, 11697u32, 24u32);
+    Result = Add(Result, 11772u32, 25u32);
+    Result = Add(Result, 11847u32, 28u32);
+    Result = Add(Result, 12911u32, 23u32);
+    Result = Add(Result, 12957u32, 27u32);
+    Result = Add(Result, 12994u32, 31u32);
+    Result = Add(Result, 13054u32, 23u32);
+    Result = Add(Result, 13333u32, 23u32);
+    Result = Add(Result, 14462u32, 23u32);
+    Result = Add(Result, 14802u32, 23u32);
+    Result = Add(Result, 15141u32, 23u32);
+    Result = Add(Result, 15469u32, 23u32);
+    Result = Add(Result, 15800u32, 23u32);
+    Result = Add(Result, 16139u32, 23u32);
+    Result = Add(Result, 16467u32, 23u32);
+    Result = Add(Result, 17943u32, 23u32);
+    Result = Add(Result, 19586u32, 19u32);
+    Result = Add(Result, 19654u32, 17u32);
     Result = Add(Result, 24992u32, 1u32);
-    Result = Add(Result, 27024u32, 20u32);
-    Result = Add(Result, 27364u32, 20u32);
-    Result = Add(Result, 27703u32, 20u32);
-    Result = Add(Result, 28031u32, 20u32);
-    Result = Add(Result, 28362u32, 20u32);
-    Result = Add(Result, 28701u32, 20u32);
-    Result = Add(Result, 29369u32, 20u32);
-    Result = Add(Result, 30915u32, 20u32);
-    Result = Add(Result, 34121u32, 19u32);
+    Result = Add(Result, 27024u32, 23u32);
+    Result = Add(Result, 27364u32, 23u32);
+    Result = Add(Result, 27703u32, 23u32);
+    Result = Add(Result, 28031u32, 23u32);
+    Result = Add(Result, 28362u32, 23u32);
+    Result = Add(Result, 28701u32, 23u32);
+    Result = Add(Result, 29369u32, 23u32);
+    Result = Add(Result, 30915u32, 23u32);
+    Result = Add(Result, 34121u32, 22u32);
     Result = Add(Result, 34231u32, 9u32);
-    Result = Add(Result, 41035u32, 26u32);
-    Result = Add(Result, 41679u32, 20u32);
-    Result = Add(Result, 41697u32, 27u32);
-    Result = Add(Result, 41727u32, 28u32);
-    Result = Add(Result, 42789u32, 26u32);
-    Result = Add(Result, 43433u32, 20u32);
-    Result = Add(Result, 43451u32, 27u32);
-    Result = Add(Result, 43481u32, 28u32);
-    Result = Add(Result, 44543u32, 26u32);
-    Result = Add(Result, 45199u32, 20u32);
-    Result = Add(Result, 45217u32, 27u32);
-    Result = Add(Result, 45247u32, 28u32);
-    Result = Add(Result, 46309u32, 26u32);
-    Result = Add(Result, 46496u32, 29u32);
-    Result = Add(Result, 46649u32, 29u32);
+    Result = Add(Result, 41035u32, 29u32);
+    Result = Add(Result, 41679u32, 23u32);
+    Result = Add(Result, 41697u32, 30u32);
+    Result = Add(Result, 41727u32, 31u32);
+    Result = Add(Result, 42789u32, 29u32);
+    Result = Add(Result, 43433u32, 23u32);
+    Result = Add(Result, 43451u32, 30u32);
+    Result = Add(Result, 43481u32, 31u32);
+    Result = Add(Result, 44543u32, 29u32);
+    Result = Add(Result, 45199u32, 23u32);
+    Result = Add(Result, 45217u32, 30u32);
+    Result = Add(Result, 45247u32, 31u32);
+    Result = Add(Result, 46309u32, 29u32);
+    Result = Add(Result, 46496u32, 32u32);
+    Result = Add(Result, 46649u32, 32u32);
     Result = Bytesˉconcat(
-        Result, Encodeˉrelocationˉaddend(1u32, 5u32, 13u32, 5393)
+        Result, Encodeˉrelocationˉaddend(1u32, 5u32, 16u32, 5393)
     );
     Result = Bytesˉconcat(
-        Result, Encodeˉrelocation(1u32, 97u32, 18u32)
+        Result, Encodeˉrelocation(1u32, 97u32, 21u32)
     );
-    return Bytesˉconcat(
-        Result, Encodeˉrelocation(1u32, 247u32, 17u32)
+    Result = Bytesˉconcat(
+        Result, Encodeˉrelocation(1u32, 247u32, 20u32)
     );
+    return Bytesˉconcat(Result, Encodeˉrelocation(2u32, 3u32, 7u32));
 }

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Native ABI 22, exception version 3, admission bridge 2, and retained bridge 10 remain unchanged in the current OS seam. Cross-host-qualified Probe 39 retains interpreter profile 7, channel 4, resource records 6, endpoint record version 1, paging 5, protected processes 17, and the private HPET/local-APIC experiment. Implemented-candidate Probe 40 advances kernel memory to version 17 and paging to version 6, adding one generation-safe memory-object WVA leaf and one supervisor RX page without changing source-language semantics or ABI-22 backend behavior. Independent Windows/Linux qualification remains pending.
+Native ABI 22, exception version 3, admission bridge 2, and retained bridge 10 remain unchanged in the current OS seam. Cross-host-qualified Probe 39 retains interpreter profile 7, channel 4, resource records 6, endpoint record version 1, paging 5, protected processes 17, and the private HPET/local-APIC experiment. Implemented-candidate Probe 40 advances kernel memory to version 17 and paging to version 7, adding one generation-safe memory-object WVA leaf and two supervisor RX pages over the version-5 baseline without changing source-language semantics or ABI-22 backend behavior. Independent Windows/Linux qualification remains pending.
 
 This contract prevents temporary C# machine-code generation from silently becoming the kernel architecture. It also avoids pretending that privileged x86-64 entry mechanics belong in ordinary source code.
 

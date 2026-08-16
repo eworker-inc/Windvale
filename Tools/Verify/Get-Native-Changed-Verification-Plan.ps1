@@ -2495,6 +2495,10 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Suite @('os-probe-object', 'os-probe')
     } elseif ($Path.StartsWith(
+        'Artifacts/Native-Os-Probe-Object-Producer-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite @('os-probe-object', 'os-probe')
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Os-Process-Object-Toolset-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite @('os-process-object', 'os-probe')

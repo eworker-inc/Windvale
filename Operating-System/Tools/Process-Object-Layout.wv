@@ -56,6 +56,9 @@ fn Importˉfunction(Name: text) -> bytes {
 export fn Buildˉfirstˉsections(
     Code: bytes,
     Handlerˉbytes: bytes,
+    Filesystemˉimageˉconstructor: bytes,
+    Filesystemˉpagingˉconstructor: bytes,
+    Filesystemˉrecordˉconstructor: bytes,
     Init: bytes,
     Client: bytes,
     Program: bytes
@@ -66,6 +69,18 @@ export fn Buildˉfirstˉsections(
     Result = Append(Result, Encodeˉsection(
         ".text.process.application_start",
         1u8, 16u32, 262u32, Handlerˉbytes
+    ));
+    Result = Append(Result, Encodeˉsection(
+        ".text.process.filesystem.image",
+        1u8, 16u32, 58u32, Filesystemˉimageˉconstructor
+    ));
+    Result = Append(Result, Encodeˉsection(
+        ".text.process.filesystem.paging",
+        1u8, 16u32, 3342u32, Filesystemˉpagingˉconstructor
+    ));
+    Result = Append(Result, Encodeˉsection(
+        ".text.process.filesystem.record",
+        1u8, 16u32, 462u32, Filesystemˉrecordˉconstructor
     ));
     Result = Append(Result, Encodeˉsection(
         ".rodata.ainit", 2u8, 16u32, 5159u32, Init
@@ -109,31 +124,31 @@ export fn Buildˉfinalˉsections(
 
 export fn Buildˉsymbols() -> bytes {
     var Result: bytes = Dataˉsymbol(
-        "Windvale_init_resource_user_image", 2u32, 5159u32
+        "Windvale_init_resource_user_image", 5u32, 5159u32
     );
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_process_client_image", 3u32, 449261u32
+        "Windvale_process_client_image", 6u32, 449261u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_boot", 4u32, 816u32
+        "Windvale_resource_init_boot", 7u32, 816u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_budget", 5u32, 4u32
+        "Windvale_resource_init_budget", 8u32, 4u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_directory", 7u32, 3184u32
+        "Windvale_resource_init_directory", 10u32, 3184u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_resource_init_store", 6u32, 1196u32
+        "Windvale_resource_init_store", 9u32, 1196u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_service_directory_user_image", 8u32, 3911u32
+        "Windvale_service_directory_user_image", 11u32, 3911u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_service_filesystem_user_image", 9u32, 195657u32
+        "Windvale_service_filesystem_user_image", 12u32, 195657u32
     ));
     Result = Append(Result, Dataˉsymbol(
-        "Windvale_service_network_user_image", 10u32, 242571u32
+        "Windvale_service_network_user_image", 13u32, 242571u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_application_start_syscall_handler",
@@ -146,6 +161,18 @@ export fn Buildˉsymbols() -> bytes {
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_exception",
         2u8, 1u8, 0u32, 33856u32, 269u32
+    ));
+    Result = Append(Result, Encodeˉsymbol(
+        "Windvale_kernel_x64_process_filesystem_image",
+        2u8, 1u8, 2u32, 0u32, 58u32
+    ));
+    Result = Append(Result, Encodeˉsymbol(
+        "Windvale_kernel_x64_process_filesystem_paging",
+        2u8, 1u8, 3u32, 0u32, 3342u32
+    ));
+    Result = Append(Result, Encodeˉsymbol(
+        "Windvale_kernel_x64_process_filesystem_record",
+        2u8, 1u8, 4u32, 0u32, 462u32
     ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_syscall",

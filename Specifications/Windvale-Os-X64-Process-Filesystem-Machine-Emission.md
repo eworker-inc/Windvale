@@ -3,9 +3,9 @@
 ## Status and scope
 
 This contract source-owns the generation-three filesystem provider's record,
-page-table, image-copy, and native-context construction bytes. It is an exact,
-focused implementation candidate, not a claim that the current boot object
-allocates, publishes, enters, or executes the provider.
+page-table, image-copy, and native-context construction bytes. The current boot
+object links and exports all three constructors, but does not allocate,
+publish, enter, or execute the provider.
 
 The machine reuses released process/object slot 2 as process reference
 `196610` and closed resource-endpoint slot 0 as endpoint reference `131072`.
@@ -47,7 +47,9 @@ constructor is 58 bytes and hashes to `16263/35901` using multipliers 271/277.
 
 The image constructor has one external RIP-relative relocation at field 3. It
 targets process-object symbol 7 with signed addend -4, copies exactly 195,657
-bytes, and rejects zero or more than 196,608 bytes.
+bytes, and rejects zero or more than 196,608 bytes. The 956,230-byte process
+object exports the image, paging, and record constructors at section addresses
+780,192, 780,256, and 783,600 respectively.
 
 ## Deterministic evidence and remaining boundary
 
@@ -69,8 +71,10 @@ The packaged Linux identities are
 and `621ed9294cafae354b4b20099cb8bc0ef1f5fc1a5f1593b9efade98ce2aceee4`.
 The native results are 50, 51, and 52.
 
-Boot integration still must allocate the exact 85-page extent, invoke these
-constructors in the privileged object, publish the generation-three record,
-advance and bind endpoint `131072`, enter the service context, and execute one
-bounded FAT32 request/reply lifecycle. Failure before publication must leave no
-visible process or committed resource charge.
+The constructors are boot-linked in the deterministic 1,696,768-byte Probe 40
+images, and pinned QEMU still completes the normal and two terminal fault paths
+with paging version 7 active. Integration still must allocate the exact 85-page
+extent, invoke the constructors, publish the generation-three record, advance
+and bind endpoint `131072`, enter the service context, and execute one bounded
+FAT32 request/reply lifecycle. Failure before publication must leave no visible
+process or committed resource charge.

@@ -1,8 +1,8 @@
 {
   "format": "windvale-native-os-probe-object-producer-candidate-3",
   "status": "candidate",
-  "sourceDecision": "0451",
-  "parentCommit": "827000f286b1992e7897e0aa28ce0b9e4f938bf0",
+  "sourceDecision": "0728",
+  "parentCommit": "601fdc5875f18283a7da1107cc73d6ea569d868a",
   "project": "Windvale-Os-Probe-Object-Producer.wvproj",
   "source": "Operating-System/Tools/Probe-Object-Producer.wv",
   "objectConstruction": "Object-Model/Windvale/Wvo-Object-Construction.wv",
@@ -31,7 +31,7 @@
       "kind": "paging",
       "name": "10-paging.wvo",
       "bytes": 1292,
-      "sha256": "5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b"
+      "sha256": "a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871"
     }
   ],
   "artifacts": [
@@ -39,19 +39,19 @@
       "name": "Os-Probe-Object-Producer.wvb",
       "target": "portable-wvb",
       "bytes": 42835,
-      "sha256": "3e9520406ee2de0ed1e2ad30868ed29e2bfa64fae19982468aaf2f1814f50278"
+      "sha256": "2d2ed300e11c50a34780482588784e2aedc4dbbd7cbeb36f17a13ba4fb774b2f"
     },
     {
       "name": "windows-x64-os-probe-object.exe",
       "target": "windows-x64",
       "bytes": 461312,
-      "sha256": "e8b631d301e8ee47c121fd6778eddc444debcdfcbb63b2d3a9f312306f58d38b"
+      "sha256": "0693b72ec5ed81dc9acdb32d48cf79be229df80c31d005d066e21ef33a5b6550"
     },
     {
       "name": "linux-x64-os-probe-object.elf",
       "target": "linux-x64",
       "bytes": 462848,
-      "sha256": "8e8817adb31bf502103a842a0945d5699b1af4ec25eb0c48891da7d6d0f6c280"
+      "sha256": "20abb93b64bf1f18b98e55aa849b7544040a9b99f34cb700f73946cd65600058"
     }
   ]
 }

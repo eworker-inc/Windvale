@@ -55,7 +55,7 @@ verify_output "$native_bridge" 461 \
 
 "$script_directory/Produce-Os-Probe-Object.sh" paging "$paging" >/dev/null 2>&1 || exit 1
 verify_output "$paging" 1292 \
-    5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b || exit 1
+    a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871 || exit 1
 "$script_directory/Verify-Wvo.sh" "$paging" >/dev/null 2>&1 || exit 1
 
 "$script_directory/Produce-Os-Probe-Object.sh" memory "$memory" >/dev/null 2>&1 || exit 1

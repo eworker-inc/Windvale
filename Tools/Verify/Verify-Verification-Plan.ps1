@@ -1419,6 +1419,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'OS Probe object producer candidate artifacts'
+        Paths = @(
+            'Artifacts/Native-Os-Probe-Object-Producer-Candidate/Manifest.json',
+            'Artifacts/Native-Os-Probe-Object-Producer-Candidate/Os-Probe-Object-Producer.wvb',
+            'Artifacts/Native-Os-Probe-Object-Producer-Candidate/SHA256SUMS',
+            'Artifacts/Native-Os-Probe-Object-Producer-Candidate/linux-x64-os-probe-object.elf',
+            'Artifacts/Native-Os-Probe-Object-Producer-Candidate/windows-x64-os-probe-object.exe'
+        )
+        Suites = @('os-probe-object', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'exact native suite owner'
         Paths = @('Tools/Native/Test-Linker-Map-Limit.cmd')
         Suites = @('linker-map-limit')

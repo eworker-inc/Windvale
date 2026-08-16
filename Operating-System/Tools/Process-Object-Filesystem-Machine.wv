@@ -1,0 +1,40 @@
+module Processˉobjectˉfilesystemˉmachine profile portable;
+
+import X64ˉprocessˉfilesystemˉimageˉemission as Imageˉemission;
+import X64ˉprocessˉfilesystemˉpagingˉemission as Pagingˉemission;
+import X64ˉprocessˉfilesystemˉrecordˉemission as Recordˉemission;
+
+data Serviceˉdigest: bytes = [
+    87, 247, 158, 40, 58, 51, 199, 232,
+    116, 118, 26, 156, 55, 19, 174, 117,
+    55, 54, 115, 29, 108, 191, 71, 124,
+    144, 253, 124, 170, 194, 49, 200, 214
+];
+
+data Emptyˉconfigurationˉdigest: bytes = [
+    227, 176, 196, 66, 152, 252, 28, 20,
+    154, 251, 244, 200, 153, 111, 185, 36,
+    39, 174, 65, 228, 100, 155, 147, 76,
+    164, 149, 153, 27, 120, 82, 184, 85
+];
+
+export fn Isˉvalid() -> bool {
+    return Recordˉemission.X64ˉprocessˉfilesystemˉrecordˉisˉvalid(
+        Serviceˉdigest, Emptyˉconfigurationˉdigest
+    ) && Pagingˉemission.X64ˉprocessˉfilesystemˉpagingˉisˉvalid() &&
+        Imageˉemission.X64ˉprocessˉfilesystemˉimageˉisˉvalid(195657u32);
+}
+
+export fn Image() -> bytes {
+    return Imageˉemission.X64ˉprocessˉfilesystemˉimageˉbytes(195657u32);
+}
+
+export fn Paging() -> bytes {
+    return Pagingˉemission.X64ˉprocessˉfilesystemˉpagingˉbytes();
+}
+
+export fn Record() -> bytes {
+    return Recordˉemission.X64ˉprocessˉfilesystemˉrecordˉbytes(
+        Serviceˉdigest, Emptyˉconfigurationˉdigest
+    );
+}

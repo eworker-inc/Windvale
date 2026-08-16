@@ -20,7 +20,7 @@ case $1 in
         ;;
     paging)
         expected_bytes=1292
-        expected_digest=5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b
+        expected_digest=a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871
         ;;
     memory)
         expected_bytes=1529
@@ -80,7 +80,7 @@ elif [[ $1 == memory || $1 == memory-invalid-opcode || $1 == memory-general-prot
 else
     producer="$repository_root/Artifacts/Native-Os-Probe-Object-Producer-Candidate/linux-x64-os-probe-object.elf"
     producer_bytes=462848
-    producer_digest=8e8817adb31bf502103a842a0945d5699b1af4ec25eb0c48891da7d6d0f6c280
+    producer_digest=20abb93b64bf1f18b98e55aa849b7544040a9b99f34cb700f73946cd65600058
 fi
 output_directory=$(dirname -- "$2")
 if [[ ! -d $output_directory ]]; then

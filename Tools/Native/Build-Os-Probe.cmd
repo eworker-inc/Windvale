@@ -11,25 +11,25 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=4d25d5105149b6b819ff35e41e027ecf351d04ba865dc7c6f3bd6c18a77bcbce"
-    set "EfiBytes=1693184"
-    set "CodeTailOffset=787552"
+    set "EfiDigest=e9a113b0b108a9da0bf31a0802d1fa7ae58f4c1888a1e30a0eb7d090732d40d9"
+    set "EfiBytes=1696768"
+    set "CodeTailOffset=791424"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=05ac3cc2d3a6337a2838f507e5a15b10755e3e6775fc6160850fc3ea4a338f31"
-    set "EfiBytes=1693184"
-    set "CodeTailOffset=787568"
+    set "EfiDigest=af1cacbc0d139958e6f8d083d68493b35e4987a8a843939506e27f9595a133e2"
+    set "EfiBytes=1696768"
+    set "CodeTailOffset=791440"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=34862977a74940f31829c7b5d9aee684bb5d9fdade4ce9e3eba9e830811c3a8d"
-    set "EfiBytes=1693184"
-    set "CodeTailOffset=787568"
+    set "EfiDigest=eea4961a1a4b2287737ccd238f088b53ae4274714bf2c88f5a2ef0f7c4bdb384"
+    set "EfiBytes=1696768"
+    set "CodeTailOffset=791440"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -122,7 +122,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 952002 5a6feaaf9be084e83b539080a14949809dcd3e3d99fca514a57b6f931af6d263
+call :verify "%Work%\05-process.wvo" 956230 6c54a37dbe4e08d43068fed9bfb98edea536ae097666fa2c793a1c1bea9f9ac3
 if errorlevel 1 goto :failure
 
 set "FailureStep=application-start-context"
@@ -179,7 +179,7 @@ set "FailureStep=verify-exceptions"
 call :verify "%Work%\09-exceptions.wvo" 483 9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c
 if errorlevel 1 goto :failure
 set "FailureStep=verify-paging"
-call :verify "%Work%\10-paging.wvo" 1292 5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b
+call :verify "%Work%\10-paging.wvo" 1292 a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871
 if errorlevel 1 goto :failure
 set "FailureStep=verify-wvb-admission-bridge"
 call :verify "%Work%\12-wvb-admission-bridge.wvo" 484 271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d

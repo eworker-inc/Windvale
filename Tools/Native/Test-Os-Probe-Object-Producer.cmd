@@ -53,7 +53,7 @@ call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" paging "%Paging
 if errorlevel 1 goto :failure
 if not exist "%Paging%" goto :failure
 for %%F in ("%Paging%") do if not "%%~zF"=="1292" goto :failure
-certutil -hashfile "%Paging%" SHA256 | findstr /i /x /c:"5d5ba8237cebf85f14482996b43b44628f1e87fbea0a19377631f3974334b29b" >nul
+certutil -hashfile "%Paging%" SHA256 | findstr /i /x /c:"a76c4a199d46f6d91c0d3cd76aec7439a5e3fa72403cfc753fa6c36cd5b9b871" >nul
 if errorlevel 1 goto :failure
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Paging%" >nul 2>&1
 if errorlevel 1 goto :failure

@@ -1,6 +1,6 @@
 # Decision 0727: Separate the filesystem transfer and native stack
 
-- Status: Accepted; boot integration pending
+- Status: Accepted; constructors boot-linked by [Decision 0728](0728-Boot-Link-The-Filesystem-Machine.md)
 - Date: 2026-08-16
 - Corrects: [Decision 0716](0716-Reserve-The-Complete-Filesystem-Envelope.md)
 - Advances: [x86-64 filesystem-machine emission](../../Specifications/Windvale-Os-X64-Process-Filesystem-Machine-Emission.md)
@@ -44,9 +44,8 @@ disjoint. The 85-page allocation still fits the released 122-page client slot.
 Resource-domain reservation, commit, readiness, drain, release, and terminal
 zero-charge evidence now carry 81 user pages.
 
-This correction does not boot-link or enter the provider. The focused machine
-owner and the existing service/provider launch owners regenerate exact
-artifacts before the constructor can be published.
+This correction did not itself boot-link or enter the provider. Decision 0728
+subsequently links the constructors; provider entry remains pending.
 
 The resulting focused owners pass 3 filesystem-machine, 69 application-launch,
 and 18 provider-transaction cases. The service policy is 10,150 bytes at
