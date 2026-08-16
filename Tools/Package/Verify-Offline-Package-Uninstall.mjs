@@ -12,6 +12,7 @@ const TRANSACTION = ".windvale-uninstall-1";
 const RECORD = "windvale-uninstall 1\nowned state generations store\n";
 const DIGEST_A = "11".repeat(32);
 const DIGEST_B = "22".repeat(32);
+const MAXIMUM_OWNED_ENTRIES = 4_096;
 const Sha256 = Value => crypto.createHash("sha256").update(Value).digest("hex");
 
 function Run(Command, InstallRoot) {
@@ -139,6 +140,19 @@ try {
     Writeˉfile(path.join(UnknownStore, "store", "unknown.txt"), "unknown");
     Requireˉrejection(Run("uninstall", UnknownStore), /unknown inventory/,
         "unknown store rejection");
+    const OversizedState = Populate(Work, "Oversized-State");
+    for (let Index = 0; Index < MAXIMUM_OWNED_ENTRIES; Index += 1) {
+        fs.writeFileSync(
+            path.join(OversizedState, "state", `unknown-${Index.toString(16)}.txt`),
+            "unknown",
+            { flag: "wx", mode: 0o600 },
+        );
+    }
+    Requireˉrejection(
+        Run("uninstall", OversizedState),
+        /exceeds the uninstall policy/,
+        "oversized state rejection",
+    );
 
     process.stdout.write("offline uninstall verification step=reject-transaction item=6/6\n");
     const Malformed = Populate(Work, "Malformed");
@@ -150,8 +164,8 @@ try {
     assert.equal(fs.existsSync(path.join(Malformed, "state")), true);
 
     process.stdout.write(
-        "native offline package uninstall status=Passed cases=13 transactions=2 " +
-        "recoveries=2 safety-rejections=5 preservation=2 idempotent=Verified\n",
+        "native offline package uninstall status=Passed cases=14 transactions=2 " +
+        "recoveries=2 safety-rejections=6 preservation=2 idempotent=Verified\n",
     );
 } finally {
     fs.rmSync(Work, { recursive: true, force: true });

@@ -45,8 +45,21 @@ function Readˉordinaryˉdirectory(DirectoryPath, Description) {
     if (!Status.isDirectory() || Status.isSymbolicLink()) {
         Fail(`${Description} must be an ordinary directory.`);
     }
-    return fs.readdirSync(DirectoryPath, { withFileTypes: true })
-        .sort((Left, Right) => Left.name.localeCompare(Right.name, "en"));
+    const Entries = [];
+    const Directory = fs.opendirSync(DirectoryPath);
+    try {
+        let Entry = Directory.readSync();
+        while (Entry !== null) {
+            Entries.push(Entry);
+            if (Entries.length > MAXIMUM_OWNED_ENTRIES) {
+                Fail("Owned installation inventory exceeds the uninstall policy.");
+            }
+            Entry = Directory.readSync();
+        }
+    } finally {
+        Directory.closeSync();
+    }
+    return Entries.sort((Left, Right) => Left.name.localeCompare(Right.name, "en"));
 }
 
 function Assertˉordinaryˉfile(FilePath, Description, MaximumBytes, Budget) {
