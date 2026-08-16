@@ -298,6 +298,11 @@ path with only its retained and selected client generations advanced to 2. All
 sixty-one fail-closed branches retain the common failure target, and source
 ownership reaches byte 30,825.
 
+The following 374-byte finalization validates completion operation 6, closes
+and scrubs the channel, advances its generation to 2, restores the selected
+client context, and resumes through `sysretq`. Source ownership reaches byte
+31,199; reclamation remains separate.
+
 The first restart policies are deliberately small:
 
 - `Never`;

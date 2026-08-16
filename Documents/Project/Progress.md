@@ -59,6 +59,11 @@ byte 30,825 and 395 relocation fields. It changes only retained and selected
 client generations to 2 while preserving all sixty-one fail-closed cleanup
 branches. Reclamation preflight and live QEMU execution remain pending.
 
+Completion finalization now extends the checkpoint through byte 31,199 and 405
+relocation fields by validating operation 6, closing and scrubbing the channel,
+advancing its generation to 2, and resuming the selected client. Provider
+shutdown, reclamation, and live QEMU execution remain pending.
+
 ## .NET retirement result
 
 `████████████████████  8/8 conditions qualified — complete`

@@ -1,0 +1,31 @@
+module X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉemission profile portable;
+
+data Code: bytes = [
+    15,1,248,76,139,172,36,184,0,0,0,65,199,133,20,0,0,0,1,0,0,0,65,199,133,204,0,0,0,0,0,0,
+    0,232,0,0,0,0,77,133,237,15,132,0,0,0,0,65,129,189,24,0,0,0,1,0,0,0,15,133,0,0,0,0,65,129,
+    189,0,1,0,0,1,0,0,0,15,133,0,0,0,0,73,139,133,64,0,0,0,232,0,0,0,0,73,59,133,64,0,0,0,
+    15,133,0,0,0,0,76,137,232,72,137,194,72,193,234,32,185,2,1,0,192,15,48,72,141,21,0,0,0,0,73,137,
+    149,136,0,0,0,65,199,133,20,0,0,0,2,0,0,0,65,199,133,204,0,0,0,0,0,0,0,77,139,149,192,0,0,
+    0,77,139,82,40,65,129,122,16,1,0,0,0,15,133,0,0,0,0,65,139,66,20,131,248,6,15,133,0,0,0,0,65,
+    199,66,16,0,0,0,0,65,199,66,28,1,0,0,0,65,255,66,36,65,199,66,40,0,0,0,0,65,255,66,44,65,129,
+    122,96,0,0,0,0,15,133,0,0,0,0,65,199,66,16,0,0,0,0,65,199,66,20,0,0,0,0,65,199,66,24,0,0,
+    0,0,65,199,66,28,0,0,0,0,65,199,66,40,0,0,0,0,65,199,66,60,0,0,0,0,65,199,66,72,0,0,0,0,
+    65,199,66,88,0,0,0,0,73,199,66,64,0,0,0,0,73,199,66,80,0,0,0,0,65,199,66,96,1,0,0,0,65,199,
+    66,100,2,0,0,0,65,255,66,104,73,139,141,152,0,0,0,77,139,157,160,0,0,0,73,139,149,88,0,0,0,73,
+    139,165,144,0,0,0,72,15,7
+];
+
+data Internalˉfields: bytes = [
+    34,0,0,0,43,0,0,0,60,0,0,0,77,0,0,0,102,0,0,0,126,0,0,0,180,0,0,0,193,0,0,0,239,0,0,0
+];
+data Internalˉdisplacements: bytes = [
+    149,135,255,255,137,11,0,0,120,11,0,0,103,11,0,0,78,11,0,0,244,0,0,0,0,11,0,0,243,10,0,0,197,10,0,0
+];
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉbytes() -> bytes { return Code; }
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉexternalˉfield() -> u32 { return 89u32; }
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉexternalˉsymbol() -> u32 { return 17u32; }
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉinternalˉfields() -> bytes { return Internalˉfields; }
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉinternalˉdisplacements() -> bytes { return Internalˉdisplacements; }
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉfixtureˉoffset() -> u32 { return 30826u32; }
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉfixtureˉend() -> u32 { return 31200u32; }

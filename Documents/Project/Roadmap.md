@@ -654,6 +654,9 @@ provenance, revocation, and consensus boundaries are named.
   Generation-two completion cleanup reuses all checked teardown validation,
   advances only retained and selected generations to 2, and reaches byte
   30,825.
+  Completion finalization then validates operation 6, closes and scrubs the
+  channel, advances its generation, resumes the selected client, and reaches
+  byte 31,199.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

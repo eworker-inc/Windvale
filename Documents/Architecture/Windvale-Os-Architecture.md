@@ -386,6 +386,11 @@ then adapts the checked completion-cleanup path by advancing only the retained
 and selected client generations to 2. Its sixty-one failure branches remain
 explicit; current ownership reaches byte 30,825 with 395 relocation fields.
 
+[Decision 0686](../Decisions/0686-Own-Generation-Two-Completion-Finalization.md)
+adds selected-client re-entry, operation-6 validation, exact channel close and
+scrub, generation advancement, context restore, and `sysretq`. Current
+ownership reaches byte 31,199 with 405 relocation fields.
+
 This sequence may interleave with native Windows/Linux work. .NET retirement is complete in `main`, and host-built AOT evidence still does not count as in-guest verification.
 
 ## Deliberately deferred choices

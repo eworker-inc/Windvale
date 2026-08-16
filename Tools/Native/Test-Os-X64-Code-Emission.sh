@@ -702,4 +702,17 @@ verify "$work/ClientGenerationTwoCompletionCleanup.elf" 45168 1bb369e9fc5ba9c86b
 [[ $? -eq 103 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoCompletionCleanup.bin" 0 "$work/ClientGenerationTwoCompletionCleanup.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoCompletionCleanup.exe" 38912 bb3580e5c672489611ee805b1cc667ac6998dd3ae91fca09623632a9a245ff17 || exit 1
-echo 'native os x64 code emission status=Passed projects=54 cases=324 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103 cross-host-images=Verified source-owned-bytes=30826 relocation-fields=395'
+echo 'step=client-generation-two-completion-finalize-resume item=55/55'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Finalize-Resume-Emission.wvproj" "$work/ClientGenerationTwoCompletionFinalizeResume.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionFinalizeResume.wvb" 4591 adacbec69e9034caf7ee75bdea4fb23e889741d4ed7b8fa39f3c1dd79dda6b43 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoCompletionFinalizeResume.wvb" "$work/ClientGenerationTwoCompletionFinalizeResume.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionFinalizeResume.wvo" 32278 f9d37f75495da64029d9735eba5337b6a983a860b88706a2e3c28542e6357729 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoCompletionFinalizeResume.bin" "$work/ClientGenerationTwoCompletionFinalizeResume.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionFinalizeResume.bin" 31790 b0b02c2b15333245127563d5cc4ae4ebd266f08058615451dbde0146a8868383 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoCompletionFinalizeResume.bin" 0 "$work/ClientGenerationTwoCompletionFinalizeResume.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionFinalizeResume.elf" 36976 4d8a0ee872b154f36c4729ca353bb059fba14988c69fe36dc647c1dc2883ca94 || exit 1
+"$work/ClientGenerationTwoCompletionFinalizeResume.elf" >/dev/null
+[[ $? -eq 104 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoCompletionFinalizeResume.bin" 0 "$work/ClientGenerationTwoCompletionFinalizeResume.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionFinalizeResume.exe" 33792 8bd78651e27f4fe68f67cc69c802605db7ddec7f15e124af71605ac0ca02b45f || exit 1
+echo 'native os x64 code emission status=Passed projects=55 cases=330 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104 cross-host-images=Verified source-owned-bytes=31200 relocation-fields=405'

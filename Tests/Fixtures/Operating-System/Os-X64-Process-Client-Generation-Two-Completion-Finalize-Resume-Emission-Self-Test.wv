@@ -1,0 +1,50 @@
+module Osˉx64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉemission as Finalize;
+
+export fn Main() -> i32 {
+    let Code: bytes = Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉbytes();
+    let Fields: bytes = Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉinternalˉfields();
+    let Displacements: bytes = Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉinternalˉdisplacements();
+    if Bytesˉlength(Code) < 374u32 { return 11; }
+    if Bytesˉlength(Code) > 374u32 { return 12; }
+    if Bytesˉlength(Fields) != 36u32 { return 2; }
+    if Bytesˉlength(Displacements) != 36u32 { return 3; }
+    if Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉexternalˉfield() != 89u32 { return 4; }
+    if Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉexternalˉsymbol() != 17u32 { return 5; }
+    if Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉfixtureˉoffset() != 30826u32 { return 6; }
+    if Finalize.X64ˉprocessˉclientˉgenerationˉtwoˉcompletionˉfinalizeˉresumeˉfixtureˉend() != 31200u32 { return 7; }
+    if Bytesˉreadˉu32ˉlittle(Code, 89u32) != 0u32 ||
+        Bytesˉreadˉu8(Code, 54u32) != 1u8 || Bytesˉreadˉu8(Code, 71u32) != 1u8 ||
+        Bytesˉreadˉu8(Code, 190u32) != 6u8 || Bytesˉreadˉu8(Code, 327u32) != 1u8 ||
+        Bytesˉreadˉu8(Code, 335u32) != 2u8 {
+        return 8;
+    }
+    var Index: u32 = 0u32;
+    while Index < 9u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        let Displacement: u32 = Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 { return 9; }
+        if Index == 0u32 && Displacement != 4294936469u32 { return 9; }
+        if Index == 5u32 && Displacement != 244u32 { return 9; }
+        if Index != 0u32 && Index != 5u32 &&
+            Displacement != 2996u32 - Field { return 9; }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 374u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 62586u32 || Hashˉone != 5319u32 ||
+        Hashˉtwo != 19012u32 || Hashˉthree != 55602u32 { return 10; }
+    return 104;
+}
