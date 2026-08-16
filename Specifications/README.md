@@ -76,6 +76,8 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Single-writer database engine lifecycle](Windvale-Database-Engine-Lifecycle.md)
 - [Canonical logical database records](Windvale-Database-Logical-Records.md)
 - [Persistent collection catalog](Windvale-Database-Collection-Catalog.md)
+- [Bounded typed database rows and schemas](Windvale-Database-Typed-Rows-And-Schemas.md)
+- [Strict bounded database JSON value](Windvale-Database-Json-Value.md)
 - [Deterministic durable database bootstrap](Windvale-Database-Bootstrap.md)
 - [Portable local database service session](Windvale-Database-Local-Service.md)
 - [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)

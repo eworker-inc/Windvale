@@ -1,0 +1,1075 @@
+module Windvaleˉdatabaseˉjsonˉvalue profile portable;
+
+const DATABASE_JSON_MAXIMUM_BYTES: u32 = 65536u32;
+const DATABASE_JSON_MAXIMUM_DEPTH: u32 = 16u32;
+const DATABASE_JSON_MAXIMUM_NODES: u32 = 4096u32;
+const DATABASE_JSON_MAXIMUM_PROPERTIES: u32 = 256u32;
+const DATABASE_JSON_MAXIMUM_ARRAY_ITEMS: u32 = 1000u32;
+const DATABASE_JSON_MAXIMUM_NAME_BYTES: u32 = 128u32;
+const DATABASE_JSON_MAXIMUM_STRING_BYTES: u32 = 61408u32;
+const DATABASE_JSON_MAXIMUM_NUMBER_BYTES: u32 = 128u32;
+const DATABASE_JSON_MAXIMUM_ESCAPES: u32 = 4096u32;
+
+export enum Databaseˉjsonˉkind {
+    Invalid = 0;
+    Null = 1;
+    False = 2;
+    True = 3;
+    Number = 4;
+    String = 5;
+    Array = 6;
+    Object = 7;
+}
+
+export enum Databaseˉjsonˉerror {
+    Valid = 0;
+    Empty = 1;
+    Tooˉlarge = 2;
+    Invalidˉutf8 = 3;
+    Unexpectedˉtoken = 4;
+    Truncated = 5;
+    Trailingˉbytes = 6;
+    Invalidˉliteral = 7;
+    Invalidˉnumber = 8;
+    Numberˉtooˉlong = 9;
+    Invalidˉstring = 10;
+    Invalidˉescape = 11;
+    Invalidˉsurrogate = 12;
+    Stringˉtooˉlong = 13;
+    Tooˉmanyˉescapes = 14;
+    Depthˉlimit = 15;
+    Nodeˉlimit = 16;
+    Propertyˉlimit = 17;
+    Arrayˉlimit = 18;
+    Propertyˉnameˉtooˉlong = 19;
+    Duplicateˉproperty = 20;
+    Forbiddenˉproperty = 21;
+    Missingˉcolon = 22;
+    Missingˉseparator = 23;
+}
+
+export record Databaseˉjsonˉresult {
+    Error: Databaseˉjsonˉerror;
+    Kind: Databaseˉjsonˉkind;
+    Nodes: u32;
+    Failureˉoffset: u32;
+    Bytes: bytes;
+}
+
+export record Databaseˉjsonˉstringˉresult {
+    Error: Databaseˉjsonˉerror;
+    Failureˉoffset: u32;
+    Bytes: bytes;
+}
+
+record Databaseˉjsonˉscanˉresult {
+    Error: Databaseˉjsonˉerror;
+    Kind: Databaseˉjsonˉkind;
+    Next: u32;
+    Nodes: u32;
+    Failureˉoffset: u32;
+}
+
+record Databaseˉjsonˉstringˉscan {
+    Error: Databaseˉjsonˉerror;
+    Next: u32;
+    Decodedˉbytes: u32;
+    Escapes: u32;
+    Failureˉoffset: u32;
+}
+
+record Databaseˉjsonˉescapeˉresult {
+    Error: Databaseˉjsonˉerror;
+    Next: u32;
+    Width: u32;
+    Codepoint: u32;
+    Failureˉoffset: u32;
+}
+
+record Databaseˉjsonˉobjectˉmember {
+    Error: Databaseˉjsonˉerror;
+    Next: u32;
+    Nodes: u32;
+    Failureˉoffset: u32;
+    Name: bytes;
+}
+
+fn Databaseˉjsonˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉjsonˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return Databaseˉjsonˉempty(); }
+    return Bytesˉslice(
+        Bytesˉconcat(Bytesˉfromˉu8(0u8), Input),
+        1u32,
+        Length
+    );
+}
+
+fn Databaseˉjsonˉbyte(Input: bytes, Offset: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+}
+
+fn Databaseˉjsonˉbyteˉfromˉu32(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+fn Databaseˉjsonˉbytesˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉjsonˉresultˉfailure(
+    Error: Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉresult {
+    return Databaseˉjsonˉresult(
+        Error,
+        Databaseˉjsonˉkind.Invalid,
+        0u32,
+        Offset,
+        Databaseˉjsonˉempty()
+    );
+}
+
+fn Databaseˉjsonˉstringˉfailure(
+    Error: Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉstringˉresult {
+    return Databaseˉjsonˉstringˉresult(
+        Error,
+        Offset,
+        Databaseˉjsonˉempty()
+    );
+}
+
+fn Databaseˉjsonˉscanˉfailure(
+    Error: Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉscanˉresult {
+    return Databaseˉjsonˉscanˉresult(
+        Error,
+        Databaseˉjsonˉkind.Invalid,
+        0u32,
+        0u32,
+        Offset
+    );
+}
+
+fn Databaseˉjsonˉstringˉscanˉfailure(
+    Error: Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉstringˉscan {
+    return Databaseˉjsonˉstringˉscan(Error, 0u32, 0u32, 0u32, Offset);
+}
+
+fn Databaseˉjsonˉescapeˉfailure(
+    Error: Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉescapeˉresult {
+    return Databaseˉjsonˉescapeˉresult(Error, 0u32, 0u32, 0u32, Offset);
+}
+
+fn Databaseˉjsonˉobjectˉmemberˉfailure(
+    Error: Databaseˉjsonˉerror,
+    Offset: u32
+) -> Databaseˉjsonˉobjectˉmember {
+    return Databaseˉjsonˉobjectˉmember(
+        Error,
+        0u32,
+        0u32,
+        Offset,
+        Databaseˉjsonˉempty()
+    );
+}
+
+fn Databaseˉjsonˉspace(Value: u32) -> bool {
+    return Value == 32u32 || Value == 9u32 ||
+        Value == 10u32 || Value == 13u32;
+}
+
+fn Databaseˉjsonˉskipˉspace(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Offset;
+    while Cursor < Total {
+        if !Databaseˉjsonˉspace(Databaseˉjsonˉbyte(Input, Cursor)) {
+            break;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Cursor;
+}
+
+fn Databaseˉjsonˉhex(Value: u32) -> u32 {
+    if Value >= 48u32 && Value <= 57u32 { return Value - 48u32; }
+    if Value >= 65u32 && Value <= 70u32 { return Value - 55u32; }
+    if Value >= 97u32 && Value <= 102u32 { return Value - 87u32; }
+    return 16u32;
+}
+
+fn Databaseˉjsonˉcodeˉunit(Input: bytes, Offset: u32) -> u32 {
+    var Value: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        let Digit: u32 = Databaseˉjsonˉhex(
+            Databaseˉjsonˉbyte(Input, Offset + Index)
+        );
+        if Digit == 16u32 { return 1114112u32; }
+        Value = Value * 16u32 + Digit;
+        Index = Index + 1u32;
+    }
+    return Value;
+}
+
+fn Databaseˉjsonˉcodepointˉbytes(Value: u32) -> bytes {
+    if Value <= 127u32 {
+        return Databaseˉjsonˉbyteˉfromˉu32(Value);
+    }
+    if Value <= 2047u32 {
+        return Bytesˉconcat(
+            Databaseˉjsonˉbyteˉfromˉu32(192u32 + Value / 64u32),
+            Databaseˉjsonˉbyteˉfromˉu32(128u32 + Value % 64u32)
+        );
+    }
+    if Value <= 65535u32 {
+        var Result: bytes = Databaseˉjsonˉbyteˉfromˉu32(
+            224u32 + Value / 4096u32
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Databaseˉjsonˉbyteˉfromˉu32(
+                128u32 + Value / 64u32 % 64u32
+            )
+        );
+        return Bytesˉconcat(
+            Result,
+            Databaseˉjsonˉbyteˉfromˉu32(128u32 + Value % 64u32)
+        );
+    }
+    var Resultˉfour: bytes = Databaseˉjsonˉbyteˉfromˉu32(
+        240u32 + Value / 262144u32
+    );
+    Resultˉfour = Bytesˉconcat(
+        Resultˉfour,
+        Databaseˉjsonˉbyteˉfromˉu32(
+            128u32 + Value / 4096u32 % 64u32
+        )
+    );
+    Resultˉfour = Bytesˉconcat(
+        Resultˉfour,
+        Databaseˉjsonˉbyteˉfromˉu32(
+            128u32 + Value / 64u32 % 64u32
+        )
+    );
+    return Bytesˉconcat(
+        Resultˉfour,
+        Databaseˉjsonˉbyteˉfromˉu32(128u32 + Value % 64u32)
+    );
+}
+
+fn Databaseˉjsonˉescapeˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉjsonˉescapeˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset + 1u32 >= Total {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Truncated,
+            Total
+        );
+    }
+    let Escape: u32 = Databaseˉjsonˉbyte(Input, Offset + 1u32);
+    if Escape == 34u32 || Escape == 47u32 || Escape == 92u32 ||
+        Escape == 98u32 || Escape == 102u32 || Escape == 110u32 ||
+        Escape == 114u32 || Escape == 116u32 {
+        return Databaseˉjsonˉescapeˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Offset + 2u32,
+            1u32,
+            Databaseˉjsonˉescapedˉbyte(Escape),
+            0u32
+        );
+    }
+    if Escape != 117u32 {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Invalidˉescape,
+            Offset
+        );
+    }
+    if Total - Offset < 6u32 {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Truncated,
+            Total
+        );
+    }
+    let First: u32 = Databaseˉjsonˉcodeˉunit(Input, Offset + 2u32);
+    if First > 65535u32 {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Invalidˉescape,
+            Offset
+        );
+    }
+    var Width: u32 = 3u32;
+    if First <= 127u32 { Width = 1u32; }
+    if First >= 128u32 && First <= 2047u32 { Width = 2u32; }
+    if First >= 56320u32 && First <= 57343u32 {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Invalidˉsurrogate,
+            Offset
+        );
+    }
+    if First < 55296u32 || First > 56319u32 {
+        return Databaseˉjsonˉescapeˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Offset + 6u32,
+            Width,
+            First,
+            0u32
+        );
+    }
+    if Total - Offset < 12u32 ||
+        Databaseˉjsonˉbyte(Input, Offset + 6u32) != 92u32 ||
+        Databaseˉjsonˉbyte(Input, Offset + 7u32) != 117u32 {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Invalidˉsurrogate,
+            Offset
+        );
+    }
+    let Second: u32 = Databaseˉjsonˉcodeˉunit(Input, Offset + 8u32);
+    if Second < 56320u32 || Second > 57343u32 {
+        return Databaseˉjsonˉescapeˉfailure(
+            Databaseˉjsonˉerror.Invalidˉsurrogate,
+            Offset + 6u32
+        );
+    }
+    return Databaseˉjsonˉescapeˉresult(
+        Databaseˉjsonˉerror.Valid,
+        Offset + 12u32,
+        4u32,
+        65536u32 + (First - 55296u32) * 1024u32 +
+            (Second - 56320u32),
+        0u32
+    );
+}
+
+fn Databaseˉjsonˉstringˉscanˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉjsonˉstringˉscan {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset >= Total || Databaseˉjsonˉbyte(Input, Offset) != 34u32 {
+        return Databaseˉjsonˉstringˉscanˉfailure(
+            Databaseˉjsonˉerror.Invalidˉstring,
+            Offset
+        );
+    }
+    var Cursor: u32 = Offset + 1u32;
+    var Decoded: u32 = 0u32;
+    var Escapes: u32 = 0u32;
+    while Cursor < Total {
+        let Value: u32 = Databaseˉjsonˉbyte(Input, Cursor);
+        if Value == 34u32 {
+            return Databaseˉjsonˉstringˉscan(
+                Databaseˉjsonˉerror.Valid,
+                Cursor + 1u32,
+                Decoded,
+                Escapes,
+                0u32
+            );
+        }
+        if Value < 32u32 {
+            return Databaseˉjsonˉstringˉscanˉfailure(
+                Databaseˉjsonˉerror.Invalidˉstring,
+                Cursor
+            );
+        }
+        if Value != 92u32 {
+            if Decoded == DATABASE_JSON_MAXIMUM_STRING_BYTES {
+                return Databaseˉjsonˉstringˉscanˉfailure(
+                    Databaseˉjsonˉerror.Stringˉtooˉlong,
+                    Cursor
+                );
+            }
+            Decoded = Decoded + 1u32;
+            Cursor = Cursor + 1u32;
+        } else {
+            if Escapes == DATABASE_JSON_MAXIMUM_ESCAPES {
+                return Databaseˉjsonˉstringˉscanˉfailure(
+                    Databaseˉjsonˉerror.Tooˉmanyˉescapes,
+                    Cursor
+                );
+            }
+            Escapes = Escapes + 1u32;
+            let Escaped: Databaseˉjsonˉescapeˉresult =
+                Databaseˉjsonˉescapeˉat(Input, Cursor);
+            if Escaped.Error != Databaseˉjsonˉerror.Valid {
+                return Databaseˉjsonˉstringˉscanˉfailure(
+                    Escaped.Error,
+                    Escaped.Failureˉoffset
+                );
+            }
+            if Escaped.Width > DATABASE_JSON_MAXIMUM_STRING_BYTES - Decoded {
+                return Databaseˉjsonˉstringˉscanˉfailure(
+                    Databaseˉjsonˉerror.Stringˉtooˉlong,
+                    Cursor
+                );
+            }
+            Decoded = Decoded + Escaped.Width;
+            Cursor = Escaped.Next;
+        }
+    }
+    return Databaseˉjsonˉstringˉscanˉfailure(
+        Databaseˉjsonˉerror.Truncated,
+        Total
+    );
+}
+
+fn Databaseˉjsonˉescapedˉbyte(Escape: u32) -> u32 {
+    if Escape == 98u32 { return 8u32; }
+    if Escape == 102u32 { return 12u32; }
+    if Escape == 110u32 { return 10u32; }
+    if Escape == 114u32 { return 13u32; }
+    if Escape == 116u32 { return 9u32; }
+    return Escape;
+}
+
+fn Databaseˉjsonˉstringˉdecodeˉadmitted(
+    Input: bytes,
+    Offset: u32,
+    Scan: Databaseˉjsonˉstringˉscan
+) -> Databaseˉjsonˉstringˉresult {
+    var Result: bytes = Databaseˉjsonˉempty();
+    var Cursor: u32 = Offset + 1u32;
+    var Segment: u32 = Offset + 1u32;
+    while Cursor < Scan.Next - 1u32 {
+        if Databaseˉjsonˉbyte(Input, Cursor) != 92u32 {
+            Cursor = Cursor + 1u32;
+        } else {
+            if Cursor > Segment {
+                Result = Bytesˉconcat(
+                    Result,
+                    Bytesˉslice(Input, Segment, Cursor - Segment)
+                );
+            }
+            let Escape: u32 = Databaseˉjsonˉbyte(Input, Cursor + 1u32);
+            if Escape != 117u32 {
+                Result = Bytesˉconcat(
+                    Result,
+                    Databaseˉjsonˉbyteˉfromˉu32(
+                        Databaseˉjsonˉescapedˉbyte(Escape)
+                    )
+                );
+                Cursor = Cursor + 2u32;
+            } else {
+                let First: u32 = Databaseˉjsonˉcodeˉunit(Input, Cursor + 2u32);
+                var Codepoint: u32 = First;
+                var Advance: u32 = 6u32;
+                if First >= 55296u32 && First <= 56319u32 {
+                    let Second: u32 = Databaseˉjsonˉcodeˉunit(
+                        Input,
+                        Cursor + 8u32
+                    );
+                    Codepoint = 65536u32 +
+                        (First - 55296u32) * 1024u32 +
+                        (Second - 56320u32);
+                    Advance = 12u32;
+                }
+                Result = Bytesˉconcat(
+                    Result,
+                    Databaseˉjsonˉcodepointˉbytes(Codepoint)
+                );
+                Cursor = Cursor + Advance;
+            }
+            Segment = Cursor;
+        }
+    }
+    if Segment < Scan.Next - 1u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(Input, Segment, Scan.Next - 1u32 - Segment)
+        );
+    }
+    return Databaseˉjsonˉstringˉresult(
+        Databaseˉjsonˉerror.Valid,
+        0u32,
+        Result
+    );
+}
+
+export fn Databaseˉjsonˉstringˉdecode(
+    Input: bytes
+) -> Databaseˉjsonˉstringˉresult {
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Databaseˉjsonˉstringˉfailure(
+            Databaseˉjsonˉerror.Invalidˉutf8,
+            0u32
+        );
+    }
+    let Scan: Databaseˉjsonˉstringˉscan =
+        Databaseˉjsonˉstringˉscanˉat(Input, 0u32);
+    if Scan.Error != Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉstringˉfailure(Scan.Error, Scan.Failureˉoffset);
+    }
+    if Scan.Next != Bytesˉlength(Input) {
+        return Databaseˉjsonˉstringˉfailure(
+            Databaseˉjsonˉerror.Trailingˉbytes,
+            Scan.Next
+        );
+    }
+    return Databaseˉjsonˉstringˉdecodeˉadmitted(Input, 0u32, Scan);
+}
+
+fn Databaseˉjsonˉnameˉexists(Names: bytes, Name: bytes) -> bool {
+    var Cursor: u32 = 0u32;
+    let Total: u32 = Bytesˉlength(Names);
+    while Cursor < Total {
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Names, Cursor);
+        if Length == Bytesˉlength(Name) {
+            let Existing: bytes = Bytesˉslice(Names, Cursor + 4u32, Length);
+            if Databaseˉjsonˉbytesˉsame(Existing, Name) { return true; }
+        }
+        Cursor = Cursor + 4u32 + Length;
+    }
+    return false;
+}
+
+fn Databaseˉjsonˉnameˉforbidden(Name: bytes) -> bool {
+    return Databaseˉjsonˉbytesˉsame(Name, Textˉtoˉutf8("__proto__")) ||
+        Databaseˉjsonˉbytesˉsame(Name, Textˉtoˉutf8("prototype")) ||
+        Databaseˉjsonˉbytesˉsame(Name, Textˉtoˉutf8("constructor"));
+}
+
+fn Databaseˉjsonˉdigit(Value: u32) -> bool {
+    return Value >= 48u32 && Value <= 57u32;
+}
+
+fn Databaseˉjsonˉnumberˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉjsonˉscanˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Offset;
+    if Databaseˉjsonˉbyte(Input, Cursor) == 45u32 {
+        Cursor = Cursor + 1u32;
+        if Cursor == Total {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Truncated,
+                Total
+            );
+        }
+    }
+    let First: u32 = Databaseˉjsonˉbyte(Input, Cursor);
+    if First == 48u32 {
+        Cursor = Cursor + 1u32;
+        if Cursor < Total {
+            if Databaseˉjsonˉdigit(Databaseˉjsonˉbyte(Input, Cursor)) {
+                return Databaseˉjsonˉscanˉfailure(
+                    Databaseˉjsonˉerror.Invalidˉnumber,
+                    Cursor
+                );
+            }
+        }
+    }
+    if First >= 49u32 && First <= 57u32 {
+        Cursor = Cursor + 1u32;
+        while Cursor < Total {
+            if !Databaseˉjsonˉdigit(Databaseˉjsonˉbyte(Input, Cursor)) {
+                break;
+            }
+            Cursor = Cursor + 1u32;
+        }
+    }
+    if !Databaseˉjsonˉdigit(First) {
+        return Databaseˉjsonˉscanˉfailure(
+            Databaseˉjsonˉerror.Invalidˉnumber,
+            Cursor
+        );
+    }
+    if Cursor < Total && Databaseˉjsonˉbyte(Input, Cursor) == 46u32 {
+        Cursor = Cursor + 1u32;
+        if Cursor == Total || !Databaseˉjsonˉdigit(
+            Databaseˉjsonˉbyte(Input, Cursor)
+        ) {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Invalidˉnumber,
+                Cursor
+            );
+        }
+        while Cursor < Total {
+            if !Databaseˉjsonˉdigit(Databaseˉjsonˉbyte(Input, Cursor)) {
+                break;
+            }
+            Cursor = Cursor + 1u32;
+        }
+    }
+    if Cursor < Total && (
+        Databaseˉjsonˉbyte(Input, Cursor) == 101u32 ||
+        Databaseˉjsonˉbyte(Input, Cursor) == 69u32
+    ) {
+        Cursor = Cursor + 1u32;
+        if Cursor < Total && (
+            Databaseˉjsonˉbyte(Input, Cursor) == 43u32 ||
+            Databaseˉjsonˉbyte(Input, Cursor) == 45u32
+        ) {
+            Cursor = Cursor + 1u32;
+        }
+        if Cursor == Total || !Databaseˉjsonˉdigit(
+            Databaseˉjsonˉbyte(Input, Cursor)
+        ) {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Invalidˉnumber,
+                Cursor
+            );
+        }
+        while Cursor < Total {
+            if !Databaseˉjsonˉdigit(Databaseˉjsonˉbyte(Input, Cursor)) {
+                break;
+            }
+            Cursor = Cursor + 1u32;
+        }
+    }
+    if Cursor - Offset > DATABASE_JSON_MAXIMUM_NUMBER_BYTES {
+        return Databaseˉjsonˉscanˉfailure(
+            Databaseˉjsonˉerror.Numberˉtooˉlong,
+            Offset + DATABASE_JSON_MAXIMUM_NUMBER_BYTES
+        );
+    }
+    return Databaseˉjsonˉscanˉresult(
+        Databaseˉjsonˉerror.Valid,
+        Databaseˉjsonˉkind.Number,
+        Cursor,
+        1u32,
+        0u32
+    );
+}
+
+fn Databaseˉjsonˉarrayˉat(
+    Input: bytes,
+    Offset: u32,
+    Depth: u32
+) -> Databaseˉjsonˉscanˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Databaseˉjsonˉskipˉspace(Input, Offset + 1u32);
+    var Nodes: u32 = 1u32;
+    var Items: u32 = 0u32;
+    if Cursor < Total && Databaseˉjsonˉbyte(Input, Cursor) == 93u32 {
+        return Databaseˉjsonˉscanˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Databaseˉjsonˉkind.Array,
+            Cursor + 1u32,
+            Nodes,
+            0u32
+        );
+    }
+    while Cursor < Total {
+        if Items == DATABASE_JSON_MAXIMUM_ARRAY_ITEMS {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Arrayˉlimit,
+                Cursor
+            );
+        }
+        let First: u32 = Databaseˉjsonˉbyte(Input, Cursor);
+        var Item: Databaseˉjsonˉscanˉresult = Databaseˉjsonˉscanˉfailure(
+            Databaseˉjsonˉerror.Unexpectedˉtoken,
+            Cursor
+        );
+        if First == 91u32 {
+            Item = Databaseˉjsonˉarrayˉat(Input, Cursor, Depth + 1u32);
+        } else if First == 123u32 {
+            Item = Databaseˉjsonˉobjectˉat(Input, Cursor, Depth + 1u32);
+        } else {
+            Item = Databaseˉjsonˉvalueˉat(Input, Cursor, Depth + 1u32);
+        }
+        if Item.Error != Databaseˉjsonˉerror.Valid { return Item; }
+        if Item.Nodes > DATABASE_JSON_MAXIMUM_NODES - Nodes {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Nodeˉlimit,
+                Cursor
+            );
+        }
+        Nodes = Nodes + Item.Nodes;
+        Items = Items + 1u32;
+        Cursor = Databaseˉjsonˉskipˉspace(Input, Item.Next);
+        if Cursor >= Total {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Truncated,
+                Total
+            );
+        }
+        let Separator: u32 = Databaseˉjsonˉbyte(Input, Cursor);
+        if Separator == 93u32 {
+            return Databaseˉjsonˉscanˉresult(
+                Databaseˉjsonˉerror.Valid,
+                Databaseˉjsonˉkind.Array,
+                Cursor + 1u32,
+                Nodes,
+                0u32
+            );
+        }
+        if Separator != 44u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Missingˉseparator,
+                Cursor
+            );
+        }
+        Cursor = Databaseˉjsonˉskipˉspace(Input, Cursor + 1u32);
+        if Cursor < Total && Databaseˉjsonˉbyte(Input, Cursor) == 93u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Unexpectedˉtoken,
+                Cursor
+            );
+        }
+    }
+    return Databaseˉjsonˉscanˉfailure(
+        Databaseˉjsonˉerror.Truncated,
+        Total
+    );
+}
+
+fn Databaseˉjsonˉobjectˉmemberˉat(
+    Input: bytes,
+    Offset: u32,
+    Depth: u32
+) -> Databaseˉjsonˉobjectˉmember {
+    let Total: u32 = Bytesˉlength(Input);
+    let Nameˉscan: Databaseˉjsonˉstringˉscan =
+        Databaseˉjsonˉstringˉscanˉat(Input, Offset);
+    if Nameˉscan.Error != Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Nameˉscan.Error,
+            Nameˉscan.Failureˉoffset
+        );
+    }
+    if Nameˉscan.Decodedˉbytes > DATABASE_JSON_MAXIMUM_NAME_BYTES {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Databaseˉjsonˉerror.Propertyˉnameˉtooˉlong,
+            Offset
+        );
+    }
+    let Name: Databaseˉjsonˉstringˉresult =
+        Databaseˉjsonˉstringˉdecodeˉadmitted(Input, Offset, Nameˉscan);
+    if Name.Error != Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Name.Error,
+            Offset + Name.Failureˉoffset
+        );
+    }
+    if Databaseˉjsonˉnameˉforbidden(Name.Bytes) {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Databaseˉjsonˉerror.Forbiddenˉproperty,
+            Offset
+        );
+    }
+    var Cursor: u32 = Databaseˉjsonˉskipˉspace(Input, Nameˉscan.Next);
+    if Cursor >= Total {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Databaseˉjsonˉerror.Truncated,
+            Total
+        );
+    }
+    if Databaseˉjsonˉbyte(Input, Cursor) != 58u32 {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Databaseˉjsonˉerror.Missingˉcolon,
+            Cursor
+        );
+    }
+    Cursor = Databaseˉjsonˉskipˉspace(Input, Cursor + 1u32);
+    if Cursor >= Total {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Databaseˉjsonˉerror.Truncated,
+            Total
+        );
+    }
+    let First: u32 = Databaseˉjsonˉbyte(Input, Cursor);
+    var Value: Databaseˉjsonˉscanˉresult = Databaseˉjsonˉscanˉfailure(
+        Databaseˉjsonˉerror.Unexpectedˉtoken,
+        Cursor
+    );
+    if First == 91u32 {
+        Value = Databaseˉjsonˉarrayˉat(Input, Cursor, Depth + 1u32);
+    } else if First == 123u32 {
+        Value = Databaseˉjsonˉobjectˉat(Input, Cursor, Depth + 1u32);
+    } else {
+        Value = Databaseˉjsonˉvalueˉat(Input, Cursor, Depth + 1u32);
+    }
+    if Value.Error != Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉobjectˉmemberˉfailure(
+            Value.Error,
+            Value.Failureˉoffset
+        );
+    }
+    return Databaseˉjsonˉobjectˉmember(
+        Databaseˉjsonˉerror.Valid,
+        Value.Next,
+        Value.Nodes,
+        0u32,
+        Name.Bytes
+    );
+}
+
+fn Databaseˉjsonˉobjectˉat(
+    Input: bytes,
+    Offset: u32,
+    Depth: u32
+) -> Databaseˉjsonˉscanˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Databaseˉjsonˉskipˉspace(Input, Offset + 1u32);
+    var Nodes: u32 = 1u32;
+    var Properties: u32 = 0u32;
+    var Names: bytes = Databaseˉjsonˉempty();
+    if Cursor < Total && Databaseˉjsonˉbyte(Input, Cursor) == 125u32 {
+        return Databaseˉjsonˉscanˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Databaseˉjsonˉkind.Object,
+            Cursor + 1u32,
+            Nodes,
+            0u32
+        );
+    }
+    while Cursor < Total {
+        if Properties == DATABASE_JSON_MAXIMUM_PROPERTIES {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Propertyˉlimit,
+                Cursor
+            );
+        }
+        let Member: Databaseˉjsonˉobjectˉmember =
+            Databaseˉjsonˉobjectˉmemberˉat(Input, Cursor, Depth);
+        if Member.Error != Databaseˉjsonˉerror.Valid {
+            return Databaseˉjsonˉscanˉfailure(
+                Member.Error,
+                Member.Failureˉoffset
+            );
+        }
+        if Databaseˉjsonˉnameˉexists(Names, Member.Name) {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Duplicateˉproperty,
+                Cursor
+            );
+        }
+        Names = Bytesˉconcat(
+            Names,
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Member.Name))
+        );
+        Names = Bytesˉconcat(Names, Member.Name);
+        if Member.Nodes > DATABASE_JSON_MAXIMUM_NODES - Nodes {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Nodeˉlimit,
+                Cursor
+            );
+        }
+        Nodes = Nodes + Member.Nodes;
+        Properties = Properties + 1u32;
+        Cursor = Databaseˉjsonˉskipˉspace(Input, Member.Next);
+        if Cursor >= Total {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Truncated,
+                Total
+            );
+        }
+        let Separator: u32 = Databaseˉjsonˉbyte(Input, Cursor);
+        if Separator == 125u32 {
+            return Databaseˉjsonˉscanˉresult(
+                Databaseˉjsonˉerror.Valid,
+                Databaseˉjsonˉkind.Object,
+                Cursor + 1u32,
+                Nodes,
+                0u32
+            );
+        }
+        if Separator != 44u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Missingˉseparator,
+                Cursor
+            );
+        }
+        Cursor = Databaseˉjsonˉskipˉspace(Input, Cursor + 1u32);
+        if Cursor < Total && Databaseˉjsonˉbyte(Input, Cursor) == 125u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Unexpectedˉtoken,
+                Cursor
+            );
+        }
+    }
+    return Databaseˉjsonˉscanˉfailure(
+        Databaseˉjsonˉerror.Truncated,
+        Total
+    );
+}
+
+fn Databaseˉjsonˉvalueˉat(
+    Input: bytes,
+    Offset: u32,
+    Depth: u32
+) -> Databaseˉjsonˉscanˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Depth > DATABASE_JSON_MAXIMUM_DEPTH {
+        return Databaseˉjsonˉscanˉfailure(
+            Databaseˉjsonˉerror.Depthˉlimit,
+            Offset
+        );
+    }
+    if Offset >= Total {
+        return Databaseˉjsonˉscanˉfailure(
+            Databaseˉjsonˉerror.Truncated,
+            Total
+        );
+    }
+    let Value: u32 = Databaseˉjsonˉbyte(Input, Offset);
+    if Value == 110u32 {
+        if Total - Offset < 4u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Truncated,
+                Total
+            );
+        }
+        if Databaseˉjsonˉbyte(Input, Offset + 1u32) != 117u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 2u32) != 108u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 3u32) != 108u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Invalidˉliteral,
+                Offset
+            );
+        }
+        return Databaseˉjsonˉscanˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Databaseˉjsonˉkind.Null,
+            Offset + 4u32,
+            1u32,
+            0u32
+        );
+    }
+    if Value == 102u32 {
+        if Total - Offset < 5u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Truncated,
+                Total
+            );
+        }
+        if Databaseˉjsonˉbyte(Input, Offset + 1u32) != 97u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 2u32) != 108u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 3u32) != 115u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 4u32) != 101u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Invalidˉliteral,
+                Offset
+            );
+        }
+        return Databaseˉjsonˉscanˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Databaseˉjsonˉkind.False,
+            Offset + 5u32,
+            1u32,
+            0u32
+        );
+    }
+    if Value == 116u32 {
+        if Total - Offset < 4u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Truncated,
+                Total
+            );
+        }
+        if Databaseˉjsonˉbyte(Input, Offset + 1u32) != 114u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 2u32) != 117u32 ||
+            Databaseˉjsonˉbyte(Input, Offset + 3u32) != 101u32 {
+            return Databaseˉjsonˉscanˉfailure(
+                Databaseˉjsonˉerror.Invalidˉliteral,
+                Offset
+            );
+        }
+        return Databaseˉjsonˉscanˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Databaseˉjsonˉkind.True,
+            Offset + 4u32,
+            1u32,
+            0u32
+        );
+    }
+    if Value == 34u32 {
+        let String: Databaseˉjsonˉstringˉscan =
+            Databaseˉjsonˉstringˉscanˉat(Input, Offset);
+        if String.Error != Databaseˉjsonˉerror.Valid {
+            return Databaseˉjsonˉscanˉfailure(
+                String.Error,
+                String.Failureˉoffset
+            );
+        }
+        return Databaseˉjsonˉscanˉresult(
+            Databaseˉjsonˉerror.Valid,
+            Databaseˉjsonˉkind.String,
+            String.Next,
+            1u32,
+            0u32
+        );
+    }
+    if Value == 45u32 || Databaseˉjsonˉdigit(Value) {
+        return Databaseˉjsonˉnumberˉat(Input, Offset);
+    }
+    if Value == 91u32 {
+        return Databaseˉjsonˉarrayˉat(Input, Offset, Depth);
+    }
+    if Value == 123u32 {
+        return Databaseˉjsonˉobjectˉat(Input, Offset, Depth);
+    }
+    return Databaseˉjsonˉscanˉfailure(
+        Databaseˉjsonˉerror.Unexpectedˉtoken,
+        Offset
+    );
+}
+
+export fn Databaseˉjsonˉadmit(Input: bytes) -> Databaseˉjsonˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 {
+        return Databaseˉjsonˉresultˉfailure(Databaseˉjsonˉerror.Empty, 0u32);
+    }
+    if Total > DATABASE_JSON_MAXIMUM_BYTES {
+        return Databaseˉjsonˉresultˉfailure(
+            Databaseˉjsonˉerror.Tooˉlarge,
+            DATABASE_JSON_MAXIMUM_BYTES
+        );
+    }
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Databaseˉjsonˉresultˉfailure(
+            Databaseˉjsonˉerror.Invalidˉutf8,
+            0u32
+        );
+    }
+    let Start: u32 = Databaseˉjsonˉskipˉspace(Input, 0u32);
+    if Start == Total {
+        return Databaseˉjsonˉresultˉfailure(Databaseˉjsonˉerror.Empty, Start);
+    }
+    let Scanned: Databaseˉjsonˉscanˉresult =
+        Databaseˉjsonˉvalueˉat(Input, Start, 1u32);
+    if Scanned.Error != Databaseˉjsonˉerror.Valid {
+        return Databaseˉjsonˉresultˉfailure(
+            Scanned.Error,
+            Scanned.Failureˉoffset
+        );
+    }
+    let End: u32 = Databaseˉjsonˉskipˉspace(Input, Scanned.Next);
+    if End != Total {
+        return Databaseˉjsonˉresultˉfailure(
+            Databaseˉjsonˉerror.Trailingˉbytes,
+            End
+        );
+    }
+    return Databaseˉjsonˉresult(
+        Databaseˉjsonˉerror.Valid,
+        Scanned.Kind,
+        Scanned.Nodes,
+        0u32,
+        Databaseˉjsonˉcopy(Input)
+    );
+}

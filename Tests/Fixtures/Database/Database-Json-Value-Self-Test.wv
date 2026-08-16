@@ -1,0 +1,361 @@
+module Windvaleˉnativeˉtestˉdatabaseˉjsonˉvalue profile portable;
+
+import Windvaleˉdatabaseˉjsonˉvalue as Json;
+
+data EXPECTED_DECODED: bytes = [65, 10, 195, 169, 240, 159, 152, 128];
+data EXPECTED_SIMPLE: bytes = [34, 92, 47, 8, 12, 10, 13, 9];
+data INVALID_ESCAPE: bytes = [34, 92, 120, 34];
+data INVALID_CONTROL: bytes = [34, 10, 34];
+data INVALID_UTF8: bytes = [34, 192, 128, 34];
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Admit(Value: text) -> Json.Databaseˉjsonˉresult {
+    return Json.Databaseˉjsonˉadmit(Textˉtoˉutf8(Value));
+}
+
+fn Error(Value: text) -> Json.Databaseˉjsonˉerror {
+    let Result: Json.Databaseˉjsonˉresult = Admit(Value);
+    return Result.Error;
+}
+
+fn Bytesˉerror(Value: bytes) -> Json.Databaseˉjsonˉerror {
+    let Result: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Value);
+    return Result.Error;
+}
+
+fn Stringˉerror(Value: bytes) -> Json.Databaseˉjsonˉerror {
+    let Result: Json.Databaseˉjsonˉstringˉresult =
+        Json.Databaseˉjsonˉstringˉdecode(Value);
+    return Result.Error;
+}
+
+fn Repeat(Value: bytes, Count: u32) -> bytes {
+    var Remaining: u32 = Count;
+    var Chunk: bytes = Value;
+    var Result: bytes = Empty();
+    while Remaining > 0u32 {
+        if Remaining % 2u32 == 1u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+
+fn Byte(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+fn Hexˉdigit(Value: u32) -> bytes {
+    if Value < 10u32 { return Byte(48u32 + Value); }
+    return Byte(55u32 + Value);
+}
+
+fn Escapedˉname(Value: u32) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("\"\\u00");
+    Result = Bytesˉconcat(Result, Hexˉdigit(Value / 16u32));
+    Result = Bytesˉconcat(Result, Hexˉdigit(Value % 16u32));
+    return Bytesˉconcat(Result, Textˉtoˉutf8("\""));
+}
+
+fn Basicˉvalues() -> i32 {
+    let Null: Json.Databaseˉjsonˉresult = Admit("null");
+    let False: Json.Databaseˉjsonˉresult = Admit("false");
+    let True: Json.Databaseˉjsonˉresult = Admit("true");
+    let Number: Json.Databaseˉjsonˉresult = Admit("-12.50e+2");
+    let String: Json.Databaseˉjsonˉresult = Admit("\"windvale\"");
+    let Array: Json.Databaseˉjsonˉresult = Admit(" [ null, true, 7 ] ");
+    let Object: Json.Databaseˉjsonˉresult = Admit(
+        "{\"a\":[null,true,{\"b\":\"x\"}]}"
+    );
+    if Null.Error != Json.Databaseˉjsonˉerror.Valid ||
+        Null.Kind != Json.Databaseˉjsonˉkind.Null || Null.Nodes != 1u32 ||
+        False.Kind != Json.Databaseˉjsonˉkind.False ||
+        True.Kind != Json.Databaseˉjsonˉkind.True ||
+        Number.Kind != Json.Databaseˉjsonˉkind.Number ||
+        String.Kind != Json.Databaseˉjsonˉkind.String ||
+        Array.Kind != Json.Databaseˉjsonˉkind.Array || Array.Nodes != 4u32 ||
+        Object.Kind != Json.Databaseˉjsonˉkind.Object || Object.Nodes != 6u32 {
+        return 1;
+    }
+    if !Same(Array.Bytes, Textˉtoˉutf8(" [ null, true, 7 ] ")) {
+        return 2;
+    }
+    let Again: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Object.Bytes);
+    if Again.Error != Json.Databaseˉjsonˉerror.Valid ||
+        !Same(Again.Bytes, Object.Bytes) || Again.Nodes != Object.Nodes {
+        return 3;
+    }
+    return 0;
+}
+
+fn Stringˉcontract() -> i32 {
+    let Decoded: Json.Databaseˉjsonˉstringˉresult =
+        Json.Databaseˉjsonˉstringˉdecode(Textˉtoˉutf8(
+            "\"A\\n\\u00E9\\uD83D\\uDE00\""
+        ));
+    if Decoded.Error != Json.Databaseˉjsonˉerror.Valid ||
+        !Same(Decoded.Bytes, EXPECTED_DECODED) {
+        return 1;
+    }
+    let Simple: Json.Databaseˉjsonˉstringˉresult =
+        Json.Databaseˉjsonˉstringˉdecode(Textˉtoˉutf8(
+            "\"\\\"\\\\\\/\\b\\f\\n\\r\\t\""
+        ));
+    if Simple.Error != Json.Databaseˉjsonˉerror.Valid ||
+        !Same(Simple.Bytes, EXPECTED_SIMPLE) {
+        return 2;
+    }
+    if Stringˉerror(
+        INVALID_ESCAPE
+    ) != Json.Databaseˉjsonˉerror.Invalidˉescape ||
+        Stringˉerror(
+            Textˉtoˉutf8("\"\\uD800\"")
+        ) != Json.Databaseˉjsonˉerror.Invalidˉsurrogate ||
+        Stringˉerror(
+            INVALID_CONTROL
+        ) != Json.Databaseˉjsonˉerror.Invalidˉstring ||
+        Stringˉerror(
+            INVALID_UTF8
+        ) != Json.Databaseˉjsonˉerror.Invalidˉutf8 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Structureˉrejections() -> i32 {
+    if Bytesˉerror(Empty()) !=
+            Json.Databaseˉjsonˉerror.Empty ||
+        Error(" \r\n\t ") != Json.Databaseˉjsonˉerror.Empty ||
+        Error("[1,]") != Json.Databaseˉjsonˉerror.Unexpectedˉtoken ||
+        Error("{\"a\":1,}") != Json.Databaseˉjsonˉerror.Unexpectedˉtoken ||
+        Error("[1 2]") != Json.Databaseˉjsonˉerror.Missingˉseparator ||
+        Error("{\"a\" 1}") != Json.Databaseˉjsonˉerror.Missingˉcolon ||
+        Error("[1") != Json.Databaseˉjsonˉerror.Truncated ||
+        Error("null false") != Json.Databaseˉjsonˉerror.Trailingˉbytes ||
+        Error("/*x*/null") != Json.Databaseˉjsonˉerror.Unexpectedˉtoken {
+        return 1;
+    }
+    if Error("{\"a\":1,\"a\":2}") !=
+            Json.Databaseˉjsonˉerror.Duplicateˉproperty ||
+        Error("{\"a\":1,\"\\u0061\":2}") !=
+            Json.Databaseˉjsonˉerror.Duplicateˉproperty ||
+        Error("{\"__proto__\":0}") !=
+            Json.Databaseˉjsonˉerror.Forbiddenˉproperty ||
+        Error("{\"constr\\u0075ctor\":0}") !=
+            Json.Databaseˉjsonˉerror.Forbiddenˉproperty {
+        return 2;
+    }
+    if Error("01") != Json.Databaseˉjsonˉerror.Invalidˉnumber ||
+        Error("1.") != Json.Databaseˉjsonˉerror.Invalidˉnumber ||
+        Error("1e") != Json.Databaseˉjsonˉerror.Invalidˉnumber ||
+        Error("+1") != Json.Databaseˉjsonˉerror.Unexpectedˉtoken ||
+        Error("-") != Json.Databaseˉjsonˉerror.Truncated ||
+        Error("tru") != Json.Databaseˉjsonˉerror.Truncated ||
+        Error("nulx") != Json.Databaseˉjsonˉerror.Invalidˉliteral {
+        return 3;
+    }
+    return 0;
+}
+
+fn Depthˉlimits() -> i32 {
+    var Accepted: bytes = Textˉtoˉutf8("0");
+    var Depth: u32 = 0u32;
+    while Depth < 15u32 {
+        Accepted = Bytesˉconcat(Textˉtoˉutf8("["), Accepted);
+        Accepted = Bytesˉconcat(Accepted, Textˉtoˉutf8("]"));
+        Depth = Depth + 1u32;
+    }
+    let Admitted: Json.Databaseˉjsonˉresult =
+        Json.Databaseˉjsonˉadmit(Accepted);
+    if Admitted.Error != Json.Databaseˉjsonˉerror.Valid ||
+        Admitted.Nodes != 16u32 {
+        return 1;
+    }
+    let Rejected: bytes = Bytesˉconcat(
+        Textˉtoˉutf8("["),
+        Bytesˉconcat(Accepted, Textˉtoˉutf8("]"))
+    );
+    if Bytesˉerror(Rejected) !=
+        Json.Databaseˉjsonˉerror.Depthˉlimit {
+        return 2;
+    }
+    return 0;
+}
+
+fn Arrayˉandˉnodeˉlimits() -> i32 {
+    var Thousand: bytes = Textˉtoˉutf8("[");
+    var Index: u32 = 0u32;
+    while Index < 1000u32 {
+        if Index > 0u32 { Thousand = Bytesˉconcat(Thousand, Textˉtoˉutf8(",")); }
+        Thousand = Bytesˉconcat(Thousand, Textˉtoˉutf8("0"));
+        Index = Index + 1u32;
+    }
+    Thousand = Bytesˉconcat(Thousand, Textˉtoˉutf8("]"));
+    if Bytesˉerror(Thousand) !=
+        Json.Databaseˉjsonˉerror.Valid {
+        return 1;
+    }
+    let Thousandˉone: bytes = Bytesˉconcat(
+        Bytesˉslice(Thousand, 0u32, Bytesˉlength(Thousand) - 1u32),
+        Textˉtoˉutf8(",0]")
+    );
+    if Bytesˉerror(Thousandˉone) !=
+        Json.Databaseˉjsonˉerror.Arrayˉlimit {
+        return 2;
+    }
+    var Nodes: bytes = Textˉtoˉutf8("[");
+    Index = 0u32;
+    while Index < 819u32 {
+        if Index > 0u32 { Nodes = Bytesˉconcat(Nodes, Textˉtoˉutf8(",")); }
+        Nodes = Bytesˉconcat(Nodes, Textˉtoˉutf8("[null,null,null,null]"));
+        Index = Index + 1u32;
+    }
+    Nodes = Bytesˉconcat(Nodes, Textˉtoˉutf8("]"));
+    let Maximum: Json.Databaseˉjsonˉresult = Json.Databaseˉjsonˉadmit(Nodes);
+    if Maximum.Error != Json.Databaseˉjsonˉerror.Valid ||
+        Maximum.Nodes != 4096u32 {
+        return 3;
+    }
+    let Excess: bytes = Bytesˉconcat(
+        Bytesˉslice(Nodes, 0u32, Bytesˉlength(Nodes) - 1u32),
+        Textˉtoˉutf8(",[null,null,null,null]]")
+    );
+    if Bytesˉerror(Excess) !=
+        Json.Databaseˉjsonˉerror.Nodeˉlimit {
+        return 4;
+    }
+    return 0;
+}
+
+fn Propertyˉlimits() -> i32 {
+    var Object: bytes = Textˉtoˉutf8("{");
+    var Index: u32 = 0u32;
+    while Index < 256u32 {
+        if Index > 0u32 { Object = Bytesˉconcat(Object, Textˉtoˉutf8(",")); }
+        Object = Bytesˉconcat(Object, Escapedˉname(Index));
+        Object = Bytesˉconcat(Object, Textˉtoˉutf8(":0"));
+        Index = Index + 1u32;
+    }
+    Object = Bytesˉconcat(Object, Textˉtoˉutf8("}"));
+    if Bytesˉerror(Object) !=
+        Json.Databaseˉjsonˉerror.Valid {
+        return 1;
+    }
+    let Excess: bytes = Bytesˉconcat(
+        Bytesˉslice(Object, 0u32, Bytesˉlength(Object) - 1u32),
+        Textˉtoˉutf8(",\"last\":0}")
+    );
+    if Bytesˉerror(Excess) !=
+        Json.Databaseˉjsonˉerror.Propertyˉlimit {
+        return 2;
+    }
+    let Longˉname: bytes = Bytesˉconcat(
+        Textˉtoˉutf8("{\""),
+        Bytesˉconcat(
+            Repeat(Textˉtoˉutf8("a"), 129u32),
+            Textˉtoˉutf8("\":0}")
+        )
+    );
+    if Bytesˉerror(Longˉname) !=
+        Json.Databaseˉjsonˉerror.Propertyˉnameˉtooˉlong {
+        return 3;
+    }
+    return 0;
+}
+
+fn Scalarˉlimits() -> i32 {
+    let Number: bytes = Repeat(Textˉtoˉutf8("1"), 129u32);
+    if Bytesˉerror(Number) !=
+        Json.Databaseˉjsonˉerror.Numberˉtooˉlong {
+        return 1;
+    }
+    let Maximumˉstring: bytes = Bytesˉconcat(
+        Textˉtoˉutf8("\""),
+        Bytesˉconcat(
+            Repeat(Textˉtoˉutf8("a"), 61408u32),
+            Textˉtoˉutf8("\"")
+        )
+    );
+    if Bytesˉerror(Maximumˉstring) !=
+        Json.Databaseˉjsonˉerror.Valid {
+        return 2;
+    }
+    let Excessˉstring: bytes = Bytesˉconcat(
+        Bytesˉslice(
+            Maximumˉstring,
+            0u32,
+            Bytesˉlength(Maximumˉstring) - 1u32
+        ),
+        Textˉtoˉutf8("a\"")
+    );
+    if Bytesˉerror(Excessˉstring) !=
+        Json.Databaseˉjsonˉerror.Stringˉtooˉlong {
+        return 3;
+    }
+    let Escapes: bytes = Repeat(Textˉtoˉutf8("\\n"), 4096u32);
+    let Acceptedˉescapes: bytes = Bytesˉconcat(
+        Textˉtoˉutf8("\""),
+        Bytesˉconcat(Escapes, Textˉtoˉutf8("\""))
+    );
+    if Bytesˉerror(Acceptedˉescapes) !=
+        Json.Databaseˉjsonˉerror.Valid {
+        return 4;
+    }
+    let Excessˉescapes: bytes = Bytesˉconcat(
+        Bytesˉslice(
+            Acceptedˉescapes,
+            0u32,
+            Bytesˉlength(Acceptedˉescapes) - 1u32
+        ),
+        Textˉtoˉutf8("\\n\"")
+    );
+    if Bytesˉerror(Excessˉescapes) !=
+        Json.Databaseˉjsonˉerror.Tooˉmanyˉescapes {
+        return 5;
+    }
+    let Tooˉlarge: bytes = Bytesˉconcat(
+        Repeat(Textˉtoˉutf8(" "), 65536u32),
+        Textˉtoˉutf8(" ")
+    );
+    if Bytesˉerror(Tooˉlarge) !=
+        Json.Databaseˉjsonˉerror.Tooˉlarge {
+        return 6;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Basic: i32 = Basicˉvalues();
+    if Basic != 0 { return 100 + Basic; }
+    let Strings: i32 = Stringˉcontract();
+    if Strings != 0 { return 200 + Strings; }
+    let Structures: i32 = Structureˉrejections();
+    if Structures != 0 { return 300 + Structures; }
+    let Depth: i32 = Depthˉlimits();
+    if Depth != 0 { return 400 + Depth; }
+    let Arrays: i32 = Arrayˉandˉnodeˉlimits();
+    if Arrays != 0 { return 500 + Arrays; }
+    let Properties: i32 = Propertyˉlimits();
+    if Properties != 0 { return 600 + Properties; }
+    let Scalars: i32 = Scalarˉlimits();
+    if Scalars != 0 { return 700 + Scalars; }
+    return 0;
+}

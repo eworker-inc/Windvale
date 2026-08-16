@@ -24,10 +24,10 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=19"
+set "SelectedCases=20"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
-    tree-node logical-record typed-row local-service collection-catalog bootstrap single-leaf
+    tree-node logical-record typed-row json-value local-service collection-catalog bootstrap single-leaf
     branch-split root-split depth-two depth-three depth-three-upsert
     tree-path-upsert host-storage
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
@@ -123,6 +123,8 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TypedRow typed-row "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Typed-Row.wvproj"
     if errorlevel 1 goto :cleanup
+    call :verify_development_target JsonValue json-value "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Value.wvproj"
+    if errorlevel 1 goto :cleanup
     call :verify_development_target LocalService local-service "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Local-Database-Service.wvproj"
     if errorlevel 1 goto :cleanup
     call :verify_development_target CollectionCatalog collection-catalog "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Collection-Catalog.wvproj"
@@ -179,6 +181,9 @@ call :verify_target LogicalRecord ^
 if errorlevel 1 goto :cleanup
 call :verify_target TypedRow ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Typed-Row.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target JsonValue ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Value.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target LocalService ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Local-Database-Service.wvproj"
@@ -267,7 +272,7 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=28 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=29 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
