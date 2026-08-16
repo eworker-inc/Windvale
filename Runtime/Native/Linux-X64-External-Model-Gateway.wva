@@ -18,6 +18,8 @@ return
 end define
 
 define Model_gateway_platform_read
+push rdi
+push rsi
 push r12
 push r13
 push r14
@@ -52,10 +54,14 @@ label Model_gateway_linux_read_return
 pop r14
 pop r13
 pop r12
+pop rsi
+pop rdi
 return
 end define
 
 define Model_gateway_platform_write
+push rdi
+push rsi
 push r12
 push r13
 push r14
@@ -90,6 +96,8 @@ label Model_gateway_linux_write_return
 pop r14
 pop r13
 pop r12
+pop rsi
+pop rdi
 return
 end define
 end section
