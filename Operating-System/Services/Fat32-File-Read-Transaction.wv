@@ -1,0 +1,477 @@
+module Fat32ˉfileˉreadˉtransaction profile portable;
+
+import Filesystemˉservice as Service;
+import Fat32ˉdirectoryˉadmission as Directory;
+import Fat32ˉchainˉposition as Position;
+import Fat32ˉfileˉreadˉplan as Read;
+import Fat32ˉblockˉexchangeˉstate as Block;
+
+const FILESYSTEM_RESPONSE_MAGIC: u32 = 1346786903u32;
+data Empty: bytes = [];
+
+export enum Fat32ˉfileˉtransactionˉphase {
+    Idle = 0; Awaiting = 1; Complete = 2; Failed = 3;
+}
+
+export enum Fat32ˉfileˉtransactionˉstatus {
+    Success = 0; Invalidˉrequest = 1; Unauthorized = 2;
+    Invalidˉdirectory = 3; Notˉfile = 4; Invalidˉgeometry = 5;
+    Invalidˉchain = 6; Invalidˉreadˉplan = 7;
+    Invalidˉexchange = 8; Wrongˉphase = 9; Stale = 10;
+    Unavailable = 11; Providerˉlost = 12; Invalidˉpayload = 13;
+}
+
+export record Fat32ˉfileˉtransaction {
+    Status: Fat32ˉfileˉtransactionˉstatus;
+    Phase: Fat32ˉfileˉtransactionˉphase;
+    Mediaˉgeneration: u32;
+    Firstˉdataˉsector: u64;
+    Totalˉsectors: u64;
+    Sectorsˉperˉcluster: u32;
+    Clusterˉcount: u64;
+    Maximumˉclusters: u32;
+    Firstˉcluster: u32;
+    Fileˉsize: u32;
+    Fileˉreference: u64;
+    Correlation: u32;
+    Startˉoffset: u64;
+    Nextˉoffset: u64;
+    Targetˉbytes: u32;
+    Firstˉsector: u64;
+    Grantedˉsectorˉcount: u64;
+    Canˉread: bool;
+    Endpointˉreference: u64;
+    Blockˉreference: u64;
+    Nextˉsequence: u32;
+    Planˉgeneration: u32;
+    Planˉsequence: u32;
+    Planˉnextˉsequence: u32;
+    Deviceˉsector: u64;
+    Sectorˉcount: u32;
+    Byteˉcount: u32;
+    Request: bytes;
+    Dispatched: bool;
+    Sectorˉoffset: u32;
+    Currentˉbytes: u32;
+    Rawˉentries: bytes;
+    Data: bytes;
+}
+
+fn Fat32ˉtransactionˉinvalid(
+    Status: Fat32ˉfileˉtransactionˉstatus
+) -> Fat32ˉfileˉtransaction {
+    return Fat32ˉfileˉtransaction(
+        Status, Fat32ˉfileˉtransactionˉphase.Failed,
+        0u32, 0u64, 0u64, 0u32, 0u64, 0u32, 0u32, 0u32,
+        0u64, 0u32, 0u64, 0u64, 0u32,
+        0u64, 0u64, false, 0u64, 0u64, 0u32,
+        0u32, 0u32, 0u32, 0u64, 0u32, 0u32, Empty, false,
+        0u32, 0u32, Empty, Empty
+    );
+}
+
+fn Fat32ˉtransactionˉtransition(
+    Status: Fat32ˉfileˉtransactionˉstatus,
+    Phase: Fat32ˉfileˉtransactionˉphase,
+    State: Fat32ˉfileˉtransaction
+) -> Fat32ˉfileˉtransaction {
+    return Fat32ˉfileˉtransaction(
+        Status, Phase, State.Mediaˉgeneration,
+        State.Firstˉdataˉsector, State.Totalˉsectors,
+        State.Sectorsˉperˉcluster, State.Clusterˉcount,
+        State.Maximumˉclusters, State.Firstˉcluster, State.Fileˉsize,
+        State.Fileˉreference, State.Correlation, State.Startˉoffset,
+        State.Nextˉoffset, State.Targetˉbytes,
+        State.Firstˉsector, State.Grantedˉsectorˉcount, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        State.Nextˉsequence, State.Planˉgeneration,
+        State.Planˉsequence, State.Planˉnextˉsequence,
+        State.Deviceˉsector, State.Sectorˉcount, State.Byteˉcount,
+        State.Request, State.Dispatched,
+        State.Sectorˉoffset, State.Currentˉbytes,
+        State.Rawˉentries, State.Data
+    );
+}
+
+fn Fat32ˉtransactionˉexchange(
+    State: Fat32ˉfileˉtransaction
+) -> Block.Fat32ˉblockˉexchange {
+    var Phase: Block.Fat32ˉblockˉexchangeˉphase =
+        Block.Fat32ˉblockˉexchangeˉphase.Ready;
+    if State.Phase == Fat32ˉfileˉtransactionˉphase.Awaiting {
+        Phase = Block.Fat32ˉblockˉexchangeˉphase.Awaiting;
+    }
+    return Block.Fat32ˉblockˉexchange(
+        Block.Fat32ˉblockˉexchangeˉstatus.Success, Phase,
+        State.Firstˉsector, State.Grantedˉsectorˉcount,
+        State.Mediaˉgeneration, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        State.Nextˉsequence, State.Planˉgeneration,
+        State.Planˉsequence, State.Planˉnextˉsequence,
+        State.Deviceˉsector, State.Sectorˉcount, State.Byteˉcount,
+        State.Request, State.Dispatched,
+        Block.Fat32ˉblockˉexchangeˉresultˉstatus.None, Empty
+    );
+}
+
+fn Fat32ˉtransactionˉsectorsˉvalid(Value: u32) -> bool {
+    return Value == 1u32 || Value == 2u32 || Value == 4u32 ||
+        Value == 8u32 || Value == 16u32 || Value == 32u32 ||
+        Value == 64u32 || Value == 128u32;
+}
+
+fn Fat32ˉtransactionˉnarrowˉu32(Value: u64) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Value), 0u32);
+}
+
+fn Fat32ˉtransactionˉappendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Fat32ˉtransactionˉappendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Fat32ˉtransactionˉprepare(
+    State: Fat32ˉfileˉtransaction
+) -> Fat32ˉfileˉtransaction {
+    let Progress: u32 = Bytesˉlength(State.Data);
+    if Progress == State.Targetˉbytes {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Success,
+            Fat32ˉfileˉtransactionˉphase.Complete, State
+        );
+    }
+    if Progress > State.Targetˉbytes ||
+        !Fat32ˉtransactionˉsectorsˉvalid(State.Sectorsˉperˉcluster) {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉgeometry,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    let Clusterˉbytes: u64 =
+        U64ˉfromˉu32(State.Sectorsˉperˉcluster) * 512u64;
+    let Ordinalˉwide: u64 = State.Nextˉoffset / Clusterˉbytes;
+    if Ordinalˉwide > 4294967295u64 {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉgeometry,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    let Ordinal: u32 = Fat32ˉtransactionˉnarrowˉu32(Ordinalˉwide);
+    let Resolved: Position.Fat32ˉchainˉposition =
+        Position.Fat32ˉchainˉpositionˉresolve(
+            State.Rawˉentries, State.Firstˉcluster,
+            State.Clusterˉcount, State.Maximumˉclusters, Ordinal
+        );
+    if Resolved.Status != Position.Fat32ˉchainˉpositionˉstatus.Ready {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉchain,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    let Plan: Read.Fat32ˉfileˉreadˉplan =
+        Read.Fat32ˉfileˉreadˉplanˉcreate(
+            State.Firstˉdataˉsector, State.Totalˉsectors,
+            State.Sectorsˉperˉcluster, State.Clusterˉcount,
+            State.Fileˉsize, State.Nextˉoffset,
+            State.Targetˉbytes - Progress, Ordinal, Resolved.Cluster
+        );
+    if Plan.Status != Read.Fat32ˉfileˉreadˉstatus.Ready ||
+        Plan.Deviceˉsector < State.Firstˉsector {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉreadˉplan,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    let Ready: Block.Fat32ˉblockˉexchange =
+        Fat32ˉtransactionˉexchange(State);
+    let Begun: Block.Fat32ˉblockˉexchange =
+        Block.Fat32ˉblockˉexchangeˉbegin(
+            Ready, State.Mediaˉgeneration,
+            Plan.Deviceˉsector - State.Firstˉsector,
+            Plan.Sectorˉcount
+        );
+    if Begun.Status != Block.Fat32ˉblockˉexchangeˉstatus.Success ||
+        Begun.Phase != Block.Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉexchange,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    return Fat32ˉfileˉtransaction(
+        Fat32ˉfileˉtransactionˉstatus.Success,
+        Fat32ˉfileˉtransactionˉphase.Awaiting,
+        State.Mediaˉgeneration,
+        State.Firstˉdataˉsector, State.Totalˉsectors,
+        State.Sectorsˉperˉcluster, State.Clusterˉcount,
+        State.Maximumˉclusters, State.Firstˉcluster, State.Fileˉsize,
+        State.Fileˉreference, State.Correlation, State.Startˉoffset,
+        Plan.Nextˉfileˉoffset, State.Targetˉbytes,
+        State.Firstˉsector, State.Grantedˉsectorˉcount, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        Begun.Nextˉsequence, Begun.Planˉgeneration,
+        Begun.Planˉsequence, Begun.Planˉnextˉsequence,
+        Begun.Deviceˉsector, Begun.Sectorˉcount, Begun.Byteˉcount,
+        Begun.Request, false, Plan.Sectorˉoffset, Plan.Dataˉbytes,
+        State.Rawˉentries, State.Data
+    );
+}
+
+export fn Fat32ˉfileˉtransactionˉbegin(
+    Request: bytes,
+    Authorizedˉfileˉreference: u64,
+    Mediaˉgeneration: u32,
+    Entry: Directory.Fat32ˉdirectoryˉresult,
+    Rawˉentries: bytes,
+    Firstˉdataˉsector: u64,
+    Totalˉsectors: u64,
+    Sectorsˉperˉcluster: u32,
+    Clusterˉcount: u64,
+    Maximumˉclusters: u32,
+    Exchange: Block.Fat32ˉblockˉexchange
+) -> Fat32ˉfileˉtransaction {
+    if Service.Filesystemˉserviceˉrequestˉstatus(Request) !=
+            Service.Filesystemˉserviceˉrequestˉstatus.Valid ||
+        Bytesˉreadˉu32ˉlittle(Request, 12u32) != 2u32 {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉrequest
+        );
+    }
+    let Fileˉreference: u64 = Bytesˉreadˉu64ˉlittle(Request, 24u32);
+    if Authorizedˉfileˉreference == 0u64 ||
+        Authorizedˉfileˉreference != Fileˉreference ||
+        Mediaˉgeneration == 0u32 {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Unauthorized
+        );
+    }
+    if Entry.Status != Directory.Fat32ˉdirectoryˉstatus.Found {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉdirectory
+        );
+    }
+    if Entry.Kind != Directory.Fat32ˉdirectoryˉkind.File {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Notˉfile
+        );
+    }
+    if (Entry.Fileˉsize == 0u32 && Entry.Firstˉcluster != 0u32) ||
+        (Entry.Fileˉsize != 0u32 && Entry.Firstˉcluster < 2u32) {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉdirectory
+        );
+    }
+    let Fileˉoffset: u64 = Bytesˉreadˉu64ˉlittle(Request, 32u32);
+    let Fileˉsizeˉwide: u64 = U64ˉfromˉu32(Entry.Fileˉsize);
+    if Fileˉoffset > Fileˉsizeˉwide {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉrequest
+        );
+    }
+    let Requested: u32 = Bytesˉreadˉu32ˉlittle(Request, 40u32);
+    let Remaining: u64 = Fileˉsizeˉwide - Fileˉoffset;
+    var Target: u32 = Requested;
+    if Remaining < U64ˉfromˉu32(Target) {
+        Target = Fat32ˉtransactionˉnarrowˉu32(Remaining);
+    }
+    if Target != 0u32 &&
+        (Exchange.Status != Block.Fat32ˉblockˉexchangeˉstatus.Success ||
+        Exchange.Phase != Block.Fat32ˉblockˉexchangeˉphase.Ready ||
+        Exchange.Capabilityˉgeneration != Mediaˉgeneration ||
+        Exchange.Endpointˉreference == 0u64 ||
+        Exchange.Blockˉreference == 0u64) {
+        return Fat32ˉtransactionˉinvalid(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉexchange
+        );
+    }
+    let Initial: Fat32ˉfileˉtransaction = Fat32ˉfileˉtransaction(
+        Fat32ˉfileˉtransactionˉstatus.Success,
+        Fat32ˉfileˉtransactionˉphase.Idle,
+        Mediaˉgeneration, Firstˉdataˉsector, Totalˉsectors,
+        Sectorsˉperˉcluster, Clusterˉcount, Maximumˉclusters,
+        Entry.Firstˉcluster, Entry.Fileˉsize, Fileˉreference,
+        Bytesˉreadˉu32ˉlittle(Request, 16u32),
+        Fileˉoffset, Fileˉoffset, Target,
+        Exchange.Firstˉsector, Exchange.Grantedˉsectorˉcount,
+        Exchange.Canˉread, Exchange.Endpointˉreference,
+        Exchange.Blockˉreference, Exchange.Nextˉsequence,
+        0u32, 0u32, 0u32, 0u64, 0u32, 0u32, Empty, false,
+        0u32, 0u32, Rawˉentries, Empty
+    );
+    return Fat32ˉtransactionˉprepare(Initial);
+}
+
+export fn Fat32ˉfileˉtransactionˉdispatch(
+    State: Fat32ˉfileˉtransaction,
+    Endpointˉreference: u64
+) -> Fat32ˉfileˉtransaction {
+    if State.Phase != Fat32ˉfileˉtransactionˉphase.Awaiting {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Wrongˉphase,
+            State.Phase, State
+        );
+    }
+    let Current: Block.Fat32ˉblockˉexchange =
+        Fat32ˉtransactionˉexchange(State);
+    let Dispatched: Block.Fat32ˉblockˉexchange =
+        Block.Fat32ˉblockˉexchangeˉdispatch(Current, Endpointˉreference);
+    if Dispatched.Status == Block.Fat32ˉblockˉexchangeˉstatus.Stale {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Stale, State.Phase, State
+        );
+    }
+    if Dispatched.Status != Block.Fat32ˉblockˉexchangeˉstatus.Success {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉexchange,
+            State.Phase, State
+        );
+    }
+    return Fat32ˉfileˉtransaction(
+        Fat32ˉfileˉtransactionˉstatus.Success, State.Phase,
+        State.Mediaˉgeneration,
+        State.Firstˉdataˉsector, State.Totalˉsectors,
+        State.Sectorsˉperˉcluster, State.Clusterˉcount,
+        State.Maximumˉclusters, State.Firstˉcluster, State.Fileˉsize,
+        State.Fileˉreference, State.Correlation, State.Startˉoffset,
+        State.Nextˉoffset, State.Targetˉbytes,
+        State.Firstˉsector, State.Grantedˉsectorˉcount, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        State.Nextˉsequence, State.Planˉgeneration,
+        State.Planˉsequence, State.Planˉnextˉsequence,
+        State.Deviceˉsector, State.Sectorˉcount, State.Byteˉcount,
+        State.Request, true, State.Sectorˉoffset, State.Currentˉbytes,
+        State.Rawˉentries, State.Data
+    );
+}
+
+export fn Fat32ˉfileˉtransactionˉcomplete(
+    State: Fat32ˉfileˉtransaction,
+    Endpointˉreference: u64,
+    Currentˉgeneration: u32,
+    Response: bytes
+) -> Fat32ˉfileˉtransaction {
+    if State.Phase != Fat32ˉfileˉtransactionˉphase.Awaiting {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Wrongˉphase,
+            State.Phase, State
+        );
+    }
+    let Current: Block.Fat32ˉblockˉexchange =
+        Fat32ˉtransactionˉexchange(State);
+    let Completed: Block.Fat32ˉblockˉexchange =
+        Block.Fat32ˉblockˉexchangeˉcomplete(
+            Current, Endpointˉreference, Currentˉgeneration, Response
+        );
+    if Completed.Phase == Block.Fat32ˉblockˉexchangeˉphase.Awaiting {
+        var Retryˉstatus: Fat32ˉfileˉtransactionˉstatus =
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉexchange;
+        if Completed.Status == Block.Fat32ˉblockˉexchangeˉstatus.Stale {
+            Retryˉstatus = Fat32ˉfileˉtransactionˉstatus.Stale;
+        }
+        return Fat32ˉtransactionˉtransition(
+            Retryˉstatus, State.Phase, State
+        );
+    }
+    if Completed.Resultˉstatus ==
+        Block.Fat32ˉblockˉexchangeˉresultˉstatus.Stale {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Stale,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    if Completed.Resultˉstatus ==
+        Block.Fat32ˉblockˉexchangeˉresultˉstatus.Unavailable {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Unavailable,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    if Completed.Resultˉstatus ==
+        Block.Fat32ˉblockˉexchangeˉresultˉstatus.Providerˉlost {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Providerˉlost,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    if Completed.Resultˉstatus !=
+            Block.Fat32ˉblockˉexchangeˉresultˉstatus.Complete ||
+        State.Sectorˉoffset > Bytesˉlength(Completed.Resultˉpayload) ||
+        State.Currentˉbytes >
+            Bytesˉlength(Completed.Resultˉpayload) - State.Sectorˉoffset {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉpayload,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    let Chunk: bytes = Bytesˉslice(
+        Completed.Resultˉpayload,
+        State.Sectorˉoffset, State.Currentˉbytes
+    );
+    let Accumulated: bytes = Bytesˉconcat(State.Data, Chunk);
+    if Bytesˉlength(Accumulated) > State.Targetˉbytes {
+        return Fat32ˉtransactionˉtransition(
+            Fat32ˉfileˉtransactionˉstatus.Invalidˉpayload,
+            Fat32ˉfileˉtransactionˉphase.Failed, State
+        );
+    }
+    let Advanced: Fat32ˉfileˉtransaction = Fat32ˉfileˉtransaction(
+        Fat32ˉfileˉtransactionˉstatus.Success,
+        Fat32ˉfileˉtransactionˉphase.Idle,
+        State.Mediaˉgeneration,
+        State.Firstˉdataˉsector, State.Totalˉsectors,
+        State.Sectorsˉperˉcluster, State.Clusterˉcount,
+        State.Maximumˉclusters, State.Firstˉcluster, State.Fileˉsize,
+        State.Fileˉreference, State.Correlation, State.Startˉoffset,
+        State.Nextˉoffset, State.Targetˉbytes,
+        State.Firstˉsector, State.Grantedˉsectorˉcount, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        Completed.Nextˉsequence, 0u32, 0u32, 0u32,
+        0u64, 0u32, 0u32, Empty, false, 0u32, 0u32,
+        State.Rawˉentries, Accumulated
+    );
+    return Fat32ˉtransactionˉprepare(Advanced);
+}
+
+export fn Fat32ˉfileˉtransactionˉresponse(
+    State: Fat32ˉfileˉtransaction,
+    Request: bytes
+) -> bytes {
+    if State.Status != Fat32ˉfileˉtransactionˉstatus.Success ||
+        State.Phase != Fat32ˉfileˉtransactionˉphase.Complete ||
+        Service.Filesystemˉserviceˉrequestˉstatus(Request) !=
+            Service.Filesystemˉserviceˉrequestˉstatus.Valid ||
+        Bytesˉreadˉu32ˉlittle(Request, 12u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 16u32) != State.Correlation ||
+        Bytesˉreadˉu64ˉlittle(Request, 24u32) != State.Fileˉreference ||
+        Bytesˉreadˉu64ˉlittle(Request, 32u32) != State.Startˉoffset ||
+        Bytesˉlength(State.Data) != State.Targetˉbytes {
+        return Empty;
+    }
+    var Response: bytes = Bytesˉfromˉu32ˉlittle(
+        FILESYSTEM_RESPONSE_MAGIC
+    );
+    Response = Fat32ˉtransactionˉappendˉu32(Response, 1u32);
+    Response = Fat32ˉtransactionˉappendˉu32(
+        Response, 64u32 + State.Targetˉbytes
+    );
+    Response = Fat32ˉtransactionˉappendˉu32(Response, 2u32);
+    Response = Fat32ˉtransactionˉappendˉu32(Response, State.Correlation);
+    Response = Fat32ˉtransactionˉappendˉu32(Response, 0u32);
+    Response = Fat32ˉtransactionˉappendˉu64(
+        Response, State.Fileˉreference
+    );
+    Response = Fat32ˉtransactionˉappendˉu64(
+        Response, U64ˉfromˉu32(State.Fileˉsize)
+    );
+    Response = Fat32ˉtransactionˉappendˉu64(Response, State.Startˉoffset);
+    Response = Fat32ˉtransactionˉappendˉu32(Response, State.Targetˉbytes);
+    Response = Fat32ˉtransactionˉappendˉu32(Response, 0u32);
+    Response = Fat32ˉtransactionˉappendˉu32(Response, State.Targetˉbytes);
+    Response = Fat32ˉtransactionˉappendˉu32(Response, 0u32);
+    Response = Bytesˉconcat(Response, State.Data);
+    if !Service.Filesystemˉserviceˉresponseˉisˉvalid(Request, Response) {
+        return Empty;
+    }
+    return Response;
+}

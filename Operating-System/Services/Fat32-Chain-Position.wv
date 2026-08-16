@@ -1,0 +1,55 @@
+module Fat32ˉchainˉposition profile portable;
+
+import Fat32ˉclusterˉchain as Chain;
+
+const FAT32_ENTRY_MASK: u32 = 268435455u32;
+
+export enum Fat32ˉchainˉpositionˉstatus {
+    Ready = 0; Invalidˉchain = 1; Invalidˉordinal = 2;
+}
+
+export record Fat32ˉchainˉposition {
+    Status: Fat32ˉchainˉpositionˉstatus;
+    Ordinal: u32;
+    Cluster: u32;
+    Chainˉclusters: u32;
+}
+
+fn Fat32ˉchainˉpositionˉinvalid(
+    Status: Fat32ˉchainˉpositionˉstatus
+) -> Fat32ˉchainˉposition {
+    return Fat32ˉchainˉposition(Status, 0u32, 0u32, 0u32);
+}
+
+export fn Fat32ˉchainˉpositionˉresolve(
+    Rawˉentries: bytes,
+    Firstˉcluster: u32,
+    Clusterˉcount: u64,
+    Maximumˉclusters: u32,
+    Ordinal: u32
+) -> Fat32ˉchainˉposition {
+    let Admitted: Chain.Fat32ˉchainˉresult =
+        Chain.Fat32ˉclusterˉchainˉadmit(
+            Rawˉentries, Firstˉcluster, Clusterˉcount, Maximumˉclusters
+        );
+    if Admitted.Status != Chain.Fat32ˉchainˉstatus.Complete {
+        return Fat32ˉchainˉpositionˉinvalid(
+            Fat32ˉchainˉpositionˉstatus.Invalidˉchain
+        );
+    }
+    if Ordinal >= Admitted.Clusters {
+        return Fat32ˉchainˉpositionˉinvalid(
+            Fat32ˉchainˉpositionˉstatus.Invalidˉordinal
+        );
+    }
+    var Cluster: u32 = Firstˉcluster;
+    if Ordinal != 0u32 {
+        Cluster = Bytesˉreadˉu32ˉlittle(
+            Rawˉentries, (Ordinal - 1u32) * 4u32
+        ) & FAT32_ENTRY_MASK;
+    }
+    return Fat32ˉchainˉposition(
+        Fat32ˉchainˉpositionˉstatus.Ready,
+        Ordinal, Cluster, Admitted.Clusters
+    );
+}

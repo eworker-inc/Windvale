@@ -1,0 +1,291 @@
+module Osˉfat32ˉfileˉreadˉtransactionˉselfˉtest profile portable;
+
+import Filesystemˉservice as Service;
+import Fat32ˉdirectoryˉadmission as Directory;
+import Fat32ˉchainˉposition as Position;
+import Fat32ˉfileˉreadˉtransaction as Transaction;
+import Fat32ˉblockˉreadˉtransaction as Block;
+import Fat32ˉblockˉexchangeˉstate as Exchange;
+
+data Testˉempty: bytes = [];
+data Testˉchain: bytes = [7, 0, 0, 0, 248, 255, 255, 15];
+data Testˉtruncatedˉchain: bytes = [7, 0, 0, 0];
+
+fn Testˉappendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Testˉappendˉu64(Value: bytes, Field: u64) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
+}
+
+fn Testˉreadˉrequest(
+    Correlation: u32,
+    Reference: u64,
+    Offset: u64,
+    Maximum: u32
+) -> bytes {
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1363564119u32);
+    Request = Testˉappendˉu32(Request, 1u32);
+    Request = Testˉappendˉu32(Request, 64u32);
+    Request = Testˉappendˉu32(Request, 2u32);
+    Request = Testˉappendˉu32(Request, Correlation);
+    Request = Testˉappendˉu32(Request, 0u32);
+    Request = Testˉappendˉu64(Request, Reference);
+    Request = Testˉappendˉu64(Request, Offset);
+    Request = Testˉappendˉu32(Request, Maximum);
+    Request = Testˉappendˉu32(Request, 0u32);
+    Request = Testˉappendˉu64(Request, 0u64);
+    return Testˉappendˉu64(Request, 0u64);
+}
+
+fn Testˉpayload(Value: u8, Length: u32) -> bytes {
+    var Result: bytes = Testˉempty;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Testˉproviderˉresponse(
+    State: Transaction.Fat32ˉfileˉtransaction,
+    Status: u32,
+    Payload: bytes
+) -> bytes {
+    var Response: bytes = Bytesˉfromˉu32ˉlittle(1346524759u32);
+    Response = Testˉappendˉu32(Response, 1u32);
+    Response = Testˉappendˉu32(Response, 48u32 + Bytesˉlength(Payload));
+    Response = Testˉappendˉu32(Response, State.Planˉgeneration);
+    Response = Testˉappendˉu32(Response, State.Planˉsequence);
+    Response = Testˉappendˉu32(Response, Status);
+    Response = Testˉappendˉu64(Response, State.Deviceˉsector);
+    Response = Testˉappendˉu32(Response, State.Sectorˉcount);
+    Response = Testˉappendˉu32(Response, State.Byteˉcount);
+    Response = Testˉappendˉu64(Response, State.Blockˉreference);
+    return Bytesˉconcat(Response, Payload);
+}
+
+fn Testˉbegin(
+    Request: bytes,
+    Authorized: u64,
+    Entry: Directory.Fat32ˉdirectoryˉresult,
+    Chain: bytes,
+    Blockˉexchange: Exchange.Fat32ˉblockˉexchange
+) -> Transaction.Fat32ˉfileˉtransaction {
+    return Transaction.Fat32ˉfileˉtransactionˉbegin(
+        Request, Authorized, 7u32, Entry, Chain,
+        1110u64, 600000u64, 8u32, 68890u64, 4096u32,
+        Blockˉexchange
+    );
+}
+
+export fn Main() -> i32 {
+    let First: Position.Fat32ˉchainˉposition =
+        Position.Fat32ˉchainˉpositionˉresolve(
+            Testˉchain, 2u32, 68890u64, 4096u32, 0u32
+        );
+    let Second: Position.Fat32ˉchainˉposition =
+        Position.Fat32ˉchainˉpositionˉresolve(
+            Testˉchain, 2u32, 68890u64, 4096u32, 1u32
+        );
+    if First.Status != Position.Fat32ˉchainˉpositionˉstatus.Ready ||
+        First.Cluster != 2u32 || First.Chainˉclusters != 2u32 ||
+        Second.Cluster != 7u32 { return 2; }
+    let Pastˉend: Position.Fat32ˉchainˉposition =
+        Position.Fat32ˉchainˉpositionˉresolve(
+            Testˉchain, 2u32, 68890u64, 4096u32, 2u32
+        );
+    let Truncatedˉposition: Position.Fat32ˉchainˉposition =
+        Position.Fat32ˉchainˉpositionˉresolve(
+            Testˉtruncatedˉchain, 2u32, 68890u64, 4096u32, 0u32
+        );
+    if Pastˉend.Status !=
+            Position.Fat32ˉchainˉpositionˉstatus.Invalidˉordinal ||
+        Truncatedˉposition.Status !=
+            Position.Fat32ˉchainˉpositionˉstatus.Invalidˉchain {
+        return 3;
+    }
+
+    let Request: bytes = Testˉreadˉrequest(8u32, 65537u64, 100u64, 4500u32);
+    let Entry: Directory.Fat32ˉdirectoryˉresult =
+        Directory.Fat32ˉdirectoryˉresult(
+            Directory.Fat32ˉdirectoryˉstatus.Found,
+            Directory.Fat32ˉdirectoryˉkind.File,
+            3u32, 2u32, 5000u32
+        );
+    let Capability: Block.Fat32ˉblockˉcapability =
+        Block.Fat32ˉblockˉcapabilityˉadmit(
+            600000u64, 0u64, 600000u64, 7u32, true
+        );
+    let Bound: Exchange.Fat32ˉblockˉexchange =
+        Exchange.Fat32ˉblockˉexchangeˉbind(
+            Capability, 77u64, 55u64
+        );
+    let Begun: Transaction.Fat32ˉfileˉtransaction =
+        Testˉbegin(Request, 65537u64, Entry, Testˉchain, Bound);
+    if Begun.Status != Transaction.Fat32ˉfileˉtransactionˉstatus.Success ||
+        Begun.Phase != Transaction.Fat32ˉfileˉtransactionˉphase.Awaiting ||
+        Begun.Deviceˉsector != 1110u64 || Begun.Sectorˉcount != 8u32 ||
+        Begun.Sectorˉoffset != 100u32 || Begun.Currentˉbytes != 3996u32 ||
+        Begun.Nextˉoffset != 4096u64 || Begun.Dispatched ||
+        Bytesˉlength(Begun.Request) != 48u32 { return 4; }
+    let Unauthorized: Transaction.Fat32ˉfileˉtransaction =
+        Testˉbegin(Request, 65538u64, Entry, Testˉchain, Bound);
+    let Directoryˉentry: Transaction.Fat32ˉfileˉtransaction =
+        Testˉbegin(
+            Request, 65537u64,
+            Directory.Fat32ˉdirectoryˉresult(
+                Directory.Fat32ˉdirectoryˉstatus.Found,
+                Directory.Fat32ˉdirectoryˉkind.Directory,
+                3u32, 2u32, 0u32
+            ), Testˉchain, Bound
+        );
+    if Unauthorized.Status !=
+            Transaction.Fat32ˉfileˉtransactionˉstatus.Unauthorized ||
+        Directoryˉentry.Status !=
+            Transaction.Fat32ˉfileˉtransactionˉstatus.Notˉfile {
+        return 5;
+    }
+    let Invalidˉchain: Transaction.Fat32ˉfileˉtransaction = Testˉbegin(
+        Request, 65537u64, Entry, Testˉtruncatedˉchain, Bound
+    );
+    if Invalidˉchain.Status !=
+        Transaction.Fat32ˉfileˉtransactionˉstatus.Invalidˉchain { return 6; }
+
+    let Notˉdispatched: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Begun, 77u64, 7u32,
+            Testˉproviderˉresponse(
+                Begun, 0u32, Testˉpayload(90u8, 4096u32)
+            )
+        );
+    if Notˉdispatched.Status !=
+            Transaction.Fat32ˉfileˉtransactionˉstatus.Invalidˉexchange ||
+        Notˉdispatched.Phase !=
+            Transaction.Fat32ˉfileˉtransactionˉphase.Awaiting {
+        return 7;
+    }
+    let Wrongˉendpoint: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉdispatch(Begun, 78u64);
+    let Dispatched: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉdispatch(Begun, 77u64);
+    if Wrongˉendpoint.Status !=
+            Transaction.Fat32ˉfileˉtransactionˉstatus.Stale ||
+        Wrongˉendpoint.Phase !=
+            Transaction.Fat32ˉfileˉtransactionˉphase.Awaiting ||
+        Dispatched.Phase != Transaction.Fat32ˉfileˉtransactionˉphase.Awaiting ||
+        !Dispatched.Dispatched || Dispatched.Planˉnextˉsequence != 2u32 {
+        return 8;
+    }
+    let Next: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Dispatched, 77u64, 7u32,
+            Testˉproviderˉresponse(
+                Dispatched, 0u32, Testˉpayload(90u8, 4096u32)
+            )
+        );
+    if Next.Phase != Transaction.Fat32ˉfileˉtransactionˉphase.Awaiting ||
+        Bytesˉlength(Next.Data) != 3996u32 ||
+        Bytesˉreadˉu8(Next.Data, 0u32) != 90u8 ||
+        Next.Deviceˉsector != 1150u64 || Next.Sectorˉcount != 1u32 ||
+        Next.Currentˉbytes != 504u32 || Next.Nextˉoffset != 4600u64 ||
+        Next.Dispatched {
+        return 9;
+    }
+
+    let Secondˉdispatched: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉdispatch(Next, 77u64);
+    let Complete: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Secondˉdispatched, 77u64, 7u32,
+            Testˉproviderˉresponse(
+                Secondˉdispatched, 0u32, Testˉpayload(91u8, 512u32)
+            )
+        );
+    if Complete.Phase !=
+            Transaction.Fat32ˉfileˉtransactionˉphase.Complete ||
+        Bytesˉlength(Complete.Data) != 4500u32 ||
+        Bytesˉreadˉu8(Complete.Data, 3995u32) != 90u8 ||
+        Bytesˉreadˉu8(Complete.Data, 3996u32) != 91u8 ||
+        Bytesˉreadˉu8(Complete.Data, 4499u32) != 91u8 { return 10; }
+    let Reply: bytes =
+        Transaction.Fat32ˉfileˉtransactionˉresponse(Complete, Request);
+    if Bytesˉlength(Reply) != 4564u32 ||
+        !Service.Filesystemˉserviceˉresponseˉisˉvalid(Request, Reply) ||
+        Bytesˉreadˉu64ˉlittle(Reply, 40u32) != 100u64 ||
+        Bytesˉreadˉu32ˉlittle(Reply, 48u32) != 4500u32 ||
+        Bytesˉreadˉu8(Reply, 64u32 + 3996u32) != 91u8 { return 11; }
+    if Bytesˉlength(Transaction.Fat32ˉfileˉtransactionˉresponse(
+        Complete, Testˉreadˉrequest(9u32, 65537u64, 100u64, 4500u32)
+    )) != 0u32 { return 12; }
+
+    let Endˉrequest: bytes =
+        Testˉreadˉrequest(10u32, 65537u64, 5000u64, 1u32);
+    let End: Transaction.Fat32ˉfileˉtransaction =
+        Testˉbegin(Endˉrequest, 65537u64, Entry, Testˉchain, Bound);
+    let Endˉreply: bytes =
+        Transaction.Fat32ˉfileˉtransactionˉresponse(End, Endˉrequest);
+    if End.Phase != Transaction.Fat32ˉfileˉtransactionˉphase.Complete ||
+        End.Targetˉbytes != 0u32 || Bytesˉlength(Endˉreply) != 64u32 ||
+        !Service.Filesystemˉserviceˉresponseˉisˉvalid(
+            Endˉrequest, Endˉreply
+        ) { return 13; }
+    let Zeroˉrequest: bytes =
+        Testˉreadˉrequest(11u32, 65537u64, 100u64, 0u32);
+    let Zero: Transaction.Fat32ˉfileˉtransaction =
+        Testˉbegin(Zeroˉrequest, 65537u64, Entry, Testˉchain, Bound);
+    if Zero.Phase != Transaction.Fat32ˉfileˉtransactionˉphase.Complete ||
+        Bytesˉlength(Transaction.Fat32ˉfileˉtransactionˉresponse(
+            Zero, Zeroˉrequest
+        )) != 64u32 { return 14; }
+    let Beyond: Transaction.Fat32ˉfileˉtransaction = Testˉbegin(
+        Testˉreadˉrequest(12u32, 65537u64, 5001u64, 1u32),
+        65537u64, Entry, Testˉchain, Bound
+    );
+    if Beyond.Status !=
+        Transaction.Fat32ˉfileˉtransactionˉstatus.Invalidˉrequest {
+        return 15;
+    }
+
+    let Unavailable: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Dispatched, 77u64, 7u32,
+            Testˉproviderˉresponse(Dispatched, 1u32, Testˉempty)
+        );
+    if Unavailable.Status !=
+        Transaction.Fat32ˉfileˉtransactionˉstatus.Unavailable {
+        return 16;
+    }
+    let Lost: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Dispatched, 77u64, 7u32,
+            Testˉproviderˉresponse(Dispatched, 2u32, Testˉempty)
+        );
+    if Lost.Status !=
+        Transaction.Fat32ˉfileˉtransactionˉstatus.Providerˉlost { return 17; }
+    let Changedˉmedia: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Dispatched, 77u64, 8u32,
+            Testˉproviderˉresponse(
+                Dispatched, 0u32, Testˉpayload(90u8, 4096u32)
+            )
+        );
+    if Changedˉmedia.Status !=
+        Transaction.Fat32ˉfileˉtransactionˉstatus.Stale {
+        return 18;
+    }
+    let Invalidˉpayload: Transaction.Fat32ˉfileˉtransaction =
+        Transaction.Fat32ˉfileˉtransactionˉcomplete(
+            Dispatched, 77u64, 7u32,
+            Testˉproviderˉresponse(
+                Dispatched, 0u32, Testˉpayload(90u8, 512u32)
+            )
+        );
+    if Invalidˉpayload.Status !=
+        Transaction.Fat32ˉfileˉtransactionˉstatus.Invalidˉpayload {
+        return 19;
+    }
+    return 47;
+}

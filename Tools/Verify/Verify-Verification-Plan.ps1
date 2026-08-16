@@ -1326,6 +1326,21 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'OS FAT32 file-read transaction ownership'
+        Paths = @(
+            'Operating-System/Services/Fat32-Chain-Position.wv',
+            'Operating-System/Services/Fat32-File-Read-Transaction.wv',
+            'Projects/Operating-System/Windvale-Os-Fat32-Chain-Position.wvproj',
+            'Projects/Operating-System/Windvale-Os-Fat32-File-Read-Transaction.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Fat32-File-Read-Transaction.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Fat32-File-Read-Transaction-Self-Test.wv',
+            'Specifications/Windvale-Os-Fat32-File-Read-Transaction.md'
+        )
+        Suites = @('os-fat32-file-read', 'native-u64-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'portable network authority ownership'
         Paths = @(
             'Libraries/Platform/Networking/Network-Authority.wv',
@@ -2621,9 +2636,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 95 -or
+if ($VerificationOwnerLines.Count -ne 96 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 94-owner inventory differs.'
+    throw 'The native verification-owner header or exact 95-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2661,7 +2676,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4420 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4438 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -41,7 +41,9 @@ Its 16-case test WVB is 10,627 bytes at SHA-256
 `7d4397fa3bc9a338ff88af5bebd8008b2ef8497ad902e6e9bafcc0c19ac4fff1`,
 returns 47 on Windows, and pins deterministic Windows and Linux console images.
 
-This boundary does not traverse a chain, bind a file reference or media
-generation, compare mirrored FATs, perform live block-provider dispatch, copy
-partial-sector data, or publish a filesystem response. Those operations remain
-separate composition and service contracts.
+This boundary does not itself traverse a chain, bind a file reference or media
+generation, compare mirrored FATs, or perform a privileged endpoint syscall.
+File-read transaction 1 now composes admitted chain positions,
+transaction-owned block identities, partial-sector copies, and a validated
+filesystem response while leaving actual driver execution to the live service
+boundary.

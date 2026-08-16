@@ -591,6 +591,8 @@ function Add-Os-Suite {
         Add-Suite @('os-provider-images', 'os-application-launch')
     } elseif ($Path -match 'Fat32-Block-(Read|Provider|Exchange)') {
         Add-Suite @('os-fat32-block-read', 'native-u64-lowering')
+    } elseif ($Path -match 'Fat32-(Chain-Position|File-Read-Transaction)') {
+        Add-Suite @('os-fat32-file-read', 'native-u64-lowering')
     } elseif ($Path -match 'Fat32-(Volume-Admission|Cluster-Chain|Directory-Admission|File-Read-Plan)') {
         Add-Suite @('os-fat32-volume', 'native-u64-lowering')
     } elseif ($Path -match 'Filesystem-(?:Service|Provider)') {
@@ -2308,6 +2310,9 @@ foreach ($Path in $Paths) {
             $Path.Contains('Fat32-Block-Provider', [StringComparison]::Ordinal) -or
             $Path.Contains('Fat32-Block-Exchange', [StringComparison]::Ordinal)) {
             Add-Suite @('os-fat32-block-read', 'native-u64-lowering')
+        } elseif ($Path.Contains('Fat32-Chain-Position', [StringComparison]::Ordinal) -or
+            $Path.Contains('Fat32-File-Read-Transaction', [StringComparison]::Ordinal)) {
+            Add-Suite @('os-fat32-file-read', 'native-u64-lowering')
         } elseif ($Path.Contains('Fat32-Volume-Admission', [StringComparison]::Ordinal) -or
             $Path.Contains('Fat32-Cluster-Chain', [StringComparison]::Ordinal) -or
             $Path.Contains('Fat32-Directory-Admission', [StringComparison]::Ordinal) -or

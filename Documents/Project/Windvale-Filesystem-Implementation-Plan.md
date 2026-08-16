@@ -87,7 +87,7 @@ The first capacity-one handle state now separately proves ownership, profile
 rights, generation reuse, stale rejection, close, and peer-exit reclamation;
 dispatch and multi-client queueing remain open.
 
-### Filesystem slice 4: block and FAT32 provider — file-read planning implemented candidate
+### Filesystem slice 4: block and FAT32 provider — read transaction implemented candidate
 
 Add one isolated block-device path and a bounded FAT32 service. Qualify malformed
 boot sectors, directories, cluster chains, cycles, oversized geometry, media
@@ -120,12 +120,16 @@ completion, consumes dispatched sequences exactly once, distinguishes
 pre-dispatch from post-dispatch cancellation, and requires teardown after peer
 loss. The privileged endpoint syscall adapter and block driver remain pending.
 
-File-read plan 1 now maps one admitted `u64` file offset plus the exact
-caller-resolved cluster into at most eight sectors and 4,096 covered bytes. It
-distinguishes exact EOF, checks the cluster ordinal, and stops at the file,
-cluster, and block-window boundaries. Its 16-case native candidate is mapping
-evidence only: chain-result binding, live block dispatch, partial-sector copy,
-media-generation validation, and filesystem response construction remain open.
+File-read plan 1 maps one admitted `u64` file offset plus the exact resolved
+cluster into at most eight sectors and 4,096 covered bytes. File-read
+transaction 1 now admits the complete chain, selects each required ordinal,
+binds an authorized file reference and media generation, and owns every exact
+block-exchange identity from begin through dispatch and completion. It copies
+partial-sector bytes and accumulates the full 65,536-byte shared limit before
+emitting a validator-accepted `WVFP 1` reply.
+Its 18-case owner crosses two clusters and exchanges. The privileged endpoint
+syscall, block driver, media discovery/change detection, and guest execution
+remain open.
 
 ### Filesystem slice 5: boot and application integration
 

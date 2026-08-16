@@ -45,5 +45,7 @@ teardown, exact completion, duplicate completion, malformed reply consumption,
 and peer loss.
 
 This policy does not yet issue a kernel endpoint syscall, execute a block
-driver, detect media change, discover partitions, parse directory entries, or
-copy file data into an application. Those remain separate integration claims.
+driver, detect media change, or discover partitions. File-read transaction 1
+now owns the admitted identity and its exact begin, dispatch, and completion
+transitions while copying validated partial-sector data into a shared filesystem
+reply, but live guest execution remains a separate integration claim.

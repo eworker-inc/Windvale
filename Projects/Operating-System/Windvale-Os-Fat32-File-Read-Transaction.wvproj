@@ -1,0 +1,12 @@
+windvale-project 2
+root "Operating-System/Services/Fat32-File-Read-Transaction.wv"
+source "Operating-System/Services/Fat32-Block-Exchange-State.wv"
+source "Operating-System/Services/Fat32-Block-Provider-Protocol.wv"
+source "Operating-System/Services/Fat32-Block-Read-Transaction.wv"
+source "Operating-System/Services/Fat32-Chain-Position.wv"
+source "Operating-System/Services/Fat32-Cluster-Chain.wv"
+source "Operating-System/Services/Fat32-Directory-Admission.wv"
+source "Operating-System/Services/Fat32-File-Read-Plan.wv"
+source "Libraries/Platform/Filesystem/Filesystem-Semantics.wv"
+source "Operating-System/Services/Filesystem-Service-Core.wv"
+emit wvb
