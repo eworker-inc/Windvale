@@ -1187,7 +1187,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoDirectoryRequestDelivery.elf" 41072 f9cdb5012700df4645d4aa892be1409274b35f440b281aab9f45890b2223efd2
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=51 cases=306 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100 cross-host-images=Verified source-owned-bytes=28468 relocation-fields=290
+echo step=directory-generation-two-reply-publish-resume item=52/52
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wvproj" "%Work%\DirectoryGenerationTwoReply.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\DirectoryGenerationTwoReply.wvb" 4915 1724f0265104808a3f30920fef11a41afce50e48902a51ba3801bb3c4ba57273
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\DirectoryGenerationTwoReply.wvb" "%Work%\DirectoryGenerationTwoReply.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\DirectoryGenerationTwoReply.wvo" 42432 8e25366bd48345a4dab57220a3c9c97697a46bc8db12f97a0ec8c7d59d568f98
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\DirectoryGenerationTwoReply.bin" "%Work%\DirectoryGenerationTwoReply.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\DirectoryGenerationTwoReply.bin" 41656 ecec624e5629baf15081613123362a758246199436241378c3b98d8c1fd03fe5
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\DirectoryGenerationTwoReply.bin" 0 "%Work%\DirectoryGenerationTwoReply.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\DirectoryGenerationTwoReply.exe" >nul
+if not "%ERRORLEVEL%"=="101" goto :cleanup
+call :verify "%Work%\DirectoryGenerationTwoReply.exe" 43520 0d2288f7b5c856943350db3ce475dc620c6aef2c5b63ab385e1a62163d757a8b
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\DirectoryGenerationTwoReply.bin" 0 "%Work%\DirectoryGenerationTwoReply.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\DirectoryGenerationTwoReply.elf" 49264 d555b8543d60d8fc56fd7f19de40b00757a842afe5e6b19f4a5292a25e5b2e57
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=52 cases=312 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101 cross-host-images=Verified source-owned-bytes=28804 relocation-fields=305
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

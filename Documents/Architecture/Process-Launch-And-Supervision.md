@@ -282,6 +282,12 @@ client syscall/thread checks, exact queued 37-byte request, dispatcher and
 page-table activation, context restoration, and provider `sysretq` remain
 shared. Source ownership reaches byte 28,467.
 
+The following 336-byte provider reply publication derives the checked
+generation-one constructor with operation 4 and selected provider generation
+2. Exact 3,096-byte reply validation, channel clearing, dispatcher/page-table
+activation, context restoration, zero completion, and provider `sysretq`
+remain shared. Source ownership reaches byte 28,803.
+
 The first restart policies are deliberately small:
 
 - `Never`;

@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission-Self-Test.wv"
+source "Operating-System/Kernel/X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wv"
+source "Operating-System/Kernel/X64-Process-Directory-Reply-Publish-Resume-Emission.wv"
+emit wvb
