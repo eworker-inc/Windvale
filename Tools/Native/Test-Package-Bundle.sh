@@ -47,20 +47,20 @@ echo 'native package bundle step=build-tools item=1/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj" \
     "$work/Self-Test.wvb" || exit $?
-verify_file "$work/Self-Test.wvb" 312949 \
-    5bff1f4aeb5c535396acd2b58e89ad39a01299f2acb5ae3e13ef31730745dbd1 \
+verify_file "$work/Self-Test.wvb" 331563 \
+    c0ec85c19fc8647d1957b127637535567e45c7e3caf637393484bca83106ec64 \
     'bundle self-test WVB' || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 265268 \
-    5e6090061127550d8eb38dd3b3cdfbf3eab30d1cba4af6692711a2c2e094fb31 \
+verify_file "$work/Writer.wvb" 283725 \
+    6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 \
     'bundle writer WVB' || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 284561 \
-    a4f381e9e2dec1c7f415aeb9be24973a971e337b7aff861ed3f84f8b1d7e29fb \
+verify_file "$work/Verifier.wvb" 303018 \
+    1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c \
     'bundle verifier WVB' || exit 1
 
 echo 'native package bundle step=package-self-test item=2/7'

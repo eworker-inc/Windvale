@@ -15,6 +15,8 @@ lock="$lock_directory/$(basename -- "$2")"
 output_directory=$(CDPATH= cd -- "$(dirname -- "$3")" && pwd -P) || exit 64
 output="$output_directory/$(basename -- "$3")"
 expected_manifest="$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvpack"
+compiler="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvcompiler.elf"
+publisher="$repository_root/Artifacts/Native-Wvb-Publisher-Candidate/linux-x64-wvpublish.elf"
 if [[ $manifest != "$expected_manifest" ]]; then
     echo 'package status=Invalid_invocation reason=manifest-identity' >&2
     exit 64
@@ -31,12 +33,14 @@ reject_lock() {
     exit 1
 }
 
-verify_file "$lock" 920 212e5c4ddf28fb347b482c73d5c38d6df8273be4bcf14ce1b581084d7be1652d || reject_lock
+verify_file "$lock" 940 948a7ee6e1cddf54b5cec274862b5a17882b271f827f61a8cd0f6649865e65f6 || reject_lock
 verify_file "$manifest" 333 27d32dc98d1c2d57792f0a37b173a77d5dab465e005bc9c47fd8fd086c8b6234 || reject_lock
 verify_file "$repository_root/Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 || reject_lock
-verify_file "$repository_root/Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 || reject_lock
+verify_file "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" 929711 79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 || reject_lock
+verify_file "$compiler" 27906048 e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2 || reject_lock
+verify_file "$publisher" 1541109 7bf4593566401853ab7f551ca5d45125ac0ea3a6c4e34315703785ed7d6cdfb6 || reject_lock
 verify_file "$repository_root/Projects/Applications/Windvale-Echo.wvproj" 62 bf5b476f36512f48c0798fc1683708872500094e6a853ba6274d3ee7a8b3c6ef || reject_lock
-verify_file "$repository_root/Applications/Shell/Echo.wv" 755 0738f826901ac6b03121d7a534b2c07f79f89475bd2af33f5c45cba895dae91d || reject_lock
+verify_file "$repository_root/Applications/Shell/Echo.wv" 845 f843e69b9549a890aa808331f6ef503941c0a1d5240ecd5859e46f6f8ae044c7 || reject_lock
 
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-echo-package.XXXXXXXX") || exit 1
@@ -55,11 +59,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Applications/Windvale-Echo.wvproj" \
+"$compiler" "$repository_root/Applications/Shell/Echo.wv" \
     "$candidate" >/dev/null || exit $?
-verify_file "$candidate" 813 \
-    5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 || reject_lock
-"$repository_root/Artifacts/Native-Front-Door/linux-x64/wvpublish.elf" \
-    "$candidate" "$output" >/dev/null || exit $?
-echo 'package status=Published root=windvale.echo target=hosted-wvb-v1 bytes=813 sha256=5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64'
+verify_file "$candidate" 927 \
+    b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 || reject_lock
+"$publisher" "$candidate" "$output" >/dev/null || exit $?
+echo 'package status=Published root=windvale.echo target=hosted-wvb-v1 bytes=927 sha256=b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 metadata=Present'

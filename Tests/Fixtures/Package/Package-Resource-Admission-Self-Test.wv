@@ -62,6 +62,22 @@ fn Actualˉresource(
     return Result.Status == Admission.Windvaleˉpackageˉresourceˉstatus.Valid;
 }
 
+fn Actualˉresourceˉis(
+    Root: text,
+    Lockˉinput: bytes,
+    Kind: Admission.Windvaleˉpackageˉresourceˉkind,
+    Index: u32,
+    Relative: text,
+    Expected: Admission.Windvaleˉpackageˉresourceˉstatus
+) -> bool {
+    let Resource: bytes = file.read_bytes(Actualˉpath(Root, Relative));
+    let Result: Admission.Windvaleˉpackageˉresourceˉresult =
+        Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
+            Lockˉinput, Kind, Index, Textˉtoˉutf8(Relative), Resource
+        );
+    return Result.Status == Expected && Result.Kind == Kind && Result.Index == Index;
+}
+
 fn Actualˉcases() -> bool {
     if process.argument_count() != 1u32 { return false; }
     let Root: text = process.argument(0u32);
@@ -128,13 +144,15 @@ fn Actualˉcases() -> bool {
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
         0u32, "Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb"
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Project,
-        0u32, "Projects/Examples/Windvale-Wvb-Inspector.wvproj"
+        0u32, "Projects/Examples/Windvale-Wvb-Inspector.wvproj",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
-    return Actualˉresource(
+    return Actualˉresourceˉis(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Part,
-        0u32, "Examples/Foundation/Wv-Dump-Core.wv"
+        0u32, "Examples/Foundation/Wv-Dump-Core.wv",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     );
 }
 

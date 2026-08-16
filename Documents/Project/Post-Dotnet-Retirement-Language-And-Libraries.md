@@ -167,10 +167,13 @@ promotion. Decision 0698 connects the WVB publisher source to the same shared
 metadata-aware verifier adapter and pins byte-identical Windows/Debian WVB, WVO,
 and fragment candidates. Decision 0706 refreshes construction variant 2 and its
 paired candidate applications, with both local hosts passing exact construction
-and absent-form plus metadata-present publication. The ordinary front door and
-package consumers still retain the absent form for their owner-sized migrations.
-Production migration is therefore not ready to become a repository-wide source
-rewrite; the focused metadata fixture remains the replacement-form proof input.
+and absent-form plus metadata-present publication. The ordinary front door still
+retains the absent form pending promotion. Decision 0707 advances the first real
+package consumer: Echo now uses the replacement header, its specialized package
+path pins the compiler and publisher candidates, and its bundle, approval,
+inspection, native execution, and command launch paths pass locally on Windows
+and Debian WSL2. Production migration is still not ready to become a
+repository-wide source rewrite.
 
 Advance the migration in this order:
 
@@ -182,14 +185,14 @@ Advance the migration in this order:
    and required-capability mismatch; lowerer coverage is complete and the
    portable normalization contract now has deterministic/malformed consumer
    cases, and the source verifier consumes its normalized view;
-3. 🟡 prove one current package application through source compilation, WVB
+3. ✅ prove one current package application through source compilation, WVB
    verification and inspection, native lowering, packaging, and execution with
-   the replacement header on Windows and Linux; source verification, lowering,
-   profile-4 inspection, and the refreshed publisher candidate now have focused
-   Windows and Debian WSL2 evidence, while ordinary front-door cutover and one
-   package's complete dual-host path remain pending;
-4. migrate that package's reachable libraries, then the remaining repository
-   source in owner-sized coherent batches with exact artifact updates; and
+   the replacement header on Windows and Linux; Echo now has the complete local
+   dual-host path while ordinary front-door cutover remains a separate promotion;
+4. 🟡 migrate that package's reachable libraries, then the remaining repository
+   source in owner-sized coherent batches with exact artifact updates; Echo has
+   no imported source library, and the reachable Bundle 1 writer/verifier now
+   normalize metadata, while other packages and source remain pending; and
 5. remove the legacy source spelling only after every maintained target and
    recovery boundary either accepts the replacement or names an explicit frozen
    historical input.

@@ -35,15 +35,15 @@ verify_file "$work/Resolver.wvb" 60732 \
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 266974 \
-    0452b3d691a0dcc3b2844b336eafc7575798d993e00659466d21548cdd47e0c2 || exit 1
+verify_file "$work/Writer.wvb" 283725 \
+    6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 || exit 1
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" linux || exit $?
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 286267 \
-    01394050e9fc714f9fbc1e18f96a448e05d9e42c6afbba8be7dee7175ebb7467 || exit 1
+verify_file "$work/Verifier.wvb" 303018 \
+    1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c || exit 1
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
     "$work/Verifier.wvb" "$work/Verifier.elf" linux || exit $?
 
@@ -60,10 +60,10 @@ node -e "const fs=require('node:fs');const x=fs.readFileSync(process.argv[1],'ut
     "$work/Echo.wvb" "$work/LICENSE.md" \
     "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvprov" \
     "$work/Echo.wvbundle" >/dev/null || exit $?
-verify_file "$work/Echo.wvbundle" 16865 \
-    0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966 || exit 1
+verify_file "$work/Echo.wvbundle" 17009 \
+    e8fdafd1b2577079e15e085c8640c7d175d0cfe0e60b43580d73e1e88148d385 || exit 1
 bundle_report=$("$work/Verifier.elf" "$work/Echo.wvbundle") || exit $?
-[[ $bundle_report == 'bundle status=Valid bytes=16865 package=windvale.echo version=0.1.0 target=hosted-wvb-v1 items=3 blobs=5 sha256=0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966' ]] || exit 1
+[[ $bundle_report == 'bundle status=Valid bytes=17009 package=windvale.echo version=0.1.0 target=hosted-wvb-v1 items=3 blobs=5 sha256=e8fdafd1b2577079e15e085c8640c7d175d0cfe0e60b43580d73e1e88148d385' ]] || exit 1
 
 echo 'native echo command launch step=package-and-dispatch item=3/3 cases=10'
 "$script_directory/Package-Hosted-Wvb.sh" 6 \

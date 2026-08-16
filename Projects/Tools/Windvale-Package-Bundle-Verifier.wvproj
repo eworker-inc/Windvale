@@ -9,4 +9,5 @@ source "Libraries/Package/Package-Consistency.wv"
 source "Libraries/Package/Package-Lock.wv"
 source "Libraries/Package/Package-Manifest.wv"
 source "Libraries/Package/Canonical-Package-Text.wv"
+source "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv"
 emit wvb

@@ -13,13 +13,13 @@ const APPROVAL = {
 const LAUNCH = {
     "windows-x64": {
         inspector: "eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b",
-        wvdb: "95d1a64007f487e57aec77f7466d091cc54247dcbec2f8534b5870e36715b0b3",
-        generation: "8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c",
+        wvdb: "213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7",
+        generation: "db46b880a6fbff8d60d4dd19b9e6318ca1657dde5f932bc257dc916c7df67a14",
     },
     "linux-x64": {
         inspector: "f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b",
-        wvdb: "b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5",
-        generation: "a8e0aebbd379c892fae1d310531dc8903c89eb0405cbb00d03fbc5c0f8db8b56",
+        wvdb: "8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88",
+        generation: "9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1",
     },
 };
 

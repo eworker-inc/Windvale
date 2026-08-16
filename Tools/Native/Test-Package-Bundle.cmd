@@ -18,11 +18,11 @@ set "Result=1"
 
 echo native package bundle step=build-tools item=1/7
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Package-Bundle.wvproj" "%Work%\Self-Test.wvb" || goto :cleanup
-call :verify_file "%Work%\Self-Test.wvb" 312949 5bff1f4aeb5c535396acd2b58e89ad39a01299f2acb5ae3e13ef31730745dbd1 "bundle self-test WVB" || goto :cleanup
+call :verify_file "%Work%\Self-Test.wvb" 331563 c0ec85c19fc8647d1957b127637535567e45c7e3caf637393484bca83106ec64 "bundle self-test WVB" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 265268 5e6090061127550d8eb38dd3b3cdfbf3eab30d1cba4af6692711a2c2e094fb31 "bundle writer WVB" || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 283725 6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 "bundle writer WVB" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 284561 a4f381e9e2dec1c7f415aeb9be24973a971e337b7aff861ed3f84f8b1d7e29fb "bundle verifier WVB" || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 303018 1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c "bundle verifier WVB" || goto :cleanup
 
 echo native package bundle step=package-self-test item=2/7
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Self-Test.wvb" "%Work%\Self-Test.exe" windows || goto :cleanup

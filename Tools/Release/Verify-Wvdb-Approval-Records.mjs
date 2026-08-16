@@ -41,9 +41,9 @@ const PACKAGE_IDENTITIES = {
 const APPROVAL_BYTES = 927;
 const APPROVAL_SHA256 = "3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71";
 const WINDOWS_BYTES = 1_315;
-const WINDOWS_SHA256 = "95d1a64007f487e57aec77f7466d091cc54247dcbec2f8534b5870e36715b0b3";
+const WINDOWS_SHA256 = "213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7";
 const LINUX_BYTES = 1_310;
-const LINUX_SHA256 = "b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5";
+const LINUX_SHA256 = "8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88";
 const BUNDLE_SHA256 = "3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474";
 const WVB_SHA256 = "61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2";
 const INSPECTOR_DIRECTORY = path.join(
@@ -247,14 +247,14 @@ function Expectedˉlaunch(Target) {
         `wvb ${WVB_SHA256} 26294`,
         "directory-host-wvo 7ab58a817fe5dbc8e8f91b910654487ba62e10bc5aa5d1ae74b6bb07f2f6ca09 2010",
         Windows ?
-            "platform-leaf-wvo d1dc38e751ab7a04cb115f2fc6f0e62a5452e2937cc1dd56867f3da8fe2ddc03 1731" :
-            "platform-leaf-wvo 53136d316adec7f6b7667ecc853764fc5207d25fc52e60d2175cd8e0f49c4c64 608",
+            "platform-leaf-wvo d2da1c67864c242aeb9797661028295922486de2cf7d37aa41024189afb10f34 1951" :
+            "platform-leaf-wvo 0ccbcda71b20eaa024946e4fbb2016853952a39f1fe58ed0a183bde502335d86 681",
         Windows ?
-            "linked-image 60bdf794d8fba0889a077eeec35fab75de9fd174a5a894eb78ef316ad1c8872c 238413" :
-            "linked-image 76b8327d6f970c467d76a4e9c2f64d7473897d2afe2a444c007f840e42a35632 237437",
+            "linked-image fe51adddc364f9ec32d9ae0a7925417e1fa6304e930fd42ec9106f31f73d35bc 238536" :
+            "linked-image cae8aee6da474d2acb0a976047c689511a22269377b58114a56e8616fecc708d 237517",
         Windows ?
-            "host-application 7cd60860e07294d9a45064495da33a42cc752849accfc672c35a69454cd963d8 258048" :
-            "host-application 29b4d4db7505daec94865d423e3805b02bde95751343b1fb7e4ceee8045a202d 258048",
+            "host-application 198d44b49db6765792c835c6419da88f0cbcc0de0422748b0d15cb4ae5e6ba32 258048" :
+            "host-application b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f 258048",
         "abi 23",
         "entry Directory_host_entry 235440",
         "provider-table 1 5",

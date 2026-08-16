@@ -37,13 +37,13 @@ echo 'native offline package stage step=build-tools item=1/8'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 265268 \
-    5e6090061127550d8eb38dd3b3cdfbf3eab30d1cba4af6692711a2c2e094fb31 || exit 1
+verify_file "$work/Writer.wvb" 283725 \
+    6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 284561 \
-    a4f381e9e2dec1c7f415aeb9be24973a971e337b7aff861ed3f84f8b1d7e29fb || exit 1
+verify_file "$work/Verifier.wvb" 303018 \
+    1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj" \
     "$work/Generation-Verifier.wvb" || exit $?
@@ -117,9 +117,9 @@ grep -F 'artifact package windvale.wvb-inspector a9be069d9eaab7a612a8833d8ce621d
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
 grep -F 'artifact package windvale.wvdb-query 3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 43725' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
-grep -F 'artifact generation linux-x64 a8e0aebbd379c892fae1d310531dc8903c89eb0405cbb00d03fbc5c0f8db8b56 726' \
+grep -F 'artifact generation linux-x64 9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 726' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
-grep -F 'artifact generation windows-x64 8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c 728' \
+grep -F 'artifact generation windows-x64 db46b880a6fbff8d60d4dd19b9e6318ca1657dde5f932bc257dc916c7df67a14 728' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
 "$work/Generation-Verifier.elf" \
     "$work/First/Artifacts/Generations/Generation-1.windows-x64.txt" \
@@ -133,10 +133,10 @@ grep -Fx 'generation status=Valid target=linux-x64 packages=2 commands=2' \
     "$work/Generation-Linux.txt" >/dev/null || exit 1
 node "$generation_publisher" publish "$work/Installed" \
     "$work/First/Artifacts/Generations/Generation-1.linux-x64.txt" \
-    a8e0aebbd379c892fae1d310531dc8903c89eb0405cbb00d03fbc5c0f8db8b56 \
+    9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 \
     >/dev/null || exit $?
 node "$generation_publisher" verify "$work/Installed" \
-    a8e0aebbd379c892fae1d310531dc8903c89eb0405cbb00d03fbc5c0f8db8b56 \
+    9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 \
     >/dev/null || exit $?
 
 echo 'native offline package stage step=reject-package-tamper item=8/8'

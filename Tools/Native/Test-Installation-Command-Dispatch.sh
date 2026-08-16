@@ -35,8 +35,8 @@ verify_file "$work/Resolver.wvb" 60732 \
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 265268 \
-    5e6090061127550d8eb38dd3b3cdfbf3eab30d1cba4af6692711a2c2e094fb31 || exit 1
+verify_file "$work/Writer.wvb" 283725 \
+    6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 || exit 1
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" linux || exit $?
 
@@ -74,8 +74,8 @@ echo 'native installation command dispatch step=lower-wvdb-host item=4/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$work/Lowerer.wvb" || exit $?
-verify_file "$work/Lowerer.wvb" 501344 \
-    4ef35324a2e5ba3bd0cf8751fb2b6beb3a8c6108767734ea719b5dab063c8746 || exit 1
+verify_file "$work/Lowerer.wvb" 520966 \
+    ce190159783b48912ff71326d937a72a27b5178b07b7e52de71742a53cd12b56 || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Lowerer.wvb" "$work/Lowerer.elf" || exit $?
 "$work/Lowerer.elf" "$work/Wvdb-Query.wvb" "$work/Wvdb-Query.wvo" >/dev/null || exit $?
@@ -93,15 +93,15 @@ echo 'native installation command dispatch step=bind-rights-reduced-provider ite
     "$work/Linux-Image.chunk-0" "$work/Wvdb-Query.wvo" \
     "$work/Directory-Host.wvo" "$work/Directory-Linux.wvo" \
     >"$work/Link.txt" || exit $?
-verify_file "$work/Linux-Image.chunk-0" 237437 \
-    76b8327d6f970c467d76a4e9c2f64d7473897d2afe2a444c007f840e42a35632 || exit 1
+verify_file "$work/Linux-Image.chunk-0" 237517 \
+    cae8aee6da474d2acb0a976047c689511a22269377b58114a56e8616fecc708d || exit 1
 
 echo 'native installation command dispatch step=package-exact-host item=6/7 target=linux-x64'
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
     "$work/Wvdb-Query.wvb" "$work/Linux-Image" 1 235440 \
     "$work/Wvdb-Query.elf" linux || exit $?
 verify_file "$work/Wvdb-Query.elf" 258048 \
-    29b4d4db7505daec94865d423e3805b02bde95751343b1fb7e4ceee8045a202d || exit 1
+    b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f || exit 1
 
 echo 'native installation command dispatch step=dispatch-and-reject item=7/7 cases=9 executions=2'
 node "$repository_root/Tools/Package/Verify-Installation-Command-Dispatcher.mjs" \

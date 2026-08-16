@@ -24,11 +24,13 @@ call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Resolver.wvb" ^
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 283725 6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Writer.wvb" ^
     "%Work%\Writer.exe" windows || goto :cleanup
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 303018 1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Verifier.wvb" ^
     "%Work%\Verifier.exe" windows || goto :cleanup
 
@@ -45,10 +47,10 @@ node -e "const fs=require('node:fs');const x=fs.readFileSync(process.argv[1],'ut
     "%Work%\Echo.wvb" "%Work%\LICENSE.md" ^
     "%RepositoryRoot%\Distribution\Applications\Echo\Windvale-Echo.wvprov" ^
     "%Work%\Echo.wvbundle" >nul || goto :cleanup
-node -e "const fs=require('node:fs'),c=require('node:crypto'),p=process.argv[1],b=fs.readFileSync(p),h=c.createHash('sha256').update(b).digest('hex');if(b.length!==16865||h!=='0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966')process.exit(1);" ^
+node -e "const fs=require('node:fs'),c=require('node:crypto'),p=process.argv[1],b=fs.readFileSync(p),h=c.createHash('sha256').update(b).digest('hex');if(b.length!==17009||h!=='e8fdafd1b2577079e15e085c8640c7d175d0cfe0e60b43580d73e1e88148d385')process.exit(1);" ^
     "%Work%\Echo.wvbundle" || goto :cleanup
 "%Work%\Verifier.exe" "%Work%\Echo.wvbundle" >"%Work%\Bundle.txt" || goto :cleanup
-node -e "const fs=require('node:fs'),x=fs.readFileSync(process.argv[1],'utf8').replaceAll('\r\n','\n');if(x!=='bundle status=Valid bytes=16865 package=windvale.echo version=0.1.0 target=hosted-wvb-v1 items=3 blobs=5 sha256=0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966\n')process.exit(1);" ^
+node -e "const fs=require('node:fs'),x=fs.readFileSync(process.argv[1],'utf8').replaceAll('\r\n','\n');if(x!=='bundle status=Valid bytes=17009 package=windvale.echo version=0.1.0 target=hosted-wvb-v1 items=3 blobs=5 sha256=e8fdafd1b2577079e15e085c8640c7d175d0cfe0e60b43580d73e1e88148d385\n')process.exit(1);" ^
     "%Work%\Bundle.txt" || goto :cleanup
 
 echo native echo command launch step=package-and-dispatch item=3/3 cases=10
@@ -64,3 +66,9 @@ for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
 echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-echo-command-launch-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 exit /b %Result%
+
+:verify_file
+if not exist "%~1" exit /b 1
+for %%F in ("%~1") do if not "%%~zF"=="%~2" exit /b 1
+certutil -hashfile "%~1" SHA256 | findstr /I /C:"%~3" >nul
+exit /b %ERRORLEVEL%

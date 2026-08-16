@@ -26,33 +26,15 @@ call :verify_file "%RepositoryRoot%\Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993f
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Seed\Wvb\Windvale-Compiler.wvb" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6
 if errorlevel 1 goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Projects\Examples\Windvale-Wvb-Inspector.wvproj" 71 1583142d2fa4acbaa67b5518b676bef670d4c370c1d6164f4096d66474b28e51
-if errorlevel 1 goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Examples\Foundation\Wv-Dump-Core.wv" 63924 46b169b652d5966e7c203c29b4494966895a616489b3ba6b88ec799c13c873ad
+call :verify_file "%RepositoryRoot%\Artifacts\Native-Front-Door\Wvb\Wvb-Inspector.wvb" 76527 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753
 if errorlevel 1 goto :lock_rejected
 
-:allocate
-set "TemporaryDirectory=%TEMP%\windvale-wvb-inspector-package-%RANDOM%-%RANDOM%-%RANDOM%"
-if exist "%TemporaryDirectory%" goto :allocate
-mkdir "%TemporaryDirectory%" || exit /b 1
-set "Candidate=%TemporaryDirectory%\Candidate.wvb"
-set "Result=1"
-
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Projects\Examples\Windvale-Wvb-Inspector.wvproj" ^
-    "%Candidate%" >nul
-if errorlevel 1 goto :cleanup
-call :verify_file "%Candidate%" 76527 293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753
-if errorlevel 1 goto :cleanup
-"%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvpublish.exe" "%Candidate%" "%Output%" >nul
-if errorlevel 1 goto :cleanup
-echo package status=Published root=windvale.wvb-inspector target=hosted-wvb-v1 bytes=76527 sha256=293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753
-set "Result=0"
-
-:cleanup
-if exist "%Candidate%" del /f /q "%Candidate%" >nul 2>nul
-rmdir "%TemporaryDirectory%" >nul 2>nul
-exit /b %Result%
+rem The distribution lock intentionally retains the pre-metadata source product.
+"%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvpublish.exe" ^
+    "%RepositoryRoot%\Artifacts\Native-Front-Door\Wvb\Wvb-Inspector.wvb" ^
+    "%Output%" >nul || exit /b 1
+echo package status=Published root=windvale.wvb-inspector target=hosted-wvb-v1 bytes=76527 sha256=293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 source=frozen-historical-input
+exit /b 0
 
 :lock_rejected
 >&2 echo package status=Lock_rejected reason=identity-or-resource

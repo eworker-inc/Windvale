@@ -84,7 +84,10 @@ An admitting reader validates, in order:
 6. Package 1 and Lock 1 syntax, identity, and cross-file agreement;
 7. package, version, and target agreement with the index;
 8. item roles and target agreement; and
-9. target-specific executable admission and the locked output identity.
+9. target-specific executable admission and the locked output identity. WVB 1.11
+   admission first applies the bounded independent-metadata normalizer; both the
+   absent form and valid present form then pass through the same executable
+   semantic verifier.
 
 The verifier never extracts to a native path. Rejection publishes nothing and
 does not replace an existing destination. The entire admitted bundle SHA-256 is

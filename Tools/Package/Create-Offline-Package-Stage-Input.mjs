@@ -21,11 +21,11 @@ const APPROVAL_IDENTITIES = {
 const LAUNCH_IDENTITIES = {
     "windows-x64": {
         inspector: "eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b",
-        wvdb: "95d1a64007f487e57aec77f7466d091cc54247dcbec2f8534b5870e36715b0b3",
+        wvdb: "213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7",
     },
     "linux-x64": {
         inspector: "f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b",
-        wvdb: "b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5",
+        wvdb: "8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88",
     },
 };
 

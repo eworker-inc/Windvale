@@ -8,7 +8,8 @@ selected by Milestone 2 under
 Milestone 4 adds exact Approval 1 and Launch Record 2 records for WVB Inspector
 under [Decision 0570](../Documents/Decisions/0570-Wvb-Inspector-Launch-Record-2.md).
 [Decision 0693](../Documents/Decisions/0693-Echo-Package-Approval-And-Launch-Record-3.md)
-adds exact Approval 1 and Launch Record 3 records for Echo. These
+adds exact Approval 1 and Launch Record 3 records for Echo; [Decision 0707](../Documents/Decisions/0707-Echo-Independent-Metadata-Package-Migration.md)
+rebinds them to Echo's independent module metadata. These
 records make all three capability proofs inspectable as installation and launch
 policy without creating a general launcher, approval UI, or capability database.
 The 13-case approval owner and ten-case Echo command owner cover three
@@ -44,12 +45,12 @@ enumeration or mutation. Its exact identity is 923 bytes with SHA-256
 `32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f`.
 
 `Windvale-Echo.wvapproval` binds the exact Echo manifest, lock, Bundle 1,
-provenance, and 813-byte WVB identities. Its complete three-capability closure
+provenance, and 927-byte metadata-bearing WVB identities. Its complete three-capability closure
 is standard line output plus immutable argument value/count snapshots. Absence
 and the explicit denials leave it without diagnostics, filesystem, environment,
 network, process-launch, clock, or entropy authority. Its exact identity is 793
 bytes with SHA-256
-`386b8c983be8f4c633f27beb0d60b0d135ff3df88819a9c20262c1a8ce257790`.
+`f65c1b3638c1e222b69c617d9c9866d069525c5bf01954496a0fa9f2dd4d636e`.
 
 ## Target launch records
 
@@ -70,9 +71,9 @@ The two target records share portable WVB, Bundle 1, approval, directory-host,
 ABI, provider, and argument identities. They deliberately differ in their
 platform leaf, linked image, hosted application, target, and generation.
 The Windows record is exactly 1,315 bytes with SHA-256
-`95d1a64007f487e57aec77f7466d091cc54247dcbec2f8534b5870e36715b0b3`;
+`213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7`;
 the Linux record is exactly 1,310 bytes with SHA-256
-`b0c976649936cf43cfa1ccb79a63093e584dda9b22cf905b954db6e3192eacd5`.
+`8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88`.
 
 ### WVB Inspector Launch Record 2
 
@@ -96,9 +97,9 @@ the Linux record is 996 bytes with SHA-256
 ### Echo Launch Record 3
 
 Launch Record 3 is the first direct native-host profile with a variable-length
-argument vector. It binds the exact 16,865-byte Bundle 1 with SHA-256
-`0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966`,
-Lock 1, approval, 813-byte WVB, named `Main` entry, and target host application.
+argument vector. It binds the exact 17,009-byte Bundle 1 with SHA-256
+`e8fdafd1b2577079e15e085c8640c7d175d0cfe0e60b43580d73e1e88148d385`,
+Lock 1, approval, 927-byte WVB, named `Main` entry, and target host application.
 Provider table 3 has exactly three ordered bindings: standard output with LF
 line behavior, immutable argument values, and the count from that same snapshot.
 
@@ -110,9 +111,9 @@ ambient filesystem, mutation, diagnostic output, environment, network,
 process-launch, clock, and entropy providers.
 
 The Windows Launch Record 3 is 918 bytes with SHA-256
-`493bac26e83edf995f87e31939a981fef7a1c021494bc23e154f61922dc2aa5b`;
+`cf33ad3586f0cda9e29f8e206611951eea556f8fd81540ab504264809a491c94`;
 the Linux record is 914 bytes with SHA-256
-`447df010898a98022a915c46d11c42c41a1099024e5fcbba3009735347459099`.
+`a31e3a61ac79b4a324f64079f0bd5d967add0ff7c37673c6f5296419a81692a3`.
 Their exact host applications are respectively 22,016 and 24,576 bytes. These
 records describe one Echo command profile; they do not establish a general
 dynamic provider-table grammar.

@@ -4,8 +4,14 @@
 
 Package 1 (`.wvpack`) and Lock 1 (`.wvlock`) define the first native-owned local
 source-package contract. The implemented instances package the WVDB Query
-application with its reusable libraries and the independent WVB inspector. Each
-builds the same canonical WVB from exact checked-in inputs on Windows and Linux.
+application with its reusable libraries, the independent WVB inspector, and the
+metadata-bearing Echo application. Each produces the same canonical WVB from
+exact checked-in inputs on Windows and Linux.
+
+The WVB Inspector distribution lock remains an explicit historical boundary: its
+specialized package builder republishes the retained digest-pinned pre-metadata
+WVB. The current metadata-aware inspector source is qualified separately and must
+receive a coherent package-record migration before it can replace that input.
 
 This contract is separate from Workspace 1 and Project 2. A project selects source
 inputs for one compilation. A package names parts, dependency edges, target scope,

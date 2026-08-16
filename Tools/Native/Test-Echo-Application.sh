@@ -32,19 +32,22 @@ verify_file() {
 }
 
 echo 'START native Windvale echo phase=compile item=1/4'
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Applications/Windvale-Echo.wvproj" \
+"$script_directory/Build-Echo-Package.sh" \
+    "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvpack" \
+    "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvlock" \
     "$work/Echo-A.wvb" >/dev/null || exit $?
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Applications/Windvale-Echo.wvproj" \
+"$script_directory/Build-Echo-Package.sh" \
+    "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvpack" \
+    "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvlock" \
     "$work/Echo-B.wvb" >/dev/null || exit $?
 cmp -s -- "$work/Echo-A.wvb" "$work/Echo-B.wvb" || exit 1
-verify_file "$work/Echo-A.wvb" 813 \
-    5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 || exit 1
+verify_file "$work/Echo-A.wvb" 927 \
+    b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 || exit 1
 echo 'PASS  native Windvale echo phase=compile item=1/4'
 
 echo 'START native Windvale echo phase=inspect item=2/4'
-"$script_directory/Inspect-Wvb.sh" "$work/Echo-A.wvb" >"$work/Inspect.txt" || exit $?
+node "$script_directory/Verify-Echo-Application.mjs" inspect \
+    "$work/Echo-A.wvb" >/dev/null || exit $?
 echo 'PASS  native Windvale echo phase=inspect item=2/4'
 
 echo 'START native Windvale echo phase=package item=3/4'
@@ -56,7 +59,7 @@ echo 'PASS  native Windvale echo phase=package item=3/4'
 
 echo 'START native Windvale echo phase=execute item=4/4 cases=9'
 node "$script_directory/Verify-Echo-Application.mjs" linux \
-    "$work/Echo-A.wvb" "$work/Echo.exe" "$work/Echo.elf" "$work/Inspect.txt" \
+    "$work/Echo-A.wvb" "$work/Echo.exe" "$work/Echo.elf" \
     >/dev/null || exit $?
 echo 'PASS  native Windvale echo phase=execute item=4/4 cases=9'
-echo 'native Windvale echo status=Passed cases=9 capabilities=3 wvb=5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 cross-host-applications=Verified'
+echo 'native Windvale echo status=Passed cases=9 capabilities=3 metadata=Present wvb=b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 cross-host-applications=Verified'

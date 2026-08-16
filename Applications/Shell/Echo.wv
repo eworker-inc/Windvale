@@ -1,8 +1,10 @@
-module Windvaleˉecho profile hosted;
+module Windvaleˉecho;
 
-capability console.write_line;
-capability process.argument;
-capability process.argument_count;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 enum Windvaleˉechoˉposition {
     First = 0;

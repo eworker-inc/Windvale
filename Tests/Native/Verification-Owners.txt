@@ -66,7 +66,7 @@ external-model-reference|Test-External-Model-Reference|24|4|external model refer
 operation-core|Test-Bounded-Operation-Core|10|4|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
 standard-byte-output|Test-Standard-Byte-Output-Core|10|4|native standard byte output status=Passed cases=10 local-result=42 cross-host-images=Verified
 shell-one-parser|Test-Shell-1-Parser|47|4|native shell 1 parser status=Passed cases=47 local-result=42 webassembly-smoke=11 cross-host-images=Verified
-echo-application|Test-Echo-Application|9|3|native Windvale echo status=Passed cases=9 capabilities=3 wvb=5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 cross-host-applications=Verified
+echo-application|Test-Echo-Application|9|3|native Windvale echo status=Passed cases=9 capabilities=3 metadata=Present wvb=b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 cross-host-applications=Verified
 echo-command-launch|Test-Echo-Command-Launch|10|4|native echo command launch status=Passed cases=10 executions=2 integrity-rejections=3 policy-rejections=4 resolution-rejections=1 private-cleanup=Verified
 network-authority|Test-Network-Address-Authority|12|4|native network authority status=Passed cases=12 local-result=42 cross-host-images=Verified
 network-connect-stream|Test-Network-Connect-Stream-Core|13|4|native network connect stream status=Passed cases=13 local-result=42 cross-host-images=Verified

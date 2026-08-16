@@ -2,6 +2,7 @@ module Windvaleˉpackageˉbundleˉverifier profile portable;
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
 import Windvaleˉpackageˉconsistency as Consistency;
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉmanifest as Manifest;
@@ -993,7 +994,14 @@ export fn Windvaleˉpackageˉbundleˉverify(
                 Contentˉoffset + Itemˉblob.Contentˉoffset,
                 Itemˉblob.Bytes
             );
-            if Wvbˉverifier.Compilerˉwvbˉverify(Executable) != 0u32 {
+            let Normalizedˉexecutable: bytes =
+                Metadataˉnormalization.Windvaleˉwvbˉmetadataˉnormalize(Executable);
+            var Verificationˉstatus: u32 = 1u32;
+            if Bytesˉlength(Normalizedˉexecutable) != 0u32 {
+                Verificationˉstatus =
+                    Wvbˉverifier.Compilerˉwvbˉverify(Normalizedˉexecutable);
+            }
+            if Verificationˉstatus != 0u32 {
                 return Failure(
                     Input,
                     Windvaleˉpackageˉbundleˉstatus.Invalidˉexecutable,

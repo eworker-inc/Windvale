@@ -27,11 +27,11 @@ echo native offline package stage step=build-tools item=1/8
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 265268 5e6090061127550d8eb38dd3b3cdfbf3eab30d1cba4af6692711a2c2e094fb31 "bundle writer WVB" || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 283725 6cf19d10d49cd27496ea7a3aa4ea11dec4baa792001697bf6e2835c0ed2c3a14 "bundle writer WVB" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 284561 a4f381e9e2dec1c7f415aeb9be24973a971e337b7aff861ed3f84f8b1d7e29fb "bundle verifier WVB" || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 303018 1fa416cd151e10422d0e0034671a1f4c4f6085c1b66aed1d8876b4f04fc4f23c "bundle verifier WVB" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Generation-Verifier.wvproj" ^
     "%Work%\Generation-Verifier.wvb" || goto :cleanup
@@ -100,17 +100,17 @@ node "%ReleaseVerifier%" verify "%Work%\Root-Key\root-public.pem" "%Work%\First"
 findstr /c:"release verify status=Valid version=0.1.0 channel=stage" "%Work%\Verify.txt" >nul || goto :cleanup
 findstr /c:"artifact package windvale.wvb-inspector a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 92781" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
 findstr /c:"artifact package windvale.wvdb-query 3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 43725" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
-findstr /c:"artifact generation linux-x64 a8e0aebbd379c892fae1d310531dc8903c89eb0405cbb00d03fbc5c0f8db8b56 726" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
-findstr /c:"artifact generation windows-x64 8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c 728" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact generation linux-x64 9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 726" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact generation windows-x64 db46b880a6fbff8d60d4dd19b9e6318ca1657dde5f932bc257dc916c7df67a14 728" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
 "%Work%\Generation-Verifier.exe" "%Work%\First\Artifacts\Generations\Generation-1.windows-x64.txt" >"%Work%\Generation-Windows.txt" || goto :cleanup
 findstr /c:"generation status=Valid target=windows-x64 packages=2 commands=2" "%Work%\Generation-Windows.txt" >nul || goto :cleanup
 "%Work%\Generation-Verifier.exe" "%Work%\First\Artifacts\Generations\Generation-1.linux-x64.txt" >"%Work%\Generation-Linux.txt" || goto :cleanup
 findstr /c:"generation status=Valid target=linux-x64 packages=2 commands=2" "%Work%\Generation-Linux.txt" >nul || goto :cleanup
 node "%GenerationPublisher%" publish "%Work%\Installed" ^
     "%Work%\First\Artifacts\Generations\Generation-1.windows-x64.txt" ^
-    8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c >nul || goto :cleanup
+    db46b880a6fbff8d60d4dd19b9e6318ca1657dde5f932bc257dc916c7df67a14 >nul || goto :cleanup
 node "%GenerationPublisher%" verify "%Work%\Installed" ^
-    8cf5e55537565204f15010501a3ed50085b5cfde2b78aca06495f4e5422d741c >nul || goto :cleanup
+    db46b880a6fbff8d60d4dd19b9e6318ca1657dde5f932bc257dc916c7df67a14 >nul || goto :cleanup
 
 echo native offline package stage step=reject-package-tamper item=8/8
 node "%FixtureTool%" copy "%Work%\First" "%Work%\Tampered" >nul || goto :cleanup

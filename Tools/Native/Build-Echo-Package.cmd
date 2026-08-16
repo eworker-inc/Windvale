@@ -12,18 +12,22 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Manifest=%~f1"
 set "Lock=%~f2"
 set "Output=%~f3"
+set "Compiler=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvcompiler.exe"
+set "Publisher=%RepositoryRoot%\Artifacts\Native-Wvb-Publisher-Candidate\windows-x64-wvpublish.exe"
 set "ExpectedManifest=%RepositoryRoot%\Distribution\Applications\Echo\Windvale-Echo.wvpack"
 if /I not "%Manifest%"=="%ExpectedManifest%" (
     >&2 echo package status=Invalid_invocation reason=manifest-identity
     exit /b 64
 )
 
-call :verify_file "%Lock%" 920 212e5c4ddf28fb347b482c73d5c38d6df8273be4bcf14ce1b581084d7be1652d || goto :lock_rejected
+call :verify_file "%Lock%" 940 948a7ee6e1cddf54b5cec274862b5a17882b271f827f61a8cd0f6649865e65f6 || goto :lock_rejected
 call :verify_file "%Manifest%" 333 27d32dc98d1c2d57792f0a37b173a77d5dab465e005bc9c47fd8fd086c8b6234 || goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 || goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Seed\Wvb\Windvale-Compiler.wvb" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 || goto :lock_rejected
+call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\Wvb\Windvale-Compiler.wvb" 929711 79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 || goto :lock_rejected
+call :verify_file "%Compiler%" 27904000 e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455 || goto :lock_rejected
+call :verify_file "%Publisher%" 1544192 0fdb432aa54cc7b9cc4a1d42a438d2b56a29695e06b2369540dac845989751c1 || goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Projects\Applications\Windvale-Echo.wvproj" 62 bf5b476f36512f48c0798fc1683708872500094e6a853ba6274d3ee7a8b3c6ef || goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Applications\Shell\Echo.wv" 755 0738f826901ac6b03121d7a534b2c07f79f89475bd2af33f5c45cba895dae91d || goto :lock_rejected
+call :verify_file "%RepositoryRoot%\Applications\Shell\Echo.wv" 845 f843e69b9549a890aa808331f6ef503941c0a1d5240ecd5859e46f6f8ae044c7 || goto :lock_rejected
 
 :allocate
 set "Work=%TEMP%\windvale-echo-package-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -32,10 +36,10 @@ mkdir "%Work%" || exit /b 1
 set "Candidate=%Work%\Candidate.wvb"
 set "Result=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Applications\Windvale-Echo.wvproj" "%Candidate%" >nul || goto :cleanup
-call :verify_file "%Candidate%" 813 5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 || goto :cleanup
-"%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvpublish.exe" "%Candidate%" "%Output%" >nul || goto :cleanup
-echo package status=Published root=windvale.echo target=hosted-wvb-v1 bytes=813 sha256=5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64
+"%Compiler%" "%RepositoryRoot%\Applications\Shell\Echo.wv" "%Candidate%" >nul || goto :cleanup
+call :verify_file "%Candidate%" 927 b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 || goto :cleanup
+"%Publisher%" "%Candidate%" "%Output%" >nul || goto :cleanup
+echo package status=Published root=windvale.echo target=hosted-wvb-v1 bytes=927 sha256=b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 metadata=Present
 set "Result=0"
 
 :cleanup
