@@ -1026,7 +1026,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoEndpointRebind.elf" 28784 522929410889169de460c55c4f936027c1f2c508c9541cd4f845d439bba3a22d
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=44 cases=264 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93 cross-host-images=Verified source-owned-bytes=25513 relocation-fields=149
+echo step=client-generation-two-reentry item=45/45
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reentry-Emission.wvproj" "%Work%\ClientGenerationTwoReentry.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReentry.wvb" 3518 835c7a03de1da731172f5e5d8b515c18f5dc62a40ca030351be90ee9ed6760a3
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoReentry.wvb" "%Work%\ClientGenerationTwoReentry.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReentry.wvo" 23885 448053de1bc86b48f211668229d6c5f0af21c9e1da73273c36e802b8e995811c
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoReentry.bin" "%Work%\ClientGenerationTwoReentry.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReentry.bin" 23465 77dc2b346ab09fd34f1458517371df4ce826a6f019f5736155c525c927e5f2eb
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoReentry.bin" 0 "%Work%\ClientGenerationTwoReentry.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoReentry.exe" >nul
+if not "%ERRORLEVEL%"=="94" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReentry.exe" 25600 1cad43b99f4712ea1779d4bbc34238e02be1e1974cbcdaaa3957db83f7c64bcb
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoReentry.bin" 0 "%Work%\ClientGenerationTwoReentry.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReentry.elf" 28784 4c810ad307e38c6db1264147f23d5e51f3f89375648fcc7813ac4c6ab6e590ea
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=45 cases=270 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94 cross-host-images=Verified source-owned-bytes=25954 relocation-fields=163
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

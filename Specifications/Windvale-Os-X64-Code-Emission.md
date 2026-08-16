@@ -49,8 +49,8 @@ coordinator entry and fixed three-record ready/wait dispatcher. Verification
 pins its full fixture-equal SHA-256, exact entry displacement, coordinator
 offset, bounded record validation, scan construction, and paired host images.
 
-Ordered consumers now source-own the first 25,513 process-machine bytes and 149
-external relocation fields through checked private construction, privileged
+Ordered consumers now source-own the first 25,954 process-machine bytes and 163
+internal or external relocation fields through checked private construction, privileged
 entry, timer activation, provider entry, provider-return/init transfer, and
 init-return validation of the program, budget, and retained store/directory
 backing records, followed by guarded client entry, checked return to init, and
@@ -61,10 +61,14 @@ client's complete terminal IPC state, then revalidate all retained client state
 before reclamation, then release generation 1 and prove same-root generation-2
 allocation, then privately reconstruct the generation-2 client record and reuse
 the exact checked paging and interpreter-copy/context-seed constructors, then
-validate and rebind both retained endpoints to generation 2. The focused owner
-executes forty-four projects and 264 cases with local results 50 through 93.
+validate and rebind both retained endpoints to generation 2, validate the
+recycled memory and returned generation state, bind the resume context, finish
+resource accounting, restore user registers, and execute the first generation-2
+`sysretq`. The focused owner executes forty-five projects and 270 cases with
+local results 50 through 94.
 
 The module is a migration primitive. Coordinator relocation and channel/
-endpoint initialization are separate consumers. Generation-2 construction,
-syscall and exception handlers, context switching, and live QEMU application
-execution remain before the reviewed process-machine fixture can be removed.
+endpoint initialization are separate consumers. The resumed handler body,
+subsequent application lifecycle, syscall and exception handlers, context
+switching, and live QEMU application execution remain before the reviewed
+process-machine fixture can be removed.

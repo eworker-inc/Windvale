@@ -1,0 +1,55 @@
+module Osˉx64ˉprocessˉclientˉgenerationˉtwoˉreentryˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉgenerationˉtwoˉreentryˉemission as Reentry;
+
+export fn Main() -> i32 {
+    let Code: bytes = Reentry.X64ˉprocessˉclientˉgenerationˉtwoˉreentryˉbytes();
+    let Fields: bytes =
+        Reentry.X64ˉprocessˉclientˉgenerationˉtwoˉreentryˉinternalˉfields();
+    let Displacements: bytes =
+        Reentry.X64ˉprocessˉclientˉgenerationˉtwoˉreentryˉinternalˉdisplacements();
+    if Bytesˉlength(Code) != 441u32 || Bytesˉlength(Fields) != 56u32 ||
+        Bytesˉlength(Displacements) != 56u32 ||
+        Reentry.X64ˉprocessˉclientˉgenerationˉtwoˉreentryˉfixtureˉoffset() !=
+            25513u32 ||
+        Reentry.X64ˉprocessˉclientˉgenerationˉtwoˉreentryˉfixtureˉend() !=
+            25954u32 {
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Displacements, 20u32) != 4294941720u32 {
+        return 2;
+    }
+    var Index: u32 = 0u32;
+    while Index < 14u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 { return 3; }
+        if Index != 5u32 {
+            let Displacement: u32 =
+                Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+            var Expected: u32 = 33826u32;
+            if Index == 9u32 { Expected = 25954u32; }
+            if 25513u32 + Field + 4u32 + Displacement != Expected {
+                return 4;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 441u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 17197u32 || Hashˉone != 9143u32 ||
+        Hashˉtwo != 58944u32 || Hashˉthree != 36021u32 {
+        return 5;
+    }
+    return 94;
+}

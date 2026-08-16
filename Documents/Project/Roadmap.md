@@ -629,10 +629,12 @@ provenance, revocation, and consensus boundaries are named.
   restoration, and same-root generation-2 allocation now reach byte 19,741.
   Private generation-2 client-record reconstruction now reaches byte 20,240.
   Exact checked paging reuse now reaches byte 24,988. Exact interpreter
-  copy/context-seed reuse now reaches byte 25,064. Resources, remaining context,
-  readiness publication, and re-entry remain before later work.
+  copy/context-seed reuse now reaches byte 25,064. Endpoint rebinding, the final
+  resource-state transition, and re-entry remain at that boundary.
   Checked two-endpoint generation-2 rebinding now reaches byte 25,512.
-  syscall/exception handler bodies, teardown, and live QEMU evidence remain.
+  Checked memory/resource transition and generation-2 re-entry now execute the
+  first generation-2 `sysretq` and reach byte 25,953.
+  Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,
   syscall entry, and dynamic executable/object allocation remain before later

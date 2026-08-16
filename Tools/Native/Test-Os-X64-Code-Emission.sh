@@ -580,4 +580,17 @@ verify "$work/ClientGenerationTwoEndpointRebind.elf" 28784 522929410889169de460c
 [[ $? -eq 93 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoEndpointRebind.bin" 0 "$work/ClientGenerationTwoEndpointRebind.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoEndpointRebind.exe" 23552 edae8ea5a71adfa34652e80f3daa68c0e39ee0e5aff825b329239e58b2077374 || exit 1
-echo 'native os x64 code emission status=Passed projects=44 cases=264 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93 cross-host-images=Verified source-owned-bytes=25513 relocation-fields=149'
+echo 'step=client-generation-two-reentry item=45/45'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Reentry-Emission.wvproj" "$work/ClientGenerationTwoReentry.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoReentry.wvb" 3518 835c7a03de1da731172f5e5d8b515c18f5dc62a40ca030351be90ee9ed6760a3 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoReentry.wvb" "$work/ClientGenerationTwoReentry.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoReentry.wvo" 23885 448053de1bc86b48f211668229d6c5f0af21c9e1da73273c36e802b8e995811c || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoReentry.bin" "$work/ClientGenerationTwoReentry.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoReentry.bin" 23465 77dc2b346ab09fd34f1458517371df4ce826a6f019f5736155c525c927e5f2eb || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoReentry.bin" 0 "$work/ClientGenerationTwoReentry.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoReentry.elf" 28784 4c810ad307e38c6db1264147f23d5e51f3f89375648fcc7813ac4c6ab6e590ea || exit 1
+"$work/ClientGenerationTwoReentry.elf" >/dev/null
+[[ $? -eq 94 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReentry.bin" 0 "$work/ClientGenerationTwoReentry.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoReentry.exe" 25600 1cad43b99f4712ea1779d4bbc34238e02be1e1974cbcdaaa3957db83f7c64bcb || exit 1
+echo 'native os x64 code emission status=Passed projects=45 cases=270 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94 cross-host-images=Verified source-owned-bytes=25954 relocation-fields=163'

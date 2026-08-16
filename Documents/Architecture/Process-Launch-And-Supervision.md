@@ -240,6 +240,13 @@ including provider/channel identities, generations, rights, close evidence, and
 zero transient state, before changing either client reference. Ownership reaches
 byte 25,512 with both endpoints bound to generation 2 but not yet republished.
 
+The following checked re-entry transaction validates the recycled memory object
+and returned client generation, binds kernel GS and the exact resume context,
+finishes the resource-state transition, restores user registers, and executes
+the first generation-2 `sysretq`. Source ownership now reaches byte 25,953. This
+is deterministic machine-code evidence, not yet live guest execution evidence;
+the resumed handler and subsequent lifecycle remain outside the owned prefix.
+
 The first restart policies are deliberately small:
 
 - `Never`;
