@@ -1,0 +1,7 @@
+windvale-project 2
+root "Libraries/Database/Sql-Lowerer.wv"
+source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
+source "Libraries/Database/Query-Ir.wv"
+source "Libraries/Database/Schema-Definition.wv"
+emit wvb

@@ -1,0 +1,332 @@
+module Windvaleˉnativeˉtestˉdatabaseˉsqlˉlowerer profile portable;
+
+import Windvaleˉdatabaseˉqueryˉir as Query;
+import Windvaleˉdatabaseˉsqlˉlowerer as Sql;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Field(Kind: u32, Nullable: bool, Maximum: u32, Name: text) -> bytes {
+    var Flags: u32 = 0u32;
+    if Nullable { Flags = 1u32; }
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Kind);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Maximum));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉbytes)));
+    return Bytesˉconcat(Result, Nameˉbytes);
+}
+
+fn Definition() -> bytes {
+    var Fields: bytes = Field(1u32, false, 1u32, "active");
+    Fields = Bytesˉconcat(Fields, Field(2u32, true, 8u32, "balance"));
+    Fields = Bytesˉconcat(Fields, Field(4u32, false, 32u32, "name"));
+    Fields = Bytesˉconcat(Fields, Field(5u32, false, 16u32, "data"));
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1129535063u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(48u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(7u64));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(9u64));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(4u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Fields)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(0u64));
+    return Bytesˉconcat(Result, Fields);
+}
+
+fn Parameter(Kind: u32, Null: bool, Data: bytes) -> bytes {
+    var Flags: u32 = 0u32;
+    if Null { Flags = 1u32; }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Kind);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Result, Data);
+}
+
+fn Parameters() -> bytes {
+    return Bytesˉconcat(
+        Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(5u64)),
+        Parameter(4u32, false, Textˉtoˉutf8("Ada"))
+    );
+}
+
+fn Lower(Input: bytes, Count: u32, Values: bytes) -> Sql.Databaseˉsqlˉresult {
+    return Sql.Databaseˉsqlˉlower(
+        Input,
+        Textˉtoˉutf8("users"),
+        7u64,
+        Definition(),
+        Count,
+        Values
+    );
+}
+
+fn Textˉlower(Input: text, Count: u32, Values: bytes) -> Sql.Databaseˉsqlˉresult {
+    return Lower(Textˉtoˉutf8(Input), Count, Values);
+}
+
+fn Error(Input: text, Count: u32, Values: bytes) -> Sql.Databaseˉsqlˉerror {
+    let Result: Sql.Databaseˉsqlˉresult = Textˉlower(Input, Count, Values);
+    return Result.Error;
+}
+
+fn Validˉcontract() -> i32 {
+    let First: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "SeLeCt active, name FROM users WHERE balance >= $1 AND name <> $2 AND balance IS NOT NULL ORDER BY balance, name DESC LIMIT 25",
+        2u32,
+        Parameters()
+    );
+    let Second: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select active,name from users where balance>=$1 and name!=$2 and balance is not null order by balance asc,name desc limit 25",
+        2u32,
+        Parameters()
+    );
+    if First.Error != Sql.Databaseˉsqlˉerror.Valid ||
+        Second.Error != Sql.Databaseˉsqlˉerror.Valid ||
+        !Same(First.Bytes, Second.Bytes) {
+        return 1;
+    }
+    let Decoded: Query.Databaseˉqueryˉresult =
+        Query.Databaseˉqueryˉdecode(First.Bytes, Definition());
+    if Decoded.Error != Query.Databaseˉqueryˉerror.Valid ||
+        Decoded.Collection != 7u64 || Decoded.Schema != 9u64 ||
+        Decoded.Projectionˉcount != 2u32 ||
+        Decoded.Predicateˉcount != 3u32 ||
+        Decoded.Orderˉcount != 2u32 ||
+        Decoded.Parameterˉcount != 2u32 || Decoded.Limit != 25u32 {
+        return 2;
+    }
+    if Bytesˉreadˉu32ˉlittle(Decoded.Projections, 0u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Projections, 4u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Predicates, 0u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Predicates, 4u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Predicates, 16u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Predicates, 20u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Predicates, 36u32) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Orders, 0u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Orders, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Orders, 8u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Decoded.Orders, 12u32) != 2u32 {
+        return 3;
+    }
+    let All: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users limit 500",
+        0u32,
+        Empty()
+    );
+    if All.Error != Sql.Databaseˉsqlˉerror.Valid ||
+        Bytesˉreadˉu32ˉlittle(All.Bytes, 32u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(All.Bytes, 48u32) != 500u32 {
+        return 4;
+    }
+    let Reuse: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users where balance >= $1 and balance <= $1 limit 1",
+        1u32,
+        Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(5u64))
+    );
+    if Reuse.Error != Sql.Databaseˉsqlˉerror.Valid { return 5; }
+    let Operators: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users where balance=$1 and balance!=$1 and balance<>$1 and balance<$1 and balance<=$1 and balance>$1 and balance>=$1 and balance is null and balance is not null limit 1",
+        1u32,
+        Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(5u64))
+    );
+    if Operators.Error != Sql.Databaseˉsqlˉerror.Valid ||
+        Bytesˉreadˉu32ˉlittle(Operators.Bytes, 36u32) != 9u32 {
+        return 6;
+    }
+    return 0;
+}
+
+fn Syntaxˉrejections() -> i32 {
+    if Error("", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Empty ||
+        Error(" \t\r\n ", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Empty {
+        return 1;
+    }
+    let Badˉutf8: Sql.Databaseˉsqlˉresult = Lower(Bytesˉfromˉu8(255u8), 0u32, Empty());
+    if Badˉutf8.Error != Sql.Databaseˉsqlˉerror.Invalidˉutf8 { return 2; }
+    if Error("delete from users limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Unexpectedˉtoken ||
+        Error("select", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Truncated ||
+        Error("select from users limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Unknownˉfield ||
+        Error("select * users limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Unexpectedˉtoken ||
+        Error("select * from missing limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Unknownˉcollection {
+        return 3;
+    }
+    if Error("select missing from users limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Unknownˉfield ||
+        Error("select * from users", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Missingˉlimit ||
+        Error("select * from users limit 0", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Invalidˉlimit ||
+        Error("select * from users limit 501", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Invalidˉlimit ||
+        Error("select * from users limit 01", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Invalidˉlimit {
+        return 4;
+    }
+    if Error("select * from users limit 1;", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Trailingˉbytes ||
+        Error("select * from users limit 1 select * from users limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Trailingˉbytes ||
+        Error("select * from users where balance = 1 limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Invalidˉparameter ||
+        Error("select * from users where balance = $1 or balance = $1 limit 1", 1u32, Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(1u64))) != Sql.Databaseˉsqlˉerror.Missingˉlimit {
+        return 5;
+    }
+    if Error("select * from users -- comment limit 1", 0u32, Empty()) != Sql.Databaseˉsqlˉerror.Missingˉlimit ||
+        Error("select * from users where balance = $0 limit 1", 1u32, Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(1u64))) != Sql.Databaseˉsqlˉerror.Invalidˉparameter ||
+        Error("select * from users where balance = $33 limit 1", 1u32, Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(1u64))) != Sql.Databaseˉsqlˉerror.Invalidˉparameter ||
+        Error("select * from users where balance = $2 limit 1", 1u32, Parameter(2u32, false, Bytesˉfromˉu64ˉlittle(1u64))) != Sql.Databaseˉsqlˉerror.Invalidˉparameter {
+        return 6;
+    }
+    let Excessˉparameters: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users limit 1", 33u32, Empty());
+    if Excessˉparameters.Error != Sql.Databaseˉsqlˉerror.Invalidˉparameter {
+        return 7;
+    }
+    return 0;
+}
+
+fn Semanticˉrejections() -> i32 {
+    let Duplicateˉprojection: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select active,active from users limit 1", 0u32, Empty());
+    if Duplicateˉprojection.Error != Sql.Databaseˉsqlˉerror.Queryˉrejected ||
+        Duplicateˉprojection.Queryˉerror != Query.Databaseˉqueryˉerror.Duplicateˉprojection {
+        return 1;
+    }
+    let Duplicateˉorder: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users order by name,name desc limit 1", 0u32, Empty());
+    if Duplicateˉorder.Error != Sql.Databaseˉsqlˉerror.Queryˉrejected ||
+        Duplicateˉorder.Queryˉerror != Query.Databaseˉqueryˉerror.Duplicateˉorder {
+        return 2;
+    }
+    let Wrongˉkind: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users where balance = $1 limit 1",
+        1u32,
+        Parameter(4u32, false, Textˉtoˉutf8("bad"))
+    );
+    if Wrongˉkind.Error != Sql.Databaseˉsqlˉerror.Queryˉrejected ||
+        Wrongˉkind.Queryˉerror != Query.Databaseˉqueryˉerror.Parameterˉkindˉmismatch {
+        return 3;
+    }
+    let Nullˉcomparison: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users where balance = $1 limit 1",
+        1u32,
+        Parameter(2u32, true, Empty())
+    );
+    if Nullˉcomparison.Error != Sql.Databaseˉsqlˉerror.Queryˉrejected ||
+        Nullˉcomparison.Queryˉerror != Query.Databaseˉqueryˉerror.Nullˉcomparison {
+        return 4;
+    }
+    let Boolˉorder: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users order by active limit 1", 0u32, Empty());
+    if Boolˉorder.Error != Sql.Databaseˉsqlˉerror.Queryˉrejected ||
+        Boolˉorder.Queryˉerror != Query.Databaseˉqueryˉerror.Unsupportedˉordering {
+        return 5;
+    }
+    let Unused: Sql.Databaseˉsqlˉresult = Textˉlower(
+        "select * from users limit 1",
+        1u32,
+        Parameter(4u32, false, Textˉtoˉutf8("unused"))
+    );
+    if Unused.Error != Sql.Databaseˉsqlˉerror.Queryˉrejected ||
+        Unused.Queryˉerror != Query.Databaseˉqueryˉerror.Unusedˉparameter {
+        return 6;
+    }
+    let Wrongˉschema: Sql.Databaseˉsqlˉresult = Sql.Databaseˉsqlˉlower(
+        Textˉtoˉutf8("select * from users limit 1"),
+        Textˉtoˉutf8("users"),
+        8u64,
+        Definition(),
+        0u32,
+        Empty()
+    );
+    if Wrongˉschema.Error != Sql.Databaseˉsqlˉerror.Invalidˉschema { return 7; }
+    let Malformedˉschema: Sql.Databaseˉsqlˉresult = Sql.Databaseˉsqlˉlower(
+        Textˉtoˉutf8("select * from users limit 1"),
+        Textˉtoˉutf8("users"),
+        7u64,
+        Empty(),
+        0u32,
+        Empty()
+    );
+    if Malformedˉschema.Error != Sql.Databaseˉsqlˉerror.Invalidˉschema {
+        return 8;
+    }
+    return 0;
+}
+
+fn Repeated(Name: text, Separator: text, Count: u32) -> bytes {
+    var Result: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Index != 0u32 { Result = Bytesˉconcat(Result, Textˉtoˉutf8(Separator)); }
+        Result = Bytesˉconcat(Result, Textˉtoˉutf8(Name));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Boundˉrejections() -> i32 {
+    var Large: bytes = Bytesˉfromˉu8(32u8);
+    while Bytesˉlength(Large) < 16384u32 {
+        Large = Bytesˉconcat(Large, Large);
+    }
+    Large = Bytesˉconcat(Large, Bytesˉfromˉu8(32u8));
+    let Largeˉresult: Sql.Databaseˉsqlˉresult = Lower(Large, 0u32, Empty());
+    if Largeˉresult.Error != Sql.Databaseˉsqlˉerror.Tooˉlarge {
+        return 1;
+    }
+    let Longˉidentifier: bytes = Repeated("a", "", 129u32);
+    let Longˉquery: bytes = Bytesˉconcat(
+        Bytesˉconcat(Textˉtoˉutf8("select "), Longˉidentifier),
+        Textˉtoˉutf8(" from users limit 1")
+    );
+    let Longˉresult: Sql.Databaseˉsqlˉresult = Lower(Longˉquery, 0u32, Empty());
+    if Longˉresult.Error != Sql.Databaseˉsqlˉerror.Invalidˉidentifier {
+        return 2;
+    }
+    let Manyˉprojections: bytes = Bytesˉconcat(
+        Bytesˉconcat(Textˉtoˉutf8("select "), Repeated("active", ",", 65u32)),
+        Textˉtoˉutf8(" from users limit 1")
+    );
+    let Projectionˉresult: Sql.Databaseˉsqlˉresult = Lower(Manyˉprojections, 0u32, Empty());
+    if Projectionˉresult.Error != Sql.Databaseˉsqlˉerror.Tooˉmanyˉprojections {
+        return 3;
+    }
+    let Manyˉpredicates: bytes = Bytesˉconcat(
+        Bytesˉconcat(Textˉtoˉutf8("select * from users where "), Repeated("balance is null", " and ", 33u32)),
+        Textˉtoˉutf8(" limit 1")
+    );
+    let Predicateˉresult: Sql.Databaseˉsqlˉresult = Lower(Manyˉpredicates, 0u32, Empty());
+    if Predicateˉresult.Error != Sql.Databaseˉsqlˉerror.Tooˉmanyˉpredicates {
+        return 4;
+    }
+    let Manyˉorders: bytes = Bytesˉconcat(
+        Bytesˉconcat(Textˉtoˉutf8("select * from users order by "), Repeated("name", ",", 9u32)),
+        Textˉtoˉutf8(" limit 1")
+    );
+    let Orderˉresult: Sql.Databaseˉsqlˉresult = Lower(Manyˉorders, 0u32, Empty());
+    if Orderˉresult.Error != Sql.Databaseˉsqlˉerror.Tooˉmanyˉorders {
+        return 5;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Valid: i32 = Validˉcontract();
+    if Valid != 0 { return 100 + Valid; }
+    let Syntax: i32 = Syntaxˉrejections();
+    if Syntax != 0 { return 200 + Syntax; }
+    let Semantic: i32 = Semanticˉrejections();
+    if Semantic != 0 { return 300 + Semantic; }
+    let Bounds: i32 = Boundˉrejections();
+    if Bounds != 0 { return 400 + Bounds; }
+    return 0;
+}

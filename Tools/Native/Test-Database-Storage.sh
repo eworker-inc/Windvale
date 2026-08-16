@@ -19,9 +19,9 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=22
+        selected_cases=23
         ;;
-    tree-node|logical-record|typed-row|query-ir|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
+    tree-node|logical-record|typed-row|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|host-storage)
         selected_cases=1
         ;;
     host-tree-reader)
@@ -32,6 +32,12 @@ case "$development_target" in
         ;;
     typed-query)
         selected_cases=2
+        ;;
+    query-sql)
+        selected_cases=2
+        ;;
+    typed-query-sql)
+        selected_cases=3
         ;;
     host-root-writer)
         selected_cases=2
@@ -1353,9 +1359,15 @@ verify_host_tree_writer_interruption() {
 }
 
 verify_development_target() {
-    local label=$1 target=$2 project=$3 group=${4:-}
-    if [[ $development_target != all && $development_target != "$target" &&
-        $development_target != "$group" ]]; then
+    local label=$1 target=$2 project=$3 group selected=0
+    shift 3
+    if [[ $development_target == all || $development_target == "$target" ]]; then
+        selected=1
+    fi
+    for group in "$@"; do
+        if [[ $development_target == "$group" ]]; then selected=1; fi
+    done
+    if ((selected == 0)); then
         return 0
     fi
     progress_current=$((progress_current + 1))
@@ -1479,9 +1491,11 @@ if ((development == 1)); then
     verify_development_target LogicalRecord logical-record \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
     verify_development_target TypedRow typed-row \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" typed-query || exit $?
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" typed-query typed-query-sql || exit $?
     verify_development_target QueryIr query-ir \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query || exit $?
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql || exit $?
+    verify_development_target SqlLowerer sql-lowerer \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj" query-sql typed-query-sql || exit $?
     verify_development_target JsonValue json-value \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj" json || exit $?
     verify_development_target JsonProtocol json-protocol \
@@ -1530,6 +1544,8 @@ verify_target TypedRow \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
 verify_target QueryIr \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" || exit $?
+verify_target SqlLowerer \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj" || exit $?
 verify_target JsonValue \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj" || exit $?
 verify_target JsonProtocol \
@@ -1582,4 +1598,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=31 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=32 local-results=0 cross-host-images=Verified'

@@ -1,0 +1,711 @@
+module Windvaleˉdatabaseˉsqlˉlowerer profile portable;
+
+import Windvaleˉdatabaseˉqueryˉir as Query;
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+
+const DATABASE_SQL_MAXIMUM_BYTES: u32 = 16384u32;
+const DATABASE_SQL_MAXIMUM_IDENTIFIER_BYTES: u32 = 128u32;
+const DATABASE_SQL_MAXIMUM_PROJECTIONS: u32 = 64u32;
+const DATABASE_SQL_MAXIMUM_PREDICATES: u32 = 32u32;
+const DATABASE_SQL_MAXIMUM_ORDERS: u32 = 8u32;
+const DATABASE_SQL_MAXIMUM_PARAMETERS: u32 = 32u32;
+const DATABASE_SQL_MAXIMUM_ROWS: u32 = 500u32;
+const DATABASE_SQL_NO_PARAMETER: u32 = 4294967295u32;
+
+export enum Databaseˉsqlˉerror {
+    Valid = 0;
+    Empty = 1;
+    Tooˉlarge = 2;
+    Invalidˉutf8 = 3;
+    Unexpectedˉtoken = 4;
+    Truncated = 5;
+    Invalidˉidentifier = 6;
+    Unknownˉcollection = 7;
+    Unknownˉfield = 8;
+    Tooˉmanyˉprojections = 9;
+    Tooˉmanyˉpredicates = 10;
+    Tooˉmanyˉorders = 11;
+    Invalidˉparameter = 12;
+    Missingˉlimit = 13;
+    Invalidˉlimit = 14;
+    Trailingˉbytes = 15;
+    Invalidˉschema = 16;
+    Queryˉrejected = 17;
+}
+
+export record Databaseˉsqlˉresult {
+    Error: Databaseˉsqlˉerror;
+    Queryˉerror: Query.Databaseˉqueryˉerror;
+    Failureˉoffset: u32;
+    Bytes: bytes;
+}
+
+record Databaseˉsqlˉidentifier {
+    Valid: bool;
+    Start: u32;
+    Length: u32;
+    Next: u32;
+}
+
+record Databaseˉsqlˉfield {
+    Found: bool;
+    Index: u32;
+}
+
+record Databaseˉsqlˉnumber {
+    Valid: bool;
+    Value: u32;
+    Next: u32;
+}
+
+record Databaseˉsqlˉoperatorˉresult {
+    Valid: bool;
+    Operator: Query.Databaseˉqueryˉoperator;
+    Next: u32;
+}
+
+fn Databaseˉsqlˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉsqlˉfailure(
+    Error: Databaseˉsqlˉerror,
+    Queryˉerror: Query.Databaseˉqueryˉerror,
+    Offset: u32
+) -> Databaseˉsqlˉresult {
+    return Databaseˉsqlˉresult(
+        Error,
+        Queryˉerror,
+        Offset,
+        Databaseˉsqlˉempty()
+    );
+}
+
+fn Databaseˉsqlˉbyte(Input: bytes, Offset: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+}
+
+fn Databaseˉsqlˉspace(Value: u32) -> bool {
+    return Value == 32u32 || Value == 9u32 ||
+        Value == 10u32 || Value == 13u32;
+}
+
+fn Databaseˉsqlˉskipˉspace(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Offset;
+    while Cursor < Total {
+        if !Databaseˉsqlˉspace(Databaseˉsqlˉbyte(Input, Cursor)) { break; }
+        Cursor = Cursor + 1u32;
+    }
+    return Cursor;
+}
+
+fn Databaseˉsqlˉalpha(Value: u32) -> bool {
+    return (Value >= 65u32 && Value <= 90u32) ||
+        (Value >= 97u32 && Value <= 122u32);
+}
+
+fn Databaseˉsqlˉdigit(Value: u32) -> bool {
+    return Value >= 48u32 && Value <= 57u32;
+}
+
+fn Databaseˉsqlˉidentifierˉpart(Value: u32) -> bool {
+    return Databaseˉsqlˉalpha(Value) || Databaseˉsqlˉdigit(Value) ||
+        Value == 95u32;
+}
+
+fn Databaseˉsqlˉasciiˉlower(Value: u32) -> u32 {
+    if Value >= 65u32 && Value <= 90u32 { return Value + 32u32; }
+    return Value;
+}
+
+fn Databaseˉsqlˉidentifierˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉsqlˉidentifier {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset == Total {
+        return Databaseˉsqlˉidentifier(false, 0u32, 0u32, Offset);
+    }
+    let First: u32 = Databaseˉsqlˉbyte(Input, Offset);
+    if !Databaseˉsqlˉalpha(First) && First != 95u32 {
+        return Databaseˉsqlˉidentifier(false, 0u32, 0u32, Offset);
+    }
+    var Cursor: u32 = Offset + 1u32;
+    while Cursor < Total {
+        if !Databaseˉsqlˉidentifierˉpart(
+                Databaseˉsqlˉbyte(Input, Cursor)) {
+            break;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    let Length: u32 = Cursor - Offset;
+    if Length > DATABASE_SQL_MAXIMUM_IDENTIFIER_BYTES {
+        return Databaseˉsqlˉidentifier(false, 0u32, 0u32, Offset);
+    }
+    return Databaseˉsqlˉidentifier(true, Offset, Length, Cursor);
+}
+
+fn Databaseˉsqlˉkeywordˉat(
+    Input: bytes,
+    Offset: u32,
+    Keyword: text
+) -> bool {
+    let Expected: bytes = Textˉtoˉutf8(Keyword);
+    let Length: u32 = Bytesˉlength(Expected);
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total || Length > Total - Offset { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Databaseˉsqlˉasciiˉlower(Databaseˉsqlˉbyte(Input, Offset + Index)) !=
+            Databaseˉsqlˉasciiˉlower(Databaseˉsqlˉbyte(Expected, Index)) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    if Offset + Length < Total && Databaseˉsqlˉidentifierˉpart(
+            Databaseˉsqlˉbyte(Input, Offset + Length)) {
+        return false;
+    }
+    return true;
+}
+
+fn Databaseˉsqlˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉsqlˉfieldˉresolve(
+    Definition: Schema.Databaseˉschemaˉresult,
+    Name: bytes
+) -> Databaseˉsqlˉfield {
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Definition.Fieldˉcount {
+        let Field: Schema.Databaseˉschemaˉfieldˉresult =
+            Schema.Databaseˉschemaˉfieldˉat(Definition.Fields, Cursor);
+        if Databaseˉsqlˉsame(Field.Name, Name) {
+            return Databaseˉsqlˉfield(true, Index);
+        }
+        Cursor = Field.Next;
+        Index = Index + 1u32;
+    }
+    return Databaseˉsqlˉfield(false, 0u32);
+}
+
+fn Databaseˉsqlˉnumberˉat(
+    Input: bytes,
+    Offset: u32,
+    Maximum: u32
+) -> Databaseˉsqlˉnumber {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset == Total || !Databaseˉsqlˉdigit(
+            Databaseˉsqlˉbyte(Input, Offset)) {
+        return Databaseˉsqlˉnumber(false, 0u32, Offset);
+    }
+    if Databaseˉsqlˉbyte(Input, Offset) == 48u32 && Offset + 1u32 < Total &&
+        Databaseˉsqlˉdigit(Databaseˉsqlˉbyte(Input, Offset + 1u32)) {
+        return Databaseˉsqlˉnumber(false, 0u32, Offset);
+    }
+    var Value: u32 = 0u32;
+    var Cursor: u32 = Offset;
+    while Cursor < Total {
+        let Byte: u32 = Databaseˉsqlˉbyte(Input, Cursor);
+        if !Databaseˉsqlˉdigit(Byte) { break; }
+        let Digit: u32 = Byte - 48u32;
+        if Value > Maximum / 10u32 {
+            return Databaseˉsqlˉnumber(false, 0u32, Offset);
+        }
+        if Value == Maximum / 10u32 && Digit > Maximum % 10u32 {
+            return Databaseˉsqlˉnumber(false, 0u32, Offset);
+        }
+        Value = Value * 10u32 + Digit;
+        Cursor = Cursor + 1u32;
+    }
+    return Databaseˉsqlˉnumber(true, Value, Cursor);
+}
+
+fn Databaseˉsqlˉoperatorˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉsqlˉoperatorˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset == Total {
+        return Databaseˉsqlˉoperatorˉresult(
+            false,
+            Query.Databaseˉqueryˉoperator.Invalid,
+            Offset
+        );
+    }
+    let First: u32 = Databaseˉsqlˉbyte(Input, Offset);
+    if First == 61u32 {
+        return Databaseˉsqlˉoperatorˉresult(
+            true,
+            Query.Databaseˉqueryˉoperator.Equal,
+            Offset + 1u32
+        );
+    }
+    if First == 33u32 && Offset + 1u32 < Total &&
+        Databaseˉsqlˉbyte(Input, Offset + 1u32) == 61u32 {
+        return Databaseˉsqlˉoperatorˉresult(
+            true,
+            Query.Databaseˉqueryˉoperator.Notˉequal,
+            Offset + 2u32
+        );
+    }
+    if First == 60u32 {
+        if Offset + 1u32 < Total {
+            let Second: u32 = Databaseˉsqlˉbyte(Input, Offset + 1u32);
+            if Second == 61u32 {
+                return Databaseˉsqlˉoperatorˉresult(
+                    true,
+                    Query.Databaseˉqueryˉoperator.Lessˉorˉequal,
+                    Offset + 2u32
+                );
+            }
+            if Second == 62u32 {
+                return Databaseˉsqlˉoperatorˉresult(
+                    true,
+                    Query.Databaseˉqueryˉoperator.Notˉequal,
+                    Offset + 2u32
+                );
+            }
+        }
+        return Databaseˉsqlˉoperatorˉresult(
+            true,
+            Query.Databaseˉqueryˉoperator.Less,
+            Offset + 1u32
+        );
+    }
+    if First == 62u32 {
+        if Offset + 1u32 < Total &&
+            Databaseˉsqlˉbyte(Input, Offset + 1u32) == 61u32 {
+            return Databaseˉsqlˉoperatorˉresult(
+                true,
+                Query.Databaseˉqueryˉoperator.Greaterˉorˉequal,
+                Offset + 2u32
+            );
+        }
+        return Databaseˉsqlˉoperatorˉresult(
+            true,
+            Query.Databaseˉqueryˉoperator.Greater,
+            Offset + 1u32
+        );
+    }
+    return Databaseˉsqlˉoperatorˉresult(
+        false,
+        Query.Databaseˉqueryˉoperator.Invalid,
+        Offset
+    );
+}
+
+export fn Databaseˉsqlˉlower(
+    Input: bytes,
+    Collectionˉname: bytes,
+    Collection: u64,
+    Schemaˉbytes: bytes,
+    Parameterˉcount: u32,
+    Parameters: bytes
+) -> Databaseˉsqlˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Empty,
+            Query.Databaseˉqueryˉerror.Valid,
+            0u32
+        );
+    }
+    if Total > DATABASE_SQL_MAXIMUM_BYTES {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Tooˉlarge,
+            Query.Databaseˉqueryˉerror.Valid,
+            DATABASE_SQL_MAXIMUM_BYTES
+        );
+    }
+    if !Textˉutf8ˉisˉvalid(Input) {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Invalidˉutf8,
+            Query.Databaseˉqueryˉerror.Valid,
+            0u32
+        );
+    }
+    if Parameterˉcount > DATABASE_SQL_MAXIMUM_PARAMETERS {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Invalidˉparameter,
+            Query.Databaseˉqueryˉerror.Valid,
+            0u32
+        );
+    }
+    let Definition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Definition.Error != Schema.Databaseˉschemaˉerror.Valid ||
+        Definition.Collection != Collection {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Invalidˉschema,
+            Query.Databaseˉqueryˉerror.Valid,
+            0u32
+        );
+    }
+    var Cursor: u32 = Databaseˉsqlˉskipˉspace(Input, 0u32);
+    if Cursor == Total {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Empty,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    if !Databaseˉsqlˉkeywordˉat(Input, Cursor, "select") {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Unexpectedˉtoken,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 6u32);
+    if Cursor == Total {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Truncated,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    var Projections: bytes = Databaseˉsqlˉempty();
+    var Projectionˉcount: u32 = 0u32;
+    if Databaseˉsqlˉbyte(Input, Cursor) == 42u32 {
+        Cursor = Cursor + 1u32;
+    } else {
+        var Projectionˉcomplete: bool = false;
+        while !Projectionˉcomplete {
+            if Projectionˉcount == DATABASE_SQL_MAXIMUM_PROJECTIONS {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Tooˉmanyˉprojections,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Cursor
+                );
+            }
+            let Projectionˉidentifier: Databaseˉsqlˉidentifier =
+                Databaseˉsqlˉidentifierˉat(Input, Cursor);
+            if !Projectionˉidentifier.Valid {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Invalidˉidentifier,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Cursor
+                );
+            }
+            let Projectionˉfield: Databaseˉsqlˉfield =
+                Databaseˉsqlˉfieldˉresolve(
+                    Definition,
+                    Bytesˉslice(
+                        Input,
+                        Projectionˉidentifier.Start,
+                        Projectionˉidentifier.Length
+                    )
+                );
+            if !Projectionˉfield.Found {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Unknownˉfield,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Projectionˉidentifier.Start
+                );
+            }
+            let Projection: Query.Databaseˉqueryˉcomponent =
+                Query.Databaseˉqueryˉprojection(Projectionˉfield.Index);
+            Projections = Bytesˉconcat(Projections, Projection.Bytes);
+            Projectionˉcount = Projectionˉcount + 1u32;
+            Cursor = Databaseˉsqlˉskipˉspace(
+                Input,
+                Projectionˉidentifier.Next
+            );
+            if Cursor < Total && Databaseˉsqlˉbyte(Input, Cursor) == 44u32 {
+                Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 1u32);
+            } else {
+                Projectionˉcomplete = true;
+            }
+        }
+    }
+    Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor);
+    if !Databaseˉsqlˉkeywordˉat(Input, Cursor, "from") {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Unexpectedˉtoken,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 4u32);
+    let Collectionˉidentifier: Databaseˉsqlˉidentifier =
+        Databaseˉsqlˉidentifierˉat(Input, Cursor);
+    if !Collectionˉidentifier.Valid {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Invalidˉidentifier,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    if !Databaseˉsqlˉsame(
+            Bytesˉslice(
+                Input,
+                Collectionˉidentifier.Start,
+                Collectionˉidentifier.Length
+            ),
+            Collectionˉname
+        ) {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Unknownˉcollection,
+            Query.Databaseˉqueryˉerror.Valid,
+            Collectionˉidentifier.Start
+        );
+    }
+    Cursor = Databaseˉsqlˉskipˉspace(Input, Collectionˉidentifier.Next);
+    var Predicates: bytes = Databaseˉsqlˉempty();
+    var Predicateˉcount: u32 = 0u32;
+    if Databaseˉsqlˉkeywordˉat(Input, Cursor, "where") {
+        Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 5u32);
+        var Predicateˉcomplete: bool = false;
+        while !Predicateˉcomplete {
+            if Predicateˉcount == DATABASE_SQL_MAXIMUM_PREDICATES {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Tooˉmanyˉpredicates,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Cursor
+                );
+            }
+            let Predicateˉidentifier: Databaseˉsqlˉidentifier =
+                Databaseˉsqlˉidentifierˉat(Input, Cursor);
+            if !Predicateˉidentifier.Valid {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Invalidˉidentifier,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Cursor
+                );
+            }
+            let Predicateˉfield: Databaseˉsqlˉfield =
+                Databaseˉsqlˉfieldˉresolve(
+                    Definition,
+                    Bytesˉslice(
+                        Input,
+                        Predicateˉidentifier.Start,
+                        Predicateˉidentifier.Length
+                    )
+                );
+            if !Predicateˉfield.Found {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Unknownˉfield,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Predicateˉidentifier.Start
+                );
+            }
+            Cursor = Databaseˉsqlˉskipˉspace(Input, Predicateˉidentifier.Next);
+            var Operator: Query.Databaseˉqueryˉoperator =
+                Query.Databaseˉqueryˉoperator.Invalid;
+            var Parameter: u32 = DATABASE_SQL_NO_PARAMETER;
+            if Databaseˉsqlˉkeywordˉat(Input, Cursor, "is") {
+                Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 2u32);
+                var Negative: bool = false;
+                if Databaseˉsqlˉkeywordˉat(Input, Cursor, "not") {
+                    Negative = true;
+                    Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 3u32);
+                }
+                if !Databaseˉsqlˉkeywordˉat(Input, Cursor, "null") {
+                    return Databaseˉsqlˉfailure(
+                        Databaseˉsqlˉerror.Unexpectedˉtoken,
+                        Query.Databaseˉqueryˉerror.Valid,
+                        Cursor
+                    );
+                }
+                Operator = Query.Databaseˉqueryˉoperator.Isˉnull;
+                if Negative {
+                    Operator = Query.Databaseˉqueryˉoperator.Isˉnotˉnull;
+                }
+                Cursor = Cursor + 4u32;
+            } else {
+                let Scannedˉoperator: Databaseˉsqlˉoperatorˉresult =
+                    Databaseˉsqlˉoperatorˉat(Input, Cursor);
+                if !Scannedˉoperator.Valid {
+                    return Databaseˉsqlˉfailure(
+                        Databaseˉsqlˉerror.Unexpectedˉtoken,
+                        Query.Databaseˉqueryˉerror.Valid,
+                        Cursor
+                    );
+                }
+                Operator = Scannedˉoperator.Operator;
+                Cursor = Databaseˉsqlˉskipˉspace(
+                    Input,
+                    Scannedˉoperator.Next
+                );
+                if Cursor == Total || Databaseˉsqlˉbyte(Input, Cursor) != 36u32 {
+                    return Databaseˉsqlˉfailure(
+                        Databaseˉsqlˉerror.Invalidˉparameter,
+                        Query.Databaseˉqueryˉerror.Valid,
+                        Cursor
+                    );
+                }
+                let Scannedˉparameter: Databaseˉsqlˉnumber =
+                    Databaseˉsqlˉnumberˉat(
+                        Input,
+                        Cursor + 1u32,
+                        DATABASE_SQL_MAXIMUM_PARAMETERS
+                    );
+                if !Scannedˉparameter.Valid || Scannedˉparameter.Value == 0u32 ||
+                    Scannedˉparameter.Value > Parameterˉcount {
+                    return Databaseˉsqlˉfailure(
+                        Databaseˉsqlˉerror.Invalidˉparameter,
+                        Query.Databaseˉqueryˉerror.Valid,
+                        Cursor
+                    );
+                }
+                Parameter = Scannedˉparameter.Value - 1u32;
+                Cursor = Scannedˉparameter.Next;
+            }
+            let Predicate: Query.Databaseˉqueryˉcomponent =
+                Query.Databaseˉqueryˉpredicate(
+                    Predicateˉfield.Index,
+                    Operator,
+                    Parameter
+                );
+            if Predicate.Error != Query.Databaseˉqueryˉerror.Valid {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Queryˉrejected,
+                    Predicate.Error,
+                    Cursor
+                );
+            }
+            Predicates = Bytesˉconcat(Predicates, Predicate.Bytes);
+            Predicateˉcount = Predicateˉcount + 1u32;
+            Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor);
+            if Databaseˉsqlˉkeywordˉat(Input, Cursor, "and") {
+                Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 3u32);
+            } else {
+                Predicateˉcomplete = true;
+            }
+        }
+    }
+    var Orders: bytes = Databaseˉsqlˉempty();
+    var Orderˉcount: u32 = 0u32;
+    if Databaseˉsqlˉkeywordˉat(Input, Cursor, "order") {
+        Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 5u32);
+        if !Databaseˉsqlˉkeywordˉat(Input, Cursor, "by") {
+            return Databaseˉsqlˉfailure(
+                Databaseˉsqlˉerror.Unexpectedˉtoken,
+                Query.Databaseˉqueryˉerror.Valid,
+                Cursor
+            );
+        }
+        Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 2u32);
+        var Orderˉcomplete: bool = false;
+        while !Orderˉcomplete {
+            if Orderˉcount == DATABASE_SQL_MAXIMUM_ORDERS {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Tooˉmanyˉorders,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Cursor
+                );
+            }
+            let Orderˉidentifier: Databaseˉsqlˉidentifier =
+                Databaseˉsqlˉidentifierˉat(Input, Cursor);
+            if !Orderˉidentifier.Valid {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Invalidˉidentifier,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Cursor
+                );
+            }
+            let Orderˉfield: Databaseˉsqlˉfield =
+                Databaseˉsqlˉfieldˉresolve(
+                    Definition,
+                    Bytesˉslice(
+                        Input,
+                        Orderˉidentifier.Start,
+                        Orderˉidentifier.Length
+                    )
+                );
+            if !Orderˉfield.Found {
+                return Databaseˉsqlˉfailure(
+                    Databaseˉsqlˉerror.Unknownˉfield,
+                    Query.Databaseˉqueryˉerror.Valid,
+                    Orderˉidentifier.Start
+                );
+            }
+            Cursor = Databaseˉsqlˉskipˉspace(Input, Orderˉidentifier.Next);
+            var Direction: Query.Databaseˉqueryˉdirection =
+                Query.Databaseˉqueryˉdirection.Ascending;
+            if Databaseˉsqlˉkeywordˉat(Input, Cursor, "asc") {
+                Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 3u32);
+            } else if Databaseˉsqlˉkeywordˉat(Input, Cursor, "desc") {
+                Direction = Query.Databaseˉqueryˉdirection.Descending;
+                Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 4u32);
+            }
+            let Order: Query.Databaseˉqueryˉcomponent =
+                Query.Databaseˉqueryˉorder(Orderˉfield.Index, Direction);
+            Orders = Bytesˉconcat(Orders, Order.Bytes);
+            Orderˉcount = Orderˉcount + 1u32;
+            if Cursor < Total && Databaseˉsqlˉbyte(Input, Cursor) == 44u32 {
+                Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 1u32);
+            } else {
+                Orderˉcomplete = true;
+            }
+        }
+    }
+    if !Databaseˉsqlˉkeywordˉat(Input, Cursor, "limit") {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Missingˉlimit,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    Cursor = Databaseˉsqlˉskipˉspace(Input, Cursor + 5u32);
+    let Limit: Databaseˉsqlˉnumber = Databaseˉsqlˉnumberˉat(
+        Input,
+        Cursor,
+        DATABASE_SQL_MAXIMUM_ROWS
+    );
+    if !Limit.Valid || Limit.Value == 0u32 {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Invalidˉlimit,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    Cursor = Databaseˉsqlˉskipˉspace(Input, Limit.Next);
+    if Cursor != Total {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Trailingˉbytes,
+            Query.Databaseˉqueryˉerror.Valid,
+            Cursor
+        );
+    }
+    let Encoded: Query.Databaseˉqueryˉresult = Query.Databaseˉqueryˉencode(
+        Collection,
+        Definition.Schema,
+        Limit.Value,
+        Projectionˉcount,
+        Projections,
+        Predicateˉcount,
+        Predicates,
+        Orderˉcount,
+        Orders,
+        Parameterˉcount,
+        Parameters,
+        Schemaˉbytes
+    );
+    if Encoded.Error != Query.Databaseˉqueryˉerror.Valid {
+        return Databaseˉsqlˉfailure(
+            Databaseˉsqlˉerror.Queryˉrejected,
+            Encoded.Error,
+            Total
+        );
+    }
+    return Databaseˉsqlˉresult(
+        Databaseˉsqlˉerror.Valid,
+        Query.Databaseˉqueryˉerror.Valid,
+        0u32,
+        Encoded.Bytes
+    );
+}

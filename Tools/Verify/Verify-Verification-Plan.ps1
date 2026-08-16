@@ -1607,7 +1607,7 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
-        DatabaseTarget = 'typed-query'
+        DatabaseTarget = 'typed-query-sql'
     },
     @{
         Name = 'focused database query-ir owner'
@@ -1620,7 +1620,20 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
-        DatabaseTarget = 'query-ir'
+        DatabaseTarget = 'query-sql'
+    },
+    @{
+        Name = 'focused database sql-lowerer owner'
+        Paths = @(
+            'Libraries/Database/Sql-Lowerer.wv',
+            'Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv',
+            'Specifications/Windvale-Database-Sql.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'sql-lowerer'
     },
     @{
         Name = 'focused database json-value owner'
@@ -1706,6 +1719,7 @@ $NativeCases = @(
             'Libraries/Database/Schema-Definition.wv',
             'Libraries/Database/Typed-Row.wv',
             'Libraries/Database/Query-Ir.wv',
+            'Libraries/Database/Sql-Lowerer.wv',
             'Libraries/Database/Json-Value.wv',
             'Libraries/Database/Json-Protocol.wv',
             'Libraries/Database/Local-Database-Contracts.wv',
@@ -1734,6 +1748,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Json-Value-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Json-Protocol-Self-Test.wv',
             'Tests/Fixtures/Database/Database-Collection-Catalog-Self-Test.wv',
@@ -1756,6 +1771,7 @@ $NativeCases = @(
             'Specifications/Windvale-Database-Logical-Records.md',
             'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md',
             'Specifications/Windvale-Database-Query-Ir.md',
+            'Specifications/Windvale-Database-Sql.md',
             'Specifications/Windvale-Database-Json-Value.md',
             'Specifications/Windvale-Database-Json-Protocol.md',
             'Specifications/Windvale-Database-Collection-Catalog.md',
@@ -1793,6 +1809,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Sql-Lowerer.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Json-Protocol.wvproj',
             'Projects/Libraries/Windvale-Library-Local-Database-Contracts.wvproj',
@@ -1821,6 +1838,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Json-Protocol.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj',
@@ -2309,7 +2327,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4157 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4158 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

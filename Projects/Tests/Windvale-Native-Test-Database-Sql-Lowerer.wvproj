@@ -1,0 +1,8 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv"
+source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
+source "Libraries/Database/Query-Ir.wv"
+source "Libraries/Database/Schema-Definition.wv"
+source "Libraries/Database/Sql-Lowerer.wv"
+emit wvb

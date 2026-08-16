@@ -29,6 +29,7 @@ $DatabaseDevelopmentTargetProjects = [ordered]@{
     'logical-record' = 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj'
     'typed-row' = 'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj'
     'query-ir' = 'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj'
+    'sql-lowerer' = 'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj'
     'json-value' = 'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj'
     'json-protocol' = 'Projects/Tests/Windvale-Native-Test-Database-Json-Protocol.wvproj'
     'local-service' = 'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj'
@@ -171,6 +172,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Logical-Records.md' = @('logical-record')
     'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md' = @('typed-row')
     'Specifications/Windvale-Database-Query-Ir.md' = @('query-ir')
+    'Specifications/Windvale-Database-Sql.md' = @('sql-lowerer')
     'Specifications/Windvale-Database-Json-Value.md' = @('json-value')
     'Specifications/Windvale-Database-Json-Protocol.md' = @('json-protocol')
     'Specifications/Windvale-Database-Local-Service.md' = @('local-service', 'host-local-service')
@@ -192,6 +194,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Sql-Lowerer.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Json-Protocol.wvproj',
     'Projects/Libraries/Windvale-Library-Local-Database-Contracts.wvproj',
@@ -217,6 +220,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Json-Protocol.wvproj',
     'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj',
@@ -273,6 +277,7 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Logical-Records.md',
     'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md',
     'Specifications/Windvale-Database-Query-Ir.md',
+    'Specifications/Windvale-Database-Sql.md',
     'Specifications/Windvale-Database-Json-Value.md',
     'Specifications/Windvale-Database-Json-Protocol.md',
     'Specifications/Windvale-Database-Local-Service.md',
@@ -1125,6 +1130,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Schema-Definition', [StringComparison]::Ordinal) -or
             $Path.Contains('Typed-Row', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
+            $Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
             $Path.Contains('Json-Value', [StringComparison]::Ordinal) -or
             $Path.Contains('Json-Protocol', [StringComparison]::Ordinal) -or
             $Path.Contains('Local-Database-', [StringComparison]::Ordinal) -or
@@ -1200,6 +1206,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Json-Value-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Json-Protocol-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Local-Database-Service-Self-Test.wv' -or
@@ -1237,6 +1244,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Json-Protocol.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj' -or
@@ -1303,6 +1311,8 @@ foreach ($Path in $Paths) {
             $Path.Contains('Schema-Definition', [StringComparison]::Ordinal) -or
             $Path.Contains('Typed-Row', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
+            ($Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
+                $Path -eq 'Specifications/Windvale-Database-Sql.md') -or
             $Path.Contains('Json-Value', [StringComparison]::Ordinal) -or
             $Path.Contains('Json-Protocol', [StringComparison]::Ordinal) -or
             $Path.Contains('Local-Database-', [StringComparison]::Ordinal) -or
@@ -2470,6 +2480,17 @@ $OrderedSuites = @($SuiteEntries.Name | Where-Object { $SelectedSuites.Contains(
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
 if (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 3 -and
+    $SelectedDatabaseDevelopmentTargets.Contains('typed-row') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('query-ir') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('sql-lowerer')) {
+    $DatabaseDevelopmentTarget = 'typed-query-sql'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
+    $SelectedDatabaseDevelopmentTargets.Contains('query-ir') -and
+    $SelectedDatabaseDevelopmentTargets.Contains('sql-lowerer')) {
+    $DatabaseDevelopmentTarget = 'query-sql'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 2 -and
     $SelectedDatabaseDevelopmentTargets.Contains('typed-row') -and
     $SelectedDatabaseDevelopmentTargets.Contains('query-ir')) {
