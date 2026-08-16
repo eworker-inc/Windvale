@@ -2029,6 +2029,23 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-ancestor-pages'
     },
     @{
+        Name = 'focused database transaction-root-growth owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Root-Growth.wv',
+            'Projects/Libraries/Windvale-Library-Database-Transaction-Root-Growth.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Root-Growth-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Root-Growth-Multi-Level-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Root-Growth.md'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-root-growth'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',

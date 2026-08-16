@@ -1,0 +1,164 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowth profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉrootˉgrowth as Growth;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Replace(Input: bytes, Offset: u32, Count: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Offset + Count, Bytesˉlength(Input) - Offset - Count)
+    );
+}
+
+fn Hash(Input: bytes) -> bytes {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Input);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Input);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Current(Depth: u32) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 3u64, 3u64, 2u64, 12u64, 11u64, 1u64, 13u64,
+        53760u64, PAGE_SIZE, Depth
+    );
+}
+
+fn Child(Pageˉidentifier: u64, Separator: bytes) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+            Pageˉidentifier, Separator
+        );
+    return Result.Bytes;
+}
+
+fn Replacementsˉplan() -> bytes {
+    let Children: bytes = Bytesˉconcat(
+        Child(15u64, Empty()), Child(16u64, Bytesˉfromˉu8(5u8))
+    );
+    let Group: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+            12u64, 15u64, 2u32, Children
+        );
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            1u32, 2u32, 15u64, Group.Bytes
+        );
+    return Result.Bytes;
+}
+
+export fn Main() -> i32 {
+    let First: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉplan(
+            Current(3u32), 13u64, 17u64, 4u64, 3u64, Replacementsˉplan()
+        );
+    let Second: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉplan(
+            Current(3u32), 13u64, 17u64, 4u64, 3u64, Replacementsˉplan()
+        );
+    let Validated: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉvalidate(
+            First.Bytes, First.Replacements, First.Pages
+        );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(First.Pages);
+    let Low: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload, Bytesˉfromˉu8(1u8),
+            false, Empty(), false, Empty()
+        );
+    let High: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload, Bytesˉfromˉu8(8u8),
+            false, Empty(), false, Empty()
+        );
+    if First.Error != Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Valid ||
+        Validated.Error != Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Valid ||
+        First.Pageˉsize != PAGE_SIZE || First.Inputˉrootˉdepth != 3u32 ||
+        First.Outputˉrootˉdepth != 4u32 || First.Roundˉcount != 1u32 ||
+        First.Pageˉcount != 1u32 || First.Inputˉchildˉcount != 2u32 ||
+        First.Firstˉallocationˉpage != 13u64 || First.Firstˉpage != 17u64 ||
+        First.Nextˉpage != 18u64 || First.Rootˉpage != 17u64 ||
+        First.Targetˉgeneration != 4u64 || First.Targetˉsequence != 3u64 ||
+        !Same(First.Bytes, Second.Bytes) || !Same(First.Pages, Second.Pages) {
+        return 1;
+    }
+    if Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Root.Pageˉidentifier != 17u64 || Root.Previousˉpage != NO_PAGE ||
+        Root.Generation != 4u64 || Root.Commitˉsequence != 3u64 ||
+        Low.Child != 15u64 || High.Child != 16u64 {
+        return 2;
+    }
+    let Invalidˉallocation: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉplan(
+            Current(3u32), 12u64, 17u64, 4u64, 3u64, Replacementsˉplan()
+        );
+    let Exhaustedˉdepth: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉplan(
+            Current(8u32), 13u64, 17u64, 4u64, 3u64, Replacementsˉplan()
+        );
+    let Truncated: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉdecode(
+            Bytesˉslice(First.Bytes, 0u32, Bytesˉlength(First.Bytes) - 1u32)
+        );
+    let Badˉmagic: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉdecode(
+            Replace(First.Bytes, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32))
+        );
+    let Badˉpages: bytes = Replace(
+        First.Pages, 0u32, 1u32, Bytesˉfromˉu8(0u8)
+    );
+    let Digestˉmismatch: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉvalidate(
+            First.Bytes, First.Replacements, Badˉpages
+        );
+    let Rebound: bytes = Replace(First.Bytes, 136u32, 32u32, Hash(Badˉpages));
+    let Invalidˉpage: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉvalidate(
+            Rebound, First.Replacements, Badˉpages
+        );
+    if Invalidˉallocation.Error !=
+            Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Inconsistentˉinput ||
+        Exhaustedˉdepth.Error !=
+            Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Depthˉexhausted ||
+        Truncated.Error !=
+            Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Invalidˉlength ||
+        Badˉmagic.Error !=
+            Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Invalidˉmagic ||
+        Digestˉmismatch.Error !=
+            Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Invalidˉdigest ||
+        Invalidˉpage.Error !=
+            Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Invalidˉpage {
+        return 3;
+    }
+    return 0;
+}

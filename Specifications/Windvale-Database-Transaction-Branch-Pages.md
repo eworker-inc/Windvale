@@ -105,6 +105,7 @@ but invalid durable page. `WVCR 1` also has an explicit 64-child group and
 
 `WVAG 1` consumes the emitted replacement plan at any remaining ancestor, and
 [`WVAP 1`](Windvale-Database-Transaction-Ancestor-Pages.md) assigns durable
-identities to that logical output. The next milestone adds the bounded
-grouping/allocation loop, including new-root construction, before compact-log
-and superblock publication.
+identities to that logical output. `WVRG 1` completes a new root after a split.
+The next milestone adds the bounded grouping/allocation loop that selects the
+completed old-root or new-root path before compact-log and superblock
+publication.

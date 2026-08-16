@@ -20,6 +20,11 @@ This is the shared-parent rewrite core. It does not repeatedly call the
 single-child branch API and does not stop at temporary overflow. The complete
 final child sequence is built once and partitioned once.
 
+`Databaseˉtransactionˉbranchˉpartitionˉrootˉchildren` uses the same packing
+core for one complete `WVCR 1` group without an existing parent payload. This
+is the new-root boundary: it converts already durable split-root children into
+one or more logical parent branches without changing `WVBP 1`.
+
 ## Replacement semantics
 
 For one old child, the first replacement inherits the old child's lower
@@ -98,8 +103,10 @@ unchanged middle routing, a four-child replacement split into two branches,
 the final-separator backtrack, deterministic output, invalid bounds, a missing
 child, malformed replacement bytes, trailing output, and invalid indexes.
 
+Root-growth tests additionally cover the root-children entry point with one
+fitting output and a two-round large-separator partition.
+
 `WVPP 1` now groups `WVCR 1` replacements by parent from the validated
-transaction paths and invokes this partitioner once per affected parent. The
-next planner allocates durable pages for each `WVBP 1` output and repeats the
-same replacement shape upward until one root remains or a new root level is
-created.
+transaction paths and invokes this partitioner once per affected parent.
+[`WVRG 1`](Windvale-Database-Transaction-Root-Growth.md) now uses the same core
+to allocate as many bounded new levels as required after an old-root split.

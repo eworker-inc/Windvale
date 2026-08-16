@@ -24,7 +24,7 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=41"
+set "SelectedCases=43"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
     tree-node logical-record typed-row transaction-mutations transaction-leaf-rewrite query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
@@ -34,13 +34,14 @@ for %%T in (
 if /I "%DevelopmentTarget%"=="transaction-branch-pages" set "SelectedCases=3"
 if /I "%DevelopmentTarget%"=="transaction-ancestor-groups" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="transaction-ancestor-pages" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="transaction-root-growth" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="transaction-parent-groups" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="transaction-leaf-pages" set "SelectedCases=5"
-if /I "%DevelopmentTarget%"=="transaction-branch-partition" set "SelectedCases=9"
+if /I "%DevelopmentTarget%"=="transaction-branch-partition" set "SelectedCases=11"
 if /I "%DevelopmentTarget%"=="transaction-leaf-groups" set "SelectedCases=6"
 if /I "%DevelopmentTarget%"=="transaction-paths" set "SelectedCases=11"
 if /I "%DevelopmentTarget%"=="transaction-leaf-partition" set "SelectedCases=7"
-if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=14"
+if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=16"
 if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-tree-delete" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="host-tree-scan" set "SelectedCases=3"
@@ -174,6 +175,10 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionAncestorPagesIntermediate transaction-ancestor-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj" transaction transaction-paths transaction-branch-partition transaction-ancestor-groups
     if errorlevel 1 goto :cleanup
+    call :verify_development_target TransactionRootGrowth transaction-root-growth "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj" transaction transaction-branch-partition
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target TransactionRootGrowthMultiLevel transaction-root-growth "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj" transaction transaction-branch-partition
+    if errorlevel 1 goto :cleanup
     call :verify_development_target QueryIr query-ir "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql
     if errorlevel 1 goto :cleanup
     call :verify_development_target SqlLowerer sql-lowerer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Sql-Lowerer.wvproj" query-sql typed-query-sql
@@ -288,6 +293,12 @@ if errorlevel 1 goto :cleanup
 call :verify_target TransactionAncestorPagesIntermediate ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_target TransactionRootGrowth ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target TransactionRootGrowthMultiLevel ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target QueryIr ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj"
 if errorlevel 1 goto :cleanup
@@ -396,7 +407,7 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=50 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=52 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target

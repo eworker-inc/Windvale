@@ -1,0 +1,137 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowthˉmultiˉlevel profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉrootˉgrowth as Growth;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Empty(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result, Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Key(Index: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Index), Zeroes(1996u32));
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 3u64, 3u64, 2u64, 20u64, 19u64, 1u64, 21u64,
+        86528u64, PAGE_SIZE, 2u32
+    );
+}
+
+fn Replacementsˉplan() -> bytes {
+    var Children: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        var Separator: bytes = Empty();
+        if Index > 0u32 { Separator = Key(Index); }
+        let Child: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+            Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+                100u64 + U64ˉfromˉu32(Index), Separator
+            );
+        Children = Bytesˉconcat(Children, Child.Bytes);
+        Index = Index + 1u32;
+    }
+    let Group: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+            20u64, 100u64, 64u32, Children
+        );
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            1u32, 64u32, 100u64, Group.Bytes
+        );
+    return Result.Bytes;
+}
+
+export fn Main() -> i32 {
+    let Result: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉplan(
+            Current(), 21u64, 164u64, 4u64, 3u64, Replacementsˉplan()
+        );
+    if Result.Error != Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Valid {
+        return 1;
+    }
+    if Result.Inputˉrootˉdepth != 2u32 || Result.Outputˉrootˉdepth != 8u32 ||
+        Result.Roundˉcount != 6u32 || Result.Pageˉcount != 63u32 ||
+        Result.Inputˉchildˉcount != 64u32 || Result.Firstˉpage != 164u64 ||
+        Result.Nextˉpage != 227u64 || Result.Rootˉpage != 226u64 {
+        return 2;
+    }
+    let First: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, 0u32, PAGE_SIZE)
+        );
+    let Lastˉfirstˉlevel: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, PAGE_SIZE * 31u32, PAGE_SIZE)
+        );
+    let Firstˉsecondˉlevel: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, PAGE_SIZE * 32u32, PAGE_SIZE)
+        );
+    let Root: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(Result.Pages, PAGE_SIZE * 62u32, PAGE_SIZE)
+        );
+    if First.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Lastˉfirstˉlevel.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Firstˉsecondˉlevel.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Root.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        First.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Lastˉfirstˉlevel.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Firstˉsecondˉlevel.Kind != Page.Databaseˉdurableˉpageˉkind.Branch ||
+        Root.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        First.Pageˉidentifier != 164u64 ||
+        Lastˉfirstˉlevel.Pageˉidentifier != 195u64 ||
+        Firstˉsecondˉlevel.Pageˉidentifier != 196u64 ||
+        Root.Pageˉidentifier != 226u64 ||
+        First.Previousˉpage != NO_PAGE || Root.Previousˉpage != NO_PAGE {
+        return 3;
+    }
+    let Low: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload, Key(1u32), false, Empty(), false, Empty()
+        );
+    let High: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Root.Payload, Key(63u32), false, Empty(), false, Empty()
+        );
+    if Low.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        High.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Low.Child != 224u64 || High.Child != 225u64 {
+        return 4;
+    }
+    let Validated: Growth.Databaseˉtransactionˉrootˉgrowthˉresult =
+        Growth.Databaseˉtransactionˉrootˉgrowthˉvalidate(
+            Result.Bytes, Result.Replacements, Result.Pages
+        );
+    if Validated.Error != Growth.Databaseˉtransactionˉrootˉgrowthˉerror.Valid {
+        return 5;
+    }
+    return 0;
+}

@@ -1,0 +1,12 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Transaction-Root-Growth-Multi-Level-Self-Test.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256-Compression.wv"
+source "Foundation/Sha256-Streaming.wv"
+source "Libraries/Database/Durable-Page.wv"
+source "Libraries/Database/Durable-Superblock.wv"
+source "Libraries/Database/Transaction-Branch-Partition.wv"
+source "Libraries/Database/Transaction-Child-Replacements.wv"
+source "Libraries/Database/Transaction-Root-Growth.wv"
+source "Libraries/Database/Tree-Node.wv"
+emit wvb

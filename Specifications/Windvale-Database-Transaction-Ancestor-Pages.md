@@ -99,7 +99,8 @@ replacement identities, manifest validation, invalid allocation, truncation,
 oversize input, bad magic, companion digest mismatch, and a digest-bound but
 invalid durable page.
 
-The next milestone adds one bounded transaction loop that alternates `WVAG 1`
-and `WVAP 1`, accounts for the complete allocation and memory budget, and
-constructs a new root when replacement of the old root produces multiple
-branches.
+[`WVRG 1`](Windvale-Database-Transaction-Root-Growth.md) now constructs a new
+root when replacement of the old root produces multiple branches. The next
+milestone adds one bounded transaction loop that alternates `WVAG 1` and
+`WVAP 1`, accounts for the complete allocation and memory budget, and invokes
+root growth only when required.
