@@ -44,7 +44,7 @@ verify_file "$hosted_toolset/SHA256SUMS" 6927 \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" 5064 \
-    d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc \
+    15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9617 \

@@ -1,18 +1,19 @@
 {
-  "format": "windvale-native-wvb-publisher-candidate-3",
+  "format": "windvale-native-wvb-publisher-candidate-4",
   "status": "candidate",
   "sourceDecision": "0490",
   "provenanceDecision": "0459",
-  "nativeSourceDecision": "0493",
-  "qualification": "current-host-focused",
-  "construction": "windvale-native-role-aware-publisher-overlay",
+  "nativeSourceDecision": "0698",
+  "qualification": "local-dual-host-focused",
+  "construction": "windvale-native-metadata-aware-role-publisher-overlay",
+  "constructionDecision": "0706",
   "artifacts": [
     {
       "name": "windows-x64-wvb-publisher",
       "path": "windows-x64-wvpublish.exe",
       "target": "windows-x64-native-wvb-publisher-v1",
-      "bytes": 1371136,
-      "sha256": "b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421",
+      "bytes": 1544192,
+      "sha256": "0fdb432aa54cc7b9cc4a1d42a438d2b56a29695e06b2369540dac845989751c1",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvb",
       "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvo"
     },
@@ -20,8 +21,8 @@
       "name": "linux-x64-wvb-publisher",
       "path": "linux-x64-wvpublish.elf",
       "target": "linux-x64-native-wvb-publisher-v1",
-      "bytes": 1369077,
-      "sha256": "b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af",
+      "bytes": 1541109,
+      "sha256": "7bf4593566401853ab7f551ca5d45125ac0ea3a6c4e34315703785ed7d6cdfb6",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvb",
       "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvo"
     }

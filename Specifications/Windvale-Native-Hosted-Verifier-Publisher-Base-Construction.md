@@ -77,9 +77,9 @@ sources.
 | Publisher-promoter WVB | 41,268 | `7ea1cda2842c4258f654ee17deb441c1b06a3fcedfc29f7382e9259b2f3800fe` |
 | Publisher-promoter WVO | 660,123 | `9ee875a6668b1661087dc6a59384c2427e6ef6febb5c83a4ed936e56cd13b44f` |
 | Linked publisher-promoter fragment | 658,339 | `843094cf8ba3de92697568abab6788a276f0ea7bd193e65abfb5c7b56918fb43` |
-| WVB publisher WVB | 163,300 | `9ebfe92eef070dfdcf18c4d176b5f32f64ad3f80751340b8a59ab2f1d567ec2a` |
-| WVB publisher WVO | 1,349,361 | `43a594776b4e280575ac14e2866b4708961dd1290d643b41779a4933a8ba5991` |
-| Linked WVB publisher fragment | 1,347,597 | `3d419d28b606408e7b2430cceacf4c0b7b109bcd511df4e98ca0d41b871f1c2d` |
+| WVB publisher WVB | 181,772 | `c90f5325ea409d0710254812e1d434cce712de68385dec74d23eef5a475cf3c4` |
+| WVB publisher WVO | 1,523,708 | `c1ce50f68e12dc94e56fa848c6f09f707ad117294af5e19f15659b7901c0bf35` |
+| Linked WVB publisher fragment | 1,520,746 | `98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a` |
 | Linked publisher fragment | 232,736 | `260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115` |
 | Windows base | 248,832 | `579ff68d6645797a08c71a3ead03be6a56c2b4fd7eda8a3db548038eb9ccc007` |
 | Linux base | 249,856 | `577bda8af2b1d8fca6f37e894c6b7f920e547f3e2b0bd1a28d2af518743a6629` |
@@ -89,23 +89,23 @@ sources.
 | Linux promoter base | 675,840 | `848ee9ed30ffc5094f77b4f79b72e3b4a426b4f9e0fc8e26631ed6619596f782` |
 | Windows promoter | 681,472 | `5690fb32c7fec85551e0c5cd58e4f56589a5ad4c09108b5dde86fa9fc7b3fb92` |
 | Linux promoter | 680,949 | `3cd1c82807495e34445345b5e61b8c5911434c84d2a6f49a11b21fd2521423f5` |
-| Windows WVB-publisher base | 1,363,968 | `243b763d8b49b34108585c56f46c90190eac085a80c59873c8a2cb3e88d16102` |
-| Linux WVB-publisher base | 1,363,968 | `2fc0332887c96ad0fa34d1987091d60ddbbe61f019739d41734cd491b8ca4b64` |
-| Windows WVB publisher | 1,371,136 | `b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421` |
-| Linux WVB publisher | 1,369,077 | `b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af` |
+| Windows WVB-publisher base | 1,537,024 | `6385eac0d7c326f9dbded708a064eecb113fcf41c036b59b519938ee1a5b5e8c` |
+| Linux WVB-publisher base | 1,536,000 | `1e3049360820c321df5489e2df6f2cbb748565f20e95e130c1ff08edbe7622c4` |
+| Windows WVB publisher | 1,544,192 | `0fdb432aa54cc7b9cc4a1d42a438d2b56a29695e06b2369540dac845989751c1` |
+| Linux WVB publisher | 1,541,109 | `7bf4593566401853ab7f551ca5d45125ac0ea3a6c4e34315703785ed7d6cdfb6` |
 | Windows WVO-publisher base | 422,912 | `22534a8a0ae42e977cd79daa3ff8b6fde5ef39d719edda07726410f95df6683d` |
 | Linux WVO-publisher base | 421,888 | `af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7` |
 | Windows WVO publisher | 430,080 | `76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910` |
 | Linux WVO publisher | 426,997 | `2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2` |
 
-Version 20 of the construction candidate contains 27 canonical WVB/WVO
+Version 21 of the construction candidate contains 27 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 49-entry `SHA256SUMS` is 5,064
 LF-only bytes with SHA-256
-`d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc`.
+`15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334`.
 
 ## Native owner and remaining gate
 
-The `hosted-verifier-publisher-files` retirement lane owns fifteen fixed cases:
+The `hosted-verifier-publisher-files` retirement lane owns sixteen fixed cases:
 the complete inventory, exact Windows and Linux publisher construction, exact
 Windows and Linux profile-8 admitter construction, a current-host read-only
 admission matrix, malformed base-record preservation, exact alias preservation,
@@ -116,13 +116,11 @@ artifacts. It also rebuilds and lowers the distinct publisher promoter, links
 `Main` at 1,178, requires the exact 658,339-byte fragment, constructs both exact
 promoter applications, installs both publisher subjects through the promoter,
 and runs the installed current-host publisher through one verifier installation.
-It additionally rebuilds, lowers, and links the exact current metadata-aware WVB
-publisher source candidate. That candidate is deliberately compared to its own
-recorded identities rather than the preceding variant-2 artifacts. The owner
-then separately constructs both retained exact role-2 applications and executes
-the current-host retained candidate on a canonical portable WVB without loading
-.NET. Refreshing variant 2 remains a distinct artifact-coherence and promotion
-boundary.
+It additionally rebuilds, lowers, and links the exact metadata-aware WVB
+publisher, constructs both refreshed exact role-2 applications, and executes
+the current-host candidate on canonical portable and metadata-present WVBs
+without loading .NET. Windows and Debian WSL2 locally pass the same owner and
+agree on the retained target identities.
 
 The separate `wvo-publisher-reconstruction` lane owns the role-3 candidate
 inventory and exact native WVB plus paired-application reconstruction. It uses
@@ -130,5 +128,5 @@ the raw lowerer directly so the WVO publisher does not participate in
 publishing its own construction object.
 
 The immutable recovery release retains historical differential evidence outside the
-normal path. Independent Linux execution, grouped qualification, candidate
-promotion, and release integration remain open.
+normal path. Grouped qualification, ordinary front-door promotion, and release
+integration remain open.

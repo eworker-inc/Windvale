@@ -35,7 +35,7 @@ export fn Main() -> i32 {
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Construction, 28u32);
     var Outputˉbytes: u32 = 256000u32;
     if Variant == 1u32 { Outputˉbytes = 681472u32; }
-    if Variant == 2u32 { Outputˉbytes = 1371136u32; }
+    if Variant == 2u32 { Outputˉbytes = 1544192u32; }
     if Variant == 3u32 { Outputˉbytes = 430080u32; }
     if Variant == 4u32 { Outputˉbytes = 1158656u32; }
     if Variant > 4u32 {

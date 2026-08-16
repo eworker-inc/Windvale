@@ -26,7 +26,7 @@ set "Result=1"
 set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -110,7 +110,7 @@ findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.ou
 if errorlevel 1 goto :failed
 call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1520746 98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a "linked metadata-aware WVB publisher fragment"
 if errorlevel 1 goto :failed
-call :pass "publisher source candidate and retained construction inventory"
+call :pass "metadata-aware publisher source and refreshed construction inventory"
 
 set /a Total+=1
 call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher.cmd" windows "%TestDirectory%\Publisher.exe" >"%TestDirectory%\Windows.out" 2>"%TestDirectory%\Windows.err"
@@ -173,9 +173,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" windows "%TestD
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Windows.err" "Windows WVB publisher construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"WVB publisher construction status=Valid target=windows bytes=1371136" "%TestDirectory%\Wvb-Publisher-Windows.out" >nul
+findstr /x /c:"WVB publisher construction status=Valid target=windows bytes=1544192" "%TestDirectory%\Wvb-Publisher-Windows.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.exe" 1371136 b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421 "Windows WVB publisher"
+call :check_file "%TestDirectory%\Wvb-Publisher.exe" 1544192 0fdb432aa54cc7b9cc4a1d42a438d2b56a29695e06b2369540dac845989751c1 "Windows WVB publisher"
 if errorlevel 1 goto :failed
 fc /b "%WvbPublisherCandidate%\windows-x64-wvpublish.exe" "%TestDirectory%\Wvb-Publisher.exe" >nul
 if errorlevel 1 goto :failed
@@ -188,9 +188,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" linux "%TestDir
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Linux.err" "Linux WVB publisher construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1369077" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
+findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1541109" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1369077 b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af "Linux WVB publisher"
+call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1541109 7bf4593566401853ab7f551ca5d45125ac0ea3a6c4e34315703785ed7d6cdfb6 "Linux WVB publisher"
 if errorlevel 1 goto :failed
 fc /b "%WvbPublisherCandidate%\linux-x64-wvpublish.elf" "%TestDirectory%\Wvb-Publisher.elf" >nul
 if errorlevel 1 goto :failed
@@ -288,9 +288,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -299,7 +299,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -312,7 +312,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 
@@ -381,6 +381,25 @@ if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
 call :pass "current-host WVB publisher execution"
+
+set /a Total+=1
+set "Phase=current-host metadata-present WVB publisher execution"
+set "MetadataWvbCandidate=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Metadata.wvb"
+call :check_file "%MetadataWvbCandidate%" 369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa "metadata-present WVB"
+if errorlevel 1 goto :failed
+"%WvbPublisherCandidate%\windows-x64-wvpublish.exe" "%MetadataWvbCandidate%" "%TestDirectory%\Published-Metadata.wvb" >"%TestDirectory%\Wvb-Publisher-Metadata.out" 2>"%TestDirectory%\Wvb-Publisher-Metadata.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Metadata.err" "metadata-present WVB publication wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher-Metadata.out" 117 65e72413bf11bafc3b08abe4c53b8abc65d85f4c4cc576de9dd2ff721418ce1d "metadata-present WVB publication report"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Published-Metadata.wvb" 369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa "published metadata-present WVB"
+if errorlevel 1 goto :failed
+fc /b "%MetadataWvbCandidate%" "%TestDirectory%\Published-Metadata.wvb" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "current-host metadata-present WVB publisher execution"
 set "Result=0"
 goto :cleanup
 

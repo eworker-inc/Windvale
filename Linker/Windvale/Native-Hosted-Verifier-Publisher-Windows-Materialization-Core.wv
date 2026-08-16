@@ -15,8 +15,8 @@ fn Response(Input: bytes, Status: u32) -> bytes {
         if Bytesˉlength(Input) == 686592u32 {
             Applicationˉbytes = 681472u32;
         }
-        if Bytesˉlength(Input) == 1375744u32 {
-            Applicationˉbytes = 1371136u32;
+        if Bytesˉlength(Input) == 1548800u32 {
+            Applicationˉbytes = 1544192u32;
         }
         if Bytesˉlength(Input) == 434688u32 {
             Applicationˉbytes = 430080u32;
@@ -39,7 +39,7 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 fn Envelopeˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if Total != 260608u32 && Total != 686592u32 &&
-        Total != 1375744u32 && Total != 434688u32 &&
+        Total != 1548800u32 && Total != 434688u32 &&
         Total != 1163264u32 { return false; }
     return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1297569367u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
@@ -71,15 +71,15 @@ fn Baseˉvalid(Base: bytes, Variant: u32) -> bool {
         Metadataˉdirectory = 671936u32;
     }
     if Variant == 2u32 {
-        Total = 1363968u32;
-        Codeˉbytes = 1354752u32;
-        Imageˉend = 145100800u32;
-        Dataˉaddress = 1359872u32;
-        Relocationˉaddress = 145096704u32;
-        Codeˉextent = 1354354u32;
-        Dataˉfile = 1355264u32;
-        Relocationˉfile = 1363456u32;
-        Metadataˉdirectory = 1360064u32;
+        Total = 1537024u32;
+        Codeˉbytes = 1527808u32;
+        Imageˉend = 145272832u32;
+        Dataˉaddress = 1531904u32;
+        Relocationˉaddress = 145268736u32;
+        Codeˉextent = 1527506u32;
+        Dataˉfile = 1528320u32;
+        Relocationˉfile = 1536512u32;
+        Metadataˉdirectory = 1532096u32;
     }
     if Variant == 3u32 {
         Total = 422912u32;
@@ -140,11 +140,11 @@ fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports:
         Importsˉaddress = 679936u32;
     }
     if Variant == 2u32 {
-        Bundleˉbytes = 1350258u32;
-        Adapterˉfile = 1355104u32;
-        Adapterˉaddress = 1358688u32;
-        Outputˉbytes = 1371136u32;
-        Importsˉaddress = 1368064u32;
+        Bundleˉbytes = 1523410u32;
+        Adapterˉfile = 1528032u32;
+        Adapterˉaddress = 1531616u32;
+        Outputˉbytes = 1544192u32;
+        Importsˉaddress = 1540096u32;
     }
     if Variant == 3u32 {
         Bundleˉbytes = 409506u32;
@@ -232,14 +232,14 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
         Relocationˉfile = 680960u32;
     }
     if Variant == 2u32 {
-        Codeˉbytes = 1361920u32;
-        Imageˉend = 145108992u32;
-        Importsˉaddress = 1368064u32;
-        Relocationˉaddress = 145104896u32;
-        Importˉdirectory = 1368304u32;
-        Codeˉextent = 1361349u32;
-        Importsˉfile = 1362432u32;
-        Relocationˉfile = 1370624u32;
+        Codeˉbytes = 1534976u32;
+        Imageˉend = 145281024u32;
+        Importsˉaddress = 1540096u32;
+        Relocationˉaddress = 145276928u32;
+        Importˉdirectory = 1540336u32;
+        Codeˉextent = 1534501u32;
+        Importsˉfile = 1535488u32;
+        Relocationˉfile = 1543680u32;
     }
     if Variant == 3u32 {
         Codeˉbytes = 420864u32;
@@ -309,12 +309,12 @@ export fn Publisherˉwindowsˉmaterialize(Input: bytes) -> bytes {
         Outputˉbytes = 681472u32;
     }
     if Variant == 2u32 {
-        Bundleˉbytes = 1350258u32;
-        Adapterˉfill = 238u32;
-        Shaˉfill = 347u32;
-        Tailˉoffset = 1359360u32;
-        Finalˉtail = 1360992u32;
-        Outputˉbytes = 1371136u32;
+        Bundleˉbytes = 1523410u32;
+        Adapterˉfill = 14u32;
+        Shaˉfill = 475u32;
+        Tailˉoffset = 1532416u32;
+        Finalˉtail = 1534048u32;
+        Outputˉbytes = 1544192u32;
     }
     if Variant == 3u32 {
         Bundleˉbytes = 409506u32;

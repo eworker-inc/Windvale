@@ -27,7 +27,7 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 fn Envelopeˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if Total != 255633u32 && Total != 681617u32 &&
-        Total != 1369745u32 && Total != 427665u32 &&
+        Total != 1541777u32 && Total != 427665u32 &&
         Total != 1156753u32 { return false; }
     return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1296848471u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
@@ -56,11 +56,11 @@ fn Inputsˉvalid(
         Outputˉbytes = 680949u32;
     }
     if Variant == 2u32 {
-        Baseˉbytes = 1363968u32;
-        Bundleˉbytes = 1349941u32;
-        Adapterˉfile = 1363968u32;
-        Adapterˉaddress = 144044032u32;
-        Outputˉbytes = 1369077u32;
+        Baseˉbytes = 1536000u32;
+        Bundleˉbytes = 1523093u32;
+        Adapterˉfile = 1536000u32;
+        Adapterˉaddress = 144216064u32;
+        Outputˉbytes = 1541109u32;
     }
     if Variant == 3u32 {
         Baseˉbytes = 421888u32;
@@ -132,8 +132,8 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
         Adapterˉaddress = 143355904u32;
     }
     if Variant == 2u32 {
-        Adapterˉfile = 1363968u32;
-        Adapterˉaddress = 144044032u32;
+        Adapterˉfile = 1536000u32;
+        Adapterˉaddress = 144216064u32;
     }
     if Variant == 3u32 {
         Adapterˉfile = 421888u32;
@@ -192,9 +192,9 @@ export fn Publisherˉlinuxˉmaterialize(Input: bytes) -> bytes {
         Outputˉbytes = 680949u32;
     }
     if Variant == 2u32 {
-        Metadataˉfile = 1361376u32;
-        Tailˉfile = 1361504u32;
-        Outputˉbytes = 1369077u32;
+        Metadataˉfile = 1533408u32;
+        Tailˉfile = 1533536u32;
+        Outputˉbytes = 1541109u32;
     }
     if Variant == 3u32 {
         Metadataˉfile = 419296u32;

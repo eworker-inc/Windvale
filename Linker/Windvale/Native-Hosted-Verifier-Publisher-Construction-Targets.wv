@@ -162,80 +162,80 @@ fn Promoterˉlinuxˉtarget(Index: u32) -> u32 {
 }
 
 fn Wvbˉpublisherˉwindowsˉtarget(Index: u32) -> u32 {
-    if Index == 0u32 { return 1358939u32; }
-    if Index == 1u32 { return 1377328u32; }
-    if Index == 2u32 { return 1376256u32; }
-    if Index == 3u32 { return 138809344u32; }
-    if Index == 4u32 { return 1372160u32; }
-    if Index == 5u32 { return 143003648u32; }
-    if Index == 6u32 { return 1372424u32; }
-    if Index == 7u32 { return 137760768u32; }
+    if Index == 0u32 { return 1531867u32; }
+    if Index == 1u32 { return 1549360u32; }
+    if Index == 2u32 { return 1548288u32; }
+    if Index == 3u32 { return 138981376u32; }
+    if Index == 4u32 { return 1544192u32; }
+    if Index == 5u32 { return 143175680u32; }
+    if Index == 6u32 { return 1544456u32; }
+    if Index == 7u32 { return 137932800u32; }
     if Index == 8u32 { return 8192u32; }
     if Index == 9u32 { return 12878u32; }
     if Index == 10u32 { return 13667u32; }
-    if Index == 11u32 { return 1372376u32; }
-    if Index == 12u32 { return 1445888u32; }
-    if Index == 13u32 { return 1355792u32; }
-    if Index == 14u32 { return 1358192u32; }
-    if Index == 15u32 { return 1356160u32; }
-    if Index == 16u32 { return 1356080u32; }
-    if Index == 17u32 { return 1356064u32; }
-    if Index == 18u32 { return 1372272u32; }
-    if Index == 19u32 { return 1357392u32; }
-    if Index == 20u32 { return 1442864u32; }
-    if Index == 21u32 { return 3543040u32; }
-    if Index == 22u32 { return 1368304u32; }
-    if Index == 23u32 { return 1368448u32; }
-    if Index == 24u32 { return 1368312u32; }
-    if Index == 25u32 { return 1368320u32; }
-    if Index == 26u32 { return 1368328u32; }
-    if Index == 27u32 { return 1368336u32; }
-    if Index == 28u32 { return 1368344u32; }
-    if Index == 29u32 { return 1368352u32; }
-    if Index == 30u32 { return 1368360u32; }
-    if Index == 31u32 { return 1368368u32; }
-    if Index == 32u32 { return 1368376u32; }
-    if Index == 33u32 { return 1368432u32; }
-    if Index == 34u32 { return 1368384u32; }
-    if Index == 35u32 { return 1368392u32; }
-    if Index == 36u32 { return 1368400u32; }
-    if Index == 37u32 { return 1368408u32; }
-    if Index == 38u32 { return 1368416u32; }
-    if Index == 39u32 { return 1365624u32; }
-    if Index == 40u32 { return 1365625u32; }
-    if Index == 41u32 { return 1365661u32; }
-    if Index == 42u32 { return 1363984u32; }
-    return 1365274u32;
+    if Index == 11u32 { return 1544408u32; }
+    if Index == 12u32 { return 1617920u32; }
+    if Index == 13u32 { return 1528944u32; }
+    if Index == 14u32 { return 1531344u32; }
+    if Index == 15u32 { return 1529312u32; }
+    if Index == 16u32 { return 1529232u32; }
+    if Index == 17u32 { return 1529216u32; }
+    if Index == 18u32 { return 1544304u32; }
+    if Index == 19u32 { return 1530544u32; }
+    if Index == 20u32 { return 1614896u32; }
+    if Index == 21u32 { return 3715072u32; }
+    if Index == 22u32 { return 1540336u32; }
+    if Index == 23u32 { return 1540480u32; }
+    if Index == 24u32 { return 1540344u32; }
+    if Index == 25u32 { return 1540352u32; }
+    if Index == 26u32 { return 1540360u32; }
+    if Index == 27u32 { return 1540368u32; }
+    if Index == 28u32 { return 1540376u32; }
+    if Index == 29u32 { return 1540384u32; }
+    if Index == 30u32 { return 1540392u32; }
+    if Index == 31u32 { return 1540400u32; }
+    if Index == 32u32 { return 1540408u32; }
+    if Index == 33u32 { return 1540464u32; }
+    if Index == 34u32 { return 1540416u32; }
+    if Index == 35u32 { return 1540424u32; }
+    if Index == 36u32 { return 1540432u32; }
+    if Index == 37u32 { return 1540440u32; }
+    if Index == 38u32 { return 1540448u32; }
+    if Index == 39u32 { return 1538552u32; }
+    if Index == 40u32 { return 1538553u32; }
+    if Index == 41u32 { return 1538589u32; }
+    if Index == 42u32 { return 1536912u32; }
+    return 1538202u32;
 }
 
 fn Wvbˉpublisherˉlinuxˉtarget(Index: u32) -> u32 {
-    if Index == 0u32 { return 144044092u32; }
-    if Index == 1u32 { return 1365040u32; }
-    if Index == 2u32 { return 1363968u32; }
-    if Index == 3u32 { return 138797056u32; }
-    if Index == 4u32 { return 1359872u32; }
-    if Index == 5u32 { return 142991360u32; }
-    if Index == 6u32 { return 1360136u32; }
-    if Index == 7u32 { return 137748480u32; }
+    if Index == 0u32 { return 144216124u32; }
+    if Index == 1u32 { return 1537072u32; }
+    if Index == 2u32 { return 1536000u32; }
+    if Index == 3u32 { return 138969088u32; }
+    if Index == 4u32 { return 1531904u32; }
+    if Index == 5u32 { return 143163392u32; }
+    if Index == 6u32 { return 1532168u32; }
+    if Index == 7u32 { return 137920512u32; }
     if Index == 8u32 { return 8192u32; }
     if Index == 9u32 { return 12878u32; }
     if Index == 10u32 { return 13667u32; }
-    if Index == 11u32 { return 1360088u32; }
-    if Index == 12u32 { return 1433600u32; }
-    if Index == 13u32 { return 1355792u32; }
-    if Index == 14u32 { return 1357920u32; }
-    if Index == 15u32 { return 1356112u32; }
-    if Index == 16u32 { return 1356032u32; }
-    if Index == 17u32 { return 1356016u32; }
-    if Index == 18u32 { return 1359984u32; }
-    if Index == 19u32 { return 1357120u32; }
-    if Index == 20u32 { return 1430576u32; }
-    if Index == 21u32 { return 3530752u32; }
-    if Index == 22u32 { return 144049096u32; }
-    if Index == 23u32 { return 144049097u32; }
-    if Index == 24u32 { return 144049133u32; }
-    if Index == 25u32 { return 144047456u32; }
-    return 144048746u32;
+    if Index == 11u32 { return 1532120u32; }
+    if Index == 12u32 { return 1605632u32; }
+    if Index == 13u32 { return 1528944u32; }
+    if Index == 14u32 { return 1531072u32; }
+    if Index == 15u32 { return 1529264u32; }
+    if Index == 16u32 { return 1529184u32; }
+    if Index == 17u32 { return 1529168u32; }
+    if Index == 18u32 { return 1532016u32; }
+    if Index == 19u32 { return 1530272u32; }
+    if Index == 20u32 { return 1602608u32; }
+    if Index == 21u32 { return 3702784u32; }
+    if Index == 22u32 { return 144221128u32; }
+    if Index == 23u32 { return 144221129u32; }
+    if Index == 24u32 { return 144221165u32; }
+    if Index == 25u32 { return 144219488u32; }
+    return 144220778u32;
 }
 
 fn Wvoˉpublisherˉwindowsˉtarget(Index: u32) -> u32 {

@@ -43,7 +43,7 @@ export fn Main() -> i32 {
             !Textˉequals(Role, "wvo-publisher") &&
             !Textˉequals(Role, "console-application-publisher") { return Usage(); }
         if Textˉequals(Role, "promoter") { Address = 679936u32; }
-        if Textˉequals(Role, "wvb-publisher") { Address = 1368064u32; }
+        if Textˉequals(Role, "wvb-publisher") { Address = 1540096u32; }
         if Textˉequals(Role, "wvo-publisher") { Address = 425984u32; }
         if Textˉequals(Role, "console-application-publisher") {
             Address = 1155072u32;

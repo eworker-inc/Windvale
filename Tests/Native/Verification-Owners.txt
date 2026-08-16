@@ -37,7 +37,7 @@ console-segmented-construction|Test-Console-Application-Segmented-Construction|2
 console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|4|Tests: 2, Passed: 2, Failed: 0
 console-packager-container-reconstruction|Test-Console-Packager-Container-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
 publisher-rejections|Test-Publisher-Rejections|4|3|Tests: 4, Passed: 4, Failed: 0
-hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|15|4|Tests: 15, Passed: 15, Failed: 0
+hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|16|4|Tests: 16, Passed: 16, Failed: 0
 uefi-packager|Test-Uefi-Packager|3|2|Tests: 3, Passed: 3, Failed: 0
 wvo-export-renamer|Test-Wvo-Export-Renamer|4|4|Tests: 4, Passed: 4, Failed: 0
 os-probe-object|Test-Os-Probe-Object-Producer|11|3|Tests: 11, Passed: 11, Failed: 0

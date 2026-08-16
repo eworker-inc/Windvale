@@ -165,9 +165,10 @@ metadata is skipped before import scanning, with a two-module binding regression
 The digest-pinned ordinary verifier and inspector still require artifact
 promotion. Decision 0698 connects the WVB publisher source to the same shared
 metadata-aware verifier adapter and pins byte-identical Windows/Debian WVB, WVO,
-and fragment candidates while keeping the preceding variant-2 applications
-explicitly retained. Publisher construction and package consumers still retain
-the absent form for their owner-sized migrations.
+and fragment candidates. Decision 0706 refreshes construction variant 2 and its
+paired candidate applications, with both local hosts passing exact construction
+and absent-form plus metadata-present publication. The ordinary front door and
+package consumers still retain the absent form for their owner-sized migrations.
 Production migration is therefore not ready to become a repository-wide source
 rewrite; the focused metadata fixture remains the replacement-form proof input.
 
@@ -184,8 +185,8 @@ Advance the migration in this order:
 3. 🟡 prove one current package application through source compilation, WVB
    verification and inspection, native lowering, packaging, and execution with
    the replacement header on Windows and Linux; source verification, lowering,
-   profile-4 inspection, and the publisher source candidate now have focused
-   Windows and Debian WSL2 evidence, while publisher artifact promotion and one
+   profile-4 inspection, and the refreshed publisher candidate now have focused
+   Windows and Debian WSL2 evidence, while ordinary front-door cutover and one
    package's complete dual-host path remain pending;
 4. migrate that package's reachable libraries, then the remaining repository
    source in owner-sized coherent batches with exact artifact updates; and

@@ -174,63 +174,63 @@ fn Promoterˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
 
 fn Wvbˉpublisherˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
     if Identity == 1u32 {
-        if Index == 0u32 { return 787070878u32; }
-        if Index == 1u32 { return 4245489647u32; }
-        if Index == 2u32 { return 3519289551u32; }
-        if Index == 3u32 { return 804500854u32; }
-        if Index == 4u32 { return 2151656804u32; }
-        if Index == 5u32 { return 3091207029u32; }
-        if Index == 6u32 { return 4055014053u32; }
-        return 720136149u32;
+        if Index == 0u32 { return 626200521u32; }
+        if Index == 1u32 { return 127746282u32; }
+        if Index == 2u32 { return 306717968u32; }
+        if Index == 3u32 { return 3426014433u32; }
+        if Index == 4u32 { return 1759384295u32; }
+        if Index == 5u32 { return 1961647416u32; }
+        if Index == 6u32 { return 1525628626u32; }
+        return 3304283207u32;
     }
     if Identity == 2u32 {
-        if Index == 0u32 { return 2006230339u32; }
-        if Index == 1u32 { return 86527595u32; }
-        if Index == 2u32 { return 3793005685u32; }
-        if Index == 3u32 { return 138898310u32; }
-        if Index == 4u32 { return 701570454u32; }
-        if Index == 5u32 { return 1094411277u32; }
-        if Index == 6u32 { return 860461687u32; }
-        return 2438576808u32;
+        if Index == 0u32 { return 4132490945u32; }
+        if Index == 1u32 { return 2497450638u32; }
+        if Index == 2u32 { return 1218998245u32; }
+        if Index == 3u32 { return 1889530054u32; }
+        if Index == 4u32 { return 689426810u32; }
+        if Index == 5u32 { return 2682385738u32; }
+        if Index == 6u32 { return 2040227093u32; }
+        return 901758977u32;
     }
     if Identity == 6u32 && Target == 1u32 {
-        if Index == 0u32 { return 2634787924u32; }
-        if Index == 1u32 { return 2211259226u32; }
-        if Index == 2u32 { return 3897941942u32; }
-        if Index == 3u32 { return 543565394u32; }
-        if Index == 4u32 { return 2980855543u32; }
-        if Index == 5u32 { return 2802180938u32; }
-        if Index == 6u32 { return 2393509812u32; }
-        return 3268267906u32;
+        if Index == 0u32 { return 3179726729u32; }
+        if Index == 1u32 { return 558881446u32; }
+        if Index == 2u32 { return 3826208566u32; }
+        if Index == 3u32 { return 2539895983u32; }
+        if Index == 4u32 { return 3911250065u32; }
+        if Index == 5u32 { return 2280524980u32; }
+        if Index == 6u32 { return 1364088990u32; }
+        return 3424904146u32;
     }
     if Identity == 6u32 {
-        if Index == 0u32 { return 2506123991u32; }
-        if Index == 1u32 { return 796346504u32; }
-        if Index == 2u32 { return 2059350303u32; }
-        if Index == 3u32 { return 3230245978u32; }
-        if Index == 4u32 { return 2514394435u32; }
-        if Index == 5u32 { return 834061956u32; }
-        if Index == 6u32 { return 4116925156u32; }
-        return 3675961729u32;
+        if Index == 0u32 { return 3125814795u32; }
+        if Index == 1u32 { return 859447956u32; }
+        if Index == 2u32 { return 3301286338u32; }
+        if Index == 3u32 { return 2652549943u32; }
+        if Index == 4u32 { return 80578160u32; }
+        if Index == 5u32 { return 2037446687u32; }
+        if Index == 6u32 { return 3982474850u32; }
+        return 571107426u32;
     }
     if Target == 1u32 {
-        if Index == 0u32 { return 287047097u32; }
-        if Index == 1u32 { return 1917460156u32; }
-        if Index == 2u32 { return 2973977198u32; }
-        if Index == 3u32 { return 900280424u32; }
-        if Index == 4u32 { return 3010716959u32; }
-        if Index == 5u32 { return 2826654734u32; }
-        if Index == 6u32 { return 258406104u32; }
-        return 567578216u32;
+        if Index == 0u32 { return 2108914448u32; }
+        if Index == 1u32 { return 2939078482u32; }
+        if Index == 2u32 { return 2489366822u32; }
+        if Index == 3u32 { return 2168192524u32; }
+        if Index == 4u32 { return 2254131144u32; }
+        if Index == 5u32 { return 3153431944u32; }
+        if Index == 6u32 { return 2083404857u32; }
+        return 2121616238u32;
     }
-    if Index == 0u32 { return 263843768u32; }
-    if Index == 1u32 { return 2924379261u32; }
-    if Index == 2u32 { return 3741441689u32; }
-    if Index == 3u32 { return 607914604u32; }
-    if Index == 4u32 { return 2607626663u32; }
-    if Index == 5u32 { return 4135547294u32; }
-    if Index == 6u32 { return 2186412189u32; }
-    return 2942516717u32;
+    if Index == 0u32 { return 22308471u32; }
+    if Index == 1u32 { return 1019321764u32; }
+    if Index == 2u32 { return 3280806006u32; }
+    if Index == 3u32 { return 2121353606u32; }
+    if Index == 4u32 { return 3268513495u32; }
+    if Index == 5u32 { return 1698326020u32; }
+    if Index == 6u32 { return 284492342u32; }
+    return 2461200297u32;
 }
 
 fn Wvoˉpublisherˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
@@ -275,24 +275,24 @@ fn Wvoˉpublisherˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
         return 3515024826u32;
     }
     if Identity == 7u32 && Target == 1u32 {
-        if Index == 0u32 { return 86658221u32; }
-        if Index == 1u32 { return 3442105105u32; }
-        if Index == 2u32 { return 4123030704u32; }
-        if Index == 3u32 { return 1886678331u32; }
-        if Index == 4u32 { return 4255956168u32; }
-        if Index == 5u32 { return 2204477694u32; }
-        if Index == 6u32 { return 266156804u32; }
-        return 2316833269u32;
+        if Index == 0u32 { return 709090063u32; }
+        if Index == 1u32 { return 3116846245u32; }
+        if Index == 2u32 { return 1109215948u32; }
+        if Index == 3u32 { return 3050453156u32; }
+        if Index == 4u32 { return 1583950186u32; }
+        if Index == 5u32 { return 2503389702u32; }
+        if Index == 6u32 { return 1170790976u32; }
+        return 3243349912u32;
     }
     if Identity == 7u32 {
-        if Index == 0u32 { return 2673765038u32; }
-        if Index == 1u32 { return 796272675u32; }
-        if Index == 2u32 { return 327522443u32; }
-        if Index == 3u32 { return 2506424317u32; }
-        if Index == 4u32 { return 689706032u32; }
-        if Index == 5u32 { return 1278594171u32; }
-        if Index == 6u32 { return 1527173421u32; }
-        return 1236514070u32;
+        if Index == 0u32 { return 895087739u32; }
+        if Index == 1u32 { return 1394098278u32; }
+        if Index == 2u32 { return 475365291u32; }
+        if Index == 3u32 { return 626119845u32; }
+        if Index == 4u32 { return 2795703980u32; }
+        if Index == 5u32 { return 356770756u32; }
+        if Index == 6u32 { return 3984930672u32; }
+        return 3068095613u32;
     }
     return Expectedˉword(Identity, Target, Index);
 }
