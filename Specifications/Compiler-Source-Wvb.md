@@ -127,6 +127,13 @@ Normal optimized compilation uses map-only call traversal because function encod
 already performs the complete operation and shape validation pass. The public
 reachability-analysis API retains its full per-function code-size attribution.
 
+The source encoder performs UTF-8 scalar partitioning with the language's checked
+`u32` division and remainder operations over the nonzero constant 64. It does not
+retain the obsolete private quotient/remainder record that preceded those
+operators. This keeps the complete compiler build driver at the native x64
+runtime's explicit 64-record representation bound without changing UTF-8 bytes or
+widening the one-byte native nominal-type encoding.
+
 ## Nominal type translation
 
 WVSD assigns canonical nominal indices independently of source order or module ownership: records sorted by ordinal name first, then enums sorted by ordinal name. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.

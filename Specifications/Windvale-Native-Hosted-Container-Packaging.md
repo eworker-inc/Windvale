@@ -88,6 +88,16 @@ This is current-Windows-host cross-target self-reconstruction: the retained
 candidate remains an input seed, so this command is not a non-circular
 bootstrap or independent Linux-host qualification.
 
+The reconstruction owner also builds the current compiler build-driver WVB into
+private temporary storage through the pinned current-host build driver and feeds
+it to the reconstructed current-host staging producer. The exact 1,153,758-byte
+WVB at SHA-256
+`31c7e5292f607b3b88153ef64a14c64bae438fcfbca75b8495ffba2a5cb991bb`
+contains 64 records and stages into 30,148,873 object bytes across 39 chunks plus
+a 492-byte manifest. This case does not execute or promote the private compiler
+WVB; general verifier, publisher, final-container, and front-door promotion
+remain separate boundaries.
+
 ## Ordered path
 
 After the existing native lowerer and linker produce the raw fragment, or after

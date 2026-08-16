@@ -4,7 +4,7 @@ seed-native-front-door|Test-Seed-Native-Front-Door|1|2|Tests: 1, Passed: 1, Fail
 seed-native-front-door-reconstruction|Test-Seed-Native-Front-Door-Reconstruction|1|2|Tests: 1, Passed: 1, Failed: 0
 seed-native-console-aot|Test-Seed-Native-Console-Aot|1|2|Tests: 1, Passed: 1, Failed: 0
 compiler-reconstruction|Test-Compiler-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
-segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
+segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|6|3|Tests: 6, Passed: 6, Failed: 0
 wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
 wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0

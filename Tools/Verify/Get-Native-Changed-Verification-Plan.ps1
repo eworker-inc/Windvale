@@ -1028,6 +1028,9 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
         Add-Suite 'workspace-project2'
         Add-Compiler-Suites
+        if ($Path -eq 'Tools/Windvale.Build/Compiler-Build-Driver.wv') {
+            Add-Suite 'segmented-compiler-toolset-reconstruction'
+        }
     } elseif ($Path -in @(
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
@@ -1706,6 +1709,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Compiler-Suites
         Add-Suite 'seed-native-front-door'
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Wvb-Core.wv',
+            'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
+            'Projects/Compiler/Windvale-Source-Wvb-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Wvb-Demo.wvproj'
+        )) {
+            Add-Suite 'segmented-compiler-toolset-reconstruction'
+        }
         if ($Path -in @(
             'Compiler/Windvale/Source-Symbols-Core.wv',
             'Compiler/Windvale/Source-Wir-Core.wv'
@@ -2464,6 +2475,12 @@ foreach ($Path in $Paths) {
         $Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'
         Add-WebAssemblyVerification
+    } elseif ($Path -eq 'Projects/Tools/Windvale-Compiler-Build-Driver.wvproj') {
+        Add-Compiler-Suites
+        Add-Suite @(
+            'workspace-project2',
+            'segmented-compiler-toolset-reconstruction'
+        )
     } elseif ($Path -in @(
         'Projects/Tools/Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Projects/Linker/Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',

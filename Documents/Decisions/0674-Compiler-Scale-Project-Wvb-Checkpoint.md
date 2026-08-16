@@ -4,6 +4,7 @@
 - Status: Implemented development-tool checkpoint
 - Extends: [native tool checkpoint contract](../../Specifications/Windvale-Native-Tool-Checkpoint.md)
 - Replaces: project-WVB checkpoint family `project-wvb-v1`
+- Advanced by: [Decision 0696](0696-Restore-Compiler-Scale-Native-Staging-Capacity.md)
 
 ## Context
 
@@ -55,9 +56,10 @@ Local tools no longer spend compiler-build time only to lose an already
 verified compiler-scale WVB at a narrower general publication boundary. Cache
 identity now states the producer that actually establishes admission.
 
-The current staging incompatibility remains visible and fail-closed. It needs
-its own compiler/bootstrap correction rather than weakening the staged
-compiler contract inside this cache.
+At this decision's source state the staging incompatibility remained visible
+and fail-closed. Decision 0696 subsequently removes the one obsolete private
+record that crossed the 64-record native representation bound and adds direct
+current-compiler staging evidence without weakening this cache contract.
 
 ## Reconsideration triggers
 

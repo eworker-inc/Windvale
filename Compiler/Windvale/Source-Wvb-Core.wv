@@ -26,11 +26,6 @@ record Compilerˉsourceˉwvbˉtextˉvalue {
     Value: bytes;
 }
 
-record Compilerˉsourceˉwvbˉdivision {
-    Quotient: u32;
-    Remainder: u32;
-}
-
 record Compilerˉsourceˉwvbˉdigit {
     Value: u32;
     Remainder: u32;
@@ -1151,70 +1146,49 @@ export fn Compilerˉsourceˉwvbˉlowˉbyte(Value: u32) -> bytes {
     return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
 }
 
-export fn Compilerˉsourceˉwvbˉdivideˉsixtyˉfour(Value: u32) -> Compilerˉsourceˉwvbˉdivision {
-    var Quotient: u32 = 0u32;
-    var Remainder: u32 = Value;
-    if Remainder >= 1048576u32 { Remainder = Remainder - 1048576u32; Quotient = Quotient + 16384u32; }
-    if Remainder >= 524288u32 { Remainder = Remainder - 524288u32; Quotient = Quotient + 8192u32; }
-    if Remainder >= 262144u32 { Remainder = Remainder - 262144u32; Quotient = Quotient + 4096u32; }
-    if Remainder >= 131072u32 { Remainder = Remainder - 131072u32; Quotient = Quotient + 2048u32; }
-    if Remainder >= 65536u32 { Remainder = Remainder - 65536u32; Quotient = Quotient + 1024u32; }
-    if Remainder >= 32768u32 { Remainder = Remainder - 32768u32; Quotient = Quotient + 512u32; }
-    if Remainder >= 16384u32 { Remainder = Remainder - 16384u32; Quotient = Quotient + 256u32; }
-    if Remainder >= 8192u32 { Remainder = Remainder - 8192u32; Quotient = Quotient + 128u32; }
-    if Remainder >= 4096u32 { Remainder = Remainder - 4096u32; Quotient = Quotient + 64u32; }
-    if Remainder >= 2048u32 { Remainder = Remainder - 2048u32; Quotient = Quotient + 32u32; }
-    if Remainder >= 1024u32 { Remainder = Remainder - 1024u32; Quotient = Quotient + 16u32; }
-    if Remainder >= 512u32 { Remainder = Remainder - 512u32; Quotient = Quotient + 8u32; }
-    if Remainder >= 256u32 { Remainder = Remainder - 256u32; Quotient = Quotient + 4u32; }
-    if Remainder >= 128u32 { Remainder = Remainder - 128u32; Quotient = Quotient + 2u32; }
-    if Remainder >= 64u32 { Remainder = Remainder - 64u32; Quotient = Quotient + 1u32; }
-    return Compilerˉsourceˉwvbˉdivision(Quotient, Remainder);
-}
-
 export fn Compilerˉsourceˉwvbˉutf8(Codeˉpoint: u32) -> bytes {
     if Codeˉpoint <= 127u32 {
         return Compilerˉsourceˉwvbˉlowˉbyte(Codeˉpoint);
     }
-    let First: Compilerˉsourceˉwvbˉdivision =
-        Compilerˉsourceˉwvbˉdivideˉsixtyˉfour(Codeˉpoint);
+    let Firstˉquotient: u32 = Codeˉpoint / 64u32;
+    let Firstˉremainder: u32 = Codeˉpoint % 64u32;
     if Codeˉpoint <= 2047u32 {
         return Bytesˉconcat(
-            Compilerˉsourceˉwvbˉlowˉbyte(192u32 + First.Quotient),
-            Compilerˉsourceˉwvbˉlowˉbyte(128u32 + First.Remainder)
+            Compilerˉsourceˉwvbˉlowˉbyte(192u32 + Firstˉquotient),
+            Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Firstˉremainder)
         );
     }
-    let Second: Compilerˉsourceˉwvbˉdivision =
-        Compilerˉsourceˉwvbˉdivideˉsixtyˉfour(First.Quotient);
+    let Secondˉquotient: u32 = Firstˉquotient / 64u32;
+    let Secondˉremainder: u32 = Firstˉquotient % 64u32;
     if Codeˉpoint <= 65535u32 {
         var Threeˉbyteˉresult: bytes = Compilerˉsourceˉwvbˉlowˉbyte(
-            224u32 + Second.Quotient
+            224u32 + Secondˉquotient
         );
         Threeˉbyteˉresult = Bytesˉconcat(
             Threeˉbyteˉresult,
-            Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Second.Remainder)
+            Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Secondˉremainder)
         );
         return Bytesˉconcat(
             Threeˉbyteˉresult,
-            Compilerˉsourceˉwvbˉlowˉbyte(128u32 + First.Remainder)
+            Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Firstˉremainder)
         );
     }
-    let Third: Compilerˉsourceˉwvbˉdivision =
-        Compilerˉsourceˉwvbˉdivideˉsixtyˉfour(Second.Quotient);
+    let Thirdˉquotient: u32 = Secondˉquotient / 64u32;
+    let Thirdˉremainder: u32 = Secondˉquotient % 64u32;
     var Fourˉbyteˉresult: bytes = Compilerˉsourceˉwvbˉlowˉbyte(
-        240u32 + Third.Quotient
+        240u32 + Thirdˉquotient
     );
     Fourˉbyteˉresult = Bytesˉconcat(
         Fourˉbyteˉresult,
-        Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Third.Remainder)
+        Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Thirdˉremainder)
     );
     Fourˉbyteˉresult = Bytesˉconcat(
         Fourˉbyteˉresult,
-        Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Second.Remainder)
+        Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Secondˉremainder)
     );
     return Bytesˉconcat(
         Fourˉbyteˉresult,
-        Compilerˉsourceˉwvbˉlowˉbyte(128u32 + First.Remainder)
+        Compilerˉsourceˉwvbˉlowˉbyte(128u32 + Firstˉremainder)
     );
 }
 

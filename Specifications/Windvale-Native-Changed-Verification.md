@@ -28,7 +28,7 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every owner. The complete 70-owner, 3,568-case coordinator
+Unknown input must never select every owner. The complete 92-owner, 4,337-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
 The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace

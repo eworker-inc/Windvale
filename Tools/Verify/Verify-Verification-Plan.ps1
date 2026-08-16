@@ -164,12 +164,28 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'seed-native-front-door',
+            'segmented-compiler-toolset-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction',
             'model-provider',
             'database-storage'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'compiler build-driver project staging capacity'
+        Paths = @('Projects/Tools/Windvale-Compiler-Build-Driver.wvproj')
+        Suites = @(
+            'seed',
+            'segmented-compiler-toolset-reconstruction',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction',
+            'workspace-project2'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -2560,7 +2576,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4336 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4337 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
