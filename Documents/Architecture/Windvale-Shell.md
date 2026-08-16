@@ -22,6 +22,12 @@ The compatibility analysis follows the accepted
 WebAssembly's possible status as a permanent host remains a separate product
 decision; this document defines what compatibility would require from that host.
 
+The exact proposed first grammar and command boundary are extracted into
+[Windvale Shell 1](../Project/Windvale-Shell-1-Proposal.md). The ordered
+[implementation-readiness plan](../Project/Windvale-Shell-Implementation-Readiness.md)
+separates work that can begin with current portable facilities from terminal,
+launch, stream, browser, and Windvale OS prerequisites that remain absent.
+
 ## Product intent
 
 Windvale should have one small capability-native shell implemented in Windvale
@@ -353,6 +359,15 @@ operations. Host adapters may render colors, fonts, cursor shapes, and window
 chrome differently. They must preserve ordered text/key events, bounded resize
 coalescing, interrupt, end-of-input, disconnect, and strict UTF-8 behavior.
 
+The terminal service owns input decoding, the generic editable buffer, cursor
+movement, selection, and rendering. The shell owns prompt content, command-aware
+completion candidates, and history policy. They compose without callbacks: the
+terminal publishes bounded `Submit`, `Complete`, `History`, `Interrupt`, and
+`Disconnect` requests; the shell returns bounded prompt, replacement, candidate,
+or refusal operations. Exact record encodings remain a prerequisite contract,
+but Windows key events, Linux terminal bytes, browser DOM events, and Windvale OS
+scan codes stop at the terminal adapter.
+
 Prompt wording and portable diagnostics should be deterministic when captured.
 Purely visual styling is not part of captured output. Terminal dimensions are
 positive bounded character cells when available; lack of dimensions is explicit
@@ -465,16 +480,21 @@ The first shell should support short familiar aliases where they are clear:
 
 | Canonical identity | Familiar alias | Purpose |
 | --- | --- | --- |
-| `file-read` | `cat` | copy one or more readable files to standard output |
+| `file-read` | `cat` | copy one readable file to standard output in the first profile |
 | `directory-list` | `ls` | list an explicitly bound directory |
 | `file-remove` | `rm` | remove an explicitly selected entry |
 | `process-list` | `ps` | inspect processes visible through one observation grant |
-| `location-show` | `pwd` | display the shell's current directory identity |
 
-The alias catalog must be inspectable, bounded, deterministic, and bound to the
-same active installation generation as command resolution. A user alias, if
-later admitted, maps one token to one exact command identity. It cannot contain
-arguments, operators, expansion, redirection, or another alias.
+`pwd` is a Shell 1 built-in, not an alias for an external `location-show`
+application. The `ls`, `rm`, and `ps` aliases enter later shell-version catalogs
+only when their exact canonical applications and providers exist.
+
+Shell 1 selects one-token command spelling. Its initial aliases are a fixed,
+inspectable part of the shell version and resolve to canonical identities before
+the active-generation resolver runs. An alias that names an unavailable
+canonical command remains unavailable. A user alias, if later admitted, maps one
+token to one exact command identity. It cannot contain arguments, operators,
+expansion, redirection, another alias, or a host executable path.
 
 A shorter command-family presentation is also desirable:
 
@@ -487,19 +507,28 @@ system info
 capability list
 ```
 
-This presentation must not turn one broad `file` or `system` executable into an
-ambiently privileged application. Two designs remain candidates:
+Shell 1 uses this form only for grouped help and completion. Executable spellings
+remain `file-read`, `directory-list`, and familiar one-token aliases. This avoids
+making parse boundaries depend on the installed package catalog: installing a
+new multiword command cannot change the meaning of an existing line. A later
+shell version may revisit registered multiword spellings only with a new grammar,
+an exact conflict rule, and evidence that grouped help plus aliases are
+insufficient.
 
-1. retain hyphenated canonical execution names and use command families only in
-   grouped help and completion; or
-2. let an active generation register a bounded multiword display spelling that
-   resolves directly to the same narrow exact identity.
+### Native host applications
 
-The second design requires an explicit, deterministic prefix-resolution rule
-and package-conflict policy. It must be specified and accepted before the Shell
-1 parser treats a second word as part of a command name. Until then,
-`file-read`, `directory-list`, and familiar one-token aliases are the conservative
-executable spellings.
+Shell 1 launches only applications whose exact Windvale module identity,
+approval, launch profile, and runtime identity are present in the active
+generation. Windows PE, Linux ELF, or Windvale OS native execution may be a
+verified derivative of that admitted WVB; the semantic application identity
+remains the Windvale application.
+
+The shell does not scan a native `PATH`, infer `.exe`, inspect executable mode,
+or pass an unparsed line to PowerShell, `cmd.exe`, Bash, or another host shell.
+A later Windows/Linux-only bridge may expose an explicit command such as
+`host-run` under a separately approved native-execution capability and exact
+executable policy. That bridge is unavailable to portable automation and is not
+part of Shell 1.
 
 ## Built-ins and command applications
 
@@ -510,11 +539,14 @@ itself. The proposed first built-ins are:
 - `clear` for a semantic terminal clear request;
 - `exit` for orderly shell-session completion;
 - `status` for the most recent structured command or pipeline completion;
-- `location-show` or `pwd` for the current directory display identity;
-- `location-change` or `cd` for replacing the shell's current directory
-  capability; and
+- `pwd` for the fixed initial directory display identity; and
 - later, bounded alias, variable, foreground-cancellation, history, and job
   selection operations when their backing contracts exist.
+
+Shell 1 has no `cd`. It starts with one fixed directory capability and display
+identity chosen by the session launcher. Directory navigation follows only after
+a live generation-safe navigation contract can replace that capability without
+turning the display identity into authority.
 
 Inspection and mutation outside the private shell session remain applications.
 The initial application catalog should grow from real provider contracts rather
@@ -528,6 +560,14 @@ than from a desire to imitate another operating system. Candidate families are:
 | Processes | `process-list`, `process-info`, `process-cancel`, `process-stop` |
 | System | `system-info`, `service-list`, `capability-list`, `log-read` |
 | Virtualization | later `vm-list`, `vm-info`, `vm-start`, and `vm-stop` with separately bound attachments |
+
+The first qualification catalog is intentionally smaller than those eventual
+families. It contains the five built-ins above plus candidate applications
+`echo`, `file-read` (alias `cat`), `module-verify`, and `command-info`.
+`file-read` writes exact bytes and appends no newline; if only line-oriented text
+output is available, an interim application must use a different name such as
+`file-show`. `directory-list`, mutation, navigation, redirection, and native-host
+execution are outside the first catalog.
 
 Shipping an application grants nothing. For example, `process-list` receives
 only a bounded observation capability, while `process-stop` requires an exact
@@ -543,17 +583,23 @@ browser Workbench requirement.
 ## Command metadata and discovery
 
 The shell should obtain bounded immutable metadata without executing the target
-application. One command record should eventually describe at least:
+application. Metadata has two different trust roles and must not be represented
+as one loosely versioned help object.
+
+Launch-critical metadata is immutable and identity-bound. It contains:
 
 - canonical identity and optional approved aliases;
 - package, version, module digest, entry point, and platform/profile scope;
-- short summary and versioned help-resource identity;
-- argument and option synopsis sufficient for help and completion;
 - accepted standard-input and produced standard-output kinds;
 - diagnostic and structured-result schemas when present;
 - required and optional semantic capabilities;
 - default resource ceiling profile; and
 - whether the command is interactive, mutating, administrative, or portable.
+
+Presentation metadata is separately digest-bound and contains the short summary,
+usage, option descriptions, examples, completion labels, and later localized
+resources. Presentation metadata cannot select code, expand authority, change
+argument boundaries, or override the launch-critical record.
 
 Human help may evolve with a package version. Machine-readable command metadata
 and output schemas remain versioned. Completion reads metadata and explicitly
@@ -596,10 +642,13 @@ filesystem command discovery, or execution of the current directory. Operator
 punctuation intended for later sequencing, pipelines, and redirection is
 reserved outside quotes.
 
-Exact maximum command bytes, word count, argument bytes, and diagnostic bytes
-must align with process-argument and terminal-event contracts before the grammar
-is frozen. Over-limit input is rejected before resolution or launch and never
-silently truncated.
+The proposed first contract accepts at most 4,096 strict-UTF-8 input bytes and
+at most 68 words: one command plus the existing maximum 67 immutable application
+arguments. It uses only ASCII space and tab as separators, prohibits word-segment
+concatenation, fixes single- and double-quote behavior, and reserves future
+operator characters outside quotes. Over-limit input is rejected before
+resolution or launch and never silently truncated. Exact escapes, result shape,
+and `WVSH1xxx` diagnostics are defined in the focused Shell 1 specification.
 
 The shell parser should be capability-free and shared across all hosts. Its
 conformance suite should cover empty input, whitespace, every quote and escape,
@@ -621,10 +670,11 @@ argument vector, selected streams, and only the concrete provider instances in
 its validated launch plan. The shell's own package, history, terminal, directory,
 or administrative authority is never transferred wholesale.
 
-`cd` replaces the shell's directory capability after a provider resolves the
-requested child or parent under explicit directory-navigation semantics. The
+Shell 1 retains the one directory capability supplied at session launch. Its
 displayed location is informational; it is not a native path and cannot be
-passed to an application as authority.
+passed to an application as authority. A later `cd` replaces the capability only
+after a provider resolves the requested child or parent under an accepted live
+directory-navigation contract.
 
 Secrets do not enter general shell variables, process arguments, aliases, or
 history. A command requiring a secret uses a dedicated capability or a typed
@@ -798,11 +848,11 @@ bootstrap JavaScript shell into a competing permanent command environment.
 
 - review representative interactive sessions for files, packages, processes,
   compilation, denial, cancellation, and provider loss;
-- select canonical naming and decide whether multiword command spellings enter
-  Shell 1;
-- specify the Shell 1 grammar, limits, command metadata, resolver request,
-  semantic launch request, and structured completion;
-- define the first command catalog only from available capabilities; and
+- retain the selected one-token canonical names and fixed versioned aliases;
+- review and accept the proposed Shell 1 grammar, limits, diagnostics, and first
+  catalog;
+- specify the terminal exchange, split command metadata, resolver request,
+  semantic launch request, byte streams, and structured completion;
 - build host-independent parser and resolver conformance fixtures.
 
 ### First real command path
@@ -817,8 +867,9 @@ bootstrap JavaScript shell into a competing permanent command environment.
 
 ### Shell 1
 
-- implement the portable parser, discovery, help, aliases, current location,
-  exact resolution, foreground launch, cancellation, and structured status;
+- implement the portable parser, discovery, help, fixed aliases, fixed current
+  location, exact resolution, foreground launch, cancellation, and structured
+  status;
 - bind it first to the host terminal and browser terminal adapters;
 - bind the same shell to Windvale OS after its terminal-input, resource-domain,
   and dynamic-launch prerequisites are qualified; and
@@ -861,15 +912,9 @@ contract.
 The following choices should be resolved through examples and focused decisions
 before their contracts are implemented:
 
-- Are multiword spellings such as `file read` part of Shell 1, or only grouped
-  help over canonical `file-read` identities?
-- Which familiar aliases ship by default, and can installations add aliases
-  without creating command-shadowing ambiguity?
-- What exact metadata is safe and sufficient for option completion without
-  running application code?
-- What are the Shell 1 command, word, argument, completion, help, and history
-  limits?
-- Which current-location navigation operations can preserve directory-capability
+- Which signed format carries launch-critical versus presentation command
+  metadata, and what exact subset is sufficient for safe completion?
+- Which later directory-navigation operations can preserve capability-relative
   semantics across Windows, Linux, Windvale OS, and browser providers?
 - What is the smallest versioned terminal, resolver, launch, observation,
   directory, and storage provider profile required to call Shell 1 usable?
@@ -883,8 +928,8 @@ before their contracts are implemented:
   pair, and does it justify typed pipelines?
 - Should `command-plan` only validate identities and grants, or also support a
   standardized application-specific dry-run contract?
-- Which terminal editing behavior belongs in the terminal service and which
-  completion/history behavior belongs in the shell?
+- What record encoding carries the selected terminal editing, completion, and
+  history request/reply split without reentrant callbacks?
 - How are portable command help and machine schemas localized without making
   locale part of deterministic resolution or machine output?
 - What minimum recovery command catalog is required before the permanent shell
