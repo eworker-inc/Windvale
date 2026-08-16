@@ -515,6 +515,10 @@ function Add-Hosted-Publisher-Suites {
 
 function Add-Os-Suite {
     param([Parameter(Mandatory)][string]$Path)
+    if ($Path -match 'X64-Process-Final-State-Validation-Epilogue-Emission') {
+        Add-Suite 'os-x64-code-emission'
+        return
+    }
     if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Init-Reply-Publish-Resume|Directory-Reply-Publish-Resume|Init-Return-(?:Program-Validation|Budget-Validation|Store-Directory-Validation)|Provider-(?:User-Transfer|Return-Init-Transfer)|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|User-Transfer|Return-Init-Transfer|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Delivery|Completion-Cleanup|Reclamation-Preflight|Memory-Recycle|Generation-Two-(?:Record|Paging|Image|Endpoint-Rebind|Reentry|Return-Validation|User-Transfer|Return-Init-Transfer|Init-Reply-Publish-Resume|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Lifecycle|Completion-Cleanup|Completion-Finalize-Resume)|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image|Generation-Two-Reply-Publish-Resume)))-Emission') {
         Add-Suite 'os-x64-code-emission'
     } elseif ($Path -match 'Provider-Launch-(?:Transaction|Lifecycle)') {
@@ -2175,6 +2179,8 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
+    } elseif ($Path -match 'X64-Process-Final-State-Validation-Epilogue-Emission') {
+        Add-Suite 'os-x64-code-emission'
     } elseif ($Path.StartsWith('Tests/Fixtures/Operating-System/Os-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Os-', [StringComparison]::Ordinal)) {
         if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Init-Reply-Publish-Resume|Directory-Reply-Publish-Resume|Init-Return-(?:Program-Validation|Budget-Validation|Store-Directory-Validation)|Provider-(?:User-Transfer|Return-Init-Transfer)|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|User-Transfer|Return-Init-Transfer|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Delivery|Completion-Cleanup|Reclamation-Preflight|Memory-Recycle|Generation-Two-(?:Record|Paging|Image|Endpoint-Rebind|Reentry|Return-Validation|User-Transfer|Return-Init-Transfer|Init-Reply-Publish-Resume|Reply-Delivery|Directory-Request-Delivery|Directory-Reply-Lifecycle|Completion-Cleanup|Completion-Finalize-Resume)|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image|Generation-Two-Reply-Publish-Resume)))-Emission') {

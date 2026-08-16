@@ -657,6 +657,8 @@ provenance, revocation, and consensus boundaries are named.
   Completion finalization then validates operation 6, closes and scrubs the
   channel, advances its generation, resumes the selected client, and reaches
   byte 31,199.
+  The final-state epilogue validates every remaining terminal invariant and
+  completes source ownership of all 33,826 process-machine bytes.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

@@ -303,6 +303,11 @@ and scrubs the channel, advances its generation to 2, restores the selected
 client context, and resumes through `sysretq`. Source ownership reaches byte
 31,199; reclamation remains separate.
 
+The terminal 2,626-byte epilogue validates the final supervisor, endpoint,
+channel, retained-resource, mapping, generation-two thread, and memory-record
+state before returning result 6. Source ownership now covers the complete
+33,826-byte retained process-machine oracle.
+
 The first restart policies are deliberately small:
 
 - `Never`;

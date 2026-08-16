@@ -715,4 +715,17 @@ verify "$work/ClientGenerationTwoCompletionFinalizeResume.elf" 36976 4d8a0ee872b
 [[ $? -eq 104 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoCompletionFinalizeResume.bin" 0 "$work/ClientGenerationTwoCompletionFinalizeResume.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoCompletionFinalizeResume.exe" 33792 8bd78651e27f4fe68f67cc69c802605db7ddec7f15e124af71605ac0ca02b45f || exit 1
-echo 'native os x64 code emission status=Passed projects=55 cases=330 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104 cross-host-images=Verified source-owned-bytes=31200 relocation-fields=405'
+echo 'step=process-final-state-validation-epilogue item=56/56'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Final-State-Validation-Epilogue-Emission.wvproj" "$work/FinalStateEpilogue.wvb" >/dev/null || exit $?
+verify "$work/FinalStateEpilogue.wvb" 7636 9c1b7b9123c6d6e65ee1de415e4f62c3b3e21a5e69ee545e5df122514a843f92 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/FinalStateEpilogue.wvb" "$work/FinalStateEpilogue.wvo" >/dev/null || exit $?
+verify "$work/FinalStateEpilogue.wvo" 33014 edb997020073b124f85e4e8a39da8934f2544fe84dddd574759733912cd3bef9 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/FinalStateEpilogue.bin" "$work/FinalStateEpilogue.wvo" >/dev/null || exit $?
+verify "$work/FinalStateEpilogue.bin" 32594 9a5d73d31676446966f531fc7888f8e6c376257850fd2d6d57fff93c80531041 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/FinalStateEpilogue.bin" 0 "$work/FinalStateEpilogue.elf" >/dev/null || exit $?
+verify "$work/FinalStateEpilogue.elf" 36976 c9552badd8d0e6f603eae6f7e161168144b8a90baaa18416a222032c864eb12a || exit 1
+"$work/FinalStateEpilogue.elf" >/dev/null
+[[ $? -eq 105 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/FinalStateEpilogue.bin" 0 "$work/FinalStateEpilogue.exe" >/dev/null || exit $?
+verify "$work/FinalStateEpilogue.exe" 34304 8e06129e570b04da298ca216599dbc997838b9f257afeee961a1397bbe88f7ac || exit 1
+echo 'native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569'

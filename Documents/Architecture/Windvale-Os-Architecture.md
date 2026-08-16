@@ -391,6 +391,11 @@ adds selected-client re-entry, operation-6 validation, exact channel close and
 scrub, generation advancement, context restore, and `sysretq`. Current
 ownership reaches byte 31,199 with 405 relocation fields.
 
+[Decision 0688](../Decisions/0688-Own-The-Process-Machine-Final-State-Epilogue.md)
+owns the terminal validation and result-6 return path. All 33,826 retained
+process-machine bytes and 569 relocation fields are now source-owned; booted
+application execution remains a separate integration claim.
+
 This sequence may interleave with native Windows/Linux work. .NET retirement is complete in `main`, and host-built AOT evidence still does not count as in-guest verification.
 
 ## Deliberately deferred choices

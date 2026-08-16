@@ -64,6 +64,11 @@ relocation fields by validating operation 6, closing and scrubbing the channel,
 advancing its generation to 2, and resuming the selected client. Provider
 shutdown, reclamation, and live QEMU execution remain pending.
 
+The final-state epilogue completes source ownership of all 33,826 retained
+process-machine bytes and 569 relocation fields. This closes the reconstruction
+boundary; integrated boot-image and live QEMU application execution remain the
+next evidence gate.
+
 ## .NET retirement result
 
 `████████████████████  8/8 conditions qualified — complete`

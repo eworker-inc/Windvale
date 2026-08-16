@@ -1279,7 +1279,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoCompletionFinalizeResume.elf" 36976 4d8a0ee872b154f36c4729ca353bb059fba14988c69fe36dc647c1dc2883ca94
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=55 cases=330 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104 cross-host-images=Verified source-owned-bytes=31200 relocation-fields=405
+echo step=process-final-state-validation-epilogue item=56/56
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Final-State-Validation-Epilogue-Emission.wvproj" "%Work%\FinalStateEpilogue.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\FinalStateEpilogue.wvb" 7636 9c1b7b9123c6d6e65ee1de415e4f62c3b3e21a5e69ee545e5df122514a843f92
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\FinalStateEpilogue.wvb" "%Work%\FinalStateEpilogue.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\FinalStateEpilogue.wvo" 33014 edb997020073b124f85e4e8a39da8934f2544fe84dddd574759733912cd3bef9
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\FinalStateEpilogue.bin" "%Work%\FinalStateEpilogue.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\FinalStateEpilogue.bin" 32594 9a5d73d31676446966f531fc7888f8e6c376257850fd2d6d57fff93c80531041
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\FinalStateEpilogue.bin" 0 "%Work%\FinalStateEpilogue.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\FinalStateEpilogue.exe" >nul
+if not "%ERRORLEVEL%"=="105" goto :cleanup
+call :verify "%Work%\FinalStateEpilogue.exe" 34304 8e06129e570b04da298ca216599dbc997838b9f257afeee961a1397bbe88f7ac
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\FinalStateEpilogue.bin" 0 "%Work%\FinalStateEpilogue.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\FinalStateEpilogue.elf" 36976 c9552badd8d0e6f603eae6f7e161168144b8a90baaa18416a222032c864eb12a
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"
