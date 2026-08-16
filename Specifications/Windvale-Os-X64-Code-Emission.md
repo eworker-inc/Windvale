@@ -49,7 +49,7 @@ coordinator entry and fixed three-record ready/wait dispatcher. Verification
 pins its full fixture-equal SHA-256, exact entry displacement, coordinator
 offset, bounded record validation, scan construction, and paired host images.
 
-Ordered consumers now source-own the first 27,139 process-machine bytes and 230
+Ordered consumers now source-own the first 27,470 process-machine bytes and 245
 internal or external relocation fields through checked private construction, privileged
 entry, timer activation, provider entry, provider-return/init transfer, and
 init-return validation of the program, budget, and retained store/directory
@@ -67,11 +67,12 @@ resource accounting, restore user registers, and execute the first generation-2
 `sysretq`, then validate the resumed processor, resource, mapping, alias, and
 context-record state, then adapt the checked user-transfer constructor by its
 single generation byte and execute the second generation-2 `sysretq`. The
-focused owner executes forty-seven projects and 282 cases with local results 50
-through 96.
+focused owner executes forty-eight projects and 288 cases with local results 50
+through 97, including the generation-adapted checked client return that delivers
+result 55 to init through its next `sysretq`.
 
 The module is a migration primitive. Coordinator relocation and channel/
-endpoint initialization are separate consumers. The following return handler,
+endpoint initialization are separate consumers. The following init handler,
 subsequent application lifecycle, remaining syscall and exception handlers,
 context switching, and live QEMU application execution remain before the
 reviewed process-machine fixture can be removed.

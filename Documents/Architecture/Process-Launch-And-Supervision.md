@@ -259,6 +259,12 @@ external page-table activation, GS/continuation publication, private context
 restoration, and `sysretq` remain the same contract. Source ownership reaches
 byte 27,138 at the second generation-2 user entry.
 
+The following 331-byte client return likewise derives the existing checked
+return-to-init constructor with only the returning generation changed from 1 to
+2. It validates result 55, crosses the dispatcher and external page-table seam,
+publishes init's GS/continuation state, and executes the next `sysretq`. Source
+ownership reaches byte 27,469.
+
 The first restart policies are deliberately small:
 
 - `Never`;

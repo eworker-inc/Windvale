@@ -1095,7 +1095,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoUserTransfer.elf" 53360 9a9c9e5ebed6472e6eed72f2d002c72e52629657a579c50c73fc917604790de9
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=47 cases=282 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96 cross-host-images=Verified source-owned-bytes=27139 relocation-fields=230
+echo step=client-generation-two-return-init-transfer item=48/48
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Return-Init-Transfer-Emission.wvproj" "%Work%\ClientGenerationTwoReturnInitTransfer.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.wvb" 4615 b40078fd3d2d928280b697af647bca5a6b399eae9de598e1c43672289f33abcb
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoReturnInitTransfer.wvb" "%Work%\ClientGenerationTwoReturnInitTransfer.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.wvo" 36875 900e0571a75ad5f7ed06ddf2817aea32d26867cbfbed55b64d543aea5e5c5d18
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoReturnInitTransfer.bin" "%Work%\ClientGenerationTwoReturnInitTransfer.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.bin" 36099 efc70741079a752de3c1e4a1e547dd84f365b5a0bd01fa3400d81ab85378319a
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoReturnInitTransfer.bin" 0 "%Work%\ClientGenerationTwoReturnInitTransfer.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoReturnInitTransfer.exe" >nul
+if not "%ERRORLEVEL%"=="97" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.exe" 37888 31a60d1b18a4bdb2f73b37e8e7141dcb9891196812101ba26cfcafbcaafbcbff
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoReturnInitTransfer.bin" 0 "%Work%\ClientGenerationTwoReturnInitTransfer.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.elf" 41072 e57c926117d430ea068b294ec5d9bce0fe35bdf24a0463b15721bdd9b86f5775
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=48 cases=288 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97 cross-host-images=Verified source-owned-bytes=27470 relocation-fields=245
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

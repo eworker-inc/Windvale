@@ -1,0 +1,50 @@
+module X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉemission profile portable;
+
+import X64ˉprocessˉclientˉreturnˉinitˉtransferˉemission as Base;
+
+data Internalˉdisplacements: bytes = [
+    13, 26, 0, 0, 251, 25, 0, 0, 233, 25, 0, 0, 215, 25, 0, 0,
+    193, 25, 0, 0, 179, 25, 0, 0, 165, 25, 0, 0, 151, 25, 0, 0,
+    116, 149, 255, 255, 104, 25, 0, 0, 87, 25, 0, 0, 70, 25, 0, 0,
+    45, 25, 0, 0, 65, 0, 0, 0
+];
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉbytes()
+    -> bytes {
+    let Original: bytes = Base.X64ˉprocessˉclientˉreturnˉinitˉtransferˉbytes();
+    let Generation: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(2u32), 0u32, 1u32);
+    return Bytesˉconcat(
+        Bytesˉslice(Original, 0u32, 112u32),
+        Bytesˉconcat(Generation, Bytesˉslice(Original, 113u32, 218u32))
+    );
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉexternalˉfield()
+    -> u32 {
+    return Base.X64ˉprocessˉclientˉreturnˉinitˉtransferˉexternalˉfield();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉexternalˉsymbol()
+    -> u32 {
+    return Base.X64ˉprocessˉclientˉreturnˉinitˉtransferˉexternalˉsymbol();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉinternalˉfields()
+    -> bytes {
+    return Base.X64ˉprocessˉclientˉreturnˉinitˉtransferˉinternalˉfields();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉinternalˉdisplacements()
+    -> bytes {
+    return Internalˉdisplacements;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉfixtureˉoffset()
+    -> u32 {
+    return 27139u32;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉreturnˉinitˉtransferˉfixtureˉend()
+    -> u32 {
+    return 27470u32;
+}

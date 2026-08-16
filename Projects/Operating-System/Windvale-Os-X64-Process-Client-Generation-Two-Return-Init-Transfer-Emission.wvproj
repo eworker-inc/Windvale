@@ -1,0 +1,4 @@
+windvale-project 2
+root "Operating-System/Kernel/X64-Process-Client-Generation-Two-Return-Init-Transfer-Emission.wv"
+source "Operating-System/Kernel/X64-Process-Client-Return-Init-Transfer-Emission.wv"
+emit wvb
