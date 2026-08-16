@@ -1,0 +1,416 @@
+module Windvaleˉdatabaseˉtransactionˉpaths profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TRANSACTION_PATHS_MAXIMUM_DEPTH: u32 = 8u32;
+const DATABASE_TRANSACTION_PATHS_MAXIMUM_BYTES: u32 = 16777216u32;
+const DATABASE_TRANSACTION_PATHS_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉtransactionˉpathsˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Invalidˉmutations = 2;
+    Unsupportedˉdepth = 3;
+    Invalidˉlength = 4;
+    Invalidˉpage = 5;
+    Pathˉmismatch = 6;
+    Inconsistentˉsharedˉpage = 7;
+    Invalidˉnode = 8;
+    Invalidˉroute = 9;
+    Invalidˉrange = 10;
+}
+
+export record Databaseˉtransactionˉpathsˉresult {
+    Error: Databaseˉtransactionˉpathsˉerror;
+    Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Failedˉpath: u32;
+    Failedˉlevel: u32;
+    Pathˉcount: u32;
+    Uniqueˉleafˉcount: u32;
+    Bytes: bytes;
+}
+
+record Databaseˉtransactionˉpathˉcheck {
+    Error: Databaseˉtransactionˉpathsˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Failedˉlevel: u32;
+    Leaf: u64;
+}
+
+record Databaseˉtransactionˉpathˉmutation {
+    Key: bytes;
+    Next: u32;
+}
+
+fn Databaseˉtransactionˉpathsˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉpathsˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 { return Databaseˉtransactionˉpathsˉempty(); }
+    return Bytesˉslice(Bytesˉconcat(Bytesˉfromˉu8(0u8), Input), 1u32, Total);
+}
+
+fn Databaseˉtransactionˉpathsˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉtransactionˉpathsˉfailure(
+    Error: Databaseˉtransactionˉpathsˉerror,
+    Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Failedˉpath: u32,
+    Failedˉlevel: u32
+) -> Databaseˉtransactionˉpathsˉresult {
+    return Databaseˉtransactionˉpathsˉresult(
+        Error, Mutationsˉerror, Pageˉerror, Nodeˉerror,
+        Failedˉpath, Failedˉlevel, 0u32, 0u32,
+        Databaseˉtransactionˉpathsˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉpathˉcheckˉfailure(
+    Error: Databaseˉtransactionˉpathsˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Failedˉlevel: u32
+) -> Databaseˉtransactionˉpathˉcheck {
+    return Databaseˉtransactionˉpathˉcheck(
+        Error, Pageˉerror, Nodeˉerror, Failedˉlevel,
+        DATABASE_TRANSACTION_PATHS_NO_PAGE
+    );
+}
+
+fn Databaseˉtransactionˉpathˉmutationˉread(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉtransactionˉpathˉmutation {
+    let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+    let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32);
+    let Content: u32 = Offset + 16u32;
+    return Databaseˉtransactionˉpathˉmutation(
+        Bytesˉslice(Input, Content, Keyˉlength),
+        Content + Keyˉlength + Valueˉlength
+    );
+}
+
+fn Databaseˉtransactionˉpathsˉcurrentˉvalid(
+    Current: Superblock.Databaseˉsuperblockˉselection
+) -> bool {
+    return Current.Status ==
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid &&
+        Current.Tailˉbytes == 0u64 &&
+        Current.Pageˉcount > 0u64 &&
+        Current.Rootˉpage < Current.Pageˉcount &&
+        (Current.Pageˉsize == 4096u32 ||
+            Current.Pageˉsize == 8192u32 ||
+            Current.Pageˉsize == 16384u32 ||
+            Current.Pageˉsize == 32768u32 ||
+            Current.Pageˉsize == 65536u32);
+}
+
+fn Databaseˉtransactionˉpathˉcheckˉpage(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Pageˉbytes: bytes,
+    Level: u32,
+    Expectedˉpage: u64
+) -> Databaseˉtransactionˉpathˉcheck {
+    let Durable: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Pageˉbytes);
+    if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉtransactionˉpathˉcheckˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Invalidˉpage,
+            Durable.Error, Tree.Databaseˉtreeˉnodeˉerror.Valid, Level
+        );
+    }
+    if Durable.Pageˉsize != Current.Pageˉsize ||
+        Durable.Pageˉidentifier != Expectedˉpage {
+        return Databaseˉtransactionˉpathˉcheckˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Pathˉmismatch,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild, Level
+        );
+    }
+    if Level == 0u32 && (
+            Durable.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+            Durable.Generation != Current.Generation ||
+            Durable.Commitˉsequence != Current.Committedˉsequence
+        ) || Level > 0u32 && (
+            Durable.Generation > Current.Generation ||
+            Durable.Commitˉsequence > Current.Committedˉsequence
+        ) {
+        return Databaseˉtransactionˉpathˉcheckˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Pathˉmismatch,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild, Level
+        );
+    }
+    return Databaseˉtransactionˉpathˉcheck(
+        Databaseˉtransactionˉpathsˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Level,
+        Durable.Pageˉidentifier
+    );
+}
+
+fn Databaseˉtransactionˉpathˉcheckˉone(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Path: bytes,
+    Key: bytes
+) -> Databaseˉtransactionˉpathˉcheck {
+    var Expectedˉpage: u64 = Current.Rootˉpage;
+    var Hasˉlower: bool = false;
+    var Lower: bytes = Databaseˉtransactionˉpathsˉempty();
+    var Hasˉupper: bool = false;
+    var Upper: bytes = Databaseˉtransactionˉpathsˉempty();
+    var Level: u32 = 0u32;
+    while Level < Current.Rootˉdepth {
+        let Pageˉbytes: bytes = Bytesˉslice(
+            Path, Level * Current.Pageˉsize, Current.Pageˉsize
+        );
+        let Basic: Databaseˉtransactionˉpathˉcheck =
+            Databaseˉtransactionˉpathˉcheckˉpage(
+                Current, Pageˉbytes, Level, Expectedˉpage
+            );
+        if Basic.Error != Databaseˉtransactionˉpathsˉerror.Valid {
+            return Basic;
+        }
+        let Durable: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Pageˉbytes);
+        let Node: Tree.Databaseˉtreeˉnodeˉresult =
+            Tree.Databaseˉtreeˉnodeˉdecode(Durable.Payload);
+        if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            return Databaseˉtransactionˉpathˉcheckˉfailure(
+                Databaseˉtransactionˉpathsˉerror.Invalidˉnode,
+                Page.Databaseˉdurableˉpageˉerror.Valid, Node.Error, Level
+            );
+        }
+        let Isˉleaf: bool = Level + 1u32 == Current.Rootˉdepth;
+        if Isˉleaf {
+            let Leafˉkindˉvalid: bool =
+                Level == 0u32 && Durable.Kind == Page.Databaseˉdurableˉpageˉkind.Root ||
+                Level > 0u32 && Durable.Kind == Page.Databaseˉdurableˉpageˉkind.Leaf;
+            if !Leafˉkindˉvalid || Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
+                Node.Entryˉcount != Durable.Itemˉcount {
+                return Databaseˉtransactionˉpathˉcheckˉfailure(
+                    Databaseˉtransactionˉpathsˉerror.Invalidˉnode,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind, Level
+                );
+            }
+            let Rangeˉerror: Tree.Databaseˉtreeˉnodeˉerror =
+                Tree.Databaseˉtreeˉleafˉrangeˉvalidate(
+                    Durable.Payload, Hasˉlower, Lower, Hasˉupper, Upper
+                );
+            if Rangeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉtransactionˉpathˉcheckˉfailure(
+                    Databaseˉtransactionˉpathsˉerror.Invalidˉrange,
+                    Page.Databaseˉdurableˉpageˉerror.Valid, Rangeˉerror, Level
+                );
+            }
+            return Databaseˉtransactionˉpathˉcheck(
+                Databaseˉtransactionˉpathsˉerror.Valid,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Valid, Level,
+                Durable.Pageˉidentifier
+            );
+        }
+        let Branchˉkindˉvalid: bool =
+            Level == 0u32 && Durable.Kind == Page.Databaseˉdurableˉpageˉkind.Root ||
+            Level > 0u32 && Durable.Kind == Page.Databaseˉdurableˉpageˉkind.Branch;
+        if !Branchˉkindˉvalid || Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+            Node.Entryˉcount != Durable.Itemˉcount {
+            return Databaseˉtransactionˉpathˉcheckˉfailure(
+                Databaseˉtransactionˉpathsˉerror.Invalidˉnode,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind, Level
+            );
+        }
+        let Route: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+            Tree.Databaseˉtreeˉbranchˉroute(
+                Durable.Payload, Key, Hasˉlower, Lower, Hasˉupper, Upper
+            );
+        if Route.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+            Route.Child >= Durable.Pageˉidentifier ||
+            Route.Child >= Current.Pageˉcount {
+            var Routeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Route.Error;
+            if Routeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                Routeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild;
+            }
+            return Databaseˉtransactionˉpathˉcheckˉfailure(
+                Databaseˉtransactionˉpathsˉerror.Invalidˉroute,
+                Page.Databaseˉdurableˉpageˉerror.Valid, Routeˉerror, Level
+            );
+        }
+        Expectedˉpage = Route.Child;
+        Hasˉlower = Route.Hasˉlower;
+        Lower = Route.Lower;
+        Hasˉupper = Route.Hasˉupper;
+        Upper = Route.Upper;
+        Level = Level + 1u32;
+    }
+    return Databaseˉtransactionˉpathˉcheckˉfailure(
+        Databaseˉtransactionˉpathsˉerror.Invalidˉroute,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Invalidˉchild, 0u32
+    );
+}
+
+fn Databaseˉtransactionˉpathsˉsharedˉconsistent(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Paths: bytes,
+    Pathˉindex: u32
+) -> u32 {
+    var Level: u32 = 0u32;
+    while Level < Current.Rootˉdepth {
+        let Currentˉoffset: u32 =
+            (Pathˉindex * Current.Rootˉdepth + Level) * Current.Pageˉsize;
+        let Previousˉoffset: u32 =
+            ((Pathˉindex - 1u32) * Current.Rootˉdepth + Level) * Current.Pageˉsize;
+        let Currentˉbytes: bytes = Bytesˉslice(Paths, Currentˉoffset, Current.Pageˉsize);
+        let Previousˉbytes: bytes = Bytesˉslice(Paths, Previousˉoffset, Current.Pageˉsize);
+        let Currentˉpage: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Currentˉbytes);
+        let Previousˉpage: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(Previousˉbytes);
+        if Currentˉpage.Pageˉidentifier == Previousˉpage.Pageˉidentifier &&
+            !Databaseˉtransactionˉpathsˉsame(Currentˉbytes, Previousˉbytes) {
+            return Level;
+        }
+        Level = Level + 1u32;
+    }
+    return Current.Rootˉdepth;
+}
+
+fn Databaseˉtransactionˉpathsˉuniqueˉleaves(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Paths: bytes,
+    Count: u32
+) -> u32 {
+    var Index: u32 = 0u32;
+    var Unique: u32 = 0u32;
+    var Previous: u64 = DATABASE_TRANSACTION_PATHS_NO_PAGE;
+    while Index < Count {
+        let Offset: u32 =
+            (Index * Current.Rootˉdepth + Current.Rootˉdepth - 1u32) *
+            Current.Pageˉsize;
+        let Leaf: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉdecode(
+                Bytesˉslice(Paths, Offset, Current.Pageˉsize)
+            );
+        if Index == 0u32 || Leaf.Pageˉidentifier != Previous {
+            Unique = Unique + 1u32;
+        }
+        Previous = Leaf.Pageˉidentifier;
+        Index = Index + 1u32;
+    }
+    return Unique;
+}
+
+export fn Databaseˉtransactionˉpathsˉvalidate(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutationsˉbytes: bytes,
+    Paths: bytes
+) -> Databaseˉtransactionˉpathsˉresult {
+    if !Databaseˉtransactionˉpathsˉcurrentˉvalid(Current) {
+        return Databaseˉtransactionˉpathsˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Invalidˉcurrent,
+            Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid, 0u32, 0u32
+        );
+    }
+    let Mutations: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉdecode(Mutationsˉbytes);
+    if Mutations.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Databaseˉtransactionˉpathsˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Invalidˉmutations,
+            Mutations.Error,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid, 0u32, 0u32
+        );
+    }
+    if Current.Rootˉdepth == 0u32 ||
+        Current.Rootˉdepth > DATABASE_TRANSACTION_PATHS_MAXIMUM_DEPTH {
+        return Databaseˉtransactionˉpathsˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Unsupportedˉdepth,
+            Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid, 0u32, 0u32
+        );
+    }
+    if Mutations.Count * Current.Rootˉdepth * Current.Pageˉsize >
+            DATABASE_TRANSACTION_PATHS_MAXIMUM_BYTES ||
+        Bytesˉlength(Paths) !=
+            Mutations.Count * Current.Rootˉdepth * Current.Pageˉsize {
+        return Databaseˉtransactionˉpathsˉfailure(
+            Databaseˉtransactionˉpathsˉerror.Invalidˉlength,
+            Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Page.Databaseˉdurableˉpageˉerror.Invalidˉlength,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid, 0u32, 0u32
+        );
+    }
+    var Mutationˉcursor: u32 = 24u32;
+    var Pathˉindex: u32 = 0u32;
+    while Pathˉindex < Mutations.Count {
+        let Mutation: Databaseˉtransactionˉpathˉmutation =
+            Databaseˉtransactionˉpathˉmutationˉread(Mutations.Bytes, Mutationˉcursor);
+        let Path: bytes = Bytesˉslice(
+            Paths,
+            Pathˉindex * Current.Rootˉdepth * Current.Pageˉsize,
+            Current.Rootˉdepth * Current.Pageˉsize
+        );
+        let Check: Databaseˉtransactionˉpathˉcheck =
+            Databaseˉtransactionˉpathˉcheckˉone(Current, Path, Mutation.Key);
+        if Check.Error != Databaseˉtransactionˉpathsˉerror.Valid {
+            return Databaseˉtransactionˉpathsˉfailure(
+                Check.Error,
+                Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+                Check.Pageˉerror, Check.Nodeˉerror,
+                Pathˉindex, Check.Failedˉlevel
+            );
+        }
+        if Pathˉindex > 0u32 {
+            let Sharedˉfailure: u32 =
+                Databaseˉtransactionˉpathsˉsharedˉconsistent(Current, Paths, Pathˉindex);
+            if Sharedˉfailure < Current.Rootˉdepth {
+                return Databaseˉtransactionˉpathsˉfailure(
+                    Databaseˉtransactionˉpathsˉerror.Inconsistentˉsharedˉpage,
+                    Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+                    Page.Databaseˉdurableˉpageˉerror.Valid,
+                    Tree.Databaseˉtreeˉnodeˉerror.Valid,
+                    Pathˉindex, Sharedˉfailure
+                );
+            }
+        }
+        Mutationˉcursor = Mutation.Next;
+        Pathˉindex = Pathˉindex + 1u32;
+    }
+    return Databaseˉtransactionˉpathsˉresult(
+        Databaseˉtransactionˉpathsˉerror.Valid,
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        0u32, 0u32, Mutations.Count,
+        Databaseˉtransactionˉpathsˉuniqueˉleaves(Current, Paths, Mutations.Count),
+        Databaseˉtransactionˉpathsˉcopy(Paths)
+    );
+}
