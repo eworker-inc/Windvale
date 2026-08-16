@@ -86,10 +86,26 @@ one when reachable and zero otherwise.
 
 Unreachable functions still pass source, symbol, binding, typed-WVIR, and WVB
 operation/shape analysis. An invalid or unsupported body therefore cannot become
-acceptable merely because no export calls it. A future pruning mode must preserve
+acceptable merely because no export calls it. Any pruning mode must preserve
 that validation boundary, remap retained call targets and referenced data through
 explicit canonical tables, preserve every root export, and prove reproducible bytes
 and equivalent retained behavior before it can replace complete emission.
+
+`Compilerˉcompileˉsourceˉwvbˉoptimized` is the first explicit pruning mode. It
+keeps `Compilerˉcompileˉsourceˉwvb` byte-for-byte unchanged while the optimized
+contract is qualified. The optimized path builds a canonical retained-function
+order from the reachability map, remaps every retained direct call through that
+order, and emits every root export at its retained rank. Unreachable functions
+still undergo operation, shape, temporary-slot, parameter, local, return, and
+metadata validation, but contribute no Functions metadata or Code bytes.
+
+Text decoding and explicit data encoding are validated over the complete source
+closure before publication. A second reachable-only text plan then omits synthetic
+literal data used exclusively by unreachable functions. Explicit source data and
+nominal Types remain complete in this slice; pruning those entries requires a
+separate referenced-data and referenced-type closure with canonical index remapping.
+Identical optimized inputs produce identical retained order, section contents, and
+bytes.
 
 ## Nominal type translation
 

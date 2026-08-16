@@ -902,6 +902,69 @@ export fn Compilerˉsourceˉwvbˉfunctionˉorder(
     );
 }
 
+export fn Compilerˉsourceˉwvbˉreachableˉfunctionˉorder(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Order: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Reachability: Compilerˉsourceˉwvbˉreachability
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    var Retainedˉentries: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Fullˉrank: u32 = 0u32;
+    while Fullˉrank < Symbols.Functions {
+        let Candidate: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Order, Fullˉrank
+        );
+        if Bytesˉreadˉu8(Reachability.Map, Candidate) == 1u8 {
+            Retainedˉentries = Bytesˉconcat(
+                Retainedˉentries, Bytesˉfromˉu32ˉlittle(Candidate)
+            );
+        }
+        Fullˉrank = Fullˉrank + 1u32;
+    }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    let Emptyˉranks: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Entries * 4u32);
+    var Retainedˉranks: bytes = Emptyˉranks.Value;
+    var Retainedˉrank: u32 = 0u32;
+    while Retainedˉrank < Reachability.Reachable {
+        let Retained: u32 = Bytesˉreadˉu32ˉlittle(
+            Retainedˉentries, Retainedˉrank * 4u32
+        );
+        let Ranked: Byteˉconstruction.Foundationˉbytesˉresult =
+            Byteˉconstruction.Foundationˉbytesˉreplace(
+                Retainedˉranks,
+                Retained * 4u32,
+                4u32,
+                Bytesˉfromˉu32ˉlittle(Retainedˉrank)
+            );
+        Retainedˉranks = Ranked.Value;
+        Retainedˉrank = Retainedˉrank + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Retainedˉentries, Retainedˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉwithˉfunctionˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
+    Functions: Compilerˉsourceˉwvbˉsymbolˉorder
+) -> Compilerˉsourceˉwvbˉsymbolˉorders {
+    return Compilerˉsourceˉwvbˉsymbolˉorders(
+        Orders.Capabilityˉentries,
+        Orders.Capabilityˉranks,
+        Orders.Dataˉentries,
+        Orders.Dataˉranks,
+        Orders.Recordˉentries,
+        Orders.Recordˉranks,
+        Orders.Enumˉentries,
+        Orders.Enumˉranks,
+        Orders.Variantˉentries,
+        Orders.Variantˉranks,
+        Functions.Entries,
+        Functions.Ranks
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉorderedˉsymbol(
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Rank: u32
@@ -1347,13 +1410,14 @@ export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Functions: u32,
     Wir: bytes
 ) -> Compilerˉsourceˉwvbˉtextˉplan {
     var Plan: Compilerˉsourceˉwvbˉtextˉplan =
         Compilerˉsourceˉwvbˉtextˉplanˉempty(Input);
     let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     var Rank: u32 = 0u32;
-    while Rank < Symbols.Functions {
+    while Rank < Functions {
         let Function: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
         let View: Sourceˉset.Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Function
@@ -2656,7 +2720,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Wir: bytes,
     Function: u32,
-    Codeˉoffset: u32
+    Codeˉoffset: u32,
+    Emitˉcode: bool
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Analysis: Compilerˉsourceˉwvbˉanalysis =
         Compilerˉsourceˉwvbˉanalyzeˉfunction(
@@ -2843,41 +2908,45 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
 
     var Code: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     var Block: u32 = 0u32;
-    while Block < Blockˉcount {
-        let Blockˉentry: u32 = Blocksˉoffset + (Firstˉblock + Block) * 36u32;
-        let Blockˉfirstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
-            Wir, Blockˉentry + 12u32
-        );
-        let Blockˉoperationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-            Wir, Blockˉentry + 16u32
-        );
-        var Inˉblock: u32 = 0u32;
-        while Inˉblock < Blockˉoperationˉcount {
-            let Operationˉentry: u32 = Operationsˉoffset +
-                (Blockˉfirstˉoperation + Inˉblock) * 48u32;
-            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32);
-            if Operationˉkind >= 73u32 { Hasˉoperators = true; }
+    if Emitˉcode {
+        while Block < Blockˉcount {
+            let Blockˉentry: u32 = Blocksˉoffset + (Firstˉblock + Block) * 36u32;
+            let Blockˉfirstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Blockˉentry + 12u32
+            );
+            let Blockˉoperationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Blockˉentry + 16u32
+            );
+            var Inˉblock: u32 = 0u32;
+            while Inˉblock < Blockˉoperationˉcount {
+                let Operationˉentry: u32 = Operationsˉoffset +
+                    (Blockˉfirstˉoperation + Inˉblock) * 48u32;
+                let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Operationˉentry + 12u32
+                );
+                if Operationˉkind >= 73u32 { Hasˉoperators = true; }
+                Code = Bytesˉconcat(
+                    Code,
+                    Compilerˉsourceˉwvbˉemitˉoperation(
+                        Input, Scan, Source, Symbols, Orders, Plan, Wir,
+                        Operationˉentry, Parameters, Locals,
+                        Temporaryˉallocation.Mapping
+                    )
+                );
+                Inˉblock = Inˉblock + 1u32;
+            }
             Code = Bytesˉconcat(
                 Code,
-                Compilerˉsourceˉwvbˉemitˉoperation(
-                    Input, Scan, Source, Symbols, Orders, Plan, Wir,
-                    Operationˉentry, Parameters, Locals,
+                Compilerˉsourceˉwvbˉemitˉterminator(
+                    Wir, Firstˉblock, Blockˉentry,
+                    Analysis.Blockˉoffsets, Parameters, Locals,
                     Temporaryˉallocation.Mapping
                 )
             );
-            Inˉblock = Inˉblock + 1u32;
+            Block = Block + 1u32;
         }
-        Code = Bytesˉconcat(
-            Code,
-            Compilerˉsourceˉwvbˉemitˉterminator(
-                Wir, Firstˉblock, Blockˉentry,
-                Analysis.Blockˉoffsets, Parameters, Locals,
-                Temporaryˉallocation.Mapping
-            )
-        );
-        Block = Block + 1u32;
     }
-    if Bytesˉlength(Code) != Analysis.Codeˉlength {
+    if Emitˉcode && Bytesˉlength(Code) != Analysis.Codeˉlength {
         return Compilerˉsourceˉwvbˉfunctionˉfailure(
             Wir, Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
             Analysis.Failureˉoperation
@@ -3172,7 +3241,10 @@ export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
     );
 }
 
-export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvbˉsummary {
+export fn Compilerˉsourceˉwvbˉcompile(
+    Input: bytes,
+    Optimize: bool
+) -> Compilerˉsourceˉwvbˉsummary {
     let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
         Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
@@ -3204,6 +3276,34 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     );
     let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
         Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(Input, Scan, Symbols);
+    var Emissionˉorders: Compilerˉsourceˉwvbˉsymbolˉorders = Orders;
+    var Emissionˉfunctions: u32 = Symbols.Functions;
+    var Reachableˉmap: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    if Optimize {
+        let Pruning: Compilerˉsourceˉwvbˉreachability =
+            Compilerˉanalyzeˉsourceˉwvbˉreachability(Input);
+        if Pruning.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                Input,
+                Pruning.Status,
+                Pruning.Wirˉstatus,
+                Pruning.Failureˉfunction,
+                Pruning.Failureˉoperation
+            );
+        }
+        let Retainedˉfunctions: Compilerˉsourceˉwvbˉsymbolˉorder =
+            Compilerˉsourceˉwvbˉreachableˉfunctionˉorder(
+                Input,
+                Symbols,
+                Compilerˉsourceˉwvbˉfunctionˉorder(Orders),
+                Pruning
+            );
+        Emissionˉorders = Compilerˉsourceˉwvbˉwithˉfunctionˉorder(
+            Orders, Retainedˉfunctions
+        );
+        Emissionˉfunctions = Pruning.Reachable;
+        Reachableˉmap = Pruning.Map;
+    }
 
     let Capabilityˉencoding: Compilerˉsourceˉwvbˉcapabilityˉencoding =
         Compilerˉsourceˉwvbˉencodeˉcapabilities(
@@ -3220,34 +3320,77 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         );
     }
 
-    let Textˉplan: Compilerˉsourceˉwvbˉtextˉplan =
+    let Validationˉtextˉplan: Compilerˉsourceˉwvbˉtextˉplan =
         Compilerˉsourceˉwvbˉcollectˉtextˉplan(
             Input, Scan, Symbols,
             Compilerˉsourceˉwvbˉfunctionˉorder(Orders),
+            Symbols.Functions,
             Wirˉsummary.Directory
         );
-    if Textˉplan.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+    if Validationˉtextˉplan.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
-            Textˉplan.Status,
+            Validationˉtextˉplan.Status,
             Wirˉsummary.Status,
             Symbols.Functions,
             Wirˉsummary.Operations
         );
     }
-    let Dataˉencoding: Compilerˉsourceˉwvbˉdataˉencoding =
+    var Textˉplan: Compilerˉsourceˉwvbˉtextˉplan = Validationˉtextˉplan;
+    if Optimize {
+        let Emissionˉtextˉplan: Compilerˉsourceˉwvbˉtextˉplan =
+            Compilerˉsourceˉwvbˉcollectˉtextˉplan(
+                Input, Scan, Symbols,
+                Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders),
+                Emissionˉfunctions,
+                Wirˉsummary.Directory
+            );
+        if Emissionˉtextˉplan.Status !=
+            Compilerˉsourceˉwvbˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                Input,
+                Emissionˉtextˉplan.Status,
+                Wirˉsummary.Status,
+                Symbols.Functions,
+                Wirˉsummary.Operations
+            );
+        }
+        Textˉplan = Emissionˉtextˉplan;
+    }
+    let Validationˉdataˉencoding: Compilerˉsourceˉwvbˉdataˉencoding =
         Compilerˉsourceˉwvbˉencodeˉdata(
-            Input, Scan, Symbols, Textˉplan,
+            Input, Scan, Symbols, Validationˉtextˉplan,
             Compilerˉsourceˉwvbˉdataˉorder(Orders)
         );
-    if Dataˉencoding.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+    if Validationˉdataˉencoding.Status !=
+        Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
-            Dataˉencoding.Status,
+            Validationˉdataˉencoding.Status,
             Wirˉsummary.Status,
             Symbols.Functions,
             Wirˉsummary.Operations
         );
+    }
+    var Dataˉencoding: Compilerˉsourceˉwvbˉdataˉencoding =
+        Validationˉdataˉencoding;
+    if Optimize {
+        let Emissionˉdataˉencoding: Compilerˉsourceˉwvbˉdataˉencoding =
+            Compilerˉsourceˉwvbˉencodeˉdata(
+                Input, Scan, Symbols, Textˉplan,
+                Compilerˉsourceˉwvbˉdataˉorder(Orders)
+            );
+        if Emissionˉdataˉencoding.Status !=
+            Compilerˉsourceˉwvbˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                Input,
+                Emissionˉdataˉencoding.Status,
+                Wirˉsummary.Status,
+                Symbols.Functions,
+                Wirˉsummary.Operations
+            );
+        }
+        Dataˉencoding = Emissionˉdataˉencoding;
     }
     let Typeˉencoding: Compilerˉsourceˉwvbˉtypeˉencoding =
         Compilerˉsourceˉwvbˉencodeˉtypes(
@@ -3266,7 +3409,47 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         );
     }
 
-    var Functionˉpayload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Functions);
+    if Optimize {
+        var Validationˉrank: u32 = 0u32;
+        while Validationˉrank < Symbols.Functions {
+            let Validationˉfunction: u32 =
+                Compilerˉsourceˉwvbˉorderedˉsymbol(
+                    Compilerˉsourceˉwvbˉfunctionˉorder(Orders),
+                    Validationˉrank
+                );
+            if Bytesˉreadˉu8(Reachableˉmap, Validationˉfunction) == 0u8 {
+                let Validationˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                    Compilerˉsourceˉwvbˉsymbolˉsource(
+                        Input, Scan, Symbols, Validationˉfunction
+                    );
+                let Validationˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader =
+                    Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                        Validationˉview.Source
+                    );
+                let Validationˉencoding: Compilerˉsourceˉwvbˉfunctionˉencoding =
+                    Compilerˉsourceˉwvbˉencodeˉfunction(
+                        Input, Scan,
+                        Validationˉview.Source, Validationˉheader,
+                        Symbols, Bindings, Orders, Validationˉtextˉplan,
+                        Wirˉsummary.Directory, Validationˉfunction,
+                        0u32, false
+                    );
+                if Validationˉencoding.Status !=
+                    Compilerˉsourceˉwvbˉstatus.Valid {
+                    return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                        Input,
+                        Validationˉencoding.Status,
+                        Wirˉsummary.Status,
+                        Validationˉrank,
+                        Validationˉencoding.Failureˉoperation
+                    );
+                }
+            }
+            Validationˉrank = Validationˉrank + 1u32;
+        }
+    }
+
+    var Functionˉpayload: bytes = Bytesˉfromˉu32ˉlittle(Emissionˉfunctions);
     var Codeˉpayload: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Exportˉentries: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Exportˉcount: u32 = 0u32;
@@ -3274,9 +3457,9 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     var Functionˉrank: u32 = 0u32;
     var Hasˉcollections: bool = Typeˉencoding.Hasˉcollections;
     var Hasˉoperators: bool = false;
-    while Functionˉrank < Symbols.Functions {
+    while Functionˉrank < Emissionˉfunctions {
         let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
-            Compilerˉsourceˉwvbˉfunctionˉorder(Orders), Functionˉrank
+            Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders), Functionˉrank
         );
         let Functionˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
             Compilerˉsourceˉwvbˉsymbolˉsource(
@@ -3290,8 +3473,8 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         let Encoded: Compilerˉsourceˉwvbˉfunctionˉencoding =
             Compilerˉsourceˉwvbˉencodeˉfunction(
                 Input, Scan, Functionˉview.Source, Functionˉheader,
-                Symbols, Bindings, Orders, Textˉplan,
-                Wirˉsummary.Directory, Functionˉentry, Codeˉoffset
+                Symbols, Bindings, Emissionˉorders, Textˉplan,
+                Wirˉsummary.Directory, Functionˉentry, Codeˉoffset, true
             );
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -3401,10 +3584,22 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     return Compilerˉsourceˉwvbˉsummary(
         Compilerˉsourceˉwvbˉstatus.Valid,
         Wirˉsummary.Status,
-        Symbols.Functions,
+        Emissionˉfunctions,
         Bytesˉlength(Codeˉpayload),
         Bytecode,
         Symbols.Functions,
         Wirˉsummary.Operations
     );
+}
+
+export fn Compilerˉcompileˉsourceˉwvb(
+    Input: bytes
+) -> Compilerˉsourceˉwvbˉsummary {
+    return Compilerˉsourceˉwvbˉcompile(Input, false);
+}
+
+export fn Compilerˉcompileˉsourceˉwvbˉoptimized(
+    Input: bytes
+) -> Compilerˉsourceˉwvbˉsummary {
+    return Compilerˉsourceˉwvbˉcompile(Input, true);
 }

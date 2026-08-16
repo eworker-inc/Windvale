@@ -46,6 +46,21 @@ fn Compilerˉsourceˉwvbˉdemoˉpair(Root: text, Dependency: text) -> bytes {
     );
 }
 
+fn Compilerˉsourceˉwvbˉdemoˉdataˉcount(Bytecode: bytes) -> u32 {
+    var Offset: u32 = 12u32;
+    var Section: u32 = 0u32;
+    while Section < 7u32 {
+        let Kind: u8 = Bytesˉreadˉu8(Bytecode, Offset);
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Bytecode, Offset + 4u32);
+        if Kind == 3u8 {
+            return Bytesˉreadˉu32ˉlittle(Bytecode, Offset + 8u32);
+        }
+        Offset = Offset + 8u32 + Length;
+        Section = Section + 1u32;
+    }
+    return 4294967295u32;
+}
+
 export fn Main() -> i32 {
     let Valid: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉinput(
@@ -152,6 +167,42 @@ export fn Main() -> i32 {
         Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings ||
         Bytesˉlength(Invalidˉreachability.Map) != 0u32 {
         return 27;
+    }
+    let Optimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+            Reachabilityˉinput
+        );
+    if Optimized.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid ||
+        Optimized.Functions != Reachability.Reachable ||
+        Optimized.Codeˉbytes != Reachability.Reachableˉcodeˉbytes {
+        return 28;
+    }
+    if Bytesˉlength(Optimized.Bytecode) >=
+        Bytesˉlength(Reachabilityˉcompiled.Bytecode) {
+        return 29;
+    }
+    let Repeatedˉoptimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+            Reachabilityˉinput
+        );
+    if Repeatedˉoptimized.Bytecode != Optimized.Bytecode { return 30; }
+    let Literalˉinput: bytes = Compilerˉsourceˉwvbˉdemoˉinput(
+        "module Wvbˉliteralˉpruning profile portable; fn Dead() -> text { return \"unused\"; } fn Live() -> text { return \"used\"; } export fn Main() -> text { return Live(); }"
+    );
+    let Literalˉfull: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Literalˉinput);
+    let Literalˉoptimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(Literalˉinput);
+    if Literalˉfull.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid ||
+        Literalˉoptimized.Status !=
+        Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
+        return 31;
+    }
+    if Compilerˉsourceˉwvbˉdemoˉdataˉcount(Literalˉfull.Bytecode) != 2u32 ||
+        Compilerˉsourceˉwvbˉdemoˉdataˉcount(
+            Literalˉoptimized.Bytecode
+        ) != 1u32 {
+        return 32;
     }
     return 0;
 }
