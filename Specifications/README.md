@@ -86,6 +86,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Provider-neutral model protocol version 1](Windvale-Model-Protocol.md)
 - [Bound hosted model provider](Windvale-Bound-Model-Provider.md)
 - [External-model reference oracle](Windvale-External-Model-Reference.md)
+- [Supervised host network provider](Host-Network-Provider.md)
 
 ## Networking
 

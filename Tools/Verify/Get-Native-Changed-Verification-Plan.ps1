@@ -809,6 +809,14 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Bound-Model-Provider.md'
     )) {
         Add-Suite 'model-provider'
+    } elseif ($Path.StartsWith('Runtime/Hosted/Network/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Tools/Native/Test-Host-Network-Provider.cmd',
+            'Tools/Native/Test-Host-Network-Provider.sh',
+            'Specifications/Host-Network-Provider.md'
+        )) {
+        Add-Suite 'host-network-provider'
     } elseif ($Path.StartsWith('Tools/Models/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-External-Model-Reference.cmd',

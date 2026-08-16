@@ -53,6 +53,7 @@ external-model-reference|Test-External-Model-Reference|24|4|external model refer
 operation-core|Test-Bounded-Operation-Core|10|4|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
 network-authority|Test-Network-Address-Authority|12|4|native network authority status=Passed cases=12 local-result=42 cross-host-images=Verified
 network-connect-stream|Test-Network-Connect-Stream-Core|13|4|native network connect stream status=Passed cases=13 local-result=42 cross-host-images=Verified
+host-network-provider|Test-Host-Network-Provider|25|4|host network provider status=Passed platforms=2 cases=25 current-host=Verified public-network=0 credentials=0
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
 database-storage|Test-Database-Storage|24|1|native database storage status=Passed cases=24 local-results=0 cross-host-images=Verified

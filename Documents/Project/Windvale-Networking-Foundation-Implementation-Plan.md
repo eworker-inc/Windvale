@@ -3,12 +3,15 @@
 ## Status
 
 - Date: 2026-08-15
-- Status: Active implementation; slices 1 and 2 plus the Layer 3 contract core
-  are implemented candidates under
+- Status: Active implementation; slices 1 and 2, the Layer 3 contract core, and
+  the first supervised slice 4 bootstrap provider are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
   [Decision 0594](../Decisions/0594-First-Network-Address-Endpoint-And-Authority-Model.md),
-  and [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
-  and no network capability is yet claimed
+  [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
+  and [Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md).
+  The hosted provider has isolated Windows execution evidence; independent
+  Linux execution and the native capability bridge remain pending, so no
+  production network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
 - First package consumer: [package-system implementation plan](Windvale-Package-System-Implementation-Plan.md)
@@ -201,6 +204,10 @@ MTU change, exhaustion, reset, and provider loss without using the public Intern
 
 ### Network slice 4: host semantic providers
 
+Status: bootstrap mechanism implemented under
+[Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md);
+production bridge and promotion remain pending.
+
 Bind constrained Windows and Linux resolver/connect, stream, datagram, monotonic
 timer, secure entropy, civil-time, trust, and secure-stream providers. Begin with
 one operation in flight per bound instance if necessary, but keep the versioned
@@ -210,6 +217,14 @@ Exit gate: both hosts produce the same semantic reports for authorized and denie
 peers, partial I/O, cancellation, timeout, close, reset, stale providers, malformed
 responses, trust failure, and entropy/time unavailability. Live Internet access is
 smoke evidence only.
+
+The first supervised provider now binds one exact service/port and finite
+connection, byte, deadline, and lifetime limits. It performs host `getaddrinfo`
+and real TCP connect/read/write/half-close through pinned Node in a child with an
+empty environment and strict `WVNR/WVNS 1` framing. Twenty-five isolated
+loopback cases pass on Windows. The source and owner are shared with Linux, but
+independent Linux execution, the Windvale capability-table/timer bridge, and
+thin Node-free Winsock/Linux leaves remain required by this slice's exit gate.
 
 ### Network slice 5: shared secure HTTP retrieval
 
@@ -259,12 +274,13 @@ and cryptographic vectors.
 
 ## Immediate recommendation
 
-The `v0.1.0` offline installer and release subset is complete, and Decision 0596
+The `v0.1.0` offline installer and release subset is complete, and Decision 0598
 now supplies two selected Milestone 5 consumers: official package retrieval and
 the external-model gateway. Preserve the implemented slice 1 and slice 2
-candidates, close slice 2's independent Linux execution, and advance the
-required native timer/stream/secure-transport providers and shared bounded HTTP
-framing without weakening the separately owned deterministic packet work. Do not add a synchronous
+candidates, close the independent Linux execution gaps, bind the supervised
+host provider through the native capability table and timer contract, then
+advance secure transport and shared bounded HTTP framing without weakening the
+separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking
 does not claim completion of the independent Windvale OS packet, driver, or TCP
 workstream.
