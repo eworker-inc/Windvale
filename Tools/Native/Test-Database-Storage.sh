@@ -19,43 +19,46 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=43
+        selected_cases=45
         ;;
     tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
         ;;
     transaction-branch-pages)
-        selected_cases=3
+        selected_cases=5
         ;;
     transaction-ancestor-groups)
-        selected_cases=4
+        selected_cases=6
         ;;
     transaction-ancestor-pages)
-        selected_cases=2
+        selected_cases=4
         ;;
     transaction-root-growth)
+        selected_cases=4
+        ;;
+    transaction-tree-completion)
         selected_cases=2
         ;;
     transaction-parent-groups)
-        selected_cases=4
-        ;;
-    transaction-leaf-pages)
-        selected_cases=5
-        ;;
-    transaction-branch-partition)
-        selected_cases=11
-        ;;
-    transaction-leaf-groups)
         selected_cases=6
         ;;
-    transaction-leaf-partition)
+    transaction-leaf-pages)
         selected_cases=7
         ;;
+    transaction-branch-partition)
+        selected_cases=13
+        ;;
+    transaction-leaf-groups)
+        selected_cases=8
+        ;;
+    transaction-leaf-partition)
+        selected_cases=9
+        ;;
     transaction-paths)
-        selected_cases=11
+        selected_cases=13
         ;;
     transaction)
-        selected_cases=16
+        selected_cases=18
         ;;
     host-tree-reader)
         selected_cases=2
@@ -281,6 +284,84 @@ if ((prepare_only == 1)); then
     echo "native database storage development tools status=Passed checkpoint=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
     exit 0
 fi
+
+verify_segmented_target() {
+    local label=$1 project_path=$2
+    local first_wvb="$temporary_directory/$label-Segmented-First.wvb"
+    local second_wvb="$temporary_directory/$label-Segmented-Second.wvb"
+    local object_prefix="$temporary_directory/$label-Object"
+    local object_manifest="$temporary_directory/$label-Object.wvop"
+    local image_prefix="$temporary_directory/$label-Staged-Image"
+    local image_manifest="$temporary_directory/$label-Staged-Image.wvli"
+    local canonical_prefix="$temporary_directory/$label-Canonical"
+    local canonical_manifest="$temporary_directory/$label-Canonical.wvli"
+    local stage_report="$temporary_directory/$label-Stage.txt"
+    local link_report="$temporary_directory/$label-Staged-Link.txt"
+    local transport_report="$temporary_directory/$label-Transport.txt"
+    local linux_application="$temporary_directory/$label-Segmented.elf"
+    local windows_application="$temporary_directory/$label-Segmented.exe"
+    local project_checkpoint=Rebuilt
+    local application_checkpoint=Rebuilt
+    local target_start=$SECONDS
+
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" \
+        "$first_wvb" >/dev/null || return $?
+    if ((development == 0)); then
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" \
+            "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    fi
+    "$script_directory/Stage-Compiler-Wvb.sh" \
+        "$first_wvb" "$object_prefix" "$object_manifest" \
+        > "$stage_report" || return $?
+    "$script_directory/Link-Staged-Compiler-Wvo.sh" \
+        "$object_prefix" "$object_manifest" "$image_prefix" "$image_manifest" \
+        > "$link_report" || return $?
+    "$script_directory/Transport-Compiler-Image.sh" \
+        "$image_prefix" "$image_manifest" "$canonical_prefix" "$canonical_manifest" \
+        > "$transport_report" || return $?
+    local entry_offset fragment_count
+    entry_offset=$(sed -n \
+        's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=\([0-9][0-9]*\) chunks=[1-8] manifest-bytes=[0-9][0-9]*$/\1/p' \
+        "$transport_report")
+    fragment_count=$(sed -n \
+        's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=[0-9][0-9]* chunks=\([1-8]\) manifest-bytes=[0-9][0-9]*$/\1/p' \
+        "$transport_report")
+    case "$entry_offset" in ''|*[!0-9]*) return 1 ;; esac
+    case "$fragment_count" in [1-8]) ;; *) return 1 ;; esac
+
+    if ((development == 1)); then
+        local application_cache_report="$temporary_directory/$label-Segmented-Application-Cache.txt"
+        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+            "$first_wvb" "$canonical_prefix" "$fragment_count" "$entry_offset" \
+            "$linux_application" linux > "$application_cache_report" || return $?
+        application_checkpoint=$(sed -n \
+            's/^native hosted application cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* target=linux$/\1/p' \
+            "$application_cache_report")
+        [[ $application_checkpoint == Created ||
+            $application_checkpoint == Hit ]] || return 1
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$canonical_prefix" "$fragment_count" "$entry_offset" \
+            "$linux_application" linux >/dev/null || return $?
+    fi
+    "$linux_application" >/dev/null
+    local application_result=$?
+    if [[ $application_result -ne 0 ]]; then
+        echo "The $label segmented database-storage case returned $application_result, expected 0." >&2
+        return 1
+    fi
+    if ((development == 1)); then
+        local target_elapsed_ms=$(((SECONDS - target_start) * 1000))
+        echo "PASS  native database storage development step=portable-segmented-target item=$progress_current/$progress_total target=$development_target case=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=Segmented application=linux-$application_checkpoint"
+        portable_project_checkpoints+="$label:$project_checkpoint/link-Segmented,"
+        portable_application_checkpoints+="$label:linux-$application_checkpoint,"
+    else
+        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+            "$first_wvb" "$canonical_prefix" "$fragment_count" "$entry_offset" \
+            "$windows_application" windows >/dev/null || return $?
+    fi
+}
 
 verify_target() {
     local label=$1 project_path=$2
@@ -1509,6 +1590,26 @@ verify_development_target() {
     }
 }
 
+verify_segmented_development_target() {
+    local label=$1 target=$2 project=$3 group selected=0
+    shift 3
+    if [[ $development_target == all || $development_target == "$target" ]]; then
+        selected=1
+    fi
+    for group in "$@"; do
+        if [[ $development_target == "$group" ]]; then selected=1; fi
+    done
+    if ((selected == 0)); then
+        return 0
+    fi
+    progress_current=$((progress_current + 1))
+    echo "START native database storage development step=$target item=$progress_current/$progress_total target=$development_target"
+    verify_segmented_target "$label" "$project" || {
+        echo "The native database storage development $target segmented stage failed." >&2
+        return 1
+    }
+}
+
 verify_development_host_targets() {
     host_storage_elapsed_ms=0
     host_root_writer_elapsed_ms=0
@@ -1705,6 +1806,18 @@ if ((development == 1)); then
     verify_development_target TransactionRootGrowthMultiLevel transaction-root-growth \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj" \
         transaction transaction-branch-partition || exit $?
+    verify_segmented_development_target TransactionTreeCompletion transaction-tree-completion \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj" \
+        transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
+        transaction-leaf-pages transaction-parent-groups transaction-branch-pages \
+        transaction-branch-partition transaction-ancestor-groups transaction-ancestor-pages \
+        transaction-root-growth || exit $?
+    verify_segmented_development_target TransactionTreeCompletionRootGrowth transaction-tree-completion \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj" \
+        transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
+        transaction-leaf-pages transaction-parent-groups transaction-branch-pages \
+        transaction-branch-partition transaction-ancestor-groups transaction-ancestor-pages \
+        transaction-root-growth || exit $?
     verify_development_target QueryIr query-ir \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql || exit $?
     verify_development_target SqlLowerer sql-lowerer \
@@ -1791,6 +1904,10 @@ verify_target TransactionRootGrowth \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj" || exit $?
 verify_target TransactionRootGrowthMultiLevel \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj" || exit $?
+verify_segmented_target TransactionTreeCompletion \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj" || exit $?
+verify_segmented_target TransactionTreeCompletionRootGrowth \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj" || exit $?
 verify_target QueryIr \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" || exit $?
 verify_target SqlLowerer \
@@ -1853,4 +1970,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=51 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=53 local-results=0 cross-host-images=Verified'

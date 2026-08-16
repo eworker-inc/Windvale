@@ -95,6 +95,6 @@ output, invalid allocation, exhausted depth, malformed manifests, digest
 mismatch, and a digest-bound invalid page. Existing branch-partition tests
 protect the shared packing refactor.
 
-The next milestone composes `WVAG 1` and `WVAP 1` in a bounded descending loop,
-then invokes `WVRG 1` only when the final old-root replacement has multiple
-children.
+[`WVTC 1`](Windvale-Database-Transaction-Tree-Completion.md) now composes
+`WVAG 1` and `WVAP 1` in a bounded descending loop, then invokes `WVRG 1` only
+when the final old-root replacement has multiple children.

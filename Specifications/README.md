@@ -89,6 +89,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Portable local database service session](Windvale-Database-Local-Service.md)
 - [Durable transaction ancestor-page allocation](Windvale-Database-Transaction-Ancestor-Pages.md)
 - [Bounded durable transaction root growth](Windvale-Database-Transaction-Root-Growth.md)
+- [Bounded transaction tree completion](Windvale-Database-Transaction-Tree-Completion.md)
 - [Native capability-provider table](Windvale-Native-Capability-Provider-Table.md)
 - [Native capability-provider call](Windvale-Native-Provider-Call.md)
 - [Native execution-context version 9 construction](Windvale-Native-Execution-Context-9-Construction.md)

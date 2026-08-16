@@ -2065,6 +2065,23 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-root-growth'
     },
     @{
+        Name = 'focused database transaction-tree-completion owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Tree-Completion.wv',
+            'Projects/Libraries/Windvale-Library-Database-Transaction-Tree-Completion.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Tree-Completion-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Tree-Completion-Root-Growth-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Tree-Completion.md'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-tree-completion'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',

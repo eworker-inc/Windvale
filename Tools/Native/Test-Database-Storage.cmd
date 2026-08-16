@@ -24,24 +24,25 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=43"
+set "SelectedCases=45"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
     tree-node logical-record typed-row transaction-mutations transaction-leaf-rewrite query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
     branch-split root-split depth-two depth-three depth-three-upsert
     tree-path-upsert tree-path-delete host-storage
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
-if /I "%DevelopmentTarget%"=="transaction-branch-pages" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="transaction-ancestor-groups" set "SelectedCases=4"
-if /I "%DevelopmentTarget%"=="transaction-ancestor-pages" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="transaction-root-growth" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="transaction-parent-groups" set "SelectedCases=4"
-if /I "%DevelopmentTarget%"=="transaction-leaf-pages" set "SelectedCases=5"
-if /I "%DevelopmentTarget%"=="transaction-branch-partition" set "SelectedCases=11"
-if /I "%DevelopmentTarget%"=="transaction-leaf-groups" set "SelectedCases=6"
-if /I "%DevelopmentTarget%"=="transaction-paths" set "SelectedCases=11"
-if /I "%DevelopmentTarget%"=="transaction-leaf-partition" set "SelectedCases=7"
-if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=16"
+if /I "%DevelopmentTarget%"=="transaction-branch-pages" set "SelectedCases=5"
+if /I "%DevelopmentTarget%"=="transaction-ancestor-groups" set "SelectedCases=6"
+if /I "%DevelopmentTarget%"=="transaction-ancestor-pages" set "SelectedCases=4"
+if /I "%DevelopmentTarget%"=="transaction-root-growth" set "SelectedCases=4"
+if /I "%DevelopmentTarget%"=="transaction-tree-completion" set "SelectedCases=2"
+if /I "%DevelopmentTarget%"=="transaction-parent-groups" set "SelectedCases=6"
+if /I "%DevelopmentTarget%"=="transaction-leaf-pages" set "SelectedCases=7"
+if /I "%DevelopmentTarget%"=="transaction-branch-partition" set "SelectedCases=13"
+if /I "%DevelopmentTarget%"=="transaction-leaf-groups" set "SelectedCases=8"
+if /I "%DevelopmentTarget%"=="transaction-paths" set "SelectedCases=13"
+if /I "%DevelopmentTarget%"=="transaction-leaf-partition" set "SelectedCases=9"
+if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=18"
 if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
 if /I "%DevelopmentTarget%"=="host-tree-delete" set "SelectedCases=4"
 if /I "%DevelopmentTarget%"=="host-tree-scan" set "SelectedCases=3"
@@ -179,6 +180,10 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionRootGrowthMultiLevel transaction-root-growth "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj" transaction transaction-branch-partition
     if errorlevel 1 goto :cleanup
+    call :verify_segmented_development_target TransactionTreeCompletion transaction-tree-completion "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj" transaction transaction-branch-partition
+    if errorlevel 1 goto :cleanup
+    call :verify_segmented_development_target TransactionTreeCompletionRootGrowth transaction-tree-completion "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj" transaction transaction-branch-partition
+    if errorlevel 1 goto :cleanup
     call :verify_development_target QueryIr query-ir "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql
     if errorlevel 1 goto :cleanup
     call :verify_development_target SqlLowerer sql-lowerer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Sql-Lowerer.wvproj" query-sql typed-query-sql
@@ -299,6 +304,12 @@ if errorlevel 1 goto :cleanup
 call :verify_target TransactionRootGrowthMultiLevel ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj"
 if errorlevel 1 goto :cleanup
+call :verify_segmented_target TransactionTreeCompletion ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_segmented_target TransactionTreeCompletionRootGrowth ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj"
+if errorlevel 1 goto :cleanup
 call :verify_target QueryIr ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj"
 if errorlevel 1 goto :cleanup
@@ -407,7 +418,7 @@ if "%Development%"=="1" (
     echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%
     exit /b 0
 )
-echo native database storage status=Passed cases=52 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=54 local-results=0 cross-host-images=Verified
 exit /b 0
 
 :verify_development_target
@@ -419,6 +430,21 @@ call echo START native database storage development step=%~2 item=%%ProgressCurr
 call :verify_target "%~1" "%~3"
 if errorlevel 1 (
     >&2 echo The native database storage development %~2 stage failed.
+    exit /b 1
+)
+exit /b 0
+
+:verify_segmented_development_target
+if /I "%DevelopmentTarget%"=="all" goto :verify_segmented_development_target_selected
+if /I "%DevelopmentTarget%"=="%~2" goto :verify_segmented_development_target_selected
+for %%T in (transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-parent-groups transaction-branch-pages transaction-branch-partition transaction-ancestor-groups transaction-ancestor-pages transaction-root-growth) do if /I "%DevelopmentTarget%"=="%%T" goto :verify_segmented_development_target_selected
+exit /b 0
+:verify_segmented_development_target_selected
+set /a ProgressCurrent+=1
+call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
+call :verify_segmented_target "%~1" "%~3"
+if errorlevel 1 (
+    >&2 echo The native database storage development %~2 segmented stage failed.
     exit /b 1
 )
 exit /b 0
@@ -2155,6 +2181,91 @@ if not "%ERRORLEVEL%"=="0" (
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
 if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:verify_segmented_target
+setlocal EnableExtensions DisableDelayedExpansion
+set "Label=%~1"
+set "ProjectPath=%~f2"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvb=%TemporaryDirectory%\%~1-Segmented-First.wvb"
+set "SecondWvb=%TemporaryDirectory%\%~1-Segmented-Second.wvb"
+set "ObjectPrefix=%TemporaryDirectory%\%~1-Object"
+set "ObjectManifest=%TemporaryDirectory%\%~1-Object.wvop"
+set "ImagePrefix=%TemporaryDirectory%\%~1-Staged-Image"
+set "ImageManifest=%TemporaryDirectory%\%~1-Staged-Image.wvli"
+set "CanonicalPrefix=%TemporaryDirectory%\%~1-Canonical"
+set "CanonicalManifest=%TemporaryDirectory%\%~1-Canonical.wvli"
+set "StageReport=%TemporaryDirectory%\%~1-Stage.txt"
+set "LinkReport=%TemporaryDirectory%\%~1-Staged-Link.txt"
+set "TransportReport=%TemporaryDirectory%\%~1-Transport.txt"
+set "WindowsApplication=%TemporaryDirectory%\%~1-Segmented.exe"
+set "LinuxApplication=%TemporaryDirectory%\%~1-Segmented.elf"
+set "ProjectCheckpoint=Rebuilt"
+set "ApplicationCheckpoint=Rebuilt"
+if "%Development%"=="1" call :read_clock TargetStart
+
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
+if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvb%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvb%" "%SecondWvb%" >nul
+    if errorlevel 1 exit /b 1
+)
+call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
+    "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >"%StageReport%"
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
+    "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%LinkReport%"
+if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
+    "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TransportReport%"
+if errorlevel 1 exit /b 1
+set "EntryOffset="
+set "FragmentCount="
+for /f "tokens=9,11 delims== " %%E in ('findstr /b /c:"compiler image transport status=Complete " "%TransportReport%"') do (
+    set "EntryOffset=%%E"
+    set "FragmentCount=%%F"
+)
+if not defined EntryOffset exit /b 1
+if not defined FragmentCount exit /b 1
+echo(%EntryOffset%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
+echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || exit /b 1
+
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+        "%FirstWvb%" "%CanonicalPrefix%" %FragmentCount% %EntryOffset% ^
+        "%WindowsApplication%" windows >"%TemporaryDirectory%\%~1-Segmented-Application-Cache.txt"
+    if errorlevel 1 exit /b 1
+    set "ApplicationCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\%~1-Segmented-Application-Cache.txt"') do set "ApplicationCheckpoint=%%S"
+    if not defined ApplicationCheckpoint exit /b 1
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%CanonicalPrefix%" %FragmentCount% %EntryOffset% ^
+        "%WindowsApplication%" windows >nul
+    if errorlevel 1 exit /b 1
+)
+"%WindowsApplication%" >nul
+if not "%ERRORLEVEL%"=="0" (
+    >&2 echo The %Label% segmented database-storage case did not return 0.
+    exit /b 1
+)
+if not "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+        "%FirstWvb%" "%CanonicalPrefix%" %FragmentCount% %EntryOffset% ^
+        "%LinuxApplication%" linux >nul
+    if errorlevel 1 exit /b 1
+)
+if "%Development%"=="1" (
+    call :read_clock TargetEnd
+    call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
+    call echo PASS  native database storage development step=portable-segmented-target item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% case=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=Segmented application=windows-%%ApplicationCheckpoint%%
+    endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%/link-Segmented," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%ApplicationCheckpoint%,"
+    exit /b 0
+)
 endlocal
 exit /b 0
 
