@@ -1,0 +1,5 @@
+windvale-project 2
+root "Operating-System/Services/Network-Process-Service.wv"
+source "Libraries/Platform/Operations/Bounded-Operation.wv"
+source "Libraries/Platform/Networking/Network-Authority.wv"
+emit wvb

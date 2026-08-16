@@ -1,0 +1,76 @@
+module X64ˉprocessˉclientˉstoreˉvalidationˉemission profile portable;
+
+data Storeˉvalidation: bytes = [
+    77, 141, 140, 36, 208, 5, 0, 0, 72, 184, 87, 86, 82, 69, 83, 48,
+    48, 54, 73, 57, 1, 15, 133, 0, 0, 0, 0, 65, 129, 121, 8, 6,
+    0, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 121, 12, 128, 0, 0,
+    0, 15, 133, 0, 0, 0, 0, 65, 129, 121, 16, 3, 0, 0, 0, 15,
+    133, 0, 0, 0, 0, 65, 129, 121, 20, 4, 0, 0, 0, 15, 133, 0,
+    0, 0, 0, 65, 129, 121, 24, 1, 0, 1, 0, 15, 133, 0, 0, 0,
+    0, 65, 129, 121, 28, 1, 0, 1, 0, 15, 133, 0, 0, 0, 0, 65,
+    129, 121, 40, 172, 4, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 121,
+    44, 7, 3, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 121, 112, 1,
+    0, 0, 0, 15, 133, 0, 0, 0, 0, 65, 129, 121, 116, 1, 0, 0,
+    0, 15, 133, 0, 0, 0, 0, 72, 184, 98, 78, 206, 45, 46, 3, 47,
+    111, 73, 57, 65, 80, 15, 133, 0, 0, 0, 0, 72, 184, 9, 41, 103
+];
+data Storeˉvalidationˉtail: bytes = [
+    90, 143, 121, 206, 178, 73, 57, 65, 88, 15, 133, 0, 0, 0, 0, 72,
+    184, 35, 83, 141, 132, 188, 202, 206, 38, 73, 57, 65, 96, 15, 133, 0,
+    0, 0, 0, 72, 184, 78, 203, 191, 220, 229, 236, 164, 173, 73, 57, 65,
+    104, 15, 133, 0, 0, 0, 0, 72, 139, 132, 36, 184, 0, 0, 0, 72,
+    139, 80, 64, 72, 141, 130, 0, 160, 0, 0, 73, 57, 65, 32, 15, 133,
+    0, 0, 0, 0, 73, 57, 65, 64, 15, 133, 0, 0, 0, 0, 73, 57,
+    81, 48, 15, 133, 0, 0, 0, 0, 72, 139, 132, 36, 184, 0, 0, 0,
+    72, 139, 64, 88, 73, 57, 65, 56, 15, 133, 0, 0, 0, 0, 73, 139,
+    73, 64, 72, 57, 136, 128, 1, 0, 0, 15, 133, 0, 0, 0, 0, 129,
+    184, 136, 1, 0, 0, 172, 4, 0, 0, 15, 133, 0, 0, 0, 0, 73,
+    139, 81, 120, 72, 139, 10, 72, 15, 186, 241, 5, 72, 131, 225, 223, 72,
+    15, 186, 233, 63, 73, 139, 65, 32, 72, 131, 200, 5, 72, 15, 186, 232,
+    63, 72, 57, 193, 15, 133, 0, 0, 0, 0
+];
+data Failureˉdisplacements: bytes = [
+    121, 90, 0, 0, 107, 90, 0, 0, 93, 90, 0, 0, 79, 90, 0, 0,
+    65, 90, 0, 0, 51, 90, 0, 0, 37, 90, 0, 0, 23, 90, 0, 0,
+    9, 90, 0, 0, 251, 89, 0, 0, 237, 89, 0, 0, 217, 89, 0, 0,
+    197, 89, 0, 0, 177, 89, 0, 0, 157, 89, 0, 0, 128, 89, 0, 0,
+    118, 89, 0, 0, 108, 89, 0, 0, 86, 89, 0, 0, 69, 89, 0, 0,
+    53, 89, 0, 0, 10, 89, 0, 0
+];
+
+export fn X64ˉprocessˉclientˉstoreˉvalidationˉbytes() -> bytes {
+    return Bytesˉconcat(Storeˉvalidation, Storeˉvalidationˉtail);
+}
+export fn X64ˉprocessˉclientˉstoreˉvalidationˉfailureˉfields() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(23u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(37u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(51u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(65u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(79u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(93u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(107u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(121u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(135u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(149u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(163u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(183u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(203u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(223u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(243u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(272u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(282u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(292u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(314u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(331u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(347u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(390u32));
+}
+export fn X64ˉprocessˉclientˉstoreˉvalidationˉfailureˉdisplacements() -> bytes {
+    return Failureˉdisplacements;
+}
+export fn X64ˉprocessˉclientˉstoreˉvalidationˉfixtureˉoffset() -> u32 {
+    return 10638u32;
+}
+export fn X64ˉprocessˉclientˉstoreˉvalidationˉfixtureˉend() -> u32 {
+    return 11032u32;
+}

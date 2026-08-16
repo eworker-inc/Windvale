@@ -1,0 +1,128 @@
+module X64ˉprocessˉdirectoryˉrecordˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Clearˉrecord: bytes = [76, 137, 239, 49, 192, 185];
+data Clearˉdirectionˉandˉstoreˉqwords: bytes = [252, 243, 72, 171];
+data Moveˉrax: bytes = [72, 184];
+data Storeˉrecordˉraxˉshort: bytes = [73, 137, 69, 0];
+data Storeˉrecordˉu32: bytes = [65, 199, 133];
+data Storeˉrecordˉrax: bytes = [73, 137, 133];
+data Storeˉrootˉr14: bytes = [77, 137, 181];
+data Loadˉextentˉaddress: bytes = [73, 141, 134];
+data Loadˉstateˉaddress: bytes = [73, 141, 132, 36];
+
+fn Emptyˉbytes() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32);
+}
+
+fn Emitˉstoreˉrecordˉu32(
+    State: X64.X64ˉemission,
+    Offset: u32,
+    Value: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Storeˉrecordˉu32);
+    Result = X64.X64ˉemitˉu32(Result, Offset);
+    return X64.X64ˉemitˉu32(Result, Value);
+}
+
+fn Emitˉstoreˉrecordˉaddress(
+    State: X64.X64ˉemission,
+    Offset: u32,
+    Page: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉextentˉaddress);
+    Result = X64.X64ˉemitˉu32(Result, Page * 4096u32);
+    Result = X64.X64ˉemit(Result, Storeˉrecordˉrax);
+    return X64.X64ˉemitˉu32(Result, Offset);
+}
+
+fn Emitˉdigest(
+    State: X64.X64ˉemission,
+    Digest: bytes,
+    Recordˉoffset: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = State;
+    var Offset: u32 = 0u32;
+    while Offset < 32u32 {
+        Result = X64.X64ˉemit(Result, Moveˉrax);
+        Result = X64.X64ˉemitˉu64(
+            Result, Bytesˉreadˉu64ˉlittle(Digest, Offset)
+        );
+        Result = X64.X64ˉemit(Result, Storeˉrecordˉrax);
+        Result = X64.X64ˉemitˉu32(Result, Recordˉoffset + Offset);
+        Offset = Offset + 8u32;
+    }
+    return Result;
+}
+
+fn Buildˉdirectoryˉrecord(
+    Serviceˉdigest: bytes,
+    Snapshotˉdigest: bytes
+) -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Clearˉrecord);
+    State = X64.X64ˉemitˉu32(State, 36u32);
+    State = X64.X64ˉemit(State, Clearˉdirectionˉandˉstoreˉqwords);
+    State = X64.X64ˉemit(State, Moveˉrax);
+    State = X64.X64ˉemitˉu64(State, 3977033953907332695u64);
+    State = X64.X64ˉemit(State, Storeˉrecordˉraxˉshort);
+    State = Emitˉstoreˉrecordˉu32(State, 8u32, 17u32);
+    State = Emitˉstoreˉrecordˉu32(State, 12u32, 288u32);
+    State = Emitˉstoreˉrecordˉu32(State, 16u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 20u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 24u32, 3u32);
+    State = Emitˉstoreˉrecordˉu32(State, 28u32, 3u32);
+    State = Emitˉdigest(State, Serviceˉdigest, 32u32);
+    State = X64.X64ˉemit(State, Storeˉrootˉr14);
+    State = X64.X64ˉemitˉu32(State, 64u32);
+    State = Emitˉstoreˉrecordˉaddress(State, 72u32, 4u32);
+    State = Emitˉstoreˉrecordˉaddress(State, 80u32, 6u32);
+    State = Emitˉstoreˉrecordˉaddress(State, 88u32, 7u32);
+    State = Emitˉstoreˉrecordˉu32(State, 96u32, 6u32);
+    State = Emitˉstoreˉrecordˉu32(State, 100u32, 64u32);
+    State = Emitˉstoreˉrecordˉu32(State, 104u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 108u32, 5u32);
+    State = Emitˉstoreˉrecordˉu32(State, 112u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 116u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 120u32, 46u32);
+    State = Emitˉstoreˉrecordˉu32(State, 124u32, 1u32);
+    State = X64.X64ˉemit(State, Loadˉstateˉaddress);
+    State = X64.X64ˉemitˉu32(State, 2144u32);
+    State = X64.X64ˉemit(State, Storeˉrecordˉrax);
+    State = X64.X64ˉemitˉu32(State, 192u32);
+    State = Emitˉstoreˉrecordˉu32(State, 200u32, 3u32);
+    State = Emitˉstoreˉrecordˉu32(State, 172u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 176u32, 4u32);
+    State = Emitˉdigest(State, Snapshotˉdigest, 216u32);
+    State = Emitˉstoreˉrecordˉu32(State, 248u32, 2u32);
+    State = Emitˉstoreˉrecordˉu32(State, 252u32, 1u32);
+    State = Emitˉstoreˉrecordˉu32(State, 256u32, 1u32);
+    return Emitˉstoreˉrecordˉaddress(State, 264u32, 9u32);
+}
+
+export fn X64ˉprocessˉdirectoryˉrecordˉisˉvalid(
+    Serviceˉdigest: bytes,
+    Snapshotˉdigest: bytes
+) -> bool {
+    if Bytesˉlength(Serviceˉdigest) != 32u32 ||
+        Bytesˉlength(Snapshotˉdigest) != 32u32 { return false; }
+    let State: X64.X64ˉemission =
+        Buildˉdirectoryˉrecord(Serviceˉdigest, Snapshotˉdigest);
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 462u32;
+}
+
+export fn X64ˉprocessˉdirectoryˉrecordˉbytes(
+    Serviceˉdigest: bytes,
+    Snapshotˉdigest: bytes
+) -> bytes {
+    if Bytesˉlength(Serviceˉdigest) != 32u32 ||
+        Bytesˉlength(Snapshotˉdigest) != 32u32 { return Emptyˉbytes(); }
+    let State: X64.X64ˉemission =
+        Buildˉdirectoryˉrecord(Serviceˉdigest, Snapshotˉdigest);
+    return State.Code;
+}
+
+export fn X64ˉprocessˉdirectoryˉrecordˉfixtureˉoffset() -> u32 { return 3323u32; }
+export fn X64ˉprocessˉdirectoryˉrecordˉfixtureˉend() -> u32 { return 3785u32; }

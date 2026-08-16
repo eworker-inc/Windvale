@@ -1,0 +1,25 @@
+module Networkˉprocessˉservice profile portable;
+
+import Boundedˉoperation as Operation;
+import Networkˉauthority as Network;
+
+export fn Main() -> i32 {
+    let Queue: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉbegin(
+            1u32, 1u64, 1u32, 0u64, 0u64,
+            0u32, 4u32, 1u32, false, true
+        );
+    if Queue.Status != Operation.Boundedˉoperationˉstatus.Success ||
+        Queue.Queueˉlimit != 4u32 || Queue.Reservedˉcontrol != 1u32 {
+        return 0;
+    }
+    let Authority: Network.Networkˉresourceˉauthority =
+        Network.Networkˉresourceˉauthority(
+            16u32, 1048576u32, 1048576u64, 0u64
+        );
+    if !Network.Networkˉresourceˉauthorityˉisˉvalid(Authority) ||
+        !Network.Networkˉdirectionsˉareˉvalid(15u32) {
+        return 0;
+    }
+    return 47;
+}

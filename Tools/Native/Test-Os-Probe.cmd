@@ -15,21 +15,21 @@ set "InvalidOpcode=%TemporaryDirectory%\Invalid-Opcode.efi"
 set "GeneralProtection=%TemporaryDirectory%\General-Protection.efi"
 set "Status=1"
 
-call :build normal "%Normal%" 3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06
+call :build normal "%Normal%" 5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb 1691136
 if errorlevel 1 goto :failure
 
 call "%Builder%" "%Normal%" normal >"%TemporaryDirectory%\Repeat.out" 2>"%TemporaryDirectory%\Repeat.err"
 if not errorlevel 1 goto :failure
 findstr /x /c:"The native Probe 40 output already exists." "%TemporaryDirectory%\Repeat.err" >nul
 if errorlevel 1 goto :failure
-call :verify "%Normal%" 3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06
+call :verify "%Normal%" 1691136 5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb
 if errorlevel 1 goto :failure
 dir /b /a "%TemporaryDirectory%\.windvale-os-probe-native-*" >nul 2>&1
 if not errorlevel 1 goto :failure
 
-call :build invalid-opcode "%InvalidOpcode%" 7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e
+call :build invalid-opcode "%InvalidOpcode%" a0c361386e8ce0aa1d8d73b2ca85f26768f2335992e993a869136db00d0daca0 1691136
 if errorlevel 1 goto :failure
-call :build general-protection "%GeneralProtection%" 6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2
+call :build general-protection "%GeneralProtection%" 7a446760851890f26becb2c00e7e76f016e95f02d30b5a4ecef78d3b692e1afd 1691136
 if errorlevel 1 goto :failure
 
 echo Tests: 4, Passed: 4, Failed: 0
@@ -40,6 +40,7 @@ goto :cleanup
 set "CaseScenario=%~1"
 set "CaseOutput=%~2"
 set "CaseDigest=%~3"
+set "CaseBytes=%~4"
 set "CaseStandardOutput=%TemporaryDirectory%\%CaseScenario%.out"
 set "CaseStandardError=%TemporaryDirectory%\%CaseScenario%.err"
 if "%CaseScenario%"=="normal" (
@@ -53,17 +54,17 @@ findstr /x /c:"windvale-os-probe-native-build 40" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
 findstr /x /c:"scenario=%CaseScenario%" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
-findstr /x /c:"efi-bytes=1137152" "%CaseStandardOutput%" >nul
+findstr /x /c:"efi-bytes=%CaseBytes%" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
 findstr /x /c:"efi-sha256=%CaseDigest%" "%CaseStandardOutput%" >nul
 if errorlevel 1 exit /b 1
-call :verify "%CaseOutput%" %CaseDigest%
+call :verify "%CaseOutput%" %CaseBytes% %CaseDigest%
 exit /b %ERRORLEVEL%
 
 :verify
 if not exist "%~1" exit /b 1
-for %%F in ("%~1") do if not "%%~zF"=="1137152" exit /b 1
-certutil -hashfile "%~1" SHA256 | findstr /i /x /c:"%~2" >nul
+for %%F in ("%~1") do if not "%%~zF"=="%~2" exit /b 1
+certutil -hashfile "%~1" SHA256 | findstr /i /x /c:"%~3" >nul
 exit /b %ERRORLEVEL%
 
 :failure

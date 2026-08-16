@@ -1,0 +1,75 @@
+module Applicationˉstartˉrequest profile portable;
+
+import Applicationˉlaunchˉpolicy as Launch;
+
+const APPLICATION_START_REQUEST_MAGIC: u32 = 1381193303u32;
+const APPLICATION_START_REQUEST_BYTES: u32 = 64u32;
+
+export enum Applicationˉstartˉrequestˉstatus {
+    Valid = 0; Invalidˉsize = 1; Invalidˉmagic = 2;
+    Invalidˉversion = 3; Invalidˉheader = 4;
+    Invalidˉkind = 5; Invalidˉreference = 6;
+    Invalidˉresource = 7; Invalidˉbinding = 8;
+}
+
+export fn Applicationˉstartˉrequestˉstatus(
+    Input: bytes
+) -> Applicationˉstartˉrequestˉstatus {
+    if Bytesˉlength(Input) != APPLICATION_START_REQUEST_BYTES {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉsize;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != APPLICATION_START_REQUEST_MAGIC {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉmagic;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉversion;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != APPLICATION_START_REQUEST_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 52u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 56u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 60u32) != 0u32 {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉheader;
+    }
+    // Version 1 admits only the measured application role. Service roles gain
+    // their own version when executable and endpoint profiles are published.
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 1u32 {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉkind;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) == 0u32 {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉreference;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 122u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉresource;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 32u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) != 4u32 {
+        return Applicationˉstartˉrequestˉstatus.Invalidˉbinding;
+    }
+    return Applicationˉstartˉrequestˉstatus.Valid;
+}
+
+export fn Applicationˉstartˉrequestˉadmit(
+    Input: bytes
+) -> Launch.Applicationˉlaunchˉtransition {
+    if Applicationˉstartˉrequestˉstatus(Input) !=
+        Applicationˉstartˉrequestˉstatus.Valid {
+        return Launch.Applicationˉlaunchˉtransition(
+            Launch.Applicationˉlaunchˉstatus.Invalidˉplan,
+            Launch.Applicationˉlaunchˉstate.Rejected,
+            0u32
+        );
+    }
+    return Launch.Applicationˉstartˉadmit(
+        Bytesˉreadˉu32ˉlittle(Input, 4u32),
+        Bytesˉreadˉu32ˉlittle(Input, 16u32),
+        Bytesˉreadˉu32ˉlittle(Input, 20u32),
+        Bytesˉreadˉu32ˉlittle(Input, 24u32),
+        Bytesˉreadˉu32ˉlittle(Input, 28u32),
+        Bytesˉreadˉu32ˉlittle(Input, 32u32)
+    );
+}

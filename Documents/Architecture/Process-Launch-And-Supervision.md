@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended next architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted clean-spawn, service-manager, process-role, and resource-domain direction in [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). Portable [resource-domain policy 1](../../Specifications/Windvale-Os-Resource-Domain-Policy.md) now gates Probe 40's fixed three-process construction with atomic accounting, but Windvale OS does not yet implement a dynamic resource-domain object, dynamic process creation, a general launch transaction, service supervision, restart policy, or a public process ABI.
+Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted clean-spawn, service-manager, process-role, and resource-domain direction in [Decision 0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md). Portable [resource-domain policy 1](../../Specifications/Windvale-Os-Resource-Domain-Policy.md) gates Probe 40's fixed three-process accounting; [application-launch policy 1](../../Specifications/Windvale-Os-Application-Launch-Policy.md) and [machine-construction policy 1](../../Specifications/Windvale-Os-Application-Machine-Construction-Policy.md) now give both sequential fixed clients live versioned-request/executable-publication/reserve/private-construction/publication/rollback transactions with different checked page layouts. The request proves the init caller, generation-safe executable publication, domain, and rights profile while deriving the child identity. [`WVSR 1`](../../Specifications/Windvale-Os-Application-Start-Request.md) now supplies an independently executed checked 64-byte application request decoder. Windvale OS does not yet implement the user-memory copy and start syscall, a dynamic resource-domain object, arbitrary admitted image loading, runtime machine-object allocation from a launch request, service supervision, restart policy, or a public process ABI.
 
 ## Recommendation
 
@@ -90,6 +90,70 @@ The service manager owns dependency and restart policy in user space. The boot o
 
 A service is published only after initialization completes and every promised endpoint is bound. Graceful stop first prevents new calls, then drains bounded in-flight work, then exits. Forced stop fails waiters explicitly and invokes resource-domain teardown.
 
+Service-launch policy 1 now applies that lifecycle to exact filesystem and
+network `WVPR 1` profiles through independently executed portable policy. It
+does not yet perform the kernel allocation, launch, or endpoint mechanisms.
+The first Windvale-owned x86-64 emission component now supplies the checked
+label/fixup/placeholder primitive for porting those privileged process-machine
+mechanisms from the remaining reviewed fixture. Its first consumer emits the
+exact 1,119-byte coordinator entry and bounded three-record ready/wait
+dispatcher. The next 309-byte source-owned slice initializes memory/context
+state and publishes seven failure plus one policy-call relocation fields; these
+are followed by exact construction of both retained resource/directory channel
+and endpoint pairs through byte 1,871. These constructors still do not
+themselves launch a process. The first checked kernel memory-object call and
+its returned-extent validation extend that source boundary through byte 1,970.
+Complete zeroed init-record construction from two verified 32-byte digest
+inputs advances the boundary through byte 2,432. Retained kernel-table copy,
+bounded private PTE construction, null-page denial, and exact W^X init mappings
+advance it through byte 2,948. Four bounded relocated input copies plus the
+native execution context and store descriptor now advance it through byte
+3,097. Checked 122-page recyclable-client reservation and private root retention
+now advance it through byte 3,215 without initializing or publishing the client.
+Checked ten-page directory-provider allocation now advances it through byte
+3,322. Complete private record construction from verified service and snapshot
+identities now advances it through byte 3,784 without paging or publication.
+Directory-private retained-table copy, null-page denial, and exact W^X mappings
+now advance it through byte 4,224 without copying provider inputs or publishing
+readiness.
+Bounded relocated service/snapshot copies, native context, and the generation-
+tagged snapshot descriptor now advance it through byte 4,340 without readiness
+publication. Exact private recyclable-client record construction from admitted
+interpreter/program identities, bounded execution geometry, and separate
+resource/directory capabilities now advances it through byte 4,858 without page
+tables or readiness publication. Retained table copy, exact client-private W^X
+mappings, null-page denial, and two post-extent guard entries now advance it
+through byte 9,606 without input copies or readiness publication. The bounded
+interpreter copy and private execution context now advance it through byte
+9,682 without resource completion or readiness publication. Clear-before-
+populate construction of the first generation-one program resource now advances
+it through byte 9,930; the separate generation-two budget resource advances it
+through byte 10,159 without readiness publication.
+The generation-three immutable store resource advances private construction
+through byte 10,398 without readiness publication.
+The generation-four read-only directory resource advances private construction
+through byte 10,637 without readiness publication.
+The following store validation advances source ownership through byte 11,031
+and rejects mismatched identity, geometry, generation, digest, private pointers,
+page-table linkage, or W^X permissions before the client may use that resource.
+Its twenty-two explicit failure branches still precede readiness publication.
+The corresponding directory validation extends ownership through byte 11,441
+and adds exact snapshot-count and mapped-byte checks. Its twenty-three failure
+branches likewise reject before any client readiness publication.
+The following privileged-entry slice constructs GDT/TSS state, installs four
+explicit exception gates, and programs syscall MSRs through byte 12,082. Its
+hosted reproduction proves exact bytes and relocation identities, not live CPU
+delivery; handler bodies, dispatch, timer setup, and publication remain later.
+Three private thread records and the first bounded timer record then extend
+ownership through byte 12,872. They retain explicit owner/generation, saved
+context, selector, budget, and page-table state without scheduling or publishing.
+The timer activation transaction then validates the selected page table, binds
+per-thread GS state, arms the architecture timer, rolls back on rejection, and
+transfers through the explicit resume boundary through byte 12,997.
+The selected directory-provider thread is then reacquired and checked before its
+page table, GS ownership, kernel continuation, and admitted user context are
+loaded for the first `sysretq`, advancing ownership through byte 13,168.
+
 The first restart policies are deliberately small:
 
 - `Never`;
@@ -151,7 +215,7 @@ receipt, lease, execution fence, observed outcome, and verification chain.
 ## First measured slices
 
 1. Retain Probe 40's qualified independently lived memory-object baseline and its current native flat-domain accounting gate around the existing processes and objects.
-2. Dynamically launch one known verified child with one input resource, three explicit streams, one reduced capability, and one observer. Reject malformed plans before the child is visible.
+2. The current candidate binds both sequential generations of one known verified child with one input resource, three explicit streams, one reduced capability, and one observer. It rejects unsupported versions, unauthorized callers, stale executable publications, and malformed plans before visibility, derives the child identity, admits distinct bounded machine layouts with W^X and capability-table checks, and proves failed-construction rollback. The first architecture-neutral request decoder now checks the exact application profile independently. Provider launch transaction 1 separately composes exact filesystem/network request admission with 64/96-page isolated domains, immutable image geometry, construction, readiness publication, stale rejection, active-work drain, and zero-charge teardown. Next, copy the application value from user memory and bind both transaction families to dynamic executable, memory-object, page-table, endpoint, and process allocation.
 3. Exercise normal completion, verifier rejection, capability refusal, trap, process fault, cancellation, forced stop, provider loss, and launcher death. Each leaves zero charges and stale generations unusable.
 4. Move one non-critical existing provider under the service manager with `Never` restart and explicit availability publication.
 5. Add bounded `Onˉfault` restart, generation-safe rebinding, and exhausted-restart policy without replaying a mutation.
@@ -159,4 +223,10 @@ receipt, lease, execution fence, observed outcome, and verification chain.
 
 ## Deliberately open details
 
-The architecture does not yet freeze source syntax, serialized plan layout, object indices, service-registry encoding, exact restart limits, backoff formula, public process IDs, environment keys, diagnostic storage, or syscall numbers. It does fix clean spawn, two-level plans, atomic publication, explicit transfer, separate observation and control rights, generation-visible restart, bounded policy, and complete domain teardown.
+The architecture does not yet freeze the broader semantic-plan serialization,
+object indices, service-registry encoding, exact restart limits, backoff formula,
+public process IDs, environment keys, diagnostic storage, or syscall numbers.
+`WVSR 1` freezes only the first kernel-facing fixed application request. The
+architecture fixes clean spawn, two-level plans, atomic publication, explicit
+transfer, separate observation and control rights, generation-visible restart,
+bounded policy, and complete domain teardown.

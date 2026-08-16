@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-X64-Process-Provider-User-Transfer-Emission-Self-Test.wv"
+source "Operating-System/Kernel/X64-Process-Provider-User-Transfer-Emission.wv"
+emit wvb

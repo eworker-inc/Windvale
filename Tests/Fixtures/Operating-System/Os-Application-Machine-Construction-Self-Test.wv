@@ -1,0 +1,30 @@
+module Osˉapplicationˉmachineˉconstructionˉselfˉtest profile portable;
+import Applicationˉmachineˉconstructionˉpolicy as Machine;
+
+export fn Main() -> i32 {
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        7u32, 63u32, 110u32, 8u32, 1u32, 16u32
+    ) != 1u32 { return 1; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        65537u32, 31u32, 110u32, 8u32, 1u32, 16u32
+    ) != 2u32 { return 2; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        65537u32, 63u32, 111u32, 8u32, 1u32, 16u32
+    ) != 3u32 { return 3; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        65537u32, 63u32, 110u32, 8u32, 2u32, 16u32
+    ) != 4u32 { return 4; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        65537u32, 63u32, 110u32, 8u32, 1u32, 3u32
+    ) != 5u32 { return 5; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        65537u32, 63u32, 110u32, 8u32, 1u32, 65u32
+    ) != 5u32 { return 6; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        65537u32, 63u32, 110u32, 8u32, 1u32, 16u32
+    ) != 0u32 { return 7; }
+    if Machine.Applicationˉmachineˉconstructionˉstatus(
+        131073u32, 63u32, 100u32, 18u32, 1u32, 16u32
+    ) != 0u32 { return 8; }
+    return 43;
+}

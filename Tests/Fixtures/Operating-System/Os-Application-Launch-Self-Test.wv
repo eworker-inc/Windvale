@@ -1,0 +1,183 @@
+module Osˉapplicationˉlaunchˉselfˉtest profile portable;
+import Resourceˉdomainˉpolicy as Domain;
+import Applicationˉlaunchˉpolicy as Launch;
+
+fn Hasˉrejectionˉbeforeˉexposure() -> bool {
+    let Resourceˉdomain: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
+    let Invalidˉidentity: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 0u32, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    if Invalidˉidentity.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉplan {
+        return false;
+    }
+    if Invalidˉidentity.State != Launch.Applicationˉlaunchˉstate.Rejected {
+        return false;
+    }
+    if Invalidˉidentity.State == Launch.Applicationˉlaunchˉstate.Published { return false; }
+    let Amplifiedˉrights: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 65537u32, 65576u32, 2u32
+        );
+    if Amplifiedˉrights.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉcapability {
+        return false;
+    }
+    let Wrongˉdomain: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 1u32, 65576u32, 1u32
+        );
+    if Wrongˉdomain.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉdomain {
+        return false;
+    }
+    if Resourceˉdomain.Reservedˉprocesses != 0u32 { return false; }
+    if Resourceˉdomain.Committedˉprocesses != 0u32 { return false; }
+    return true;
+}
+
+fn Hasˉtypedˉstartˉrequest() -> bool {
+    let Accepted: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    if Accepted.Status != Launch.Applicationˉlaunchˉstatus.Success { return false; }
+    if Accepted.State != Launch.Applicationˉlaunchˉstate.Planned { return false; }
+    if Accepted.Planˉreference != 65537u32 { return false; }
+
+    let Wrongˉversion: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            2u32, 65537u32, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    if Wrongˉversion.Status !=
+        Launch.Applicationˉlaunchˉstatus.Unsupportedˉrequest { return false; }
+    let Wrongˉcaller: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65538u32, 65537u32, 65576u32, 1u32
+        );
+    if Wrongˉcaller.Status !=
+        Launch.Applicationˉlaunchˉstatus.Invalidˉcaller { return false; }
+    let Staleˉexecutable: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 65537u32, 40u32, 1u32
+        );
+    if Staleˉexecutable.Status !=
+        Launch.Applicationˉlaunchˉstatus.Invalidˉexecutable { return false; }
+    let Wrongˉdomain: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 1u32, 65576u32, 1u32
+        );
+    if Wrongˉdomain.Status !=
+        Launch.Applicationˉlaunchˉstatus.Invalidˉdomain { return false; }
+    if Wrongˉversion.State == Launch.Applicationˉlaunchˉstate.Published {
+        return false;
+    }
+    if Wrongˉcaller.State == Launch.Applicationˉlaunchˉstate.Published {
+        return false;
+    }
+    if Staleˉexecutable.State == Launch.Applicationˉlaunchˉstate.Published {
+        return false;
+    }
+    return true;
+}
+
+fn Hasˉpublicationˉcommit() -> bool {
+    var Resourceˉdomain: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
+    Resourceˉdomain = Domain.Resourceˉdomainˉreserve(
+        Resourceˉdomain, 2u32, 22u32, 2u32
+    );
+    Resourceˉdomain = Domain.Resourceˉdomainˉcommit(
+        Resourceˉdomain, 2u32, 22u32, 2u32
+    );
+    var Current: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    Current = Launch.Applicationˉlaunchˉadvance(
+        Current, Launch.Applicationˉlaunchˉstate.Reserved,
+        Domain.Resourceˉdomainˉreserveˉstatus(
+            Resourceˉdomain, 1u32, 122u32, 0u32
+        ) == Domain.Resourceˉdomainˉstatus.Success, true
+    );
+    if Current.State != Launch.Applicationˉlaunchˉstate.Reserved { return false; }
+    if Current.State == Launch.Applicationˉlaunchˉstate.Published { return false; }
+    Resourceˉdomain = Domain.Resourceˉdomainˉreserve(
+        Resourceˉdomain, 1u32, 122u32, 0u32
+    );
+    Current = Launch.Applicationˉlaunchˉadvance(
+        Current, Launch.Applicationˉlaunchˉstate.Constructed,
+        true, true
+    );
+    if Current.State != Launch.Applicationˉlaunchˉstate.Constructed { return false; }
+    if Current.State == Launch.Applicationˉlaunchˉstate.Published { return false; }
+    Resourceˉdomain = Domain.Resourceˉdomainˉcommit(
+        Resourceˉdomain, 1u32, 122u32, 0u32
+    );
+    Current = Launch.Applicationˉlaunchˉadvance(
+        Current, Launch.Applicationˉlaunchˉstate.Published,
+        Resourceˉdomain.Identity == 1u32 &&
+        Resourceˉdomain.Generation == 1u32 &&
+        Resourceˉdomain.Reservedˉprocesses == 0u32 &&
+        Resourceˉdomain.Reservedˉpages == 0u32 &&
+        Resourceˉdomain.Reservedˉendpoints == 0u32 &&
+        Resourceˉdomain.Committedˉprocesses == 3u32 &&
+        Resourceˉdomain.Committedˉpages == 144u32, true
+    );
+    if Current.State != Launch.Applicationˉlaunchˉstate.Published { return false; }
+    if Current.Planˉreference != 65537u32 { return false; }
+    if Resourceˉdomain.Committedˉprocesses != 3u32 { return false; }
+    if Resourceˉdomain.Committedˉpages != 144u32 { return false; }
+    if Resourceˉdomain.Committedˉendpoints != 2u32 { return false; }
+    return true;
+}
+
+fn Hasˉcompleteˉrollback() -> bool {
+    let Baseline: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcreate(1u32, 1u32, 1u32, 122u32, 0u32);
+    var Resourceˉdomain: Domain.Resourceˉdomainˉtransition = Baseline;
+    var Current: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    Current = Launch.Applicationˉlaunchˉadvance(
+        Current, Launch.Applicationˉlaunchˉstate.Reserved,
+        true, true
+    );
+    Resourceˉdomain = Domain.Resourceˉdomainˉreserve(
+        Resourceˉdomain, 1u32, 122u32, 0u32
+    );
+    Current = Launch.Applicationˉlaunchˉadvance(
+        Current, Launch.Applicationˉlaunchˉstate.Constructed,
+        true, false
+    );
+    if Current.Status != Launch.Applicationˉlaunchˉstatus.Constructionˉfailed {
+        return false;
+    }
+    if Current.State != Launch.Applicationˉlaunchˉstate.Rolledˉback { return false; }
+    if Current.State == Launch.Applicationˉlaunchˉstate.Published { return false; }
+    // Neither immutable replacement is published: discarding the reserved
+    // domain record restores the exact pre-transaction accounting state.
+    Resourceˉdomain = Baseline;
+    if Resourceˉdomain.Reservedˉprocesses != 0u32 { return false; }
+    if Resourceˉdomain.Reservedˉpages != 0u32 { return false; }
+    if Resourceˉdomain.Committedˉprocesses != 0u32 { return false; }
+    if Resourceˉdomain.Committedˉpages != 0u32 { return false; }
+    let Published: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉlaunchˉadvance(
+            Current, Launch.Applicationˉlaunchˉstate.Published,
+            false, true
+        );
+    if Published.Status != Launch.Applicationˉlaunchˉstatus.Wrongˉstate {
+        return false;
+    }
+    if Published.State == Launch.Applicationˉlaunchˉstate.Published { return false; }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if !Hasˉrejectionˉbeforeˉexposure() { return 1; }
+    if !Hasˉtypedˉstartˉrequest() { return 2; }
+    if !Hasˉpublicationˉcommit() { return 3; }
+    if !Hasˉcompleteˉrollback() { return 4; }
+    return 42;
+}

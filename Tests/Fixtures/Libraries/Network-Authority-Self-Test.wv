@@ -1,0 +1,90 @@
+module Networkˉauthorityˉselfˉtest profile portable;
+
+import Networkˉauthority as Network;
+
+export fn Main() -> i32 {
+    let V4: Network.Networkˉaddress = Network.Networkˉaddress(
+        Network.Networkˉaddressˉfamily.IPv4,
+        3221225985u32, 0u32, 0u32, 0u32, 0u32
+    );
+    if !Network.Networkˉaddressˉisˉvalid(V4) { return 1; }
+    let Badˉv4: Network.Networkˉaddress = Network.Networkˉaddress(
+        Network.Networkˉaddressˉfamily.IPv4,
+        3221225985u32, 1u32, 0u32, 0u32, 0u32
+    );
+    if Network.Networkˉaddressˉisˉvalid(Badˉv4) { return 2; }
+    let V6: Network.Networkˉaddress = Network.Networkˉaddress(
+        Network.Networkˉaddressˉfamily.IPv6,
+        536939960u32, 1u32, 2u32, 3u32, 0u32
+    );
+    if !Network.Networkˉaddressˉisˉvalid(V6) { return 3; }
+    let Linkˉwithoutˉscope: Network.Networkˉaddress = Network.Networkˉaddress(
+        Network.Networkˉaddressˉfamily.IPv6,
+        4269801472u32, 0u32, 0u32, 1u32, 0u32
+    );
+    if Network.Networkˉaddressˉisˉvalid(Linkˉwithoutˉscope) { return 4; }
+    let Linkˉwithˉscope: Network.Networkˉaddress = Network.Networkˉaddress(
+        Network.Networkˉaddressˉfamily.IPv6,
+        4269801472u32, 0u32, 0u32, 1u32, 7u32
+    );
+    if !Network.Networkˉaddressˉisˉvalid(Linkˉwithˉscope) { return 5; }
+    let Globalˉwithˉscope: Network.Networkˉaddress = Network.Networkˉaddress(
+        Network.Networkˉaddressˉfamily.IPv6,
+        536939960u32, 0u32, 0u32, 1u32, 7u32
+    );
+    if Network.Networkˉaddressˉisˉvalid(Globalˉwithˉscope) { return 6; }
+
+    let V4ˉprefix: Network.Networkˉprefix = Network.Networkˉprefix(
+        Network.Networkˉaddressˉfamily.IPv4,
+        3221225984u32, 0u32, 0u32, 0u32, 24u32
+    );
+    if V4ˉprefix.Length != 24u32 ||
+        V4ˉprefix.Wordˉzero % 256u32 != 0u32 { return 7; }
+    let Badˉlength: Network.Networkˉprefix = Network.Networkˉprefix(
+        Network.Networkˉaddressˉfamily.IPv4,
+        3221225984u32, 0u32, 0u32, 0u32, 33u32
+    );
+    if Badˉlength.Length <= 32u32 { return 8; }
+    let Badˉhost: Network.Networkˉprefix = Network.Networkˉprefix(
+        Network.Networkˉaddressˉfamily.IPv4,
+        3221225985u32, 0u32, 0u32, 0u32, 24u32
+    );
+    if Badˉhost.Wordˉzero % 256u32 == 0u32 { return 9; }
+    let V6ˉprefix: Network.Networkˉprefix = Network.Networkˉprefix(
+        Network.Networkˉaddressˉfamily.IPv6,
+        536939960u32, 0u32, 0u32, 0u32, 32u32
+    );
+    if V6ˉprefix.Length != 32u32 || V6ˉprefix.Wordˉone != 0u32 ||
+        V6ˉprefix.Wordˉtwo != 0u32 || V6ˉprefix.Wordˉthree != 0u32 {
+        return 10;
+    }
+
+    if Network.Networkˉportˉrangeˉisˉvalid(0u32, 443u32) { return 11; }
+    if !Network.Networkˉportˉrangeˉisˉvalid(80u32, 443u32) { return 12; }
+    if !Network.Networkˉdirectionsˉareˉvalid(5u32) { return 13; }
+    if Network.Networkˉdirectionsˉareˉvalid(16u32) { return 14; }
+    if !Network.Networkˉprefixˉwordˉmatches(
+        V4ˉprefix.Wordˉzero, V4.Wordˉzero, 3u32
+    ) { return 15; }
+    if Network.Networkˉprefixˉwordˉmatches(
+        V4ˉprefix.Wordˉzero, 3221226241u32, 3u32
+    ) { return 16; }
+
+    let Parent: Network.Networkˉresourceˉauthority =
+        Network.Networkˉresourceˉauthority(
+            8u32, 65536u32, 1048576u64, 1000u64
+        );
+    if !Network.Networkˉresourceˉauthorityˉisˉvalid(Parent) { return 17; }
+    if !Network.Networkˉu32ˉlimitˉisˉnarrower(
+        Parent.Maximumˉconnections, 2u32
+    ) || !Network.Networkˉu32ˉlimitˉisˉnarrower(
+        Parent.Maximumˉqueuedˉbytes, 4096u32
+    ) || !Network.Networkˉu64ˉlimitˉisˉnarrower(
+        Parent.Transferˉbudget, 65536u64
+    ) || !Network.Networkˉdeadlineˉisˉnarrower(
+        Parent.Deadline, 900u64
+    ) || Network.Networkˉu32ˉlimitˉisˉnarrower(80u32, 81u32) {
+        return 18;
+    }
+    return 45;
+}

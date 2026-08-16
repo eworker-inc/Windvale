@@ -1,0 +1,130 @@
+module Applicationˉlaunchˉpolicy profile portable;
+
+export enum Applicationˉlaunchˉstate {
+    Planned = 0; Reserved = 1; Constructed = 2; Published = 3;
+    Rolledˉback = 4; Rejected = 5;
+}
+
+export enum Applicationˉlaunchˉstatus {
+    Success = 0; Invalidˉplan = 1; Invalidˉprocess = 2;
+    Invalidˉdomain = 3; Invalidˉimage = 4; Invalidˉcharge = 5;
+    Invalidˉcapability = 6; Invalidˉbindings = 7; Wrongˉstate = 8;
+    Resourceˉrejected = 9; Constructionˉfailed = 10;
+    Unsupportedˉrequest = 11; Invalidˉcaller = 12;
+    Invalidˉexecutable = 13;
+}
+
+export record Applicationˉlaunchˉtransition {
+    Status: Applicationˉlaunchˉstatus;
+    State: Applicationˉlaunchˉstate;
+    Planˉreference: u32;
+}
+
+export fn Applicationˉstartˉadmit(
+    Version: u32,
+    Requestˉreference: u32,
+    Callerˉreference: u32,
+    Domainˉreference: u32,
+    Executableˉreference: u32,
+    Admissionˉprofile: u32
+) -> Applicationˉlaunchˉtransition {
+    if Version != 1u32 {
+        return Applicationˉlaunchˉtransition(
+            Applicationˉlaunchˉstatus.Unsupportedˉrequest,
+            Applicationˉlaunchˉstate.Rejected,
+            Requestˉreference
+        );
+    }
+    if Callerˉreference != 65537u32 {
+        return Applicationˉlaunchˉtransition(
+            Applicationˉlaunchˉstatus.Invalidˉcaller,
+            Applicationˉlaunchˉstate.Rejected,
+            Requestˉreference
+        );
+    }
+    if Executableˉreference != 65576u32 {
+        return Applicationˉlaunchˉtransition(
+            Applicationˉlaunchˉstatus.Invalidˉexecutable,
+            Applicationˉlaunchˉstate.Rejected,
+            Requestˉreference
+        );
+    }
+    var Status: Applicationˉlaunchˉstatus = Applicationˉlaunchˉstatus.Success;
+    if Requestˉreference != 65537u32 {
+        if Requestˉreference != 131073u32 {
+            Status = Applicationˉlaunchˉstatus.Invalidˉplan;
+        }
+    }
+    if Domainˉreference != 65537u32 {
+        Status = Applicationˉlaunchˉstatus.Invalidˉdomain;
+    }
+    // Admission profile 1 binds 122 pages, rights 46 -> 17, three streams,
+    // and the observer. Its checked-buffer encoding belongs to the later
+    // architecture-neutral syscall boundary rather than this source ABI.
+    if Admissionˉprofile != 1u32 {
+        Status = Applicationˉlaunchˉstatus.Invalidˉcapability;
+    }
+    var State: Applicationˉlaunchˉstate = Applicationˉlaunchˉstate.Planned;
+    if Status != Applicationˉlaunchˉstatus.Success {
+        State = Applicationˉlaunchˉstate.Rejected;
+    }
+    return Applicationˉlaunchˉtransition(
+        Status, State, Requestˉreference
+    );
+}
+
+export fn Applicationˉlaunchˉadvance(
+    Plan: Applicationˉlaunchˉtransition,
+    Nextˉstate: Applicationˉlaunchˉstate,
+    Resourceˉaccepted: bool,
+    Constructionˉsucceeded: bool
+) -> Applicationˉlaunchˉtransition {
+    var Status: Applicationˉlaunchˉstatus = Applicationˉlaunchˉstatus.Success;
+    var State: Applicationˉlaunchˉstate = Plan.State;
+    if Plan.Status != Applicationˉlaunchˉstatus.Success {
+        Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+    } else if Plan.State == Applicationˉlaunchˉstate.Published {
+        Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+    } else if Nextˉstate == Applicationˉlaunchˉstate.Reserved {
+        if Plan.State != Applicationˉlaunchˉstate.Planned {
+            Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+        } else if !Resourceˉaccepted {
+            Status = Applicationˉlaunchˉstatus.Resourceˉrejected;
+        } else {
+            State = Applicationˉlaunchˉstate.Reserved;
+        }
+    } else if Nextˉstate == Applicationˉlaunchˉstate.Constructed {
+        if Plan.State != Applicationˉlaunchˉstate.Reserved {
+            Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+        } else if !Constructionˉsucceeded {
+            Status = Applicationˉlaunchˉstatus.Constructionˉfailed;
+            State = Applicationˉlaunchˉstate.Rolledˉback;
+        } else {
+            State = Applicationˉlaunchˉstate.Constructed;
+        }
+    } else if Nextˉstate == Applicationˉlaunchˉstate.Published {
+        if Plan.State != Applicationˉlaunchˉstate.Constructed {
+            Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+        } else if !Resourceˉaccepted {
+            Status = Applicationˉlaunchˉstatus.Resourceˉrejected;
+        } else {
+            State = Applicationˉlaunchˉstate.Published;
+        }
+    } else if Nextˉstate == Applicationˉlaunchˉstate.Rolledˉback {
+        if Plan.State != Applicationˉlaunchˉstate.Reserved {
+            if Plan.State != Applicationˉlaunchˉstate.Constructed {
+                Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+            }
+        }
+        if Status == Applicationˉlaunchˉstatus.Success {
+            State = Applicationˉlaunchˉstate.Rolledˉback;
+        }
+    } else {
+        Status = Applicationˉlaunchˉstatus.Wrongˉstate;
+    }
+    let Resultˉstatus: Applicationˉlaunchˉstatus = Status;
+    let Resultˉstate: Applicationˉlaunchˉstate = State;
+    return Applicationˉlaunchˉtransition(
+        Resultˉstatus, Resultˉstate, Plan.Planˉreference
+    );
+}

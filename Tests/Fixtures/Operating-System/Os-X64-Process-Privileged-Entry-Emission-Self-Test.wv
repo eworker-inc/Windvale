@@ -1,0 +1,61 @@
+module Osˉx64ˉprocessˉprivilegedˉentryˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉprivilegedˉentryˉemission as Privileged;
+
+export fn Main() -> i32 {
+    let Code: bytes = Privileged.X64ˉprocessˉprivilegedˉentryˉbytes();
+    let Externalˉfields: bytes = Privileged.X64ˉprocessˉprivilegedˉentryˉexternalˉfields();
+    let Externalˉsymbols: bytes = Privileged.X64ˉprocessˉprivilegedˉentryˉexternalˉsymbols();
+    let Internalˉfields: bytes = Privileged.X64ˉprocessˉprivilegedˉentryˉinternalˉfields();
+    let Internalˉdisplacements: bytes =
+        Privileged.X64ˉprocessˉprivilegedˉentryˉinternalˉdisplacements();
+    if Bytesˉlength(Code) != 641u32 || Bytesˉlength(Externalˉfields) != 16u32 ||
+        Bytesˉlength(Externalˉsymbols) != 16u32 ||
+        Bytesˉlength(Internalˉfields) != 12u32 ||
+        Bytesˉlength(Internalˉdisplacements) != 12u32 ||
+        Privileged.X64ˉprocessˉprivilegedˉentryˉfixtureˉoffset() != 11442u32 ||
+        Privileged.X64ˉprocessˉprivilegedˉentryˉfixtureˉend() != 12083u32 {
+        return 1;
+    }
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        let Externalˉfield: u32 =
+            Bytesˉreadˉu32ˉlittle(Externalˉfields, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Externalˉfield) != 0u32 { return 2; }
+        Index = Index + 1u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 0u32) != 20u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 4u32) != 18u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 8u32) != 19u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 12u32) != 22u32 { return 3; }
+    Index = 0u32;
+    while Index < 3u32 {
+        let Internalˉfield: u32 =
+            Bytesˉreadˉu32ˉlittle(Internalˉfields, Index * 4u32);
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Internalˉdisplacements, Index * 4u32);
+        var Expected: u32 = 33826u32;
+        if Index == 2u32 { Expected = 34128u32; }
+        if Bytesˉreadˉu32ˉlittle(Code, Internalˉfield) != 0u32 ||
+            11442u32 + Internalˉfield + 4u32 + Displacement != Expected {
+            return 4;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 641u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 16904u32 || Hashˉone != 45004u32 ||
+        Hashˉtwo != 21749u32 || Hashˉthree != 33949u32 { return 5; }
+    return 72;
+}

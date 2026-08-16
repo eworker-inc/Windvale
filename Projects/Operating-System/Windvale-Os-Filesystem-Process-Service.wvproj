@@ -1,0 +1,5 @@
+windvale-project 2
+root "Operating-System/Services/Filesystem-Process-Service.wv"
+source "Operating-System/Services/Filesystem-Provider-State.wv"
+source "Libraries/Platform/Filesystem/Filesystem-Semantics.wv"
+emit wvb

@@ -1,0 +1,89 @@
+module X64ˉprocessˉclientˉreservationˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Loadˉclientˉrecordˉr13: bytes = [76, 139, 172, 36];
+data Prepareˉallocation: bytes = [76, 137, 225, 73, 141, 148, 36];
+data Moveˉr8d: bytes = [65, 184];
+data Moveˉr9d: bytes = [65, 185];
+data Testˉrax: bytes = [72, 133, 192];
+data Conditionˉequal: bytes = [15, 132];
+data Conditionˉnotˉequal: bytes = [15, 133];
+data Conditionˉabove: bytes = [15, 135];
+data Preserveˉextent: bytes = [73, 137, 198];
+data Testˉpageˉalignment: bytes = [72, 247, 192, 255, 15, 0, 0];
+data Loadˉextentˉend: bytes = [73, 141, 134];
+data Compareˉidentityˉend: bytes = [72, 61];
+data Compareˉidentityˉwindows: bytes = [76, 137, 240, 72, 193, 232, 21, 73, 141, 142];
+data Compareˉidentityˉwindowˉends: bytes = [72, 193, 233, 21, 72, 57, 200];
+data Moveˉextentˉrax: bytes = [76, 137, 240];
+data Storeˉclientˉrootˉrax: bytes = [72, 137, 132, 36];
+
+fn Emitˉconditionˉplaceholder(
+    State: X64.X64ˉemission,
+    Prefix: bytes
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Prefix);
+    return X64.X64ˉemitˉu32(Result, 0u32);
+}
+
+fn Buildˉclientˉreservation() -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Loadˉclientˉrecordˉr13);
+    State = X64.X64ˉemitˉu32(State, 192u32);
+    State = X64.X64ˉemit(State, Prepareˉallocation);
+    State = X64.X64ˉemitˉu32(State, 3472u32);
+    State = X64.X64ˉemit(State, Moveˉr8d);
+    State = X64.X64ˉemitˉu32(State, 65538u32);
+    State = X64.X64ˉemit(State, Moveˉr9d);
+    State = X64.X64ˉemitˉu32(State, 122u32);
+    State = X64.X64ˉemitˉcallˉplaceholder(State);
+    State = X64.X64ˉemit(State, Testˉrax);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉequal);
+    State = X64.X64ˉemit(State, Preserveˉextent);
+    State = X64.X64ˉemit(State, Testˉpageˉalignment);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉnotˉequal);
+    State = X64.X64ˉemit(State, Loadˉextentˉend);
+    State = X64.X64ˉemitˉu32(State, 499712u32);
+    State = X64.X64ˉemit(State, Compareˉidentityˉend);
+    State = X64.X64ˉemitˉu32(State, 1073741824u32);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉabove);
+    State = X64.X64ˉemit(State, Compareˉidentityˉwindows);
+    State = X64.X64ˉemitˉu32(State, 499711u32);
+    State = X64.X64ˉemit(State, Compareˉidentityˉwindowˉends);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉnotˉequal);
+    State = X64.X64ˉemit(State, Moveˉextentˉrax);
+    State = X64.X64ˉemit(State, Storeˉclientˉrootˉrax);
+    return X64.X64ˉemitˉu32(State, 216u32);
+}
+
+export fn X64ˉprocessˉclientˉreservationˉisˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉclientˉreservation();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 118u32;
+}
+
+export fn X64ˉprocessˉclientˉreservationˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉclientˉreservation();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉclientˉreservationˉfixtureˉoffset() -> u32 { return 3098u32; }
+export fn X64ˉprocessˉclientˉreservationˉfixtureˉend() -> u32 { return 3216u32; }
+export fn X64ˉprocessˉclientˉreservationˉcallˉfield() -> u32 { return 32u32; }
+export fn X64ˉprocessˉclientˉreservationˉsymbolˉindex() -> u32 { return 13u32; }
+export fn X64ˉprocessˉclientˉreservationˉrelocationˉaddend() -> i32 { return -4; }
+
+export fn X64ˉprocessˉclientˉreservationˉfailureˉfields() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(41u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(57u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(76u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(103u32));
+}
+
+export fn X64ˉprocessˉclientˉreservationˉfailureˉdisplacements() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(30683u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(30667u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(30648u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(30621u32));
+}

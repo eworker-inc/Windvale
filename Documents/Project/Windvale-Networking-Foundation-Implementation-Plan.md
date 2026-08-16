@@ -146,7 +146,7 @@ TCP, TLS, HTTP, or package protocol parser.
 
 ## Ordered implementation slices
 
-### Network slice 1: operation, deadline, and cancellation core
+### Network slice 1: operation, deadline, and cancellation core — first candidate implemented
 
 Status: implemented candidate under [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md).
 
@@ -309,6 +309,12 @@ Exit gate: the pinned QEMU device and deterministic peer prove interrupt-driven
 completion, bounded pools, reset, DMA revocation, service restart, every stale
 generation, and zero retained resources after teardown.
 
+The first fixed boot-composition candidate now requires the selected IPv4/IPv6,
+port, direction-right, and shared operation-queue envelope before Probe 40
+returns token 97. It does not start a network process, grant a link, or process a
+packet; checked provider launch, IPC/resource binding, and the slice-7 device and
+transport evidence remain open.
+
 ## Verification policy
 
 Each slice has one focused native owner and deterministic fixtures. Development
@@ -334,3 +340,8 @@ separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking
 does not claim completion of the independent Windvale OS packet, driver, or TCP
 workstream.
+
+The OS path already admits network profile 3 as an isolated 96-page,
+one-process, one-endpoint resource domain and boot-embeds its deterministic user
+image. The privileged machine still has to instantiate and publish that provider;
+the guest packet, device-driver, and transport path remains independent work.

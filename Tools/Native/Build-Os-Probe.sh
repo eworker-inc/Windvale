@@ -11,19 +11,25 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06
+        efi_digest=5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb
+        efi_bytes=1691136
+        code_tail_offset=785968
         ;;
     invalid-opcode)
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e
+        efi_digest=a0c361386e8ce0aa1d8d73b2ca85f26768f2335992e993a869136db00d0daca0
+        efi_bytes=1691136
+        code_tail_offset=785984
         ;;
     general-protection)
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2
+        efi_digest=7a446760851890f26becb2c00e7e76f016e95f02d30b5a4ecef78d3b692e1afd
+        efi_bytes=1691136
+        code_tail_offset=785984
         ;;
     *)
         echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
@@ -171,9 +177,9 @@ if ! "$script_directory/Build-Os-Process-Policy-Object.sh" \
     cat -- "$work/04.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/04-process-policy.wvo") -ne 583416 ]] ||
+if [[ $(wc -c < "$work/04-process-policy.wvo") -ne 699394 ]] ||
     ! printf '%s  %s\n' \
-        '4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428' \
+        'dea015f8cafac002eddb9383691e2de10cbdcd0c0a589a88d88fbef95241f5b5' \
         "$work/04-process-policy.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process-policy object is invalid.' >&2
     exit 1
@@ -184,9 +190,9 @@ if ! "$script_directory/Build-Os-Process-Object.sh" \
     cat -- "$work/05.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/05-process.wvo") -ne 512978 ]] ||
+if [[ $(wc -c < "$work/05-process.wvo") -ne 951394 ]] ||
     ! printf '%s  %s\n' \
-        'e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a' \
+        '884152027e10221591f1fc79bbffd8875c14d507e5652719ede4d67dea22624e' \
         "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process object is invalid.' >&2
     exit 1
@@ -275,13 +281,17 @@ if ! grep -Fxq 'entry name=Windvale_boot_probe address=0' "$work/Link.map"; then
     echo 'The native Probe 40 linker reported an unexpected entry.' >&2
     exit 1
 fi
+if ! grep -Fxq "section index=14 input=13 source-index=1 kind=code name=.text.support image-offset=$code_tail_offset address=$code_tail_offset memory-bytes=23 data-bytes=23 alignment=16" "$work/Link.map"; then
+    echo 'The native Probe 40 linker reported an unexpected supervisor code boundary.' >&2
+    exit 1
+fi
 
 if ! "$script_directory/Package-Uefi.sh" \
     "$work/Probe40.bin" 0 "$work/Probe40.efi" >"$work/Package.log" 2>&1; then
     cat -- "$work/Package.log" >&2
     exit 1
 fi
-if [[ $(wc -c < "$work/Probe40.efi") -ne 1137152 ]] ||
+if [[ $(wc -c < "$work/Probe40.efi") -ne $efi_bytes ]] ||
     ! printf '%s  %s\n' \
         "$efi_digest" \
         "$work/Probe40.efi" | sha256sum --check --strict --quiet; then
@@ -298,6 +308,6 @@ fi
 printf '%s\n' \
     'windvale-os-probe-native-build 40' \
     "scenario=$scenario" \
-    'efi-bytes=1137152' \
+    "efi-bytes=$efi_bytes" \
     "efi-sha256=$efi_digest" \
     "output=$output"

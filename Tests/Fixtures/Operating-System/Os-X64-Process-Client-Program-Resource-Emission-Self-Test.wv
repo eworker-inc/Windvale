@@ -1,0 +1,45 @@
+module Osˉx64ˉprocessˉclientˉprogramˉresourceˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉprogramˉresourceˉemission as Resourceˉemission;
+
+data Programˉdigest: bytes = [
+    40, 210, 21, 185, 130, 167, 183, 24, 92, 250, 128, 196, 204, 83, 70, 102,
+    107, 208, 24, 21, 130, 254, 128, 190, 200, 183, 3, 93, 81, 77, 169, 54
+];
+
+export fn Main() -> i32 {
+    if !Resourceˉemission.X64ˉprocessˉclientˉprogramˉresourceˉisˉvalid(
+        Programˉdigest
+    ) { return 1; }
+    let Code: bytes =
+        Resourceˉemission.X64ˉprocessˉclientˉprogramˉresourceˉbytes(
+            Programˉdigest
+        );
+    if Bytesˉlength(Code) != 248u32 ||
+        Resourceˉemission.X64ˉprocessˉclientˉprogramˉresourceˉfixtureˉoffset()
+            != 9683u32 ||
+        Resourceˉemission.X64ˉprocessˉclientˉprogramˉresourceˉfixtureˉend()
+            != 9931u32 { return 2; }
+    let Short: bytes = Bytesˉslice(Programˉdigest, 0u32, 31u32);
+    if Resourceˉemission.X64ˉprocessˉclientˉprogramˉresourceˉisˉvalid(Short) ||
+        Bytesˉlength(
+            Resourceˉemission.X64ˉprocessˉclientˉprogramˉresourceˉbytes(Short)
+        ) != 0u32 { return 3; }
+
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 248u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 33489u32 || Hashˉone != 53980u32 ||
+        Hashˉtwo != 37479u32 || Hashˉthree != 37780u32 { return 4; }
+    return 66;
+}

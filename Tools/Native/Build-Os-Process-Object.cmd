@@ -27,9 +27,9 @@ call :verify "%Toolset%\windows-x64-process-resource-store.exe" 50688 28275579df
 if errorlevel 1 goto :invalid_toolset
 call :verify "%Toolset%\windows-x64-process-directory-snapshot.exe" 46592 73ba3ee9460bd8915e6f05031f44cd963aecf60d424544f48cf57ed9912c2779
 if errorlevel 1 goto :invalid_toolset
-call :verify "%Toolset%\windows-x64-process-object.exe" 181248 69358a8422b5f79a189c60e06061cd1a95a1308f1ab887a329afc319ad2c80e9
+call :verify "%Toolset%\windows-x64-process-object.exe" 190464 9ddd81e3d2bf885c045a01921b3e48875050ab912d599f57462a9c3a9b239af2
 if errorlevel 1 goto :invalid_toolset
-call :verify "%Toolset%\normal-x64-process.bin" 46678 993827337a101660107742e4f41de5d2df849517d4aa16bb919d708531592bfc
+call :verify "%Toolset%\normal-x64-process.bin" 46678 112dd0cb06de269e069436720876829313fb0a20546d1d7b38ea336fea26e6fd
 if errorlevel 1 goto :invalid_toolset
 
 :allocate
@@ -71,6 +71,34 @@ if errorlevel 1 goto :failure
 call :verify "%Work%\Directory.wvo" 2803 04339b8fd627c6b765a16903ad339408c86eaa9877bdc52357cbafa33e98679a
 if errorlevel 1 goto :failure
 
+set "FailureStep=build-filesystem"
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Operating-System\Windvale-Os-Filesystem-Process-Service.wvproj" "%Work%\Filesystem.wvb" >"%Work%\Build-Filesystem.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Filesystem.wvb" 14812 054dc2c9b5c33e02e6263b644049fd84f1ed2e1219d642ec64c066af5bdc8fcf
+if errorlevel 1 goto :failure
+set "FailureStep=lower-filesystem"
+call "%Native%\Lower-Wvb-To-Wvo.cmd" "%Work%\Filesystem.wvb" "%Work%\Filesystem-Main.wvo" >"%Work%\Lower-Filesystem.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Filesystem-Main.wvo" 196327 5ee235d5dca7bfdab8a5a1b7c54874b6545725e69da754e22e06f72f578ebdb3
+if errorlevel 1 goto :failure
+set "FailureStep=rename-filesystem"
+call "%Native%\Rename-Wvo-Export.cmd" "%Work%\Filesystem-Main.wvo" Main Windvale_filesystem_process_service_main "%Work%\Filesystem.wvo" >"%Work%\Rename-Filesystem.log" 2>&1
+if errorlevel 1 goto :failure
+
+set "FailureStep=build-network"
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Operating-System\Windvale-Os-Network-Process-Service.wvproj" "%Work%\Network.wvb" >"%Work%\Build-Network.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Network.wvb" 13543 32c595716af0a3706226d677924a5279ea2d7b97b0a4cbdf7c6c9eed808e1b2a
+if errorlevel 1 goto :failure
+set "FailureStep=lower-network"
+call "%Native%\Lower-Wvb-To-Wvo.cmd" "%Work%\Network.wvb" "%Work%\Network-Main.wvo" >"%Work%\Lower-Network.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Network-Main.wvo" 243124 892cfe18b81667c9e4d3e82a1889a9b1f77c45e350d2e75144694db3c2f49ca0
+if errorlevel 1 goto :failure
+set "FailureStep=rename-network"
+call "%Native%\Rename-Wvo-Export.cmd" "%Work%\Network-Main.wvo" Main Windvale_network_process_service_main "%Work%\Network.wvo" >"%Work%\Rename-Network.log" 2>&1
+if errorlevel 1 goto :failure
+
 set "FailureStep=build-interpreter"
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Bytecode-Interpreter.wvproj" "%Work%\Interpreter.wvb" >"%Work%\Build-Interpreter.log" 2>&1
 if errorlevel 1 goto :failure
@@ -103,6 +131,16 @@ call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Kernel\Direc
 if errorlevel 1 goto :failure
 call :verify "%Work%\Directory-Shim.wvo" 1549 c0a7524130b8733ed17a3ce52fc04986cb449394c9ee509280120b86a3ed8c88
 if errorlevel 1 goto :failure
+set "FailureStep=assemble-filesystem-shim"
+call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Kernel\Filesystem-Process-Service-Shim.wva" "%Work%\Filesystem-Shim.wvo" >"%Work%\Assemble-Filesystem.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Filesystem-Shim.wvo" 302 dc212ce43b59102a05521531e6df4674291851c72a1be8990eff049ea46879dd
+if errorlevel 1 goto :failure
+set "FailureStep=assemble-network-shim"
+call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Kernel\Network-Process-Service-Shim.wva" "%Work%\Network-Shim.wvo" >"%Work%\Assemble-Network.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Network-Shim.wvo" 296 628852893fcbc32e610261517a79c3acd56714ce0c197beab1c0a3917dedf726
+if errorlevel 1 goto :failure
 set "FailureStep=assemble-boot-resource"
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Operating-System\Runtime\Boot-Resource-Service.wva" "%Work%\Boot-Stencil.wvo" >"%Work%\Assemble-Boot.log" 2>&1
 if errorlevel 1 goto :failure
@@ -130,6 +168,16 @@ call "%Native%\Link-Wvo.cmd" 0 Windvale_directory_process_user_entry "%Work%\Dir
 if errorlevel 1 goto :failure
 call :verify "%Work%\Directory.bin" 3911 f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb
 if errorlevel 1 goto :failure
+set "FailureStep=link-filesystem"
+call "%Native%\Link-Wvo.cmd" 0 Windvale_filesystem_process_user_entry "%Work%\Filesystem.bin" "%Work%\Filesystem-Shim.wvo" "%Work%\Filesystem.wvo" >"%Work%\Link-Filesystem.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Filesystem.bin" 195657 453cef870da3f375400d1c58cc8ebd385f761c2eafbdf3b3fb70603db8520dab
+if errorlevel 1 goto :failure
+set "FailureStep=link-network"
+call "%Native%\Link-Wvo.cmd" 0 Windvale_network_process_user_entry "%Work%\Network.bin" "%Work%\Network-Shim.wvo" "%Work%\Network.wvo" >"%Work%\Link-Network.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\Network.bin" 242571 57067da10da68fc1d35b41784e147d8f60ed1e05441cb68bc803ad5a9682f6d1
+if errorlevel 1 goto :failure
 set "FailureStep=link-client"
 call "%Native%\Link-Wvo.cmd" 0 Windvale_process_user_entry "%Work%\Client.bin" "%Work%\User-Shim.wvo" "%Work%\Interpreter.wvo" "%Work%\Boot-Service.wvo" >"%Work%\Link-Client.log" 2>&1
 if errorlevel 1 goto :failure
@@ -148,11 +196,11 @@ call :verify "%Work%\Directory.wvds" 3184 0f793a41a701240b9cf41179dafa252384b43c
 if errorlevel 1 goto :failure
 
 set "FailureStep=build-process-object"
-"%Toolset%\windows-x64-process-object.exe" "%Toolset%\normal-x64-process.bin" "%Work%\Init.bin" "%Work%\Client.bin" "%Work%\Program.wvb" "%Work%\Resources.wvrs" "%Work%\Directory.wvds" "%Work%\Directory.bin" "%Work%\Process.wvo" >"%Work%\Process-Object.log" 2>&1
+"%Toolset%\windows-x64-process-object.exe" "%Toolset%\normal-x64-process.bin" "%Work%\Init.bin" "%Work%\Client.bin" "%Work%\Program.wvb" "%Work%\Resources.wvrs" "%Work%\Directory.wvds" "%Work%\Directory.bin" "%Work%\Filesystem.bin" "%Work%\Network.bin" "%Work%\Process.wvo" >"%Work%\Process-Object.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process.wvo" 512978 e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a
+call :verify "%Work%\Process.wvo" 951394 884152027e10221591f1fc79bbffd8875c14d507e5652719ede4d67dea22624e
 if errorlevel 1 goto :failure
-call "%Native%\Verify-Wvo.cmd" "%Work%\Process.wvo" >nul 2>&1
+call "%Native%\Verify-Wvo.cmd" "%Work%\Process.wvo" >"%Work%\Verify-Process.log" 2>&1
 if errorlevel 1 goto :failure
 set "FailureStep=publish"
 call "%Native%\Publish-Wvo.cmd" "%Work%\Process.wvo" "%Output%" >"%Work%\Publish.log" 2>&1

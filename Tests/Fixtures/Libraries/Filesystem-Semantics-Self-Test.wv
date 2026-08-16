@@ -1,0 +1,47 @@
+module Filesystemˉsemanticsˉselfˉtest profile portable;
+
+import Filesystemˉsemantics as Filesystem;
+
+export fn Main() -> i32 {
+    if !Filesystem.Filesystemˉsegmentˉisˉvalid("kernel.wv") { return 1; }
+    if Filesystem.Filesystemˉsegmentˉisˉvalid("") { return 2; }
+    if Filesystem.Filesystemˉsegmentˉisˉvalid(".") { return 3; }
+    if Filesystem.Filesystemˉsegmentˉisˉvalid("..") { return 4; }
+    if Filesystem.Filesystemˉsegmentˉisˉvalid("a/b") { return 5; }
+    if !Filesystem.Filesystemˉopenˉrequestˉisˉvalid("state.bin", 4u32) { return 6; }
+    if Filesystem.Filesystemˉopenˉrequestˉisˉvalid("state.bin", 5u32) { return 7; }
+    if !Filesystem.Filesystemˉfileˉrequestˉisˉvalid(
+        2u32, 65537u64, 4294967296u64, 4096u32, 0u32
+    ) { return 8; }
+    if Filesystem.Filesystemˉfileˉrequestˉisˉvalid(
+        3u32, 65537u64, 18446744073709551615u64, 0u32, 1u32
+    ) { return 9; }
+    if !Filesystem.Filesystemˉreadˉresultˉisˉvalid(
+        65537u64, 8u64, 8u32, 65537u64, 12u64, 8u64, 4u32, 4u32
+    ) { return 10; }
+    if Filesystem.Filesystemˉreadˉresultˉisˉvalid(
+        65537u64, 8u64, 8u32, 65537u64, 12u64, 8u64, 8u32, 8u32
+    ) { return 11; }
+    if !Filesystem.Filesystemˉwriteˉresultˉisˉvalid(
+        65537u64, 8u64, 8u32, 65537u64, 16u64, 8u32, 1u32
+    ) { return 12; }
+    if !Filesystem.Filesystemˉwriteˉresultˉisˉvalid(
+        65537u64, 8u64, 8u32, 65537u64, 12u64, 4u32, 2u32
+    ) { return 13; }
+    if !Filesystem.Filesystemˉwriteˉresultˉisˉvalid(
+        65537u64, 8u64, 8u32, 65537u64, 0u64, 0u32, 3u32
+    ) { return 14; }
+    if Filesystem.Filesystemˉwriteˉresultˉisˉvalid(
+        65537u64, 8u64, 8u32, 65537u64, 0u64, 4u32, 3u32
+    ) { return 15; }
+    if !Filesystem.Filesystemˉsetˉlengthˉresultˉisˉvalid(
+        65537u64, 4294967296u64, 65537u64, 4294967296u64, 1u32
+    ) { return 16; }
+    if !Filesystem.Filesystemˉrejectionˉisˉvalid(5u32, 0u32, 0u32, 0u32) {
+        return 17;
+    }
+    if Filesystem.Filesystemˉrejectionˉisˉvalid(5u32, 1u32, 0u32, 0u32) {
+        return 18;
+    }
+    return 42;
+}

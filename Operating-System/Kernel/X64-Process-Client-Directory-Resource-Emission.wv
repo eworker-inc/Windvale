@@ -1,0 +1,68 @@
+module X64ˉprocessˉclientˉdirectoryˉresourceˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Directoryˉresourceˉheader: bytes = [
+    77, 141, 140, 36, 80, 6, 0, 0, 72, 184, 87, 86, 82, 69, 83, 48,
+    48, 54, 73, 137, 1, 65, 199, 65, 8, 6, 0, 0, 0,
+    65, 199, 65, 12, 128, 0, 0, 0, 65, 199, 65, 16, 3, 0, 0, 0,
+    65, 199, 65, 20, 5, 0, 0, 0, 65, 199, 65, 24, 3, 0, 1, 0,
+    65, 199, 65, 28, 3, 0, 1, 0, 65, 199, 65, 40, 112, 12, 0, 0,
+    65, 199, 65, 44, 7, 4, 0, 0, 65, 199, 65, 112, 1, 0, 0, 0,
+    65, 199, 65, 116, 1, 0, 0, 0,
+    72, 139, 132, 36, 200, 0, 0, 0, 72, 139, 80, 64,
+    72, 141, 130, 0, 128, 0, 0, 73, 137, 65, 32, 73, 137, 81, 48,
+    72, 139, 132, 36, 200, 0, 0, 0, 72, 139, 64, 88,
+    73, 137, 65, 56, 72, 141, 130, 0, 128, 0, 0, 73, 137, 65, 64
+];
+data Moveˉrax: bytes = [72, 184];
+data Storeˉdigestˉrax: bytes = [73, 137, 65];
+data Digestˉoffsets: bytes = [80, 88, 96, 104];
+data Directoryˉresourceˉpageˉtable: bytes = [
+    73, 139, 65, 64, 72, 37, 0, 240, 31, 0, 72, 193, 232, 9,
+    73, 3, 65, 48, 72, 5, 0, 48, 0, 0, 73, 137, 65, 120
+];
+
+fn Emptyˉbytes() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32);
+}
+
+fn Buildˉdirectoryˉresource(Snapshotˉdigest: bytes) -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Directoryˉresourceˉheader);
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        State = X64.X64ˉemit(State, Moveˉrax);
+        State = X64.X64ˉemitˉu64(
+            State, Bytesˉreadˉu64ˉlittle(Snapshotˉdigest, Index * 8u32)
+        );
+        State = X64.X64ˉemit(State, Storeˉdigestˉrax);
+        State = X64.X64ˉemit(State, Bytesˉslice(Digestˉoffsets, Index, 1u32));
+        Index = Index + 1u32;
+    }
+    return X64.X64ˉemit(State, Directoryˉresourceˉpageˉtable);
+}
+
+export fn X64ˉprocessˉclientˉdirectoryˉresourceˉisˉvalid(
+    Snapshotˉdigest: bytes
+) -> bool {
+    if Bytesˉlength(Snapshotˉdigest) != 32u32 { return false; }
+    let State: X64.X64ˉemission = Buildˉdirectoryˉresource(Snapshotˉdigest);
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 239u32;
+}
+
+export fn X64ˉprocessˉclientˉdirectoryˉresourceˉbytes(
+    Snapshotˉdigest: bytes
+) -> bytes {
+    if Bytesˉlength(Snapshotˉdigest) != 32u32 { return Emptyˉbytes(); }
+    let State: X64.X64ˉemission = Buildˉdirectoryˉresource(Snapshotˉdigest);
+    return State.Code;
+}
+
+export fn X64ˉprocessˉclientˉdirectoryˉresourceˉfixtureˉoffset() -> u32 {
+    return 10399u32;
+}
+export fn X64ˉprocessˉclientˉdirectoryˉresourceˉfixtureˉend() -> u32 {
+    return 10638u32;
+}

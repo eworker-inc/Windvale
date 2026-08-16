@@ -1,0 +1,135 @@
+module Providerˉlaunchˉlifecycleˉpolicy profile portable;
+
+import Providerˉlaunchˉtransactionˉpolicy as Provider;
+import Resourceˉdomainˉpolicy as Domain;
+
+fn Lifecycleˉresult(
+    Status: Provider.Providerˉlaunchˉstatus,
+    Phase: Provider.Providerˉlaunchˉphase,
+    State: Provider.Providerˉlaunchˉtransition,
+    Processˉreference: u32,
+    Committedˉpages: u32
+) -> Provider.Providerˉlaunchˉtransition {
+    return Provider.Providerˉlaunchˉtransition(
+        Status, Phase, State.Role, State.Domainˉreference,
+        Processˉreference, Committedˉpages
+    );
+}
+
+export fn Providerˉlaunchˉdrain(
+    State: Provider.Providerˉlaunchˉtransition,
+    Processˉreference: u32
+) -> Provider.Providerˉlaunchˉtransition {
+    if Processˉreference != State.Processˉreference {
+        return Lifecycleˉresult(
+            Provider.Providerˉlaunchˉstatus.Stale,
+            State.Phase, State, State.Processˉreference,
+            State.Committedˉpages
+        );
+    }
+    if State.Phase != Provider.Providerˉlaunchˉphase.Available {
+        return Lifecycleˉresult(
+            Provider.Providerˉlaunchˉstatus.Wrongˉphase,
+            State.Phase, State, State.Processˉreference,
+            State.Committedˉpages
+        );
+    }
+    return Lifecycleˉresult(
+        Provider.Providerˉlaunchˉstatus.Success,
+        Provider.Providerˉlaunchˉphase.Draining,
+        State, State.Processˉreference, State.Committedˉpages
+    );
+}
+
+export fn Providerˉlaunchˉfinish(
+    State: Provider.Providerˉlaunchˉtransition,
+    Activeˉwork: u32
+) -> Provider.Providerˉlaunchˉtransition {
+    if State.Phase != Provider.Providerˉlaunchˉphase.Draining {
+        return Lifecycleˉresult(
+            Provider.Providerˉlaunchˉstatus.Wrongˉphase,
+            State.Phase, State, State.Processˉreference,
+            State.Committedˉpages
+        );
+    }
+    if Activeˉwork != 0u32 {
+        return Lifecycleˉresult(
+            Provider.Providerˉlaunchˉstatus.Workˉactive,
+            State.Phase, State, State.Processˉreference,
+            State.Committedˉpages
+        );
+    }
+    var Current: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉtransition(
+            Domain.Resourceˉdomainˉstatus.Success,
+            State.Domainˉreference, 1u32, Domain.Resourceˉdomainˉstate.Alive,
+            1u32, State.Committedˉpages, 1u32,
+            0u32, 0u32, 0u32, 1u32, State.Committedˉpages, 1u32,
+            1u32, State.Committedˉpages, 1u32, 0u32
+        );
+    Current = Domain.Resourceˉdomainˉstop(Current, 40u32 + State.Role);
+    Current = Domain.Resourceˉdomainˉrelease(
+        Current, 1u32, State.Committedˉpages, 1u32
+    );
+    Current = Domain.Resourceˉdomainˉfinishˉstop(Current);
+    if Current.State != Domain.Resourceˉdomainˉstate.Dead {
+        return Lifecycleˉresult(
+            Provider.Providerˉlaunchˉstatus.Teardownˉfailed,
+            State.Phase, State, State.Processˉreference,
+            State.Committedˉpages
+        );
+    }
+    return Lifecycleˉresult(
+        Provider.Providerˉlaunchˉstatus.Success,
+        Provider.Providerˉlaunchˉphase.Stopped, State, 0u32, 0u32
+    );
+}
+
+export fn Providerˉlaunchˉstaleˉisˉrejected(
+    Role: u32,
+    Domainˉreference: u32,
+    Processˉreference: u32,
+    Committedˉpages: u32,
+    Staleˉprocessˉreference: u32
+) -> bool {
+    let Available: Provider.Providerˉlaunchˉtransition =
+        Provider.Providerˉlaunchˉtransition(
+            Provider.Providerˉlaunchˉstatus.Success,
+            Provider.Providerˉlaunchˉphase.Available,
+            Role, Domainˉreference, Processˉreference, Committedˉpages
+        );
+    let Stale: Provider.Providerˉlaunchˉtransition =
+        Providerˉlaunchˉdrain(Available, Staleˉprocessˉreference);
+    return Stale.Status == Provider.Providerˉlaunchˉstatus.Stale &&
+        Stale.Phase == Provider.Providerˉlaunchˉphase.Available &&
+        Stale.Processˉreference == Processˉreference &&
+        Stale.Committedˉpages == Committedˉpages;
+}
+
+export fn Providerˉlaunchˉteardownˉisˉvalid(
+    Role: u32,
+    Domainˉreference: u32,
+    Processˉreference: u32,
+    Committedˉpages: u32,
+    Activeˉwork: u32
+) -> bool {
+    let Available: Provider.Providerˉlaunchˉtransition =
+        Provider.Providerˉlaunchˉtransition(
+            Provider.Providerˉlaunchˉstatus.Success,
+            Provider.Providerˉlaunchˉphase.Available,
+            Role, Domainˉreference, Processˉreference, Committedˉpages
+        );
+    let Draining: Provider.Providerˉlaunchˉtransition =
+        Providerˉlaunchˉdrain(Available, Processˉreference);
+    let Finished: Provider.Providerˉlaunchˉtransition =
+        Providerˉlaunchˉfinish(Draining, Activeˉwork);
+    if Activeˉwork != 0u32 {
+        return Finished.Status == Provider.Providerˉlaunchˉstatus.Workˉactive &&
+            Finished.Phase == Provider.Providerˉlaunchˉphase.Draining &&
+            Finished.Committedˉpages == Committedˉpages;
+    }
+    return Finished.Status == Provider.Providerˉlaunchˉstatus.Success &&
+        Finished.Phase == Provider.Providerˉlaunchˉphase.Stopped &&
+        Finished.Processˉreference == 0u32 &&
+        Finished.Committedˉpages == 0u32;
+}

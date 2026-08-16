@@ -1,0 +1,256 @@
+module Boundedˉoperation profile portable;
+
+const MAXIMUM_TRANSFER: u32 = 65536u32;
+
+export enum Boundedˉoperationˉphase {
+    Free = 0; Queued = 1; Active = 2; Terminal = 3;
+}
+
+export enum Boundedˉoperationˉoutcome {
+    None = 0; Completed = 1; Cancelled = 2; Timedˉout = 3;
+    Rejected = 4; Stale = 5; Providerˉexited = 6;
+    Indeterminate = 7;
+}
+
+export enum Boundedˉoperationˉstatus {
+    Success = 0; Invalidˉrequest = 1; Queueˉfull = 2;
+    Wrongˉphase = 3; Invalidˉprogress = 4; Deadlineˉexpired = 5;
+}
+
+export record Boundedˉoperationˉtransition {
+    Status: Boundedˉoperationˉstatus;
+    Phase: Boundedˉoperationˉphase;
+    Outcome: Boundedˉoperationˉoutcome;
+    Providerˉgeneration: u32;
+    Identity: u64;
+    Requested: u32;
+    Progress: u32;
+    Deadline: u64;
+    Queueˉused: u32;
+    Queueˉlimit: u32;
+    Reservedˉcontrol: u32;
+    Mutation: bool;
+    Control: bool;
+}
+
+fn Transition(
+    Status: Boundedˉoperationˉstatus,
+    Phase: Boundedˉoperationˉphase,
+    Outcome: Boundedˉoperationˉoutcome,
+    State: Boundedˉoperationˉtransition
+) -> Boundedˉoperationˉtransition {
+    return Boundedˉoperationˉtransition(
+        Status, Phase, Outcome, State.Providerˉgeneration, State.Identity,
+        State.Requested, State.Progress, State.Deadline, State.Queueˉused,
+        State.Queueˉlimit, State.Reservedˉcontrol, State.Mutation,
+        State.Control
+    );
+}
+
+export fn Boundedˉoperationˉbegin(
+    Providerˉgeneration: u32,
+    Identity: u64,
+    Requested: u32,
+    Deadline: u64,
+    Now: u64,
+    Queueˉused: u32,
+    Queueˉlimit: u32,
+    Reservedˉcontrol: u32,
+    Mutation: bool,
+    Control: bool
+) -> Boundedˉoperationˉtransition {
+    var Status: Boundedˉoperationˉstatus = Boundedˉoperationˉstatus.Success;
+    if Providerˉgeneration == 0u32 || Identity == 0u64 ||
+        Requested > MAXIMUM_TRANSFER || Queueˉlimit == 0u32 ||
+        Reservedˉcontrol > Queueˉlimit || Queueˉused > Queueˉlimit {
+        Status = Boundedˉoperationˉstatus.Invalidˉrequest;
+    }
+    if Status == Boundedˉoperationˉstatus.Success {
+        if Control {
+            if Queueˉused >= Queueˉlimit {
+                Status = Boundedˉoperationˉstatus.Queueˉfull;
+            }
+        } else if Queueˉused >= Queueˉlimit - Reservedˉcontrol {
+            Status = Boundedˉoperationˉstatus.Queueˉfull;
+        }
+    }
+    if Status == Boundedˉoperationˉstatus.Success && Deadline != 0u64 &&
+        Deadline <= Now {
+        return Boundedˉoperationˉtransition(
+            Boundedˉoperationˉstatus.Deadlineˉexpired,
+            Boundedˉoperationˉphase.Terminal,
+            Boundedˉoperationˉoutcome.Timedˉout,
+            Providerˉgeneration, Identity, Requested, 0u32, Deadline,
+            Queueˉused, Queueˉlimit, Reservedˉcontrol, Mutation, Control
+        );
+    }
+    if Status != Boundedˉoperationˉstatus.Success {
+        return Boundedˉoperationˉtransition(
+            Status, Boundedˉoperationˉphase.Terminal,
+            Boundedˉoperationˉoutcome.Rejected,
+            Providerˉgeneration, Identity, Requested, 0u32, Deadline,
+            Queueˉused, Queueˉlimit, Reservedˉcontrol, Mutation, Control
+        );
+    }
+    return Boundedˉoperationˉtransition(
+        Status, Boundedˉoperationˉphase.Queued,
+        Boundedˉoperationˉoutcome.None,
+        Providerˉgeneration, Identity, Requested, 0u32, Deadline,
+        Queueˉused + 1u32, Queueˉlimit, Reservedˉcontrol, Mutation, Control
+    );
+}
+
+export fn Boundedˉoperationˉactivate(
+    State: Boundedˉoperationˉtransition,
+    Providerˉgeneration: u32
+) -> Boundedˉoperationˉtransition {
+    if State.Phase != Boundedˉoperationˉphase.Queued {
+        return Transition(
+            Boundedˉoperationˉstatus.Wrongˉphase,
+            State.Phase, State.Outcome, State
+        );
+    }
+    if Providerˉgeneration != State.Providerˉgeneration {
+        return Transition(
+            Boundedˉoperationˉstatus.Success,
+            Boundedˉoperationˉphase.Terminal,
+            Boundedˉoperationˉoutcome.Stale, State
+        );
+    }
+    return Transition(
+        Boundedˉoperationˉstatus.Success,
+        Boundedˉoperationˉphase.Active,
+        Boundedˉoperationˉoutcome.None, State
+    );
+}
+
+export fn Boundedˉoperationˉadvance(
+    State: Boundedˉoperationˉtransition,
+    Progress: u32,
+    Complete: bool
+) -> Boundedˉoperationˉtransition {
+    if State.Phase != Boundedˉoperationˉphase.Active {
+        return Transition(
+            Boundedˉoperationˉstatus.Wrongˉphase,
+            State.Phase, State.Outcome, State
+        );
+    }
+    if Progress > State.Requested - State.Progress ||
+        (Complete && State.Progress + Progress != State.Requested) ||
+        (!Complete && State.Progress + Progress >= State.Requested) {
+        return Transition(
+            Boundedˉoperationˉstatus.Invalidˉprogress,
+            State.Phase, State.Outcome, State
+        );
+    }
+    var Phase: Boundedˉoperationˉphase = State.Phase;
+    var Outcome: Boundedˉoperationˉoutcome = State.Outcome;
+    if Complete {
+        Phase = Boundedˉoperationˉphase.Terminal;
+        Outcome = Boundedˉoperationˉoutcome.Completed;
+    }
+    return Boundedˉoperationˉtransition(
+        Boundedˉoperationˉstatus.Success, Phase, Outcome,
+        State.Providerˉgeneration, State.Identity, State.Requested,
+        State.Progress + Progress, State.Deadline, State.Queueˉused,
+        State.Queueˉlimit, State.Reservedˉcontrol, State.Mutation,
+        State.Control
+    );
+}
+
+export fn Boundedˉoperationˉcancel(
+    State: Boundedˉoperationˉtransition,
+    Providerˉconfirmed: bool
+) -> Boundedˉoperationˉtransition {
+    if State.Phase == Boundedˉoperationˉphase.Queued {
+        return Transition(
+            Boundedˉoperationˉstatus.Success,
+            Boundedˉoperationˉphase.Terminal,
+            Boundedˉoperationˉoutcome.Cancelled, State
+        );
+    }
+    if State.Phase != Boundedˉoperationˉphase.Active {
+        return Transition(
+            Boundedˉoperationˉstatus.Wrongˉphase,
+            State.Phase, State.Outcome, State
+        );
+    }
+    var Outcome: Boundedˉoperationˉoutcome =
+        Boundedˉoperationˉoutcome.Cancelled;
+    if !Providerˉconfirmed && State.Mutation {
+        Outcome = Boundedˉoperationˉoutcome.Indeterminate;
+    }
+    return Transition(
+        Boundedˉoperationˉstatus.Success,
+        Boundedˉoperationˉphase.Terminal, Outcome, State
+    );
+}
+
+export fn Boundedˉoperationˉobserveˉtime(
+    State: Boundedˉoperationˉtransition,
+    Now: u64
+) -> Boundedˉoperationˉtransition {
+    if State.Phase != Boundedˉoperationˉphase.Queued &&
+        State.Phase != Boundedˉoperationˉphase.Active {
+        return Transition(
+            Boundedˉoperationˉstatus.Wrongˉphase,
+            State.Phase, State.Outcome, State
+        );
+    }
+    if State.Deadline == 0u64 || Now < State.Deadline {
+        return Transition(
+            Boundedˉoperationˉstatus.Success,
+            State.Phase, State.Outcome, State
+        );
+    }
+    var Outcome: Boundedˉoperationˉoutcome =
+        Boundedˉoperationˉoutcome.Timedˉout;
+    if State.Phase == Boundedˉoperationˉphase.Active && State.Mutation {
+        Outcome = Boundedˉoperationˉoutcome.Indeterminate;
+    }
+    return Transition(
+        Boundedˉoperationˉstatus.Success,
+        Boundedˉoperationˉphase.Terminal, Outcome, State
+    );
+}
+
+export fn Boundedˉoperationˉproviderˉexit(
+    State: Boundedˉoperationˉtransition
+) -> Boundedˉoperationˉtransition {
+    if State.Phase != Boundedˉoperationˉphase.Queued &&
+        State.Phase != Boundedˉoperationˉphase.Active {
+        return Transition(
+            Boundedˉoperationˉstatus.Wrongˉphase,
+            State.Phase, State.Outcome, State
+        );
+    }
+    var Outcome: Boundedˉoperationˉoutcome =
+        Boundedˉoperationˉoutcome.Providerˉexited;
+    if State.Phase == Boundedˉoperationˉphase.Active && State.Mutation {
+        Outcome = Boundedˉoperationˉoutcome.Indeterminate;
+    }
+    return Transition(
+        Boundedˉoperationˉstatus.Success,
+        Boundedˉoperationˉphase.Terminal, Outcome, State
+    );
+}
+
+export fn Boundedˉoperationˉrelease(
+    State: Boundedˉoperationˉtransition
+) -> Boundedˉoperationˉtransition {
+    if State.Phase != Boundedˉoperationˉphase.Terminal ||
+        State.Queueˉused == 0u32 {
+        return Transition(
+            Boundedˉoperationˉstatus.Wrongˉphase,
+            State.Phase, State.Outcome, State
+        );
+    }
+    return Boundedˉoperationˉtransition(
+        Boundedˉoperationˉstatus.Success,
+        Boundedˉoperationˉphase.Free, State.Outcome,
+        State.Providerˉgeneration, State.Identity, State.Requested,
+        State.Progress, State.Deadline, State.Queueˉused - 1u32,
+        State.Queueˉlimit, State.Reservedˉcontrol, State.Mutation,
+        State.Control
+    );
+}

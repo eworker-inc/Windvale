@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Libraries/Filesystem-Semantics-Self-Test.wv"
+source "Libraries/Platform/Filesystem/Filesystem-Semantics.wv"
+emit wvb

@@ -1,0 +1,53 @@
+module Osˉx64ˉprocessˉimageˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉimageˉemission as Imageˉemission;
+
+export fn Main() -> i32 {
+    if !Imageˉemission.X64ˉprocessˉinitˉcontentˉisˉvalid(
+        5159u32, 816u32, 4u32, 1196u32
+    ) { return 1; }
+    let Code: bytes = Imageˉemission.X64ˉprocessˉinitˉcontentˉbytes(
+        5159u32, 816u32, 4u32, 1196u32
+    );
+    if Bytesˉlength(Code) != 149u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉfixtureˉoffset() != 2949u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉfixtureˉend() != 3098u32 {
+        return 2;
+    }
+    if Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉcount() != 4u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉfield(0u32) != 3u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉfield(1u32) != 25u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉfield(2u32) != 47u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉfield(3u32) != 69u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉsymbol(0u32) != 0u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉsymbol(1u32) != 2u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉsymbol(2u32) != 3u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉsymbol(3u32) != 5u32 ||
+        Imageˉemission.X64ˉprocessˉinitˉcontentˉrelocationˉaddend() != 4294967292u32 {
+        return 3;
+    }
+    if Imageˉemission.X64ˉprocessˉinitˉcontentˉisˉvalid(
+        8193u32, 816u32, 4u32, 1196u32
+    ) || Bytesˉlength(Imageˉemission.X64ˉprocessˉinitˉcontentˉbytes(
+        5159u32, 0u32, 4u32, 1196u32
+    )) != 0u32 { return 4; }
+
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 149u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 42782u32 || Hashˉone != 43380u32 ||
+        Hashˉtwo != 42308u32 || Hashˉthree != 46083u32 {
+        return 5;
+    }
+    return 57;
+}

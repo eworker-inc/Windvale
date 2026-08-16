@@ -1,0 +1,79 @@
+module Boundedˉoperationˉselfˉtest profile portable;
+
+import Boundedˉoperation as Operation;
+
+export fn Main() -> i32 {
+    let Queued: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉbegin(
+            1u32, 1u64, 10u32, 100u64, 1u64,
+            0u32, 2u32, 1u32, false, false
+        );
+    if Queued.Phase != Operation.Boundedˉoperationˉphase.Queued ||
+        Queued.Queueˉused != 1u32 { return 1; }
+    let Full: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉbegin(
+            1u32, 2u64, 1u32, 0u64, 0u64,
+            1u32, 2u32, 1u32, false, false
+        );
+    if Full.Status != Operation.Boundedˉoperationˉstatus.Queueˉfull {
+        return 2;
+    }
+    let Control: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉbegin(
+            1u32, 3u64, 0u32, 0u64, 0u64,
+            1u32, 2u32, 1u32, false, true
+        );
+    if Control.Phase != Operation.Boundedˉoperationˉphase.Queued ||
+        Control.Queueˉused != 2u32 { return 3; }
+    let Active: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉactivate(Queued, 1u32);
+    let Partial: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉadvance(Active, 4u32, false);
+    if Partial.Progress != 4u32 ||
+        Partial.Phase != Operation.Boundedˉoperationˉphase.Active { return 4; }
+    let Complete: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉadvance(Partial, 6u32, true);
+    if Complete.Outcome != Operation.Boundedˉoperationˉoutcome.Completed ||
+        Complete.Progress != 10u32 { return 5; }
+    let Released: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉrelease(Complete);
+    if Released.Phase != Operation.Boundedˉoperationˉphase.Free ||
+        Released.Queueˉused != 0u32 { return 6; }
+    let Stale: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉactivate(Control, 2u32);
+    if Stale.Outcome != Operation.Boundedˉoperationˉoutcome.Stale { return 7; }
+    let Cancelled: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉcancel(Queued, false);
+    if Cancelled.Outcome != Operation.Boundedˉoperationˉoutcome.Cancelled {
+        return 8;
+    }
+    let Mutationˉqueued: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉbegin(
+            1u32, 4u64, 8u32, 10u64, 1u64,
+            0u32, 2u32, 1u32, true, false
+        );
+    let Mutationˉactive: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉactivate(Mutationˉqueued, 1u32);
+    let Uncertainˉcancel: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉcancel(Mutationˉactive, false);
+    if Uncertainˉcancel.Outcome !=
+        Operation.Boundedˉoperationˉoutcome.Indeterminate { return 9; }
+    let Expired: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉbegin(
+            1u32, 5u64, 1u32, 5u64, 5u64,
+            0u32, 2u32, 1u32, false, false
+        );
+    if Expired.Status != Operation.Boundedˉoperationˉstatus.Deadlineˉexpired ||
+        Expired.Outcome != Operation.Boundedˉoperationˉoutcome.Timedˉout {
+        return 10;
+    }
+    let Timedˉmutation: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉobserveˉtime(Mutationˉactive, 10u64);
+    if Timedˉmutation.Outcome !=
+        Operation.Boundedˉoperationˉoutcome.Indeterminate { return 11; }
+    let Providerˉexit: Operation.Boundedˉoperationˉtransition =
+        Operation.Boundedˉoperationˉproviderˉexit(Active);
+    if Providerˉexit.Outcome !=
+        Operation.Boundedˉoperationˉoutcome.Providerˉexited { return 12; }
+    return 44;
+}

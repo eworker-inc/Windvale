@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Service-Launch-Self-Test.wv"
+source "Operating-System/Kernel/Service-Launch-Policy.wv"
+emit wvb

@@ -1,0 +1,51 @@
+module Osˉx64ˉprocessˉentryˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉentryˉemission as Entry;
+
+data Expectedˉprefix: bytes = [
+    83, 85, 86, 87, 65, 84, 65, 85, 65, 86, 65, 87,
+    72, 129, 236, 224, 0, 0, 0,
+    184, 2, 0, 0, 0,
+    72, 137, 132, 36, 208, 0, 0, 0,
+    233, 0, 0, 0, 0
+];
+export fn Main() -> i32 {
+    if !Entry.X64ˉprocessˉentryˉprefixˉisˉvalid() { return 1; }
+    let Actual: bytes = Entry.X64ˉprocessˉentryˉprefixˉbytes();
+    if Bytesˉlength(Actual) != 37u32 ||
+        Bytesˉlength(Expectedˉprefix) != 37u32 ||
+        Entry.X64ˉprocessˉentryˉdispatcherˉdisplacementˉoffset() != 33u32 {
+        return 2;
+    }
+    var Index: u32 = 0u32;
+    while Index < 37u32 {
+        if Bytesˉreadˉu8(Actual, Index) !=
+            Bytesˉreadˉu8(Expectedˉprefix, Index) { return 3; }
+        Index = Index + 1u32;
+    }
+    if !Entry.X64ˉprocessˉentryˉandˉdispatcherˉisˉvalid() { return 4; }
+    let Machine: bytes = Entry.X64ˉprocessˉentryˉandˉdispatcherˉbytes();
+    if Bytesˉlength(Machine) != Entry.X64ˉprocessˉcoordinatorˉoffset() ||
+        Bytesˉlength(Machine) != 1119u32 ||
+        Bytesˉreadˉu32ˉlittle(Machine, 33u32) != 1082u32 {
+        return 5;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 1119u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Machine, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 10166u32 || Hashˉone != 57u32 ||
+        Hashˉtwo != 3355u32 || Hashˉthree != 42289u32 {
+        return 7;
+    }
+    return 51;
+}

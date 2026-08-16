@@ -1,0 +1,165 @@
+module Providerˉlaunchˉtransactionˉpolicy profile portable;
+
+import Resourceˉdomainˉpolicy as Domain;
+import Serviceˉlaunchˉpolicy as Service;
+
+export enum Providerˉlaunchˉstatus {
+    Success = 0; Requestˉrejected = 1; Invalidˉimage = 2;
+    Invalidˉreference = 3; Reservationˉfailed = 4;
+    Constructionˉfailed = 5; Initializationˉfailed = 6;
+    Wrongˉphase = 7; Workˉactive = 8; Stale = 9;
+    Teardownˉfailed = 10;
+}
+
+export enum Providerˉlaunchˉphase {
+    Available = 0; Draining = 1; Stopped = 2; Faulted = 3;
+}
+
+export record Providerˉlaunchˉtransition {
+    Status: Providerˉlaunchˉstatus;
+    Phase: Providerˉlaunchˉphase;
+    Role: u32;
+    Domainˉreference: u32;
+    Processˉreference: u32;
+    Committedˉpages: u32;
+}
+
+fn Providerˉresult(
+    Status: Providerˉlaunchˉstatus,
+    Phase: Providerˉlaunchˉphase,
+    Role: u32,
+    Domainˉreference: u32,
+    Processˉreference: u32,
+    Committedˉpages: u32
+) -> Providerˉlaunchˉtransition {
+    return Providerˉlaunchˉtransition(
+        Status, Phase, Role, Domainˉreference,
+        Processˉreference, Committedˉpages
+    );
+}
+
+fn Providerˉfault(
+    Status: Providerˉlaunchˉstatus,
+    Role: u32,
+    Domainˉreference: u32
+) -> Providerˉlaunchˉtransition {
+    return Providerˉresult(
+        Status, Providerˉlaunchˉphase.Faulted,
+        Role, Domainˉreference, 0u32, 0u32
+    );
+}
+
+export fn Providerˉlaunchˉadmit(
+    Input: bytes,
+    Processˉreference: u32,
+    Endpointˉreference: u32,
+    Imageˉbytes: u32,
+    Imageˉidentityˉmatches: bool,
+    Imageˉmappedˉreadˉexecute: bool,
+    Privateˉmemoryˉmappedˉreadˉwrite: bool,
+    Endpointˉbound: bool,
+    Initialized: bool
+) -> Providerˉlaunchˉtransition {
+    let Plan: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉplan(Input);
+    if Plan.Status != Service.Serviceˉlaunchˉstatus.Success {
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Requestˉrejected, 0u32, 0u32
+        );
+    }
+    var Expectedˉimageˉbytes: u32 = 195657u32;
+    var Pageˉlimit: u32 = 64u32;
+    if Plan.Role == 3u32 {
+        Expectedˉimageˉbytes = 242571u32;
+        Pageˉlimit = 96u32;
+    }
+    if !Imageˉidentityˉmatches || Imageˉbytes != Expectedˉimageˉbytes {
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Invalidˉimage,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+    if Processˉreference != Plan.Requestˉreference ||
+        Endpointˉreference != Plan.Domainˉreference {
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Invalidˉreference,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+
+    let Created: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcreate(
+            Plan.Domainˉreference, 1u32, 1u32, Pageˉlimit, 1u32
+        );
+    if Domain.Resourceˉdomainˉreserveˉstatus(
+        Created, 1u32, Pageˉlimit, 1u32
+    ) != Domain.Resourceˉdomainˉstatus.Success {
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Reservationˉfailed,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+    let Reserved: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉreserve(
+            Created, 1u32, Pageˉlimit, 1u32
+        );
+    let Constructed: bool = Imageˉmappedˉreadˉexecute &&
+        Privateˉmemoryˉmappedˉreadˉwrite && Endpointˉbound;
+    let Starting: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉstart(
+            Plan, Processˉreference, Endpointˉreference, Constructed
+        );
+    if Starting.Status != Service.Serviceˉlaunchˉstatus.Success {
+        let Stopping: Domain.Resourceˉdomainˉtransition =
+            Domain.Resourceˉdomainˉstop(Created, 85u32);
+        if Domain.Resourceˉdomainˉfinishˉstopˉstatus(Stopping) !=
+            Domain.Resourceˉdomainˉstatus.Success ||
+            Reserved.Reservedˉpages != Pageˉlimit {
+            return Providerˉfault(
+                Providerˉlaunchˉstatus.Teardownˉfailed,
+                Plan.Role, Plan.Domainˉreference
+            );
+        }
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Constructionˉfailed,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+
+    let Committed: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcommit(
+            Reserved, 1u32, Pageˉlimit, 1u32
+        );
+    if Committed.Status != Domain.Resourceˉdomainˉstatus.Success ||
+        Committed.Committedˉpages != Pageˉlimit {
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Reservationˉfailed,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+    let Published: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉpublish(Starting, Initialized);
+    if Published.Status != Service.Serviceˉlaunchˉstatus.Success {
+        var Reclaimed: Domain.Resourceˉdomainˉtransition =
+            Domain.Resourceˉdomainˉrelease(
+                Committed, 1u32, Pageˉlimit, 1u32
+            );
+        Reclaimed = Domain.Resourceˉdomainˉstop(Reclaimed, 87u32);
+        Reclaimed = Domain.Resourceˉdomainˉfinishˉstop(Reclaimed);
+        if Reclaimed.State != Domain.Resourceˉdomainˉstate.Dead {
+            return Providerˉfault(
+                Providerˉlaunchˉstatus.Teardownˉfailed,
+                Plan.Role, Plan.Domainˉreference
+            );
+        }
+        return Providerˉfault(
+            Providerˉlaunchˉstatus.Initializationˉfailed,
+            Plan.Role, Plan.Domainˉreference
+        );
+    }
+    return Providerˉresult(
+        Providerˉlaunchˉstatus.Success,
+        Providerˉlaunchˉphase.Available, Plan.Role,
+        Plan.Domainˉreference, Processˉreference, Pageˉlimit
+    );
+}

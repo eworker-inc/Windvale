@@ -427,13 +427,23 @@ function Add-Hosted-Publisher-Suites {
 
 function Add-Os-Suite {
     param([Parameter(Mandatory)][string]$Path)
-    if ($Path -match 'Resource-Domain') {
+    if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Provider-User-Transfer|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image)))-Emission') {
+        Add-Suite 'os-x64-code-emission'
+    } elseif ($Path -match 'Provider-Launch-(?:Transaction|Lifecycle)') {
+        Add-Suite 'os-provider-launch-transaction'
+    } elseif ($Path -match '(?:Filesystem|Network)-Process-Service|Provider-Images') {
+        Add-Suite @('os-provider-images', 'os-application-launch')
+    } elseif ($Path -match 'Filesystem-(?:Service|Provider)') {
+        Add-Suite @('os-filesystem-service', 'native-u64-lowering')
+    } elseif ($Path -match 'Application-(?:Launch|Machine-Construction)|Service-Launch') {
+        Add-Suite @('os-application-launch', 'os-process-policy', 'os-probe')
+    } elseif ($Path -match 'Resource-Domain') {
         Add-Suite 'os-resource-domain'
     } elseif ($Path -match 'Hello-Service-Fault|Process-Service-Fault-Shim|Process-User-Fault-Shim') {
         Add-Gap 'os-process-fault-scenario-construction'
     } elseif ($Path -match '/Services/|Windvale-Os-(?:Resource-Service|Resource-Store-Service|Directory-Service|Directory-Snapshot)|Windvale-(?:Resource-Service-Ipc|Directory-Service-Ipc|Directory-Snapshot)\.md$') {
         Add-Suite 'os-services'
-    } elseif ($Path -match 'Process-Foundation|Process-Policy') {
+    } elseif ($Path -match 'Process-Foundation|Process-Policy|Boot-Service-Composition') {
         Add-Suite @('os-process-policy', 'os-probe')
     } elseif (
         $Path -match 'Process-Object|Process-Code-Extractor|Process-Resource-Store|Process-Directory-Snapshot|Boot-Resource-Object|Bytecode-Interpreter|Init-Resource-Service|Directory-Process-Service|Process-User-Shim|Boot-Resource-Service'
@@ -1274,6 +1284,30 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Tools/Database/', [StringComparison]::Ordinal)) {
         Add-Suite 'database-storage'
+    } elseif ($Path -in @(
+        'Libraries/Platform/Operations/Bounded-Operation.wv',
+        'Projects/Libraries/Windvale-Library-Bounded-Operation.wvproj',
+        'Tests/Fixtures/Libraries/Bounded-Operation-Self-Test.wv',
+        'Projects/Tests/Windvale-Native-Test-Bounded-Operation.wvproj',
+        'Specifications/Windvale-Bounded-Operation.md'
+    )) {
+        Add-Suite @('bounded-operation', 'native-u64-lowering')
+    } elseif ($Path -in @(
+        'Libraries/Platform/Networking/Network-Authority.wv',
+        'Projects/Libraries/Windvale-Library-Network-Authority.wvproj',
+        'Tests/Fixtures/Libraries/Network-Authority-Self-Test.wv',
+        'Projects/Tests/Windvale-Native-Test-Network-Authority.wvproj',
+        'Specifications/Windvale-Network-Authority.md'
+    )) {
+        Add-Suite @('os-network-authority', 'native-u64-lowering')
+    } elseif ($Path -in @(
+        'Libraries/Platform/Filesystem/Filesystem-Semantics.wv',
+        'Projects/Libraries/Windvale-Library-Filesystem-Semantics.wvproj',
+        'Tests/Fixtures/Libraries/Filesystem-Semantics-Self-Test.wv',
+        'Projects/Tests/Windvale-Native-Test-Filesystem-Semantics.wvproj',
+        'Specifications/Windvale-Filesystem-Semantics.md'
+    )) {
+        Add-Suite @('filesystem-semantics', 'native-u64-lowering')
     } elseif ($Path.StartsWith('Operating-System/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Operating-System/', [StringComparison]::Ordinal)) {
         if ($Path.EndsWith('.cs', [StringComparison]::OrdinalIgnoreCase) -or
@@ -1291,6 +1325,8 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
         Add-WebAssemblyVerification
+    } elseif ($Path -eq 'Runtime/Windvale/Filesystem-Host-Adapter-Core.wv') {
+        Add-Suite @('os-filesystem-service', 'native-u64-lowering')
     } elseif ($Path -in @(
         'Runtime/Native/X64-Read-Only-Directory-Host.wva',
         'Runtime/Native/Windows-X64-Read-Only-Directory.wva',
@@ -1975,7 +2011,16 @@ foreach ($Path in $Paths) {
         Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Tests/Fixtures/Operating-System/Os-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Os-', [StringComparison]::Ordinal)) {
-        if ($Path.Contains('Resource-Domain', [StringComparison]::Ordinal)) {
+        if ($Path -match 'X64-(?:Code|Process-(?:Entry|Privileged-Entry|Thread-Timer-State|Timer-Activation|Provider-User-Transfer|Coordinator|Endpoint|Memory-Allocation|Record|Paging|Image|Client-(?:Reservation|Record|Paging|Image|Program-Resource|Budget-Resource|Store-Resource|Directory-Resource|Store-Validation|Directory-Validation)|Directory-(?:Allocation|Record|Paging|Image)))-Emission') {
+            Add-Suite 'os-x64-code-emission'
+        } elseif ($Path.Contains('Provider-Launch-', [StringComparison]::Ordinal)) {
+            Add-Suite 'os-provider-launch-transaction'
+        } elseif ($Path.Contains('Filesystem-Service', [StringComparison]::Ordinal)) {
+            Add-Suite @('os-filesystem-service', 'native-u64-lowering')
+        } elseif ($Path.Contains('Application-Launch', [StringComparison]::Ordinal) -or
+            $Path.Contains('Application-Machine-Construction', [StringComparison]::Ordinal)) {
+            Add-Suite 'os-application-launch'
+        } elseif ($Path.Contains('Resource-Domain', [StringComparison]::Ordinal)) {
             Add-Suite 'os-resource-domain'
         } else {
             Add-Suite 'os-services'

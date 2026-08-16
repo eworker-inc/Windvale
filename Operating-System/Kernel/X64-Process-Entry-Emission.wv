@@ -1,0 +1,195 @@
+module X64ˉprocessˉentryˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Nonvolatileˉprologue: bytes = [
+    83, 85, 86, 87, 65, 84, 65, 85, 65, 86, 65, 87
+];
+data Reserveˉframe: bytes = [72, 129, 236];
+data Moveˉeax: bytes = [184];
+data Storeˉstackˉrax: bytes = [72, 137, 132, 36];
+data Loadˉstackˉr13: bytes = [76, 139, 172, 36];
+data Testˉr13: bytes = [77, 133, 237];
+data Moveˉrax: bytes = [72, 184];
+data Compareˉrecordˉmagic: bytes = [73, 57, 69, 0];
+data Compareˉrecordˉu32: bytes = [65, 129, 189];
+data Loadˉstackˉrax: bytes = [72, 139, 132, 36];
+data Compareˉeaxˉu8: bytes = [131, 248];
+data Clearˉr13ˉandˉreturn: bytes = [69, 49, 237, 195];
+data Return: bytes = [195];
+
+fn Emitˉloadˉstackˉr13(
+    State: X64.X64ˉemission,
+    Offset: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉstackˉr13);
+    return X64.X64ˉemitˉu32(Result, Offset);
+}
+
+fn Emitˉcompareˉrecordˉu32(
+    State: X64.X64ˉemission,
+    Offset: u32,
+    Value: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Compareˉrecordˉu32);
+    Result = X64.X64ˉemitˉu32(Result, Offset);
+    return X64.X64ˉemitˉu32(Result, Value);
+}
+
+fn Emitˉstoreˉstackˉrax(
+    State: X64.X64ˉemission,
+    Offset: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Storeˉstackˉrax);
+    return X64.X64ˉemitˉu32(Result, Offset);
+}
+
+fn Emitˉvalidateˉrecord(
+    State: X64.X64ˉemission,
+    Slot: u32,
+    Processˉid: u32,
+    Failureˉlabel: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = Emitˉloadˉstackˉr13(State, Slot + 8u32);
+    Result = X64.X64ˉemit(Result, Testˉr13);
+    Result = X64.X64ˉjumpˉif(Result, 132u32, Failureˉlabel);
+    Result = X64.X64ˉemit(Result, Moveˉrax);
+    Result = X64.X64ˉemitˉu64(Result, 3977033953907332695u64);
+    Result = X64.X64ˉemit(Result, Compareˉrecordˉmagic);
+    Result = X64.X64ˉjumpˉif(Result, 133u32, Failureˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 8u32, 17u32);
+    Result = X64.X64ˉjumpˉif(Result, 133u32, Failureˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 12u32, 288u32);
+    Result = X64.X64ˉjumpˉif(Result, 133u32, Failureˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 24u32, Processˉid);
+    Result = X64.X64ˉjumpˉif(Result, 133u32, Failureˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 256u32, 0u32);
+    Result = X64.X64ˉjumpˉif(Result, 132u32, Failureˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 256u32, 65535u32);
+    return X64.X64ˉjumpˉif(Result, 135u32, Failureˉlabel);
+}
+
+fn Emitˉscanˉentry(
+    State: X64.X64ˉemission,
+    Slot: u32,
+    Nextˉcursor: u32,
+    Eligibleˉlabel: u32,
+    Nextˉlabel: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = Emitˉloadˉstackˉr13(State, Slot + 8u32);
+    Result = Emitˉcompareˉrecordˉu32(Result, 16u32, 1u32);
+    Result = X64.X64ˉjumpˉif(Result, 132u32, Eligibleˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 16u32, 2u32);
+    Result = X64.X64ˉjumpˉif(Result, 133u32, Nextˉlabel);
+    Result = X64.X64ˉmark(Result, Eligibleˉlabel);
+    Result = Emitˉcompareˉrecordˉu32(Result, 20u32, 1u32);
+    Result = X64.X64ˉjumpˉif(Result, 133u32, Nextˉlabel);
+    Result = X64.X64ˉemit(Result, Moveˉeax);
+    Result = X64.X64ˉemitˉu32(Result, Nextˉcursor);
+    Result = Emitˉstoreˉstackˉrax(Result, 216u32);
+    Result = X64.X64ˉemit(Result, Return);
+    return X64.X64ˉmark(Result, Nextˉlabel);
+}
+
+fn Buildˉentryˉandˉdispatcher() -> X64.X64ˉemission {
+    let Coordinatorˉlabel: u32 = 1u32;
+    let Dispatcherˉlabel: u32 = 2u32;
+    let Failureˉlabel: u32 = 3u32;
+    let Startˉzeroˉlabel: u32 = 4u32;
+    let Startˉoneˉlabel: u32 = 5u32;
+    let Startˉtwoˉlabel: u32 = 6u32;
+
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Nonvolatileˉprologue);
+    State = X64.X64ˉemit(State, Reserveˉframe);
+    State = X64.X64ˉemitˉu32(State, 224u32);
+    State = X64.X64ˉemit(State, Moveˉeax);
+    State = X64.X64ˉemitˉu32(State, 2u32);
+    State = Emitˉstoreˉstackˉrax(State, 208u32);
+    State = X64.X64ˉjump(State, Coordinatorˉlabel);
+
+    State = X64.X64ˉmark(State, Dispatcherˉlabel);
+    State = Emitˉvalidateˉrecord(State, 184u32, 1u32, Failureˉlabel);
+    State = Emitˉvalidateˉrecord(State, 192u32, 2u32, Failureˉlabel);
+    State = Emitˉvalidateˉrecord(State, 200u32, 3u32, Failureˉlabel);
+
+    State = X64.X64ˉemit(State, Loadˉstackˉrax);
+    State = X64.X64ˉemitˉu32(State, 216u32);
+    State = X64.X64ˉemit(State, Compareˉeaxˉu8);
+    State = X64.X64ˉemit(State, Bytesˉfromˉu8(0u8));
+    State = X64.X64ˉjumpˉif(State, 132u32, Startˉzeroˉlabel);
+    State = X64.X64ˉemit(State, Compareˉeaxˉu8);
+    State = X64.X64ˉemit(State, Bytesˉfromˉu8(1u8));
+    State = X64.X64ˉjumpˉif(State, 132u32, Startˉoneˉlabel);
+    State = X64.X64ˉemit(State, Compareˉeaxˉu8);
+    State = X64.X64ˉemit(State, Bytesˉfromˉu8(2u8));
+    State = X64.X64ˉjumpˉif(State, 132u32, Startˉtwoˉlabel);
+    State = X64.X64ˉjump(State, Failureˉlabel);
+
+    State = X64.X64ˉmark(State, Startˉzeroˉlabel);
+    State = Emitˉscanˉentry(State, 184u32, 1u32, 7u32, 8u32);
+    State = Emitˉscanˉentry(State, 192u32, 2u32, 9u32, 10u32);
+    State = Emitˉscanˉentry(State, 200u32, 0u32, 11u32, 12u32);
+    State = X64.X64ˉjump(State, Failureˉlabel);
+
+    State = X64.X64ˉmark(State, Startˉoneˉlabel);
+    State = Emitˉscanˉentry(State, 192u32, 2u32, 13u32, 14u32);
+    State = Emitˉscanˉentry(State, 200u32, 0u32, 15u32, 16u32);
+    State = Emitˉscanˉentry(State, 184u32, 1u32, 17u32, 18u32);
+    State = X64.X64ˉjump(State, Failureˉlabel);
+
+    State = X64.X64ˉmark(State, Startˉtwoˉlabel);
+    State = Emitˉscanˉentry(State, 200u32, 0u32, 19u32, 20u32);
+    State = Emitˉscanˉentry(State, 184u32, 1u32, 21u32, 22u32);
+    State = Emitˉscanˉentry(State, 192u32, 2u32, 23u32, 24u32);
+    State = X64.X64ˉjump(State, Failureˉlabel);
+
+    State = X64.X64ˉmark(State, Failureˉlabel);
+    State = X64.X64ˉemit(State, Clearˉr13ˉandˉreturn);
+    State = X64.X64ˉmark(State, Coordinatorˉlabel);
+    return X64.X64ˉbuild(State);
+}
+
+fn Buildˉprefix() -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    // Preserve RBX, RBP, RSI, RDI, and R12-R15 for the fixed coordinator.
+    State = X64.X64ˉemit(State, Nonvolatileˉprologue);
+    // Reserve the exact 0xe0-byte coordinator frame.
+    State = X64.X64ˉemit(State, Reserveˉframe);
+    State = X64.X64ˉemitˉu32(State, 224u32);
+    // Initialize the dispatcher cursor to process slot two at [rsp + 0xd0].
+    State = X64.X64ˉemit(State, Moveˉeax);
+    State = X64.X64ˉemitˉu32(State, 2u32);
+    State = X64.X64ˉemit(State, Storeˉstackˉrax);
+    State = X64.X64ˉemitˉu32(State, 208u32);
+    // The next slice owns the dispatcher body and patches this near jump.
+    return X64.X64ˉemitˉjumpˉplaceholder(State);
+}
+
+export fn X64ˉprocessˉentryˉprefixˉisˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉprefix();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready;
+}
+
+export fn X64ˉprocessˉentryˉprefixˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉprefix();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉentryˉdispatcherˉdisplacementˉoffset() -> u32 {
+    return 33u32;
+}
+
+export fn X64ˉprocessˉentryˉandˉdispatcherˉisˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉentryˉandˉdispatcher();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready;
+}
+
+export fn X64ˉprocessˉentryˉandˉdispatcherˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉentryˉandˉdispatcher();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉcoordinatorˉoffset() -> u32 {
+    return 1119u32;
+}

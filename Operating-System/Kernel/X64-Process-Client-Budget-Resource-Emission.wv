@@ -1,0 +1,69 @@
+module X64ˉprocessˉclientˉbudgetˉresourceˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Budgetˉresourceˉheader: bytes = [
+    77, 141, 140, 36, 80, 5, 0, 0,
+    72, 184, 87, 86, 82, 69, 83, 48, 48, 54, 73, 137, 1,
+    65, 199, 65, 8, 6, 0, 0, 0, 65, 199, 65, 12, 128, 0, 0, 0,
+    65, 199, 65, 16, 1, 0, 0, 0, 65, 199, 65, 20, 2, 0, 0, 0,
+    65, 199, 65, 24, 1, 0, 1, 0, 65, 199, 65, 44, 7, 2, 0, 0,
+    72, 139, 132, 36, 184, 0, 0, 0, 72, 139, 64, 64,
+    72, 5, 0, 144, 0, 0, 73, 137, 65, 32,
+    65, 199, 65, 40, 4, 0, 0, 0,
+    72, 139, 132, 36, 192, 0, 0, 0, 72, 139, 80, 64,
+    73, 137, 81, 48, 72, 139, 64, 88, 73, 137, 65, 56,
+    72, 141, 130, 0, 176, 7, 0, 73, 137, 65, 64,
+    72, 141, 130, 16, 25, 7, 0, 73, 137, 65, 72
+];
+data Moveˉrax: bytes = [72, 184];
+data Storeˉresourceˉrax: bytes = [73, 137, 65];
+data Digestˉoffsets: bytes = [80, 88, 96, 104];
+data Budgetˉresourceˉpageˉtable: bytes = [
+    73, 139, 65, 64, 72, 37, 0, 240, 31, 0, 72, 193, 232, 9,
+    73, 3, 65, 48, 72, 5, 0, 48, 0, 0, 73, 137, 65, 120
+];
+
+fn Emptyˉbytes() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32);
+}
+
+fn Buildˉbudgetˉresource(Budgetˉdigest: bytes) -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Budgetˉresourceˉheader);
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        State = X64.X64ˉemit(State, Moveˉrax);
+        State = X64.X64ˉemitˉu64(
+            State, Bytesˉreadˉu64ˉlittle(Budgetˉdigest, Index * 8u32)
+        );
+        State = X64.X64ˉemit(State, Storeˉresourceˉrax);
+        State = X64.X64ˉemit(State, Bytesˉslice(Digestˉoffsets, Index, 1u32));
+        Index = Index + 1u32;
+    }
+    return X64.X64ˉemit(State, Budgetˉresourceˉpageˉtable);
+}
+
+export fn X64ˉprocessˉclientˉbudgetˉresourceˉisˉvalid(
+    Budgetˉdigest: bytes
+) -> bool {
+    if Bytesˉlength(Budgetˉdigest) != 32u32 { return false; }
+    let State: X64.X64ˉemission = Buildˉbudgetˉresource(Budgetˉdigest);
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 229u32;
+}
+
+export fn X64ˉprocessˉclientˉbudgetˉresourceˉbytes(
+    Budgetˉdigest: bytes
+) -> bytes {
+    if Bytesˉlength(Budgetˉdigest) != 32u32 { return Emptyˉbytes(); }
+    let State: X64.X64ˉemission = Buildˉbudgetˉresource(Budgetˉdigest);
+    return State.Code;
+}
+
+export fn X64ˉprocessˉclientˉbudgetˉresourceˉfixtureˉoffset() -> u32 {
+    return 9931u32;
+}
+export fn X64ˉprocessˉclientˉbudgetˉresourceˉfixtureˉend() -> u32 {
+    return 10160u32;
+}

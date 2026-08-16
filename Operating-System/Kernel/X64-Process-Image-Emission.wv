@@ -1,0 +1,132 @@
+module X64ˉprocessˉimageˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Loadˉripˉrelativeˉrsi: bytes = [72, 141, 53];
+data Loadˉextentˉrdi: bytes = [73, 141, 190];
+data Moveˉecx: bytes = [185];
+data Clearˉdirectionˉcopyˉbytes: bytes = [252, 243, 164];
+data Moveˉrax: bytes = [72, 184];
+data Storeˉcontextˉheaderˉandˉbudget: bytes = [
+    72, 137, 7, 72, 199, 71, 8
+];
+data Storeˉcontextˉdepth: bytes = [72, 199, 71, 16];
+data Loadˉextentˉrax: bytes = [73, 141, 134];
+data Storeˉextentˉrax: bytes = [73, 137, 134];
+data Storeˉextentˉu32: bytes = [65, 199, 134];
+
+fn Emptyˉbytes() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32);
+}
+
+fn Hasˉvalidˉgeometry(
+    Serviceˉbytes: u32,
+    Programˉbytes: u32,
+    Budgetˉbytes: u32,
+    Storeˉbytes: u32
+) -> bool {
+    return Serviceˉbytes != 0u32 && Serviceˉbytes <= 8192u32 &&
+        Programˉbytes != 0u32 && Programˉbytes <= 4096u32 &&
+        Budgetˉbytes != 0u32 && Budgetˉbytes <= 4096u32 &&
+        Storeˉbytes != 0u32 && Storeˉbytes <= 4096u32;
+}
+
+fn Emitˉcopy(
+    State: X64.X64ˉemission,
+    Destination: u32,
+    Count: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉripˉrelativeˉrsi);
+    Result = X64.X64ˉemitˉu32(Result, 0u32);
+    Result = X64.X64ˉemit(Result, Loadˉextentˉrdi);
+    Result = X64.X64ˉemitˉu32(Result, Destination);
+    Result = X64.X64ˉemit(Result, Moveˉecx);
+    Result = X64.X64ˉemitˉu32(Result, Count);
+    return X64.X64ˉemit(Result, Clearˉdirectionˉcopyˉbytes);
+}
+
+fn Buildˉinitˉcontent(
+    Serviceˉbytes: u32,
+    Programˉbytes: u32,
+    Budgetˉbytes: u32,
+    Storeˉbytes: u32
+) -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = Emitˉcopy(State, 16384u32, Serviceˉbytes);
+    State = Emitˉcopy(State, 32768u32, Programˉbytes);
+    State = Emitˉcopy(State, 36864u32, Budgetˉbytes);
+    State = Emitˉcopy(State, 40960u32, Storeˉbytes);
+
+    State = X64.X64ˉemit(State, Loadˉextentˉrdi);
+    State = X64.X64ˉemitˉu32(State, 28672u32);
+    State = X64.X64ˉemit(State, Moveˉrax);
+    State = X64.X64ˉemitˉu64(State, 481036337159u64);
+    State = X64.X64ˉemit(State, Storeˉcontextˉheaderˉandˉbudget);
+    State = X64.X64ˉemitˉu32(State, 64u32);
+    State = X64.X64ˉemit(State, Storeˉcontextˉdepth);
+    State = X64.X64ˉemitˉu32(State, 1u32);
+
+    State = X64.X64ˉemit(State, Loadˉextentˉrax);
+    State = X64.X64ˉemitˉu32(State, 40960u32);
+    State = X64.X64ˉemit(State, Storeˉextentˉrax);
+    State = X64.X64ˉemitˉu32(State, 29056u32);
+    State = X64.X64ˉemit(State, Storeˉextentˉu32);
+    State = X64.X64ˉemitˉu32(State, 29064u32);
+    return X64.X64ˉemitˉu32(State, Storeˉbytes);
+}
+
+export fn X64ˉprocessˉinitˉcontentˉisˉvalid(
+    Serviceˉbytes: u32,
+    Programˉbytes: u32,
+    Budgetˉbytes: u32,
+    Storeˉbytes: u32
+) -> bool {
+    if !Hasˉvalidˉgeometry(
+        Serviceˉbytes, Programˉbytes, Budgetˉbytes, Storeˉbytes
+    ) { return false; }
+    let State: X64.X64ˉemission = Buildˉinitˉcontent(
+        Serviceˉbytes, Programˉbytes, Budgetˉbytes, Storeˉbytes
+    );
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 149u32;
+}
+
+export fn X64ˉprocessˉinitˉcontentˉbytes(
+    Serviceˉbytes: u32,
+    Programˉbytes: u32,
+    Budgetˉbytes: u32,
+    Storeˉbytes: u32
+) -> bytes {
+    if !Hasˉvalidˉgeometry(
+        Serviceˉbytes, Programˉbytes, Budgetˉbytes, Storeˉbytes
+    ) { return Emptyˉbytes(); }
+    let State: X64.X64ˉemission = Buildˉinitˉcontent(
+        Serviceˉbytes, Programˉbytes, Budgetˉbytes, Storeˉbytes
+    );
+    return State.Code;
+}
+
+export fn X64ˉprocessˉinitˉcontentˉrelocationˉcount() -> u32 { return 4u32; }
+
+export fn X64ˉprocessˉinitˉcontentˉrelocationˉfield(Index: u32) -> u32 {
+    if Index == 0u32 { return 3u32; }
+    if Index == 1u32 { return 25u32; }
+    if Index == 2u32 { return 47u32; }
+    if Index == 3u32 { return 69u32; }
+    return 0u32;
+}
+
+export fn X64ˉprocessˉinitˉcontentˉrelocationˉsymbol(Index: u32) -> u32 {
+    if Index == 0u32 { return 0u32; }
+    if Index == 1u32 { return 2u32; }
+    if Index == 2u32 { return 3u32; }
+    if Index == 3u32 { return 5u32; }
+    return 0u32;
+}
+
+export fn X64ˉprocessˉinitˉcontentˉrelocationˉaddend() -> u32 {
+    return 4294967292u32;
+}
+
+export fn X64ˉprocessˉinitˉcontentˉfixtureˉoffset() -> u32 { return 2949u32; }
+export fn X64ˉprocessˉinitˉcontentˉfixtureˉend() -> u32 { return 3098u32; }

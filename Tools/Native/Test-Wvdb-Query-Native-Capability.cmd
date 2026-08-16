@@ -57,8 +57,8 @@ call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Runtime\Native\X64-Read-Only-
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Runtime\Native\Windows-X64-Read-Only-Directory.wva" "%Work%\Directory-Windows.wvo" || goto :cleanup
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Runtime\Native\Linux-X64-Read-Only-Directory.wva" "%Work%\Directory-Linux.wvo" || goto :cleanup
 call :verify_file "%Work%\Directory-Host.wvo" 2010 7ab58a817fe5dbc8e8f91b910654487ba62e10bc5aa5d1ae74b6bb07f2f6ca09 "directory host WVO" || goto :cleanup
-call :verify_file "%Work%\Directory-Windows.wvo" 1731 d1dc38e751ab7a04cb115f2fc6f0e62a5452e2937cc1dd56867f3da8fe2ddc03 "Windows directory leaf WVO" || goto :cleanup
-call :verify_file "%Work%\Directory-Linux.wvo" 608 53136d316adec7f6b7667ecc853764fc5207d25fc52e60d2175cd8e0f49c4c64 "Linux directory leaf WVO" || goto :cleanup
+call :verify_file "%Work%\Directory-Windows.wvo" 1951 d2da1c67864c242aeb9797661028295922486de2cf7d37aa41024189afb10f34 "Windows directory leaf WVO" || goto :cleanup
+call :verify_file "%Work%\Directory-Linux.wvo" 681 0ccbcda71b20eaa024946e4fbb2016853952a39f1fe58ed0a183bde502335d86 "Linux directory leaf WVO" || goto :cleanup
 
 echo native wvdb query step=link-cross-host-images
 call "%Native%\Link-Wvo.cmd" 0 Directory_host_entry "%Work%\Windows-Image.chunk-0" ^
@@ -69,20 +69,20 @@ for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Directory_host_ent
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Directory_host_entry address=" "%Work%\Linux-Link.txt"') do set "LinuxEntry=%%E"
 if not "%WindowsEntry%"=="235440" goto :cleanup
 if not "%LinuxEntry%"=="235440" goto :cleanup
-call :verify_file "%Work%\Windows-Image.chunk-0" 238413 60bdf794d8fba0889a077eeec35fab75de9fd174a5a894eb78ef316ad1c8872c "Windows linked image" || goto :cleanup
-call :verify_file "%Work%\Linux-Image.chunk-0" 237437 76b8327d6f970c467d76a4e9c2f64d7473897d2afe2a444c007f840e42a35632 "Linux linked image" || goto :cleanup
+call :verify_file "%Work%\Windows-Image.chunk-0" 238536 fe51adddc364f9ec32d9ae0a7925417e1fa6304e930fd42ec9106f31f73d35bc "Windows linked image" || goto :cleanup
+call :verify_file "%Work%\Linux-Image.chunk-0" 237517 cae8aee6da474d2acb0a976047c689511a22269377b58114a56e8616fecc708d "Linux linked image" || goto :cleanup
 
 echo native wvdb query step=package-cross-host-applications
 call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" "%Work%\Windows-Image" 1 235440 "%Work%\Wvdb-Query.exe" windows || goto :cleanup
 call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" "%Work%\Linux-Image" 1 235440 "%Work%\Wvdb-Query.elf" linux || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.exe" 258048 7cd60860e07294d9a45064495da33a42cc752849accfc672c35a69454cd963d8 "Windows hosted application" || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.elf" 258048 29b4d4db7505daec94865d423e3805b02bde95751343b1fb7e4ceee8045a202d "Linux hosted application" || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.exe" 258048 198d44b49db6765792c835c6419da88f0cbcc0de0422748b0d15cb4ae5e6ba32 "Windows hosted application" || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.elf" 258048 b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f "Linux hosted application" || goto :cleanup
 
 echo native wvdb query step=create-fixture
 node "%Native%\Create-Wvdb-Query-Fixture.mjs" "%Work%\Run\Windvale-Database-Storage.bin" || goto :cleanup
 call :verify_file "%Work%\Run\Windvale-Database-Storage.bin" 288 b0a940dca77a4b018f66d3be66023880746f077ff78446e88671688d5ad31892 "WVDB query fixture" || goto :cleanup
 
-echo native wvdb query step=execute-windows-cases cases=5
+echo native wvdb query step=execute-windows-cases cases=6
 pushd "%Work%\Run" || goto :cleanup
 "%Work%\Wvdb-Query.exe" Windvale-Database-Storage.bin 7 >"%Work%\Found.txt" 2>&1
 set "FoundExit=%ERRORLEVEL%"
@@ -97,40 +97,55 @@ pushd "%Work%\Empty" || goto :cleanup
 "%Work%\Wvdb-Query.exe" Windvale-Database-Storage.bin 7 >"%Work%\Unavailable.txt" 2>&1
 set "UnavailableExit=%ERRORLEVEL%"
 popd
-echo native wvdb query cases status found=%FoundExit% negative=%NegativeExit% missing=%MissingExit% denied=%DeniedExit% unavailable=%UnavailableExit%
+mklink /J "%Work%\Empty\Windvale-Database-Storage.bin" "%Work%\Run" >nul || goto :cleanup
+pushd "%Work%\Empty" || goto :cleanup
+"%Work%\Wvdb-Query.exe" Windvale-Database-Storage.bin 7 >"%Work%\NoLink.txt" 2>&1
+set "NoLinkExit=%ERRORLEVEL%"
+popd
+rmdir "%Work%\Empty\Windvale-Database-Storage.bin" || goto :cleanup
+echo native wvdb query cases status found=%FoundExit% negative=%NegativeExit% missing=%MissingExit% denied=%DeniedExit% unavailable=%UnavailableExit% no-link=%NoLinkExit%
 if not "%FoundExit%"=="0" goto :cleanup
 if not "%NegativeExit%"=="0" goto :cleanup
 if not "%MissingExit%"=="2" goto :cleanup
 if not "%DeniedExit%"=="3" goto :cleanup
 if not "%UnavailableExit%"=="3" goto :cleanup
-echo native wvdb query output item=1/5 case=found
+if not "%NoLinkExit%"=="3" goto :cleanup
+echo native wvdb query output item=1/6 case=found
 call :verify_file "%Work%\Found.txt" 21 cbd29940b14cde7eff85ca50290622c0b1a45cf984faba599d048e23291e291f "found output" || goto :cleanup
-echo native wvdb query output item=2/5 case=negative
+echo native wvdb query output item=2/6 case=negative
 call :verify_file "%Work%\Negative.txt" 21 3c9e8339e9d9522a8f806c6076fde6bd8eb286cfd993e4d24b4f271d102490e8 "negative output" || goto :cleanup
-echo native wvdb query output item=3/5 case=missing
+echo native wvdb query output item=3/6 case=missing
 call :verify_file "%Work%\Missing.txt" 14 d6592b511275d30bb5d995e669e7be2cc458bba9db8b656b3fc4ca88fe86b3d8 "missing output" || goto :cleanup
-echo native wvdb query output item=4/5 case=denied
+echo native wvdb query output item=4/6 case=denied
 findstr /b /c:"storage-failure status=" "%Work%\Denied.txt" >nul
 if errorlevel 1 (
     >&2 echo native wvdb query output status=Mismatch case=denied
     type "%Work%\Denied.txt" >&2
     goto :cleanup
 )
-echo native wvdb query output item=5/5 case=unavailable
+echo native wvdb query output item=5/6 case=unavailable
 findstr /b /c:"storage-failure status=" "%Work%\Unavailable.txt" >nul
 if errorlevel 1 (
     >&2 echo native wvdb query output status=Mismatch case=unavailable
     type "%Work%\Unavailable.txt" >&2
     goto :cleanup
 )
+echo native wvdb query output item=6/6 case=no-link
+findstr /b /c:"storage-failure status=" "%Work%\NoLink.txt" >nul
+if errorlevel 1 (
+    >&2 echo native wvdb query output status=Mismatch case=no-link
+    type "%Work%\NoLink.txt" >&2
+    goto :cleanup
+)
 
-echo native wvdb query identity host=windows wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 windows-application=7cd60860e07294d9a45064495da33a42cc752849accfc672c35a69454cd963d8 linux-application=29b4d4db7505daec94865d423e3805b02bde95751343b1fb7e4ceee8045a202d
-echo native wvdb query capability status=Passed cases=5 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified
+echo native wvdb query identity host=windows wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 windows-application=198d44b49db6765792c835c6419da88f0cbcc0de0422748b0d15cb4ae5e6ba32 linux-application=b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f
+echo native wvdb query capability status=Passed cases=6 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified
 set "Result=0"
 
 :cleanup
 if exist "%Work%\Run\." del /f /q "%Work%\Run\*" >nul 2>nul
 if exist "%Work%\Run\." rmdir "%Work%\Run" >nul 2>nul
+if exist "%Work%\Empty\Windvale-Database-Storage.bin\." rmdir "%Work%\Empty\Windvale-Database-Storage.bin" >nul 2>nul
 if exist "%Work%\Empty\." del /f /q "%Work%\Empty\*" >nul 2>nul
 if exist "%Work%\Empty\." rmdir "%Work%\Empty" >nul 2>nul
 if exist "%Work%\." del /f /q "%Work%\*" >nul 2>nul

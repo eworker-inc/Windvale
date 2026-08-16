@@ -1,0 +1,6 @@
+windvale-project 2
+root "Operating-System/Services/Filesystem-Service-Core.wv"
+source "Runtime/Windvale/Filesystem-Host-Adapter-Core.wv"
+source "Operating-System/Services/Filesystem-Provider-State.wv"
+source "Libraries/Platform/Filesystem/Filesystem-Semantics.wv"
+emit wvb

@@ -1,0 +1,83 @@
+module Osˉx64ˉprocessˉcoordinatorˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉcoordinatorˉemission as Coordinator;
+
+data Expectedˉfailureˉfields: bytes = [
+    12, 0, 0, 0, 32, 0, 0, 0, 44, 0, 0, 0,
+    216, 0, 0, 0, 225, 0, 0, 0, 245, 0, 0, 0,
+    1, 1, 0, 0
+];
+data Expectedˉfailureˉdisplacements: bytes = [
+    179, 127, 0, 0, 159, 127, 0, 0, 147, 127, 0, 0,
+    231, 126, 0, 0, 222, 126, 0, 0, 202, 126, 0, 0,
+    190, 126, 0, 0
+];
+
+export fn Main() -> i32 {
+    if !Coordinator.X64ˉprocessˉcoordinatorˉinitializationˉisˉvalid() {
+        return 1;
+    }
+    let Code: bytes =
+        Coordinator.X64ˉprocessˉcoordinatorˉinitializationˉbytes();
+    let Fields: bytes = Coordinator.X64ˉprocessˉcoordinatorˉfailureˉfields();
+    let Displacements: bytes =
+        Coordinator.X64ˉprocessˉcoordinatorˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 309u32 || Bytesˉlength(Fields) != 28u32 ||
+        Bytesˉlength(Displacements) != 28u32 ||
+        Bytesˉlength(Expectedˉfailureˉfields) != 28u32 ||
+        Bytesˉlength(Expectedˉfailureˉdisplacements) != 28u32 ||
+        Coordinator.X64ˉprocessˉcoordinatorˉfixtureˉoffset() != 1119u32 ||
+        Coordinator.X64ˉprocessˉcoordinatorˉfailureˉtarget() != 33826u32 ||
+        Coordinator.X64ˉprocessˉcoordinatorˉpolicyˉcallˉfield() != 192u32 ||
+        Coordinator.X64ˉprocessˉcoordinatorˉpolicyˉsymbolˉindex() != 12u32 ||
+        Coordinator.X64ˉprocessˉcoordinatorˉpolicyˉrelocationˉaddend() != -4 {
+        return 2;
+    }
+    var Index: u32 = 0u32;
+    while Index < 28u32 {
+        if Bytesˉreadˉu8(Fields, Index) !=
+            Bytesˉreadˉu8(Expectedˉfailureˉfields, Index) {
+            return 3;
+        }
+        if Bytesˉreadˉu8(Displacements, Index) !=
+            Bytesˉreadˉu8(Expectedˉfailureˉdisplacements, Index) {
+            return 3;
+        }
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < 28u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 { return 4; }
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Displacements, Index);
+        if Coordinator.X64ˉprocessˉcoordinatorˉfixtureˉoffset() +
+            Field + 4u32 + Displacement !=
+            Coordinator.X64ˉprocessˉcoordinatorˉfailureˉtarget() {
+            return 4;
+        }
+        Index = Index + 4u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(
+        Code, Coordinator.X64ˉprocessˉcoordinatorˉpolicyˉcallˉfield()
+    ) != 0u32 { return 5; }
+
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 309u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 11124u32 || Hashˉone != 52665u32 ||
+        Hashˉtwo != 43226u32 || Hashˉthree != 43545u32 {
+        return 6;
+    }
+    return 52;
+}

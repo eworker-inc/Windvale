@@ -1,0 +1,3 @@
+windvale-project 2
+root "Libraries/Platform/Networking/Network-Authority.wv"
+emit wvb

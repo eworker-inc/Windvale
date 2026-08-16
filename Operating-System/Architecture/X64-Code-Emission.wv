@@ -1,0 +1,287 @@
+module X64ˉcodeˉemission profile portable;
+
+export enum X64ˉemissionˉstatus {
+    Ready = 0;
+    Codeˉlimit = 1;
+    Invalidˉlabel = 2;
+    Duplicateˉlabel = 3;
+    Undefinedˉlabel = 4;
+    Labelˉlimit = 5;
+    Fixupˉlimit = 6;
+    Invalidˉcondition = 7;
+    Invalidˉalignment = 8;
+}
+
+export record X64ˉemission {
+    Status: X64ˉemissionˉstatus;
+    Code: bytes;
+    Labels: bytes;
+    Fixups: bytes;
+}
+
+record X64ˉlabelˉlookup {
+    Found: bool;
+    Offset: u32;
+}
+
+fn Appendˉentry(Input: bytes, Identifier: u32, Offset: u32) -> bytes {
+    return Bytesˉconcat(
+        Input,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Identifier),
+            Bytesˉfromˉu32ˉlittle(Offset)
+        )
+    );
+}
+
+fn Findˉlabel(Labels: bytes, Identifier: u32) -> X64ˉlabelˉlookup {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Labels) {
+        if Bytesˉreadˉu32ˉlittle(Labels, Index) == Identifier {
+            return X64ˉlabelˉlookup(
+                true, Bytesˉreadˉu32ˉlittle(Labels, Index + 4u32)
+            );
+        }
+        Index = Index + 8u32;
+    }
+    return X64ˉlabelˉlookup(false, 0u32);
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(
+            Input, Offset + 4u32,
+            Bytesˉlength(Input) - Offset - 4u32
+        )
+    );
+}
+
+fn Emitˉrelative(
+    State: X64ˉemission,
+    Prefix: bytes,
+    Label: u32
+) -> X64ˉemission {
+    if State.Status != X64ˉemissionˉstatus.Ready { return State; }
+    if Label == 0u32 {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Invalidˉlabel
+        );
+    }
+    if Bytesˉlength(State.Fixups) / 8u32 >= 512u32 {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Fixupˉlimit
+        );
+    }
+    let Prefixˉlength: u32 = Bytesˉlength(Prefix);
+    let Codeˉlength: u32 = Bytesˉlength(State.Code);
+    if Prefixˉlength > 65536u32 - Codeˉlength ||
+        4u32 > 65536u32 - Codeˉlength - Prefixˉlength {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Codeˉlimit
+        );
+    }
+    let Displacementˉoffset: u32 = Codeˉlength + Prefixˉlength;
+    let Code: bytes = Bytesˉconcat(
+        Bytesˉconcat(State.Code, Prefix),
+        Bytesˉfromˉu32ˉlittle(0u32)
+    );
+    return X64ˉemission(
+        X64ˉemissionˉstatus.Ready, Code, State.Labels,
+        Appendˉentry(State.Fixups, Label, Displacementˉoffset)
+    );
+}
+
+export fn X64ˉemissionˉempty() -> X64ˉemission {
+    let Empty: bytes = Bytesˉslice(
+        Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32
+    );
+    return X64ˉemission(X64ˉemissionˉstatus.Ready, Empty, Empty, Empty);
+}
+
+export fn X64ˉwithˉstatus(
+    State: X64ˉemission,
+    Status: X64ˉemissionˉstatus
+) -> X64ˉemission {
+    return X64ˉemission(Status, State.Code, State.Labels, State.Fixups);
+}
+
+export fn X64ˉemit(State: X64ˉemission, Value: bytes) -> X64ˉemission {
+    if State.Status != X64ˉemissionˉstatus.Ready { return State; }
+    let Current: u32 = Bytesˉlength(State.Code);
+    let Added: u32 = Bytesˉlength(Value);
+    if Added > 65536u32 - Current {
+        return X64ˉwithˉstatus(State, X64ˉemissionˉstatus.Codeˉlimit);
+    }
+    return X64ˉemission(
+        X64ˉemissionˉstatus.Ready,
+        Bytesˉconcat(State.Code, Value), State.Labels, State.Fixups
+    );
+}
+
+export fn X64ˉemitˉu32(State: X64ˉemission, Value: u32) -> X64ˉemission {
+    return X64ˉemit(State, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn X64ˉemitˉu64(State: X64ˉemission, Value: u64) -> X64ˉemission {
+    return X64ˉemit(State, Bytesˉfromˉu64ˉlittle(Value));
+}
+
+export fn X64ˉemitˉcallˉplaceholder(
+    State: X64ˉemission
+) -> X64ˉemission {
+    return X64ˉemit(
+        State,
+        Bytesˉconcat(
+            Bytesˉfromˉu8(232u8), Bytesˉfromˉu32ˉlittle(0u32)
+        )
+    );
+}
+
+export fn X64ˉemitˉjumpˉplaceholder(
+    State: X64ˉemission
+) -> X64ˉemission {
+    return X64ˉemit(
+        State,
+        Bytesˉconcat(
+            Bytesˉfromˉu8(233u8), Bytesˉfromˉu32ˉlittle(0u32)
+        )
+    );
+}
+
+fn Isˉalignment(Alignment: u32) -> bool {
+    if Alignment == 1u32 || Alignment == 2u32 ||
+        Alignment == 4u32 || Alignment == 8u32 ||
+        Alignment == 16u32 || Alignment == 32u32 ||
+        Alignment == 64u32 || Alignment == 128u32 ||
+        Alignment == 256u32 || Alignment == 512u32 ||
+        Alignment == 1024u32 || Alignment == 2048u32 ||
+        Alignment == 4096u32 { return true; }
+    return false;
+}
+
+export fn X64ˉalign(
+    State: X64ˉemission,
+    Alignment: u32
+) -> X64ˉemission {
+    if State.Status != X64ˉemissionˉstatus.Ready { return State; }
+    if !Isˉalignment(Alignment) {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Invalidˉalignment
+        );
+    }
+    let Remainder: u32 = Bytesˉlength(State.Code) % Alignment;
+    var Padding: u32 = 0u32;
+    if Remainder != 0u32 { Padding = Alignment - Remainder; }
+    var Result: X64ˉemission = State;
+    while Padding != 0u32 {
+        Result = X64ˉemit(Result, Bytesˉfromˉu8(144u8));
+        Padding = Padding - 1u32;
+    }
+    return Result;
+}
+
+export fn X64ˉmark(State: X64ˉemission, Label: u32) -> X64ˉemission {
+    if State.Status != X64ˉemissionˉstatus.Ready { return State; }
+    if Label == 0u32 {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Invalidˉlabel
+        );
+    }
+    let Existing: X64ˉlabelˉlookup = Findˉlabel(State.Labels, Label);
+    if Existing.Found {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Duplicateˉlabel
+        );
+    }
+    if Bytesˉlength(State.Labels) / 8u32 >= 256u32 {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Labelˉlimit
+        );
+    }
+    return X64ˉemission(
+        X64ˉemissionˉstatus.Ready, State.Code,
+        Appendˉentry(State.Labels, Label, Bytesˉlength(State.Code)),
+        State.Fixups
+    );
+}
+
+export fn X64ˉjump(State: X64ˉemission, Label: u32) -> X64ˉemission {
+    return Emitˉrelative(State, Bytesˉfromˉu8(233u8), Label);
+}
+
+export fn X64ˉcall(State: X64ˉemission, Label: u32) -> X64ˉemission {
+    return Emitˉrelative(State, Bytesˉfromˉu8(232u8), Label);
+}
+
+export fn X64ˉjumpˉif(
+    State: X64ˉemission,
+    Conditionˉopcode: u32,
+    Label: u32
+) -> X64ˉemission {
+    if Conditionˉopcode < 128u32 || Conditionˉopcode > 143u32 {
+        return X64ˉwithˉstatus(
+            State, X64ˉemissionˉstatus.Invalidˉcondition
+        );
+    }
+    return Emitˉrelative(
+        State,
+        Bytesˉconcat(
+            Bytesˉfromˉu8(15u8),
+            Bytesˉslice(
+                Bytesˉfromˉu32ˉlittle(Conditionˉopcode), 0u32, 1u32
+            )
+        ),
+        Label
+    );
+}
+
+export fn X64ˉloadˉripˉrelativeˉrdx(
+    State: X64ˉemission,
+    Label: u32
+) -> X64ˉemission {
+    return Emitˉrelative(
+        State,
+        Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉfromˉu8(72u8), Bytesˉfromˉu8(141u8)
+            ),
+            Bytesˉfromˉu8(21u8)
+        ),
+        Label
+    );
+}
+
+export fn X64ˉbuild(State: X64ˉemission) -> X64ˉemission {
+    if State.Status != X64ˉemissionˉstatus.Ready { return State; }
+    var Code: bytes = State.Code;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(State.Fixups) {
+        let Label: u32 = Bytesˉreadˉu32ˉlittle(State.Fixups, Index);
+        let Displacementˉoffset: u32 =
+            Bytesˉreadˉu32ˉlittle(State.Fixups, Index + 4u32);
+        let Target: X64ˉlabelˉlookup = Findˉlabel(State.Labels, Label);
+        if !Target.Found {
+            return X64ˉwithˉstatus(
+                State, X64ˉemissionˉstatus.Undefinedˉlabel
+            );
+        }
+        Code = Patchˉu32(
+            Code, Displacementˉoffset,
+            Relativeˉu32(Target.Offset, Displacementˉoffset + 4u32)
+        );
+        Index = Index + 8u32;
+    }
+    return X64ˉemission(
+        X64ˉemissionˉstatus.Ready, Code, State.Labels, State.Fixups
+    );
+}

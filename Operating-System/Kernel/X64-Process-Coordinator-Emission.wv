@@ -1,0 +1,140 @@
+module X64ˉprocessˉcoordinatorˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Coordinatorˉprologue: bytes = [73, 137, 204, 73, 131, 236, 64];
+data Testˉr12: bytes = [77, 133, 228];
+data Moveˉrax: bytes = [72, 184];
+data Compareˉstateˉmagic: bytes = [73, 57, 4, 36];
+data Compareˉstateˉversion: bytes = [65, 131, 124, 36, 8, 17];
+data Conditionˉequal: bytes = [15, 132];
+data Conditionˉnotˉequal: bytes = [15, 133];
+data Storeˉstackˉrax: bytes = [72, 137, 132, 36];
+data Storeˉstackˉr13: bytes = [76, 137, 172, 36];
+data Moveˉeax: bytes = [184];
+data Clearˉeax: bytes = [49, 192];
+data Loadˉcontextˉrdx: bytes = [72, 141, 84, 36, 64];
+data Reserveˉpolicyˉframe: bytes = [72, 131, 236, 40];
+data Restoreˉpolicyˉframe: bytes = [72, 131, 196, 40];
+data Alignˉarenaˉbase: bytes = [73, 137, 228, 73, 129, 228];
+data Compareˉpolicyˉtoken: bytes = [72, 131, 248, 97];
+data Loadˉstateˉr13: bytes = [77, 141, 172, 36];
+data Loadˉstateˉrax: bytes = [73, 141, 132, 36];
+
+fn Emitˉconditionˉplaceholder(
+    State: X64.X64ˉemission,
+    Prefix: bytes
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Prefix);
+    return X64.X64ˉemitˉu32(Result, 0u32);
+}
+
+fn Emitˉstoreˉstackˉrax(
+    State: X64.X64ˉemission,
+    Offset: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Storeˉstackˉrax);
+    return X64.X64ˉemitˉu32(Result, Offset);
+}
+
+fn Emitˉstoreˉstackˉr13(
+    State: X64.X64ˉemission,
+    Offset: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Storeˉstackˉr13);
+    return X64.X64ˉemitˉu32(Result, Offset);
+}
+
+fn Emitˉvalidateˉmemoryˉstate(
+    State: X64.X64ˉemission
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Testˉr12);
+    Result = Emitˉconditionˉplaceholder(Result, Conditionˉequal);
+    Result = X64.X64ˉemit(Result, Moveˉrax);
+    Result = X64.X64ˉemitˉu64(Result, 3977044905989723735u64);
+    Result = X64.X64ˉemit(Result, Compareˉstateˉmagic);
+    Result = Emitˉconditionˉplaceholder(Result, Conditionˉnotˉequal);
+    Result = X64.X64ˉemit(Result, Compareˉstateˉversion);
+    return Emitˉconditionˉplaceholder(Result, Conditionˉnotˉequal);
+}
+
+fn Buildˉcoordinatorˉinitialization() -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Coordinatorˉprologue);
+    State = Emitˉvalidateˉmemoryˉstate(State);
+
+    // Construct native execution-context format 7 with its exact 112-byte size.
+    State = X64.X64ˉemit(State, Moveˉrax);
+    State = X64.X64ˉemitˉu64(State, 481036337159u64);
+    State = Emitˉstoreˉstackˉrax(State, 64u32);
+    State = X64.X64ˉemit(State, Moveˉeax);
+    State = X64.X64ˉemitˉu32(State, 21918u32);
+    State = Emitˉstoreˉstackˉrax(State, 72u32);
+    State = X64.X64ˉemit(State, Moveˉeax);
+    State = X64.X64ˉemitˉu32(State, 5u32);
+    State = Emitˉstoreˉstackˉrax(State, 80u32);
+    State = X64.X64ˉemit(State, Clearˉeax);
+    var Offset: u32 = 88u32;
+    while Offset < 176u32 {
+        State = Emitˉstoreˉstackˉrax(State, Offset);
+        Offset = Offset + 8u32;
+    }
+    State = X64.X64ˉemit(State, Loadˉcontextˉrdx);
+
+    // Relocation field 192 targets the imported process-policy function.
+    State = X64.X64ˉemit(State, Reserveˉpolicyˉframe);
+    State = X64.X64ˉemitˉcallˉplaceholder(State);
+    State = X64.X64ˉemit(State, Restoreˉpolicyˉframe);
+    State = X64.X64ˉemit(State, Alignˉarenaˉbase);
+    State = X64.X64ˉemitˉu32(State, 4292870144u32);
+    State = X64.X64ˉemit(State, Compareˉpolicyˉtoken);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉnotˉequal);
+    State = Emitˉvalidateˉmemoryˉstate(State);
+
+    State = X64.X64ˉemit(State, Loadˉstateˉr13);
+    State = X64.X64ˉemitˉu32(State, 256u32);
+    State = Emitˉstoreˉstackˉr13(State, 184u32);
+    State = X64.X64ˉemit(State, Loadˉstateˉrax);
+    State = X64.X64ˉemitˉu32(State, 768u32);
+    State = Emitˉstoreˉstackˉrax(State, 192u32);
+    State = X64.X64ˉemit(State, Loadˉstateˉrax);
+    State = X64.X64ˉemitˉu32(State, 1744u32);
+    return Emitˉstoreˉstackˉrax(State, 200u32);
+}
+
+export fn X64ˉprocessˉcoordinatorˉinitializationˉisˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉcoordinatorˉinitialization();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 309u32;
+}
+
+export fn X64ˉprocessˉcoordinatorˉinitializationˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉcoordinatorˉinitialization();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉcoordinatorˉfixtureˉoffset() -> u32 { return 1119u32; }
+export fn X64ˉprocessˉcoordinatorˉfailureˉtarget() -> u32 { return 33826u32; }
+export fn X64ˉprocessˉcoordinatorˉpolicyˉcallˉfield() -> u32 { return 192u32; }
+export fn X64ˉprocessˉcoordinatorˉpolicyˉsymbolˉindex() -> u32 { return 12u32; }
+export fn X64ˉprocessˉcoordinatorˉpolicyˉrelocationˉaddend() -> i32 { return -4; }
+
+export fn X64ˉprocessˉcoordinatorˉfailureˉfields() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(12u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(44u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(216u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(225u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(245u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(257u32));
+}
+
+export fn X64ˉprocessˉcoordinatorˉfailureˉdisplacements() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(32691u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32671u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32659u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32487u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32478u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32458u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32446u32));
+}

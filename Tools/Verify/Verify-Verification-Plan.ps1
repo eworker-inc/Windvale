@@ -909,6 +909,118 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'OS x64 process-machine emission ownership'
+        Paths = @(
+            'Operating-System/Architecture/X64-Code-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Coordinator-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Endpoint-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Memory-Allocation-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Record-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Paging-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Image-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Reservation-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Record-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Paging-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Image-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Program-Resource-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Budget-Resource-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Store-Resource-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Directory-Resource-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Store-Validation-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Directory-Validation-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Privileged-Entry-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Thread-Timer-State-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Timer-Activation-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Provider-User-Transfer-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Directory-Allocation-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Directory-Record-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Directory-Paging-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Directory-Image-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Entry-Emission.wv',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Coordinator-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Endpoint-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Memory-Allocation-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Record-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Paging-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Image-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Reservation-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Record-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Paging-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Image-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Program-Resource-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Budget-Resource-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Store-Resource-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Directory-Resource-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Store-Validation-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Directory-Validation-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Privileged-Entry-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Thread-Timer-State-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Timer-Activation-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Provider-User-Transfer-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Allocation-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Record-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Paging-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Image-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Code-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Entry-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Coordinator-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Endpoint-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Memory-Allocation-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Record-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Paging-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Image-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Reservation-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Record-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Paging-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Image-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Program-Resource-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Budget-Resource-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Store-Resource-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Directory-Resource-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Store-Validation-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Directory-Validation-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Privileged-Entry-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Thread-Timer-State-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Timer-Activation-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Provider-User-Transfer-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Allocation-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Record-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Paging-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Image-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Code-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Entry-Emission.wvproj',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Coordinator-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Endpoint-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Memory-Allocation-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Record-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Paging-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Image-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Reservation-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Record-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Paging-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Image-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Program-Resource-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Budget-Resource-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Store-Resource-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Directory-Resource-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Store-Validation-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Directory-Validation-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Privileged-Entry-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Thread-Timer-State-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Timer-Activation-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Provider-User-Transfer-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Allocation-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Record-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Paging-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Image-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Code-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Entry-Emission-Self-Test.wv'
+        )
+        Suites = @('os-x64-code-emission')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'normal process object'
         Paths = @('Operating-System/Tools/Process-Object-Tool.wv')
         Suites = @('os-process-object', 'os-probe')
@@ -956,6 +1068,67 @@ $NativeCases = @(
             'Specifications/Windvale-Os-Resource-Domain-Policy.md'
         )
         Suites = @('os-resource-domain')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'OS application-launch policy ownership'
+        Paths = @(
+            'Operating-System/Kernel/Application-Launch-Policy.wv',
+            'Operating-System/Kernel/Application-Machine-Construction-Policy.wv',
+            'Projects/Operating-System/Windvale-Os-Application-Launch-Policy.wvproj',
+            'Projects/Operating-System/Windvale-Os-Application-Machine-Construction-Policy.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Application-Launch.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Application-Machine-Construction.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Application-Launch-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-Application-Machine-Construction-Self-Test.wv',
+            'Specifications/Windvale-Os-Application-Launch-Policy.md'
+        )
+        Suites = @('os-process-policy', 'os-application-launch', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'OS provider-launch transaction ownership'
+        Paths = @(
+            'Operating-System/Kernel/Provider-Launch-Transaction-Policy.wv',
+            'Operating-System/Kernel/Provider-Launch-Lifecycle-Policy.wv',
+            'Projects/Operating-System/Windvale-Os-Provider-Launch-Transaction-Policy.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Provider-Launch-Transaction.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Provider-Launch-Lifecycle.wvproj',
+            'Tests/Fixtures/Operating-System/Os-Provider-Launch-Transaction-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-Provider-Launch-Lifecycle-Self-Test.wv',
+            'Specifications/Windvale-Os-Provider-Launch-Transaction.md'
+        )
+        Suites = @('os-provider-launch-transaction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'OS boot-service composition ownership'
+        Paths = @(
+            'Operating-System/Kernel/Process-Foundation.wv',
+            'Specifications/Windvale-Os-Boot-Service-Composition.md'
+        )
+        Suites = @('os-process-policy', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'portable network authority ownership'
+        Paths = @(
+            'Libraries/Platform/Networking/Network-Authority.wv',
+            'Projects/Libraries/Windvale-Library-Network-Authority.wvproj',
+            'Tests/Fixtures/Libraries/Network-Authority-Self-Test.wv',
+            'Projects/Tests/Windvale-Native-Test-Network-Authority.wvproj',
+            'Specifications/Windvale-Network-Authority.md'
+        )
+        Suites = @(
+            'os-network-authority',
+            'native-u64-lowering',
+            'workspace-project2',
+            'libraries'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1959,9 +2132,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 81 -or
+if ($VerificationOwnerLines.Count -ne 89 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 80-owner inventory differs.'
+    throw 'The native verification-owner header or exact 88-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1999,7 +2172,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3787 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4065 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

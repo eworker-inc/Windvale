@@ -1,0 +1,186 @@
+module Filesystemˉservice profile portable;
+
+import Filesystemˉsemantics as Filesystem;
+
+const FILESYSTEM_REQUEST_MAGIC: u32 = 1363564119u32;
+const FILESYSTEM_REQUEST_HEADER_BYTES: u32 = 64u32;
+const FILESYSTEM_REQUEST_MAXIMUM_BYTES: u32 = 65600u32;
+const FILESYSTEM_RESPONSE_MAGIC: u32 = 1346786903u32;
+
+export enum Filesystemˉserviceˉrequestˉstatus {
+    Valid = 0; Invalidˉsize = 1; Invalidˉmagic = 2;
+    Invalidˉversion = 3; Invalidˉheader = 4;
+    Invalidˉoperation = 5; Invalidˉreference = 6;
+    Invalidˉsegment = 7; Invalidˉlimit = 8;
+}
+
+fn Filesystemˉserviceˉsegmentˉisˉvalid(
+    Input: bytes,
+    Length: u32
+) -> bool {
+    if Length == 0u32 || Length > 255u32 { return false; }
+    if Length == 1u32 && Bytesˉreadˉu8(Input, 64u32) == 46u8 { return false; }
+    if Length == 2u32 && Bytesˉreadˉu8(Input, 64u32) == 46u8 &&
+        Bytesˉreadˉu8(Input, 65u32) == 46u8 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Byte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 64u32 + Index));
+        var Accepted: bool = false;
+        if Byte >= 48u32 && Byte <= 57u32 { Accepted = true; }
+        if Byte >= 65u32 && Byte <= 90u32 { Accepted = true; }
+        if Byte >= 97u32 && Byte <= 122u32 { Accepted = true; }
+        if Byte == 45u32 || Byte == 46u32 || Byte == 95u32 { Accepted = true; }
+        if !Accepted { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Filesystemˉserviceˉrequestˉstatus(
+    Input: bytes
+) -> Filesystemˉserviceˉrequestˉstatus {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < FILESYSTEM_REQUEST_HEADER_BYTES ||
+        Total > FILESYSTEM_REQUEST_MAXIMUM_BYTES {
+        return Filesystemˉserviceˉrequestˉstatus.Invalidˉsize;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != FILESYSTEM_REQUEST_MAGIC {
+        return Filesystemˉserviceˉrequestˉstatus.Invalidˉmagic;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Filesystemˉserviceˉrequestˉstatus.Invalidˉversion;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total ||
+        Bytesˉreadˉu64ˉlittle(Input, 48u32) != 0u64 ||
+        Bytesˉreadˉu64ˉlittle(Input, 56u32) != 0u64 {
+        return Filesystemˉserviceˉrequestˉstatus.Invalidˉheader;
+    }
+    let Operation: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Correlation: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Directoryˉreference: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Fileˉreference: u64 = Bytesˉreadˉu64ˉlittle(Input, 24u32);
+    let Position: u64 = Bytesˉreadˉu64ˉlittle(Input, 32u32);
+    let Control: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 44u32);
+    if Correlation == 0u32 || Payloadˉlength != Total - 64u32 {
+        return Filesystemˉserviceˉrequestˉstatus.Invalidˉheader;
+    }
+    if Operation == 1u32 {
+        if Directoryˉreference == 0u32 || Fileˉreference != 0u64 ||
+            Position != 0u64 {
+            return Filesystemˉserviceˉrequestˉstatus.Invalidˉreference;
+        }
+        if Control < 1u32 || Control > 4u32 {
+            return Filesystemˉserviceˉrequestˉstatus.Invalidˉlimit;
+        }
+        if !Filesystemˉserviceˉsegmentˉisˉvalid(Input, Payloadˉlength) {
+            return Filesystemˉserviceˉrequestˉstatus.Invalidˉsegment;
+        }
+    } else {
+        if Operation < 2u32 || Operation > 6u32 {
+            return Filesystemˉserviceˉrequestˉstatus.Invalidˉoperation;
+        }
+        if Directoryˉreference != 0u32 {
+            return Filesystemˉserviceˉrequestˉstatus.Invalidˉreference;
+        }
+        if !Filesystem.Filesystemˉfileˉrequestˉisˉvalid(
+            Operation, Fileˉreference, Position, Control, Payloadˉlength
+        ) {
+            return Filesystemˉserviceˉrequestˉstatus.Invalidˉlimit;
+        }
+    }
+    return Filesystemˉserviceˉrequestˉstatus.Valid;
+}
+
+export fn Filesystemˉserviceˉshouldˉinvokeˉprovider(
+    Input: bytes
+) -> bool {
+    return Filesystemˉserviceˉrequestˉstatus(Input) ==
+        Filesystemˉserviceˉrequestˉstatus.Valid;
+}
+
+export fn Filesystemˉserviceˉresponseˉisˉvalid(
+    Request: bytes,
+    Response: bytes
+) -> bool {
+    if Filesystemˉserviceˉrequestˉstatus(Request) !=
+        Filesystemˉserviceˉrequestˉstatus.Valid { return false; }
+    let Total: u32 = Bytesˉlength(Response);
+    if Total < 64u32 || Total > FILESYSTEM_REQUEST_MAXIMUM_BYTES { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != FILESYSTEM_RESPONSE_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Total { return false; }
+    let Operation: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
+    let Correlation: u32 = Bytesˉreadˉu32ˉlittle(Request, 16u32);
+    let Requestedˉreference: u64 = Bytesˉreadˉu64ˉlittle(Request, 24u32);
+    let Requestedˉposition: u64 = Bytesˉreadˉu64ˉlittle(Request, 32u32);
+    let Requestedˉcontrol: u32 = Bytesˉreadˉu32ˉlittle(Request, 40u32);
+    let Requestedˉpayload: u32 = Bytesˉreadˉu32ˉlittle(Request, 44u32);
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != Operation ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != Correlation { return false; }
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 20u32);
+    let Returnedˉreference: u64 = Bytesˉreadˉu64ˉlittle(Response, 24u32);
+    let Fileˉlength: u64 = Bytesˉreadˉu64ˉlittle(Response, 32u32);
+    let Returnedˉposition: u64 = Bytesˉreadˉu64ˉlittle(Response, 40u32);
+    let Progress: u32 = Bytesˉreadˉu32ˉlittle(Response, 48u32);
+    let Completion: u32 = Bytesˉreadˉu32ˉlittle(Response, 52u32);
+    let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Response, 56u32);
+    if Bytesˉreadˉu32ˉlittle(Response, 60u32) != 0u32 ||
+        Payloadˉlength != Total - 64u32 || Status > 11u32 ||
+        Completion > 3u32 { return false; }
+    if Status != 0u32 {
+        if !Filesystem.Filesystemˉrejectionˉisˉvalid(
+            Status, Progress, Completion, Payloadˉlength
+        ) || Fileˉlength != 0u64 || Returnedˉposition != Requestedˉposition {
+            return false;
+        }
+        if Status == 8u32 {
+            return Operation != 1u32 && Returnedˉreference != 0u64 &&
+                Returnedˉreference != Requestedˉreference;
+        }
+        if Operation == 1u32 { return Returnedˉreference == 0u64; }
+        return Returnedˉreference == Requestedˉreference;
+    }
+    if Operation == 1u32 {
+        return Returnedˉreference != 0u64 && Returnedˉposition == 0u64 &&
+            Progress == 0u32 && Completion == 0u32 && Payloadˉlength == 0u32;
+    }
+    if Operation == 2u32 {
+        if Completion != 0u32 { return false; }
+        return Filesystem.Filesystemˉreadˉresultˉisˉvalid(
+            Requestedˉreference, Requestedˉposition, Requestedˉcontrol,
+            Returnedˉreference, Fileˉlength, Returnedˉposition,
+            Progress, Payloadˉlength
+        );
+    }
+    if Operation == 3u32 {
+        if Returnedˉposition != Requestedˉposition || Payloadˉlength != 0u32 {
+            return false;
+        }
+        return Filesystem.Filesystemˉwriteˉresultˉisˉvalid(
+            Requestedˉreference, Requestedˉposition, Requestedˉpayload,
+            Returnedˉreference, Fileˉlength, Progress, Completion
+        );
+    }
+    if Operation == 4u32 {
+        if Returnedˉposition != Requestedˉposition || Progress != 0u32 ||
+            Payloadˉlength != 0u32 { return false; }
+        return Filesystem.Filesystemˉsetˉlengthˉresultˉisˉvalid(
+            Requestedˉreference, Requestedˉposition, Returnedˉreference,
+            Fileˉlength, Completion
+        );
+    }
+    if Operation == 5u32 {
+        return Returnedˉreference == 0u64 && Fileˉlength == 0u64 &&
+            Returnedˉposition == 0u64 && Progress == 0u32 &&
+            Completion == 0u32 && Payloadˉlength == 0u32;
+    }
+    if Operation == 6u32 {
+        if Returnedˉreference != Requestedˉreference ||
+            Returnedˉposition != 0u64 || Progress != 0u32 ||
+            Payloadˉlength != 0u32 { return false; }
+        if Completion == 1u32 { return true; }
+        return Completion == 3u32 && Fileˉlength == 0u64;
+    }
+    return false;
+}

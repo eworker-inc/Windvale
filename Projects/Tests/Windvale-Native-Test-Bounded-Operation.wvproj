@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Libraries/Bounded-Operation-Self-Test.wv"
+source "Libraries/Platform/Operations/Bounded-Operation.wv"
+emit wvb

@@ -289,8 +289,8 @@ surface to complete this milestone.
 | Canonical manifest and lock closure | ✅ | Package 1 and Lock 1 select the exact WVDB Query source, resource, project, platform, license, tool, output, and capability closure under [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md). |
 | Deterministic independently admitted bundle | ✅ | Distinct Windvale-written writer and verifier implementations construct and admit the exact 43,725-byte Bundle 1 identity under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md); paired [Verify run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) owns valid, boundary, malformed, ordering, geometry, digest, target, and executable rejection cases. |
 | Immutable content-addressed local store | ✅ | The admitted bundle publisher creates five digest-derived objects plus one bundle through private reread-verified publication and proves an idempotent second publish with zero rewrites on both hosts. This bounded host publisher closes Milestone 2 without claiming the later general activation/store service. |
-| Same canonical host identities | ✅ | WVB `61f7b9d…`, bundle `3d7f035…`, Windows application `7cd6086…`, and Linux application `29b4d4d…` are pinned and reported by the paired owners. |
-| Rights-reduced success and denial | ✅ | The ABI-23 five-entry provider table binds only `filesystem.directory_read_v1` to one fixed immutable object. Paired [Verify run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) executes positive, negative-value, missing-key, unauthorized-name, and unavailable-provider cases on Windows and Linux. |
+| Same canonical host identities | ✅ | WVB `61f7b9d…`, bundle `3d7f035…`, hardened no-link Windows application `198d44b…`, and Linux application `b21095d…` are pinned and reported by the paired owners. |
+| Rights-reduced success and denial | ✅ | The ABI-23 five-entry provider table binds only `filesystem.directory_read_v1` to one fixed immutable object. The current hardened leaves add regular-file and no-link/reparse enforcement and a sixth traversal-denial case; the earlier paired [Verify run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) remains the five-case cross-host qualification until the hardened owner runs on Linux. |
 | Clean offline locked rebuild | ✅ | The selected package rebuilds from checked-in locked resources and documented native tool identities without .NET. Reconfirm it inside the final integrated package evidence without reopening the implementation gate. |
 
 Milestone 2 is closed at implementation/evidence commit
@@ -379,14 +379,19 @@ policy remain later milestones unless this slice produces a measured need.
 | Gate | Standing | Evidence or remaining boundary |
 | --- | :---: | --- |
 | Flat resource domain | 🔵 | The current native Probe 40 candidate reserves and commits exactly 3 processes, 144 ordinary pages, and 2 endpoints before publication, retains peaks across client reuse, rejects post-stop work, and finishes at zero charge. Dynamic membership plus capability and work budgets remain open. |
-| Atomic launch transaction | ○ | The immutable launch-plan contract is designed; dynamic reserve/construct/publish and complete rollback are not implemented. |
-| Isolated provider serving two clients | 🔵 | Bounded queues, two endpoints, explicit peer loss, generation-safe rebind, and teardown are qualified. The fixed proof still serves sequential client generations rather than two live clients through a general provider boundary. |
+| Atomic launch transaction | 🔵 | The current Probe 40 candidate routes both sequential generations of one fixed known child through immutable reserve/private-construct/publish transactions, admits distinct bounded machine layouts with W^X/capability checks, and proves failed-construction rollback. `WVSR 1` independently checks the first exact 64-byte application request. User-memory copy/syscall entry, arbitrary admitted images, variable charges, and runtime allocation/mapping remain open. |
+| Isolated provider serving two clients | 🔵 | Bounded queues, two endpoints, explicit peer loss, generation-safe rebind, and teardown are qualified. The current candidate pins the filesystem, operation-queue, and network authority envelope, boot-embeds separate deterministic filesystem and network user images, and admits their exact failure-atomic resource/mapping/publication/teardown transaction. Checked Windvale x86-64 emission now begins replacement of the fixed three-process machine boundary, but the privileged machine still does not allocate, map, launch, or bind those providers, or serve two live clients through a general boundary. |
 | Structured supervision | 🔵 | Contained service failure and deliberate terminal behavior are qualified foundations; a supervisor, generic completion record, and bounded restart policy are not implemented. |
 | Exact WVB across hosts and guest | ✅ | Decisions [0101](../Decisions/0101-First-Exact-Wvb-Across-Three-Environments.md) and [0103](../Decisions/0103-Second-Exact-Wvb-And-Broader-Scalar-Control-Flow.md) qualify exact canonical application WVBs across Windows, Linux, and the guest. A future WVDB-specific guest composition is consumer integration, not a reason to reopen this portability proof. |
 
-OS-1 has one completed portability gate, three substantially implemented or
-qualified foundations, and one unimplemented atomic-launch composition mechanism. Work may advance when it is the
-selected consumer without delaying the host-product critical path.
+OS-1 has one completed portability gate and four substantially implemented or
+qualified foundations. The current candidate also admits a versioned
+generation-safe executable-publication request before both fixed launch
+transactions, independently validates its `WVSR 1` serialization, and requires
+the fixed boot-service envelope before token 97. User-memory copy/syscall entry,
+dynamic allocation, filesystem/network
+provider launch, IPC/resource binding, and supervision remain active work that
+may advance without delaying the host-product critical path.
 
 ## Proposed future product lane: agent runtime and digital subconscious
 
@@ -579,12 +584,54 @@ provenance, revocation, and consensus boundaries are named.
 
 - Keep policy in isolated services and privileged mechanism in the kernel/WVA
   boundary.
-- Advance one resource-domain, launch, service, driver, or teardown invariant at
-  a time through a real consumer.
+- Replace the remaining process architecture fixture in cohesive source-owned
+  slices: the checked emitter and exact 1,119-byte process-entry/dispatcher are
+  implemented, and the following 309-byte coordinator initialization/relocation
+  surface plus 444-byte channel/endpoint region are explicit; checked allocation
+  and returned-extent validation plus the complete 462-byte init process record
+  are source-owned, and the following retained-table copy and W^X/null-safe init
+  paging are exact through byte 2,948. Four bounded private input copies, their
+  typed relocations, native context, and store descriptor now extend ownership
+  through byte 3,097. Checked non-tail recyclable-client reservation now extends
+  ownership through byte 3,215, and checked directory-provider allocation now
+  extends it through byte 3,322, and complete directory record construction from
+  measured inputs reaches byte 3,784, and directory-private null-safe W^X
+  paging reaches byte 4,224, and bounded measured provider inputs, native
+  context, and snapshot descriptor now reach byte 4,340. Exact recyclable-client
+  record construction from admitted interpreter/program identities, fixed
+  budgets, and rights-limited resource/directory capabilities reaches byte
+  4,858. Client-private null-safe W^X mappings and two post-extent guard entries
+  now reach byte 9,606. The bounded interpreter copy, typed relocation, and
+  private execution context reach byte 9,682. The first generation-one program
+  resource reaches byte 9,930 and its separate generation-two budget resource
+  reaches byte 10,159, and the generation-three immutable store resource reaches
+  byte 10,398, and the generation-four read-only directory resource reaches byte
+  10,637. Exact validation of the immutable store and its private W^X mapping
+  reaches byte 11,031 with twenty-two additional explicit failure branches;
+  directory snapshot validation reaches byte 11,441 with twenty-three more.
+  Privileged GDT/TSS, four IDT gates, feature admission, and syscall-MSR setup
+  then reach byte 12,082; three private thread records plus bounded timer state
+  reach byte 12,872. Timer activation and rollback reach byte 12,997, and the
+  guarded provider user-context transfer reaches byte 13,168. Remaining
+  provider/client readiness, syscall/exception handler bodies, teardown, and live
+  QEMU evidence remain.
+- Complete the application-start boundary first. The typed source admission and
+  executable-publication check are implemented; checked user-buffer decoding,
+  syscall entry, and dynamic executable/object allocation remain before later
+  isolated services can rely on it.
+- Then advance the selected [filesystem plan](Windvale-Filesystem-Implementation-Plan.md):
+  shared semantics, Windows/Linux host adapters, bounded Windvale OS service
+  IPC, and one FAT32-backed guest provider before optional NTFS/ext4 adapters or
+  a new native disk format.
+- Advance the selected [networking plan](Windvale-Networking-Foundation-Implementation-Plan.md)
+  through shared operation/address contracts, deterministic link/packet tests,
+  Windows/Linux providers, and then the isolated guest link/transport service.
+- Advance one resource-domain, launch, filesystem, network, driver, or teardown
+  invariant at a time through a real consumer.
 - Preserve pinned QEMU/Q35 as the reproducible oracle; physical or accelerated
   providers remain separately reported evidence.
 
-### Browser, networking, shell, and virtualization
+### Browser, shell, and virtualization
 
 Hosted resolver/secure-stream/HTTP work is now on the Milestone 5 critical path
 for the official repository and external-model gateway. Browser Workbench may

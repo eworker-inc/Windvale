@@ -1,0 +1,133 @@
+module Osˉfilesystemˉserviceˉselfˉtest profile portable;
+
+import Filesystemˉservice as Service;
+import Filesystemˉproviderˉstate as Provider;
+import Filesystemˉhostˉadapter as Host;
+import Filesystemˉsemantics as Filesystem;
+
+data Openˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 73, 0, 0, 0, 1, 0, 0, 0, 7, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 115, 116, 97, 116, 101, 46, 98, 105, 110];
+data Readˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 64, 0, 0, 0, 2, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Traversalˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 66, 0, 0, 0, 1, 0, 0, 0, 9, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 46, 46];
+data Wrongˉownerˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 65, 0, 0, 0, 3, 0, 0, 0, 10, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+data Overflowˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 65, 0, 0, 0, 3, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+data Noˉcorrelationˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 64, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Writeˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 68, 0, 0, 0, 3, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4];
+data Closeˉrequest: bytes = [87, 86, 70, 81, 1, 0, 0, 0, 64, 0, 0, 0, 5, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Openˉresponse: bytes = [87, 86, 70, 80, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Readˉresponse: bytes = [87, 86, 70, 80, 1, 0, 0, 0, 66, 0, 0, 0, 2, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 7, 8];
+data Partialˉwriteˉresponse: bytes = [87, 86, 70, 80, 1, 0, 0, 0, 64, 0, 0, 0, 3, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Closeˉresponse: bytes = [87, 86, 70, 80, 1, 0, 0, 0, 64, 0, 0, 0, 5, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Wrongˉcorrelationˉresponse: bytes = [87, 86, 70, 80, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 99, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+export fn Main() -> i32 {
+    let Openˉbytes: bytes = Openˉrequest;
+    let Openˉstatus: Service.Filesystemˉserviceˉrequestˉstatus =
+        Service.Filesystemˉserviceˉrequestˉstatus(Openˉbytes);
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉsize { return 11; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉmagic { return 12; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉversion { return 13; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉheader { return 14; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉoperation { return 15; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉreference { return 16; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉsegment { return 17; }
+    if Openˉstatus == Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉlimit { return 18; }
+    if !Service.Filesystemˉserviceˉshouldˉinvokeˉprovider(Openˉbytes) { return 19; }
+    let Readˉbytes: bytes = Readˉrequest;
+    if !Service.Filesystemˉserviceˉshouldˉinvokeˉprovider(Readˉbytes) { return 2; }
+    let Traversal: Service.Filesystemˉserviceˉrequestˉstatus =
+        Service.Filesystemˉserviceˉrequestˉstatus(Traversalˉrequest);
+    if Traversal != Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉsegment {
+        return 3;
+    }
+    let Wrongˉowner: Service.Filesystemˉserviceˉrequestˉstatus =
+        Service.Filesystemˉserviceˉrequestˉstatus(Wrongˉownerˉrequest);
+    if Wrongˉowner !=
+        Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉreference { return 4; }
+    let Overflow: Service.Filesystemˉserviceˉrequestˉstatus =
+        Service.Filesystemˉserviceˉrequestˉstatus(Overflowˉrequest);
+    if Overflow != Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉlimit {
+        return 5;
+    }
+    let Noˉcorrelation: Service.Filesystemˉserviceˉrequestˉstatus =
+        Service.Filesystemˉserviceˉrequestˉstatus(Noˉcorrelationˉrequest);
+    if Noˉcorrelation != Service.Filesystemˉserviceˉrequestˉstatus.Invalidˉheader {
+        return 6;
+    }
+    if !Service.Filesystemˉserviceˉresponseˉisˉvalid(
+        Openˉrequest, Openˉresponse
+    ) { return 7; }
+    if !Service.Filesystemˉserviceˉresponseˉisˉvalid(
+        Readˉrequest, Readˉresponse
+    ) { return 8; }
+    if !Service.Filesystemˉserviceˉresponseˉisˉvalid(
+        Writeˉrequest, Partialˉwriteˉresponse
+    ) { return 9; }
+    if !Service.Filesystemˉserviceˉresponseˉisˉvalid(
+        Closeˉrequest, Closeˉresponse
+    ) { return 10; }
+    if Service.Filesystemˉserviceˉresponseˉisˉvalid(
+        Openˉrequest, Wrongˉcorrelationˉresponse
+    ) { return 11; }
+    let Windowsˉread: Host.Filesystemˉhostˉopenˉplan =
+        Host.Filesystemˉhostˉplanˉopen(1u32, 1u32);
+    if Windowsˉread.Status != Host.Filesystemˉhostˉplanˉstatus.Valid ||
+        Windowsˉread.Access != 2147483648u32 || Windowsˉread.Creation != 3u32 ||
+        Windowsˉread.Flags != 2097152u32 || Windowsˉread.Share != 1u32 ||
+        !Windowsˉread.Requireˉregular { return 12; }
+    let Linuxˉnew: Host.Filesystemˉhostˉopenˉplan =
+        Host.Filesystemˉhostˉplanˉopen(2u32, 3u32);
+    if Linuxˉnew.Status != Host.Filesystemˉhostˉplanˉstatus.Valid ||
+        Linuxˉnew.Flags != 655554u32 || Linuxˉnew.Mode != 384u32 ||
+        !Linuxˉnew.Requireˉregular || Host.Filesystemˉhostˉstatus(4u32) != 5u32 ||
+        Host.Filesystemˉhostˉstatus(6u32) != 10u32 { return 13; }
+    let Invalidˉhost: Host.Filesystemˉhostˉopenˉplan =
+        Host.Filesystemˉhostˉplanˉopen(3u32, 1u32);
+    if Invalidˉhost.Status != Host.Filesystemˉhostˉplanˉstatus.Invalidˉtarget {
+        return 14;
+    }
+    let Initial: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉcreate();
+    let Opened: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉopen(
+            Initial, 65538u32, 2u32, 77u64, 8u64, true
+        );
+    if Opened.Status != Provider.Filesystemˉproviderˉstatus.Success ||
+        Opened.Phase != Provider.Filesystemˉproviderˉphase.Open ||
+        Opened.Fileˉreference != 65537u64 || Opened.Activeˉhandles != 1u32 ||
+        Opened.Peakˉhandles != 1u32 { return 15; }
+    if Provider.Filesystemˉproviderˉauthorize(
+        Opened, 65539u32, Opened.Fileˉreference, 2u32
+    ) != Provider.Filesystemˉproviderˉstatus.Invalidˉowner { return 16; }
+    let Closed: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉclose(
+            Opened, 65538u32, Opened.Fileˉreference, true, false
+        );
+    if Closed.Status != Provider.Filesystemˉproviderˉstatus.Success ||
+        Closed.Phase != Provider.Filesystemˉproviderˉphase.Ready ||
+        Closed.Generation != 2u32 || Closed.Activeˉhandles != 0u32 {
+        return 17;
+    }
+    let Reopened: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉopen(
+            Closed, 65538u32, 1u32, 88u64, 8u64, true
+        );
+    if Reopened.Fileˉreference != 131073u64 ||
+        Provider.Filesystemˉproviderˉauthorize(
+            Reopened, 65538u32, Opened.Fileˉreference, 2u32
+        ) != Provider.Filesystemˉproviderˉstatus.Stale ||
+        Provider.Filesystemˉproviderˉauthorize(
+            Reopened, 65538u32, Reopened.Fileˉreference, 3u32
+        ) != Provider.Filesystemˉproviderˉstatus.Permissionˉdenied {
+        return 18;
+    }
+    let Exited: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉpeerˉexit(Reopened, 65538u32);
+    let Reclaimed: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉfinishˉteardown(Exited, true);
+    if Exited.Phase != Provider.Filesystemˉproviderˉphase.Stopping ||
+        Reclaimed.Phase != Provider.Filesystemˉproviderˉphase.Ready ||
+        Reclaimed.Generation != 3u32 || Reclaimed.Activeˉhandles != 0u32 {
+        return 19;
+    }
+    return 43;
+}

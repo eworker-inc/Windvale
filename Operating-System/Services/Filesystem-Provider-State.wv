@@ -1,0 +1,209 @@
+module Filesystemˉproviderˉstate profile portable;
+
+const MAXIMUM_GENERATION: u32 = 4294967295u32;
+
+export enum Filesystemˉproviderˉphase {
+    Ready = 0; Open = 1; Stopping = 2; Dead = 3;
+}
+
+export enum Filesystemˉproviderˉstatus {
+    Success = 0; Wrongˉphase = 1; Invalidˉowner = 2;
+    Invalidˉprofile = 3; Providerˉrejected = 4; Stale = 5;
+    Permissionˉdenied = 6; Teardownˉpending = 7;
+    Generationˉexhausted = 8;
+}
+
+export record Filesystemˉproviderˉtransition {
+    Status: Filesystemˉproviderˉstatus;
+    Phase: Filesystemˉproviderˉphase;
+    Generation: u32;
+    Owner: u32;
+    Openˉprofile: u32;
+    Fileˉreference: u64;
+    Nativeˉtoken: u64;
+    Fileˉlength: u64;
+    Activeˉhandles: u32;
+    Peakˉhandles: u32;
+}
+
+fn Transition(
+    Status: Filesystemˉproviderˉstatus,
+    State: Filesystemˉproviderˉtransition
+) -> Filesystemˉproviderˉtransition {
+    return Filesystemˉproviderˉtransition(
+        Status, State.Phase, State.Generation, State.Owner,
+        State.Openˉprofile, State.Fileˉreference, State.Nativeˉtoken,
+        State.Fileˉlength, State.Activeˉhandles, State.Peakˉhandles
+    );
+}
+
+fn Nextˉreference(Generation: u32) -> u64 {
+    return U64ˉfromˉu32(Generation) * 65536u64 + 1u64;
+}
+
+export fn Filesystemˉproviderˉcreate() -> Filesystemˉproviderˉtransition {
+    return Filesystemˉproviderˉtransition(
+        Filesystemˉproviderˉstatus.Success,
+        Filesystemˉproviderˉphase.Ready,
+        1u32, 0u32, 0u32, 0u64, 0u64, 0u64, 0u32, 0u32
+    );
+}
+
+export fn Filesystemˉproviderˉopen(
+    State: Filesystemˉproviderˉtransition,
+    Owner: u32,
+    Openˉprofile: u32,
+    Nativeˉtoken: u64,
+    Fileˉlength: u64,
+    Providerˉaccepted: bool
+) -> Filesystemˉproviderˉtransition {
+    if State.Phase != Filesystemˉproviderˉphase.Ready {
+        return Transition(Filesystemˉproviderˉstatus.Wrongˉphase, State);
+    }
+    if Owner == 0u32 { return Transition(
+        Filesystemˉproviderˉstatus.Invalidˉowner, State
+    ); }
+    if Openˉprofile < 1u32 || Openˉprofile > 4u32 {
+        return Transition(Filesystemˉproviderˉstatus.Invalidˉprofile, State);
+    }
+    if !Providerˉaccepted || Nativeˉtoken == 0u64 {
+        return Transition(Filesystemˉproviderˉstatus.Providerˉrejected, State);
+    }
+    return Filesystemˉproviderˉtransition(
+        Filesystemˉproviderˉstatus.Success,
+        Filesystemˉproviderˉphase.Open,
+        State.Generation, Owner, Openˉprofile,
+        Nextˉreference(State.Generation), Nativeˉtoken, Fileˉlength,
+        1u32, 1u32
+    );
+}
+
+export fn Filesystemˉproviderˉauthorize(
+    State: Filesystemˉproviderˉtransition,
+    Owner: u32,
+    Fileˉreference: u64,
+    Operation: u32
+) -> Filesystemˉproviderˉstatus {
+    if State.Phase != Filesystemˉproviderˉphase.Open {
+        return Filesystemˉproviderˉstatus.Wrongˉphase;
+    }
+    if Owner == 0u32 || Owner != State.Owner {
+        return Filesystemˉproviderˉstatus.Invalidˉowner;
+    }
+    if Fileˉreference != State.Fileˉreference {
+        return Filesystemˉproviderˉstatus.Stale;
+    }
+    if Operation < 2u32 || Operation > 6u32 {
+        return Filesystemˉproviderˉstatus.Permissionˉdenied;
+    }
+    if State.Openˉprofile == 1u32 && Operation != 2u32 && Operation != 5u32 {
+        return Filesystemˉproviderˉstatus.Permissionˉdenied;
+    }
+    return Filesystemˉproviderˉstatus.Success;
+}
+
+export fn Filesystemˉproviderˉsetˉlength(
+    State: Filesystemˉproviderˉtransition,
+    Owner: u32,
+    Fileˉreference: u64,
+    Fileˉlength: u64
+) -> Filesystemˉproviderˉtransition {
+    let Status: Filesystemˉproviderˉstatus = Filesystemˉproviderˉauthorize(
+        State, Owner, Fileˉreference, 4u32
+    );
+    if Status != Filesystemˉproviderˉstatus.Success {
+        return Transition(Status, State);
+    }
+    return Filesystemˉproviderˉtransition(
+        Filesystemˉproviderˉstatus.Success, State.Phase, State.Generation,
+        State.Owner, State.Openˉprofile, State.Fileˉreference,
+        State.Nativeˉtoken, Fileˉlength, State.Activeˉhandles,
+        State.Peakˉhandles
+    );
+}
+
+export fn Filesystemˉproviderˉclose(
+    State: Filesystemˉproviderˉtransition,
+    Owner: u32,
+    Fileˉreference: u64,
+    Providerˉcompleted: bool,
+    Completionˉindeterminate: bool
+) -> Filesystemˉproviderˉtransition {
+    let Status: Filesystemˉproviderˉstatus = Filesystemˉproviderˉauthorize(
+        State, Owner, Fileˉreference, 5u32
+    );
+    if Status != Filesystemˉproviderˉstatus.Success {
+        return Transition(Status, State);
+    }
+    if Completionˉindeterminate {
+        return Filesystemˉproviderˉtransition(
+            Filesystemˉproviderˉstatus.Teardownˉpending,
+            Filesystemˉproviderˉphase.Stopping,
+            State.Generation, State.Owner, State.Openˉprofile,
+            State.Fileˉreference, State.Nativeˉtoken, State.Fileˉlength,
+            State.Activeˉhandles, State.Peakˉhandles
+        );
+    }
+    if !Providerˉcompleted {
+        return Transition(Filesystemˉproviderˉstatus.Providerˉrejected, State);
+    }
+    if State.Generation == MAXIMUM_GENERATION {
+        return Filesystemˉproviderˉtransition(
+            Filesystemˉproviderˉstatus.Generationˉexhausted,
+            Filesystemˉproviderˉphase.Dead,
+            State.Generation, 0u32, 0u32, 0u64, 0u64, 0u64, 0u32,
+            State.Peakˉhandles
+        );
+    }
+    return Filesystemˉproviderˉtransition(
+        Filesystemˉproviderˉstatus.Success,
+        Filesystemˉproviderˉphase.Ready,
+        State.Generation + 1u32, 0u32, 0u32, 0u64, 0u64, 0u64, 0u32,
+        State.Peakˉhandles
+    );
+}
+
+export fn Filesystemˉproviderˉpeerˉexit(
+    State: Filesystemˉproviderˉtransition,
+    Owner: u32
+) -> Filesystemˉproviderˉtransition {
+    if State.Phase != Filesystemˉproviderˉphase.Open {
+        return Transition(Filesystemˉproviderˉstatus.Wrongˉphase, State);
+    }
+    if Owner == 0u32 || Owner != State.Owner {
+        return Transition(Filesystemˉproviderˉstatus.Invalidˉowner, State);
+    }
+    return Filesystemˉproviderˉtransition(
+        Filesystemˉproviderˉstatus.Teardownˉpending,
+        Filesystemˉproviderˉphase.Stopping,
+        State.Generation, State.Owner, State.Openˉprofile,
+        State.Fileˉreference, State.Nativeˉtoken, State.Fileˉlength,
+        State.Activeˉhandles, State.Peakˉhandles
+    );
+}
+
+export fn Filesystemˉproviderˉfinishˉteardown(
+    State: Filesystemˉproviderˉtransition,
+    Providerˉreleased: bool
+) -> Filesystemˉproviderˉtransition {
+    if State.Phase != Filesystemˉproviderˉphase.Stopping {
+        return Transition(Filesystemˉproviderˉstatus.Wrongˉphase, State);
+    }
+    if !Providerˉreleased {
+        return Transition(Filesystemˉproviderˉstatus.Teardownˉpending, State);
+    }
+    if State.Generation == MAXIMUM_GENERATION {
+        return Filesystemˉproviderˉtransition(
+            Filesystemˉproviderˉstatus.Generationˉexhausted,
+            Filesystemˉproviderˉphase.Dead,
+            State.Generation, 0u32, 0u32, 0u64, 0u64, 0u64, 0u32,
+            State.Peakˉhandles
+        );
+    }
+    return Filesystemˉproviderˉtransition(
+        Filesystemˉproviderˉstatus.Success,
+        Filesystemˉproviderˉphase.Ready,
+        State.Generation + 1u32, 0u32, 0u32, 0u64, 0u64, 0u64, 0u32,
+        State.Peakˉhandles
+    );
+}

@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Application-Machine-Construction-Self-Test.wv"
+source "Operating-System/Kernel/Application-Machine-Construction-Policy.wv"
+emit wvb

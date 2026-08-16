@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Application-Launch-Self-Test.wv"
+source "Operating-System/Kernel/Application-Launch-Policy.wv"
+source "Operating-System/Kernel/Resource-Domain-Policy.wv"
+emit wvb

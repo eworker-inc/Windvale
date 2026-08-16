@@ -1,0 +1,112 @@
+module Networkˉauthority profile portable;
+
+const MAXIMUM_PORT: u32 = 65535u32;
+const MAXIMUM_CONNECTIONS: u32 = 1024u32;
+const MAXIMUM_QUEUED_BYTES: u32 = 16777216u32;
+const ALL_DIRECTIONS: u32 = 15u32;
+const IPV6_LINK_LOCAL_MASK: u32 = 4290772992u32;
+const IPV6_LINK_LOCAL_PREFIX: u32 = 4269801472u32;
+
+export enum Networkˉaddressˉfamily {
+    IPv4 = 4; IPv6 = 6;
+}
+
+export record Networkˉaddress {
+    Family: Networkˉaddressˉfamily;
+    Wordˉzero: u32;
+    Wordˉone: u32;
+    Wordˉtwo: u32;
+    Wordˉthree: u32;
+    Scope: u32;
+}
+
+export record Networkˉprefix {
+    Family: Networkˉaddressˉfamily;
+    Wordˉzero: u32;
+    Wordˉone: u32;
+    Wordˉtwo: u32;
+    Wordˉthree: u32;
+    Length: u32;
+}
+
+export record Networkˉresourceˉauthority {
+    Maximumˉconnections: u32;
+    Maximumˉqueuedˉbytes: u32;
+    Transferˉbudget: u64;
+    Deadline: u64;
+}
+
+export fn Networkˉaddressˉisˉvalid(Address: Networkˉaddress) -> bool {
+    if Address.Family == Networkˉaddressˉfamily.IPv4 {
+        return Address.Wordˉone == 0u32 && Address.Wordˉtwo == 0u32 &&
+            Address.Wordˉthree == 0u32 && Address.Scope == 0u32;
+    }
+    if Address.Family != Networkˉaddressˉfamily.IPv6 { return false; }
+    let Linkˉlocal: bool =
+        (Address.Wordˉzero & IPV6_LINK_LOCAL_MASK) == IPV6_LINK_LOCAL_PREFIX;
+    if Linkˉlocal { return Address.Scope != 0u32; }
+    return Address.Scope == 0u32;
+}
+
+export fn Networkˉprefixˉwordˉmatches(
+    Networkˉword: u32,
+    Candidateˉword: u32,
+    Prefixˉbytes: u32
+) -> bool {
+    if Prefixˉbytes == 0u32 { return true; }
+    if Prefixˉbytes == 1u32 {
+        return Networkˉword / 16777216u32 ==
+            Candidateˉword / 16777216u32;
+    }
+    if Prefixˉbytes == 2u32 {
+        return Networkˉword / 65536u32 == Candidateˉword / 65536u32;
+    }
+    if Prefixˉbytes == 3u32 {
+        return Networkˉword / 256u32 == Candidateˉword / 256u32;
+    }
+    if Prefixˉbytes == 4u32 { return Networkˉword == Candidateˉword; }
+    return false;
+}
+
+export fn Networkˉportˉrangeˉisˉvalid(
+    First: u32,
+    Last: u32
+) -> bool {
+    return First > 0u32 && First <= Last && Last <= MAXIMUM_PORT;
+}
+
+export fn Networkˉdirectionsˉareˉvalid(Directions: u32) -> bool {
+    return Directions != 0u32 && (Directions & ~ALL_DIRECTIONS) == 0u32;
+}
+
+export fn Networkˉresourceˉauthorityˉisˉvalid(
+    Authority: Networkˉresourceˉauthority
+) -> bool {
+    return Authority.Maximumˉconnections > 0u32 &&
+        Authority.Maximumˉconnections <= MAXIMUM_CONNECTIONS &&
+        Authority.Maximumˉqueuedˉbytes > 0u32 &&
+        Authority.Maximumˉqueuedˉbytes <= MAXIMUM_QUEUED_BYTES &&
+        Authority.Transferˉbudget > 0u64;
+}
+
+export fn Networkˉu32ˉlimitˉisˉnarrower(
+    Parent: u32,
+    Child: u32
+) -> bool {
+    return Child > 0u32 && Child <= Parent;
+}
+
+export fn Networkˉu64ˉlimitˉisˉnarrower(
+    Parent: u64,
+    Child: u64
+) -> bool {
+    return Child > 0u64 && Child <= Parent;
+}
+
+export fn Networkˉdeadlineˉisˉnarrower(
+    Parent: u64,
+    Child: u64
+) -> bool {
+    if Parent == 0u64 { return true; }
+    return Child != 0u64 && Child <= Parent;
+}

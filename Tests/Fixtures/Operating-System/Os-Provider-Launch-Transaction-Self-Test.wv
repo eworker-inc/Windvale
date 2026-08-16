@@ -1,0 +1,84 @@
+module Osˉproviderˉlaunchˉtransactionˉselfˉtest profile portable;
+
+import Providerˉlaunchˉtransactionˉpolicy as Provider;
+
+data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Networkˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 3, 0, 0, 0, 5, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 0, 42, 0, 1, 0, 3, 0, 0, 0, 1, 0, 0, 0, 96, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 15, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+fn Admitˉfilesystem(
+    Identity: bool,
+    Rx: bool,
+    Privateˉmapped: bool,
+    Endpoint: bool,
+    Initialized: bool
+) -> Provider.Providerˉlaunchˉtransition {
+    return Provider.Providerˉlaunchˉadmit(
+        Filesystemˉrequest, 65540u32, 65538u32, 195657u32,
+        Identity, Rx, Privateˉmapped, Endpoint, Initialized
+    );
+}
+
+fn Admitˉnetwork() -> Provider.Providerˉlaunchˉtransition {
+    return Provider.Providerˉlaunchˉadmit(
+        Networkˉrequest, 65541u32, 65539u32, 242571u32,
+        true, true, true, true, true
+    );
+}
+
+fn Profilesˉpass() -> bool {
+    let Filesystem: Provider.Providerˉlaunchˉtransition =
+        Admitˉfilesystem(true, true, true, true, true);
+    if Filesystem.Status != Provider.Providerˉlaunchˉstatus.Success ||
+        Filesystem.Phase != Provider.Providerˉlaunchˉphase.Available ||
+        Filesystem.Role != 2u32 || Filesystem.Domainˉreference != 65538u32 ||
+        Filesystem.Processˉreference != 65540u32 ||
+        Filesystem.Committedˉpages != 64u32 {
+        return false;
+    }
+    let Network: Provider.Providerˉlaunchˉtransition = Admitˉnetwork();
+    return Network.Status == Provider.Providerˉlaunchˉstatus.Success &&
+        Network.Phase == Provider.Providerˉlaunchˉphase.Available &&
+        Network.Role == 3u32 && Network.Domainˉreference == 65539u32 &&
+        Network.Processˉreference == 65541u32 &&
+        Network.Committedˉpages == 96u32;
+}
+
+fn Rejectionsˉpass() -> bool {
+    let Invalidˉimage: Provider.Providerˉlaunchˉtransition =
+        Provider.Providerˉlaunchˉadmit(
+            Filesystemˉrequest, 65540u32, 65538u32, 195656u32,
+            true, true, true, true, true
+        );
+    if Invalidˉimage.Status != Provider.Providerˉlaunchˉstatus.Invalidˉimage ||
+        Invalidˉimage.Committedˉpages != 0u32 {
+        return false;
+    }
+    let Wrongˉreference: Provider.Providerˉlaunchˉtransition =
+        Provider.Providerˉlaunchˉadmit(
+            Networkˉrequest, 65542u32, 65539u32, 242571u32,
+            true, true, true, true, true
+        );
+    if Wrongˉreference.Status !=
+        Provider.Providerˉlaunchˉstatus.Invalidˉreference ||
+        Wrongˉreference.Committedˉpages != 0u32 {
+        return false;
+    }
+    let Failedˉmapping: Provider.Providerˉlaunchˉtransition =
+        Admitˉfilesystem(true, false, true, true, true);
+    if Failedˉmapping.Status !=
+        Provider.Providerˉlaunchˉstatus.Constructionˉfailed ||
+        Failedˉmapping.Committedˉpages != 0u32 {
+        return false;
+    }
+    let Failedˉinitialization: Provider.Providerˉlaunchˉtransition =
+        Admitˉfilesystem(true, true, true, true, false);
+    return Failedˉinitialization.Status ==
+        Provider.Providerˉlaunchˉstatus.Initializationˉfailed &&
+        Failedˉinitialization.Committedˉpages == 0u32;
+}
+
+export fn Main() -> i32 {
+    if !Profilesˉpass() { return 1; }
+    if !Rejectionsˉpass() { return 2; }
+    return 48;
+}

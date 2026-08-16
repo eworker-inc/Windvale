@@ -1,0 +1,163 @@
+module Filesystemˉsemantics profile portable;
+
+const MAXIMUM_TRANSFER: u32 = 65536u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Filesystemˉstatus {
+    Valid = 0; Notˉfound = 1; Alreadyˉexists = 2; Notˉfile = 3;
+    Notˉdirectory = 4; Permissionˉdenied = 5; Unavailable = 6;
+    Revoked = 7; Stale = 8; Peerˉexited = 9; Unsupported = 10;
+    Invalidˉrequest = 11; Invalidˉresponse = 12;
+}
+
+export enum Filesystemˉcompletion {
+    None = 0; Completed = 1; Partial = 2; Indeterminate = 3;
+}
+
+export enum Filesystemˉopenˉprofile {
+    Readˉexistingˉnoˉlinks = 1;
+    Readˉwriteˉexistingˉnoˉlinks = 2;
+    Readˉwriteˉcreateˉnewˉnoˉlinks = 3;
+    Readˉwriteˉopenˉorˉcreateˉnoˉlinks = 4;
+}
+
+export enum Filesystemˉoperation {
+    Open = 1; Readˉat = 2; Writeˉat = 3;
+    Setˉlength = 4; Close = 5; Flush = 6;
+}
+
+export enum Filesystemˉflush {
+    Content = 1; Contentˉandˉlength = 2;
+}
+
+export fn Filesystemˉsegmentˉisˉvalid(Segment: text) -> bool {
+    let Value: bytes = Textˉtoˉutf8(Segment);
+    let Length: u32 = Bytesˉlength(Value);
+    if Length == 0u32 || Length > 255u32 { return false; }
+    if Length == 1u32 && Bytesˉreadˉu8(Value, 0u32) == 46u8 { return false; }
+    if Length == 2u32 && Bytesˉreadˉu8(Value, 0u32) == 46u8 &&
+        Bytesˉreadˉu8(Value, 1u32) == 46u8 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Byte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index));
+        var Accepted: bool = false;
+        if Byte >= 48u32 && Byte <= 57u32 { Accepted = true; }
+        if Byte >= 65u32 && Byte <= 90u32 { Accepted = true; }
+        if Byte >= 97u32 && Byte <= 122u32 { Accepted = true; }
+        if Byte == 45u32 || Byte == 46u32 || Byte == 95u32 { Accepted = true; }
+        if !Accepted { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Filesystemˉopenˉrequestˉisˉvalid(
+    Segment: text,
+    Profile: u32
+) -> bool {
+    if !Filesystemˉsegmentˉisˉvalid(Segment) { return false; }
+    return Profile >= 1u32 && Profile <= 4u32;
+}
+
+export fn Filesystemˉfileˉrequestˉisˉvalid(
+    Operation: u32,
+    Fileˉreference: u64,
+    Position: u64,
+    Control: u32,
+    Valueˉlength: u32
+) -> bool {
+    if Fileˉreference == 0u64 { return false; }
+    if Valueˉlength > MAXIMUM_TRANSFER { return false; }
+    if Operation == 2u32 {
+        return Control <= MAXIMUM_TRANSFER && Valueˉlength == 0u32;
+    }
+    if Operation == 3u32 {
+        if Control != 0u32 { return false; }
+        return Position <= U64_MAXIMUM - U64ˉfromˉu32(Valueˉlength);
+    }
+    if Operation == 4u32 {
+        return Control == 0u32 && Valueˉlength == 0u32;
+    }
+    if Operation == 5u32 {
+        return Position == 0u64 && Control == 0u32 && Valueˉlength == 0u32;
+    }
+    if Operation == 6u32 {
+        if Position != 0u64 || Valueˉlength != 0u32 { return false; }
+        return Control == 1u32 || Control == 2u32;
+    }
+    return false;
+}
+
+export fn Filesystemˉreadˉresultˉisˉvalid(
+    Fileˉreference: u64,
+    Position: u64,
+    Maximum: u32,
+    Returnedˉreference: u64,
+    Fileˉlength: u64,
+    Returnedˉposition: u64,
+    Progress: u32,
+    Payloadˉlength: u32
+) -> bool {
+    if !Filesystemˉfileˉrequestˉisˉvalid(
+        2u32, Fileˉreference, Position, Maximum, 0u32
+    ) { return false; }
+    if Returnedˉreference != Fileˉreference || Returnedˉposition != Position {
+        return false;
+    }
+    if Position > Fileˉlength || Progress != Payloadˉlength { return false; }
+    let Remaining: u64 = Fileˉlength - Position;
+    var Expected: u64 = U64ˉfromˉu32(Maximum);
+    if Remaining < Expected { Expected = Remaining; }
+    return U64ˉfromˉu32(Progress) == Expected;
+}
+
+export fn Filesystemˉwriteˉresultˉisˉvalid(
+    Fileˉreference: u64,
+    Position: u64,
+    Requested: u32,
+    Returnedˉreference: u64,
+    Fileˉlength: u64,
+    Progress: u32,
+    Completion: u32
+) -> bool {
+    if !Filesystemˉfileˉrequestˉisˉvalid(
+        3u32, Fileˉreference, Position, 0u32, Requested
+    ) { return false; }
+    if Returnedˉreference != Fileˉreference { return false; }
+    if Completion == 1u32 {
+        if Progress != Requested { return false; }
+        return Fileˉlength >= Position + U64ˉfromˉu32(Requested);
+    }
+    if Completion == 2u32 {
+        if Progress == 0u32 || Progress >= Requested { return false; }
+        return Fileˉlength >= Position + U64ˉfromˉu32(Progress);
+    }
+    if Completion == 3u32 {
+        return Progress == 0u32 && Fileˉlength == 0u64;
+    }
+    return false;
+}
+
+export fn Filesystemˉsetˉlengthˉresultˉisˉvalid(
+    Fileˉreference: u64,
+    Requestedˉlength: u64,
+    Returnedˉreference: u64,
+    Fileˉlength: u64,
+    Completion: u32
+) -> bool {
+    if Returnedˉreference != Fileˉreference || Fileˉreference == 0u64 {
+        return false;
+    }
+    if Completion == 1u32 { return Fileˉlength == Requestedˉlength; }
+    return Completion == 3u32 && Fileˉlength == 0u64;
+}
+
+export fn Filesystemˉrejectionˉisˉvalid(
+    Status: u32,
+    Progress: u32,
+    Completion: u32,
+    Payloadˉlength: u32
+) -> bool {
+    if Status == 0u32 || Status > 11u32 { return false; }
+    return Progress == 0u32 && Completion == 0u32 && Payloadˉlength == 0u32;
+}

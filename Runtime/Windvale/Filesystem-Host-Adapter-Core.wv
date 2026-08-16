@@ -1,0 +1,78 @@
+module Filesystemˉhostˉadapter profile portable;
+
+export enum Filesystemˉhostˉtarget { Windows = 1; Linux = 2; }
+
+export enum Filesystemˉhostˉplanˉstatus {
+    Valid = 0; Invalidˉtarget = 1; Invalidˉprofile = 2;
+}
+
+export record Filesystemˉhostˉopenˉplan {
+    Status: Filesystemˉhostˉplanˉstatus;
+    Target: Filesystemˉhostˉtarget;
+    Access: u32;
+    Creation: u32;
+    Flags: u32;
+    Mode: u32;
+    Share: u32;
+    Requireˉregular: bool;
+}
+
+export fn Filesystemˉhostˉplanˉopen(
+    Target: u32,
+    Profile: u32
+) -> Filesystemˉhostˉopenˉplan {
+    if Profile < 1u32 || Profile > 4u32 {
+        return Filesystemˉhostˉopenˉplan(
+            Filesystemˉhostˉplanˉstatus.Invalidˉprofile,
+            Filesystemˉhostˉtarget.Windows,
+            0u32, 0u32, 0u32, 0u32, 0u32, true
+        );
+    }
+    if Target == 1u32 {
+        var Access: u32 = 3221225472u32;
+        var Creation: u32 = 3u32;
+        var Share: u32 = 0u32;
+        if Profile == 1u32 {
+            Access = 2147483648u32;
+            Share = 1u32;
+        }
+        if Profile == 3u32 { Creation = 1u32; }
+        if Profile == 4u32 { Creation = 4u32; }
+        return Filesystemˉhostˉopenˉplan(
+            Filesystemˉhostˉplanˉstatus.Valid,
+            Filesystemˉhostˉtarget.Windows,
+            Access, Creation, 2097152u32, 0u32, Share, true
+        );
+    }
+    if Target == 2u32 {
+        var Flags: u32 = 655360u32;
+        var Mode: u32 = 0u32;
+        if Profile != 1u32 { Flags = Flags + 2u32; }
+        if Profile == 3u32 {
+            Flags = Flags + 192u32;
+            Mode = 384u32;
+        }
+        if Profile == 4u32 {
+            Flags = Flags + 64u32;
+            Mode = 384u32;
+        }
+        return Filesystemˉhostˉopenˉplan(
+            Filesystemˉhostˉplanˉstatus.Valid,
+            Filesystemˉhostˉtarget.Linux,
+            0u32, 0u32, Flags, Mode, 0u32, true
+        );
+    }
+    return Filesystemˉhostˉopenˉplan(
+        Filesystemˉhostˉplanˉstatus.Invalidˉtarget,
+        Filesystemˉhostˉtarget.Windows,
+        0u32, 0u32, 0u32, 0u32, 0u32, true
+    );
+}
+
+export fn Filesystemˉhostˉstatus(Hostˉstatus: u32) -> u32 {
+    if Hostˉstatus <= 3u32 { return Hostˉstatus; }
+    if Hostˉstatus == 4u32 { return 5u32; }
+    if Hostˉstatus == 5u32 { return 6u32; }
+    if Hostˉstatus == 6u32 { return 10u32; }
+    return 6u32;
+}

@@ -4,7 +4,7 @@
 
 Resource-domain policy 1 is the portable accounting gate used by the current native Probe 40 construction. It models the resources already measured there: processes, committed 4 KiB pages, and service endpoints. It is an immutable policy model, not a serialized format, kernel ABI, public object table, allocator, capability bundle, or dynamic launch implementation.
 
-The live process-policy path composes this module and must return token 97 before any of the three process objects are published. It reserves and commits the exact ordinary-domain charge of three processes, 144 process-owned pages, and two endpoints; the thirteen kernel and recovery pages remain outside the domain. The two client generations temporarily reduce current use to two processes and 22 pages, reserve the complete replacement charge before reuse, and retain peaks of 3/144/2.
+The live process-policy path composes this module and must return token 97 before any of the three process objects are published. It first commits the retained two-process/22-page/two-endpoint base, then composes application-launch and machine-construction policy 1 around each sequential client's one-process/122-page charge. The total remains three processes, 144 process-owned pages, and two endpoints; the thirteen kernel and recovery pages remain outside the domain. Client reuse temporarily reduces current use to two processes and 22 pages, reserves and admits the complete replacement before publication, and retains peaks of 3/144/2.
 
 ## Transition contract
 

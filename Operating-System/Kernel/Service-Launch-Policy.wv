@@ -1,0 +1,226 @@
+module Serviceˉlaunchˉpolicy profile portable;
+
+const SERVICE_START_MAGIC: u32 = 1380996695u32;
+const SERVICE_START_BYTES: u32 = 80u32;
+
+export enum Serviceˉlaunchˉstatus {
+    Success = 0; Invalidˉsize = 1; Invalidˉmagic = 2;
+    Invalidˉversion = 3; Invalidˉheader = 4; Invalidˉrole = 5;
+    Invalidˉreference = 6; Invalidˉprofile = 7; Invalidˉresource = 8;
+    Invalidˉbinding = 9; Invalidˉqueue = 10; Wrongˉphase = 11;
+    Constructionˉfailed = 12; Initializationˉfailed = 13;
+    Workˉactive = 14; Stale = 15;
+}
+
+export enum Serviceˉlaunchˉphase {
+    Planned = 0; Starting = 1; Available = 2; Draining = 3;
+    Stopped = 4; Faulted = 5;
+}
+
+export record Serviceˉlaunchˉtransition {
+    Status: Serviceˉlaunchˉstatus;
+    Phase: Serviceˉlaunchˉphase;
+    Role: u32;
+    Requestˉreference: u32;
+    Domainˉreference: u32;
+    Processˉreference: u32;
+    Endpointˉreference: u32;
+    Activeˉwork: u32;
+}
+
+export fn Serviceˉstartˉrequestˉstatus(Input: bytes) -> Serviceˉlaunchˉstatus {
+    if Bytesˉlength(Input) != SERVICE_START_BYTES {
+        return Serviceˉlaunchˉstatus.Invalidˉsize;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != SERVICE_START_MAGIC {
+        return Serviceˉlaunchˉstatus.Invalidˉmagic;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Serviceˉlaunchˉstatus.Invalidˉversion;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != SERVICE_START_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 68u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 72u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 76u32) != 0u32 {
+        return Serviceˉlaunchˉstatus.Invalidˉheader;
+    }
+    let Role: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Role != 2u32 && Role != 3u32 {
+        return Serviceˉlaunchˉstatus.Invalidˉrole;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) != 65537u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) == 0u32 {
+        return Serviceˉlaunchˉstatus.Invalidˉreference;
+    }
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Profile != Role { return Serviceˉlaunchˉstatus.Invalidˉprofile; }
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 1u32 {
+        return Serviceˉlaunchˉstatus.Invalidˉresource;
+    }
+    let Pages: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Bindings: u32 = Bytesˉreadˉu32ˉlittle(Input, 48u32);
+    let Rights: u32 = Bytesˉreadˉu32ˉlittle(Input, 52u32);
+    let Queue: u32 = Bytesˉreadˉu32ˉlittle(Input, 56u32);
+    let Reservedˉcontrol: u32 = Bytesˉreadˉu32ˉlittle(Input, 60u32);
+    let Transferˉlimit: u32 = Bytesˉreadˉu32ˉlittle(Input, 64u32);
+    if Role == 2u32 {
+        if Pages != 64u32 { return Serviceˉlaunchˉstatus.Invalidˉresource; }
+        if Bindings != 3u32 || Rights != 3u32 {
+            return Serviceˉlaunchˉstatus.Invalidˉbinding;
+        }
+        if Queue != 4u32 || Reservedˉcontrol != 1u32 ||
+            Transferˉlimit != 65536u32 {
+            return Serviceˉlaunchˉstatus.Invalidˉqueue;
+        }
+    } else {
+        if Pages != 96u32 { return Serviceˉlaunchˉstatus.Invalidˉresource; }
+        if Bindings != 5u32 || Rights != 15u32 {
+            return Serviceˉlaunchˉstatus.Invalidˉbinding;
+        }
+        if Queue != 4u32 || Reservedˉcontrol != 1u32 ||
+            Transferˉlimit != 1048576u32 {
+            return Serviceˉlaunchˉstatus.Invalidˉqueue;
+        }
+    }
+    return Serviceˉlaunchˉstatus.Success;
+}
+
+export fn Serviceˉlaunchˉplan(Input: bytes) -> Serviceˉlaunchˉtransition {
+    let Status: Serviceˉlaunchˉstatus = Serviceˉstartˉrequestˉstatus(Input);
+    if Status != Serviceˉlaunchˉstatus.Success {
+        return Serviceˉlaunchˉtransition(
+            Status, Serviceˉlaunchˉphase.Faulted,
+            0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    return Serviceˉlaunchˉtransition(
+        Serviceˉlaunchˉstatus.Success, Serviceˉlaunchˉphase.Planned,
+        Bytesˉreadˉu32ˉlittle(Input, 12u32),
+        Bytesˉreadˉu32ˉlittle(Input, 16u32),
+        Bytesˉreadˉu32ˉlittle(Input, 24u32), 0u32, 0u32, 0u32
+    );
+}
+
+export fn Serviceˉlaunchˉstart(
+    State: Serviceˉlaunchˉtransition,
+    Processˉreference: u32,
+    Endpointˉreference: u32,
+    Constructionˉsucceeded: bool
+) -> Serviceˉlaunchˉtransition {
+    if State.Phase != Serviceˉlaunchˉphase.Planned {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Wrongˉphase, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    if !Constructionˉsucceeded || Processˉreference == 0u32 ||
+        Endpointˉreference == 0u32 {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Constructionˉfailed,
+            Serviceˉlaunchˉphase.Faulted, State.Role, State.Requestˉreference,
+            State.Domainˉreference, 0u32, 0u32, 0u32
+        );
+    }
+    return Serviceˉlaunchˉtransition(
+        Serviceˉlaunchˉstatus.Success, Serviceˉlaunchˉphase.Starting,
+        State.Role, State.Requestˉreference, State.Domainˉreference,
+        Processˉreference, Endpointˉreference, 0u32
+    );
+}
+
+export fn Serviceˉlaunchˉpublish(
+    State: Serviceˉlaunchˉtransition,
+    Initialized: bool
+) -> Serviceˉlaunchˉtransition {
+    if State.Phase != Serviceˉlaunchˉphase.Starting {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Wrongˉphase, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    if !Initialized {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Initializationˉfailed,
+            Serviceˉlaunchˉphase.Faulted, State.Role, State.Requestˉreference,
+            State.Domainˉreference, State.Processˉreference,
+            State.Endpointˉreference, 0u32
+        );
+    }
+    return Serviceˉlaunchˉtransition(
+        Serviceˉlaunchˉstatus.Success, Serviceˉlaunchˉphase.Available,
+        State.Role, State.Requestˉreference, State.Domainˉreference,
+        State.Processˉreference, State.Endpointˉreference, 0u32
+    );
+}
+
+export fn Serviceˉlaunchˉsetˉwork(
+    State: Serviceˉlaunchˉtransition,
+    Activeˉwork: u32
+) -> Serviceˉlaunchˉtransition {
+    if State.Phase != Serviceˉlaunchˉphase.Available || Activeˉwork > 3u32 {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Wrongˉphase, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    return Serviceˉlaunchˉtransition(
+        Serviceˉlaunchˉstatus.Success, State.Phase, State.Role,
+        State.Requestˉreference, State.Domainˉreference,
+        State.Processˉreference, State.Endpointˉreference, Activeˉwork
+    );
+}
+
+export fn Serviceˉlaunchˉdrain(
+    State: Serviceˉlaunchˉtransition,
+    Processˉreference: u32
+) -> Serviceˉlaunchˉtransition {
+    if Processˉreference != State.Processˉreference {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Stale, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    if State.Phase != Serviceˉlaunchˉphase.Available {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Wrongˉphase, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    return Serviceˉlaunchˉtransition(
+        Serviceˉlaunchˉstatus.Success, Serviceˉlaunchˉphase.Draining,
+        State.Role, State.Requestˉreference, State.Domainˉreference,
+        State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+    );
+}
+
+export fn Serviceˉlaunchˉfinish(
+    State: Serviceˉlaunchˉtransition
+) -> Serviceˉlaunchˉtransition {
+    if State.Phase != Serviceˉlaunchˉphase.Draining {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Wrongˉphase, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    if State.Activeˉwork != 0u32 {
+        return Serviceˉlaunchˉtransition(
+            Serviceˉlaunchˉstatus.Workˉactive, State.Phase, State.Role,
+            State.Requestˉreference, State.Domainˉreference,
+            State.Processˉreference, State.Endpointˉreference, State.Activeˉwork
+        );
+    }
+    return Serviceˉlaunchˉtransition(
+        Serviceˉlaunchˉstatus.Success, Serviceˉlaunchˉphase.Stopped,
+        State.Role, State.Requestˉreference, State.Domainˉreference,
+        0u32, 0u32, 0u32
+    );
+}

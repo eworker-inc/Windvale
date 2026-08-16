@@ -1,0 +1,126 @@
+module X64ˉprocessˉclientˉpagingˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Loadˉkernelˉrootˉrsi: bytes = [73, 139, 180, 36];
+data Firstˉtableˉcopy: bytes = [76, 137, 247, 185];
+data Clearˉdirectionˉcopyˉqwords: bytes = [252, 243, 72, 165];
+data Addˉrsi: bytes = [72, 129, 198];
+data Loadˉextentˉrdi: bytes = [73, 141, 190];
+data Moveˉecx: bytes = [185];
+data Copyˉqwords: bytes = [243, 72, 165];
+data Processˉtableˉprefix: bytes = [
+    73, 141, 134, 7, 16, 0, 0, 73, 137, 6,
+    73, 141, 134, 7, 32, 0, 0, 73, 137, 134, 0, 16, 0, 0,
+    76, 137, 243, 72, 129, 227, 0, 0, 224, 255,
+    77, 141, 190, 0, 48, 0, 0, 72, 137, 216, 72, 131, 200, 3,
+    72, 15, 186, 232, 63, 185, 0, 2, 0, 0
+];
+data Processˉtableˉloop: bytes = [
+    73, 137, 7, 73, 131, 199, 8, 72, 5, 0, 16, 0, 0, 255, 201
+];
+data Processˉtableˉnullˉtest: bytes = [
+    77, 141, 190, 0, 48, 0, 0, 72, 133, 219
+];
+data Processˉtableˉclearˉnull: bytes = [
+    73, 199, 134, 0, 48, 0, 0, 0, 0, 0, 0
+];
+data Processˉtableˉbindˉroot: bytes = [
+    76, 137, 240, 72, 193, 232, 21, 72, 193, 224, 3,
+    73, 141, 150, 7, 48, 0, 0, 73, 137, 148, 6, 0, 32, 0, 0
+];
+data Loadˉpageˉrax: bytes = [73, 141, 134];
+data Pageˉindexˉandˉflags: bytes = [
+    72, 137, 194, 72, 41, 218, 72, 193, 234, 12, 72, 185
+];
+data Storeˉpte: bytes = [
+    72, 9, 200, 73, 137, 132, 215, 0, 0, 0, 0
+];
+data Clearˉpte: bytes = [
+    72, 41, 216, 72, 193, 232, 12,
+    73, 199, 132, 199, 0, 0, 0, 0, 0, 0, 0, 0
+];
+
+fn Emitˉcopyˉkernelˉtable(
+    State: X64.X64ˉemission,
+    Offset: u32,
+    First: bool
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉkernelˉrootˉrsi);
+    Result = X64.X64ˉemitˉu32(Result, 144u32);
+    if First {
+        Result = X64.X64ˉemit(Result, Firstˉtableˉcopy);
+        Result = X64.X64ˉemitˉu32(Result, 512u32);
+        return X64.X64ˉemit(Result, Clearˉdirectionˉcopyˉqwords);
+    }
+    Result = X64.X64ˉemit(Result, Addˉrsi);
+    Result = X64.X64ˉemitˉu32(Result, Offset);
+    Result = X64.X64ˉemit(Result, Loadˉextentˉrdi);
+    Result = X64.X64ˉemitˉu32(Result, Offset);
+    Result = X64.X64ˉemit(Result, Moveˉecx);
+    Result = X64.X64ˉemitˉu32(Result, 512u32);
+    return X64.X64ˉemit(Result, Copyˉqwords);
+}
+
+fn Emitˉuserˉpte(
+    State: X64.X64ˉemission,
+    Page: u32,
+    Flags: u64
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉpageˉrax);
+    Result = X64.X64ˉemitˉu32(Result, Page * 4096u32);
+    Result = X64.X64ˉemit(Result, Pageˉindexˉandˉflags);
+    Result = X64.X64ˉemitˉu64(Result, Flags);
+    return X64.X64ˉemit(Result, Storeˉpte);
+}
+
+fn Emitˉclearˉuserˉpte(
+    State: X64.X64ˉemission,
+    Page: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉpageˉrax);
+    Result = X64.X64ˉemitˉu32(Result, Page * 4096u32);
+    return X64.X64ˉemit(Result, Clearˉpte);
+}
+
+fn Buildˉclientˉpaging() -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = Emitˉcopyˉkernelˉtable(State, 0u32, true);
+    State = Emitˉcopyˉkernelˉtable(State, 4096u32, false);
+    State = Emitˉcopyˉkernelˉtable(State, 8192u32, false);
+    State = X64.X64ˉemit(State, Processˉtableˉprefix);
+    State = X64.X64ˉmark(State, 1u32);
+    State = X64.X64ˉemit(State, Processˉtableˉloop);
+    State = X64.X64ˉjumpˉif(State, 133u32, 1u32);
+    State = X64.X64ˉemit(State, Processˉtableˉnullˉtest);
+    State = X64.X64ˉjumpˉif(State, 133u32, 2u32);
+    State = X64.X64ˉemit(State, Processˉtableˉclearˉnull);
+    State = X64.X64ˉmark(State, 2u32);
+    State = X64.X64ˉemit(State, Processˉtableˉbindˉroot);
+    var Page: u32 = 4u32;
+    while Page < 114u32 {
+        State = Emitˉuserˉpte(State, Page, 5u64);
+        Page = Page + 1u32;
+    }
+    while Page < 122u32 {
+        State = Emitˉuserˉpte(State, Page, 9223372036854775815u64);
+        Page = Page + 1u32;
+    }
+    State = Emitˉclearˉuserˉpte(State, 122u32);
+    State = Emitˉclearˉuserˉpte(State, 123u32);
+    return X64.X64ˉbuild(State);
+}
+
+export fn X64ˉprocessˉclientˉpagingˉisˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉclientˉpaging();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 4748u32;
+}
+
+export fn X64ˉprocessˉclientˉpagingˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉclientˉpaging();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉclientˉpagingˉfixtureˉoffset() -> u32 { return 4859u32; }
+export fn X64ˉprocessˉclientˉpagingˉfixtureˉend() -> u32 { return 9607u32; }

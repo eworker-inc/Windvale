@@ -1,0 +1,33 @@
+module Osˉx64ˉprocessˉendpointˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉendpointˉemission as Endpoint;
+
+export fn Main() -> i32 {
+    if !Endpoint.X64ˉprocessˉchannelsˉandˉendpointsˉareˉvalid() {
+        return 1;
+    }
+    let Code: bytes = Endpoint.X64ˉprocessˉchannelsˉandˉendpointsˉbytes();
+    if Bytesˉlength(Code) != 444u32 ||
+        Endpoint.X64ˉprocessˉchannelsˉandˉendpointsˉfixtureˉoffset() != 1428u32 ||
+        Endpoint.X64ˉprocessˉchannelsˉandˉendpointsˉfixtureˉend() != 1872u32 {
+        return 2;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 444u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 47018u32 || Hashˉone != 48850u32 ||
+        Hashˉtwo != 42592u32 || Hashˉthree != 30919u32 {
+        return 3;
+    }
+    return 53;
+}

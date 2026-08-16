@@ -1,0 +1,4 @@
+windvale-project 2
+root "Operating-System/Kernel/X64-Process-Directory-Paging-Emission.wv"
+source "Operating-System/Architecture/X64-Code-Emission.wv"
+emit wvb

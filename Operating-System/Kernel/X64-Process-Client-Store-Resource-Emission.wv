@@ -1,0 +1,68 @@
+module X64ˉprocessˉclientˉstoreˉresourceˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Storeˉresourceˉheader: bytes = [
+    77, 141, 140, 36, 208, 5, 0, 0, 72, 184, 87, 86, 82, 69, 83, 48,
+    48, 54, 73, 137, 1, 65, 199, 65, 8, 6, 0, 0, 0,
+    65, 199, 65, 12, 128, 0, 0, 0, 65, 199, 65, 16, 3, 0, 0, 0,
+    65, 199, 65, 20, 4, 0, 0, 0, 65, 199, 65, 24, 1, 0, 1, 0,
+    65, 199, 65, 28, 1, 0, 1, 0, 65, 199, 65, 40, 172, 4, 0, 0,
+    65, 199, 65, 44, 7, 3, 0, 0, 65, 199, 65, 112, 1, 0, 0, 0,
+    65, 199, 65, 116, 1, 0, 0, 0,
+    72, 139, 132, 36, 184, 0, 0, 0, 72, 139, 80, 64,
+    72, 141, 130, 0, 160, 0, 0, 73, 137, 65, 32, 73, 137, 81, 48,
+    72, 139, 132, 36, 184, 0, 0, 0, 72, 139, 64, 88,
+    73, 137, 65, 56, 72, 141, 130, 0, 160, 0, 0, 73, 137, 65, 64
+];
+data Moveˉrax: bytes = [72, 184];
+data Storeˉdigestˉrax: bytes = [73, 137, 65];
+data Digestˉoffsets: bytes = [80, 88, 96, 104];
+data Storeˉresourceˉpageˉtable: bytes = [
+    73, 139, 65, 64, 72, 37, 0, 240, 31, 0, 72, 193, 232, 9,
+    73, 3, 65, 48, 72, 5, 0, 48, 0, 0, 73, 137, 65, 120
+];
+
+fn Emptyˉbytes() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32);
+}
+
+fn Buildˉstoreˉresource(Storeˉdigest: bytes) -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Storeˉresourceˉheader);
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        State = X64.X64ˉemit(State, Moveˉrax);
+        State = X64.X64ˉemitˉu64(
+            State, Bytesˉreadˉu64ˉlittle(Storeˉdigest, Index * 8u32)
+        );
+        State = X64.X64ˉemit(State, Storeˉdigestˉrax);
+        State = X64.X64ˉemit(State, Bytesˉslice(Digestˉoffsets, Index, 1u32));
+        Index = Index + 1u32;
+    }
+    return X64.X64ˉemit(State, Storeˉresourceˉpageˉtable);
+}
+
+export fn X64ˉprocessˉclientˉstoreˉresourceˉisˉvalid(
+    Storeˉdigest: bytes
+) -> bool {
+    if Bytesˉlength(Storeˉdigest) != 32u32 { return false; }
+    let State: X64.X64ˉemission = Buildˉstoreˉresource(Storeˉdigest);
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 239u32;
+}
+
+export fn X64ˉprocessˉclientˉstoreˉresourceˉbytes(
+    Storeˉdigest: bytes
+) -> bytes {
+    if Bytesˉlength(Storeˉdigest) != 32u32 { return Emptyˉbytes(); }
+    let State: X64.X64ˉemission = Buildˉstoreˉresource(Storeˉdigest);
+    return State.Code;
+}
+
+export fn X64ˉprocessˉclientˉstoreˉresourceˉfixtureˉoffset() -> u32 {
+    return 10160u32;
+}
+export fn X64ˉprocessˉclientˉstoreˉresourceˉfixtureˉend() -> u32 {
+    return 10399u32;
+}

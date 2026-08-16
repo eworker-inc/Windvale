@@ -1,0 +1,49 @@
+module Osˉx64ˉprocessˉclientˉimageˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉimageˉemission as Imageˉemission;
+
+export fn Main() -> i32 {
+    if !Imageˉemission.X64ˉprocessˉclientˉimageˉisˉvalid(449261u32) {
+        return 1;
+    }
+    let Code: bytes =
+        Imageˉemission.X64ˉprocessˉclientˉimageˉbytes(449261u32);
+    if Bytesˉlength(Code) != 76u32 ||
+        Imageˉemission.X64ˉprocessˉclientˉimageˉfixtureˉoffset() != 9607u32 ||
+        Imageˉemission.X64ˉprocessˉclientˉimageˉfixtureˉend() != 9683u32 {
+        return 2;
+    }
+    if Imageˉemission.X64ˉprocessˉclientˉimageˉisˉvalid(0u32) ||
+        Imageˉemission.X64ˉprocessˉclientˉimageˉisˉvalid(450561u32) ||
+        Bytesˉlength(Imageˉemission.X64ˉprocessˉclientˉimageˉbytes(
+            450561u32
+        )) != 0u32 {
+        return 3;
+    }
+    if Imageˉemission.X64ˉprocessˉclientˉimageˉrelocationˉcount() != 1u32 ||
+        Imageˉemission.X64ˉprocessˉclientˉimageˉrelocationˉfield() != 3u32 ||
+        Imageˉemission.X64ˉprocessˉclientˉimageˉrelocationˉsymbol() != 1u32 ||
+        Imageˉemission.X64ˉprocessˉclientˉimageˉrelocationˉaddend() !=
+            4294967292u32 {
+        return 4;
+    }
+
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 76u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 45760u32 || Hashˉone != 25950u32 ||
+        Hashˉtwo != 63896u32 || Hashˉthree != 45108u32 {
+        return 5;
+    }
+    return 65;
+}

@@ -1,0 +1,30 @@
+module Applicationˉmachineˉconstructionˉpolicy profile portable;
+
+// Status 0 is success. Rejections are plan, object set, page layout,
+// mapping/binding profile, then capability-table shape.
+export fn Applicationˉmachineˉconstructionˉstatus(
+    Planˉreference: u32,
+    Objectˉmask: u32,
+    Codeˉpages: u32,
+    Dataˉpages: u32,
+    Mappingˉprofile: u32,
+    Capabilityˉslots: u32
+) -> u32 {
+    if Planˉreference != 65537u32 && Planˉreference != 131073u32 {
+        return 1u32;
+    }
+    // Bits 0..5 prove the private address space, code/data/stack objects,
+    // observer, and initial thread. The bounded caller supplies no other bits.
+    if Objectˉmask != 63u32 { return 2u32; }
+    // Profile 1 fixes four stack pages; code and data partition the other 118.
+    if Codeˉpages == 0u32 || Codeˉpages > 118u32 { return 3u32; }
+    let Remainingˉdata: u32 = 118u32 - Codeˉpages;
+    if Dataˉpages == 0u32 || Dataˉpages != Remainingˉdata {
+        return 3u32;
+    }
+    // Mapping profile 1 is code R-X plus data/stack RW-NX and binds input,
+    // output, diagnostics, and observer.
+    if Mappingˉprofile != 1u32 { return 4u32; }
+    if Capabilityˉslots < 4u32 || Capabilityˉslots > 64u32 { return 5u32; }
+    return 0u32;
+}

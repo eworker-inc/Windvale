@@ -1,0 +1,20 @@
+module Filesystemˉprocessˉservice profile portable;
+
+import Filesystemˉproviderˉstate as Provider;
+import Filesystemˉsemantics as Filesystem;
+
+export fn Main() -> i32 {
+    let State: Provider.Filesystemˉproviderˉtransition =
+        Provider.Filesystemˉproviderˉcreate();
+    if State.Status != Provider.Filesystemˉproviderˉstatus.Success ||
+        State.Phase != Provider.Filesystemˉproviderˉphase.Ready ||
+        State.Generation != 1u32 || State.Activeˉhandles != 0u32 {
+        return 0;
+    }
+    if !Filesystem.Filesystemˉopenˉrequestˉisˉvalid("state.bin", 1u32) ||
+        !Filesystem.Filesystemˉopenˉrequestˉisˉvalid("state.bin", 4u32) ||
+        Filesystem.Filesystemˉopenˉrequestˉisˉvalid("state.bin", 5u32) {
+        return 0;
+    }
+    return 46;
+}

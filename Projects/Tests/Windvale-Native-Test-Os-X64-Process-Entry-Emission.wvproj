@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-X64-Process-Entry-Emission-Self-Test.wv"
+source "Operating-System/Architecture/X64-Code-Emission.wv"
+source "Operating-System/Kernel/X64-Process-Entry-Emission.wv"
+emit wvb

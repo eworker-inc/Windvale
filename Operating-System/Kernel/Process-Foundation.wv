@@ -1,5 +1,7 @@
 module Processˉfoundation profile portable;
 import Resourceˉdomainˉpolicy as Domain;
+import Applicationˉlaunchˉpolicy as Launch;
+import Applicationˉmachineˉconstructionˉpolicy as Machine;
 
 // Exact SHA-256 identities of the CPL3 interpreter, admitted WVB, execution
 // budget, Windvale resource owner, Windvale directory owner, package-resource
@@ -349,6 +351,59 @@ fn Hasˉmemoryˉobjectˉcontract() -> bool {
     return true;
 }
 
+fn Admitˉknownˉapplication(
+    Current: Domain.Resourceˉdomainˉtransition,
+    Planˉreference: u32,
+    Processˉreference: u32,
+    Codeˉpages: u32,
+    Dataˉpages: u32
+) -> Domain.Resourceˉdomainˉtransition {
+    var Admission: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, Planˉreference, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    if Admission.Planˉreference + 1u32 != Processˉreference { return Current; }
+    let Machineˉstatus: u32 =
+        Machine.Applicationˉmachineˉconstructionˉstatus(
+            Planˉreference, 63u32, Codeˉpages, Dataˉpages,
+            1u32, 16u32
+        );
+    if Machineˉstatus != 0u32 { return Current; }
+    let Reserveˉaccepted: bool =
+        Domain.Resourceˉdomainˉreserveˉstatus(
+            Current, 1u32, 122u32, 0u32
+        ) == Domain.Resourceˉdomainˉstatus.Success;
+    Admission = Launch.Applicationˉlaunchˉadvance(
+        Admission, Launch.Applicationˉlaunchˉstate.Reserved,
+        Reserveˉaccepted, true
+    );
+    let Reserved: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉreserve(Current, 1u32, 122u32, 0u32);
+    Admission = Launch.Applicationˉlaunchˉadvance(
+        Admission, Launch.Applicationˉlaunchˉstate.Constructed, true, true
+    );
+    if Admission.State != Launch.Applicationˉlaunchˉstate.Constructed {
+        return Current;
+    }
+    let Committed: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcommit(Reserved, 1u32, 122u32, 0u32);
+    let Publishˉaccepted: bool =
+        Committed.Identity == 1u32 && Committed.Generation == 1u32 &&
+        Committed.Reservedˉprocesses == 0u32 &&
+        Committed.Reservedˉpages == 0u32 &&
+        Committed.Reservedˉendpoints == 0u32 &&
+        Committed.Committedˉprocesses == 3u32 &&
+        Committed.Committedˉpages == 144u32;
+    Admission = Launch.Applicationˉlaunchˉadvance(
+        Admission, Launch.Applicationˉlaunchˉstate.Published,
+        Publishˉaccepted, true
+    );
+    if Admission.State != Launch.Applicationˉlaunchˉstate.Published {
+        return Current;
+    }
+    return Committed;
+}
+
 fn Hasˉresourceˉdomainˉusage() -> bool {
     var Current: Domain.Resourceˉdomainˉtransition =
         Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
@@ -356,11 +411,13 @@ fn Hasˉresourceˉdomainˉusage() -> bool {
         Domain.Resourceˉdomainˉreserveˉstatus(Current, 4u32, 144u32, 2u32);
     if Rejection != Domain.Resourceˉdomainˉstatus.Limitˉexceeded { return false; }
     if Current.Committedˉpages != 0u32 { return false; }
-    Current = Domain.Resourceˉdomainˉreserve(Current, 3u32, 144u32, 2u32);
-    if Current.Reservedˉprocesses != 3u32 { return false; }
-    if Current.Reservedˉpages != 144u32 { return false; }
-    if Current.Reservedˉendpoints != 2u32 { return false; }
-    Current = Domain.Resourceˉdomainˉcommit(Current, 3u32, 144u32, 2u32);
+    // Init and directory are the retained base. Each known verified client is
+    // admitted through the same immutable LaunchPlan1 transaction owner.
+    Current = Domain.Resourceˉdomainˉreserve(Current, 2u32, 22u32, 2u32);
+    Current = Domain.Resourceˉdomainˉcommit(Current, 2u32, 22u32, 2u32);
+    Current = Admitˉknownˉapplication(
+        Current, 65537u32, 65538u32, 110u32, 8u32
+    );
     if Current.Committedˉprocesses != 3u32 { return false; }
     if Current.Committedˉpages != 144u32 { return false; }
     if Current.Committedˉendpoints != 2u32 { return false; }
@@ -371,11 +428,51 @@ fn Hasˉresourceˉdomainˉusage() -> bool {
     if Current.Committedˉprocesses != 2u32 { return false; }
     if Current.Committedˉpages != 22u32 { return false; }
     if Current.Committedˉendpoints != 2u32 { return false; }
-    Current = Domain.Resourceˉdomainˉreserve(Current, 1u32, 122u32, 0u32);
-    Current = Domain.Resourceˉdomainˉcommit(Current, 1u32, 122u32, 0u32);
+    Current = Admitˉknownˉapplication(
+        Current, 131073u32, 131074u32, 100u32, 18u32
+    );
     if Current.Committedˉprocesses != 3u32 { return false; }
     if Current.Committedˉpages != 144u32 { return false; }
     if Current.Peakˉpages != 144u32 { return false; }
+    return true;
+}
+
+fn Hasˉapplicationˉlaunchˉrollback() -> bool {
+    var Current: Domain.Resourceˉdomainˉtransition =
+        Domain.Resourceˉdomainˉcreate(1u32, 1u32, 3u32, 144u32, 2u32);
+    Current = Domain.Resourceˉdomainˉreserve(Current, 2u32, 22u32, 2u32);
+    Current = Domain.Resourceˉdomainˉcommit(Current, 2u32, 22u32, 2u32);
+    let Baseline: Domain.Resourceˉdomainˉtransition = Current;
+    var Failedˉlaunch: Launch.Applicationˉlaunchˉtransition =
+        Launch.Applicationˉstartˉadmit(
+            1u32, 65537u32, 65537u32, 65537u32, 65576u32, 1u32
+        );
+    let Failedˉmachineˉstatus: u32 =
+        Machine.Applicationˉmachineˉconstructionˉstatus(
+            65537u32, 63u32, 110u32, 8u32, 2u32, 16u32
+        );
+    if Failedˉmachineˉstatus != 4u32 { return false; }
+    Failedˉlaunch = Launch.Applicationˉlaunchˉadvance(
+        Failedˉlaunch, Launch.Applicationˉlaunchˉstate.Reserved, true, true
+    );
+    Current = Domain.Resourceˉdomainˉreserve(Current, 1u32, 122u32, 0u32);
+    Failedˉlaunch = Launch.Applicationˉlaunchˉadvance(
+        Failedˉlaunch, Launch.Applicationˉlaunchˉstate.Constructed,
+        true, Failedˉmachineˉstatus == 0u32
+    );
+    if Failedˉlaunch.State != Launch.Applicationˉlaunchˉstate.Rolledˉback {
+        return false;
+    }
+    if Failedˉlaunch.State == Launch.Applicationˉlaunchˉstate.Published { return false; }
+    // The reservation and every constructed value are still private immutable
+    // replacements. Dropping them restores the exact base record.
+    Current = Baseline;
+    if Current.Reservedˉprocesses != 0u32 { return false; }
+    if Current.Reservedˉpages != 0u32 { return false; }
+    if Current.Reservedˉendpoints != 0u32 { return false; }
+    if Current.Committedˉprocesses != 2u32 { return false; }
+    if Current.Committedˉpages != 22u32 { return false; }
+    if Current.Committedˉendpoints != 2u32 { return false; }
     return true;
 }
 
@@ -457,6 +554,10 @@ fn Processˉfoundationˉtoken() -> i32 {
     let Initˉsyscallˉbudget: u32 = 9u32;
     let Directoryˉsyscallˉbudget: u32 = 5u32;
     let Interpreterˉsyscallˉbudget: u32 = 4u32;
+    // Version 1 selects filesystem v1/max-transfer 65,536, operation queue
+    // 4/reserved-control 1, and IPv4/IPv6 port/direction authority. Their full
+    // validators remain in independently executed shared-contract owners.
+    let Bootˉserviceˉcompositionˉpolicyˉversion: u32 = 1u32;
     if Initˉprocessˉid != 1u32 { return 0; }
     if Clientˉprocessˉid != 2u32 { return 0; }
     if Directoryˉprocessˉid != 3u32 { return 0; }
@@ -468,7 +569,8 @@ fn Processˉfoundationˉtoken() -> i32 {
     if Interpreterˉcallˉdepth != 5u32 { return 0; }
     if Initˉprofile != 2u32 { return 0; }
     if Interpreterˉprofile != 7u32 { return 0; }
-    if Providerˉhandleˉbudget != 1u32 { return 0; }
+    if Providerˉhandleˉbudget !=
+        Bootˉserviceˉcompositionˉpolicyˉversion { return 0; }
     if Clientˉhandleˉbudget != 2u32 { return 0; }
     if Initˉsyscallˉbudget != 9u32 { return 0; }
     if Directoryˉsyscallˉbudget != 5u32 { return 0; }
@@ -526,6 +628,7 @@ export fn Main() -> i32 {
     // Each bounded phase uses the same exact fixed topology after the
     // foundation frame unwinds, retaining the sixteen-KiB kernel stack bound.
     if !Hasˉresourceˉdomainˉusage() { return 0; }
+    if !Hasˉapplicationˉlaunchˉrollback() { return 0; }
     if !Hasˉresourceˉdomainˉstop() { return 0; }
     if !Hasˉresourceˉdomainˉteardown() { return 0; }
     return 97;

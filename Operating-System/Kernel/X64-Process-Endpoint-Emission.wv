@@ -1,0 +1,102 @@
+module X64ˉprocessˉendpointˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Loadˉstateˉrdi: bytes = [73, 141, 188, 36];
+data Clearˉeaxˉandˉmoveˉecx: bytes = [49, 192, 185];
+data Clearˉdirectionˉandˉstoreˉqwords: bytes = [252, 243, 72, 171];
+data Moveˉrax: bytes = [72, 184];
+data Storeˉstateˉrax: bytes = [73, 137, 132, 36];
+data Storeˉstateˉu32: bytes = [65, 199, 132, 36];
+data Loadˉstateˉrax: bytes = [73, 141, 132, 36];
+
+fn Emitˉstoreˉstateˉu32(
+    State: X64.X64ˉemission,
+    Offset: u32,
+    Value: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Storeˉstateˉu32);
+    Result = X64.X64ˉemitˉu32(Result, Offset);
+    return X64.X64ˉemitˉu32(Result, Value);
+}
+
+fn Emitˉchannel(
+    State: X64.X64ˉemission,
+    Recordˉoffset: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉstateˉrdi);
+    Result = X64.X64ˉemitˉu32(Result, Recordˉoffset);
+    Result = X64.X64ˉemit(Result, Clearˉeaxˉandˉmoveˉecx);
+    Result = X64.X64ˉemitˉu32(Result, 14u32);
+    Result = X64.X64ˉemit(Result, Clearˉdirectionˉandˉstoreˉqwords);
+    Result = X64.X64ˉemit(Result, Moveˉrax);
+    Result = X64.X64ˉemitˉu64(Result, 3760591731146577495u64);
+    Result = X64.X64ˉemit(Result, Storeˉstateˉrax);
+    Result = X64.X64ˉemitˉu32(Result, Recordˉoffset);
+    Result = Emitˉstoreˉstateˉu32(Result, Recordˉoffset + 8u32, 4u32);
+    Result = Emitˉstoreˉstateˉu32(Result, Recordˉoffset + 12u32, 112u32);
+    return Emitˉstoreˉstateˉu32(Result, Recordˉoffset + 48u32, 1u32);
+}
+
+fn Emitˉendpoint(
+    State: X64.X64ˉemission,
+    Endpointˉoffset: u32,
+    Channelˉoffset: u32,
+    Capabilityˉreference: u32,
+    Providerˉreference: u32
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Loadˉstateˉrdi);
+    Result = X64.X64ˉemitˉu32(Result, Endpointˉoffset);
+    Result = X64.X64ˉemit(Result, Clearˉeaxˉandˉmoveˉecx);
+    Result = X64.X64ˉemitˉu32(Result, 8u32);
+    Result = X64.X64ˉemit(Result, Clearˉdirectionˉandˉstoreˉqwords);
+    Result = X64.X64ˉemit(Result, Moveˉrax);
+    Result = X64.X64ˉemitˉu64(Result, 3544421161041745495u64);
+    Result = X64.X64ˉemit(Result, Storeˉstateˉrax);
+    Result = X64.X64ˉemitˉu32(Result, Endpointˉoffset);
+    Result = Emitˉstoreˉstateˉu32(Result, Endpointˉoffset + 8u32, 1u32);
+    Result = Emitˉstoreˉstateˉu32(Result, Endpointˉoffset + 12u32, 64u32);
+    Result = Emitˉstoreˉstateˉu32(Result, Endpointˉoffset + 16u32, 1u32);
+    Result = Emitˉstoreˉstateˉu32(
+        Result, Endpointˉoffset + 20u32, Capabilityˉreference
+    );
+    Result = Emitˉstoreˉstateˉu32(Result, Endpointˉoffset + 24u32, 1u32);
+    Result = Emitˉstoreˉstateˉu32(Result, Endpointˉoffset + 28u32, 1u32);
+    Result = Emitˉstoreˉstateˉu32(
+        Result, Endpointˉoffset + 32u32, Providerˉreference
+    );
+    Result = Emitˉstoreˉstateˉu32(Result, Endpointˉoffset + 36u32, 65538u32);
+    Result = X64.X64ˉemit(Result, Loadˉstateˉrax);
+    Result = X64.X64ˉemitˉu32(Result, Channelˉoffset);
+    Result = X64.X64ˉemit(Result, Storeˉstateˉrax);
+    return X64.X64ˉemitˉu32(Result, Endpointˉoffset + 40u32);
+}
+
+fn Buildˉchannelsˉandˉendpoints() -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = Emitˉchannel(State, 1056u32);
+    State = Emitˉendpoint(State, 1168u32, 1056u32, 65536u32, 65537u32);
+    State = Emitˉchannel(State, 2032u32);
+    return Emitˉendpoint(
+        State, 2144u32, 2032u32, 65537u32, 65539u32
+    );
+}
+
+export fn X64ˉprocessˉchannelsˉandˉendpointsˉareˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉchannelsˉandˉendpoints();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 444u32;
+}
+
+export fn X64ˉprocessˉchannelsˉandˉendpointsˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉchannelsˉandˉendpoints();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉchannelsˉandˉendpointsˉfixtureˉoffset() -> u32 {
+    return 1428u32;
+}
+
+export fn X64ˉprocessˉchannelsˉandˉendpointsˉfixtureˉend() -> u32 {
+    return 1872u32;
+}

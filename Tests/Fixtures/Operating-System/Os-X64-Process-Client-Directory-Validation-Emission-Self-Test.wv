@@ -1,0 +1,44 @@
+module Osˉx64ˉprocessˉclientˉdirectoryˉvalidationˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉdirectoryˉvalidationˉemission as Validation;
+
+export fn Main() -> i32 {
+    let Code: bytes = Validation.X64ˉprocessˉclientˉdirectoryˉvalidationˉbytes();
+    let Fields: bytes =
+        Validation.X64ˉprocessˉclientˉdirectoryˉvalidationˉfailureˉfields();
+    let Displacements: bytes =
+        Validation.X64ˉprocessˉclientˉdirectoryˉvalidationˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 410u32 || Bytesˉlength(Fields) != 92u32 ||
+        Bytesˉlength(Displacements) != 92u32 ||
+        Validation.X64ˉprocessˉclientˉdirectoryˉvalidationˉfixtureˉoffset()
+            != 11032u32 ||
+        Validation.X64ˉprocessˉclientˉdirectoryˉvalidationˉfixtureˉend()
+            != 11442u32 { return 1; }
+    var Index: u32 = 0u32;
+    while Index < 23u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 ||
+            11032u32 + Field + 4u32 + Displacement != 33826u32 {
+            return 2;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 410u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 30379u32 || Hashˉone != 11110u32 ||
+        Hashˉtwo != 2324u32 || Hashˉthree != 39207u32 { return 3; }
+    return 71;
+}

@@ -21,8 +21,8 @@ fn Buildˉobject(Sections: bytes, Symbols: bytes, Relocationˉbytes: bytes) -> b
     Header = Bytesˉconcat(Header, Bytesˉfromˉu8(1u8));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu8(0u8));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(25u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(10u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(27u32));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(55u32));
     return Bytesˉconcat(
         Bytesˉconcat(Header, Sections),
@@ -31,9 +31,9 @@ fn Buildˉobject(Sections: bytes, Symbols: bytes, Relocationˉbytes: bytes) -> b
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 8u32 {
+    if process.argument_count() != 10u32 {
         diagnostic.write_line(
-            "Usage: process-object <code.bin> <init.bin> <client.bin> <program.wvb> <resources.wvrs> <directory.wvds> <directory.bin> <output.wvo>"
+            "Usage: process-object <code.bin> <init.bin> <client.bin> <program.wvb> <resources.wvrs> <directory.wvds> <directory.bin> <filesystem.bin> <network.bin> <output.wvo>"
         );
         return 64;
     }
@@ -44,33 +44,39 @@ export fn Main() -> i32 {
     let Store: bytes = file.read_bytes(process.argument(4u32));
     let Snapshot: bytes = file.read_bytes(process.argument(5u32));
     let Directory: bytes = file.read_bytes(process.argument(6u32));
+    let Filesystem: bytes = file.read_bytes(process.argument(7u32));
+    let Network: bytes = file.read_bytes(process.argument(8u32));
     if Bytesˉlength(Code) != 46678u32 ||
         Bytesˉlength(Init) != 5159u32 ||
         Bytesˉlength(Client) != 449261u32 ||
         Bytesˉlength(Program) != 816u32 ||
         Bytesˉlength(Store) != 1196u32 ||
         Bytesˉlength(Snapshot) != 3184u32 ||
-        Bytesˉlength(Directory) != 3911u32 {
+        Bytesˉlength(Directory) != 3911u32 ||
+        Bytesˉlength(Filesystem) != 195657u32 ||
+        Bytesˉlength(Network) != 242571u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
     let Sections: bytes = Bytesˉconcat(
         Layout.Buildˉfirstˉsections(Code, Init, Client, Program),
-        Layout.Buildˉfinalˉsections(Store, Snapshot, Directory)
+        Layout.Buildˉfinalˉsections(
+            Store, Snapshot, Directory, Filesystem, Network
+        )
     );
     let Symbols: bytes = Layout.Buildˉsymbols();
     let Relocationˉbytes: bytes = Relocations.Buildˉrelocations();
-    if Bytesˉlength(Sections) != 510486u32 ||
-        Bytesˉlength(Symbols) != 1368u32 ||
+    if Bytesˉlength(Sections) != 948789u32 ||
+        Bytesˉlength(Symbols) != 1481u32 ||
         Bytesˉlength(Relocationˉbytes) != 1100u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
     let Result: bytes = Buildˉobject(Sections, Symbols, Relocationˉbytes);
-    if Bytesˉlength(Result) != 512978u32 {
+    if Bytesˉlength(Result) != 951394u32 {
         diagnostic.write_line("process object status=Rejected");
         return 1;
     }
-    file.write_bytes(process.argument(7u32), Result);
+    file.write_bytes(process.argument(9u32), Result);
     return 0;
 }

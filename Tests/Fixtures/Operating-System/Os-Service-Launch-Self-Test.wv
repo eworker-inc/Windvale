@@ -1,0 +1,65 @@
+module Osˉserviceˉlaunchˉselfˉtest profile portable;
+
+import Serviceˉlaunchˉpolicy as Service;
+
+data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Networkˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 3, 0, 0, 0, 5, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 0, 42, 0, 1, 0, 3, 0, 0, 0, 1, 0, 0, 0, 96, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 15, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Wrongˉrightsˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Shortˉrequest: bytes = [87, 86, 80, 82];
+
+fn Filesystemˉlifecycleˉpasses() -> bool {
+    let Plan: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉplan(Filesystemˉrequest);
+    if Plan.Status != Service.Serviceˉlaunchˉstatus.Success ||
+        Plan.Phase != Service.Serviceˉlaunchˉphase.Planned ||
+        Plan.Role != 2u32 || Plan.Domainˉreference != 65538u32 { return false; }
+    var State: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉstart(Plan, 65540u32, 65538u32, true);
+    State = Service.Serviceˉlaunchˉpublish(State, true);
+    if State.Phase != Service.Serviceˉlaunchˉphase.Available { return false; }
+    State = Service.Serviceˉlaunchˉsetˉwork(State, 1u32);
+    State = Service.Serviceˉlaunchˉdrain(State, 65540u32);
+    let Busy: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉfinish(State);
+    if Busy.Status != Service.Serviceˉlaunchˉstatus.Workˉactive { return false; }
+    return true;
+}
+
+fn Networkˉlifecycleˉpasses() -> bool {
+    let Plan: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉplan(Networkˉrequest);
+    var State: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉstart(Plan, 65541u32, 65539u32, true);
+    State = Service.Serviceˉlaunchˉpublish(State, true);
+    if State.Role != 3u32 || State.Phase != Service.Serviceˉlaunchˉphase.Available {
+        return false;
+    }
+    let Stale: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉdrain(State, 41u32);
+    if Stale.Status != Service.Serviceˉlaunchˉstatus.Stale { return false; }
+    State = Service.Serviceˉlaunchˉdrain(State, 65541u32);
+    State = Service.Serviceˉlaunchˉfinish(State);
+    return State.Status == Service.Serviceˉlaunchˉstatus.Success &&
+        State.Phase == Service.Serviceˉlaunchˉphase.Stopped &&
+        State.Processˉreference == 0u32 && State.Endpointˉreference == 0u32;
+}
+
+export fn Main() -> i32 {
+    if Service.Serviceˉstartˉrequestˉstatus(Filesystemˉrequest) !=
+        Service.Serviceˉlaunchˉstatus.Success { return 1; }
+    if Service.Serviceˉstartˉrequestˉstatus(Networkˉrequest) !=
+        Service.Serviceˉlaunchˉstatus.Success { return 2; }
+    if Service.Serviceˉstartˉrequestˉstatus(Shortˉrequest) !=
+        Service.Serviceˉlaunchˉstatus.Invalidˉsize { return 3; }
+    if Service.Serviceˉstartˉrequestˉstatus(Wrongˉrightsˉrequest) !=
+        Service.Serviceˉlaunchˉstatus.Invalidˉbinding { return 4; }
+    if !Filesystemˉlifecycleˉpasses() { return 5; }
+    if !Networkˉlifecycleˉpasses() { return 6; }
+    let Failed: Service.Serviceˉlaunchˉtransition =
+        Service.Serviceˉlaunchˉstart(
+            Service.Serviceˉlaunchˉplan(Filesystemˉrequest), 0u32, 0u32, false
+        );
+    if Failed.Status != Service.Serviceˉlaunchˉstatus.Constructionˉfailed ||
+        Failed.Phase != Service.Serviceˉlaunchˉphase.Faulted { return 7; }
+    return 45;
+}

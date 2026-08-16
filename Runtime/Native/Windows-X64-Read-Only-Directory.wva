@@ -2,8 +2,9 @@ windvale-assembly 1
 
 # Windows x64 leaf for the single immutable directory entry. It opens one
 # fixed file with GENERIC_READ and OPEN_EXISTING, retains no write/create/
-# delete authority, and resolves only SetFilePointerEx from the already
-# admitted KERNEL32 image.
+# delete authority, and resolves only the two required same-module functions
+# from the already admitted KERNEL32 image.
+symbol local data Directory_windows_name_get_file_information in .rodata
 symbol local data Directory_windows_name_set_file_pointer in .rodata
 symbol local data Directory_windows_path in .rodata
 symbol local function Directory_windows_resolve in .text
@@ -181,7 +182,7 @@ define Directory_platform_open
 push rbx
 push r12
 push r13
-subtract_i32 rsp 64
+subtract_i32 rsp 96
 move r12 r8
 load_memory_u64 rax r12 none 1 3144
 test rax rax
@@ -201,15 +202,23 @@ test rax rax
 branch equal Directory_windows_open_failure
 store_memory_u64 r12 none 1 3152 rax
 
+move r8 rbx
+load_address r9 Directory_windows_name_get_file_information
+move_u32 r10d 26
+call Directory_windows_resolve
+test rax rax
+branch equal Directory_windows_open_failure
+store_memory_u64 r12 none 1 3160 rax
+
 # CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-#             FILE_ATTRIBUTE_NORMAL, NULL)
+#             FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT, NULL)
 load_address rcx Directory_windows_path
 move_u32 edx 2147483648
 move_u32 r8d 1
 xor r9 r9
 move_u32 eax 3
 store_memory_u64 rsp none 1 32 rax
-move_u32 eax 128
+move_u32 eax 2097280
 store_memory_u64 rsp none 1 40 rax
 xor eax eax
 store_memory_u64 rsp none 1 48 rax
@@ -219,16 +228,29 @@ branch equal Directory_windows_open_failure
 move rbx rax
 store_memory_u64 r12 none 1 0 rax
 
-xor eax eax
-store_memory_u64 rsp none 1 56 rax
+# GetFileInformationByHandle must report neither DIRECTORY nor REPARSE_POINT.
 move rcx rbx
 move rdx rsp
-add_i32 rdx 56
+add_i32 rdx 32
+load_memory_u64 rax r12 none 1 3160
+call_register rax
+test eax eax
+branch equal Directory_windows_open_close_failure
+load_memory_u32 eax rsp none 1 32
+and_i32 eax 1040
+test eax eax
+branch not_equal Directory_windows_open_close_failure
+
+xor eax eax
+store_memory_u64 rsp none 1 88 rax
+move rcx rbx
+move rdx rsp
+add_i32 rdx 88
 load_memory_u64 rax r13 none 1 96
 call_register rax
 test eax eax
 branch equal Directory_windows_open_close_failure
-load_memory_u64 rax rsp none 1 56
+load_memory_u64 rax rsp none 1 88
 move_u32 ecx 4294967295
 compare rax rcx
 branch above Directory_windows_open_close_failure
@@ -243,7 +265,7 @@ call_register rax
 label Directory_windows_open_failure
 move_u32 eax 1
 label Directory_windows_open_complete
-add_i32 rsp 64
+add_i32 rsp 96
 pop r13
 pop r12
 pop rbx
@@ -339,6 +361,10 @@ end section
 section rodata .rodata align 2
 define Directory_windows_name_set_file_pointer
 bytes 83 101 116 70 105 108 101 80 111 105 110 116 101 114 69 120 0
+end define
+define Directory_windows_name_get_file_information
+bytes 71 101 116 70 105 108 101 73 110 102 111 114 109 97 116 105
+bytes 111 110 66 121 72 97 110 100 108 101 0
 end define
 define Directory_windows_path
 bytes 87 0 105 0 110 0 100 0 118 0 97 0 108 0 101 0 45 0 68 0

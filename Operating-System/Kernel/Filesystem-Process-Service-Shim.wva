@@ -1,0 +1,28 @@
+windvale-assembly 1
+
+symbol export function Windvale_filesystem_process_user_entry in .text
+symbol export function Windvale_process_preemption_probe in .text
+symbol import function Windvale_filesystem_process_service_main
+
+section code .text align 16
+define Windvale_filesystem_process_user_entry
+call Windvale_filesystem_process_service_main
+compare_i32 eax 46
+branch not_equal filesystem_service_failure
+move r8 rdx
+add_i32 r8 1024
+move_u32 r9d 65600
+move_u32 ebx 5
+move_u32 esi 65538
+syscall
+label filesystem_service_failure
+move_u32 ebx 3
+syscall
+end define
+
+define Windvale_process_preemption_probe
+move_u32 eax 17409
+label filesystem_preemption_spin
+jump_label filesystem_preemption_spin
+end define
+end section

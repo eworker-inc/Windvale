@@ -1,0 +1,60 @@
+module Osˉx64ˉprocessˉtimerˉactivationˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉtimerˉactivationˉemission as Activation;
+
+export fn Main() -> i32 {
+    let Code: bytes = Activation.X64ˉprocessˉtimerˉactivationˉbytes();
+    let Externalˉfields: bytes = Activation.X64ˉprocessˉtimerˉactivationˉexternalˉfields();
+    let Externalˉsymbols: bytes = Activation.X64ˉprocessˉtimerˉactivationˉexternalˉsymbols();
+    let Internalˉfields: bytes = Activation.X64ˉprocessˉtimerˉactivationˉinternalˉfields();
+    let Internalˉdisplacements: bytes =
+        Activation.X64ˉprocessˉtimerˉactivationˉinternalˉdisplacements();
+    if Bytesˉlength(Code) != 125u32 || Bytesˉlength(Externalˉfields) != 12u32 ||
+        Bytesˉlength(Externalˉsymbols) != 12u32 ||
+        Bytesˉlength(Internalˉfields) != 12u32 ||
+        Bytesˉlength(Internalˉdisplacements) != 12u32 ||
+        Activation.X64ˉprocessˉtimerˉactivationˉfixtureˉoffset() != 12873u32 ||
+        Activation.X64ˉprocessˉtimerˉactivationˉfixtureˉend() != 12998u32 {
+        return 1;
+    }
+    var Index: u32 = 0u32;
+    while Index < 3u32 {
+        let Externalˉfield: u32 =
+            Bytesˉreadˉu32ˉlittle(Externalˉfields, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Externalˉfield) != 0u32 { return 2; }
+        Index = Index + 1u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 0u32) != 17u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 4u32) != 21u32 ||
+        Bytesˉreadˉu32ˉlittle(Externalˉsymbols, 8u32) != 25u32 { return 3; }
+    Index = 0u32;
+    while Index < 3u32 {
+        let Internalˉfield: u32 =
+            Bytesˉreadˉu32ˉlittle(Internalˉfields, Index * 4u32);
+        let Displacement: u32 =
+            Bytesˉreadˉu32ˉlittle(Internalˉdisplacements, Index * 4u32);
+        var Expected: u32 = 33826u32;
+        if Index == 1u32 { Expected = 12985u32; }
+        if Bytesˉreadˉu32ˉlittle(Code, Internalˉfield) != 0u32 ||
+            12873u32 + Internalˉfield + 4u32 + Displacement != Expected {
+            return 4;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 125u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 44431u32 || Hashˉone != 27032u32 ||
+        Hashˉtwo != 51386u32 || Hashˉthree != 20218u32 { return 5; }
+    return 74;
+}

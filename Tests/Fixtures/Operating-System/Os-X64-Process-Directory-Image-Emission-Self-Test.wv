@@ -1,0 +1,49 @@
+module Osˉx64ˉprocessˉdirectoryˉimageˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉdirectoryˉimageˉemission as Imageˉemission;
+
+export fn Main() -> i32 {
+    if !Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉisˉvalid(
+        3911u32, 3184u32
+    ) { return 1; }
+    let Code: bytes = Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉbytes(
+        3911u32, 3184u32
+    );
+    if Bytesˉlength(Code) != 116u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉfixtureˉoffset() != 4225u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉfixtureˉend() != 4341u32 {
+        return 2;
+    }
+    if Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉrelocationˉcount() != 2u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉrelocationˉfield(0u32) != 3u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉrelocationˉfield(1u32) != 25u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉrelocationˉsymbol(0u32) != 6u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉrelocationˉsymbol(1u32) != 4u32 ||
+        Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉrelocationˉaddend() != 4294967292u32 {
+        return 3;
+    }
+    if Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉisˉvalid(
+        8193u32, 3184u32
+    ) || Bytesˉlength(Imageˉemission.X64ˉprocessˉdirectoryˉcontentˉbytes(
+        3911u32, 0u32
+    )) != 0u32 { return 4; }
+
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 116u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 63445u32 || Hashˉone != 45060u32 ||
+        Hashˉtwo != 43762u32 || Hashˉthree != 61853u32 {
+        return 5;
+    }
+    return 62;
+}

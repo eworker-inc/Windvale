@@ -90,9 +90,13 @@ The Stage 0 reference runtime accepts an explicit `IReadˉonlyˉdirectory` insta
 The first native ABI-23 binding is implemented for the fixed WVDB Query proof.
 It constructs an execution-owned five-entry provider table, binds this capability
 at ordinal two to one fixed immutable object, and uses separate read-only Windows
-and Linux leaves. Source receives no native path or handle. This proves the exact
-single-object success, denial, and unavailable paths; it is not a configurable
-launcher or general directory service.
+and Linux leaves. The Linux leaf uses `openat` with `O_NOFOLLOW`, verifies a
+regular file with `fstat`, and retains only the admitted descriptor. The Windows
+leaf uses `FILE_FLAG_OPEN_REPARSE_POINT`, verifies handle metadata, and rejects
+both directories and reparse points. Source receives no native path or handle.
+The six-case host owner proves positive, negative-value, missing-key,
+unauthorized-name, unavailable-provider, and no-link behavior against real host
+I/O. It is not a configurable launcher or general directory service.
 
 A Windvale OS service protocol, independent platform-scope metadata, multiple
 directory instances, enumeration, source-visible open handles, links, mutation,

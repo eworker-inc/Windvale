@@ -1,0 +1,81 @@
+module X64ˉprocessˉmemoryˉallocationˉemission profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+data Prepareˉallocation: bytes = [76, 137, 225, 73, 141, 148, 36];
+data Moveˉr8d: bytes = [65, 184];
+data Moveˉr9d: bytes = [65, 185];
+data Testˉrax: bytes = [72, 133, 192];
+data Conditionˉequal: bytes = [15, 132];
+data Conditionˉnotˉequal: bytes = [15, 133];
+data Conditionˉabove: bytes = [15, 135];
+data Preserveˉextent: bytes = [73, 137, 198];
+data Testˉpageˉalignment: bytes = [72, 247, 192, 255, 15, 0, 0];
+data Loadˉextentˉend: bytes = [73, 141, 134];
+data Compareˉidentityˉend: bytes = [72, 61];
+data Compareˉidentityˉwindows: bytes = [76, 137, 240, 72, 193, 232, 21, 73, 141, 142];
+data Compareˉidentityˉwindowˉends: bytes = [72, 193, 233, 21, 72, 57, 200];
+
+fn Emitˉconditionˉplaceholder(
+    State: X64.X64ˉemission,
+    Prefix: bytes
+) -> X64.X64ˉemission {
+    var Result: X64.X64ˉemission = X64.X64ˉemit(State, Prefix);
+    return X64.X64ˉemitˉu32(Result, 0u32);
+}
+
+fn Buildˉinitˉextentˉallocation() -> X64.X64ˉemission {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Prepareˉallocation);
+    State = X64.X64ˉemitˉu32(State, 3168u32);
+    State = X64.X64ˉemit(State, Moveˉr8d);
+    State = X64.X64ˉemitˉu32(State, 65537u32);
+    State = X64.X64ˉemit(State, Moveˉr9d);
+    State = X64.X64ˉemitˉu32(State, 12u32);
+    State = X64.X64ˉemitˉcallˉplaceholder(State);
+    State = X64.X64ˉemit(State, Testˉrax);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉequal);
+    State = X64.X64ˉemit(State, Preserveˉextent);
+    State = X64.X64ˉemit(State, Testˉpageˉalignment);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉnotˉequal);
+    State = X64.X64ˉemit(State, Loadˉextentˉend);
+    State = X64.X64ˉemitˉu32(State, 49152u32);
+    State = X64.X64ˉemit(State, Compareˉidentityˉend);
+    State = X64.X64ˉemitˉu32(State, 1073741824u32);
+    State = Emitˉconditionˉplaceholder(State, Conditionˉabove);
+    State = X64.X64ˉemit(State, Compareˉidentityˉwindows);
+    State = X64.X64ˉemitˉu32(State, 49151u32);
+    State = X64.X64ˉemit(State, Compareˉidentityˉwindowˉends);
+    return Emitˉconditionˉplaceholder(State, Conditionˉnotˉequal);
+}
+
+export fn X64ˉprocessˉinitˉextentˉallocationˉisˉvalid() -> bool {
+    let State: X64.X64ˉemission = Buildˉinitˉextentˉallocation();
+    return State.Status == X64.X64ˉemissionˉstatus.Ready &&
+        Bytesˉlength(State.Code) == 99u32;
+}
+
+export fn X64ˉprocessˉinitˉextentˉallocationˉbytes() -> bytes {
+    let State: X64.X64ˉemission = Buildˉinitˉextentˉallocation();
+    return State.Code;
+}
+
+export fn X64ˉprocessˉinitˉextentˉfixtureˉoffset() -> u32 { return 1872u32; }
+export fn X64ˉprocessˉinitˉextentˉfixtureˉend() -> u32 { return 1971u32; }
+export fn X64ˉprocessˉinitˉextentˉallocationˉcallˉfield() -> u32 { return 24u32; }
+export fn X64ˉprocessˉinitˉextentˉallocationˉsymbolˉindex() -> u32 { return 11u32; }
+export fn X64ˉprocessˉinitˉextentˉrelocationˉaddend() -> i32 { return -4; }
+
+export fn X64ˉprocessˉinitˉextentˉfailureˉfields() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(33u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(49u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(68u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(95u32));
+}
+
+export fn X64ˉprocessˉinitˉextentˉfailureˉdisplacements() -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(31917u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(31901u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(31882u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(31855u32));
+}

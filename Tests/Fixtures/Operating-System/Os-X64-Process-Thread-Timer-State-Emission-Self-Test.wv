@@ -1,0 +1,28 @@
+module Osˉx64ˉprocessˉthreadˉtimerˉstateˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉthreadˉtimerˉstateˉemission as State;
+
+export fn Main() -> i32 {
+    let Code: bytes = State.X64ˉprocessˉthreadˉtimerˉstateˉbytes();
+    if Bytesˉlength(Code) != 790u32 ||
+        State.X64ˉprocessˉthreadˉtimerˉstateˉfixtureˉoffset() != 12083u32 ||
+        State.X64ˉprocessˉthreadˉtimerˉstateˉfixtureˉend() != 12873u32 {
+        return 1;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 790u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 34476u32 || Hashˉone != 27192u32 ||
+        Hashˉtwo != 55587u32 || Hashˉthree != 29619u32 { return 2; }
+    return 73;
+}

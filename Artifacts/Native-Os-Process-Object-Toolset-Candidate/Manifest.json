@@ -1,14 +1,14 @@
 {
   "format": "windvale-native-os-process-object-toolset-candidate-1",
   "status": "candidate",
-  "sourceDecision": "0567",
-  "parentCommit": "3bfc065d518bd6a2cd4d45ee28c33f7e37ab8b1a",
+  "sourceDecision": "0582",
+  "parentCommit": "01ba10a94e95c3aedd1f09506e6904e9b855f1a0",
   "hostedProfile": 1,
   "qualification": "pending",
   "architectureFixture": {
     "name": "normal-x64-process.bin",
     "bytes": 46678,
-    "sha256": "993827337a101660107742e4f41de5d2df849517d4aa16bb919d708531592bfc"
+    "sha256": "112dd0cb06de269e069436720876829313fb0a20546d1d7b38ea336fea26e6fd"
   },
   "tools": [
     {
@@ -54,19 +54,19 @@
       "name": "process-object",
       "project": "Windvale-Os-Process-Object-Tool.wvproj",
       "module": "Process-Object-Tool.wvb",
-      "moduleBytes": 14107,
-      "moduleSha256": "47704358879d5eb88b4e829a277c6797035ec81633a1a20089c9b38354aa01dd",
+      "moduleBytes": 15148,
+      "moduleSha256": "6cd4e39796cc477b895b356863914c614e1dd1b504a918ea3c2e3325883fe02a",
       "windows": "windows-x64-process-object.exe",
-      "windowsBytes": 181248,
-      "windowsSha256": "69358a8422b5f79a189c60e06061cd1a95a1308f1ab887a329afc319ad2c80e9",
+      "windowsBytes": 190464,
+      "windowsSha256": "9ddd81e3d2bf885c045a01921b3e48875050ab912d599f57462a9c3a9b239af2",
       "linux": "linux-x64-process-object.elf",
-      "linuxBytes": 180224,
-      "linuxSha256": "8ff023ada9e6b903be5a0b06ad4335bba9737eb8dc65aaf611d67a51e24555f9"
+      "linuxBytes": 192512,
+      "linuxSha256": "518e08f39231835655e40cc411e6ff2e70d973ba669db61e9032ad8206b17d05"
     }
   ],
   "output": {
     "name": "05-process.wvo",
-    "bytes": 512978,
-    "sha256": "e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a"
+    "bytes": 951394,
+    "sha256": "884152027e10221591f1fc79bbffd8875c14d507e5652719ede4d67dea22624e"
   }
 }

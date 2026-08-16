@@ -1,0 +1,77 @@
+module Osˉx64ˉcodeˉemissionˉselfˉtest profile portable;
+
+import X64ˉcodeˉemission as X64;
+
+export fn Main() -> i32 {
+    var State: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    State = X64.X64ˉemit(State, Bytesˉfromˉu8(144u8));
+    State = X64.X64ˉmark(State, 1u32);
+    State = X64.X64ˉcall(State, 2u32);
+    State = X64.X64ˉjumpˉif(State, 132u32, 1u32);
+    State = X64.X64ˉalign(State, 16u32);
+    State = X64.X64ˉmark(State, 2u32);
+    State = X64.X64ˉloadˉripˉrelativeˉrdx(State, 1u32);
+    State = X64.X64ˉbuild(State);
+    if State.Status != X64.X64ˉemissionˉstatus.Ready ||
+        Bytesˉlength(State.Code) != 23u32 { return 1; }
+    if Bytesˉreadˉu8(State.Code, 0u32) != 144u8 ||
+        Bytesˉreadˉu8(State.Code, 1u32) != 232u8 ||
+        Bytesˉreadˉu32ˉlittle(State.Code, 2u32) != 10u32 ||
+        Bytesˉreadˉu8(State.Code, 6u32) != 15u8 ||
+        Bytesˉreadˉu8(State.Code, 7u32) != 132u8 ||
+        Bytesˉreadˉu32ˉlittle(State.Code, 8u32) != 4294967285u32 {
+        return 2;
+    }
+    if Bytesˉreadˉu8(State.Code, 12u32) != 144u8 ||
+        Bytesˉreadˉu8(State.Code, 15u32) != 144u8 ||
+        Bytesˉreadˉu8(State.Code, 16u32) != 72u8 ||
+        Bytesˉreadˉu8(State.Code, 17u32) != 141u8 ||
+        Bytesˉreadˉu8(State.Code, 18u32) != 21u8 ||
+        Bytesˉreadˉu32ˉlittle(State.Code, 19u32) != 4294967274u32 {
+        return 3;
+    }
+
+    var Placeholder: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    Placeholder = X64.X64ˉemitˉu32(Placeholder, 287454020u32);
+    Placeholder = X64.X64ˉemitˉu64(
+        Placeholder, 72623859790382856u64
+    );
+    let Callˉoffset: u32 = Bytesˉlength(Placeholder.Code) + 1u32;
+    Placeholder = X64.X64ˉemitˉcallˉplaceholder(Placeholder);
+    let Jumpˉoffset: u32 = Bytesˉlength(Placeholder.Code) + 1u32;
+    Placeholder = X64.X64ˉemitˉjumpˉplaceholder(Placeholder);
+    if Callˉoffset != 13u32 || Jumpˉoffset != 18u32 ||
+        Bytesˉlength(Placeholder.Code) != 22u32 ||
+        Bytesˉreadˉu32ˉlittle(Placeholder.Code, 0u32) != 287454020u32 ||
+        Bytesˉreadˉu8(Placeholder.Code, 12u32) != 232u8 ||
+        Bytesˉreadˉu8(Placeholder.Code, 17u32) != 233u8 { return 4; }
+
+    var Duplicate: X64.X64ˉemission = X64.X64ˉemissionˉempty();
+    Duplicate = X64.X64ˉmark(Duplicate, 1u32);
+    Duplicate = X64.X64ˉmark(Duplicate, 1u32);
+    if Duplicate.Status != X64.X64ˉemissionˉstatus.Duplicateˉlabel {
+        return 5;
+    }
+    let Missing: X64.X64ˉemission = X64.X64ˉbuild(
+        X64.X64ˉjump(X64.X64ˉemissionˉempty(), 9u32)
+    );
+    if Missing.Status != X64.X64ˉemissionˉstatus.Undefinedˉlabel {
+        return 6;
+    }
+    let Invalidˉlabel: X64.X64ˉemission =
+        X64.X64ˉmark(X64.X64ˉemissionˉempty(), 0u32);
+    if Invalidˉlabel.Status != X64.X64ˉemissionˉstatus.Invalidˉlabel {
+        return 7;
+    }
+    let Invalidˉcondition: X64.X64ˉemission = X64.X64ˉjumpˉif(
+        X64.X64ˉemissionˉempty(), 127u32, 1u32
+    );
+    if Invalidˉcondition.Status !=
+        X64.X64ˉemissionˉstatus.Invalidˉcondition { return 8; }
+    let Invalidˉalignment: X64.X64ˉemission = X64.X64ˉalign(
+        X64.X64ˉemissionˉempty(), 3u32
+    );
+    if Invalidˉalignment.Status !=
+        X64.X64ˉemissionˉstatus.Invalidˉalignment { return 9; }
+    return 50;
+}

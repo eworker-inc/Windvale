@@ -29,21 +29,21 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Process-Policy.wvproj" ^
     "%Work%\Process-Policy.wvb" >"%Work%\Build.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process-Policy.wvb" 33786 26a540bc1435114608aa597545c805e0786c9593b6e8ba19e8919b9f7718b0c1
+call :verify "%Work%\Process-Policy.wvb" 42027 22e40a95100c635a2bf8980ee6f81f5660e3ac6bf2251a2355e5c9b6106e3d55
 if errorlevel 1 goto :failure
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
     "%Work%\Process-Policy.wvb" "%Work%\Process-Policy-Main.wvo" ^
     >"%Work%\Lower.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process-Policy-Main.wvo" 583390 dcee27f6384933ef07cf99eefd5f3355e25edbf690c332c7b201a397a0031d95
+call :verify "%Work%\Process-Policy-Main.wvo" 699368 46844c80221180e039cfb9d45ed2493486d1b026d9712517f64025db202100a9
 if errorlevel 1 goto :failure
 
 call "%RepositoryRoot%\Tools\Native\Rename-Wvo-Export.cmd" ^
     "%Work%\Process-Policy-Main.wvo" Main Windvale_kernel_process_policy ^
     "%Work%\Process-Policy.wvo" >"%Work%\Rename.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process-Policy.wvo" 583416 4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428
+call :verify "%Work%\Process-Policy.wvo" 699394 dea015f8cafac002eddb9383691e2de10cbdcd0c0a589a88d88fbef95241f5b5
 if errorlevel 1 goto :failure
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Work%\Process-Policy.wvo" >nul 2>&1
 if errorlevel 1 goto :failure

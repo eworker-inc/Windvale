@@ -11,12 +11,13 @@ symbol export function Directory_platform_read in .text
 section code .text align 16
 define Directory_platform_open
 push r12
+subtract_i32 rsp 144
 move r12 r8
 
-# openat(AT_FDCWD, fixed-path, O_RDONLY|O_CLOEXEC, 0)
+# openat(AT_FDCWD, fixed-path, O_RDONLY|O_CLOEXEC|O_NOFOLLOW, 0)
 move_i32 edi -100
 load_address rsi Directory_linux_path
-move_u32 edx 524288
+move_u32 edx 655360
 xor r10d r10d
 move_u32 eax 257
 syscall
@@ -24,9 +25,22 @@ compare_i32 rax -4095
 branch above_equal Directory_linux_open_failure
 store_memory_u64 r12 none 1 0 rax
 
+# fstat(fd, scratch) rejects every non-regular result after the no-follow open.
+# Linux x86-64 stat mode is the u32 at offset 24; S_IFMT must equal S_IFREG.
+move edi eax
+move rsi rsp
+move_u32 eax 5
+syscall
+test rax rax
+branch not_equal Directory_linux_open_close_failure
+load_memory_u32 ecx rsp none 1 24
+and_i32 ecx 61440
+compare_i32 ecx 32768
+branch not_equal Directory_linux_open_close_failure
+
 # lseek(fd, 0, SEEK_END) obtains the immutable snapshot length. WVDR 1 uses
 # u32 lengths, so larger objects fail before source entry.
-move edi eax
+load_memory_u64 rdi r12 none 1 0
 xor esi esi
 move_u32 edx 2
 move_u32 eax 8
@@ -38,6 +52,7 @@ compare rax rcx
 branch above Directory_linux_open_close_failure
 store_memory_u64 r12 none 1 8 rax
 xor eax eax
+add_i32 rsp 144
 pop r12
 return
 
@@ -47,6 +62,7 @@ move_u32 eax 3
 syscall
 label Directory_linux_open_failure
 move_u32 eax 1
+add_i32 rsp 144
 pop r12
 return
 end define

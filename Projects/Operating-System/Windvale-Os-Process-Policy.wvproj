@@ -1,4 +1,6 @@
 windvale-project 2
 root "Operating-System/Kernel/Process-Foundation.wv"
+source "Operating-System/Kernel/Application-Launch-Policy.wv"
+source "Operating-System/Kernel/Application-Machine-Construction-Policy.wv"
 source "Operating-System/Kernel/Resource-Domain-Policy.wv"
 emit wvb

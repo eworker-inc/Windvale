@@ -1,0 +1,36 @@
+module Osˉx64ˉprocessˉpagingˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉpagingˉemission as Pagingˉemission;
+
+export fn Main() -> i32 {
+    if !Pagingˉemission.X64ˉprocessˉinitˉpagingˉisˉvalid() { return 1; }
+    let Code: bytes = Pagingˉemission.X64ˉprocessˉinitˉpagingˉbytes();
+    if Bytesˉlength(Code) != 516u32 ||
+        Pagingˉemission.X64ˉprocessˉinitˉpagingˉfixtureˉoffset() != 2433u32 ||
+        Pagingˉemission.X64ˉprocessˉinitˉpagingˉfixtureˉend() != 2949u32 {
+        return 2;
+    }
+    if Bytesˉreadˉu32ˉlittle(Code, 155u32) != 4294967275u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 171u32) != 11u32 {
+        return 3;
+    }
+
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 516u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 36241u32 || Hashˉone != 17559u32 ||
+        Hashˉtwo != 64511u32 || Hashˉthree != 45742u32 {
+        return 4;
+    }
+    return 56;
+}

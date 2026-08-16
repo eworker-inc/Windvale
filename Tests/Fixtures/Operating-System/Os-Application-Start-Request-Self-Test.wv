@@ -1,0 +1,51 @@
+module Osˉapplicationˉstartˉrequestˉselfˉtest profile portable;
+
+import Applicationˉlaunchˉpolicy as Launch;
+import Applicationˉstartˉrequest as Start;
+
+data Validˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Shortˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0];
+data Wrongˉmagicˉrequest: bytes = [88, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Wrongˉversionˉrequest: bytes = [87, 86, 83, 82, 2, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Reservedˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Serviceˉkindˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 2, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Zeroˉcallerˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Wrongˉpagesˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 123, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Wrongˉbindingsˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Staleˉexecutableˉrequest: bytes = [87, 86, 83, 82, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 40, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+export fn Main() -> i32 {
+    if Start.Applicationˉstartˉrequestˉstatus(Validˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Valid { return 1; }
+    let Accepted: Launch.Applicationˉlaunchˉtransition =
+        Start.Applicationˉstartˉrequestˉadmit(Validˉrequest);
+    if Accepted.Status != Launch.Applicationˉlaunchˉstatus.Success ||
+        Accepted.State != Launch.Applicationˉlaunchˉstate.Planned ||
+        Accepted.Planˉreference != 65537u32 { return 2; }
+    if Start.Applicationˉstartˉrequestˉstatus(Shortˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉsize { return 3; }
+    if Start.Applicationˉstartˉrequestˉstatus(Wrongˉmagicˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉmagic { return 4; }
+    if Start.Applicationˉstartˉrequestˉstatus(Wrongˉversionˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉversion { return 5; }
+    if Start.Applicationˉstartˉrequestˉstatus(Reservedˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉheader { return 6; }
+    if Start.Applicationˉstartˉrequestˉstatus(Serviceˉkindˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉkind { return 7; }
+    if Start.Applicationˉstartˉrequestˉstatus(Zeroˉcallerˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉreference { return 8; }
+    if Start.Applicationˉstartˉrequestˉstatus(Wrongˉpagesˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉresource { return 9; }
+    if Start.Applicationˉstartˉrequestˉstatus(Wrongˉbindingsˉrequest) !=
+        Start.Applicationˉstartˉrequestˉstatus.Invalidˉbinding { return 10; }
+    let Stale: Launch.Applicationˉlaunchˉtransition =
+        Start.Applicationˉstartˉrequestˉadmit(Staleˉexecutableˉrequest);
+    if Stale.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉexecutable ||
+        Stale.State != Launch.Applicationˉlaunchˉstate.Rejected { return 11; }
+    let Malformed: Launch.Applicationˉlaunchˉtransition =
+        Start.Applicationˉstartˉrequestˉadmit(Shortˉrequest);
+    if Malformed.Status != Launch.Applicationˉlaunchˉstatus.Invalidˉplan ||
+        Malformed.State != Launch.Applicationˉlaunchˉstate.Rejected ||
+        Malformed.Planˉreference != 0u32 { return 12; }
+    return 44;
+}

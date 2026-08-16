@@ -77,7 +77,9 @@ export fn Buildˉfirstˉsections(
 export fn Buildˉfinalˉsections(
     Store: bytes,
     Snapshot: bytes,
-    Directory: bytes
+    Directory: bytes,
+    Filesystem: bytes,
+    Network: bytes
 ) -> bytes {
     var Result: bytes = Encodeˉsection(
         ".rodata.dbudget", 2u8, 4u32, 4u32,
@@ -89,8 +91,14 @@ export fn Buildˉfinalˉsections(
     Result = Append(Result, Encodeˉsection(
         ".rodata.fwvds", 2u8, 16u32, 3184u32, Snapshot
     ));
-    return Append(Result, Encodeˉsection(
+    Result = Append(Result, Encodeˉsection(
         ".rodata.gdirectory", 2u8, 16u32, 3911u32, Directory
+    ));
+    Result = Append(Result, Encodeˉsection(
+        ".rodata.hfilesystem", 2u8, 16u32, 195657u32, Filesystem
+    ));
+    return Append(Result, Encodeˉsection(
+        ".rodata.inetwork", 2u8, 16u32, 242571u32, Network
     ));
 }
 
@@ -116,7 +124,12 @@ export fn Buildˉsymbols() -> bytes {
     Result = Append(Result, Dataˉsymbol(
         "Windvale_service_directory_user_image", 7u32, 3911u32
     ));
-
+    Result = Append(Result, Dataˉsymbol(
+        "Windvale_service_filesystem_user_image", 8u32, 195657u32
+    ));
+    Result = Append(Result, Dataˉsymbol(
+        "Windvale_service_network_user_image", 9u32, 242571u32
+    ));
     Result = Append(Result, Encodeˉsymbol(
         "Windvale_kernel_x64_process_enter",
         2u8, 1u8, 0u32, 0u32, 33851u32

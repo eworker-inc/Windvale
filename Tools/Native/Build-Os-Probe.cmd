@@ -11,19 +11,25 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=3edd328fb014fe51708513594672a72bb245617b4950275f1b1b04b566c4cd06"
+    set "EfiDigest=5c2625210ce9bae91def596c01881e8bad35ce9d6a0e5532bfa860ebc8533bcb"
+    set "EfiBytes=1691136"
+    set "CodeTailOffset=785968"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=7a0a2bd8e6f05142134fff093cb1943464c8e1523c39e11be3f5f3b8b420309e"
+    set "EfiDigest=a0c361386e8ce0aa1d8d73b2ca85f26768f2335992e993a869136db00d0daca0"
+    set "EfiBytes=1691136"
+    set "CodeTailOffset=785984"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=6850a219770d38fc4610fd88ec735c9e06aabcf163d76c5aac9b8d2f750fdda2"
+    set "EfiDigest=7a446760851890f26becb2c00e7e76f016e95f02d30b5a4ecef78d3b692e1afd"
+    set "EfiBytes=1691136"
+    set "CodeTailOffset=785984"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -110,13 +116,13 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-policy"
 cmd /d /c call "%PolicyProducer%" "%Work%\04-process-policy.wvo" >"%Work%\04.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\04-process-policy.wvo" 583416 4d3ffefc6be3c4edb48f1032415d96987bbd62899cdadd1fb4f0dc91ca319428
+call :verify "%Work%\04-process-policy.wvo" 699394 dea015f8cafac002eddb9383691e2de10cbdcd0c0a589a88d88fbef95241f5b5
 if errorlevel 1 goto :failure
 
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 512978 e9e77ec2550f7e6c8e853a622f0f34a6f932c7c0ed73022d2bca57f1922f239a
+call :verify "%Work%\05-process.wvo" 951394 884152027e10221591f1fc79bbffd8875c14d507e5652719ede4d67dea22624e
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"
@@ -188,18 +194,20 @@ cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
 if errorlevel 1 goto :failure
 findstr /c:"entry name=Windvale_boot_probe address=0" "%Work%\Link.map" >nul
 if errorlevel 1 goto :failure
+findstr /c:"name=.text.support image-offset=%CodeTailOffset% address=%CodeTailOffset% memory-bytes=23 data-bytes=23 alignment=16" "%Work%\Link.map" >nul
+if errorlevel 1 goto :failure
 
 set "FailureStep=package"
 cmd /d /c call "%Packager%" "%Work%\Probe40.bin" 0 "%Work%\Probe40.efi" >"%Work%\Package.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Probe40.efi" 1137152 %EfiDigest%
+call :verify "%Work%\Probe40.efi" %EfiBytes% %EfiDigest%
 if errorlevel 1 goto :failure
 
 move /y "%Work%\Probe40.efi" "%Output%" >nul
 if errorlevel 1 goto :failure
 echo windvale-os-probe-native-build 40
 echo scenario=%Scenario%
-echo efi-bytes=1137152
+echo efi-bytes=%EfiBytes%
 echo efi-sha256=%EfiDigest%
 echo output=%Output%
 if exist "%Work%" rmdir /s /q "%Work%"
