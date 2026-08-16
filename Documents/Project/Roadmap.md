@@ -613,8 +613,10 @@ provenance, revocation, and consensus boundaries are named.
   then reach byte 12,082; three private thread records plus bounded timer state
   reach byte 12,872. Timer activation and rollback reach byte 12,997, and the
   guarded provider user-context transfer reaches byte 13,168, and checked
-  provider-return/init transfer reaches byte 13,447. Remaining client transfer,
-  syscall/exception handler bodies, teardown, and live
+  provider-return/init transfer reaches byte 13,447. Checked init return and
+  generation-one program-resource validation now reach byte 13,786. Remaining
+  budget/store/directory validation, client transfer, syscall/exception handler
+  bodies, teardown, and live
   QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

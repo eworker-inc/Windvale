@@ -157,6 +157,11 @@ On provider return, the machine validates the provider thread and process,
 selects only the admitted init thread, revalidates its page table, binds its GS
 and continuation state, and performs the next `sysretq`, advancing ownership
 through byte 13,447.
+When init returns, the following transaction requires the admitted init thread
+and process states, then reacquires and validates the generation-one client
+program resource, its exact geometry and rights, its owner generation, and its
+private page-table linkage. Any mismatch reaches the common fail-closed boundary
+before client activation, advancing ownership through byte 13,786.
 
 The first restart policies are deliberately small:
 
