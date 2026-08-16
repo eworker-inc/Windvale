@@ -1586,6 +1586,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'focused database tree-leaf operations owner'
+        Paths = @(
+            'Libraries/Database/Tree-Leaf-Scan.wv',
+            'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
+            'Specifications/Windvale-Database-Tree-Leaf-Operations.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'tree-node'
+    },
+    @{
         Name = 'focused database lifecycle owner'
         Paths = @('Libraries/Platform/Database/Durable-Database-Lifecycle.wv')
         Suites = @('database-storage', 'libraries')
@@ -1722,6 +1735,7 @@ $NativeCases = @(
             'Libraries/Database/Depth-Two-Upsert.wv',
             'Libraries/Database/Tree-Path-Upsert.wv',
             'Libraries/Database/Tree-Node.wv',
+            'Libraries/Database/Tree-Leaf-Scan.wv',
             'Libraries/Database/Logical-Record.wv',
             'Libraries/Database/Logical-Record-Write.wv',
             'Libraries/Database/Schema-Definition.wv',
@@ -1776,6 +1790,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Writer-Self-Test.wv',
             'Tests/Fixtures/Database/Native-Hosted-Durable-Logical-Tree-Get-Self-Test.wv',
             'Specifications/Windvale-Database-Tree-Reading-And-Root-Split.md',
+            'Specifications/Windvale-Database-Tree-Leaf-Operations.md',
             'Specifications/Windvale-Database-Logical-Records.md',
             'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md',
             'Specifications/Windvale-Database-Query-Ir.md',
@@ -1813,6 +1828,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Depth-Two-Upsert.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Tree-Path-Upsert.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Tree-Leaf-Scan.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',

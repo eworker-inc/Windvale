@@ -74,6 +74,17 @@ foreach ($TargetEntry in $DatabaseDevelopmentTargetProjects.GetEnumerator()) {
         $null = $DatabaseDevelopmentTargetsByPath[$TargetPath].Add($TargetEntry.Key)
     }
 }
+foreach ($TreeLeafProject in @(
+    'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Tree-Leaf-Scan.wvproj'
+)) {
+    if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TreeLeafProject)) {
+        $DatabaseDevelopmentTargetsByPath[$TreeLeafProject] =
+            [System.Collections.Generic.HashSet[string]]::new(
+                [StringComparer]::Ordinal)
+    }
+    $null = $DatabaseDevelopmentTargetsByPath[$TreeLeafProject].Add('tree-node')
+}
 $HostLocalGetProject =
     'Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj'
 $HostLocalGetAbsolute = Join-Path $RepositoryRoot $HostLocalGetProject
@@ -178,6 +189,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Local-Service.md' = @('local-service', 'host-local-service')
     'Specifications/Windvale-Database-Hosted-Local-Service.md' = @('host-local-service')
     'Specifications/Windvale-Database-Tree-Node.md' = @('tree-node')
+    'Specifications/Windvale-Database-Tree-Leaf-Operations.md' = @('tree-node')
     'Specifications/Windvale-Database-Depth-Two-Upsert.md' = @('depth-two')
     'Specifications/Windvale-Database-Depth-Three-Root-Growth.md' = @('depth-three')
     'Specifications/Windvale-Database-Depth-Three-Upsert.md' = @('depth-three-upsert')
@@ -188,6 +200,8 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Hosted-Tree-Writer.md' = @('host-tree-writer')
 }
 $DatabaseDevelopmentProjects = @(
+    'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Tree-Leaf-Scan.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Collection-Catalog.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
@@ -282,6 +296,7 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Json-Protocol.md',
     'Specifications/Windvale-Database-Local-Service.md',
     'Specifications/Windvale-Database-Tree-Node.md',
+    'Specifications/Windvale-Database-Tree-Leaf-Operations.md',
     'Specifications/Windvale-Database-Depth-Two-Upsert.md',
     'Specifications/Windvale-Database-Depth-Three-Root-Growth.md',
     'Specifications/Windvale-Database-Depth-Three-Upsert.md',
@@ -1126,6 +1141,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Depth-Three-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Leaf-Scan', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
             $Path.Contains('Schema-Definition', [StringComparison]::Ordinal) -or
             $Path.Contains('Typed-Row', [StringComparison]::Ordinal) -or
@@ -1307,6 +1323,8 @@ foreach ($Path in $Paths) {
             $Path.Contains('Depth-Three-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Path-Upsert', [StringComparison]::Ordinal) -or
             $Path.Contains('Tree-Node', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Leaf-Scan', [StringComparison]::Ordinal) -or
+            $Path.Contains('Tree-Leaf-Operations', [StringComparison]::Ordinal) -or
             $Path.Contains('Logical-Record', [StringComparison]::Ordinal) -or
             $Path.Contains('Schema-Definition', [StringComparison]::Ordinal) -or
             $Path.Contains('Typed-Row', [StringComparison]::Ordinal) -or

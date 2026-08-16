@@ -1,6 +1,7 @@
 module Databaseˉtreeˉnodeˉselfˉtest profile portable;
 
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
+import Windvaleˉdatabaseˉtreeˉleafˉscan as Scan;
 
 const NO_PAGE: u64 = 18446744073709551615u64;
 
@@ -213,6 +214,230 @@ fn Leafˉoperations() -> i32 {
         );
     if !Bytesˉequal(Replacement.Bytes, Deterministic.Bytes) {
         return 5;
+    }
+    return 0;
+}
+
+fn Leafˉdelete() -> i32 {
+    let Bytes: bytes = Validˉleafˉbytes();
+    let Missing: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Key(4u8), 3968u32);
+    if Missing.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Missing.Found || Missing.Entryˉcount != 3u32 ||
+        !Bytesˉequal(Missing.Bytes, Bytes) {
+        return 1;
+    }
+    let Middle: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Key(2u8), 3968u32);
+    if Middle.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        !Middle.Found || Middle.Entryˉcount != 2u32 {
+        return 2;
+    }
+    let Removed: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Middle.Bytes, Key(2u8));
+    let Retainedˉfirst: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Middle.Bytes, Key(1u8));
+    let Retainedˉlast: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Middle.Bytes, Key(3u8));
+    if Removed.Found || !Retainedˉfirst.Found ||
+        !Bytesˉequal(Retainedˉfirst.Value, Value(10)) ||
+        !Retainedˉlast.Found || Bytesˉlength(Retainedˉlast.Value) != 0u32 {
+        return 3;
+    }
+    let Repeated: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Key(2u8), 3968u32);
+    if !Bytesˉequal(Middle.Bytes, Repeated.Bytes) { return 4; }
+    let First: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Middle.Bytes, Key(1u8), 3968u32);
+    let Last: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(First.Bytes, Key(3u8), 3968u32);
+    let Emptyˉnode: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Last.Bytes);
+    if !First.Found || First.Entryˉcount != 1u32 || !Last.Found ||
+        Last.Entryˉcount != 0u32 || Bytesˉlength(Last.Bytes) != 32u32 ||
+        Emptyˉnode.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Emptyˉnode.Entryˉcount != 0u32 {
+        return 5;
+    }
+    let Emptyˉroot: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(
+            Emptyˉbytes(), Key(1u8), 3968u32);
+    if Emptyˉroot.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Emptyˉroot.Found || Emptyˉroot.Entryˉcount != 0u32 ||
+        Bytesˉlength(Emptyˉroot.Bytes) != 0u32 {
+        return 6;
+    }
+    let Badˉkey: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Emptyˉbytes(), 3968u32);
+    let Badˉmaximum: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Key(1u8), 31u32);
+    let Tooˉsmall: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Key(1u8), 60u32);
+    let Badˉkind: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Branchˉbytes(), Key(1u8), 3968u32);
+    let Malformed: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(
+            Withˉu32(Bytes, 0u32, 0u32), Key(1u8), 3968u32);
+    if Badˉkey.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength ||
+        Badˉmaximum.Error !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉmaximumˉpayload ||
+        Tooˉsmall.Error != Tree.Databaseˉtreeˉnodeˉerror.Full ||
+        Badˉkind.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind ||
+        Malformed.Error != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉmagic {
+        return 7;
+    }
+    return 0;
+}
+
+fn Leafˉscan() -> i32 {
+    let Bytes: bytes = Validˉleafˉbytes();
+    let All: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes,
+            false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false,
+            500u32
+        );
+    if All.Error != Scan.Databaseˉtreeˉleafˉscanˉerror.Valid ||
+        All.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        All.Count != 3u32 || All.Examined != 3u32 || All.Hasˉmore ||
+        Bytesˉlength(All.Entries) != 35u32 ||
+        !Bytesˉequal(All.Lastˉkey, Key(3u8)) ||
+        Bytesˉreadˉu8(All.Entries, 8u32) != 1u8 {
+        return 1;
+    }
+    let Bounded: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes,
+            true, Key(1u8), false,
+            true, Key(3u8), true,
+            500u32
+        );
+    if Bounded.Error != Scan.Databaseˉtreeˉleafˉscanˉerror.Valid ||
+        Bounded.Count != 2u32 || Bounded.Hasˉmore ||
+        Bytesˉreadˉu8(Bounded.Entries, 8u32) != 2u8 ||
+        !Bytesˉequal(Bounded.Lastˉkey, Key(3u8)) {
+        return 2;
+    }
+    let Equal: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes,
+            true, Key(2u8), true,
+            true, Key(2u8), true,
+            1u32
+        );
+    let Emptyˉequal: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes,
+            true, Key(2u8), false,
+            true, Key(2u8), true,
+            1u32
+        );
+    if Equal.Count != 1u32 || !Bytesˉequal(Equal.Lastˉkey, Key(2u8)) ||
+        Emptyˉequal.Count != 0u32 || Emptyˉequal.Hasˉmore {
+        return 3;
+    }
+    let Limited: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes,
+            false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false,
+            2u32
+        );
+    let Resumed: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes,
+            true, Limited.Lastˉkey, false,
+            false, Emptyˉbytes(), false,
+            2u32
+        );
+    if Limited.Count != 2u32 || Limited.Examined != 3u32 ||
+        !Limited.Hasˉmore || !Bytesˉequal(Limited.Lastˉkey, Key(2u8)) ||
+        Resumed.Count != 1u32 || Resumed.Hasˉmore ||
+        !Bytesˉequal(Resumed.Lastˉkey, Key(3u8)) {
+        return 4;
+    }
+    let Emptyˉroot: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Emptyˉbytes(),
+            false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false,
+            1u32
+        );
+    let Emptyˉfirst: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(Bytes, Key(1u8), 3968u32);
+    let Emptyˉsecond: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(
+            Emptyˉfirst.Bytes, Key(2u8), 3968u32);
+    let Emptyˉthird: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+        Tree.Databaseˉtreeˉleafˉdelete(
+            Emptyˉsecond.Bytes, Key(3u8), 3968u32);
+    let Emptyˉleaf: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Emptyˉthird.Bytes,
+            false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false,
+            1u32
+        );
+    if Emptyˉroot.Count != 0u32 || Emptyˉroot.Examined != 0u32 ||
+        Emptyˉleaf.Count != 0u32 || Emptyˉleaf.Examined != 0u32 {
+        return 5;
+    }
+    let Invalidˉlimit: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes, false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false, 0u32);
+    let Excessiveˉlimit: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes, false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false, 501u32);
+    let Invalidˉstart: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes, false, Key(1u8), false,
+            false, Emptyˉbytes(), false, 1u32);
+    let Emptyˉstart: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes, true, Emptyˉbytes(), true,
+            false, Emptyˉbytes(), false, 1u32);
+    let Invalidˉend: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes, false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), true, 1u32);
+    let Invalidˉrange: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Bytes, true, Key(3u8), true,
+            true, Key(1u8), true, 1u32);
+    let Invalidˉnode: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Branchˉbytes(), false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false, 1u32);
+    let Malformedˉnode: Scan.Databaseˉtreeˉleafˉscanˉresult =
+        Scan.Databaseˉtreeˉleafˉscan(
+            Withˉu32(Bytes, 0u32, 0u32),
+            false, Emptyˉbytes(), false,
+            false, Emptyˉbytes(), false, 1u32);
+    if Invalidˉlimit.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉlimit ||
+        Excessiveˉlimit.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉlimit ||
+        Invalidˉstart.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉstart ||
+        Emptyˉstart.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉstart ||
+        Invalidˉend.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉend ||
+        Invalidˉrange.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Invalidˉrange ||
+        Invalidˉnode.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Nodeˉrejected ||
+        Invalidˉnode.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind {
+        return 6;
+    }
+    if Malformedˉnode.Error !=
+            Scan.Databaseˉtreeˉleafˉscanˉerror.Nodeˉrejected ||
+        Malformedˉnode.Nodeˉerror !=
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉmagic {
+        return 6;
     }
     return 0;
 }
@@ -514,5 +739,9 @@ export fn Main() -> i32 {
     if Limitˉresult != 0 { return 60 + Limitˉresult; }
     let Splitˉresult: i32 = Splitˉandˉroute();
     if Splitˉresult != 0 { return 70 + Splitˉresult; }
+    let Deleteˉresult: i32 = Leafˉdelete();
+    if Deleteˉresult != 0 { return 80 + Deleteˉresult; }
+    let Scanˉresult: i32 = Leafˉscan();
+    if Scanˉresult != 0 { return 90 + Scanˉresult; }
     return 0;
 }

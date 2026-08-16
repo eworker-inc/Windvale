@@ -1,0 +1,193 @@
+module Windvaleˉdatabaseˉtreeˉleafˉscan profile portable;
+
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TREE_SCAN_HEADER_BYTES: u32 = 32u32;
+const DATABASE_TREE_SCAN_MAXIMUM_KEY_BYTES: u32 = 4096u32;
+const DATABASE_TREE_SCAN_MAXIMUM_ROWS: u32 = 500u32;
+
+export enum Databaseˉtreeˉleafˉscanˉerror {
+    Valid = 0;
+    Invalidˉlimit = 1;
+    Invalidˉstart = 2;
+    Invalidˉend = 3;
+    Invalidˉrange = 4;
+    Nodeˉrejected = 5;
+}
+
+export record Databaseˉtreeˉleafˉscanˉresult {
+    Error: Databaseˉtreeˉleafˉscanˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Count: u32;
+    Examined: u32;
+    Hasˉmore: bool;
+    Entries: bytes;
+    Lastˉkey: bytes;
+}
+
+fn Databaseˉtreeˉscanˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtreeˉscanˉfailure(
+    Error: Databaseˉtreeˉleafˉscanˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtreeˉleafˉscanˉresult {
+    let Empty: bytes = Databaseˉtreeˉscanˉempty();
+    return Databaseˉtreeˉleafˉscanˉresult(
+        Error,
+        Nodeˉerror,
+        0u32,
+        0u32,
+        false,
+        Empty,
+        Empty
+    );
+}
+
+fn Databaseˉtreeˉscanˉkeyˉvalid(Input: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Input);
+    return Length > 0u32 && Length <= DATABASE_TREE_SCAN_MAXIMUM_KEY_BYTES;
+}
+
+export fn Databaseˉtreeˉleafˉscan(
+    Input: bytes,
+    Hasˉstart: bool,
+    Start: bytes,
+    Startˉinclusive: bool,
+    Hasˉend: bool,
+    End: bytes,
+    Endˉinclusive: bool,
+    Limit: u32
+) -> Databaseˉtreeˉleafˉscanˉresult {
+    if Limit == 0u32 || Limit > DATABASE_TREE_SCAN_MAXIMUM_ROWS {
+        return Databaseˉtreeˉscanˉfailure(
+            Databaseˉtreeˉleafˉscanˉerror.Invalidˉlimit,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Hasˉstart && !Databaseˉtreeˉscanˉkeyˉvalid(Start) ||
+        !Hasˉstart && (Bytesˉlength(Start) != 0u32 || Startˉinclusive) {
+        return Databaseˉtreeˉscanˉfailure(
+            Databaseˉtreeˉleafˉscanˉerror.Invalidˉstart,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Hasˉend && !Databaseˉtreeˉscanˉkeyˉvalid(End) ||
+        !Hasˉend && (Bytesˉlength(End) != 0u32 || Endˉinclusive) {
+        return Databaseˉtreeˉscanˉfailure(
+            Databaseˉtreeˉleafˉscanˉerror.Invalidˉend,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Hasˉstart && Hasˉend && Tree.Databaseˉtreeˉkeyˉcompare(
+            Start,
+            End
+        ) == Tree.Databaseˉtreeˉkeyˉorder.Greater {
+        return Databaseˉtreeˉscanˉfailure(
+            Databaseˉtreeˉleafˉscanˉerror.Invalidˉrange,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    if Bytesˉlength(Input) == 0u32 {
+        let Empty: bytes = Databaseˉtreeˉscanˉempty();
+        return Databaseˉtreeˉleafˉscanˉresult(
+            Databaseˉtreeˉleafˉscanˉerror.Valid,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid,
+            0u32,
+            0u32,
+            false,
+            Empty,
+            Empty
+        );
+    }
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Input);
+    if Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉtreeˉscanˉfailure(
+            Databaseˉtreeˉleafˉscanˉerror.Nodeˉrejected,
+            Node.Error
+        );
+    }
+    if Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf {
+        return Databaseˉtreeˉscanˉfailure(
+            Databaseˉtreeˉleafˉscanˉerror.Nodeˉrejected,
+            Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind
+        );
+    }
+
+    var Cursor: u32 = DATABASE_TREE_SCAN_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Count: u32 = 0u32;
+    var Examined: u32 = 0u32;
+    var Hasˉmore: bool = false;
+    var Selected: bool = false;
+    var Begin: u32 = DATABASE_TREE_SCAN_HEADER_BYTES;
+    var Selectedˉend: u32 = DATABASE_TREE_SCAN_HEADER_BYTES;
+    var Lastˉkey: bytes = Databaseˉtreeˉscanˉempty();
+    while Index < Node.Entryˉcount {
+        let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Cursor + 4u32
+        );
+        let Entryˉend: u32 = Cursor + 8u32 + Keyˉlength + Valueˉlength;
+        let Key: bytes = Bytesˉslice(Input, Cursor + 8u32, Keyˉlength);
+        Examined = Examined + 1u32;
+
+        var Afterˉstart: bool = true;
+        if Hasˉstart {
+            let Startˉorder: Tree.Databaseˉtreeˉkeyˉorder =
+                Tree.Databaseˉtreeˉkeyˉcompare(Key, Start);
+            if Startˉorder == Tree.Databaseˉtreeˉkeyˉorder.Less ||
+                Startˉorder == Tree.Databaseˉtreeˉkeyˉorder.Equal &&
+                    !Startˉinclusive {
+                Afterˉstart = false;
+            }
+        }
+        var Beforeˉend: bool = true;
+        if Hasˉend {
+            let Endˉorder: Tree.Databaseˉtreeˉkeyˉorder =
+                Tree.Databaseˉtreeˉkeyˉcompare(Key, End);
+            if Endˉorder == Tree.Databaseˉtreeˉkeyˉorder.Greater ||
+                Endˉorder == Tree.Databaseˉtreeˉkeyˉorder.Equal &&
+                    !Endˉinclusive {
+                Beforeˉend = false;
+            }
+        }
+        if Afterˉstart && !Beforeˉend {
+            Index = Node.Entryˉcount;
+        } else if Afterˉstart {
+            if Count == Limit {
+                Hasˉmore = true;
+                Index = Node.Entryˉcount;
+            } else {
+                if !Selected {
+                    Selected = true;
+                    Begin = Cursor;
+                }
+                Selectedˉend = Entryˉend;
+                Lastˉkey = Key;
+                Count = Count + 1u32;
+                Cursor = Entryˉend;
+                Index = Index + 1u32;
+            }
+        } else {
+            Cursor = Entryˉend;
+            Index = Index + 1u32;
+        }
+    }
+    var Entries: bytes = Databaseˉtreeˉscanˉempty();
+    if Selected {
+        Entries = Bytesˉslice(Input, Begin, Selectedˉend - Begin);
+    }
+    return Databaseˉtreeˉleafˉscanˉresult(
+        Databaseˉtreeˉleafˉscanˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        Count,
+        Examined,
+        Hasˉmore,
+        Entries,
+        Lastˉkey
+    );
+}

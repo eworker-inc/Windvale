@@ -103,6 +103,8 @@ selected database and other pages.
 Databaseˉtreeˉkeyˉcompare(Left, Right) -> Databaseˉtreeˉkeyˉorder
 Databaseˉtreeˉnodeˉdecode(Input) -> Databaseˉtreeˉnodeˉresult
 Databaseˉtreeˉleafˉlookup(Input, Key) -> Databaseˉtreeˉleafˉlookupˉresult
+Databaseˉtreeˉleafˉdelete(Input, Key, Maximum_payload)
+    -> Databaseˉtreeˉleafˉdeleteˉresult
 Databaseˉtreeˉleafˉupsert(Input, Key, Value, Maximum_payload)
     -> Databaseˉtreeˉleafˉupsertˉresult
 Databaseˉtreeˉleafˉsplitˉupsert(Input, Key, Value, Maximum_payload)
@@ -122,6 +124,8 @@ Databaseˉtreeˉbranchˉsplitˉpropagate(
 Databaseˉtreeˉleafˉrangeˉvalidate(
     Input, Has_lower, Lower, Has_upper, Upper
 ) -> Databaseˉtreeˉnodeˉerror
+Databaseˉtreeˉleafˉscan(..., Limit)
+    -> Databaseˉtreeˉleafˉscanˉresult
 ```
 
 All expected failures are typed. Decode rejects malformed headers, lengths,
@@ -223,7 +227,8 @@ execution.
 
 ## Next contracts
 
-The next tree milestone is updating an already depth-three generation and
-cascading a split from a non-root internal branch. Delete, merge, reclamation,
-pinned concurrent snapshots, catalog typing, SQL, and network service behavior
-remain later layers.
+Full-depth upsert is now handled by the bounded owned-path composition.
+Durable path deletion, cross-leaf cursors, reverse scans, merge, reclamation,
+pinned concurrent snapshots, and query execution remain later layers. Portable
+physical leaf deletion and bounded ascending leaf scanning are defined by
+[leaf operations](Windvale-Database-Tree-Leaf-Operations.md).

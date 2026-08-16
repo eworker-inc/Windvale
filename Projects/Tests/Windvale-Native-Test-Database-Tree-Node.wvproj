@@ -1,4 +1,5 @@
 windvale-project 2
 root "Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv"
+source "Libraries/Database/Tree-Leaf-Scan.wv"
 source "Libraries/Database/Tree-Node.wv"
 emit wvb

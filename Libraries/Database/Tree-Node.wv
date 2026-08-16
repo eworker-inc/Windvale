@@ -64,6 +64,13 @@ export record Databaseˉtreeˉleafˉupsertˉresult {
     Bytes: bytes;
 }
 
+export record Databaseˉtreeˉleafˉdeleteˉresult {
+    Error: Databaseˉtreeˉnodeˉerror;
+    Found: bool;
+    Entryˉcount: u32;
+    Bytes: bytes;
+}
+
 export record Databaseˉtreeˉbranchˉrouteˉresult {
     Error: Databaseˉtreeˉnodeˉerror;
     Child: u64;
@@ -127,6 +134,17 @@ fn Databaseˉtreeˉupsertˉfailure(
     Error: Databaseˉtreeˉnodeˉerror
 ) -> Databaseˉtreeˉleafˉupsertˉresult {
     return Databaseˉtreeˉleafˉupsertˉresult(
+        Error,
+        false,
+        0u32,
+        Databaseˉtreeˉempty()
+    );
+}
+
+fn Databaseˉtreeˉdeleteˉfailure(
+    Error: Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtreeˉleafˉdeleteˉresult {
+    return Databaseˉtreeˉleafˉdeleteˉresult(
         Error,
         false,
         0u32,
@@ -817,6 +835,118 @@ export fn Databaseˉtreeˉleafˉlookup(
         Databaseˉtreeˉnodeˉerror.Valid,
         false,
         Databaseˉtreeˉempty()
+    );
+}
+
+export fn Databaseˉtreeˉleafˉdelete(
+    Input: bytes,
+    Key: bytes,
+    Maximumˉpayload: u32
+) -> Databaseˉtreeˉleafˉdeleteˉresult {
+    if Maximumˉpayload < DATABASE_TREE_NODE_HEADER_BYTES ||
+        Maximumˉpayload > DATABASE_TREE_NODE_MAXIMUM_BYTES {
+        return Databaseˉtreeˉdeleteˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉmaximumˉpayload
+        );
+    }
+    let Keyˉlength: u32 = Bytesˉlength(Key);
+    if Keyˉlength == 0u32 ||
+        Keyˉlength > DATABASE_TREE_NODE_MAXIMUM_KEY_BYTES {
+        return Databaseˉtreeˉdeleteˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉkeyˉlength
+        );
+    }
+    if Bytesˉlength(Input) == 0u32 {
+        return Databaseˉtreeˉleafˉdeleteˉresult(
+            Databaseˉtreeˉnodeˉerror.Valid,
+            false,
+            0u32,
+            Input
+        );
+    }
+    let Node: Databaseˉtreeˉnodeˉresult =
+        Databaseˉtreeˉnodeˉdecode(Input);
+    if Node.Error != Databaseˉtreeˉnodeˉerror.Valid {
+        return Databaseˉtreeˉdeleteˉfailure(Node.Error);
+    }
+    if Node.Kind != Databaseˉtreeˉnodeˉkind.Leaf {
+        return Databaseˉtreeˉdeleteˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉkind
+        );
+    }
+    if Bytesˉlength(Input) > Maximumˉpayload {
+        return Databaseˉtreeˉdeleteˉfailure(
+            Databaseˉtreeˉnodeˉerror.Full
+        );
+    }
+
+    var Cursor: u32 = DATABASE_TREE_NODE_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Found: bool = false;
+    var Removeˉstart: u32 = Cursor;
+    var Removeˉend: u32 = Cursor;
+    while Index < Node.Entryˉcount {
+        let Candidateˉkeyˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Candidateˉvalueˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Candidateˉkey: bytes = Bytesˉslice(
+            Input,
+            Cursor + 8u32,
+            Candidateˉkeyˉlength
+        );
+        let Order: Databaseˉtreeˉkeyˉorder =
+            Databaseˉtreeˉkeyˉcompare(Key, Candidateˉkey);
+        if Order == Databaseˉtreeˉkeyˉorder.Equal {
+            Found = true;
+            Removeˉstart = Cursor;
+            Removeˉend = Cursor + 8u32 + Candidateˉkeyˉlength +
+                Candidateˉvalueˉlength;
+            Index = Node.Entryˉcount;
+        } else if Order == Databaseˉtreeˉkeyˉorder.Less {
+            Index = Node.Entryˉcount;
+        } else {
+            Cursor = Cursor + 8u32 + Candidateˉkeyˉlength +
+                Candidateˉvalueˉlength;
+            Index = Index + 1u32;
+        }
+    }
+    if !Found {
+        return Databaseˉtreeˉleafˉdeleteˉresult(
+            Databaseˉtreeˉnodeˉerror.Valid,
+            false,
+            Node.Entryˉcount,
+            Input
+        );
+    }
+    let Prefix: bytes = Bytesˉslice(
+        Input,
+        DATABASE_TREE_NODE_HEADER_BYTES,
+        Removeˉstart - DATABASE_TREE_NODE_HEADER_BYTES
+    );
+    let Suffix: bytes = Bytesˉslice(
+        Input,
+        Removeˉend,
+        Bytesˉlength(Input) - Removeˉend
+    );
+    let Resultˉbytes: bytes = Databaseˉtreeˉleafˉbytes(
+        Node.Entryˉcount - 1u32,
+        Bytesˉconcat(Prefix, Suffix)
+    );
+    let Validation: Databaseˉtreeˉnodeˉresult =
+        Databaseˉtreeˉnodeˉdecode(Resultˉbytes);
+    if Validation.Error != Databaseˉtreeˉnodeˉerror.Valid ||
+        Validation.Kind != Databaseˉtreeˉnodeˉkind.Leaf ||
+        Validation.Entryˉcount != Node.Entryˉcount - 1u32 {
+        return Databaseˉtreeˉdeleteˉfailure(
+            Databaseˉtreeˉnodeˉerror.Invalidˉcount
+        );
+    }
+    return Databaseˉtreeˉleafˉdeleteˉresult(
+        Databaseˉtreeˉnodeˉerror.Valid,
+        true,
+        Validation.Entryˉcount,
+        Validation.Bytes
     );
 }
 
