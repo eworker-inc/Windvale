@@ -1397,8 +1397,7 @@ $NativeCases = @(
         Suites = @(
             'os-network-authority',
             'native-u64-lowering',
-            'workspace-project2',
-            'libraries'
+            'workspace-project2'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1605,6 +1604,8 @@ $NativeCases = @(
         Suites = @('model-provider', 'workspace-project2', 'libraries')
         Gaps = @()
         VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'models'
     },
     @{
         Name = 'external model reference owner'
@@ -1838,7 +1839,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Tree-Node-Self-Test.wv',
             'Specifications/Windvale-Database-Tree-Leaf-Operations.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1853,7 +1854,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1875,7 +1876,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1884,7 +1885,7 @@ $NativeCases = @(
     @{
         Name = 'focused database lifecycle owner'
         Paths = @('Libraries/Platform/Database/Durable-Database-Lifecycle.wv')
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1893,7 +1894,7 @@ $NativeCases = @(
     @{
         Name = 'focused database logical-record owner'
         Paths = @('Tests/Fixtures/Database/Database-Logical-Record-Self-Test.wv')
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1907,7 +1908,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Typed-Row-Self-Test.wv',
             'Specifications/Windvale-Database-Typed-Rows-And-Schemas.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1920,7 +1921,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv',
             'Specifications/Windvale-Database-Query-Ir.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1933,7 +1934,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Mutations-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Mutations.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1946,7 +1947,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Leaf-Rewrite-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Leaf-Rewrite.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1959,7 +1960,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Paths-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Paths.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1972,7 +1973,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Leaf-Groups.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1985,7 +1986,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Leaf-Partition-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Leaf-Partition.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -1998,7 +1999,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Leaf-Pages-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Leaf-Pages.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2013,7 +2014,7 @@ $NativeCases = @(
             'Specifications/Windvale-Database-Transaction-Child-Replacements.md',
             'Specifications/Windvale-Database-Transaction-Branch-Partition.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2026,7 +2027,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Parent-Groups-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Parent-Groups.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2045,7 +2046,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Branch-Pages-Depth-Three-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Branch-Pages.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2062,7 +2063,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Ancestor-Groups-Depth-Four-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Ancestor-Groups.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2079,7 +2080,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Ancestor-Pages-Intermediate-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Ancestor-Pages.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2096,7 +2097,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Root-Growth-Multi-Level-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Root-Growth.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2113,7 +2114,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Tree-Completion-Root-Growth-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Tree-Completion.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2131,7 +2132,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Transaction-Commit-Self-Test.wv',
             'Specifications/Windvale-Database-Transaction-Commit.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2148,7 +2149,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Native-Hosted-Persistent-Transaction-Writer-Self-Test.wv',
             'Specifications/Windvale-Database-Persistent-Transaction-Writer.md'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2161,7 +2162,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv',
             'Specifications/Windvale-Database-Sql.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2174,7 +2175,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Json-Value-Self-Test.wv',
             'Specifications/Windvale-Database-Json-Value.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2187,7 +2188,7 @@ $NativeCases = @(
             'Tests/Fixtures/Database/Database-Json-Protocol-Self-Test.wv',
             'Specifications/Windvale-Database-Json-Protocol.md'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
@@ -2332,7 +2333,7 @@ $NativeCases = @(
             'Tools/Database/Measure-Database-Comparison.ps1',
             'Tools/Database/SQLite-Durable-Cycle.py'
         )
-        Suites = @('database-storage', 'libraries')
+        Suites = @('database-storage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2410,7 +2411,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj'
         )
-        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Suites = @('database-storage', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2720,7 +2721,7 @@ $NativeCases = @(
     @{
         Name = 'library project owner'
         Paths = @('Projects/Libraries/Windvale-Database-Reader.wvproj')
-        Suites = @('workspace-project2', 'libraries')
+        Suites = @('workspace-project2')
         Gaps = @()
         VerifyPlan = $false
     },

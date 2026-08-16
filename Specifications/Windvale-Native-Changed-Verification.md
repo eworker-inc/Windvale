@@ -41,8 +41,11 @@ lane owns 19 reusable or importing projects, eight conformance builds, and two
 capability/profile rejection projects. Its development manifest groups those 29
 projects into seven dependency clusters and derives each cluster's inputs from
 the project declarations. One unambiguous cluster may run independently;
-shared, multiple, owner, and unmapped owner inputs retain the complete lane. The
-`packages` lane owns the WVDB Query
+shared, multiple, owner, and unmapped owner inputs retain the complete lane.
+Library, database, fixture, project, and contract paths outside that maintained
+inventory use their actual focused owners and do not select `libraries` merely
+because they occupy a broad library or database directory. The `packages` lane
+owns the WVDB Query
 application, its exact Package 1 / Lock 1 metadata, Project 2 input, locked library
 parts, native package front doors, deterministic output identity, capability
 inspection, negative admission, and failed-output preservation.

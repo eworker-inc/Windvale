@@ -149,6 +149,15 @@ if (!$LibraryDevelopmentTargetNames.SetEquals([string[]]@(
     $LibraryDevelopmentKindCounts.negative -ne 2) {
     $LibraryDevelopmentEligible = $false
 }
+$LibraryDevelopmentContractTargets = @{
+    'Specifications/Read-Only-Directory-Capability.md' = 'read-only-wvdb'
+    'Specifications/Random-Access-Storage-Capability.md' = 'page-storage'
+    'Specifications/Windvale-Database-Durable-Commit.md' = 'durability'
+    'Specifications/Windvale-Database-Durable-Superblock.md' = 'durability'
+    'Specifications/Windvale-Database-Reader.md' = 'read-only-wvdb'
+    'Specifications/Windvale-Database-Storage-Page.md' = 'page-storage'
+    'Specifications/Windvale-Model-Protocol.md' = 'models'
+}
 $DatabaseStorageDevelopmentEligible = $true
 $DatabaseDevelopmentRequiresAllTargets = $false
 $SelectedDatabaseDevelopmentTargets = [System.Collections.Generic.HashSet[string]]::new(
@@ -845,10 +854,21 @@ function Add-Suite {
         if ($SuiteName -eq 'libraries' -and
             ![string]::IsNullOrWhiteSpace($script:CurrentChangedPath) -and
             !$LibraryDevelopmentTargetsByPath.ContainsKey(
+                $script:CurrentChangedPath) -and
+            !$LibraryDevelopmentContractTargets.ContainsKey(
                 $script:CurrentChangedPath)) {
             $script:LibraryDevelopmentRequiresAllTargets = $true
         }
         $null = $SelectedSuites.Add($SuiteName)
+    }
+}
+
+function Add-Library-Suite-If-Owned {
+    if ($LibraryDevelopmentTargetsByPath.ContainsKey(
+            $script:CurrentChangedPath) -or
+        $LibraryDevelopmentContractTargets.ContainsKey(
+            $script:CurrentChangedPath)) {
+        Add-Suite 'libraries'
     }
 }
 
@@ -1265,6 +1285,9 @@ foreach ($Path in $Paths) {
         foreach ($LibraryTarget in $LibraryDevelopmentTargetsByPath[$Path]) {
             $null = $SelectedLibraryDevelopmentTargets.Add($LibraryTarget)
         }
+    } elseif ($LibraryDevelopmentContractTargets.ContainsKey($Path)) {
+        $null = $SelectedLibraryDevelopmentTargets.Add(
+            $LibraryDevelopmentContractTargets[$Path])
     }
     if ($DatabaseDevelopmentTargetsByPath.ContainsKey($Path)) {
         foreach ($DatabaseTarget in $DatabaseDevelopmentTargetsByPath[$Path]) {
@@ -1712,7 +1735,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'offline-generation-lifecycle'
         }
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
-        Add-Suite @('workspace-project2', 'libraries')
+        Add-Suite 'workspace-project2'
+        Add-Library-Suite-If-Owned
         if ($Path.Contains('Durable-Superblock', [StringComparison]::Ordinal)) {
             Add-Suite @('database-superblock', 'database-durable-commit')
         }
@@ -1951,7 +1975,10 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Native-Provider-Call.md',
             'Specifications/Windvale-Native-Execution-Context-9-Construction.md'
         )) {
-        Add-Suite 'libraries'
+        Add-Library-Suite-If-Owned
+        if ($DatabaseDevelopmentContractTargets.ContainsKey($Path)) {
+            Add-Suite 'database-storage'
+        }
         if ($Path.Contains('Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal)) {
             Add-Suite 'native-u64-lowering'
         }

@@ -235,6 +235,13 @@ for the unchanged complete owner. That is a 6.10-fold speedup for the model
 cluster and 4.48-fold for the page/storage cluster without removing the full
 29-case qualification route.
 
+Library ownership is inventory-bounded as well as target-aware. Modern database,
+network, and other library projects outside those 29 cases remain with their
+actual focused owners instead of also invoking an unrelated library regression
+set. Replaying the 112 commits from 2026-08-16 reduced library-owner selection
+from 31 commits to four, avoiding about 711 seconds of measured Windows work
+while retaining two focused selections and two legitimate complete selections.
+
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.

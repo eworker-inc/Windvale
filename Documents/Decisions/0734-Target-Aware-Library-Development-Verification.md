@@ -31,6 +31,11 @@ WVDB reader projects and therefore cannot safely select only one cluster.
   owner maps to that same target. Shared inputs, multiple targets, owner-script
   changes, and unrecognized inputs that select the owner fail closed to the
   complete route.
+- Select the library owner only for an input in its 29-project closure, one of
+  its maintained contract documents, or a compiler/verifier/owner input that
+  can change the result of all library builds. A modern library, database
+  project, fixture, or contract does not select this owner merely because it is
+  stored under a broad library or database path.
 - Add `--development-target <target>` to the paired library owners. The focused
   route builds every positive and conformance project assigned to the target
   and retains failed-output preservation for assigned negative projects.
@@ -51,6 +56,13 @@ respectively. The two-case `capability-rejections` target passed, an unknown
 target rejected with exit code 64, and the Linux owner passed Git Bash syntax
 validation.
 
+A replay of the 112 commits made on 2026-08-16 reduced library-owner selection
+from 31 commits to four. Two of the remaining selections resolve to focused
+targets; the other two change the library owner or shared compiler-verifier
+behavior and correctly retain the complete route. Avoiding 27 unrelated
+26.348-second owner invocations removes about 711 seconds of Windows work for
+that history; Linux remains independent rather than inferred from this timing.
+
 These timings are diagnostic host evidence, not portable thresholds.
 Independent Linux behavior execution remains required before claiming paired-
 host execution evidence for this development route.
@@ -63,8 +75,9 @@ oracle. The manifest is also the shared inventory used by both focused owner
 scripts, replacing target-specific command duplication.
 
 Changes to modern library areas outside this 29-project owner continue to use
-their existing focused owners. This decision does not claim that the generic
-library owner verifies projects absent from its complete inventory.
+their existing focused owners without also running this owner. This decision
+does not claim that the generic library owner verifies projects absent from its
+complete inventory.
 
 ## Reconsideration triggers
 
