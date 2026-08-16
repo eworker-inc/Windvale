@@ -2555,6 +2555,8 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Tests/Native/Plan.txt' -or
         $Path.StartsWith('Tests/Native/Malformed-Wvb/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
+    } elseif ($Path -eq 'Tests/Native/X64-Application-Start-User-Copy-Self-Test.wva') {
+        Add-Suite 'os-application-launch'
     } elseif ($Path.StartsWith('Tests/Native/Wvo/', [StringComparison]::Ordinal)) {
         Add-Object-Suites
     } elseif ($Path.StartsWith('Tests/Native/', [StringComparison]::Ordinal)) {

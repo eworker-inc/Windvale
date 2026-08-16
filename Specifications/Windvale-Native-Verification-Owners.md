@@ -16,8 +16,8 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 
 ## Registry identity and grammar
 
-`Tests/Native/Verification-Owners.txt` is 12,590 LF-only bytes with SHA-256
-`22ce7303bf4830dfe55955fffcf02a70af5c88adc5440271154c3aac0276c388`.
+`Tests/Native/Verification-Owners.txt` is 12,802 LF-only bytes with SHA-256
+`111a1a3097dcbaf4709947d17c2ab06f93f0fff2939badb97ed3e906b4b85712`.
 Its first line is exactly:
 
 ```text
@@ -34,14 +34,14 @@ The digest fixes owner order, commands, declared case counts, qualification
 allocation, and accepted terminal summaries. Each command stem resolves under
 `Tools/Native` to matching Windows `.cmd` and Linux `.sh` commands.
 
-The current registry contains exactly 97 owners and 4,522 declared cases:
+The current registry contains exactly 98 owners and 4,553 declared cases:
 
 | Qualification shard | Owners | Cases |
 | ---: | ---: | ---: |
 | 1 | 1 | 32 |
-| 2 | 25 | 1,772 |
+| 2 | 25 | 1,782 |
 | 3 | 32 | 1,504 |
-| 4 | 39 | 1,214 |
+| 4 | 40 | 1,235 |
 
 The manifest is the canonical detailed inventory. Documentation must not copy
 its entire evolving table because duplicated inventories become stale.

@@ -46,7 +46,7 @@ os-process-policy|Test-Os-Process-Policy-Object|2|3|Tests: 2, Passed: 2, Failed:
 os-process-object|Test-Os-Process-Object|2|4|Tests: 2, Passed: 2, Failed: 0
 os-x64-code-emission|Test-Os-X64-Code-Emission|336|2|native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
 os-resource-domain|Test-Os-Resource-Domain|2|2|native os resource domain status=Passed projects=1 behavior=1 cases=2
-os-application-launch|Test-Os-Application-Launch|42|2|native os application launch status=Passed projects=7 behavior=5 cases=42
+os-application-launch|Test-Os-Application-Launch|52|2|native os application launch status=Passed projects=7 native-leaves=1 behavior=6 cases=52 local-result=47 cross-host-images=Verified
 os-provider-images|Test-Os-Provider-Images|8|2|native os provider images status=Passed services=2 readiness=2 cases=8
 os-provider-launch-transaction|Test-Os-Provider-Launch-Transaction|15|2|native os provider launch transaction status=Passed projects=3 behavior=10 cases=15
 os-endpoint-transfer|Test-Os-Endpoint-Transfer-Profile|29|3|native os endpoint transfer profiles status=Passed projects=2 cases=29 profiles=3 max-pages=17 local-result=47 cross-host-images=Verified

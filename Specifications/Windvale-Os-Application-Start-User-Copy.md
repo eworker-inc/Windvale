@@ -9,10 +9,12 @@ boundary between an untrusted caller's byte window and the checked
 compares the encoded caller reference with the caller identity supplied by the
 future syscall adapter.
 
-This policy does not walk x86-64 page tables, recover from a processor fault,
-assign a syscall number or registers, or publish a user-callable start ABI.
-Those mechanisms remain the responsibility of the architecture-specific
-kernel adapter.
+The architecture-specific x86-64 copy leaf is also implemented. It accepts one
+already admitted page, snapshots and validates one exact request, and erases a
+rejected copied request. It does not walk page tables, pin or stabilize the
+mapping, recover from a processor fault, derive the current caller, assign a
+syscall number, or publish a user-callable start ABI. Those mechanisms remain
+the responsibility of the syscall adapter.
 
 ## Copy and admission contract
 
@@ -36,6 +38,33 @@ transition, rejects an encoded caller that differs from the current caller as
 The caller comparison is separate from structural decoding: bytes controlled
 by a process cannot establish that process's kernel identity.
 
+## X64 native leaf
+
+[`X64-Application-Start-User-Copy.wva`](../Operating-System/Kernel/X64-Application-Start-User-Copy.wva)
+exports `Windvale_kernel_x64_application_start_copy` with this internal
+register contract:
+
+| Register | Meaning |
+| --- | --- |
+| `RCX`, `RDX` | start and exclusive end of one exact page-aligned current-process user window |
+| `R8` | untrusted request address |
+| `R9` | nonzero, eight-byte-aligned, kernel-owned 64-byte snapshot outside the user window |
+| `R10D` | caller reference independently derived by the future syscall adapter |
+| `R11D` | requested byte count, exactly 64 |
+| `EAX` | `0` valid, `1` size, `2` window, `3` range, `4` caller, or `5` payload |
+
+The leaf rejects a wrapped, unaligned, non-4,096-byte window before touching a
+destination. After admitting the destination, it clears all eight qwords,
+requires the complete source range to remain inside the page, copies exactly
+eight qwords, validates every `WVSR 1` field, and compares the copied caller
+with `R10D`. Caller and payload rejection clear all eight qwords again. The
+loops are fixed at eight iterations; no input controls allocation, recursion,
+diagnostic growth, or additional work.
+
+This is an internal machine leaf, not the public start operation. Its caller
+must prove that the page belongs to the current process, is readable and stable
+for the bounded copy, and cannot fault across the privileged load sequence.
+
 ## Evidence and limits
 
 The policy builds as an 8,313-byte WVB at SHA-256
@@ -46,8 +75,19 @@ passes nine boundary cases: exact copy, successful admission, caller
 impersonation, wrong size, invalid window offset, oversized window, buffer
 before or after the window, and malformed copied input.
 
-This evidence does not prove safe reads from live user virtual memory. The
-x86-64 adapter must still pin or otherwise stabilize the source mapping, derive
-the caller from the current thread/process record, convert page-walk and access
-faults into a defined rejection, and ensure that no decoder observes caller
-memory directly.
+The native leaf assembles to a 799-byte WVO at SHA-256
+`74978b1f6124517b44205cba52aaf6c161cf5d00e39ff9ab3ad883d527c87ddb`.
+Its ten-case self-test assembles to a 1,432-byte WVO, links with the leaf into
+an exact 4,288-byte image at SHA-256
+`19411b99859049d7453bd17c3d473e0141122213b39d9c9f4be5356c6b495cc1`,
+returns 47 on the local host, and deterministically packages as both Windows
+and Linux console images. The cases cover valid status, exact immutable copy,
+wrong size, invalid envelope, cross-page source, zero and overlapping
+destinations, caller impersonation, malformed magic, and a wrong page charge;
+rejection erasure is checked directly.
+
+This evidence still does not prove a safe public read from live user virtual
+memory. The syscall adapter must pin or otherwise stabilize the source mapping,
+derive the caller from the current thread/process record, convert page-walk and
+access faults into a defined rejection, and ensure that no policy decoder
+observes caller memory directly.

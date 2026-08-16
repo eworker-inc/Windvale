@@ -1,0 +1,161 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_x64_application_start_copy in .text
+
+section code .text align 16
+define Windvale_kernel_x64_application_start_copy
+# RCX/RDX delimit a page-aligned current-process user window. R8 is the
+# untrusted WVSR address, R9 is a kernel-owned 64-byte destination, R10D is the
+# independently derived caller reference, and R11D is the requested byte count.
+# EAX returns 0 valid, 1 size, 2 window, 3 range, 4 caller, or 5 payload.
+push rbx
+push r12
+push r13
+move r12 rcx
+move r13 rdx
+
+compare r12 r13
+branch above_equal application_start_invalid_window
+move rax r12
+and_i32 rax 4095
+branch not_equal application_start_invalid_window
+move rax r13
+and_i32 rax 4095
+branch not_equal application_start_invalid_window
+move rax r12
+add_i32 rax 4096
+branch below application_start_invalid_window
+compare rax r13
+branch not_equal application_start_invalid_window
+
+test r9 r9
+branch equal application_start_invalid_range
+move rax r9
+and_i32 rax 7
+branch not_equal application_start_invalid_range
+move rax r9
+add_i32 rax 64
+branch below application_start_invalid_range
+# Kernel output must not alias any part of the admitted user window.
+compare rax r12
+branch below_equal application_start_destination_ready
+compare r9 r13
+branch above_equal application_start_destination_ready
+jump_label application_start_invalid_range
+
+label application_start_destination_ready
+xor rax rax
+move rdx r9
+move_u32 ecx 8
+label application_start_clear_initial
+store_memory_u64 rdx none 1 0 rax
+add_i32 rdx 8
+subtract_i32 ecx 1
+branch not_equal application_start_clear_initial
+
+compare_i32 r11d 64
+branch not_equal application_start_invalid_size
+compare r8 r12
+branch below application_start_invalid_range
+move rax r8
+add_i32 rax 64
+branch below application_start_invalid_range
+compare rax r13
+branch above application_start_invalid_range
+
+move rax r8
+move rdx r9
+move_u32 ecx 8
+label application_start_copy_qword
+load_memory_u64 rbx rax none 1 0
+store_memory_u64 rdx none 1 0 rbx
+add_i32 rax 8
+add_i32 rdx 8
+subtract_i32 ecx 1
+branch not_equal application_start_copy_qword
+
+load_memory_u32 eax r9 none 1 0
+compare_i32 eax 1381193303
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 4
+compare_i32 eax 1
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 64
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 12
+compare_i32 eax 1
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 16
+compare_i32 eax 65537
+branch equal application_start_request_reference_ready
+compare_i32 eax 131073
+branch not_equal application_start_invalid_payload
+label application_start_request_reference_ready
+load_memory_u32 eax r9 none 1 20
+compare eax r10d
+branch not_equal application_start_invalid_caller
+compare_i32 r10d 65537
+branch not_equal application_start_invalid_caller
+load_memory_u32 eax r9 none 1 24
+compare_i32 eax 65537
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 28
+compare_i32 eax 65576
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 32
+compare_i32 eax 1
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 36
+compare_i32 eax 1
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 40
+compare_i32 eax 122
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 44
+test eax eax
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 48
+compare_i32 eax 4
+branch not_equal application_start_invalid_payload
+load_memory_u32 eax r9 none 1 52
+test eax eax
+branch not_equal application_start_invalid_payload
+load_memory_u64 rax r9 none 1 56
+test rax rax
+branch not_equal application_start_invalid_payload
+xor eax eax
+jump_label application_start_return
+
+label application_start_invalid_size
+move_u32 ebx 1
+jump_label application_start_failure_cleared
+label application_start_invalid_window
+move_u32 eax 2
+jump_label application_start_return
+label application_start_invalid_range
+move_u32 eax 3
+jump_label application_start_return
+label application_start_invalid_caller
+move_u32 ebx 4
+jump_label application_start_clear_failure
+label application_start_invalid_payload
+move_u32 ebx 5
+label application_start_clear_failure
+xor rax rax
+move rdx r9
+move_u32 ecx 8
+label application_start_clear_rejected
+store_memory_u64 rdx none 1 0 rax
+add_i32 rdx 8
+subtract_i32 ecx 1
+branch not_equal application_start_clear_rejected
+label application_start_failure_cleared
+move eax ebx
+label application_start_return
+pop r13
+pop r12
+pop rbx
+return
+end define
+end section
