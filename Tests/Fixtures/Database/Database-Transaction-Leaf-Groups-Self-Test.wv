@@ -1,0 +1,271 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉgroups profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉleafˉgroups as Groups;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 2u64, 3u64, 2u64, 10u64, 11u64, 1u64, 12u64,
+        49664u64, PAGE_SIZE, 2u32
+    );
+}
+
+fn Leaf(First: u8, Second: u8) -> bytes {
+    let One: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu8(First), Bytesˉfromˉu8(First), MAXIMUM_PAYLOAD
+        );
+    let Two: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            One.Bytes, Bytesˉfromˉu8(Second), Bytesˉfromˉu8(Second), MAXIMUM_PAYLOAD
+        );
+    return Two.Bytes;
+}
+
+fn Branch() -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Bytesˉfromˉu8(5u8), 8u64, 9u64, MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Durable(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Identifier: u64,
+    Payload: bytes
+) -> bytes {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Kind, PAGE_SIZE, Identifier, 3u64, 2u64, NO_PAGE,
+                Node.Entryˉcount, Payload
+            )
+        );
+    return Result.Bytes;
+}
+
+fn Root() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Root, 10u64, Branch());
+}
+
+fn Left() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Leaf, 8u64, Leaf(1u8, 2u8));
+}
+
+fn Right() -> bytes {
+    return Durable(Page.Databaseˉdurableˉpageˉkind.Leaf, 9u64, Leaf(6u8, 7u8));
+}
+
+fn Leftˉpath() -> bytes {
+    return Bytesˉconcat(Root(), Left());
+}
+
+fn Rightˉpath() -> bytes {
+    return Bytesˉconcat(Root(), Right());
+}
+
+fn Put(Key: u8, Value: bytes) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Value
+        );
+    return Result.Bytes;
+}
+
+fn Putˉu8(Key: u8, Value: u8) -> bytes {
+    return Put(Key, Bytesˉfromˉu8(Value));
+}
+
+fn Delete(Key: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉdelete(Bytesˉfromˉu8(Key));
+    return Result.Bytes;
+}
+
+fn Mutationˉset(Count: u32, Input: bytes) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(Count, Input);
+    return Result.Bytes;
+}
+
+fn Twoˉleafˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(
+        3u32,
+        Bytesˉconcat(
+            Bytesˉconcat(Putˉu8(1u8, 10u8), Delete(2u8)),
+            Putˉu8(6u8, 60u8)
+        )
+    );
+    let Input: bytes = Bytesˉconcat(
+        Bytesˉconcat(Leftˉpath(), Leftˉpath()),
+        Rightˉpath()
+    );
+    let First: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
+        Groups.Databaseˉtransactionˉleafˉgroupsˉplan(Current(), Mutations, Input);
+    let Second: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
+        Groups.Databaseˉtransactionˉleafˉgroupsˉplan(Current(), Mutations, Input);
+    if First.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Valid ||
+        First.Groupˉcount != 2u32 || First.Changedˉgroupˉcount != 2u32 ||
+        First.Splitˉgroupˉcount != 0u32 || First.Appliedˉcount != 3u32 ||
+        First.Putˉcount != 2u32 || First.Deletedˉcount != 1u32 ||
+        !Same(First.Bytes, Second.Bytes) {
+        return 1;
+    }
+    let Leftˉgroup: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(
+            First.Bytes, 0u32
+        );
+    let Rightˉgroup: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(
+            First.Bytes, 1u32
+        );
+    if Leftˉgroup.Error != Groups.Databaseˉtransactionˉleafˉgroupˉreadˉerror.Valid ||
+        Leftˉgroup.Leafˉpage != 8u64 || Leftˉgroup.Firstˉmutation != 0u32 ||
+        Leftˉgroup.Mutationˉcount != 2u32 ||
+        Leftˉgroup.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten ||
+        Leftˉgroup.Entryˉcount != 1u32 ||
+        Rightˉgroup.Error != Groups.Databaseˉtransactionˉleafˉgroupˉreadˉerror.Valid ||
+        Rightˉgroup.Leafˉpage != 9u64 || Rightˉgroup.Firstˉmutation != 2u32 ||
+        Rightˉgroup.Mutationˉcount != 1u32 ||
+        Rightˉgroup.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten ||
+        Rightˉgroup.Entryˉcount != 2u32 {
+        return 2;
+    }
+    let One: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leftˉgroup.Payload, Bytesˉfromˉu8(1u8));
+    let Two: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Leftˉgroup.Payload, Bytesˉfromˉu8(2u8));
+    let Six: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Rightˉgroup.Payload, Bytesˉfromˉu8(6u8));
+    let Seven: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(Rightˉgroup.Payload, Bytesˉfromˉu8(7u8));
+    if !One.Found || Bytesˉreadˉu8(One.Value, 0u32) != 10u8 ||
+        Two.Found || !Six.Found || Bytesˉreadˉu8(Six.Value, 0u32) != 60u8 ||
+        !Seven.Found || Bytesˉreadˉu8(Seven.Value, 0u32) != 7u8 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Unchangedˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(1u32, Delete(3u8));
+    let Result: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
+        Groups.Databaseˉtransactionˉleafˉgroupsˉplan(
+            Current(), Mutations, Leftˉpath()
+        );
+    let Group: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(Result.Bytes, 0u32);
+    if Result.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Valid ||
+        Result.Groupˉcount != 1u32 || Result.Changedˉgroupˉcount != 0u32 ||
+        Result.Appliedˉcount != 0u32 ||
+        Group.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged ||
+        Group.Entryˉcount != 2u32 || Bytesˉlength(Group.Payload) != 0u32 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Splitˉcontract() -> i32 {
+    var Large: bytes = Bytesˉfromˉu64ˉlittle(1u64);
+    while Bytesˉlength(Large) < 4096u32 {
+        Large = Bytesˉconcat(Large, Large);
+    }
+    let Mutations: bytes = Mutationˉset(1u32, Put(3u8, Large));
+    let Result: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
+        Groups.Databaseˉtransactionˉleafˉgroupsˉplan(
+            Current(), Mutations, Leftˉpath()
+        );
+    let Group: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(Result.Bytes, 0u32);
+    if Result.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Valid ||
+        Result.Groupˉcount != 1u32 || Result.Splitˉgroupˉcount != 1u32 ||
+        Result.Changedˉgroupˉcount != 0u32 || Result.Appliedˉcount != 0u32 ||
+        Group.Status != Groups.Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired ||
+        Group.Entryˉcount != 0u32 || Bytesˉlength(Group.Payload) != 0u32 {
+        return 1;
+    }
+    return 0;
+}
+
+fn Rejectionˉcontract() -> i32 {
+    let Mutations: bytes = Mutationˉset(1u32, Putˉu8(1u8, 10u8));
+    let Short: bytes = Bytesˉslice(
+        Leftˉpath(), 0u32, Bytesˉlength(Leftˉpath()) - 1u32
+    );
+    let Invalid: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
+        Groups.Databaseˉtransactionˉleafˉgroupsˉplan(Current(), Mutations, Short);
+    if Invalid.Error != Groups.Databaseˉtransactionˉleafˉgroupsˉerror.Invalidˉpaths ||
+        Invalid.Pathsˉerror != Paths.Databaseˉtransactionˉpathsˉerror.Invalidˉlength ||
+        Invalid.Groupˉcount != 0u32 || Bytesˉlength(Invalid.Bytes) != 0u32 {
+        return 1;
+    }
+    let Valid: Groups.Databaseˉtransactionˉleafˉgroupsˉresult =
+        Groups.Databaseˉtransactionˉleafˉgroupsˉplan(
+            Current(), Mutations, Leftˉpath()
+        );
+    let Invalidˉindex: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(Valid.Bytes, 1u32);
+    let Trailing: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(
+            Bytesˉconcat(Valid.Bytes, Bytesˉfromˉu8(0u8)), 0u32
+        );
+    let Corruptˉpayload: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Valid.Bytes, 0u32, 56u32),
+            Bytesˉfromˉu8(0u8)
+        ),
+        Bytesˉslice(Valid.Bytes, 57u32, Bytesˉlength(Valid.Bytes) - 57u32)
+    );
+    let Invalidˉpayload: Groups.Databaseˉtransactionˉleafˉgroup =
+        Groups.Databaseˉtransactionˉleafˉgroupˉread(Corruptˉpayload, 0u32);
+    if Invalidˉindex.Error != Groups.Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉindex ||
+        Trailing.Error != Groups.Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉtotalˉlength ||
+        Invalidˉpayload.Error != Groups.Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload {
+        return 2;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Twoˉleaf: i32 = Twoˉleafˉcontract();
+    if Twoˉleaf != 0 { return 100 + Twoˉleaf; }
+    let Unchanged: i32 = Unchangedˉcontract();
+    if Unchanged != 0 { return 200 + Unchanged; }
+    let Split: i32 = Splitˉcontract();
+    if Split != 0 { return 300 + Split; }
+    let Rejection: i32 = Rejectionˉcontract();
+    if Rejection != 0 { return 400 + Rejection; }
+    return 0;
+}

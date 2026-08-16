@@ -70,6 +70,7 @@ mutations, and a forged invalid page-size selection.
 
 This contract does not read provider storage, remove duplicate input paths,
 rewrite leaves, split nodes, assign new page identities, rewrite shared
-ancestors, or publish a commit. The next planner groups consecutive paths by
-leaf identity, applies each group's mutations, and builds the bottom-up shared
-replacement map consumed by one commit batch.
+ancestors, or publish a commit. The
+[leaf-group planner](Windvale-Database-Transaction-Leaf-Groups.md) now groups
+consecutive paths by leaf identity and applies each group once. Split handling
+and the bottom-up shared replacement map remain next before one commit batch.

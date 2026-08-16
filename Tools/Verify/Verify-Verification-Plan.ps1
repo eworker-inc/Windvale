@@ -1798,6 +1798,19 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-paths'
     },
     @{
+        Name = 'focused database transaction-leaf-groups owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Leaf-Groups.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Leaf-Groups.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-leaf-groups'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',

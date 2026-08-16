@@ -1,0 +1,437 @@
+module Windvaleˉdatabaseˉtransactionˉleafˉgroups profile portable;
+
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉleafˉrewrite as Rewrite;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES: u32 = 32u32;
+const DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES: u32 = 24u32;
+const DATABASE_TRANSACTION_LEAF_GROUPS_MAGIC: u32 = 1196185175u32;
+const DATABASE_TRANSACTION_LEAF_GROUPS_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES: u32 = 24u32;
+
+export enum Databaseˉtransactionˉleafˉgroupˉstatus {
+    Invalid = 0;
+    Unchanged = 1;
+    Rewritten = 2;
+    Splitˉrequired = 3;
+}
+
+export enum Databaseˉtransactionˉleafˉgroupsˉerror {
+    Valid = 0;
+    Invalidˉpaths = 1;
+    Rewriteˉfailed = 2;
+}
+
+export enum Databaseˉtransactionˉleafˉgroupˉreadˉerror {
+    Valid = 0;
+    Invalidˉindex = 1;
+    Invalidˉlength = 2;
+    Invalidˉmagic = 3;
+    Unsupportedˉversion = 4;
+    Invalidˉheader = 5;
+    Invalidˉflags = 6;
+    Invalidˉcount = 7;
+    Invalidˉtotalˉlength = 8;
+    Invalidˉstatus = 9;
+    Invalidˉpayload = 10;
+    Trailingˉbytes = 11;
+}
+
+export record Databaseˉtransactionˉleafˉgroupsˉresult {
+    Error: Databaseˉtransactionˉleafˉgroupsˉerror;
+    Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror;
+    Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror;
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror;
+    Rewriteˉerror: Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Failedˉgroup: u32;
+    Groupˉcount: u32;
+    Changedˉgroupˉcount: u32;
+    Splitˉgroupˉcount: u32;
+    Appliedˉcount: u32;
+    Putˉcount: u32;
+    Deletedˉcount: u32;
+    Bytes: bytes;
+}
+
+export record Databaseˉtransactionˉleafˉgroup {
+    Error: Databaseˉtransactionˉleafˉgroupˉreadˉerror;
+    Leafˉpage: u64;
+    Firstˉmutation: u32;
+    Mutationˉcount: u32;
+    Status: Databaseˉtransactionˉleafˉgroupˉstatus;
+    Entryˉcount: u32;
+    Payload: bytes;
+}
+
+record Databaseˉtransactionˉleafˉgroupˉmutation {
+    Next: u32;
+}
+
+fn Databaseˉtransactionˉleafˉgroupsˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉleafˉgroupsˉfailure(
+    Error: Databaseˉtransactionˉleafˉgroupsˉerror,
+    Pathsˉerror: Paths.Databaseˉtransactionˉpathsˉerror,
+    Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror,
+    Pageˉerror: Page.Databaseˉdurableˉpageˉerror,
+    Rewriteˉerror: Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror,
+    Failedˉgroup: u32
+) -> Databaseˉtransactionˉleafˉgroupsˉresult {
+    return Databaseˉtransactionˉleafˉgroupsˉresult(
+        Error, Pathsˉerror, Mutationsˉerror, Pageˉerror, Rewriteˉerror,
+        Nodeˉerror, Failedˉgroup,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        Databaseˉtransactionˉleafˉgroupsˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+    Error: Databaseˉtransactionˉleafˉgroupˉreadˉerror
+) -> Databaseˉtransactionˉleafˉgroup {
+    return Databaseˉtransactionˉleafˉgroup(
+        Error, 0u64, 0u32, 0u32,
+        Databaseˉtransactionˉleafˉgroupˉstatus.Invalid,
+        0u32, Databaseˉtransactionˉleafˉgroupsˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉleafˉgroupˉmutationˉread(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉtransactionˉleafˉgroupˉmutation {
+    let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+    let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32);
+    return Databaseˉtransactionˉleafˉgroupˉmutation(
+        Offset + 16u32 + Keyˉlength + Valueˉlength
+    );
+}
+
+fn Databaseˉtransactionˉleafˉgroupˉstatusˉraw(
+    Status: Databaseˉtransactionˉleafˉgroupˉstatus
+) -> u32 {
+    if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged { return 1u32; }
+    if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten { return 2u32; }
+    if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired { return 3u32; }
+    return 0u32;
+}
+
+fn Databaseˉtransactionˉleafˉgroupˉstatusˉfromˉraw(
+    Raw: u32
+) -> Databaseˉtransactionˉleafˉgroupˉstatus {
+    if Raw == 1u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged; }
+    if Raw == 2u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten; }
+    if Raw == 3u32 { return Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired; }
+    return Databaseˉtransactionˉleafˉgroupˉstatus.Invalid;
+}
+
+fn Databaseˉtransactionˉleafˉgroupˉencode(
+    Leafˉpage: u64,
+    Firstˉmutation: u32,
+    Mutationˉcount: u32,
+    Status: Databaseˉtransactionˉleafˉgroupˉstatus,
+    Entryˉcount: u32,
+    Payload: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu64ˉlittle(Leafˉpage);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Firstˉmutation));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Mutationˉcount));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Databaseˉtransactionˉleafˉgroupˉstatusˉraw(Status))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entryˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Payload)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Result, Payload);
+}
+
+fn Databaseˉtransactionˉleafˉgroupsˉencode(
+    Groupˉcount: u32,
+    Groups: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(
+        DATABASE_TRANSACTION_LEAF_GROUPS_MAGIC
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_LEAF_GROUPS_VERSION)
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Groupˉcount));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES + Bytesˉlength(Groups)
+        )
+    );
+    return Bytesˉconcat(Result, Groups);
+}
+
+fn Databaseˉtransactionˉleafˉpage(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Pathsˉbytes: bytes,
+    Mutationˉindex: u32
+) -> Page.Databaseˉdurableˉpageˉresult {
+    let Offset: u32 =
+        (Mutationˉindex * Current.Rootˉdepth + Current.Rootˉdepth - 1u32) *
+        Current.Pageˉsize;
+    return Page.Databaseˉdurableˉpageˉdecode(
+        Bytesˉslice(Pathsˉbytes, Offset, Current.Pageˉsize)
+    );
+}
+
+export fn Databaseˉtransactionˉleafˉgroupsˉplan(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutationsˉbytes: bytes,
+    Pathsˉbytes: bytes
+) -> Databaseˉtransactionˉleafˉgroupsˉresult {
+    let Validated: Paths.Databaseˉtransactionˉpathsˉresult =
+        Paths.Databaseˉtransactionˉpathsˉvalidate(
+            Current, Mutationsˉbytes, Pathsˉbytes
+        );
+    if Validated.Error != Paths.Databaseˉtransactionˉpathsˉerror.Valid {
+        return Databaseˉtransactionˉleafˉgroupsˉfailure(
+            Databaseˉtransactionˉleafˉgroupsˉerror.Invalidˉpaths,
+            Validated.Error, Validated.Mutationsˉerror, Validated.Pageˉerror,
+            Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid,
+            Validated.Nodeˉerror, Validated.Failedˉpath
+        );
+    }
+    let Mutations: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉdecode(Mutationsˉbytes);
+    var Result: bytes = Databaseˉtransactionˉleafˉgroupsˉempty();
+    var Mutationˉindex: u32 = 0u32;
+    var Mutationˉcursor: u32 = DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES;
+    var Groupˉcount: u32 = 0u32;
+    var Changedˉcount: u32 = 0u32;
+    var Splitˉcount: u32 = 0u32;
+    var Appliedˉcount: u32 = 0u32;
+    var Putˉcount: u32 = 0u32;
+    var Deletedˉcount: u32 = 0u32;
+    while Mutationˉindex < Mutations.Count {
+        let Firstˉmutation: u32 = Mutationˉindex;
+        let Firstˉcursor: u32 = Mutationˉcursor;
+        let Leaf: Page.Databaseˉdurableˉpageˉresult =
+            Databaseˉtransactionˉleafˉpage(Current, Validated.Bytes, Mutationˉindex);
+        var Groupˉmutations: u32 = 0u32;
+        while Mutationˉindex < Mutations.Count {
+            let Candidate: Page.Databaseˉdurableˉpageˉresult =
+                Databaseˉtransactionˉleafˉpage(
+                    Current, Validated.Bytes, Mutationˉindex
+                );
+            if Candidate.Pageˉidentifier != Leaf.Pageˉidentifier {
+                break;
+            }
+            let Mutation: Databaseˉtransactionˉleafˉgroupˉmutation =
+                Databaseˉtransactionˉleafˉgroupˉmutationˉread(
+                    Mutations.Bytes, Mutationˉcursor
+                );
+            Mutationˉcursor = Mutation.Next;
+            Mutationˉindex = Mutationˉindex + 1u32;
+            Groupˉmutations = Groupˉmutations + 1u32;
+        }
+        let Groupˉencoding: Transaction.Databaseˉtransactionˉmutationsˉresult =
+            Transaction.Databaseˉtransactionˉmutationsˉencode(
+                Groupˉmutations,
+                Bytesˉslice(
+                    Mutations.Bytes,
+                    Firstˉcursor,
+                    Mutationˉcursor - Firstˉcursor
+                )
+            );
+        let Rewritten: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+            Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(
+                Leaf.Payload,
+                Groupˉencoding.Bytes,
+                Current.Pageˉsize - 128u32
+            );
+        var Status: Databaseˉtransactionˉleafˉgroupˉstatus =
+            Databaseˉtransactionˉleafˉgroupˉstatus.Invalid;
+        var Payload: bytes = Databaseˉtransactionˉleafˉgroupsˉempty();
+        var Entryˉcount: u32 = 0u32;
+        if Rewritten.Error == Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Full {
+            Status = Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired;
+            Splitˉcount = Splitˉcount + 1u32;
+        } else if Rewritten.Error == Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid {
+            Entryˉcount = Rewritten.Entryˉcount;
+            Appliedˉcount = Appliedˉcount + Rewritten.Appliedˉcount;
+            Putˉcount = Putˉcount + Rewritten.Putˉcount;
+            Deletedˉcount = Deletedˉcount + Rewritten.Deletedˉcount;
+            if Rewritten.Changed {
+                Status = Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten;
+                Payload = Rewritten.Bytes;
+                Changedˉcount = Changedˉcount + 1u32;
+            } else {
+                Status = Databaseˉtransactionˉleafˉgroupˉstatus.Unchanged;
+            }
+        } else {
+            return Databaseˉtransactionˉleafˉgroupsˉfailure(
+                Databaseˉtransactionˉleafˉgroupsˉerror.Rewriteˉfailed,
+                Paths.Databaseˉtransactionˉpathsˉerror.Valid,
+                Rewritten.Mutationsˉerror,
+                Page.Databaseˉdurableˉpageˉerror.Valid,
+                Rewritten.Error, Rewritten.Nodeˉerror, Groupˉcount
+            );
+        }
+        Result = Bytesˉconcat(
+            Result,
+            Databaseˉtransactionˉleafˉgroupˉencode(
+                Leaf.Pageˉidentifier, Firstˉmutation, Groupˉmutations,
+                Status, Entryˉcount, Payload
+            )
+        );
+        Groupˉcount = Groupˉcount + 1u32;
+    }
+    return Databaseˉtransactionˉleafˉgroupsˉresult(
+        Databaseˉtransactionˉleafˉgroupsˉerror.Valid,
+        Paths.Databaseˉtransactionˉpathsˉerror.Valid,
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        0u32, Groupˉcount, Changedˉcount, Splitˉcount,
+        Appliedˉcount, Putˉcount, Deletedˉcount,
+        Databaseˉtransactionˉleafˉgroupsˉencode(Groupˉcount, Result)
+    );
+}
+
+export fn Databaseˉtransactionˉleafˉgroupˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉtransactionˉleafˉgroup {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TRANSACTION_LEAF_GROUPS_MAGIC {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TRANSACTION_LEAF_GROUPS_VERSION {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉheader
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉflags
+        );
+    }
+    let Groupˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Groupˉcount == 0u32 || Groupˉcount > 32u32 {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉcount
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != Total {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉtotalˉlength
+        );
+    }
+    if Requested >= Groupˉcount {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉindex
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_LEAF_GROUPS_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Expectedˉfirst: u32 = 0u32;
+    var Requestedˉresult: Databaseˉtransactionˉleafˉgroup =
+        Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉindex
+        );
+    while Index < Groupˉcount {
+        if Cursor > Total || Total - Cursor < DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES {
+            return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉlength
+            );
+        }
+        let Leafˉpage: u64 = Bytesˉreadˉu64ˉlittle(Input, Cursor);
+        let Firstˉmutation: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Mutationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Status: Databaseˉtransactionˉleafˉgroupˉstatus =
+            Databaseˉtransactionˉleafˉgroupˉstatusˉfromˉraw(
+                Bytesˉreadˉu32ˉlittle(Input, Cursor + 16u32)
+            );
+        let Entryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 20u32);
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 24u32);
+        if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Invalid {
+            return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉstatus
+            );
+        }
+        if Mutationˉcount == 0u32 || Mutationˉcount > 32u32 - Expectedˉfirst ||
+            Firstˉmutation != Expectedˉfirst ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 28u32) != 0u32 ||
+            Payloadˉlength > Total - Cursor - DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES {
+            return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉlength
+            );
+        }
+        if Status != Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten &&
+            Payloadˉlength != 0u32 ||
+            Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten &&
+            Payloadˉlength == 0u32 {
+            return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload
+            );
+        }
+        let Payload: bytes = Bytesˉslice(
+            Input,
+            Cursor + DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES,
+            Payloadˉlength
+        );
+        if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Splitˉrequired &&
+            Entryˉcount != 0u32 {
+            return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload
+            );
+        }
+        if Status == Databaseˉtransactionˉleafˉgroupˉstatus.Rewritten {
+            let Node: Tree.Databaseˉtreeˉnodeˉresult =
+                Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+            if Payloadˉlength > 65408u32 ||
+                Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+                Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf ||
+                Node.Entryˉcount != Entryˉcount {
+                return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+                    Databaseˉtransactionˉleafˉgroupˉreadˉerror.Invalidˉpayload
+                );
+            }
+        }
+        if Index == Requested {
+            Requestedˉresult = Databaseˉtransactionˉleafˉgroup(
+                Databaseˉtransactionˉleafˉgroupˉreadˉerror.Valid,
+                Leafˉpage, Firstˉmutation, Mutationˉcount,
+                Status, Entryˉcount, Payload
+            );
+        }
+        Cursor = Cursor + DATABASE_TRANSACTION_LEAF_GROUP_HEADER_BYTES + Payloadˉlength;
+        Expectedˉfirst = Expectedˉfirst + Mutationˉcount;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total {
+        return Databaseˉtransactionˉleafˉgroupˉreadˉfailure(
+            Databaseˉtransactionˉleafˉgroupˉreadˉerror.Trailingˉbytes
+        );
+    }
+    return Requestedˉresult;
+}
