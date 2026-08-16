@@ -1,0 +1,260 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉmutations profile portable;
+
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Withˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Powerˉbytes(Exponent: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    var Index: u32 = 0u32;
+    while Index < Exponent {
+        Result = Bytesˉconcat(Result, Result);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Put(Key: text, Value: u32) -> Transaction.Databaseˉtransactionˉmutationˉcomponent {
+    return Transaction.Databaseˉtransactionˉmutationˉput(
+        Textˉtoˉutf8(Key),
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
+}
+
+fn Delete(Key: text) -> Transaction.Databaseˉtransactionˉmutationˉcomponent {
+    return Transaction.Databaseˉtransactionˉmutationˉdelete(
+        Textˉtoˉutf8(Key)
+    );
+}
+
+fn Validˉtransaction() -> Transaction.Databaseˉtransactionˉmutationsˉresult {
+    let First: Transaction.Databaseˉtransactionˉmutationˉcomponent = Put("alpha", 10u32);
+    let Second: Transaction.Databaseˉtransactionˉmutationˉcomponent = Delete("beta");
+    let Third: Transaction.Databaseˉtransactionˉmutationˉcomponent = Put("gamma", 30u32);
+    return Transaction.Databaseˉtransactionˉmutationsˉencode(
+        3u32,
+        Bytesˉconcat(Bytesˉconcat(First.Bytes, Second.Bytes), Third.Bytes)
+    );
+}
+
+fn Errorˉof(Input: bytes) -> Transaction.Databaseˉtransactionˉmutationsˉerror {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉdecode(Input);
+    return Result.Error;
+}
+
+fn Encodingˉcontract() -> i32 {
+    let First: Transaction.Databaseˉtransactionˉmutationsˉresult = Validˉtransaction();
+    let Second: Transaction.Databaseˉtransactionˉmutationsˉresult = Validˉtransaction();
+    if First.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid ||
+        First.Count != 3u32 || !Same(First.Bytes, Second.Bytes) ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 0u32) != 1297372759u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 8u32) != 24u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 16u32) != 3u32 ||
+        Bytesˉreadˉu32ˉlittle(First.Bytes, 20u32) != Bytesˉlength(First.Bytes) {
+        return 1;
+    }
+    let Putˉresult: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(First.Bytes, 0u32);
+    let Deleteˉresult: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(First.Bytes, 1u32);
+    let Last: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(First.Bytes, 2u32);
+    if Putˉresult.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid ||
+        Putˉresult.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put ||
+        !Same(Putˉresult.Key, Textˉtoˉutf8("alpha")) ||
+        Bytesˉreadˉu32ˉlittle(Putˉresult.Value, 0u32) != 10u32 ||
+        Deleteˉresult.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Delete ||
+        !Same(Deleteˉresult.Key, Textˉtoˉutf8("beta")) ||
+        Bytesˉlength(Deleteˉresult.Value) != 0u32 ||
+        Last.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put ||
+        !Same(Last.Key, Textˉtoˉutf8("gamma")) {
+        return 2;
+    }
+    let Missing: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(First.Bytes, 3u32);
+    if Missing.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉindex {
+        return 3;
+    }
+    return 0;
+}
+
+fn Headerˉrejections() -> i32 {
+    let Valid: Transaction.Databaseˉtransactionˉmutationsˉresult = Validˉtransaction();
+    if Errorˉof(Empty()) != Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉlength {
+        return 1;
+    }
+    let Oversized: bytes = Bytesˉconcat(Powerˉbytes(18u32), Bytesˉfromˉu8(0u8));
+    if Errorˉof(Oversized) != Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉlength {
+        return 8;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 0u32, 0u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉmagic {
+        return 2;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 4u32, 2u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Unsupportedˉversion {
+        return 3;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 8u32, 20u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉheader {
+        return 4;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 12u32, 1u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉflags {
+        return 5;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 16u32, 0u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉcount ||
+        Errorˉof(Withˉu32(Valid.Bytes, 16u32, 33u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉcount {
+        return 6;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 20u32, 24u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉtotalˉlength {
+        return 7;
+    }
+    return 0;
+}
+
+fn Mutationˉrejections() -> i32 {
+    let Valid: Transaction.Databaseˉtransactionˉmutationsˉresult = Validˉtransaction();
+    if Errorˉof(Withˉu32(Valid.Bytes, 24u32, 3u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉkind {
+        return 1;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 28u32, 1u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉmutationˉflags {
+        return 2;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 32u32, 0u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉkeyˉlength ||
+        Errorˉof(Withˉu32(Valid.Bytes, 32u32, 4097u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉkeyˉlength {
+        return 3;
+    }
+    if Errorˉof(Withˉu32(Valid.Bytes, 36u32, 61441u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉvalueˉlength {
+        return 4;
+    }
+    let Firstˉbytes: u32 = 16u32 + 5u32 + 4u32;
+    let Deleteˉvalueˉoffset: u32 = 24u32 + Firstˉbytes + 12u32;
+    if Errorˉof(Withˉu32(Valid.Bytes, Deleteˉvalueˉoffset, 1u32)) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉdeleteˉvalue {
+        return 5;
+    }
+    let Short: bytes = Bytesˉslice(Valid.Bytes, 0u32, Bytesˉlength(Valid.Bytes) - 1u32);
+    let Shortˉwithˉlength: bytes = Withˉu32(Short, 20u32, Bytesˉlength(Short));
+    if Errorˉof(Shortˉwithˉlength) !=
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Truncatedˉmutation {
+        return 6;
+    }
+    return 0;
+}
+
+fn Orderingˉrejections() -> i32 {
+    let A: Transaction.Databaseˉtransactionˉmutationˉcomponent = Put("a", 1u32);
+    let B: Transaction.Databaseˉtransactionˉmutationˉcomponent = Delete("b");
+    let Duplicate: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32,
+            Bytesˉconcat(A.Bytes, A.Bytes)
+        );
+    if Duplicate.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Duplicateˉkey {
+        return 1;
+    }
+    let Reversed: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32,
+            Bytesˉconcat(B.Bytes, A.Bytes)
+        );
+    if Reversed.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉorder {
+        return 2;
+    }
+    let Trailing: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            1u32,
+            Bytesˉconcat(A.Bytes, B.Bytes)
+        );
+    if Trailing.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Trailingˉbytes {
+        return 3;
+    }
+    let Invalidˉput: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(Empty(), Empty());
+    if Invalidˉput.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Invalidˉkeyˉlength {
+        return 4;
+    }
+    return 0;
+}
+
+fn Maximumˉcontract() -> i32 {
+    var Mutations: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let Putˉvalue: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+            Transaction.Databaseˉtransactionˉmutationˉput(
+                Bytesˉfromˉu32ˉlittle(Index),
+                Empty()
+            );
+        if Putˉvalue.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid {
+            return 1;
+        }
+        Mutations = Bytesˉconcat(Mutations, Putˉvalue.Bytes);
+        Index = Index + 1u32;
+    }
+    let Maximum: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(32u32, Mutations);
+    if Maximum.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid ||
+        Maximum.Count != 32u32 {
+        return 2;
+    }
+    let Last: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(Maximum.Bytes, 31u32);
+    if Last.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid ||
+        Last.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put ||
+        Bytesˉreadˉu32ˉlittle(Last.Key, 0u32) != 31u32 ||
+        Bytesˉlength(Last.Value) != 0u32 {
+        return 3;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Encoding: i32 = Encodingˉcontract();
+    if Encoding != 0 { return 100 + Encoding; }
+    let Header: i32 = Headerˉrejections();
+    if Header != 0 { return 200 + Header; }
+    let Mutation: i32 = Mutationˉrejections();
+    if Mutation != 0 { return 300 + Mutation; }
+    let Ordering: i32 = Orderingˉrejections();
+    if Ordering != 0 { return 400 + Ordering; }
+    let Maximum: i32 = Maximumˉcontract();
+    if Maximum != 0 { return 500 + Maximum; }
+    return 0;
+}

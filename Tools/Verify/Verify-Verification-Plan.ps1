@@ -1733,6 +1733,19 @@ $NativeCases = @(
         DatabaseTarget = 'query-sql'
     },
     @{
+        Name = 'focused database transaction-mutations owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Mutations.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Mutations-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Mutations.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-mutations'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',
@@ -1924,6 +1937,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Logical-Record.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Transaction-Mutations.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Sql-Lowerer.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
@@ -1954,6 +1968,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',

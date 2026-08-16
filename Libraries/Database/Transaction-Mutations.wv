@@ -1,0 +1,396 @@
+module Windvaleˉdatabaseˉtransactionˉmutations profile portable;
+
+const DATABASE_TRANSACTION_MUTATIONS_MAGIC: u32 = 1297372759u32;
+const DATABASE_TRANSACTION_MUTATIONS_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES: u32 = 24u32;
+const DATABASE_TRANSACTION_MUTATION_HEADER_BYTES: u32 = 16u32;
+const DATABASE_TRANSACTION_MUTATIONS_MAXIMUM_BYTES: u32 = 262144u32;
+const DATABASE_TRANSACTION_MUTATIONS_MAXIMUM_COUNT: u32 = 32u32;
+const DATABASE_TRANSACTION_MUTATION_MAXIMUM_KEY_BYTES: u32 = 4096u32;
+const DATABASE_TRANSACTION_MUTATION_MAXIMUM_VALUE_BYTES: u32 = 61440u32;
+
+export enum Databaseˉtransactionˉmutationˉkind {
+    Invalid = 0;
+    Put = 1;
+    Delete = 2;
+}
+
+export enum Databaseˉtransactionˉmutationsˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉflags = 5;
+    Invalidˉcount = 6;
+    Invalidˉtotalˉlength = 7;
+    Truncatedˉmutation = 8;
+    Invalidˉkind = 9;
+    Invalidˉmutationˉflags = 10;
+    Invalidˉkeyˉlength = 11;
+    Invalidˉvalueˉlength = 12;
+    Invalidˉdeleteˉvalue = 13;
+    Invalidˉorder = 14;
+    Duplicateˉkey = 15;
+    Trailingˉbytes = 16;
+    Invalidˉindex = 17;
+}
+
+export record Databaseˉtransactionˉmutationˉcomponent {
+    Error: Databaseˉtransactionˉmutationsˉerror;
+    Bytes: bytes;
+}
+
+export record Databaseˉtransactionˉmutationˉresult {
+    Error: Databaseˉtransactionˉmutationsˉerror;
+    Kind: Databaseˉtransactionˉmutationˉkind;
+    Key: bytes;
+    Value: bytes;
+    Next: u32;
+}
+
+export record Databaseˉtransactionˉmutationsˉresult {
+    Error: Databaseˉtransactionˉmutationsˉerror;
+    Count: u32;
+    Bytes: bytes;
+}
+
+fn Databaseˉtransactionˉmutationsˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉmutationsˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 { return Databaseˉtransactionˉmutationsˉempty(); }
+    return Bytesˉslice(
+        Bytesˉconcat(Bytesˉfromˉu8(0u8), Input),
+        1u32,
+        Total
+    );
+}
+
+fn Databaseˉtransactionˉmutationsˉfailure(
+    Error: Databaseˉtransactionˉmutationsˉerror
+) -> Databaseˉtransactionˉmutationsˉresult {
+    return Databaseˉtransactionˉmutationsˉresult(
+        Error,
+        0u32,
+        Databaseˉtransactionˉmutationsˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉmutationˉfailure(
+    Error: Databaseˉtransactionˉmutationsˉerror
+) -> Databaseˉtransactionˉmutationˉresult {
+    let Empty: bytes = Databaseˉtransactionˉmutationsˉempty();
+    return Databaseˉtransactionˉmutationˉresult(
+        Error,
+        Databaseˉtransactionˉmutationˉkind.Invalid,
+        Empty,
+        Empty,
+        0u32
+    );
+}
+
+fn Databaseˉtransactionˉmutationˉcomponentˉfailure(
+    Error: Databaseˉtransactionˉmutationsˉerror
+) -> Databaseˉtransactionˉmutationˉcomponent {
+    return Databaseˉtransactionˉmutationˉcomponent(
+        Error,
+        Databaseˉtransactionˉmutationsˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉmutationˉkindˉraw(
+    Kind: Databaseˉtransactionˉmutationˉkind
+) -> u32 {
+    if Kind == Databaseˉtransactionˉmutationˉkind.Put { return 1u32; }
+    if Kind == Databaseˉtransactionˉmutationˉkind.Delete { return 2u32; }
+    return 0u32;
+}
+
+fn Databaseˉtransactionˉmutationˉkindˉfromˉraw(
+    Value: u32
+) -> Databaseˉtransactionˉmutationˉkind {
+    if Value == 1u32 { return Databaseˉtransactionˉmutationˉkind.Put; }
+    if Value == 2u32 { return Databaseˉtransactionˉmutationˉkind.Delete; }
+    return Databaseˉtransactionˉmutationˉkind.Invalid;
+}
+
+fn Databaseˉtransactionˉkeyˉcompare(Left: bytes, Right: bytes) -> i32 {
+    let Leftˉlength: u32 = Bytesˉlength(Left);
+    let Rightˉlength: u32 = Bytesˉlength(Right);
+    var Limit: u32 = Leftˉlength;
+    if Rightˉlength < Limit { Limit = Rightˉlength; }
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let Leftˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Index));
+        let Rightˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Index));
+        if Leftˉbyte < Rightˉbyte { return -1; }
+        if Leftˉbyte > Rightˉbyte { return 1; }
+        Index = Index + 1u32;
+    }
+    if Leftˉlength < Rightˉlength { return -1; }
+    if Leftˉlength > Rightˉlength { return 1; }
+    return 0;
+}
+
+fn Databaseˉtransactionˉmutationˉreadˉat(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉtransactionˉmutationˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total || Total - Offset < DATABASE_TRANSACTION_MUTATION_HEADER_BYTES {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Truncatedˉmutation
+        );
+    }
+    let Kind: Databaseˉtransactionˉmutationˉkind =
+        Databaseˉtransactionˉmutationˉkindˉfromˉraw(
+            Bytesˉreadˉu32ˉlittle(Input, Offset)
+        );
+    if Kind == Databaseˉtransactionˉmutationˉkind.Invalid {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉkind
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 0u32 {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉmutationˉflags
+        );
+    }
+    let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+    let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32);
+    if Keyˉlength == 0u32 ||
+        Keyˉlength > DATABASE_TRANSACTION_MUTATION_MAXIMUM_KEY_BYTES {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉkeyˉlength
+        );
+    }
+    if Valueˉlength > DATABASE_TRANSACTION_MUTATION_MAXIMUM_VALUE_BYTES {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉvalueˉlength
+        );
+    }
+    if Kind == Databaseˉtransactionˉmutationˉkind.Delete && Valueˉlength != 0u32 {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉdeleteˉvalue
+        );
+    }
+    let Contentˉoffset: u32 = Offset + DATABASE_TRANSACTION_MUTATION_HEADER_BYTES;
+    let Remaining: u32 = Total - Contentˉoffset;
+    if Keyˉlength > Remaining || Valueˉlength > Remaining - Keyˉlength {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Truncatedˉmutation
+        );
+    }
+    return Databaseˉtransactionˉmutationˉresult(
+        Databaseˉtransactionˉmutationsˉerror.Valid,
+        Kind,
+        Bytesˉslice(Input, Contentˉoffset, Keyˉlength),
+        Bytesˉslice(Input, Contentˉoffset + Keyˉlength, Valueˉlength),
+        Contentˉoffset + Keyˉlength + Valueˉlength
+    );
+}
+
+fn Databaseˉtransactionˉmutationˉencode(
+    Kind: Databaseˉtransactionˉmutationˉkind,
+    Key: bytes,
+    Value: bytes
+) -> Databaseˉtransactionˉmutationˉcomponent {
+    let Keyˉlength: u32 = Bytesˉlength(Key);
+    let Valueˉlength: u32 = Bytesˉlength(Value);
+    if Databaseˉtransactionˉmutationˉkindˉraw(Kind) == 0u32 {
+        return Databaseˉtransactionˉmutationˉcomponentˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉkind
+        );
+    }
+    if Keyˉlength == 0u32 ||
+        Keyˉlength > DATABASE_TRANSACTION_MUTATION_MAXIMUM_KEY_BYTES {
+        return Databaseˉtransactionˉmutationˉcomponentˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉkeyˉlength
+        );
+    }
+    if Valueˉlength > DATABASE_TRANSACTION_MUTATION_MAXIMUM_VALUE_BYTES {
+        return Databaseˉtransactionˉmutationˉcomponentˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉvalueˉlength
+        );
+    }
+    if Kind == Databaseˉtransactionˉmutationˉkind.Delete && Valueˉlength != 0u32 {
+        return Databaseˉtransactionˉmutationˉcomponentˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉdeleteˉvalue
+        );
+    }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(
+        Databaseˉtransactionˉmutationˉkindˉraw(Kind)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Keyˉlength));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Valueˉlength));
+    Result = Bytesˉconcat(Result, Key);
+    Result = Bytesˉconcat(Result, Value);
+    return Databaseˉtransactionˉmutationˉcomponent(
+        Databaseˉtransactionˉmutationsˉerror.Valid,
+        Result
+    );
+}
+
+export fn Databaseˉtransactionˉmutationˉput(
+    Key: bytes,
+    Value: bytes
+) -> Databaseˉtransactionˉmutationˉcomponent {
+    return Databaseˉtransactionˉmutationˉencode(
+        Databaseˉtransactionˉmutationˉkind.Put,
+        Key,
+        Value
+    );
+}
+
+export fn Databaseˉtransactionˉmutationˉdelete(
+    Key: bytes
+) -> Databaseˉtransactionˉmutationˉcomponent {
+    return Databaseˉtransactionˉmutationˉencode(
+        Databaseˉtransactionˉmutationˉkind.Delete,
+        Key,
+        Databaseˉtransactionˉmutationsˉempty()
+    );
+}
+
+export fn Databaseˉtransactionˉmutationsˉdecode(
+    Input: bytes
+) -> Databaseˉtransactionˉmutationsˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES ||
+        Total > DATABASE_TRANSACTION_MUTATIONS_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_TRANSACTION_MUTATIONS_MAGIC {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_TRANSACTION_MUTATIONS_VERSION {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉheader
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉflags
+        );
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Count == 0u32 || Count > DATABASE_TRANSACTION_MUTATIONS_MAXIMUM_COUNT {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉcount
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != Total {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉtotalˉlength
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Previous: bytes = Databaseˉtransactionˉmutationsˉempty();
+    while Index < Count {
+        let Mutation: Databaseˉtransactionˉmutationˉresult =
+            Databaseˉtransactionˉmutationˉreadˉat(Input, Cursor);
+        if Mutation.Error != Databaseˉtransactionˉmutationsˉerror.Valid {
+            return Databaseˉtransactionˉmutationsˉfailure(Mutation.Error);
+        }
+        if Index > 0u32 {
+            let Order: i32 = Databaseˉtransactionˉkeyˉcompare(Previous, Mutation.Key);
+            if Order == 0 {
+                return Databaseˉtransactionˉmutationsˉfailure(
+                    Databaseˉtransactionˉmutationsˉerror.Duplicateˉkey
+                );
+            }
+            if Order > 0 {
+                return Databaseˉtransactionˉmutationsˉfailure(
+                    Databaseˉtransactionˉmutationsˉerror.Invalidˉorder
+                );
+            }
+        }
+        Previous = Mutation.Key;
+        Cursor = Mutation.Next;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Trailingˉbytes
+        );
+    }
+    return Databaseˉtransactionˉmutationsˉresult(
+        Databaseˉtransactionˉmutationsˉerror.Valid,
+        Count,
+        Databaseˉtransactionˉmutationsˉcopy(Input)
+    );
+}
+
+export fn Databaseˉtransactionˉmutationsˉencode(
+    Count: u32,
+    Mutations: bytes
+) -> Databaseˉtransactionˉmutationsˉresult {
+    let Mutationˉbytes: u32 = Bytesˉlength(Mutations);
+    if Mutationˉbytes > DATABASE_TRANSACTION_MUTATIONS_MAXIMUM_BYTES -
+        DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES {
+        return Databaseˉtransactionˉmutationsˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉlength
+        );
+    }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_MUTATIONS_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_MUTATIONS_VERSION));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Count));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES + Mutationˉbytes
+        )
+    );
+    return Databaseˉtransactionˉmutationsˉdecode(
+        Bytesˉconcat(Result, Mutations)
+    );
+}
+
+export fn Databaseˉtransactionˉmutationsˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉtransactionˉmutationˉresult {
+    let Decoded: Databaseˉtransactionˉmutationsˉresult =
+        Databaseˉtransactionˉmutationsˉdecode(Input);
+    if Decoded.Error != Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Databaseˉtransactionˉmutationˉfailure(Decoded.Error);
+    }
+    if Requested >= Decoded.Count {
+        return Databaseˉtransactionˉmutationˉfailure(
+            Databaseˉtransactionˉmutationsˉerror.Invalidˉindex
+        );
+    }
+    var Cursor: u32 = DATABASE_TRANSACTION_MUTATIONS_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    while Index < Requested {
+        let Skipped: Databaseˉtransactionˉmutationˉresult =
+            Databaseˉtransactionˉmutationˉreadˉat(Input, Cursor);
+        Cursor = Skipped.Next;
+        Index = Index + 1u32;
+    }
+    let Result: Databaseˉtransactionˉmutationˉresult =
+        Databaseˉtransactionˉmutationˉreadˉat(Input, Cursor);
+    return Databaseˉtransactionˉmutationˉresult(
+        Result.Error,
+        Result.Kind,
+        Databaseˉtransactionˉmutationsˉcopy(Result.Key),
+        Databaseˉtransactionˉmutationsˉcopy(Result.Value),
+        Result.Next
+    );
+}

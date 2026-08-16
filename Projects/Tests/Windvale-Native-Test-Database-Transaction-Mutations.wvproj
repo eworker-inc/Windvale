@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Transaction-Mutations-Self-Test.wv"
+source "Libraries/Database/Transaction-Mutations.wv"
+emit wvb
