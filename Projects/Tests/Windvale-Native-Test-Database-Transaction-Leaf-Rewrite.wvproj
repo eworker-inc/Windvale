@@ -1,0 +1,6 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Transaction-Leaf-Rewrite-Self-Test.wv"
+source "Libraries/Database/Transaction-Leaf-Rewrite.wv"
+source "Libraries/Database/Transaction-Mutations.wv"
+source "Libraries/Database/Tree-Node.wv"
+emit wvb

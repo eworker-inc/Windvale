@@ -1747,7 +1747,20 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $true
-        DatabaseTarget = 'transaction-mutations'
+        DatabaseTarget = 'transaction'
+    },
+    @{
+        Name = 'focused database transaction-leaf-rewrite owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Leaf-Rewrite.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Leaf-Rewrite-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Leaf-Rewrite.md'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-leaf-rewrite'
     },
     @{
         Name = 'focused database sql-lowerer owner'
@@ -1942,6 +1955,7 @@ $NativeCases = @(
             'Projects/Libraries/Windvale-Library-Database-Schema-Definition.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Typed-Row.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Transaction-Mutations.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Rewrite.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Sql-Lowerer.wvproj',
             'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
@@ -1973,6 +1987,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj',
             'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',

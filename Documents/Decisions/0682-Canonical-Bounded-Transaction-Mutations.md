@@ -33,17 +33,17 @@ model and 1,000-operation ceiling are too large for this native storage layer.
 
 ## Evidence
 
-The focused source build produces a deterministic 20,966-byte WVB with
-SHA-256 `0833e51cc240d69f74aeb424943261541fb548c96e24cc8f7ea80911ad6a618c`.
-It lowers to a 239,474-byte WVO with SHA-256
-`b6282374f5d86dc5477244ea3bc5c58b6843c055dc96bc99287f903d0b891b74`
-and packages as a 256,512-byte Windows application with SHA-256
-`7ae4e045d1bac739198e1d892b1dc816fcc5fca33b5991a5eaa8dc3d55b63d82`.
+The focused source build produces a deterministic 21,077-byte WVB with
+SHA-256 `6acfe4e40a4d559ed17c3fbf78d66e9cd9f015b6420515f05179042e9664c358`.
+It lowers to a 241,908-byte WVO with SHA-256
+`eeb5f7fada47d7ef21db75102b5497cc7ec04dee459b25e96ff604ecfaa067e0`
+and packages as a 259,072-byte Windows application with SHA-256
+`d0e8aaa7fd838f6e0504bbebaf37d9a179c2dda77e3f3d9c6219c6e1a8f605b1`.
 The application returns zero.
 
-Twenty fresh whole-process runs measured 23.405 ms minimum, 25.138 ms median,
-25.531 ms mean, and 32.758 ms maximum. Peak sampled working set across those
-runs was 7,802,880 bytes. These numbers include process startup and test all
+Twenty fresh whole-process runs measured 21.770 ms minimum, 23.865 ms median,
+24.079 ms mean, and 32.514 ms maximum. Peak sampled working set across those
+runs was 7,806,976 bytes. These numbers include process startup and test all
 valid and malformed cases; they are development evidence, not transaction
 throughput.
 
@@ -51,7 +51,7 @@ The normal Linux-focused wrapper could not start its cached build phase in
 this Windows desktop environment because WSL has no Linux `node` executable;
 the available bundled `node.exe` cannot consume WSL paths. The recorded result
 uses the repository's Windows native front door, lowerer, linker, and hosted
-packager directly. Changed-file planning passes 24 general and 130 native
+packager directly. Changed-file planning passes 24 general and 131 native
 routing cases. Native development dependency closure passes for 3 owners and
 34 declarations; Bash syntax and diff checks also pass.
 

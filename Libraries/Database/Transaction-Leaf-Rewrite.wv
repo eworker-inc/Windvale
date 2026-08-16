@@ -1,0 +1,188 @@
+module Windvaleˉdatabaseˉtransactionˉleafˉrewrite profile portable;
+
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+export enum Databaseˉtransactionˉleafˉrewriteˉerror {
+    Valid = 0;
+    Invalidˉmutations = 1;
+    Invalidˉleaf = 2;
+    Mutationˉfailed = 3;
+    Full = 4;
+}
+
+export record Databaseˉtransactionˉleafˉrewrite {
+    Error: Databaseˉtransactionˉleafˉrewriteˉerror;
+    Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror;
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror;
+    Changed: bool;
+    Appliedˉcount: u32;
+    Putˉcount: u32;
+    Deletedˉcount: u32;
+    Entryˉcount: u32;
+    Bytes: bytes;
+}
+
+record Databaseˉtransactionˉleafˉmutation {
+    Kind: Transaction.Databaseˉtransactionˉmutationˉkind;
+    Key: bytes;
+    Value: bytes;
+    Next: u32;
+}
+
+fn Databaseˉtransactionˉleafˉrewriteˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉleafˉrewriteˉfailure(
+    Error: Databaseˉtransactionˉleafˉrewriteˉerror,
+    Mutationsˉerror: Transaction.Databaseˉtransactionˉmutationsˉerror,
+    Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror
+) -> Databaseˉtransactionˉleafˉrewrite {
+    return Databaseˉtransactionˉleafˉrewrite(
+        Error,
+        Mutationsˉerror,
+        Nodeˉerror,
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Databaseˉtransactionˉleafˉrewriteˉempty()
+    );
+}
+
+fn Databaseˉtransactionˉleafˉrewriteˉsame(
+    Left: bytes,
+    Right: bytes
+) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉtransactionˉleafˉrewriteˉmutation(
+    Input: bytes,
+    Offset: u32
+) -> Databaseˉtransactionˉleafˉmutation {
+    var Kind: Transaction.Databaseˉtransactionˉmutationˉkind =
+        Transaction.Databaseˉtransactionˉmutationˉkind.Put;
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) == 2u32 {
+        Kind = Transaction.Databaseˉtransactionˉmutationˉkind.Delete;
+    }
+    let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+    let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32);
+    let Content: u32 = Offset + 16u32;
+    return Databaseˉtransactionˉleafˉmutation(
+        Kind,
+        Bytesˉslice(Input, Content, Keyˉlength),
+        Bytesˉslice(Input, Content + Keyˉlength, Valueˉlength),
+        Content + Keyˉlength + Valueˉlength
+    );
+}
+
+export fn Databaseˉtransactionˉleafˉrewriteˉapply(
+    Input: bytes,
+    Mutationsˉbytes: bytes,
+    Maximumˉpayload: u32
+) -> Databaseˉtransactionˉleafˉrewrite {
+    let Mutations: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉdecode(Mutationsˉbytes);
+    if Mutations.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Databaseˉtransactionˉleafˉrewriteˉfailure(
+            Databaseˉtransactionˉleafˉrewriteˉerror.Invalidˉmutations,
+            Mutations.Error,
+            Tree.Databaseˉtreeˉnodeˉerror.Valid
+        );
+    }
+    let Initial: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Input);
+    if Initial.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+        Initial.Kind != Tree.Databaseˉtreeˉnodeˉkind.Leaf {
+        var Nodeˉerror: Tree.Databaseˉtreeˉnodeˉerror = Initial.Error;
+        if Nodeˉerror == Tree.Databaseˉtreeˉnodeˉerror.Valid {
+            Nodeˉerror = Tree.Databaseˉtreeˉnodeˉerror.Invalidˉkind;
+        }
+        return Databaseˉtransactionˉleafˉrewriteˉfailure(
+            Databaseˉtransactionˉleafˉrewriteˉerror.Invalidˉleaf,
+            Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+            Nodeˉerror
+        );
+    }
+    var Current: bytes = Initial.Bytes;
+    var Entryˉcount: u32 = Initial.Entryˉcount;
+    var Appliedˉcount: u32 = 0u32;
+    var Putˉcount: u32 = 0u32;
+    var Deletedˉcount: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Cursor: u32 = 24u32;
+    while Index < Mutations.Count {
+        let Mutation: Databaseˉtransactionˉleafˉmutation =
+            Databaseˉtransactionˉleafˉrewriteˉmutation(Mutations.Bytes, Cursor);
+        if Mutation.Kind == Transaction.Databaseˉtransactionˉmutationˉkind.Put {
+            let Put: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+                Tree.Databaseˉtreeˉleafˉupsert(
+                    Current,
+                    Mutation.Key,
+                    Mutation.Value,
+                    Maximumˉpayload
+                );
+            if Put.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                var Error: Databaseˉtransactionˉleafˉrewriteˉerror =
+                    Databaseˉtransactionˉleafˉrewriteˉerror.Mutationˉfailed;
+                if Put.Error == Tree.Databaseˉtreeˉnodeˉerror.Full {
+                    Error = Databaseˉtransactionˉleafˉrewriteˉerror.Full;
+                }
+                return Databaseˉtransactionˉleafˉrewriteˉfailure(
+                    Error,
+                    Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+                    Put.Error
+                );
+            }
+            Current = Put.Bytes;
+            Entryˉcount = Put.Entryˉcount;
+            Appliedˉcount = Appliedˉcount + 1u32;
+            Putˉcount = Putˉcount + 1u32;
+        } else {
+            let Delete: Tree.Databaseˉtreeˉleafˉdeleteˉresult =
+                Tree.Databaseˉtreeˉleafˉdelete(
+                    Current,
+                    Mutation.Key,
+                    Maximumˉpayload
+                );
+            if Delete.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid {
+                return Databaseˉtransactionˉleafˉrewriteˉfailure(
+                    Databaseˉtransactionˉleafˉrewriteˉerror.Mutationˉfailed,
+                    Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+                    Delete.Error
+                );
+            }
+            Current = Delete.Bytes;
+            Entryˉcount = Delete.Entryˉcount;
+            if Delete.Found {
+                Appliedˉcount = Appliedˉcount + 1u32;
+                Deletedˉcount = Deletedˉcount + 1u32;
+            }
+        }
+        Cursor = Mutation.Next;
+        Index = Index + 1u32;
+    }
+    return Databaseˉtransactionˉleafˉrewrite(
+        Databaseˉtransactionˉleafˉrewriteˉerror.Valid,
+        Transaction.Databaseˉtransactionˉmutationsˉerror.Valid,
+        Tree.Databaseˉtreeˉnodeˉerror.Valid,
+        !Databaseˉtransactionˉleafˉrewriteˉsame(Input, Current),
+        Appliedˉcount,
+        Putˉcount,
+        Deletedˉcount,
+        Entryˉcount,
+        Current
+    );
+}

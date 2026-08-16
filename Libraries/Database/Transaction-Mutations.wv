@@ -362,16 +362,14 @@ export fn Databaseˉtransactionˉmutationsˉencode(
     );
 }
 
-export fn Databaseˉtransactionˉmutationsˉread(
-    Input: bytes,
+fn Databaseˉtransactionˉmutationsˉreadˉdecoded(
+    Input: Databaseˉtransactionˉmutationsˉresult,
     Requested: u32
 ) -> Databaseˉtransactionˉmutationˉresult {
-    let Decoded: Databaseˉtransactionˉmutationsˉresult =
-        Databaseˉtransactionˉmutationsˉdecode(Input);
-    if Decoded.Error != Databaseˉtransactionˉmutationsˉerror.Valid {
-        return Databaseˉtransactionˉmutationˉfailure(Decoded.Error);
+    if Input.Error != Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Databaseˉtransactionˉmutationˉfailure(Input.Error);
     }
-    if Requested >= Decoded.Count {
+    if Requested >= Input.Count {
         return Databaseˉtransactionˉmutationˉfailure(
             Databaseˉtransactionˉmutationsˉerror.Invalidˉindex
         );
@@ -380,17 +378,27 @@ export fn Databaseˉtransactionˉmutationsˉread(
     var Index: u32 = 0u32;
     while Index < Requested {
         let Skipped: Databaseˉtransactionˉmutationˉresult =
-            Databaseˉtransactionˉmutationˉreadˉat(Input, Cursor);
+            Databaseˉtransactionˉmutationˉreadˉat(Input.Bytes, Cursor);
         Cursor = Skipped.Next;
         Index = Index + 1u32;
     }
     let Result: Databaseˉtransactionˉmutationˉresult =
-        Databaseˉtransactionˉmutationˉreadˉat(Input, Cursor);
+        Databaseˉtransactionˉmutationˉreadˉat(Input.Bytes, Cursor);
     return Databaseˉtransactionˉmutationˉresult(
         Result.Error,
         Result.Kind,
         Databaseˉtransactionˉmutationsˉcopy(Result.Key),
         Databaseˉtransactionˉmutationsˉcopy(Result.Value),
         Result.Next
+    );
+}
+
+export fn Databaseˉtransactionˉmutationsˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉtransactionˉmutationˉresult {
+    return Databaseˉtransactionˉmutationsˉreadˉdecoded(
+        Databaseˉtransactionˉmutationsˉdecode(Input),
+        Requested
     );
 }

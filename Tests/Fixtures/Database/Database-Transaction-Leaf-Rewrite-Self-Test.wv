@@ -1,0 +1,154 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉrewrite profile portable;
+
+import Windvaleˉdatabaseˉtransactionˉleafˉrewrite as Rewrite;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Entry(Key: text, Value: u32) -> bytes {
+    let Keyˉbytes: bytes = Textˉtoˉutf8(Key);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Keyˉbytes));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(4u32));
+    Result = Bytesˉconcat(Result, Keyˉbytes);
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Leaf() -> bytes {
+    let Body: bytes = Bytesˉconcat(
+        Bytesˉconcat(Entry("a", 1u32), Entry("b", 2u32)),
+        Entry("d", 4u32)
+    );
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1314149975u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(3u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32 + Bytesˉlength(Body)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(18446744073709551615u64));
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Put(Key: text, Value: u32) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Textˉtoˉutf8(Key),
+            Bytesˉfromˉu32ˉlittle(Value)
+        );
+    return Result.Bytes;
+}
+
+fn Delete(Key: text) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉdelete(Textˉtoˉutf8(Key));
+    return Result.Bytes;
+}
+
+fn Mutations() -> bytes {
+    let Entries: bytes = Bytesˉconcat(
+        Bytesˉconcat(Put("a", 10u32), Delete("b")),
+        Bytesˉconcat(Put("c", 30u32), Delete("z"))
+    );
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(4u32, Entries);
+    return Result.Bytes;
+}
+
+fn Applyˉcontract() -> i32 {
+    let First: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(Leaf(), Mutations(), 256u32);
+    let Second: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(Leaf(), Mutations(), 256u32);
+    if First.Error != Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid ||
+        !First.Changed || First.Appliedˉcount != 3u32 ||
+        First.Putˉcount != 2u32 || First.Deletedˉcount != 1u32 ||
+        First.Entryˉcount != 3u32 || !Same(First.Bytes, Second.Bytes) {
+        return 1;
+    }
+    let A: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(First.Bytes, Textˉtoˉutf8("a"));
+    let B: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(First.Bytes, Textˉtoˉutf8("b"));
+    let C: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(First.Bytes, Textˉtoˉutf8("c"));
+    let D: Tree.Databaseˉtreeˉleafˉlookupˉresult =
+        Tree.Databaseˉtreeˉleafˉlookup(First.Bytes, Textˉtoˉutf8("d"));
+    if !A.Found || Bytesˉreadˉu32ˉlittle(A.Value, 0u32) != 10u32 ||
+        B.Found || !C.Found || Bytesˉreadˉu32ˉlittle(C.Value, 0u32) != 30u32 ||
+        !D.Found || Bytesˉreadˉu32ˉlittle(D.Value, 0u32) != 4u32 {
+        return 2;
+    }
+    return 0;
+}
+
+fn Noˉchangeˉcontract() -> i32 {
+    let Encoded: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32,
+            Bytesˉconcat(Delete("x"), Delete("z"))
+        );
+    let Result: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(Leaf(), Encoded.Bytes, 256u32);
+    if Result.Error != Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Valid ||
+        Result.Changed || Result.Appliedˉcount != 0u32 ||
+        Result.Deletedˉcount != 0u32 || !Same(Result.Bytes, Leaf()) {
+        return 1;
+    }
+    return 0;
+}
+
+fn Failureˉcontract() -> i32 {
+    let Large: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉfromˉu64ˉlittle(1u64), Bytesˉfromˉu64ˉlittle(2u64)),
+        Bytesˉconcat(Bytesˉfromˉu64ˉlittle(3u64), Bytesˉfromˉu64ˉlittle(4u64))
+    );
+    let First: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(Textˉtoˉutf8("aa"), Bytesˉfromˉu32ˉlittle(11u32));
+    let Second: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(Textˉtoˉutf8("c"), Large);
+    let Encoded: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(2u32, Bytesˉconcat(First.Bytes, Second.Bytes));
+    let Full: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(Leaf(), Encoded.Bytes, 90u32);
+    if Full.Error != Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Full ||
+        Full.Nodeˉerror != Tree.Databaseˉtreeˉnodeˉerror.Full ||
+        Bytesˉlength(Full.Bytes) != 0u32 || Full.Appliedˉcount != 0u32 {
+        return 1;
+    }
+    let Invalidˉmutations: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(Leaf(), Empty(), 256u32);
+    if Invalidˉmutations.Error != Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Invalidˉmutations {
+        return 2;
+    }
+    let Invalidˉleaf: Rewrite.Databaseˉtransactionˉleafˉrewrite =
+        Rewrite.Databaseˉtransactionˉleafˉrewriteˉapply(Empty(), Mutations(), 256u32);
+    if Invalidˉleaf.Error != Rewrite.Databaseˉtransactionˉleafˉrewriteˉerror.Invalidˉleaf {
+        return 3;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Apply: i32 = Applyˉcontract();
+    if Apply != 0 { return 100 + Apply; }
+    let Noˉchange: i32 = Noˉchangeˉcontract();
+    if Noˉchange != 0 { return 200 + Noˉchange; }
+    let Failure: i32 = Failureˉcontract();
+    if Failure != 0 { return 300 + Failure; }
+    return 0;
+}

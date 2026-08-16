@@ -19,10 +19,13 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=27
+        selected_cases=28
         ;;
-    tree-node|logical-record|typed-row|transaction-mutations|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
+    tree-node|logical-record|typed-row|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
+        ;;
+    transaction)
+        selected_cases=2
         ;;
     host-tree-reader)
         selected_cases=2
@@ -1625,7 +1628,9 @@ if ((development == 1)); then
     verify_development_target TypedRow typed-row \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" typed-query typed-query-sql || exit $?
     verify_development_target TransactionMutations transaction-mutations \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj" || exit $?
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj" transaction || exit $?
+    verify_development_target TransactionLeafRewrite transaction-leaf-rewrite \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj" transaction || exit $?
     verify_development_target QueryIr query-ir \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" typed-query query-sql typed-query-sql || exit $?
     verify_development_target SqlLowerer sql-lowerer \
@@ -1680,6 +1685,8 @@ verify_target TypedRow \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
 verify_target TransactionMutations \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj" || exit $?
+verify_target TransactionLeafRewrite \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj" || exit $?
 verify_target QueryIr \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" || exit $?
 verify_target SqlLowerer \
@@ -1742,4 +1749,4 @@ verify_host_tree_writer \
 verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-echo 'native database storage status=Passed cases=36 local-results=0 cross-host-images=Verified'
+echo 'native database storage status=Passed cases=37 local-results=0 cross-host-images=Verified'
