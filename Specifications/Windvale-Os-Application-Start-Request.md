@@ -53,11 +53,14 @@ The implemented [user-copy policy](Windvale-Os-Application-Start-User-Copy.md)
 now copies the complete request into an immutable value, checks an admitted
 window with subtraction-first arithmetic, and compares the encoded caller with
 an independently supplied current-caller identity before calling this decoder.
-The x86-64 internal copy leaf now enforces one exact admitted page, copies the
+The x86-64 internal copy leaf enforces one exact admitted page, copies the
 request into a kernel-owned snapshot, validates every version-1 field and the
-independently supplied caller, and erases rejected copied bytes. The future
-syscall adapter must still select the public number/registers, derive that
-caller and admitted page from the current process, stabilize live mappings,
-and define completion, cancellation, and fault behavior. Service launch
+independently supplied caller, and erases rejected copied bytes. Its internal
+syscall-context adapter now accepts separate machine process id/generation and
+current-page inputs and derives reference `65537`; request bytes cannot select
+them. The retained-machine cutover must still select the public
+number/registers, load that context from the current process, stabilize live
+mappings, enforce its budget, and define completion, cancellation, and fault
+behavior. Service launch
 requires a successor request version with named filesystem/network executable,
 endpoint, capability, and resource profiles; version 1 rejects those roles.

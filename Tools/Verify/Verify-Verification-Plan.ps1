@@ -1238,6 +1238,7 @@ $NativeCases = @(
             'Operating-System/Kernel/Application-Start-Request.wv',
             'Operating-System/Kernel/Application-Start-User-Copy.wv',
             'Operating-System/Kernel/X64-Application-Start-User-Copy.wva',
+            'Operating-System/Kernel/X64-Application-Start-Syscall-Context.wva',
             'Operating-System/Kernel/Application-Machine-Construction-Policy.wv',
             'Projects/Operating-System/Windvale-Os-Application-Launch-Policy.wvproj',
             'Projects/Operating-System/Windvale-Os-Application-Start-Request.wvproj',
@@ -1251,6 +1252,7 @@ $NativeCases = @(
             'Tests/Fixtures/Operating-System/Os-Application-Start-Request-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-Application-Start-User-Copy-Self-Test.wv',
             'Tests/Native/X64-Application-Start-User-Copy-Self-Test.wva',
+            'Tests/Native/X64-Application-Start-Syscall-Context-Self-Test.wva',
             'Tests/Fixtures/Operating-System/Os-Application-Machine-Construction-Self-Test.wv',
             'Specifications/Windvale-Os-Application-Launch-Policy.md',
             'Specifications/Windvale-Os-Application-Start-Request.md',
@@ -2802,7 +2804,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4553 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4562 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

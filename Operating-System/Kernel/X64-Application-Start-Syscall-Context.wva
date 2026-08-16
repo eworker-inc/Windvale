@@ -1,0 +1,58 @@
+windvale-assembly 1
+
+symbol export function Windvale_kernel_x64_application_start_syscall_context in .text
+symbol import function Windvale_kernel_x64_application_start_copy
+
+section code .text align 16
+define Windvale_kernel_x64_application_start_syscall_context
+# RCX is the machine-derived current-process request-page start, RDX is the
+# untrusted request address, R8 is the kernel-owned snapshot, R9D is the byte
+# count, R10D is the current process id, and R11D is its generation.
+# EAX preserves the copy leaf's statuses; status 2 also covers invalid current
+# process context. WVSR 1 deliberately admits only init generation 1.
+push rbx
+push r12
+push r13
+push r14
+push r15
+move r12 rcx
+move r13 rdx
+move r14 r8
+move r15d r9d
+
+compare_i32 r10d 1
+branch not_equal application_start_syscall_invalid_context
+compare_i32 r11d 1
+branch not_equal application_start_syscall_invalid_context
+test r12 r12
+branch equal application_start_syscall_invalid_context
+move rax r12
+and_i32 rax 4095
+branch not_equal application_start_syscall_invalid_context
+move rax r12
+add_i32 rax 4096
+branch below application_start_syscall_invalid_context
+
+move ebx r11d
+shift_left ebx 16
+or ebx r10d
+move rcx r12
+move rdx rax
+move r8 r13
+move r9 r14
+move r10d ebx
+move r11d r15d
+call Windvale_kernel_x64_application_start_copy
+jump_label application_start_syscall_return
+
+label application_start_syscall_invalid_context
+move_u32 eax 2
+label application_start_syscall_return
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+end define
+end section

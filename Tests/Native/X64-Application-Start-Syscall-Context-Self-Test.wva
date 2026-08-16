@@ -1,0 +1,200 @@
+windvale-assembly 1
+
+symbol local data Application_start_syscall_requests in .rodata
+symbol export function Main in .text
+symbol import function Windvale_kernel_x64_application_start_syscall_context
+
+section code .text align 16
+define Main
+push r12
+subtract_i32 rsp 8448
+move r12 rsp
+add_i32 r12 4223
+and_i32 r12 -4096
+
+# Copy three request fixtures into one explicitly reserved current-process page.
+load_address r8 Application_start_syscall_requests
+move r9 r12
+move_u32 ecx 24
+label application_start_syscall_fixture_copy
+load_memory_u64 rax r8 none 1 0
+store_memory_u64 r9 none 1 0 rax
+add_i32 r8 8
+add_i32 r9 8
+subtract_i32 ecx 1
+branch not_equal application_start_syscall_fixture_copy
+
+# Valid init generation 1 derives reference 65537 and snapshots exact bytes.
+move rcx r12
+move rdx r12
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 1
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+test eax eax
+branch not_equal application_start_syscall_test_1
+move r8 r12
+move r9 rsp
+move_u32 ecx 8
+label application_start_syscall_compare
+load_memory_u64 rax r8 none 1 0
+load_memory_u64 rdx r9 none 1 0
+compare rax rdx
+branch not_equal application_start_syscall_test_1
+add_i32 r8 8
+add_i32 r9 8
+subtract_i32 ecx 1
+branch not_equal application_start_syscall_compare
+
+# Process and generation are derived context, not caller-controlled request data.
+move_u32 eax 91
+store_memory_u64 rsp none 1 0 rax
+move rcx r12
+move rdx r12
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 2
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 2
+branch not_equal application_start_syscall_test_2
+load_memory_u64 rax rsp none 1 0
+compare_i32 eax 91
+branch not_equal application_start_syscall_test_2
+
+move rcx r12
+move rdx r12
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 1
+move_u32 r11d 2
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 2
+branch not_equal application_start_syscall_test_3
+
+# The machine-derived page must be nonzero and page aligned.
+move rcx r12
+add_i32 rcx 1
+move rdx r12
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 1
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 2
+branch not_equal application_start_syscall_test_4
+
+# The complete request must remain in that exact current-process page.
+move rcx r12
+move rdx r12
+add_i32 rdx 4080
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 1
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 3
+branch not_equal application_start_syscall_test_5
+
+# Size, copied caller, and payload failures retain leaf statuses and erasure.
+move_u32 eax 92
+store_memory_u64 rsp none 1 0 rax
+move rcx r12
+move rdx r12
+move r8 rsp
+move_u32 r9d 63
+move_u32 r10d 1
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 1
+branch not_equal application_start_syscall_test_6
+load_memory_u64 rax rsp none 1 0
+test rax rax
+branch not_equal application_start_syscall_test_6
+
+move rcx r12
+move rdx r12
+add_i32 rdx 64
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 1
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 4
+branch not_equal application_start_syscall_test_7
+load_memory_u64 rax rsp none 1 0
+test rax rax
+branch not_equal application_start_syscall_test_7
+
+move rcx r12
+move rdx r12
+add_i32 rdx 128
+move r8 rsp
+move_u32 r9d 64
+move_u32 r10d 1
+move_u32 r11d 1
+call Windvale_kernel_x64_application_start_syscall_context
+compare_i32 eax 5
+branch not_equal application_start_syscall_test_8
+move r8 rsp
+move_u32 ecx 8
+label application_start_syscall_erased
+load_memory_u64 rax r8 none 1 0
+test rax rax
+branch not_equal application_start_syscall_test_8
+add_i32 r8 8
+subtract_i32 ecx 1
+branch not_equal application_start_syscall_erased
+
+move_u32 eax 48
+jump_label application_start_syscall_return
+label application_start_syscall_test_1
+move_u32 eax 1
+jump_label application_start_syscall_return
+label application_start_syscall_test_2
+move_u32 eax 2
+jump_label application_start_syscall_return
+label application_start_syscall_test_3
+move_u32 eax 3
+jump_label application_start_syscall_return
+label application_start_syscall_test_4
+move_u32 eax 4
+jump_label application_start_syscall_return
+label application_start_syscall_test_5
+move_u32 eax 5
+jump_label application_start_syscall_return
+label application_start_syscall_test_6
+move_u32 eax 6
+jump_label application_start_syscall_return
+label application_start_syscall_test_7
+move_u32 eax 7
+jump_label application_start_syscall_return
+label application_start_syscall_test_8
+move_u32 eax 8
+label application_start_syscall_return
+add_i32 rsp 8448
+pop r12
+return
+end define
+end section
+
+section rodata .rodata align 4096
+define Application_start_syscall_requests
+# Valid WVSR 1.
+bytes 87 86 83 82 1 0 0 0 64 0 0 0 1 0 0 0
+bytes 1 0 1 0 1 0 1 0 1 0 1 0 40 0 1 0
+bytes 1 0 0 0 1 0 0 0 122 0 0 0 0 0 0 0
+bytes 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+# Wrong copied caller reference 65538.
+bytes 87 86 83 82 1 0 0 0 64 0 0 0 1 0 0 0
+bytes 1 0 1 0 2 0 1 0 1 0 1 0 40 0 1 0
+bytes 1 0 0 0 1 0 0 0 122 0 0 0 0 0 0 0
+bytes 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+# Wrong magic.
+bytes 88 86 83 82 1 0 0 0 64 0 0 0 1 0 0 0
+bytes 1 0 1 0 1 0 1 0 1 0 1 0 40 0 1 0
+bytes 1 0 0 0 1 0 0 0 122 0 0 0 0 0 0 0
+bytes 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+end define
+end section

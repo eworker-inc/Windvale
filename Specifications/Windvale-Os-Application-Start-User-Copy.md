@@ -65,6 +65,24 @@ This is an internal machine leaf, not the public start operation. Its caller
 must prove that the page belongs to the current process, is readable and stable
 for the bounded copy, and cannot fault across the privileged load sequence.
 
+## Syscall-context adapter
+
+[`X64-Application-Start-Syscall-Context.wva`](../Operating-System/Kernel/X64-Application-Start-Syscall-Context.wva)
+is the next internal leaf. It accepts the machine-derived current-process
+request-page start, untrusted request address, kernel snapshot, exact byte
+count, process id, and process generation. Version 1 admits only init process 1
+generation 1. The adapter rejects any other or unaligned context, derives
+reference `65537` from the separate id and generation, constructs the exclusive
+one-page end with checked addition, and invokes the copy leaf. Caller-controlled
+request bytes never select that derived identity or page.
+
+The adapter is intentionally independent of `GS` layout and syscall numbering.
+The future retained-machine cutover must load these inputs from the current
+thread/process record, prove that the selected RW/NX page is present and stable,
+reserve a kernel-owned snapshot, enforce the syscall budget, and translate the
+returned internal status. This keeps state-layout mechanics out of the reusable
+copy contract while leaving no user-supplied identity boolean.
+
 ## Evidence and limits
 
 The policy builds as an 8,313-byte WVB at SHA-256
@@ -91,3 +109,12 @@ memory. The syscall adapter must pin or otherwise stabilize the source mapping,
 derive the caller from the current thread/process record, convert page-walk and
 access faults into a defined rejection, and ensure that no policy decoder
 observes caller memory directly.
+
+The syscall-context leaf adds a 344-byte WVO at SHA-256
+`d639056eb9831f89ef3baa33b06b522437d2da4444f74e2db1d58229656dc04b`.
+Its nine-case probe links both leaves into a 4,288-byte image at SHA-256
+`3b5b95a0ceb544ca9beac65c3da9fb62ce4cce48dfb0a23e858a76827fd82b6f`,
+returns 48, and has pinned Windows/Linux containers. It checks exact snapshot
+success, byte identity, process and generation rejection, page alignment,
+cross-page range, size, independently derived caller, payload rejection, and
+rejection erasure.
