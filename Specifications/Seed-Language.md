@@ -48,7 +48,7 @@ Each dependency is semantically checked against only its own declarations and ex
 
 Current profile import compatibility is monotonic. A `portable` module may import only `portable` modules. A `hosted` module may import `portable` or `hosted` modules. A `system` module may import any current profile. This is a temporary compatibility and authority lattice, not the durable independent platform-scope model accepted by [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md).
 
-Every module must explicitly declare each catalog capability required anywhere in its transitive dependency closure. Missing transitive approval is `WVC0013`; an incompatible profile edge is `WVC0010`. The root declarations become the final canonical WVB capability set, sorted by the existing lowering rules. Declaration is compile-time approval and remains separate from the exact runtime grant. [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) owns this first capability-bearing static-library slice. Independent platform scope, required-versus-optional interfaces, capability identity versions beyond the current catalog name, typed capability values, and dynamic linking remain later contracts.
+Every module must explicitly declare each catalog capability required anywhere in its transitive dependency closure. Missing transitive approval is `WVC0013`; an incompatible profile edge is `WVC0010`. The root declarations become the final canonical WVB capability set, sorted by the existing lowering rules. Declaration is compile-time approval and remains separate from the exact runtime grant. [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) owns the first capability-bearing static-library slice. [Decision 0712](../Documents/Decisions/0712-First-Typed-Singleton-Capability-References.md) adds exact typed references to those required root singleton bindings. Independent platform scope, instance-bearing references, provider binding metadata, and dynamic linking remain later contracts.
 
 ## Types
 
@@ -64,10 +64,11 @@ Every module must explicitly declare each catalog capability required anywhere i
 - A declared record name is an immutable nominal product type with fixed, named fields.
 - A declared enum name is an immutable nominal scalar type with explicitly valued, named members.
 - A declared variant name is an immutable nominal sum type with one selected case and zero or one payload value.
+- A required root capability's qualified name is its immutable singleton reference type. The same qualified name as an expression acquires that pre-bound shared reference.
 - `sequence<T, N>` is an immutable sequence of at most `N` values; `builder<T, N>` is its affine mutable construction state. `N` is 1 through 4095 and collections cannot directly contain collections.
 - `[i32]` is immutable module data. It is not a general runtime array type in Seed.
 
-Parameters and local variables may have `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, a declared record, enum, or variant type, or an admitted sequence type. Functions may return the same non-builder value types. A builder is restricted to one explicitly typed mutable local and cannot cross a call, return, record, variant, data, constant, or assignment boundary. Module data may be `text`, `[i32]`, or `bytes`. Typed constants may be `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, or a declared enum type.
+Parameters and local variables may also carry an exact required root capability reference, and functions may return one. Capability references are freely copyable, shared, and non-owned, but cannot be record fields, variant payloads, collection elements, module data, or constants. A builder is restricted to one explicitly typed mutable local and cannot cross a call, return, record, variant, data, constant, or assignment boundary. Module data may be `text`, `[i32]`, or `bytes`. Typed constants may be `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, or a declared enum type.
 
 ## Declarations
 
@@ -108,6 +109,24 @@ Exact standard byte output is defined by
 [Standard-Byte-Output-Capability.md](Standard-Byte-Output-Capability.md).
 The two model operations are defined by
 [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md).
+
+A required root capability may be passed explicitly without creating another
+provider instance:
+
+```text
+fn Write(Output: console.write_line, Value: text) -> void {
+    Output(Value);
+}
+
+let Output: console.write_line = console.write_line;
+```
+
+The reference identifies only the one root-approved singleton binding for that
+catalog operation. Optional-only metadata does not produce a reference. A value
+call performs the ordinary capability call and retains its authorization,
+revocation, provider-restart, peer-loss, and operation failure behavior. The
+reference has no comparison, conversion, serialization, close, or `using`
+operation, and its erased numeric witness is not authority.
 
 ## Statements
 

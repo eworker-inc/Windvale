@@ -65,7 +65,7 @@ call "%Native%\Link-Wvo.cmd" 0 Directory_host_entry "%Work%\Windows-Image.chunk-
 
 echo native installation command dispatch step=package-exact-host item=6/7 target=windows-x64
 call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" ^
-    "%Work%\Windows-Image" 1 235440 "%Work%\Wvdb-Query.exe" windows || goto :cleanup
+    "%Work%\Windows-Image" 1 237360 "%Work%\Wvdb-Query.exe" windows || goto :cleanup
 
 echo native installation command dispatch step=dispatch-and-reject item=7/7 cases=9 executions=2
 node "%RepositoryRoot%\Tools\Package\Verify-Installation-Command-Dispatcher.mjs" ^

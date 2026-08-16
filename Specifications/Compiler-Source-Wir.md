@@ -28,7 +28,7 @@ The phase currently lowers:
 - expression statements, `return`, lexical blocks, `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
 - explicit jump, branch, and return terminators.
 
-Shape `0` is `void`; `1` through `6` are `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`. Record shapes start at `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at `196608`. Packed high families retain sequence/builder element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
+Shape `0` is `void`; `1` through `6` are `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`. Record shapes start at `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at `196608`. Exact singleton capability-reference shapes are `268435456 + RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
 
 Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. Function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries.
 
@@ -82,6 +82,14 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 
 Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
 
+A bare required capability name emits the existing `U32ˉconstant = 3` operation
+with its exact internal capability-reference result shape and zero target and
+auxiliary fields. Calling a local of that shape resolves the root capability
+directory entry and emits the existing `Callˉcapability = 63` operation. The
+validator accepts the custom shape only when it names an actual required root
+capability and rejects capability shapes in records, variants, and collections.
+No WVIR operation value or directory version changes.
+
 A constant read resolves its WVSD 1.1 entry, reevaluates the validated root declaration under the source-symbol contract, and emits the matching scalar, Boolean, or enum constant operation, including `I64ˉconstant` and `U64ˉconstant`. Wide values carry exact low/high `u32` limbs in the operation target and auxiliary fields. No data identity, local slot, or runtime lookup is introduced.
 
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. No new WVIR operation or WVB opcode is introduced. Recursive `else if` lowers through the existing conditional blocks and terminators.
@@ -105,9 +113,9 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Current deterministic candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 824,959 bytes, SHA-256 `32f71092a7e0a82c8da5fdd0bc332318a5ce158b79772e40673980ffd44f68e5`.
-- `Source-Wir-Demo.wvb`: 829,787 bytes, SHA-256 `1259896022fcee5aa660fae2831fa0ae3ab3be2a6fc8b7eb6678b0c292d210dc`.
-- `Source-Wir-Tool.wvb`: 823,255 bytes, SHA-256 `9414ab75c69f15bffca0b0ddf6cd51280196c54b743ab6dd11c27f9d559703be`.
+- `Source-Wir-Core.wvb`: 831,890 bytes, SHA-256 `221702d78eea74babbe3762f59da7f5445920cd093e8a42859ed2b5ce009d8e9`.
+- `Source-Wir-Demo.wvb`: 837,598 bytes, SHA-256 `67de0b84e904b4ac3b412bb6204157fb390b8a768b277522d7e78de378800a38`.
+- `Source-Wir-Tool.wvb`: 830,836 bytes, SHA-256 `385c54a5bb36c8b5b7db000123c5355939b6a51597d015dc6fa90bfc6da74927`.
 
 These local identities include inferred-local verification, storage-free typed-constant lowering, named-record remapping, recursive `else if`, loop-control targets, compound assignment, and structurally verified short-circuit Boolean phi nodes; they require cross-host requalification before a new qualification claim.
 

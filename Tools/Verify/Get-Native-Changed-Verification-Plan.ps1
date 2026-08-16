@@ -1185,6 +1185,9 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
+    } elseif ($Stem -eq 'Build-Current-Wvb') {
+        Add-Bytecode-Suites
+        Add-Suite @('compiler-reconstruction', 'libraries', 'packages')
     } elseif ($Stem -in @('Build-Wvdb-Query-Package', 'Build-Wvb-Inspector-Package')) {
         Add-Suite @('packages', 'offline-package-stage')
     } elseif ($Stem -eq 'Test-Package-Format') {
@@ -2254,6 +2257,7 @@ foreach ($Path in $Paths) {
         'Examples/Compiler/Source-Wir-Tool.wv',
         'Examples/Compiler/Source-Wvb-Demo.wv',
         'Examples/Compiler/Source-Wvb-Tool.wv',
+        'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv',
         'Tests/Fixtures/Source-Wvb/Pruning.wv',
         'Projects/Compiler/Windvale-Source-Lexer-Core.wvproj',
         'Projects/Examples/Windvale-Source-Lexer-Demo.wvproj',

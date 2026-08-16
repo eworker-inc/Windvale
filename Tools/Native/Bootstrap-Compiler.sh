@@ -91,14 +91,14 @@ if [[ $result -ne 0 ]]; then
     exit "$result"
 fi
 
-verify_file "$stage1" 947975 \
-    c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb \
+verify_file "$stage1" 955192 \
+    f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4 \
     'transitional Stage 1 compiler WVB' || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
     1 "$stage1" "$stage1_compiler" || exit $?
 "$script_directory/Compile-Compiler-Source-Set.sh" \
     "$stage1_compiler" "$source_root" "$candidate" || exit $?
-verify_file "$candidate" 923818 \
-    49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 \
+verify_file "$candidate" 931035 \
+    13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 \
     'fixed-point Stage 2 compiler WVB' || exit 1
 "$publisher" "$candidate" "$output_path"

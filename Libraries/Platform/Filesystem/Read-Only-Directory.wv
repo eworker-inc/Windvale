@@ -166,7 +166,8 @@ export fn Directoryˉreadˉdecode(
     );
 }
 
-export fn Directoryˉreadˉbytes(
+export fn Directoryˉreadˉbytesˉfrom(
+    Directory: filesystem.directory_read_v1,
     Name: text,
     Offset: u32,
     Maximum: u32
@@ -180,6 +181,19 @@ export fn Directoryˉreadˉbytes(
     if Offset > 4294967295u32 - Maximum {
         return Directoryˉreadˉfailure(Directoryˉreadˉstatus.Invalidˉlimit, Offset);
     }
-    let Response: bytes = filesystem.directory_read_v1(Name, Offset, Maximum);
+    let Response: bytes = Directory(Name, Offset, Maximum);
     return Directoryˉreadˉdecode(Response, Offset, Maximum);
+}
+
+export fn Directoryˉreadˉbytes(
+    Name: text,
+    Offset: u32,
+    Maximum: u32
+) -> Directoryˉreadˉresult {
+    return Directoryˉreadˉbytesˉfrom(
+        filesystem.directory_read_v1,
+        Name,
+        Offset,
+        Maximum
+    );
 }

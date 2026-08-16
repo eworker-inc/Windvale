@@ -35,14 +35,14 @@ reject_lock() {
     exit 1
 }
 
-verify_file "$lock" 1750 ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618 || reject_lock
+verify_file "$lock" 1770 4e4089ad6b40f6f9b435bebdd8b3321e64db6038d745c191aa54e348ee44d926 || reject_lock
 verify_file "$manifest" 866 835f573302377fdd38e4c3d51fa9106397beba0b9813f99bfc3143d08a156406 || reject_lock
 verify_file "$repository_root/Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 || reject_lock
-verify_file "$repository_root/Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 || reject_lock
+verify_file "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" 931035 13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 || reject_lock
 verify_file "$repository_root/Projects/Applications/Windvale-Wvdb-Query.wvproj" 270 86570daa0dac6410dc8a64947901a3fc955db24afe3589bc70986f96abb8f49a || reject_lock
 verify_file "$repository_root/Applications/Database/Wvdb-Query.wv" 3168 22d1fb0b883383fd51cd103d9b831d500178bbedc3d79df12dc86af74070c2d8 || reject_lock
 verify_file "$repository_root/Foundation/Decimal-Parsing.wv" 1276 797eb31da7e7a8c93e0d082bf910bc6d8e7988bcfad757a87c979075912e668a || reject_lock
-verify_file "$repository_root/Libraries/Platform/Filesystem/Read-Only-Directory.wv" 6565 4c6ecc745b0755b0242c7127c391d27408a7694f91d634c55eeb512746393c81 || reject_lock
+verify_file "$repository_root/Libraries/Platform/Filesystem/Read-Only-Directory.wv" 6847 7b8600bebb590d8c9d9ce9c8b7318374d4ee0501d7e32dddeded3fcf672c3f28 || reject_lock
 verify_file "$repository_root/Libraries/Platform/Database/Read-Only-Wvdb.wv" 9084 7b3bd45397878e5468d979a2fb437feb4d72d5d8bbad21c832bcf3f280c018cb || reject_lock
 verify_file "$repository_root/Libraries/Database/Wvdb-Reader.wv" 11213 ad6fd38dafdab57793aead612dd050817f65f22179d11b0f3dbab6654ac909c2 || reject_lock
 
@@ -63,10 +63,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"$script_directory/Build-Wvb.sh" \
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Applications/Windvale-Wvdb-Query.wvproj" \
     "$candidate" >/dev/null || exit $?
-verify_file "$candidate" 26294 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 || reject_lock
+verify_file "$candidate" 26420 24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 || reject_lock
 "$repository_root/Artifacts/Native-Front-Door/linux-x64/wvpublish.elf" \
     "$candidate" "$output" >/dev/null || exit $?
-echo 'package status=Published root=windvale.wvdb-query target=hosted-wvb-v1 bytes=26294 sha256=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2'
+echo 'package status=Published root=windvale.wvdb-query target=hosted-wvb-v1 bytes=26420 sha256=24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9'

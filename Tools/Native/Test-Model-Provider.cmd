@@ -28,9 +28,8 @@ set "ModelProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Hosted-Mo
 set "ModelProjectResource=%ModelProject:\=/%"
 
 echo START native model provider phase=tools item=1/4
-"%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
-    "%BuildProjectResource%" "%WorkResource%/Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1155121 0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 || goto :cleanup
+call "%Native%\Build-Current-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
+call :verify_file "%Work%\Build-Driver.wvb" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LowererProjectResource%" "%Work%/Lowerer.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Lowerer.wvb" 522025 318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6 || goto :cleanup

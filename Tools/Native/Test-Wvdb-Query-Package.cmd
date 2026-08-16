@@ -27,7 +27,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvdb-Query-Package.cmd" ^
 if errorlevel 1 goto :cleanup
 fc /b "%TemporaryDirectory%\First.wvb" "%TemporaryDirectory%\Second.wvb" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%TemporaryDirectory%\First.wvb" 26294 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2
+call :verify_file "%TemporaryDirectory%\First.wvb" 26420 24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb-Inspector-Package.cmd" ^

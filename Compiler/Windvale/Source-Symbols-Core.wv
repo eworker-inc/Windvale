@@ -43,6 +43,7 @@ export enum Compilerˉsourceˉsymbolˉstatus {
     Emptyˉvariant = 32;
     Duplicateˉvariantˉcase = 33;
     Invalidˉvariantˉpayload = 34;
+    Invalidˉcollectionˉelement = 35;
 }
 
 enum Compilerˉsourceˉnamespaceˉkind {
@@ -1224,6 +1225,19 @@ export fn Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
     return Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
 }
 
+export fn Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+    Directory: bytes,
+    Shape: u32
+) -> bool {
+    if Shape < 268435456u32 { return false; }
+    let Target: u32 = Shape - 268435456u32;
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    if Target >= Entries { return false; }
+    let Entry: u32 = 16u32 + Target * 24u32;
+    return Bytesˉreadˉu32ˉlittle(Directory, Entry) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) == 2u32;
+}
+
 export fn Compilerˉsourceˉsymbolsˉownedˉmatchˉisˉaccessible(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -1459,6 +1473,13 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
             Records, Enums, false
         );
         if Element.Status != Compilerˉsourceˉsymbolˉstatus.Valid { return Element; }
+        if Element.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Invalidˉcollectionˉelement,
+                Kind, Element.Nominalˉkind, Element.Nominalˉindex,
+                Element.Nominalˉmodule, Token
+            );
+        }
         var Elementˉshape: u32 = 0u32;
         if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { Elementˉshape = 1u32; }
         if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { Elementˉshape = 2u32; }
@@ -1520,6 +1541,38 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
         Source, Offset, Line, Column, false
     );
     let Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
+    let Capability: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉpriorˉinˉdirectory(
+        Input, Scan, Directory, Lookup, 0u32, 4294967295u32,
+        Source, Token.Offset, Qualifiedˉlength,
+        Compilerˉsourceˉnamespaceˉkind.Capability
+    );
+    if Capability.Found {
+        if Forˉfield {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype,
+                Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability,
+                Capability.Directoryˉindex,
+                0u32,
+                Token
+            );
+        }
+        return Compilerˉsourceˉtypeˉbinding(
+            Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability,
+            Capability.Directoryˉindex,
+            0u32,
+            Token.Offset,
+            Qualifiedˉlength,
+            Qualified.Nextˉoffset,
+            Qualified.Nextˉline,
+            Qualified.Nextˉcolumn,
+            Qualified.Nextˉoffset,
+            Qualified.Nextˉline,
+            Qualified.Nextˉcolumn
+        );
+    }
     let Match: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
         Input,
         Scan,
@@ -3944,6 +3997,13 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉvariant(
                 );
             }
             if Payloadˉtype.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+                return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                    Input, Counts, Compilerˉsourceˉsymbolˉstatus.Invalidˉvariantˉpayload,
+                    Module, Payloadˉtype.Nominalˉmodule, Declaration.Kind,
+                    Payloadˉtype.Nameˉoffset, Payloadˉtype.Failureˉline, Payloadˉtype.Failureˉcolumn
+                );
+            }
+            if Payloadˉtype.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
                 return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
                     Input, Counts, Compilerˉsourceˉsymbolˉstatus.Invalidˉvariantˉpayload,
                     Module, Payloadˉtype.Nominalˉmodule, Declaration.Kind,

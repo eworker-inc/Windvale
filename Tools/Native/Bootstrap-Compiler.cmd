@@ -49,7 +49,7 @@ call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
 
-call :verify_file "%Stage1%" 947975 c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb "transitional Stage 1 compiler WVB"
+call :verify_file "%Stage1%" 955192 f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4 "transitional Stage 1 compiler WVB"
 if errorlevel 1 (
     set "Result=1"
     goto :cleanup
@@ -65,7 +65,7 @@ call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
 
-call :verify_file "%Candidate%" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 "fixed-point Stage 2 compiler WVB"
+call :verify_file "%Candidate%" 931035 13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 "fixed-point Stage 2 compiler WVB"
 if errorlevel 1 (
     set "Result=1"
     goto :cleanup

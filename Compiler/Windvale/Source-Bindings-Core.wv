@@ -237,6 +237,9 @@ export fn Compilerˉsourceˉbindingsˉshape(
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { return 6u32; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence { return Binding.Nominalˉindex; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder { return Binding.Nominalˉindex; }
+    if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
+        return 268435456u32 + Binding.Nominalˉindex;
+    }
     if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
         return 65536u32 + Binding.Nominalˉindex;
     }
@@ -703,6 +706,9 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         var Shapeˉvalid: bool = Shape <= 8u32;
         if Shape == 0u32 { Shapeˉvalid = Kind != 1u32; }
         if Shape > 8u32 {
+            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+                Symbols.Directory, Shape
+            ) { Shapeˉvalid = true; }
             if Shape >= 65536u32 {
                 if Shape < 65536u32 + Symbols.Records { Shapeˉvalid = true; }
             }
@@ -1205,6 +1211,47 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
     );
 }
 
+export fn Compilerˉsourceˉbindingsˉfindˉlocalˉcapability(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Payload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Offset: u32,
+    Length: u32,
+    Useˉoffset: u32
+) -> Compilerˉsourceˉbindingˉmatch {
+    let Local: Compilerˉsourceˉlocalˉmatch = Compilerˉsourceˉbindingsˉfindˉlocal(
+        Source, Payload, Bindingˉfirst, Bindingˉentries, Offset, Length, Useˉoffset
+    );
+    if Local.Found {
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+            Symbols.Directory, Local.Shape
+        ) {
+            let Target: u32 = Local.Shape - 268435456u32;
+            let Entry: u32 = 16u32 + Target * 24u32;
+            let Root: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                Input, Scan, 0u32
+            );
+            return Compilerˉsourceˉbindingˉmatch(
+                true, true, Compilerˉsourceˉcallableˉkind.Capability, 0u32,
+                Compilerˉsourceˉbindingsˉcapabilityˉarity(
+                    Root.Source,
+                    Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32),
+                    Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32)
+                ),
+                Target
+            );
+        }
+    }
+    return Compilerˉsourceˉbindingˉmatch(
+        false, false, Compilerˉsourceˉcallableˉkind.None,
+        Symbols.Modules, 0u32, Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32)
+        );
+}
+
 export fn Compilerˉsourceˉbindingsˉbodyˉempty() -> Compilerˉsourceˉbindingˉbody {
     return Compilerˉsourceˉbindingˉbody(
         Compilerˉsourceˉbindingˉstatus.Valid,
@@ -1323,6 +1370,12 @@ export fn Compilerˉsourceˉbindingsˉbindˉname(
             Module, Constant.Module, Function, Nameˉoffset, Line, Column
         );
     }
+    let Capability: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉfindˉcallable(
+        Input, Scan, Symbols, 0u32, Source, Nameˉoffset, Nameˉlength
+    );
+    if Capability.Kind == Compilerˉsourceˉcallableˉkind.Capability {
+        return Compilerˉsourceˉbindingsˉbodyˉcounts(1u32, 0u32, 0u32);
+    }
     return Compilerˉsourceˉbindingsˉbodyˉfailure(
         Compilerˉsourceˉbindingsˉbodyˉempty(),
         Compilerˉsourceˉbindingˉstatus.Unknownˉname,
@@ -1377,6 +1430,13 @@ export fn Compilerˉsourceˉbindingsˉbindˉfield(
             Module, Constant.Module, Function,
             Expression.Valueˉoffset, Position.Line, Position.Column
         );
+    }
+    let Capability: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉfindˉcallable(
+        Input, Scan, Symbols, 0u32, Source,
+        Expression.Valueˉoffset, Expression.Valueˉlength
+    );
+    if Capability.Kind == Compilerˉsourceˉcallableˉkind.Capability {
+        return Compilerˉsourceˉbindingsˉbodyˉcounts(1u32, 0u32, 0u32);
     }
     var Lastˉdot: u32 = Expression.Valueˉlength;
     var Nameˉcharacter: u32 = 0u32;
@@ -1716,6 +1776,25 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
         let Callˉnameˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
             Source, Expression.Offset, Expression.Line, Expression.Column, Expression.Valueˉoffset
         );
+        let Capabilityˉlocal: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉfindˉlocalˉcapability(
+            Input, Scan, Symbols, Payload, Bindingˉfirst, Bindingˉentries, Source,
+            Expression.Valueˉoffset, Expression.Valueˉlength, Expression.Offset
+        );
+        if Capabilityˉlocal.Found {
+            if Capabilityˉlocal.Items != Expression.Items {
+                return Compilerˉsourceˉbindingsˉbodyˉfailure(
+                    Arguments,
+                    Compilerˉsourceˉbindingˉstatus.Callˉarity,
+                    Module, 0u32, Function,
+                    Expression.Valueˉoffset, Callˉnameˉposition.Line, Callˉnameˉposition.Column
+                );
+            }
+            return Compilerˉsourceˉbindingsˉbodyˉcounts(
+                Arguments.Reads + 1u32,
+                Arguments.Assignments,
+                Arguments.Calls + 1u32
+            );
+        }
         let Callable: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉfindˉcallable(
             Input, Scan, Symbols, Module, Source,
             Expression.Valueˉoffset, Expression.Valueˉlength

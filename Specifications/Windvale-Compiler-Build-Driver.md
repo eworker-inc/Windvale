@@ -137,13 +137,24 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The current canonical-source reconstruction candidate is 1,101,068 bytes with SHA-256 `7c87b171ff61278599bec200090def1ae14ba58567b07d36cfdb3a420a533e4f`. One current-host Windows package reproduced those exact bytes through the native driver in 57.315 seconds with an empty diagnostic stream. The qualified native front door remains pinned until the exact-commit dual-host gate passes.
+The current canonical-source reconstruction candidate is 1,162,338 bytes with
+SHA-256 `a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20`.
+It stages as eight canonical native chunks with `Main` at entry offset 220,460.
 
-The current WVB 1.11 recovery reconstruction for `windows-x64-build-driver-v1` emits a 29,257,728-byte PE32+ application with SHA-256 `875e827a512f2387a980d2871115c94ba0a17a0e9dac6b89439140dc9b7f313a`.
+The current WVB 1.11 reconstruction for `windows-x64-build-driver-v1` emits a
+30,381,568-byte PE32+ application with SHA-256
+`b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3`.
 
-The current WVB 1.11 recovery reconstruction for `linux-x64-build-driver-v1` emits a 29,257,728-byte sectionless static-PIE ELF application with SHA-256 `d96da77e3dba34598975eb1c721b0195a54f746e1b9a11608bda3e384a96c590`.
+The current WVB 1.11 reconstruction for `linux-x64-build-driver-v1` emits a
+30,380,032-byte sectionless static-PIE ELF application with SHA-256
+`b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0`.
 
-These are reconstruction candidates produced after the Decision 0220 descriptor-return correction. The digest-bound ordinary native-front-door inventory deliberately retains its previously qualified build-driver applications until this exact descendant passes the Windows/Linux replacement gate; historical qualification identities remain recorded in that inventory and its evidence documents.
+These are unqualified reconstruction candidates. `Build-Current-Wvb` uses the
+current candidate driver's raw, self-verified, non-atomic output contract because
+the semantic-freeze publisher does not admit forward-language WVB. The ordinary `Build-Wvb` launcher and
+`Artifacts/Native-Front-Door` remain the qualified semantic-freeze baseline;
+their historical qualification identities are not repinned by forward language
+evolution.
 
 The retained recovery construction route is recorded separately. The normal source
 construction route is:
@@ -152,10 +163,18 @@ construction route is:
 Tools/Native/Build-Wvb Projects/Tools/Windvale-Compiler-Build-Driver.wvproj <output.wvb>
 ```
 
+Forward-language consumers use the explicitly unqualified current route:
+
+```text
+Tools/Native/Build-Current-Wvb Projects/Tools/Windvale-Compiler-Build-Driver.wvproj <output.wvb>
+```
+
 `Test-Workspace-Project2` executes the native driver over the checked-in workspace,
-publishes and runs a valid module, and owns seven malformed or containment
+writes and runs a valid module, and owns seven malformed or containment
 rejections. `Test-Libraries` exercises Project 2 over reusable portable and hosted
-library compositions. Both tests leave failed outputs unpublished.
+library compositions. The qualified ordinary route preserves failed destinations;
+the explicitly unqualified current route retains the raw driver's non-atomic output
+and indeterminate-failure boundary.
 
 ## Retirement boundary
 

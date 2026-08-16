@@ -115,11 +115,11 @@ grep -F 'release verify status=Valid version=0.1.0 channel=stage' \
     "$work/Verify.txt" >/dev/null || exit 1
 grep -F 'artifact package windvale.wvb-inspector a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 92781' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
-grep -F 'artifact package windvale.wvdb-query 3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 43725' \
+grep -F 'artifact package windvale.wvdb-query 33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c 43873' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
-grep -F 'artifact generation linux-x64 9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 726' \
+grep -F 'artifact generation linux-x64 ec12ed70528e77b3809380525d9abeeed87433dcff7150c96eb9dc449e8aea57 726' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
-grep -F 'artifact generation windows-x64 db46b880a6fbff8d60d4dd19b9e6318ca1657dde5f932bc257dc916c7df67a14 728' \
+grep -F 'artifact generation windows-x64 d5b55b528b35adb43eb7bc9a9fe62d2ca3c5d6578642e78854b7be31013f579d 728' \
     "$work/First/Release-Manifest.txt" >/dev/null || exit 1
 "$work/Generation-Verifier.elf" \
     "$work/First/Artifacts/Generations/Generation-1.windows-x64.txt" \
@@ -133,10 +133,10 @@ grep -Fx 'generation status=Valid target=linux-x64 packages=2 commands=2' \
     "$work/Generation-Linux.txt" >/dev/null || exit 1
 node "$generation_publisher" publish "$work/Installed" \
     "$work/First/Artifacts/Generations/Generation-1.linux-x64.txt" \
-    9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 \
+    ec12ed70528e77b3809380525d9abeeed87433dcff7150c96eb9dc449e8aea57 \
     >/dev/null || exit $?
 node "$generation_publisher" verify "$work/Installed" \
-    9bc748c74f93bbdea9ad6bafc58a4bb1b14ab3511e852fa5fe48b158114bf3f1 \
+    ec12ed70528e77b3809380525d9abeeed87433dcff7150c96eb9dc449e8aea57 \
     >/dev/null || exit $?
 
 echo 'native offline package stage step=reject-package-tamper item=8/8'

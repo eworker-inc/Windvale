@@ -27,12 +27,13 @@ The seed compiler source is the qualified semantic-freeze tree at commit
 state for the last 921,900-byte convergence candidate. Decision 0491 repins the
 ordinary bootstrap contract to the current explicit inventory in
 `Projects/Examples/Windvale-Compiler.wvproj`. With Decision 0713's capability
-catalog extension, the seed emits a transitional 947,975-byte Stage 1 WVB at
+catalog extension and Decision 0712's typed singleton references, the seed emits
+a transitional 955,192-byte Stage 1 WVB at
 SHA-256
-`c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb`.
+`f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4`.
 The launcher packages that private compiler and uses it once to emit the stable
-923,818-byte Stage 2 WVB at SHA-256
-`49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2`.
+931,035-byte Stage 2 WVB at SHA-256
+`13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4`.
 Decision 0494 retains the unqualified current WVB and paired reconstruction in
 `Artifacts/Native-Compiler-Reconstruction-Candidate`; exact checkpoint
 qualification remains pending on both hosts.
@@ -119,9 +120,9 @@ independently verify the next generation, and require complete byte equality.
 source invocation shared by the seed and convergence routes. They do not discover
 files, parse the project, or weaken the project-manifest identity check.
 
-The coordinators are repinned to require identical 923,818-byte outputs at
+The coordinators are repinned to require identical 931,035-byte outputs at
 SHA-256
-`49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2`.
+`13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4`.
 The current toolset and paired compiler applications are reconstructed as
 unqualified candidates. Exact equality on Windows and Linux and promotion remain
 part of the grouped retirement qualification; a local or focused pass does not

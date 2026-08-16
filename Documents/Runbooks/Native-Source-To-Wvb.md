@@ -24,18 +24,39 @@ On Linux x64, use Bash:
 If the output is omitted, it defaults beside the project with the same basename
 and a `.wvb` extension. The output directory must already exist.
 
-Both launchers use the checked-in inventory under
+Both launchers use the qualified checked-in inventory under
 [`Artifacts/Native-Front-Door/`](../../Artifacts/Native-Front-Door/Manifest.json).
-They verify the pinned host tools before execution, ask the native build driver to
+They verify both pinned host tools before execution, ask the native build driver to
 write a private caller-owned candidate, and invoke the native publisher only after
 successful compiler and verifier admission. The publisher repeats admission over
 the exact candidate snapshot and atomically replaces the destination. A rejected
 project, source set, compiler result, verifier result, or pre-replacement publication
 attempt preserves an existing destination.
 
-The project must use the current Project 1 format and may identify at most 63 source
+The project must use the current Project 2 format and may identify at most 63 source
 modules. The launchers do not discover source files, install packages, infer imports,
 create output directories, package PE/ELF applications, or execute the result.
+
+## Forward-language candidate build
+
+Source that uses post-freeze language features must opt into the unqualified
+current compiler candidate:
+
+```bat
+Tools\Native\Build-Current-Wvb.cmd <project.wvproj> [output.wvb]
+```
+
+```sh
+./Tools/Native/Build-Current-Wvb.sh <project.wvproj> [output.wvb]
+```
+
+This route binds the exact build driver under
+[`Artifacts/Native-Compiler-Reconstruction-Candidate/`](../../Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json)
+and uses its self-verified raw output contract. It is non-atomic development
+evidence, not a promotion or cross-host qualification claim; a failed write can
+leave an indeterminate destination. The WVDB Query package and current library
+verification use this route because the read-only directory facade consumes typed
+singleton capability references.
 
 Place a project manifest beside the component source it owns. Use a repository-root
 manifest only when one artifact genuinely spans components and therefore needs their

@@ -52,7 +52,7 @@ function Replaceˉfixture(Value) {
 }
 
 try {
-    assert.equal(fs.statSync(Wvb).size, 76348);
+    assert.equal(fs.statSync(Wvb).size, 76474);
     const SuccessCases = [
         ["empty", Buffer.alloc(0)],
         ["invalid-utf8", Buffer.from([0x00, 0xff, 0xc3, 0x28, 0x0a])],

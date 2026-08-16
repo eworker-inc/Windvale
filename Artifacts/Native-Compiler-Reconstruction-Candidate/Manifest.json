@@ -1,7 +1,7 @@
 {
   "format": "windvale-native-compiler-reconstruction-candidate-1",
   "status": "candidate",
-  "sourceDecision": "0491",
+  "sourceDecision": "0712",
   "provenanceDecision": "0201",
   "nativeSourceDecision": "0494",
   "qualification": "current-host-focused",
@@ -9,8 +9,8 @@
   "sourceProject": "Windvale-Compiler.wvproj",
   "sourceProjectBytes": 649,
   "sourceProjectSha256": "a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05",
-  "nativeImageBytes": 27647511,
-  "nativeImageSha256": "8f808c868da20fe8ffbe01a40cd8473f0cb570e825283bb938a2e37668470c8e",
+  "nativeImageBytes": 27867015,
+  "nativeImageSha256": "69c2250a4ebb19d63be0cb14b367a5aeb5fcbb64a0b825cd275f82595a851ac9",
   "nativeEntryOffset": 51356,
   "canonicalImageChunks": 7,
   "artifacts": [
@@ -18,25 +18,49 @@
       "name": "current-compiler-wvb",
       "path": "Wvb/Windvale-Compiler.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 923818,
-      "sha256": "49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2",
+      "bytes": 931035,
+      "sha256": "13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4",
       "sourceProject": "Windvale-Compiler.wvproj"
     },
     {
       "name": "windows-x64-current-compiler",
       "path": "windows-x64/wvcompiler.exe",
       "target": "windows-x64-console-v3",
-      "bytes": 27678720,
-      "sha256": "6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8",
+      "bytes": 27898368,
+      "sha256": "4009e6747bbf9a6d2b0b2ec90e2368ca50fda863d445534f15ef96e22a657b34",
       "sourceWvb": "Wvb/Windvale-Compiler.wvb"
     },
     {
       "name": "linux-x64-current-compiler",
       "path": "linux-x64/wvcompiler.elf",
       "target": "linux-x64-console-v3",
-      "bytes": 27680768,
-      "sha256": "7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37",
+      "bytes": 27897856,
+      "sha256": "c266adf20fe2927a446483f68880ef323c480f011b0c26384716ea2f651bcd65",
       "sourceWvb": "Wvb/Windvale-Compiler.wvb"
+    },
+    {
+      "name": "current-compiler-build-driver-wvb",
+      "path": "Wvb/Compiler-Build-Driver.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 1162338,
+      "sha256": "a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20",
+      "sourceProject": "Projects/Tools/Windvale-Compiler-Build-Driver.wvproj"
+    },
+    {
+      "name": "windows-x64-current-compiler-build-driver",
+      "path": "windows-x64/wvbuild.exe",
+      "target": "windows-x64-build-driver-v1",
+      "bytes": 30381568,
+      "sha256": "b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3",
+      "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
+    },
+    {
+      "name": "linux-x64-current-compiler-build-driver",
+      "path": "linux-x64/wvbuild.elf",
+      "target": "linux-x64-build-driver-v1",
+      "bytes": 30380032,
+      "sha256": "b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0",
+      "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
     }
   ]
 }

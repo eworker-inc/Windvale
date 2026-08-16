@@ -40,8 +40,8 @@ echo 'START native file read phase=self-host item=1/6'
 "$front_door" --workspace "$workspace" --project \
     "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
     "$work/Build-Driver.wvb" >/dev/null || exit $?
-verify_file "$work/Build-Driver.wvb" 1155121 \
-    0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 \
+verify_file "$work/Build-Driver.wvb" 1162338 \
+    a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 \
     'current build driver WVB' || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Build-Driver.wvb" "$work/Build-Driver.elf" --development-cache \
@@ -67,13 +67,13 @@ echo 'native file read compile step=source'
 verify_file "$work/Response.wvb" 8417 \
     868c9967432b3b5b2859de26bb3caf76dcbcc113d4a9c678625eecde73fd8193 \
     'response-core self-test WVB' || exit 1
-verify_file "$work/File-Read.wvb" 76348 \
-    4ef96f317c0ac0ca57d60c1c2b6533e6d51cc36b8adb5b481e8ec04b61b69a73 \
+verify_file "$work/File-Read.wvb" 76474 \
+    95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb \
     'file-read WVB' || exit 1
 echo 'native file read compile step=lower'
 "$work/Lowerer.elf" "$work/File-Read.wvb" "$work/File-Read.wvo" >/dev/null || exit $?
-verify_file "$work/File-Read.wvo" 2408301 \
-    93553d1c06f19c52d276bc7150d7939b5da4d5b5f8b260deb742f00da123b429 \
+verify_file "$work/File-Read.wvo" 2410255 \
+    8ad63e3dbe87daccf6a9a94407ee0a661f177d6f812b300587b77fe36f7dd323 \
     'file-read WVO' || exit 1
 echo 'native file read compile step=response-package'
 "$script_directory/Package-Hosted-Wvb.sh" 2 "$work/Response.wvb" \
@@ -111,18 +111,18 @@ echo 'START native file read phase=link item=4/6'
     "$work/Output-Linux.wvo" >"$work/Linux-Link.txt" || exit $?
 windows_entry=$(sed -n 's/^entry name=File_read_host_entry address=\([0-9][0-9]*\)$/\1/p' "$work/Windows-Link.txt")
 linux_entry=$(sed -n 's/^entry name=File_read_host_entry address=\([0-9][0-9]*\)$/\1/p' "$work/Linux-Link.txt")
-[[ $windows_entry == 2405696 && $linux_entry == 2405696 ]] || exit 1
-verify_file "$work/Windows-Image.chunk-0" 2409512 d4d58f79cff5bd4a2066567116f40c8b7128d4578c0959bb2ff08b2be0d2b38e 'Windows linked image' || exit 1
-verify_file "$work/Linux-Image.chunk-0" 2408462 9a0a6736ce61c468faf270ab392aa41991ae0763f0a53f9cb42b56641e1f0186 'Linux linked image' || exit 1
+[[ $windows_entry == 2407616 && $linux_entry == 2407616 ]] || exit 1
+verify_file "$work/Windows-Image.chunk-0" 2411432 7905ace13aaea2715c622380177b3a4bdb7470d122d143729603c6ead0d17cfb 'Windows linked image' || exit 1
+verify_file "$work/Linux-Image.chunk-0" 2410382 748d356ac947e2eb52fbe7b186a90f0b22aed6bbef6da10f908eff472f22ab05 'Linux linked image' || exit 1
 echo 'PASS  native file read phase=link item=4/6'
 
 echo 'START native file read phase=package item=5/6'
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 "$work/File-Read.wvb" \
-    "$work/Windows-Image" 1 2405696 "$work/File-Read.exe" windows >/dev/null || exit $?
+    "$work/Windows-Image" 1 2407616 "$work/File-Read.exe" windows >/dev/null || exit $?
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 "$work/File-Read.wvb" \
-    "$work/Linux-Image" 1 2405696 "$work/File-Read.elf" linux >/dev/null || exit $?
-verify_file "$work/File-Read.exe" 2430464 16085cd263600822f693d1f57f14315f47fe4102b76b59a64e333bdcf98615b9 'Windows file-read application' || exit 1
-verify_file "$work/File-Read.elf" 2428928 547c311b1f5398d7cc5f67d31782ccb992e98c02dd90edfe0a560b47de575beb 'Linux file-read application' || exit 1
+    "$work/Linux-Image" 1 2407616 "$work/File-Read.elf" linux >/dev/null || exit $?
+verify_file "$work/File-Read.exe" 2432000 98c8ae185f9508d7ac6473b433cc8cb21429fe77cf3b218196bf25032e7ba7d5 'Windows file-read application' || exit 1
+verify_file "$work/File-Read.elf" 2433024 e24332de44b14766049742941742e31d8a6b55c62ee31510e95ef9a128de0f24 'Linux file-read application' || exit 1
 echo 'PASS  native file read phase=package item=5/6'
 
 echo 'START native file read phase=execute item=6/6 cases=32'
@@ -131,4 +131,4 @@ echo 'START native file read phase=execute item=6/6 cases=32'
 node "$script_directory/Verify-File-Read-Application.mjs" linux \
     "$work/File-Read.wvb" "$work/File-Read.exe" "$work/File-Read.elf" >/dev/null || exit $?
 echo 'PASS  native file read phase=execute item=6/6 cases=32'
-echo 'native file read application status=Passed cases=32 capabilities=5 wvb=4ef96f317c0ac0ca57d60c1c2b6533e6d51cc36b8adb5b481e8ec04b61b69a73 cross-host-images=Verified'
+echo 'native file read application status=Passed cases=32 capabilities=5 wvb=95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb cross-host-images=Verified'

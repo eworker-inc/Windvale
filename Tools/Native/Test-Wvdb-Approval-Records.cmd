@@ -87,7 +87,7 @@ node "%Verifier%" verify "%Work%\Target" >nul 2>nul
 if not errorlevel 1 goto :cleanup
 
 echo native application approval step=reject-approval-identity-substitution item=12/13
-pwsh -NoLogo -NoProfile -Command "$p='%Work%\Approval-Identity\%Linux%'; $t=[IO.File]::ReadAllText($p); [IO.File]::WriteAllText($p, $t.Replace('3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71', ('0' * 64)), [Text.UTF8Encoding]::new($false))" || goto :cleanup
+pwsh -NoLogo -NoProfile -Command "$p='%Work%\Approval-Identity\%Linux%'; $t=[IO.File]::ReadAllText($p); [IO.File]::WriteAllText($p, $t.Replace('13650128da9229524b35910b0fb9f3f7ed2da3de3648f0207fd1e32979b30668', ('0' * 64)), [Text.UTF8Encoding]::new($false))" || goto :cleanup
 node "%Verifier%" verify "%Work%\Approval-Identity" >nul 2>nul
 if not errorlevel 1 goto :cleanup
 

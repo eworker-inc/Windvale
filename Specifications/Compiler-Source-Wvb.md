@@ -165,6 +165,14 @@ result tags come from the fixed eleven-entry Seed catalog, including
 
 WVIR operation `63` carries a validated WVSD capability directory entry. The backend ranks that entry among capability declarations by ordinal name and emits WVB `call.capability` with the resulting index. No capability is inferred, removed, or authorized by compilation; host support and runtime authorization remain separate required boundaries.
 
+An internal typed singleton capability-reference shape encodes as the existing WVB
+`u32` value tag in parameters, results, locals, and temporaries. Acquisition lowers
+from the typed WVIR `U32ˉconstant` to `u32.const 0`; the payload is an erased witness
+and cannot select a provider or grant authority. Calls through that reference have
+already resolved its exact root capability identity and lower to the same static
+`call.capability` index as a qualified source call. WVB 1.11, its verifier, and the
+runtime capability table therefore require no new serialized shape or opcode.
+
 ## Text and static data
 
 Integer-array elements are serialized as exact 32-bit little-endian two's-complement values. Byte data preserves each declared byte. Text data and text literals are serialized as strict UTF-8.
@@ -265,9 +273,9 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current deterministic compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 949,516 bytes, SHA-256 `d4317cca6731009c90750e8d1554c392185e31c95f2bc425b6d8423549791113`.
-- `Source-Wvb-Demo.wvb`: 954,602 bytes, SHA-256 `933630bf122c97f45a0c5720f331e706581c0817e0f8390cbf8890095d684c57`.
-- `Source-Wvb-Tool.wvb`: 947,975 bytes, SHA-256 `c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb`.
+- `Source-Wvb-Core.wvb`: 956,733 bytes, SHA-256 `ef6b18cefb40527944da34103c891754207fad6aafea81f4168f33b3cb93a374`.
+- `Source-Wvb-Demo.wvb`: 962,310 bytes, SHA-256 `ed063a966acdd189718a3f9fd022e1a7e7a85dc4a04a713307c9d91fe6947efe`.
+- `Source-Wvb-Tool.wvb`: 955,192 bytes, SHA-256 `f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4`.
 - `Source-Wvb-Memory-Adapter.wvb`: 924,951 bytes, SHA-256 `8c5f97a83d7dde34d42f411260986915679e47dcac89a486e0a3a8d94cb523a5`.
 
 Decision 0518 moved ordinary construction of the core, demo, and tool products to

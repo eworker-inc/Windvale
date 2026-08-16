@@ -92,7 +92,7 @@ The reconstruction owner also builds the current compiler build-driver WVB into
 private temporary storage through the pinned current-host build driver and feeds
 it to the reconstructed current-host staging producer. The exact 1,155,121-byte
 WVB at SHA-256
-`0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02`
+`a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20`
 contains 64 records and stages into 30,158,719 object bytes across 39 chunks plus
 a 492-byte manifest. This case does not execute or promote the private compiler
 WVB; general verifier, publisher, final-container, and front-door promotion

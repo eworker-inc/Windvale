@@ -13,17 +13,17 @@ const GENERATION_PUBLISHER = path.join(SCRIPT_DIRECTORY, "Publish-Installation-G
 const ACTIVATION_PUBLISHER = path.join(SCRIPT_DIRECTORY, "Publish-Installation-Activation.mjs");
 const APPROVAL = {
     inspector: "32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f",
-    wvdb: "3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71",
+    wvdb: "13650128da9229524b35910b0fb9f3f7ed2da3de3648f0207fd1e32979b30668",
 };
 const LAUNCH = {
     "windows-x64": {
         inspector: "eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b",
-        wvdb: "213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7",
+        wvdb: "1cf993a1dec8f06ea3475aab1aaf27d2ac28f4acca39d7a0f475be8fa75ab530",
         other: "linux-x64",
     },
     "linux-x64": {
         inspector: "f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b",
-        wvdb: "8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88",
+        wvdb: "7c7f85d8d7877badc4353581be8c19a454e9ca375977d17b7605d58fd66bb70b",
         other: "windows-x64",
     },
 };
@@ -38,8 +38,8 @@ function Generation(Target) {
         "a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 " +
         "eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1\n" +
         "package windvale.wvdb-query 0.1.0 " +
-        "3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 " +
-        "ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618\n" +
+        "33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c " +
+        "4e4089ad6b40f6f9b435bebdd8b3321e64db6038d745c191aa54e348ee44d926\n" +
         `command wvdump windvale.wvb-inspector inspector ${APPROVAL.inspector} ${LAUNCH[Target].inspector}\n` +
         `command wvquery windvale.wvdb-query application ${APPROVAL.wvdb} ${LAUNCH[Target].wvdb}\n`,
         "utf8",

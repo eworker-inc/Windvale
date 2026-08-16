@@ -32,7 +32,19 @@ fn Argument(Index: u32) -> text {
     return process.argument(Index);
 }
 
+fn Copyˉlineˉoutput(
+    Output: console.write_line
+) -> console.write_line {
+    return Output;
+}
+
+fn Writeˉboundˉline(Output: console.write_line, Value: text) -> void {
+    Output(Value);
+}
+
 export fn Main() -> i32 {
+    let Output: console.write_line = Copyˉlineˉoutput(console.write_line);
+    if false { Writeˉboundˉline(Output, "unused"); }
     if process.argument_count() != 0u32 { return 1; }
     return 0;
 }

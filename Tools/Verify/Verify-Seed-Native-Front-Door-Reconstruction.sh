@@ -1336,94 +1336,94 @@ exact_build \
 exact_build \
     "$REPOSITORY_ROOT/Projects/Compiler/Windvale-Source-Symbols-Core.wvproj" \
     "$SOURCE_SYMBOLS_MODULE" \
-    443101 \
-    0bd60b09b03599eaa0f06ba26744ff3cb8eb57c894d3a778dae0278aabc98ece \
-    0006c2dd \
-    'build status=Published verification=compiler-aligned functions=204 code-bytes=354863 module-bytes=443101'
-exact_inspect "$SOURCE_SYMBOLS_MODULE" 'profile=portable' 'section name=exports offset=428183 bytes=3608 count=66' 'section name=types offset=431799 bytes=11302 count=45' 'Compiler\u02C9source\u02C9symbol\u02C9status' 'Compiler\u02C9source\u02C9symbol\u02C9summary' 'Compiler\u02C9source\u02C9symbols\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9symbols'
+    445357 \
+    64fcf13cc05969ee8021448ffa660d463e0ef7b17dba31849a792635aa798bb0 \
+    0006cbad \
+    'build status=Published verification=compiler-aligned functions=205 code-bytes=356648 module-bytes=445357'
+exact_inspect "$SOURCE_SYMBOLS_MODULE" 'profile=portable' 'section name=exports offset=430346 bytes=3665 count=67' 'section name=types offset=434019 bytes=11338 count=45' 'Compiler\u02C9source\u02C9symbol\u02C9status' 'Compiler\u02C9source\u02C9symbol\u02C9summary' 'Compiler\u02C9source\u02C9symbols\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9symbols'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Source-Symbols-Demo.wvproj" \
     "$SOURCE_SYMBOLS_DEMO_MODULE" \
-    453987 \
-    fdd2ec523624f50f6bd1a2348835d0d7c2bdb75864fb972027f221ffb54ab9ec \
-    0006ed63 \
-    'build status=Published verification=compiler-aligned functions=213 code-bytes=364987 module-bytes=453987'
+    457363 \
+    dc357f3e35f0dd154b7b0979e6ddad0fa19c8eab382bf39d10b67d41d83cfb69 \
+    0006fa93 \
+    'build status=Published verification=compiler-aligned functions=214 code-bytes=367136 module-bytes=457363'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Source-Symbols-Tool.wvproj" \
     "$SOURCE_SYMBOLS_TOOL_MODULE" \
-    441934 \
-    11367a1536a2435e122db795d83c9b25cef94fe5e8c6da0af6d0d70c0b467083 \
-    0006be4e \
-    'build status=Published verification=compiler-aligned functions=209 code-bytes=358857 module-bytes=441934'
+    444094 \
+    1f2d0e0df52425b36eef50b1db05ed36cbe504cf2254a4d7333be36c0a5fcdbb \
+    0006c6be \
+    'build status=Published verification=compiler-aligned functions=210 code-bytes=360642 module-bytes=444094'
 
 exact_build \
     "$REPOSITORY_ROOT/Projects/Compiler/Windvale-Source-Bindings-Core.wvproj" \
     "$SOURCE_BINDINGS_MODULE" \
-    546089 \
-    0483adc7bbbd6d90c4399a337cc013cbaf5e6bf66565d96f0b0c586483b2b495 \
-    00085529 \
-    'build status=Published verification=compiler-aligned functions=263 code-bytes=440520 module-bytes=546089'
-exact_inspect "$SOURCE_BINDINGS_MODULE" 'profile=portable' 'section name=exports offset=529798 bytes=2996 count=59' 'section name=types offset=532802 bytes=13287 count=55' 'Compiler\u02C9source\u02C9binding\u02C9status' 'Compiler\u02C9source\u02C9binding\u02C9summary' 'Compiler\u02C9source\u02C9bindings\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9bindings'
+    551200 \
+    54be5f326b982fdd33e56cb96f8b0fa21f2dcbcc6d371d57c597d7db6cd002e2 \
+    00086920 \
+    'build status=Published verification=compiler-aligned functions=265 code-bytes=444696 module-bytes=551200'
+exact_inspect "$SOURCE_BINDINGS_MODULE" 'profile=portable' 'section name=exports offset=534813 bytes=3056 count=60' 'section name=types offset=537877 bytes=13323 count=55' 'Compiler\u02C9source\u02C9binding\u02C9status' 'Compiler\u02C9source\u02C9binding\u02C9summary' 'Compiler\u02C9source\u02C9bindings\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9bindings'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Source-Bindings-Demo.wvproj" \
     "$SOURCE_BINDINGS_DEMO_MODULE" \
-    552329 \
-    1b18d50f8a71585eed3400cd16093d8185dc376c9133d4a21a6a2deed7b9c414 \
-    00086d89 \
-    'build status=Published verification=compiler-aligned functions=271 code-bytes=447056 module-bytes=552329'
+    557834 \
+    73af35691ea355eb49b06ee2ff6905c9293115591548e94f36ef38f0a55a8604 \
+    0008830a \
+    'build status=Published verification=compiler-aligned functions=273 code-bytes=451323 module-bytes=557834'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Source-Bindings-Tool.wvproj" \
     "$SOURCE_BINDINGS_TOOL_MODULE" \
-    546114 \
-    70fe5dda33829666001bc46e6217b8893b31db11467ade53e33fd57dbdd6eef0 \
-    00085542 \
-    'build status=Published verification=compiler-aligned functions=268 code-bytes=444150 module-bytes=546114'
+    551123 \
+    2088cb97a2614dbccb6e7504707c8584431e3e1ccd4bd98797b1d65398fdaaef \
+    000868d3 \
+    'build status=Published verification=compiler-aligned functions=270 code-bytes=448326 module-bytes=551123'
 
 exact_build \
     "$REPOSITORY_ROOT/Projects/Compiler/Windvale-Source-Wir-Core.wvproj" \
     "$SOURCE_WIR_MODULE" \
-    824959 \
-    32f71092a7e0a82c8da5fdd0bc332318a5ce158b79772e40673980ffd44f68e5 \
-    000c967f \
-    'build status=Published verification=compiler-aligned functions=347 code-bytes=671922 module-bytes=824959'
-exact_inspect "$SOURCE_WIR_MODULE" 'profile=portable' 'section name=exports offset=801510 bytes=3755 count=75' 'section name=types offset=805273 bytes=19686 count=66' 'Compiler\u02C9source\u02C9wir\u02C9operation' 'Compiler\u02C9source\u02C9wir\u02C9summary' 'Compiler\u02C9source\u02C9wir\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9wir'
+    831890 \
+    221702d78eea74babbe3762f59da7f5445920cd093e8a42859ed2b5ce009d8e9 \
+    000cb192 \
+    'build status=Published verification=compiler-aligned functions=349 code-bytes=677715 module-bytes=831890'
+exact_inspect "$SOURCE_WIR_MODULE" 'profile=portable' 'section name=exports offset=808405 bytes=3755 count=75' 'section name=types offset=812168 bytes=19722 count=66' 'Compiler\u02C9source\u02C9wir\u02C9operation' 'Compiler\u02C9source\u02C9wir\u02C9summary' 'Compiler\u02C9source\u02C9wir\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9wir'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Source-Wir-Demo.wvproj" \
     "$SOURCE_WIR_DEMO_MODULE" \
-    829787 \
-    1259896022fcee5aa660fae2831fa0ae3ab3be2a6fc8b7eb6678b0c292d210dc \
-    000ca95b \
-    'build status=Published verification=compiler-aligned functions=353 code-bytes=678437 module-bytes=829787'
+    837598 \
+    67de0b84e904b4ac3b412bb6204157fb390b8a768b277522d7e78de378800a38 \
+    000cc7de \
+    'build status=Published verification=compiler-aligned functions=355 code-bytes=684412 module-bytes=837598'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Source-Wir-Tool.wvproj" \
     "$SOURCE_WIR_TOOL_MODULE" \
-    823255 \
-    9414ab75c69f15bffca0b0ddf6cd51280196c54b743ab6dd11c27f9d559703be \
-    000c8fd7 \
-    'build status=Published verification=compiler-aligned functions=352 code-bytes=675434 module-bytes=823255'
+    830836 \
+    385c54a5bb36c8b5b7db000123c5355939b6a51597d015dc6fa90bfc6da74927 \
+    000cad74 \
+    'build status=Published verification=compiler-aligned functions=354 code-bytes=681817 module-bytes=830836'
 
 exact_source_compiler_build \
     core \
     "$SOURCE_WVB_MODULE" \
-    949516 \
-    d4317cca6731009c90750e8d1554c392185e31c95f2bc425b6d8423549791113 \
-    000e7d0c \
-    'source wvb status=Valid functions=434 code-bytes=778190 module-bytes=949516'
-exact_inspect "$SOURCE_WVB_MODULE" 'profile=portable' 'section name=exports offset=924282 bytes=3740 count=78' 'section name=types offset=928030 bytes=21486 count=82' 'Compiler\u02C9source\u02C9wvb\u02C9summary' 'Compiler\u02C9compile\u02C9source\u02C9wvb'
+    956733 \
+    ef6b18cefb40527944da34103c891754207fad6aafea81f4168f33b3cb93a374 \
+    000e993d \
+    'source wvb status=Valid functions=436 code-bytes=784254 module-bytes=956733'
+exact_inspect "$SOURCE_WVB_MODULE" 'profile=portable' 'section name=exports offset=931463 bytes=3740 count=78' 'section name=types offset=935211 bytes=21522 count=82' 'Compiler\u02C9source\u02C9wvb\u02C9summary' 'Compiler\u02C9compile\u02C9source\u02C9wvb'
 exact_source_compiler_build \
     demo \
     "$SOURCE_WVB_DEMO_MODULE" \
-    954602 \
-    933630bf122c97f45a0c5720f331e706581c0817e0f8390cbf8890095d684c57 \
-    000e90ea \
-    'source wvb status=Valid functions=439 code-bytes=785660 module-bytes=954602'
+    962310 \
+    ed063a966acdd189718a3f9fd022e1a7e7a85dc4a04a713307c9d91fe6947efe \
+    000eaf06 \
+    'source wvb status=Valid functions=441 code-bytes=791815 module-bytes=962310'
 exact_source_compiler_build \
     tool \
     "$SOURCE_WVB_TOOL_MODULE" \
-    947975 \
-    c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb \
-    000e7707 \
-    'source wvb status=Valid functions=441 code-bytes=781753 module-bytes=947975'
+    955192 \
+    f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4 \
+    000e9338 \
+    'source wvb status=Valid functions=443 code-bytes=787817 module-bytes=955192'
 
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Wvb-Inspector.wvproj" \

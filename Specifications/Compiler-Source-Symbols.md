@@ -42,6 +42,10 @@ enum Compilerˉsourceˉsymbolˉstatus {
     Constantˉforwardˉreference = 29;
     Constantˉoverflow = 30;
     Importedˉconstant = 31;
+    Emptyˉvariant = 32;
+    Duplicateˉvariantˉcase = 33;
+    Invalidˉvariantˉpayload = 34;
+    Invalidˉcollectionˉelement = 35;
 }
 
 record Compilerˉsourceˉsymbolˉsummary {
@@ -81,7 +85,7 @@ Capabilities must belong to the implemented catalog. A portable-profile module m
 
 Records and enums are nonempty. Field names are unique within a record. Enum member names and explicit values are each unique within an enum. Parameter names are unique within a function. These rules apply after complete syntax validation, so the symbol phase operates only on qualified declaration and body spans.
 
-A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Function parameters and results may use visible record or enum types. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
+A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
@@ -125,9 +129,9 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and retained qualified evidence
 
-- `Source-Symbols-Core.wvb`: 443,101 bytes, SHA-256 `0bd60b09b03599eaa0f06ba26744ff3cb8eb57c894d3a778dae0278aabc98ece`.
-- `Source-Symbols-Demo.wvb`: 453,987 bytes, SHA-256 `fdd2ec523624f50f6bd1a2348835d0d7c2bdb75864fb972027f221ffb54ab9ec`.
-- `Source-Symbols-Tool.wvb`: 441,934 bytes, SHA-256 `11367a1536a2435e122db795d83c9b25cef94fe5e8c6da0af6d0d70c0b467083`.
+- `Source-Symbols-Core.wvb`: 445,357 bytes, SHA-256 `64fcf13cc05969ee8021448ffa660d463e0ef7b17dba31849a792635aa798bb0`.
+- `Source-Symbols-Demo.wvb`: 457,363 bytes, SHA-256 `dc357f3e35f0dd154b7b0979e6ddad0fa19c8eab382bf39d10b67d41d83cfb69`.
+- `Source-Symbols-Tool.wvb`: 444,094 bytes, SHA-256 `1f2d0e0df52425b36eef50b1db05ed36cbe504cf2254a4d7333be36c0a5fcdbb`.
 
 Decision 0517 reproduces all three identities through the current-Windows
 native Project front door and natively inspects the core portable type/export
@@ -137,7 +141,7 @@ pending.
 The candidate demo additionally exercises valid constants, enum and earlier-constant references, Boolean short-circuiting over invalid or would-overflow skipped operands, invalid names/types/initializers, exact type mismatch, forward reference, checked overflow, and imported-module rejection. The hosted tool retains namespace/signature reporting; constants contribute WVSD entries but deliberately do not change the existing public aggregate `Data` count. The current local whole-compiler closure report is:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=31 enums=14 functions=204 fields=344 members=245 parameters=897 directory-bytes=5992 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=31 enums=14 functions=206 fields=344 members=245 parameters=897 directory-bytes=6040 visibility-bytes=64
 ```
 
 The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it advanced the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 added bounded reverse-table lookup and is cross-host qualified at `1a4fca7`. Decision 0058 changed equality-only implementation paths and embedded artifact bytes while preserving the then-current WVSD 1.0 and WVSI 1.1 formats and is cross-host qualified at `5c16547`. WVSD 1.1 and typed constants are new local candidate behavior and do not inherit those cross-host claims.

@@ -268,19 +268,19 @@ if ((development == 1)); then
     verify_file "$lowerer" 7491584 \
         deb75ead2af0d06d2357cdf88d8cf58fefd284bf4834e6489198b517f3a4908e || exit $?
 else
-    "$front_door" --workspace "$workspace_path" --project \
+    "$script_directory/Build-Current-Wvb.sh" \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
         "$build_driver_wvb" >/dev/null || exit $?
-    verify_file "$build_driver_wvb" 1155121 \
-        0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 || exit $?
+    verify_file "$build_driver_wvb" 1162338 \
+        a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 || exit $?
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
         2 "$build_driver_wvb" "$build_driver" --development-cache >/dev/null || exit $?
 
     "$build_driver" --workspace "$workspace_path" --project \
         "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
         "$lowerer_wvb" >/dev/null || exit $?
-    verify_file "$lowerer_wvb" 522025 \
-        318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6 || exit $?
+    verify_file "$lowerer_wvb" 523087 \
+        6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 || exit $?
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
         6 "$lowerer_wvb" "$lowerer" --development-cache >/dev/null || exit $?
 fi

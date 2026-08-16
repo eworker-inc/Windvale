@@ -40,14 +40,14 @@ evidence, copy those two directories from the promoted seed release into a fresh
 location and pass that copied location rather than the checkout's `Artifacts`
 directory.
 
-The seed first emits the transitional 947,975-byte Stage 1 WVB at SHA-256
-`c929d5123078272e33a3c32288c770d6c20c2abc8f8800a3e0a32b8bda5c2fcb`.
+The seed first emits the transitional 955,192-byte Stage 1 WVB at SHA-256
+`f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4`.
 The launcher packages that private compiler and uses it once to emit the
-fixed-point Stage 2 candidate. Native publication must complete at 923,818
+fixed-point Stage 2 candidate. Native publication must complete at 931,035
 bytes with SHA-256
-`49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2`.
+`13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4`.
 Its exact compiler status summary is
-`source wvb status=Valid functions=414 code-bytes=761807 module-bytes=923818`.
+`source wvb status=Valid functions=416 code-bytes=767871 module-bytes=931035`.
 Decision 0494 reconstructs the downstream paired applications without executing
 them; Decision 0492 owns the hosted-container toolset.
 

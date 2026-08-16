@@ -59,8 +59,8 @@ node -e "const fs=require('node:fs');const x=fs.readFileSync(process.argv[1],'ut
     "$work/Wvdb-Query.wvb" "$work/LICENSE.md" \
     "$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvprov" \
     "$work/Wvdb-Query.wvbundle" >/dev/null || exit $?
-verify_file "$work/Wvdb-Query.wvbundle" 43725 \
-    3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 || exit 1
+verify_file "$work/Wvdb-Query.wvbundle" 43873 \
+    33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c || exit 1
 "$work/Writer.elf" \
     "$repository_root/Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack" \
     "$repository_root/Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvlock" \
@@ -79,8 +79,8 @@ verify_file "$work/Lowerer.wvb" 522025 \
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Lowerer.wvb" "$work/Lowerer.elf" || exit $?
 "$work/Lowerer.elf" "$work/Wvdb-Query.wvb" "$work/Wvdb-Query.wvo" >/dev/null || exit $?
-verify_file "$work/Wvdb-Query.wvo" 237210 \
-    b3d3bbde00136c230f6804215c352490bae9603b338d25186dba827be137edbf || exit 1
+verify_file "$work/Wvdb-Query.wvo" 239164 \
+    141be1a8194a13def42ab945dda81148719cad3e8344826e3fea5f9747e69721 || exit 1
 
 echo 'native installation command dispatch step=bind-rights-reduced-provider item=5/7 target=linux-x64'
 "$script_directory/Assemble-Wva.sh" \
@@ -93,15 +93,15 @@ echo 'native installation command dispatch step=bind-rights-reduced-provider ite
     "$work/Linux-Image.chunk-0" "$work/Wvdb-Query.wvo" \
     "$work/Directory-Host.wvo" "$work/Directory-Linux.wvo" \
     >"$work/Link.txt" || exit $?
-verify_file "$work/Linux-Image.chunk-0" 237517 \
-    cae8aee6da474d2acb0a976047c689511a22269377b58114a56e8616fecc708d || exit 1
+verify_file "$work/Linux-Image.chunk-0" 239437 \
+    32833a1b1bb5b8c6febb2e4cabcf89ce13ffee67523cf8f82c1490e377034e21 || exit 1
 
 echo 'native installation command dispatch step=package-exact-host item=6/7 target=linux-x64'
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
-    "$work/Wvdb-Query.wvb" "$work/Linux-Image" 1 235440 \
+    "$work/Wvdb-Query.wvb" "$work/Linux-Image" 1 237360 \
     "$work/Wvdb-Query.elf" linux || exit $?
 verify_file "$work/Wvdb-Query.elf" 258048 \
-    b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f || exit 1
+    2c7afe9857c284196dc6120cf25241df0520ec3ea5ce35bee32c21904ef10baf || exit 1
 
 echo 'native installation command dispatch step=dispatch-and-reject item=7/7 cases=9 executions=2'
 node "$repository_root/Tools/Package/Verify-Installation-Command-Dispatcher.mjs" \

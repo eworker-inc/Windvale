@@ -44,7 +44,7 @@ for %%P in (
     Windvale-Library-Model-Protocol
     Windvale-Library-Scripted-Model-Provider
 ) do (
-    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Libraries\%%P.wvproj" ^
         "%TemporaryDirectory%\%%P.wvb" >nul
     if errorlevel 1 (
@@ -53,17 +53,17 @@ for %%P in (
     )
 )
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Tests\Fixtures\Libraries\Directory-Import-Smoke.wvproj" ^
     "%TemporaryDirectory%\Directory-Import-Smoke.wvb" >nul
 if errorlevel 1 goto :cleanup
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Tests\Fixtures\Libraries\Random-Access-Page-Import-Smoke.wvproj" ^
     "%TemporaryDirectory%\Random-Access-Page-Import-Smoke.wvb" >nul
 if errorlevel 1 goto :cleanup
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Tests\Fixtures\Libraries\Random-Access-Storage-Import-Smoke.wvproj" ^
     "%TemporaryDirectory%\Random-Access-Storage-Import-Smoke.wvb" >nul
 if errorlevel 1 goto :cleanup
@@ -78,7 +78,7 @@ for %%T in (
     Windvale-Native-Test-Database-Reader
     Windvale-Native-Test-Model-Protocol
 ) do (
-    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Tests\%%T.wvproj" ^
         "%TemporaryDirectory%\%%T.wvb" >nul
     if errorlevel 1 goto :cleanup
@@ -88,7 +88,7 @@ for %%N in (
     Capability-Import-No-Root-Declaration
     Capability-Profile-Rejection
 ) do (
-    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
         "%RepositoryRoot%\Tests\Fixtures\Libraries\%%N.wvproj" ^
         "%TemporaryDirectory%\%%N.wvb" >"%TemporaryDirectory%\%%N.out" 2>"%TemporaryDirectory%\%%N.err"
     if not errorlevel 1 goto :cleanup

@@ -210,6 +210,9 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     if Shape >= 196608u32 + Records + Enums {
         if Shape < 196608u32 + Records + Enums + Variants { return true; }
     }
+    if Shape >= 268435456u32 {
+        if Shape < 268439552u32 { return true; }
+    }
     if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
         Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
         let Maximum: u32 = Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉmaximum(Shape);
@@ -232,6 +235,11 @@ export fn Compilerˉsourceˉwvbˉshape(Shape: u32) -> bytes {
     if Shape == 6u32 { Kind = 6u8; }
     if Shape == 7u32 { Kind = 9u8; }
     if Shape == 8u32 { Kind = 10u8; }
+    if Shape >= 268435456u32 {
+        if Shape < 268439552u32 {
+            return Bytesˉfromˉu8(5u8);
+        }
+    }
     if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
         Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
         var Collectionˉkind: u8 = 12u8;

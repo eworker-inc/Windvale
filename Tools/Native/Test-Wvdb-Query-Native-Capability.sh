@@ -44,8 +44,8 @@ echo 'native wvdb query step=locked-package'
     "$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack" \
     "$repository_root/Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvlock" \
     "$work/Wvdb-Query.wvb" || exit $?
-verify_file "$work/Wvdb-Query.wvb" 26294 \
-    61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 \
+verify_file "$work/Wvdb-Query.wvb" 26420 \
+    24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 \
     'locked WVDB query WVB' || exit 1
 
 echo 'native wvdb query step=capability-directory'
@@ -76,8 +76,8 @@ echo 'native wvdb query step=package-current-lowerer'
 
 echo 'native wvdb query step=lower-application'
 "$work/Lowerer.elf" "$work/Wvdb-Query.wvb" "$work/Wvdb-Query.wvo" || exit $?
-verify_file "$work/Wvdb-Query.wvo" 237210 \
-    b3d3bbde00136c230f6804215c352490bae9603b338d25186dba827be137edbf \
+verify_file "$work/Wvdb-Query.wvo" 239164 \
+    141be1a8194a13def42ab945dda81148719cad3e8344826e3fea5f9747e69721 \
     'WVDB query WVO' || exit 1
 
 echo 'native wvdb query step=assemble-rights-reduced-hosts'
@@ -111,26 +111,26 @@ echo 'native wvdb query step=link-cross-host-images'
     >"$work/Linux-Link.txt" || exit $?
 windows_entry=$(sed -n 's/^entry name=Directory_host_entry address=\([0-9][0-9]*\)$/\1/p' "$work/Windows-Link.txt")
 linux_entry=$(sed -n 's/^entry name=Directory_host_entry address=\([0-9][0-9]*\)$/\1/p' "$work/Linux-Link.txt")
-[[ $windows_entry == 235440 && $linux_entry == 235440 ]] || exit 1
-verify_file "$work/Windows-Image.chunk-0" 238536 \
-    fe51adddc364f9ec32d9ae0a7925417e1fa6304e930fd42ec9106f31f73d35bc \
+[[ $windows_entry == 237360 && $linux_entry == 237360 ]] || exit 1
+verify_file "$work/Windows-Image.chunk-0" 240456 \
+    adbd8c52f95c79fed5646400b4d2b2b3ec070807c512291765d3a398975952ee \
     'Windows linked image' || exit 1
-verify_file "$work/Linux-Image.chunk-0" 237517 \
-    cae8aee6da474d2acb0a976047c689511a22269377b58114a56e8616fecc708d \
+verify_file "$work/Linux-Image.chunk-0" 239437 \
+    32833a1b1bb5b8c6febb2e4cabcf89ce13ffee67523cf8f82c1490e377034e21 \
     'Linux linked image' || exit 1
 
 echo 'native wvdb query step=package-cross-host-applications'
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
-    "$work/Wvdb-Query.wvb" "$work/Windows-Image" 1 235440 \
+    "$work/Wvdb-Query.wvb" "$work/Windows-Image" 1 237360 \
     "$work/Wvdb-Query.exe" windows || exit $?
 "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
-    "$work/Wvdb-Query.wvb" "$work/Linux-Image" 1 235440 \
+    "$work/Wvdb-Query.wvb" "$work/Linux-Image" 1 237360 \
     "$work/Wvdb-Query.elf" linux || exit $?
-verify_file "$work/Wvdb-Query.exe" 258048 \
-    198d44b49db6765792c835c6419da88f0cbcc0de0422748b0d15cb4ae5e6ba32 \
+verify_file "$work/Wvdb-Query.exe" 260096 \
+    29914b484a195ffcc4c3463ca997d68802a8d662d2c6066e0dfe07481413ca3b \
     'Windows hosted application' || exit 1
 verify_file "$work/Wvdb-Query.elf" 258048 \
-    b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f \
+    2c7afe9857c284196dc6120cf25241df0520ec3ea5ce35bee32c21904ef10baf \
     'Linux hosted application' || exit 1
 
 echo 'native wvdb query step=create-fixture'
@@ -203,5 +203,5 @@ if ! grep -F 'storage-failure status=' "$work/NoLink.txt" >/dev/null; then
     exit 1
 fi
 
-echo 'native wvdb query identity host=linux wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 windows-application=198d44b49db6765792c835c6419da88f0cbcc0de0422748b0d15cb4ae5e6ba32 linux-application=b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f'
-echo 'native wvdb query capability status=Passed cases=6 capabilities=5 wvb=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 cross-host-images=Verified'
+echo 'native wvdb query identity host=linux wvb=24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 windows-application=29914b484a195ffcc4c3463ca997d68802a8d662d2c6066e0dfe07481413ca3b linux-application=2c7afe9857c284196dc6120cf25241df0520ec3ea5ce35bee32c21904ef10baf'
+echo 'native wvdb query capability status=Passed cases=6 capabilities=5 wvb=24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 cross-host-images=Verified'

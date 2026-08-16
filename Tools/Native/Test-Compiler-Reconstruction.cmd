@@ -7,11 +7,17 @@ set "Candidate=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candida
 set /a Tests=0
 set /a Passed=0
 
-call :check_file "%Candidate%\Wvb\Windvale-Compiler.wvb" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2
+call :check_file "%Candidate%\Wvb\Windvale-Compiler.wvb" 931035 13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\windows-x64\wvcompiler.exe" 27678720 6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8
+call :check_file "%Candidate%\windows-x64\wvcompiler.exe" 27898368 4009e6747bbf9a6d2b0b2ec90e2368ca50fda863d445534f15ef96e22a657b34
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\linux-x64\wvcompiler.elf" 27680768 7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37
+call :check_file "%Candidate%\linux-x64\wvcompiler.elf" 27897856 c266adf20fe2927a446483f68880ef323c480f011b0c26384716ea2f651bcd65
+if errorlevel 1 goto :failed
+call :check_file "%Candidate%\Wvb\Compiler-Build-Driver.wvb" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20
+if errorlevel 1 goto :failed
+call :check_file "%Candidate%\windows-x64\wvbuild.exe" 30381568 b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3
+if errorlevel 1 goto :failed
+call :check_file "%Candidate%\linux-x64\wvbuild.elf" 30380032 b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0
 if errorlevel 1 goto :failed
 call :pass "candidate inventory"
 
@@ -26,14 +32,20 @@ mkdir "%TestDirectory%" || goto :failed
 call "%RepositoryRoot%\Tools\Native\Construct-Compiler-Reconstruction.cmd" "%TestDirectory%" ^
     >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
 if errorlevel 1 goto :failed
-findstr /x /c:"native compiler reconstruction status=Complete compiler-bytes=923818 native-bytes=27647511 entry-offset=51356 chunks=7" "%TestDirectory%\Construct.out" >nul
+findstr /x /c:"native compiler reconstruction status=Complete compiler-bytes=931035 native-bytes=27867015 entry-offset=51356 chunks=7 build-driver-bytes=1162338 build-driver-entry-offset=220460 build-driver-chunks=8" "%TestDirectory%\Construct.out" >nul
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Construct.err") do if not "%%~zF"=="0" goto :failed
-call :check_file "%TestDirectory%\Wvb\Windvale-Compiler.wvb" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2
+call :check_file "%TestDirectory%\Wvb\Windvale-Compiler.wvb" 931035 13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\windows-x64\wvcompiler.exe" 27678720 6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8
+call :check_file "%TestDirectory%\windows-x64\wvcompiler.exe" 27898368 4009e6747bbf9a6d2b0b2ec90e2368ca50fda863d445534f15ef96e22a657b34
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\linux-x64\wvcompiler.elf" 27680768 7a81bc84a433bec0b2dcebd1ec3be82de120b11427687b9926ec13592231dc37
+call :check_file "%TestDirectory%\linux-x64\wvcompiler.elf" 27897856 c266adf20fe2927a446483f68880ef323c480f011b0c26384716ea2f651bcd65
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb\Compiler-Build-Driver.wvb" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\windows-x64\wvbuild.exe" 30381568 b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\linux-x64\wvbuild.elf" 30380032 b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0
 if errorlevel 1 goto :failed
 call :pass "native paired reconstruction"
 

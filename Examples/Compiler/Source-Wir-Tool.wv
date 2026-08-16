@@ -76,6 +76,16 @@ fn Compilerˉsourceˉwirˉtoolˉfailure(
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉrelatedˉmodule));
     Report = Textˉconcat(Report, " function=");
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
+    Report = Textˉconcat(Report, " functions=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
+    Report = Textˉconcat(Report, " blocks=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Blocks));
+    Report = Textˉconcat(Report, " operations=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Operations));
+    Report = Textˉconcat(Report, " temporaries=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Temporaries));
+    Report = Textˉconcat(Report, " operands=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Operands));
     Report = Textˉconcat(Report, " offset=");
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoffset));
     Report = Textˉconcat(Report, " line=");

@@ -403,6 +403,9 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉvalid(
     if Shape >= 196608u32 + Symbols.Records + Symbols.Enums {
         if Shape < 196608u32 + Symbols.Records + Symbols.Enums + Symbols.Variants { return true; }
     }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+        Symbols.Directory, Shape
+    ) { return true; }
     if Shape >= 1073741824u32 {
         if Shape < 1610612736u32 { return true; }
     }
@@ -1503,12 +1506,27 @@ export fn Compilerˉsourceˉwirˉcallableˉsignature(
         );
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
+        let Capabilityˉentry: u32 = 16u32 + Callable.Directoryˉentry * 24u32;
+        let Capabilityˉview: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
+            Input, Scan, Callable.Module
+        );
+        let Capabilityˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Capabilityˉentry + 12u32
+        );
+        let Capabilityˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Capabilityˉentry + 16u32
+        );
         return Compilerˉsourceˉwirˉsignature(
             Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
-                Nameˉsource, Nameˉoffset, Nameˉlength, Argument
+                Capabilityˉview.Source,
+                Capabilityˉnameˉoffset,
+                Capabilityˉnameˉlength,
+                Argument
             ),
             Compilerˉsourceˉwirˉcapabilityˉreturnˉshape(
-                Nameˉsource, Nameˉoffset, Nameˉlength
+                Capabilityˉview.Source,
+                Capabilityˉnameˉoffset,
+                Capabilityˉnameˉlength
             ),
             Callable.Directoryˉentry,
             0u32
@@ -1865,6 +1883,22 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
             Expression.Offset, Expression.Length
         );
     }
+    let Capability: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉcallable(
+        Input, Scan, Symbols, 0u32, Source,
+        Expression.Valueˉoffset, Expression.Valueˉlength
+    );
+    if Capability.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
+        return Compilerˉsourceˉwirˉemit(
+            Build,
+            Compilerˉsourceˉwirˉoperation.U32ˉconstant,
+            268435456u32 + Capability.Directoryˉentry,
+            Compilerˉsourceˉwirˉempty(Source),
+            0u32,
+            0u32,
+            Expression.Offset,
+            Expression.Length
+        );
+    }
     let Data: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉdeclaration(
         Input, Scan, Symbols, Build.Currentˉmodule, Source,
         Expression.Valueˉoffset, Expression.Valueˉlength,
@@ -2076,6 +2110,22 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
             Secondˉtoken.Nextˉoffset,
             Secondˉtoken.Nextˉline,
             Secondˉtoken.Nextˉcolumn
+        );
+    }
+    let Capability: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉcallable(
+        Input, Scan, Symbols, 0u32, Source,
+        Expression.Valueˉoffset, Expression.Valueˉlength
+    );
+    if Capability.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
+        return Compilerˉsourceˉwirˉemit(
+            Build,
+            Compilerˉsourceˉwirˉoperation.U32ˉconstant,
+            268435456u32 + Capability.Directoryˉentry,
+            Compilerˉsourceˉwirˉempty(Source),
+            0u32,
+            0u32,
+            Expression.Offset,
+            Expression.Length
         );
     }
     let Qualifiedˉconstant: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch =
@@ -2978,10 +3028,17 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Expression.Offset, Expression.Length
         );
     }
-    let Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉcallable(
+    var Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉcallable(
         Input, Scan, Symbols, Build.Currentˉmodule, Source,
         Expression.Valueˉoffset, Expression.Valueˉlength
     );
+    let Capabilityˉlocal: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocalˉcapability(
+        Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries, Source,
+        Expression.Valueˉoffset, Expression.Valueˉlength, Expression.Offset
+    );
+    if Capabilityˉlocal.Found {
+        Callable = Capabilityˉlocal;
+    }
     if !Callable.Found {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
@@ -4936,7 +4993,11 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
 ) -> bool {
     if Operation == 1u32 { return Shape == 1u32; }
     if Operation == 2u32 { return Shape == 2u32; }
-    if Operation == 3u32 { return Shape == 3u32; }
+    if Operation == 3u32 {
+        if Shape == 3u32 { return true; }
+        if Shape >= 268435456u32 { return Shape < 268439552u32; }
+        return false;
+    }
     if Operation == 4u32 { return Shape == 4u32; }
     if Operation == 5u32 { return Shape == 5u32; }
     if Operation == 6u32 { return Shape == 6u32; }
@@ -6130,6 +6191,14 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             if Operationˉtarget > 1u32 { return false; }
             if Operationˉauxiliary != 0u32 { return false; }
         }
+        if Operationˉkind == 3u32 {
+            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+                Symbols.Directory, Operationˉshape
+            ) {
+                if Operationˉtarget != 0u32 { return false; }
+                if Operationˉauxiliary != 0u32 { return false; }
+            }
+        }
         Expectedˉoperand = Firstˉoperand + Operandˉcount;
         Operationˉindex = Operationˉindex + 1u32;
     }
@@ -6228,20 +6297,11 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
 }
 
 export fn Compilerˉsourceˉwirˉevidenceˉfits(Build: Compilerˉsourceˉwirˉbuild) -> bool {
-    var Remaining: u32 = 4194256u32;
-    let Functionˉbytes: u32 = Bytesˉlength(Build.Functionˉpayload);
-    if Functionˉbytes > Remaining { return false; }
-    Remaining = Remaining - Functionˉbytes;
-    let Blockˉbytes: u32 = Bytesˉlength(Build.Blockˉpayload);
-    if Blockˉbytes > Remaining { return false; }
-    Remaining = Remaining - Blockˉbytes;
-    let Operationˉbytes: u32 = Bytesˉlength(Build.Operationˉpayload);
-    if Operationˉbytes > Remaining { return false; }
-    Remaining = Remaining - Operationˉbytes;
-    let Temporaryˉbytes: u32 = Bytesˉlength(Build.Temporaryˉpayload);
-    if Temporaryˉbytes > Remaining { return false; }
-    Remaining = Remaining - Temporaryˉbytes;
-    return Bytesˉlength(Build.Operandˉpayload) <= Remaining;
+    return Bytesˉlength(Build.Functionˉpayload) +
+        Bytesˉlength(Build.Blockˉpayload) +
+        Bytesˉlength(Build.Operationˉpayload) +
+        Bytesˉlength(Build.Temporaryˉpayload) +
+        Bytesˉlength(Build.Operandˉpayload) <= 4194256u32;
 }
 
 export fn Compilerˉsourceˉwirˉsummaryˉfromˉbindings(

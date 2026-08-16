@@ -38,10 +38,9 @@ model_project="$repository_root/Projects/Tests/Windvale-Native-Test-Hosted-Model
 front_door="$repository_root/Artifacts/Native-Front-Door/linux-x64/wvbuild.elf"
 
 echo 'START native model provider phase=tools item=1/4'
-"$front_door" --workspace "$workspace" --project "$build_project" \
-    "$work/Build-Driver.wvb" >/dev/null || exit $?
-verify_file "$work/Build-Driver.wvb" 1155121 \
-    0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 || exit 1
+"$script_directory/Build-Current-Wvb.sh" "$build_project" "$work/Build-Driver.wvb" >/dev/null || exit $?
+verify_file "$work/Build-Driver.wvb" 1162338 \
+    a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Build-Driver.wvb" "$work/Build-Driver.elf" --development-cache \
     >/dev/null || exit $?

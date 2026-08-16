@@ -24,32 +24,27 @@ This is a source-to-WVB cutover, not complete .NET retirement. The normal assemb
 linker, native application packaging, runtime, test runner, complete backend, and
 final recovery archive still retain explicit Stage 0 responsibilities.
 
-## Distribution inventory
+## Qualified and current-candidate inventories
+
+[`Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json`](../Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json)
+binds the current compiler and build-driver WVB modules and their paired native
+applications. `Build-Current-Wvb` selects its host build driver for explicit
+forward-language development. That launcher binds the exact candidate by SHA-256
+and does not infer a newer local executable.
 
 [`Artifacts/Native-Front-Door/Manifest.json`](../Artifacts/Native-Front-Door/Manifest.json)
-is the shared version-1 native-front-door inventory. It records the semantic-freeze
-and publisher evidence, then binds fifteen artifacts by relative path, target, byte
-length, and lowercase SHA-256. This source-build profile owns six of them:
+and its `SHA256SUMS` retain the cross-host-qualified semantic-freeze toolset. The
+ordinary `Build-Wvb` launcher takes both qualified tools from that inventory.
+`Build-Current-Wvb` deliberately does not pass forward-language output through
+that frozen publisher; it retains the current raw driver's self-verification and
+non-atomic write contract. The frozen build driver remains available for recovery
+and for reconstructing the current candidate, but it is not asked to accept
+post-freeze language syntax.
 
-- the canonical format-5 compiler build-driver WVB;
-- the canonical publisher WVB;
-- the raw Windows x64 build driver and publisher; and
-- the raw Linux x64 build driver and publisher.
-
-Of the remaining nine artifacts, two WVB modules and four applications belong to
-the separate [read-only WVB front door](Windvale-Native-Wvb-Read-Only-Front-Door.md),
-while one WVB module and two applications belong to the bounded runner profile.
-
-[`SHA256SUMS`](../Artifacts/Native-Front-Door/SHA256SUMS) repeats the byte identities
-in a standard external-tool form. Artifact paths are repository-relative and may
-not escape the inventory directory. PE, ELF, WVB, and WVO files are explicitly
+The Windows launchers verify each executable they invoke through the inbox
+`certutil` SHA-256 implementation. The Linux launchers perform the corresponding
+exact SHA-256 checks through `sha256sum`. PE, ELF, WVB, and WVO files remain explicitly
 binary in `.gitattributes`.
-
-The Windows launcher verifies the two executables it will invoke through the inbox
-`certutil` SHA-256 implementation. The Linux launcher verifies the complete shared
-`SHA256SUMS` inventory through `sha256sum`. The conformance test independently
-parses the JSON inventory and hashes all fifteen files before executing the
-current-host ordinary workflow.
 
 ## Ordinary invocation
 

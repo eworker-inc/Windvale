@@ -34,7 +34,7 @@ from the approval is denial. Package metadata and a release signature are not
 approval substitutes.
 
 The exact Approval 1 identity is 927 bytes with SHA-256
-`3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71`.
+`13650128da9229524b35910b0fb9f3f7ed2da3de3648f0207fd1e32979b30668`.
 
 `Windvale-Wvb-Inspector.wvapproval` binds its exact manifest, lock, Bundle 1,
 provenance, and WVB identities to five capabilities: standard output,
@@ -71,9 +71,9 @@ The two target records share portable WVB, Bundle 1, approval, directory-host,
 ABI, provider, and argument identities. They deliberately differ in their
 platform leaf, linked image, hosted application, target, and generation.
 The Windows record is exactly 1,315 bytes with SHA-256
-`213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7`;
+`1cf993a1dec8f06ea3475aab1aaf27d2ac28f4acca39d7a0f475be8fa75ab530`;
 the Linux record is exactly 1,310 bytes with SHA-256
-`8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88`.
+`7c7f85d8d7877badc4353581be8c19a454e9ca375977d17b7605d58fd66bb70b`.
 
 ### WVB Inspector Launch Record 2
 

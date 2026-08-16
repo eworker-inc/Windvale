@@ -29,23 +29,23 @@ const PACKAGE_IDENTITIES = {
     ],
     lock: [
         "Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvlock",
-        1750,
-        "ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618",
+        1770,
+        "4e4089ad6b40f6f9b435bebdd8b3321e64db6038d745c191aa54e348ee44d926",
     ],
     provenance: [
         "Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvprov",
         452,
-        "0030feba6327489c13de0ef019705a0c018945e8669fed695d76465ff4d4a3e5",
+        "f3b08d813c56b1f097b6cefefafcda7cc48b2ae56d4f2fc1cffead4190959af4",
     ],
 };
 const APPROVAL_BYTES = 927;
-const APPROVAL_SHA256 = "3c4a968745cde9d5073c67c6c453443d54c74e779b509c2f00131b4d47e8ef71";
+const APPROVAL_SHA256 = "13650128da9229524b35910b0fb9f3f7ed2da3de3648f0207fd1e32979b30668";
 const WINDOWS_BYTES = 1_315;
-const WINDOWS_SHA256 = "213a59ecf1f9bde65ce596e2627bce1add249f936fc781b71dcba1eb88bcefe7";
+const WINDOWS_SHA256 = "1cf993a1dec8f06ea3475aab1aaf27d2ac28f4acca39d7a0f475be8fa75ab530";
 const LINUX_BYTES = 1_310;
-const LINUX_SHA256 = "8ff3152ad30951235abb3504a372c57b2cb1bbff1410bb47933136645580ab88";
-const BUNDLE_SHA256 = "3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474";
-const WVB_SHA256 = "61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2";
+const LINUX_SHA256 = "7c7f85d8d7877badc4353581be8c19a454e9ca375977d17b7605d58fd66bb70b";
+const BUNDLE_SHA256 = "33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c";
+const WVB_SHA256 = "24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9";
 const INSPECTOR_DIRECTORY = path.join(
     REPOSITORY_ROOT,
     "Distribution",
@@ -156,10 +156,10 @@ function Expectedˉapproval() {
         "application windvale.wvdb-query 0.1.0",
         "target hosted-wvb-v1",
         "package-manifest 835f573302377fdd38e4c3d51fa9106397beba0b9813f99bfc3143d08a156406 866",
-        "lock ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618 1750",
-        `bundle ${BUNDLE_SHA256} 43725`,
-        "provenance 0030feba6327489c13de0ef019705a0c018945e8669fed695d76465ff4d4a3e5 452",
-        `executable ${WVB_SHA256} 26294`,
+        "lock 4e4089ad6b40f6f9b435bebdd8b3321e64db6038d745c191aa54e348ee44d926 1770",
+        `bundle ${BUNDLE_SHA256} 43873`,
+        "provenance f3b08d813c56b1f097b6cefefafcda7cc48b2ae56d4f2fc1cffead4190959af4 452",
+        `executable ${WVB_SHA256} 26420`,
         "capability-count 5",
         "approve 0 console.write_line standard-output-line-v1",
         "approve 1 diagnostic.write_line standard-diagnostic-line-v1",
@@ -240,23 +240,23 @@ function Expectedˉlaunch(Target) {
     return [
         "windvale-launch-record 1",
         "application windvale.wvdb-query 0.1.0",
-        `generation 0.1.0-${Target}-3c4a968745cd`,
+        `generation 0.1.0-${Target}-0aa5a137be06`,
         `target ${Target}`,
         `approval ${APPROVAL_SHA256} ${APPROVAL_BYTES}`,
-        `bundle ${BUNDLE_SHA256} 43725`,
-        `wvb ${WVB_SHA256} 26294`,
+        `bundle ${BUNDLE_SHA256} 43873`,
+        `wvb ${WVB_SHA256} 26420`,
         "directory-host-wvo 7ab58a817fe5dbc8e8f91b910654487ba62e10bc5aa5d1ae74b6bb07f2f6ca09 2010",
         Windows ?
             "platform-leaf-wvo d2da1c67864c242aeb9797661028295922486de2cf7d37aa41024189afb10f34 1951" :
             "platform-leaf-wvo 0ccbcda71b20eaa024946e4fbb2016853952a39f1fe58ed0a183bde502335d86 681",
         Windows ?
-            "linked-image fe51adddc364f9ec32d9ae0a7925417e1fa6304e930fd42ec9106f31f73d35bc 238536" :
-            "linked-image cae8aee6da474d2acb0a976047c689511a22269377b58114a56e8616fecc708d 237517",
+            "linked-image adbd8c52f95c79fed5646400b4d2b2b3ec070807c512291765d3a398975952ee 240456" :
+            "linked-image 32833a1b1bb5b8c6febb2e4cabcf89ce13ffee67523cf8f82c1490e377034e21 239437",
         Windows ?
-            "host-application 198d44b49db6765792c835c6419da88f0cbcc0de0422748b0d15cb4ae5e6ba32 258048" :
-            "host-application b21095d6ab62209b67053b7dfe1cf5a2f0130b3722a09a8e48284fc1aa988b3f 258048",
+            "host-application 29914b484a195ffcc4c3463ca997d68802a8d662d2c6066e0dfe07481413ca3b 260096" :
+            "host-application 2c7afe9857c284196dc6120cf25241df0520ec3ea5ce35bee32c21904ef10baf 258048",
         "abi 23",
-        "entry Directory_host_entry 235440",
+        "entry Directory_host_entry 237360",
         "provider-table 1 5",
         "bind 0 console.write_line host-standard-output line-lf",
         "bind 1 diagnostic.write_line host-standard-diagnostic line-lf",

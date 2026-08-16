@@ -63,7 +63,7 @@ Parameter scope is the complete function body. A local initializer is bound befo
 
 Parameter and local names are unique across the complete function. Shadowing is deliberately unavailable in this stage: an inner declaration cannot reuse a parameter or earlier local name, even when the earlier binding is inactive. This keeps slots and diagnostics stable and matches Windvale's current explicit-name convention.
 
-Parameters and `let` locals are immutable. Only a visible `var` local may be an assignment target. Ordinary `=` contributes one assignment occurrence. `+=`, `-=`, and `*=` bind the same simple mutable-local target as one read followed by one assignment before traversing the right operand; the exact operator and value types remain WVIR responsibilities. Local type annotations accept primitive types or visible record/enum types under the qualified source-symbol rules. An omitted local annotation is recorded as unresolved inference evidence; complete expression typing remains owned by WVIR.
+Parameters and `let` locals are immutable. Only a visible `var` local may be an assignment target. Ordinary `=` contributes one assignment occurrence. `+=`, `-=`, and `*=` bind the same simple mutable-local target as one read followed by one assignment before traversing the right operand; the exact operator and value types remain WVIR responsibilities. Local type annotations accept primitive types, visible record/enum types, or an exact required root capability-reference type under the qualified source-symbol rules. An omitted local annotation is recorded as unresolved inference evidence; complete expression typing remains owned by WVIR.
 
 ## Name and call binding
 
@@ -75,6 +75,11 @@ A positional call resolves in this order:
 2. record constructor;
 3. function;
 4. declared capability.
+
+A local or parameter with capability-reference shape is callable and resolves only
+the exact root capability directory entry embedded in that shape. Binding counts
+the callee read plus one capability call and validates catalog arity. It does not
+look at the erased witness payload or select a provider dynamically.
 
 The target must be visible through the WVSD visibility matrix, and the supplied argument count must match the constructor field count, function parameter count, intrinsic arity, or capability arity. Arguments are bound in source order before target failure is reported. A known capability that was not declared returns `Undeclaredˉcapability`; an otherwise absent target returns `Unknownˉcall`.
 
@@ -100,7 +105,7 @@ The header is followed by one range entry for every WVSD declaration entry. Each
 
 Each 36-byte binding entry contains nine `u32` fields in this order: module index, WVSD function-entry index, binding-kind value, slot, name byte offset, name byte length, shape, scope-start byte offset, and exclusive scope-end byte offset.
 
-Shape `0` is permitted only on a `let` or `var` entry whose source type is inferred and means “resolve from typed initializer evidence.” Parameter shapes are always concrete. Shape values `1` through `8` represent `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, `i64`, and `u64`. A record shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`. Nominal indices are the canonical WVSD identities.
+Shape `0` is permitted only on a `let` or `var` entry whose source type is inferred and means “resolve from typed initializer evidence.” Parameter shapes are always concrete. Shape values `1` through `8` represent `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, `i64`, and `u64`. A record shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`. An exact singleton capability-reference shape is `268435456 + RootCapabilityDirectoryEntry` and is valid only when that entry is a required module-zero capability. Nominal indices are the canonical WVSD identities.
 
 Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks the complete header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
 
@@ -116,9 +121,9 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Bindings-Core.wvb`: 546,089 bytes, SHA-256 `0483adc7bbbd6d90c4399a337cc013cbaf5e6bf66565d96f0b0c586483b2b495`.
-- `Source-Bindings-Demo.wvb`: 552,329 bytes, SHA-256 `1b18d50f8a71585eed3400cd16093d8185dc376c9133d4a21a6a2deed7b9c414`.
-- `Source-Bindings-Tool.wvb`: 546,114 bytes, SHA-256 `70fe5dda33829666001bc46e6217b8893b31db11467ade53e33fd57dbdd6eef0`.
+- `Source-Bindings-Core.wvb`: 551,200 bytes, SHA-256 `54be5f326b982fdd33e56cb96f8b0fa21f2dcbcc6d371d57c597d7db6cd002e2`.
+- `Source-Bindings-Demo.wvb`: 557,834 bytes, SHA-256 `73af35691ea355eb49b06ee2ff6905c9293115591548e94f36ef38f0a55a8604`.
+- `Source-Bindings-Tool.wvb`: 551,123 bytes, SHA-256 `2088cb97a2614dbccb6e7504707c8584431e3e1ccd4bd98797b1d65398fdaaef`.
 
 These are local deterministic WVLB 1.1 candidate identities; they do not claim cross-host requalification.
 

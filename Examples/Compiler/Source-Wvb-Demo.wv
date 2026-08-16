@@ -90,6 +90,9 @@ export fn Main() -> i32 {
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉsystem profile system; capability process.argument_count; export fn Main() -> i32 { return 0; }"
     ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 13; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉcapabilityˉreference profile hosted; capability console.write_line; fn Copy(Output: console.write_line) -> console.write_line { return Output; } fn Use(Output: console.write_line, Value: text) -> void { Output(Value); } export fn Main() -> i32 { let Output: console.write_line = Copy(console.write_line); if false { Use(Output, \"unused\"); } return 0; }"
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 35; }
     let Composed: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉpair(
             "module Wvbˉroot profile portable; import Wvbˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Wvbˉvalue(); }",

@@ -39,7 +39,7 @@ call "%Native%\Build-Wvdb-Query-Package.cmd" ^
     "%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvpack" ^
     "%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvlock" ^
     "%Work%\Wvdb-Query.wvb" || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.wvb" 26294 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 "locked WVDB Query WVB" || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.wvb" 26420 24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 "locked WVDB Query WVB" || goto :cleanup
 call "%Native%\Build-Wvb-Inspector-Package.cmd" ^
     "%RepositoryRoot%\Distribution\Applications\Wvb-Inspector\Windvale-Wvb-Inspector.wvpack" ^
     "%RepositoryRoot%\Distribution\Applications\Wvb-Inspector\Windvale-Wvb-Inspector.wvlock" ^
@@ -57,7 +57,7 @@ for %%C in (First Second) do (
         "%Work%\LICENSE.md" ^
         "%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvprov" ^
         "%Work%\Wvdb-%%C.wvbundle" || goto :cleanup
-    call :verify_file "%Work%\Wvdb-%%C.wvbundle" 43725 3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 "WVDB Query Bundle 1 candidate" || goto :cleanup
+    call :verify_file "%Work%\Wvdb-%%C.wvbundle" 43873 33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c "WVDB Query Bundle 1 candidate" || goto :cleanup
     "%Work%\Verifier.exe" "%Work%\Wvdb-%%C.wvbundle" || goto :cleanup
 
     "%Work%\Writer.exe" ^
@@ -76,15 +76,15 @@ fc /b "%Work%\Inspector-First.wvbundle" "%Work%\Inspector-Second.wvbundle" >nul 
 echo native package bundle step=publish-shared-immutable-store item=7/7 applications=2 attempts=4
 pwsh -NoProfile -File "%RepositoryRoot%\Tools\Package\Publish-Admitted-Bundle.ps1" ^
     "%Work%\Wvdb-First.wvbundle" ^
-    3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 ^
+    33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c ^
     "%Work%\Store" >"%Work%\First-Publish.txt" || goto :cleanup
-findstr /x /c:"package store status=Published bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 created=6 existing=0" "%Work%\First-Publish.txt" >nul || goto :cleanup
+findstr /x /c:"package store status=Published bundle=33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c objects=5 created=6 existing=0" "%Work%\First-Publish.txt" >nul || goto :cleanup
 type "%Work%\First-Publish.txt"
 pwsh -NoProfile -File "%RepositoryRoot%\Tools\Package\Publish-Admitted-Bundle.ps1" ^
     "%Work%\Wvdb-First.wvbundle" ^
-    3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 ^
+    33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c ^
     "%Work%\Store" >"%Work%\Second-Publish.txt" || goto :cleanup
-findstr /x /c:"package store status=Published bundle=3d7f035e15fa839d9a7a3f8df6a7fa152e115aba42c1b48bdd1ae0b1ba998474 objects=5 created=0 existing=6" "%Work%\Second-Publish.txt" >nul || goto :cleanup
+findstr /x /c:"package store status=Published bundle=33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c objects=5 created=0 existing=6" "%Work%\Second-Publish.txt" >nul || goto :cleanup
 type "%Work%\Second-Publish.txt"
 pwsh -NoProfile -File "%RepositoryRoot%\Tools\Package\Publish-Admitted-Bundle.ps1" ^
     "%Work%\Inspector-First.wvbundle" ^

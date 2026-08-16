@@ -109,7 +109,7 @@ library_projects=(
     Windvale-Library-Scripted-Model-Provider
 )
 for project in "${library_projects[@]}"; do
-    "$script_directory/Build-Wvb.sh" \
+    "$script_directory/Build-Current-Wvb.sh" \
         "$repository_root/Projects/Libraries/$project.wvproj" \
         "$temporary_directory/$project.wvb" >/dev/null || {
             status=$?
@@ -118,15 +118,15 @@ for project in "${library_projects[@]}"; do
         }
 done
 
-"$script_directory/Build-Wvb.sh" \
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Tests/Fixtures/Libraries/Directory-Import-Smoke.wvproj" \
     "$temporary_directory/Directory-Import-Smoke.wvb" >/dev/null || exit $?
 
-"$script_directory/Build-Wvb.sh" \
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Tests/Fixtures/Libraries/Random-Access-Page-Import-Smoke.wvproj" \
     "$temporary_directory/Random-Access-Page-Import-Smoke.wvb" >/dev/null || exit $?
 
-"$script_directory/Build-Wvb.sh" \
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Tests/Fixtures/Libraries/Random-Access-Storage-Import-Smoke.wvproj" \
     "$temporary_directory/Random-Access-Storage-Import-Smoke.wvb" >/dev/null || exit $?
 
@@ -141,7 +141,7 @@ conformance_projects=(
     Windvale-Native-Test-Model-Protocol
 )
 for project in "${conformance_projects[@]}"; do
-    "$script_directory/Build-Wvb.sh" \
+    "$script_directory/Build-Current-Wvb.sh" \
         "$repository_root/Projects/Tests/$project.wvproj" \
         "$temporary_directory/$project.wvb" >/dev/null || exit $?
 done
@@ -151,7 +151,7 @@ negative_projects=(
     Capability-Profile-Rejection
 )
 for project in "${negative_projects[@]}"; do
-    if "$script_directory/Build-Wvb.sh" \
+    if "$script_directory/Build-Current-Wvb.sh" \
         "$repository_root/Tests/Fixtures/Libraries/$project.wvproj" \
         "$temporary_directory/$project.wvb" \
         >"$temporary_directory/$project.out" \

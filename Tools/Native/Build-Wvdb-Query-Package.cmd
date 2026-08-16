@@ -18,13 +18,13 @@ if /I not "%Manifest%"=="%ExpectedManifest%" (
     exit /b 64
 )
 
-call :verify_file "%Lock%" 1750 ad22e10e41dda772650123b4802518575088973aa73277889b443ad27aa25618 "package lock"
+call :verify_file "%Lock%" 1770 4e4089ad6b40f6f9b435bebdd8b3321e64db6038d745c191aa54e348ee44d926 "package lock"
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%Manifest%" 866 835f573302377fdd38e4c3d51fa9106397beba0b9813f99bfc3143d08a156406 "package manifest"
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 "workspace"
 if errorlevel 1 goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Seed\Wvb\Windvale-Compiler.wvb" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 "compiler"
+call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\Wvb\Windvale-Compiler.wvb" 931035 13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 "compiler"
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Projects\Applications\Windvale-Wvdb-Query.wvproj" 270 86570daa0dac6410dc8a64947901a3fc955db24afe3589bc70986f96abb8f49a "project"
 if errorlevel 1 goto :lock_rejected
@@ -32,7 +32,7 @@ call :verify_file "%RepositoryRoot%\Applications\Database\Wvdb-Query.wv" 3168 22
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Foundation\Decimal-Parsing.wv" 1276 797eb31da7e7a8c93e0d082bf910bc6d8e7988bcfad757a87c979075912e668a "decimal part"
 if errorlevel 1 goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Libraries\Platform\Filesystem\Read-Only-Directory.wv" 6565 4c6ecc745b0755b0242c7127c391d27408a7694f91d634c55eeb512746393c81 "directory part"
+call :verify_file "%RepositoryRoot%\Libraries\Platform\Filesystem\Read-Only-Directory.wv" 6847 7b8600bebb590d8c9d9ce9c8b7318374d4ee0501d7e32dddeded3fcf672c3f28 "directory part"
 if errorlevel 1 goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Libraries\Platform\Database\Read-Only-Wvdb.wv" 9084 7b3bd45397878e5468d979a2fb437feb4d72d5d8bbad21c832bcf3f280c018cb "WVDB platform part"
 if errorlevel 1 goto :lock_rejected
@@ -46,15 +46,15 @@ mkdir "%TemporaryDirectory%" || exit /b 1
 set "Candidate=%TemporaryDirectory%\Candidate.wvb"
 set "Result=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Applications\Windvale-Wvdb-Query.wvproj" ^
     "%Candidate%" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%Candidate%" 26294 61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2 "locked output"
+call :verify_file "%Candidate%" 26420 24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 "locked output"
 if errorlevel 1 goto :cleanup
 "%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvpublish.exe" "%Candidate%" "%Output%" >nul
 if errorlevel 1 goto :cleanup
-echo package status=Published root=windvale.wvdb-query target=hosted-wvb-v1 bytes=26294 sha256=61f7b9d739a0f4ac9eece1cb79e554e373f49375109cf23d332921395ae37dc2
+echo package status=Published root=windvale.wvdb-query target=hosted-wvb-v1 bytes=26420 sha256=24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9
 set "Result=0"
 
 :cleanup

@@ -25,7 +25,7 @@ set "BuildProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver
 set "BuildProjectResource=%BuildProject:\=/%"
 "%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
     "%BuildProjectResource%" "%WorkResource%/Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1155121 0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02 "current build driver WVB" || goto :cleanup
+call :verify_file "%Work%\Build-Driver.wvb" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 "current build driver WVB" || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
 set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
@@ -48,10 +48,10 @@ set "ApplicationProjectResource=%ApplicationProject:\=/%"
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
     "%ApplicationProjectResource%" "%WorkResource%/File-Read.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Response.wvb" 8417 868c9967432b3b5b2859de26bb3caf76dcbcc113d4a9c678625eecde73fd8193 "response-core self-test WVB" || goto :cleanup
-call :verify_file "%Work%\File-Read.wvb" 76348 4ef96f317c0ac0ca57d60c1c2b6533e6d51cc36b8adb5b481e8ec04b61b69a73 "file-read WVB" || goto :cleanup
+call :verify_file "%Work%\File-Read.wvb" 76474 95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb "file-read WVB" || goto :cleanup
 echo native file read compile step=lower
 "%Work%\Lowerer.exe" "%Work%\File-Read.wvb" "%Work%\File-Read.wvo" >nul || goto :cleanup
-call :verify_file "%Work%\File-Read.wvo" 2408301 93553d1c06f19c52d276bc7150d7939b5da4d5b5f8b260deb742f00da123b429 "file-read WVO" || goto :cleanup
+call :verify_file "%Work%\File-Read.wvo" 2410255 8ad63e3dbe87daccf6a9a94407ee0a661f177d6f812b300587b77fe36f7dd323 "file-read WVO" || goto :cleanup
 echo native file read compile step=response-package
 call "%Native%\Package-Hosted-Wvb.cmd" 2 "%Work%\Response.wvb" "%Work%\Response.exe" windows >nul || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 2 "%Work%\Response.wvb" "%Work%\Response.elf" linux >nul || goto :cleanup
@@ -82,17 +82,17 @@ set "WindowsEntry="
 set "LinuxEntry="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=File_read_host_entry address=" "%Work%\Windows-Link.txt"') do set "WindowsEntry=%%E"
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=File_read_host_entry address=" "%Work%\Linux-Link.txt"') do set "LinuxEntry=%%E"
-if not "%WindowsEntry%"=="2405696" goto :cleanup
-if not "%LinuxEntry%"=="2405696" goto :cleanup
-call :verify_file "%Work%\Windows-Image.chunk-0" 2409512 d4d58f79cff5bd4a2066567116f40c8b7128d4578c0959bb2ff08b2be0d2b38e "Windows linked image" || goto :cleanup
-call :verify_file "%Work%\Linux-Image.chunk-0" 2408462 9a0a6736ce61c468faf270ab392aa41991ae0763f0a53f9cb42b56641e1f0186 "Linux linked image" || goto :cleanup
+if not "%WindowsEntry%"=="2407616" goto :cleanup
+if not "%LinuxEntry%"=="2407616" goto :cleanup
+call :verify_file "%Work%\Windows-Image.chunk-0" 2411432 7905ace13aaea2715c622380177b3a4bdb7470d122d143729603c6ead0d17cfb "Windows linked image" || goto :cleanup
+call :verify_file "%Work%\Linux-Image.chunk-0" 2410382 748d356ac947e2eb52fbe7b186a90f0b22aed6bbef6da10f908eff472f22ab05 "Linux linked image" || goto :cleanup
 echo PASS  native file read phase=link item=4/6
 
 echo START native file read phase=package item=5/6
-call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\File-Read.wvb" "%Work%\Windows-Image" 1 2405696 "%Work%\File-Read.exe" windows >nul || goto :cleanup
-call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\File-Read.wvb" "%Work%\Linux-Image" 1 2405696 "%Work%\File-Read.elf" linux >nul || goto :cleanup
-call :verify_file "%Work%\File-Read.exe" 2430464 16085cd263600822f693d1f57f14315f47fe4102b76b59a64e333bdcf98615b9 "Windows file-read application" || goto :cleanup
-call :verify_file "%Work%\File-Read.elf" 2428928 547c311b1f5398d7cc5f67d31782ccb992e98c02dd90edfe0a560b47de575beb "Linux file-read application" || goto :cleanup
+call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\File-Read.wvb" "%Work%\Windows-Image" 1 2407616 "%Work%\File-Read.exe" windows >nul || goto :cleanup
+call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\File-Read.wvb" "%Work%\Linux-Image" 1 2407616 "%Work%\File-Read.elf" linux >nul || goto :cleanup
+call :verify_file "%Work%\File-Read.exe" 2432000 98c8ae185f9508d7ac6473b433cc8cb21429fe77cf3b218196bf25032e7ba7d5 "Windows file-read application" || goto :cleanup
+call :verify_file "%Work%\File-Read.elf" 2433024 e24332de44b14766049742941742e31d8a6b55c62ee31510e95ef9a128de0f24 "Linux file-read application" || goto :cleanup
 echo PASS  native file read phase=package item=5/6
 
 echo START native file read phase=execute item=6/6 cases=32
@@ -108,7 +108,7 @@ for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
 echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-file-read-application-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native file read application status=Passed cases=32 capabilities=5 wvb=4ef96f317c0ac0ca57d60c1c2b6533e6d51cc36b8adb5b481e8ec04b61b69a73 cross-host-images=Verified
+echo native file read application status=Passed cases=32 capabilities=5 wvb=95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb cross-host-images=Verified
 exit /b 0
 
 :verify_file

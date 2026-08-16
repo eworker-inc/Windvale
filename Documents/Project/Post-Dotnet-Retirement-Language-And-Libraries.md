@@ -203,6 +203,13 @@ violate the package and portability contracts.
 
 ### 2. Add typed capability references and scoped ownership where it is real
 
+Decision 0712 implements the first typed-reference slice for required root
+singleton capabilities. Exact references can cross parameters, immutable locals,
+and returns, and the read-only directory facade accepts one explicitly; the value
+is shared and non-owned and lowers to the existing static WVB capability call.
+Multiple instances, optional acquisition, provider-generation values, and scoped
+ownership remain future consumer-driven contracts.
+
 The first language priority after the package baseline is one typed, rights-limited
 capability reference. Its decision must specify binding, copying or movement,
 instance and provider generation, limits, revocation, provider restart, peer loss,

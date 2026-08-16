@@ -98,7 +98,8 @@ fn Actualˉcases() -> bool {
     ) { return false; }
     if !Actualˉresource(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
-        0u32, "Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb"
+        0u32,
+        "Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb"
     ) { return false; }
     if !Actualˉresource(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,

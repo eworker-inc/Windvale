@@ -122,10 +122,11 @@ if "%Development%"=="1" (
     call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7491072 85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3
     if errorlevel 1 goto :cleanup
 ) else (
-    "%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
-        "%BuildDriverProjectResource%" "%TemporaryResource%/Build-Driver.wvb" >nul
+    call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
+        "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
+        "%BuildDriverWvb%" >nul
     if errorlevel 1 goto :cleanup
-    call :verify_file "%BuildDriverWvb%" 1155121 0cd519556a1cf59321b9418bfbf01643283e10e3dd111c8e2083ec0e51c4ce02
+    call :verify_file "%BuildDriverWvb%" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20
     if errorlevel 1 goto :cleanup
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
         2 "%BuildDriverWvb%" "%BuildDriver%" --development-cache >nul
@@ -134,7 +135,7 @@ if "%Development%"=="1" (
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
         "%LowererProjectResource%" "%TemporaryResource%/Lowerer.wvb" >nul
     if errorlevel 1 goto :cleanup
-    call :verify_file "%LowererWvb%" 522025 318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6
+    call :verify_file "%LowererWvb%" 523087 6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41
     if errorlevel 1 goto :cleanup
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
         6 "%LowererWvb%" "%Lowerer%" --development-cache >nul
