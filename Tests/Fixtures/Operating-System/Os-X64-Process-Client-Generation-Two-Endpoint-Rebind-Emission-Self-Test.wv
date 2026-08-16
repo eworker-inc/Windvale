@@ -1,0 +1,43 @@
+module Osˉx64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉemission as Rebind;
+
+export fn Main() -> i32 {
+    let Code: bytes = Rebind.X64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉbytes();
+    let Fields: bytes = Rebind.X64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉfailureˉfields();
+    let Displacements: bytes = Rebind.X64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 448u32 || Bytesˉlength(Fields) != 112u32 ||
+        Bytesˉlength(Displacements) != 112u32 ||
+        Rebind.X64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉfixtureˉoffset() != 25065u32 ||
+        Rebind.X64ˉprocessˉclientˉgenerationˉtwoˉendpointˉrebindˉfixtureˉend() != 25513u32 {
+        return 1;
+    }
+    var Index: u32 = 0u32;
+    while Index < 28u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        let Displacement: u32 = Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 ||
+            25065u32 + Field + 4u32 + Displacement != 33826u32 {
+            return 2;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 448u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 33192u32 || Hashˉone != 9978u32 ||
+        Hashˉtwo != 23624u32 || Hashˉthree != 57905u32 {
+        return 3;
+    }
+    return 93;
+}

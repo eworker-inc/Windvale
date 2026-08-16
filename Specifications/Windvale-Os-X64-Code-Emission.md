@@ -49,7 +49,7 @@ coordinator entry and fixed three-record ready/wait dispatcher. Verification
 pins its full fixture-equal SHA-256, exact entry displacement, coordinator
 offset, bounded record validation, scan construction, and paired host images.
 
-Ordered consumers now source-own the first 25,065 process-machine bytes and 121
+Ordered consumers now source-own the first 25,513 process-machine bytes and 149
 external relocation fields through checked private construction, privileged
 entry, timer activation, provider entry, provider-return/init transfer, and
 init-return validation of the program, budget, and retained store/directory
@@ -60,9 +60,9 @@ the first reply's publication and client delivery, then transfer the exact
 client's complete terminal IPC state, then revalidate all retained client state
 before reclamation, then release generation 1 and prove same-root generation-2
 allocation, then privately reconstruct the generation-2 client record and reuse
-the exact checked paging and interpreter-copy/context-seed constructors. The
-focused owner executes forty-three projects and 258 cases with local results 50
-through 92.
+the exact checked paging and interpreter-copy/context-seed constructors, then
+validate and rebind both retained endpoints to generation 2. The focused owner
+executes forty-four projects and 264 cases with local results 50 through 93.
 
 The module is a migration primitive. Coordinator relocation and channel/
 endpoint initialization are separate consumers. Generation-2 construction,

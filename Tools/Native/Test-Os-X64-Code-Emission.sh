@@ -567,4 +567,17 @@ verify "$work/ClientGenerationTwoImage.elf" 192624 fb2d1a9b64f06b8068602e05fe23d
 [[ $? -eq 92 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoImage.bin" 0 "$work/ClientGenerationTwoImage.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoImage.exe" 187904 a78e65b9424e4a10dc65cbf0f5cf5268a3ec04b39bdac854023b9fe35fb46386 || exit 1
-echo 'native os x64 code emission status=Passed projects=43 cases=258 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92 cross-host-images=Verified source-owned-bytes=25065 relocation-fields=121'
+echo 'step=client-generation-two-endpoint-rebind item=44/44'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.wvproj" "$work/ClientGenerationTwoEndpointRebind.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoEndpointRebind.wvb" 3388 66c40838688bf09ec245b38b98196d13f62073119afee66b295e526aabc18d52 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoEndpointRebind.wvb" "$work/ClientGenerationTwoEndpointRebind.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoEndpointRebind.wvo" 22228 46a33e3e75a085a7b7a2c5713cb976425e21d0e0a90a5326e362c91ab94b1794 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoEndpointRebind.bin" "$work/ClientGenerationTwoEndpointRebind.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoEndpointRebind.bin" 21808 bede90cb4efadc65e09b61b0b8a40e2c3b03c2ef04408278fe0b49c1038581cc || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoEndpointRebind.bin" 0 "$work/ClientGenerationTwoEndpointRebind.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoEndpointRebind.elf" 28784 522929410889169de460c55c4f936027c1f2c508c9541cd4f845d439bba3a22d || exit 1
+"$work/ClientGenerationTwoEndpointRebind.elf" >/dev/null
+[[ $? -eq 93 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoEndpointRebind.bin" 0 "$work/ClientGenerationTwoEndpointRebind.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoEndpointRebind.exe" 23552 edae8ea5a71adfa34652e80f3daa68c0e39ee0e5aff825b329239e58b2077374 || exit 1
+echo 'native os x64 code emission status=Passed projects=44 cases=264 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93 cross-host-images=Verified source-owned-bytes=25513 relocation-fields=149'

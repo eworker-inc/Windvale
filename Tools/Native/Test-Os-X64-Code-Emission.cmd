@@ -1003,7 +1003,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoImage.elf" 192624 fb2d1a9b64f06b8068602e05fe23d710c0e8e45ae1ff06803489c8f31bc6ad4e
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=43 cases=258 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92 cross-host-images=Verified source-owned-bytes=25065 relocation-fields=121
+echo step=client-generation-two-endpoint-rebind item=44/44
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.wvproj" "%Work%\ClientGenerationTwoEndpointRebind.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoEndpointRebind.wvb" 3388 66c40838688bf09ec245b38b98196d13f62073119afee66b295e526aabc18d52
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoEndpointRebind.wvb" "%Work%\ClientGenerationTwoEndpointRebind.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoEndpointRebind.wvo" 22228 46a33e3e75a085a7b7a2c5713cb976425e21d0e0a90a5326e362c91ab94b1794
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoEndpointRebind.bin" "%Work%\ClientGenerationTwoEndpointRebind.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoEndpointRebind.bin" 21808 bede90cb4efadc65e09b61b0b8a40e2c3b03c2ef04408278fe0b49c1038581cc
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoEndpointRebind.bin" 0 "%Work%\ClientGenerationTwoEndpointRebind.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoEndpointRebind.exe" >nul
+if not "%ERRORLEVEL%"=="93" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoEndpointRebind.exe" 23552 edae8ea5a71adfa34652e80f3daa68c0e39ee0e5aff825b329239e58b2077374
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoEndpointRebind.bin" 0 "%Work%\ClientGenerationTwoEndpointRebind.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoEndpointRebind.elf" 28784 522929410889169de460c55c4f936027c1f2c508c9541cd4f845d439bba3a22d
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=44 cases=264 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93 cross-host-images=Verified source-owned-bytes=25513 relocation-fields=149
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

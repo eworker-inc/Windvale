@@ -235,6 +235,11 @@ context seed, including its symbol-1 relocation. Generation-2 private image and
 initial execution-context reconstruction therefore reach byte 25,064 before
 endpoint rebinding or readiness publication.
 
+Endpoint rebinding then validates both complete closed generation-1 records,
+including provider/channel identities, generations, rights, close evidence, and
+zero transient state, before changing either client reference. Ownership reaches
+byte 25,512 with both endpoints bound to generation 2 but not yet republished.
+
 The first restart policies are deliberately small:
 
 - `Never`;

@@ -251,6 +251,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [x86-64 generation-2 client-record emission](Windvale-Os-X64-Process-Client-Generation-Two-Record-Emission.md)
 - [x86-64 generation-2 client-paging emission](Windvale-Os-X64-Process-Client-Generation-Two-Paging-Emission.md)
 - [x86-64 generation-2 client-image emission](Windvale-Os-X64-Process-Client-Generation-Two-Image-Emission.md)
+- [x86-64 generation-2 endpoint-rebind emission](Windvale-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.md)
 - [x86-64 directory-provider allocation emission](Windvale-Os-X64-Process-Directory-Allocation-Emission.md)
 - [x86-64 directory-provider record emission](Windvale-Os-X64-Process-Directory-Record-Emission.md)
 - [x86-64 directory-provider paging emission](Windvale-Os-X64-Process-Directory-Paging-Emission.md)
