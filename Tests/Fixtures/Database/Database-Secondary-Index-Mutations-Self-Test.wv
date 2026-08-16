@@ -1,0 +1,371 @@
+module Databaseˉsecondaryˉindexˉmutationsˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+import Windvaleˉdatabaseˉsecondaryˉindex as Secondary;
+import Windvaleˉdatabaseˉsecondaryˉindexˉmutations as Mutations;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtypedˉrow as Typed;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Equal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Less(Left: bytes, Right: bytes) -> bool {
+    var Limit: u32 = Bytesˉlength(Left);
+    if Bytesˉlength(Right) < Limit { Limit = Bytesˉlength(Right); }
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let L: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Index));
+        let R: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Index));
+        if L < R { return true; }
+        if L > R { return false; }
+        Index = Index + 1u32;
+    }
+    return Bytesˉlength(Left) < Bytesˉlength(Right);
+}
+
+fn Replace(Input: bytes, Offset: u32, Length: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Offset + Length, Bytesˉlength(Input) - Offset - Length)
+    );
+}
+
+fn Schemaˉfield(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Nullable: bool,
+    Maximum: u32,
+    Name: text
+) -> bytes {
+    let Result: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Kind,
+            Nullable,
+            Maximum,
+            Textˉtoˉutf8(Name)
+        );
+    return Result.Bytes;
+}
+
+fn Schemaˉbytes() -> bytes {
+    let Fields: bytes = Bytesˉconcat(
+        Schemaˉfield(Schema.Databaseˉfieldˉkind.I64, false, 8u32, "balance"),
+        Schemaˉfield(Schema.Databaseˉfieldˉkind.Text, true, 64u32, "name")
+    );
+    let Result: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fields);
+    return Result.Bytes;
+}
+
+fn Value(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> bytes {
+    let Result: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(Kind, Null, Data);
+    return Result.Bytes;
+}
+
+fn Values(Balance: u64, Nameˉnull: bool, Name: bytes) -> bytes {
+    let Balanceˉvalue: bytes = Value(
+        Schema.Databaseˉfieldˉkind.I64,
+        false,
+        Bytesˉfromˉu64ˉlittle(Balance)
+    );
+    var Nameˉdata: bytes = Name;
+    if Nameˉnull { Nameˉdata = Empty(); }
+    return Bytesˉconcat(Balanceˉvalue, Value(
+        Schema.Databaseˉfieldˉkind.Text,
+        Nameˉnull,
+        Nameˉdata
+    ));
+}
+
+fn Row(Balance: u64, Nameˉnull: bool, Name: bytes) -> bytes {
+    let Result: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(
+            Schemaˉbytes(),
+            Values(Balance, Nameˉnull, Name)
+        );
+    return Result.Bytes;
+}
+
+fn Definition(Index: u64, Unique: bool, Field: u32, Name: text) -> bytes {
+    let Indexˉfield: Secondary.Databaseˉsecondaryˉfieldˉresult =
+        Secondary.Databaseˉsecondaryˉfieldˉencode(
+            Field,
+            Secondary.Databaseˉsecondaryˉdirection.Ascending,
+            Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+        );
+    let Result: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64,
+            9u64,
+            Index,
+            Unique,
+            Indexˉfield.Bytes,
+            Textˉtoˉutf8(Name)
+        );
+    return Result.Bytes;
+}
+
+fn Component(Definitionˉbytes: bytes) -> bytes {
+    let Result: Mutations.Databaseˉsecondaryˉbundleˉcomponent =
+        Mutations.Databaseˉsecondaryˉbundleˉcomponentˉencode(
+            Definitionˉbytes
+        );
+    return Result.Bytes;
+}
+
+fn Bundle() -> bytes {
+    let Definitions: bytes = Bytesˉconcat(
+        Component(Definition(1u64, false, 0u32, "balance")),
+        Component(Definition(2u64, true, 1u32, "name"))
+    );
+    let Result: Mutations.Databaseˉsecondaryˉbundleˉresult =
+        Mutations.Databaseˉsecondaryˉbundleˉencode(7u64, 9u64, 2u32, Definitions);
+    return Result.Bytes;
+}
+
+fn Bundleˉerror(Input: bytes) -> Mutations.Databaseˉsecondaryˉmutationsˉerror {
+    let Result: Mutations.Databaseˉsecondaryˉbundleˉresult =
+        Mutations.Databaseˉsecondaryˉbundleˉdecode(Input);
+    return Result.Error;
+}
+
+fn Checkˉerror(
+    Input: bytes,
+    Requested: u32
+) -> Mutations.Databaseˉsecondaryˉmutationsˉerror {
+    let Result: Mutations.Databaseˉsecondaryˉuniqueˉcheck =
+        Mutations.Databaseˉsecondaryˉuniqueˉcheckˉread(Input, Requested);
+    return Result.Error;
+}
+
+fn Testˉbundle() -> i32 {
+    let Encoded: bytes = Bundle();
+    let Decoded: Mutations.Databaseˉsecondaryˉbundleˉresult =
+        Mutations.Databaseˉsecondaryˉbundleˉdecode(Encoded);
+    let First: Mutations.Databaseˉsecondaryˉbundleˉdefinition =
+        Mutations.Databaseˉsecondaryˉbundleˉdefinitionˉat(Decoded.Definitions, 0u32);
+    let Second: Mutations.Databaseˉsecondaryˉbundleˉdefinition =
+        Mutations.Databaseˉsecondaryˉbundleˉdefinitionˉat(Decoded.Definitions, First.Next);
+    let Firstˉdefinition: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉdecode(First.Definition);
+    let Secondˉdefinition: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉdecode(Second.Definition);
+    if Decoded.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Valid ||
+        Decoded.Collection != 7u64 || Decoded.Schema != 9u64 || Decoded.Count != 2u32 ||
+        Firstˉdefinition.Index != 1u64 || Secondˉdefinition.Index != 2u64 ||
+        !Equal(Encoded, Bundle()) {
+        return 1;
+    }
+    if Bundleˉerror(Bytesˉslice(Encoded, 0u32, 47u32)) !=
+            Mutations.Databaseˉsecondaryˉmutationsˉerror.Invalidˉlength ||
+        Bundleˉerror(Replace(Encoded, 12u32, 4u32, Bytesˉfromˉu32ˉlittle(1u32))) !=
+            Mutations.Databaseˉsecondaryˉmutationsˉerror.Invalidˉflags ||
+        Bundleˉerror(Bytesˉconcat(Encoded, Bytesˉfromˉu8(0u8))) !=
+            Mutations.Databaseˉsecondaryˉmutationsˉerror.Trailingˉbytes {
+        return 2;
+    }
+    let Reversed: Mutations.Databaseˉsecondaryˉbundleˉresult =
+        Mutations.Databaseˉsecondaryˉbundleˉencode(
+            7u64,
+            9u64,
+            2u32,
+            Bytesˉconcat(
+                Component(Definition(2u64, true, 1u32, "name")),
+                Component(Definition(1u64, false, 0u32, "balance"))
+            )
+        );
+    if Reversed.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Invalidˉindexˉorder {
+        return 3;
+    }
+    var Eight: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        Eight = Bytesˉconcat(Eight, Component(Definition(
+            U64ˉfromˉu32(Index + 1u32),
+            false,
+            0u32,
+            "bounded"
+        )));
+        Index = Index + 1u32;
+    }
+    let Maximum: Mutations.Databaseˉsecondaryˉbundleˉresult =
+        Mutations.Databaseˉsecondaryˉbundleˉencode(7u64, 9u64, 8u32, Eight);
+    let Nine: Mutations.Databaseˉsecondaryˉbundleˉresult =
+        Mutations.Databaseˉsecondaryˉbundleˉencode(
+            7u64,
+            9u64,
+            9u32,
+            Bytesˉconcat(Eight, Component(Definition(9u64, false, 0u32, "ninth")))
+        );
+    if Maximum.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Valid ||
+        Nine.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Invalidˉcount {
+        return 4;
+    }
+    return 0;
+}
+
+fn Testˉinsertˉandˉunique() -> i32 {
+    let Identity: bytes = Textˉtoˉutf8("row-1");
+    let Newˉvalues: bytes = Values(1u64, false, Textˉtoˉutf8("alice"));
+    let Plan: Mutations.Databaseˉsecondaryˉmutationˉplan =
+        Mutations.Databaseˉsecondaryˉupsertˉmutations(
+            Schemaˉbytes(), Bundle(), Identity, false, Empty(), Newˉvalues
+        );
+    if Plan.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Valid ||
+        Plan.Mutationˉcount != 3u32 || Plan.Uniqueˉcheckˉcount != 1u32 {
+        return 1;
+    }
+    let First: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(Plan.Mutations, 0u32);
+    let Unique: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(Plan.Mutations, 1u32);
+    let Primary: Transaction.Databaseˉtransactionˉmutationˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉread(Plan.Mutations, 2u32);
+    if First.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put ||
+        Unique.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put ||
+        Primary.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put ||
+        !Less(First.Key, Unique.Key) || !Less(Unique.Key, Primary.Key) {
+        return 2;
+    }
+    let Check: Mutations.Databaseˉsecondaryˉuniqueˉcheck =
+        Mutations.Databaseˉsecondaryˉuniqueˉcheckˉread(Plan.Uniqueˉchecks, 0u32);
+    if Check.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Valid ||
+        !Equal(Check.Key, Unique.Key) || !Equal(Check.Identity, Identity) {
+        return 3;
+    }
+    let Missing: Secondary.Databaseˉsecondaryˉownerˉresult =
+        Secondary.Databaseˉsecondaryˉuniqueˉownerˉcheck(Identity, false, Empty());
+    let Same: Secondary.Databaseˉsecondaryˉownerˉresult =
+        Secondary.Databaseˉsecondaryˉuniqueˉownerˉcheck(Identity, true, Unique.Value);
+    let Otherˉentry: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(2u64, true, 1u32, "name"),
+            Row(1u64, false, Textˉtoˉutf8("alice")),
+            Textˉtoˉutf8("row-2")
+        );
+    let Conflict: Secondary.Databaseˉsecondaryˉownerˉresult =
+        Secondary.Databaseˉsecondaryˉuniqueˉownerˉcheck(Identity, true, Otherˉentry.Value);
+    if Missing.Status != Secondary.Databaseˉsecondaryˉownerˉstatus.Available ||
+        Same.Status != Secondary.Databaseˉsecondaryˉownerˉstatus.Sameˉowner ||
+        Conflict.Status != Secondary.Databaseˉsecondaryˉownerˉstatus.Conflict {
+        return 4;
+    }
+    var Malformedˉchecks: bytes = Replace(
+        Plan.Uniqueˉchecks,
+        16u32,
+        4u32,
+        Bytesˉfromˉu32ˉlittle(2u32)
+    );
+    Malformedˉchecks = Replace(
+        Malformedˉchecks,
+        20u32,
+        4u32,
+        Bytesˉfromˉu32ˉlittle(
+            Bytesˉreadˉu32ˉlittle(Malformedˉchecks, 20u32) + 1u32
+        )
+    );
+    Malformedˉchecks = Bytesˉconcat(Malformedˉchecks, Bytesˉfromˉu8(0u8));
+    let Invalidˉowner: Secondary.Databaseˉsecondaryˉownerˉresult =
+        Secondary.Databaseˉsecondaryˉuniqueˉownerˉcheck(
+            Identity,
+            true,
+            Bytesˉfromˉu8(0u8)
+        );
+    if Checkˉerror(Malformedˉchecks, 0u32) !=
+            Mutations.Databaseˉsecondaryˉmutationsˉerror.Truncated ||
+        Invalidˉowner.Error != Secondary.Databaseˉsecondaryˉerror.Invalidˉlength {
+        return 5;
+    }
+    return 0;
+}
+
+fn Testˉupdates() -> i32 {
+    let Identity: bytes = Textˉtoˉutf8("row-1");
+    let Oldˉrow: bytes = Row(1u64, false, Textˉtoˉutf8("alice"));
+    let Changed: Mutations.Databaseˉsecondaryˉmutationˉplan =
+        Mutations.Databaseˉsecondaryˉupsertˉmutations(
+            Schemaˉbytes(),
+            Bundle(),
+            Identity,
+            true,
+            Oldˉrow,
+            Values(2u64, false, Textˉtoˉutf8("bob"))
+        );
+    if Changed.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Valid ||
+        Changed.Mutationˉcount != 5u32 || Changed.Uniqueˉcheckˉcount != 1u32 {
+        return 1;
+    }
+    var Index: u32 = 0u32;
+    var Prior: bytes = Empty();
+    while Index < Changed.Mutationˉcount {
+        let Mutation: Transaction.Databaseˉtransactionˉmutationˉresult =
+            Transaction.Databaseˉtransactionˉmutationsˉread(Changed.Mutations, Index);
+        if Index > 0u32 && !Less(Prior, Mutation.Key) { return 2; }
+        if Index == 0u32 && Mutation.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Delete { return 3; }
+        if Index == 1u32 && Mutation.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put { return 4; }
+        if Index == 2u32 && Mutation.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Delete { return 5; }
+        if Index == 3u32 && Mutation.Kind != Transaction.Databaseˉtransactionˉmutationˉkind.Put { return 6; }
+        Prior = Mutation.Key;
+        Index = Index + 1u32;
+    }
+    let Same: Mutations.Databaseˉsecondaryˉmutationˉplan =
+        Mutations.Databaseˉsecondaryˉupsertˉmutations(
+            Schemaˉbytes(),
+            Bundle(),
+            Identity,
+            true,
+            Oldˉrow,
+            Values(1u64, false, Textˉtoˉutf8("alice"))
+        );
+    if Same.Mutationˉcount != 1u32 || Same.Uniqueˉcheckˉcount != 0u32 {
+        return 7;
+    }
+    let Nullˉname: Mutations.Databaseˉsecondaryˉmutationˉplan =
+        Mutations.Databaseˉsecondaryˉupsertˉmutations(
+            Schemaˉbytes(),
+            Bundle(),
+            Identity,
+            false,
+            Empty(),
+            Values(1u64, true, Empty())
+        );
+    if Nullˉname.Mutationˉcount != 2u32 || Nullˉname.Uniqueˉcheckˉcount != 0u32 {
+        return 8;
+    }
+    let Invalidˉold: Mutations.Databaseˉsecondaryˉmutationˉplan =
+        Mutations.Databaseˉsecondaryˉupsertˉmutations(
+            Schemaˉbytes(), Bundle(), Identity, true, Bytesˉfromˉu8(0u8), Values(1u64, true, Empty())
+        );
+    if Invalidˉold.Error != Mutations.Databaseˉsecondaryˉmutationsˉerror.Invalidˉoldˉrow {
+        return 9;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Bundleˉresult: i32 = Testˉbundle();
+    if Bundleˉresult != 0 { return 10 + Bundleˉresult; }
+    let Insertˉresult: i32 = Testˉinsertˉandˉunique();
+    if Insertˉresult != 0 { return 20 + Insertˉresult; }
+    let Updateˉresult: i32 = Testˉupdates();
+    if Updateˉresult != 0 { return 30 + Updateˉresult; }
+    return 0;
+}

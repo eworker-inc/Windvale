@@ -2,10 +2,12 @@
 
 ## Status and scope
 
-`Windvaleˉdatabaseˉsecondaryˉindex` is the first portable secondary-index
-contract. It defines bounded ordered-index metadata and deterministically derives
-tree keys from an admitted `WVSC 1` schema, `WVTR 1` row, and record identity. It
-does not perform storage I/O, publish mutations, or grant authority.
+`Windvaleˉdatabaseˉsecondaryˉindex` and
+`Windvaleˉdatabaseˉsecondaryˉindexˉmutations` are the first portable
+secondary-index contracts. They define bounded ordered-index metadata,
+deterministically derive tree keys from admitted typed rows, and compose index
+plus primary-row changes into one canonical transaction. They do not perform
+storage I/O, publish mutations, or grant authority.
 
 This slice carries forward the useful EWDB mechanisms: compound ordered keys,
 explicit ascending or descending fields, explicit null placement, row-identity
@@ -85,28 +87,55 @@ version `1`, header size `24`, zero flags, identity byte count, and zero reserve
 field, followed by the exact record identity. Both unique and non-unique entries
 retain this owner value.
 
-## Atomicity and uniqueness boundary
+## `WVIB 1` bounded index bundle
 
-Key construction is not publication. The next mutation-composition boundary must
-delete stale index entries, put new index entries, and mutate the primary row in
-one canonical `WVTM 1` transaction. With at most eight indexes, the worst update
-is 17 mutations, below `WVTM 1`'s limit of 32.
+A collection/schema pair has one canonical bundle containing one through eight
+complete `WVSI 1` definitions in strictly increasing index-identity order. The
+48-byte little-endian header contains `WVIB`, version `1`, header size `48`, zero
+flags, collection and schema identities, definition count, exact definition
+bytes, and eight reserved zero bytes. Each component is a `u32` length followed
+by one exact definition. The complete bundle is at most 2,384 bytes.
+
+The decoder validates the complete bundle before returning any definitions. It
+rejects a mismatched collection/schema, duplicate or decreasing index identity,
+malformed component, truncation, or extension. The eight-index limit makes the
+worst update 17 mutations, below `WVTM 1`'s limit of 32.
+
+## Atomic upsert and `WVUC 1` unique checks
+
+`Databaseˉsecondaryˉupsertˉmutations` admits the schema, bundle, optional
+old row, new typed values, and record identity before emitting anything. For each
+index it derives old and new entries. It omits unchanged index keys, emits the
+remaining delete and put in key order, and appends the primary typed-row put.
+The result is one independently validated, strictly sorted `WVTM 1` transaction.
+
+Every unique entry put also produces one `WVUC 1` read-before-write check.
+Its 24-byte header contains `WVUC`, version `1`, header size `24`, zero flags,
+check count, and exact component bytes. Each component contains key and expected
+owner lengths followed by those exact bytes. The complete envelope is at most
+65,536 bytes and the reader validates every component, even when the caller asks
+for an earlier one.
 
 Before a unique-entry put is published, the writer must read the candidate key.
 No existing value is acceptable; the same owner identity is an idempotent update;
 a different owner is a unique conflict. A caller must never use an ordinary put
-to overwrite another owner. This contract exposes the unique shape but does not
-claim that the ownership probe or atomic composer is implemented yet.
+to overwrite another owner. The portable owner decoder and checker implement
+those three outcomes. The hosted writer does not yet execute a `WVUC 1` envelope;
+therefore a plan with nonzero unique checks is not authorized for publication
+until that writer integration is complete.
 
 ## Verification
 
-The focused portable fixture proves deterministic definition round trips,
+The focused portable fixtures prove deterministic definition round trips,
 compound ascending I64 and descending text bytes, big-endian catalog ordering,
 non-unique identity suffixes, equal unique keys with distinct owner values, null
 exclusion and placement, the eight-field bound, duplicate fields, unsupported
 byte fields, the exact key-size rejection, and malformed definition boundaries.
+They also prove deterministic eight-index bundles, insert/update/unchanged/null
+upsert shapes, strict mutation order, exact 3- and 5-mutation cases, unique check
+selection, and available/same/conflicting ownership outcomes.
 
-Range-scan execution, index-set discovery, primary-plus-index mutation
-composition, unique ownership probes, query planning, online build, rebuild,
-schema migration, full-text search, JSON paths, locale collation, and vector
-search remain separate milestones.
+Hosted unique-check execution, persistent bundle discovery, delete composition,
+range-scan execution, query planning, online build, rebuild, schema migration,
+full-text search, JSON paths, locale collation, and vector search remain separate
+milestones.

@@ -19,9 +19,9 @@ fi
 
 case "$development_target" in
     all)
-        selected_cases=49
+        selected_cases=50
         ;;
-    tree-node|logical-record|typed-row|secondary-index|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
+    tree-node|logical-record|typed-row|secondary-index|secondary-index-mutations|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
         selected_cases=1
         ;;
     transaction-branch-pages)
@@ -1825,6 +1825,8 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" typed-query typed-query-sql || exit $?
     verify_development_target SecondaryIndex secondary-index \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Secondary-Index.wvproj" || exit $?
+    verify_development_target SecondaryIndexMutations secondary-index-mutations \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Secondary-Index-Mutations.wvproj" || exit $?
     verify_development_target TransactionMutations transaction-mutations \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj" transaction || exit $?
     verify_development_target TransactionLeafRewrite transaction-leaf-rewrite \
@@ -1945,6 +1947,8 @@ verify_target TypedRow \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
 verify_target SecondaryIndex \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Secondary-Index.wvproj" || exit $?
+verify_target SecondaryIndexMutations \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Secondary-Index-Mutations.wvproj" || exit $?
 verify_target TransactionMutations \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj" || exit $?
 verify_target TransactionLeafRewrite \

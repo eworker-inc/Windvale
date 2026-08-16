@@ -58,6 +58,12 @@ export enum Databaseˉsecondaryˉerror {
     Keyˉtooˉlarge = 24;
 }
 
+export enum Databaseˉsecondaryˉownerˉstatus {
+    Available = 1;
+    Sameˉowner = 2;
+    Conflict = 3;
+}
+
 export record Databaseˉsecondaryˉfieldˉresult {
     Error: Databaseˉsecondaryˉerror;
     Field: u32;
@@ -90,6 +96,12 @@ export record Databaseˉsecondaryˉentryˉresult {
     Unique: bool;
     Key: bytes;
     Value: bytes;
+}
+
+export record Databaseˉsecondaryˉownerˉresult {
+    Error: Databaseˉsecondaryˉerror;
+    Status: Databaseˉsecondaryˉownerˉstatus;
+    Identity: bytes;
 }
 
 record Databaseˉsecondaryˉfieldsˉresult {
@@ -166,6 +178,40 @@ fn Databaseˉsecondaryˉentryˉfailure(
         Databaseˉsecondaryˉempty(),
         Databaseˉsecondaryˉempty()
     );
+}
+
+export fn Databaseˉsecondaryˉentryˉexcluded(
+    Unique: bool
+) -> Databaseˉsecondaryˉentryˉresult {
+    return Databaseˉsecondaryˉentryˉresult(
+        Databaseˉsecondaryˉerror.Valid,
+        false,
+        Unique,
+        Databaseˉsecondaryˉempty(),
+        Databaseˉsecondaryˉempty()
+    );
+}
+
+fn Databaseˉsecondaryˉownerˉfailure(
+    Error: Databaseˉsecondaryˉerror
+) -> Databaseˉsecondaryˉownerˉresult {
+    return Databaseˉsecondaryˉownerˉresult(
+        Error,
+        Databaseˉsecondaryˉownerˉstatus.Conflict,
+        Databaseˉsecondaryˉempty()
+    );
+}
+
+fn Databaseˉsecondaryˉequal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
 }
 
 fn Databaseˉsecondaryˉdirectionˉraw(
@@ -550,6 +596,110 @@ fn Databaseˉsecondaryˉentryˉvalue(Identity: bytes) -> bytes {
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Identity)));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
     return Bytesˉconcat(Result, Identity);
+}
+
+export fn Databaseˉsecondaryˉentryˉownerˉdecode(
+    Input: bytes
+) -> Databaseˉsecondaryˉownerˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_SECONDARY_ENTRY_VALUE_HEADER_BYTES ||
+        Total > DATABASE_SECONDARY_ENTRY_VALUE_HEADER_BYTES +
+            DATABASE_SECONDARY_MAXIMUM_IDENTITY_BYTES {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) !=
+        DATABASE_SECONDARY_ENTRY_VALUE_MAGIC {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_SECONDARY_VERSION {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+        DATABASE_SECONDARY_ENTRY_VALUE_HEADER_BYTES {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉheader
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉflags
+        );
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Length == 0u32 || Length > DATABASE_SECONDARY_MAXIMUM_IDENTITY_BYTES {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉidentity
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉreserved
+        );
+    }
+    if Total < DATABASE_SECONDARY_ENTRY_VALUE_HEADER_BYTES + Length {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Truncated
+        );
+    }
+    if Total > DATABASE_SECONDARY_ENTRY_VALUE_HEADER_BYTES + Length {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Trailingˉbytes
+        );
+    }
+    return Databaseˉsecondaryˉownerˉresult(
+        Databaseˉsecondaryˉerror.Valid,
+        Databaseˉsecondaryˉownerˉstatus.Sameˉowner,
+        Databaseˉsecondaryˉcopy(Bytesˉslice(
+            Input,
+            DATABASE_SECONDARY_ENTRY_VALUE_HEADER_BYTES,
+            Length
+        ))
+    );
+}
+
+export fn Databaseˉsecondaryˉuniqueˉownerˉcheck(
+    Expectedˉidentity: bytes,
+    Found: bool,
+    Input: bytes
+) -> Databaseˉsecondaryˉownerˉresult {
+    let Expectedˉlength: u32 = Bytesˉlength(Expectedˉidentity);
+    if Expectedˉlength == 0u32 ||
+        Expectedˉlength > DATABASE_SECONDARY_MAXIMUM_IDENTITY_BYTES {
+        return Databaseˉsecondaryˉownerˉfailure(
+            Databaseˉsecondaryˉerror.Invalidˉidentity
+        );
+    }
+    if !Found {
+        if Bytesˉlength(Input) != 0u32 {
+            return Databaseˉsecondaryˉownerˉfailure(
+                Databaseˉsecondaryˉerror.Trailingˉbytes
+            );
+        }
+        return Databaseˉsecondaryˉownerˉresult(
+            Databaseˉsecondaryˉerror.Valid,
+            Databaseˉsecondaryˉownerˉstatus.Available,
+            Databaseˉsecondaryˉempty()
+        );
+    }
+    let Owner: Databaseˉsecondaryˉownerˉresult =
+        Databaseˉsecondaryˉentryˉownerˉdecode(Input);
+    if Owner.Error != Databaseˉsecondaryˉerror.Valid { return Owner; }
+    var Status: Databaseˉsecondaryˉownerˉstatus =
+        Databaseˉsecondaryˉownerˉstatus.Conflict;
+    if Databaseˉsecondaryˉequal(Owner.Identity, Expectedˉidentity) {
+        Status = Databaseˉsecondaryˉownerˉstatus.Sameˉowner;
+    }
+    return Databaseˉsecondaryˉownerˉresult(
+        Databaseˉsecondaryˉerror.Valid,
+        Status,
+        Owner.Identity
+    );
 }
 
 export fn Databaseˉsecondaryˉentryˉbuild(

@@ -98,6 +98,7 @@ provider-call accounting, append-byte accounting, retained-byte high water,
 and close.
 
 The contract does not yet provide concurrent readers, a writer queue, group
-commit, cancellation, atomic secondary-index maintenance, query execution, page
-reclamation, process supervision, transport, authentication, or authorization.
+commit, cancellation, secondary-index bundle discovery or unique-check execution,
+query execution, page reclamation, process supervision, transport,
+authentication, or authorization.
 Those remain separate milestones over this durable single-writer boundary.

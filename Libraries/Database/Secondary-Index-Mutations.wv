@@ -1,0 +1,605 @@
+module Windvaleˉdatabaseˉsecondaryˉindexˉmutations profile portable;
+
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+import Windvaleˉdatabaseˉsecondaryˉindex as Secondary;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtypedˉrow as Typed;
+
+const DATABASE_SECONDARY_BUNDLE_MAGIC: u32 = 1112102487u32;
+const DATABASE_SECONDARY_UNIQUE_CHECKS_MAGIC: u32 = 1129666135u32;
+const DATABASE_SECONDARY_MUTATIONS_VERSION: u32 = 1u32;
+const DATABASE_SECONDARY_BUNDLE_HEADER_BYTES: u32 = 48u32;
+const DATABASE_SECONDARY_UNIQUE_CHECKS_HEADER_BYTES: u32 = 24u32;
+const DATABASE_SECONDARY_COMPONENT_HEADER_BYTES: u32 = 4u32;
+const DATABASE_SECONDARY_UNIQUE_COMPONENT_HEADER_BYTES: u32 = 8u32;
+const DATABASE_SECONDARY_MAXIMUM_INDEXES: u32 = 8u32;
+const DATABASE_SECONDARY_MAXIMUM_DEFINITION_BYTES: u32 = 288u32;
+const DATABASE_SECONDARY_MAXIMUM_BUNDLE_BYTES: u32 = 2384u32;
+const DATABASE_SECONDARY_MAXIMUM_UNIQUE_CHECK_BYTES: u32 = 65536u32;
+
+export enum Databaseˉsecondaryˉmutationsˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉflags = 5;
+    Invalidˉcollection = 6;
+    Invalidˉschema = 7;
+    Invalidˉcount = 8;
+    Invalidˉdefinitionˉbytes = 9;
+    Invalidˉdefinition = 10;
+    Definitionˉmismatch = 11;
+    Invalidˉindexˉorder = 12;
+    Invalidˉreserved = 13;
+    Truncated = 14;
+    Trailingˉbytes = 15;
+    Invalidˉidentity = 16;
+    Invalidˉoldˉrow = 17;
+    Invalidˉnewˉrow = 18;
+    Invalidˉsecondaryˉentry = 19;
+    Invalidˉtransaction = 20;
+    Invalidˉuniqueˉchecks = 21;
+    Invalidˉindex = 22;
+}
+
+export record Databaseˉsecondaryˉbundleˉcomponent {
+    Error: Databaseˉsecondaryˉmutationsˉerror;
+    Bytes: bytes;
+}
+
+export record Databaseˉsecondaryˉbundleˉresult {
+    Error: Databaseˉsecondaryˉmutationsˉerror;
+    Collection: u64;
+    Schema: u64;
+    Count: u32;
+    Definitions: bytes;
+    Bytes: bytes;
+}
+
+export record Databaseˉsecondaryˉbundleˉdefinition {
+    Error: Databaseˉsecondaryˉmutationsˉerror;
+    Definition: bytes;
+    Next: u32;
+}
+
+export record Databaseˉsecondaryˉuniqueˉcheck {
+    Error: Databaseˉsecondaryˉmutationsˉerror;
+    Key: bytes;
+    Identity: bytes;
+    Next: u32;
+}
+
+export record Databaseˉsecondaryˉmutationˉplan {
+    Error: Databaseˉsecondaryˉmutationsˉerror;
+    Mutationˉcount: u32;
+    Uniqueˉcheckˉcount: u32;
+    Mutations: bytes;
+    Uniqueˉchecks: bytes;
+}
+
+record Databaseˉsecondaryˉbundleˉscanˉresult {
+    Error: Databaseˉsecondaryˉmutationsˉerror;
+    Count: u32;
+}
+
+fn Databaseˉsecondaryˉmutationsˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉsecondaryˉmutationsˉcopy(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 { return Databaseˉsecondaryˉmutationsˉempty(); }
+    return Bytesˉslice(
+        Bytesˉconcat(Bytesˉfromˉu8(0u8), Input),
+        1u32,
+        Length
+    );
+}
+
+fn Databaseˉsecondaryˉbundleˉcomponentˉfailure(
+    Error: Databaseˉsecondaryˉmutationsˉerror
+) -> Databaseˉsecondaryˉbundleˉcomponent {
+    return Databaseˉsecondaryˉbundleˉcomponent(
+        Error,
+        Databaseˉsecondaryˉmutationsˉempty()
+    );
+}
+
+fn Databaseˉsecondaryˉbundleˉfailure(
+    Error: Databaseˉsecondaryˉmutationsˉerror
+) -> Databaseˉsecondaryˉbundleˉresult {
+    return Databaseˉsecondaryˉbundleˉresult(
+        Error,
+        0u64,
+        0u64,
+        0u32,
+        Databaseˉsecondaryˉmutationsˉempty(),
+        Databaseˉsecondaryˉmutationsˉempty()
+    );
+}
+
+fn Databaseˉsecondaryˉbundleˉdefinitionˉfailure(
+    Error: Databaseˉsecondaryˉmutationsˉerror
+) -> Databaseˉsecondaryˉbundleˉdefinition {
+    return Databaseˉsecondaryˉbundleˉdefinition(
+        Error,
+        Databaseˉsecondaryˉmutationsˉempty(),
+        0u32
+    );
+}
+
+fn Databaseˉsecondaryˉuniqueˉcheckˉfailure(
+    Error: Databaseˉsecondaryˉmutationsˉerror
+) -> Databaseˉsecondaryˉuniqueˉcheck {
+    return Databaseˉsecondaryˉuniqueˉcheck(
+        Error,
+        Databaseˉsecondaryˉmutationsˉempty(),
+        Databaseˉsecondaryˉmutationsˉempty(),
+        0u32
+    );
+}
+
+fn Databaseˉsecondaryˉmutationˉplanˉfailure(
+    Error: Databaseˉsecondaryˉmutationsˉerror
+) -> Databaseˉsecondaryˉmutationˉplan {
+    return Databaseˉsecondaryˉmutationˉplan(
+        Error,
+        0u32,
+        0u32,
+        Databaseˉsecondaryˉmutationsˉempty(),
+        Databaseˉsecondaryˉmutationsˉempty()
+    );
+}
+
+fn Databaseˉsecondaryˉkeyˉcompare(Left: bytes, Right: bytes) -> i32 {
+    var Limit: u32 = Bytesˉlength(Left);
+    if Bytesˉlength(Right) < Limit { Limit = Bytesˉlength(Right); }
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let L: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Index));
+        let R: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Index));
+        if L < R { return -1; }
+        if L > R { return 1; }
+        Index = Index + 1u32;
+    }
+    if Bytesˉlength(Left) < Bytesˉlength(Right) { return -1; }
+    if Bytesˉlength(Left) > Bytesˉlength(Right) { return 1; }
+    return 0;
+}
+
+export fn Databaseˉsecondaryˉbundleˉcomponentˉencode(
+    Definitionˉbytes: bytes
+) -> Databaseˉsecondaryˉbundleˉcomponent {
+    let Definition: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉdecode(Definitionˉbytes);
+    if Definition.Error != Secondary.Databaseˉsecondaryˉerror.Valid {
+        return Databaseˉsecondaryˉbundleˉcomponentˉfailure(
+            Databaseˉsecondaryˉmutationsˉerror.Invalidˉdefinition
+        );
+    }
+    let Length: u32 = Bytesˉlength(Definitionˉbytes);
+    if Length > DATABASE_SECONDARY_MAXIMUM_DEFINITION_BYTES {
+        return Databaseˉsecondaryˉbundleˉcomponentˉfailure(
+            Databaseˉsecondaryˉmutationsˉerror.Invalidˉdefinitionˉbytes
+        );
+    }
+    return Databaseˉsecondaryˉbundleˉcomponent(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Length), Definitionˉbytes)
+    );
+}
+
+fn Databaseˉsecondaryˉbundleˉscan(
+    Collection: u64,
+    Schemaˉidentity: u64,
+    Count: u32,
+    Definitions: bytes
+) -> Databaseˉsecondaryˉbundleˉscanˉresult {
+    if Count == 0u32 || Count > DATABASE_SECONDARY_MAXIMUM_INDEXES {
+        return Databaseˉsecondaryˉbundleˉscanˉresult(
+            Databaseˉsecondaryˉmutationsˉerror.Invalidˉcount,
+            0u32
+        );
+    }
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Previousˉidentity: u64 = 0u64;
+    while Index < Count {
+        let Total: u32 = Bytesˉlength(Definitions);
+        if Cursor > Total || Total - Cursor < DATABASE_SECONDARY_COMPONENT_HEADER_BYTES {
+            return Databaseˉsecondaryˉbundleˉscanˉresult(
+                Databaseˉsecondaryˉmutationsˉerror.Truncated,
+                0u32
+            );
+        }
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Definitions, Cursor);
+        Cursor = Cursor + DATABASE_SECONDARY_COMPONENT_HEADER_BYTES;
+        if Length == 0u32 || Length > DATABASE_SECONDARY_MAXIMUM_DEFINITION_BYTES {
+            return Databaseˉsecondaryˉbundleˉscanˉresult(
+                Databaseˉsecondaryˉmutationsˉerror.Invalidˉdefinitionˉbytes,
+                0u32
+            );
+        }
+        if Length > Total - Cursor {
+            return Databaseˉsecondaryˉbundleˉscanˉresult(
+                Databaseˉsecondaryˉmutationsˉerror.Truncated,
+                0u32
+            );
+        }
+        let Definition: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+            Secondary.Databaseˉsecondaryˉdefinitionˉdecode(
+                Bytesˉslice(Definitions, Cursor, Length)
+            );
+        if Definition.Error != Secondary.Databaseˉsecondaryˉerror.Valid {
+            return Databaseˉsecondaryˉbundleˉscanˉresult(
+                Databaseˉsecondaryˉmutationsˉerror.Invalidˉdefinition,
+                0u32
+            );
+        }
+        if Definition.Collection != Collection || Definition.Schema != Schemaˉidentity {
+            return Databaseˉsecondaryˉbundleˉscanˉresult(
+                Databaseˉsecondaryˉmutationsˉerror.Definitionˉmismatch,
+                0u32
+            );
+        }
+        if Index > 0u32 && Definition.Index <= Previousˉidentity {
+            return Databaseˉsecondaryˉbundleˉscanˉresult(
+                Databaseˉsecondaryˉmutationsˉerror.Invalidˉindexˉorder,
+                0u32
+            );
+        }
+        Previousˉidentity = Definition.Index;
+        Cursor = Cursor + Length;
+        Index = Index + 1u32;
+    }
+    if Cursor != Bytesˉlength(Definitions) {
+        return Databaseˉsecondaryˉbundleˉscanˉresult(
+            Databaseˉsecondaryˉmutationsˉerror.Trailingˉbytes,
+            0u32
+        );
+    }
+    return Databaseˉsecondaryˉbundleˉscanˉresult(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Count
+    );
+}
+
+export fn Databaseˉsecondaryˉbundleˉencode(
+    Collection: u64,
+    Schemaˉidentity: u64,
+    Count: u32,
+    Definitions: bytes
+) -> Databaseˉsecondaryˉbundleˉresult {
+    if Collection == 0u64 { return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉcollection); }
+    if Schemaˉidentity == 0u64 { return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉschema); }
+    if Bytesˉlength(Definitions) > DATABASE_SECONDARY_MAXIMUM_BUNDLE_BYTES -
+        DATABASE_SECONDARY_BUNDLE_HEADER_BYTES {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉdefinitionˉbytes);
+    }
+    let Scanned: Databaseˉsecondaryˉbundleˉscanˉresult =
+        Databaseˉsecondaryˉbundleˉscan(Collection, Schemaˉidentity, Count, Definitions);
+    if Scanned.Error != Databaseˉsecondaryˉmutationsˉerror.Valid {
+        return Databaseˉsecondaryˉbundleˉfailure(Scanned.Error);
+    }
+    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_SECONDARY_BUNDLE_MAGIC);
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(DATABASE_SECONDARY_MUTATIONS_VERSION));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(DATABASE_SECONDARY_BUNDLE_HEADER_BYTES));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(0u32));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Collection));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(Schemaˉidentity));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Count));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Definitions)));
+    Encoded = Bytesˉconcat(Encoded, Bytesˉfromˉu64ˉlittle(0u64));
+    Encoded = Bytesˉconcat(Encoded, Definitions);
+    return Databaseˉsecondaryˉbundleˉresult(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Collection,
+        Schemaˉidentity,
+        Count,
+        Databaseˉsecondaryˉmutationsˉcopy(Definitions),
+        Encoded
+    );
+}
+
+export fn Databaseˉsecondaryˉbundleˉdecode(
+    Input: bytes
+) -> Databaseˉsecondaryˉbundleˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_SECONDARY_BUNDLE_HEADER_BYTES ||
+        Total > DATABASE_SECONDARY_MAXIMUM_BUNDLE_BYTES {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉlength);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_SECONDARY_BUNDLE_MAGIC {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉmagic);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_SECONDARY_MUTATIONS_VERSION {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Unsupportedˉversion);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_SECONDARY_BUNDLE_HEADER_BYTES {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉheader);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉflags);
+    }
+    let Collection: u64 = Bytesˉreadˉu64ˉlittle(Input, 16u32);
+    let Schemaˉidentity: u64 = Bytesˉreadˉu64ˉlittle(Input, 24u32);
+    if Collection == 0u64 { return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉcollection); }
+    if Schemaˉidentity == 0u64 { return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉschema); }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Definitionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    if Bytesˉreadˉu64ˉlittle(Input, 40u32) != 0u64 {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉreserved);
+    }
+    if Definitionˉbytes > Total - DATABASE_SECONDARY_BUNDLE_HEADER_BYTES {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Truncated);
+    }
+    if DATABASE_SECONDARY_BUNDLE_HEADER_BYTES + Definitionˉbytes != Total {
+        return Databaseˉsecondaryˉbundleˉfailure(Databaseˉsecondaryˉmutationsˉerror.Trailingˉbytes);
+    }
+    let Definitions: bytes = Bytesˉslice(Input, DATABASE_SECONDARY_BUNDLE_HEADER_BYTES, Definitionˉbytes);
+    let Scanned: Databaseˉsecondaryˉbundleˉscanˉresult =
+        Databaseˉsecondaryˉbundleˉscan(Collection, Schemaˉidentity, Count, Definitions);
+    if Scanned.Error != Databaseˉsecondaryˉmutationsˉerror.Valid {
+        return Databaseˉsecondaryˉbundleˉfailure(Scanned.Error);
+    }
+    return Databaseˉsecondaryˉbundleˉresult(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Collection,
+        Schemaˉidentity,
+        Count,
+        Databaseˉsecondaryˉmutationsˉcopy(Definitions),
+        Databaseˉsecondaryˉmutationsˉcopy(Input)
+    );
+}
+
+export fn Databaseˉsecondaryˉbundleˉdefinitionˉat(
+    Definitions: bytes,
+    Offset: u32
+) -> Databaseˉsecondaryˉbundleˉdefinition {
+    let Total: u32 = Bytesˉlength(Definitions);
+    if Offset > Total || Total - Offset < DATABASE_SECONDARY_COMPONENT_HEADER_BYTES {
+        return Databaseˉsecondaryˉbundleˉdefinitionˉfailure(Databaseˉsecondaryˉmutationsˉerror.Truncated);
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Definitions, Offset);
+    if Length == 0u32 || Length > DATABASE_SECONDARY_MAXIMUM_DEFINITION_BYTES {
+        return Databaseˉsecondaryˉbundleˉdefinitionˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉdefinitionˉbytes);
+    }
+    let Start: u32 = Offset + DATABASE_SECONDARY_COMPONENT_HEADER_BYTES;
+    if Length > Total - Start {
+        return Databaseˉsecondaryˉbundleˉdefinitionˉfailure(Databaseˉsecondaryˉmutationsˉerror.Truncated);
+    }
+    return Databaseˉsecondaryˉbundleˉdefinition(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Databaseˉsecondaryˉmutationsˉcopy(Bytesˉslice(Definitions, Start, Length)),
+        Start + Length
+    );
+}
+
+fn Databaseˉsecondaryˉuniqueˉcomponent(Key: bytes, Identity: bytes) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Key));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Identity)));
+    Result = Bytesˉconcat(Result, Key);
+    return Bytesˉconcat(Result, Identity);
+}
+
+fn Databaseˉsecondaryˉuniqueˉchecksˉencode(
+    Count: u32,
+    Checks: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_SECONDARY_UNIQUE_CHECKS_MAGIC);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_SECONDARY_MUTATIONS_VERSION));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(DATABASE_SECONDARY_UNIQUE_CHECKS_HEADER_BYTES));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Count));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Checks)));
+    return Bytesˉconcat(Result, Checks);
+}
+
+export fn Databaseˉsecondaryˉuniqueˉcheckˉread(
+    Input: bytes,
+    Requested: u32
+) -> Databaseˉsecondaryˉuniqueˉcheck {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_SECONDARY_UNIQUE_CHECKS_HEADER_BYTES ||
+        Total > DATABASE_SECONDARY_MAXIMUM_UNIQUE_CHECK_BYTES {
+        return Databaseˉsecondaryˉuniqueˉcheckˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉuniqueˉchecks);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_SECONDARY_UNIQUE_CHECKS_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_SECONDARY_MUTATIONS_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_SECONDARY_UNIQUE_CHECKS_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉsecondaryˉuniqueˉcheckˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉuniqueˉchecks);
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Checkˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Count > DATABASE_SECONDARY_MAXIMUM_INDEXES || Requested >= Count ||
+        Checkˉbytes != Total - DATABASE_SECONDARY_UNIQUE_CHECKS_HEADER_BYTES {
+        return Databaseˉsecondaryˉuniqueˉcheckˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉuniqueˉchecks);
+    }
+    var Cursor: u32 = DATABASE_SECONDARY_UNIQUE_CHECKS_HEADER_BYTES;
+    var Index: u32 = 0u32;
+    var Selectedˉkey: bytes = Databaseˉsecondaryˉmutationsˉempty();
+    var Selectedˉidentity: bytes = Databaseˉsecondaryˉmutationsˉempty();
+    var Selectedˉnext: u32 = 0u32;
+    while Index < Count {
+        if Cursor > Total || Total - Cursor < DATABASE_SECONDARY_UNIQUE_COMPONENT_HEADER_BYTES {
+            return Databaseˉsecondaryˉuniqueˉcheckˉfailure(Databaseˉsecondaryˉmutationsˉerror.Truncated);
+        }
+        let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        let Identityˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Start: u32 = Cursor + DATABASE_SECONDARY_UNIQUE_COMPONENT_HEADER_BYTES;
+        if Keyˉlength == 0u32 || Keyˉlength > 4096u32 ||
+            Identityˉlength == 0u32 || Identityˉlength > 4064u32 ||
+            Keyˉlength > Total - Start ||
+            Identityˉlength > Total - Start - Keyˉlength {
+            return Databaseˉsecondaryˉuniqueˉcheckˉfailure(Databaseˉsecondaryˉmutationsˉerror.Truncated);
+        }
+        let Next: u32 = Start + Keyˉlength + Identityˉlength;
+        if Index == Requested {
+            Selectedˉkey = Databaseˉsecondaryˉmutationsˉcopy(
+                Bytesˉslice(Input, Start, Keyˉlength)
+            );
+            Selectedˉidentity = Databaseˉsecondaryˉmutationsˉcopy(
+                Bytesˉslice(Input, Start + Keyˉlength, Identityˉlength)
+            );
+            Selectedˉnext = Next;
+        }
+        Cursor = Next;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total {
+        return Databaseˉsecondaryˉuniqueˉcheckˉfailure(
+            Databaseˉsecondaryˉmutationsˉerror.Trailingˉbytes
+        );
+    }
+    return Databaseˉsecondaryˉuniqueˉcheck(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Selectedˉkey,
+        Selectedˉidentity,
+        Selectedˉnext
+    );
+}
+
+fn Databaseˉsecondaryˉappendˉdelete(
+    Mutations: bytes,
+    Key: bytes
+) -> bytes {
+    let Component: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉdelete(Key);
+    return Bytesˉconcat(Mutations, Component.Bytes);
+}
+
+fn Databaseˉsecondaryˉappendˉput(
+    Mutations: bytes,
+    Key: bytes,
+    Value: bytes
+) -> bytes {
+    let Component: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(Key, Value);
+    return Bytesˉconcat(Mutations, Component.Bytes);
+}
+
+export fn Databaseˉsecondaryˉupsertˉmutations(
+    Schemaˉbytes: bytes,
+    Bundleˉbytes: bytes,
+    Identity: bytes,
+    Hasˉoldˉrow: bool,
+    Oldˉrow: bytes,
+    Newˉvalues: bytes
+) -> Databaseˉsecondaryˉmutationˉplan {
+    let Schemaˉdefinition: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉdecode(Schemaˉbytes);
+    if Schemaˉdefinition.Error != Schema.Databaseˉschemaˉerror.Valid {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉschema);
+    }
+    let Bundle: Databaseˉsecondaryˉbundleˉresult =
+        Databaseˉsecondaryˉbundleˉdecode(Bundleˉbytes);
+    if Bundle.Error != Databaseˉsecondaryˉmutationsˉerror.Valid { return Databaseˉsecondaryˉmutationˉplanˉfailure(Bundle.Error); }
+    if Bundle.Collection != Schemaˉdefinition.Collection || Bundle.Schema != Schemaˉdefinition.Schema {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Definitionˉmismatch);
+    }
+    if Bytesˉlength(Identity) == 0u32 || Bytesˉlength(Identity) > 4064u32 {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉidentity);
+    }
+    if !Hasˉoldˉrow && Bytesˉlength(Oldˉrow) != 0u32 {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉoldˉrow);
+    }
+    if Hasˉoldˉrow {
+        let Oldˉdecoded: Typed.Databaseˉtypedˉrowˉresult =
+            Typed.Databaseˉtypedˉrowˉdecode(Schemaˉbytes, Oldˉrow);
+        if Oldˉdecoded.Error != Typed.Databaseˉtypedˉrowˉerror.Valid {
+            return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉoldˉrow);
+        }
+    }
+    let Newˉrow: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(Schemaˉbytes, Newˉvalues);
+    if Newˉrow.Error != Typed.Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉnewˉrow);
+    }
+    let Primary: Typed.Databaseˉtypedˉput = Typed.Databaseˉtypedˉputˉprepare(
+        Bundle.Collection,
+        Identity,
+        Schemaˉbytes,
+        Newˉvalues
+    );
+    if Primary.Error != Typed.Databaseˉtypedˉrowˉerror.Valid {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉnewˉrow);
+    }
+    var Mutations: bytes = Databaseˉsecondaryˉmutationsˉempty();
+    var Mutationˉcount: u32 = 0u32;
+    var Checks: bytes = Databaseˉsecondaryˉmutationsˉempty();
+    var Checkˉcount: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Bundle.Count {
+        let Component: Databaseˉsecondaryˉbundleˉdefinition =
+            Databaseˉsecondaryˉbundleˉdefinitionˉat(Bundle.Definitions, Cursor);
+        var Oldˉentry: Secondary.Databaseˉsecondaryˉentryˉresult =
+            Secondary.Databaseˉsecondaryˉentryˉexcluded(false);
+        if Hasˉoldˉrow {
+            Oldˉentry = Secondary.Databaseˉsecondaryˉentryˉbuild(
+                Schemaˉbytes,
+                Component.Definition,
+                Oldˉrow,
+                Identity
+            );
+        }
+        let Newˉentry: Secondary.Databaseˉsecondaryˉentryˉresult =
+            Secondary.Databaseˉsecondaryˉentryˉbuild(
+                Schemaˉbytes,
+                Component.Definition,
+                Newˉrow.Bytes,
+                Identity
+            );
+        if Oldˉentry.Error != Secondary.Databaseˉsecondaryˉerror.Valid ||
+            Newˉentry.Error != Secondary.Databaseˉsecondaryˉerror.Valid {
+            return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉsecondaryˉentry);
+        }
+        var Putˉnew: bool = false;
+        if Oldˉentry.Included && Newˉentry.Included {
+            let Order: i32 = Databaseˉsecondaryˉkeyˉcompare(Oldˉentry.Key, Newˉentry.Key);
+            if Order < 0 {
+                Mutations = Databaseˉsecondaryˉappendˉdelete(Mutations, Oldˉentry.Key);
+                Mutations = Databaseˉsecondaryˉappendˉput(Mutations, Newˉentry.Key, Newˉentry.Value);
+                Mutationˉcount = Mutationˉcount + 2u32;
+                Putˉnew = true;
+            }
+            if Order > 0 {
+                Mutations = Databaseˉsecondaryˉappendˉput(Mutations, Newˉentry.Key, Newˉentry.Value);
+                Mutations = Databaseˉsecondaryˉappendˉdelete(Mutations, Oldˉentry.Key);
+                Mutationˉcount = Mutationˉcount + 2u32;
+                Putˉnew = true;
+            }
+        }
+        if Oldˉentry.Included && !Newˉentry.Included {
+            Mutations = Databaseˉsecondaryˉappendˉdelete(Mutations, Oldˉentry.Key);
+            Mutationˉcount = Mutationˉcount + 1u32;
+        }
+        if !Oldˉentry.Included && Newˉentry.Included {
+            Mutations = Databaseˉsecondaryˉappendˉput(Mutations, Newˉentry.Key, Newˉentry.Value);
+            Mutationˉcount = Mutationˉcount + 1u32;
+            Putˉnew = true;
+        }
+        if Putˉnew && Newˉentry.Unique {
+            Checks = Bytesˉconcat(Checks, Databaseˉsecondaryˉuniqueˉcomponent(Newˉentry.Key, Identity));
+            Checkˉcount = Checkˉcount + 1u32;
+        }
+        Cursor = Component.Next;
+        Index = Index + 1u32;
+    }
+    Mutations = Databaseˉsecondaryˉappendˉput(Mutations, Primary.Key, Primary.Value);
+    Mutationˉcount = Mutationˉcount + 1u32;
+    let Encoded: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(Mutationˉcount, Mutations);
+    if Encoded.Error != Transaction.Databaseˉtransactionˉmutationsˉerror.Valid {
+        return Databaseˉsecondaryˉmutationˉplanˉfailure(Databaseˉsecondaryˉmutationsˉerror.Invalidˉtransaction);
+    }
+    return Databaseˉsecondaryˉmutationˉplan(
+        Databaseˉsecondaryˉmutationsˉerror.Valid,
+        Mutationˉcount,
+        Checkˉcount,
+        Encoded.Bytes,
+        Databaseˉsecondaryˉuniqueˉchecksˉencode(Checkˉcount, Checks)
+    );
+}

@@ -493,9 +493,11 @@ and can create a depth-five root. The persistent hosted writer now discovers
 one provider-backed path per canonical mutation and publishes the whole set in
 one commit. The first portable secondary-index contract now adds bounded compound
 definitions and deterministic ordered keys for Boolean, I64, U64, and text
-fields, including explicit null placement and safe unique-owner key shapes. It
-does not yet compose those keys with primary-row mutations, enforce unique
-ownership in the writer, accept input depth nine, reclaim pages, queue concurrent
+fields, including explicit null placement and safe unique-owner key shapes. A
+bounded bundle and pure upsert planner now compose old-entry deletes, new-entry
+puts, and the primary row into one sorted transaction while emitting explicit
+unique-owner checks. The hosted writer does not yet execute those checks, discover
+persisted bundles, accept input depth nine, reclaim pages, queue concurrent
 requests, or manage concurrent readers.
 
 This milestone needs no general query language, network protocol, or graph
@@ -507,7 +509,7 @@ Add, one independently measured boundary at a time:
 
 - generation-pinned committed snapshots and structurally shared roots;
 - a process-wide byte-budgeted page buffer with exact pin and eviction evidence;
-- atomic primary-plus-secondary mutation composition and unique-owner checks;
+- hosted secondary-index bundle discovery and unique-owner check execution;
 - normalized query planning and a generation-keyed plan cache;
 - a bounded hosted-writer queue and adaptive group commit; and
 - committed point/range read fast paths with exact I/O and allocation evidence.
