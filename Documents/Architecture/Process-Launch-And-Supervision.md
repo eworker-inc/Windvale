@@ -191,6 +191,10 @@ state and exact 37-byte queued request, dispatches only the admitted isolated
 directory-provider generation, restores its checked saved context, and returns
 the exact request length through `sysretq`, advancing ownership through byte
 15,905.
+The directory provider's reply-publication transaction then checks its exact
+3,096-byte reply state, clears the channel publication state, dispatches only
+the admitted provider generation, restores its checked saved context, and
+returns zero through `sysretq`, advancing ownership through byte 16,241.
 
 The first restart policies are deliberately small:
 

@@ -620,7 +620,8 @@ provenance, revocation, and consensus boundaries are named.
   return/init resume reaches byte 14,907. Init's checked 116-byte reply
   publication and zero-result resume reach byte 15,243, exact client reply
   delivery reaches byte 15,574, and checked transfer of the first 37-byte
-  directory request reaches byte 15,905. Provider receive/response exchanges,
+  directory request reaches byte 15,905. Checked publication and provider
+  resume for the 3,096-byte reply reach byte 16,241. Client reply delivery,
   syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

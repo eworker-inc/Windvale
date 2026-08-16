@@ -49,16 +49,17 @@ coordinator entry and fixed three-record ready/wait dispatcher. Verification
 pins its full fixture-equal SHA-256, exact entry displacement, coordinator
 offset, bounded record validation, scan construction, and paired host images.
 
-Ordered consumers now source-own the first 15,906 process-machine bytes and 105
+Ordered consumers now source-own the first 16,242 process-machine bytes and 106
 external relocation fields through checked private construction, privileged
 entry, timer activation, provider entry, provider-return/init transfer, and
 init-return validation of the program, budget, and retained store/directory
 backing records, followed by guarded client entry, checked return to init, and
 the first reply's publication and client delivery, then transfer the exact
-37-byte directory request to its isolated provider. The focused owner executes
-thirty-five projects and 210 cases with local results 50 through 84.
+37-byte directory request to its isolated provider and publish its exact
+3,096-byte reply. The focused owner executes thirty-six projects and 216 cases
+with local results 50 through 85.
 
 The module is a migration primitive. Coordinator relocation and channel/
-endpoint initialization are separate consumers. Provider receive/response exchanges,
+endpoint initialization are separate consumers. Client directory-reply delivery,
 syscall and exception handlers, context switching, and live QEMU application
 execution remain before the reviewed process-machine fixture can be removed.
