@@ -156,7 +156,7 @@ queue binding, capability publication, consumer execution, restart, and teardown
 remain the slice-5 gate.
 
 `WVSR 1` checks the first fixed application request before typed admission.
-`WVPR 1` now separately admits filesystem profile 2 with an isolated 65-page,
+`WVPR 1` now separately admits filesystem profile 2 with an isolated 81-page,
 one-process, one-endpoint domain, three bindings, bounded rights, and the shared
 four-slot/one-control-reserved queue. Live domain allocation, endpoint creation,
 executable launch, and capability publication remain required.
@@ -165,13 +165,19 @@ The first separate filesystem user image now builds deterministically, returns
 readiness token 46, and waits on endpoint `131072`. The current process-object
 constructor embeds the immutable image in the boot object, but Probe 40 does not
 yet allocate its domain, map it, bind its endpoint, publish it, or launch it.
-Provider launch transaction 1 now admits its exact 48 RX plus 17 private-page
-partition, one process, one endpoint, readiness publication, rollback, stale
+Provider launch transaction 1 now admits its exact 48 RX plus 33 private-page
+partition, including a disjoint 17-page transfer region and 16-page stack, one
+process, one endpoint, readiness publication, rollback, stale
 rejection, and zero-charge teardown. The first machine-binding policy now
 selects sequential reuse of released process/object slot 2 as generation 3 and
 closed resource-endpoint slot 0 as generation 2; the embedded service waits on
-that exact endpoint. Privileged record reconstruction, paging, context entry,
-request/reply execution, and teardown remain open.
+that exact endpoint. The generation-three record, W^X paging, service copy, and
+native-context constructor bytes are now source-owned and pass a focused
+three-case cross-host packaging owner. Their allocation is 85 physical pages:
+four kernel-only paging pages plus 81 charged user pages (48 RX image, 17 RW/NX
+context/transfer, and 16 disjoint RW/NX stack pages). Boot-object composition,
+real configuration/media identity, record publication, endpoint advance,
+context entry, request/reply execution, and teardown remain open.
 
 ### Filesystem slice 6: optional format adapters or native format decision
 

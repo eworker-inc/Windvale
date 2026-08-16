@@ -277,6 +277,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [x86-64 directory-provider record emission](Windvale-Os-X64-Process-Directory-Record-Emission.md)
 - [x86-64 directory-provider paging emission](Windvale-Os-X64-Process-Directory-Paging-Emission.md)
 - [x86-64 directory-provider image emission](Windvale-Os-X64-Process-Directory-Image-Emission.md)
+- [x86-64 filesystem-machine emission](Windvale-Os-X64-Process-Filesystem-Machine-Emission.md)
 - [Filesystem semantic core](Windvale-Filesystem-Semantics.md)
 - [OS filesystem service protocol](Windvale-Os-Filesystem-Service.md)
 - [OS FAT32 volume admission](Windvale-Os-Fat32-Volume-Admission.md)

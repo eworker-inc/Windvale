@@ -44,6 +44,7 @@ os-probe-object|Test-Os-Probe-Object-Producer|11|3|Tests: 11, Passed: 11, Failed
 os-kernel-target|Test-Os-Kernel-Target|7|2|Tests: 7, Passed: 7, Failed: 0
 os-process-policy|Test-Os-Process-Policy-Object|2|3|Tests: 2, Passed: 2, Failed: 0
 os-process-object|Test-Os-Process-Object|2|4|Tests: 2, Passed: 2, Failed: 0
+os-x64-filesystem-machine-emission|Test-Os-X64-Process-Filesystem-Machine-Emission|3|2|native os x64 filesystem machine emission status=Passed cases=3 geometry=85/81/48/33
 os-x64-code-emission|Test-Os-X64-Code-Emission|336|2|native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
 os-resource-domain|Test-Os-Resource-Domain|2|2|native os resource domain status=Passed projects=1 behavior=1 cases=2
 os-application-launch|Test-Os-Application-Launch|69|2|native os application launch status=Passed projects=7 native-leaves=3 behavior=8 cases=69 local-results=47,48,49 cross-host-images=Verified

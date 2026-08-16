@@ -1,6 +1,6 @@
 # Decision 0716: Reserve the complete filesystem envelope
 
-- Status: Implemented portable launch correction; privileged binding pending
+- Status: Superseded by [Decision 0727](0727-Separate-The-Filesystem-Transfer-And-Native-Stack.md)
 - Date: 2026-08-16
 - Corrects: [Decision 0620](0620-First-Checked-Os-Provider-Launch-Transaction.md)
 - Advances: [filesystem implementation plan](../Project/Windvale-Filesystem-Implementation-Plan.md)

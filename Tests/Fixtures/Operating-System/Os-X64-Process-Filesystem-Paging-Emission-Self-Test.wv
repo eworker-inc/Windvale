@@ -1,0 +1,31 @@
+module Osˉx64ˉprocessˉfilesystemˉpagingˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉfilesystemˉpagingˉemission as Paging;
+
+export fn Main() -> i32 {
+    if !Paging.X64ˉprocessˉfilesystemˉpagingˉisˉvalid() { return 1; }
+    let Code: bytes = Paging.X64ˉprocessˉfilesystemˉpagingˉbytes();
+    if Bytesˉlength(Code) != 3342u32 { return 2; }
+    if Paging.X64ˉprocessˉfilesystemˉallocationˉpages() != 85u32 ||
+        Paging.X64ˉprocessˉfilesystemˉuserˉpages() != 81u32 ||
+        Paging.X64ˉprocessˉfilesystemˉimageˉpages() != 48u32 ||
+        Paging.X64ˉprocessˉfilesystemˉprivateˉpages() != 33u32 ||
+        Paging.X64ˉprocessˉfilesystemˉreceiveˉoffset() != 214016u32 ||
+        Paging.X64ˉprocessˉfilesystemˉreceiveˉbytes() != 65600u32 ||
+        Paging.X64ˉprocessˉfilesystemˉstackˉbytes() != 65536u32 {
+        return 3;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Code) {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 263u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 23484u32 || Hashˉone != 25185u32 {
+        return 4;
+    }
+    return 51;
+}

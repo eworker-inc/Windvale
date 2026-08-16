@@ -68,8 +68,9 @@ export fn Serviceˉstartˉrequestˉstatus(Input: bytes) -> Serviceˉlaunchˉstat
     let Transferˉlimit: u32 = Bytesˉreadˉu32ˉlittle(Input, 64u32);
     if Role == 2u32 {
         // The maximum envelope begins 1,024 bytes into private memory.
-        // Seventeen RW/NX pages are required after the 48 RX image pages.
-        if Pages != 65u32 { return Serviceˉlaunchˉstatus.Invalidˉresource; }
+        // Seventeen transfer pages and sixteen disjoint stack pages are
+        // required after the 48 RX image pages.
+        if Pages != 81u32 { return Serviceˉlaunchˉstatus.Invalidˉresource; }
         if Bindings != 3u32 || Rights != 3u32 {
             return Serviceˉlaunchˉstatus.Invalidˉbinding;
         }

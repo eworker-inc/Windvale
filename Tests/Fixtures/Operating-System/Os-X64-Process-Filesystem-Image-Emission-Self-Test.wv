@@ -1,0 +1,35 @@
+module Osˉx64ˉprocessˉfilesystemˉimageˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉfilesystemˉimageˉemission as Image;
+
+export fn Main() -> i32 {
+    if !Image.X64ˉprocessˉfilesystemˉimageˉisˉvalid(195657u32) {
+        return 1;
+    }
+    let Code: bytes = Image.X64ˉprocessˉfilesystemˉimageˉbytes(195657u32);
+    if Bytesˉlength(Code) != 58u32 ||
+        Image.X64ˉprocessˉfilesystemˉimageˉisˉvalid(0u32) ||
+        Image.X64ˉprocessˉfilesystemˉimageˉisˉvalid(196609u32) ||
+        Bytesˉlength(Image.X64ˉprocessˉfilesystemˉimageˉbytes(0u32)) != 0u32 {
+        return 2;
+    }
+    if Image.X64ˉprocessˉfilesystemˉimageˉrelocationˉfield() != 3u32 ||
+        Image.X64ˉprocessˉfilesystemˉimageˉrelocationˉsymbol() != 7u32 ||
+        Image.X64ˉprocessˉfilesystemˉimageˉrelocationˉaddend() !=
+            4294967292u32 {
+        return 3;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Code) {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 271u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 277u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 16263u32 || Hashˉone != 35901u32 {
+        return 4;
+    }
+    return 52;
+}

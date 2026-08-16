@@ -790,6 +790,10 @@ function Add-Hosted-Publisher-Suites {
 
 function Add-Os-Suite {
     param([Parameter(Mandatory)][string]$Path)
+    if ($Path -match 'X64-Process-Filesystem-(?:Record|Paging|Image|Machine)-Emission') {
+        Add-Suite 'os-x64-filesystem-machine-emission'
+        return
+    }
     if ($Path -match 'X64-Process-Final-State-Validation-Epilogue-Emission') {
         Add-Suite 'os-x64-code-emission'
         return
@@ -2586,6 +2590,8 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
+    } elseif ($Path -match 'X64-Process-Filesystem-(?:Record|Paging|Image|Machine)-Emission') {
+        Add-Suite 'os-x64-filesystem-machine-emission'
     } elseif ($Path -match 'X64-Process-Final-State-Validation-Epilogue-Emission') {
         Add-Suite 'os-x64-code-emission'
     } elseif ($Path.StartsWith('Tests/Fixtures/Operating-System/Os-', [StringComparison]::Ordinal) -or

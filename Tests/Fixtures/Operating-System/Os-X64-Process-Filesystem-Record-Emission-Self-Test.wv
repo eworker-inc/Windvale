@@ -1,0 +1,52 @@
+module Osˉx64ˉprocessˉfilesystemˉrecordˉemissionˉselfˉtest profile portable;
+
+import X64ˉprocessˉfilesystemˉrecordˉemission as Record;
+
+data Serviceˉdigest: bytes = [
+    87, 247, 158, 40, 58, 51, 199, 232, 116, 118, 26, 156, 55, 19, 174, 117,
+    55, 54, 115, 29, 108, 191, 71, 124, 144, 253, 124, 170, 194, 49, 200, 214
+];
+data Configurationˉdigest: bytes = [
+    227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36,
+    39, 174, 65, 228, 100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85
+];
+
+export fn Main() -> i32 {
+    if !Record.X64ˉprocessˉfilesystemˉrecordˉisˉvalid(
+        Serviceˉdigest, Configurationˉdigest
+    ) { return 1; }
+    let Code: bytes = Record.X64ˉprocessˉfilesystemˉrecordˉbytes(
+        Serviceˉdigest, Configurationˉdigest
+    );
+    if Bytesˉlength(Code) != 462u32 { return 2; }
+    if Bytesˉreadˉu32ˉlittle(Code, 186u32) != 348160u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 218u32) != 81u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 262u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 273u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 284u32) != 46u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 295u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 332u32) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 444u32) != 3u32 ||
+        Bytesˉreadˉu32ˉlittle(Code, 451u32) != 214016u32 {
+        return 3;
+    }
+    let Short: bytes = Bytesˉslice(Serviceˉdigest, 0u32, 31u32);
+    if Record.X64ˉprocessˉfilesystemˉrecordˉisˉvalid(
+        Short, Configurationˉdigest
+    ) || Bytesˉlength(Record.X64ˉprocessˉfilesystemˉrecordˉbytes(
+        Short, Configurationˉdigest
+    )) != 0u32 { return 4; }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Code) {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 10324u32 || Hashˉone != 43536u32 {
+        return 5;
+    }
+    return 50;
+}
