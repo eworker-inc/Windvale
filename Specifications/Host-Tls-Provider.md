@@ -108,6 +108,6 @@ The accepted summary includes `public-network=0`, `credentials=0`, and
 Independent Linux execution, the Windvale capability-table and monotonic-timer
 bridge, explicit secure-stream peer-evidence records, and eventual Node-free
 platform leaves remain open. Bounded HTTP/1.1 is implemented separately under
-[Decision 0600](../Documents/Decisions/0600-First-Bounded-Https-Client.md). Public
+[Decision 0603](../Documents/Decisions/0603-First-Bounded-Https-Client.md). Public
 model access additionally requires protected credential custody, provider JSON
 admission, supervision, quotas, and opt-in live smoke evidence.

@@ -1232,6 +1232,23 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'external model gateway owner'
+        Paths = @(
+            'Runtime/Hosted/Models/External-Model-Gateway-Core.mjs',
+            'Runtime/Hosted/Models/External-Model-Gateway-Process.mjs',
+            'Runtime/Hosted/Models/External-Model-Gateway-Protocol.mjs',
+            'Runtime/Hosted/Models/External-Model-Gateway-Supervisor.mjs',
+            'Tools/Models/Test-External-Model-Gateway-Core.mjs',
+            'Tools/Models/Test-Supervised-External-Model-Gateway.mjs',
+            'Tools/Native/Test-External-Model-Gateway.cmd',
+            'Tools/Native/Test-External-Model-Gateway.sh',
+            'Specifications/Supervised-External-Model-Gateway.md'
+        )
+        Suites = @('external-model-gateway')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'hosted model provider owner'
         Paths = @(
             'Libraries/Platform/Models/Bound-Model-Provider.wv',
@@ -1921,9 +1938,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 80 -or
+if ($VerificationOwnerLines.Count -ne 81 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 79-owner inventory differs.'
+    throw 'The native verification-owner header or exact 80-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -1961,7 +1978,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 3756 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 3786 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

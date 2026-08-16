@@ -967,8 +967,17 @@ foreach ($Path in $Paths) {
             'Tools/Native/Test-Protected-Credential.cmd',
             'Tools/Native/Test-Protected-Credential.sh',
             'Specifications/Protected-Provider-Credential.md'
-        )) {
+    )) {
         Add-Suite 'protected-credential'
+    } elseif ($Path.StartsWith('Runtime/Hosted/Models/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Tools/Models/Test-External-Model-Gateway-Core.mjs',
+            'Tools/Models/Test-Supervised-External-Model-Gateway.mjs',
+            'Tools/Native/Test-External-Model-Gateway.cmd',
+            'Tools/Native/Test-External-Model-Gateway.sh',
+            'Specifications/Supervised-External-Model-Gateway.md'
+        )) {
+        Add-Suite 'external-model-gateway'
     } elseif ($Path.StartsWith('Tools/Network/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Tools/Native/Test-Host-Network-Provider.cmd',

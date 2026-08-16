@@ -1,10 +1,10 @@
-# Decision 0601: First protected provider credential custody
+# Decision 0604: First protected provider credential custody
 
 - Date: 2026-08-15
-- Status: Implemented candidate with isolated Windows evidence
+- Status: Implemented candidate with independent Windows/Linux evidence
 - Advances: external-model gateway credential boundary
 - Contract: [protected provider credential](../../Specifications/Protected-Provider-Credential.md)
-- Builds on: [Decision 0600](0600-First-Bounded-Https-Client.md)
+- Builds on: [Decision 0603](0603-First-Bounded-Https-Client.md)
 
 ## Context
 
@@ -53,8 +53,9 @@ replacement.
 The wrapper does not make a weak passphrase strong, protect an already
 compromised host, guarantee erasure inside Node/OpenSSL/the kernel, provide
 multi-user ACLs, or define backup and recovery. Production promotion still
-requires independent Linux evidence, a protected startup channel and process
-lifecycle, log redaction, rotation/revocation policy, and the supervised gateway.
+requires launcher-owned protected unlock, log redaction, rotation/revocation
+policy, and operational recovery. The supervised gateway now owns the lease in
+an isolated child under Decision 0605.
 
 ## Reconsideration triggers
 

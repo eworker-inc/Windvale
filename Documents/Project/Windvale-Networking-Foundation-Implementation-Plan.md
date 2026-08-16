@@ -2,7 +2,7 @@
 
 ## Status
 
-- Date: 2026-08-15
+- Date: 2026-08-16
 - Status: Active implementation; slices 1, 2, and 5, the Layer 3 contract core,
   and the first supervised resolver/TCP and TLS 1.3 bootstrap providers are implemented candidates under
   [Decision 0587](../Decisions/0587-First-Bounded-Operation-Deadline-And-Cancellation-Core.md),
@@ -10,11 +10,13 @@
   [Decision 0596](../Decisions/0596-First-Resolve-Connect-And-Reliable-Stream-Core.md),
   [Decision 0598](../Decisions/0598-First-Supervised-Host-Resolver-And-Stream-Provider.md),
   [Decision 0599](../Decisions/0599-First-Supervised-Host-Tls-13-Provider.md),
-  [Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md), and
-  [Decision 0601](../Decisions/0601-First-Protected-Provider-Credential-Custody.md).
-  Resolver/TCP, TLS, and bounded HTTPS have independent Windows/Linux execution
-  evidence. Protected credential custody has isolated Windows evidence; its
-  independent Linux execution and the native capability bridge remain pending, so no
+  [Decision 0603](../Decisions/0603-First-Bounded-Https-Client.md),
+  [Decision 0604](../Decisions/0604-First-Protected-Provider-Credential-Custody.md),
+  and [Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md).
+  Resolver/TCP, TLS, bounded HTTPS, and protected credential custody have
+  independent Windows/Linux execution evidence. The supervised external-model
+  gateway has isolated Windows evidence; its independent Linux execution and the
+  native capability bridge remain pending, so no
   production network capability is yet claimed
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
@@ -240,7 +242,7 @@ native secure-transport leaves remain required before production promotion.
 ### Network slice 5: shared secure HTTP retrieval
 
 Status: hosted bootstrap candidate implemented under
-[Decision 0600](../Decisions/0600-First-Bounded-Https-Client.md); independent
+[Decision 0603](../Decisions/0603-First-Bounded-Https-Client.md); independent
 Windows/Linux execution is complete and native binding remains pending.
 
 Implement the portable HTTP client and bounded streaming response body above the
@@ -262,14 +264,28 @@ owned protected-custody injection path.
 ### External-model credential custody
 
 Status: hosted bootstrap candidate implemented under
-[Decision 0601](../Decisions/0601-First-Protected-Provider-Credential-Custody.md);
-independent Linux execution and supervised gateway ownership remain pending.
+[Decision 0604](../Decisions/0604-First-Protected-Provider-Credential-Custody.md);
+independent Windows/Linux execution is complete and the supervised gateway owns
+the live lease.
 
 The bounded `WVSC 1` wrapper encrypts one provider credential at rest and
 authenticates its provider, generation, exact DNS service, implied HTTPS port
 443, and cryptographic profile. A private revocable lease injects the OpenAI,
 Anthropic, or Google authorization field only inside bounded HTTPS after an exact
 generation check. Sixteen isolated cases use fake keys and no public network.
+
+### Supervised external-model gateway
+
+Status: hosted bootstrap candidate implemented under
+[Decision 0605](../Decisions/0605-First-Supervised-External-Model-Gateway.md);
+independent Linux execution and native capability binding remain pending.
+
+One empty-environment child owns the encrypted startup/unlock exchange, exact
+provider and credential generations, three fixed provider mappings, bounded
+JSON admission, shared HTTPS, and canonical model responses. Thirty isolated
+cases cover the core and child boundary, including differential output against
+the reference oracle and real credential-to-HTTPS composition with fake data.
+No deterministic case reads a real key or contacts the public Internet.
 
 ### Network slice 6: package-source integration
 
@@ -309,11 +325,11 @@ and cryptographic vectors.
 ## Immediate recommendation
 
 The `v0.1.0` offline installer and release subset is complete, and Decisions
-0598 through 0600 now supply two selected Milestone 5 consumers: official package retrieval and
-the external-model gateway. Preserve the implemented slice 1 and slice 2
-candidates, close bounded HTTPS's independent Linux execution gap, bind the
-supervised providers through the native capability table and timer contract,
-then advance the supervised model gateway without weakening the
+0598, 0599, and 0603 through 0605 now supply shared retrieval and the selected
+external-model gateway candidate. Preserve the implemented slice 1 and slice 2
+candidates, close the gateway's independent Linux evidence, then bind the
+supervised providers and gateway through the native capability table and timer
+contract without weakening the
 separately owned deterministic packet work. Do not add a synchronous
 `download(url)` host call or package-specific HTTPS capability. Host networking
 does not claim completion of the independent Windvale OS packet, driver, or TCP

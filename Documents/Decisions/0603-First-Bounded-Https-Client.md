@@ -1,4 +1,4 @@
-# Decision 0600: First bounded HTTPS client
+# Decision 0603: First bounded HTTPS client
 
 - Date: 2026-08-15
 - Status: Implemented candidate with independent Windows/Linux evidence

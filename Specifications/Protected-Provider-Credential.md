@@ -3,7 +3,7 @@
 ## Status and purpose
 
 The hosted bootstrap custody boundary selected by
-[Decision 0601](../Documents/Decisions/0601-First-Protected-Provider-Credential-Custody.md)
+[Decision 0604](../Documents/Decisions/0604-First-Protected-Provider-Credential-Custody.md)
 protects an external-model API credential at rest, binds it to one provider and
 HTTPS origin, and injects it only inside the shared
 [bounded HTTPS](Bounded-Https.md) request path. It is not a general secret store,
@@ -95,7 +95,7 @@ authorization-field denial, port-443 origin fixation, and idempotent revocation.
 It uses fake credentials and an isolated HTTPS supervisor, writes no plaintext
 credential file, performs no public-network call, and exports no secret.
 
-The current evidence is Windows. The same owner must pass independently on
-Linux before this candidate becomes dual-host evidence. OS keyrings, HSMs,
-interactive prompting, rotation publication, recovery, backup, and the
-supervised gateway process boundary remain separate work.
+The owner has independent Windows and Linux execution evidence for the same
+source. OS keyrings, HSMs, interactive prompting, rotation publication,
+recovery, backup, and launcher-owned long-term operational custody remain
+separate work. The supervised gateway now owns the live lease in its child.

@@ -3,7 +3,7 @@
 ## Status and purpose
 
 The hosted bootstrap client selected by
-[Decision 0600](../Documents/Decisions/0600-First-Bounded-Https-Client.md)
+[Decision 0603](../Documents/Decisions/0603-First-Bounded-Https-Client.md)
 implements one bounded HTTP/1.1 request over one authenticated
 [host TLS 1.3 stream](Host-Tls-Provider.md). It is shared infrastructure for
 package retrieval and the external-model gateway rather than a model-specific
