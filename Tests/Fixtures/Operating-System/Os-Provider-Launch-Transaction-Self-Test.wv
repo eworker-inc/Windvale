@@ -2,7 +2,7 @@ module Osˉproviderˉlaunchˉtransactionˉselfˉtest profile portable;
 
 import Providerˉlaunchˉtransactionˉpolicy as Provider;
 
-data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 65, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 data Networkˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 3, 0, 0, 0, 5, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 0, 42, 0, 1, 0, 3, 0, 0, 0, 1, 0, 0, 0, 96, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 15, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 fn Admitˉfilesystem(
@@ -32,7 +32,7 @@ fn Profilesˉpass() -> bool {
         Filesystem.Phase != Provider.Providerˉlaunchˉphase.Available ||
         Filesystem.Role != 2u32 || Filesystem.Domainˉreference != 65538u32 ||
         Filesystem.Processˉreference != 65540u32 ||
-        Filesystem.Committedˉpages != 64u32 {
+        Filesystem.Committedˉpages != 65u32 {
         return false;
     }
     let Network: Provider.Providerˉlaunchˉtransition = Admitˉnetwork();

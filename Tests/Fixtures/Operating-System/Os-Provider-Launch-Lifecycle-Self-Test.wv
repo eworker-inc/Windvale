@@ -7,10 +7,10 @@ export fn Main() -> i32 {
         3u32, 65539u32, 65541u32, 96u32, 41u32
     ) { return 1; }
     if !Lifecycle.Providerˉlaunchˉteardownˉisˉvalid(
-        2u32, 65538u32, 65540u32, 64u32, 1u32
+        2u32, 65538u32, 65540u32, 65u32, 1u32
     ) { return 2; }
     if !Lifecycle.Providerˉlaunchˉteardownˉisˉvalid(
-        2u32, 65538u32, 65540u32, 64u32, 0u32
+        2u32, 65538u32, 65540u32, 65u32, 0u32
     ) { return 3; }
     if !Lifecycle.Providerˉlaunchˉteardownˉisˉvalid(
         3u32, 65539u32, 65541u32, 96u32, 0u32

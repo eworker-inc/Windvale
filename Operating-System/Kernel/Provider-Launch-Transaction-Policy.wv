@@ -68,7 +68,7 @@ export fn Providerˉlaunchˉadmit(
         );
     }
     var Expectedˉimageˉbytes: u32 = 195657u32;
-    var Pageˉlimit: u32 = 64u32;
+    var Pageˉlimit: u32 = 65u32;
     if Plan.Role == 3u32 {
         Expectedˉimageˉbytes = 242571u32;
         Pageˉlimit = 96u32;

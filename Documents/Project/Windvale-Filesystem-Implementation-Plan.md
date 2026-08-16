@@ -156,7 +156,7 @@ queue binding, capability publication, consumer execution, restart, and teardown
 remain the slice-5 gate.
 
 `WVSR 1` checks the first fixed application request before typed admission.
-`WVPR 1` now separately admits filesystem profile 2 with an isolated 64-page,
+`WVPR 1` now separately admits filesystem profile 2 with an isolated 65-page,
 one-process, one-endpoint domain, three bindings, bounded rights, and the shared
 four-slot/one-control-reserved queue. Live domain allocation, endpoint creation,
 executable launch, and capability publication remain required.
@@ -165,7 +165,7 @@ The first separate filesystem user image now builds deterministically, returns
 readiness token 46, and waits on endpoint `65538`. The current process-object
 constructor embeds the immutable image in the boot object, but Probe 40 does not
 yet allocate its domain, map it, bind its endpoint, publish it, or launch it.
-Provider launch transaction 1 now admits its exact 48 RX plus 16 private-page
+Provider launch transaction 1 now admits its exact 48 RX plus 17 private-page
 partition, one process, one endpoint, readiness publication, rollback, stale
 rejection, and zero-charge teardown. Privileged machine binding remains open.
 

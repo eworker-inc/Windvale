@@ -58,7 +58,7 @@ set "Actual="
 set /p "Actual=" <"%Work%\Machine-Run.out"
 if not "%Actual%"=="Result: 43" goto :cleanup
 for %%E in ("%Work%\Machine-Run.err") do if not "%%~zE"=="0" goto :cleanup
-echo native os application launch status=Passed projects=7 behavior=5 cases=41
+echo native os application launch status=Passed projects=7 behavior=5 cases=42
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

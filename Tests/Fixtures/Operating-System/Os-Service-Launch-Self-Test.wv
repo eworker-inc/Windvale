@@ -2,10 +2,23 @@ module Osˉserviceˉlaunchˉselfˉtest profile portable;
 
 import Serviceˉlaunchˉpolicy as Service;
 
-data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Filesystemˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 65, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 data Networkˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 3, 0, 0, 0, 5, 0, 1, 0, 1, 0, 1, 0, 3, 0, 1, 0, 42, 0, 1, 0, 3, 0, 0, 0, 1, 0, 0, 0, 96, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 15, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-data Wrongˉrightsˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Wrongˉrightsˉrequest: bytes = [87, 86, 80, 82, 1, 0, 0, 0, 80, 0, 0, 0, 2, 0, 0, 0, 4, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 41, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 65, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 data Shortˉrequest: bytes = [87, 86, 80, 82];
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(
+                Input, Offset + 4u32,
+                Bytesˉlength(Input) - Offset - 4u32
+            )
+        )
+    );
+}
 
 fn Filesystemˉlifecycleˉpasses() -> bool {
     let Plan: Service.Serviceˉlaunchˉtransition =
@@ -53,13 +66,16 @@ export fn Main() -> i32 {
         Service.Serviceˉlaunchˉstatus.Invalidˉsize { return 3; }
     if Service.Serviceˉstartˉrequestˉstatus(Wrongˉrightsˉrequest) !=
         Service.Serviceˉlaunchˉstatus.Invalidˉbinding { return 4; }
-    if !Filesystemˉlifecycleˉpasses() { return 5; }
-    if !Networkˉlifecycleˉpasses() { return 6; }
+    if Service.Serviceˉstartˉrequestˉstatus(
+        Replaceˉu32(Filesystemˉrequest, 40u32, 64u32)
+    ) != Service.Serviceˉlaunchˉstatus.Invalidˉresource { return 5; }
+    if !Filesystemˉlifecycleˉpasses() { return 6; }
+    if !Networkˉlifecycleˉpasses() { return 7; }
     let Failed: Service.Serviceˉlaunchˉtransition =
         Service.Serviceˉlaunchˉstart(
             Service.Serviceˉlaunchˉplan(Filesystemˉrequest), 0u32, 0u32, false
         );
     if Failed.Status != Service.Serviceˉlaunchˉstatus.Constructionˉfailed ||
-        Failed.Phase != Service.Serviceˉlaunchˉphase.Faulted { return 7; }
+        Failed.Phase != Service.Serviceˉlaunchˉphase.Faulted { return 8; }
     return 45;
 }

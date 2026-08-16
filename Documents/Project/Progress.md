@@ -101,7 +101,10 @@ has 80 cases. File-read transaction 1 now binds an authorized file reference
 and media generation to each exact dispatched exchange, resolves successive
 chain ordinals, copies partial-sector bytes, and produces a validator-accepted
 shared reply. Its 18 cases include a 4,500-byte read across two clusters and
-exchanges. Privileged endpoint and driver execution remain open. VFAT
+exchanges. The filesystem launch profile now reserves 48 RX plus 17 private
+RW/NX pages, so its 1,024-byte prefix and complete 65,600-byte response fit the
+admitted domain; the undersized 64-page request is rejected. Privileged
+endpoint and driver execution remain open. VFAT
 long-name/Unicode mapping remains explicit future work.
 
 ## .NET retirement result

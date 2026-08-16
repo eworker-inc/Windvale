@@ -37,4 +37,4 @@ trap cleanup EXIT
 "$script_directory/Run-Wvb.sh" "$work/Machine-Test.wvb" >"$work/Machine-Run.out" 2>"$work/Machine-Run.err" || exit $?
 [[ $(<"$work/Machine-Run.out") == 'Result: 43' ]] || exit 1
 [[ ! -s $work/Machine-Run.err ]] || exit 1
-echo 'native os application launch status=Passed projects=7 behavior=5 cases=41'
+echo 'native os application launch status=Passed projects=7 behavior=5 cases=42'
