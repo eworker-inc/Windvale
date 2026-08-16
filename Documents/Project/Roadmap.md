@@ -651,6 +651,9 @@ provenance, revocation, and consensus boundaries are named.
   The checked endpoint lifecycle then publishes resolution, scrubs the request,
   advances bounded state, delivers 3,096 bytes to client generation 2, and
   reaches byte 29,474.
+  Generation-two completion cleanup reuses all checked teardown validation,
+  advances only retained and selected generations to 2, and reaches byte
+  30,825.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

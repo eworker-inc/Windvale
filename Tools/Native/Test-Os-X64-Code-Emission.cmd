@@ -1233,7 +1233,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoDirectoryReplyLifecycle.elf" 36976 eb19da01012c6a39b12522d791363f3fdee488337b323af638167ecd3c997fdb
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=53 cases=318 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102 cross-host-images=Verified source-owned-bytes=29475 relocation-fields=334
+echo step=client-generation-two-completion-cleanup item=54/54
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wvproj" "%Work%\ClientGenerationTwoCompletionCleanup.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoCompletionCleanup.wvb" 5638 0aa64fc109b1bad64986997e9aa6131d28b6aac3dc48cd3ee0d6bdab35625e8a
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoCompletionCleanup.wvb" "%Work%\ClientGenerationTwoCompletionCleanup.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoCompletionCleanup.wvo" 37427 82efadd7f69b10bdc955df2a11609785edddb83f7488086cddf6e385a5d0153d
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoCompletionCleanup.bin" "%Work%\ClientGenerationTwoCompletionCleanup.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoCompletionCleanup.bin" 36787 52ec3f09abdfbd51c6d3a82df25b0ee6517de8674b97dceb52ac7faaac1a1a6f
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoCompletionCleanup.bin" 0 "%Work%\ClientGenerationTwoCompletionCleanup.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoCompletionCleanup.exe" >nul
+if not "%ERRORLEVEL%"=="103" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoCompletionCleanup.exe" 38912 bb3580e5c672489611ee805b1cc667ac6998dd3ae91fca09623632a9a245ff17
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoCompletionCleanup.bin" 0 "%Work%\ClientGenerationTwoCompletionCleanup.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoCompletionCleanup.elf" 45168 1bb369e9fc5ba9c86b24e3ce8b2b8ab4a9d87d98aa1869807969092577c115fc
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=54 cases=324 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103 cross-host-images=Verified source-owned-bytes=30826 relocation-fields=395
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"

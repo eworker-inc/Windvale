@@ -979,6 +979,7 @@ $NativeCases = @(
             'Operating-System/Kernel/X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wv',
             'Operating-System/Kernel/X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wv',
             'Operating-System/Kernel/X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.wv',
+            'Operating-System/Kernel/X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wv',
             'Operating-System/Kernel/X64-Process-Directory-Allocation-Emission.wv',
             'Operating-System/Kernel/X64-Process-Directory-Record-Emission.wv',
             'Operating-System/Kernel/X64-Process-Directory-Paging-Emission.wv',
@@ -1031,6 +1032,7 @@ $NativeCases = @(
             'Projects/Operating-System/Windvale-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wvproj',
             'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wvproj',
             'Projects/Operating-System/Windvale-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.wvproj',
+            'Projects/Operating-System/Windvale-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wvproj',
             'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Allocation-Emission.wvproj',
             'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Record-Emission.wvproj',
             'Projects/Operating-System/Windvale-Os-X64-Process-Directory-Paging-Emission.wvproj',
@@ -1084,6 +1086,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Allocation-Emission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Record-Emission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-X64-Process-Directory-Paging-Emission.wvproj',
@@ -1137,6 +1140,7 @@ $NativeCases = @(
             'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Allocation-Emission-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Record-Emission-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-X64-Process-Directory-Paging-Emission-Self-Test.wv',
@@ -2479,7 +2483,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4254 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4260 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

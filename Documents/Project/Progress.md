@@ -54,6 +54,11 @@ and 334 relocation fields by validating/publishing the directory endpoint,
 scrubbing the completed request channel, advancing bounded lifecycle state, and
 delivering the exact 3,096-byte result to client generation 2.
 
+The following completion-cleanup adaptation now extends that checkpoint through
+byte 30,825 and 395 relocation fields. It changes only retained and selected
+client generations to 2 while preserving all sixty-one fail-closed cleanup
+branches. Reclamation preflight and live QEMU execution remain pending.
+
 ## .NET retirement result
 
 `████████████████████  8/8 conditions qualified — complete`

@@ -689,4 +689,17 @@ verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 31119 9b512b17b828
 verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.elf" 36976 eb19da01012c6a39b12522d791363f3fdee488337b323af638167ecd3c997fdb || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoDirectoryReplyLifecycle.bin" 0 "$work/ClientGenerationTwoDirectoryReplyLifecycle.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoDirectoryReplyLifecycle.exe" 32768 25a67bbfdc92654cb380de563cb4bf13870467aed19288921162a229ae104242 || exit 1
-echo 'native os x64 code emission status=Passed projects=53 cases=318 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102 cross-host-images=Verified source-owned-bytes=29475 relocation-fields=334'
+echo 'step=client-generation-two-completion-cleanup item=54/54'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.wvproj" "$work/ClientGenerationTwoCompletionCleanup.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionCleanup.wvb" 5638 0aa64fc109b1bad64986997e9aa6131d28b6aac3dc48cd3ee0d6bdab35625e8a || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoCompletionCleanup.wvb" "$work/ClientGenerationTwoCompletionCleanup.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionCleanup.wvo" 37427 82efadd7f69b10bdc955df2a11609785edddb83f7488086cddf6e385a5d0153d || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoCompletionCleanup.bin" "$work/ClientGenerationTwoCompletionCleanup.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionCleanup.bin" 36787 52ec3f09abdfbd51c6d3a82df25b0ee6517de8674b97dceb52ac7faaac1a1a6f || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoCompletionCleanup.bin" 0 "$work/ClientGenerationTwoCompletionCleanup.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionCleanup.elf" 45168 1bb369e9fc5ba9c86b24e3ce8b2b8ab4a9d87d98aa1869807969092577c115fc || exit 1
+"$work/ClientGenerationTwoCompletionCleanup.elf" >/dev/null
+[[ $? -eq 103 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoCompletionCleanup.bin" 0 "$work/ClientGenerationTwoCompletionCleanup.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoCompletionCleanup.exe" 38912 bb3580e5c672489611ee805b1cc667ac6998dd3ae91fca09623632a9a245ff17 || exit 1
+echo 'native os x64 code emission status=Passed projects=54 cases=324 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103 cross-host-images=Verified source-owned-bytes=30826 relocation-fields=395'

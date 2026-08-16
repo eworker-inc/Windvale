@@ -1,0 +1,42 @@
+module Osˉx64ˉgenerationˉtwoˉcompletionˉcleanupˉtest profile portable;
+
+import Generationˉtwoˉcompletionˉcleanupˉemission as Cleanup;
+
+export fn Main() -> i32 {
+    let Code: bytes = Cleanup.Generationˉtwoˉcompletionˉcleanupˉbytes();
+    let Fields: bytes = Cleanup.Generationˉtwoˉcompletionˉcleanupˉfailureˉfields();
+    let Displacements: bytes = Cleanup.Generationˉtwoˉcompletionˉcleanupˉfailureˉdisplacements();
+    if Bytesˉlength(Code) != 1351u32 || Bytesˉlength(Fields) != 244u32 ||
+        Bytesˉlength(Displacements) != 244u32 ||
+        Cleanup.Generationˉtwoˉcompletionˉcleanupˉfixtureˉoffset() != 29475u32 ||
+        Cleanup.Generationˉtwoˉcompletionˉcleanupˉfixtureˉend() != 30826u32 ||
+        Bytesˉreadˉu8(Code, 80u32) != 2u8 || Bytesˉreadˉu8(Code, 203u32) != 2u8 {
+        return 1;
+    }
+    var Index: u32 = 0u32;
+    while Index < 61u32 {
+        let Field: u32 = Bytesˉreadˉu32ˉlittle(Fields, Index * 4u32);
+        let Displacement: u32 = Bytesˉreadˉu32ˉlittle(Displacements, Index * 4u32);
+        if Bytesˉreadˉu32ˉlittle(Code, Field) != 0u32 ||
+            29475u32 + Field + 4u32 + Displacement != 33826u32 {
+            return 2;
+        }
+        Index = Index + 1u32;
+    }
+    var Hashˉzero: u32 = 0u32;
+    var Hashˉone: u32 = 0u32;
+    var Hashˉtwo: u32 = 0u32;
+    var Hashˉthree: u32 = 0u32;
+    Index = 0u32;
+    while Index < 1351u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Code, Index));
+        Hashˉzero = (Hashˉzero * 251u32 + Value) % 65521u32;
+        Hashˉone = (Hashˉone * 257u32 + Value) % 65521u32;
+        Hashˉtwo = (Hashˉtwo * 263u32 + Value) % 65521u32;
+        Hashˉthree = (Hashˉthree * 269u32 + Value) % 65521u32;
+        Index = Index + 1u32;
+    }
+    if Hashˉzero != 4668u32 || Hashˉone != 40437u32 ||
+        Hashˉtwo != 35128u32 || Hashˉthree != 51025u32 { return 3; }
+    return 103;
+}

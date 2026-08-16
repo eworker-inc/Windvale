@@ -293,6 +293,11 @@ endpoint and reply state, publishes its resolved transition, scrubs the request
 channel, advances bounded lifecycle counters, and only then dispatches client
 generation 2 with result 3,096. Source ownership reaches byte 29,474.
 
+Generation-two completion cleanup then reuses the checked 1,351-byte cleanup
+path with only its retained and selected client generations advanced to 2. All
+sixty-one fail-closed branches retain the common failure target, and source
+ownership reaches byte 30,825.
+
 The first restart policies are deliberately small:
 
 - `Never`;
