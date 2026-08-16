@@ -491,8 +491,12 @@ eight. The bounded transaction validates top-down, rebuilds bottom-up, propagate
 splits through every supplied ancestor, updates existing depth-four generations,
 and can create a depth-five root. The persistent hosted writer now discovers
 one provider-backed path per canonical mutation and publishes the whole set in
-one commit. It does not yet accept input depth nine, reclaim pages, queue
-concurrent requests, or manage concurrent readers.
+one commit. The first portable secondary-index contract now adds bounded compound
+definitions and deterministic ordered keys for Boolean, I64, U64, and text
+fields, including explicit null placement and safe unique-owner key shapes. It
+does not yet compose those keys with primary-row mutations, enforce unique
+ownership in the writer, accept input depth nine, reclaim pages, queue concurrent
+requests, or manage concurrent readers.
 
 This milestone needs no general query language, network protocol, or graph
 layer.
@@ -503,7 +507,7 @@ Add, one independently measured boundary at a time:
 
 - generation-pinned committed snapshots and structurally shared roots;
 - a process-wide byte-budgeted page buffer with exact pin and eviction evidence;
-- secondary indexes and bounded mutation batches;
+- atomic primary-plus-secondary mutation composition and unique-owner checks;
 - normalized query planning and a generation-keyed plan cache;
 - a bounded hosted-writer queue and adaptive group commit; and
 - committed point/range read fast paths with exact I/O and allocation evidence.

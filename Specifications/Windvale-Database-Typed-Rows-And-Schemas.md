@@ -118,6 +118,7 @@ oversized values.
 
 This version does not define defaults, computed fields, decimal or floating
 point values, nested rows, arrays, schema migration, compatibility coercions,
-name indexes, secondary indexes, query execution, deletion, transactions,
-concurrency, networking, or authorization. Those require separate bounded
-contracts and must lower to the same typed value model rather than bypass it.
+name indexes, query execution, deletion, transactions, concurrency, networking,
+or authorization. Ordered secondary-index definitions and keys are now a
+separate bounded contract; index maintenance and execution remain later work.
+Those layers must lower to this typed value model rather than bypass it.

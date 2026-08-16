@@ -1,0 +1,459 @@
+module Databaseˉsecondaryˉindexˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
+import Windvaleˉdatabaseˉsecondaryˉindex as Secondary;
+import Windvaleˉdatabaseˉtypedˉrow as Typed;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Equal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Less(Left: bytes, Right: bytes) -> bool {
+    var Limit: u32 = Bytesˉlength(Left);
+    if Bytesˉlength(Right) < Limit { Limit = Bytesˉlength(Right); }
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let L: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Index));
+        let R: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Index));
+        if L < R { return true; }
+        if L > R { return false; }
+        Index = Index + 1u32;
+    }
+    return Bytesˉlength(Left) < Bytesˉlength(Right);
+}
+
+fn Replace(Input: bytes, Offset: u32, Length: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(
+            Input,
+            Offset + Length,
+            Bytesˉlength(Input) - Offset - Length
+        )
+    );
+}
+
+fn Repeat(Value: u8, Count: u32) -> bytes {
+    var Result: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Field(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Nullable: bool,
+    Maximum: u32,
+    Name: text
+) -> bytes {
+    let Result: Schema.Databaseˉschemaˉfieldˉresult =
+        Schema.Databaseˉschemaˉfieldˉencode(
+            Kind,
+            Nullable,
+            Maximum,
+            Textˉtoˉutf8(Name)
+        );
+    return Result.Bytes;
+}
+
+fn Schemaˉbytes() -> bytes {
+    var Fields: bytes = Field(
+        Schema.Databaseˉfieldˉkind.Boolean,
+        false,
+        1u32,
+        "active"
+    );
+    Fields = Bytesˉconcat(Fields, Field(
+        Schema.Databaseˉfieldˉkind.I64,
+        false,
+        8u32,
+        "balance"
+    ));
+    Fields = Bytesˉconcat(Fields, Field(
+        Schema.Databaseˉfieldˉkind.U64,
+        false,
+        8u32,
+        "sequence"
+    ));
+    Fields = Bytesˉconcat(Fields, Field(
+        Schema.Databaseˉfieldˉkind.Text,
+        false,
+        4000u32,
+        "name"
+    ));
+    Fields = Bytesˉconcat(Fields, Field(
+        Schema.Databaseˉfieldˉkind.Bytes,
+        false,
+        32u32,
+        "raw"
+    ));
+    Fields = Bytesˉconcat(Fields, Field(
+        Schema.Databaseˉfieldˉkind.Text,
+        true,
+        32u32,
+        "optional"
+    ));
+    let Result: Schema.Databaseˉschemaˉresult =
+        Schema.Databaseˉschemaˉencode(7u64, 9u64, Fields);
+    return Result.Bytes;
+}
+
+fn Value(
+    Kind: Schema.Databaseˉfieldˉkind,
+    Null: bool,
+    Data: bytes
+) -> bytes {
+    let Result: Typed.Databaseˉtypedˉvalueˉresult =
+        Typed.Databaseˉtypedˉvalueˉencode(Kind, Null, Data);
+    return Result.Bytes;
+}
+
+fn Rowˉwith(Name: bytes, Optionalˉnull: bool) -> bytes {
+    var Values: bytes = Value(
+        Schema.Databaseˉfieldˉkind.Boolean,
+        false,
+        Bytesˉfromˉu8(1u8)
+    );
+    Values = Bytesˉconcat(Values, Value(
+        Schema.Databaseˉfieldˉkind.I64,
+        false,
+        Bytesˉfromˉu64ˉlittle(1u64)
+    ));
+    Values = Bytesˉconcat(Values, Value(
+        Schema.Databaseˉfieldˉkind.U64,
+        false,
+        Bytesˉfromˉu64ˉlittle(2u64)
+    ));
+    Values = Bytesˉconcat(Values, Value(
+        Schema.Databaseˉfieldˉkind.Text,
+        false,
+        Name
+    ));
+    Values = Bytesˉconcat(Values, Value(
+        Schema.Databaseˉfieldˉkind.Bytes,
+        false,
+        Bytesˉfromˉu8(3u8)
+    ));
+    var Optional: bytes = Textˉtoˉutf8("present");
+    if Optionalˉnull { Optional = Empty(); }
+    Values = Bytesˉconcat(Values, Value(
+        Schema.Databaseˉfieldˉkind.Text,
+        Optionalˉnull,
+        Optional
+    ));
+    let Result: Typed.Databaseˉtypedˉrowˉresult =
+        Typed.Databaseˉtypedˉrowˉencode(Schemaˉbytes(), Values);
+    return Result.Bytes;
+}
+
+fn Indexˉfield(
+    Fieldˉindex: u32,
+    Direction: Secondary.Databaseˉsecondaryˉdirection,
+    Nulls: Secondary.Databaseˉsecondaryˉnullˉpolicy
+) -> bytes {
+    let Result: Secondary.Databaseˉsecondaryˉfieldˉresult =
+        Secondary.Databaseˉsecondaryˉfieldˉencode(
+            Fieldˉindex,
+            Direction,
+            Nulls
+        );
+    return Result.Bytes;
+}
+
+fn Definition(Unique: bool, Fields: bytes) -> bytes {
+    let Result: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64,
+            9u64,
+            11u64,
+            Unique,
+            Fields,
+            Textˉtoˉutf8("balance-name")
+        );
+    return Result.Bytes;
+}
+
+fn Definitionˉerror(Input: bytes) -> Secondary.Databaseˉsecondaryˉerror {
+    let Result: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉdecode(Input);
+    return Result.Error;
+}
+
+fn Testˉdefinition() -> i32 {
+    let First: bytes = Indexˉfield(
+        1u32,
+        Secondary.Databaseˉsecondaryˉdirection.Ascending,
+        Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+    );
+    let Second: bytes = Indexˉfield(
+        3u32,
+        Secondary.Databaseˉsecondaryˉdirection.Descending,
+        Secondary.Databaseˉsecondaryˉnullˉpolicy.Last
+    );
+    let Encoded: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64,
+            9u64,
+            11u64,
+            true,
+            Bytesˉconcat(First, Second),
+            Textˉtoˉutf8("balance-name")
+        );
+    let Decoded: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉdecode(Encoded.Bytes);
+    let Again: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64,
+            9u64,
+            11u64,
+            true,
+            Bytesˉconcat(First, Second),
+            Textˉtoˉutf8("balance-name")
+        );
+    if Encoded.Error != Secondary.Databaseˉsecondaryˉerror.Valid ||
+        Decoded.Error != Secondary.Databaseˉsecondaryˉerror.Valid ||
+        Decoded.Collection != 7u64 || Decoded.Schema != 9u64 ||
+        Decoded.Index != 11u64 || !Decoded.Unique ||
+        Decoded.Fieldˉcount != 2u32 ||
+        !Equal(Encoded.Bytes, Again.Bytes) {
+        return 1;
+    }
+    let Readˉfirst: Secondary.Databaseˉsecondaryˉfieldˉresult =
+        Secondary.Databaseˉsecondaryˉfieldˉat(Decoded.Fields, 0u32);
+    let Readˉsecond: Secondary.Databaseˉsecondaryˉfieldˉresult =
+        Secondary.Databaseˉsecondaryˉfieldˉat(Decoded.Fields, Readˉfirst.Next);
+    if Readˉfirst.Field != 1u32 ||
+        Readˉsecond.Field != 3u32 ||
+        Readˉsecond.Direction != Secondary.Databaseˉsecondaryˉdirection.Descending ||
+        Readˉsecond.Nulls != Secondary.Databaseˉsecondaryˉnullˉpolicy.Last {
+        return 2;
+    }
+    let Firstˉkey: Secondary.Databaseˉsecondaryˉkeyˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉkey(7u64, 1u64);
+    let Secondˉkey: Secondary.Databaseˉsecondaryˉkeyˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉkey(7u64, 2u64);
+    if Bytesˉlength(Firstˉkey.Key) != 24u32 ||
+        !Less(Firstˉkey.Key, Secondˉkey.Key) {
+        return 3;
+    }
+    return 0;
+}
+
+fn Testˉentry() -> i32 {
+    let Fields: bytes = Bytesˉconcat(
+        Indexˉfield(
+            1u32,
+            Secondary.Databaseˉsecondaryˉdirection.Ascending,
+            Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+        ),
+        Indexˉfield(
+            3u32,
+            Secondary.Databaseˉsecondaryˉdirection.Descending,
+            Secondary.Databaseˉsecondaryˉnullˉpolicy.Last
+        )
+    );
+    let Entry: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(false, Fields),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id")
+        );
+    if Entry.Error != Secondary.Databaseˉsecondaryˉerror.Valid ||
+        !Entry.Included || Entry.Unique ||
+        Bytesˉlength(Entry.Key) != 43u32 ||
+        Bytesˉreadˉu8(Entry.Key, 24u32) != 64u8 ||
+        Bytesˉreadˉu8(Entry.Key, 25u32) != 128u8 ||
+        Bytesˉreadˉu8(Entry.Key, 32u32) != 1u8 ||
+        Bytesˉreadˉu8(Entry.Key, 33u32) != 64u8 ||
+        Bytesˉreadˉu8(Entry.Key, 34u32) != 158u8 ||
+        Bytesˉreadˉu8(Entry.Key, 35u32) != 157u8 ||
+        Bytesˉreadˉu8(Entry.Key, 38u32) != 128u8 ||
+        Bytesˉlength(Entry.Value) != 26u32 ||
+        Bytesˉreadˉu8(Entry.Value, 24u32) != 105u8 {
+        return 1;
+    }
+    let Uniqueˉa: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(true, Fields),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id-a")
+        );
+    let Uniqueˉb: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(true, Fields),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id-b")
+        );
+    if !Uniqueˉa.Unique || !Equal(Uniqueˉa.Key, Uniqueˉb.Key) ||
+        Equal(Uniqueˉa.Value, Uniqueˉb.Value) {
+        return 2;
+    }
+    let Excluded: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(false, Indexˉfield(
+                5u32,
+                Secondary.Databaseˉsecondaryˉdirection.Ascending,
+                Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+            )),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id")
+        );
+    if Excluded.Error != Secondary.Databaseˉsecondaryˉerror.Valid ||
+        Excluded.Included || Bytesˉlength(Excluded.Key) != 0u32 {
+        return 3;
+    }
+    let Nullˉfirst: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(false, Indexˉfield(
+                5u32,
+                Secondary.Databaseˉsecondaryˉdirection.Ascending,
+                Secondary.Databaseˉsecondaryˉnullˉpolicy.First
+            )),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id")
+        );
+    let Nullˉlast: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(false, Indexˉfield(
+                5u32,
+                Secondary.Databaseˉsecondaryˉdirection.Ascending,
+                Secondary.Databaseˉsecondaryˉnullˉpolicy.Last
+            )),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id")
+        );
+    if Bytesˉreadˉu8(Nullˉfirst.Key, 24u32) != 16u8 ||
+        Bytesˉreadˉu8(Nullˉlast.Key, 24u32) != 240u8 {
+        return 4;
+    }
+    let Unsupported: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(false, Indexˉfield(
+                4u32,
+                Secondary.Databaseˉsecondaryˉdirection.Ascending,
+                Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+            )),
+            Rowˉwith(Textˉtoˉutf8("ab"), true),
+            Textˉtoˉutf8("id")
+        );
+    if Unsupported.Error != Secondary.Databaseˉsecondaryˉerror.Unsupportedˉfieldˉkind {
+        return 5;
+    }
+    return 0;
+}
+
+fn Testˉrejections() -> i32 {
+    let One: bytes = Indexˉfield(
+        1u32,
+        Secondary.Databaseˉsecondaryˉdirection.Ascending,
+        Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+    );
+    let Valid: bytes = Definition(false, One);
+    if Definitionˉerror(
+        Bytesˉslice(Valid, 0u32, 63u32)
+    ) != Secondary.Databaseˉsecondaryˉerror.Invalidˉlength ||
+        Definitionˉerror(
+            Replace(Valid, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32))
+        ) != Secondary.Databaseˉsecondaryˉerror.Invalidˉmagic ||
+        Definitionˉerror(
+            Replace(Valid, 4u32, 4u32, Bytesˉfromˉu32ˉlittle(2u32))
+        ) != Secondary.Databaseˉsecondaryˉerror.Unsupportedˉversion ||
+        Definitionˉerror(
+            Replace(Valid, 12u32, 4u32, Bytesˉfromˉu32ˉlittle(2u32))
+        ) != Secondary.Databaseˉsecondaryˉerror.Invalidˉflags ||
+        Definitionˉerror(
+            Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8))
+        ) != Secondary.Databaseˉsecondaryˉerror.Trailingˉbytes {
+        return 1;
+    }
+    let Duplicate: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64,
+            9u64,
+            11u64,
+            false,
+            Bytesˉconcat(One, One),
+            Textˉtoˉutf8("duplicate")
+        );
+    if Duplicate.Error != Secondary.Databaseˉsecondaryˉerror.Duplicateˉfield {
+        return 2;
+    }
+    var Eight: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        Eight = Bytesˉconcat(Eight, Indexˉfield(
+            Index,
+            Secondary.Databaseˉsecondaryˉdirection.Ascending,
+            Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+        ));
+        Index = Index + 1u32;
+    }
+    let Maximum: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64, 9u64, 11u64, false, Eight, Textˉtoˉutf8("eight")
+        );
+    let Nine: Secondary.Databaseˉsecondaryˉdefinitionˉresult =
+        Secondary.Databaseˉsecondaryˉdefinitionˉencode(
+            7u64,
+            9u64,
+            11u64,
+            false,
+            Bytesˉconcat(Eight, Indexˉfield(
+                8u32,
+                Secondary.Databaseˉsecondaryˉdirection.Ascending,
+                Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+            )),
+            Textˉtoˉutf8("nine")
+        );
+    if Maximum.Error != Secondary.Databaseˉsecondaryˉerror.Valid ||
+        Nine.Error != Secondary.Databaseˉsecondaryˉerror.Invalidˉfieldˉcount {
+        return 3;
+    }
+    let Tooˉlarge: Secondary.Databaseˉsecondaryˉentryˉresult =
+        Secondary.Databaseˉsecondaryˉentryˉbuild(
+            Schemaˉbytes(),
+            Definition(false, Indexˉfield(
+                3u32,
+                Secondary.Databaseˉsecondaryˉdirection.Ascending,
+                Secondary.Databaseˉsecondaryˉnullˉpolicy.Exclude
+            )),
+            Rowˉwith(Repeat(97u8, 4000u32), true),
+            Repeat(98u8, 100u32)
+        );
+    if Tooˉlarge.Error != Secondary.Databaseˉsecondaryˉerror.Keyˉtooˉlarge {
+        return 4;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Definitionˉresult: i32 = Testˉdefinition();
+    if Definitionˉresult != 0 { return 10 + Definitionˉresult; }
+    let Entryˉresult: i32 = Testˉentry();
+    if Entryˉresult != 0 { return 20 + Entryˉresult; }
+    let Rejectionˉresult: i32 = Testˉrejections();
+    if Rejectionˉresult != 0 { return 30 + Rejectionˉresult; }
+    return 0;
+}

@@ -24,10 +24,10 @@ if "%Development%"=="0" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=48"
+set "SelectedCases=49"
 if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
 for %%T in (
-    tree-node logical-record typed-row transaction-mutations transaction-leaf-rewrite query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
+    tree-node logical-record typed-row secondary-index transaction-mutations transaction-leaf-rewrite query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
     branch-split root-split depth-two depth-three depth-three-upsert
     tree-path-upsert tree-path-delete host-storage
 ) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
@@ -158,6 +158,8 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TypedRow typed-row "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Typed-Row.wvproj" typed-query typed-query-sql
     if errorlevel 1 goto :cleanup
+    call :verify_development_target SecondaryIndex secondary-index "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Secondary-Index.wvproj"
+    if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionMutations transaction-mutations "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Mutations.wvproj" transaction
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionLeafRewrite transaction-leaf-rewrite "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj" transaction
@@ -269,6 +271,9 @@ call :verify_target LogicalRecord ^
 if errorlevel 1 goto :cleanup
 call :verify_target TypedRow ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Typed-Row.wvproj"
+if errorlevel 1 goto :cleanup
+call :verify_target SecondaryIndex ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Secondary-Index.wvproj"
 if errorlevel 1 goto :cleanup
 call :verify_target TransactionMutations ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Mutations.wvproj"

@@ -1,0 +1,8 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Secondary-Index-Self-Test.wv"
+source "Libraries/Database/Logical-Record.wv"
+source "Libraries/Database/Logical-Record-Write.wv"
+source "Libraries/Database/Schema-Definition.wv"
+source "Libraries/Database/Secondary-Index.wv"
+source "Libraries/Database/Typed-Row.wv"
+emit wvb
