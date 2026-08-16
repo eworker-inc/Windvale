@@ -134,8 +134,47 @@ function Selectedˉpackage(Generation, Selection) {
     return { name: Values[1], version: Values[2], bundle: Values[3], lock: Values[4] };
 }
 
-function Validateˉarguments(Selection, Launch, Arguments) {
+function Validateˉarguments(Selection, Approval, Launch, Arguments) {
     const Application = One(Launch, "application", 2, "launch")[0];
+    if (Selection.command === "echo" && Selection.package === "windvale.echo" &&
+        Selection.part === "application" && Application === "windvale.echo") {
+        const ExpectedApprovals = [
+            "approve 0 console.write_line standard-output-line-v1",
+            "approve 1 process.argument immutable-argument-snapshot-v1",
+            "approve 2 process.argument_count immutable-argument-snapshot-v1",
+        ];
+        const ExpectedBindings = [
+            "bind 0 console.write_line host-standard-output line-lf",
+            "bind 1 process.argument immutable-launch-arguments 0 67 4096 65536",
+            "bind 2 process.argument_count immutable-launch-arguments 0 67 4096 65536",
+        ];
+        const Approvals = Approval.lines.filter(Line => Line.startsWith("approve "));
+        const Bindings = Launch.lines.filter(Line => Line.startsWith("bind "));
+        if (Approval.lines[0] !== "windvale-capability-approval 1" ||
+            !Approval.lines.includes("capability-count 3") ||
+            Approvals.length !== ExpectedApprovals.length ||
+            ExpectedApprovals.some((Line, Index) => Approvals[Index] !== Line) ||
+            Launch.lines[0] !== "windvale-launch-record 3" ||
+            !Launch.lines.includes("entry Main") ||
+            !Launch.lines.includes("provider-table 3 3") ||
+            Bindings.length !== ExpectedBindings.length ||
+            ExpectedBindings.some((Line, Index) => Bindings[Index] !== Line) ||
+            !Launch.lines.includes("argument-vector strict-utf8 0 67 4096 65536")) {
+            Fail("capability-contract-mismatch");
+        }
+        if (Arguments.length > 67) Fail("argument-contract-mismatch");
+        let Total = 0;
+        for (const Argument of Arguments) {
+            const Encoded = Buffer.from(Argument, "utf8");
+            if (Argument.includes("\0") || Encoded.toString("utf8") !== Argument ||
+                Encoded.length > 4096) {
+                Fail("argument-contract-mismatch");
+            }
+            Total += Encoded.length;
+            if (Total > 65_536) Fail("argument-contract-mismatch");
+        }
+        return;
+    }
     if (Selection.command === "wvdump" && Selection.package === "windvale.wvb-inspector" &&
         Selection.part === "inspector" && Application === "windvale.wvb-inspector") {
         if (Launch.lines[0] !== "windvale-launch-record 2" || Arguments.length !== 1 ||
@@ -237,7 +276,7 @@ function Dispatch(Arguments) {
         One(Launch, "host-application", 2, "launch"), "launch-host-application",
     );
     Requireˉidentity(Host, HostIdentity, "host-application");
-    Validateˉarguments(Selection, Launch, CommandArguments);
+    Validateˉarguments(Selection, Approval, Launch, CommandArguments);
 
     const PrivateRoot = fs.mkdtempSync(path.join(os.tmpdir(), "windvale-command-host-"));
     const PrivateHost = path.join(

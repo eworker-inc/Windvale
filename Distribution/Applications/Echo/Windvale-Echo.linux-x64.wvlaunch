@@ -1,0 +1,23 @@
+windvale-launch-record 3
+application windvale.echo 0.1.0
+generation 0.1.0-linux-x64-386b8c983be8
+target linux-x64
+approval 386b8c983be8f4c633f27beb0d60b0d135ff3df88819a9c20262c1a8ce257790 793
+bundle 0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966 16865
+lock 212e5c4ddf28fb347b482c73d5c38d6df8273be4bcf14ce1b581084d7be1652d 920
+wvb 5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64 813
+host-application 0e5a91887381adb23a84d745ce06902be99e53d70e58a598465939881638b576 24576
+entry Main
+provider-table 3 3
+bind 0 console.write_line host-standard-output line-lf
+bind 1 process.argument immutable-launch-arguments 0 67 4096 65536
+bind 2 process.argument_count immutable-launch-arguments 0 67 4096 65536
+argument-vector strict-utf8 0 67 4096 65536
+deny ambient-filesystem
+deny file-mutation
+deny diagnostic-output
+deny environment
+deny network
+deny process-launch
+deny clock
+deny entropy

@@ -7,10 +7,13 @@ selected by Milestone 2 under
 [Decision 0564](../Documents/Decisions/0564-First-Installed-Capability-Approval-And-Launch-Records.md).
 Milestone 4 adds exact Approval 1 and Launch Record 2 records for WVB Inspector
 under [Decision 0570](../Documents/Decisions/0570-Wvb-Inspector-Launch-Record-2.md).
-These records make both capability proofs inspectable as installation and launch
+[Decision 0693](../Documents/Decisions/0693-Echo-Package-Approval-And-Launch-Record-3.md)
+adds exact Approval 1 and Launch Record 3 records for Echo. These
+records make all three capability proofs inspectable as installation and launch
 policy without creating a general launcher, approval UI, or capability database.
-The 13-case paired-host owner covers two applications, six records, ten approved
-capabilities, four target records, and one exact command execution per host.
+The 13-case approval owner and ten-case Echo command owner cover three
+applications, nine records, thirteen approved capabilities, six target records,
+and three exact command executions per host.
 
 ## Approval record
 
@@ -39,6 +42,14 @@ argument count/value snapshots. It carries the same explicit denials as WVDB
 Query while distinguishing one explicitly supplied host file from ambient
 enumeration or mutation. Its exact identity is 923 bytes with SHA-256
 `32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f`.
+
+`Windvale-Echo.wvapproval` binds the exact Echo manifest, lock, Bundle 1,
+provenance, and 813-byte WVB identities. Its complete three-capability closure
+is standard line output plus immutable argument value/count snapshots. Absence
+and the explicit denials leave it without diagnostics, filesystem, environment,
+network, process-launch, clock, or entropy authority. Its exact identity is 793
+bytes with SHA-256
+`386b8c983be8f4c633f27beb0d60b0d135ff3df88819a9c20262c1a8ce257790`.
 
 ## Target launch records
 
@@ -82,6 +93,30 @@ The Windows Launch Record 2 is 1,000 bytes with SHA-256
 the Linux record is 996 bytes with SHA-256
 `f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b`.
 
+### Echo Launch Record 3
+
+Launch Record 3 is the first direct native-host profile with a variable-length
+argument vector. It binds the exact 16,865-byte Bundle 1 with SHA-256
+`0502051930bddd016924e7858e0c32c0c481774edae9e755ca926f3cc3b3e966`,
+Lock 1, approval, 813-byte WVB, named `Main` entry, and target host application.
+Provider table 3 has exactly three ordered bindings: standard output with LF
+line behavior, immutable argument values, and the count from that same snapshot.
+
+The `argument-vector strict-utf8 0 67 4096 65536` field freezes the existing
+hosted-resource boundary: zero through 67 arguments, no more than 4,096 strict
+UTF-8 bytes in one argument, and no more than 65,536 bytes in the complete
+vector. Empty arguments are values, not omissions. The record explicitly denies
+ambient filesystem, mutation, diagnostic output, environment, network,
+process-launch, clock, and entropy providers.
+
+The Windows Launch Record 3 is 918 bytes with SHA-256
+`493bac26e83edf995f87e31939a981fef7a1c021494bc23e154f61922dc2aa5b`;
+the Linux record is 914 bytes with SHA-256
+`447df010898a98022a915c46d11c42c41a1099024e5fcbba3009735347459099`.
+Their exact host applications are respectively 22,016 and 24,576 bytes. These
+records describe one Echo command profile; they do not establish a general
+dynamic provider-table grammar.
+
 An approval records what authority the application owner accepts. A launch
 record proves which rights-limited providers and target bytes will be used.
 Neither record opens a file, starts a process, or proves that a provider remains
@@ -97,6 +132,13 @@ inspector host binaries; and executes the exact inspector command on each native
 host. Its focused owner rejects added capability authority, substitution in
 either application, host substitution, writable provider substitution, target
 substitution, approval-identity substitution, and truncation.
+
+`Verify-Echo-Command-Launch.mjs` independently activates one exact Generation 1,
+resolves `echo` through the Windvale-written resolver, and dispatches its native
+host without a command shell. Its paired-host owner proves argument and empty
+execution, rejects bundle, approval, host, capability-binding, argument-budget,
+and unknown-command substitutions, and requires private host cleanup after each
+attempt.
 
 These exact application records are an implemented product slice, not a general
 approval grammar promise. A configurable directory, mutable provider, dynamic

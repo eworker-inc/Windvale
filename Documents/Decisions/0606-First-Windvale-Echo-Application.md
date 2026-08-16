@@ -1,11 +1,12 @@
 # Decision 0606: First Windvale echo application
 
 - Date: 2026-08-16
-- Status: Implemented application with paired hosted evidence; generation resolution and shell launch remain pending
+- Status: Implemented application with paired hosted evidence; command launch advanced by Decision 0693
 - Contract: [Windvale Shell 1](../../Specifications/Windvale-Shell-1.md)
 - Architecture: [Windvale shell](../Architecture/Windvale-Shell.md)
 - Readiness: [shell implementation readiness](../Project/Windvale-Shell-Implementation-Readiness.md)
 - Builds on: [Decision 0602](0602-Shell-1-Parser-Contract-And-First-Portable-Core.md)
+- Advanced by: [Decision 0693](0693-Echo-Package-Approval-And-Launch-Record-3.md)
 
 ## Context
 

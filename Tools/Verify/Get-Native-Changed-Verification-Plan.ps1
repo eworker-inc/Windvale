@@ -603,6 +603,8 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -eq 'Verify-Echo-Application') {
         Add-Suite 'echo-application'
+    } elseif ($Stem -eq 'Build-Echo-Package') {
+        Add-Suite @('echo-application', 'echo-command-launch')
     } elseif ($Stem -eq 'Create-Wvdb-Query-Fixture') {
         Add-Suite 'wvdb-query-capability'
     } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
@@ -985,7 +987,10 @@ foreach ($Path in $Paths) {
             'Dispatch-Installation-Command.mjs',
             'Verify-Installation-Command-Dispatcher.mjs'
         )) {
-            Add-Suite 'installation-command-dispatch'
+            Add-Suite @('echo-command-launch', 'installation-command-dispatch')
+        } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Verify-Echo-Command-Launch.mjs') {
+            Add-Suite 'echo-command-launch'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Installation-Activation-Planner.mjs',
             'Verify-Offline-Generation-Lifecycle.mjs'
@@ -1176,7 +1181,7 @@ foreach ($Path in $Paths) {
         'Applications/Shell/Echo.wv',
         'Projects/Applications/Windvale-Echo.wvproj'
     )) {
-        Add-Suite 'echo-application'
+        Add-Suite @('echo-application', 'echo-command-launch')
         if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
             Add-Suite 'workspace-project2'
         }
@@ -1267,6 +1272,8 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Libraries/Package/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Package/', [StringComparison]::Ordinal)) {
         Add-Suite @('package-format', 'package-bundle')
+    } elseif ($Path.StartsWith('Distribution/Applications/Echo/', [StringComparison]::Ordinal)) {
+        Add-Suite @('echo-command-launch', 'package-bundle', 'package-format', 'packages')
     } elseif ($Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -and
         ([IO.Path]::GetExtension($Path) -in @('.wvapproval', '.wvlaunch'))) {
         Add-Suite @('installation-command-dispatch', 'wvdb-approval', 'offline-package-stage')
@@ -1286,6 +1293,7 @@ foreach ($Path in $Paths) {
         Add-Suite @('packages', 'package-format')
     } elseif ($Path -eq 'Specifications/Windvale-Installation-Generation.md') {
         Add-Suite @(
+            'echo-command-launch',
             'package-format',
             'installation-activation',
             'offline-generation-lifecycle',
@@ -2276,7 +2284,7 @@ foreach ($Path in $Paths) {
         } elseif ($Path -eq 'Specifications/Windvale-Release-Envelope.md') {
             Add-Suite @('release-envelope', 'offline-package-stage')
         } elseif ($Path -eq 'Specifications/Windvale-Capability-Approval-And-Launch.md') {
-            Add-Suite 'wvdb-approval'
+            Add-Suite @('echo-command-launch', 'wvdb-approval')
         } elseif ($Path -in @(
             'Specifications/Windvale-Resource-Service-Ipc.md',
             'Specifications/Windvale-Directory-Service-Ipc.md',

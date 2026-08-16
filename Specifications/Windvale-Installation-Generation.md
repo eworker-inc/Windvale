@@ -120,15 +120,17 @@ creation it independently requires all of these identities and relationships:
    and executable identities;
 4. the target launch record matches the selected launch, approval, bundle,
    executable, target, and host-application identities; and
-5. command arguments satisfy the exact `wvdump` or `wvquery` launch profile.
+5. command arguments satisfy the exact `echo`, `wvdump`, or `wvquery` launch
+   profile.
 
 The adapter copies the verified host bytes into private storage, flushes and
 rereads that copy, then starts it directly without a command shell and propagates
-the application's exit status. The first profile supports only the
-two exact Generation 1 commands. It grants no package-manager, signing, network,
-environment, mutation, or process-launch capability to either application; the
+the application's exit status. The first profiles support only those three exact
+Generation 1 commands. They grant no package-manager, signing, network,
+environment, mutation, or process-launch capability to any application; the
 launch records bind the existing inspector file reader and WVDB fixed read-only
-directory provider. Unknown commands, unsupported profiles, substitutions,
+directory provider, while Echo receives only standard line output and immutable
+argument snapshots. Unknown commands, unsupported profiles, substitutions,
 tampering, and invalid arguments fail before process creation.
 
 This development adapter still receives already acquired object paths from its

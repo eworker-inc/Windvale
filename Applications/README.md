@@ -21,9 +21,11 @@ are preserved rather than reparsed as a host command line.
 argument-count access. It has no filesystem, diagnostic, environment,
 native-process, or ambient path authority. The focused `echo-application` owner
 builds deterministic Windows and Linux hosted applications and executes nine
-success and boundary cases independently on both hosts. Generation metadata,
-Windvale package records, resolver selection, and shell-driven launch remain the
-next integration increment.
+success and boundary cases independently on both hosts. Exact Package 1, Lock 1,
+Bundle 1, Approval 1, Launch Record 3, and Generation 1 records now bind `echo`
+through the Windvale-written resolver and the guarded Windows/Linux dispatcher.
+The separate ten-case `echo-command-launch` owner proves execution, rejection,
+and private-host cleanup. An interactive shell remains a later integration.
 
 ## Wvdb Query
 

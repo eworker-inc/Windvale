@@ -2189,6 +2189,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Package-Resource-Admission.wvproj'
         )
         Suites = @(
+            'echo-command-launch',
             'package-format',
             'installation-activation',
             'offline-generation-lifecycle',
@@ -2314,7 +2315,7 @@ $NativeCases = @(
             'Tools/Native/Test-Installation-Command-Dispatch.cmd',
             'Tools/Native/Test-Installation-Command-Dispatch.sh'
         )
-        Suites = @('installation-command-dispatch')
+        Suites = @('echo-command-launch', 'installation-command-dispatch')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2382,6 +2383,7 @@ $NativeCases = @(
             'Specifications/Windvale-Capability-Approval-And-Launch.md'
         )
         Suites = @(
+            'echo-command-launch',
             'packages',
             'package-format',
             'installation-command-dispatch',
@@ -2515,9 +2517,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 92 -or
+if ($VerificationOwnerLines.Count -ne 93 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 91-owner inventory differs.'
+    throw 'The native verification-owner header or exact 92-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2555,7 +2557,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4306 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4316 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

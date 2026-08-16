@@ -1,0 +1,11 @@
+windvale-package 1
+name windvale.echo
+version 0.1.0
+license LicenseRef-Windvale-Community-Source-1.0
+root application
+target hosted-wvb-v1
+project Projects/Applications/Windvale-Echo.wvproj
+part application hosted Applications/Shell/Echo.wv
+capability console.write_line
+capability process.argument
+capability process.argument_count

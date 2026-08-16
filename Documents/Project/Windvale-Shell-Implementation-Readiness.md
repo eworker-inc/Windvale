@@ -9,6 +9,7 @@
 - Accepted first contract: [Windvale Shell 1](../../Specifications/Windvale-Shell-1.md)
 - Parser decision: [Decision 0602](../Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md)
 - First application decision: [Decision 0606](../Decisions/0606-First-Windvale-Echo-Application.md)
+- First command-launch decision: [Decision 0693](../Decisions/0693-Echo-Package-Approval-And-Launch-Record-3.md)
 - Accepted boundary: [Decision 0191](../Decisions/0191-Windvale-Console-Shell-And-Cli-Architecture.md)
 
 This plan answers what must be decided, specified, implemented, and verified
@@ -243,9 +244,13 @@ Current result: the real `Applications/Shell/Echo.wv` entry point and Project 2
 manifest are implemented. Its exact WVB declares only `console.write_line`,
 `process.argument`, and `process.argument_count`; exact Windows and Linux hosted
 applications pass nine current-host behavior and resource-boundary cases on
-both hosts. Windvale package/lock/provenance records, an active generation,
-resolver selection, approval/launch records, and dispatcher integration remain
-pending, so this is an application proof rather than a command-launch proof.
+both hosts. Exact package, lock, provenance, Bundle 1, Approval 1, and Launch
+Record 3 bytes now place `echo` in an active Generation 1. A separate ten-case
+owner resolves it through Windvale-written semantics, directly launches the
+identity-bound host without a command shell, and proves success, unknown-command,
+identity, capability, argument-budget, and private-cleanup outcomes on both
+permanent hosts. This completes the bounded command-launch proof; it is not an
+interactive shell or browser/OS launch provider.
 
 - package a real Windvale `echo` application;
 - place its exact identity in a test active generation;

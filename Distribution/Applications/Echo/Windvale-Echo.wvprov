@@ -1,0 +1,9 @@
+windvale-provenance 1
+package windvale.echo 0.1.0
+target hosted-wvb-v1
+manifest-sha256 27d32dc98d1c2d57792f0a37b173a77d5dab465e005bc9c47fd8fd086c8b6234
+lock-sha256 212e5c4ddf28fb347b482c73d5c38d6df8273be4bcf14ce1b581084d7be1652d
+compiler-sha256 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6
+output-sha256 5d827b98be518a07a8dea60d79e70073535f78f07cf875d750021fa795c13c64
+builder native-source-front-door
+resolver local-source-1
