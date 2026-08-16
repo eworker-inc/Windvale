@@ -504,6 +504,8 @@ function Add-Native-Tool-Suite {
         Add-Compiler-Suites
         Add-Suite 'compiler-reconstruction'
         Add-Suite 'seed-native-front-door'
+    } elseif ($Stem -eq 'Measure-Source-Wvb-Compilation') {
+        Add-Compiler-Suites
     } elseif ($Stem -in @(
         'Stage-Compiler-Wvb',
         'Link-Staged-Compiler-Wvo',
@@ -522,7 +524,8 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -in @(
         'Construct-Segmented-Compiler-Toolset',
         'Test-Segmented-Compiler-Packaging',
-        'Package-Segmented-Compiler-Wvb'
+        'Package-Segmented-Compiler-Wvb',
+        'Measure-Segmented-Compiler-Packaging'
     )) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Stem -eq 'Construct-Wvb-To-Wvo-Reconstruction') {

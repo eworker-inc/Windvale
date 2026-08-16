@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 3 || ! $1 =~ ^[1-7]$ || $2 != *.wvb || $3 != *.elf ]]; then
-    echo 'Usage: ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf>' >&2
+if [[ ($# -ne 3 && $# -ne 4) || ! $1 =~ ^[1-7]$ ||
+      $2 != *.wvb || $3 != *.elf ||
+      ($# -eq 4 && ${4:-} != --development-cache) ]]; then
+    echo 'Usage: ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf> [--development-cache]' >&2
     exit 64
 fi
+development_cache=0
+[[ $# -eq 4 ]] && development_cache=1
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 input_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 64
@@ -65,5 +69,13 @@ case "$fragment_count" in
 esac
 
 echo "segmented compiler package step=container fragments=$fragment_count entry=$native_entry"
-"$script_directory/Package-Hosted-Wvb.sh" image "$1" "$input" "$canonical_prefix" "$fragment_count" "$native_entry" "$output"
+if [[ $development_cache -eq 1 ]]; then
+    "$script_directory/Build-Cached-Hosted-Application.sh" "$1" "$input" \
+        "$canonical_prefix" "$fragment_count" "$native_entry" "$output" linux
+else
+    "$script_directory/Package-Hosted-Wvb.sh" image "$1" "$input" \
+        "$canonical_prefix" "$fragment_count" "$native_entry" "$output"
+fi
+result=$?
+[[ $result -eq 0 ]] || exit "$result"
 echo "segmented compiler package status=Complete output=$(basename -- "$output")"

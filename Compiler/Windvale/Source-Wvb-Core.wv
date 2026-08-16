@@ -2468,6 +2468,9 @@ export fn Compilerˉsourceˉwvbˉtemporaryˉslot(
     Locals: u32,
     Mapping: bytes
 ) -> u32 {
+    if Bytesˉlength(Mapping) == 0u32 {
+        return Parameters + Locals + Temporary;
+    }
     return Parameters + Locals + Bytesˉreadˉu32ˉlittle(
         Mapping, Temporary * 4u32
     );

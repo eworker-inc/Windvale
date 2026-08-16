@@ -51,23 +51,12 @@ export fn Compilerˉsourceˉwvbˉidentityˉtemporaryˉslots(
     Firstˉtemporary: u32,
     Temporaryˉcount: u32
 ) -> Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation {
-    var Mapping: bytes = Empty(Wir);
-    var Shapes: bytes = Empty(Wir);
-    var Temporary: u32 = 0u32;
-    while Temporary < Temporaryˉcount {
-        Mapping = Bytesˉconcat(
-            Mapping, Bytesˉfromˉu32ˉlittle(Temporary)
-        );
-        Shapes = Bytesˉconcat(
-            Shapes,
-            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
-                Wir,
-                Temporariesˉoffset +
-                    (Firstˉtemporary + Temporary) * 4u32
-            ))
-        );
-        Temporary = Temporary + 1u32;
-    }
+    let Mapping: bytes = Empty(Wir);
+    let Shapes: bytes = Bytesˉslice(
+        Wir,
+        Temporariesˉoffset + Firstˉtemporary * 4u32,
+        Temporaryˉcount * 4u32
+    );
     return Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation(
         Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Valid,
         Temporaryˉcount,

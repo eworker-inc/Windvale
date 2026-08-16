@@ -2,11 +2,16 @@
 setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~3"=="" goto :usage
-if not "%~4"=="" goto :usage
+if not "%~5"=="" goto :usage
 echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 if /I not "%~x3"==".exe" goto :usage
+set "DevelopmentCache=0"
+if "%~4"=="" goto :arguments_ready
+if /I not "%~4"=="--development-cache" goto :usage
+set "DevelopmentCache=1"
 
+:arguments_ready
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Input=%~f2"
@@ -58,7 +63,11 @@ echo(%NativeEntry%| findstr /r /x "[0-9][0-9]*" >nul || goto :cleanup
 echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || goto :cleanup
 
 echo segmented compiler package step=container fragments=%FragmentCount% entry=%NativeEntry%
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%"
+if "%DevelopmentCache%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%" windows
+) else (
+    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%"
+)
 set "Result=%ERRORLEVEL%"
 if "%Result%"=="0" echo segmented compiler package status=Complete output=%~nx3
 
@@ -68,5 +77,5 @@ rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%
 
 :usage
->&2 echo Usage: Tools\Native\Package-Segmented-Compiler-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^>
+>&2 echo Usage: Tools\Native\Package-Segmented-Compiler-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^> [--development-cache]
 exit /b 64

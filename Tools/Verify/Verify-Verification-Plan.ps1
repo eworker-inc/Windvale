@@ -193,6 +193,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'source compiler compilation benchmark'
+        Paths = @('Tools/Native/Measure-Source-Wvb-Compilation.ps1')
+        Suites = @(
+            'seed',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Seed native runtime-service source transfer'
         Paths = @(
             'Runtime/Windvale/Native-X64-Utf8-Service-Core.wvproj',
@@ -354,6 +367,13 @@ $NativeCases = @(
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'segmented compiler packaging benchmark'
+        Paths = @('Tools/Native/Measure-Segmented-Compiler-Packaging.ps1')
+        Suites = @('segmented-compiler-toolset-reconstruction')
         Gaps = @()
         VerifyPlan = $false
     },

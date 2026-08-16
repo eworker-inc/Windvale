@@ -174,6 +174,13 @@ Canonical WVB admits 8,192 combined parameter/local slots. The current Windvale-
 
 Every WVIR temporary becomes a WVB local after the function's parameter and user-local slots. A concrete WVLB local shape maps directly to WVB metadata; an inferred WVLB shape marker is resolved from the first verified WVIR store for that slot. Each operation loads its temporary operands, executes one WVB instruction, and stores a result temporary when present. The operand stack is therefore empty between WVIR operations and at every basic-block boundary.
 
+The common identity temporary-slot allocation is represented by an empty mapping
+and computes `parameters + locals + temporary` directly. Its temporary shapes are
+an immutable slice of the already validated WIR shape table. Only the lifetime
+allocator materializes a nonidentity temporary-to-slot mapping. This avoids two
+incremental four-byte construction chains per temporary while preserving local
+indices, shapes, emitted instructions, and canonical WVB bytes.
+
 The backend makes two deterministic passes over each function. The first computes every block byte offset, exact function code length, and maximum operand-stack depth. The second emits code using those offsets, so branches never require mutable backpatching.
 
 `Boolˉphi = 64` is typed control evidence rather than a new WVB opcode. It has zero operation bytes. Each unconditional predecessor jump to a phi join emits the selected Boolean temporary load and phi-result local store immediately before the ordinary jump. The right-operand block is reached only by the conditional branch, so skipped short-circuit operands retain no bytecode execution path. WVIR validation forbids a conditional or third predecessor from targeting such a join.
@@ -216,13 +223,26 @@ one data entry in 308 bytes with SHA-256
 The optimized module passes the compiler-aligned verifier and executes with result
 `42` in the native WVB runner.
 
-An alternating two-pair Windows hosted-tool measurement over the complete
-13-module compiler-tool closure observed optimized compilation averaging 49.17
-seconds and complete emission averaging 51.79 seconds, a 5.1% reduction. The
-optimized closure contains 415 instead of 442 functions and is 926,872 instead of
-951,029 bytes, a 2.54% reduction. Both runs in each mode produced identical SHA-256
-values; timing is performance evidence for this implementation and machine, not a
-portable semantic guarantee or a fixed threshold.
+An alternating two-pair Windows hosted-tool measurement over the current complete
+13-module compiler-tool closure observed optimized compilation averaging 45.861
+seconds and complete emission averaging 46.400 seconds. The optimized closure
+contains 415 instead of 442 functions and is 926,108 instead of 950,265 bytes, a
+2.54% reduction. Both runs in each mode produced identical SHA-256 values.
+
+A retained pre-implicit-mapping compiler processed the same current closure with
+the same harness in 46.305 seconds optimized and 46.089 seconds complete. The new
+compiler was 0.96% faster in optimized mode while the complete-mode difference was
+0.67% slower and within the observed run variation. Both compilers produced the
+same optimized and complete bytes. The implicit identity therefore has direct
+allocation and byte-identity evidence, but this small sample does not claim a
+portable timing improvement or fixed threshold.
+
+`Tools/Native/Measure-Source-Wvb-Compilation.ps1` makes that comparison
+repeatable. It reads the canonical Project 2 source order, alternates optimized
+and complete runs to reduce ordering bias, requires byte-identical output within
+each mode, and emits per-run and aggregate JSON. The compiler application digest,
+source count, output sizes, and output digests are included so results from
+different binaries or closures are not silently combined.
 
 `Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers inferred record, enum, and text locals; named literals; canonical record/enum grouping and ordering; every primitive record field plus enum fields; nominal parameters/results/locals/temporaries; multiline trailing commas; and all six nominal WVIR operations. Both backends produce the exact 1,782-byte WVB module with SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`; it executes with result `11`.
 

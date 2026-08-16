@@ -28,10 +28,11 @@ Tools\Native\Package-Hosted-Wvb.cmd <profile> <input.wvb> <output.exe|output.elf
 ./Tools/Native/Package-Hosted-Wvb.sh <profile> <input.wvb> <output.elf|output.exe> [linux|windows]
 Tools\Native\Package-Hosted-Wvb.cmd image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.exe>
 ./Tools/Native/Package-Hosted-Wvb.sh image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.elf>
-Tools\Native\Package-Segmented-Compiler-Wvb.cmd <profile> <input.wvb> <output.exe>
-./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile> <input.wvb> <output.elf>
+Tools\Native\Package-Segmented-Compiler-Wvb.cmd <profile> <input.wvb> <output.exe> [--development-cache]
+./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile> <input.wvb> <output.elf> [--development-cache]
 Tools\Native\Construct-Segmented-Compiler-Toolset.cmd <existing-separate-output-directory>
 ./Tools/Native/Construct-Segmented-Compiler-Toolset.sh <existing-separate-output-directory>
+pwsh -NoProfile -File Tools/Native/Measure-Segmented-Compiler-Packaging.ps1 -InputWvb <input.wvb> [-Profile <1-through-7>]
 ```
 
 Omitting the optional target preserves the original current-host behavior.
@@ -41,6 +42,25 @@ the result. The output suffix must match the selected target. Wrong argument
 count, invalid profile or target, or wrong suffix returns 64. Any failed
 digest, native child, status-line admission, or publication returns nonzero and
 does not treat a rejected segment request as loop completion.
+
+The segmented command stages, links, and transports the compiler image freshly
+by default and when `--development-cache` is present. The optional flag applies
+Decision 0554's complete content-addressed checkpoint only to final hosted
+application construction. A hit revalidates the complete key, cached manifest,
+application bytes, digest, and executable mode before materializing a fresh
+destination. Invalid entries fail closed. The default path, reconstruction
+owners, GitHub shards, and qualification remain cache-independent.
+
+`Measure-Segmented-Compiler-Packaging.ps1` creates an isolated empty cache,
+requires a `Created` run followed by a `Hit`, compares their complete application
+bytes, and reports cold and warm elapsed time as JSON. It is measurement tooling,
+not a product-performance threshold or qualification shortcut.
+
+The initial Windows x64 profile-7 measurement used a 950,265-byte source compiler
+WVB. Cold construction took 270.088 seconds and warm construction took 101.729
+seconds, a 2.66 times speedup. Both paths produced the same 28,313,600-byte
+application with SHA-256
+`1ee8066b91834bdd1d943a34c5bee9dd8e78aba0abf6015bdc8d478ad3a10c2e`.
 
 Before lowering begins, the command verifies the exact `SHA256SUMS` inventory,
 all 72 tool artifacts, nine target-specific fixed service leaves, and the
