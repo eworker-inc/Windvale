@@ -2,6 +2,7 @@ module Osˉfat32ˉblockˉreadˉtransactionˉselfˉtest profile portable;
 
 import Fat32ˉblockˉreadˉtransaction as Block;
 import Fat32ˉblockˉproviderˉprotocol as Protocol;
+import Fat32ˉblockˉexchangeˉstate as State;
 
 data Empty: bytes = [];
 
@@ -83,6 +84,17 @@ fn Response(
     Result = Appendˉu32(Result, Plan.Byteˉcount);
     Result = Appendˉu64(Result, Reference);
     return Bytesˉconcat(Result, Value);
+}
+
+fn Exchangeˉplan(
+    Exchange: State.Fat32ˉblockˉexchange
+) -> Block.Fat32ˉblockˉreadˉplan {
+    return Block.Fat32ˉblockˉreadˉplan(
+        Block.Fat32ˉblockˉplanˉstatus.Valid,
+        Exchange.Planˉgeneration, Exchange.Planˉsequence,
+        Exchange.Planˉnextˉsequence, Exchange.Deviceˉsector,
+        Exchange.Sectorˉcount, Exchange.Byteˉcount
+    );
 }
 
 export fn Main() -> i32 {
@@ -186,5 +198,125 @@ export fn Main() -> i32 {
     if Protocol.Fat32ˉblockˉproviderˉresponseˉisˉvalid(
         Plan, 55u64, Response(Plan, 55u64, 1u32, Payload(1u32))
     ) { return 23; }
+
+    let Bound: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbind(Capability, 77u64, 55u64);
+    if Bound.Status != State.Fat32ˉblockˉexchangeˉstatus.Success ||
+        Bound.Phase != State.Fat32ˉblockˉexchangeˉphase.Ready ||
+        Bound.Nextˉsequence != 1u32 { return 24; }
+    let Invalidˉbinding: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbind(Capability, 0u64, 55u64);
+    if Invalidˉbinding.Status !=
+        State.Fat32ˉblockˉexchangeˉstatus.Invalidˉbinding ||
+        Invalidˉbinding.Phase != State.Fat32ˉblockˉexchangeˉphase.Dead {
+        return 25;
+    }
+    let Begun: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbegin(Bound, 7u32, 1u64, 2u32);
+    if Begun.Phase != State.Fat32ˉblockˉexchangeˉphase.Awaiting ||
+        Begun.Planˉsequence != 1u32 || Bytesˉlength(Begun.Request) != 48u32 ||
+        Begun.Dispatched { return 26; }
+    let Busy: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbegin(Begun, 7u32, 2u64, 1u32);
+    if Busy.Status != State.Fat32ˉblockˉexchangeˉstatus.Busy ||
+        Busy.Planˉsequence != 1u32 { return 27; }
+    let Early: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcomplete(
+            Begun, 77u64, 7u32,
+            Response(Exchangeˉplan(Begun), 55u64, 0u32, Payload(1024u32))
+        );
+    if Early.Status != State.Fat32ˉblockˉexchangeˉstatus.Notˉdispatched ||
+        Early.Phase != State.Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return 28;
+    }
+    let Wrongˉendpoint: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉdispatch(Begun, 78u64);
+    if Wrongˉendpoint.Status != State.Fat32ˉblockˉexchangeˉstatus.Stale ||
+        Wrongˉendpoint.Dispatched { return 29; }
+    let Dispatched: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉdispatch(Begun, 77u64);
+    if Dispatched.Status != State.Fat32ˉblockˉexchangeˉstatus.Success ||
+        !Dispatched.Dispatched { return 30; }
+    let Cancelled: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcancel(Dispatched, 77u64);
+    if Cancelled.Status != State.Fat32ˉblockˉexchangeˉstatus.Cancelled ||
+        Cancelled.Phase != State.Fat32ˉblockˉexchangeˉphase.Stopping ||
+        Cancelled.Nextˉsequence != 2u32 { return 31; }
+    let Pending: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉfinishˉteardown(Cancelled, false);
+    if Pending.Status !=
+        State.Fat32ˉblockˉexchangeˉstatus.Teardownˉpending { return 32; }
+    let Dead: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉfinishˉteardown(Cancelled, true);
+    if Dead.Phase != State.Fat32ˉblockˉexchangeˉphase.Dead ||
+        Dead.Endpointˉreference != 0u64 || Dead.Blockˉreference != 0u64 {
+        return 33;
+    }
+
+    let Begunˉagain: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbegin(Bound, 7u32, 1u64, 2u32);
+    let Cancelledˉearly: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcancel(Begunˉagain, 77u64);
+    if Cancelledˉearly.Phase != State.Fat32ˉblockˉexchangeˉphase.Ready ||
+        Cancelledˉearly.Nextˉsequence != 1u32 { return 34; }
+    let Begunˉcomplete: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbegin(
+            Cancelledˉearly, 7u32, 1u64, 2u32
+        );
+    let Sentˉcomplete: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉdispatch(Begunˉcomplete, 77u64);
+    let Finished: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcomplete(
+            Sentˉcomplete, 77u64, 7u32,
+            Response(
+                Exchangeˉplan(Sentˉcomplete), 55u64, 0u32,
+                Payload(1024u32)
+            )
+        );
+    if Finished.Status != State.Fat32ˉblockˉexchangeˉstatus.Success ||
+        Finished.Phase != State.Fat32ˉblockˉexchangeˉphase.Ready ||
+        Finished.Nextˉsequence != 2u32 ||
+        Finished.Resultˉstatus !=
+            State.Fat32ˉblockˉexchangeˉresultˉstatus.Complete {
+        return 35;
+    }
+    let Duplicate: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcomplete(
+            Finished, 77u64, 7u32,
+            Response(
+                Exchangeˉplan(Sentˉcomplete), 55u64, 0u32,
+                Payload(1024u32)
+            )
+        );
+    if Duplicate.Status != State.Fat32ˉblockˉexchangeˉstatus.Wrongˉphase ||
+        Duplicate.Nextˉsequence != 2u32 { return 36; }
+    let Begunˉmalformed: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbegin(Finished, 7u32, 3u64, 1u32);
+    let Sentˉmalformed: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉdispatch(Begunˉmalformed, 77u64);
+    let Malformed: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉcomplete(
+            Sentˉmalformed, 77u64, 7u32, Empty
+        );
+    if Malformed.Phase != State.Fat32ˉblockˉexchangeˉphase.Ready ||
+        Malformed.Nextˉsequence != 3u32 ||
+        Malformed.Resultˉstatus !=
+            State.Fat32ˉblockˉexchangeˉresultˉstatus.Invalidˉpayload {
+        return 37;
+    }
+    let Begunˉlost: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉbegin(Malformed, 7u32, 4u64, 1u32);
+    let Sentˉlost: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉdispatch(Begunˉlost, 77u64);
+    let Peerˉlost: State.Fat32ˉblockˉexchange =
+        State.Fat32ˉblockˉexchangeˉpeerˉexit(Sentˉlost, 77u64);
+    if Peerˉlost.Status !=
+            State.Fat32ˉblockˉexchangeˉstatus.Providerˉlost ||
+        Peerˉlost.Phase != State.Fat32ˉblockˉexchangeˉphase.Stopping ||
+        Peerˉlost.Nextˉsequence != 4u32 ||
+        Peerˉlost.Resultˉstatus !=
+            State.Fat32ˉblockˉexchangeˉresultˉstatus.Providerˉlost {
+        return 38;
+    }
     return 47;
 }

@@ -1,6 +1,6 @@
 # Decision 0699: Freeze the FAT32 block-provider wire protocol
 
-- Status: Implemented architecture-neutral native candidate; endpoint loop pending
+- Status: Implemented architecture-neutral native candidate; lifecycle advanced by Decision 0700
 - Date: 2026-08-16
 - Advances: [filesystem implementation plan](../Project/Windvale-Filesystem-Implementation-Plan.md)
 - Contract: [FAT32 block-provider protocol 1](../../Specifications/Windvale-Os-Fat32-Block-Provider-Protocol.md)
@@ -23,13 +23,13 @@ and byte count that produced it.
 
 The 8,726-byte protocol WVB has SHA-256
 `5d37a54cc6e6763aca7f1e2c76d128cedae49d5febeef6ffa85d1d4de7e1348e`.
-Its composed 22-case owner returns 47 and pins paired Windows/Linux images.
+Its composed 37-case owner returns 47 and pins paired Windows/Linux images.
 
 ## Consequences
 
-The next filesystem-process increment can send and receive one capacity-one
-block operation without inventing a driver-specific message. Endpoint binding,
-peer-loss wakeup, live driver execution, and media-change handling remain.
+Decision 0700 binds this protocol to one capacity-one exchange and defines
+dispatch, completion, cancellation, peer loss, and teardown. The privileged
+endpoint adapter, live driver execution, and media-change handling remain.
 
 ## Reconsideration triggers
 

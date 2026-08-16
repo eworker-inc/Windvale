@@ -83,12 +83,14 @@ volume policy checks a 512-byte boot sector against a separately admitted
 address them, and selects the mirrored or active FAT. The chain policy locates
 four-byte entries, masks their reserved high nibble, classifies special values,
 and rejects cycles, truncation, trailing entries, and work beyond 4,096
-clusters. All 45 focused cases pass; exact block-provider reads and directory/
-file parsing remain next. A separate 14-case block-read transaction now bounds
+clusters. All 45 focused cases pass; directory/file parsing remains next. The
+block-read transaction bounds
 the granted device extent, read right, generation, sequence, eight-sector
-ceiling, and exact completion bytes. Its owner now has 22 cases and composes
-the exact `WVBR 1`/`WVBP 1` provider messages; endpoint execution remains
-pending.
+ceiling, and exact completion bytes. Its 37-case owner composes the exact
+`WVBR 1`/`WVBP 1` provider messages with a capacity-one exchange lifecycle.
+Construction, dispatch, exact-once completion, pre/post-dispatch cancellation,
+peer loss, and teardown are bounded; the privileged endpoint syscall adapter,
+block driver, and directory/file data reads remain pending.
 
 ## .NET retirement result
 

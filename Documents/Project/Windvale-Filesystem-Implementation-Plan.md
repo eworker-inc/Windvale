@@ -110,11 +110,12 @@ stale, unavailable, lost-provider, and invalid-payload completion. Its 14-case
 native owner passes; this is policy evidence rather than a hardware-driver
 claim.
 
-`WVBR 1`/`WVBP 1` now provide the exact capacity-one provider wire envelope.
-They bind generation, sequence, absolute sector geometry, byte count, and the
-nonzero block reference, allow payload only on exact completion, and map a
-malformed reply to invalid completion without retry. The endpoint send/receive
-loop and driver remain pending.
+`WVBR 1`/`WVBP 1` provide the exact capacity-one provider wire envelope. The
+implemented exchange lifecycle now binds it to one endpoint and one grant,
+separates construction from dispatch, rejects concurrent and duplicate
+completion, consumes dispatched sequences exactly once, distinguishes
+pre-dispatch from post-dispatch cancellation, and requires teardown after peer
+loss. The privileged endpoint syscall adapter and block driver remain pending.
 
 ### Filesystem slice 5: boot and application integration
 

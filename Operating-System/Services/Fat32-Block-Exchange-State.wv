@@ -1,0 +1,346 @@
+module Fat32ˉblockˉexchangeˉstate profile portable;
+
+import Fat32ˉblockˉreadˉtransaction as Block;
+import Fat32ˉblockˉproviderˉprotocol as Protocol;
+
+const MAXIMUM_SEQUENCE: u32 = 4294967295u32;
+data Empty: bytes = [];
+
+export enum Fat32ˉblockˉexchangeˉphase {
+    Ready = 0; Awaiting = 1; Stopping = 2; Dead = 3;
+}
+
+export enum Fat32ˉblockˉexchangeˉstatus {
+    Success = 0; Invalidˉbinding = 1; Wrongˉphase = 2;
+    Invalidˉrequest = 3; Busy = 4; Notˉdispatched = 5;
+    Stale = 6; Cancelled = 7; Providerˉlost = 8;
+    Teardownˉpending = 9; Sequenceˉexhausted = 10;
+}
+
+export enum Fat32ˉblockˉexchangeˉresultˉstatus {
+    None = 0; Complete = 1; Stale = 2; Unavailable = 3;
+    Providerˉlost = 4; Invalidˉpayload = 5;
+}
+
+export record Fat32ˉblockˉexchange {
+    Status: Fat32ˉblockˉexchangeˉstatus;
+    Phase: Fat32ˉblockˉexchangeˉphase;
+    Firstˉsector: u64;
+    Grantedˉsectorˉcount: u64;
+    Capabilityˉgeneration: u32;
+    Canˉread: bool;
+    Endpointˉreference: u64;
+    Blockˉreference: u64;
+    Nextˉsequence: u32;
+    Planˉgeneration: u32;
+    Planˉsequence: u32;
+    Planˉnextˉsequence: u32;
+    Deviceˉsector: u64;
+    Sectorˉcount: u32;
+    Byteˉcount: u32;
+    Request: bytes;
+    Dispatched: bool;
+    Resultˉstatus: Fat32ˉblockˉexchangeˉresultˉstatus;
+    Resultˉpayload: bytes;
+}
+
+fn Withˉstatus(
+    Status: Fat32ˉblockˉexchangeˉstatus,
+    State: Fat32ˉblockˉexchange
+) -> Fat32ˉblockˉexchange {
+    return Fat32ˉblockˉexchange(
+        Status, State.Phase, State.Firstˉsector,
+        State.Grantedˉsectorˉcount, State.Capabilityˉgeneration,
+        State.Canˉread, State.Endpointˉreference, State.Blockˉreference,
+        State.Nextˉsequence, State.Planˉgeneration, State.Planˉsequence,
+        State.Planˉnextˉsequence, State.Deviceˉsector,
+        State.Sectorˉcount, State.Byteˉcount, State.Request,
+        State.Dispatched, State.Resultˉstatus, State.Resultˉpayload
+    );
+}
+
+fn Capability(State: Fat32ˉblockˉexchange) -> Block.Fat32ˉblockˉcapability {
+    return Block.Fat32ˉblockˉcapability(
+        Block.Fat32ˉblockˉcapabilityˉstatus.Valid,
+        State.Firstˉsector, State.Grantedˉsectorˉcount,
+        State.Capabilityˉgeneration, State.Canˉread
+    );
+}
+
+fn Plan(State: Fat32ˉblockˉexchange) -> Block.Fat32ˉblockˉreadˉplan {
+    return Block.Fat32ˉblockˉreadˉplan(
+        Block.Fat32ˉblockˉplanˉstatus.Valid,
+        State.Planˉgeneration, State.Planˉsequence,
+        State.Planˉnextˉsequence, State.Deviceˉsector,
+        State.Sectorˉcount, State.Byteˉcount
+    );
+}
+
+fn Resultˉstatus(
+    Result: Block.Fat32ˉblockˉreadˉresult
+) -> Fat32ˉblockˉexchangeˉresultˉstatus {
+    if Result.Status == Block.Fat32ˉblockˉresultˉstatus.Complete {
+        return Fat32ˉblockˉexchangeˉresultˉstatus.Complete;
+    }
+    if Result.Status == Block.Fat32ˉblockˉresultˉstatus.Stale {
+        return Fat32ˉblockˉexchangeˉresultˉstatus.Stale;
+    }
+    if Result.Status == Block.Fat32ˉblockˉresultˉstatus.Unavailable {
+        return Fat32ˉblockˉexchangeˉresultˉstatus.Unavailable;
+    }
+    if Result.Status == Block.Fat32ˉblockˉresultˉstatus.Providerˉlost {
+        return Fat32ˉblockˉexchangeˉresultˉstatus.Providerˉlost;
+    }
+    return Fat32ˉblockˉexchangeˉresultˉstatus.Invalidˉpayload;
+}
+
+fn Ready(
+    Status: Fat32ˉblockˉexchangeˉstatus,
+    State: Fat32ˉblockˉexchange,
+    Nextˉsequence: u32,
+    Resultˉstatus: Fat32ˉblockˉexchangeˉresultˉstatus,
+    Resultˉpayload: bytes
+) -> Fat32ˉblockˉexchange {
+    return Fat32ˉblockˉexchange(
+        Status, Fat32ˉblockˉexchangeˉphase.Ready,
+        State.Firstˉsector, State.Grantedˉsectorˉcount,
+        State.Capabilityˉgeneration, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference, Nextˉsequence,
+        0u32, 0u32, 0u32, 0u64, 0u32, 0u32, Empty, false,
+        Resultˉstatus, Resultˉpayload
+    );
+}
+
+fn Stopping(
+    Status: Fat32ˉblockˉexchangeˉstatus,
+    State: Fat32ˉblockˉexchange,
+    Nextˉsequence: u32,
+    Resultˉstatus: Fat32ˉblockˉexchangeˉresultˉstatus
+) -> Fat32ˉblockˉexchange {
+    return Fat32ˉblockˉexchange(
+        Status, Fat32ˉblockˉexchangeˉphase.Stopping,
+        State.Firstˉsector, State.Grantedˉsectorˉcount,
+        State.Capabilityˉgeneration, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference, Nextˉsequence,
+        State.Planˉgeneration, State.Planˉsequence,
+        State.Planˉnextˉsequence, State.Deviceˉsector,
+        State.Sectorˉcount, State.Byteˉcount, Empty, State.Dispatched,
+        Resultˉstatus, Empty
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉbind(
+    Capability: Block.Fat32ˉblockˉcapability,
+    Endpointˉreference: u64,
+    Blockˉreference: u64
+) -> Fat32ˉblockˉexchange {
+    if Capability.Status != Block.Fat32ˉblockˉcapabilityˉstatus.Valid ||
+        Capability.Generation == 0u32 || Endpointˉreference == 0u64 ||
+        Blockˉreference == 0u64 {
+        return Fat32ˉblockˉexchange(
+            Fat32ˉblockˉexchangeˉstatus.Invalidˉbinding,
+            Fat32ˉblockˉexchangeˉphase.Dead,
+            0u64, 0u64, 0u32, false, 0u64, 0u64, 0u32,
+            0u32, 0u32, 0u32, 0u64, 0u32, 0u32, Empty, false,
+            Fat32ˉblockˉexchangeˉresultˉstatus.None, Empty
+        );
+    }
+    return Fat32ˉblockˉexchange(
+        Fat32ˉblockˉexchangeˉstatus.Success,
+        Fat32ˉblockˉexchangeˉphase.Ready,
+        Capability.Firstˉsector, Capability.Sectorˉcount,
+        Capability.Generation, Capability.Canˉread,
+        Endpointˉreference, Blockˉreference, 1u32,
+        0u32, 0u32, 0u32, 0u64, 0u32, 0u32, Empty, false,
+        Fat32ˉblockˉexchangeˉresultˉstatus.None, Empty
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉbegin(
+    State: Fat32ˉblockˉexchange,
+    Presentedˉgeneration: u32,
+    Relativeˉsector: u64,
+    Sectorˉcount: u32
+) -> Fat32ˉblockˉexchange {
+    if State.Phase == Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Busy, State);
+    }
+    if State.Phase != Fat32ˉblockˉexchangeˉphase.Ready {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Wrongˉphase, State);
+    }
+    let Currentˉcapability: Block.Fat32ˉblockˉcapability = Capability(State);
+    let Currentˉplan: Block.Fat32ˉblockˉreadˉplan =
+        Block.Fat32ˉblockˉreadˉplanˉadmit(
+            Currentˉcapability, Presentedˉgeneration,
+            State.Nextˉsequence, State.Nextˉsequence,
+            Relativeˉsector, Sectorˉcount
+        );
+    if Currentˉplan.Status != Block.Fat32ˉblockˉplanˉstatus.Valid {
+        return Withˉstatus(
+            Fat32ˉblockˉexchangeˉstatus.Invalidˉrequest, State
+        );
+    }
+    let Request: bytes = Protocol.Fat32ˉblockˉproviderˉrequest(
+        Currentˉplan, State.Blockˉreference
+    );
+    if Bytesˉlength(Request) == 0u32 {
+        return Withˉstatus(
+            Fat32ˉblockˉexchangeˉstatus.Invalidˉbinding, State
+        );
+    }
+    return Fat32ˉblockˉexchange(
+        Fat32ˉblockˉexchangeˉstatus.Success,
+        Fat32ˉblockˉexchangeˉphase.Awaiting,
+        State.Firstˉsector, State.Grantedˉsectorˉcount,
+        State.Capabilityˉgeneration, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        State.Nextˉsequence, Currentˉplan.Generation,
+        Currentˉplan.Sequence, Currentˉplan.Nextˉsequence,
+        Currentˉplan.Deviceˉsector, Currentˉplan.Sectorˉcount,
+        Currentˉplan.Byteˉcount, Request, false,
+        Fat32ˉblockˉexchangeˉresultˉstatus.None, Empty
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉdispatch(
+    State: Fat32ˉblockˉexchange,
+    Endpointˉreference: u64
+) -> Fat32ˉblockˉexchange {
+    if State.Phase != Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Wrongˉphase, State);
+    }
+    if Endpointˉreference != State.Endpointˉreference {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Stale, State);
+    }
+    if State.Dispatched {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Busy, State);
+    }
+    return Fat32ˉblockˉexchange(
+        Fat32ˉblockˉexchangeˉstatus.Success, State.Phase,
+        State.Firstˉsector, State.Grantedˉsectorˉcount,
+        State.Capabilityˉgeneration, State.Canˉread,
+        State.Endpointˉreference, State.Blockˉreference,
+        State.Nextˉsequence, State.Planˉgeneration,
+        State.Planˉsequence, State.Planˉnextˉsequence,
+        State.Deviceˉsector, State.Sectorˉcount, State.Byteˉcount,
+        State.Request, true, State.Resultˉstatus, State.Resultˉpayload
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉcomplete(
+    State: Fat32ˉblockˉexchange,
+    Endpointˉreference: u64,
+    Currentˉgeneration: u32,
+    Response: bytes
+) -> Fat32ˉblockˉexchange {
+    if State.Phase != Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Wrongˉphase, State);
+    }
+    if Endpointˉreference != State.Endpointˉreference {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Stale, State);
+    }
+    if !State.Dispatched {
+        return Withˉstatus(
+            Fat32ˉblockˉexchangeˉstatus.Notˉdispatched, State
+        );
+    }
+    let Currentˉplan: Block.Fat32ˉblockˉreadˉplan = Plan(State);
+    let Result: Block.Fat32ˉblockˉreadˉresult =
+        Protocol.Fat32ˉblockˉproviderˉfinish(
+            Currentˉplan, State.Blockˉreference,
+            Currentˉgeneration, Response
+        );
+    let Completionˉstatus: Fat32ˉblockˉexchangeˉresultˉstatus =
+        Resultˉstatus(Result);
+    if State.Planˉnextˉsequence == MAXIMUM_SEQUENCE {
+        return Stopping(
+            Fat32ˉblockˉexchangeˉstatus.Sequenceˉexhausted,
+            State, State.Planˉnextˉsequence, Completionˉstatus
+        );
+    }
+    if Completionˉstatus ==
+        Fat32ˉblockˉexchangeˉresultˉstatus.Providerˉlost {
+        return Stopping(
+            Fat32ˉblockˉexchangeˉstatus.Providerˉlost,
+            State, State.Planˉnextˉsequence, Completionˉstatus
+        );
+    }
+    return Ready(
+        Fat32ˉblockˉexchangeˉstatus.Success,
+        State, State.Planˉnextˉsequence,
+        Completionˉstatus, Result.Payload
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉcancel(
+    State: Fat32ˉblockˉexchange,
+    Endpointˉreference: u64
+) -> Fat32ˉblockˉexchange {
+    if State.Phase != Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Wrongˉphase, State);
+    }
+    if Endpointˉreference != State.Endpointˉreference {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Stale, State);
+    }
+    if !State.Dispatched {
+        return Ready(
+            Fat32ˉblockˉexchangeˉstatus.Cancelled, State,
+            State.Nextˉsequence,
+            Fat32ˉblockˉexchangeˉresultˉstatus.None, Empty
+        );
+    }
+    return Stopping(
+        Fat32ˉblockˉexchangeˉstatus.Cancelled, State,
+        State.Planˉnextˉsequence,
+        Fat32ˉblockˉexchangeˉresultˉstatus.None
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉpeerˉexit(
+    State: Fat32ˉblockˉexchange,
+    Endpointˉreference: u64
+) -> Fat32ˉblockˉexchange {
+    if State.Phase != Fat32ˉblockˉexchangeˉphase.Ready &&
+        State.Phase != Fat32ˉblockˉexchangeˉphase.Awaiting {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Wrongˉphase, State);
+    }
+    if Endpointˉreference != State.Endpointˉreference {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Stale, State);
+    }
+    var Nextˉsequence: u32 = State.Nextˉsequence;
+    var Completionˉstatus: Fat32ˉblockˉexchangeˉresultˉstatus =
+        Fat32ˉblockˉexchangeˉresultˉstatus.None;
+    if State.Phase == Fat32ˉblockˉexchangeˉphase.Awaiting {
+        Completionˉstatus =
+            Fat32ˉblockˉexchangeˉresultˉstatus.Providerˉlost;
+        if State.Dispatched {
+            Nextˉsequence = State.Planˉnextˉsequence;
+        }
+    }
+    return Stopping(
+        Fat32ˉblockˉexchangeˉstatus.Providerˉlost,
+        State, Nextˉsequence, Completionˉstatus
+    );
+}
+
+export fn Fat32ˉblockˉexchangeˉfinishˉteardown(
+    State: Fat32ˉblockˉexchange,
+    Providerˉreleased: bool
+) -> Fat32ˉblockˉexchange {
+    if State.Phase != Fat32ˉblockˉexchangeˉphase.Stopping {
+        return Withˉstatus(Fat32ˉblockˉexchangeˉstatus.Wrongˉphase, State);
+    }
+    if !Providerˉreleased {
+        return Withˉstatus(
+            Fat32ˉblockˉexchangeˉstatus.Teardownˉpending, State
+        );
+    }
+    return Fat32ˉblockˉexchange(
+        Fat32ˉblockˉexchangeˉstatus.Success,
+        Fat32ˉblockˉexchangeˉphase.Dead,
+        0u64, 0u64, 0u32, false, 0u64, 0u64,
+        State.Nextˉsequence, 0u32, 0u32, 0u32,
+        0u64, 0u32, 0u32, Empty, false,
+        State.Resultˉstatus, State.Resultˉpayload
+    );
+}

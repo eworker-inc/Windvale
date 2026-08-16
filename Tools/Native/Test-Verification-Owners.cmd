@@ -26,7 +26,7 @@ goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Verification-Owners.txt"
-set "PlanDigest=1dc012e0a8f6a8a0a3aa154cd1c9cc6d294cfed7be74284c574b71382adca75e"
+set "PlanDigest=c34578e09f7eef5a9d61422faf6acfc91666d1114edae6ae95d44de94cff9bdd"
 certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"%PlanDigest%" >nul
 if errorlevel 1 (
     >&2 echo Native verification owner plan identity differs

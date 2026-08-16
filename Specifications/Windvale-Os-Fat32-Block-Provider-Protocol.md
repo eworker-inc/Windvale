@@ -30,9 +30,11 @@ completion. A malformed reply becomes invalid payload and is never retried.
 
 The protocol WVB is 8,726 bytes at SHA-256
 `5d37a54cc6e6763aca7f1e2c76d128cedae49d5febeef6ffa85d1d4de7e1348e`.
-The composed transaction/protocol owner has 22 cases, returns 47 on Windows,
-and pins deterministic Windows/Linux images.
+The protocol is composed with the capacity-one block-exchange lifecycle. Their
+37-case owner returns 47 on Windows and pins deterministic Windows/Linux
+images.
 
-This contract does not yet prove an endpoint send/receive loop, a hardware
-driver, DMA, media-change notification, partition discovery, or directory data
+The architecture-neutral exchange loop is implemented separately. This wire
+contract does not yet prove a privileged endpoint adapter, hardware driver,
+DMA, media-change notification, partition discovery, or directory data
 interpretation.
