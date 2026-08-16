@@ -265,6 +265,11 @@ return-to-init constructor with only the returning generation changed from 1 to
 publishes init's GS/continuation state, and executes the next `sysretq`. Source
 ownership reaches byte 27,469.
 
+Init's following 336-byte reply publication derives the checked generation-one
+constructor with operation 7 and retained client generation 2. Channel clearing,
+dispatcher/page-table activation, GS/continuation publication, zero completion,
+and the client `sysretq` remain shared. Source ownership reaches byte 27,805.
+
 The first restart policies are deliberately small:
 
 - `Never`;

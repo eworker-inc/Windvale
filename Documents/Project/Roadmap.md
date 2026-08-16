@@ -640,6 +640,8 @@ provenance, revocation, and consensus boundaries are named.
   generation-2 `sysretq` and reaches byte 27,138.
   The generation-adapted client return now delivers result 55 to init and
   reaches byte 27,469 through the next `sysretq`.
+  The adapted init reply for operation 7 and retained generation 2 now returns
+  zero to the client and reaches byte 27,805.
   Syscall/exception handler bodies, teardown, and live QEMU evidence remain.
 - Complete the application-start boundary first. The typed source admission and
   executable-publication check are implemented; checked user-buffer decoding,

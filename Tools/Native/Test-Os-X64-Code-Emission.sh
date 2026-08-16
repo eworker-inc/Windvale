@@ -632,4 +632,17 @@ verify "$work/ClientGenerationTwoReturnInitTransfer.elf" 41072 e57c926117d430ea0
 [[ $? -eq 97 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoReturnInitTransfer.bin" 0 "$work/ClientGenerationTwoReturnInitTransfer.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoReturnInitTransfer.exe" 37888 31a60d1b18a4bdb2f73b37e8e7141dcb9891196812101ba26cfcafbcaafbcbff || exit 1
-echo 'native os x64 code emission status=Passed projects=48 cases=288 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97 cross-host-images=Verified source-owned-bytes=27470 relocation-fields=245'
+echo 'step=client-generation-two-init-reply-publish-resume item=49/49'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Init-Reply-Publish-Resume-Emission.wvproj" "$work/ClientGenerationTwoInitReplyPublishResume.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoInitReplyPublishResume.wvb" 4944 1aa2e1875648d7bbf0e6db9328719682990c59518a27d5fe8d55950d639cee05 || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoInitReplyPublishResume.wvb" "$work/ClientGenerationTwoInitReplyPublishResume.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoInitReplyPublishResume.wvo" 42432 87f854a0b1a54f1efde6c70dbe1281fc365cb099ed1791f17a6a02d4d5224c48 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoInitReplyPublishResume.bin" "$work/ClientGenerationTwoInitReplyPublishResume.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoInitReplyPublishResume.bin" 41656 a7cded95095d0abb8a8f35704941fa0bcb7ecb2c2af0198eceff6ced5a089bb0 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoInitReplyPublishResume.bin" 0 "$work/ClientGenerationTwoInitReplyPublishResume.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoInitReplyPublishResume.elf" 49264 205324fcae6d30ae3f1f09a4971f452728487a4c37d6090cddb827b62db8f65b || exit 1
+"$work/ClientGenerationTwoInitReplyPublishResume.elf" >/dev/null
+[[ $? -eq 98 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoInitReplyPublishResume.bin" 0 "$work/ClientGenerationTwoInitReplyPublishResume.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoInitReplyPublishResume.exe" 43520 d99e034e63f3cdd9d4571d44684bfe7ef16da45caee09bd2c7a6a1bceca28b3d || exit 1
+echo 'native os x64 code emission status=Passed projects=49 cases=294 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98 cross-host-images=Verified source-owned-bytes=27806 relocation-fields=260'

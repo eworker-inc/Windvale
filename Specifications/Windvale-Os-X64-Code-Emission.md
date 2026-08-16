@@ -49,7 +49,7 @@ coordinator entry and fixed three-record ready/wait dispatcher. Verification
 pins its full fixture-equal SHA-256, exact entry displacement, coordinator
 offset, bounded record validation, scan construction, and paired host images.
 
-Ordered consumers now source-own the first 27,470 process-machine bytes and 245
+Ordered consumers now source-own the first 27,806 process-machine bytes and 260
 internal or external relocation fields through checked private construction, privileged
 entry, timer activation, provider entry, provider-return/init transfer, and
 init-return validation of the program, budget, and retained store/directory
@@ -66,13 +66,14 @@ recycled memory and returned generation state, bind the resume context, finish
 resource accounting, restore user registers, and execute the first generation-2
 `sysretq`, then validate the resumed processor, resource, mapping, alias, and
 context-record state, then adapt the checked user-transfer constructor by its
-single generation byte and execute the second generation-2 `sysretq`. The
-focused owner executes forty-eight projects and 288 cases with local results 50
-through 97, including the generation-adapted checked client return that delivers
-result 55 to init through its next `sysretq`.
+single generation byte and execute the second generation-2 `sysretq`, adapt the
+checked client return to deliver result 55 to init, and adapt checked init reply
+publication for operation 7 and retained generation 2 to return zero to the
+client. The focused owner executes forty-nine projects and 294 cases with local
+results 50 through 98.
 
 The module is a migration primitive. Coordinator relocation and channel/
-endpoint initialization are separate consumers. The following init handler,
+endpoint initialization are separate consumers. The following client handler,
 subsequent application lifecycle, remaining syscall and exception handlers,
 context switching, and live QEMU application execution remain before the
 reviewed process-machine fixture can be removed.

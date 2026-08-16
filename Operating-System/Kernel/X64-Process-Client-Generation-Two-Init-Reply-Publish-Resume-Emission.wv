@@ -1,0 +1,55 @@
+module X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉemission profile portable;
+
+import X64ˉprocessˉinitˉreplyˉpublishˉresumeˉemission as Base;
+
+data Internalˉdisplacements: bytes = [
+    194, 24, 0, 0, 176, 24, 0, 0, 158, 24, 0, 0, 140, 24, 0, 0,
+    118, 24, 0, 0, 104, 24, 0, 0, 90, 24, 0, 0, 76, 24, 0, 0,
+    33, 148, 255, 255, 21, 24, 0, 0, 4, 24, 0, 0, 243, 23, 0, 0,
+    218, 23, 0, 0, 62, 0, 0, 0
+];
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉbytes()
+    -> bytes {
+    let Original: bytes = Base.X64ˉprocessˉinitˉreplyˉpublishˉresumeˉbytes();
+    let Operation: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(7u32), 0u32, 1u32);
+    let Generation: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(2u32), 0u32, 1u32);
+    var Result: bytes = Bytesˉconcat(
+        Bytesˉslice(Original, 0u32, 44u32),
+        Bytesˉconcat(Operation, Bytesˉslice(Original, 45u32, 67u32))
+    );
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(Generation, Bytesˉslice(Original, 113u32, 223u32))
+    );
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉexternalˉfield()
+    -> u32 {
+    return Base.X64ˉprocessˉinitˉreplyˉpublishˉresumeˉexternalˉfield();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉexternalˉsymbol()
+    -> u32 {
+    return Base.X64ˉprocessˉinitˉreplyˉpublishˉresumeˉexternalˉsymbol();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉinternalˉfields()
+    -> bytes {
+    return Base.X64ˉprocessˉinitˉreplyˉpublishˉresumeˉinternalˉfields();
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉinternalˉdisplacements()
+    -> bytes {
+    return Internalˉdisplacements;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉfixtureˉoffset()
+    -> u32 {
+    return 27470u32;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉinitˉreplyˉpublishˉresumeˉfixtureˉend()
+    -> u32 {
+    return 27806u32;
+}

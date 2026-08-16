@@ -1118,7 +1118,30 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\ClientGenerationTwoReturnInitTransfer.elf" 41072 e57c926117d430ea068b294ec5d9bce0fe35bdf24a0463b15721bdd9b86f5775
 if errorlevel 1 goto :cleanup
-echo native os x64 code emission status=Passed projects=48 cases=288 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97 cross-host-images=Verified source-owned-bytes=27470 relocation-fields=245
+echo step=client-generation-two-init-reply-publish-resume item=49/49
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Init-Reply-Publish-Resume-Emission.wvproj" "%Work%\ClientGenerationTwoInitReplyPublishResume.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoInitReplyPublishResume.wvb" 4944 1aa2e1875648d7bbf0e6db9328719682990c59518a27d5fe8d55950d639cee05
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\ClientGenerationTwoInitReplyPublishResume.wvb" "%Work%\ClientGenerationTwoInitReplyPublishResume.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoInitReplyPublishResume.wvo" 42432 87f854a0b1a54f1efde6c70dbe1281fc365cb099ed1791f17a6a02d4d5224c48
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\ClientGenerationTwoInitReplyPublishResume.bin" "%Work%\ClientGenerationTwoInitReplyPublishResume.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoInitReplyPublishResume.bin" 41656 a7cded95095d0abb8a8f35704941fa0bcb7ecb2c2af0198eceff6ced5a089bb0
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\ClientGenerationTwoInitReplyPublishResume.bin" 0 "%Work%\ClientGenerationTwoInitReplyPublishResume.exe" >nul
+if errorlevel 1 goto :cleanup
+call "%Work%\ClientGenerationTwoInitReplyPublishResume.exe" >nul
+if not "%ERRORLEVEL%"=="98" goto :cleanup
+call :verify "%Work%\ClientGenerationTwoInitReplyPublishResume.exe" 43520 d99e034e63f3cdd9d4571d44684bfe7ef16da45caee09bd2c7a6a1bceca28b3d
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\ClientGenerationTwoInitReplyPublishResume.bin" 0 "%Work%\ClientGenerationTwoInitReplyPublishResume.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\ClientGenerationTwoInitReplyPublishResume.elf" 49264 205324fcae6d30ae3f1f09a4971f452728487a4c37d6090cddb827b62db8f65b
+if errorlevel 1 goto :cleanup
+echo native os x64 code emission status=Passed projects=49 cases=294 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98 cross-host-images=Verified source-owned-bytes=27806 relocation-fields=260
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"
