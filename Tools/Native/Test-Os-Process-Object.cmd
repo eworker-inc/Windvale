@@ -15,7 +15,7 @@ set "Status=1"
 call "%RepositoryRoot%\Tools\Native\Build-Os-Process-Object.cmd" "%Object%" >nul 2>&1
 if errorlevel 1 goto :failure
 for %%F in ("%Object%") do if not "%%~zF"=="956321" goto :failure
-certutil -hashfile "%Object%" SHA256 | findstr /i /x /c:"9f310ad538580bbc00f5dcf38428eac7daef78a5f78fc1bc95b22a4b4dad7b45" >nul
+certutil -hashfile "%Object%" SHA256 | findstr /i /x /c:"ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1" >nul
 if errorlevel 1 goto :failure
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Object%" >nul 2>&1
 if errorlevel 1 goto :failure

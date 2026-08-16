@@ -166,9 +166,11 @@ readiness token 46, and waits on endpoint `131072`. The current process-object
 constructor embeds the immutable image in the boot object. Probe 40 now releases
 the terminal generation-two client, first-fits process/object generation 3 at
 the same root, allocates its exact 85-page extent, and invokes the image,
-W^X-paging, record, and native-context constructors. This transaction remains
-private and non-runnable: it does not bind an endpoint, publish a resource-domain
-charge, create a ready thread, enter the provider, or accept a request.
+W^X-paging, record, and native-context constructors. It binds the record to the
+exact admitted `WVPR 1` request digest, advances endpoint slot 0 to generation
+2, reconstructs its empty channel, and publishes a fresh ready thread and
+process. The endpoint is provider-side only with client reference 0; the boot
+path does not dispatch the new thread or accept a request.
 Provider launch transaction 1 now admits its exact 48 RX plus 33 private-page
 partition, including a disjoint 17-page transfer region and 16-page stack, one
 process, one endpoint, readiness publication, rollback, stale
@@ -182,10 +184,10 @@ unchanged link addresses, and the complete normal plus two terminal-fault Probe
 40 QEMU gate passes after their private invocation. The allocation contains four
 kernel-only paging pages plus 81 future domain-charged user pages (48 RX image,
 17 RW/NX context/transfer, and 16 disjoint RW/NX stack pages); those 81 pages are
-not yet published as a live domain charge. Real FAT32 configuration/media
-identity, atomic domain/record publication, endpoint generation advance and
-binding, a fresh ready thread, context entry, request/reply execution, and
-teardown remain open.
+not yet published in a durable live domain ledger. A surviving consumer
+capability, endpoint finalization for traffic, real FAT32 media identity,
+context entry, request/reply execution, complete failed-construction rollback,
+and teardown remain open.
 
 ### Filesystem slice 6: optional format adapters or native format decision
 

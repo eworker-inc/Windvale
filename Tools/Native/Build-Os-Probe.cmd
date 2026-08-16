@@ -11,25 +11,25 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=be0f0f168bd801489737f60fa0ebef436f62b764175683dfbe8782a1c69588c1"
-    set "EfiBytes=1697280"
-    set "CodeTailOffset=791968"
+    set "EfiDigest=6ffec58edefd6c09c7c552858316da1be02cbceb515715bea36ac5ef0a140018"
+    set "EfiBytes=1698304"
+    set "CodeTailOffset=793072"
 ) else if /I "%Scenario%"=="invalid-opcode" (
     set "Scenario=invalid-opcode"
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=ad38552ad37ac444d8d0443c5942eb60fec5171a9cbddea6144b0f57c109aa7c"
-    set "EfiBytes=1697280"
-    set "CodeTailOffset=791984"
+    set "EfiDigest=84d0c66f9b6a0ea7ed4c1f3c9416884d80481d42117693298b96baa71e888e3c"
+    set "EfiBytes=1698304"
+    set "CodeTailOffset=793088"
 ) else if /I "%Scenario%"=="general-protection" (
     set "Scenario=general-protection"
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=9f7c9d9d7ec36a3d8ed0c714fe7d32bc33bae27eb453db9bf8fe51c79d327acc"
-    set "EfiBytes=1697280"
-    set "CodeTailOffset=791984"
+    set "EfiDigest=9f0d51b6f057387f01e054ab22167fc261981748d5d593f37e6aee26256ef740"
+    set "EfiBytes=1698304"
+    set "CodeTailOffset=793088"
 ) else goto :usage
 
 set "Output=%~f1"
@@ -122,7 +122,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 956321 9f310ad538580bbc00f5dcf38428eac7daef78a5f78fc1bc95b22a4b4dad7b45
+call :verify "%Work%\05-process.wvo" 956321 ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1
 if errorlevel 1 goto :failure
 
 set "FailureStep=application-start-context"
@@ -143,7 +143,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=filesystem-construction"
 cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Process-Filesystem-Construction.wva" "%Work%\17-filesystem-construction.wvo" >"%Work%\17.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\17-filesystem-construction.wvo" 1068 755278057f3415f0ed1661364c2be636efb879875f0a9a74bd5d3a0f9238b763
+call :verify "%Work%\17-filesystem-construction.wvo" 2167 63c9c8397cf86b9f8af08b616b1152a287789fa77002d00bcac789dbf1bb180d
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"

@@ -21,11 +21,15 @@ linked entries wait on generation-two endpoint references `131072` and
 `131073`, respectively. Those are the checked post-client resource and
 post-directory slot identities selected by provider-machine binding.
 
-These are real linkable guest payloads. The current eleven-section process object
-embeds both in separate read-only sections and publishes exact local symbols,
-but Probe 40 does not yet launch them. Request decoding, reply production,
-process/domain allocation, RX mapping, endpoint creation, publication, and
-teardown must be connected before live-service behavior is claimed. The
-[provider launch transaction](Windvale-Os-Provider-Launch-Transaction.md) now
-admits the exact image/page profiles and proves failure-atomic accounting and
-teardown, but the current privileged Probe 40 machine does not consume it.
+These are real linkable guest payloads. The current fourteen-section process
+object embeds both in separate read-only sections and publishes exact local
+symbols. Probe 40 allocates and maps the filesystem image, advances its endpoint
+slot, and publishes provider-side ready process/thread state, but does not enter
+the payload. Request decoding and reply production are therefore still portable
+and hosted evidence rather than live guest behavior. Consumer capability and
+durable domain binding, first entry/request, teardown, and the later network
+machine must be connected before a live-service claim. The
+[provider launch transaction](Windvale-Os-Provider-Launch-Transaction.md)
+admits the exact image/page profiles and proves policy-level failure accounting
+and teardown; the privileged fixture currently consumes only the construction
+and provider-side publication prefix.

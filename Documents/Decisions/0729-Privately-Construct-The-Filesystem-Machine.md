@@ -1,6 +1,6 @@
 # Decision 0729: Privately construct the filesystem machine
 
-- Status: Accepted; endpoint publication and provider entry pending
+- Status: Accepted; advanced by [Decision 0730](0730-Publish-Provider-Side-Filesystem-State.md)
 - Date: 2026-08-16
 - Advances: [Decision 0728](0728-Boot-Link-The-Filesystem-Machine.md)
 - Contracts: [provider launch transaction](../../Specifications/Windvale-Os-Provider-Launch-Transaction.md), [process-object build](../../Specifications/Windvale-Os-Process-Object.md), and [filesystem-machine emission](../../Specifications/Windvale-Os-X64-Process-Filesystem-Machine-Emission.md)

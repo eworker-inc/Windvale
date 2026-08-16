@@ -79,9 +79,9 @@ exact two-process/22-page/two-endpoint baseline.
 
 The composed WVB returns token 97 only after the boot-service envelope and both
 launch transactions admit. Its 699,394-byte link-facing object remains inside
-the fixed 776 KiB supervisor RX window. The normal 1,697,280-byte
+the fixed 776 KiB supervisor RX window. The normal 1,698,304-byte
 current-Windows-host Probe 40 image at SHA-256
-`be0f0f168bd801489737f60fa0ebef436f62b764175683dfbe8782a1c69588c1`
+`6ffec58edefd6c09c7c552858316da1be02cbceb515715bea36ac5ef0a140018`
 passes the pinned QEMU/OVMF gate through application execution and
 guest-controlled shutdown.
 

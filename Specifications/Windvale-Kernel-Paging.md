@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-Kernel paging version 5 is cross-host qualified with Probe 39 under [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md). Current paging version 7 retains its seven-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and exact HPET/local-APIC MMIO directory. It expands the supervisor executable window from version 6's 772 KiB to 776 KiB so the boot-linked callable filesystem constructors and private construction transaction remain executable, and it makes the ownership record report that exact mapped span.
+Kernel paging version 5 is cross-host qualified with Probe 39 under [Decision 0188](../Documents/Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md). Current paging version 7 retains its seven-page low-1-GiB identity hierarchy, null guard, NX enforcement, supervisor write protection, two-code-table topology, and exact HPET/local-APIC MMIO directory. It expands the supervisor executable window from version 6's 772 KiB to 776 KiB so the boot-linked callable filesystem constructors and provider-side publication transaction remain executable, and it makes the ownership record report that exact mapped span.
 
 The kernel root remains a bounded construction foundation, not a general virtual-memory manager. Protected-process version 17 derives three private roots and manages two exact client resource aliases without turning the kernel record into a public mapping API.
 

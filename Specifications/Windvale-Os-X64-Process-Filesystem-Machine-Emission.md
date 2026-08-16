@@ -3,11 +3,13 @@
 ## Status and scope
 
 This contract source-owns the generation-three filesystem provider's record,
-page-table, image-copy, and native-context construction bytes. The current boot
-object links callable forms of all three constructors and invokes them after an
-exact 85-page generation-three allocation. It does not bind or publish the
-endpoint, publish the domain charge, create runnable work, enter the provider,
-or execute a request.
+page-table, image-copy, native-context, endpoint, and initial-thread
+construction bytes. The current boot object links callable forms of the three
+generated constructors and invokes them after an exact 85-page
+generation-three allocation. The WVA transaction then publishes a provider-side
+generation-two endpoint, a fresh ready thread, and the ready process record. It
+does not bind a consumer capability, publish a durable domain ledger, enter the
+provider, or execute a request.
 
 The machine reuses released process/object slot 2 as process reference
 `196610` and closed resource-endpoint slot 0 as endpoint reference `131072`.
@@ -16,9 +18,11 @@ profile 5, a 262,144-instruction candidate budget, depth 16, primary capability
 slot 0 at endpoint generation 2 with provider rights 46 and capacity one, the
 endpoint-table address at state offset 1,168, and the 195,657-byte service digest
 `57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6`.
-Its current configuration digest is the SHA-256 empty digest; boot integration
-must replace that placeholder with the admitted FAT32 media/configuration
-identity before claiming a real read.
+Its configuration digest is SHA-256
+`0e34a46dd568fdf97fb72c005d11bc626e9c2950b706fec73cb166521ccfecf4`,
+the exact admitted 80-byte `WVPR 1` filesystem launch request. This is not
+FAT32 media identity; boot integration must bind the selected media separately
+before claiming a real read.
 
 ## Memory construction
 
@@ -43,8 +47,8 @@ page is both writable and executable.
 ## Emitted bytes and relocation
 
 The raw record constructor is 462 bytes and has independent polynomial hash
-pairs `29647/8698` using multipliers 251/257. It writes generation 3 at
-`WVPROC17 + 0x14`. The paging constructor is 3,342 bytes
+pairs `58251/5347` using multipliers 251/257. It writes private state 0 at
+`WVPROC17 + 0x10` and generation 3 at `WVPROC17 + 0x14`. The paging constructor is 3,342 bytes
 and hashes to `23484/25185` using multipliers 263/269. The image/context
 constructor is 58 bytes and hashes to `16263/35901` using multipliers 271/277.
 The process-object adapter appends one `ret` opcode to each raw fragment, so the
@@ -55,9 +59,9 @@ targets process-object symbol 7 with signed addend -4, copies exactly 195,657
 bytes, and rejects zero or more than 196,608 bytes. The 956,321-byte process
 object exports the image, paging, and record constructors at section addresses
 780,192, 780,256, and 783,600 respectively, with SHA-256
-`9f310ad538580bbc00f5dcf38428eac7daef78a5f78fc1bc95b22a4b4dad7b45`.
-The separately assembled 1,068-byte construction transaction has SHA-256
-`755278057f3415f0ed1661364c2be636efb879875f0a9a74bd5d3a0f9238b763`.
+`ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1`.
+The separately assembled 2,167-byte construction transaction has SHA-256
+`63c9c8397cf86b9f8af08b616b1152a287789fa77002d00bcac789dbf1bb180d`.
 
 ## Deterministic evidence and remaining boundary
 
@@ -65,25 +69,28 @@ The focused owner builds and executes three independent test roots on Windows
 and packages matching Linux images. The record, paging, and image WVB identities
 are respectively:
 
-- `c7d1ab82c53d66a191936cc1b0e0c53bc18f806f486e341d69b242c8de24cbe6`;
+- `3f1c122df05e8c3d6a963846b8d97a4dbbe6ff692a205d8a6b4d19c2ceccf329`;
 - `1e626b1775f34af1356a10287c23b04523f39cd9971e57f60bf1105c3ec6aeae`;
 - `c2630d4100b2e3a8447f850ac0be9ffb21160431de199908584ed4b08c49a743`.
 
 Their Windows executable identities are
-`0773673d06d069e7478a3ce058f131afe4c136f12350af9c6919375a9df4bf83`,
+`98f573b13a8ac2f4301078a1fd92a95348341e2711b30a002764044aef4826e3`,
 `9fad8f8be8bfabaabd0d800ba3df4a8533ed7dc7df62a804d19d04a6a2e0db85`,
 and `8b1d4296461f2e553ba1b4ed2f42bdfdcd4706cb4f88de74bfaa408b37b2d384`.
 The packaged Linux identities are
-`17cb0467e32360fe3ba8f70f906e6376625545a8a69a0b5169081e751762baae`,
+`25c5c09a0aed29175c8745c09944831269266b3a8be9e74b91d3c50afb907604`,
 `aebe8ae480c0e57ff1014030152d987091d463f047b8cdcc3c1a7ad83b887cd1`,
 and `621ed9294cafae354b4b20099cb8bc0ef1f5fc1a5f1593b9efade98ce2aceee4`.
 The native results are 50, 51, and 52.
 
-The constructors are invoked privately in deterministic 1,697,280-byte Probe 40
-images, and pinned QEMU completes the normal and two terminal fault paths with
-paging version 7 active. Integration still must admit the real FAT32
-configuration/media identity, atomically publish the generation-three record and
-81-page domain charge, advance and bind endpoint `131072`, create a fresh ready
-thread, enter the service context, and execute one bounded FAT32 request/reply
-lifecycle. Failure before publication must reclaim the private allocation and
-leave no visible runnable process or committed resource charge.
+The constructors and provider-side publication execute in deterministic
+1,698,304-byte Probe 40 images, and pinned QEMU completes the normal and two
+terminal fault paths with paging version 7 active. Endpoint `131072` now names
+generation 2, provider `196610`, client 0, and one empty retained channel. A
+fresh generation-three thread and process are ready, but the boot path does not
+dispatch them after publication. Integration still must bind a real surviving
+consumer, finalize the endpoint for traffic, add durable 81-page domain
+accounting, bind FAT32 media identity, enter the service context, and execute
+one bounded request/reply lifecycle. Complete rollback of the unpublished
+generation-three allocation after a post-constructor validation failure also
+remains open.

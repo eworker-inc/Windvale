@@ -68,10 +68,12 @@ one linear dependency chain per executable.
 The current Probe 40 architecture fixture still has three fixed process slots.
 This policy deliberately reuses one instead of claiming a nonexistent fourth
 slot. The generation-three filesystem record, W^X page tables, service copy,
-and context setup are now source-owned by a separate focused three-case owner,
-including the exact 85-physical/81-user-page distinction. The fixture does not
-yet consume those constructors, perform the third allocation generation,
-publish the rebuilt record, advance either endpoint, enter the user image, or
-dispatch a request. The embedded images name the admitted future endpoint
-generations. The next privileged slice must boot-link and execute the verified
-filesystem reconstruction before a live service is claimed.
+and context setup are source-owned by a focused three-case owner, including the
+exact 85-physical/81-user-page distinction. The fixture now consumes those
+constructors, performs the third allocation generation, binds the exact launch
+request digest, advances endpoint slot 0 to generation 2, and publishes fresh
+ready thread and process records. The endpoint is deliberately provider-only
+with client reference 0. It is not resolved for traffic, the thread is not
+entered, the 81-page charge has no durable kernel ledger, and no request is
+dispatched. The next privileged slice must bind a surviving consumer and domain
+record atomically before first entry and one bounded filesystem request.
