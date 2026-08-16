@@ -1,0 +1,112 @@
+module Windvaleˉnativeˉtestˉdatabaseˉcommitˉbatchˉcapacity profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+const PAGE_SIZE: u32 = 4096u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.First,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 2u64, 1u64, 0u64, 0u64, NO_PAGE, 0u64, 1u64,
+        4608u64, PAGE_SIZE, 1u32
+    );
+}
+
+fn Pages(Count: u32, Duplicateˉownership: bool) -> bytes {
+    var Result: bytes = Empty();
+    var Index: u32 = 0u32;
+    while Index < Count {
+        var Kind: Page.Databaseˉdurableˉpageˉkind =
+            Page.Databaseˉdurableˉpageˉkind.Leaf;
+        if Index + 1u32 == Count {
+            Kind = Page.Databaseˉdurableˉpageˉkind.Root;
+        }
+        var Previous: u64 = NO_PAGE;
+        if Duplicateˉownership { Previous = 0u64; }
+        let Encoded: Page.Databaseˉdurableˉpageˉresult =
+            Page.Databaseˉdurableˉpageˉencode(
+                Page.Databaseˉdurableˉpage(
+                    Kind, PAGE_SIZE, 1u64 + U64ˉfromˉu32(Index),
+                    2u64, 1u64, Previous, 0u32, Empty()
+                )
+            );
+        if Encoded.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+            return Empty();
+        }
+        Result = Bytesˉconcat(Result, Encoded.Bytes);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Main() -> i32 {
+    let Data: bytes = Pages(64u32, false);
+    let First: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current(), 64u64, 2u32, 64u32, Data
+        );
+    let Second: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current(), 64u64, 2u32, 64u32, Data
+        );
+    if Bytesˉlength(Data) != 64u32 * PAGE_SIZE ||
+        First.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid ||
+        Second.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid ||
+        First.Rootˉpage != 64u64 || First.Logˉpage != 65u64 ||
+        First.Targetˉgeneration != 2u64 || First.Targetˉsequence != 1u64 ||
+        First.Targetˉlength != 270848u64 ||
+        Bytesˉlength(First.Pages) != 65u32 * PAGE_SIZE ||
+        Bytesˉlength(First.Superblock) != 256u32 ||
+        First.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        First.Publication.Position != 4608u64 ||
+        First.Publication.Length != 266240u64 ||
+        !Same(First.Pages, Second.Pages) ||
+        !Same(First.Superblock, Second.Superblock) {
+        return 1;
+    }
+
+    let Tooˉmany: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current(), 792u64, 2u32, 793u32, Empty()
+        );
+    if Tooˉmany.Error !=
+            Batch.Databaseˉcommitˉbatchˉerror.Invalidˉdataˉpageˉcount {
+        return 2;
+    }
+
+    let Duplicate: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current(), 2u64, 2u32, 2u32, Pages(2u32, true)
+        );
+    if Duplicate.Error !=
+            Batch.Databaseˉcommitˉbatchˉerror.Duplicateˉobsoleteˉpage ||
+        Duplicate.Failedˉpageˉindex != 1u32 {
+        return 3;
+    }
+    return 0;
+}

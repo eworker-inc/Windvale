@@ -41,6 +41,7 @@ $DatabaseDevelopmentTargetProjects = [ordered]@{
     'transaction-ancestor-pages' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj'
     'transaction-root-growth' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj'
     'transaction-tree-completion' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj'
+    'transaction-commit' = 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj'
     'query-ir' = 'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj'
     'sql-lowerer' = 'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj'
     'json-value' = 'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj'
@@ -283,6 +284,33 @@ foreach ($TransactionTreeCompletionProject in $TransactionTreeCompletionProjects
             'transaction-tree-completion')
     }
 }
+$TransactionCommitBoundaryPaths = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($TransactionCommitPath in @(
+    'Libraries/Database/Commit-Batch.wv',
+    'Libraries/Database/Transaction-Commit.wv',
+    'Projects/Libraries/Windvale-Library-Database-Transaction-Commit.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj',
+    'Tests/Fixtures/Database/Database-Commit-Batch-Capacity-Self-Test.wv',
+    'Tests/Fixtures/Database/Database-Transaction-Commit-Self-Test.wv',
+    'Specifications/Windvale-Database-Transaction-Commit.md'
+)) {
+    $null = $TransactionCommitBoundaryPaths.Add($TransactionCommitPath)
+    if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($TransactionCommitPath)) {
+        $DatabaseDevelopmentTargetsByPath[$TransactionCommitPath] =
+            [System.Collections.Generic.HashSet[string]]::new(
+                [StringComparer]::Ordinal)
+    }
+    $null = $DatabaseDevelopmentTargetsByPath[$TransactionCommitPath].Add(
+        'transaction-commit')
+}
+foreach ($DatabaseDevelopmentPath in @($DatabaseDevelopmentTargetsByPath.Keys)) {
+    if (!$TransactionCommitBoundaryPaths.Contains($DatabaseDevelopmentPath)) {
+        $null = $DatabaseDevelopmentTargetsByPath[$DatabaseDevelopmentPath].Remove(
+            'transaction-commit')
+    }
+}
 $DurableTreeScanProject =
     'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj'
 if (!$DatabaseDevelopmentTargetsByPath.ContainsKey($DurableTreeScanProject)) {
@@ -416,6 +444,7 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Transaction-Ancestor-Pages.md' = @('transaction-ancestor-pages', 'transaction-tree-completion')
     'Specifications/Windvale-Database-Transaction-Root-Growth.md' = @('transaction-root-growth', 'transaction-tree-completion')
     'Specifications/Windvale-Database-Transaction-Tree-Completion.md' = @('transaction-tree-completion')
+    'Specifications/Windvale-Database-Transaction-Commit.md' = @('transaction-commit')
     'Specifications/Windvale-Database-Query-Ir.md' = @('query-ir')
     'Specifications/Windvale-Database-Sql.md' = @('sql-lowerer')
     'Specifications/Windvale-Database-Json-Value.md' = @('json-value')
@@ -462,6 +491,7 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Libraries/Windvale-Library-Database-Transaction-Ancestor-Pages.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Transaction-Root-Growth.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Transaction-Tree-Completion.wvproj',
+    'Projects/Libraries/Windvale-Library-Database-Transaction-Commit.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Query-Ir.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Sql-Lowerer.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Json-Value.wvproj',
@@ -507,6 +537,8 @@ $DatabaseDevelopmentProjects = @(
     'Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj',
     'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj',
@@ -581,6 +613,7 @@ foreach ($ContractPath in @(
     'Specifications/Windvale-Database-Transaction-Ancestor-Pages.md',
     'Specifications/Windvale-Database-Transaction-Root-Growth.md',
     'Specifications/Windvale-Database-Transaction-Tree-Completion.md',
+    'Specifications/Windvale-Database-Transaction-Commit.md',
     'Specifications/Windvale-Database-Query-Ir.md',
     'Specifications/Windvale-Database-Sql.md',
     'Specifications/Windvale-Database-Json-Value.md',
@@ -1516,6 +1549,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Transaction-Ancestor-Pages', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Root-Growth', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Tree-Completion', [StringComparison]::Ordinal) -or
+            $Path.Contains('Transaction-Commit', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
             $Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
             $Path.Contains('Json-Value', [StringComparison]::Ordinal) -or
@@ -1611,6 +1645,8 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tests/Fixtures/Database/Database-Transaction-Ancestor-Pages-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Transaction-Root-Growth-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Transaction-Tree-Completion-', [StringComparison]::Ordinal) -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Commit-Batch-Capacity-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Commit-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Query-Ir-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Sql-Lowerer-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Json-Value-Self-Test.wv' -or
@@ -1665,6 +1701,8 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion', [StringComparison]::Ordinal) -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj' -or
@@ -1752,6 +1790,7 @@ foreach ($Path in $Paths) {
             $Path.Contains('Transaction-Ancestor-Pages', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Root-Growth', [StringComparison]::Ordinal) -or
             $Path.Contains('Transaction-Tree-Completion', [StringComparison]::Ordinal) -or
+            $Path.Contains('Transaction-Commit', [StringComparison]::Ordinal) -or
             $Path.Contains('Query-Ir', [StringComparison]::Ordinal) -or
             ($Path.Contains('Sql-Lowerer', [StringComparison]::Ordinal) -or
                 $Path -eq 'Specifications/Windvale-Database-Sql.md') -or
@@ -2975,6 +3014,9 @@ $OrderedSuites = @($SuiteEntries.Name | Where-Object { $SelectedSuites.Contains(
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
 if (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Contains('transaction-commit')) {
+    $DatabaseDevelopmentTarget = 'transaction-commit'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 3 -and
     $SelectedDatabaseDevelopmentTargets.Contains('typed-row') -and
     $SelectedDatabaseDevelopmentTargets.Contains('query-ir') -and

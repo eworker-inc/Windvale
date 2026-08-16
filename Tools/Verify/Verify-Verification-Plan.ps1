@@ -2084,6 +2084,24 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-tree-completion'
     },
     @{
+        Name = 'focused database transaction-commit owner'
+        Paths = @(
+            'Libraries/Database/Commit-Batch.wv',
+            'Libraries/Database/Transaction-Commit.wv',
+            'Projects/Libraries/Windvale-Library-Database-Transaction-Commit.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj',
+            'Tests/Fixtures/Database/Database-Commit-Batch-Capacity-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Commit-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Commit.md'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-commit'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',

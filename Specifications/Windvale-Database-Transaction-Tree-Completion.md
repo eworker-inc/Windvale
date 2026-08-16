@@ -119,7 +119,9 @@ test fills a depth-two root to 3,959 bytes, splits one leaf, splits the old root
 into two branches, and proves that the coordinator invokes `WVRG 1` to produce
 one depth-three root.
 
-The next transaction milestone aggregates obsolete-page ownership, constructs
-the compact commit log, and hands this exact page batch and completed root to
-the existing durable publication planner. The persistent server follows that
-complete portable commit boundary.
+The implemented
+[transaction commit coordinator](Windvale-Database-Transaction-Commit.md)
+validates obsolete-page ownership, constructs the compact commit log, and
+hands this exact page batch and completed root to the existing durable
+publication planner. The persistent hosted writer loop follows that complete
+portable commit boundary.

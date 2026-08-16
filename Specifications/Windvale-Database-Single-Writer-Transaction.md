@@ -23,7 +23,7 @@ storage object.
 The builder is portable and has no I/O authority. The executor is hosted and
 declares exactly `storage.random_access_v1`. Neither layer receives a native
 path or host handle. This slice is one transaction over one storage object. The
-original builder owns one root plus one log; the bounded batch owns up to 63
+original builder owns one root plus one log; the bounded batch owns up to 792
 data pages plus one log without changing publication order. Neither is a
 database server, SQL engine, page cache, or concurrent transaction manager.
 
@@ -71,7 +71,7 @@ same batch and publication state for repeated routed-leaf updates.
 
 ## Bounded multi-page builder
 
-`Databaseˉcommitˉbatchˉbegin` accepts 1 through 63 complete consecutive data
+`Databaseˉcommitˉbatchˉbegin` accepts 1 through 792 complete consecutive data
 pages, exactly one of which is the new root, and produces one following log
 page. It validates every `WVPG 1` identity, target generation, target sequence,
 and kind before constructing the `WVCR 1` record or target `WVDS 1`
@@ -79,6 +79,9 @@ superblock. The returned append remains one contiguous byte value, so the
 hosted executor still dispatches exactly four durable actions. The first
 consumer appends left leaf, right leaf, branch root, and log as defined by
 [tree reading and root split](Windvale-Database-Tree-Reading-And-Root-Split.md).
+The current ceiling matches the general
+[transaction commit coordinator](Windvale-Database-Transaction-Commit.md);
+earlier consumers remain valid subsets.
 
 ## Hosted execution
 

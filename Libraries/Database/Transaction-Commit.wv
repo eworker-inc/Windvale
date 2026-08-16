@@ -1,0 +1,179 @@
+module Windvaleˉdatabaseˉtransactionˉcommit profile portable;
+
+import Windvaleˉdatabaseˉcommitˉbatch as Batch;
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉtreeˉcompletion as Completion;
+
+export enum Databaseˉtransactionˉcommitˉerror {
+    Valid = 0;
+    Treeˉcompletionˉfailed = 1;
+    Invalidˉtreeˉcompletion = 2;
+    Commitˉbatchˉfailed = 3;
+    Invalidˉcommitˉbatch = 4;
+    Inconsistentˉresult = 5;
+}
+
+export record Databaseˉtransactionˉcommitˉresult {
+    Error: Databaseˉtransactionˉcommitˉerror;
+    Changed: bool;
+    Publicationˉready: bool;
+    Completion: Completion.Databaseˉtransactionˉtreeˉcompletionˉresult;
+    Commit: Batch.Databaseˉcommitˉbatch;
+}
+
+fn Databaseˉtransactionˉcommitˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉtransactionˉcommitˉwithoutˉbatch()
+    -> Batch.Databaseˉcommitˉbatch {
+    return Batch.Databaseˉcommitˉbatchˉreject(
+        Batch.Databaseˉcommitˉbatchˉerror.Invalidˉcurrent
+    );
+}
+
+fn Databaseˉtransactionˉcommitˉresultˉmake(
+    Error: Databaseˉtransactionˉcommitˉerror,
+    Changed: bool,
+    Publicationˉready: bool,
+    Tree: Completion.Databaseˉtransactionˉtreeˉcompletionˉresult,
+    Commit: Batch.Databaseˉcommitˉbatch
+) -> Databaseˉtransactionˉcommitˉresult {
+    return Databaseˉtransactionˉcommitˉresult(
+        Error, Changed, Publicationˉready, Tree, Commit
+    );
+}
+
+export fn Databaseˉtransactionˉcommitˉplan(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutations: bytes,
+    Paths: bytes
+) -> Databaseˉtransactionˉcommitˉresult {
+    let Tree: Completion.Databaseˉtransactionˉtreeˉcompletionˉresult =
+        Completion.Databaseˉtransactionˉtreeˉcompletionˉplan(
+            Current, Mutations, Paths
+        );
+    let Noˉcommit: Batch.Databaseˉcommitˉbatch =
+        Databaseˉtransactionˉcommitˉwithoutˉbatch();
+    if Tree.Error !=
+            Completion.Databaseˉtransactionˉtreeˉcompletionˉerror.Valid {
+        return Databaseˉtransactionˉcommitˉresultˉmake(
+            Databaseˉtransactionˉcommitˉerror.Treeˉcompletionˉfailed,
+            false, false, Tree, Noˉcommit
+        );
+    }
+    if !Tree.Changed {
+        if Tree.Pageˉcount != 0u32 || Bytesˉlength(Tree.Pages) != 0u32 ||
+            Tree.Rootˉpage != Current.Rootˉpage ||
+            Tree.Outputˉrootˉdepth != Current.Rootˉdepth ||
+            Tree.Targetˉgeneration != Current.Generation ||
+            Tree.Targetˉsequence != Current.Committedˉsequence {
+            return Databaseˉtransactionˉcommitˉresultˉmake(
+                Databaseˉtransactionˉcommitˉerror.Invalidˉtreeˉcompletion,
+                false, false, Tree, Noˉcommit
+            );
+        }
+        return Databaseˉtransactionˉcommitˉresultˉmake(
+            Databaseˉtransactionˉcommitˉerror.Valid,
+            false, false, Tree, Noˉcommit
+        );
+    }
+    if Tree.Pageˉcount == 0u32 || Tree.Rootˉpage < Tree.Firstˉpage ||
+        Tree.Rootˉpage >= Tree.Nextˉpage ||
+        Tree.Nextˉpage != Current.Pageˉcount +
+            U64ˉfromˉu32(Tree.Pageˉcount) {
+        return Databaseˉtransactionˉcommitˉresultˉmake(
+            Databaseˉtransactionˉcommitˉerror.Invalidˉtreeˉcompletion,
+            true, false, Tree, Noˉcommit
+        );
+    }
+    let Commit: Batch.Databaseˉcommitˉbatch =
+        Batch.Databaseˉcommitˉbatchˉbegin(
+            Current,
+            Tree.Rootˉpage,
+            Tree.Outputˉrootˉdepth,
+            Tree.Pageˉcount,
+            Tree.Pages
+        );
+    if Commit.Error != Batch.Databaseˉcommitˉbatchˉerror.Valid {
+        return Databaseˉtransactionˉcommitˉresultˉmake(
+            Databaseˉtransactionˉcommitˉerror.Commitˉbatchˉfailed,
+            true, false, Tree, Commit
+        );
+    }
+    if Commit.Rootˉpage != Tree.Rootˉpage ||
+        Commit.Logˉpage != Tree.Nextˉpage ||
+        Commit.Targetˉgeneration != Tree.Targetˉgeneration ||
+        Commit.Targetˉsequence != Tree.Targetˉsequence ||
+        Bytesˉlength(Commit.Pages) !=
+            (Tree.Pageˉcount + 1u32) * Tree.Pageˉsize ||
+        Commit.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        Commit.Publication.Position != Current.Committedˉlength ||
+        Commit.Publication.Length != U64ˉfromˉu32(
+            Bytesˉlength(Commit.Pages)
+        ) {
+        return Databaseˉtransactionˉcommitˉresultˉmake(
+            Databaseˉtransactionˉcommitˉerror.Invalidˉcommitˉbatch,
+            true, false, Tree, Commit
+        );
+    }
+    return Databaseˉtransactionˉcommitˉresultˉmake(
+        Databaseˉtransactionˉcommitˉerror.Valid,
+        true, true, Tree, Commit
+    );
+}
+
+export fn Databaseˉtransactionˉcommitˉvalidate(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Mutations: bytes,
+    Paths: bytes,
+    Input: Databaseˉtransactionˉcommitˉresult
+) -> Databaseˉtransactionˉcommitˉresult {
+    let Replay: Databaseˉtransactionˉcommitˉresult =
+        Databaseˉtransactionˉcommitˉplan(Current, Mutations, Paths);
+    if Input.Error != Databaseˉtransactionˉcommitˉerror.Valid ||
+        Replay.Error != Databaseˉtransactionˉcommitˉerror.Valid ||
+        Input.Changed != Replay.Changed ||
+        Input.Publicationˉready != Replay.Publicationˉready ||
+        !Databaseˉtransactionˉcommitˉsame(
+            Input.Completion.Bytes, Replay.Completion.Bytes
+        ) ||
+        !Databaseˉtransactionˉcommitˉsame(
+            Input.Completion.Pages, Replay.Completion.Pages
+        ) ||
+        Input.Commit.Error != Replay.Commit.Error ||
+        Input.Commit.Rootˉpage != Replay.Commit.Rootˉpage ||
+        Input.Commit.Logˉpage != Replay.Commit.Logˉpage ||
+        Input.Commit.Targetˉgeneration != Replay.Commit.Targetˉgeneration ||
+        Input.Commit.Targetˉsequence != Replay.Commit.Targetˉsequence ||
+        Input.Commit.Targetˉlength != Replay.Commit.Targetˉlength ||
+        !Databaseˉtransactionˉcommitˉsame(
+            Input.Commit.Pages, Replay.Commit.Pages
+        ) ||
+        !Databaseˉtransactionˉcommitˉsame(
+            Input.Commit.Superblock, Replay.Commit.Superblock
+        ) ||
+        Input.Commit.Publication.Stage != Replay.Commit.Publication.Stage ||
+        Input.Commit.Publication.Targetˉslot !=
+            Replay.Commit.Publication.Targetˉslot ||
+        Input.Commit.Publication.Position !=
+            Replay.Commit.Publication.Position ||
+        Input.Commit.Publication.Length != Replay.Commit.Publication.Length {
+        return Databaseˉtransactionˉcommitˉresultˉmake(
+            Databaseˉtransactionˉcommitˉerror.Inconsistentˉresult,
+            Input.Changed, false, Input.Completion, Input.Commit
+        );
+    }
+    return Replay;
+}

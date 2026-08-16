@@ -6,7 +6,8 @@ import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 
 const DATABASE_COMMIT_BATCH_NO_PAGE: u64 = 18446744073709551615u64;
-const DATABASE_COMMIT_BATCH_MAXIMUM_DATA_PAGES: u32 = 63u32;
+const DATABASE_COMMIT_BATCH_MAXIMUM_DATA_PAGES: u32 = 792u32;
+const DATABASE_COMMIT_BATCH_PREVIOUS_PAGE_OFFSET: u32 = 48u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
 export enum Databaseˉcommitˉbatchˉerror {
@@ -112,14 +113,13 @@ fn Databaseˉcommitˉbatchˉobsoleteˉpageˉisˉduplicate(
 ) -> bool {
     var Index: u32 = 0u32;
     while Index < Limit {
-        let Previousˉbytes: bytes = Bytesˉslice(
-            Dataˉpages,
-            Index * Pageˉsize,
-            Pageˉsize
-        );
-        let Previousˉdataˉpage: Page.Databaseˉdurableˉpageˉresult =
-            Page.Databaseˉdurableˉpageˉdecode(Previousˉbytes);
-        if Previousˉdataˉpage.Previousˉpage == Obsoleteˉpage {
+        // Every earlier page was fully decoded before this check. Reading the
+        // fixed WVPG 1 ownership field avoids rehashing all earlier pages for
+        // every replacement while retaining the same bounded duplicate test.
+        let Previousˉoffset: u32 = Index * Pageˉsize +
+            DATABASE_COMMIT_BATCH_PREVIOUS_PAGE_OFFSET;
+        if Bytesˉreadˉu64ˉlittle(Dataˉpages, Previousˉoffset) ==
+                Obsoleteˉpage {
             return true;
         }
         Index = Index + 1u32;

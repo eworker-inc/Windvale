@@ -102,7 +102,7 @@ Databaseˉcommitˉbatchˉbegin(
 ) -> Databaseˉcommitˉbatch
 ```
 
-The portable batch accepts 1 through 63 exact, contiguous data pages and adds
+The portable batch accepts 1 through 792 exact, contiguous data pages and adds
 one commit-log page. It requires a tail-free valid current selection, root
 depth 1 through 128, consecutive page identities beginning at the current page
 count, one root page inside that range, the next generation and sequence on
