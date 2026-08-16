@@ -965,6 +965,137 @@ export fn Compilerˉsourceˉwvbˉwithˉfunctionˉorder(
     );
 }
 
+export fn Compilerˉsourceˉwvbˉreachableˉdataˉorder(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Functions: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Functionˉcount: u32,
+    Data: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Wir: bytes
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    let Emptyˉmap: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Entries);
+    var Dataˉmap: bytes = Emptyˉmap.Value;
+    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    var Functionˉrank: u32 = 0u32;
+    while Functionˉrank < Functionˉcount {
+        let Function: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Functions, Functionˉrank
+        );
+        let Functionˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Compilerˉsourceˉwvbˉsymbolˉsource(
+                Input, Scan, Symbols, Function
+            );
+        let Functionˉentry: u32 = 48u32 + Function * 48u32;
+        let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Functionˉentry + 12u32
+        );
+        let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Functionˉentry + 16u32
+        );
+        var Inˉfunction: u32 = 0u32;
+        while Inˉfunction < Operationˉcount {
+            let Operationˉentry: u32 = Operationsˉoffset +
+                (Firstˉoperation + Inˉfunction) * 48u32;
+            let Operation: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Operationˉentry + 12u32
+            );
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Operationˉentry + 32u32
+            );
+            var Referenced: u32 = Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
+            if Operation == 6u32 || Operation == 9u32 || Operation == 10u32 {
+                Referenced = Target;
+            }
+            if Operation == 5u32 {
+                let Textˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Operationˉentry + 36u32
+                );
+                if Textˉlength == 0u32 {
+                    Referenced = Target;
+                } else {
+                    let Textˉvalue: Compilerˉsourceˉwvbˉtextˉvalue =
+                        Compilerˉsourceˉwvbˉdecodeˉtext(
+                            Functionˉview.Source, Target, Textˉlength
+                        );
+                    Referenced = Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
+                        Input, Scan, Symbols, Textˉvalue.Value
+                    );
+                }
+            }
+            if Referenced != Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
+                if Bytesˉreadˉu8(Dataˉmap, Referenced) == 0u8 {
+                    let Marked: Byteˉconstruction.Foundationˉbytesˉresult =
+                        Byteˉconstruction.Foundationˉbytesˉreplace(
+                            Dataˉmap, Referenced,
+                            1u32, Bytesˉfromˉu8(1u8)
+                        );
+                    Dataˉmap = Marked.Value;
+                }
+            }
+            Inˉfunction = Inˉfunction + 1u32;
+        }
+        Functionˉrank = Functionˉrank + 1u32;
+    }
+
+    var Retainedˉentries: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Dataˉrank: u32 = 0u32;
+    while Dataˉrank < Symbols.Data {
+        let Candidate: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Data, Dataˉrank
+        );
+        if Bytesˉreadˉu8(Dataˉmap, Candidate) == 1u8 {
+            Retainedˉentries = Bytesˉconcat(
+                Retainedˉentries, Bytesˉfromˉu32ˉlittle(Candidate)
+            );
+        }
+        Dataˉrank = Dataˉrank + 1u32;
+    }
+    let Emptyˉranks: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Entries * 4u32);
+    var Retainedˉranks: bytes = Emptyˉranks.Value;
+    var Retainedˉrank: u32 = 0u32;
+    while Retainedˉrank * 4u32 < Bytesˉlength(Retainedˉentries) {
+        let Retained: u32 = Bytesˉreadˉu32ˉlittle(
+            Retainedˉentries, Retainedˉrank * 4u32
+        );
+        let Ranked: Byteˉconstruction.Foundationˉbytesˉresult =
+            Byteˉconstruction.Foundationˉbytesˉreplace(
+                Retainedˉranks,
+                Retained * 4u32,
+                4u32,
+                Bytesˉfromˉu32ˉlittle(Retainedˉrank)
+            );
+        Retainedˉranks = Ranked.Value;
+        Retainedˉrank = Retainedˉrank + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Retainedˉentries, Retainedˉranks
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉwithˉdataˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
+    Data: Compilerˉsourceˉwvbˉsymbolˉorder
+) -> Compilerˉsourceˉwvbˉsymbolˉorders {
+    return Compilerˉsourceˉwvbˉsymbolˉorders(
+        Orders.Capabilityˉentries,
+        Orders.Capabilityˉranks,
+        Data.Entries,
+        Data.Ranks,
+        Orders.Recordˉentries,
+        Orders.Recordˉranks,
+        Orders.Enumˉentries,
+        Orders.Enumˉranks,
+        Orders.Variantˉentries,
+        Orders.Variantˉranks,
+        Orders.Functionˉentries,
+        Orders.Functionˉranks
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉorderedˉsymbol(
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Rank: u32
@@ -1523,8 +1654,9 @@ export fn Compilerˉsourceˉwvbˉsyntheticˉdataˉindex(
         Bytesˉreadˉu32ˉlittle(Plan.Directory, Synthetic * 12u32)
     );
     var Result: u32 = Synthetic;
+    let Explicitˉcount: u32 = Bytesˉlength(Order.Entries) / 4u32;
     var Rank: u32 = 0u32;
-    while Rank < Symbols.Data {
+    while Rank < Explicitˉcount {
         let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
         let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
         let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
@@ -1675,10 +1807,11 @@ export fn Compilerˉsourceˉwvbˉencodeˉdata(
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉdataˉencoding {
-    var Payload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Data + Plan.Count);
+    let Explicitˉcount: u32 = Bytesˉlength(Order.Entries) / 4u32;
+    var Payload: bytes = Bytesˉfromˉu32ˉlittle(Explicitˉcount + Plan.Count);
     var Explicit: u32 = 0u32;
     var Synthetic: u32 = 0u32;
-    while Explicit < Symbols.Data {
+    while Explicit < Explicitˉcount {
         var Useˉexplicit: bool = Synthetic >= Plan.Count;
         let Explicitˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Order, Explicit
@@ -2962,31 +3095,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     );
 }
 
-export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
-    Input: bytes
+export fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidence(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> Compilerˉsourceˉwvbˉreachability {
-    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
-        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
-        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
-            Input, Scan, Symbols
-        );
-    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
-    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉreachabilityˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Wirˉsummary.Status,
-            Wirˉsummary.Failureˉfunction,
-            0u32
-        );
-    }
-
-    let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
-        Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(Input, Scan, Symbols);
     let Functionˉorder: Compilerˉsourceˉwvbˉsymbolˉorder =
         Compilerˉsourceˉwvbˉfunctionˉorder(Orders);
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
@@ -3241,6 +3356,35 @@ export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
     );
 }
 
+export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
+    Input: bytes
+) -> Compilerˉsourceˉwvbˉreachability {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
+    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉreachabilityˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Wirˉsummary.Status,
+            Wirˉsummary.Failureˉfunction,
+            0u32
+        );
+    }
+    let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(Input, Scan, Symbols);
+    return Compilerˉsourceˉwvbˉreachabilityˉwithˉevidence(
+        Input, Scan, Symbols, Wirˉsummary, Orders
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉcompile(
     Input: bytes,
     Optimize: bool
@@ -3281,7 +3425,9 @@ export fn Compilerˉsourceˉwvbˉcompile(
     var Reachableˉmap: bytes = Compilerˉsourceˉwvbˉempty(Input);
     if Optimize {
         let Pruning: Compilerˉsourceˉwvbˉreachability =
-            Compilerˉanalyzeˉsourceˉwvbˉreachability(Input);
+            Compilerˉsourceˉwvbˉreachabilityˉwithˉevidence(
+                Input, Scan, Symbols, Wirˉsummary, Orders
+            );
         if Pruning.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Compilerˉsourceˉwvbˉsummaryˉfailure(
                 Input,
@@ -3303,6 +3449,19 @@ export fn Compilerˉsourceˉwvbˉcompile(
         );
         Emissionˉfunctions = Pruning.Reachable;
         Reachableˉmap = Pruning.Map;
+        let Retainedˉdata: Compilerˉsourceˉwvbˉsymbolˉorder =
+            Compilerˉsourceˉwvbˉreachableˉdataˉorder(
+                Input,
+                Scan,
+                Symbols,
+                Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders),
+                Emissionˉfunctions,
+                Compilerˉsourceˉwvbˉdataˉorder(Orders),
+                Wirˉsummary.Directory
+            );
+        Emissionˉorders = Compilerˉsourceˉwvbˉwithˉdataˉorder(
+            Emissionˉorders, Retainedˉdata
+        );
     }
 
     let Capabilityˉencoding: Compilerˉsourceˉwvbˉcapabilityˉencoding =
@@ -3378,7 +3537,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
         let Emissionˉdataˉencoding: Compilerˉsourceˉwvbˉdataˉencoding =
             Compilerˉsourceˉwvbˉencodeˉdata(
                 Input, Scan, Symbols, Textˉplan,
-                Compilerˉsourceˉwvbˉdataˉorder(Orders)
+                Compilerˉsourceˉwvbˉdataˉorder(Emissionˉorders)
             );
         if Emissionˉdataˉencoding.Status !=
             Compilerˉsourceˉwvbˉstatus.Valid {

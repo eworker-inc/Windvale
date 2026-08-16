@@ -204,5 +204,27 @@ export fn Main() -> i32 {
         ) != 1u32 {
         return 32;
     }
+    let Explicitˉdataˉinput: bytes = Compilerˉsourceˉwvbˉdemoˉinput(
+        "module Wvbˉexplicitˉdataˉpruning profile portable; data Dead: bytes = [1u8]; data Used: bytes = [42u8]; export fn Main() -> u32 { return Bytesˉlength(Used); }"
+    );
+    let Explicitˉdataˉfull: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Explicitˉdataˉinput);
+    let Explicitˉdataˉoptimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+            Explicitˉdataˉinput
+        );
+    if Explicitˉdataˉfull.Status !=
+        Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid ||
+        Explicitˉdataˉoptimized.Status !=
+        Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
+        return 33;
+    }
+    if Compilerˉsourceˉwvbˉdemoˉdataˉcount(
+        Explicitˉdataˉfull.Bytecode
+    ) != 2u32 || Compilerˉsourceˉwvbˉdemoˉdataˉcount(
+        Explicitˉdataˉoptimized.Bytecode
+    ) != 1u32 {
+        return 34;
+    }
     return 0;
 }

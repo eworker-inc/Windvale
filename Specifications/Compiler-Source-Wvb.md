@@ -101,11 +101,17 @@ metadata validation, but contribute no Functions metadata or Code bytes.
 
 Text decoding and explicit data encoding are validated over the complete source
 closure before publication. A second reachable-only text plan then omits synthetic
-literal data used exclusively by unreachable functions. Explicit source data and
-nominal Types remain complete in this slice; pruning those entries requires a
-separate referenced-data and referenced-type closure with canonical index remapping.
-Identical optimized inputs produce identical retained order, section contents, and
-bytes.
+literal data used exclusively by unreachable functions. The reachable-function
+scan also retains only explicit data targeted by `Bytesˉconstant`, `Dataˉlength`,
+`Dataˉloadˉi32`, or a text literal that reuses an explicit text declaration. The
+filtered canonical data order remaps explicit and synthetic values into one ordinal
+namespace. Nominal Types remain complete in this slice; pruning them requires a
+separate referenced-type closure. Identical optimized inputs produce identical
+retained order, section contents, and bytes.
+
+The optimized compiler derives reachability from the same validated source scan,
+symbol directory, WVIR summary, and canonical orders already prepared for emission.
+It does not rebuild those whole-program models through the public analysis adapter.
 
 ## Nominal type translation
 
