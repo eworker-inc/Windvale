@@ -230,6 +230,11 @@ hierarchy, read/execute code, writable/NX stack/data/response pages, and two
 guard entries are byte-identical. This advances ownership through byte 24,988
 without introducing a second paging policy.
 
+The next 76 bytes likewise reuse the exact admitted-interpreter copy and native
+context seed, including its symbol-1 relocation. Generation-2 private image and
+initial execution-context reconstruction therefore reach byte 25,064 before
+endpoint rebinding or readiness publication.
+
 The first restart policies are deliberately small:
 
 - `Never`;

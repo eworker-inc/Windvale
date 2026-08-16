@@ -554,4 +554,17 @@ verify "$work/ClientGenerationTwoPaging.elf" 209008 bae80f3e33d79d1446cd54af10c0
 [[ $? -eq 91 ]] || exit 1
 "$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoPaging.bin" 0 "$work/ClientGenerationTwoPaging.exe" >/dev/null || exit $?
 verify "$work/ClientGenerationTwoPaging.exe" 206336 62c74695812eec852cf3dddee37cec39596da28397e0f2abdbaf28e8475119c2 || exit 1
-echo 'native os x64 code emission status=Passed projects=42 cases=252 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91 cross-host-images=Verified source-owned-bytes=24989 relocation-fields=120'
+echo 'step=client-generation-two-image item=43/43'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-X64-Process-Client-Generation-Two-Image-Emission.wvproj" "$work/ClientGenerationTwoImage.wvb" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoImage.wvb" 13762 8758de24cc2954212d55bedab76d3746cfb584313bd455e11f2a0461fba40b1e || exit 1
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/ClientGenerationTwoImage.wvb" "$work/ClientGenerationTwoImage.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoImage.wvo" 187483 1847ff8d4263ca70bf6d8e165fb1e09bf7f9621a58ef94c8d238b3b1f759d436 || exit 1
+"$script_directory/Link-Wvo.sh" 0 Main "$work/ClientGenerationTwoImage.bin" "$work/ClientGenerationTwoImage.wvo" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoImage.bin" 185809 1e9357d1626073ab7b2148c5c0368cc977449b691f09180339058c923be86a95 || exit 1
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/ClientGenerationTwoImage.bin" 0 "$work/ClientGenerationTwoImage.elf" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoImage.elf" 192624 fb2d1a9b64f06b8068602e05fe23d710c0e8e45ae1ff06803489c8f31bc6ad4e || exit 1
+"$work/ClientGenerationTwoImage.elf" >/dev/null
+[[ $? -eq 92 ]] || exit 1
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/ClientGenerationTwoImage.bin" 0 "$work/ClientGenerationTwoImage.exe" >/dev/null || exit $?
+verify "$work/ClientGenerationTwoImage.exe" 187904 a78e65b9424e4a10dc65cbf0f5cf5268a3ec04b39bdac854023b9fe35fb46386 || exit 1
+echo 'native os x64 code emission status=Passed projects=43 cases=258 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92 cross-host-images=Verified source-owned-bytes=25065 relocation-fields=121'

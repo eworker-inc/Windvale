@@ -1,0 +1,9 @@
+module X64ˉprocessˉclientˉgenerationˉtwoˉimageˉemission profile portable;
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉimageˉfixtureˉoffset() -> u32 {
+    return 24989u32;
+}
+
+export fn X64ˉprocessˉclientˉgenerationˉtwoˉimageˉfixtureˉend() -> u32 {
+    return 25065u32;
+}
