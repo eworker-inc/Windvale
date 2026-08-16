@@ -1,0 +1,111 @@
+module Osˉfat32ˉfileˉreadˉplanˉselfˉtest profile portable;
+
+import Fat32ˉfileˉreadˉplan as File;
+
+fn Plan(
+    First: u64, Total: u64, Sectors: u32, Clusters: u64,
+    Size: u32, Offset: u64, Requested: u32,
+    Ordinal: u32, Cluster: u32
+) -> File.Fat32ˉfileˉreadˉplan {
+    return File.Fat32ˉfileˉreadˉplanˉcreate(
+        First, Total, Sectors, Clusters, Size, Offset,
+        Requested, Ordinal, Cluster
+    );
+}
+
+fn Status(
+    First: u64, Total: u64, Sectors: u32, Clusters: u64,
+    Size: u32, Offset: u64, Requested: u32,
+    Ordinal: u32, Cluster: u32
+) -> File.Fat32ˉfileˉreadˉstatus {
+    let Result: File.Fat32ˉfileˉreadˉplan = Plan(
+        First, Total, Sectors, Clusters, Size, Offset,
+        Requested, Ordinal, Cluster
+    );
+    return Result.Status;
+}
+
+export fn Main() -> i32 {
+    let Start: File.Fat32ˉfileˉreadˉplan = Plan(
+        1110u64, 70000u64, 1u32, 68890u64,
+        5000u32, 0u64, 65536u32, 0u32, 2u32
+    );
+    if Start.Status != File.Fat32ˉfileˉreadˉstatus.Ready ||
+        Start.Deviceˉsector != 1110u64 || Start.Sectorˉcount != 1u32 ||
+        Start.Sectorˉoffset != 0u32 || Start.Dataˉbytes != 512u32 ||
+        Start.Nextˉfileˉoffset != 512u64 { return 2; }
+    let Unaligned: File.Fat32ˉfileˉreadˉplan = Plan(
+        1110u64, 70000u64, 1u32, 68890u64,
+        5000u32, 100u64, 65536u32, 0u32, 2u32
+    );
+    if Unaligned.Sectorˉoffset != 100u32 ||
+        Unaligned.Dataˉbytes != 412u32 ||
+        Unaligned.Sectorˉcount != 1u32 ||
+        Unaligned.Nextˉfileˉoffset != 512u64 { return 3; }
+    let Eightˉsectors: File.Fat32ˉfileˉreadˉplan = Plan(
+        1110u64, 600000u64, 8u32, 68890u64,
+        10000u32, 100u64, 65536u32, 0u32, 2u32
+    );
+    if Eightˉsectors.Dataˉbytes != 3996u32 ||
+        Eightˉsectors.Sectorˉcount != 8u32 ||
+        Eightˉsectors.Nextˉfileˉoffset != 4096u64 { return 4; }
+    let Secondˉcluster: File.Fat32ˉfileˉreadˉplan = Plan(
+        1110u64, 600000u64, 8u32, 68890u64,
+        10000u32, 4096u64, 4096u32, 1u32, 7u32
+    );
+    if Secondˉcluster.Deviceˉsector != 1150u64 ||
+        Secondˉcluster.Dataˉbytes != 4096u32 ||
+        Secondˉcluster.Sectorˉcount != 8u32 { return 5; }
+    let Tail: File.Fat32ˉfileˉreadˉplan = Plan(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 4096u64, 4096u32, 1u32, 7u32
+    );
+    if Tail.Dataˉbytes != 100u32 || Tail.Nextˉfileˉoffset != 4196u64 {
+        return 6;
+    }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 4196u64, 1u32, 1u32, 7u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Endˉofˉfile { return 7; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 4197u64, 1u32, 1u32, 7u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉoffset { return 8; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 0u64, 0u32, 0u32, 2u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉlimit { return 9; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 0u64, 65537u32, 0u32, 2u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉlimit { return 10; }
+    if Status(
+        1110u64, 70000u64, 3u32, 68890u64,
+        4196u32, 0u64, 1u32, 0u32, 2u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉgeometry { return 11; }
+    if Status(
+        70000u64, 70000u64, 1u32, 68890u64,
+        4196u32, 0u64, 1u32, 0u32, 2u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉgeometry { return 12; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 0u64, 1u32, 0u32, 1u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉcluster { return 13; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 0u64, 1u32, 0u32, 70000u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉcluster { return 14; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        4196u32, 4096u64, 1u32, 0u32, 7u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉordinal { return 15; }
+    if Status(
+        1110u64, 600000u64, 8u32, 68890u64,
+        0u32, 0u64, 1u32, 0u32, 0u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Endˉofˉfile { return 16; }
+    if Status(
+        1110u64, 70000u64, 128u32, 268435438u64,
+        1u32, 0u64, 1u32, 0u32, 2u32
+    ) != File.Fat32ˉfileˉreadˉstatus.Invalidˉgeometry { return 17; }
+    return 47;
+}

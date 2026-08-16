@@ -28,6 +28,8 @@ verify "$work/Volume.wvb" 7654 564793e2af919a9adf7623f28775f653ac89cc642c5bb0cd2
 verify "$work/Chain.wvb" 6359 75470d2a1c48c86754e2f91cd5919306fe73d76c567b87f7490fc87cc1eeeb1a || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Fat32-Directory-Admission.wvproj" "$work/Directory.wvb" >/dev/null || exit $?
 verify "$work/Directory.wvb" 6340 14548e1da399a95bb8c25be9c9224b4d524c729457992c2dc26ef153561b7733 || exit $?
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Fat32-File-Read-Plan.wvproj" "$work/File-Read.wvb" >/dev/null || exit $?
+verify "$work/File-Read.wvb" 4543 71868dc89be5f640ca137b50ba09ccddab3a940706756a209570079f3e2e2b1d || exit $?
 "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Fat32-Volume-Admission.wvproj" "$work/Test.wvb" >/dev/null || exit $?
 verify "$work/Test.wvb" 25600 c978805d2dec9acb9ba08e3fa9466d5f21aab013aff0f6d6c807666ac986bcd9 || exit $?
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Test.wvb" "$work/Test.wvo" >/dev/null || exit $?
@@ -52,4 +54,16 @@ verify "$work/Directory-Test.exe" 132608 1debd01031f349f444aa66f09f7bd248fdf6533
 verify "$work/Directory-Test.elf" 135280 b2f9e66d2a78b9f85ac4aed80d6a517cdad154313265fe6925c917ff7502b1a5 || exit $?
 "$work/Directory-Test.elf" >/dev/null
 [[ $? -eq 47 ]] || exit 1
-echo 'native os fat32 volume chain and directory admission status=Passed projects=5 cases=64 local-result=47 cross-host-images=Verified'
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Os-Fat32-File-Read-Plan.wvproj" "$work/File-Read-Test.wvb" >/dev/null || exit $?
+verify "$work/File-Read-Test.wvb" 10627 7d4397fa3bc9a338ff88af5bebd8008b2ef8497ad902e6e9bafcc0c19ac4fff1 || exit $?
+"$script_directory/Lower-Wvb-To-Wvo.sh" "$work/File-Read-Test.wvb" "$work/File-Read-Test.wvo" >/dev/null || exit $?
+verify "$work/File-Read-Test.wvo" 107371 8516ea6f84521c3d5dc00fe41cffaf21406cf91da7b2b61d006ca6ea5d90f902 || exit $?
+"$script_directory/Link-Wvo.sh" 0 Main "$work/File-Read-Test.bin" "$work/File-Read-Test.wvo" >/dev/null || exit $?
+verify "$work/File-Read-Test.bin" 107060 eb8c619de686b25e41f6e1300114d4c58f5c6b9e64c190c52d9be91878e33eb1 || exit $?
+"$script_directory/Package-Console.sh" windows-x64-console-v1 "$work/File-Read-Test.bin" 0 "$work/File-Read-Test.exe" >/dev/null || exit $?
+verify "$work/File-Read-Test.exe" 109056 c2eb4be0aee89cdc202b524733a85a5670d9260d7fe6cd49f417265cbd90aefe || exit $?
+"$script_directory/Package-Console.sh" linux-x64-console-v1 "$work/File-Read-Test.bin" 0 "$work/File-Read-Test.elf" >/dev/null || exit $?
+verify "$work/File-Read-Test.elf" 114800 ebdb4ad297801000c0a8d9ca203809f158a02e07183cf53a935fa866f3469a11 || exit $?
+"$work/File-Read-Test.elf" >/dev/null
+[[ $? -eq 47 ]] || exit 1
+echo 'native os fat32 volume chain directory and file-read admission status=Passed projects=7 cases=80 local-result=47 cross-host-images=Verified'

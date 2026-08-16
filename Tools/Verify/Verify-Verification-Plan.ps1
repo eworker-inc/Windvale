@@ -1281,21 +1281,26 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'OS FAT32 volume-and-chain ownership'
+        Name = 'OS FAT32 volume-chain-directory-file ownership'
         Paths = @(
             'Operating-System/Services/Fat32-Volume-Admission.wv',
             'Operating-System/Services/Fat32-Cluster-Chain.wv',
             'Operating-System/Services/Fat32-Directory-Admission.wv',
+            'Operating-System/Services/Fat32-File-Read-Plan.wv',
             'Projects/Operating-System/Windvale-Os-Fat32-Volume-Admission.wvproj',
             'Projects/Operating-System/Windvale-Os-Fat32-Cluster-Chain.wvproj',
             'Projects/Operating-System/Windvale-Os-Fat32-Directory-Admission.wvproj',
+            'Projects/Operating-System/Windvale-Os-Fat32-File-Read-Plan.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Fat32-Volume-Admission.wvproj',
             'Projects/Tests/Windvale-Native-Test-Os-Fat32-Directory-Admission.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Os-Fat32-File-Read-Plan.wvproj',
             'Tests/Fixtures/Operating-System/Os-Fat32-Volume-Admission-Self-Test.wv',
             'Tests/Fixtures/Operating-System/Os-Fat32-Directory-Admission-Self-Test.wv',
+            'Tests/Fixtures/Operating-System/Os-Fat32-File-Read-Plan-Self-Test.wv',
             'Specifications/Windvale-Os-Fat32-Volume-Admission.md',
             'Specifications/Windvale-Os-Fat32-Cluster-Chain.md',
-            'Specifications/Windvale-Os-Fat32-Directory-Admission.md'
+            'Specifications/Windvale-Os-Fat32-Directory-Admission.md',
+            'Specifications/Windvale-Os-Fat32-File-Read-Plan.md'
         )
         Suites = @('os-fat32-volume', 'native-u64-lowering')
         Gaps = @()
@@ -2643,7 +2648,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4403 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4419 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -37,5 +37,7 @@ Its 19-case test WVB is 12,922 bytes at SHA-256
 returns 47 on Windows, and pins deterministic Windows/Linux images.
 
 This slice does not assemble VFAT long-file-name slots, normalize Unicode,
-interpret timestamps, read file clusters, compare mirrored directory data, or
-translate shared Windvale path segments. Those require separate contracts.
+interpret timestamps, compare mirrored directory data, or translate shared
+Windvale path segments. File-cluster mapping now has a separate bounded plan,
+but chain-to-plan binding, live block I/O, and application copying remain
+outside directory admission.

@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Operating-System/Os-Fat32-File-Read-Plan-Self-Test.wv"
+source "Operating-System/Services/Fat32-File-Read-Plan.wv"
+emit wvb

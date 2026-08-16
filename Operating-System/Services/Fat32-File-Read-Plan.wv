@@ -1,0 +1,120 @@
+module Fat32ˉfileˉreadˉplan profile portable;
+
+const BYTES_PER_SECTOR: u32 = 512u32;
+const MAXIMUM_BLOCK_BYTES: u32 = 4096u32;
+const MAXIMUM_TRANSFER_BYTES: u32 = 65536u32;
+const MINIMUM_CLUSTERS: u64 = 65525u64;
+const MAXIMUM_CLUSTERS: u64 = 268435438u64;
+
+export enum Fat32ˉfileˉreadˉstatus {
+    Ready = 0; Endˉofˉfile = 1; Invalidˉgeometry = 2;
+    Invalidˉoffset = 3; Invalidˉlimit = 4;
+    Invalidˉordinal = 5; Invalidˉcluster = 6;
+}
+
+export record Fat32ˉfileˉreadˉplan {
+    Status: Fat32ˉfileˉreadˉstatus;
+    Clusterˉordinal: u32;
+    Cluster: u32;
+    Deviceˉsector: u64;
+    Sectorˉcount: u32;
+    Sectorˉoffset: u32;
+    Fileˉoffset: u64;
+    Dataˉbytes: u32;
+    Nextˉfileˉoffset: u64;
+}
+
+fn Invalid(Status: Fat32ˉfileˉreadˉstatus) -> Fat32ˉfileˉreadˉplan {
+    return Fat32ˉfileˉreadˉplan(
+        Status, 0u32, 0u32, 0u64, 0u32, 0u32, 0u64, 0u32, 0u64
+    );
+}
+
+fn Sectorsˉperˉclusterˉisˉvalid(Value: u32) -> bool {
+    return Value == 1u32 || Value == 2u32 || Value == 4u32 ||
+        Value == 8u32 || Value == 16u32 || Value == 32u32 ||
+        Value == 64u32 || Value == 128u32;
+}
+
+fn Narrowˉu32(Value: u64) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Value), 0u32);
+}
+
+fn Minimum(Left: u32, Right: u32) -> u32 {
+    if Left < Right { return Left; }
+    return Right;
+}
+
+export fn Fat32ˉfileˉreadˉplanˉcreate(
+    Firstˉdataˉsector: u64,
+    Totalˉsectors: u64,
+    Sectorsˉperˉcluster: u32,
+    Clusterˉcount: u64,
+    Fileˉsize: u32,
+    Fileˉoffset: u64,
+    Requestedˉbytes: u32,
+    Clusterˉordinal: u32,
+    Cluster: u32
+) -> Fat32ˉfileˉreadˉplan {
+    if !Sectorsˉperˉclusterˉisˉvalid(Sectorsˉperˉcluster) ||
+        Clusterˉcount < MINIMUM_CLUSTERS ||
+        Clusterˉcount > MAXIMUM_CLUSTERS ||
+        Firstˉdataˉsector >= Totalˉsectors {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉgeometry);
+    }
+    let Clusterˉarea: u64 = Clusterˉcount *
+        U64ˉfromˉu32(Sectorsˉperˉcluster);
+    if Clusterˉarea > Totalˉsectors - Firstˉdataˉsector {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉgeometry);
+    }
+    if Requestedˉbytes == 0u32 ||
+        Requestedˉbytes > MAXIMUM_TRANSFER_BYTES {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉlimit);
+    }
+    let Fileˉsizeˉwide: u64 = U64ˉfromˉu32(Fileˉsize);
+    if Fileˉoffset > Fileˉsizeˉwide {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉoffset);
+    }
+    if Fileˉoffset == Fileˉsizeˉwide {
+        return Fat32ˉfileˉreadˉplan(
+            Fat32ˉfileˉreadˉstatus.Endˉofˉfile,
+            Clusterˉordinal, Cluster, 0u64, 0u32, 0u32,
+            Fileˉoffset, 0u32, Fileˉoffset
+        );
+    }
+    if Cluster < 2u32 ||
+        U64ˉfromˉu32(Cluster) >= Clusterˉcount + 2u64 {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉcluster);
+    }
+    let Clusterˉbytes: u64 =
+        U64ˉfromˉu32(Sectorsˉperˉcluster) * 512u64;
+    let Requiredˉordinal: u64 = Fileˉoffset / Clusterˉbytes;
+    if Requiredˉordinal != U64ˉfromˉu32(Clusterˉordinal) {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉordinal);
+    }
+    let Inˉcluster: u32 = Narrowˉu32(Fileˉoffset % Clusterˉbytes);
+    let Clusterˉsector: u32 = Inˉcluster / BYTES_PER_SECTOR;
+    let Sectorˉoffset: u32 = Inˉcluster % BYTES_PER_SECTOR;
+    let Deviceˉsector: u64 = Firstˉdataˉsector +
+        U64ˉfromˉu32(Cluster - 2u32) *
+            U64ˉfromˉu32(Sectorsˉperˉcluster) +
+        U64ˉfromˉu32(Clusterˉsector);
+    if Deviceˉsector >= Totalˉsectors {
+        return Invalid(Fat32ˉfileˉreadˉstatus.Invalidˉgeometry);
+    }
+    let Remainingˉfile: u32 = Narrowˉu32(Fileˉsizeˉwide - Fileˉoffset);
+    let Remainingˉcluster: u32 =
+        Sectorsˉperˉcluster * BYTES_PER_SECTOR - Inˉcluster;
+    let Remainingˉblock: u32 = MAXIMUM_BLOCK_BYTES - Sectorˉoffset;
+    var Dataˉbytes: u32 = Minimum(Requestedˉbytes, Remainingˉfile);
+    Dataˉbytes = Minimum(Dataˉbytes, Remainingˉcluster);
+    Dataˉbytes = Minimum(Dataˉbytes, Remainingˉblock);
+    let Sectorˉcount: u32 =
+        (Sectorˉoffset + Dataˉbytes + 511u32) / BYTES_PER_SECTOR;
+    return Fat32ˉfileˉreadˉplan(
+        Fat32ˉfileˉreadˉstatus.Ready,
+        Clusterˉordinal, Cluster, Deviceˉsector,
+        Sectorˉcount, Sectorˉoffset, Fileˉoffset,
+        Dataˉbytes, Fileˉoffset + U64ˉfromˉu32(Dataˉbytes)
+    );
+}

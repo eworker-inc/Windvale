@@ -87,7 +87,7 @@ The first capacity-one handle state now separately proves ownership, profile
 rights, generation reuse, stale rejection, close, and peer-exit reclamation;
 dispatch and multi-client queueing remain open.
 
-### Filesystem slice 4: block and FAT32 provider — volume and chain admission implemented candidate
+### Filesystem slice 4: block and FAT32 provider — file-read planning implemented candidate
 
 Add one isolated block-device path and a bounded FAT32 service. Qualify malformed
 boot sectors, directories, cluster chains, cycles, oversized geometry, media
@@ -103,8 +103,8 @@ masks the reserved high nibble, classifies every special value, rejects cycles
 and truncated/trailing traces, and enforces a caller-selected ceiling no larger
 than 4,096 clusters. The combined 45-case owner passes in paired native images.
 FSInfo/backup content validation, mirrored-FAT comparison, long-name/path
-mapping, live block-provider IPC, media removal, and file data reads remain
-before slice 4 is complete. Short-directory admission now bounds one through
+mapping, live block-provider IPC, media removal, and completed file-data reads
+remain before slice 4 is complete. Short-directory admission now bounds one through
 4,096 entries, validates attributes and cluster/size fields, distinguishes
 files and directories, detects duplicate targets, and separates an end marker
 from an incomplete chain. Block-read transaction 1 admits a generation-safe,
@@ -119,6 +119,13 @@ separates construction from dispatch, rejects concurrent and duplicate
 completion, consumes dispatched sequences exactly once, distinguishes
 pre-dispatch from post-dispatch cancellation, and requires teardown after peer
 loss. The privileged endpoint syscall adapter and block driver remain pending.
+
+File-read plan 1 now maps one admitted `u64` file offset plus the exact
+caller-resolved cluster into at most eight sectors and 4,096 covered bytes. It
+distinguishes exact EOF, checks the cluster ordinal, and stops at the file,
+cluster, and block-window boundaries. Its 16-case native candidate is mapping
+evidence only: chain-result binding, live block dispatch, partial-sector copy,
+media-generation validation, and filesystem response construction remain open.
 
 ### Filesystem slice 5: boot and application integration
 

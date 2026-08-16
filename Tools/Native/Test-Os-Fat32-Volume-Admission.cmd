@@ -20,6 +20,10 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Op
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Directory.wvb" 6340 14548e1da399a95bb8c25be9c9224b4d524c729457992c2dc26ef153561b7733
 if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Operating-System\Windvale-Os-Fat32-File-Read-Plan.wvproj" "%Work%\File-Read.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\File-Read.wvb" 4543 71868dc89be5f640ca137b50ba09ccddab3a940706756a209570079f3e2e2b1d
+if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-Fat32-Volume-Admission.wvproj" "%Work%\Test.wvb" >nul
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Test.wvb" 25600 c978805d2dec9acb9ba08e3fa9466d5f21aab013aff0f6d6c807666ac986bcd9
@@ -64,7 +68,29 @@ call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%
 if errorlevel 1 goto :cleanup
 call :verify "%Work%\Directory-Test.elf" 135280 b2f9e66d2a78b9f85ac4aed80d6a517cdad154313265fe6925c917ff7502b1a5
 if errorlevel 1 goto :cleanup
-echo native os fat32 volume chain and directory admission status=Passed projects=5 cases=64 local-result=47 cross-host-images=Verified
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Os-Fat32-File-Read-Plan.wvproj" "%Work%\File-Read-Test.wvb" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\File-Read-Test.wvb" 10627 7d4397fa3bc9a338ff88af5bebd8008b2ef8497ad902e6e9bafcc0c19ac4fff1
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Work%\File-Read-Test.wvb" "%Work%\File-Read-Test.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\File-Read-Test.wvo" 107371 8516ea6f84521c3d5dc00fe41cffaf21406cf91da7b2b61d006ca6ea5d90f902
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Work%\File-Read-Test.bin" "%Work%\File-Read-Test.wvo" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\File-Read-Test.bin" 107060 eb8c619de686b25e41f6e1300114d4c58f5c6b9e64c190c52d9be91878e33eb1
+if errorlevel 1 goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Work%\File-Read-Test.bin" 0 "%Work%\File-Read-Test.exe" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\File-Read-Test.exe" 109056 c2eb4be0aee89cdc202b524733a85a5670d9260d7fe6cd49f417265cbd90aefe
+if errorlevel 1 goto :cleanup
+"%Work%\File-Read-Test.exe" >nul
+if not "%ERRORLEVEL%"=="47" goto :cleanup
+call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 "%Work%\File-Read-Test.bin" 0 "%Work%\File-Read-Test.elf" >nul
+if errorlevel 1 goto :cleanup
+call :verify "%Work%\File-Read-Test.elf" 114800 ebdb4ad297801000c0a8d9ca203809f158a02e07183cf53a935fa866f3469a11
+if errorlevel 1 goto :cleanup
+echo native os fat32 volume chain directory and file-read admission status=Passed projects=7 cases=80 local-result=47 cross-host-images=Verified
 set "Status=0"
 :cleanup
 if exist "%Work%\." rmdir /s /q "%Work%"
