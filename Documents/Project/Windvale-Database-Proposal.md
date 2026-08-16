@@ -647,6 +647,17 @@ crash safety, bounded resource use, reproducibility, and a coherent native path.
 Performance targets should be approved only after the first complete path can be
 measured against EWDB and relevant external comparators.
 
+After the persistent Windvale server path is complete, its first external
+comparison will run the same bounded workloads against installed PostgreSQL and
+SQLite: sequential and batched durable writes, warm and cold point reads, range
+scans, atomic multi-record transactions, and primary plus secondary indexed
+lookups. Each result must name durability and synchronous-commit settings,
+connection and process shape, warm-up, data size, key/value distribution,
+concurrency, host, storage, and software versions. Reports retain throughput,
+median and tail latency, peak memory, database bytes, and observed I/O. Default
+safe settings are reported separately from any tuned profile; no engine may use
+weaker durability while presenting the result as an equal comparison.
+
 ## Non-goals of this proposal
 
 This proposal does not:

@@ -103,7 +103,8 @@ inconsistent path/depth input, companion digest mismatch, and a digest-bound
 but invalid durable page. `WVCR 1` also has an explicit 64-child group and
 95-child level boundary test.
 
-`WVAG 1` now consumes the emitted replacement plan at any remaining ancestor.
-The next milestone assigns durable identities to that logical output and adds
-the bounded grouping/allocation loop, including new-root construction, before
-compact-log and superblock publication.
+`WVAG 1` consumes the emitted replacement plan at any remaining ancestor, and
+[`WVAP 1`](Windvale-Database-Transaction-Ancestor-Pages.md) assigns durable
+identities to that logical output. The next milestone adds the bounded
+grouping/allocation loop, including new-root construction, before compact-log
+and superblock publication.

@@ -1,0 +1,278 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉpages profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉancestorˉgroups as Ancestors;
+import Windvaleˉdatabaseˉtransactionˉancestorˉpages as AncestorPages;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const PAGE_SIZE: u32 = 4096u32;
+const MAXIMUM_PAYLOAD: u32 = 3968u32;
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+fn Empty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Same(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Replace(Input: bytes, Offset: u32, Count: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Offset + Count, Bytesˉlength(Input) - Offset - Count)
+    );
+}
+
+fn Powerˉbytes(Exponent: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    var Index: u32 = 0u32;
+    while Index < Exponent {
+        Result = Bytesˉconcat(Result, Result);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Hash(Input: bytes) -> bytes {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Input);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Input);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Current() -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        0u64, 1u64, 3u64, 3u64, 2u64, 12u64, 11u64, 1u64, 13u64,
+        53760u64, PAGE_SIZE, 3u32
+    );
+}
+
+fn Leaf(First: u8, Second: u8) -> bytes {
+    let One: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            Empty(), Bytesˉfromˉu8(First), Bytesˉfromˉu8(First), MAXIMUM_PAYLOAD
+        );
+    let Two: Tree.Databaseˉtreeˉleafˉupsertˉresult =
+        Tree.Databaseˉtreeˉleafˉupsert(
+            One.Bytes, Bytesˉfromˉu8(Second), Bytesˉfromˉu8(Second), MAXIMUM_PAYLOAD
+        );
+    return Two.Bytes;
+}
+
+fn Branch(Separator: u8, Left: u64, Right: u64) -> bytes {
+    let Result: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉbranchˉtwoˉchildren(
+            Bytesˉfromˉu8(Separator), Left, Right, MAXIMUM_PAYLOAD
+        );
+    return Result.Bytes;
+}
+
+fn Durable(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Identifier: u64,
+    Payload: bytes
+) -> bytes {
+    let Node: Tree.Databaseˉtreeˉnodeˉresult =
+        Tree.Databaseˉtreeˉnodeˉdecode(Payload);
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Page.Databaseˉdurableˉpage(
+                Kind, PAGE_SIZE, Identifier, 3u64, 2u64, NO_PAGE,
+                Node.Entryˉcount, Payload
+            )
+        );
+    return Result.Bytes;
+}
+
+fn Root() -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Root, 12u64,
+        Branch(5u8, 10u64, 11u64)
+    );
+}
+
+fn Parent(Identifier: u64, Separator: u8, Left: u64, Right: u64) -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Branch, Identifier,
+        Branch(Separator, Left, Right)
+    );
+}
+
+fn Leafˉpage(Identifier: u64, First: u8, Second: u8) -> bytes {
+    return Durable(
+        Page.Databaseˉdurableˉpageˉkind.Leaf, Identifier, Leaf(First, Second)
+    );
+}
+
+fn Paths() -> bytes {
+    let Left: bytes = Bytesˉconcat(
+        Bytesˉconcat(Root(), Parent(10u64, 3u8, 8u64, 9u64)),
+        Leafˉpage(8u64, 1u8, 2u8)
+    );
+    let Right: bytes = Bytesˉconcat(
+        Bytesˉconcat(Root(), Parent(11u64, 8u8, 6u64, 7u64)),
+        Leafˉpage(7u64, 8u8, 9u8)
+    );
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Put(Key: u8) -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationˉcomponent =
+        Transaction.Databaseˉtransactionˉmutationˉput(
+            Bytesˉfromˉu8(Key), Bytesˉfromˉu8(Key)
+        );
+    return Result.Bytes;
+}
+
+fn Mutations() -> bytes {
+    let Result: Transaction.Databaseˉtransactionˉmutationsˉresult =
+        Transaction.Databaseˉtransactionˉmutationsˉencode(
+            2u32, Bytesˉconcat(Put(1u8), Put(8u8))
+        );
+    return Result.Bytes;
+}
+
+fn Child(Pageˉidentifier: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+            Pageˉidentifier, Empty()
+        );
+    return Result.Bytes;
+}
+
+fn Group(Original: u64, Replacement: u64) -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+            Original, Replacement, 1u32, Child(Replacement)
+        );
+    return Result.Bytes;
+}
+
+fn Replacementˉplan() -> bytes {
+    let Result: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            2u32, 2u32, 15u64,
+            Bytesˉconcat(Group(10u64, 15u64), Group(11u64, 16u64))
+        );
+    return Result.Bytes;
+}
+
+export fn Main() -> i32 {
+    let Groups: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉplan(
+            Current(), Mutations(), Paths(), 1u32, Replacementˉplan()
+        );
+    let First: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉplan(
+            Current(), 13u64, 17u64, 4u64, 3u64, Groups.Bytes
+        );
+    let Second: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉplan(
+            Current(), 13u64, 17u64, 4u64, 3u64, Groups.Bytes
+        );
+    let Rootˉpage: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(
+            Bytesˉslice(First.Pages, 0u32, PAGE_SIZE)
+        );
+    let Low: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Rootˉpage.Payload, Bytesˉfromˉu8(1u8),
+            false, Empty(), false, Empty()
+        );
+    let High: Tree.Databaseˉtreeˉbranchˉrouteˉresult =
+        Tree.Databaseˉtreeˉbranchˉroute(
+            Rootˉpage.Payload, Bytesˉfromˉu8(8u8),
+            false, Empty(), false, Empty()
+        );
+    let Replacement: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+        Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+            First.Replacements, 0u32
+        );
+    let Validated: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉvalidate(
+            First.Bytes, First.Ancestorˉgroups, First.Pages
+        );
+    if Groups.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid ||
+        First.Error != AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Valid ||
+        !First.Changed || !First.Rootˉready || First.Childˉlevel != 1u32 ||
+        First.Parentˉgroupˉcount != 1u32 || First.Branchˉpageˉcount != 1u32 ||
+        First.Firstˉallocationˉpage != 13u64 || First.Firstˉpage != 17u64 ||
+        First.Rootˉpage != 17u64 || First.Targetˉgeneration != 4u64 ||
+        First.Targetˉsequence != 3u64 ||
+        Validated.Error != AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Valid ||
+        !Same(First.Bytes, Second.Bytes) || !Same(First.Pages, Second.Pages) {
+        return 1;
+    }
+    if Rootˉpage.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Rootˉpage.Kind != Page.Databaseˉdurableˉpageˉkind.Root ||
+        Rootˉpage.Pageˉidentifier != 17u64 || Rootˉpage.Previousˉpage != 12u64 ||
+        Low.Child != 15u64 || High.Child != 16u64 ||
+        Replacement.Originalˉchild != 12u64 || Replacement.Firstˉpage != 17u64 {
+        return 2;
+    }
+    let Invalidˉallocation: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉplan(
+            Current(), 12u64, 17u64, 4u64, 3u64, Groups.Bytes
+        );
+    let Truncated: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉdecode(
+            Bytesˉslice(First.Bytes, 0u32, Bytesˉlength(First.Bytes) - 1u32)
+        );
+    let Badˉmagic: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉdecode(
+            Replace(First.Bytes, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32))
+        );
+    let Oversized: bytes = Bytesˉconcat(
+        Bytesˉconcat(Powerˉbytes(19u32), Powerˉbytes(16u32)),
+        Bytesˉfromˉu8(0u8)
+    );
+    let Tooˉlarge: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉdecode(Oversized);
+    let Badˉpages: bytes = Replace(
+        First.Pages, 0u32, 1u32, Bytesˉfromˉu8(0u8)
+    );
+    let Digestˉmismatch: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉvalidate(
+            First.Bytes, First.Ancestorˉgroups, Badˉpages
+        );
+    let Reboundˉmanifest: bytes = Replace(
+        First.Bytes, 128u32, 32u32, Hash(Badˉpages)
+    );
+    let Invalidˉpage: AncestorPages.Databaseˉtransactionˉancestorˉpagesˉresult =
+        AncestorPages.Databaseˉtransactionˉancestorˉpagesˉvalidate(
+            Reboundˉmanifest, First.Ancestorˉgroups, Badˉpages
+        );
+    if Invalidˉallocation.Error !=
+            AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Inconsistentˉinput ||
+        Truncated.Error !=
+            AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉtotalˉlength ||
+        Badˉmagic.Error !=
+            AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉmagic ||
+        Tooˉlarge.Error !=
+            AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉlength ||
+        Digestˉmismatch.Error !=
+            AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉdigest ||
+        Invalidˉpage.Error !=
+            AncestorPages.Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉpage {
+        return 3;
+    }
+    return 0;
+}

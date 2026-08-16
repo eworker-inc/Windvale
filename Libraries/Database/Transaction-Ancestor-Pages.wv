@@ -1,0 +1,595 @@
+module Windvaleˉdatabaseˉtransactionˉancestorˉpages profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉtransactionˉancestorˉgroups as Ancestors;
+import Windvaleˉdatabaseˉtransactionˉbranchˉpartition as Partition;
+import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
+import Windvaleˉdatabaseˉtreeˉnode as Tree;
+
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_MAGIC: u32 = 1346459223u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_VERSION: u32 = 1u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES: u32 = 160u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_BYTES: u32 = 589824u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_GROUP_BYTES: u32 = 3145728u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_REPLACEMENT_BYTES: u32 = 524288u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_PAGES: u32 = 95u32;
+const DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE: u64 = 18446744073709551615u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉtransactionˉancestorˉpagesˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Invalidˉgroups = 2;
+    Inconsistentˉinput = 3;
+    Pageˉidentifierˉexhausted = 4;
+    Invalidˉgroup = 5;
+    Invalidˉpartition = 6;
+    Replacementˉfailed = 7;
+    Pageˉencodeˉfailed = 8;
+    Invalidˉoutput = 9;
+    Invalidˉlength = 10;
+    Invalidˉmagic = 11;
+    Unsupportedˉversion = 12;
+    Invalidˉheader = 13;
+    Invalidˉflags = 14;
+    Invalidˉcount = 15;
+    Invalidˉtotalˉlength = 16;
+    Invalidˉreplacements = 17;
+    Invalidˉdigest = 18;
+    Invalidˉpage = 19;
+}
+
+export record Databaseˉtransactionˉancestorˉpagesˉresult {
+    Error: Databaseˉtransactionˉancestorˉpagesˉerror;
+    Failedˉgroup: u32;
+    Changed: bool;
+    Rootˉready: bool;
+    Pageˉsize: u32;
+    Rootˉdepth: u32;
+    Childˉlevel: u32;
+    Parentˉgroupˉcount: u32;
+    Branchˉpageˉcount: u32;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Firstˉallocationˉpage: u64;
+    Firstˉpage: u64;
+    Rootˉpage: u64;
+    Ancestorˉgroups: bytes;
+    Replacements: bytes;
+    Pages: bytes;
+    Bytes: bytes;
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉcopy(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total == 0u32 { return Databaseˉtransactionˉancestorˉpagesˉempty(); }
+    return Bytesˉslice(Bytesˉconcat(Bytesˉfromˉu8(0u8), Input), 1u32, Total);
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉsame(Left: bytes, Right: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Left);
+    if Total != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Total {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉhash(Input: bytes) -> bytes {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Input);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Input);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉfailure(
+    Error: Databaseˉtransactionˉancestorˉpagesˉerror,
+    Failedˉgroup: u32
+) -> Databaseˉtransactionˉancestorˉpagesˉresult {
+    let Empty: bytes = Databaseˉtransactionˉancestorˉpagesˉempty();
+    return Databaseˉtransactionˉancestorˉpagesˉresult(
+        Error, Failedˉgroup, false, false,
+        0u32, 0u32, 0u32, 0u32, 0u32,
+        0u64, 0u64, DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE,
+        DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE,
+        DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE,
+        Empty, Empty, Empty, Empty
+    );
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+    Error: Databaseˉtransactionˉancestorˉpagesˉerror
+) -> Databaseˉtransactionˉancestorˉpagesˉresult {
+    return Databaseˉtransactionˉancestorˉpagesˉfailure(Error, 0u32);
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉencode(
+    Rootˉready: bool,
+    Pageˉsize: u32,
+    Rootˉdepth: u32,
+    Childˉlevel: u32,
+    Parentˉgroupˉcount: u32,
+    Branchˉpageˉcount: u32,
+    Targetˉgeneration: u64,
+    Targetˉsequence: u64,
+    Firstˉallocationˉpage: u64,
+    Firstˉpage: u64,
+    Rootˉpage: u64,
+    Ancestorˉgroups: bytes,
+    Pages: bytes,
+    Replacementsˉbytes: bytes
+) -> bytes {
+    var Flags: u32 = 1u32;
+    if Rootˉready { Flags = 3u32; }
+    let Groupˉdigest: bytes =
+        Databaseˉtransactionˉancestorˉpagesˉhash(Ancestorˉgroups);
+    let Pageˉdigest: bytes = Databaseˉtransactionˉancestorˉpagesˉhash(Pages);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(
+        DATABASE_TRANSACTION_ANCESTOR_PAGES_MAGIC
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+        DATABASE_TRANSACTION_ANCESTOR_PAGES_VERSION
+    ));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+        DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES
+    ));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Flags));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Pageˉsize));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Rootˉdepth));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Childˉlevel));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Parentˉgroupˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Branchˉpageˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+        Bytesˉlength(Replacementsˉbytes)
+    ));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Targetˉgeneration));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Targetˉsequence));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Firstˉallocationˉpage));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Firstˉpage));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu64ˉlittle(Rootˉpage));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+        Bytesˉlength(Ancestorˉgroups)
+    ));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Pages)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+        DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES +
+        Bytesˉlength(Replacementsˉbytes)
+    ));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Groupˉdigest);
+    Result = Bytesˉconcat(Result, Pageˉdigest);
+    return Bytesˉconcat(Result, Replacementsˉbytes);
+}
+
+fn Databaseˉtransactionˉancestorˉpagesˉwithˉcompanions(
+    Value: Databaseˉtransactionˉancestorˉpagesˉresult,
+    Ancestorˉgroups: bytes,
+    Pages: bytes
+) -> Databaseˉtransactionˉancestorˉpagesˉresult {
+    return Databaseˉtransactionˉancestorˉpagesˉresult(
+        Value.Error, Value.Failedˉgroup, Value.Changed, Value.Rootˉready,
+        Value.Pageˉsize, Value.Rootˉdepth, Value.Childˉlevel,
+        Value.Parentˉgroupˉcount, Value.Branchˉpageˉcount,
+        Value.Targetˉgeneration, Value.Targetˉsequence,
+        Value.Firstˉallocationˉpage, Value.Firstˉpage, Value.Rootˉpage,
+        Databaseˉtransactionˉancestorˉpagesˉcopy(Ancestorˉgroups),
+        Value.Replacements,
+        Databaseˉtransactionˉancestorˉpagesˉcopy(Pages), Value.Bytes
+    );
+}
+
+export fn Databaseˉtransactionˉancestorˉpagesˉdecode(
+    Input: bytes
+) -> Databaseˉtransactionˉancestorˉpagesˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES ||
+        Total > DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_BYTES {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) !=
+            DATABASE_TRANSACTION_ANCESTOR_PAGES_MAGIC {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) !=
+            DATABASE_TRANSACTION_ANCESTOR_PAGES_VERSION {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+            DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 92u32) != 0u32 {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉheader
+        );
+    }
+    let Flags: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Pageˉsize: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Rootˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Childˉlevel: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Parentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    let Pageˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Replacementˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    let Generation: u64 = Bytesˉreadˉu64ˉlittle(Input, 40u32);
+    let Sequence: u64 = Bytesˉreadˉu64ˉlittle(Input, 48u32);
+    let Firstˉallocation: u64 = Bytesˉreadˉu64ˉlittle(Input, 56u32);
+    let Firstˉpage: u64 = Bytesˉreadˉu64ˉlittle(Input, 64u32);
+    let Rootˉpage: u64 = Bytesˉreadˉu64ˉlittle(Input, 72u32);
+    let Groupˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 80u32);
+    let Pagesˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 84u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 88u32) != Total {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉtotalˉlength
+        );
+    }
+    if Flags != 1u32 && Flags != 3u32 {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉflags
+        );
+    }
+    if Pageˉsize != 4096u32 && Pageˉsize != 8192u32 &&
+        Pageˉsize != 16384u32 && Pageˉsize != 32768u32 &&
+        Pageˉsize != 65536u32 || Rootˉdepth < 3u32 || Rootˉdepth > 8u32 ||
+        Childˉlevel == 0u32 || Childˉlevel > Rootˉdepth - 2u32 ||
+        Parentˉcount == 0u32 || Parentˉcount > 32u32 ||
+        Pageˉcount == 0u32 ||
+        Pageˉcount > DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_PAGES ||
+        Generation == 0u64 || Firstˉallocation ==
+            DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE ||
+        Firstˉpage < Firstˉallocation ||
+        Firstˉpage > U64_MAXIMUM - U64ˉfromˉu32(Pageˉcount) ||
+        Groupˉlength < 64u32 ||
+        Groupˉlength > DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_GROUP_BYTES ||
+        Pagesˉlength != Pageˉcount * Pageˉsize ||
+        Replacementˉlength == 0u32 ||
+        Replacementˉlength > DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_REPLACEMENT_BYTES ||
+        Replacementˉlength != Total - DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES ||
+        Flags == 3u32 && (Childˉlevel != 1u32 || Parentˉcount != 1u32 ||
+            Pageˉcount != 1u32 || Rootˉpage != Firstˉpage) ||
+        Flags == 1u32 && Rootˉpage != DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉcount
+        );
+    }
+    let Replacementˉbytes: bytes = Bytesˉslice(
+        Input, DATABASE_TRANSACTION_ANCESTOR_PAGES_HEADER_BYTES,
+        Replacementˉlength
+    );
+    let Replacementˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉdecode(
+            Replacementˉbytes
+        );
+    if Replacementˉplan.Error !=
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid ||
+        Replacementˉplan.Groupˉcount != Parentˉcount ||
+        Replacementˉplan.Replacementˉcount != Pageˉcount ||
+        Replacementˉplan.Firstˉpage != Firstˉpage {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉreplacements
+        );
+    }
+    let Empty: bytes = Databaseˉtransactionˉancestorˉpagesˉempty();
+    return Databaseˉtransactionˉancestorˉpagesˉresult(
+        Databaseˉtransactionˉancestorˉpagesˉerror.Valid, 0u32,
+        true, Flags == 3u32, Pageˉsize, Rootˉdepth, Childˉlevel,
+        Parentˉcount, Pageˉcount, Generation, Sequence,
+        Firstˉallocation, Firstˉpage, Rootˉpage,
+        Empty, Databaseˉtransactionˉancestorˉpagesˉcopy(Replacementˉbytes),
+        Empty, Databaseˉtransactionˉancestorˉpagesˉcopy(Input)
+    );
+}
+
+export fn Databaseˉtransactionˉancestorˉpagesˉvalidate(
+    Manifestˉbytes: bytes,
+    Ancestorˉgroupsˉbytes: bytes,
+    Pageˉbytes: bytes
+) -> Databaseˉtransactionˉancestorˉpagesˉresult {
+    let Manifest: Databaseˉtransactionˉancestorˉpagesˉresult =
+        Databaseˉtransactionˉancestorˉpagesˉdecode(Manifestˉbytes);
+    if Manifest.Error != Databaseˉtransactionˉancestorˉpagesˉerror.Valid {
+        return Manifest;
+    }
+    if Bytesˉlength(Ancestorˉgroupsˉbytes) !=
+            Bytesˉreadˉu32ˉlittle(Manifest.Bytes, 80u32) ||
+        Bytesˉlength(Pageˉbytes) !=
+            Bytesˉreadˉu32ˉlittle(Manifest.Bytes, 84u32) ||
+        !Databaseˉtransactionˉancestorˉpagesˉsame(
+            Bytesˉslice(Manifest.Bytes, 96u32, 32u32),
+            Databaseˉtransactionˉancestorˉpagesˉhash(Ancestorˉgroupsˉbytes)
+        ) ||
+        !Databaseˉtransactionˉancestorˉpagesˉsame(
+            Bytesˉslice(Manifest.Bytes, 128u32, 32u32),
+            Databaseˉtransactionˉancestorˉpagesˉhash(Pageˉbytes)
+        ) {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉdigest
+        );
+    }
+    let Groupˉplan: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(
+            Ancestorˉgroupsˉbytes
+        );
+    if Groupˉplan.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid ||
+        Groupˉplan.Pageˉsize != Manifest.Pageˉsize ||
+        Groupˉplan.Rootˉdepth != Manifest.Rootˉdepth ||
+        Groupˉplan.Childˉlevel != Manifest.Childˉlevel ||
+        Groupˉplan.Parentˉgroupˉcount != Manifest.Parentˉgroupˉcount ||
+        Groupˉplan.Outputˉbranchˉcount != Manifest.Branchˉpageˉcount {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Inconsistentˉinput
+        );
+    }
+    let Replacementˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉdecode(
+            Manifest.Replacements
+        );
+    var Counted: u32 = 0u32;
+    var Groupˉindex: u32 = 0u32;
+    while Groupˉindex < Manifest.Parentˉgroupˉcount {
+        let Group: Ancestors.Databaseˉtransactionˉancestorˉgroup =
+            Ancestors.Databaseˉtransactionˉancestorˉgroupˉread(
+                Ancestorˉgroupsˉbytes, Groupˉindex
+            );
+        let Replacement: Replacements.Databaseˉtransactionˉchildˉreplacementˉgroup =
+            Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉread(
+                Manifest.Replacements, Groupˉindex
+            );
+        if Group.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid ||
+            Replacement.Error !=
+                Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid ||
+            Group.Parentˉpage != Replacement.Originalˉchild ||
+            Group.Parentˉpage >= Manifest.Firstˉallocationˉpage ||
+            Group.Outputˉbranchˉcount != Replacement.Replacementˉcount {
+            return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉgroup,
+                Groupˉindex
+            );
+        }
+        var Branchˉindex: u32 = 0u32;
+        while Branchˉindex < Group.Outputˉbranchˉcount {
+            let Branch: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+                Partition.Databaseˉtransactionˉbranchˉpartitionˉread(
+                    Group.Payload, Branchˉindex
+                );
+            let Child: Replacements.Databaseˉtransactionˉchildˉreplacementˉchild =
+                Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉread(
+                    Replacement, Branchˉindex
+                );
+            if Branch.Error !=
+                    Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid ||
+                Child.Error !=
+                    Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid ||
+                !Databaseˉtransactionˉancestorˉpagesˉsame(
+                    Branch.Separator, Child.Separator
+                ) {
+                return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                    Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉpartition,
+                    Groupˉindex
+                );
+            }
+            let Durable: Page.Databaseˉdurableˉpageˉresult =
+                Page.Databaseˉdurableˉpageˉdecode(
+                    Bytesˉslice(
+                        Pageˉbytes, Counted * Manifest.Pageˉsize,
+                        Manifest.Pageˉsize
+                    )
+                );
+            let Node: Tree.Databaseˉtreeˉnodeˉresult =
+                Tree.Databaseˉtreeˉnodeˉdecode(Durable.Payload);
+            var Expectedˉkind: Page.Databaseˉdurableˉpageˉkind =
+                Page.Databaseˉdurableˉpageˉkind.Branch;
+            if Manifest.Rootˉready {
+                Expectedˉkind = Page.Databaseˉdurableˉpageˉkind.Root;
+            }
+            var Expectedˉprevious: u64 =
+                DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE;
+            if Branchˉindex == 0u32 {
+                Expectedˉprevious = Group.Parentˉpage;
+            }
+            if Durable.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+                Durable.Pageˉidentifier != Child.Pageˉidentifier ||
+                Durable.Generation != Manifest.Targetˉgeneration ||
+                Durable.Commitˉsequence != Manifest.Targetˉsequence ||
+                Durable.Previousˉpage != Expectedˉprevious ||
+                Durable.Kind != Expectedˉkind ||
+                Durable.Itemˉcount != Branch.Entryˉcount ||
+                Node.Error != Tree.Databaseˉtreeˉnodeˉerror.Valid ||
+                Node.Kind != Tree.Databaseˉtreeˉnodeˉkind.Branch ||
+                !Databaseˉtransactionˉancestorˉpagesˉsame(
+                    Durable.Payload, Branch.Payload
+                ) {
+                return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                    Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉpage,
+                    Groupˉindex
+                );
+            }
+            Counted = Counted + 1u32;
+            Branchˉindex = Branchˉindex + 1u32;
+        }
+        Groupˉindex = Groupˉindex + 1u32;
+    }
+    if Counted != Manifest.Branchˉpageˉcount ||
+        Replacementˉplan.Replacementˉcount != Counted {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Inconsistentˉinput
+        );
+    }
+    return Databaseˉtransactionˉancestorˉpagesˉwithˉcompanions(
+        Manifest, Ancestorˉgroupsˉbytes, Pageˉbytes
+    );
+}
+
+export fn Databaseˉtransactionˉancestorˉpagesˉplan(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Firstˉallocationˉpage: u64,
+    Firstˉpage: u64,
+    Targetˉgeneration: u64,
+    Targetˉsequence: u64,
+    Ancestorˉgroupsˉbytes: bytes
+) -> Databaseˉtransactionˉancestorˉpagesˉresult {
+    let Groupˉplan: Ancestors.Databaseˉtransactionˉancestorˉgroupsˉresult =
+        Ancestors.Databaseˉtransactionˉancestorˉgroupsˉdecode(
+            Ancestorˉgroupsˉbytes
+        );
+    if Groupˉplan.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉgroups
+        );
+    }
+    if Current.Status != Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Current.Generation == U64_MAXIMUM ||
+        Current.Committedˉsequence == U64_MAXIMUM ||
+        Groupˉplan.Pageˉsize != Current.Pageˉsize ||
+        Groupˉplan.Rootˉdepth != Current.Rootˉdepth ||
+        Groupˉplan.Parentˉgroupˉcount == 0u32 ||
+        Groupˉplan.Outputˉbranchˉcount == 0u32 ||
+        Firstˉallocationˉpage != Current.Pageˉcount ||
+        Firstˉpage < Firstˉallocationˉpage ||
+        Targetˉgeneration != Current.Generation + 1u64 ||
+        Targetˉsequence != Current.Committedˉsequence + 1u64 ||
+        Bytesˉlength(Ancestorˉgroupsˉbytes) >
+            DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_GROUP_BYTES {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Inconsistentˉinput
+        );
+    }
+    if Firstˉpage == DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE ||
+        Firstˉpage > U64_MAXIMUM -
+            U64ˉfromˉu32(Groupˉplan.Outputˉbranchˉcount) {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Pageˉidentifierˉexhausted
+        );
+    }
+    let Rootˉready: bool = Groupˉplan.Childˉlevel == 1u32 &&
+        Groupˉplan.Parentˉgroupˉcount == 1u32 &&
+        Groupˉplan.Outputˉbranchˉcount == 1u32;
+    var Rootˉpage: u64 = DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE;
+    if Rootˉready { Rootˉpage = Firstˉpage; }
+    var Pages: bytes = Databaseˉtransactionˉancestorˉpagesˉempty();
+    var Replacementˉgroups: bytes = Databaseˉtransactionˉancestorˉpagesˉempty();
+    var Nextˉpage: u64 = Firstˉpage;
+    var Groupˉindex: u32 = 0u32;
+    while Groupˉindex < Groupˉplan.Parentˉgroupˉcount {
+        let Group: Ancestors.Databaseˉtransactionˉancestorˉgroup =
+            Ancestors.Databaseˉtransactionˉancestorˉgroupˉread(
+                Ancestorˉgroupsˉbytes, Groupˉindex
+            );
+        if Group.Error != Ancestors.Databaseˉtransactionˉancestorˉgroupsˉerror.Valid {
+            return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉgroup,
+                Groupˉindex
+            );
+        }
+        let Groupˉfirst: u64 = Nextˉpage;
+        var Children: bytes = Databaseˉtransactionˉancestorˉpagesˉempty();
+        var Branchˉindex: u32 = 0u32;
+        while Branchˉindex < Group.Outputˉbranchˉcount {
+            let Branch: Partition.Databaseˉtransactionˉbranchˉpartitionˉbranch =
+                Partition.Databaseˉtransactionˉbranchˉpartitionˉread(
+                    Group.Payload, Branchˉindex
+                );
+            if Branch.Error !=
+                    Partition.Databaseˉtransactionˉbranchˉpartitionˉerror.Valid {
+                return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                    Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉpartition,
+                    Groupˉindex
+                );
+            }
+            let Child: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+                Replacements.Databaseˉtransactionˉchildˉreplacementˉchildˉencode(
+                    Nextˉpage, Branch.Separator
+                );
+            if Child.Error !=
+                    Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+                return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                    Databaseˉtransactionˉancestorˉpagesˉerror.Replacementˉfailed,
+                    Groupˉindex
+                );
+            }
+            var Kind: Page.Databaseˉdurableˉpageˉkind =
+                Page.Databaseˉdurableˉpageˉkind.Branch;
+            if Rootˉready { Kind = Page.Databaseˉdurableˉpageˉkind.Root; }
+            var Previous: u64 = DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE;
+            if Branchˉindex == 0u32 { Previous = Group.Parentˉpage; }
+            let Encodedˉpage: Page.Databaseˉdurableˉpageˉresult =
+                Page.Databaseˉdurableˉpageˉencode(
+                    Page.Databaseˉdurableˉpage(
+                        Kind, Current.Pageˉsize, Nextˉpage,
+                        Targetˉgeneration, Targetˉsequence, Previous,
+                        Branch.Entryˉcount, Branch.Payload
+                    )
+                );
+            if Encodedˉpage.Error != Page.Databaseˉdurableˉpageˉerror.Valid {
+                return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                    Databaseˉtransactionˉancestorˉpagesˉerror.Pageˉencodeˉfailed,
+                    Groupˉindex
+                );
+            }
+            Children = Bytesˉconcat(Children, Child.Bytes);
+            Pages = Bytesˉconcat(Pages, Encodedˉpage.Bytes);
+            Nextˉpage = Nextˉpage + 1u64;
+            Branchˉindex = Branchˉindex + 1u32;
+        }
+        let Replacementˉgroup: Replacements.Databaseˉtransactionˉchildˉreplacementˉcomponent =
+            Replacements.Databaseˉtransactionˉchildˉreplacementˉgroupˉencode(
+                Group.Parentˉpage, Groupˉfirst,
+                Group.Outputˉbranchˉcount, Children
+            );
+        if Replacementˉgroup.Error !=
+                Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+            return Databaseˉtransactionˉancestorˉpagesˉfailure(
+                Databaseˉtransactionˉancestorˉpagesˉerror.Replacementˉfailed,
+                Groupˉindex
+            );
+        }
+        Replacementˉgroups = Bytesˉconcat(
+            Replacementˉgroups, Replacementˉgroup.Bytes
+        );
+        Groupˉindex = Groupˉindex + 1u32;
+    }
+    let Replacementˉplan: Replacements.Databaseˉtransactionˉchildˉreplacementsˉresult =
+        Replacements.Databaseˉtransactionˉchildˉreplacementsˉencode(
+            Groupˉplan.Parentˉgroupˉcount,
+            Groupˉplan.Outputˉbranchˉcount,
+            Firstˉpage, Replacementˉgroups
+        );
+    if Replacementˉplan.Error !=
+            Replacements.Databaseˉtransactionˉchildˉreplacementsˉerror.Valid {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Replacementˉfailed
+        );
+    }
+    let Encoded: bytes = Databaseˉtransactionˉancestorˉpagesˉencode(
+        Rootˉready, Current.Pageˉsize, Current.Rootˉdepth,
+        Groupˉplan.Childˉlevel, Groupˉplan.Parentˉgroupˉcount,
+        Groupˉplan.Outputˉbranchˉcount, Targetˉgeneration, Targetˉsequence,
+        Firstˉallocationˉpage, Firstˉpage, Rootˉpage,
+        Ancestorˉgroupsˉbytes, Pages, Replacementˉplan.Bytes
+    );
+    let Checked: Databaseˉtransactionˉancestorˉpagesˉresult =
+        Databaseˉtransactionˉancestorˉpagesˉvalidate(
+            Encoded, Ancestorˉgroupsˉbytes, Pages
+        );
+    if Checked.Error != Databaseˉtransactionˉancestorˉpagesˉerror.Valid {
+        return Databaseˉtransactionˉancestorˉpagesˉsimpleˉfailure(
+            Databaseˉtransactionˉancestorˉpagesˉerror.Invalidˉoutput
+        );
+    }
+    return Databaseˉtransactionˉancestorˉpagesˉwithˉcompanions(
+        Checked, Ancestorˉgroupsˉbytes, Pages
+    );
+}

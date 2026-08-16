@@ -96,6 +96,7 @@ output, route preservation, malformed paths, invalid levels, missing child
 identities, truncated and trailing encodings, bad magic, and the 3 MiB size
 boundary.
 
-The next milestone assigns durable page identities to every `WVAG 1` output,
-emits the next `WVCR 1` plan, and then adds the bounded loop that repeats both
-steps until one root is complete or a new root level is required.
+[`WVAP 1`](Windvale-Database-Transaction-Ancestor-Pages.md) now assigns durable
+page identities to every `WVAG 1` output and emits the next `WVCR 1` plan. The
+next milestone adds the bounded loop that repeats both steps until one root is
+complete or a new root level is required.

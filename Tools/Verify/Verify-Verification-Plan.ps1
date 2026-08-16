@@ -2012,6 +2012,23 @@ $NativeCases = @(
         DatabaseTarget = 'transaction-ancestor-groups'
     },
     @{
+        Name = 'focused database transaction-ancestor-pages owner'
+        Paths = @(
+            'Libraries/Database/Transaction-Ancestor-Pages.wv',
+            'Projects/Libraries/Windvale-Library-Database-Transaction-Ancestor-Pages.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Ancestor-Pages-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Transaction-Ancestor-Pages-Intermediate-Self-Test.wv',
+            'Specifications/Windvale-Database-Transaction-Ancestor-Pages.md'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-ancestor-pages'
+    },
+    @{
         Name = 'focused database sql-lowerer owner'
         Paths = @(
             'Libraries/Database/Sql-Lowerer.wv',
