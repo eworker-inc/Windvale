@@ -9,7 +9,7 @@ and refined by
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 and
 [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
-with the first workload findings resolved by
+with the first reviewed bundle's findings resolved by
 [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
@@ -113,6 +113,12 @@ indeterminate output progress.
 The successful path must remain easy to read without hiding parse or output
 failure. Adding one option must not change unrelated call meaning through
 overload resolution.
+
+The complete first-author source and evidence are in the
+[workload 1 paper bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md).
+It expresses one bounded strict UTF-8 byte/rune inspector and awaits owner review
+of its sequence, numeric parsing, reserved-builder, stream-capability, and
+command-status recommendations.
 
 ## Workload 2: bounded file copy
 
@@ -483,7 +489,7 @@ source contract ambiguous.
 
 | Workload | Status |
 | --- | --- |
-| Command-line application | Pending source bundle |
+| Command-line application | Complete first-author bundle; owner review pending |
 | Bounded file copy | Pending source bundle |
 | Database transaction | Pending source bundle |
 | Compiler front end | Pending source bundle |

@@ -1,0 +1,196 @@
+edition 1;
+module Inspectˉarguments;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Inspectˉtypes as Types;
+
+const DEFAULT_MAXIMUM_INPUT_BYTES: u64 = 4096u64;
+const MAXIMUM_INPUT_BYTES: u64 = 65536u64;
+const MAXIMUM_NUMERIC_ARGUMENT_BYTES: u64 = 20u64;
+
+fn Parseˉoperation(
+    Value: borrow text,
+    Index: u64,
+) -> Result.Result<Types.Operation, Types.Argumentˉfailure> effects() {
+    if Value == "bytes" {
+        return Result.Result.Valid {
+            Value: Types.Operation.Bytes,
+        };
+    }
+    if Value == "runes" {
+        return Result.Result.Valid {
+            Value: Types.Operation.Runes,
+        };
+    }
+    return Result.Result.Failure {
+        Error: Types.Argumentˉfailure.Invalidˉoperation {
+            Index: Index,
+        },
+    };
+}
+
+fn Parseˉmaximum(
+    Value: borrow text,
+    Index: u64,
+) -> Result.Result<u64, Types.Argumentˉfailure> effects() {
+    let Parsed = match Numeric.Parseˉu64ˉdecimalˉwhole(
+        Value: borrow Value,
+        Maximumˉinputˉbytes: MAXIMUM_NUMERIC_ARGUMENT_BYTES,
+    ) {
+        case Result.Result.Valid { Value: Accepted } {
+            Accepted
+        }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Argumentˉfailure.Invalidˉmaximum {
+                    Index: Index,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    if Parsed > MAXIMUM_INPUT_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Argumentˉfailure.Maximumˉoutˉofˉrange {
+                Value: Parsed,
+                Maximum: MAXIMUM_INPUT_BYTES,
+            },
+        };
+    }
+    return Result.Result.Valid { Value: Parsed };
+}
+
+export fn Parse(
+    Arguments: borrow Collections.Sequence<text>,
+) -> Result.Result<Types.Command, Types.Argumentˉfailure> effects() {
+    let Count = Collections.Sequenceˉlength(Value: borrow Arguments);
+    if Count == 0u64 {
+        return Result.Result.Failure {
+            Error: Types.Argumentˉfailure.Noˉarguments,
+        };
+    }
+
+    var Selectedˉoperation: Option.Option<Types.Operation> = Option.Option.Absent;
+    var Selectedˉmaximum: Option.Option<u64> = Option.Option.Absent;
+    var Index = 0u64;
+
+    while Index < Count {
+        let Argument = Collections.Sequenceˉat(
+            Value: borrow Arguments,
+            Index: Index,
+        );
+
+        if Argument == "--help" {
+            if Count == 1u64 {
+                return Result.Result.Valid {
+                    Value: Types.Command.Showˉusage,
+                };
+            }
+            return Result.Result.Failure {
+                Error: Types.Argumentˉfailure.Helpˉwithˉotherˉarguments {
+                    Index: Index,
+                },
+            };
+        }
+
+        if Argument == "--operation" {
+            if Option.Isˉpresent(Value: borrow Selectedˉoperation) {
+                return Result.Result.Failure {
+                    Error: Types.Argumentˉfailure.Repeatedˉoperation {
+                        Index: Index,
+                    },
+                };
+            }
+            let Valueˉindex = Index + 1u64;
+            if Valueˉindex >= Count {
+                return Result.Result.Failure {
+                    Error: Types.Argumentˉfailure.Missingˉvalue {
+                        Index: Index,
+                    },
+                };
+            }
+            let Value = Collections.Sequenceˉat(
+                Value: borrow Arguments,
+                Index: Valueˉindex,
+            );
+            Selectedˉoperation = Option.Option.Present {
+                Value: try Parseˉoperation(
+                    Value: borrow Value,
+                    Index: Valueˉindex,
+                ),
+            };
+            Index = Valueˉindex + 1u64;
+            continue;
+        }
+
+        if Argument == "--maximum-bytes" {
+            if Option.Isˉpresent(Value: borrow Selectedˉmaximum) {
+                return Result.Result.Failure {
+                    Error: Types.Argumentˉfailure.Repeatedˉmaximum {
+                        Index: Index,
+                    },
+                };
+            }
+            let Valueˉindex = Index + 1u64;
+            if Valueˉindex >= Count {
+                return Result.Result.Failure {
+                    Error: Types.Argumentˉfailure.Missingˉvalue {
+                        Index: Index,
+                    },
+                };
+            }
+            let Value = Collections.Sequenceˉat(
+                Value: borrow Arguments,
+                Index: Valueˉindex,
+            );
+            Selectedˉmaximum = Option.Option.Present {
+                Value: try Parseˉmaximum(
+                    Value: borrow Value,
+                    Index: Valueˉindex,
+                ),
+            };
+            Index = Valueˉindex + 1u64;
+            continue;
+        }
+
+        return Result.Result.Failure {
+            Error: Types.Argumentˉfailure.Unknownˉoption {
+                Index: Index,
+            },
+        };
+    }
+
+    let Operation = match Selectedˉoperation {
+        case Option.Option.Present { Value: Value } {
+            Value
+        }
+        case Option.Option.Absent {
+            return Result.Result.Failure {
+                Error: Types.Argumentˉfailure.Operationˉmissing,
+            };
+        }
+    };
+    let Maximumˉinputˉbytes = match Selectedˉmaximum {
+        case Option.Option.Present { Value: Value } {
+            Value
+        }
+        case Option.Option.Absent {
+            DEFAULT_MAXIMUM_INPUT_BYTES
+        }
+    };
+
+    return Result.Result.Valid {
+        Value: Types.Command.Inspect {
+            Configuration: Types.Configuration {
+                Operation: Operation,
+                Maximumˉinputˉbytes: Maximumˉinputˉbytes,
+            },
+        },
+    };
+}

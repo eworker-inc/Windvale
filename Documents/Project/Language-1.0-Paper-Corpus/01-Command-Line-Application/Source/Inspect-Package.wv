@@ -1,0 +1,7 @@
+edition 1;
+module Inspectˉpackage;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+export package data Usage: bytes maximum 73u64;

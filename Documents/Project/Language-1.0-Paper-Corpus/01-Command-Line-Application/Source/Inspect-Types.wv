@@ -1,0 +1,61 @@
+edition 1;
+module Inspectˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+
+export enum Operation: u8 {
+    Bytes = 1u8;
+    Runes = 2u8;
+}
+
+export record Configuration {
+    Operation: Operation;
+    Maximumˉinputˉbytes: u64;
+}
+
+export variant Command {
+    Showˉusage;
+    Inspect(Configuration: Configuration);
+}
+
+export variant Argumentˉfailure {
+    Noˉarguments;
+    Helpˉwithˉotherˉarguments(Index: u64);
+    Unknownˉoption(Index: u64);
+    Repeatedˉoperation(Index: u64);
+    Repeatedˉmaximum(Index: u64);
+    Missingˉvalue(Index: u64);
+    Invalidˉoperation(Index: u64);
+    Invalidˉmaximum(
+        Index: u64,
+        Error: Numeric.Numericˉparseˉfailure,
+    );
+    Maximumˉoutˉofˉrange(
+        Value: u64,
+        Maximum: u64,
+    );
+    Operationˉmissing;
+}
+
+export record Summary {
+    Operation: Operation;
+    Count: u64;
+}
+
+export variant Renderˉfailure {
+    Allocation(Error: Memory.Allocationˉfailure);
+    Limit(Error: Memory.Limitˉfailure);
+}
+
+export enum Processˉstatus: i32 {
+    Success = 0i32;
+    Argumentsˉfailed = 2i32;
+    Inputˉfailed = 3i32;
+    Outputˉfailed = 4i32;
+    Outputˉindeterminate = 5i32;
+    Resourceˉfailed = 6i32;
+}

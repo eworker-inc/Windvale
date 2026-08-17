@@ -1,0 +1,331 @@
+edition 1;
+module Inspectˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability standard.diagnostic version 1;
+requires capability standard.input version 1;
+requires capability standard.output version 1;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresource as Resource;
+import Foundationˉresult as Result;
+import Inspectˉarguments as Argumentˉparser;
+import Inspectˉpackage as Package;
+import Inspectˉsummary as Summary;
+import Inspectˉtypes as Types;
+import Platformˉstream as Stream;
+
+const DIAGNOSTIC_BUDGET_BYTES: u64 = 256u64;
+const SUMMARY_TEXT_BUDGET_BYTES: u64 = 32u64;
+const SUMMARY_OUTPUT_BUDGET_BYTES: u64 = 32u64;
+
+fn Mapˉmutation<E>(
+    Outcome: Resource.Mutationˉoutcome<E>,
+    Expectedˉbytes: u64,
+    Completedˉstatus: Types.Processˉstatus,
+) -> Types.Processˉstatus effects() {
+    return match Outcome {
+        case Resource.Mutationˉoutcome.Rejected { Error: _ } {
+            Types.Processˉstatus.Outputˉfailed
+        }
+        case Resource.Mutationˉoutcome.Acceptedˉpartial {
+            Completed: _,
+            Error: _,
+        } {
+            Types.Processˉstatus.Outputˉfailed
+        }
+        case Resource.Mutationˉoutcome.Completed { Completed: Completed } {
+            if Completed == Expectedˉbytes {
+                Completedˉstatus
+            } else {
+                Types.Processˉstatus.Outputˉfailed
+            }
+        }
+        case Resource.Mutationˉoutcome.Indeterminate { Error: _ } {
+            Types.Processˉstatus.Outputˉindeterminate
+        }
+    };
+}
+
+fn Writeˉoutput(
+    Value: borrow bytes,
+    Completedˉstatus: Types.Processˉstatus,
+) -> Types.Processˉstatus effects(standard.output) {
+    return Mapˉmutation(
+        Outcome: standard.output.Write(Value: borrow Value),
+        Expectedˉbytes: Bytes.Length(Value: borrow Value),
+        Completedˉstatus: Completedˉstatus,
+    );
+}
+
+fn Writeˉdiagnostic(
+    Value: borrow bytes,
+    Completedˉstatus: Types.Processˉstatus,
+) -> Types.Processˉstatus effects(standard.diagnostic) {
+    return Mapˉmutation(
+        Outcome: standard.diagnostic.Write(Value: borrow Value),
+        Expectedˉbytes: Bytes.Length(Value: borrow Value),
+        Completedˉstatus: Completedˉstatus,
+    );
+}
+
+fn Argumentˉmessage(
+    Error: borrow Types.Argumentˉfailure,
+) -> bytes effects() {
+    return match Error {
+        case Types.Argumentˉfailure.Noˉarguments {
+            b"error: no arguments\n"
+        }
+        case Types.Argumentˉfailure.Helpˉwithˉotherˉarguments { Index: _ } {
+            b"error: --help cannot be combined\n"
+        }
+        case Types.Argumentˉfailure.Unknownˉoption { Index: _ } {
+            b"error: unknown option\n"
+        }
+        case Types.Argumentˉfailure.Repeatedˉoperation { Index: _ } {
+            b"error: repeated --operation\n"
+        }
+        case Types.Argumentˉfailure.Repeatedˉmaximum { Index: _ } {
+            b"error: repeated --maximum-bytes\n"
+        }
+        case Types.Argumentˉfailure.Missingˉvalue { Index: _ } {
+            b"error: option value is missing\n"
+        }
+        case Types.Argumentˉfailure.Invalidˉoperation { Index: _ } {
+            b"error: operation must be bytes or runes\n"
+        }
+        case Types.Argumentˉfailure.Invalidˉmaximum {
+            Index: _,
+            Error: _,
+        } {
+            b"error: maximum bytes is not a decimal u64\n"
+        }
+        case Types.Argumentˉfailure.Maximumˉoutˉofˉrange {
+            Value: _,
+            Maximum: _,
+        } {
+            b"error: maximum bytes exceeds 65536\n"
+        }
+        case Types.Argumentˉfailure.Operationˉmissing {
+            b"error: --operation is required\n"
+        }
+    };
+}
+
+fn Inputˉmessage(Error: borrow Stream.Inputˉfailure) -> bytes effects() {
+    return match Error {
+        case Stream.Inputˉfailure.Maximumˉexceeded {
+            Observedˉminimum: _,
+            Maximum: _,
+        } {
+            b"error: input exceeds maximum bytes\n"
+        }
+        case Stream.Inputˉfailure.Invalidˉutf8 { Offset: _ } {
+            b"error: input is not valid UTF-8\n"
+        }
+        case Stream.Inputˉfailure.Rejected { Reason: _ } {
+            b"error: input provider rejected the read\n"
+        }
+        case Stream.Inputˉfailure.Providerˉlost { Generation: _ } {
+            b"error: input provider was lost\n"
+        }
+    };
+}
+
+fn Report(
+    Message: bytes,
+    Budget: Memory.Memoryˉbudget,
+    Completedˉstatus: Types.Processˉstatus,
+) -> Types.Processˉstatus
+    effects(memory.allocate, resource.release, standard.diagnostic) {
+    let Diagnostic = match Summary.Renderˉdiagnostic(
+        Message: borrow Message,
+        Usage: borrow Package.Usage,
+        Budget: Budget,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Value
+        }
+        case Result.Result.Failure { Error: _ } {
+            return Types.Processˉstatus.Resourceˉfailed;
+        }
+    };
+    return Writeˉdiagnostic(
+        Value: borrow Diagnostic,
+        Completedˉstatus: Completedˉstatus,
+    );
+}
+
+fn Reportˉargument(
+    Error: borrow Types.Argumentˉfailure,
+    Budget: Memory.Memoryˉbudget,
+) -> Types.Processˉstatus
+    effects(memory.allocate, resource.release, standard.diagnostic) {
+    return Report(
+        Message: Argumentˉmessage(Error: borrow Error),
+        Budget: Budget,
+        Completedˉstatus: Types.Processˉstatus.Argumentsˉfailed,
+    );
+}
+
+fn Reportˉinput(
+    Error: borrow Stream.Inputˉfailure,
+    Budget: Memory.Memoryˉbudget,
+) -> Types.Processˉstatus
+    effects(memory.allocate, resource.release, standard.diagnostic) {
+    return Report(
+        Message: Inputˉmessage(Error: borrow Error),
+        Budget: Budget,
+        Completedˉstatus: Types.Processˉstatus.Inputˉfailed,
+    );
+}
+
+fn Reportˉresource(
+    Budget: Memory.Memoryˉbudget,
+) -> Types.Processˉstatus
+    effects(memory.allocate, resource.release, standard.diagnostic) {
+    return Report(
+        Message: b"error: memory budget unavailable\n",
+        Budget: Budget,
+        Completedˉstatus: Types.Processˉstatus.Resourceˉfailed,
+    );
+}
+
+fn Reportˉrender(
+    Budget: Memory.Memoryˉbudget,
+) -> Types.Processˉstatus
+    effects(memory.allocate, resource.release, standard.diagnostic) {
+    return Report(
+        Message: b"error: bounded output construction failed\n",
+        Budget: Budget,
+        Completedˉstatus: Types.Processˉstatus.Resourceˉfailed,
+    );
+}
+
+export fn Run(
+    Arguments: Collections.Sequence<text>,
+    Budget: Memory.Memoryˉbudget,
+) -> Types.Processˉstatus
+    effects(
+        memory.allocate,
+        resource.acquire,
+        resource.release,
+        standard.diagnostic,
+        standard.input,
+        standard.output,
+    ) {
+    var Rootˉbudget = Budget;
+    let Diagnosticˉbudget = match Memory.Split(
+        Parent: borrow mut Rootˉbudget,
+        Maximumˉbytes: DIAGNOSTIC_BUDGET_BYTES,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Value
+        }
+        case Result.Result.Failure { Error: _ } {
+            let Message = b"error: memory budget unavailable\n";
+            return Writeˉdiagnostic(
+                Value: borrow Message,
+                Completedˉstatus: Types.Processˉstatus.Resourceˉfailed,
+            );
+        }
+    };
+
+    let Command = match Argumentˉparser.Parse(Arguments: borrow Arguments) {
+        case Result.Result.Valid { Value: Value } {
+            Value
+        }
+        case Result.Result.Failure { Error: Error } {
+            return Reportˉargument(
+                Error: borrow Error,
+                Budget: Diagnosticˉbudget,
+            );
+        }
+    };
+
+    match Command {
+        case Types.Command.Showˉusage {
+            return Writeˉoutput(
+                Value: borrow Package.Usage,
+                Completedˉstatus: Types.Processˉstatus.Success,
+            );
+        }
+        case Types.Command.Inspect { Configuration: Configuration } {
+            let Inputˉbudget = match Memory.Split(
+                Parent: borrow mut Rootˉbudget,
+                Maximumˉbytes: Configuration.Maximumˉinputˉbytes,
+                Maximumˉchildren: 0u32,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Value
+                }
+                case Result.Result.Failure { Error: _ } {
+                    return Reportˉresource(Budget: Diagnosticˉbudget);
+                }
+            };
+            let Textˉbudget = match Memory.Split(
+                Parent: borrow mut Rootˉbudget,
+                Maximumˉbytes: SUMMARY_TEXT_BUDGET_BYTES,
+                Maximumˉchildren: 0u32,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Value
+                }
+                case Result.Result.Failure { Error: _ } {
+                    return Reportˉresource(Budget: Diagnosticˉbudget);
+                }
+            };
+            let Outputˉbudget = match Memory.Split(
+                Parent: borrow mut Rootˉbudget,
+                Maximumˉbytes: SUMMARY_OUTPUT_BUDGET_BYTES,
+                Maximumˉchildren: 0u32,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Value
+                }
+                case Result.Result.Failure { Error: _ } {
+                    return Reportˉresource(Budget: Diagnosticˉbudget);
+                }
+            };
+
+            let Input = match standard.input.Readˉtext(
+                Budget: Inputˉbudget,
+                Maximumˉutf8ˉbytes: Configuration.Maximumˉinputˉbytes,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Value
+                }
+                case Result.Result.Failure { Error: Error } {
+                    return Reportˉinput(
+                        Error: borrow Error,
+                        Budget: Diagnosticˉbudget,
+                    );
+                }
+            };
+            let Measured = Summary.Measure(
+                Value: borrow Input,
+                Operation: Configuration.Operation,
+            );
+            let Output = match Summary.Render(
+                Summary: Measured,
+                Textˉbudget: Textˉbudget,
+                Byteˉbudget: Outputˉbudget,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Value
+                }
+                case Result.Result.Failure { Error: _ } {
+                    return Reportˉrender(Budget: Diagnosticˉbudget);
+                }
+            };
+            return Writeˉoutput(
+                Value: borrow Output,
+                Completedˉstatus: Types.Processˉstatus.Success,
+            );
+        }
+    }
+}

@@ -1,0 +1,153 @@
+edition 1;
+module Inspectˉsummary;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Inspectˉtypes as Types;
+
+const SUMMARY_TEXT_BYTES: u64 = 32u64;
+const SUMMARY_OUTPUT_BYTES: u64 = 32u64;
+const DIAGNOSTIC_OUTPUT_BYTES: u64 = 256u64;
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Renderˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Renderˉfailure.Allocation {
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Mapˉlimit(
+    Value: Result.Result<unit, Memory.Limitˉfailure>,
+) -> Result.Result<unit, Types.Renderˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Renderˉfailure.Limit {
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+export fn Measure(
+    Value: borrow text,
+    Operation: Types.Operation,
+) -> Types.Summary effects() {
+    let Count = match Operation {
+        case Types.Operation.Bytes {
+            Text.Byteˉlength(Value: borrow Value)
+        }
+        case Types.Operation.Runes {
+            Text.Runeˉcount(Value: borrow Value)
+        }
+    };
+    return Types.Summary {
+        Operation: Operation,
+        Count: Count,
+    };
+}
+
+export fn Render(
+    Summary: Types.Summary,
+    Textˉbudget: Memory.Memoryˉbudget,
+    Byteˉbudget: Memory.Memoryˉbudget,
+) -> Result.Result<bytes, Types.Renderˉfailure>
+    effects(memory.allocate, resource.release) {
+    var Textˉoutput = try Mapˉallocation(
+        Value: Text.Constructˉreserved(
+            Budget: Textˉbudget,
+            Maximumˉoutputˉbytes: SUMMARY_TEXT_BYTES,
+        ),
+    );
+    let Label = match Summary.Operation {
+        case Types.Operation.Bytes {
+            "bytes="
+        }
+        case Types.Operation.Runes {
+            "runes="
+        }
+    };
+    try Mapˉlimit(
+        Value: Text.Appendˉtext(
+            Builder: borrow mut Textˉoutput,
+            Value: borrow Label,
+        ),
+    );
+    try Mapˉlimit(
+        Value: Text.Appendˉu64ˉdecimal(
+            Builder: borrow mut Textˉoutput,
+            Value: Summary.Count,
+        ),
+    );
+    try Mapˉlimit(
+        Value: Text.Appendˉtext(
+            Builder: borrow mut Textˉoutput,
+            Value: borrow "\n",
+        ),
+    );
+    let Renderedˉtext = Text.Freeze(Builder: Textˉoutput);
+
+    var Byteˉoutput = try Mapˉallocation(
+        Value: Bytes.Constructˉreserved(
+            Budget: Byteˉbudget,
+            Maximumˉoutputˉbytes: SUMMARY_OUTPUT_BYTES,
+        ),
+    );
+    try Mapˉlimit(
+        Value: Bytes.Appendˉutf8(
+            Builder: borrow mut Byteˉoutput,
+            Value: borrow Renderedˉtext,
+        ),
+    );
+    return Result.Result.Valid {
+        Value: Bytes.Freeze(Builder: Byteˉoutput),
+    };
+}
+
+export fn Renderˉdiagnostic(
+    Message: borrow bytes,
+    Usage: borrow bytes,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<bytes, Types.Renderˉfailure>
+    effects(memory.allocate, resource.release) {
+    var Output = try Mapˉallocation(
+        Value: Bytes.Constructˉreserved(
+            Budget: Budget,
+            Maximumˉoutputˉbytes: DIAGNOSTIC_OUTPUT_BYTES,
+        ),
+    );
+    try Mapˉlimit(
+        Value: Bytes.Appendˉbytes(
+            Builder: borrow mut Output,
+            Value: Message,
+        ),
+    );
+    try Mapˉlimit(
+        Value: Bytes.Appendˉbytes(
+            Builder: borrow mut Output,
+            Value: Usage,
+        ),
+    );
+    return Result.Result.Valid {
+        Value: Bytes.Freeze(Builder: Output),
+    };
+}
