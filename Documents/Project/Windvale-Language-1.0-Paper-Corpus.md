@@ -10,7 +10,9 @@ and refined by
 and
 [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
 with the first reviewed bundle's findings resolved by
-[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
+and the command workload findings resolved by
+[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -116,9 +118,11 @@ overload resolution.
 
 The complete first-author source and evidence are in the
 [workload 1 paper bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md).
-It expresses one bounded strict UTF-8 byte/rune inspector and awaits owner review
-of its sequence, numeric parsing, reserved-builder, stream-capability, and
-command-status recommendations.
+It expresses one bounded strict UTF-8 byte/rune inspector. Its owner review
+accepts the sequence, numeric parsing, reserved-builder, stream-authority, and
+command-status recommendations. The general Foundation calls and command profile
+are normative-candidate contracts; final stream operation identities remain
+provisional pending later I/O workloads.
 
 ## Workload 2: bounded file copy
 
@@ -489,7 +493,7 @@ source contract ambiguous.
 
 | Workload | Status |
 | --- | --- |
-| Command-line application | Complete first-author bundle; owner review pending |
+| Command-line application | Draft reviewed; five findings accepted and resolved |
 | Bounded file copy | Pending source bundle |
 | Database transaction | Pending source bundle |
 | Compiler front end | Pending source bundle |

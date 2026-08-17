@@ -27,10 +27,14 @@ completes its ordered-set and package-data boundaries, while
 requires an eleventh local AI accelerator workload before source freeze without
 accepting accelerator syntax or implementation, and
 [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
-resolves the first reviewed bundle's five general source-contract questions. The
+resolves the first reviewed bundle's five general source-contract questions, and
+[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
+accepts the command workload's general Foundation and launcher findings while
+keeping its stream operation identities provisional. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md)
-is now complete first-author and awaits owner review of its Foundation and hosted
-command recommendations. The accepted direction, normative-candidate suite,
+and
+[local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
+are now draft reviewed. The accepted direction, normative-candidate suite,
 paper corpus, accelerator/AI design evidence, and migration plan may advance
 without claiming implementation or changing the current Seed product. Source
 implementation begins only after the named source-freeze gate.

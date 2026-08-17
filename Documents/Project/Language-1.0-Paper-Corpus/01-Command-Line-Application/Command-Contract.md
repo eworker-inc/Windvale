@@ -3,9 +3,12 @@
 ## Status
 
 This is the smallest launcher, Foundation, and standard-stream contract required
-to type and review workload 1. It is a paper candidate, not a published
-capability catalog, runtime ABI, or implementation claim. General Foundation
-findings require project-owner review before they update the normative candidate.
+to type and review workload 1. Its general Foundation signatures and command
+launcher policy are accepted by
+[Decision 0755](../../../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
+The three standard-stream shapes remain paper candidates pending later I/O
+workloads; this is not a published capability catalog, runtime ABI, or
+implementation claim.
 
 ## Ordinary arguments
 
@@ -15,7 +18,7 @@ capability, global, native pointer array, or source of executable-path identity.
 The profile excludes the executable/package display name so argument index zero
 is the first user-supplied token.
 
-The source requires these exact candidate collection operations:
+The source uses these accepted normative-candidate collection operations:
 
 ```text
 Sequenceˉlength<T>(

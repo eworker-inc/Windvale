@@ -13,11 +13,11 @@ provider. No row authorizes implementation before Language 1.0 source freeze.
 | --- | --- | --- | --- |
 | Edition/module/profile/platform/authority/capability parsing | Language grammar and compiler front end | Parse five modules and preserve the exact three-capability closure. | No new syntax. |
 | Arguments as immutable ordinary entry data | Package/launcher profile, Foundation collections | Construct and bind one bounded `Sequence<text>` excluding executable identity. | No. Decision 0754 already assigns ordinary arguments to launcher metadata. |
-| Exact sequence length and access | Foundation collections, type checker, borrow checker | Publish generic `Sequenceˉlength` and checked borrowed `Sequenceˉat`; solve `T` from the explicit sequence argument. | No new syntax; exact Foundation signatures are proposed. |
-| Strict decimal `u64` parsing | Foundation numeric, runtimes/backends | Implement whole-input ASCII decimal parsing with exact failure offsets, byte maximum, and overflow behavior. | No; an exact Foundation signature is proposed. |
+| Exact sequence length and access | Foundation collections, type checker, borrow checker | Publish generic `Sequenceˉlength` and checked borrowed `Sequenceˉat`; solve `T` from the explicit sequence argument. | No new syntax; exact Foundation signatures are accepted. |
+| Strict decimal `u64` parsing | Foundation numeric, runtimes/backends | Implement whole-input ASCII decimal parsing with exact failure offsets, byte maximum, and overflow behavior. | No; the exact Foundation signature is accepted. |
 | Option, Result, `try`, records, enums, variants, and value match | Language semantic owner and compiler | Type the parser and preserve exact failure propagation without exceptions or overload selection. | No. |
-| Text byte/rune observations | Foundation text, runtimes/backends | Return canonical UTF-8 byte length and Unicode scalar count identically on all targets. | No; exact Foundation names are proposed. |
-| Reserved text/byte builders | Foundation memory/bytes/text, ownership lowering | Commit maxima at construction; append atomically; consume on freeze; release on every early return. | No new grammar; exact Foundation signatures are proposed. |
+| Text byte/rune observations | Foundation text, runtimes/backends | Return canonical UTF-8 byte length and Unicode scalar count identically on all targets. | No; exact Foundation names are accepted. |
+| Reserved text/byte builders | Foundation memory/bytes/text, ownership lowering | Commit maxima at construction; append atomically; consume on freeze; release on every early return. | No new grammar; exact Foundation signatures are accepted. |
 | Package data | Parser, source graph, package/build plan | Bind one 73-byte object by type, maximum, length, and digest with no filesystem grant. | No. |
 | Package/WVB representation | Package formats, WVB owner, loader, publisher | Store one typed content reference and one distinct payload object; charge retained bytes once. | No source change; likely a versioned content-reference table. |
 | Standard input | Hosted capability catalog and provider adapters | Read one bounded strict UTF-8 value into a caller budget and preserve limit, invalid UTF-8, rejection, and loss. | No; capability/library contract only. |
@@ -28,7 +28,7 @@ provider. No row authorizes implementation before Language 1.0 source freeze.
 | Editor tooling | Windvale editor/formatter | Classify edition-1 headers, package data, named calls, variants, borrows, builders, effects, and capability roots. | Uses candidate grammar. |
 | Verification | Focused Language 1.0 command owners | Turn valid, rejected, limit, UTF-8, mutation, cleanup, deterministic, and malformed cases into bounded fixtures. | No. |
 
-## Proposed Foundation signatures
+## Accepted Foundation signatures
 
 The complete exact set selected by this source is recorded in
 [Command-Contract.md](Command-Contract.md). The four source-freeze groups are:
@@ -39,8 +39,9 @@ The complete exact set selected by this source is recorded in
 4. reserved text/byte builder construction, atomic append, UTF-8 append, decimal
    append, and consuming freeze.
 
-These are candidate additions to the Foundation companion, not a second command
-library. A later mandatory workload may revise one only through a named
+These are normative-candidate additions to the Foundation companion under
+[Decision 0755](../../../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md),
+not a second command library. A later mandatory workload may revise one only through a named
 reconsideration that updates all paper source coherently.
 
 ## Representation planning

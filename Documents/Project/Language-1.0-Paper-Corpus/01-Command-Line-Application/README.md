@@ -2,11 +2,13 @@
 
 ## Status
 
-Complete first-author paper bundle for workload 1 under the
+Draft-reviewed paper bundle for workload 1 under the
 [Language 1.0 paper corpus](../../Windvale-Language-1.0-Paper-Corpus.md).
-It awaits project-owner review. It is not frozen source, an implemented
-application, or a published standard-stream capability. Current compilers
-continue to accept Windvale Seed.
+[Decision 0755](../../../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
+accepts its five recommendations. It is not frozen source, an implemented
+application, or a published standard-stream capability. The three stream
+signature-set identities remain provisional pending later I/O workloads.
+Current compilers continue to accept Windvale Seed.
 
 ## Result first
 
@@ -40,7 +42,7 @@ progress produce different terminal statuses and are never retried.
 | [Rejected cases](Rejected-Cases.md) | Compile, build, launcher, input, mutation, and diagnostic boundary cases. |
 | [Expected outputs](Expected-Outputs.md) | Exact successful and failing semantic observations independent of a backend. |
 | [Implementation responsibilities](Implementation-Responsibilities.md) | Compiler, Foundation, launcher, capability, runtime, verifier, editor, and evidence ownership. |
-| [Review findings](Review-Findings.md) | Acceptance matrix, source-freeze findings, recommendations, quantitative record, and review status. |
+| [Review findings](Review-Findings.md) | Acceptance matrix, accepted source-freeze findings, quantitative record, and review status. |
 
 ## Source graph
 

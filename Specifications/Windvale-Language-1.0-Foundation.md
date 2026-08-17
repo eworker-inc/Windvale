@@ -6,7 +6,9 @@ This is the normative-candidate Foundation companion to the
 [Language 1.0 semantic specification](Windvale-Language-1.0.md), authorized by
 [Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 and refined by
-[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
+and
+[Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -421,6 +423,22 @@ export variant Numericˉparseˉfailure {
 Floating parsing additionally reports invalid exponent and unsupported special
 value. Parsing is locale-independent and never accepts a host-specific spelling.
 
+The command workload fixes the first exact type- and policy-specific parser:
+
+~~~text
+export fn Parseˉu64ˉdecimalˉwhole(
+    Value: borrow text,
+    Maximumˉinputˉbytes: u64,
+) -> Result<u64, Numericˉparseˉfailure> effects();
+~~~
+
+It admits one or more ASCII decimal digits only, checks the canonical UTF-8 byte
+maximum before digit work, and consumes the whole input. It accepts no sign,
+prefix, separator, whitespace, locale digit, special value, or trailing input.
+It reports `Limitˉexceeded`, `Empty`, the exact first `Invalidˉdigit` byte
+offset, or `Aboveˉmaximum` as applicable and never wraps or truncates. The name
+fixes destination, radix, and policy without result-context inference.
+
 ## Fixed arrays
 
 `Array<T, N>` contains exactly compile-time constant `N` elements. `N` uses an
@@ -491,6 +509,25 @@ Freeze:
 - reports any fallible compaction before consuming ownership, or returns the
   original owner with the failure; and
 - cannot leave both mutable and immutable aliases to the same storage.
+
+The command workload fixes these version-1 immutable observations:
+
+~~~text
+export fn Sequenceˉlength<T>(
+    Value: borrow Sequence<T>,
+) -> u64 effects();
+
+export fn Sequenceˉat<T>(
+    Value: borrow Sequence<T>,
+    Index: u64,
+) -> borrow T effects();
+~~~
+
+`T` is solved uniquely from the explicit `Value` argument. `Sequenceˉlength`
+returns current element count. `Sequenceˉat` checks
+`Index < Sequenceˉlength(Value)` before access and traps terminally on
+violation. Its result is tied to the one borrowed sequence owner and cannot
+escape it. No unchecked Core or Hosted counterpart is implied.
 
 ## Slices
 
@@ -640,6 +677,36 @@ Required builder operations include:
 Each append is either all-or-nothing or explicitly prefix-admitting. A failed
 all-or-nothing append leaves content and length unchanged.
 
+The command workload fixes this version-1 reserved construction family:
+
+~~~text
+export fn Constructˉreserved(
+    Budget: Memoryˉbudget,
+    Maximumˉoutputˉbytes: u64,
+) -> Result<Bytesˉbuilder, Allocationˉfailure>
+    effects(memory.allocate);
+
+export fn Appendˉbytes(
+    Builder: borrow mut Bytesˉbuilder,
+    Value: borrow bytes,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Appendˉutf8(
+    Builder: borrow mut Bytesˉbuilder,
+    Value: borrow text,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Freeze(Builder: Bytesˉbuilder) -> bytes effects();
+~~~
+
+`Constructˉreserved` consumes the budget and commits the complete output maximum
+before returning. Constructor failure consumes and locally releases that child
+budget. Later appends cannot fail for physical growth, but reject before
+mutation with `Limitˉfailure` when the complete result would exceed the maximum.
+Both appends are all-or-nothing. `Appendˉutf8` emits canonical UTF-8 without a
+host encoding. `Freeze` consumes the builder and transfers retained accounting
+to the exact immutable result without fallible compaction.
+
 Byte codecs validate complete input ranges before reading and use checked offset
 arithmetic. No codec inherits native alignment or endianness.
 
@@ -664,6 +731,37 @@ Required operations include:
 Text builder maximum output is measured in bytes. Rune count is separately
 bounded by byte maximum. Failure leaves the builder unchanged unless an operation
 is explicitly named as prefix-admitting.
+
+The command workload fixes these version-1 observations and reserved operations:
+
+~~~text
+export fn Byteˉlength(Value: borrow text) -> u64 effects();
+export fn Runeˉcount(Value: borrow text) -> u64 effects();
+
+export fn Constructˉreserved(
+    Budget: Memoryˉbudget,
+    Maximumˉoutputˉbytes: u64,
+) -> Result<Textˉbuilder, Allocationˉfailure>
+    effects(memory.allocate);
+
+export fn Appendˉtext(
+    Builder: borrow mut Textˉbuilder,
+    Value: borrow text,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Appendˉu64ˉdecimal(
+    Builder: borrow mut Textˉbuilder,
+    Value: u64,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Freeze(Builder: Textˉbuilder) -> text effects();
+~~~
+
+`Byteˉlength` reports canonical UTF-8 bytes. `Runeˉcount` reports Unicode scalar
+values, not UTF-16 code units, grapheme clusters, display cells, or locale
+characters. Reserved construction has the same committed-capacity, local
+failure-release, atomic append, and accounting-transfer rules as the byte
+builder. `Appendˉu64ˉdecimal` emits invariant shortest unsigned decimal.
 
 ## Formatting and interpolation
 

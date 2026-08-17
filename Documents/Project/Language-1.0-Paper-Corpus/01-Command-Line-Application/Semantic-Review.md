@@ -2,11 +2,13 @@
 
 ## Review status
 
-Complete first-author review. The source is coherent under the candidate grammar
-and the paper contracts in this bundle. General Foundation selections remain
-recommendations until project-owner review; the standard-stream API remains a
-paper-only hosted contract until implementation planning assigns its catalog
-identity.
+Draft-reviewed under
+[Decision 0755](../../../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
+The source is coherent under the candidate grammar and paper contracts. Its
+general Foundation selections and command launcher policy are accepted. The
+standard-stream API remains a paper-only hosted contract until later I/O
+workloads confirm its operation boundary and implementation planning assigns
+its catalog identity.
 
 ## Module metadata
 

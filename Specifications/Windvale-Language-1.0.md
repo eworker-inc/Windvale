@@ -22,6 +22,8 @@ and
 [Decision 0753](../Documents/Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
 with the first paper findings resolved by
 [Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md),
+and the command workload findings resolved by
+[Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -975,7 +977,10 @@ This candidate becomes frozen Language 1.0 only after:
 11. the accepted argument-derived generic, capability-root, Foundation-call,
     launcher-entry, and target-scope cases remain coherent across all mandatory
     workloads; and
-12. a source-freeze decision records the canonical document identities.
+12. the accepted command sequence, strict parsing, reserved-builder,
+    standard-stream authority, and launcher-status cases remain coherent across
+    all mandatory workloads; and
+13. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

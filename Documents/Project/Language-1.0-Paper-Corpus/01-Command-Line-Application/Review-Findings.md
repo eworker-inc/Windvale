@@ -2,12 +2,12 @@
 
 ## Status
 
-Complete first-author review. The workload passes its paper acceptance criteria
-under the bundle's candidate contracts and exposes four general Foundation
-signature groups plus two related hosted command-boundary choices for
-project-owner review.
-It is not yet a draft-reviewed corpus row because those recommendations have not
-been accepted or revised by a named decision.
+Draft-reviewed under
+[Decision 0755](../../../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
+The workload passes its paper acceptance criteria. Its four general Foundation
+signature groups, independent standard-stream authority split, and command
+launcher status policy are accepted. The stream operation identities remain
+provisional pending later I/O workloads.
 
 ## Acceptance matrix
 
@@ -15,13 +15,13 @@ been accepted or revised by a named decision.
 | --- | --- | --- |
 | Edition/module/profile/platform/authority metadata | Five complete modules with one Core-to-Hosted import direction and exact target scopes. | Pass on paper |
 | Named arguments and configuration records | Fixed named calls and one two-field `Configuration` record; option traversal is deterministic. | Pass on paper |
-| Strict numeric parsing | Type- and policy-specific whole-input decimal `u64` parsing; overflow and application maximum remain separate. | Pass on paper; signature recommendation pending |
+| Strict numeric parsing | Type- and policy-specific whole-input decimal `u64` parsing; overflow and application maximum remain separate. | Pass on paper; normative-candidate signature accepted |
 | `Option`, `Result`, `try`, and domain variants | Optional parser state, exact recoverable failures, explicit adapters, and no catchable exceptions. | Pass on paper |
-| Text and byte builders | Reserved construction, atomic appends, invariant decimal formatting, canonical UTF-8 encoding, and consuming freeze. | Pass on paper; signature recommendation pending |
+| Text and byte builders | Reserved construction, atomic appends, invariant decimal formatting, canonical UTF-8 encoding, and consuming freeze. | Pass on paper; normative-candidate signatures accepted |
 | Bounded immutable package usage | One exact 73-byte object, digest, type, charge, and shipped content identity with no filesystem grant. | Pass on paper |
-| Explicit output capability | Independently bound normal and diagnostic roots returning four-state mutation outcomes. | Pass on paper; hosted contract recommendation pending |
+| Explicit output capability | Independently bound normal and diagnostic roots returning four-state mutation outcomes. | Pass on paper; authority split accepted, stream identities provisional |
 | No ambient environment or locale | Launcher-bound arguments/budget, invariant numeric text, strict UTF-8, and no environment/current-directory/host encoding access. | Pass on paper |
-| Deterministic exit mapping | Six closed status members and exact precedence for complete, partial, rejected, inconsistent, and indeterminate writes. | Pass on paper; policy recommendation pending |
+| Deterministic exit mapping | Six closed status members and exact precedence for complete, partial, rejected, inconsistent, and indeterminate writes. | Pass on paper; command-profile policy accepted |
 | Required boundaries | Launcher maxima, every argument failure, numeric overflow, input maximum, malformed UTF-8, output rejection, partial progress, and uncertainty are recorded. | Pass on paper |
 | Adding one unrelated option | Calls resolve by declared name and exact argument types; no overload or result-context choice can change. | Pass on paper |
 
@@ -86,34 +86,34 @@ This is one named command-launcher policy, not a universal rule for services or
 structured completion records. It keeps the simple process status honest while
 the source retains the primary error until the diagnostic outcome is known.
 
-## Recommended project-owner resolutions
+## Owner resolutions
 
-### 1. Accept exact sequence observations
+### 1. Exact sequence observations accepted
 
-Add `Sequenceˉlength<T>` and borrowed checked `Sequenceˉat<T>` to the
+`Sequenceˉlength<T>` and borrowed checked `Sequenceˉat<T>` are added to the
 normative-candidate Foundation collection surface with argument-derived generic
 resolution and the one-owner borrowed-result rule.
 
-### 2. Accept the first exact strict numeric parser
+### 2. First exact strict numeric parser accepted
 
-Add `Parseˉu64ˉdecimalˉwhole(Value, Maximumˉinputˉbytes)` with ASCII digits,
+`Parseˉu64ˉdecimalˉwhole(Value, Maximumˉinputˉbytes)` is accepted with ASCII digits,
 no sign/prefix/separator/whitespace, whole-input consumption, byte-first limit
 checking, exact offsets, and checked overflow.
 
-### 3. Accept text observations and reserved builders
+### 3. Text observations and reserved builders accepted
 
-Add exact `Byteˉlength`, `Runeˉcount`, reserved text/byte builder constructors,
+Exact `Byteˉlength`, `Runeˉcount`, reserved text/byte builder constructors,
 atomic append calls, invariant `u64` decimal append, UTF-8 append, and consuming
-freeze as recorded in [Command-Contract.md](Command-Contract.md).
+freeze are accepted as recorded in [Command-Contract.md](Command-Contract.md).
 
-### 4. Retain the three-capability paper split
+### 4. Three-capability paper split retained
 
-Carry `standard.input`, `standard.output`, and `standard.diagnostic` as separate
+`standard.input`, `standard.output`, and `standard.diagnostic` remain separate
 version-1 hosted capability candidates into workloads 2, 5, and 6. Do not freeze
 their signature-set identities until those streaming, cancellation, and
 provider-loss workloads confirm the boundary.
 
-### 5. Accept the command status precedence
+### 5. Command status precedence accepted
 
 For launcher profile `windvale.launch.command.v1`, preserve the six statuses and
 let incomplete or uncertain diagnostic mutation override the primary argument,
@@ -154,9 +154,9 @@ retained evidence, WVB/native bytes, elapsed time, and peak memory.
 8. Made package usage an exact bytes object so provider output has no implicit
    host encoding step.
 
-## Review decision required
+## Owner resolution
 
-The project owner may accept all five recommendations, revise one exact
-signature or policy coherently across the bundle, or return the row for another
-first-author pass. Until then the corpus row remains complete first-author rather
-than draft reviewed.
+The project owner accepted all five recommendations through Decision 0755 with
+no source revision required. The general Foundation calls and command profile
+are normative-candidate contracts. The three stream capability signatures remain
+provisional until workloads 2, 5, and 6 test their wider I/O boundary.

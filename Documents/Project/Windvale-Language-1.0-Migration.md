@@ -9,7 +9,9 @@ and refined by
 and
 [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
 with the first paper findings resolved by
-[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
+and the command workload findings resolved by
+[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -141,6 +143,8 @@ reparse it.
 - Convert paper programs into parser/type/ownership fixtures.
 - Retain the accepted generic-call, capability-root, Foundation-call,
   launcher-entry, and target-scope cases from Decision 0754.
+- Retain the accepted command sequence, strict parsing, reserved-builder,
+  stream-authority, and launcher-status cases from Decision 0755.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.
