@@ -175,10 +175,17 @@ if ($Plan.Scope -eq 'website') {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.sh'
                 }
                 $OsX64Target = $NativePlan.OsX64CodeEmissionDevelopmentTarget
-                Write-Host (
-                    'Native owner os-x64-code-emission mode=development-target ' +
-                    "target=$OsX64Target")
-                & $DevelopmentOwner --development-target $OsX64Target
+                if ($OsX64Target -eq 'all') {
+                    Write-Host (
+                        'Native owner os-x64-code-emission ' +
+                        'mode=development-checkpoint target=all')
+                    & $DevelopmentOwner --development-all
+                } else {
+                    Write-Host (
+                        'Native owner os-x64-code-emission ' +
+                        "mode=development-checkpoint target=$OsX64Target")
+                    & $DevelopmentOwner --development-target $OsX64Target
+                }
             } else {
                 & $Coordinator --filter $Suite
             }

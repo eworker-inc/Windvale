@@ -132,16 +132,21 @@ affected emission input belongs to that same project closure. Shared inputs,
 multiple targets, changes to the paired owner scripts, malformed target data,
 and otherwise ambiguous inputs select `all`. The paired owners execute one
 generic host pipeline over the selected rows. An exact target retains the six
-declared checks; qualification and no-argument owner execution retain all 56
-projects and 336 cases. A change to the manifest itself selects planner
-verification plus that complete owner.
+declared checks. Development `all` retains all 56 projects and 336 cases while
+allowing dependency-keyed project-WVB checkpoints; qualification and
+no-argument owner execution retain the same 336 cases with cold compilation.
+A change to the manifest itself selects planner verification plus development
+`all`.
 
 Within one owner invocation, the paired OS x64 executors may stage private
 copies of their pinned tools, validate those staged identities and workspace
 containment once, and then process the selected rows. Every row still receives
 independent native tool processes, candidate paths, immutable publication,
 local execution, and exact final-byte checks. Session-scoped trust reuse must
-not become a persistent compiler service.
+not become a persistent compiler service. Explicit development execution may
+derive all selected Project 2 keys and validate/materialize their immutable WVB
+checkpoints in one Node process. Every miss still receives an independent
+native compiler process. Qualification remains cache-independent.
 
 ## Dispatch contract
 
@@ -155,8 +160,9 @@ changes it:
 4. runs the focused GitHub workflow verifier when selected;
 5. invokes each selected owner through `Test-Verification-Owners.cmd --filter` on
    Windows or the paired `.sh` coordinator on non-Windows hosts, except that an
-   eligible `database-storage` or `os-x64-code-emission` owner receives its exact
-   development target;
+   eligible `database-storage` or `os-x64-code-emission` owner receives its
+   development target, including explicit checkpointed `all` when more than one
+   OS x64 project is affected;
 6. invokes either the pinned WebAssembly engine checkpoint or the complete
    construction-and-engine owner when selected, never both;
 7. stops at the first failure unless `-NoFailFast` is explicit; and

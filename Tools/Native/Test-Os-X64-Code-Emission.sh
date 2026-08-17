@@ -2,11 +2,17 @@
 set -uo pipefail
 
 development_target=''
+development_cache=false
 case $# in
     0) ;;
+    1)
+        [[ $1 == '--development-all' ]] || exit 64
+        development_cache=true
+        ;;
     2)
         [[ $1 == '--development-target' && $2 =~ ^[a-z0-9][a-z0-9-]*$ ]] || exit 64
         development_target=$2
+        development_cache=true
         ;;
     *) exit 64 ;;
 esac
@@ -22,6 +28,7 @@ wvo_publisher=$repository_root/Artifacts/Native-Wvo-Publisher-Candidate/linux-x6
 linker=$repository_root/Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.elf
 packager=$repository_root/Artifacts/Native-Console-Packager-Candidate/Console-Packager.elf
 console_publisher=$repository_root/Artifacts/Native-Console-Application-Publisher-Candidate/linux-x64-wvappublish.elf
+cached_project_builder=$repository_root/Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-os-x64-code-emission.XXXXXXXX") || exit 1
 cleanup() {
@@ -53,8 +60,11 @@ run_case() {
     local candidate_wvo=$work/$artifact.candidate.wvo
     local candidate_exe=$work/$artifact.candidate.exe
     local candidate_elf=$work/$artifact.candidate.elf
-    "$build_driver" --workspace "$workspace_path" \
-        --project "$repository_root/$project" "$candidate_wvb" >/dev/null || return $?
+    if [[ $development_cache != true ]]; then
+        "$build_driver" --workspace "$workspace_path" \
+            --project "$repository_root/$project" "$candidate_wvb" >/dev/null || return $?
+    fi
+    [[ -f $candidate_wvb ]] || return 1
     "$wvb_publisher" "$candidate_wvb" "$work/$artifact.wvb" >/dev/null || return $?
     verify "$work/$artifact.wvb" "$wvb_bytes" "$wvb_sha256" || return 1
     "$lowerer" "$work/$artifact.wvb" "$candidate_wvo" >/dev/null || return $?
@@ -85,6 +95,10 @@ run_case() {
     echo 'Missing OS x64 code-emission target manifest.' >&2
     exit 1
 }
+if [[ $development_cache == true && ! -f $cached_project_builder ]]; then
+    echo 'The native project-WVB checkpoint builder is missing.' >&2
+    exit 1
+fi
 IFS= read -r target_header <"$target_plan"
 [[ $target_header == 'windvale-os-x64-code-emission-development-targets 2' ]] || {
     echo 'Invalid OS x64 code-emission target manifest.' >&2
@@ -129,6 +143,11 @@ workspace_path=$repository_root/Windvale.wvws
 if [[ -L $repository_root ]] || [[ -n $(find "$repository_root" -type l -print -quit) ]]; then
     echo 'The native workspace must not contain symbolic links.' >&2
     exit 1
+fi
+if [[ $development_cache == true ]]; then
+    cache_target=${development_target:-all}
+    node "$cached_project_builder" "$target_plan" "$work" \
+        "$build_driver" "$cache_target" || exit $?
 fi
 
 declare -A seen_targets=()
@@ -187,6 +206,8 @@ if [[ -n $development_target ]]; then
         exit 64
     fi
     echo "native os x64 code emission development status=Passed target=$development_target projects=1 cases=6 cross-host-images=Verified"
+elif [[ $development_cache == true ]]; then
+    echo 'native os x64 code emission development status=Passed target=all projects=56 cases=336 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569'
 else
     echo 'native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569'
 fi

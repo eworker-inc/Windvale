@@ -2,12 +2,22 @@
 setlocal EnableExtensions DisableDelayedExpansion
 
 set "DevelopmentTarget="
+set "DevelopmentAll="
+set "DevelopmentCache="
 if "%~1"=="" goto :arguments_ready
+if /I "%~1"=="--development-all" goto :development_all
 if /I not "%~1"=="--development-target" exit /b 64
 if "%~2"=="" exit /b 64
 if not "%~3"=="" exit /b 64
 set "DevelopmentTarget=%~2"
+set "DevelopmentCache=1"
 echo(%DevelopmentTarget%| findstr /r /i /x "[a-z0-9][a-z0-9-]*" >nul || exit /b 64
+goto :arguments_ready
+
+:development_all
+if not "%~2"=="" exit /b 64
+set "DevelopmentAll=1"
+set "DevelopmentCache=1"
 
 :arguments_ready
 set "RepositoryRoot=%~dp0\..\.."
@@ -36,9 +46,14 @@ set "WvoPublisherSource=%RepositoryRoot%\Artifacts\Native-Wvo-Publisher-Candidat
 set "LinkerSource=%RepositoryRoot%\Artifacts\Native-Wv-Linker-Candidate\Wv-Linker.exe"
 set "PackagerSource=%RepositoryRoot%\Artifacts\Native-Console-Packager-Candidate\Console-Packager.exe"
 set "ConsolePublisherSource=%RepositoryRoot%\Artifacts\Native-Console-Application-Publisher-Candidate\windows-x64-wvappublish.exe"
+set "CachedProjectBuilder=%RepositoryRoot%\Tools\Native\Build-Cached-Os-X64-Project-Wvbs.mjs"
 set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
 if not exist "%WorkspacePath%" (
     >&2 echo The native workspace marker is missing.
+    exit /b 1
+)
+if defined DevelopmentCache if not exist "%CachedProjectBuilder%" (
+    >&2 echo The native project-WVB checkpoint builder is missing.
     exit /b 1
 )
 fsutil reparsepoint query "%RepositoryRoot%" >nul 2>nul
@@ -63,6 +78,17 @@ if errorlevel 1 (
     >&2 echo The Windows native OS x64 verification toolchain digest is invalid.
     goto :cleanup
 )
+if not defined DevelopmentCache goto :cache_ready
+set "CacheTarget=all"
+if defined DevelopmentTarget set "CacheTarget=%DevelopmentTarget%"
+node "%CachedProjectBuilder%" "%TargetPlan%" "%Work%" ^
+    "%BuildDriver%" "%CacheTarget%"
+if not errorlevel 1 goto :cache_ready
+set "Result=%ERRORLEVEL%"
+>&2 echo The native OS x64 project-WVB checkpoint batch failed.
+goto :cleanup
+
+:cache_ready
 set "TotalProjects=0"
 set "Selected=0"
 
@@ -97,6 +123,8 @@ if defined DevelopmentTarget if not "%Selected%"=="1" (
 )
 if defined DevelopmentTarget (
     echo native os x64 code emission development status=Passed target=%DevelopmentTarget% projects=1 cases=6 cross-host-images=Verified
+) else if defined DevelopmentAll (
+    echo native os x64 code emission development status=Passed target=all projects=56 cases=336 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
 ) else (
     echo native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
 )
@@ -129,9 +157,12 @@ for %%P in ("%CaseProjectPath%") do set "CaseProjectPath=%%~fP"
 set "CaseProjectResource=%CaseProjectPath:\=/%"
 set "CandidateWvb=%Work%\%CaseArtifact%.candidate.wvb"
 set "CandidateWvbResource=%CandidateWvb:\=/%"
+if defined DevelopmentCache goto :build_ready
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
     "%CaseProjectResource%" "%CandidateWvbResource%" >nul
 if errorlevel 1 exit /b 1
+:build_ready
+if not exist "%CandidateWvb%" exit /b 1
 "%WvbPublisher%" "%CandidateWvb%" "%Work%\%CaseArtifact%.wvb" >nul
 if errorlevel 1 exit /b 1
 call :verify "%Work%\%CaseArtifact%.wvb" "%CaseWvbBytes%" "%CaseWvbSha256%"

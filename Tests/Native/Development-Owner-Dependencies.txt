@@ -15,6 +15,7 @@ database-storage|producer|Tools/Native/Build-Cached-Project-Wvb.cmd
 database-storage|producer|Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs
 database-storage|producer|Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs
 database-storage|producer|Tools/Native/Get-Native-Project-Cache-Key.mjs
+database-storage|producer|Tools/Native/Native-Project-Cache-Key-Core.mjs
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj
@@ -24,6 +25,13 @@ database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Host-Tree-R
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj
+os-x64-code-emission|artifact|Artifacts/Native-Front-Door/SHA256SUMS
+os-x64-code-emission|checkpoint|project-wvb-v2
+os-x64-code-emission|producer|Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs
+os-x64-code-emission|producer|Tools/Native/Native-Project-Cache-Key-Core.mjs
+os-x64-code-emission|producer|Tools/Native/Test-Os-X64-Code-Emission.cmd
+os-x64-code-emission|producer|Tools/Native/Test-Os-X64-Code-Emission.sh
+os-x64-code-emission|source|Tests/Native/Os-X64-Code-Emission-Development-Targets.txt
 seed-native-front-door|artifact|Artifacts/Native-Front-Door/SHA256SUMS
 seed-native-front-door|producer|Tools/Native/Test-Seed-Native-Front-Door.cmd
 seed-native-front-door|producer|Tools/Native/Test-Seed-Native-Front-Door.sh

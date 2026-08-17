@@ -1045,6 +1045,11 @@ function Add-Os-Suite {
 function Add-Native-Tool-Suite {
     param([Parameter(Mandatory)][string]$Path)
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
+    if ($Stem -eq 'Build-Cached-Os-X64-Project-Wvbs') {
+        $script:OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
+        Add-Suite 'os-x64-code-emission'
+        return
+    }
     if ($Stem -in @(
         'Build-Cached-Hosted-Application',
         'Build-Cached-Linked-Image',
@@ -1053,10 +1058,19 @@ function Add-Native-Tool-Suite {
         'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
+        'Native-Project-Cache-Key-Core',
         'Test-Database-Storage'
     )) {
         $script:DatabaseDevelopmentRequiresAllTargets = $true
         Add-Suite 'database-storage'
+        if ($Stem -in @(
+            'Build-Cached-Project-Wvb',
+            'Get-Native-Project-Cache-Key',
+            'Native-Project-Cache-Key-Core'
+        )) {
+            $script:OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
+            Add-Suite 'os-x64-code-emission'
+        }
         return
     }
     if ($SuiteByCommand.ContainsKey($Stem)) {
@@ -3454,8 +3468,7 @@ if ($PassThru) {
         RunGitHubQualificationVerification = $RunGitHubQualificationVerification
         UseOsX64CodeEmissionDevelopment = (
             $SelectedSuites.Contains('os-x64-code-emission') -and
-            $OsX64CodeEmissionDevelopmentEligible -and
-            $OsX64CodeEmissionDevelopmentTarget -ne 'all')
+            $OsX64CodeEmissionDevelopmentEligible)
         OsX64CodeEmissionDevelopmentTarget = $OsX64CodeEmissionDevelopmentTarget
         UseLibraryDevelopment = (
             $SelectedSuites.Contains('libraries') -and

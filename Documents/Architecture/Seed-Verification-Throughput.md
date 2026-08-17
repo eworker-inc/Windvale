@@ -241,8 +241,15 @@ packager, and publisher processes plus separate candidate paths. This retains
 immutable publication and per-target exact hashes without repeating 504 Windows
 tool hashes and 56 workspace scans. The measured complete Windows owner fell
 from 129,638 ms to 82,557 ms, a 36.32 percent reduction and 1.57-fold speedup.
-This does not yet reuse compiler state across project requests; doing so requires
-a versioned multi-request driver or dependency-aware compiler cache.
+The development path now also reuses deterministic compiler products through
+the existing Project 2 content identity. One batch process derives and validates
+all selected keys, while a miss retains a separate native compiler process and
+all later phases remain fresh. The complete all-hit Windows development owner
+takes 74,729 ms, saving another 7,828 ms or 9.48 percent from the session-only
+result. The focused `code` target takes 4,076 ms instead of 4,524 ms. A rejected
+per-project wrapper design took 94,799 ms because 56 Node and command-shell
+hashing lifecycles outweighed compilation; batching the cache boundary is what
+makes reuse beneficial. No-argument and qualification execution remain cold.
 
 The library development owner now selects one of seven dependency clusters from
 a canonical 29-project manifest. The planner derives each cluster's source
@@ -264,8 +271,9 @@ while retaining two focused selections and two legitimate complete selections.
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.
-2. Treat compiler incrementality as a separate optimization: cache parsed
-   modules, symbols, WIR, and native objects by complete dependency identity.
+2. Extend compiler incrementality beyond whole-project WVB checkpoints only
+   after measuring a stable phase boundary: cache parsed modules, symbols, WIR,
+   or native objects by complete dependency identity.
 
 The working targets are a repeated affected-owner local run under two minutes
 and ordinary pull-request feedback under five minutes, excluding runner queueing.

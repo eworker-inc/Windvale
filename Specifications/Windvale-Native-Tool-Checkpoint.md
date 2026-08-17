@@ -155,8 +155,9 @@ also requires executable mode on both the checkpoint and materialized copy.
 
 ## Project-WVB key and record
 
-`Build-Cached-Project-Wvb` invokes the existing
-`Get-Native-Project-Cache-Key.mjs` framing with namespace `project-wvb-v2`.
+`Build-Cached-Project-Wvb` and the OS x64 development batch invoke the shared
+`Native-Project-Cache-Key-Core.mjs` framing through namespace `project-wvb-v2`.
+The standalone key command is a thin command-line adapter over that core.
 After the format, namespace, workspace, project identity and bytes, and declared
 root/source closure, the ordered producers are:
 
@@ -186,6 +187,28 @@ bytes. Every hit rejects links, recomputes the size and digest, compares the
 complete expected record, and materializes a fresh byte-identical copy. The
 keyed build driver and its mandatory verification are the admission boundary;
 the cache does not reinterpret or execute the WVB.
+
+`Build-Cached-Os-X64-Project-Wvbs.mjs` accepts the canonical target manifest,
+one private output directory, one already staged and digest-verified build
+driver, and either one target or `all`. It validates all 56 manifest rows,
+derives every selected key in one process, and materializes one separately
+validated checkpoint per selected project. A miss still launches a distinct
+native build-driver process and atomically publishes one immutable entry. A
+hit rehashes its product and compares the complete record before copying and
+rehashing the private materialization. The paired owner then performs ordinary
+WVB publication, fresh lower/link/package operations, current-host execution,
+and all exact byte checks.
+
+The batch owns each `.new-<key>-<pid>-<nonce>` directory it allocates. A
+`finally` boundary removes that exact ordinary non-link directory after a
+build, measurement, manifest, or lost-publication-race failure, but only after
+proving its canonical parent remains the selected checkpoint family. A
+successful atomic rename removes the temporary path and preserves the published
+checkpoint. A race loser accepts the destination only after complete checkpoint
+validation.
+
+This batch is an explicit development path. No-argument owner execution,
+verification-owner coordination, and qualification do not consult it.
 
 ## Linked-image key and record
 

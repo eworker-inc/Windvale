@@ -2437,6 +2437,7 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Tool-Checkpoint.md',
             'Tools/Native/Build-Cached-Hosted-Application.cmd',
             'Tools/Native/Build-Cached-Hosted-Application.sh',
+            'Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs',
             'Tools/Native/Build-Cached-Linked-Image.cmd',
             'Tools/Native/Build-Cached-Linked-Image.sh',
             'Tools/Native/Build-Cached-Project-Object.cmd',
@@ -2445,11 +2446,14 @@ $NativeCases = @(
             'Tools/Native/Build-Cached-Project-Wvb.sh',
             'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
             'Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs',
-            'Tools/Native/Get-Native-Project-Cache-Key.mjs'
+            'Tools/Native/Get-Native-Project-Cache-Key.mjs',
+            'Tools/Native/Native-Project-Cache-Key-Core.mjs'
         )
-        Suites = @('database-storage')
+        Suites = @('os-x64-code-emission', 'database-storage')
         Gaps = @()
         VerifyPlan = $false
+        OsX64Development = $true
+        OsX64Target = 'all'
         DatabaseDevelopment = $true
     },
     @{
@@ -2826,7 +2830,7 @@ $NativeCases = @(
         Suites = @('os-x64-code-emission')
         Gaps = @()
         VerifyPlan = $true
-        OsX64Development = $false
+        OsX64Development = $true
         OsX64Target = 'all'
     },
     @{
@@ -2862,7 +2866,7 @@ $NativeCases = @(
         Suites = @('os-x64-code-emission')
         Gaps = @()
         VerifyPlan = $false
-        OsX64Development = $false
+        OsX64Development = $true
         OsX64Target = 'all'
     },
     @{
@@ -2874,7 +2878,7 @@ $NativeCases = @(
         Suites = @('os-x64-code-emission')
         Gaps = @()
         VerifyPlan = $false
-        OsX64Development = $false
+        OsX64Development = $true
         OsX64Target = 'all'
     },
     @{
@@ -3121,6 +3125,19 @@ $OsX64WindowsOwner = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.cmd')
 $OsX64LinuxOwner = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.sh')
+$OsX64BatchBuilder = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs')
+foreach ($Fragment in @(
+    'Removeˉtemporaryˉcheckpoint',
+    '} finally {',
+    'await rm(candidate, { recursive: true, force: false, maxRetries: 2 });',
+    "['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES']",
+    'await Validateˉcheckpoint(checkpointDirectory, key);'
+)) {
+    if (!$OsX64BatchBuilder.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "The OS x64 project-WVB batch is missing '$Fragment'."
+    }
+}
 $OsX64OwnerContracts = @(
     @{
         Host = 'Windows'
@@ -3131,6 +3148,8 @@ $OsX64OwnerContracts = @(
             ':consider_case',
             ':run_case',
             ':stage_toolchain',
+            '--development-all',
+            'Build-Cached-Os-X64-Project-Wvbs.mjs',
             '%CaseProject%',
             '%CaseArtifact%',
             '%CaseExpectedExit%',
@@ -3176,6 +3195,8 @@ $OsX64OwnerContracts = @(
             'Os-X64-Code-Emission-Development-Targets.txt',
             'windvale-os-x64-code-emission-development-targets 2',
             'run_case()',
+            '--development-all',
+            'Build-Cached-Os-X64-Project-Wvbs.mjs',
             '$repository_root/$project',
             '$work/$artifact',
             '$expected_exit',

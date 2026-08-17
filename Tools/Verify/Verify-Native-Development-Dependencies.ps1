@@ -5,7 +5,12 @@ $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $DeclarationPath = Join-Path $RepositoryRoot 'Tests/Native/Development-Owner-Dependencies.txt'
 $Planner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
-$Owners = @('database-storage', 'seed-native-front-door', 'webassembly-engine')
+$Owners = @(
+    'database-storage',
+    'os-x64-code-emission',
+    'seed-native-front-door',
+    'webassembly-engine'
+)
 $RequiredKinds = @('artifact', 'producer', 'source')
 
 $Bytes = [IO.File]::ReadAllBytes($DeclarationPath)
@@ -76,6 +81,7 @@ foreach ($Owner in $Owners) {
     }
     $OwnerSelected = switch ($Owner) {
         'database-storage' { $Plan.Suites -contains 'database-storage' }
+        'os-x64-code-emission' { $Plan.Suites -contains 'os-x64-code-emission' }
         'seed-native-front-door' { $Plan.Suites -contains 'seed-native-front-door' }
         'webassembly-engine' { $Plan.RunWebAssemblyEngineVerification }
     }
@@ -99,6 +105,18 @@ $ExpectedCheckpoints = @(
 if (![Linq.Enumerable]::SequenceEqual(
         [string[]]$DatabaseCheckpoints, [string[]]$ExpectedCheckpoints)) {
     throw 'The database development checkpoint-family closure differs.'
+}
+
+$OsX64Checkpoints = @(
+    $Entries |
+        Where-Object {
+            $_.Owner -eq 'os-x64-code-emission' -and $_.Kind -eq 'checkpoint'
+        } |
+        ForEach-Object Value
+)
+if (![Linq.Enumerable]::SequenceEqual(
+        [string[]]$OsX64Checkpoints, [string[]]@('project-wvb-v2'))) {
+    throw 'The OS x64 development checkpoint-family closure differs.'
 }
 
 if (!$Quiet) {

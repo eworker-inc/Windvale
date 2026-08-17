@@ -3,6 +3,7 @@
 - Date: 2026-08-16
 - Status: Implemented with complete Windows execution evidence; independent Linux execution pending
 - Extends: [Decision 0735](0735-Manifest-Driven-Os-X64-Code-Emission-Verification.md)
+- Advanced by: [Decision 0737](0737-Batch-Os-X64-Project-Wvb-Development-Checkpoints.md)
 - Preserves: per-target native processes, immutable publication, exact hashes, and the 336-case complete owner
 
 ## Context
