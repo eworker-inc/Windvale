@@ -13,13 +13,15 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Work=%TEMP%\windvale-installers-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
-mkdir "%Work%\First-Development" "%Work%\Second-Development" "%Work%\First-Release" "%Work%\Second-Release" "%Work%\Corrupt" "%Work%\Tampered-Extract" "%Work%\Clean-Extract" || goto :cleanup
+mkdir "%Work%\First-Development" "%Work%\Second-Development" "%Work%\First-Release" "%Work%\Second-Release" "%Work%\Corrupt" "%Work%\Development-Extract" "%Work%\Tampered-Extract" "%Work%\Clean-Extract" || goto :cleanup
 >"%Work%\sentinel.txt" echo preserve
 set "Result=1"
 set "Builder=%RepositoryRoot%\Tools\Release\Build-Installers.mjs"
 set "ReleaseInput=Distribution/Installers/Windvale-Release-Installer.json"
-set "DevelopmentWindowsArchive=windvale-0.1.0-dev.1-windows-x64.zip"
-set "DevelopmentLinuxArchive=windvale-0.1.0-dev.1-linux-x64.tar.gz"
+set "DevelopmentWindowsArchive=windvale-0.2.0-dev.1-windows-x64.zip"
+set "DevelopmentLinuxArchive=windvale-0.2.0-dev.1-linux-x64.tar.gz"
+set "DevelopmentPackageDirectory=windvale-0.2.0-dev.1-windows-x64"
+set "DevelopmentPayload=1f86c542450c0ce92ad886363ec2ef1112431e71314ff5115166db6fad31dfc7"
 set "WindowsArchive=windvale-0.1.0-windows-x64.zip"
 set "LinuxArchive=windvale-0.1.0-linux-x64.tar.gz"
 set "PackageDirectory=windvale-0.1.0-windows-x64"
@@ -36,8 +38,8 @@ fc /b "%Work%\First-Development\%DevelopmentWindowsArchive%" "%Work%\Second-Deve
 fc /b "%Work%\First-Development\%DevelopmentLinuxArchive%" "%Work%\Second-Development\%DevelopmentLinuxArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%WindowsArchive%" "%Work%\Second-Release\%WindowsArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%LinuxArchive%" "%Work%\Second-Release\%LinuxArchive%" >nul || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 38824208 03a82ab273c7fae7e40393a12bce2584da79aa4bc760024ce0b85e5dc9075662 "Windows development installer" || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 38835111 0edfcc8851c69513a7638ca6df1416e556c20032cd5e78b0e8060af4e024d280 "Linux development installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 4659946 88b67397575768eec4027fe2f6118354b8e117875c0563c3ff90561c74b0216c "Windows development installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 4653399 eef1401522b829d1c0de76e37d914fa3215a5bdea31dfa66513a65e38e5a438f "Linux development installer" || goto :cleanup
 call :verify_file "%Work%\First-Release\%WindowsArchive%" 38823943 a04156e699a9156584195c402d3fe41b90683378f3099b8b6ee9fad74088b2c4 "Windows release installer" || goto :cleanup
 call :verify_file "%Work%\First-Release\%LinuxArchive%" 38835111 77b317a44c4d8408d1804b8c645108bd9517926e897747e606cef12a7adee23b "Linux release installer" || goto :cleanup
 
@@ -49,7 +51,9 @@ copy /b "%Work%\First-Release\%WindowsArchive%" "%Work%\Corrupt\%WindowsArchive%
 node "%Builder%" verify "%Work%\Corrupt\%WindowsArchive%" "%ReleaseInput%" >nul 2>nul
 if not errorlevel 1 goto :cleanup
 
-echo native installer step=extract-host-package item=4/8 channel=stable
+echo native installer step=extract-host-packages item=4/8 channels=2
+pwsh -NoLogo -NoProfile -Command "Expand-Archive -LiteralPath '%Work%\First-Development\%DevelopmentWindowsArchive%' -DestinationPath '%Work%\Development-Extract'" || goto :cleanup
+pwsh -NoLogo -NoProfile -File "%Work%\Development-Extract\%DevelopmentPackageDirectory%\bin\wv-verify-installation.ps1" -Root "%Work%\Development-Extract\%DevelopmentPackageDirectory%" -ExpectedTarget windows-x64 -ExpectedPayload "%DevelopmentPayload%" >nul || goto :cleanup
 pwsh -NoLogo -NoProfile -Command "Expand-Archive -LiteralPath '%Work%\First-Release\%WindowsArchive%' -DestinationPath '%Work%\Tampered-Extract'" || goto :cleanup
 pwsh -NoLogo -NoProfile -Command "Expand-Archive -LiteralPath '%Work%\First-Release\%WindowsArchive%' -DestinationPath '%Work%\Clean-Extract'" || goto :cleanup
 

@@ -1,8 +1,8 @@
 # Windvale installer runbook
 
 This runbook builds and installs deterministic Windvale Installer 1 archives.
-Use the `0.1.0-dev.1` channel for local development. Use stable `0.1.0` archives
-only as exact inputs to the signed preview release ceremony.
+Use the compressed `0.2.0-dev.1` channel for local development. Use stable
+`0.1.0` archives only as exact inputs to the signed preview release ceremony.
 
 ## Build both targets
 
@@ -25,6 +25,8 @@ node Tools/Release/Build-Installers.mjs build C:\Temp\windvale-release-installer
 The same commands work on Linux. Each build emits a Windows ZIP and Linux
 tarball on either host. The bounded progress and final report name the channel,
 target, byte length, archive SHA-256, payload identity, and generation.
+The development archives are approximately 4.7 MB each; the published stable
+archives retain their exact uncompressed `0.1.0` transport identities.
 
 Verify an artifact against the matching input envelope with:
 

@@ -20,12 +20,15 @@ trap cleanup EXIT
 
 mkdir -- "$work/First-Development" "$work/Second-Development" \
     "$work/First-Release" "$work/Second-Release" "$work/Corrupt" \
-    "$work/Tampered-Extract" "$work/Clean-Extract" || exit 1
+    "$work/Development-Extract" "$work/Tampered-Extract" \
+    "$work/Clean-Extract" || exit 1
 printf '%s\n' preserve >"$work/sentinel.txt"
 builder=$repository_root/Tools/Release/Build-Installers.mjs
 release_input=Distribution/Installers/Windvale-Release-Installer.json
-development_windows_archive=windvale-0.1.0-dev.1-windows-x64.zip
-development_linux_archive=windvale-0.1.0-dev.1-linux-x64.tar.gz
+development_windows_archive=windvale-0.2.0-dev.1-windows-x64.zip
+development_linux_archive=windvale-0.2.0-dev.1-linux-x64.tar.gz
+development_package_directory=windvale-0.2.0-dev.1-linux-x64
+development_payload=c9a0c344fb026c648fa7e69b0a2d6886264068a2d9da48738f76a7dba1d58033
 windows_archive=windvale-0.1.0-windows-x64.zip
 linux_archive=windvale-0.1.0-linux-x64.tar.gz
 package_directory=windvale-0.1.0-linux-x64
@@ -56,11 +59,11 @@ cmp --silent "$work/First-Release/$windows_archive" \
     "$work/Second-Release/$windows_archive" || exit 1
 cmp --silent "$work/First-Release/$linux_archive" \
     "$work/Second-Release/$linux_archive" || exit 1
-verify_file "$work/First-Development/$development_windows_archive" 38824361 \
-    8a0cc08fae0d92312b1e926c3149a7c90ad4dae7ee589d49b6f075da801776c1 \
+verify_file "$work/First-Development/$development_windows_archive" 4659946 \
+    88b67397575768eec4027fe2f6118354b8e117875c0563c3ff90561c74b0216c \
     'Windows development installer' || exit 1
-verify_file "$work/First-Development/$development_linux_archive" 38835111 \
-    0edfcc8851c69513a7638ca6df1416e556c20032cd5e78b0e8060af4e024d280 \
+verify_file "$work/First-Development/$development_linux_archive" 4653399 \
+    eef1401522b829d1c0de76e37d914fa3215a5bdea31dfa66513a65e38e5a438f \
     'Linux development installer' || exit 1
 verify_file "$work/First-Release/$windows_archive" 38824096 \
     5e45f775f30d2419a3df6e1c7217f24b5cf3bfcdfe5a7592955326f00c743f0d \
@@ -76,7 +79,12 @@ cp -- "$work/First-Release/$linux_archive" "$work/Corrupt/$linux_archive" || exi
 printf x >>"$work/Corrupt/$linux_archive"
 if node "$builder" verify "$work/Corrupt/$linux_archive" "$release_input" >/dev/null 2>&1; then exit 1; fi
 
-echo 'native installer step=extract-host-package item=4/8 channel=stable'
+echo 'native installer step=extract-host-packages item=4/8 channels=2'
+tar -xzf "$work/First-Development/$development_linux_archive" \
+    -C "$work/Development-Extract" || exit $?
+"$work/Development-Extract/$development_package_directory/bin/wv-verify-installation" \
+    "$work/Development-Extract/$development_package_directory" linux-x64 \
+    "$development_payload" >/dev/null || exit $?
 tar -xzf "$work/First-Release/$linux_archive" -C "$work/Tampered-Extract" || exit $?
 tar -xzf "$work/First-Release/$linux_archive" -C "$work/Clean-Extract" || exit $?
 

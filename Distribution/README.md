@@ -21,10 +21,11 @@ The `local-source-1` implementation remains deliberately narrow: it admits the
 one checked-in WVDB Query package and lock identity. Decision 0561 separately
 admits Bundle 1 and immutable local publication for that exact application.
 
-`Installers/` selects the exact native inputs for both the retained
-`0.1.0-dev.1` development artifacts and separate `0.1.0` stable Windows/Linux
-artifacts under Decisions 0562 and 0565. Generated archives are caller-owned
-release outputs and are not checked into this tree. The owner-signed Release
+`Installers/` selects the exact native inputs for the compressed
+`0.2.0-dev.1` successor and the separate `0.1.0` stable Windows/Linux
+artifacts under Decisions 0749 and 0565. Decision 0562 retains the historical
+`0.1.0-dev.1` identities. Generated archives are caller-owned release outputs
+and are not checked into this tree. The owner-signed Release
 Envelope 1 and exact-state qualification promoted these bytes into the official
 [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0).
 A version label by itself remains insufficient evidence of authenticity.

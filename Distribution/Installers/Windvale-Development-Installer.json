@@ -1,6 +1,6 @@
 {
   "format": "windvale-installer-input-1",
-  "version": "0.1.0-dev.1",
+  "version": "0.2.0-dev.1",
   "channel": "development",
   "sharedFiles": [
     {
@@ -15,11 +15,11 @@
   "targets": [
     {
       "id": "windows-x64",
-      "archive": "windvale-0.1.0-dev.1-windows-x64.zip",
-      "archiveFormat": "zip-store-1",
-      "expectedArchiveBytes": 38824208,
-      "expectedArchiveSha256": "03a82ab273c7fae7e40393a12bce2584da79aa4bc760024ce0b85e5dc9075662",
-      "expectedPayloadSha256": "f95a19650f26003b62c2b929fe32cb662818de2ae1ad450ca81f8284e7b169d7",
+      "archive": "windvale-0.2.0-dev.1-windows-x64.zip",
+      "archiveFormat": "zip-deflate-1",
+      "expectedArchiveBytes": 4659946,
+      "expectedArchiveSha256": "88b67397575768eec4027fe2f6118354b8e117875c0563c3ff90561c74b0216c",
+      "expectedPayloadSha256": "1f86c542450c0ce92ad886363ec2ef1112431e71314ff5115166db6fad31dfc7",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/windows-x64/wvbuild.exe",
@@ -74,11 +74,11 @@
     },
     {
       "id": "linux-x64",
-      "archive": "windvale-0.1.0-dev.1-linux-x64.tar.gz",
-      "archiveFormat": "tar-gzip-store-1",
-      "expectedArchiveBytes": 38835111,
-      "expectedArchiveSha256": "0edfcc8851c69513a7638ca6df1416e556c20032cd5e78b0e8060af4e024d280",
-      "expectedPayloadSha256": "32e6360c9873d51691451ee4acefe227f5a6dcc10a35807a746f955a7c024fad",
+      "archive": "windvale-0.2.0-dev.1-linux-x64.tar.gz",
+      "archiveFormat": "tar-gzip-deflate-1",
+      "expectedArchiveBytes": 4653399,
+      "expectedArchiveSha256": "eef1401522b829d1c0de76e37d914fa3215a5bdea31dfa66513a65e38e5a438f",
+      "expectedPayloadSha256": "c9a0c344fb026c648fa7e69b0a2d6886264068a2d9da48738f76a7dba1d58033",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/linux-x64/wvbuild.elf",

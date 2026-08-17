@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { constants as ZLIB_CONSTANTS, deflateRawSync } from "node:zlib";
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, "../..");
@@ -14,6 +15,7 @@ const SHA256 = /^[0-9a-f]{64}$/;
 const VERSION = /^0\.[0-9]+\.[0-9]+(?:-dev\.[0-9]+)?$/;
 const ARCHIVE_ROOT = /^windvale-[a-z0-9.-]+-(?:windows|linux)-x64$/;
 const DOS_DATE_1980_01_01 = 0x0021;
+const MAX_EXPANDED_ARCHIVE_BYTES = 64 * 1024 * 1024;
 
 function Sha256(Value) {
     return crypto.createHash("sha256").update(Value).digest("hex");
@@ -148,8 +150,8 @@ function Readmeˉtext(VersionValue, Channel, Target) {
     return Textˉbytes(
         `Windvale ${VersionValue} development installer (${Target})\n` +
         "\n" +
-        "This unsigned development installer is an early Milestone 3 artifact.\n" +
-        "It is not the Windvale v0.1.0 release and carries no automatic update client.\n" +
+        "This unsigned development installer exercises the successor delivery format.\n" +
+        "It is not an official Windvale release and carries no automatic update client.\n" +
         "\n" +
         "Installed commands:\n" +
         "  wv, wvbuild, wvasm, wvlink, wvrun, wvdump, wvverify, wvpublish\n" +
@@ -205,10 +207,16 @@ function Loadˉinput(InputPath) {
 }
 
 function Buildˉtarget(Input, Target) {
+    const ExpectedArchive = Target.id === "windows-x64" ?
+        `windvale-${Input.version}-${Target.id}.zip` :
+        `windvale-${Input.version}-${Target.id}.tar.gz`;
+    const ExpectedFormats = Target.id === "windows-x64" ?
+        ["zip-store-1", "zip-deflate-1"] :
+        ["tar-gzip-store-1", "tar-gzip-deflate-1"];
     if (!ARCHIVE_ROOT.test(`windvale-${Input.version}-${Target.id}`) ||
         !Array.isArray(Target.files) || Target.files.length !== 7 ||
-        !Assertˉordinaryˉrelativeˉpath(Target.archive, "archive name") ||
-        !["zip-store-1", "tar-gzip-store-1"].includes(Target.archiveFormat)) {
+        Assertˉordinaryˉrelativeˉpath(Target.archive, "archive name") !==
+            ExpectedArchive || !ExpectedFormats.includes(Target.archiveFormat)) {
         Fail(`Invalid installer target: ${Target.id}`);
     }
 
@@ -318,8 +326,23 @@ function Buildˉtarget(Input, Target) {
         ...File,
         path: `${RootName}/${File.path}`,
     }));
-    const ArchiveBytes = Target.archiveFormat === "zip-store-1" ?
-        Writeˉzip(RootedFiles) : Gzipˉstored(Writeˉtar(RootedFiles));
+    const ExpandedBytes = RootedFiles.reduce(
+        (Total, File) => Total + File.bytes.length,
+        0,
+    );
+    if (ExpandedBytes > MAX_EXPANDED_ARCHIVE_BYTES) {
+        Fail(`Installer expanded-byte bound exceeded: ${Target.id}`);
+    }
+    let ArchiveBytes;
+    if (Target.archiveFormat === "zip-store-1") {
+        ArchiveBytes = Writeˉzip(RootedFiles, false);
+    } else if (Target.archiveFormat === "zip-deflate-1") {
+        ArchiveBytes = Writeˉzip(RootedFiles, true);
+    } else {
+        const TarBytes = Writeˉtar(RootedFiles);
+        ArchiveBytes = Target.archiveFormat === "tar-gzip-store-1" ?
+            Gzipˉstored(TarBytes) : Gzipˉdeflate(TarBytes);
+    }
     const ArchiveSha256 = Sha256(ArchiveBytes);
     if (Target.expectedArchiveSha256 !== "pending" &&
         (Target.expectedArchiveSha256 !== ArchiveSha256 ||
@@ -358,37 +381,48 @@ function Crc32(Value) {
     return (Crc ^ 0xffffffff) >>> 0;
 }
 
-function Writeˉzip(Files) {
+function Deflateˉbytes(Value) {
+    return deflateRawSync(Value, {
+        level: 6,
+        memLevel: 8,
+        strategy: ZLIB_CONSTANTS.Z_DEFAULT_STRATEGY,
+        windowBits: 15,
+    });
+}
+
+function Writeˉzip(Files, Compress) {
     const LocalParts = [];
     const CentralParts = [];
     let LocalOffset = 0;
     for (const File of Files) {
         const Name = Buffer.from(File.path, "utf8");
         const Crc = Crc32(File.bytes);
+        const PublishedBytes = Compress ? Deflateˉbytes(File.bytes) : File.bytes;
+        const CompressionMethod = Compress ? 8 : 0;
         const Local = Buffer.alloc(30);
         Local.writeUInt32LE(0x04034b50, 0);
         Local.writeUInt16LE(20, 4);
         Local.writeUInt16LE(0x0800, 6);
-        Local.writeUInt16LE(0, 8);
+        Local.writeUInt16LE(CompressionMethod, 8);
         Local.writeUInt16LE(0, 10);
         Local.writeUInt16LE(DOS_DATE_1980_01_01, 12);
         Local.writeUInt32LE(Crc, 14);
-        Local.writeUInt32LE(File.bytes.length, 18);
+        Local.writeUInt32LE(PublishedBytes.length, 18);
         Local.writeUInt32LE(File.bytes.length, 22);
         Local.writeUInt16LE(Name.length, 26);
         Local.writeUInt16LE(0, 28);
-        LocalParts.push(Local, Name, File.bytes);
+        LocalParts.push(Local, Name, PublishedBytes);
 
         const Central = Buffer.alloc(46);
         Central.writeUInt32LE(0x02014b50, 0);
         Central.writeUInt16LE(0x0314, 4);
         Central.writeUInt16LE(20, 6);
         Central.writeUInt16LE(0x0800, 8);
-        Central.writeUInt16LE(0, 10);
+        Central.writeUInt16LE(CompressionMethod, 10);
         Central.writeUInt16LE(0, 12);
         Central.writeUInt16LE(DOS_DATE_1980_01_01, 14);
         Central.writeUInt32LE(Crc, 16);
-        Central.writeUInt32LE(File.bytes.length, 20);
+        Central.writeUInt32LE(PublishedBytes.length, 20);
         Central.writeUInt32LE(File.bytes.length, 24);
         Central.writeUInt16LE(Name.length, 28);
         Central.writeUInt16LE(0, 30);
@@ -398,7 +432,7 @@ function Writeˉzip(Files) {
         Central.writeUInt32LE(((0o100000 | File.mode) << 16) >>> 0, 38);
         Central.writeUInt32LE(LocalOffset, 42);
         CentralParts.push(Central, Name);
-        LocalOffset += Local.length + Name.length + File.bytes.length;
+        LocalOffset += Local.length + Name.length + PublishedBytes.length;
     }
     const CentralBytes = Buffer.concat(CentralParts);
     const End = Buffer.alloc(22);
@@ -476,6 +510,14 @@ function Gzipˉstored(Value) {
     Trailer.writeUInt32LE(Value.length >>> 0, 4);
     Parts.push(Trailer);
     return Buffer.concat(Parts);
+}
+
+function Gzipˉdeflate(Value) {
+    const Header = Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0x00, 0xff]);
+    const Trailer = Buffer.alloc(8);
+    Trailer.writeUInt32LE(Crc32(Value), 0);
+    Trailer.writeUInt32LE(Value.length >>> 0, 4);
+    return Buffer.concat([Header, Deflateˉbytes(Value), Trailer]);
 }
 
 function Findˉtarget(Input, ArtifactPath) {
