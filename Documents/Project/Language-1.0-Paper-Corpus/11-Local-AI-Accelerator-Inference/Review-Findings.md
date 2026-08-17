@@ -77,9 +77,10 @@ is no overload set, conversion, return-context choice, or protocol search.
 Accepted resolution: Language 1.0 permits deterministic argument-derived
 generic parameter resolution only when every type/constant
 parameter is solved uniquely from explicit argument types. A parameter not
-solved that way is a diagnostic; result context cannot guess it. Edition 1 has
-no explicit generic-call suffix. A function without sufficient argument evidence
-must take an explicit typed argument or use a non-generic named constructor.
+solved that way is a diagnostic; result context cannot guess it. Decision 0758
+later admits a full-arity explicit suffix for one resolved named declaration
+when argument evidence is insufficient. This workload still uses the ordinary
+argument-derived form and needs no source revision.
 
 ### 2. Module-bound capability roots versus closure capture
 

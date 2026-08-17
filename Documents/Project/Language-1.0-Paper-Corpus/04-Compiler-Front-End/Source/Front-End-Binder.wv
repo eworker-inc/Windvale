@@ -1,0 +1,437 @@
+edition 1;
+module Frontˉendˉbinder;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Frontˉendˉdiagnostics as Diagnostics;
+import Frontˉendˉtypes as Types;
+import Frontˉendˉwork as Work;
+
+fn Emit(
+    Sink: borrow mut Diagnostics.Sink,
+    Code: Types.Diagnosticˉcode,
+    Span: Types.Sourceˉspan,
+    Related: Option.Option<Types.Sourceˉspan>,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return Diagnostics.Emit(
+        Sink: Sink,
+        Value: Types.Diagnostic {
+            Code: Code,
+            Phase: Types.Diagnosticˉphase.Bind,
+            Primary: Span,
+            Related: Related,
+            Observed: 0u64,
+            Limit: 0u64,
+        },
+    );
+}
+
+fn Appendˉoperation(
+    Operations: borrow mut Collections.Vector<Types.Boundˉoperation>,
+    Value: Types.Boundˉoperation,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Collections.Vectorˉappend(Vector: Operations, Value: Value) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Operations,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Appendˉsymbol(
+    Symbols: borrow mut Collections.Vector<Types.Symbolˉrecord>,
+    Value: Types.Symbolˉrecord,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Collections.Vectorˉappend(Vector: Symbols, Value: Value) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Symbols,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Insertˉbinding(
+    Bindings: borrow mut Collections.Map<text, Types.Binding>,
+    Name: text,
+    Value: Types.Binding,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Collections.Mapˉinsert(
+        Map: Bindings,
+        Key: Name,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Bindings,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Bindˉnode(
+    Source: borrow text,
+    Nodes: borrow Collections.Immutableˉarena<Types.Node>,
+    Handle: borrow Collections.Handle<Types.Node>,
+    Bindings: borrow Collections.Map<text, Types.Binding>,
+    Operations: borrow mut Collections.Vector<Types.Boundˉoperation>,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+    Depth: u32,
+    Maximumˉdepth: u32,
+) -> Result.Result<bool, Types.Frontˉendˉfailure> effects() {
+    try Work.Charge(Meter: Meter, Amount: 1u64);
+    if Depth > Maximumˉdepth {
+        let Empty = Types.Sourceˉposition {
+            Byteˉoffset: 0u64,
+            Runeˉoffset: 0u64,
+            Line: 1u32,
+            Column: 1u32,
+        };
+        try Emit(
+            Sink: Diagnostics,
+            Code: Types.Diagnosticˉcode.Nestingˉlimit,
+            Span: Types.Sourceˉspan { Start: Empty, End: Empty },
+            Related: Option.Option.Absent,
+        );
+        return Result.Result.Valid { Value: false };
+    }
+    match Collections.Immutableˉarenaˉvalidate(
+        Arena: Nodes,
+        Handle: Handle,
+    ) {
+        case Result.Result.Valid { Value: () } { () }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Nodes,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    let Node = Collections.Immutableˉarenaˉborrowˉvalidated(
+        Arena: Nodes,
+        Handle: Handle,
+    );
+    return match Node {
+        case Types.Node.Error { Span: _ } {
+            Result.Result.Valid { Value: false }
+        }
+        case Types.Node.Literal { Value: Value, Span: _ } {
+            try Appendˉoperation(
+                Operations: Operations,
+                Value: Types.Boundˉoperation.Literal { Value: Value },
+            );
+            Result.Result.Valid { Value: true }
+        }
+        case Types.Node.Name { Nameˉspan: Nameˉspan, Span: Span } {
+            let Name = Text.Shareˉrange(
+                Value: Source,
+                Startˉrune: Nameˉspan.Start.Runeˉoffset,
+                Runeˉcount: Nameˉspan.End.Runeˉoffset
+                    - Nameˉspan.Start.Runeˉoffset,
+            );
+            let Rank = Collections.Mapˉfindˉrank(
+                Map: Bindings,
+                Key: borrow Name,
+            );
+            let Index = match Rank {
+                case Option.Option.Present { Value: Value } { Value }
+                case Option.Option.Absent {
+                    try Emit(
+                        Sink: Diagnostics,
+                        Code: Types.Diagnosticˉcode.Unknownˉsymbol,
+                        Span: Span,
+                        Related: Option.Option.Absent,
+                    );
+                    return Result.Result.Valid { Value: false };
+                }
+            };
+            let Binding = Collections.Mapˉborrowˉat(
+                Map: Bindings,
+                Index: Index,
+            );
+            try Appendˉoperation(
+                Operations: Operations,
+                Value: Types.Boundˉoperation.Loadˉsymbol {
+                    Ordinal: Binding.Ordinal,
+                },
+            );
+            Result.Result.Valid { Value: true }
+        }
+        case Types.Node.Add { Left: Left, Right: Right, Span: _ } {
+            let Leftˉvalid = try Bindˉnode(
+                Source: Source,
+                Nodes: Nodes,
+                Handle: borrow Left,
+                Bindings: Bindings,
+                Operations: Operations,
+                Diagnostics: Diagnostics,
+                Meter: Meter,
+                Depth: Depth + 1u32,
+                Maximumˉdepth: Maximumˉdepth,
+            );
+            let Rightˉvalid = try Bindˉnode(
+                Source: Source,
+                Nodes: Nodes,
+                Handle: borrow Right,
+                Bindings: Bindings,
+                Operations: Operations,
+                Diagnostics: Diagnostics,
+                Meter: Meter,
+                Depth: Depth + 1u32,
+                Maximumˉdepth: Maximumˉdepth,
+            );
+            if Leftˉvalid && Rightˉvalid {
+                try Appendˉoperation(
+                    Operations: Operations,
+                    Value: Types.Boundˉoperation.Add,
+                );
+                Result.Result.Valid { Value: true }
+            } else {
+                Result.Result.Valid { Value: false }
+            }
+        }
+        case Types.Node.Multiply { Left: Left, Right: Right, Span: _ } {
+            let Leftˉvalid = try Bindˉnode(
+                Source: Source,
+                Nodes: Nodes,
+                Handle: borrow Left,
+                Bindings: Bindings,
+                Operations: Operations,
+                Diagnostics: Diagnostics,
+                Meter: Meter,
+                Depth: Depth + 1u32,
+                Maximumˉdepth: Maximumˉdepth,
+            );
+            let Rightˉvalid = try Bindˉnode(
+                Source: Source,
+                Nodes: Nodes,
+                Handle: borrow Right,
+                Bindings: Bindings,
+                Operations: Operations,
+                Diagnostics: Diagnostics,
+                Meter: Meter,
+                Depth: Depth + 1u32,
+                Maximumˉdepth: Maximumˉdepth,
+            );
+            if Leftˉvalid && Rightˉvalid {
+                try Appendˉoperation(
+                    Operations: Operations,
+                    Value: Types.Boundˉoperation.Multiply,
+                );
+                Result.Result.Valid { Value: true }
+            } else {
+                Result.Result.Valid { Value: false }
+            }
+        }
+    };
+}
+
+export fn Bind(
+    Module: borrow Types.Parsedˉmodule,
+    Bindingˉbudget: Memory.Memoryˉbudget,
+    Symbolˉbudget: Memory.Memoryˉbudget,
+    Operationˉbudget: Memory.Memoryˉbudget,
+    Maximumˉsymbols: u64,
+    Maximumˉoperations: u64,
+    Maximumˉdepth: u32,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Boundˉmodule, Types.Frontˉendˉfailure>
+    effects(memory.allocate) {
+    var Bindings = match Collections.Mapˉconstruct::<text, Types.Binding>(
+        Budget: Bindingˉbudget,
+        Maximumˉitems: Maximumˉsymbols,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Bindings,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    var Operations = match
+        Collections.Vectorˉconstructˉreserved::<Types.Boundˉoperation>(
+            Budget: Operationˉbudget,
+            Maximumˉitems: Maximumˉoperations,
+        ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Operations,
+                    Error: Error,
+                },
+            };
+        }
+    };
+
+    var Index = 0u64;
+    var Ordinal = 0u32;
+    let Declarationˉcount = Collections.Sequenceˉlength(
+        Value: borrow Module.Declarations,
+    );
+    while Index < Declarationˉcount {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Declaration = Collections.Sequenceˉat(
+            Value: borrow Module.Declarations,
+            Index: Index,
+        );
+        let Name = Text.Shareˉrange(
+            Value: borrow Module.Source,
+            Startˉrune: Declaration.Nameˉspan.Start.Runeˉoffset,
+            Runeˉcount: Declaration.Nameˉspan.End.Runeˉoffset
+                - Declaration.Nameˉspan.Start.Runeˉoffset,
+        );
+        let Existingˉrank = Collections.Mapˉfindˉrank(
+            Map: borrow Bindings,
+            Key: borrow Name,
+        );
+        let Duplicate = Option.Isˉpresent(Value: borrow Existingˉrank);
+        if Duplicate {
+            let Rank = match Existingˉrank {
+                case Option.Option.Present { Value: Value } { Value }
+                case Option.Option.Absent { 0u64 }
+            };
+            let Existing = Collections.Mapˉborrowˉat(
+                Map: borrow Bindings,
+                Index: Rank,
+            );
+            let Related = Existing.Nameˉspan;
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Duplicateˉsymbol,
+                Span: Declaration.Nameˉspan,
+                Related: Option.Option.Present { Value: Related },
+            );
+        }
+
+        try Appendˉoperation(
+            Operations: borrow mut Operations,
+            Value: Types.Boundˉoperation.Beginˉdeclaration {
+                Ordinal: Ordinal,
+            },
+        );
+        let _ = try Bindˉnode(
+            Source: borrow Module.Source,
+            Nodes: borrow Module.Nodes,
+            Handle: borrow Declaration.Value,
+            Bindings: borrow Bindings,
+            Operations: borrow mut Operations,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+            Depth: 0u32,
+            Maximumˉdepth: Maximumˉdepth,
+        );
+        try Appendˉoperation(
+            Operations: borrow mut Operations,
+            Value: Types.Boundˉoperation.Endˉdeclaration {
+                Ordinal: Ordinal,
+            },
+        );
+        if !Duplicate {
+            try Insertˉbinding(
+                Bindings: borrow mut Bindings,
+                Name: Name,
+                Value: Types.Binding {
+                    Ordinal: Ordinal,
+                    Nameˉspan: Declaration.Nameˉspan,
+                },
+            );
+            Ordinal = Ordinal + 1u32;
+        }
+        Index = Index + 1u64;
+    }
+
+    let Returnˉvalid = try Bindˉnode(
+        Source: borrow Module.Source,
+        Nodes: borrow Module.Nodes,
+        Handle: borrow Module.Returnˉvalue,
+        Bindings: borrow Bindings,
+        Operations: borrow mut Operations,
+        Diagnostics: Diagnostics,
+        Meter: Meter,
+        Depth: 0u32,
+        Maximumˉdepth: Maximumˉdepth,
+    );
+    if Returnˉvalid {
+        try Appendˉoperation(
+            Operations: borrow mut Operations,
+            Value: Types.Boundˉoperation.Return,
+        );
+    }
+
+    var Symbols = match
+        Collections.Vectorˉconstructˉreserved::<Types.Symbolˉrecord>(
+            Budget: Symbolˉbudget,
+            Maximumˉitems: Maximumˉsymbols,
+        ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Symbols,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    var Symbolˉindex = 0u64;
+    let Symbolˉcount = Collections.Mapˉlength(Map: borrow Bindings);
+    while Symbolˉindex < Symbolˉcount {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Name = Collections.Mapˉkeyˉat(
+            Map: borrow Bindings,
+            Index: Symbolˉindex,
+        );
+        let Binding = Collections.Mapˉborrowˉat(
+            Map: borrow Bindings,
+            Index: Symbolˉindex,
+        );
+        try Appendˉsymbol(
+            Symbols: borrow mut Symbols,
+            Value: Types.Symbolˉrecord {
+                Name: Name,
+                Ordinal: Binding.Ordinal,
+            },
+        );
+        Symbolˉindex = Symbolˉindex + 1u64;
+    }
+
+    return Result.Result.Valid {
+        Value: Types.Boundˉmodule {
+            Symbols: Collections.Vectorˉfreeze(Vector: Symbols),
+            Operations: Collections.Vectorˉfreeze(Vector: Operations),
+        },
+    };
+}

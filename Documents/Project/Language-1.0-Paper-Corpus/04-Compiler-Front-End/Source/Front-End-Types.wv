@@ -1,0 +1,191 @@
+edition 1;
+module Frontˉendˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+
+export enum Diagnosticˉphase: u8 {
+    Decode = 1u8;
+    Lex = 2u8;
+    Parse = 3u8;
+    Bind = 4u8;
+    Emit = 5u8;
+}
+
+export enum Diagnosticˉcode: u16 {
+    Invalidˉutf8 = 1u16;
+    Unexpectedˉrune = 2u16;
+    Invalidˉidentifier = 3u16;
+    Numericˉoverflow = 4u16;
+    Tokenˉlimit = 5u16;
+    Expectedˉidentifier = 6u16;
+    Expectedˉequal = 7u16;
+    Expectedˉexpression = 8u16;
+    Expectedˉrightˉparenthesis = 9u16;
+    Expectedˉsemicolon = 10u16;
+    Expectedˉreturn = 11u16;
+    Trailingˉtoken = 12u16;
+    Nestingˉlimit = 13u16;
+    Declarationˉlimit = 14u16;
+    Duplicateˉsymbol = 15u16;
+    Unknownˉsymbol = 16u16;
+    Diagnosticˉlimit = 17u16;
+    Outputˉlimit = 18u16;
+    Sourceˉlimit = 19u16;
+    Sourceˉruneˉlimit = 20u16;
+}
+
+export enum Tokenˉkind: u8 {
+    Let = 1u8;
+    Return = 2u8;
+    Identifier = 3u8;
+    Number = 4u8;
+    Equal = 5u8;
+    Plus = 6u8;
+    Star = 7u8;
+    Leftˉparenthesis = 8u8;
+    Rightˉparenthesis = 9u8;
+    Semicolon = 10u8;
+    Invalid = 11u8;
+    End = 12u8;
+}
+
+export enum Resourceˉkind: u8 {
+    Sourceˉtext = 1u8;
+    Diagnostics = 2u8;
+    Tokens = 3u8;
+    Nodes = 4u8;
+    Declarations = 5u8;
+    Bindings = 6u8;
+    Symbols = 7u8;
+    Operations = 8u8;
+    Output = 9u8;
+}
+
+export record Sourceˉposition {
+    Byteˉoffset: u64;
+    Runeˉoffset: u64;
+    Line: u32;
+    Column: u32;
+}
+
+export record Sourceˉspan {
+    Start: Sourceˉposition;
+    End: Sourceˉposition;
+}
+
+export record Diagnostic {
+    Code: Diagnosticˉcode;
+    Phase: Diagnosticˉphase;
+    Primary: Sourceˉspan;
+    Related: Option.Option<Sourceˉspan>;
+    Observed: u64;
+    Limit: u64;
+}
+
+export record Token {
+    Kind: Tokenˉkind;
+    Span: Sourceˉspan;
+    Numericˉvalue: u64;
+}
+
+export variant Node {
+    Error(Span: Sourceˉspan);
+    Literal(Value: u64, Span: Sourceˉspan);
+    Name(Nameˉspan: Sourceˉspan, Span: Sourceˉspan);
+    Add(
+        Left: Collections.Handle<Node>,
+        Right: Collections.Handle<Node>,
+        Span: Sourceˉspan,
+    );
+    Multiply(
+        Left: Collections.Handle<Node>,
+        Right: Collections.Handle<Node>,
+        Span: Sourceˉspan,
+    );
+}
+
+export record Declaration {
+    Nameˉspan: Sourceˉspan;
+    Value: Collections.Handle<Node>;
+    Span: Sourceˉspan;
+}
+
+export record Parsedˉmodule {
+    Source: text;
+    Declarations: Collections.Sequence<Declaration>;
+    Nodes: Collections.Immutableˉarena<Node>;
+    Returnˉvalue: Collections.Handle<Node>;
+}
+
+export record Binding {
+    Ordinal: u32;
+    Nameˉspan: Sourceˉspan;
+}
+
+export record Symbolˉrecord {
+    Name: text;
+    Ordinal: u32;
+}
+
+export variant Boundˉoperation {
+    Beginˉdeclaration(Ordinal: u32);
+    Literal(Value: u64);
+    Loadˉsymbol(Ordinal: u32);
+    Add;
+    Multiply;
+    Endˉdeclaration(Ordinal: u32);
+    Return;
+}
+
+export record Boundˉmodule {
+    Symbols: Collections.Sequence<Symbolˉrecord>;
+    Operations: Collections.Sequence<Boundˉoperation>;
+}
+
+export record Limits {
+    Maximumˉsourceˉbytes: u64;
+    Maximumˉsourceˉrunes: u64;
+    Maximumˉtokens: u64;
+    Maximumˉnodes: u64;
+    Maximumˉdeclarations: u64;
+    Maximumˉsymbols: u64;
+    Maximumˉoperations: u64;
+    Maximumˉdiagnostics: u64;
+    Maximumˉnesting: u32;
+    Maximumˉwork: u64;
+    Maximumˉoutputˉbytes: u64;
+}
+
+export record Configuration {
+    Limits: Limits;
+}
+
+export record Workˉmeter {
+    Completed: u64;
+    Maximum: u64;
+}
+
+export variant Frontˉendˉfailure {
+    Invalidˉconfiguration(Field: u32, Observed: u64, Minimum: u64, Maximum: u64);
+    Allocation(Resource: Resourceˉkind, Error: Memory.Allocationˉfailure);
+    Collection(Resource: Resourceˉkind, Error: Collections.Collectionˉfailure);
+    Output(Error: Memory.Limitˉfailure);
+    Workˉexhausted(Completed: u64, Maximum: u64);
+}
+
+export record Frontˉendˉreport {
+    Artifact: Option.Option<bytes>;
+    Diagnostics: Collections.Sequence<Diagnostic>;
+    Sourceˉbytes: u64;
+    Sourceˉrunes: u64;
+    Tokenˉcount: u64;
+    Nodeˉcount: u64;
+    Declarationˉcount: u64;
+    Symbolˉcount: u64;
+    Operationˉcount: u64;
+}

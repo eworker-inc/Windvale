@@ -12,7 +12,9 @@ and
 and
 [Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
 and
-[Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
+[Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
+and
+[Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -491,6 +493,42 @@ An all-or-nothing rejected append returns the original owned item and leaves
 length, contents, capacity, and iteration unchanged. A successful append accepts
 ownership exactly once.
 
+The compiler-front-end workload fixes the first reserved empty-vector surface:
+
+~~~text
+export record Vectorˉappendˉfailure<T> {
+    Error: Collectionˉfailure;
+    Value: T;
+}
+
+export fn Vectorˉconstructˉreserved<T>(
+    Budget: Memoryˉbudget,
+    Maximumˉitems: u64,
+) -> Result<Vector<T>, Allocationˉfailure>
+    effects(memory.allocate);
+
+export fn Vectorˉappend<T>(
+    Vector: borrow mut Vector<T>,
+    Value: T,
+) -> Result<unit, Vectorˉappendˉfailure<T>> effects();
+
+export fn Vectorˉlength<T>(
+    Vector: borrow Vector<T>,
+) -> u64 effects();
+
+export fn Vectorˉfreeze<T>(
+    Vector: Vector<T>,
+) -> Sequence<T> effects();
+~~~
+
+Construction requires a positive maximum, consumes one budget, and reserves the
+complete representation/capacity for that item maximum. The empty generic call
+uses edition 1's explicit `::<T>` syntax. Later append cannot fail for physical
+growth; capacity rejection returns the unchanged original value and vector.
+Length reports accepted items. Freeze consumes the vector, publishes exactly its
+items in order, transfers retained accounting, and performs no fallible
+compaction.
+
 ### Sequence
 
 `Sequence<T>` is shared immutable publication produced by consuming a vector or
@@ -573,8 +611,8 @@ future type. Serialization uses a named format and cannot assume internal nodes.
 Consuming publication produces `Immutableˉmap<K, V>` with the same canonical
 iteration order and no mutation.
 
-The database-transaction workload fixes the first exact ordered-map construction
-and observation surface:
+The database-transaction and compiler-front-end workloads fix this first exact
+ordered-map construction and observation surface:
 
 ~~~text
 export variant Collectionˉfailure {
@@ -595,6 +633,13 @@ export record Mapˉinsertˉfailure<K, V> {
     Key: K;
     Value: V;
 }
+
+export fn Mapˉconstruct<K, V>(
+    Budget: Memoryˉbudget,
+    Maximumˉitems: u64,
+) -> Result<Map<K, V>, Collectionˉfailure>
+    effects(memory.allocate)
+    where K: Ordering<K>;
 
 export fn Mapˉconstructˉwithˉfirst<K, V>(
     Budget: Memoryˉbudget,
@@ -622,11 +667,16 @@ export fn Mapˉcontains<K, V>(
 ) -> bool effects()
     where K: Ordering<K>;
 
-export fn Mapˉborrowˉexisting<K, V>(
+export fn Mapˉfindˉrank<K, V>(
     Map: borrow Map<K, V>,
     Key: borrow K,
-) -> borrow V effects()
+) -> Option<u64> effects()
     where K: Ordering<K>;
+
+export fn Mapˉborrowˉat<K, V>(
+    Map: borrow Map<K, V>,
+    Index: u64,
+) -> borrow V effects();
 
 export fn Mapˉkeyˉat<K, V>(
     Map: borrow Map<K, V>,
@@ -634,18 +684,20 @@ export fn Mapˉkeyˉat<K, V>(
 ) -> borrow K effects();
 ~~~
 
-Construction requires a positive maximum. Its `K` and `V` derive from the
-explicit first key/value; it atomically creates the map and inserts that pair.
-Construction or insertion failure returns the original owned key/value and
+Construction requires a positive maximum. Empty construction uses explicit
+`::<K,V>` syntax and creates no dummy node. First-item construction derives `K`
+and `V` from its explicit key/value and atomically inserts that pair. First-item
+construction or insertion failure returns the original owned key/value and
 leaves no partial observable change. The budget supplies the retained-byte bound
 and success transfers its accounting into the map.
 
-`Mapˉkeyˉat` observes ascending canonical rank and requires
-`Index < Mapˉlength`. `Mapˉborrowˉexisting` requires `Mapˉcontains` to have proved
-the key present in the same immutable map state. A violated precondition traps
-before access. The borrow checker prevents intervening exclusive mutation while
-the proof/borrow owner is live. This keeps absence recoverable without placing a
-borrow inside an `Option` payload.
+`Mapˉfindˉrank` returns absence or the owned ascending canonical rank.
+`Mapˉkeyˉat` and `Mapˉborrowˉat` require `Index < Mapˉlength` and observe key and
+value at that same rank. A violated precondition traps before access. Each direct
+borrow is tied to the map's one borrowed owner; the key used to find a rank is no
+longer a competing lifetime source. The borrow checker prevents intervening
+exclusive mutation while a rank-derived borrow is live. `Mapˉcontains` remains a
+Boolean convenience, not a borrow-lifetime proof.
 
 ## Deterministic sets
 
@@ -678,7 +730,9 @@ of this contract.
 `Arena<T>` is a move-owned store with one immutable positive runtime
 `Maximumˉnodes`. It owns one allocation lease and every live node. Construction
 validates its maximum before allocation, records it for admission and
-diagnostics, and never grows past it.
+diagnostics, and never grows past it. `Immutableˉarena<T>` is its consuming
+read-only publication form: node ranks and handles remain stable, mutation is
+unavailable, and the publication retains the arena's allocation lease.
 
 `Handle<T>` is a Copy, non-owning pair of arena identity, slot index, and
 generation. Its representation is opaque and not generally serializable,
@@ -704,7 +758,8 @@ destroys every live node and invalidates every handle, including cyclic graphs.
 The arena provides bounded iteration over live nodes in ascending slot order.
 Graph traversal order is owned by the algorithm, not inferred from handle values.
 
-The database-transaction workload fixes these first exact arena operations:
+The database-transaction and compiler-front-end workloads fix these first exact
+arena operations:
 
 ~~~text
 export record Arenaˉseed<T> {
@@ -716,6 +771,12 @@ export record Arenaˉinsertˉfailure<T> {
     Error: Collectionˉfailure;
     Value: T;
 }
+
+export fn Arenaˉconstruct<T>(
+    Budget: Memoryˉbudget,
+    Maximumˉnodes: u64,
+) -> Result<Arena<T>, Collectionˉfailure>
+    effects(memory.allocate);
 
 export fn Arenaˉconstructˉwithˉfirst<T>(
     Budget: Memoryˉbudget,
@@ -736,23 +797,45 @@ export fn Arenaˉvalidate<T>(
 
 export fn Arenaˉborrowˉvalidated<T>(
     Arena: borrow Arena<T>,
-    Handle: borrow Handle<T>,
+    Handle: Handle<T>,
 ) -> borrow T effects();
+
+export fn Arenaˉlength<T>(Arena: borrow Arena<T>) -> u64 effects();
+
+export fn Arenaˉfreeze<T>(Arena: Arena<T>) -> Immutableˉarena<T> effects();
+
+export fn Immutableˉarenaˉvalidate<T>(
+    Arena: borrow Immutableˉarena<T>,
+    Handle: borrow Handle<T>,
+) -> Result<unit, Collectionˉfailure> effects();
+
+export fn Immutableˉarenaˉborrowˉvalidated<T>(
+    Arena: borrow Immutableˉarena<T>,
+    Handle: Handle<T>,
+) -> borrow T effects();
+
+export fn Immutableˉarenaˉlength<T>(
+    Arena: borrow Immutableˉarena<T>,
+) -> u64 effects();
 ~~~
 
-The first-item constructor solves `T` from `First`, atomically constructs the
-arena and inserts the value, and returns both owner and first handle. Failure
-releases partial allocation and returns the original value unchanged. Ordinary
-insertion checks capacity before acceptance and has the same ownership-return
-rule.
+Empty construction uses explicit `::<T>` syntax and creates no dummy node. The
+first-item constructor solves `T` from `First`, atomically constructs the arena
+and inserts the value, and returns both owner and first handle. Failure releases
+partial allocation and returns the original value unchanged. Ordinary insertion
+checks capacity before acceptance and has the same ownership-return rule.
 
 `Arenaˉvalidate` returns a nominal failure for wrong arena, range, vacancy, stale
 generation, or retired slot. `Arenaˉborrowˉvalidated` requires a successful
-validation for the same immutable arena/handle state and returns a direct borrow
-tied to the arena owner. Violation traps before access. No exclusive arena
-mutation can occur between proof and use while that immutable owner borrow is
-live. This avoids a borrowed value inside `Result` without weakening recoverable
-validation or memory safety.
+validation for the same arena/handle state and returns a direct borrow tied only
+to the arena owner; the borrow operation copies `Handle<T>` by value, so it is
+not a second lifetime source. Validation may borrow the handle because it
+returns only owned unit/failure. Violation traps before access. No exclusive
+arena mutation can occur between proof and use while that immutable owner borrow
+is live. `Arenaˉfreeze` consumes the mutable owner without copying nodes, and
+the corresponding `Immutableˉarena` operations preserve the same validation and
+borrow rules. This avoids a borrowed value inside `Result` without weakening
+recoverable validation or memory safety.
 
 ## Bounded iterators
 
@@ -862,6 +945,21 @@ export fn Appendˉutf8(
     Value: borrow text,
 ) -> Result<unit, Limitˉfailure> effects();
 
+export fn Appendˉu8(
+    Builder: borrow mut Bytesˉbuilder,
+    Value: u8,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Appendˉu32ˉlittle(
+    Builder: borrow mut Bytesˉbuilder,
+    Value: u32,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Appendˉu64ˉlittle(
+    Builder: borrow mut Bytesˉbuilder,
+    Value: u64,
+) -> Result<unit, Limitˉfailure> effects();
+
 export fn Freeze(Builder: Bytesˉbuilder) -> bytes effects();
 ~~~
 
@@ -869,9 +967,12 @@ export fn Freeze(Builder: Bytesˉbuilder) -> bytes effects();
 before returning. Constructor failure consumes and locally releases that child
 budget. Later appends cannot fail for physical growth, but reject before
 mutation with `Limitˉfailure` when the complete result would exceed the maximum.
-Both appends are all-or-nothing. `Appendˉutf8` emits canonical UTF-8 without a
-host encoding. `Freeze` consumes the builder and transfers retained accounting
-to the exact immutable result without fallible compaction.
+All appends are all-or-nothing. `Appendˉutf8` emits canonical UTF-8 without a
+host encoding. The integer operations prove their complete resulting length
+with checked arithmetic before mutation and append exactly 1, 4, or 8 bytes;
+the multi-byte forms use little endian regardless of host alignment or byte
+order. `Freeze` consumes the builder and transfers retained accounting to the
+exact immutable result without fallible compaction.
 
 Byte codecs validate complete input ranges before reading and use checked offset
 arithmetic. No codec inherits native alignment or endianness.
@@ -898,11 +999,48 @@ Text builder maximum output is measured in bytes. Rune count is separately
 bounded by byte maximum. Failure leaves the builder unchanged unless an operation
 is explicitly named as prefix-admitting.
 
-The command workload fixes these version-1 observations and reserved operations:
+The command and compiler-front-end workloads fix these version-1 observations
+and reserved operations:
 
 ~~~text
+export variant Decodeˉfailure {
+    Inputˉlimit(Byteˉoffset: u64, Observed: u64, Maximum: u64);
+    Runeˉlimit(Byteˉoffset: u64, Observed: u64, Maximum: u64);
+    Invalidˉlead(Byteˉoffset: u64);
+    Invalidˉcontinuation(Byteˉoffset: u64);
+    Truncated(Byteˉoffset: u64);
+    Overlong(Byteˉoffset: u64);
+    Surrogate(Byteˉoffset: u64);
+    Outˉofˉrange(Byteˉoffset: u64);
+}
+
+export variant Decodeˉutf8ˉfailure {
+    Allocation(Error: Allocationˉfailure);
+    Source(Error: Decodeˉfailure);
+}
+
 export fn Byteˉlength(Value: borrow text) -> u64 effects();
 export fn Runeˉcount(Value: borrow text) -> u64 effects();
+
+export fn Decodeˉutf8ˉreserved(
+    Budget: Memoryˉbudget,
+    Value: borrow bytes,
+    Maximumˉbytes: u64,
+    Maximumˉrunes: u64,
+) -> Result<text, Decodeˉutf8ˉfailure> effects(memory.allocate);
+
+export fn Decodeˉfailureˉbyteˉoffset(
+    Error: borrow Decodeˉfailure,
+) -> u64 effects();
+
+export fn Runeˉat(Value: borrow text, Index: u64) -> rune effects();
+export fn Runeˉutf8ˉwidth(Value: rune) -> u64 effects();
+
+export fn Shareˉrange(
+    Value: borrow text,
+    Startˉrune: u64,
+    Runeˉcount: u64,
+) -> text effects();
 
 export fn Constructˉreserved(
     Budget: Memoryˉbudget,
@@ -925,9 +1063,23 @@ export fn Freeze(Builder: Textˉbuilder) -> text effects();
 
 `Byteˉlength` reports canonical UTF-8 bytes. `Runeˉcount` reports Unicode scalar
 values, not UTF-16 code units, grapheme clusters, display cells, or locale
-characters. Reserved construction has the same committed-capacity, local
-failure-release, atomic append, and accounting-transfer rules as the byte
-builder. `Appendˉu64ˉdecimal` emits invariant shortest unsigned decimal.
+characters. Strict reserved decode rejects byte/rune limits before excess
+allocation, accepts only shortest canonical UTF-8 scalar encodings, distinguishes
+physical allocation from source failure, and releases the child budget without
+a partial `text` on either failure. `Runeˉat` requires an
+in-range scalar index and traps before access otherwise. `Runeˉutf8ˉwidth`
+returns 1 through 4. `Shareˉrange` validates checked rune geometry and returns a
+shared immutable range whose descriptor exposes exactly its byte/rune bounds;
+it may retain the same backing and charge and never creates a mutable alias.
+Reserved construction has the same committed-capacity, local failure-release,
+atomic append, and accounting-transfer rules as the byte builder.
+`Appendˉu64ˉdecimal` emits invariant shortest unsigned decimal.
+
+Canonical compiler positions over `text` use zero-based byte/rune offsets and
+one-based scalar line/column. LF advances the line and resets the column; CR and
+tab each advance one scalar column. Canonical positions do not normalize text,
+translate host newlines, or count UTF-16 units, grapheme clusters, display
+cells, or locale characters.
 
 ## Formatting and interpolation
 
@@ -1212,6 +1364,12 @@ Before source freeze:
 14. runtime-bounded arena capacity, generation validation, and two-step borrowed
     observation pass the paper corpus;
 15. ordered-map first construction, ownership-return failure, presence proof,
-    and canonical rank access pass the paper corpus; and
-16. a responsibility matrix identifies ordinary source, compiler intrinsic,
+    and canonical rank access pass the paper corpus;
+16. explicit empty collection construction, immutable arena publication, and
+    one-owner rank/handle borrows pass the compiler paper corpus;
+17. strict UTF-8 decode, scalar source positions, diagnostic saturation, and
+    exact integer byte appends pass boundary and deterministic-output cases;
+18. all explicit generic Foundation calls name the complete canonical instance;
+    and
+19. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.

@@ -83,8 +83,8 @@ responses are validated into recoverable failures before safe values exist.
 
 ## Quantitative source and compiler plan
 
-The bundle has four modules, 819 physical source lines, 29 top-level
-declarations, and 27,078 source bytes. `Run` is the largest function at 161
+The bundle has four modules, 825 physical source lines, 26 top-level
+declarations, and 27,254 source bytes. `Run` is the largest function at 161
 physical lines. `Transactionˉreport` is the widest record at seven fields. The
 source contains one required capability declaration, zero optional capabilities,
 zero unsafe blocks, zero tasks, seven named failure adapters, and explicit

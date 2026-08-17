@@ -3,7 +3,9 @@
 ## Status
 
 All five first-author findings are resolved by the project owner through
-[Decision 0757](../../../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
+[Decision 0757](../../../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
+and the later lifetime/generic-construction refinement in
+[Decision 0758](../../../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
 The workload is draft reviewed. Capability/schema signature-set digests remain
 source-freeze inputs, not current implementation identities.
 
@@ -11,9 +13,10 @@ source-freeze inputs, not current implementation identities.
 
 The candidate Foundation described `Arena<T, N>`. The paper parser knows its
 three-node maximum at launch/build planning, but edition 1 cannot infer constant
-`N` from a plain integer argument and intentionally has no result-context or
-explicit call-suffix inference. Encoding every capacity into a distinct arena
-type would also multiply generic instances without changing handle semantics.
+`N` from a plain integer argument and never uses result-context inference.
+Decision 0758 now permits a full-arity explicit suffix, but spelling each runtime
+capacity as a type argument would still multiply generic instances without
+changing handle semantics.
 
 Resolution: use `Arena<T>` with an immutable positive `Maximumˉnodes` stored in
 the move-owned arena. Capacity remains explicit, validated before allocation,
@@ -33,7 +36,10 @@ typed arguments and the first element is inserted atomically. Failure returns
 the original owned input(s). No grammar or inference change is made. General
 empty generic construction remains deliberately absent; workload 4 must supply
 the second complete pressure case before Decision 0754's reconsideration trigger
-can fire.
+can fire. Workload 4 supplied that second complete case, so Decision 0758 now
+also admits full-arity `Qualifiedˉfunction::<...>(...)` calls and exact empty
+map/arena/vector construction. The first-item constructors remain useful
+ownership-preserving conveniences.
 
 ## Finding 3: recoverable borrowed lookup needs a nonescaping shape
 
@@ -41,12 +47,15 @@ can fire.
 a variant payload, which edition 1 deliberately forbids without named lifetime
 grammar. Yet missing keys and stale handles must remain recoverable.
 
-Resolution: accept a two-step observation pattern. `Mapˉcontains` precedes
-`Mapˉborrowˉexisting`; `Arenaˉvalidate` precedes
-`Arenaˉborrowˉvalidated`. The direct borrowed result is tied to one immutable
-owner, and the borrow checker prevents intervening mutation. Skipping the proof
-is a terminal precondition trap, not unchecked memory access. Canonical map
-rank access uses `Mapˉlength` and `Mapˉkeyˉat` without a stored borrowed iterator.
+Resolution: accept a two-step observation pattern. Decision 0758 refines the
+provisional key-borrow operation because both the map and key were competing
+lifetime sources: `Mapˉfindˉrank` returns an owned optional canonical rank, then
+`Mapˉborrowˉat` borrows through the map alone. `Arenaˉvalidate` precedes
+`Arenaˉborrowˉvalidated`; the borrow operation copies its `Handle<T>` value, so
+its result is likewise tied only to the arena. The borrow checker prevents
+intervening mutation. Skipping either proof is a terminal precondition trap, not
+unchecked memory access. `Mapˉkeyˉat` shares the canonical rank contract without
+a stored borrowed iterator.
 
 ## Finding 4: typed rows need a schema adapter, not reflection
 

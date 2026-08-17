@@ -7,6 +7,7 @@ authority library;
 import Foundationˉcollections as Collections;
 import Foundationˉmemory as Memory;
 import Foundationˉnumeric as Numeric;
+import Foundationˉoption as Option;
 import Foundationˉordering as Ordering;
 import Foundationˉresult as Result;
 import Foundationˉtext as Text;
@@ -288,6 +289,28 @@ fn Readˉcredits(
     };
 }
 
+fn Requiredˉrank(
+    Fields: borrow Collections.Map<
+        Types.Fieldˉkey,
+        Collections.Handle<Types.Parsedˉvalue>
+    >,
+    Key: Types.Fieldˉkey,
+) -> Result.Result<u64, Types.Parseˉfailure> effects() {
+    return match Collections.Mapˉfindˉrank(
+        Map: Fields,
+        Key: borrow Key,
+    ) {
+        case Option.Option.Present { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Option.Option.Absent {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Missingˉfield { Key: Key },
+            }
+        }
+    };
+}
+
 export fn Parse(
     Input: borrow Collections.Sequence<Types.Fieldˉinput>,
     Arenaˉbudget: Memory.Memoryˉbudget,
@@ -335,10 +358,11 @@ export fn Parse(
     var Index = 1u64;
     while Index < Count {
         let Field = Collections.Sequenceˉat(Value: Input, Index: Index);
-        if Collections.Mapˉcontains(
+        let Existing = Collections.Mapˉfindˉrank(
             Map: borrow Fields,
             Key: borrow Field.Key,
-        ) {
+        );
+        if Option.Isˉpresent(Value: borrow Existing) {
             return Result.Result.Failure {
                 Error: Types.Parseˉfailure.Duplicateˉfield {
                     Key: Field.Key,
@@ -366,47 +390,29 @@ export fn Parse(
     let Identifierˉkey = Types.Fieldˉkey.Identifier;
     let Emailˉkey = Types.Fieldˉkey.Email;
     let Creditsˉkey = Types.Fieldˉkey.Credits;
-    if !Collections.Mapˉcontains(
-        Map: borrow Fields,
-        Key: borrow Identifierˉkey,
-    ) {
-        return Result.Result.Failure {
-            Error: Types.Parseˉfailure.Missingˉfield {
-                Key: Types.Fieldˉkey.Identifier,
-            },
-        };
-    }
-    if !Collections.Mapˉcontains(
-        Map: borrow Fields,
-        Key: borrow Emailˉkey,
-    ) {
-        return Result.Result.Failure {
-            Error: Types.Parseˉfailure.Missingˉfield {
-                Key: Types.Fieldˉkey.Email,
-            },
-        };
-    }
-    if !Collections.Mapˉcontains(
-        Map: borrow Fields,
-        Key: borrow Creditsˉkey,
-    ) {
-        return Result.Result.Failure {
-            Error: Types.Parseˉfailure.Missingˉfield {
-                Key: Types.Fieldˉkey.Credits,
-            },
-        };
-    }
-    let Identifierˉhandle = Collections.Mapˉborrowˉexisting(
-        Map: borrow Fields,
-        Key: borrow Identifierˉkey,
+    let Identifierˉrank = try Requiredˉrank(
+        Fields: borrow Fields,
+        Key: Identifierˉkey,
     );
-    let Emailˉhandle = Collections.Mapˉborrowˉexisting(
-        Map: borrow Fields,
-        Key: borrow Emailˉkey,
+    let Emailˉrank = try Requiredˉrank(
+        Fields: borrow Fields,
+        Key: Emailˉkey,
     );
-    let Creditsˉhandle = Collections.Mapˉborrowˉexisting(
+    let Creditsˉrank = try Requiredˉrank(
+        Fields: borrow Fields,
+        Key: Creditsˉkey,
+    );
+    let Identifierˉhandle = Collections.Mapˉborrowˉat(
         Map: borrow Fields,
-        Key: borrow Creditsˉkey,
+        Index: Identifierˉrank,
+    );
+    let Emailˉhandle = Collections.Mapˉborrowˉat(
+        Map: borrow Fields,
+        Index: Emailˉrank,
+    );
+    let Creditsˉhandle = Collections.Mapˉborrowˉat(
+        Map: borrow Fields,
+        Index: Creditsˉrank,
     );
 
     try Validateˉcanonicalˉiteration(Fields: borrow Fields);

@@ -68,7 +68,8 @@ interpreted as a committed success because `using` never commits.
 ### Mutable map alias
 
 ```text
-let Existing = Collections.Mapˉborrow(Map: borrow Fields, Key: borrow Key);
+let Rank = try Collections.Mapˉfindˉrank(Map: borrow Fields, Key: borrow Key);
+let Existing = Collections.Mapˉborrowˉat(Map: borrow Fields, Index: Rank);
 Collections.Mapˉinsert(Map: borrow mut Fields, Key: Other, Value: Handle);
 use Existing;
 ```

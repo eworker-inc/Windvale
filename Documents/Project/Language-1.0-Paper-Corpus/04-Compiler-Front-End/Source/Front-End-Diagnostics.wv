@@ -1,0 +1,131 @@
+edition 1;
+module Frontˉendˉdiagnostics;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Frontˉendˉtypes as Types;
+
+export record Sink {
+    Items: Collections.Vector<Types.Diagnostic>;
+    Maximum: u64;
+    Saturated: bool;
+}
+
+fn Mapˉallocation(
+    Value: Result.Result<
+        Collections.Vector<Types.Diagnostic>,
+        Memory.Allocationˉfailure
+    >,
+) -> Result.Result<Sink, Types.Frontˉendˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Items } {
+            Result.Result.Valid {
+                Value: Sink {
+                    Items: Items,
+                    Maximum: 0u64,
+                    Saturated: false,
+                },
+            }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Diagnostics,
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Append(
+    Sink: borrow mut Sink,
+    Value: Types.Diagnostic,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Collections.Vectorˉappend(
+        Vector: borrow mut Sink.Items,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Diagnostics,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+export fn Construct(
+    Budget: Memory.Memoryˉbudget,
+    Maximum: u64,
+) -> Result.Result<Sink, Types.Frontˉendˉfailure>
+    effects(memory.allocate) {
+    var Value = try Mapˉallocation(
+        Value: Collections.Vectorˉconstructˉreserved::<Types.Diagnostic>(
+            Budget: Budget,
+            Maximumˉitems: Maximum,
+        ),
+    );
+    Value.Maximum = Maximum;
+    return Result.Result.Valid { Value: Value };
+}
+
+export fn Emit(
+    Sink: borrow mut Sink,
+    Value: Types.Diagnostic,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    if Sink.Saturated {
+        return Result.Result.Valid { Value: () };
+    }
+    let Count = Collections.Vectorˉlength(Vector: borrow Sink.Items);
+    if Count + 1u64 < Sink.Maximum {
+        return Append(Sink: Sink, Value: Value);
+    }
+    if Count < Sink.Maximum {
+        try Append(
+            Sink: Sink,
+            Value: Types.Diagnostic {
+                Code: Types.Diagnosticˉcode.Diagnosticˉlimit,
+                Phase: Value.Phase,
+                Primary: Value.Primary,
+                Related: Option.Option.Absent,
+                Observed: Count + 1u64,
+                Limit: Sink.Maximum,
+            },
+        );
+    }
+    Sink.Saturated = true;
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Hasˉany(
+    Sink: borrow Sink,
+) -> bool effects() {
+    return Collections.Vectorˉlength(Vector: borrow Sink.Items) != 0u64;
+}
+
+export fn Count(
+    Sink: borrow Sink,
+) -> u64 effects() {
+    return Collections.Vectorˉlength(Vector: borrow Sink.Items);
+}
+
+export fn Freeze(
+    Sink: Sink,
+) -> Collections.Sequence<Types.Diagnostic> effects() {
+    return Collections.Vectorˉfreeze(Vector: Sink.Items);
+}
+
+export fn Noˉrelated() -> Option.Option<Types.Sourceˉspan> effects() {
+    return Option.Option.Absent;
+}

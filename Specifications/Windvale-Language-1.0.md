@@ -28,6 +28,8 @@ and the file-copy workload findings resolved by
 [Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md),
 and the database-transaction findings resolved by
 [Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md),
+and the compiler-front-end findings resolved by
+[Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -514,11 +516,20 @@ result, return statement, function body, default, or import order. A parameter
 with no solution or conflicting solutions is a diagnostic at the call. Result
 context never chooses or repairs a generic instance.
 
-Edition 1 has no explicit generic-argument suffix on a call. A generic function
-that cannot satisfy the argument-derived rule is not callable in edition 1 and
-must be redesigned around an explicit typed argument or a non-generic named
-constructor. Type arguments remain valid in type, protocol-instance, and
-declaration positions owned by the grammar.
+Edition 1 also admits `Qualifiedˉname::<Typeˉarguments>(...)`; this form is
+required when an empty or otherwise evidence-free call cannot use the ordinary
+rule. The qualified name resolves one generic function declaration first. The
+list supplies every type and compile-time constant parameter exactly once in
+declaration order; partial lists, defaults, placeholders, named generic
+arguments, and inference of omitted parameters are invalid. After exact
+substitution, ordinary argument, protocol, effect, ownership, and admission
+checks run.
+
+`::` distinguishes the syntax from relational `<`/`>`. A bare `Name<T>(...)`
+remains invalid. Explicit generic syntax applies only to a named declaration,
+not an arbitrary function value. An explicit and argument-derived call producing
+the same substitution share one canonical generic identity. Result context still
+never chooses or repairs a generic instance.
 
 Dynamic protocol values remain outside edition 1.
 
@@ -582,6 +593,14 @@ A borrow:
 
 Borrow checking is compile-time and must diagnose the origin, conflicting use,
 and required lifetime with bounded related locations.
+
+An expression of type `borrow T` or `borrow mut T` may satisfy an exact
+by-value `T` position only when `T` is Copy or shared immutable. Evaluation
+reads the borrowed value and creates its ordinary semantic copy; a shared
+immutable result may retain the same hidden backing and admitted charge. This
+does not move from the owner, invoke a clone, change the borrow lifetime, or
+perform a numeric, Boolean, enum, protocol, or other conversion. No
+corresponding read-through is available for an owned `T`.
 
 Edition 1 has no named lifetime parameters. A public function may return a
 borrowed value only when its signature has exactly one borrowed parameter; the
@@ -684,6 +703,9 @@ an exhaustive fallback over the same named cases.
 
 Destructuring preserves ownership. It cannot copy an owned field implicitly,
 leave an owned remainder inaccessible, or bind overlapping mutable access.
+Matching a borrowed aggregate never moves out of it. Copy and shared-immutable
+fields bind as their ordinary semantic copies under the read-through rule;
+owned fields bind only as borrows tied to the aggregate owner.
 
 `while` and bounded `for` are the iteration constructs. `break` and `continue`
 target the nearest enclosing loop. A `for` source exposes an exact remaining or
@@ -943,6 +965,13 @@ unsafe, profile, capability, and target-support failures. Tooling must support
 semantic rename, exact-name search, ownership explanation, capability closure,
 source-to-WIR/WVB mapping, and source-to-machine identity inspection.
 
+A bounded compiler diagnostic sink reserves its final admitted slot. It retains
+at most maximum-minus-one ordinary diagnostics in encounter order, writes
+exactly one `Diagnosticˉlimit` marker when the next issue occurs, and retains no
+later issue. The selected maximum is positive; a compiler profile using this
+policy admits at least two. Any retained diagnostic suppresses publication of a
+successful artifact for that compile request.
+
 ## Explicitly absent from edition 1
 
 Language 1.0 has no:
@@ -998,7 +1027,10 @@ This candidate becomes frozen Language 1.0 only after:
 14. the accepted runtime-arena, first-item construction, two-step checked
     observation, explicit-schema, commit, and fresh-recovery cases remain
     coherent across all mandatory workloads; and
-15. a source-freeze decision records the canonical document identities.
+15. the accepted explicit-generic, Copy-read, rank-borrow, immutable-arena,
+    source-position, diagnostic-saturation, exact-byte, and phase-publication
+    cases remain coherent across all mandatory workloads; and
+16. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

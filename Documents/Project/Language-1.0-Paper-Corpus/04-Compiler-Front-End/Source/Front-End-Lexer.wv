@@ -1,0 +1,361 @@
+edition 1;
+module Frontˉendˉlexer;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Frontˉendˉdiagnostics as Diagnostics;
+import Frontˉendˉtypes as Types;
+import Frontˉendˉwork as Work;
+
+record Cursor {
+    Byteˉoffset: u64;
+    Runeˉoffset: u64;
+    Line: u32;
+    Column: u32;
+}
+
+fn Position(Value: borrow Cursor) -> Types.Sourceˉposition effects() {
+    return Types.Sourceˉposition {
+        Byteˉoffset: Value.Byteˉoffset,
+        Runeˉoffset: Value.Runeˉoffset,
+        Line: Value.Line,
+        Column: Value.Column,
+    };
+}
+
+fn Span(
+    Start: Types.Sourceˉposition,
+    Cursor: borrow Cursor,
+) -> Types.Sourceˉspan effects() {
+    return Types.Sourceˉspan {
+        Start: Start,
+        End: Position(Value: Cursor),
+    };
+}
+
+fn Advance(
+    Cursor: borrow mut Cursor,
+    Value: rune,
+) -> unit effects() {
+    Cursor.Byteˉoffset = Cursor.Byteˉoffset
+        + Text.Runeˉutf8ˉwidth(Value: Value);
+    Cursor.Runeˉoffset = Cursor.Runeˉoffset + 1u64;
+    if Value == '\n' {
+        Cursor.Line = Cursor.Line + 1u32;
+        Cursor.Column = 1u32;
+    } else {
+        Cursor.Column = Cursor.Column + 1u32;
+    }
+}
+
+fn Isˉasciiˉletter(Value: rune) -> bool effects() {
+    return (Value >= 'A' && Value <= 'Z')
+        || (Value >= 'a' && Value <= 'z');
+}
+
+fn Isˉasciiˉdigit(Value: rune) -> bool effects() {
+    return Value >= '0' && Value <= '9';
+}
+
+fn Isˉidentifierˉstart(Value: rune) -> bool effects() {
+    return Isˉasciiˉletter(Value: Value) || Value == '_';
+}
+
+fn Isˉidentifierˉcontinue(Value: rune) -> bool effects() {
+    return Isˉidentifierˉstart(Value: Value)
+        || Isˉasciiˉdigit(Value: Value);
+}
+
+fn Digitˉvalue(Value: rune) -> u64 effects() {
+    if Value == '0' { return 0u64; }
+    if Value == '1' { return 1u64; }
+    if Value == '2' { return 2u64; }
+    if Value == '3' { return 3u64; }
+    if Value == '4' { return 4u64; }
+    if Value == '5' { return 5u64; }
+    if Value == '6' { return 6u64; }
+    if Value == '7' { return 7u64; }
+    if Value == '8' { return 8u64; }
+    return 9u64;
+}
+
+fn Emit(
+    Sink: borrow mut Diagnostics.Sink,
+    Code: Types.Diagnosticˉcode,
+    Phase: Types.Diagnosticˉphase,
+    Span: Types.Sourceˉspan,
+    Observed: u64,
+    Limit: u64,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return Diagnostics.Emit(
+        Sink: Sink,
+        Value: Types.Diagnostic {
+            Code: Code,
+            Phase: Phase,
+            Primary: Span,
+            Related: Option.Option.Absent,
+            Observed: Observed,
+            Limit: Limit,
+        },
+    );
+}
+
+fn Append(
+    Tokens: borrow mut Collections.Vector<Types.Token>,
+    Value: Types.Token,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Collections.Vectorˉappend(
+        Vector: Tokens,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Tokens,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Tokenˉavailable(
+    Tokens: borrow Collections.Vector<Types.Token>,
+    Maximum: u64,
+) -> bool effects() {
+    return Collections.Vectorˉlength(Vector: Tokens) + 1u64 < Maximum;
+}
+
+export fn Lex(
+    Source: borrow text,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉtokens: u64,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<
+    Collections.Sequence<Types.Token>,
+    Types.Frontˉendˉfailure
+> effects(memory.allocate) {
+    var Tokens = match
+        Collections.Vectorˉconstructˉreserved::<Types.Token>(
+            Budget: Budget,
+            Maximumˉitems: Maximumˉtokens,
+        ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Tokens,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    var Cursor = Cursor {
+        Byteˉoffset: 0u64,
+        Runeˉoffset: 0u64,
+        Line: 1u32,
+        Column: 1u32,
+    };
+    let Runeˉcount = Text.Runeˉcount(Value: Source);
+    var Stop = false;
+
+    while Cursor.Runeˉoffset < Runeˉcount && !Stop {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Value = Text.Runeˉat(
+            Value: Source,
+            Index: Cursor.Runeˉoffset,
+        );
+        if Value == ' ' || Value == '\t' || Value == '\r' || Value == '\n' {
+            Advance(Cursor: borrow mut Cursor, Value: Value);
+            continue;
+        }
+
+        if !Tokenˉavailable(Tokens: borrow Tokens, Maximum: Maximumˉtokens) {
+            let Here = Position(Value: borrow Cursor);
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Tokenˉlimit,
+                Phase: Types.Diagnosticˉphase.Lex,
+                Span: Types.Sourceˉspan { Start: Here, End: Here },
+                Observed: Collections.Vectorˉlength(Vector: borrow Tokens) + 1u64,
+                Limit: Maximumˉtokens - 1u64,
+            );
+            Stop = true;
+            continue;
+        }
+
+        let Start = Position(Value: borrow Cursor);
+        if Isˉidentifierˉstart(Value: Value) {
+            var Invalidˉseparator = false;
+            var Needˉsegmentˉstart = false;
+            Advance(Cursor: borrow mut Cursor, Value: Value);
+            while Cursor.Runeˉoffset < Runeˉcount {
+                try Work.Charge(Meter: Meter, Amount: 1u64);
+                let Next = Text.Runeˉat(
+                    Value: Source,
+                    Index: Cursor.Runeˉoffset,
+                );
+                if Next == 'ˉ' {
+                    if Needˉsegmentˉstart {
+                        Invalidˉseparator = true;
+                    }
+                    Needˉsegmentˉstart = true;
+                    Advance(Cursor: borrow mut Cursor, Value: Next);
+                    continue;
+                }
+                if Needˉsegmentˉstart {
+                    if !Isˉidentifierˉstart(Value: Next) {
+                        Invalidˉseparator = true;
+                        break;
+                    }
+                    Needˉsegmentˉstart = false;
+                    Advance(Cursor: borrow mut Cursor, Value: Next);
+                    continue;
+                }
+                if !Isˉidentifierˉcontinue(Value: Next) {
+                    break;
+                }
+                Advance(Cursor: borrow mut Cursor, Value: Next);
+            }
+            if Needˉsegmentˉstart {
+                Invalidˉseparator = true;
+            }
+            let Tokenˉspan = Span(Start: Start, Cursor: borrow Cursor);
+            let Lexeme = Text.Shareˉrange(
+                Value: Source,
+                Startˉrune: Start.Runeˉoffset,
+                Runeˉcount: Cursor.Runeˉoffset - Start.Runeˉoffset,
+            );
+            let Kind = if Invalidˉseparator {
+                try Emit(
+                    Sink: Diagnostics,
+                    Code: Types.Diagnosticˉcode.Invalidˉidentifier,
+                    Phase: Types.Diagnosticˉphase.Lex,
+                    Span: Tokenˉspan,
+                    Observed: 0u64,
+                    Limit: 0u64,
+                );
+                Types.Tokenˉkind.Invalid
+            } else if Lexeme == "let" {
+                Types.Tokenˉkind.Let
+            } else if Lexeme == "return" {
+                Types.Tokenˉkind.Return
+            } else {
+                Types.Tokenˉkind.Identifier
+            };
+            try Append(
+                Tokens: borrow mut Tokens,
+                Value: Types.Token {
+                    Kind: Kind,
+                    Span: Tokenˉspan,
+                    Numericˉvalue: 0u64,
+                },
+            );
+            continue;
+        }
+
+        if Isˉasciiˉdigit(Value: Value) {
+            var Number = 0u64;
+            var Overflow = false;
+            while Cursor.Runeˉoffset < Runeˉcount {
+                try Work.Charge(Meter: Meter, Amount: 1u64);
+                let Digit = Text.Runeˉat(
+                    Value: Source,
+                    Index: Cursor.Runeˉoffset,
+                );
+                if !Isˉasciiˉdigit(Value: Digit) {
+                    break;
+                }
+                let Part = Digitˉvalue(Value: Digit);
+                if Number > 1844674407370955161u64
+                    || (Number == 1844674407370955161u64 && Part > 5u64) {
+                    Overflow = true;
+                } else if !Overflow {
+                    Number = Number * 10u64 + Part;
+                }
+                Advance(Cursor: borrow mut Cursor, Value: Digit);
+            }
+            let Tokenˉspan = Span(Start: Start, Cursor: borrow Cursor);
+            if Overflow {
+                try Emit(
+                    Sink: Diagnostics,
+                    Code: Types.Diagnosticˉcode.Numericˉoverflow,
+                    Phase: Types.Diagnosticˉphase.Lex,
+                    Span: Tokenˉspan,
+                    Observed: 0u64,
+                    Limit: 18446744073709551615u64,
+                );
+            }
+            try Append(
+                Tokens: borrow mut Tokens,
+                Value: Types.Token {
+                    Kind: if Overflow {
+                        Types.Tokenˉkind.Invalid
+                    } else {
+                        Types.Tokenˉkind.Number
+                    },
+                    Span: Tokenˉspan,
+                    Numericˉvalue: Number,
+                },
+            );
+            continue;
+        }
+
+        Advance(Cursor: borrow mut Cursor, Value: Value);
+        let Tokenˉspan = Span(Start: Start, Cursor: borrow Cursor);
+        let Kind = if Value == '=' {
+            Types.Tokenˉkind.Equal
+        } else if Value == '+' {
+            Types.Tokenˉkind.Plus
+        } else if Value == '*' {
+            Types.Tokenˉkind.Star
+        } else if Value == '(' {
+            Types.Tokenˉkind.Leftˉparenthesis
+        } else if Value == ')' {
+            Types.Tokenˉkind.Rightˉparenthesis
+        } else if Value == ';' {
+            Types.Tokenˉkind.Semicolon
+        } else {
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Unexpectedˉrune,
+                Phase: Types.Diagnosticˉphase.Lex,
+                Span: Tokenˉspan,
+                Observed: 0u64,
+                Limit: 0u64,
+            );
+            Types.Tokenˉkind.Invalid
+        };
+        try Append(
+            Tokens: borrow mut Tokens,
+            Value: Types.Token {
+                Kind: Kind,
+                Span: Tokenˉspan,
+                Numericˉvalue: 0u64,
+            },
+        );
+    }
+
+    let End = Position(Value: borrow Cursor);
+    try Append(
+        Tokens: borrow mut Tokens,
+        Value: Types.Token {
+            Kind: Types.Tokenˉkind.End,
+            Span: Types.Sourceˉspan { Start: End, End: End },
+            Numericˉvalue: 0u64,
+        },
+    );
+    return Result.Result.Valid {
+        Value: Collections.Vectorˉfreeze(Vector: Tokens),
+    };
+}

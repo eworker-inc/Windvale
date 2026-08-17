@@ -1,0 +1,178 @@
+edition 1;
+module Frontˉendˉencoder;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Frontˉendˉtypes as Types;
+import Frontˉendˉwork as Work;
+
+fn Append(
+    Value: Result.Result<unit, Memory.Limitˉfailure>,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Output { Error: Error },
+            }
+        }
+    };
+}
+
+fn Encodeˉoperation(
+    Builder: borrow mut Bytes.Bytesˉbuilder,
+    Value: borrow Types.Boundˉoperation,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    match Value {
+        case Types.Boundˉoperation.Beginˉdeclaration { Ordinal: Ordinal } {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 1u8));
+            try Append(
+                Value: Bytes.Appendˉu32ˉlittle(
+                    Builder: Builder,
+                    Value: Ordinal,
+                ),
+            );
+        }
+        case Types.Boundˉoperation.Literal { Value: Number } {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 2u8));
+            try Append(
+                Value: Bytes.Appendˉu64ˉlittle(
+                    Builder: Builder,
+                    Value: Number,
+                ),
+            );
+        }
+        case Types.Boundˉoperation.Loadˉsymbol { Ordinal: Ordinal } {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 3u8));
+            try Append(
+                Value: Bytes.Appendˉu32ˉlittle(
+                    Builder: Builder,
+                    Value: Ordinal,
+                ),
+            );
+        }
+        case Types.Boundˉoperation.Add {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 4u8));
+        }
+        case Types.Boundˉoperation.Multiply {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 5u8));
+        }
+        case Types.Boundˉoperation.Endˉdeclaration { Ordinal: Ordinal } {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 6u8));
+            try Append(
+                Value: Bytes.Appendˉu32ˉlittle(
+                    Builder: Builder,
+                    Value: Ordinal,
+                ),
+            );
+        }
+        case Types.Boundˉoperation.Return {
+            try Append(Value: Bytes.Appendˉu8(Builder: Builder, Value: 7u8));
+        }
+    };
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Encode(
+    Module: borrow Types.Boundˉmodule,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉoutputˉbytes: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<bytes, Types.Frontˉendˉfailure>
+    effects(memory.allocate) {
+    var Builder = match Bytes.Constructˉreserved(
+        Budget: Budget,
+        Maximumˉoutputˉbytes: Maximumˉoutputˉbytes,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Output,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    try Append(
+        Value: Bytes.Appendˉbytes(
+            Builder: borrow mut Builder,
+            Value: borrow b"WVFE0001",
+        ),
+    );
+    try Append(
+        Value: Bytes.Appendˉu32ˉlittle(
+            Builder: borrow mut Builder,
+            Value: 1u32,
+        ),
+    );
+    let Symbolˉcount = Collections.Sequenceˉlength(
+        Value: borrow Module.Symbols,
+    );
+    let Operationˉcount = Collections.Sequenceˉlength(
+        Value: borrow Module.Operations,
+    );
+    try Append(
+        Value: Bytes.Appendˉu64ˉlittle(
+            Builder: borrow mut Builder,
+            Value: Symbolˉcount,
+        ),
+    );
+    try Append(
+        Value: Bytes.Appendˉu64ˉlittle(
+            Builder: borrow mut Builder,
+            Value: Operationˉcount,
+        ),
+    );
+
+    var Symbolˉindex = 0u64;
+    while Symbolˉindex < Symbolˉcount {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Symbol = Collections.Sequenceˉat(
+            Value: borrow Module.Symbols,
+            Index: Symbolˉindex,
+        );
+        try Append(
+            Value: Bytes.Appendˉu32ˉlittle(
+                Builder: borrow mut Builder,
+                Value: Symbol.Ordinal,
+            ),
+        );
+        try Append(
+            Value: Bytes.Appendˉu64ˉlittle(
+                Builder: borrow mut Builder,
+                Value: Text.Byteˉlength(Value: borrow Symbol.Name),
+            ),
+        );
+        try Append(
+            Value: Bytes.Appendˉutf8(
+                Builder: borrow mut Builder,
+                Value: borrow Symbol.Name,
+            ),
+        );
+        Symbolˉindex = Symbolˉindex + 1u64;
+    }
+
+    var Operationˉindex = 0u64;
+    while Operationˉindex < Operationˉcount {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Operation = Collections.Sequenceˉat(
+            Value: borrow Module.Operations,
+            Index: Operationˉindex,
+        );
+        try Encodeˉoperation(
+            Builder: borrow mut Builder,
+            Value: Operation,
+        );
+        Operationˉindex = Operationˉindex + 1u64;
+    }
+    return Result.Result.Valid { Value: Bytes.Freeze(Builder: Builder) };
+}

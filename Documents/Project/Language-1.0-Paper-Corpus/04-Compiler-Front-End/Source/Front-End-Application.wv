@@ -1,0 +1,531 @@
+edition 1;
+module Frontˉendˉapplication;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Frontˉendˉbinder as Binder;
+import Frontˉendˉdiagnostics as Diagnostics;
+import Frontˉendˉencoder as Encoder;
+import Frontˉendˉlexer as Lexer;
+import Frontˉendˉparser as Parser;
+import Frontˉendˉtypes as Types;
+
+const SOURCE_BUDGET_BYTES: u64 = 262144u64;
+const DIAGNOSTIC_BUDGET_BYTES: u64 = 131072u64;
+const TOKEN_BUDGET_BYTES: u64 = 786432u64;
+const NODE_BUDGET_BYTES: u64 = 1048576u64;
+const DECLARATION_BUDGET_BYTES: u64 = 262144u64;
+const BINDING_BUDGET_BYTES: u64 = 262144u64;
+const SYMBOL_BUDGET_BYTES: u64 = 262144u64;
+const OPERATION_BUDGET_BYTES: u64 = 1048576u64;
+const OUTPUT_BUDGET_BYTES: u64 = 524288u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Frontˉendˉfailure.Invalidˉconfiguration {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Types.Limits,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    if Limits.Maximumˉsourceˉbytes == 0u64
+        || Limits.Maximumˉsourceˉbytes > 65536u64 {
+        return Invalid(
+            Field: 1u32,
+            Observed: Limits.Maximumˉsourceˉbytes,
+            Minimum: 1u64,
+            Maximum: 65536u64,
+        );
+    }
+    if Limits.Maximumˉsourceˉrunes == 0u64
+        || Limits.Maximumˉsourceˉrunes > Limits.Maximumˉsourceˉbytes {
+        return Invalid(
+            Field: 2u32,
+            Observed: Limits.Maximumˉsourceˉrunes,
+            Minimum: 1u64,
+            Maximum: Limits.Maximumˉsourceˉbytes,
+        );
+    }
+    if Limits.Maximumˉtokens < 2u64 || Limits.Maximumˉtokens > 8192u64 {
+        return Invalid(
+            Field: 3u32,
+            Observed: Limits.Maximumˉtokens,
+            Minimum: 2u64,
+            Maximum: 8192u64,
+        );
+    }
+    if Limits.Maximumˉnodes == 0u64 || Limits.Maximumˉnodes > 4096u64 {
+        return Invalid(
+            Field: 4u32,
+            Observed: Limits.Maximumˉnodes,
+            Minimum: 1u64,
+            Maximum: 4096u64,
+        );
+    }
+    if Limits.Maximumˉdeclarations == 0u64
+        || Limits.Maximumˉdeclarations > 512u64 {
+        return Invalid(
+            Field: 5u32,
+            Observed: Limits.Maximumˉdeclarations,
+            Minimum: 1u64,
+            Maximum: 512u64,
+        );
+    }
+    if Limits.Maximumˉsymbols < Limits.Maximumˉdeclarations
+        || Limits.Maximumˉsymbols > 512u64 {
+        return Invalid(
+            Field: 6u32,
+            Observed: Limits.Maximumˉsymbols,
+            Minimum: Limits.Maximumˉdeclarations,
+            Maximum: 512u64,
+        );
+    }
+    if Limits.Maximumˉoperations == 0u64
+        || Limits.Maximumˉoperations > 16384u64 {
+        return Invalid(
+            Field: 7u32,
+            Observed: Limits.Maximumˉoperations,
+            Minimum: 1u64,
+            Maximum: 16384u64,
+        );
+    }
+    if Limits.Maximumˉdiagnostics < 2u64
+        || Limits.Maximumˉdiagnostics > 16u64 {
+        return Invalid(
+            Field: 8u32,
+            Observed: Limits.Maximumˉdiagnostics,
+            Minimum: 2u64,
+            Maximum: 16u64,
+        );
+    }
+    if Limits.Maximumˉnesting == 0u32 || Limits.Maximumˉnesting > 64u32 {
+        return Invalid(
+            Field: 9u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Maximumˉnesting,
+            ),
+            Minimum: 1u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Maximumˉwork == 0u64 || Limits.Maximumˉwork > 200000u64 {
+        return Invalid(
+            Field: 10u32,
+            Observed: Limits.Maximumˉwork,
+            Minimum: 1u64,
+            Maximum: 200000u64,
+        );
+    }
+    if Limits.Maximumˉoutputˉbytes < 28u64
+        || Limits.Maximumˉoutputˉbytes > 262144u64 {
+        return Invalid(
+            Field: 11u32,
+            Observed: Limits.Maximumˉoutputˉbytes,
+            Minimum: 28u64,
+            Maximum: 262144u64,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+    Resource: Types.Resourceˉkind,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Frontˉendˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Resource,
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Positionˉatˉbyte(Byteˉoffset: u64) -> Types.Sourceˉposition effects() {
+    return Types.Sourceˉposition {
+        Byteˉoffset: Byteˉoffset,
+        Runeˉoffset: 0u64,
+        Line: 1u32,
+        Column: 1u32,
+    };
+}
+
+fn Emitˉlimit(
+    Sink: borrow mut Diagnostics.Sink,
+    Code: Types.Diagnosticˉcode,
+    Phase: Types.Diagnosticˉphase,
+    Position: Types.Sourceˉposition,
+    Observed: u64,
+    Limit: u64,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return Diagnostics.Emit(
+        Sink: Sink,
+        Value: Types.Diagnostic {
+            Code: Code,
+            Phase: Phase,
+            Primary: Types.Sourceˉspan {
+                Start: Position,
+                End: Position,
+            },
+            Related: Option.Option.Absent,
+            Observed: Observed,
+            Limit: Limit,
+        },
+    );
+}
+
+fn Decodeˉdiagnostic(
+    Error: borrow Text.Decodeˉfailure,
+    Maximumˉsourceˉbytes: u64,
+) -> Types.Diagnostic effects() {
+    let Offset = Text.Decodeˉfailureˉbyteˉoffset(Error: Error);
+    let Position = Positionˉatˉbyte(Byteˉoffset: Offset);
+    let Code = match Error {
+        case Text.Decodeˉfailure.Inputˉlimit {
+            Byteˉoffset: _,
+            Observed: _,
+            Maximum: _,
+        } { Types.Diagnosticˉcode.Sourceˉlimit }
+        case Text.Decodeˉfailure.Runeˉlimit {
+            Byteˉoffset: _,
+            Observed: _,
+            Maximum: _,
+        } { Types.Diagnosticˉcode.Sourceˉruneˉlimit }
+        case _ { Types.Diagnosticˉcode.Invalidˉutf8 }
+    };
+    let Observed = match Error {
+        case Text.Decodeˉfailure.Inputˉlimit {
+            Byteˉoffset: _,
+            Observed: Value,
+            Maximum: _,
+        } { Value }
+        case Text.Decodeˉfailure.Runeˉlimit {
+            Byteˉoffset: _,
+            Observed: Value,
+            Maximum: _,
+        } { Value }
+        case _ { Offset }
+    };
+    let Limit = match Error {
+        case Text.Decodeˉfailure.Inputˉlimit {
+            Byteˉoffset: _,
+            Observed: _,
+            Maximum: Value,
+        } { Value }
+        case Text.Decodeˉfailure.Runeˉlimit {
+            Byteˉoffset: _,
+            Observed: _,
+            Maximum: Value,
+        } { Value }
+        case _ { Maximumˉsourceˉbytes }
+    };
+    return Types.Diagnostic {
+        Code: Code,
+        Phase: Types.Diagnosticˉphase.Decode,
+        Primary: Types.Sourceˉspan { Start: Position, End: Position },
+        Related: Option.Option.Absent,
+        Observed: Observed,
+        Limit: Limit,
+    };
+}
+
+fn Report(
+    Artifact: Option.Option<bytes>,
+    Diagnostics: Diagnostics.Sink,
+    Sourceˉbytes: u64,
+    Sourceˉrunes: u64,
+    Tokenˉcount: u64,
+    Nodeˉcount: u64,
+    Declarationˉcount: u64,
+    Symbolˉcount: u64,
+    Operationˉcount: u64,
+) -> Types.Frontˉendˉreport effects() {
+    return Types.Frontˉendˉreport {
+        Artifact: Artifact,
+        Diagnostics: Diagnostics.Freeze(Sink: Diagnostics),
+        Sourceˉbytes: Sourceˉbytes,
+        Sourceˉrunes: Sourceˉrunes,
+        Tokenˉcount: Tokenˉcount,
+        Nodeˉcount: Nodeˉcount,
+        Declarationˉcount: Declarationˉcount,
+        Symbolˉcount: Symbolˉcount,
+        Operationˉcount: Operationˉcount,
+    };
+}
+
+export fn Compile(
+    Sourceˉbytes: borrow bytes,
+    Configuration: Types.Configuration,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Frontˉendˉreport, Types.Frontˉendˉfailure>
+    effects(memory.allocate, resource.acquire, resource.release) {
+    try Validate(Limits: borrow Configuration.Limits);
+    var Root = Budget;
+    let Sourceˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: SOURCE_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Sourceˉtext,
+    );
+    let Diagnosticˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: DIAGNOSTIC_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Diagnostics,
+    );
+    let Tokenˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: TOKEN_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Tokens,
+    );
+    let Nodeˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: NODE_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Nodes,
+    );
+    let Declarationˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: DECLARATION_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Declarations,
+    );
+    let Bindingˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: BINDING_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Bindings,
+    );
+    let Symbolˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: SYMBOL_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Symbols,
+    );
+    let Operationˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: OPERATION_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Operations,
+    );
+    let Outputˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: OUTPUT_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Output,
+    );
+    var Diagnostics = try Diagnostics.Construct(
+        Budget: Diagnosticˉbudget,
+        Maximum: Configuration.Limits.Maximumˉdiagnostics,
+    );
+
+    let Byteˉcount = Bytes.Length(Value: Sourceˉbytes);
+    if Byteˉcount > Configuration.Limits.Maximumˉsourceˉbytes {
+        let Start = Positionˉatˉbyte(Byteˉoffset: 0u64);
+        try Emitˉlimit(
+            Sink: borrow mut Diagnostics,
+            Code: Types.Diagnosticˉcode.Sourceˉlimit,
+            Phase: Types.Diagnosticˉphase.Decode,
+            Position: Start,
+            Observed: Byteˉcount,
+            Limit: Configuration.Limits.Maximumˉsourceˉbytes,
+        );
+        return Result.Result.Valid {
+            Value: Report(
+                Artifact: Option.Option.Absent,
+                Diagnostics: Diagnostics,
+                Sourceˉbytes: Byteˉcount,
+                Sourceˉrunes: 0u64,
+                Tokenˉcount: 0u64,
+                Nodeˉcount: 0u64,
+                Declarationˉcount: 0u64,
+                Symbolˉcount: 0u64,
+                Operationˉcount: 0u64,
+            ),
+        };
+    }
+
+    let Source = match Text.Decodeˉutf8ˉreserved(
+        Budget: Sourceˉbudget,
+        Value: Sourceˉbytes,
+        Maximumˉbytes: Configuration.Limits.Maximumˉsourceˉbytes,
+        Maximumˉrunes: Configuration.Limits.Maximumˉsourceˉrunes,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure {
+            Error: Text.Decodeˉutf8ˉfailure.Allocation { Error: Error },
+        } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Sourceˉtext,
+                    Error: Error,
+                },
+            };
+        }
+        case Result.Result.Failure {
+            Error: Text.Decodeˉutf8ˉfailure.Source { Error: Error },
+        } {
+            try Diagnostics.Emit(
+                Sink: borrow mut Diagnostics,
+                Value: Decodeˉdiagnostic(
+                    Error: borrow Error,
+                    Maximumˉsourceˉbytes:
+                        Configuration.Limits.Maximumˉsourceˉbytes,
+                ),
+            );
+            return Result.Result.Valid {
+                Value: Report(
+                    Artifact: Option.Option.Absent,
+                    Diagnostics: Diagnostics,
+                    Sourceˉbytes: Byteˉcount,
+                    Sourceˉrunes: 0u64,
+                    Tokenˉcount: 0u64,
+                    Nodeˉcount: 0u64,
+                    Declarationˉcount: 0u64,
+                    Symbolˉcount: 0u64,
+                    Operationˉcount: 0u64,
+                ),
+            };
+        }
+    };
+    let Runeˉcount = Text.Runeˉcount(Value: borrow Source);
+    var Meter = Types.Workˉmeter {
+        Completed: 0u64,
+        Maximum: Configuration.Limits.Maximumˉwork,
+    };
+    let Tokens = try Lexer.Lex(
+        Source: borrow Source,
+        Budget: Tokenˉbudget,
+        Maximumˉtokens: Configuration.Limits.Maximumˉtokens,
+        Diagnostics: borrow mut Diagnostics,
+        Meter: borrow mut Meter,
+    );
+    let Tokenˉcount = Collections.Sequenceˉlength(Value: borrow Tokens);
+    let Endˉposition = Collections.Sequenceˉat(
+        Value: borrow Tokens,
+        Index: Tokenˉcount - 1u64,
+    ).Span.End;
+    let Parsed = try Parser.Parse(
+        Source: Source,
+        Tokens: borrow Tokens,
+        Nodeˉbudget: Nodeˉbudget,
+        Declarationˉbudget: Declarationˉbudget,
+        Limits: borrow Configuration.Limits,
+        Diagnostics: borrow mut Diagnostics,
+        Meter: borrow mut Meter,
+    );
+    let Nodeˉcount = Collections.Immutableˉarenaˉlength(
+        Arena: borrow Parsed.Nodes,
+    );
+    let Declarationˉcount = Collections.Sequenceˉlength(
+        Value: borrow Parsed.Declarations,
+    );
+    let Bound = try Binder.Bind(
+        Module: borrow Parsed,
+        Bindingˉbudget: Bindingˉbudget,
+        Symbolˉbudget: Symbolˉbudget,
+        Operationˉbudget: Operationˉbudget,
+        Maximumˉsymbols: Configuration.Limits.Maximumˉsymbols,
+        Maximumˉoperations: Configuration.Limits.Maximumˉoperations,
+        Maximumˉdepth: Configuration.Limits.Maximumˉnesting,
+        Diagnostics: borrow mut Diagnostics,
+        Meter: borrow mut Meter,
+    );
+    let Symbolˉcount = Collections.Sequenceˉlength(Value: borrow Bound.Symbols);
+    let Operationˉcount = Collections.Sequenceˉlength(
+        Value: borrow Bound.Operations,
+    );
+    if Diagnostics.Hasˉany(Sink: borrow Diagnostics) {
+        return Result.Result.Valid {
+            Value: Report(
+                Artifact: Option.Option.Absent,
+                Diagnostics: Diagnostics,
+                Sourceˉbytes: Byteˉcount,
+                Sourceˉrunes: Runeˉcount,
+                Tokenˉcount: Tokenˉcount,
+                Nodeˉcount: Nodeˉcount,
+                Declarationˉcount: Declarationˉcount,
+                Symbolˉcount: Symbolˉcount,
+                Operationˉcount: Operationˉcount,
+            ),
+        };
+    }
+
+    let Artifact = match Encoder.Encode(
+        Module: borrow Bound,
+        Budget: Outputˉbudget,
+        Maximumˉoutputˉbytes: Configuration.Limits.Maximumˉoutputˉbytes,
+        Meter: borrow mut Meter,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure {
+            Error: Types.Frontˉendˉfailure.Output {
+                Error: Memory.Limitˉfailure.Maximumˉexceeded {
+                    Requested: Requested,
+                    Maximum: Maximum,
+                },
+            },
+        } {
+            try Emitˉlimit(
+                Sink: borrow mut Diagnostics,
+                Code: Types.Diagnosticˉcode.Outputˉlimit,
+                Phase: Types.Diagnosticˉphase.Emit,
+                Position: Endˉposition,
+                Observed: Requested,
+                Limit: Maximum,
+            );
+            return Result.Result.Valid {
+                Value: Report(
+                    Artifact: Option.Option.Absent,
+                    Diagnostics: Diagnostics,
+                    Sourceˉbytes: Byteˉcount,
+                    Sourceˉrunes: Runeˉcount,
+                    Tokenˉcount: Tokenˉcount,
+                    Nodeˉcount: Nodeˉcount,
+                    Declarationˉcount: Declarationˉcount,
+                    Symbolˉcount: Symbolˉcount,
+                    Operationˉcount: Operationˉcount,
+                ),
+            };
+        }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure { Error: Error };
+        }
+    };
+    return Result.Result.Valid {
+        Value: Report(
+            Artifact: Option.Option.Present { Value: Artifact },
+            Diagnostics: Diagnostics,
+            Sourceˉbytes: Byteˉcount,
+            Sourceˉrunes: Runeˉcount,
+            Tokenˉcount: Tokenˉcount,
+            Nodeˉcount: Nodeˉcount,
+            Declarationˉcount: Declarationˉcount,
+            Symbolˉcount: Symbolˉcount,
+            Operationˉcount: Operationˉcount,
+        ),
+    };
+}

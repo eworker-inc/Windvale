@@ -15,7 +15,9 @@ and the command workload findings resolved by
 and the file-copy workload findings resolved by
 [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
 and the database-transaction findings resolved by
-[Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
+[Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
+and the compiler-front-end findings resolved by
+[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -122,7 +124,7 @@ changes require semantic review.
 | New fixed numerics and strict floats | Type checker, operators, Foundation, verifier, runtimes, native backend | Likely for new scalar operations. |
 | Named update and multi-field variants | Parser, bindings, WIR construction | Only when current aggregate operations cannot encode the result. |
 | Value `if`/`match` and destructuring | Body parser, ownership analysis, WIR control flow | Prefer lowering through existing blocks and values. |
-| Generics and protocols | Symbols, exact argument-type matcher, type checker, specialization cache, package interfaces | Specialized output should remain ordinary typed operations; no overload or result-context search. |
+| Generics and protocols | Symbols, exact argument-type matcher, full-arity named explicit arguments, type checker, specialization cache, package interfaces | Specialized output should remain ordinary typed operations; no overload or result-context search. |
 | Ownership and borrowing | Type/ownership analysis, WIR evidence, diagnostics | Runtime move opcodes are not required when static lowering suffices. |
 | Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
 | Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
@@ -154,6 +156,10 @@ reparse it.
 - Retain the accepted runtime arena, first-item construction, checked borrowed
   observation, typed-schema, explicit-commit, and fresh-recovery cases from
   Decision 0757.
+- Retain the accepted full-arity explicit generic calls, empty bounded owners,
+  rank-based one-owner observation, Copy read-through, immutable arena
+  publication, scalar source positions, diagnostic saturation, and exact byte
+  emission from Decision 0758.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.
@@ -184,9 +190,9 @@ reparse it.
 
 ### Slice 4: generics and collections
 
-- Implement unique argument-derived structural generic resolution, bounded
-  specialization, and retained solution evidence without result-context or
-  overload search.
+- Implement unique argument-derived structural generic resolution, full-arity
+  explicit arguments for one resolved named declaration, bounded specialization,
+  and retained solution evidence without result-context or overload search.
 - Add arrays, vectors, immutable sequences, slices, ordered maps, ordered sets,
   arenas, and builders.
 - Migrate repeated concatenation and packed mutable state with before/after

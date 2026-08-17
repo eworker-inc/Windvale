@@ -13,7 +13,9 @@
 > and the bounded file-copy findings by
 > [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md),
 > and the database-transaction findings by
-> [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
+> [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md),
+> and the compiler-front-end findings by
+> [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -220,10 +222,12 @@ overload to change which function a call means. It increases compiler work and
 often produces diagnostics far from the source of ambiguity.
 
 Windvale prefers distinct semantic names, explicit generic contracts, and one
-deterministic implementation-selection path. Decision 0754 permits a generic
-call only when exact explicit argument types solve every parameter structurally.
-When they do not, the API takes an explicit typed witness argument or exposes a
-non-generic named constructor; result context never guesses the instance.
+deterministic implementation-selection path. Ordinary calls solve every generic
+parameter from exact explicit argument types. Decision 0758 additionally permits
+full-arity `Qualifiedˉfunction::<...>(...)` when a named declaration has no such
+argument evidence, as empty collection construction demonstrated twice. The
+suffix supplies every parameter in declaration order; it does not select an
+overload, omit/default a parameter, or infer from result context.
 
 ### Ambient reflection
 
@@ -667,7 +671,7 @@ Language 1.0 should distinguish representation and runtime budget:
 | `Mutableˉslice<T>` | Exclusive lexical view into one owned mutable collection. |
 | `Map<K, V>` | Move-owned bounded deterministic associative collection with an immutable publication form. |
 | `Set<T>` | Move-owned bounded deterministic membership collection with canonical iteration and immutable publication. |
-| `Arena<T>` | Owned typed node store with a positive immutable runtime maximum and generation-checked handles. |
+| `Arena<T>` | Owned typed node store with a positive immutable runtime maximum and generation-checked handles; consuming freeze publishes `Immutableˉarena<T>` without changing handle identity. |
 
 Collections may be fields, variant payloads, parameters, results, and elements
 when their ownership classes permit it. Immutable collections may nest. Mutable

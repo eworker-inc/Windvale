@@ -37,10 +37,15 @@ lifecycle findings while keeping filesystem catalog identities provisional, and
 [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
 accepts the database workload's arena, collection-observation, typed-schema,
 commit, and recovery findings while keeping its capability/schema identities
-provisional. The
+provisional, and
+[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
+accepts the compiler workload's explicit generic construction, one-owner
+collection observation, immutable arena, scalar-position, diagnostic, and byte
+publication findings. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
 [bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
 [database-transaction bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md),
+[compiler-front-end bundle](Language-1.0-Paper-Corpus/04-Compiler-Front-End/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
 are now draft reviewed. The accepted direction, normative-candidate suite,

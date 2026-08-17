@@ -16,7 +16,9 @@ and the command workload findings resolved by
 and the file-copy workload findings resolved by
 [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
 and the database-transaction findings resolved by
-[Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
+[Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
+and the compiler-front-end findings resolved by
+[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -197,7 +199,9 @@ The complete source and evidence are in the
 Its owner review accepts runtime-bounded typed arenas, ownership-preserving
 first-item collection construction, two-step checked borrowed observation,
 explicit typed schema adapters, and explicit commit plus fresh-session recovery.
-The general Foundation clarifications are normative-candidate contracts; final
+Decision 0758 later makes the map half of that observation explicitly
+rank-based so the direct borrow has only the map as lifetime owner. The general
+Foundation clarifications are normative-candidate contracts; final
 database capability and schema signature identities remain provisional.
 
 ## Workload 4: compiler front end
@@ -228,6 +232,15 @@ cascade limit, and output-capacity rejection.
 The design must materially improve on packed offsets, wide flat records, manual
 status propagation, and repeated concatenation without producing unreviewable
 ownership annotations.
+
+The complete source and evidence are in the
+[workload 4 paper bundle](Language-1.0-Paper-Corpus/04-Compiler-Front-End/README.md).
+Its owner review accepts full-arity named explicit generic calls, empty bounded
+collection construction, rank-based one-owner map borrows, immutable typed-arena
+publication, exact UTF-8/scalar source positions, deterministic diagnostic
+saturation, and exact integer byte-builder appends. These are
+normative-candidate contracts and do not claim that Windvale Seed implements
+them.
 
 ## Workload 5: HTTP request handler
 
@@ -516,7 +529,7 @@ source contract ambiguous.
 | Command-line application | Draft reviewed; five findings accepted and resolved |
 | Bounded file copy | Draft reviewed; five findings accepted and resolved |
 | Database transaction | Draft reviewed; five findings accepted and resolved |
-| Compiler front end | Pending source bundle |
+| Compiler front end | Draft reviewed; six findings accepted and resolved |
 | HTTP request handler | Pending source bundle |
 | Concurrent hosted service | Pending source bundle |
 | GUI retained state | Pending source bundle |
@@ -524,6 +537,9 @@ source contract ambiguous.
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
+
+Five of eleven workloads are draft reviewed. The six pending workloads are 5
+through 10, beginning with the HTTP request handler.
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

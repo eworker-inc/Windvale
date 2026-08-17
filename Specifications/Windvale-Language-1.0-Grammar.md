@@ -586,11 +586,20 @@ Namedˉargument ::= Identifier ":" Expression
 
 Named and positional arguments cannot mix in one call.
 
-The postfix grammar deliberately has no type-argument suffix. A generic function
-call uses the semantic specification's exact argument-derived structural
-resolution. `<...>` remains valid only in declaration, type, and
-protocol-instance positions; it cannot be attached to a callable expression in
-edition 1.
+An ordinary generic call uses the semantic specification's argument-derived
+structural resolution. Edition 1 also admits this separate primary form, which
+is required when a named generic function has no typed argument evidence:
+
+~~~text
+Explicitˉgenericˉcall ::= Qualifiedˉsourceˉname "::"
+                          Typeˉarguments
+                          "(" [ Callˉarguments ] ")"
+~~~
+
+The list supplies every generic parameter in declaration order. `::` is
+mandatory, so `Name<T>(...)` remains invalid and `<` in an ordinary expression
+remains relational. The form applies only to a resolved qualified named function,
+not an arbitrary callable expression.
 
 ~~~text
 Primaryˉexpression ::= Literal | "true" | "false" | "()"
@@ -598,6 +607,7 @@ Primaryˉexpression ::= Literal | "true" | "false" | "()"
                      | "(" Expression ")"
                      | Nominalˉconstruction
                      | Recordˉupdate
+                     | Explicitˉgenericˉcall
                      | Closure
                      | Unsafeˉexpression
                      | Interpolatedˉtext
@@ -721,6 +731,9 @@ Before source freeze, the grammar must have:
 - lexical tests for every UTF-8, identifier, comment, literal, delimiter, and
   lookalike boundary;
 - accepted and rejected precedence cases;
+- full-arity explicit-generic call cases proving `::` disambiguation from
+  relational `<`/`>` and rejection of bare, partial, or arbitrary-callable
+  suffixes;
 - complete examples for every declaration, type, statement, expression, pattern,
   closure, resource, task, and unsafe form;
 - bounded recovery tests for truncated and malicious source; and

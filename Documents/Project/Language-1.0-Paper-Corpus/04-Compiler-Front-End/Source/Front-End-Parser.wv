@@ -1,0 +1,562 @@
+edition 1;
+module Frontˉendˉparser;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Frontˉendˉdiagnostics as Diagnostics;
+import Frontˉendˉtypes as Types;
+import Frontˉendˉwork as Work;
+
+record State {
+    Index: u64;
+    Maximumˉnesting: u32;
+}
+
+fn Current(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    Index: u64,
+) -> borrow Types.Token effects() {
+    return Collections.Sequenceˉat(Value: Tokens, Index: Index);
+}
+
+fn Advance(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    State: borrow mut State,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    if Current(Tokens: Tokens, Index: State.Index).Kind != Types.Tokenˉkind.End {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        State.Index = State.Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Emit(
+    Sink: borrow mut Diagnostics.Sink,
+    Code: Types.Diagnosticˉcode,
+    Span: Types.Sourceˉspan,
+    Related: Option.Option<Types.Sourceˉspan>,
+    Observed: u64,
+    Limit: u64,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return Diagnostics.Emit(
+        Sink: Sink,
+        Value: Types.Diagnostic {
+            Code: Code,
+            Phase: Types.Diagnosticˉphase.Parse,
+            Primary: Span,
+            Related: Related,
+            Observed: Observed,
+            Limit: Limit,
+        },
+    );
+}
+
+fn Appendˉnode(
+    Arena: borrow mut Collections.Arena<Types.Node>,
+    Value: Types.Node,
+) -> Result.Result<
+    Collections.Handle<Types.Node>,
+    Types.Frontˉendˉfailure
+> effects() {
+    return match Collections.Arenaˉinsert(Arena: Arena, Value: Value) {
+        case Result.Result.Valid { Value: Handle } {
+            Result.Result.Valid { Value: Handle }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Nodes,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Appendˉdeclaration(
+    Declarations: borrow mut Collections.Vector<Types.Declaration>,
+    Value: Types.Declaration,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    return match Collections.Vectorˉappend(Vector: Declarations, Value: Value) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Declarations,
+                    Error: Error.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Nodeˉspan(
+    Arena: borrow Collections.Arena<Types.Node>,
+    Handle: borrow Collections.Handle<Types.Node>,
+) -> Result.Result<Types.Sourceˉspan, Types.Frontˉendˉfailure> effects() {
+    match Collections.Arenaˉvalidate(Arena: Arena, Handle: Handle) {
+        case Result.Result.Valid { Value: () } { () }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Nodes,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    let Node = Collections.Arenaˉborrowˉvalidated(
+        Arena: Arena,
+        Handle: Handle,
+    );
+    return Result.Result.Valid {
+        Value: match Node {
+            case Types.Node.Error { Span: Span } { Span }
+            case Types.Node.Literal { Value: _, Span: Span } { Span }
+            case Types.Node.Name { Nameˉspan: _, Span: Span } { Span }
+            case Types.Node.Add { Left: _, Right: _, Span: Span } { Span }
+            case Types.Node.Multiply { Left: _, Right: _, Span: Span } { Span }
+        },
+    };
+}
+
+fn Parseˉprimary(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    State: borrow mut State,
+    Arena: borrow mut Collections.Arena<Types.Node>,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+    Depth: u32,
+) -> Result.Result<
+    Collections.Handle<Types.Node>,
+    Types.Frontˉendˉfailure
+> effects() {
+    let Token = Current(Tokens: Tokens, Index: State.Index);
+    if Token.Kind == Types.Tokenˉkind.Number {
+        let Value = Token.Numericˉvalue;
+        let Span = Token.Span;
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        return Appendˉnode(
+            Arena: Arena,
+            Value: Types.Node.Literal { Value: Value, Span: Span },
+        );
+    }
+    if Token.Kind == Types.Tokenˉkind.Identifier {
+        let Span = Token.Span;
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        return Appendˉnode(
+            Arena: Arena,
+            Value: Types.Node.Name { Nameˉspan: Span, Span: Span },
+        );
+    }
+    if Token.Kind == Types.Tokenˉkind.Leftˉparenthesis {
+        let Start = Token.Span.Start;
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        if Depth >= State.Maximumˉnesting {
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Nestingˉlimit,
+                Span: Token.Span,
+                Related: Option.Option.Absent,
+                Observed: Numeric.Widenˉu32ˉtoˉu64(
+                    Value: Depth + 1u32,
+                ),
+                Limit: Numeric.Widenˉu32ˉtoˉu64(
+                    Value: State.Maximumˉnesting,
+                ),
+            );
+            return Appendˉnode(
+                Arena: Arena,
+                Value: Types.Node.Error { Span: Token.Span },
+            );
+        }
+        let Inner = try Parseˉexpression(
+            Tokens: Tokens,
+            State: State,
+            Arena: Arena,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+            Depth: Depth + 1u32,
+        );
+        let Closing = Current(Tokens: Tokens, Index: State.Index);
+        if Closing.Kind == Types.Tokenˉkind.Rightˉparenthesis {
+            try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        } else {
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Expectedˉrightˉparenthesis,
+                Span: Closing.Span,
+                Related: Option.Option.Present {
+                    Value: Types.Sourceˉspan {
+                        Start: Start,
+                        End: Token.Span.End,
+                    },
+                },
+                Observed: 0u64,
+                Limit: 0u64,
+            );
+        }
+        return Result.Result.Valid { Value: Inner };
+    }
+
+    let Span = Token.Span;
+    try Emit(
+        Sink: Diagnostics,
+        Code: Types.Diagnosticˉcode.Expectedˉexpression,
+        Span: Span,
+        Related: Option.Option.Absent,
+        Observed: 0u64,
+        Limit: 0u64,
+    );
+    if Token.Kind != Types.Tokenˉkind.End
+        && Token.Kind != Types.Tokenˉkind.Semicolon
+        && Token.Kind != Types.Tokenˉkind.Rightˉparenthesis {
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+    }
+    try Work.Charge(Meter: Meter, Amount: 1u64);
+    return Appendˉnode(Arena: Arena, Value: Types.Node.Error { Span: Span });
+}
+
+fn Parseˉmultiplicative(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    State: borrow mut State,
+    Arena: borrow mut Collections.Arena<Types.Node>,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+    Depth: u32,
+) -> Result.Result<
+    Collections.Handle<Types.Node>,
+    Types.Frontˉendˉfailure
+> effects() {
+    var Left = try Parseˉprimary(
+        Tokens: Tokens,
+        State: State,
+        Arena: Arena,
+        Diagnostics: Diagnostics,
+        Meter: Meter,
+        Depth: Depth,
+    );
+    while Current(Tokens: Tokens, Index: State.Index).Kind
+        == Types.Tokenˉkind.Star {
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        let Right = try Parseˉprimary(
+            Tokens: Tokens,
+            State: State,
+            Arena: Arena,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+            Depth: Depth,
+        );
+        let Leftˉspan = try Nodeˉspan(Arena: borrow Arena, Handle: borrow Left);
+        let Rightˉspan = try Nodeˉspan(Arena: borrow Arena, Handle: borrow Right);
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        Left = try Appendˉnode(
+            Arena: Arena,
+            Value: Types.Node.Multiply {
+                Left: Left,
+                Right: Right,
+                Span: Types.Sourceˉspan {
+                    Start: Leftˉspan.Start,
+                    End: Rightˉspan.End,
+                },
+            },
+        );
+    }
+    return Result.Result.Valid { Value: Left };
+}
+
+fn Parseˉadditive(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    State: borrow mut State,
+    Arena: borrow mut Collections.Arena<Types.Node>,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+    Depth: u32,
+) -> Result.Result<
+    Collections.Handle<Types.Node>,
+    Types.Frontˉendˉfailure
+> effects() {
+    var Left = try Parseˉmultiplicative(
+        Tokens: Tokens,
+        State: State,
+        Arena: Arena,
+        Diagnostics: Diagnostics,
+        Meter: Meter,
+        Depth: Depth,
+    );
+    while Current(Tokens: Tokens, Index: State.Index).Kind
+        == Types.Tokenˉkind.Plus {
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        let Right = try Parseˉmultiplicative(
+            Tokens: Tokens,
+            State: State,
+            Arena: Arena,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+            Depth: Depth,
+        );
+        let Leftˉspan = try Nodeˉspan(Arena: borrow Arena, Handle: borrow Left);
+        let Rightˉspan = try Nodeˉspan(Arena: borrow Arena, Handle: borrow Right);
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        Left = try Appendˉnode(
+            Arena: Arena,
+            Value: Types.Node.Add {
+                Left: Left,
+                Right: Right,
+                Span: Types.Sourceˉspan {
+                    Start: Leftˉspan.Start,
+                    End: Rightˉspan.End,
+                },
+            },
+        );
+    }
+    return Result.Result.Valid { Value: Left };
+}
+
+fn Parseˉexpression(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    State: borrow mut State,
+    Arena: borrow mut Collections.Arena<Types.Node>,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+    Depth: u32,
+) -> Result.Result<
+    Collections.Handle<Types.Node>,
+    Types.Frontˉendˉfailure
+> effects() {
+    return Parseˉadditive(
+        Tokens: Tokens,
+        State: State,
+        Arena: Arena,
+        Diagnostics: Diagnostics,
+        Meter: Meter,
+        Depth: Depth,
+    );
+}
+
+fn Consumeˉsemicolon(
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    State: borrow mut State,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<unit, Types.Frontˉendˉfailure> effects() {
+    let Token = Current(Tokens: Tokens, Index: State.Index);
+    if Token.Kind == Types.Tokenˉkind.Semicolon {
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+        return Result.Result.Valid { Value: () };
+    }
+    try Emit(
+        Sink: Diagnostics,
+        Code: Types.Diagnosticˉcode.Expectedˉsemicolon,
+        Span: Token.Span,
+        Related: Option.Option.Absent,
+        Observed: 0u64,
+        Limit: 0u64,
+    );
+    while Current(Tokens: Tokens, Index: State.Index).Kind
+        != Types.Tokenˉkind.Semicolon
+        && Current(Tokens: Tokens, Index: State.Index).Kind
+            != Types.Tokenˉkind.Let
+        && Current(Tokens: Tokens, Index: State.Index).Kind
+            != Types.Tokenˉkind.Return
+        && Current(Tokens: Tokens, Index: State.Index).Kind
+            != Types.Tokenˉkind.End {
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+    }
+    if Current(Tokens: Tokens, Index: State.Index).Kind
+        == Types.Tokenˉkind.Semicolon {
+        try Advance(Tokens: Tokens, State: State, Meter: Meter);
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Parse(
+    Source: text,
+    Tokens: borrow Collections.Sequence<Types.Token>,
+    Nodeˉbudget: Memory.Memoryˉbudget,
+    Declarationˉbudget: Memory.Memoryˉbudget,
+    Limits: borrow Types.Limits,
+    Diagnostics: borrow mut Diagnostics.Sink,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Parsedˉmodule, Types.Frontˉendˉfailure>
+    effects(memory.allocate) {
+    var Nodes = match Collections.Arenaˉconstruct::<Types.Node>(
+        Budget: Nodeˉbudget,
+        Maximumˉnodes: Limits.Maximumˉnodes,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Collection {
+                    Resource: Types.Resourceˉkind.Nodes,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    var Declarations = match
+        Collections.Vectorˉconstructˉreserved::<Types.Declaration>(
+            Budget: Declarationˉbudget,
+            Maximumˉitems: Limits.Maximumˉdeclarations,
+        ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frontˉendˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Declarations,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    var State = State {
+        Index: 0u64,
+        Maximumˉnesting: Limits.Maximumˉnesting,
+    };
+
+    while Current(Tokens: Tokens, Index: State.Index).Kind
+        == Types.Tokenˉkind.Let {
+        let Start = Current(Tokens: Tokens, Index: State.Index).Span.Start;
+        try Advance(Tokens: Tokens, State: borrow mut State, Meter: Meter);
+        let Nameˉtoken = Current(Tokens: Tokens, Index: State.Index);
+        let Nameˉspan = Nameˉtoken.Span;
+        if Nameˉtoken.Kind == Types.Tokenˉkind.Identifier {
+            try Advance(Tokens: Tokens, State: borrow mut State, Meter: Meter);
+        } else {
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Expectedˉidentifier,
+                Span: Nameˉtoken.Span,
+                Related: Option.Option.Absent,
+                Observed: 0u64,
+                Limit: 0u64,
+            );
+            if Nameˉtoken.Kind != Types.Tokenˉkind.End {
+                try Advance(Tokens: Tokens, State: borrow mut State, Meter: Meter);
+            }
+        }
+        let Equal = Current(Tokens: Tokens, Index: State.Index);
+        if Equal.Kind == Types.Tokenˉkind.Equal {
+            try Advance(Tokens: Tokens, State: borrow mut State, Meter: Meter);
+        } else {
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Expectedˉequal,
+                Span: Equal.Span,
+                Related: Option.Option.Absent,
+                Observed: 0u64,
+                Limit: 0u64,
+            );
+        }
+        let Value = try Parseˉexpression(
+            Tokens: Tokens,
+            State: borrow mut State,
+            Arena: borrow mut Nodes,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+            Depth: 0u32,
+        );
+        let Valueˉspan = try Nodeˉspan(
+            Arena: borrow Nodes,
+            Handle: borrow Value,
+        );
+        try Consumeˉsemicolon(
+            Tokens: Tokens,
+            State: borrow mut State,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+        );
+        if Collections.Vectorˉlength(Vector: borrow Declarations)
+            >= Limits.Maximumˉdeclarations {
+            try Emit(
+                Sink: Diagnostics,
+                Code: Types.Diagnosticˉcode.Declarationˉlimit,
+                Span: Valueˉspan,
+                Related: Option.Option.Absent,
+                Observed: Collections.Vectorˉlength(Vector: borrow Declarations)
+                    + 1u64,
+                Limit: Limits.Maximumˉdeclarations,
+            );
+        } else {
+            try Appendˉdeclaration(
+                Declarations: borrow mut Declarations,
+                Value: Types.Declaration {
+                    Nameˉspan: Nameˉspan,
+                    Value: Value,
+                    Span: Types.Sourceˉspan {
+                        Start: Start,
+                        End: Valueˉspan.End,
+                    },
+                },
+            );
+        }
+    }
+
+    let Returnˉvalue = if Current(Tokens: Tokens, Index: State.Index).Kind
+        == Types.Tokenˉkind.Return {
+        try Advance(Tokens: Tokens, State: borrow mut State, Meter: Meter);
+        let Value = try Parseˉexpression(
+            Tokens: Tokens,
+            State: borrow mut State,
+            Arena: borrow mut Nodes,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+            Depth: 0u32,
+        );
+        try Consumeˉsemicolon(
+            Tokens: Tokens,
+            State: borrow mut State,
+            Diagnostics: Diagnostics,
+            Meter: Meter,
+        );
+        Value
+    } else {
+        let Span = Current(Tokens: Tokens, Index: State.Index).Span;
+        try Emit(
+            Sink: Diagnostics,
+            Code: Types.Diagnosticˉcode.Expectedˉreturn,
+            Span: Span,
+            Related: Option.Option.Absent,
+            Observed: 0u64,
+            Limit: 0u64,
+        );
+        try Appendˉnode(
+            Arena: borrow mut Nodes,
+            Value: Types.Node.Error { Span: Span },
+        )
+    };
+
+    while Current(Tokens: Tokens, Index: State.Index).Kind
+        != Types.Tokenˉkind.End {
+        let Token = Current(Tokens: Tokens, Index: State.Index);
+        try Emit(
+            Sink: Diagnostics,
+            Code: Types.Diagnosticˉcode.Trailingˉtoken,
+            Span: Token.Span,
+            Related: Option.Option.Absent,
+            Observed: 0u64,
+            Limit: 0u64,
+        );
+        try Advance(Tokens: Tokens, State: borrow mut State, Meter: Meter);
+    }
+
+    return Result.Result.Valid {
+        Value: Types.Parsedˉmodule {
+            Source: Source,
+            Declarations: Collections.Vectorˉfreeze(Vector: Declarations),
+            Nodes: Collections.Arenaˉfreeze(Arena: Nodes),
+            Returnˉvalue: Returnˉvalue,
+        },
+    };
+}
