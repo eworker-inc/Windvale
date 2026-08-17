@@ -1,8 +1,8 @@
 # Windvale
 
-![Four-panel Day 18 comic showing the signed Windvale 0.1.0 preview reaching Windows and Linux and running successfully](Documents/Project/Images/Windvale-Project-Progress-2026-08-15.png)
+![Four-panel Day 20 comic tracing Windvale from an AI experiment through a working system stack, measured engineering limits, and an unfinished full-system build](Documents/Project/Images/Windvale-Project-Progress-2026-08-17.png)
 
-*Day 18: Windvale 0.1.0 ships as an installable preview for Windows and Linux. The signed release preserves exact source, qualification, recovery, and offline-verification evidence.*
+*Day 20: Windvale's AI experiment has become serious system-building work. Real limits remain, and the language, connected services, and operating system are still under construction. The experiment grows toward a full system.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
