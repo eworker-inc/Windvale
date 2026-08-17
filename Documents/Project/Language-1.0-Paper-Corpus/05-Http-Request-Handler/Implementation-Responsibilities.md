@@ -14,9 +14,9 @@ claim that this paper application runs today.
 | Slice length/index and immutable byte-range borrow | Foundation collections/bytes | Implement checked one-owner slice observations and malformed-range tests. | No; ordinary borrow/generic lowering. |
 | Strict UTF-8 decode from `Slice<u8>` | Foundation text | Reuse the strict decoder without an intermediate immutable-byte copy; retain allocation/source distinction. | No. |
 | Decimal append to byte builder | Foundation bytes | Implement invariant shortest `u64` decimal append with all-or-nothing capacity check. | Optional ordinary intrinsic only. |
-| Opaque operation context | Hosted operation provider | Bind monotonic generation/deadline and cancellation view; reject forgery/extension. | No new syntax or WVB opcode. |
-| Rights-limited stream accept | Network service provider/launcher | Bind one approved service and limits; return one generation-bound move-only stream. | Canonical capability import only. |
-| Reliable stream read/write | Host adapters plus shared stream core | Preserve exact counts, deadline/cancellation races, generation checks, and indeterminate mutation. | No. |
+| Opaque operation context | Foundation operation/task plus launcher | Bind monotonic generation/deadline and scope-derived cancellation view; reject forgery, escape, and extension. | Lifetime evidence; no new syntax or WVB opcode. |
+| Rights-limited stream accept | Network service provider/launcher | Bind one Copy shared-call endpoint to exact service/rights/limits/generation; awaited accept returns one move-only stream. | Canonical capability import only. |
+| Reliable stream read/write | Host adapters plus shared stream core | Suspend explicitly while preserving exact counts, deadline/cancellation races, generation checks, and indeterminate mutation. | Ordinary async capability call. |
 | HTTP parser/router/renderer | Foundation/application library | Implement source after freeze and keep strict single-request framing. | No HTTP compiler feature. |
 | Resource teardown | Provider/runtime | Local release invalidates one handle and bounds shutdown without inventing graceful completion. | Existing `Localˉrelease` recognition only. |
 | Capability approval | Launcher/service manager | Approve exact transitive requirement and bind provider separately from application package. | No. |
@@ -33,6 +33,7 @@ emit diagnostics for:
 - a slice escaping its owner;
 - immutable buffer access while a mutable provider target is live;
 - a missing transitive capability/effect;
+- a provider operation called without `await` or `task.suspend`;
 - construction of an opaque operation context;
 - use after stream move/release; and
 - an unproved checked slice/map access.
@@ -42,8 +43,9 @@ GC, macro, reflection, dynamic dispatch, or automatic retry lowering.
 
 ## Provider implementation sequence
 
-1. Reconcile workload 6 with the operation-context and service-accept identity.
-2. Freeze the general slice/decode/builder and provider-facing contracts.
+1. Freeze the reconciled workload-6 operation-context, task, endpoint, and async
+   provider contracts.
+2. Freeze the general slice/decode/builder contracts.
 3. Implement Foundation calls with simple correctness oracles and malicious
    range/UTF-8/count tests.
 4. Adapt the existing bounded-operation and reliable-stream cores to the frozen

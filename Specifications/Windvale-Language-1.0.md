@@ -32,6 +32,8 @@ and the compiler-front-end findings resolved by
 [Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md),
 and the HTTP-handler findings resolved by
 [Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
+and the concurrent-service findings resolved by
+[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -786,16 +788,24 @@ Provider revocation, generation mismatch, restart, peer exit, timeout,
 cancellation, rejection, partial progress, and indeterminate completion remain
 distinct typed outcomes where the interface can observe them.
 
-For the first reviewed Hosted stream workload, a launcher/provider may supply
-one shared immutable opaque operation context that binds a nonzero monotonic
-clock identity/generation, absolute deadline, nonzero cancellation-view
-identity/generation, and admitted deadline span. Application source may borrow
-and pass it to explicit provider observation points. It cannot construct the
-context, inspect civil time through it, extend the deadline, or request
-cancellation. At the deadline tick timeout wins; a dispatched mutation may
-remain indeterminate. This value is provider control evidence, not a capability
-grant, task handle, keyword, or ambient clock. The structured-service workload
-must reconcile its canonical signature with scope cancellation before freeze.
+For Hosted provider operations, a launcher supplies one shared immutable opaque
+operation context that binds a nonzero monotonic clock identity/generation,
+absolute deadline, nonzero cancellation-view identity/generation, and admitted
+deadline span. Application source may copy or borrow it within its proven
+lifetime and pass it to explicit provider observation points. It cannot
+construct the context, inspect civil time through it, extend the deadline, or
+request cancellation through the value itself. At the deadline tick timeout
+wins; a dispatched mutation may remain indeterminate. This value is provider
+control evidence, not a capability grant, task handle, keyword, or ambient
+clock.
+
+A task scope borrows one parent context and derives one child context
+with the same or earlier deadline plus a fresh scope-owned cancellation identity
+and generation. The derived context is Copy only inside that lexical scope and
+its joined children. It cannot escape; scope teardown invalidates its generation.
+Only the scope's named cancellation operation may request cancellation. Thus
+provider calls and task cancellation observe one system rather than two
+uncoordinated flags.
 
 ## Capabilities and effects
 
@@ -841,7 +851,8 @@ through a generic protocol or closure preserves the required effect set.
 
 Effect identities are canonical lowercase ASCII names. Required language
 identities include `memory.allocate`, `resource.acquire`,
-`resource.complete`, `resource.release`, `task.spawn`, `task.suspend`, and each
+`resource.complete`, `resource.release`, `task.cancel`, `task.spawn`,
+`task.suspend`, and each
 capability interface identity. Release of already owned local accounting carries
 `resource.release` but is not external authority; provider-visible release also
 retains that provider interface effect.
@@ -867,27 +878,39 @@ Task creation explicitly copies, moves, or borrows captures under ordinary
 closure rules. A task result and recoverable failure are typed. A scope cannot
 exit while a child remains detached.
 
-Leaving a scope follows the one policy declared at scope construction: join all,
-request cancellation then join, or fail while retaining control until teardown
-completes. The policy, join result order, and cancellation result are
-deterministic and independent of scheduler interleaving.
+Leaving a scope follows the one policy declared by the lexical task-scope
+statement: join all, request cancellation then join, or fail while retaining
+control until teardown completes. The policy, join result order, and
+cancellation result are deterministic and independent of scheduler interleaving.
 
 Cancellation is a requested state observed only at specified suspension,
-provider, or explicit check points. It is not an asynchronous exception.
-Timeout, provider loss, cancellation, application failure, and trap containment
-are distinct.
+provider, or explicit check points. Source may request it through one named,
+idempotent operation on a mutably borrowed scope. The first request closes that
+scope to new spawn acceptance and marks every live child view; it never replaces
+join. Cancellation is not an asynchronous exception. Timeout, task-runtime
+loss/restart, child provider loss/restart, cancellation, application failure,
+and trap containment are distinct typed outcomes with exact generation evidence
+where a provider boundary is involved.
 
-`async` and `await` are syntax over this task model. `await` is permitted only in
-an asynchronous hosted function or task body with a live scope. Suspension cannot
-retain an invalid borrow, implicit capability, or unbounded continuation.
+`async` and `await` are syntax over this task model. Hosted provider operations
+that may suspend are source-level async calls and require explicit `await` plus
+`task.suspend`; a host event loop cannot hide suspension beneath an apparently
+synchronous call. `await` is permitted only in an asynchronous hosted function
+or task body with a live scope. Suspension cannot retain an invalid borrow,
+implicit capability, or unbounded continuation. A temporary exclusive argument
+into one awaited provider call is valid when its owner lives in that same child
+continuation and no alias can run; storing that borrow, returning it, or
+capturing an outer mutable borrow into a spawned child remains rejected.
 
 A scheduler may execute tasks sequentially or in parallel. Data-race freedom
 follows from ownership, immutable sharing, and exclusive mutable borrowing rather
 than from one host scheduler.
 
-The exact scope syntax and cancellation examples remain source-freeze blockers
-until the paper corpus completes the hosted service, GUI, and concurrent provider
-restart cases.
+The concurrent hosted-service workload fixes task construction, derived context,
+explicit cancellation request, creation-order collection, runtime/provider
+failure separation, and no-replay restart behavior. GUI and later paper
+workloads may still refine library surfaces, but cannot add detached tasks or
+weaken these ownership and cancellation rules before source freeze.
 
 ## Unsafe and foreign interfaces
 

@@ -6,6 +6,9 @@ Complete first-author bundle, draft reviewed by the project owner on
 2026-08-17. [Decision 0759](../../../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md)
 accepts the checked-slice, strict slice-decode, decimal byte-builder,
 operation-context, and reliable-stream findings.
+[Decision 0760](../../../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
+subsequently makes the provider surface explicitly async and supplies one
+generation-bound service endpoint without changing exact progress semantics.
 
 This is paper Language 1.0 source. It is not accepted by current Seed tools, is
 not a production HTTP server, and does not freeze or implement edition 1.
@@ -14,7 +17,7 @@ not a production HTTP server, and does not freeze or implement edition 1.
 
 Seven modules implement one strict, bounded HTTP/1.1 request handler:
 
-1. accept one already bound, rights-limited reliable stream;
+1. await one accept on an already bound, rights-limited service endpoint;
 2. read into one fixed initialized byte buffer under one absolute deadline and
    cancellation view;
 3. scan the header terminator incrementally without rescanning the complete
@@ -43,8 +46,8 @@ There is no reconnect or replay.
 | `Httpˉapplication` | Capability acquisition, reads, decoding, writes, cleanup, and report. |
 
 The first six modules are Core. `Httpˉapplication` is Hosted and requires only
-`network.service.accept` version 1. The capability catalog name remains
-provisional until workload 6 tests the multi-request service boundary.
+`network.service.accept` version 1. Its entry receives one Copy endpoint whose
+interface explicitly permits shared accepts and one borrowed operation context.
 
 ## Evidence index
 

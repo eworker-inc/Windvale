@@ -1,0 +1,192 @@
+edition 1;
+module Concurrentˉserviceˉpolicy;
+profile hosted;
+platform windows, linux, windvale;
+authority library;
+
+import Concurrentˉserviceˉtypes as Types;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+import Httpˉtypes as Http;
+
+fn Restartˉfromˉhandler(
+    Error: borrow Http.Handlerˉfailure,
+) -> Option.Option<Types.Restartˉevidence> effects() {
+    return match Error {
+        case Http.Handlerˉfailure.Acceptˉrejected {
+            Reason: Http.Streamˉreason.Providerˉrestarted,
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+        } {
+            Option.Option.Present {
+                Value: Types.Restartˉevidence {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                    Mutationˉindeterminate: false,
+                },
+            }
+        }
+        case Http.Handlerˉfailure.Readˉrejected {
+            Reason: Http.Streamˉreason.Providerˉrestarted,
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+            Receivedˉbytes: _,
+        } {
+            Option.Option.Present {
+                Value: Types.Restartˉevidence {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                    Mutationˉindeterminate: false,
+                },
+            }
+        }
+        case Http.Handlerˉfailure.Writeˉrejected {
+            Reason: Http.Streamˉreason.Providerˉrestarted,
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+            Acceptedˉbytes: _,
+        } {
+            Option.Option.Present {
+                Value: Types.Restartˉevidence {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                    Mutationˉindeterminate: false,
+                },
+            }
+        }
+        case Http.Handlerˉfailure.Writeˉindeterminate {
+            Reason: Http.Streamˉreason.Providerˉrestarted,
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+            Knownˉacceptedˉbytes: _,
+        } {
+            Option.Option.Present {
+                Value: Types.Restartˉevidence {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                    Mutationˉindeterminate: true,
+                },
+            }
+        }
+        case _ { Option.Option.Absent }
+    };
+}
+
+export fn Summarize(
+    Value: Task.Taskˉoutcome<Http.Handlerˉreport, Http.Handlerˉfailure>,
+) -> Types.Childˉsummary effects() {
+    return match Value {
+        case Task.Taskˉoutcome.Valid { Value: Report } {
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Served { Report: Report },
+                Cancelˉremaining: false,
+                Restart: Option.Option.Absent,
+            }
+        }
+        case Task.Taskˉoutcome.Failure { Error: Error } {
+            let Restart = Restartˉfromˉhandler(Error: borrow Error);
+            let Cancel = match Restart {
+                case Option.Option.Absent { true }
+                case Option.Option.Present { Value: _ } { false }
+            };
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Handlerˉfailed { Error: Error },
+                Cancelˉremaining: Cancel,
+                Restart: Restart,
+            }
+        }
+        case Task.Taskˉoutcome.Cancelled {
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Cancelled,
+                Cancelˉremaining: true,
+                Restart: Option.Option.Absent,
+            }
+        }
+        case Task.Taskˉoutcome.Deadlineˉreached {
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Deadlineˉreached,
+                Cancelˉremaining: true,
+                Restart: Option.Option.Absent,
+            }
+        }
+        case Task.Taskˉoutcome.Runtimeˉlost {
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+        } {
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Taskˉruntimeˉlost {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                },
+                Cancelˉremaining: true,
+                Restart: Option.Option.Absent,
+            }
+        }
+        case Task.Taskˉoutcome.Runtimeˉrestarted {
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+        } {
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Taskˉruntimeˉrestarted {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                },
+                Cancelˉremaining: true,
+                Restart: Option.Option.Absent,
+            }
+        }
+        case Task.Taskˉoutcome.Trapped { Identity: Identity } {
+            Types.Childˉsummary {
+                Outcome: Types.Childˉoutcome.Trapped { Identity: Identity },
+                Cancelˉremaining: true,
+                Restart: Option.Option.Absent,
+            }
+        }
+    };
+}
+
+export fn Mergeˉrestart(
+    Current: Option.Option<Types.Restartˉevidence>,
+    Next: Option.Option<Types.Restartˉevidence>,
+) -> Result.Result<
+    Option.Option<Types.Restartˉevidence>,
+    Types.Serviceˉfailure
+> effects() {
+    return match Current {
+        case Option.Option.Absent {
+            Result.Result.Valid { Value: Next }
+        }
+        case Option.Option.Present { Value: First } {
+            match Next {
+                case Option.Option.Absent {
+                    Result.Result.Valid {
+                        Value: Option.Option.Present { Value: First },
+                    }
+                }
+                case Option.Option.Present { Value: Later } {
+                    if First.Observedˉgeneration != Later.Observedˉgeneration {
+                        Result.Result.Failure {
+                            Error: Types.Serviceˉfailure.Conflictingˉrestartˉevidence {
+                                Firstˉobserved: First.Observedˉgeneration,
+                                Laterˉobserved: Later.Observedˉgeneration,
+                            },
+                        }
+                    } else {
+                        Result.Result.Valid {
+                            Value: Option.Option.Present {
+                                Value: Types.Restartˉevidence {
+                                    Expectedˉgeneration: First.Expectedˉgeneration,
+                                    Observedˉgeneration: First.Observedˉgeneration,
+                                    Mutationˉindeterminate:
+                                        First.Mutationˉindeterminate
+                                        || Later.Mutationˉindeterminate,
+                                },
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    };
+}

@@ -4,7 +4,9 @@
 
 The owner review is complete under
 [Decision 0754](../../../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
-This record describes the source as written and the accepted general
+[Decision 0760](../../../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
+later reconciles its task construction, operation context, and task-runtime
+outcomes. This record describes the source as written and the accepted general
 clarifications; it does not convert paper dependencies into implemented or
 frozen behavior.
 
@@ -35,8 +37,9 @@ capability grants.
 | Provider identity text and completed output bytes | Shared immutable | Returned terminal record, then final result / decoder; no backing identity or mutation is visible. |
 | Provider `Selection` | Copy witness | Produced by catalog selection; it names a generation but grants no allocation or execution authority by itself. |
 | Root `Memoryˉbudget` | Move-owned resource | Supplied by the launcher to `Inferenceˉapplication.Run`, then consumed by task-scope construction. |
+| Parent / scope-derived `Operationˉcontext` | Shared immutable, lifetime-bound Copy view | Launcher lends the parent; task construction derives the child view, which the closure copies and every accelerator operation borrows. It grants no authority and cannot outlive the scope. |
 | `Taskˉscope` | Move-owned resource | Bound by `task scope`; cancel-and-join policy owns the child and outcome retention. |
-| Async work closure | Owned function value | Explicitly copies `Model`; accepted exactly once by spawn or returned inside spawn failure and then released. |
+| Async work closure | Owned function value | Explicitly copies `Model` and the scope-derived `Context`; accepted exactly once by spawn or returned inside spawn failure and then released. |
 | Task handle | Move-owned scoped handle | Returned by spawn, consumed by `Await`, and unable to detach or outlive the scope. |
 | Accelerator session | Move-owned resource | Outermost accelerator `using`; owns provider-generation and session ceilings. |
 | Residency | Move-owned resource | Nested inside session; owns five device slots and their 320-byte charge. |
@@ -45,11 +48,11 @@ capability grants.
 | Tensor-view descriptors | Copy geometry | Source constructs slot/format/shape/stride/range/rights values; each use requires a live borrowed residency and materializes only a provider-validated generation-bound command view. |
 | Kernel lane inputs/results | Copy f32 values | The target interface invokes two independent pure scalar calls and collects each return at its matching lane. |
 
-No stored user record or variant contains a borrow. No borrow crosses the task
-boundary: the closure owns its copied model, and the accelerator function borrows
-that owner only within the child. Provider resource borrows remain inside the
-lexically nested `using` scopes and across `Wait` only under the live owners whose
-generations the submission retains.
+No stored user record or variant contains a borrow. No source borrow crosses the
+task boundary: the closure owns its copied model and lifetime-bound context, and
+the accelerator function borrows those owners only within the child. Provider
+resource borrows remain inside the lexically nested `using` scopes and across
+`Wait` only under the live owners whose generations the submission retains.
 
 ## Capability and effect closure
 
@@ -71,8 +74,10 @@ or hidden capability. Exact function effects additionally expose
 an already returned nominal result; generic use does not hide the effect of the
 capability call passed into it. The async closure repeats the four capability
 effects in its function type. Its direct lexical value capture is only
-`copy Model`; module-bound singleton capability calls remain visible through the
-called function's effect set and the importing module's requirement closure.
+`copy Model` and `copy Context`; module-bound singleton capability calls remain
+visible through the called function's effect set and the importing module's
+requirement closure. The context carries cancellation/deadline evidence but no
+provider grant.
 
 Authority intentionally absent from the closure includes filesystem, network,
 external-model inference, native-device extension, profiling, display, graphics,
@@ -127,12 +132,13 @@ operation, or kernel loop is semantically unbounded.
 | Invalid tokenizer length, magic, shape, tokens, or f16 class | Core decoder | `Invalidˉtokenizer` with bounded offset/rule. |
 | Invalid model length, magic, shape, format, finite values, scale, or budgets | Core decoder | `Invalidˉmodel` with bounded offset/rule. |
 | Invalid weight length or index | Core decoder | `Invalidˉweights` with bounded offset/rule. |
-| Root/task budget unavailable | Foundation memory/task | `Taskˉscopeˉrejected` with normalized reason and bytes. |
+| Invalid task limits, task budget unavailable, stale parent context, or unavailable task runtime | Foundation memory/task | `Taskˉscopeˉrejected` with the exact normalized variant and bounds/generations. |
 | Scope closing, child, queue, or spawn-memory limit | Foundation task | `Taskˉspawnˉrejected` with one closed reason. |
 | Unsupported formats/mode/provider, insufficient device budget, stale generation, invalid command/range/shape/alias/kernel, or provider-side limit | Accelerator capability | `Acceleratorˉrejected` with kind, stage, generation, requested, and limit. |
 | Cooperative cancellation | Task scope / provider wait | `Cancelled` only after terminal containment. |
 | Deadline | Task scope / provider wait | `Deadlineˉreached`. |
 | Provider loss or reset | Provider | `Providerˉlost` with the last proved generation where available. |
+| Task runtime loss or restart | Foundation task runtime | `Taskˉruntimeˉlost` or `Taskˉruntimeˉrestarted` with exact expected/observed generations; never relabeled as accelerator loss. |
 | Terminal identity/generation/mode differs from selected description | Application/provider evidence validator | `Providerˉevidenceˉmismatch`; completed output is not accepted. |
 | Contained task trap | Foundation task | `Taskˉtrapped` with bounded identity. |
 | Mis-sized or non-finite completed output | Output decoder | `Invalidˉproviderˉoutput`. |
@@ -143,14 +149,15 @@ There is no catchable general exception and no implicit error conversion.
 
 ## Normal completion walkthrough
 
-1. The launcher transfers one admitted root memory budget into `Run`.
+1. The launcher transfers one admitted root memory budget and lends one valid
+   parent operation context to `Run`.
 2. Package-bound input, tokenizer, metadata, and weights are validated; source
    constructs only Copy/shared values.
 3. The strict reference output is computed before any provider work.
-4. Task-scope construction consumes the budget and publishes one cancel-and-join
-   scope.
+4. Task-scope construction consumes the budget, borrows the parent context,
+   publishes one cancel-and-join scope, and derives its child operation context.
 5. Spawn either returns the closure unchanged on rejection or accepts its copied
-   model and publishes one task handle.
+   model/context and publishes one task handle.
 6. The child selects and describes a provider generation before use, opens one
    session, atomically admits five residency slots, and creates one batch.
 7. Six all-or-nothing commands are added and the batch is submitted once.
@@ -180,7 +187,8 @@ does not retry automatically.
 
 ### Cancellation after submit
 
-The `cancel_join` policy requests child cancellation. `Wait` is an explicit
+The `cancel_join` policy marks the scope's one cancellation generation. Every
+provider call receives that same scope-derived context; `Wait` is the suspending
 observation point and forwards the request to the provider. The child remains
 owned by the scope until the provider proves completed, cancelled, lost, or
 faulted. `Cancelled` means no later private output can publish. Resources then

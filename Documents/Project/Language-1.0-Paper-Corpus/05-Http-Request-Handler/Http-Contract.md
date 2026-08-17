@@ -6,8 +6,9 @@ This is the smallest paper-only provider and protocol contract required to type
 and review workload 5. Its general Language 1.0 and Foundation findings are
 accepted by
 [Decision 0759](../../../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
-The `network.service.accept` catalog identity remains provisional pending the
-concurrent-service workload. This document does not claim a native provider.
+The async/context/endpoint completion is accepted by
+[Decision 0760](../../../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
+This document does not claim a native provider.
 
 ## Bound service authority
 
@@ -35,7 +36,7 @@ application approval and provider binding remain separate.
 
 ## Operation context
 
-`Platformˉoperation.Operationˉcontext` is a shared immutable opaque value
+`Foundationˉoperation.Operationˉcontext` is a shared immutable opaque value
 constructed by the launcher/provider boundary. It carries:
 
 - one nonzero monotonic-clock identity and generation;
@@ -51,9 +52,10 @@ operation progress. A cancellation, timeout, loss, restart, or teardown after a
 write dispatch may be indeterminate and can never be mapped to known-zero
 acceptance.
 
-Workload 5 accepts this provider-facing context shape without adding a keyword
-or a second cancellation model. Workload 6 owns cancellation request, task-scope
-propagation, `await`, and concurrent race evidence.
+Workload 6 connects this provider-facing context to lexical task scopes. Task
+construction derives a narrower child view; `Task.Requestˉcancel` marks that
+view, and every awaited provider call observes it. The context remains neither
+a keyword nor a second cancellation model.
 
 ## Paper stream surface
 
@@ -67,6 +69,7 @@ export record Streamˉlimits {
     Maximumˉoperations: u64;
 }
 
+export opaque Serviceˉendpoint Copy;
 export opaque resource Requestˉstream;
 
 export enum Streamˉfailureˉkind: u8 {
@@ -103,27 +106,46 @@ export variant Writeˉoutcome {
 }
 ```
 
-The capability root supplies:
+`Serviceˉendpoint` binds the approved service identity, exact rights and limits,
+provider identity, and one nonzero generation. It is Copy only because this
+interface explicitly admits concurrent shared accepts. Copying cannot discover
+another service or widen authority.
+
+The capability root supplies asynchronous semantic operations:
 
 ```text
-Acceptˉone(
+async Acceptˉone(
+    Endpoint: Serviceˉendpoint,
     Context: borrow Operationˉcontext,
     Limits: Streamˉlimits,
 ) -> Result<Requestˉstream, Streamˉfailure>
-    effects(network.service.accept, resource.acquire)
+    effects(network.service.accept, resource.acquire, task.suspend)
 
-Read(
+async Read(
     Stream: borrow mut Requestˉstream,
     Target: Mutableˉslice<u8>,
     Context: borrow Operationˉcontext,
-) -> Readˉoutcome effects(network.service.accept)
+) -> Readˉoutcome effects(network.service.accept, task.suspend)
 
-Write(
+async Write(
     Stream: borrow mut Requestˉstream,
     Value: Slice<u8>,
     Context: borrow Operationˉcontext,
-) -> Writeˉoutcome effects(network.service.accept)
+) -> Writeˉoutcome effects(network.service.accept, task.suspend)
+
+async Refresh(
+    Endpoint: Serviceˉendpoint,
+    Context: borrow Operationˉcontext,
+    Observedˉgeneration: u64,
+) -> Result<Serviceˉendpoint, Streamˉfailure>
+    effects(network.service.accept, task.suspend)
 ```
+
+Every call requires explicit `await`. `Refresh` requires exact restart evidence
+for `Endpoint` and may return only the same approved service, rights, and limits
+at `Observedˉgeneration`. It is not discovery or replay. The handler itself does
+not refresh; workload 6 joins old children and uses a refreshed endpoint only
+for a fresh request.
 
 `Requestˉstream` is move-only and implements local release. Release always
 invalidates the local handle and schedules bounded transport teardown. It does

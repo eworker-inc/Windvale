@@ -9,6 +9,7 @@ requires capability accelerator.kernel version 1;
 requires capability accelerator.memory version 1;
 
 import Foundationˉmemory as Memory;
+import Foundationˉoperation as Operation;
 import Foundationˉresult as Result;
 import Foundationˉtask as Task;
 import Inferenceˉaccelerated as Accelerated;
@@ -38,18 +39,61 @@ fn Convertˉallocationˉreason(
 fn Constructˉscope(
     Budget: Memory.Memoryˉbudget,
     Limits: Task.Taskˉlimits,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
 ) -> Result.Result<Task.Taskˉscope, Types.Inferenceˉfailure>
     effects(memory.allocate, resource.acquire) {
-    return match Task.Construct(Budget: Budget, Limits: Limits) {
+    return match Task.Construct(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: Parentˉcontext,
+    ) {
         case Result.Result.Valid { Value: Scope } {
             Result.Result.Valid { Value: Scope }
         }
         case Result.Result.Failure { Error: Error } {
+            let Reason = match Error {
+                case Task.Taskˉscopeˉfailure.Invalidˉlimits {
+                    Field: Field,
+                    Observed: Observed,
+                    Minimum: Minimum,
+                    Maximum: Maximum,
+                } {
+                    Types.Taskˉscopeˉreason.Invalidˉlimits {
+                        Field: Field,
+                        Observed: Observed,
+                        Minimum: Minimum,
+                        Maximum: Maximum,
+                    }
+                }
+                case Task.Taskˉscopeˉfailure.Allocation { Error: Failure } {
+                    Types.Taskˉscopeˉreason.Allocation {
+                        Reason: Convertˉallocationˉreason(Value: Failure.Reason),
+                        Requestedˉbytes: Failure.Requestedˉbytes,
+                        Availableˉbytes: Failure.Availableˉbytes,
+                    }
+                }
+                case Task.Taskˉscopeˉfailure.Parentˉcontextˉstale {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                } {
+                    Types.Taskˉscopeˉreason.Parentˉcontextˉstale {
+                        Expectedˉgeneration: Expected,
+                        Observedˉgeneration: Observed,
+                    }
+                }
+                case Task.Taskˉscopeˉfailure.Runtimeˉunavailable {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                } {
+                    Types.Taskˉscopeˉreason.Runtimeˉunavailable {
+                        Expectedˉgeneration: Expected,
+                        Observedˉgeneration: Observed,
+                    }
+                }
+            };
             Result.Result.Failure {
                 Error: Types.Inferenceˉfailure.Taskˉscopeˉrejected {
-                    Reason: Convertˉallocationˉreason(Value: Error.Reason),
-                    Requestedˉbytes: Error.Requestedˉbytes,
-                    Availableˉbytes: Error.Availableˉbytes,
+                    Error: Reason,
                 },
             }
         }
@@ -140,6 +184,7 @@ fn Compareˉone(
 
 export async fn Run(
     Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
 ) -> Result.Result<Types.Inferenceˉresult, Types.Inferenceˉfailure>
     effects(
         accelerator.catalog,
@@ -170,9 +215,14 @@ export async fn Run(
         Maximumˉdiagnostics: 16u32,
     };
 
-    task scope Scope = try Constructˉscope(Budget: Budget, Limits: Taskˉlimits)
+    task scope Scope = try Constructˉscope(
+        Budget: Budget,
+        Limits: Taskˉlimits,
+        Parentˉcontext: Parentˉcontext,
+    )
         policy cancel_join {
-        let Work = async fn [copy Model]()
+        let Context = Task.Operationˉcontext(Scope: borrow Scope);
+        let Work = async fn [copy Model, copy Context]()
             -> Result.Result<Types.Acceleratedˉresult, Types.Inferenceˉfailure>
             effects(
                 accelerator.catalog,
@@ -183,7 +233,10 @@ export async fn Run(
                 resource.release,
                 task.suspend,
             ) {
-            return await Accelerated.Run(Model: borrow Model);
+            return await Accelerated.Run(
+                Model: borrow Model,
+                Context: borrow Context,
+            );
         };
         let Handle = try Mapˉspawn(
             Value: Task.Spawn(Scope: borrow mut Scope, Work: Work),
@@ -232,10 +285,25 @@ export async fn Run(
                     Error: Types.Inferenceˉfailure.Deadlineˉreached,
                 };
             }
-            case Task.Taskˉoutcome.Providerˉlost {
+            case Task.Taskˉoutcome.Runtimeˉlost {
+                Expectedˉgeneration: Expected,
+                Observedˉgeneration: Observed,
+            } {
                 return Result.Result.Failure {
-                    Error: Types.Inferenceˉfailure.Providerˉlost {
-                        Generation: 0u64,
+                    Error: Types.Inferenceˉfailure.Taskˉruntimeˉlost {
+                        Expectedˉgeneration: Expected,
+                        Observedˉgeneration: Observed,
+                    },
+                };
+            }
+            case Task.Taskˉoutcome.Runtimeˉrestarted {
+                Expectedˉgeneration: Expected,
+                Observedˉgeneration: Observed,
+            } {
+                return Result.Result.Failure {
+                    Error: Types.Inferenceˉfailure.Taskˉruntimeˉrestarted {
+                        Expectedˉgeneration: Expected,
+                        Observedˉgeneration: Observed,
                     },
                 };
             }

@@ -1,0 +1,572 @@
+edition 1;
+module Concurrentˉserviceˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability network.service.accept version 1;
+
+import Concurrentˉserviceˉpolicy as Policy;
+import Concurrentˉserviceˉtypes as Types;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoperation as Operation;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+import Httpˉapplication as Http;
+import Httpˉtypes as Httpˉtypes;
+import Platformˉstream as Stream;
+
+const MAXIMUM_TASK_SCOPE_BYTES: u64 = 262144u64;
+const MAXIMUM_HANDLER_BYTES: u64 = 131072u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Serviceˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Serviceˉfailure.Invalidˉconfiguration {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Types.Limits,
+) -> Result.Result<unit, Types.Serviceˉfailure> effects() {
+    if Limits.Tasks.Maximumˉchildren < 5u32
+        || Limits.Tasks.Maximumˉchildren > 64u32 {
+        return Invalid(
+            Field: 1u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉchildren,
+            ),
+            Minimum: 5u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Tasks.Maximumˉrunnable == 0u32
+        || Limits.Tasks.Maximumˉrunnable > Limits.Tasks.Maximumˉchildren {
+        return Invalid(
+            Field: 2u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉrunnable,
+            ),
+            Minimum: 1u64,
+            Maximum: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉchildren,
+            ),
+        );
+    }
+    if Limits.Tasks.Maximumˉcompleted < 5u32
+        || Limits.Tasks.Maximumˉcompleted > Limits.Tasks.Maximumˉchildren {
+        return Invalid(
+            Field: 3u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉcompleted,
+            ),
+            Minimum: 5u64,
+            Maximum: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉchildren,
+            ),
+        );
+    }
+    if Limits.Tasks.Maximumˉretainedˉbytes == 0u64
+        || Limits.Tasks.Maximumˉretainedˉbytes > Limits.Taskˉscopeˉbytes {
+        return Invalid(
+            Field: 4u32,
+            Observed: Limits.Tasks.Maximumˉretainedˉbytes,
+            Minimum: 1u64,
+            Maximum: Limits.Taskˉscopeˉbytes,
+        );
+    }
+    if Limits.Tasks.Maximumˉworkˉunits == 0u64
+        || Limits.Tasks.Maximumˉworkˉunits > 65536u64 {
+        return Invalid(
+            Field: 5u32,
+            Observed: Limits.Tasks.Maximumˉworkˉunits,
+            Minimum: 1u64,
+            Maximum: 65536u64,
+        );
+    }
+    if Limits.Tasks.Maximumˉcallˉdepth == 0u32
+        || Limits.Tasks.Maximumˉcallˉdepth > 64u32 {
+        return Invalid(
+            Field: 6u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉcallˉdepth,
+            ),
+            Minimum: 1u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Tasks.Maximumˉtimers == 0u32
+        || Limits.Tasks.Maximumˉtimers > 8u32 {
+        return Invalid(
+            Field: 7u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉtimers,
+            ),
+            Minimum: 1u64,
+            Maximum: 8u64,
+        );
+    }
+    if Limits.Tasks.Maximumˉdiagnostics == 0u32
+        || Limits.Tasks.Maximumˉdiagnostics > 64u32 {
+        return Invalid(
+            Field: 8u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉdiagnostics,
+            ),
+            Minimum: 1u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Taskˉscopeˉbytes == 0u64
+        || Limits.Taskˉscopeˉbytes > MAXIMUM_TASK_SCOPE_BYTES {
+        return Invalid(
+            Field: 9u32,
+            Observed: Limits.Taskˉscopeˉbytes,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_TASK_SCOPE_BYTES,
+        );
+    }
+    if Limits.Handlerˉbytes < MAXIMUM_HANDLER_BYTES
+        || Limits.Handlerˉbytes > MAXIMUM_HANDLER_BYTES {
+        return Invalid(
+            Field: 10u32,
+            Observed: Limits.Handlerˉbytes,
+            Minimum: MAXIMUM_HANDLER_BYTES,
+            Maximum: MAXIMUM_HANDLER_BYTES,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+    Maximumˉchildren: u32,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Serviceˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: Maximumˉchildren,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Serviceˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Task.Taskˉlimits,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<Task.Taskˉscope, Types.Serviceˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Task.Construct(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: Parentˉcontext,
+    ) {
+        case Result.Result.Valid { Value: Scope } {
+            Result.Result.Valid { Value: Scope }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Serviceˉfailure.Taskˉscopeˉrejected {
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Mapˉspawn<W>(
+    Childˉindex: u32,
+    Value: Result.Result<
+        Task.Task<Httpˉtypes.Handlerˉreport, Httpˉtypes.Handlerˉfailure>,
+        Task.Spawnˉfailure<W>
+    >,
+) -> Result.Result<
+    Task.Task<Httpˉtypes.Handlerˉreport, Httpˉtypes.Handlerˉfailure>,
+    Types.Serviceˉfailure
+> effects(resource.release) {
+    return match Value {
+        case Result.Result.Valid { Value: Handle } {
+            Result.Result.Valid { Value: Handle }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            let Reason = match Failure {
+                case Task.Spawnˉfailure.Scopeˉclosing { Work: _ } {
+                    Types.Spawnˉreason.Scopeˉclosing
+                }
+                case Task.Spawnˉfailure.Taskˉlimit { Work: _ } {
+                    Types.Spawnˉreason.Taskˉlimit
+                }
+                case Task.Spawnˉfailure.Queueˉlimit { Work: _ } {
+                    Types.Spawnˉreason.Queueˉlimit
+                }
+                case Task.Spawnˉfailure.Memoryˉfailure {
+                    Error: _,
+                    Work: _,
+                } {
+                    Types.Spawnˉreason.Memoryˉfailure
+                }
+            };
+            Result.Result.Failure {
+                Error: Types.Serviceˉfailure.Spawnˉrejected {
+                    Childˉindex: Childˉindex,
+                    Reason: Reason,
+                },
+            }
+        }
+    };
+}
+
+fn Requestˉcancellation(
+    Scope: borrow mut Task.Taskˉscope,
+    Summary: borrow Types.Childˉsummary,
+    Alreadyˉrequested: bool,
+) -> bool effects(task.cancel) {
+    if Alreadyˉrequested || !Summary.Cancelˉremaining {
+        return Alreadyˉrequested;
+    }
+    let _ = Task.Requestˉcancel(Scope: Scope);
+    return true;
+}
+
+export async fn Run(
+    Endpoint: Stream.Serviceˉendpoint,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+    Limits: Types.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Serviceˉreport, Types.Serviceˉfailure>
+    effects(
+        memory.allocate,
+        network.service.accept,
+        resource.acquire,
+        resource.release,
+        task.cancel,
+        task.spawn,
+        task.suspend
+    ) {
+    try Validate(Limits: borrow Limits);
+    var Root = Budget;
+    let Scopeˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Taskˉscopeˉbytes,
+        Maximumˉchildren: 8u32,
+    );
+    let Budget0 = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Handlerˉbytes,
+        Maximumˉchildren: 4u32,
+    );
+    let Budget1 = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Handlerˉbytes,
+        Maximumˉchildren: 4u32,
+    );
+    let Budget2 = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Handlerˉbytes,
+        Maximumˉchildren: 4u32,
+    );
+    let Budget3 = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Handlerˉbytes,
+        Maximumˉchildren: 4u32,
+    );
+    let Recoveryˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Handlerˉbytes,
+        Maximumˉchildren: 4u32,
+    );
+
+    task scope Scope = try Constructˉscope(
+        Budget: Scopeˉbudget,
+        Limits: Limits.Tasks,
+        Parentˉcontext: Parentˉcontext,
+    ) policy cancel_join {
+        let Context = Task.Operationˉcontext(Scope: borrow Scope);
+
+        let Work0 = async fn [
+            copy Endpoint,
+            copy Context,
+            borrow Limits,
+            move Budget0,
+        ]() -> Result.Result<
+            Httpˉtypes.Handlerˉreport,
+            Httpˉtypes.Handlerˉfailure
+        > effects(
+            memory.allocate,
+            network.service.accept,
+            resource.acquire,
+            resource.release,
+            task.suspend
+        ) {
+            return await Http.Run(
+                Endpoint: Endpoint,
+                Context: borrow Context,
+                Limits: Limits.Handler,
+                Budget: Budget0,
+            );
+        };
+        let Handle0 = try Mapˉspawn(
+            Childˉindex: 0u32,
+            Value: Task.Spawn(Scope: borrow mut Scope, Work: Work0),
+        );
+
+        let Work1 = async fn [
+            copy Endpoint,
+            copy Context,
+            borrow Limits,
+            move Budget1,
+        ]() -> Result.Result<
+            Httpˉtypes.Handlerˉreport,
+            Httpˉtypes.Handlerˉfailure
+        > effects(
+            memory.allocate,
+            network.service.accept,
+            resource.acquire,
+            resource.release,
+            task.suspend
+        ) {
+            return await Http.Run(
+                Endpoint: Endpoint,
+                Context: borrow Context,
+                Limits: Limits.Handler,
+                Budget: Budget1,
+            );
+        };
+        let Handle1 = try Mapˉspawn(
+            Childˉindex: 1u32,
+            Value: Task.Spawn(Scope: borrow mut Scope, Work: Work1),
+        );
+
+        let Work2 = async fn [
+            copy Endpoint,
+            copy Context,
+            borrow Limits,
+            move Budget2,
+        ]() -> Result.Result<
+            Httpˉtypes.Handlerˉreport,
+            Httpˉtypes.Handlerˉfailure
+        > effects(
+            memory.allocate,
+            network.service.accept,
+            resource.acquire,
+            resource.release,
+            task.suspend
+        ) {
+            return await Http.Run(
+                Endpoint: Endpoint,
+                Context: borrow Context,
+                Limits: Limits.Handler,
+                Budget: Budget2,
+            );
+        };
+        let Handle2 = try Mapˉspawn(
+            Childˉindex: 2u32,
+            Value: Task.Spawn(Scope: borrow mut Scope, Work: Work2),
+        );
+
+        let Work3 = async fn [
+            copy Endpoint,
+            copy Context,
+            borrow Limits,
+            move Budget3,
+        ]() -> Result.Result<
+            Httpˉtypes.Handlerˉreport,
+            Httpˉtypes.Handlerˉfailure
+        > effects(
+            memory.allocate,
+            network.service.accept,
+            resource.acquire,
+            resource.release,
+            task.suspend
+        ) {
+            return await Http.Run(
+                Endpoint: Endpoint,
+                Context: borrow Context,
+                Limits: Limits.Handler,
+                Budget: Budget3,
+            );
+        };
+        let Handle3 = try Mapˉspawn(
+            Childˉindex: 3u32,
+            Value: Task.Spawn(Scope: borrow mut Scope, Work: Work3),
+        );
+
+        var Cancelled = false;
+        var Cancelˉafter = Option.Option.Absent;
+        var Restart = Option.Option.Absent;
+
+        let Summary0 = Policy.Summarize(
+            Value: await Task.Await(Handle: Handle0),
+        );
+        let Requested0 = Requestˉcancellation(
+            Scope: borrow mut Scope,
+            Summary: borrow Summary0,
+            Alreadyˉrequested: Cancelled,
+        );
+        if Requested0 && !Cancelled {
+            Cancelˉafter = Option.Option.Present { Value: 0u32 };
+        }
+        Cancelled = Requested0;
+        Restart = try Policy.Mergeˉrestart(
+            Current: Restart,
+            Next: Summary0.Restart,
+        );
+
+        let Summary1 = Policy.Summarize(
+            Value: await Task.Await(Handle: Handle1),
+        );
+        let Requested1 = Requestˉcancellation(
+            Scope: borrow mut Scope,
+            Summary: borrow Summary1,
+            Alreadyˉrequested: Cancelled,
+        );
+        if Requested1 && !Cancelled {
+            Cancelˉafter = Option.Option.Present { Value: 1u32 };
+        }
+        Cancelled = Requested1;
+        Restart = try Policy.Mergeˉrestart(
+            Current: Restart,
+            Next: Summary1.Restart,
+        );
+
+        let Summary2 = Policy.Summarize(
+            Value: await Task.Await(Handle: Handle2),
+        );
+        let Requested2 = Requestˉcancellation(
+            Scope: borrow mut Scope,
+            Summary: borrow Summary2,
+            Alreadyˉrequested: Cancelled,
+        );
+        if Requested2 && !Cancelled {
+            Cancelˉafter = Option.Option.Present { Value: 2u32 };
+        }
+        Cancelled = Requested2;
+        Restart = try Policy.Mergeˉrestart(
+            Current: Restart,
+            Next: Summary2.Restart,
+        );
+
+        let Summary3 = Policy.Summarize(
+            Value: await Task.Await(Handle: Handle3),
+        );
+        let Requested3 = Requestˉcancellation(
+            Scope: borrow mut Scope,
+            Summary: borrow Summary3,
+            Alreadyˉrequested: Cancelled,
+        );
+        if Requested3 && !Cancelled {
+            Cancelˉafter = Option.Option.Present { Value: 3u32 };
+        }
+        Cancelled = Requested3;
+        Restart = try Policy.Mergeˉrestart(
+            Current: Restart,
+            Next: Summary3.Restart,
+        );
+
+        var Recovery = Option.Option.Absent;
+        var Refreshed = Option.Option.Absent;
+        if !Cancelled {
+            match Restart {
+                case Option.Option.Absent { }
+                case Option.Option.Present { Value: Evidence } {
+                    let Newˉendpoint = match await network.service.accept.Refresh(
+                        Endpoint: Endpoint,
+                        Context: borrow Context,
+                        Observedˉgeneration: Evidence.Observedˉgeneration,
+                    ) {
+                        case Result.Result.Valid { Value: Value } { Value }
+                        case Result.Result.Failure { Error: Error } {
+                            return Result.Result.Failure {
+                                Error: Types.Serviceˉfailure.Endpointˉrefreshˉrejected {
+                                    Error: Error,
+                                },
+                            };
+                        }
+                    };
+                    Refreshed = Option.Option.Present {
+                        Value: Evidence.Observedˉgeneration,
+                    };
+                    let Recoveryˉwork = async fn [
+                        copy Newˉendpoint,
+                        copy Context,
+                        borrow Limits,
+                        move Recoveryˉbudget,
+                    ]() -> Result.Result<
+                        Httpˉtypes.Handlerˉreport,
+                        Httpˉtypes.Handlerˉfailure
+                    > effects(
+                        memory.allocate,
+                        network.service.accept,
+                        resource.acquire,
+                        resource.release,
+                        task.suspend
+                    ) {
+                        return await Http.Run(
+                            Endpoint: Newˉendpoint,
+                            Context: borrow Context,
+                            Limits: Limits.Handler,
+                            Budget: Recoveryˉbudget,
+                        );
+                    };
+                    let Recoveryˉhandle = try Mapˉspawn(
+                        Childˉindex: 4u32,
+                        Value: Task.Spawn(
+                            Scope: borrow mut Scope,
+                            Work: Recoveryˉwork,
+                        ),
+                    );
+                    let Recoveryˉsummary = Policy.Summarize(
+                        Value: await Task.Await(Handle: Recoveryˉhandle),
+                    );
+                    match Recoveryˉsummary.Restart {
+                        case Option.Option.Absent { }
+                        case Option.Option.Present { Value: Again } {
+                            return Result.Result.Failure {
+                                Error: Types.Serviceˉfailure.Secondˉproviderˉrestart {
+                                    Expectedˉgeneration: Again.Expectedˉgeneration,
+                                    Observedˉgeneration: Again.Observedˉgeneration,
+                                },
+                            };
+                        }
+                    }
+                    Recovery = Option.Option.Present {
+                        Value: Recoveryˉsummary.Outcome,
+                    };
+                }
+            }
+        }
+
+        return Result.Result.Valid {
+            Value: Types.Serviceˉreport {
+                First: Summary0.Outcome,
+                Second: Summary1.Outcome,
+                Third: Summary2.Outcome,
+                Fourth: Summary3.Outcome,
+                Recovery: Recovery,
+                Cancellationˉrequested: Cancelled,
+                Cancellationˉafterˉindex: Cancelˉafter,
+                Refreshedˉgeneration: Refreshed,
+            },
+        };
+    }
+}

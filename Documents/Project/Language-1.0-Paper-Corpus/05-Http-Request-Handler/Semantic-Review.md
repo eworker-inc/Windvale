@@ -76,9 +76,10 @@ not a bounds trap.
 9. On full local-provider acceptance, response/input/text backings release and
    `using` locally closes the stream. No graceful peer receipt is claimed.
 
-Cancellation is observable only at accept/read/write in this workload. The
-borrowed operation context cannot be retained beyond `Run`. Workload 6 will test
-scope cancellation requests, child propagation, and awaits.
+Cancellation is observable only at awaited accept/read/write in this workload.
+The borrowed operation context cannot be retained beyond `Run`. Decision 0760's
+task scope derives that context and owns the sole explicit cancellation request;
+the handler needs no second flag or cancellation authority.
 
 ## Cross-host meaning
 

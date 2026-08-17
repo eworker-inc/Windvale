@@ -24,7 +24,11 @@ let Target = Bytes.Borrowˉsliceˉmut(
     Length: Requested,
 );
 let First = Bytes.Borrowˉslice(Buffer: borrow Input, Start: 0u64, Length: 1u64);
-network.service.accept.Read(Stream: borrow mut Stream, Target: Target, Context: Context);
+await network.service.accept.Read(
+    Stream: borrow mut Stream,
+    Target: Target,
+    Context: Context,
+);
 ```
 
 Reject the immutable borrow because the exclusive target remains live. Real
@@ -45,7 +49,7 @@ lengths.
 ```text
 module Httpˉparser;
 profile core;
-fn Read() { network.service.accept.Read(...); }
+async fn Read() { await network.service.accept.Read(...); }
 ```
 
 Reject because a Core module cannot require a Hosted capability and the effect
@@ -68,7 +72,11 @@ view.
 
 ```text
 case Stream.Writeˉoutcome.Indeterminate { Error: _ } {
-    network.service.accept.Write(Stream: Stream, Value: Suffix, Context: Context)
+    await network.service.accept.Write(
+        Stream: Stream,
+        Value: Suffix,
+        Context: Context,
+    )
 }
 ```
 

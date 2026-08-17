@@ -7,13 +7,13 @@ requires capability network.service.accept version 1;
 
 import Foundationˉbytes as Bytes;
 import Foundationˉmemory as Memory;
+import Foundationˉoperation as Operation;
 import Foundationˉoption as Option;
 import Foundationˉresult as Result;
 import Foundationˉtext as Text;
 import Httpˉparser as Parser;
 import Httpˉresponse as Response;
 import Httpˉtypes as Types;
-import Platformˉoperation as Operation;
 import Platformˉstream as Stream;
 
 const HEADER_MAP_BUDGET_BYTES: u64 = 4096u64;
@@ -226,7 +226,7 @@ fn Requestˉrejection(
     };
 }
 
-fn Receive(
+async fn Receive(
     Streamˉvalue: borrow mut Stream.Requestˉstream,
     Context: borrow Operation.Operationˉcontext,
     Buffer: Bytes.Byteˉbuffer,
@@ -234,7 +234,7 @@ fn Receive(
     Limits: borrow Types.Limits,
     Meter: borrow mut Types.Workˉmeter,
 ) -> Result.Result<Types.Receiveˉoutcome, Types.Handlerˉfailure>
-    effects(network.service.accept, resource.release) {
+    effects(network.service.accept, resource.release, task.suspend) {
     var Input = Buffer;
     var Received = 0u64;
     var Readˉoperations = 0u64;
@@ -299,7 +299,7 @@ fn Receive(
             Start: Received,
             Length: Requested,
         );
-        let Readˉoutcome = network.service.accept.Read(
+        let Readˉoutcome = await network.service.accept.Read(
             Stream: Streamˉvalue,
             Target: Target,
             Context: Context,
@@ -555,14 +555,14 @@ fn Prepare(
     };
 }
 
-fn Writeˉall(
+async fn Writeˉall(
     Streamˉvalue: borrow mut Stream.Requestˉstream,
     Context: borrow Operation.Operationˉcontext,
     Value: borrow bytes,
     Completedˉoperations: u64,
     Maximumˉoperations: u64,
 ) -> Result.Result<Types.Writeˉreport, Types.Handlerˉfailure>
-    effects(network.service.accept) {
+    effects(network.service.accept, task.suspend) {
     var Accepted = 0u64;
     var Operations = Completedˉoperations;
     let Length = Bytes.Length(Value: Value);
@@ -581,7 +581,7 @@ fn Writeˉall(
             Start: Accepted,
             Length: Remaining,
         );
-        let Outcome = network.service.accept.Write(
+        let Outcome = await network.service.accept.Write(
             Stream: Streamˉvalue,
             Value: Suffix,
             Context: Context,
@@ -632,7 +632,8 @@ fn Writeˉall(
     };
 }
 
-export fn Run(
+export async fn Run(
+    Endpoint: Stream.Serviceˉendpoint,
     Context: borrow Operation.Operationˉcontext,
     Limits: Types.Limits,
     Budget: Memory.Memoryˉbudget,
@@ -641,7 +642,8 @@ export fn Run(
         memory.allocate,
         network.service.accept,
         resource.acquire,
-        resource.release
+        resource.release,
+        task.suspend
     ) {
     try Validate(Limits: borrow Limits);
     var Root = Budget;
@@ -675,7 +677,8 @@ export fn Run(
     };
 
     using Requestˉstream = try Mapˉaccept(
-        Value: network.service.accept.Acceptˉone(
+        Value: await network.service.accept.Acceptˉone(
+            Endpoint: Endpoint,
             Context: Context,
             Limits: Stream.Streamˉlimits {
                 Maximumˉreadˉbytes: Limits.Maximumˉreadˉbytes,
@@ -686,7 +689,7 @@ export fn Run(
             },
         ),
     ) {
-        let Received = try Receive(
+        let Received = try await Receive(
             Streamˉvalue: borrow mut Requestˉstream,
             Context: Context,
             Buffer: Buffer,
@@ -709,7 +712,7 @@ export fn Run(
             Budget: Responseˉbudget,
             Maximumˉbytes: Limits.Maximumˉresponseˉbytes,
         );
-        let Written = try Writeˉall(
+        let Written = try await Writeˉall(
             Streamˉvalue: borrow mut Requestˉstream,
             Context: Context,
             Value: borrow Encoded,

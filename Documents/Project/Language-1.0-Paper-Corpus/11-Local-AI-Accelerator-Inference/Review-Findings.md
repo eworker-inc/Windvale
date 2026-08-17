@@ -5,6 +5,8 @@
 First-author review completed and the project owner accepted all five recommended
 clarifications on 2026-08-17 under
 [Decision 0754](../../../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+Its task/context surface was reconciled after workload 6 under
+[Decision 0760](../../../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
 The dependent semantic, grammar, Foundation, migration, and paper documents now
 carry those normative-candidate rules. The bundle remains a draft-reviewed paper
 source row, not frozen or implemented source, because ten corpus workloads and
@@ -84,7 +86,8 @@ argument-derived form and needs no source revision.
 
 ### 2. Module-bound capability roots versus closure capture
 
-The async closure explicitly captures only lexical `Model`. It calls an imported
+The async closure explicitly captures lexical `Model` and the scope-derived
+`Context`. It calls an imported
 async function whose signature exposes four capability effects; the application
 and library modules both declare those four requirements. No instance resource
 or local capability value is captured implicitly.
@@ -108,6 +111,11 @@ Accepted resolution: retain these signatures through the full eleven-workload
 review and update source coherently if another workload proves a better shape.
 This is Foundation completion, not accelerator syntax.
 
+Workload 6 supplied that later evidence. Decision 0760 replaces the
+allocation-only `Construct` failure with exact `Taskˉscopeˉfailure`, requires a
+borrowed parent operation context, and adds the scope-derived child context. The
+source and dependency list above now use that coherent successor shape.
+
 ### 4. Application entry and root budgets
 
 The exported application `Run` receives one owned `Memoryˉbudget`; source cannot
@@ -117,6 +125,11 @@ application entry ABI or launcher parameter binding.
 Accepted resolution: the package/launcher contract binds the selected
 entry signature, root budget, and approved capability roots. Do not add a hidden
 global allocator or special `Main` semantics merely for this workload.
+
+Decision 0760 later completes this entry boundary: the launcher also lends one
+valid parent `Operationˉcontext`; `Task.Construct` derives the child's context,
+and every accelerator call borrows that one view. This adds no ambient clock,
+cancel flag, or provider authority.
 
 ### 5. Accelerator target-scope identity
 
@@ -134,9 +147,9 @@ required.
 
 | Measure | Recorded value |
 | --- | --- |
-| Source size | 7 modules, 1,203 lines, 28 functions, 6 records, 6 enums, 1 variant, 4 package-data declarations. |
-| Maximum source width | 4 function parameters; 15 record fields; 13 failure cases; largest module 370 lines. |
-| Explicitness | 4 capabilities, 1 copied closure capture, 4 nested provider resources, 6 tensor-view descriptors, 6 commands, 5 device slots. |
+| Source size | 7 modules, 1,316 lines / 48,785 UTF-8 bytes, 28 functions, 6 records, 6 enums, 2 variants, 4 package-data declarations. |
+| Maximum source width | 4 function parameters; 15 record fields; 15 inference-failure cases; largest module 389 lines. |
+| Explicitness | 4 capabilities, 2 copied closure captures, 4 nested provider resources, 6 tensor-view descriptors, 6 commands, 5 device slots. |
 | Resources | 16,384 host bytes, 64 pinned bytes, 320 charged device bytes, 1 task/queue/submission, 8 command slots, 16 diagnostics. |
 | Failure surface | Package rejection; 4 decoder families; scope/spawn; accelerator rejection; cancelled/deadline/lost/fault/trap; output validation/mismatch. |
 | Compiler planning | 7 `Mapˉaccelerator<T>` specializations, 1 closure-specific spawn adapter, planned ceilings of 64 generic instances, 512 WIR blocks, 4,096 WIR operations, and 1 MiB retained compiler evidence. |
@@ -163,6 +176,9 @@ retained evidence, WVB bytes, target artifact bytes, elapsed time, and peak memo
    mutable borrows or speculating about barriers and atomics.
 6. The reference operation order and accelerated tolerance were separated so a
    physical provider cannot redefine strict Language 1.0 arithmetic.
+7. Workload 6 replaced allocation-only scope construction with exact
+   `Taskˉscopeˉfailure`, added parent/scope-derived operation contexts, and split
+   task-runtime loss/restart from accelerator-provider loss.
 
 ## Owner resolution
 

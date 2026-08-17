@@ -122,11 +122,16 @@ invalid for this exact fixture.
 ## Target parts and kernel binding
 
 The package plan selects exported `Inferenceˉapplication.Run` by canonical
-identity and exact monomorphic signature for its hosted launcher profile. The
+identity and exact monomorphic signature whose parameters are owned
+`Memoryˉbudget` followed by borrowed parent `Operationˉcontext` for its hosted
+launcher profile. The
 launcher creates and transfers the owned 16,384-byte root `Memoryˉbudget`,
-approves the exact four-capability transitive closure, binds four rights-limited
-module roots, and starts no source until every binding is admitted. `Run` is an
-ordinary source name, not a special language entry.
+borrows one launcher-created `Operationˉcontext`, approves the exact
+four-capability transitive closure, binds four rights-limited module roots, and
+starts no source until every binding is admitted. `Run` is an ordinary source
+name, not a special language entry. Task construction derives the child context;
+the async child copies that scope-bound view and passes it to every accelerator
+operation, so cancellation and deadline observation do not form a second system.
 
 The host build selects one `Platformˉaccelerator` implementation compatible with
 Windows, Linux, or Windvale. Provider selection remains runtime-visible and may

@@ -12,7 +12,7 @@ submission, output, or capability grant.
 | Case | Mutation | Earliest rejection | Required evidence |
 | --- | --- | --- | --- |
 | 1. Missing `accelerator.kernel` requirement | Delete the requirement from `Inferenceˉaccelerated` or the root application while retaining `Addˉkernel`. | Capability/effect closure analysis. | Stable missing-capability diagnostic; no artifact. |
-| 2. Hidden closure capture | Change `[copy Model]` to `[]` while the closure reads `Model`. | Closure capture analysis. | Diagnostic points to closure and outer binding. |
+| 2. Hidden closure capture | Remove `copy Model` from `[copy Model, copy Context]` while the closure reads `Model`. | Closure capture analysis. | Diagnostic points to closure and outer binding. |
 | 3. Invalid borrowed task capture | Capture `borrow Model` in an escaping/suspending child without a proven immobile owner. | Borrow/task analysis. | Origin, suspension, and required lifetime are bounded related locations. |
 | 4. Resource move during borrow | Move/release `Residency` while `Batch` or `Submission` retains it. | Ownership analysis. | Diagnostic names owner, borrow, attempted move, and generation dependency. |
 | 5. Kernel target absent | Build the kernel module only for an ordinary host scope. | Build target graph. | Unsupported target part before kernel lowering. |
@@ -28,8 +28,11 @@ Representative source mutations:
 accelerator.kernel.Addˉkernel(...);
 
 // Case 2: rejected explicit capture.
-let Work = async fn []() -> Result<...> effects(...) {
-    return await Accelerated.Run(Model: borrow Model);
+let Work = async fn [copy Context]() -> Result<...> effects(...) {
+    return await Accelerated.Run(
+        Model: borrow Model,
+        Context: borrow Context,
+    );
 };
 
 // Case 7: no such Language 1.0 primitive.

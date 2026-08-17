@@ -34,6 +34,28 @@ export enum Taskˉallocationˉreason: u8 {
     Fragmented = 4u8;
 }
 
+export variant Taskˉscopeˉreason {
+    Invalidˉlimits(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(
+        Reason: Taskˉallocationˉreason,
+        Requestedˉbytes: u64,
+        Availableˉbytes: u64,
+    );
+    Parentˉcontextˉstale(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Runtimeˉunavailable(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+}
+
 export record Inputˉvector {
     X0: f32;
     X1: f32;
@@ -102,14 +124,18 @@ export variant Inferenceˉfailure {
         Offset: u64,
         Rule: u32,
     );
-    Taskˉscopeˉrejected(
-        Reason: Taskˉallocationˉreason,
-        Requestedˉbytes: u64,
-        Availableˉbytes: u64,
-    );
+    Taskˉscopeˉrejected(Error: Taskˉscopeˉreason);
     Taskˉspawnˉrejected(Reason: u32);
     Cancelled;
     Deadlineˉreached;
+    Taskˉruntimeˉlost(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Taskˉruntimeˉrestarted(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
     Providerˉlost(Generation: u64);
     Providerˉevidenceˉmismatch(
         Expectedˉgeneration: u64,

@@ -1,0 +1,85 @@
+edition 1;
+module Concurrentˉserviceˉtypes;
+profile hosted;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉtask as Task;
+import Httpˉtypes as Http;
+import Platformˉstream as Stream;
+
+export enum Spawnˉreason: u8 {
+    Scopeˉclosing = 1u8;
+    Taskˉlimit = 2u8;
+    Queueˉlimit = 3u8;
+    Memoryˉfailure = 4u8;
+}
+
+export record Restartˉevidence {
+    Expectedˉgeneration: u64;
+    Observedˉgeneration: u64;
+    Mutationˉindeterminate: bool;
+}
+
+export variant Childˉoutcome {
+    Served(Report: Http.Handlerˉreport);
+    Handlerˉfailed(Error: Http.Handlerˉfailure);
+    Cancelled;
+    Deadlineˉreached;
+    Taskˉruntimeˉlost(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Taskˉruntimeˉrestarted(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Trapped(Identity: u32);
+}
+
+export record Childˉsummary {
+    Outcome: Childˉoutcome;
+    Cancelˉremaining: bool;
+    Restart: Option.Option<Restartˉevidence>;
+}
+
+export variant Serviceˉfailure {
+    Invalidˉconfiguration(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(Error: Memory.Allocationˉfailure);
+    Taskˉscopeˉrejected(Error: Task.Taskˉscopeˉfailure);
+    Spawnˉrejected(Childˉindex: u32, Reason: Spawnˉreason);
+    Conflictingˉrestartˉevidence(
+        Firstˉobserved: u64,
+        Laterˉobserved: u64,
+    );
+    Endpointˉrefreshˉrejected(Error: Stream.Streamˉfailure);
+    Secondˉproviderˉrestart(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+}
+
+export record Serviceˉreport {
+    First: Childˉoutcome;
+    Second: Childˉoutcome;
+    Third: Childˉoutcome;
+    Fourth: Childˉoutcome;
+    Recovery: Option.Option<Childˉoutcome>;
+    Cancellationˉrequested: bool;
+    Cancellationˉafterˉindex: Option.Option<u32>;
+    Refreshedˉgeneration: Option.Option<u64>;
+}
+
+export record Limits {
+    Handler: Http.Limits;
+    Tasks: Task.Taskˉlimits;
+    Taskˉscopeˉbytes: u64;
+    Handlerˉbytes: u64;
+}

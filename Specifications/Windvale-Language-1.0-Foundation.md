@@ -16,7 +16,9 @@ and
 and
 [Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
 and
-[Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
+[Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md)
+and
+[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -1206,6 +1208,27 @@ Completed reports exact accepted progress under the interface's completion
 meaning. Indeterminate means progress cannot be proved and must not be retried
 without a specified idempotency key or recovery protocol.
 
+## Hosted operation context
+
+`Operationˉcontext` is a shared immutable opaque Hosted value. A launcher-created
+root binds a nonzero monotonic clock identity and generation, one absolute
+deadline, a nonzero cancellation-view identity and generation, and the already
+admitted provider deadline span. Source cannot construct it, inspect civil time
+through it, change either generation, extend its deadline, or request
+cancellation through it.
+
+The value is Copy only within its compiler-proved origin lifetime. Copying does
+not duplicate a timer, grant authority, or multiply accounting. Provider calls
+borrow it as an explicit cancellation/deadline observation point. At the exact
+deadline tick, deadline wins. Pre-dispatch cancellation proves no operation
+progress; a dispatched mutation may remain indeterminate under its interface.
+
+Task construction below derives a child context with a deadline no later than
+its parent and a fresh scope-owned cancellation identity/generation. That value
+may be copied into joined children but cannot escape its lexical task scope.
+Scope teardown invalidates the derived generation. A later use of forged,
+serialized, cross-scope, or stale context evidence fails closed.
+
 ## Structured task Foundation
 
 Structured tasks are Hosted-only.
@@ -1226,9 +1249,29 @@ export record Taskˉlimits {
 ~~~
 
 `Taskˉscope` is move-owned and implements Local release. Construction consumes a
-rights-reduced memory budget and optional deadline/cancellation providers. It
-records one scope-exit policy selected by grammar: join, cancel then join, or fail
-then join.
+rights-reduced memory budget, borrows one valid parent operation context, and
+reserves bounded task-runtime state. The surrounding grammar records one
+scope-exit policy: join, cancel then join, or fail then join.
+
+~~~text
+export variant Taskˉscopeˉfailure {
+    Invalidˉlimits(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(Error: Allocationˉfailure);
+    Parentˉcontextˉstale(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Runtimeˉunavailable(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+}
+~~~
 
 The first accepted construction signature is:
 
@@ -1236,14 +1279,31 @@ The first accepted construction signature is:
 export fn Construct(
     Budget: Memoryˉbudget,
     Limits: Taskˉlimits,
-) -> Result<Taskˉscope, Allocationˉfailure>
+    Parentˉcontext: borrow Operationˉcontext,
+) -> Result<Taskˉscope, Taskˉscopeˉfailure>
     effects(memory.allocate, resource.acquire);
 ~~~
 
 `Construct` consumes `Budget`. On rejection it releases any consumed local
-accounting before returning `Allocationˉfailure`; it does not recover the budget
-implicitly. The surrounding `task scope` statement supplies the one explicit
-exit policy, so `Construct` has no default or hidden policy.
+accounting before returning the exact typed failure; it does not recover the
+budget implicitly. Invalid child/runnable/completion/retained-byte/work/depth/
+timer/diagnostic relationships reject before scheduling. A stale parent or
+unavailable task runtime retains exact expected/observed generation evidence.
+The surrounding `task scope` statement supplies the one explicit exit policy,
+so `Construct` has no default or hidden policy.
+
+The accepted scope context observation is:
+
+~~~text
+export fn Operationˉcontext(
+    Scope: borrow Taskˉscope,
+) -> Operationˉcontext effects();
+~~~
+
+It returns the scope-derived Copy view described above. The immutable borrow of
+`Scope` ends with the call; the returned value carries the scope lifetime
+provenance rather than retaining a source borrow that would prevent later
+spawns or cancellation requests.
 
 ### Task handle
 
@@ -1257,13 +1317,22 @@ export variant Taskˉoutcome<T, E> {
     Failure(Error: E);
     Cancelled;
     Deadlineˉreached;
-    Providerˉlost;
+    Runtimeˉlost(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Runtimeˉrestarted(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
     Trapped(Identity: u32);
 }
 ~~~
 
 Trap identity is bounded diagnostic evidence, not a catchable source exception or
-arbitrary stack trace.
+arbitrary stack trace. Runtime loss/restart describes only the task runtime.
+Loss or restart of a capability used by the child remains inside `E`; the two
+domains cannot be collapsed into one payload-free provider result.
 
 The accepted version-1 operation for this handle consumes it exactly once:
 
@@ -1327,12 +1396,33 @@ order. An explicitly named completion-order operation may exist only with a
 bounded completion queue and stable child identities.
 
 Cancellation is cooperative and observable only at explicit checks, provider
-operations, and `await` suspension points. Cancelling a scope requests
-cancellation for all live children and still joins them before scope release.
+operations, and `await` suspension points. Its accepted source operation is:
+
+~~~text
+export variant Cancelˉrequestˉoutcome {
+    Requested(Liveˉchildren: u32);
+    Alreadyˉrequested(Liveˉchildren: u32);
+}
+
+export fn Requestˉcancel(
+    Scope: borrow mut Taskˉscope,
+) -> Cancelˉrequestˉoutcome effects(task.cancel);
+~~~
+
+The first request closes the scope to new spawn acceptance, marks the one
+scope-owned cancellation generation, and reports the then-live child count.
+Later requests are idempotent and report the then-live count. Cancelling a scope
+still joins every accepted child before scope release.
 
 No task can become detached, retain a borrowed value beyond the proven owner
 lifetime, capture an optional-only capability, or silently replay an
 indeterminate external mutation.
+
+A temporary exclusive borrow passed directly into one awaited provider call is
+valid when its owner lives in the same child continuation and no alias can
+execute until the await completes. It cannot be stored in task state, returned,
+or captured from an outer mutable owner into a spawned child. This is a
+lifetime/aliasing proof, not a provider exception to ownership.
 
 The scope-exit policies mean:
 
@@ -1350,8 +1440,10 @@ unbounded outcome list. A block `return`, `try` propagation, `break`, or
 `continue` first applies the selected scope policy and local release, then
 continues the transfer.
 
-The paper corpus must confirm these signatures and the source spelling before
-the task module receives a frozen signature identity.
+The concurrent hosted-service paper workload accepts these signatures and the
+source spelling as normative-candidate inputs. Their canonical signature-set
+identity remains a source-freeze deliverable rather than an implementation
+claim.
 
 ## Unsafe Foundation
 

@@ -6,6 +6,8 @@ Complete first-author paper bundle for workload 11 under
 [Decision 0753](../../../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
 with its five general findings accepted under
 [Decision 0754](../../../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
+and its task/context surface reconciled under
+[Decision 0760](../../../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
 and the
 [Language 1.0 paper corpus](../../Windvale-Language-1.0-Paper-Corpus.md).
 It is a draft-reviewed corpus row, not frozen source, an implemented program, a
@@ -56,7 +58,7 @@ Inferenceˉapplication
   -> Inferenceˉreference
        -> Inferenceˉdecode
        -> Inferenceˉtypes
-  -> Foundationˉmemory/result/task
+  -> Foundationˉmemory/operation/result/task
 
 Inferenceˉkernel
   -> no imported module; package metadata supplies the scalar-lane target mapping

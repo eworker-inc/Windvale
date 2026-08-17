@@ -6,7 +6,9 @@ This is the normative-candidate token and parsing companion to the
 [Language 1.0 semantic specification](Windvale-Language-1.0.md), authorized by
 [Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 and refined by
-[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
+and
+[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
 It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
@@ -504,6 +506,14 @@ The candidate deliberately keeps scheduling and scope creation in Foundation
 rather than adding a second spawn expression. The paper corpus must prove that
 this spelling expresses join, cancellation, provider restart, GUI, and service
 cases without hidden work before source freeze.
+
+The concurrent hosted-service workload confirms the spelling. Explicit
+cancellation is the ordinary Foundation call
+`Task.Requestˉcancel(Scope: borrow mut Scope)`; context derivation is
+`Task.Operationˉcontext(Scope: borrow Scope)`. Neither needs another statement,
+`spawn` expression, `select`, detached-task marker, thread keyword, or exception
+form. Provider operations that may suspend are ordinary async calls and therefore
+require the existing `await` unary expression.
 
 ## Patterns
 

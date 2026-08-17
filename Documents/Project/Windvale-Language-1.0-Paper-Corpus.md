@@ -20,7 +20,9 @@ and the database-transaction findings resolved by
 and the compiler-front-end findings resolved by
 [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
 and the HTTP-handler findings resolved by
-[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
+[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
+and the concurrent-service findings resolved by
+[Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -279,8 +281,8 @@ Its owner review accepts checked slice observation and immutable byte-range
 borrowing, strict UTF-8 decode directly from a byte slice, invariant decimal
 byte-builder append, one opaque launcher-supplied operation context, and exact
 reliable-stream progress/no-replay meanings. These are normative-candidate
-contracts. The service capability identity and task/cancellation integration
-remain provisional pending workload 6.
+contracts. Decision 0760 completes their async provider spelling,
+generation-bound endpoint, and task/cancellation integration.
 
 ## Workload 6: concurrent hosted service
 
@@ -310,6 +312,17 @@ queue, mutable borrow across await, and attempted detach.
 
 No child may outlive the scope or retain invalid authority. Scheduler choice may
 change timing but not ownership, result order, or cleanup semantics.
+
+The draft-reviewed source and evidence are in the
+[workload 6 paper bundle](Language-1.0-Paper-Corpus/06-Concurrent-Hosted-Service/README.md).
+Its seven accepted findings reconcile task construction with the operation
+context, add an explicit cooperative cancellation request, distinguish task
+runtime generations from child provider failures, make blocking provider calls
+explicitly asynchronous, bind shared accepts to a typed endpoint generation,
+clarify valid awaited borrows versus invalid captures, and avoid premature task
+collection/detach syntax. The project owner accepted them under Decision 0760;
+they remain normative-candidate inputs rather than implementation or final
+source-freeze claims.
 
 ## Workload 7: GUI or retained application state
 
@@ -541,16 +554,16 @@ source contract ambiguous.
 | Bounded file copy | Draft reviewed; five findings accepted and resolved |
 | Database transaction | Draft reviewed; five findings accepted and resolved |
 | Compiler front end | Draft reviewed; six findings accepted and resolved |
-| HTTP request handler | Pending source bundle |
-| Concurrent hosted service | Pending source bundle |
+| HTTP request handler | Draft reviewed; five findings accepted and resolved |
+| Concurrent hosted service | Draft reviewed; seven findings accepted and resolved |
 | GUI retained state | Pending source bundle |
 | Numeric or graphics processing | Pending source bundle |
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-Five of eleven workloads are draft reviewed. The six pending workloads are 5
-through 10, beginning with the HTTP request handler.
+Seven of eleven workloads are draft reviewed. Workloads 7 through 10 remain to
+be written and reviewed.
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

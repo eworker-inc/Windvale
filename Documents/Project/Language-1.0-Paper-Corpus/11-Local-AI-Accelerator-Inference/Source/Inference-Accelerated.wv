@@ -8,6 +8,7 @@ requires capability accelerator.execute version 1;
 requires capability accelerator.kernel version 1;
 requires capability accelerator.memory version 1;
 
+import Foundationˉoperation as Operation;
 import Foundationˉresult as Result;
 import Inferenceˉdecode as Decode;
 import Inferenceˉpackage as Package;
@@ -60,6 +61,7 @@ fn Mapˉaccelerator<T>(
 
 export async fn Run(
     Model: borrow Types.Modelˉplan,
+    Context: borrow Operation.Operationˉcontext,
 ) -> Result.Result<Types.Acceleratedˉresult, Types.Inferenceˉfailure>
     effects(
         accelerator.catalog,
@@ -86,9 +88,15 @@ export async fn Run(
         Allowˉexclusiveˉpassthrough: false,
     };
     let Selection = try Mapˉaccelerator(
-        Value: accelerator.catalog.Select(Requirements: Requirements),
+        Value: accelerator.catalog.Select(
+            Requirements: Requirements,
+            Context: Context,
+        ),
     );
-    let Description = accelerator.catalog.Describe(Selection: borrow Selection);
+    let Description = accelerator.catalog.Describe(
+        Selection: borrow Selection,
+        Context: Context,
+    );
     let Sessionˉlimits = Accelerator.Sessionˉlimits {
         Maximumˉhostˉstateˉbytes: 4096u64,
         Maximumˉdeviceˉbytes: Model.Maximumˉdeviceˉbytes,
@@ -104,6 +112,7 @@ export async fn Run(
         Value: accelerator.memory.Openˉsession(
             Selection: Selection,
             Limits: Sessionˉlimits,
+            Context: Context,
         ),
     ) {
         let Residencyˉplan = Accelerator.Residencyˉplan {
@@ -118,6 +127,7 @@ export async fn Run(
             Value: accelerator.memory.Admitˉresidency(
                 Session: borrow mut Session,
                 Plan: Residencyˉplan,
+                Context: Context,
             ),
         ) {
             let Inputˉview = Accelerator.Tensorˉview {
@@ -197,6 +207,7 @@ export async fn Run(
                     Session: borrow mut Session,
                     Residency: borrow mut Residency,
                     Maximumˉcommands: Model.Maximumˉcommands,
+                    Context: Context,
                 ),
             ) {
                 try Mapˉaccelerator(
@@ -207,6 +218,7 @@ export async fn Run(
                         Source: Package.Tokenizerˉmetadata,
                         Sourceˉoffset: 16u64,
                         Sourceˉlength: 8u64,
+                        Context: Context,
                     ),
                 );
                 try Mapˉaccelerator(
@@ -217,6 +229,7 @@ export async fn Run(
                         Source: Package.Quantizedˉweights,
                         Sourceˉoffset: 0u64,
                         Sourceˉlength: 4u64,
+                        Context: Context,
                     ),
                 );
                 try Mapˉaccelerator(
@@ -227,6 +240,7 @@ export async fn Run(
                         Source: Package.Modelˉmetadata,
                         Sourceˉoffset: 24u64,
                         Sourceˉlength: 16u64,
+                        Context: Context,
                     ),
                 );
 
@@ -248,6 +262,7 @@ export async fn Run(
                         Batch: borrow mut Batch,
                         Residency: borrow mut Residency,
                         Operation: Linear,
+                        Context: Context,
                     ),
                 );
 
@@ -264,6 +279,7 @@ export async fn Run(
                         Batch: borrow mut Batch,
                         Residency: borrow mut Residency,
                         Operation: Kernel,
+                        Context: Context,
                     ),
                 );
                 try Mapˉaccelerator(
@@ -273,6 +289,7 @@ export async fn Run(
                         Slot: Accelerator.Bufferˉslot.Output,
                         Sourceˉoffset: 0u64,
                         Sourceˉlength: 8u64,
+                        Context: Context,
                     ),
                 );
 
@@ -281,11 +298,13 @@ export async fn Run(
                         Session: borrow mut Session,
                         Residency: borrow mut Residency,
                         Batch: borrow mut Batch,
+                        Context: Context,
                     ),
                 ) {
                     let Terminal = try Mapˉaccelerator(
                         Value: await accelerator.execute.Wait(
                             Submission: borrow mut Submission,
+                            Context: Context,
                         ),
                     );
                     match Terminal {

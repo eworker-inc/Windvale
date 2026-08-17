@@ -204,26 +204,31 @@ The capability catalog supplies one exact signature set equivalent to:
 ```text
 accelerator.catalog.Select(
     Requirements: Requirements,
+    Context: borrow Operationˉcontext,
 ) -> Result<Selection, Failure>
 
 accelerator.catalog.Describe(
     Selection: borrow Selection,
+    Context: borrow Operationˉcontext,
 ) -> Providerˉdescription
 
 accelerator.memory.Openˉsession(
     Selection: Selection,
     Limits: Sessionˉlimits,
+    Context: borrow Operationˉcontext,
 ) -> Result<Session, Failure>
 
 accelerator.memory.Admitˉresidency(
     Session: borrow mut Session,
     Plan: Residencyˉplan,
+    Context: borrow Operationˉcontext,
 ) -> Result<Residency, Failure>
 
 accelerator.execute.Createˉbatch(
     Session: borrow mut Session,
     Residency: borrow mut Residency,
     Maximumˉcommands: u32,
+    Context: borrow Operationˉcontext,
 ) -> Result<Commandˉbatch, Failure>
 
 accelerator.execute.Addˉupload(
@@ -233,18 +238,21 @@ accelerator.execute.Addˉupload(
     Source: bytes,
     Sourceˉoffset: u64,
     Sourceˉlength: u64,
+    Context: borrow Operationˉcontext,
 ) -> Result<unit, Failure>
 
 accelerator.execute.Addˉquantizedˉlinear(
     Batch: borrow mut Commandˉbatch,
     Residency: borrow mut Residency,
     Operation: Quantizedˉlinearˉoperation,
+    Context: borrow Operationˉcontext,
 ) -> Result<unit, Failure>
 
 accelerator.kernel.Addˉkernel(
     Batch: borrow mut Commandˉbatch,
     Residency: borrow mut Residency,
     Operation: Kernelˉoperation,
+    Context: borrow Operationˉcontext,
 ) -> Result<unit, Failure>
 
 accelerator.execute.Addˉreadback(
@@ -253,23 +261,31 @@ accelerator.execute.Addˉreadback(
     Slot: Bufferˉslot,
     Sourceˉoffset: u64,
     Sourceˉlength: u64,
+    Context: borrow Operationˉcontext,
 ) -> Result<unit, Failure>
 
 accelerator.execute.Submit(
     Session: borrow mut Session,
     Residency: borrow mut Residency,
     Batch: borrow mut Commandˉbatch,
+    Context: borrow Operationˉcontext,
 ) -> Result<Submission, Failure>
 
 async accelerator.execute.Wait(
     Submission: borrow mut Submission,
+    Context: borrow Operationˉcontext,
 ) -> Result<Terminal, Failure>
 ```
 
 Each signature has the capability identity as an effect. Resource construction
 also has `resource.acquire`; provider-visible local release has the applicable
 capability and `resource.release`; `Wait` has `task.suspend`. The source wrappers
-retain these effects rather than hiding them through a generic adapter.
+retain these effects rather than hiding them through a generic adapter. Every
+operation receives the one scope-derived `Operationˉcontext` and observes its
+deadline/cancellation generation before publishing a mutation. All operations
+except `Wait` are bounded, non-suspending admission or batch-construction calls;
+an implementation that may suspend one must expose an async signature and
+`task.suspend` instead of hiding the continuation.
 
 ## Admission and mutation rules
 

@@ -67,6 +67,7 @@ allocated.
 | Value | Class | Owner/lifetime |
 | --- | --- | --- |
 | limits, ranges, enum keys, counters, scan state | Copy | ordinary stack/value state |
+| service endpoint | Copy shared-call reference | exact approved service/rights/provider generation |
 | operation context | shared immutable opaque | launcher owns; handler borrows |
 | memory root/children | move-owned accounting | handler and consuming constructors |
 | request stream | move-only resource | one `using` scope |
@@ -91,21 +92,26 @@ memory.allocate
 network.service.accept
 resource.acquire
 resource.release
+task.suspend
 ```
 
 It has no filesystem, raw network, DNS, listener, TLS, entropy, clock, process,
-environment, locale, terminal, logging, task, unsafe, or reflection effect.
+environment, locale, terminal, logging, task creation/cancellation, unsafe, or
+reflection effect. `task.suspend` makes provider waiting visible; this handler
+does not create a task scope itself.
 
 ## Build and artifact plan
 
 The seven modules lower through ordinary records, variants, maps, slices,
 builders, borrows, resource scopes, and capability calls. No HTTP-specific WIR
 or WVB instruction is required. The provider interface remains a canonical
-capability import and the operation context an ordinary opaque imported type.
+capability import, generation-bound endpoint, and operation context ordinary
+opaque imported types. Async calls use the shared structured-task continuation
+model rather than an HTTP-specific scheduler.
 
-The reviewed paper bundle contains 7 source files, 2,206 LF-terminated source
-lines, 72 top-level declarations, and 73,744 UTF-8 bytes. `Http-Application.wv`
-is 27,932 bytes/731 lines and `Http-Parser.wv` is 24,621 bytes/746 lines; their
+The reviewed paper bundle contains 7 source files, 2,209 LF-terminated source
+lines, 72 top-level declarations, and 73,916 UTF-8 bytes. `Http-Application.wv`
+is 28,104 bytes/734 lines and `Http-Parser.wv` is 24,621 bytes/746 lines; their
 separation keeps provider lifecycle out of pure framing code. Current Seed does
 not accept edition-1 source, so WIR, WVB, native size, compiler time, execution
 time, and working set are explicitly unmeasured rather than estimated. The

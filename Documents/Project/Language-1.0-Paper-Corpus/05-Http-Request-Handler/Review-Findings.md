@@ -5,18 +5,19 @@
 Draft reviewed by the project owner on 2026-08-17. All five general findings are
 accepted by
 [Decision 0759](../../../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
-The capability catalog name is deliberately provisional until workload 6.
+Decision 0760 completes the async provider, operation-context, and typed service
+endpoint boundary without reopening the five findings below.
 
 ## Pressure matrix
 
 | Required pressure | Evidence | Status |
 | --- | --- | --- |
-| Hosted capability and owned stream | One `network.service.accept` root returns one generation-bound resource in `using`. | Pass; final catalog identity provisional |
+| Hosted capability and owned stream | One typed generation-bound endpoint admits an awaited accept returning one resource in `using`. | Pass; completed by Decision 0760 |
 | Deterministic ordered maps | Four recognized singleton enum keys map to Copy buffer ranges in canonical order. | Pass |
 | Slices into input buffers | Exclusive read target ends before checked immutable parse slices; no slice is retained. | Pass; Foundation completion accepted |
 | Explicit text/bytes decode | Only `/echo` body crosses strict UTF-8 slice decode; all framing stays bytes/ASCII. | Pass |
 | Partial and indeterminate writes | Known positive prefixes advance suffix; rejection preserves known total; uncertainty stops. | Pass |
-| Deadlines and cancellation | One opaque borrowed operation context reaches every provider call. | Pass for synchronous provider use; task request propagation deferred to W6 |
+| Deadlines and cancellation | One scope-derived opaque context reaches every awaited provider call. | Pass; task propagation completed by Decision 0760 |
 | Builders and formatting | Reserved byte builder plus exact invariant decimal Content-Length. | Pass |
 | No ambient socket/TLS/clock/entropy | Binding supplies semantic stream; source has none of those effects. | Pass |
 
@@ -83,15 +84,17 @@ Accept one shared immutable opaque `Operationˉcontext` supplied by the launcher
 and borrowed by provider calls. It binds monotonic clock identity/generation,
 absolute deadline, cancellation-view identity/generation, and admitted span.
 Source cannot inspect civil time, extend it, or forge cancellation. This is an
-imported Hosted provider value, not a keyword, capability grant, task handle, or
-second cancellation system. Workload 6 must reconcile it with task-scope
-cancellation before final signature identity is frozen.
+imported Hosted Foundation value, not a keyword, capability grant, task handle,
+or second cancellation system. Decision 0760 derives a child view from one
+lexical task scope and makes the scope the sole cancellation requester.
 
-## Finding 5: exact synchronous stream outcomes are sufficient here
+## Finding 5: exact stream outcomes are independent of suspension spelling
 
-The handler does not need `async` merely because the host provider may use an
-event loop internally. A synchronous semantic operation can block/suspend below
-this paper boundary while still returning exact generation-bound outcomes.
+The first review proved the exact progress meanings without selecting final
+suspension spelling. Workload 6 later showed that a hosted service must expose
+potential suspension, continuation ownership, and cancellation points in source.
+Decision 0760 therefore makes accept/read/write async while preserving the
+outcomes below.
 
 Accept the paper profile:
 
@@ -102,9 +105,8 @@ Accept the paper profile:
 - every next successful call addresses only the uncompleted suffix; and
 - local release is teardown, not graceful response completion.
 
-Workload 6 owns `async`, task handles, cancellation requests, and deterministic
-joins. It may make the provider operation source surface asynchronous, but it
-must preserve these exact progress/outcome meanings.
+Every call now requires `await` and `task.suspend`; this changes no completion,
+rejection, uncertainty, or no-replay meaning.
 
 ## Workload-specific accepted policy
 
@@ -116,6 +118,6 @@ general language syntax or universal HTTP behavior.
 ## Acceptance
 
 The bundle is complete first-author source and paper evidence. General findings
-are normative-candidate inputs. Six of eleven workloads are now draft reviewed;
-workloads 6 through 10 remain. No current Seed, provider, cross-host, or source
-freeze implementation claim is made.
+are normative-candidate inputs. Decision 0760 synchronizes its provider surface
+with the reviewed concurrent service. No current Seed, provider, cross-host, or
+source-freeze implementation claim is made.
