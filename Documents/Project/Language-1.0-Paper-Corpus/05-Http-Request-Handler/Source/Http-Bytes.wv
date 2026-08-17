@@ -1,0 +1,221 @@
+edition 1;
+module Httpˉbytes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉcollections as Collections;
+import Foundationˉresult as Result;
+import Httpˉtypes as Types;
+import Httpˉwork as Work;
+
+export fn Bufferˉat(
+    Buffer: borrow Bytes.Byteˉbuffer,
+    Offset: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<u8, Types.Handlerˉfailure> effects() {
+    try Work.Charge(Meter: Meter, Amount: 1u64);
+    let Value = Bytes.Borrowˉslice(
+        Buffer: Buffer,
+        Start: Offset,
+        Length: 1u64,
+    );
+    return Result.Result.Valid {
+        Value: Collections.Sliceˉat(Value: Value, Index: 0u64),
+    };
+}
+
+export fn Equal(
+    Value: Collections.Slice<u8>,
+    Expected: borrow bytes,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<bool, Types.Handlerˉfailure> effects() {
+    let Length = Collections.Sliceˉlength(Value: Value);
+    if Length != Bytes.Length(Value: Expected) {
+        return Result.Result.Valid { Value: false };
+    }
+    var Index = 0u64;
+    while Index < Length {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        if Collections.Sliceˉat(Value: Value, Index: Index)
+            != Bytes.At(Value: Expected, Index: Index) {
+            return Result.Result.Valid { Value: false };
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: true };
+}
+
+fn Foldˉascii(Value: u8) -> u8 effects() {
+    if Value >= 65u8 && Value <= 90u8 {
+        return Value + 32u8;
+    }
+    return Value;
+}
+
+export fn Equalˉfoldedˉascii(
+    Value: Collections.Slice<u8>,
+    Expectedˉlower: borrow bytes,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<bool, Types.Handlerˉfailure> effects() {
+    let Length = Collections.Sliceˉlength(Value: Value);
+    if Length != Bytes.Length(Value: Expectedˉlower) {
+        return Result.Result.Valid { Value: false };
+    }
+    var Index = 0u64;
+    while Index < Length {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        if Foldˉascii(
+            Value: Collections.Sliceˉat(Value: Value, Index: Index),
+        ) != Bytes.At(Value: Expectedˉlower, Index: Index) {
+            return Result.Result.Valid { Value: false };
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: true };
+}
+
+fn Isˉtokenˉpunctuation(Value: u8) -> bool effects() {
+    return Value == 33u8
+        || Value == 35u8
+        || Value == 36u8
+        || Value == 37u8
+        || Value == 38u8
+        || Value == 39u8
+        || Value == 42u8
+        || Value == 43u8
+        || Value == 45u8
+        || Value == 46u8
+        || Value == 94u8
+        || Value == 95u8
+        || Value == 96u8
+        || Value == 124u8
+        || Value == 126u8;
+}
+
+export fn Validateˉtoken(
+    Value: Collections.Slice<u8>,
+    Absoluteˉstart: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    let Length = Collections.Sliceˉlength(Value: Value);
+    if Length == 0u64 {
+        return Result.Result.Failure {
+            Error: Types.Handlerˉfailure.Request {
+                Error: Types.Requestˉrejection.Malformedˉheader {
+                    Byteˉoffset: Absoluteˉstart,
+                },
+            },
+        };
+    }
+    var Index = 0u64;
+    while Index < Length {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Byte = Collections.Sliceˉat(Value: Value, Index: Index);
+        let Alphanumeric = (Byte >= 48u8 && Byte <= 57u8)
+            || (Byte >= 65u8 && Byte <= 90u8)
+            || (Byte >= 97u8 && Byte <= 122u8);
+        if !Alphanumeric && !Isˉtokenˉpunctuation(Value: Byte) {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Request {
+                    Error: Types.Requestˉrejection.Malformedˉheader {
+                        Byteˉoffset: Absoluteˉstart + Index,
+                    },
+                },
+            };
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Validateˉvisibleˉascii(
+    Value: Collections.Slice<u8>,
+    Absoluteˉstart: u64,
+    Allowˉempty: bool,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    let Length = Collections.Sliceˉlength(Value: Value);
+    if Length == 0u64 && !Allowˉempty {
+        return Result.Result.Failure {
+            Error: Types.Handlerˉfailure.Request {
+                Error: Types.Requestˉrejection.Malformedˉheader {
+                    Byteˉoffset: Absoluteˉstart,
+                },
+            },
+        };
+    }
+    var Index = 0u64;
+    while Index < Length {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Byte = Collections.Sliceˉat(Value: Value, Index: Index);
+        if Byte < 32u8 || Byte > 126u8 {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Request {
+                    Error: Types.Requestˉrejection.Malformedˉheader {
+                        Byteˉoffset: Absoluteˉstart + Index,
+                    },
+                },
+            };
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Parseˉdecimalˉbounded(
+    Value: Collections.Slice<u8>,
+    Absoluteˉstart: u64,
+    Maximum: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<u64, Types.Handlerˉfailure> effects() {
+    let Length = Collections.Sliceˉlength(Value: Value);
+    if Length == 0u64 {
+        return Result.Result.Failure {
+            Error: Types.Handlerˉfailure.Request {
+                Error: Types.Requestˉrejection.Invalidˉcontentˉlength {
+                    Byteˉoffset: Absoluteˉstart,
+                },
+            },
+        };
+    }
+    var Parsed = 0u64;
+    var Index = 0u64;
+    while Index < Length {
+        try Work.Charge(Meter: Meter, Amount: 1u64);
+        let Byte = Collections.Sliceˉat(Value: Value, Index: Index);
+        if Index == 0u64 && Length > 1u64 && Byte == 48u8 {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Request {
+                    Error: Types.Requestˉrejection.Invalidˉcontentˉlength {
+                        Byteˉoffset: Absoluteˉstart,
+                    },
+                },
+            };
+        }
+        if Byte < 48u8 || Byte > 57u8 {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Request {
+                    Error: Types.Requestˉrejection.Invalidˉcontentˉlength {
+                        Byteˉoffset: Absoluteˉstart + Index,
+                    },
+                },
+            };
+        }
+        let Digit = Byte - 48u8;
+        if Digit > Maximum || Parsed > (Maximum - Digit) / 10u64 {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Request {
+                    Error: Types.Requestˉrejection.Bodyˉlimit {
+                        Observed: Maximum + 1u64,
+                        Maximum: Maximum,
+                    },
+                },
+            };
+        }
+        Parsed = (Parsed * 10u64) + Digit;
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: Parsed };
+}

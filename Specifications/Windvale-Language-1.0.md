@@ -30,6 +30,8 @@ and the database-transaction findings resolved by
 [Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md),
 and the compiler-front-end findings resolved by
 [Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md),
+and the HTTP-handler findings resolved by
+[Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -609,7 +611,10 @@ zero or multiple borrowed parameters cannot return a borrow. A user-declared
 record, variant, module value, owned collection, task, or closure that escapes its
 call cannot contain a borrow. Foundation may use `Option<borrow T>`,
 `Result<borrow T, E>`, and borrowed slices as ephemeral results under the same
-one-owner rule.
+one-owner rule. A `Slice<T>` or `Mutableˉslice<T>` parameter counts as one
+borrowed parameter whose provenance is its underlying owner. A direct borrowed
+element result may inherit that one lifetime; it cannot outlive the slice or
+underlying owner.
 
 ### Allocation and release
 
@@ -780,6 +785,17 @@ outcomes; it does not gain hidden completion or exception precedence.
 Provider revocation, generation mismatch, restart, peer exit, timeout,
 cancellation, rejection, partial progress, and indeterminate completion remain
 distinct typed outcomes where the interface can observe them.
+
+For the first reviewed Hosted stream workload, a launcher/provider may supply
+one shared immutable opaque operation context that binds a nonzero monotonic
+clock identity/generation, absolute deadline, nonzero cancellation-view
+identity/generation, and admitted deadline span. Application source may borrow
+and pass it to explicit provider observation points. It cannot construct the
+context, inspect civil time through it, extend the deadline, or request
+cancellation. At the deadline tick timeout wins; a dispatched mutation may
+remain indeterminate. This value is provider control evidence, not a capability
+grant, task handle, keyword, or ambient clock. The structured-service workload
+must reconcile its canonical signature with scope cancellation before freeze.
 
 ## Capabilities and effects
 

@@ -41,11 +41,16 @@ provisional, and
 [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
 accepts the compiler workload's explicit generic construction, one-owner
 collection observation, immutable arena, scalar-position, diagnostic, and byte
-publication findings. The
+publication findings, and
+[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md)
+accepts the HTTP workload's checked slices, strict slice decode, byte decimal
+formatting, opaque operation context, and exact reliable-stream progress
+findings while leaving the service catalog identity provisional. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
 [bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
 [database-transaction bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md),
 [compiler-front-end bundle](Language-1.0-Paper-Corpus/04-Compiler-Front-End/README.md),
+[HTTP request-handler bundle](Language-1.0-Paper-Corpus/05-Http-Request-Handler/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
 are now draft reviewed. The accepted direction, normative-candidate suite,

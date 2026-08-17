@@ -15,7 +15,9 @@
 > and the database-transaction findings by
 > [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md),
 > and the compiler-front-end findings by
-> [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
+> [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md),
+> and the HTTP-handler findings by
+> [Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -844,7 +846,11 @@ byte offsets and rune positions are distinct types or explicitly named values.
 
 `bytes` is arbitrary immutable octets. Byte order is always named by the format or
 operation. Slices validate complete ranges with checked arithmetic before creating
-a view.
+a view. The HTTP workload confirms that slices also need ordinary checked length
+and index observation, immutable-byte range borrowing, and strict UTF-8 decode
+directly from a byte slice. Otherwise parsers are pushed toward raw pointers or
+an avoidable buffer-to-bytes copy. These remain Foundation calls, not indexing
+syntax or an HTTP compiler feature.
 
 Bounded interpolation is accepted for 1.0 after the builder contract is fixed.
 Interpolation:
@@ -874,6 +880,13 @@ Task creation explicitly moves, copies, or borrows captures under the same closu
 rules. Results and failures are typed. Cancellation is a requested state with exact
 observation points, not an asynchronous exception. Provider loss, timeout,
 cancellation, and application rejection remain distinct outcomes.
+
+A synchronous Hosted operation may receive one opaque launcher-supplied context
+binding an absolute monotonic deadline and cancellation view. This keeps clocks
+and cancellation authority out of ambient state while allowing exact provider
+observation. It does not let application code extend time or cancel tasks; the
+concurrent-service workload must connect that provider view to lexical scope
+cancellation.
 
 `async` and `await` are syntax over this structured task model. They do not create
 an ambient promise runtime, hidden scheduler, implicit replay, or unbounded queue.

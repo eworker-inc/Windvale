@@ -1,0 +1,24 @@
+edition 1;
+module Httpˉwork;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉresult as Result;
+import Httpˉtypes as Types;
+
+export fn Charge(
+    Meter: borrow mut Types.Workˉmeter,
+    Amount: u64,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    if Amount > Meter.Maximum - Meter.Completed {
+        return Result.Result.Failure {
+            Error: Types.Handlerˉfailure.Workˉexhausted {
+                Completed: Meter.Completed,
+                Maximum: Meter.Maximum,
+            },
+        };
+    }
+    Meter.Completed = Meter.Completed + Amount;
+    return Result.Result.Valid { Value: () };
+}

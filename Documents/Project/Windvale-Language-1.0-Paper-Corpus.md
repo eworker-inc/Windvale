@@ -18,7 +18,9 @@ and the file-copy workload findings resolved by
 and the database-transaction findings resolved by
 [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
 and the compiler-front-end findings resolved by
-[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
+[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
+and the HTTP-handler findings resolved by
+[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -270,6 +272,15 @@ partial response acceptance, and provider restart.
 
 Transport details may be hidden behind semantic capabilities, but authority,
 limits, mutation progress, and response ownership must remain visible.
+
+The complete source and evidence are in the
+[workload 5 paper bundle](Language-1.0-Paper-Corpus/05-Http-Request-Handler/README.md).
+Its owner review accepts checked slice observation and immutable byte-range
+borrowing, strict UTF-8 decode directly from a byte slice, invariant decimal
+byte-builder append, one opaque launcher-supplied operation context, and exact
+reliable-stream progress/no-replay meanings. These are normative-candidate
+contracts. The service capability identity and task/cancellation integration
+remain provisional pending workload 6.
 
 ## Workload 6: concurrent hosted service
 

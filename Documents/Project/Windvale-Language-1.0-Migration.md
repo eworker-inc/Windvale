@@ -17,7 +17,9 @@ and the file-copy workload findings resolved by
 and the database-transaction findings resolved by
 [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
 and the compiler-front-end findings resolved by
-[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
+[Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
+and the HTTP-handler findings resolved by
+[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -127,10 +129,12 @@ changes require semantic review.
 | Generics and protocols | Symbols, exact argument-type matcher, full-arity named explicit arguments, type checker, specialization cache, package interfaces | Specialized output should remain ordinary typed operations; no overload or result-context search. |
 | Ownership and borrowing | Type/ownership analysis, WIR evidence, diagnostics | Runtime move opcodes are not required when static lowering suffices. |
 | Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
+| Checked slices, byte views, strict slice decode, and decimal byte formatting | Foundation collections/bytes/text, ownership analysis, optional intrinsics | Ordinary borrow and builder lowering; no new opcode by default. |
 | Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
 | Function values and closures | Type checker, capture analysis, WIR, runtime/native calling convention | Likely requires versioned callable-value representation. |
 | Application entry and root binding | Package/build plan, launcher profile, capability catalog, runtime resource domain | Entry selection remains metadata; no special source function or ambient allocator. |
 | Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
+| Opaque operation contexts and exact stream progress | Hosted operation/network providers, launcher, capability runtime, generation verifier | Prefer ordinary opaque values and capability calls; no language opcode. |
 | Builders and interpolation | Foundation libraries, bounds analysis, optional intrinsics | No syntax-specific opcode required. |
 | Structured concurrency | Effects, captures, Foundation tasks, runtime providers, target schedulers | Requires an explicit verified task/runtime contract. |
 | Unsafe and FFI | System type checker, ABI specifications, native backend, verifier | Target- and ABI-specific additions are likely. |
@@ -160,6 +164,9 @@ reparse it.
   rank-based one-owner observation, Copy read-through, immutable arena
   publication, scalar source positions, diagnostic saturation, and exact byte
   emission from Decision 0758.
+- Retain the accepted checked slice/immutable byte views, strict slice decode,
+  invariant byte decimal append, opaque operation context, and exact
+  reliable-stream progress cases from Decision 0759.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.

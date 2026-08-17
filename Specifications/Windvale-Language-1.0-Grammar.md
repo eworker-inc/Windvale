@@ -433,7 +433,10 @@ Functionˉtype ::= [ "unsafe" ] [ "async" ] "fn"
 
 Borrow types may appear only where the semantic lifetime can be represented.
 Edition 1 has no named lifetime grammar. A public borrowed result is tied to its
-signature's one borrowed parameter. Borrow types are not permitted in user
+signature's one borrowed parameter. An ephemeral `Slice<T>` or
+`Mutableˉslice<T>` parameter is one borrowed parameter whose lifetime comes from
+its underlying owner, so a checked element result may inherit that sole
+provenance. Borrow types are not permitted in user
 record or variant fields, module data, constants, owned stored collections,
 tasks, serializable formats, or unrestricted escaping aggregates.
 

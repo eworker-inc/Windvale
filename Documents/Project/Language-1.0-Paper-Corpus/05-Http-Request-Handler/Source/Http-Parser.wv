@@ -1,0 +1,746 @@
+edition 1;
+module Httpˉparser;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Httpˉbytes as Byteˉparser;
+import Httpˉordering as Headerˉordering;
+import Httpˉtypes as Types;
+import Httpˉwork as Work;
+
+variant Recognizedˉheader {
+    Known(Value: Types.Headerˉname);
+    Transferˉencoding;
+    Unknown;
+}
+
+fn Reject<T>(
+    Error: Types.Requestˉrejection,
+) -> Result.Result<T, Types.Handlerˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Handlerˉfailure.Request { Error: Error },
+    };
+}
+
+fn Findˉcrlf(
+    Buffer: borrow Bytes.Byteˉbuffer,
+    Start: u64,
+    End: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Option.Option<u64>, Types.Handlerˉfailure> effects() {
+    var Index = Start;
+    while Index + 1u64 < End {
+        let First = try Byteˉparser.Bufferˉat(
+            Buffer: Buffer,
+            Offset: Index,
+            Meter: Meter,
+        );
+        if First == 13u8 {
+            let Second = try Byteˉparser.Bufferˉat(
+                Buffer: Buffer,
+                Offset: Index + 1u64,
+                Meter: Meter,
+            );
+            if Second == 10u8 {
+                return Result.Result.Valid {
+                    Value: Option.Option.Present { Value: Index },
+                };
+            }
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: Option.Option.Absent };
+}
+
+export fn Scan(
+    Buffer: borrow Bytes.Byteˉbuffer,
+    Received: u64,
+    State: Types.Headerˉscanˉstate,
+    Limits: borrow Types.Limits,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Headerˉscan, Types.Handlerˉfailure> effects() {
+    var Firstˉlineˉend = State.Firstˉlineˉend;
+    var Index = State.Nextˉstart;
+    while Index < Received {
+        if Index + 1u64 < Received {
+            let First = try Byteˉparser.Bufferˉat(
+                Buffer: Buffer,
+                Offset: Index,
+                Meter: Meter,
+            );
+            if First == 13u8 {
+                let Second = try Byteˉparser.Bufferˉat(
+                    Buffer: Buffer,
+                    Offset: Index + 1u64,
+                    Meter: Meter,
+                );
+                if Second == 10u8 {
+                    match Firstˉlineˉend {
+                        case Option.Option.Absent {
+                            if Index > Limits.Maximumˉstartˉlineˉbytes {
+                                return Reject(
+                                    Error: Types.Requestˉrejection.Startˉlineˉlimit {
+                                        Observed: Index,
+                                        Maximum: Limits.Maximumˉstartˉlineˉbytes,
+                                    },
+                                );
+                            }
+                            Firstˉlineˉend = Option.Option.Present {
+                                Value: Index,
+                            };
+                        }
+                        case _ { }
+                    }
+
+                    if Index + 3u64 < Received {
+                        let Third = try Byteˉparser.Bufferˉat(
+                            Buffer: Buffer,
+                            Offset: Index + 2u64,
+                            Meter: Meter,
+                        );
+                        let Fourth = try Byteˉparser.Bufferˉat(
+                            Buffer: Buffer,
+                            Offset: Index + 3u64,
+                            Meter: Meter,
+                        );
+                        if Third == 13u8 && Fourth == 10u8 {
+                            let Headerˉend = Index + 4u64;
+                            if Headerˉend > Limits.Maximumˉheaderˉbytes {
+                                return Reject(
+                                    Error: Types.Requestˉrejection.Headerˉbytesˉlimit {
+                                        Observed: Headerˉend,
+                                        Maximum: Limits.Maximumˉheaderˉbytes,
+                                    },
+                                );
+                            }
+                            return match Firstˉlineˉend {
+                                case Option.Option.Present { Value: Value } {
+                                    Result.Result.Valid {
+                                        Value: Types.Headerˉscan.Complete {
+                                            Firstˉlineˉend: Value,
+                                            Headerˉend: Headerˉend,
+                                        },
+                                    }
+                                }
+                                case Option.Option.Absent {
+                                    Reject(
+                                        Error: Types.Requestˉrejection.Malformedˉstartˉline {
+                                            Byteˉoffset: 0u64,
+                                        },
+                                    )
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        Index = Index + 1u64;
+    }
+
+    match Firstˉlineˉend {
+        case Option.Option.Absent {
+            if Received > Limits.Maximumˉstartˉlineˉbytes + 2u64 {
+                return Reject(
+                    Error: Types.Requestˉrejection.Startˉlineˉlimit {
+                        Observed: Received,
+                        Maximum: Limits.Maximumˉstartˉlineˉbytes,
+                    },
+                );
+            }
+        }
+        case _ { }
+    }
+    if Received >= Limits.Maximumˉheaderˉbytes {
+        return Reject(
+            Error: Types.Requestˉrejection.Headerˉbytesˉlimit {
+                Observed: Received,
+                Maximum: Limits.Maximumˉheaderˉbytes,
+            },
+        );
+    }
+
+    let Nextˉstart = if Received > 3u64 {
+        Received - 3u64
+    } else {
+        0u64
+    };
+    return Result.Result.Valid {
+        Value: Types.Headerˉscan.Needˉmore {
+            State: Types.Headerˉscanˉstate {
+                Nextˉstart: Nextˉstart,
+                Firstˉlineˉend: Firstˉlineˉend,
+            },
+        },
+    };
+}
+
+fn Classifyˉmethod(
+    Value: Collections.Slice<u8>,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Method, Types.Handlerˉfailure> effects() {
+    if try Byteˉparser.Equal(
+        Value: Value,
+        Expected: borrow b"GET",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid { Value: Types.Method.Get };
+    }
+    if try Byteˉparser.Equal(
+        Value: Value,
+        Expected: borrow b"POST",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid { Value: Types.Method.Post };
+    }
+    try Byteˉparser.Validateˉtoken(
+        Value: Value,
+        Absoluteˉstart: 0u64,
+        Meter: Meter,
+    );
+    return Result.Result.Valid { Value: Types.Method.Other };
+}
+
+fn Classifyˉtarget(
+    Value: Collections.Slice<u8>,
+    Absoluteˉstart: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Target, Types.Handlerˉfailure> effects() {
+    try Byteˉparser.Validateˉvisibleˉascii(
+        Value: Value,
+        Absoluteˉstart: Absoluteˉstart,
+        Allowˉempty: false,
+        Meter: Meter,
+    );
+    if try Byteˉparser.Equal(
+        Value: Value,
+        Expected: borrow b"/health",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid { Value: Types.Target.Health };
+    }
+    if try Byteˉparser.Equal(
+        Value: Value,
+        Expected: borrow b"/echo",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid { Value: Types.Target.Echo };
+    }
+    return Result.Result.Valid { Value: Types.Target.Other };
+}
+
+fn Classifyˉheader(
+    Value: Collections.Slice<u8>,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Recognizedˉheader, Types.Handlerˉfailure> effects() {
+    if try Byteˉparser.Equalˉfoldedˉascii(
+        Value: Value,
+        Expectedˉlower: borrow b"host",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid {
+            Value: Recognizedˉheader.Known {
+                Value: Types.Headerˉname.Host,
+            },
+        };
+    }
+    if try Byteˉparser.Equalˉfoldedˉascii(
+        Value: Value,
+        Expectedˉlower: borrow b"content-length",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid {
+            Value: Recognizedˉheader.Known {
+                Value: Types.Headerˉname.Contentˉlength,
+            },
+        };
+    }
+    if try Byteˉparser.Equalˉfoldedˉascii(
+        Value: Value,
+        Expectedˉlower: borrow b"content-type",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid {
+            Value: Recognizedˉheader.Known {
+                Value: Types.Headerˉname.Contentˉtype,
+            },
+        };
+    }
+    if try Byteˉparser.Equalˉfoldedˉascii(
+        Value: Value,
+        Expectedˉlower: borrow b"connection",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid {
+            Value: Recognizedˉheader.Known {
+                Value: Types.Headerˉname.Connection,
+            },
+        };
+    }
+    if try Byteˉparser.Equalˉfoldedˉascii(
+        Value: Value,
+        Expectedˉlower: borrow b"transfer-encoding",
+        Meter: Meter,
+    ) {
+        return Result.Result.Valid { Value: Recognizedˉheader.Transferˉencoding };
+    }
+    return Result.Result.Valid { Value: Recognizedˉheader.Unknown };
+}
+
+fn Insertˉheader(
+    Headers: borrow mut Collections.Map<Types.Headerˉname, Types.Headerˉvalue>,
+    Name: Types.Headerˉname,
+    Range: Types.Byteˉrange,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    return match Collections.Mapˉinsert(
+        Map: Headers,
+        Key: Name,
+        Value: Types.Headerˉvalue { Range: Range },
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            match Error.Error {
+                case Collections.Collectionˉfailure.Duplicate {
+                    Reject(
+                        Error: Types.Requestˉrejection.Duplicateˉheader {
+                            Header: Error.Key,
+                        },
+                    )
+                }
+                case _ {
+                    Result.Result.Failure {
+                        Error: Types.Handlerˉfailure.Collection {
+                            Error: Error.Error,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Findˉheader(
+    Headers: borrow Collections.Map<Types.Headerˉname, Types.Headerˉvalue>,
+    Name: Types.Headerˉname,
+) -> Option.Option<Types.Headerˉvalue> effects() {
+    return match Collections.Mapˉfindˉrank(
+        Map: Headers,
+        Key: borrow Name,
+    ) {
+        case Option.Option.Absent { Option.Option.Absent }
+        case Option.Option.Present { Value: Rank } {
+            Option.Option.Present {
+                Value: Collections.Mapˉborrowˉat(
+                    Map: Headers,
+                    Index: Rank,
+                ),
+            }
+        }
+    };
+}
+
+fn Parseˉstartˉline(
+    Buffer: borrow Bytes.Byteˉbuffer,
+    Firstˉlineˉend: u64,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Parsedˉstartˉline, Types.Handlerˉfailure> effects() {
+    var Firstˉspace = Option.Option.Absent;
+    var Secondˉspace = Option.Option.Absent;
+    var Index = 0u64;
+    while Index < Firstˉlineˉend {
+        let Byte = try Byteˉparser.Bufferˉat(
+            Buffer: Buffer,
+            Offset: Index,
+            Meter: Meter,
+        );
+        if Byte == 32u8 {
+            match Firstˉspace {
+                case Option.Option.Absent {
+                    Firstˉspace = Option.Option.Present { Value: Index };
+                }
+                case Option.Option.Present { Value: _ } {
+                    match Secondˉspace {
+                        case Option.Option.Absent {
+                            Secondˉspace = Option.Option.Present { Value: Index };
+                        }
+                        case Option.Option.Present { Value: _ } {
+                            return Reject(
+                                Error: Types.Requestˉrejection.Malformedˉstartˉline {
+                                    Byteˉoffset: Index,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        Index = Index + 1u64;
+    }
+
+    let Methodˉend = match Firstˉspace {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
+            return Reject(
+                Error: Types.Requestˉrejection.Malformedˉstartˉline {
+                    Byteˉoffset: Firstˉlineˉend,
+                },
+            );
+        }
+    };
+    let Targetˉend = match Secondˉspace {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
+            return Reject(
+                Error: Types.Requestˉrejection.Malformedˉstartˉline {
+                    Byteˉoffset: Firstˉlineˉend,
+                },
+            );
+        }
+    };
+    if Methodˉend == 0u64 || Targetˉend <= Methodˉend + 1u64 {
+        return Reject(
+            Error: Types.Requestˉrejection.Malformedˉstartˉline {
+                Byteˉoffset: 0u64,
+            },
+        );
+    }
+
+    let Methodˉbytes = Bytes.Borrowˉslice(
+        Buffer: Buffer,
+        Start: 0u64,
+        Length: Methodˉend,
+    );
+    let Targetˉstart = Methodˉend + 1u64;
+    let Targetˉbytes = Bytes.Borrowˉslice(
+        Buffer: Buffer,
+        Start: Targetˉstart,
+        Length: Targetˉend - Targetˉstart,
+    );
+    let Versionˉstart = Targetˉend + 1u64;
+    let Versionˉbytes = Bytes.Borrowˉslice(
+        Buffer: Buffer,
+        Start: Versionˉstart,
+        Length: Firstˉlineˉend - Versionˉstart,
+    );
+    if !(try Byteˉparser.Equal(
+        Value: Versionˉbytes,
+        Expected: borrow b"HTTP/1.1",
+        Meter: Meter,
+    )) {
+        return Reject(
+            Error: Types.Requestˉrejection.Unsupportedˉversion {
+                Byteˉoffset: Versionˉstart,
+            },
+        );
+    }
+    return Result.Result.Valid {
+        Value: Types.Parsedˉstartˉline {
+            Method: try Classifyˉmethod(
+                Value: Methodˉbytes,
+                Meter: Meter,
+            ),
+            Target: try Classifyˉtarget(
+                Value: Targetˉbytes,
+                Absoluteˉstart: Targetˉstart,
+                Meter: Meter,
+            ),
+        },
+    };
+}
+
+fn Route(Method: Types.Method, Target: Types.Target) -> Types.Route effects() {
+    return match Method {
+        case Types.Method.Get {
+            match Target {
+                case Types.Target.Health { Types.Route.Health }
+                case _ { Types.Route.Notˉfound }
+            }
+        }
+        case Types.Method.Post {
+            match Target {
+                case Types.Target.Echo { Types.Route.Echo }
+                case _ { Types.Route.Notˉfound }
+            }
+        }
+        case Types.Method.Other { Types.Route.Methodˉnotˉallowed }
+    };
+}
+
+export fn Parseˉhead(
+    Buffer: borrow Bytes.Byteˉbuffer,
+    Firstˉlineˉend: u64,
+    Headerˉend: u64,
+    Headerˉbudget: Memory.Memoryˉbudget,
+    Limits: borrow Types.Limits,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Parsedˉhead, Types.Handlerˉfailure>
+    effects(memory.allocate, resource.release) {
+    let Start = try Parseˉstartˉline(
+        Buffer: Buffer,
+        Firstˉlineˉend: Firstˉlineˉend,
+        Meter: Meter,
+    );
+    var Headers = match Collections.Mapˉconstruct::<Types.Headerˉname, Types.Headerˉvalue>(
+        Budget: Headerˉbudget,
+        Maximumˉitems: 4u64,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+
+    var Headerˉcount = 0u64;
+    var Lineˉstart = Firstˉlineˉend + 2u64;
+    let Finalˉemptyˉline = Headerˉend - 2u64;
+    while Lineˉstart < Finalˉemptyˉline {
+        if Headerˉcount == Limits.Maximumˉheaders {
+            return Reject(
+                Error: Types.Requestˉrejection.Headerˉcountˉlimit {
+                    Observed: Headerˉcount + 1u64,
+                    Maximum: Limits.Maximumˉheaders,
+                },
+            );
+        }
+        Headerˉcount = Headerˉcount + 1u64;
+        let Lineˉend = match try Findˉcrlf(
+            Buffer: Buffer,
+            Start: Lineˉstart,
+            End: Finalˉemptyˉline,
+            Meter: Meter,
+        ) {
+            case Option.Option.Present { Value: Value } { Value }
+            case Option.Option.Absent {
+                return Reject(
+                    Error: Types.Requestˉrejection.Malformedˉheader {
+                        Byteˉoffset: Lineˉstart,
+                    },
+                );
+            }
+        };
+
+        var Colon = Option.Option.Absent;
+        var Index = Lineˉstart;
+        while Index < Lineˉend {
+            let Byte = try Byteˉparser.Bufferˉat(
+                Buffer: Buffer,
+                Offset: Index,
+                Meter: Meter,
+            );
+            if Byte == 58u8 {
+                Colon = Option.Option.Present { Value: Index };
+                break;
+            }
+            Index = Index + 1u64;
+        }
+        let Colonˉoffset = match Colon {
+            case Option.Option.Present { Value: Value } { Value }
+            case Option.Option.Absent {
+                return Reject(
+                    Error: Types.Requestˉrejection.Malformedˉheader {
+                        Byteˉoffset: Lineˉstart,
+                    },
+                );
+            }
+        };
+        if Colonˉoffset == Lineˉstart
+            || Colonˉoffset + 1u64 >= Lineˉend
+            || (try Byteˉparser.Bufferˉat(
+                Buffer: Buffer,
+                Offset: Colonˉoffset + 1u64,
+                Meter: Meter,
+            )) != 32u8 {
+            return Reject(
+                Error: Types.Requestˉrejection.Malformedˉheader {
+                    Byteˉoffset: Colonˉoffset,
+                },
+            );
+        }
+
+        let Name = Bytes.Borrowˉslice(
+            Buffer: Buffer,
+            Start: Lineˉstart,
+            Length: Colonˉoffset - Lineˉstart,
+        );
+        try Byteˉparser.Validateˉtoken(
+            Value: Name,
+            Absoluteˉstart: Lineˉstart,
+            Meter: Meter,
+        );
+        let Valueˉstart = Colonˉoffset + 2u64;
+        let Valueˉrange = Types.Byteˉrange {
+            Start: Valueˉstart,
+            Length: Lineˉend - Valueˉstart,
+        };
+        let Value = Bytes.Borrowˉslice(
+            Buffer: Buffer,
+            Start: Valueˉrange.Start,
+            Length: Valueˉrange.Length,
+        );
+        try Byteˉparser.Validateˉvisibleˉascii(
+            Value: Value,
+            Absoluteˉstart: Valueˉstart,
+            Allowˉempty: true,
+            Meter: Meter,
+        );
+
+        match try Classifyˉheader(Value: Name, Meter: Meter) {
+            case Recognizedˉheader.Known { Value: Header } {
+                try Insertˉheader(
+                    Headers: borrow mut Headers,
+                    Name: Header,
+                    Range: Valueˉrange,
+                );
+            }
+            case Recognizedˉheader.Transferˉencoding {
+                return Reject(
+                    Error: Types.Requestˉrejection.Transferˉencodingˉforbidden {
+                        Byteˉoffset: Lineˉstart,
+                    },
+                );
+            }
+            case Recognizedˉheader.Unknown { }
+        }
+        Lineˉstart = Lineˉend + 2u64;
+    }
+    if Lineˉstart != Finalˉemptyˉline {
+        return Reject(
+            Error: Types.Requestˉrejection.Malformedˉheader {
+                Byteˉoffset: Lineˉstart,
+            },
+        );
+    }
+
+    let Host = match Findˉheader(
+        Headers: borrow Headers,
+        Name: Types.Headerˉname.Host,
+    ) {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
+            return Reject(Error: Types.Requestˉrejection.Hostˉmissing);
+        }
+    };
+    if Host.Range.Length == 0u64 {
+        return Reject(
+            Error: Types.Requestˉrejection.Invalidˉhost {
+                Byteˉoffset: Host.Range.Start,
+            },
+        );
+    }
+
+    let Contentˉlength = match Findˉheader(
+        Headers: borrow Headers,
+        Name: Types.Headerˉname.Contentˉlength,
+    ) {
+        case Option.Option.Absent { Option.Option.Absent }
+        case Option.Option.Present { Value: Entry } {
+            let Value = Bytes.Borrowˉslice(
+                Buffer: Buffer,
+                Start: Entry.Range.Start,
+                Length: Entry.Range.Length,
+            );
+            Option.Option.Present {
+                Value: try Byteˉparser.Parseˉdecimalˉbounded(
+                    Value: Value,
+                    Absoluteˉstart: Entry.Range.Start,
+                    Maximum: Limits.Maximumˉbodyˉbytes,
+                    Meter: Meter,
+                ),
+            }
+        }
+    };
+    let Bodyˉlength = match Contentˉlength {
+        case Option.Option.Absent { 0u64 }
+        case Option.Option.Present { Value: Value } { Value }
+    };
+
+    match Findˉheader(
+        Headers: borrow Headers,
+        Name: Types.Headerˉname.Connection,
+    ) {
+        case Option.Option.Absent { }
+        case Option.Option.Present { Value: Entry } {
+            let Value = Bytes.Borrowˉslice(
+                Buffer: Buffer,
+                Start: Entry.Range.Start,
+                Length: Entry.Range.Length,
+            );
+            if !(try Byteˉparser.Equalˉfoldedˉascii(
+                Value: Value,
+                Expectedˉlower: borrow b"close",
+                Meter: Meter,
+            )) {
+                return Reject(
+                    Error: Types.Requestˉrejection.Invalidˉconnection,
+                );
+            }
+        }
+    }
+
+    let Selectedˉroute = Route(Method: Start.Method, Target: Start.Target);
+    match Selectedˉroute {
+        case Types.Route.Health {
+            if Bodyˉlength != 0u64 {
+                return Reject(
+                    Error: Types.Requestˉrejection.Unexpectedˉbody {
+                        Observed: Bodyˉlength,
+                    },
+                );
+            }
+        }
+        case Types.Route.Echo {
+            match Contentˉlength {
+                case Option.Option.Absent {
+                    return Reject(
+                        Error: Types.Requestˉrejection.Contentˉlengthˉrequired,
+                    );
+                }
+                case _ { }
+            }
+            let Contentˉtype = match Findˉheader(
+                Headers: borrow Headers,
+                Name: Types.Headerˉname.Contentˉtype,
+            ) {
+                case Option.Option.Present { Value: Value } { Value }
+                case Option.Option.Absent {
+                    return Reject(
+                        Error: Types.Requestˉrejection.Contentˉtypeˉrequired,
+                    );
+                }
+            };
+            let Value = Bytes.Borrowˉslice(
+                Buffer: Buffer,
+                Start: Contentˉtype.Range.Start,
+                Length: Contentˉtype.Range.Length,
+            );
+            if !(try Byteˉparser.Equalˉfoldedˉascii(
+                Value: Value,
+                Expectedˉlower: borrow b"text/plain; charset=utf-8",
+                Meter: Meter,
+            )) {
+                return Reject(
+                    Error: Types.Requestˉrejection.Invalidˉcontentˉtype,
+                );
+            }
+        }
+        case _ { }
+    }
+
+    return Result.Result.Valid {
+        Value: Types.Parsedˉhead {
+            Route: Selectedˉroute,
+            Bodyˉstart: Headerˉend,
+            Bodyˉlength: Bodyˉlength,
+        },
+    };
+}

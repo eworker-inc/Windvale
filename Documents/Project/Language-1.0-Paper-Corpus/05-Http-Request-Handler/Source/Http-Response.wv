@@ -1,0 +1,208 @@
+edition 1;
+module Httpˉresponse;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Httpˉtypes as Types;
+
+fn Limit<T>(Maximum: u64) -> Result.Result<T, Types.Handlerˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Handlerˉfailure.Responseˉlimit { Maximum: Maximum },
+    };
+}
+
+fn Appendˉbytes(
+    Builder: borrow mut Bytes.Bytesˉbuilder,
+    Value: borrow bytes,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    return match Bytes.Appendˉbytes(Builder: Builder, Value: Value) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: _ } { Limit(Maximum: Maximum) }
+    };
+}
+
+fn Appendˉtext(
+    Builder: borrow mut Bytes.Bytesˉbuilder,
+    Value: borrow text,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    return match Bytes.Appendˉutf8(Builder: Builder, Value: Value) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: _ } { Limit(Maximum: Maximum) }
+    };
+}
+
+fn Appendˉlength(
+    Builder: borrow mut Bytes.Bytesˉbuilder,
+    Value: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    return match Bytes.Appendˉu64ˉdecimal(
+        Builder: Builder,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: _ } { Limit(Maximum: Maximum) }
+    };
+}
+
+fn Statusˉline(Status: Types.Status) -> bytes effects() {
+    return match Status {
+        case Types.Status.Ok { b"HTTP/1.1 200 OK\r\n" }
+        case Types.Status.Badˉrequest { b"HTTP/1.1 400 Bad Request\r\n" }
+        case Types.Status.Notˉfound { b"HTTP/1.1 404 Not Found\r\n" }
+        case Types.Status.Methodˉnotˉallowed {
+            b"HTTP/1.1 405 Method Not Allowed\r\n"
+        }
+        case Types.Status.Payloadˉtooˉlarge {
+            b"HTTP/1.1 413 Payload Too Large\r\n"
+        }
+    };
+}
+
+fn Bodyˉlength(Body: borrow Types.Responseˉbody) -> u64 effects() {
+    return match Body {
+        case Types.Responseˉbody.Bytes { Value: Value } {
+            Bytes.Length(Value: borrow Value)
+        }
+        case Types.Responseˉbody.Text { Value: Value } {
+            Text.Byteˉlength(Value: borrow Value)
+        }
+    };
+}
+
+export fn Planˉhealth() -> Types.Responseˉplan effects() {
+    return Types.Responseˉplan {
+        Status: Types.Status.Ok,
+        Body: Types.Responseˉbody.Bytes { Value: b"ok\n" },
+    };
+}
+
+export fn Planˉecho(Value: text) -> Types.Responseˉplan effects() {
+    return Types.Responseˉplan {
+        Status: Types.Status.Ok,
+        Body: Types.Responseˉbody.Text { Value: Value },
+    };
+}
+
+export fn Planˉnotˉfound() -> Types.Responseˉplan effects() {
+    return Types.Responseˉplan {
+        Status: Types.Status.Notˉfound,
+        Body: Types.Responseˉbody.Bytes { Value: b"not found\n" },
+    };
+}
+
+export fn Planˉmethodˉnotˉallowed() -> Types.Responseˉplan effects() {
+    return Types.Responseˉplan {
+        Status: Types.Status.Methodˉnotˉallowed,
+        Body: Types.Responseˉbody.Bytes { Value: b"method not allowed\n" },
+    };
+}
+
+export fn Planˉrejection(
+    Error: borrow Types.Requestˉrejection,
+) -> Types.Responseˉplan effects() {
+    let Tooˉlarge = match Error {
+        case Types.Requestˉrejection.Startˉlineˉlimit {
+            Observed: _,
+            Maximum: _,
+        } { true }
+        case Types.Requestˉrejection.Headerˉbytesˉlimit {
+            Observed: _,
+            Maximum: _,
+        } { true }
+        case Types.Requestˉrejection.Headerˉcountˉlimit {
+            Observed: _,
+            Maximum: _,
+        } { true }
+        case Types.Requestˉrejection.Bodyˉlimit {
+            Observed: _,
+            Maximum: _,
+        } { true }
+        case _ { false }
+    };
+    if Tooˉlarge {
+        return Types.Responseˉplan {
+            Status: Types.Status.Payloadˉtooˉlarge,
+            Body: Types.Responseˉbody.Bytes {
+                Value: b"payload too large\n",
+            },
+        };
+    }
+    return Types.Responseˉplan {
+        Status: Types.Status.Badˉrequest,
+        Body: Types.Responseˉbody.Bytes { Value: b"bad request\n" },
+    };
+}
+
+export fn Render(
+    Plan: borrow Types.Responseˉplan,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<bytes, Types.Handlerˉfailure>
+    effects(memory.allocate, resource.release) {
+    var Builder = match Bytes.Constructˉreserved(
+        Budget: Budget,
+        Maximumˉoutputˉbytes: Maximumˉbytes,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Response,
+                    Error: Error,
+                },
+            };
+        }
+    };
+
+    try Appendˉbytes(
+        Builder: borrow mut Builder,
+        Value: borrow Statusˉline(Status: Plan.Status),
+        Maximum: Maximumˉbytes,
+    );
+    try Appendˉbytes(
+        Builder: borrow mut Builder,
+        Value: borrow b"Content-Length: ",
+        Maximum: Maximumˉbytes,
+    );
+    try Appendˉlength(
+        Builder: borrow mut Builder,
+        Value: Bodyˉlength(Body: borrow Plan.Body),
+        Maximum: Maximumˉbytes,
+    );
+    try Appendˉbytes(
+        Builder: borrow mut Builder,
+        Value: borrow b"\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n",
+        Maximum: Maximumˉbytes,
+    );
+    match Plan.Body {
+        case Types.Responseˉbody.Bytes { Value: Value } {
+            try Appendˉbytes(
+                Builder: borrow mut Builder,
+                Value: borrow Value,
+                Maximum: Maximumˉbytes,
+            );
+        }
+        case Types.Responseˉbody.Text { Value: Value } {
+            try Appendˉtext(
+                Builder: borrow mut Builder,
+                Value: borrow Value,
+                Maximum: Maximumˉbytes,
+            );
+        }
+    }
+    return Result.Result.Valid { Value: Bytes.Freeze(Builder: Builder) };
+}

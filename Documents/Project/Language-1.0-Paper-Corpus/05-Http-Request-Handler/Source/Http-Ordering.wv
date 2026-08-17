@@ -1,0 +1,43 @@
+edition 1;
+module Httpˉordering;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉordering as Ordering;
+import Httpˉtypes as Types;
+
+implement Ordering.Ordering<Types.Headerˉname> for Types.Headerˉname {
+    fn Compare(
+        Left: borrow Types.Headerˉname,
+        Right: borrow Types.Headerˉname,
+    ) -> Ordering.Orderingˉresult effects() {
+        if Left == Right {
+            return Ordering.Orderingˉresult.Equal;
+        }
+        return match Left {
+            case Types.Headerˉname.Host {
+                Ordering.Orderingˉresult.Less
+            }
+            case Types.Headerˉname.Contentˉlength {
+                match Right {
+                    case Types.Headerˉname.Host {
+                        Ordering.Orderingˉresult.Greater
+                    }
+                    case _ { Ordering.Orderingˉresult.Less }
+                }
+            }
+            case Types.Headerˉname.Contentˉtype {
+                match Right {
+                    case Types.Headerˉname.Connection {
+                        Ordering.Orderingˉresult.Less
+                    }
+                    case _ { Ordering.Orderingˉresult.Greater }
+                }
+            }
+            case Types.Headerˉname.Connection {
+                Ordering.Orderingˉresult.Greater
+            }
+        };
+    }
+}

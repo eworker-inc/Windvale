@@ -14,7 +14,9 @@ and
 and
 [Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
 and
-[Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md).
+[Decision 0758](../Documents/Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
+and
+[Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -585,6 +587,23 @@ Slices cannot outlive, resize, move, freeze, release, or close their owner.
 Mutable slices cannot overlap any live read or write access. Splitting a mutable
 slice is permitted only by an operation that proves disjoint ranges.
 
+The HTTP-handler workload fixes these first exact immutable-slice observations:
+
+~~~text
+export fn Sliceˉlength<T>(Value: Slice<T>) -> u64 effects();
+
+export fn Sliceˉat<T>(
+    Value: Slice<T>,
+    Index: u64,
+) -> borrow T effects();
+~~~
+
+`Sliceˉlength` returns exact elements. `Sliceˉat` checks
+`Index < Sliceˉlength(Value)` before access and traps terminally on a violated
+proved precondition. Its result inherits the ephemeral slice's one underlying
+owner and cannot escape it. Decision 0758's Copy/shared read-through applies to
+the result; it does not expose an address or add unchecked indexing.
+
 ## Deterministic maps
 
 `Map<K, V>` is a move-owned finite associative collection. Language 1.0's
@@ -868,6 +887,12 @@ signatures:
 ~~~text
 export fn Length(Value: borrow bytes) -> u64 effects();
 export fn At(Value: borrow bytes, Index: u64) -> u8 effects();
+
+export fn Borrowˉrange(
+    Value: borrow bytes,
+    Start: u64,
+    Length: u64,
+) -> Slice<u8> effects();
 ~~~
 
 `Length` returns the current byte length, not the admitted maximum or hidden
@@ -876,6 +901,11 @@ capacity. `At` requires `Index < Length(Value)`. It checks that precondition wit
 violation; it can never read outside the value or return a partial byte. Code
 parsing untrusted offsets first proves the complete range or uses a separately
 named recoverable codec. No unchecked Core or Hosted counterpart is implied.
+
+`Borrowˉrange` checks `Start + Length` with checked arithmetic against the
+exact byte length before constructing a view. An empty range may use only the
+admitted one-past-end boundary. The slice is tied to `Value` as its one borrowed
+owner and cannot outlive, move, or release that owner.
 
 The file-copy workload fixes these version-1 byte-buffer signatures:
 
@@ -960,6 +990,11 @@ export fn Appendˉu64ˉlittle(
     Value: u64,
 ) -> Result<unit, Limitˉfailure> effects();
 
+export fn Appendˉu64ˉdecimal(
+    Builder: borrow mut Bytesˉbuilder,
+    Value: u64,
+) -> Result<unit, Limitˉfailure> effects();
+
 export fn Freeze(Builder: Bytesˉbuilder) -> bytes effects();
 ~~~
 
@@ -971,8 +1006,11 @@ All appends are all-or-nothing. `Appendˉutf8` emits canonical UTF-8 without a
 host encoding. The integer operations prove their complete resulting length
 with checked arithmetic before mutation and append exactly 1, 4, or 8 bytes;
 the multi-byte forms use little endian regardless of host alignment or byte
-order. `Freeze` consumes the builder and transfers retained accounting to the
-exact immutable result without fallible compaction.
+order. `Appendˉu64ˉdecimal` emits shortest unsigned ASCII decimal, with zero
+as `0` and no sign, locale, grouping, padding, or radix prefix. It too proves the
+complete resulting length before mutation. `Freeze` consumes the builder and
+transfers retained accounting to the exact immutable result without fallible
+compaction.
 
 Byte codecs validate complete input ranges before reading and use checked offset
 arithmetic. No codec inherits native alignment or endianness.
@@ -1029,6 +1067,13 @@ export fn Decodeˉutf8ˉreserved(
     Maximumˉrunes: u64,
 ) -> Result<text, Decodeˉutf8ˉfailure> effects(memory.allocate);
 
+export fn Decodeˉutf8ˉsliceˉreserved(
+    Budget: Memoryˉbudget,
+    Value: Slice<u8>,
+    Maximumˉbytes: u64,
+    Maximumˉrunes: u64,
+) -> Result<text, Decodeˉutf8ˉfailure> effects(memory.allocate);
+
 export fn Decodeˉfailureˉbyteˉoffset(
     Error: borrow Decodeˉfailure,
 ) -> u64 effects();
@@ -1074,6 +1119,12 @@ it may retain the same backing and charge and never creates a mutable alias.
 Reserved construction has the same committed-capacity, local failure-release,
 atomic append, and accounting-transfer rules as the byte builder.
 `Appendˉu64ˉdecimal` emits invariant shortest unsigned decimal.
+
+`Decodeˉutf8ˉsliceˉreserved` has the same validation, limits, budget,
+publication, and failure contract over one ephemeral immutable byte slice. The
+slice remains borrowed only for the call. Success publishes independent shared
+immutable text and does not retain the slice's mutable-buffer owner or allocate
+an intermediate immutable byte value.
 
 Canonical compiler positions over `text` use zero-based byte/rune offsets and
 one-based scalar line/column. LF advances the line and resets the column; CR and
@@ -1370,6 +1421,11 @@ Before source freeze:
 17. strict UTF-8 decode, scalar source positions, diagnostic saturation, and
     exact integer byte appends pass boundary and deterministic-output cases;
 18. all explicit generic Foundation calls name the complete canonical instance;
-    and
-19. a responsibility matrix identifies ordinary source, compiler intrinsic,
+19. checked slice observation, immutable byte-range borrowing, strict slice
+    decode, and invariant decimal byte append pass malformed-range, ownership,
+    allocation, and capacity cases;
+20. deadline/cancellation context and exact stream progress remain compatible
+    with the structured-service workload without permitting indeterminate
+    mutation replay; and
+21. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.

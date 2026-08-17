@@ -1,0 +1,731 @@
+edition 1;
+module Httpˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability network.service.accept version 1;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Httpˉparser as Parser;
+import Httpˉresponse as Response;
+import Httpˉtypes as Types;
+import Platformˉoperation as Operation;
+import Platformˉstream as Stream;
+
+const HEADER_MAP_BUDGET_BYTES: u64 = 4096u64;
+const BODY_TEXT_BUDGET_BYTES: u64 = 65536u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Handlerˉfailure.Invalidˉconfiguration {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Types.Limits,
+) -> Result.Result<unit, Types.Handlerˉfailure> effects() {
+    if Limits.Maximumˉstartˉlineˉbytes == 0u64
+        || Limits.Maximumˉstartˉlineˉbytes > 2048u64 {
+        return Invalid(
+            Field: 1u32,
+            Observed: Limits.Maximumˉstartˉlineˉbytes,
+            Minimum: 1u64,
+            Maximum: 2048u64,
+        );
+    }
+    if Limits.Maximumˉheaderˉbytes
+            < Limits.Maximumˉstartˉlineˉbytes + 4u64
+        || Limits.Maximumˉheaderˉbytes > 8192u64 {
+        return Invalid(
+            Field: 2u32,
+            Observed: Limits.Maximumˉheaderˉbytes,
+            Minimum: Limits.Maximumˉstartˉlineˉbytes + 4u64,
+            Maximum: 8192u64,
+        );
+    }
+    if Limits.Maximumˉheaders == 0u64 || Limits.Maximumˉheaders > 32u64 {
+        return Invalid(
+            Field: 3u32,
+            Observed: Limits.Maximumˉheaders,
+            Minimum: 1u64,
+            Maximum: 32u64,
+        );
+    }
+    if Limits.Maximumˉbodyˉbytes == 0u64
+        || Limits.Maximumˉbodyˉbytes > 16384u64 {
+        return Invalid(
+            Field: 4u32,
+            Observed: Limits.Maximumˉbodyˉbytes,
+            Minimum: 1u64,
+            Maximum: 16384u64,
+        );
+    }
+    if Limits.Maximumˉbodyˉrunes == 0u64
+        || Limits.Maximumˉbodyˉrunes > Limits.Maximumˉbodyˉbytes {
+        return Invalid(
+            Field: 5u32,
+            Observed: Limits.Maximumˉbodyˉrunes,
+            Minimum: 1u64,
+            Maximum: Limits.Maximumˉbodyˉbytes,
+        );
+    }
+    let Requiredˉrequest = Limits.Maximumˉheaderˉbytes
+        + Limits.Maximumˉbodyˉbytes;
+    if Limits.Maximumˉrequestˉbytes < Requiredˉrequest
+        || Limits.Maximumˉrequestˉbytes > 24576u64 {
+        return Invalid(
+            Field: 6u32,
+            Observed: Limits.Maximumˉrequestˉbytes,
+            Minimum: Requiredˉrequest,
+            Maximum: 24576u64,
+        );
+    }
+    if Limits.Maximumˉreadˉbytes == 0u64
+        || Limits.Maximumˉreadˉbytes > 4096u64
+        || Limits.Maximumˉreadˉbytes > Limits.Maximumˉrequestˉbytes {
+        return Invalid(
+            Field: 7u32,
+            Observed: Limits.Maximumˉreadˉbytes,
+            Minimum: 1u64,
+            Maximum: 4096u64,
+        );
+    }
+    let Requiredˉresponse = Limits.Maximumˉbodyˉbytes + 256u64;
+    if Limits.Maximumˉresponseˉbytes < Requiredˉresponse
+        || Limits.Maximumˉresponseˉbytes > 32768u64 {
+        return Invalid(
+            Field: 8u32,
+            Observed: Limits.Maximumˉresponseˉbytes,
+            Minimum: Requiredˉresponse,
+            Maximum: 32768u64,
+        );
+    }
+    let Minimumˉoperations = ((Limits.Maximumˉrequestˉbytes
+        + Limits.Maximumˉreadˉbytes - 1u64)
+        / Limits.Maximumˉreadˉbytes) + 1u64;
+    if Limits.Maximumˉoperations < Minimumˉoperations
+        || Limits.Maximumˉoperations > 64u64 {
+        return Invalid(
+            Field: 9u32,
+            Observed: Limits.Maximumˉoperations,
+            Minimum: Minimumˉoperations,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Maximumˉwork == 0u64 || Limits.Maximumˉwork > 100000u64 {
+        return Invalid(
+            Field: 10u32,
+            Observed: Limits.Maximumˉwork,
+            Minimum: 1u64,
+            Maximum: 100000u64,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+    Resource: Types.Resourceˉkind,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Handlerˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Allocation {
+                    Resource: Resource,
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Normalizeˉreason(
+    Value: Stream.Streamˉfailureˉkind,
+) -> Types.Streamˉreason effects() {
+    return match Value {
+        case Stream.Streamˉfailureˉkind.Rejected {
+            Types.Streamˉreason.Rejected
+        }
+        case Stream.Streamˉfailureˉkind.Timedˉout {
+            Types.Streamˉreason.Timedˉout
+        }
+        case Stream.Streamˉfailureˉkind.Cancelled {
+            Types.Streamˉreason.Cancelled
+        }
+        case Stream.Streamˉfailureˉkind.Peerˉreset {
+            Types.Streamˉreason.Peerˉreset
+        }
+        case Stream.Streamˉfailureˉkind.Revoked {
+            Types.Streamˉreason.Revoked
+        }
+        case Stream.Streamˉfailureˉkind.Providerˉlost {
+            Types.Streamˉreason.Providerˉlost
+        }
+        case Stream.Streamˉfailureˉkind.Providerˉrestarted {
+            Types.Streamˉreason.Providerˉrestarted
+        }
+        case Stream.Streamˉfailureˉkind.Invalidˉresponse {
+            Types.Streamˉreason.Invalidˉresponse
+        }
+    };
+}
+
+fn Mapˉaccept(
+    Value: Result.Result<Stream.Requestˉstream, Stream.Streamˉfailure>,
+) -> Result.Result<Stream.Requestˉstream, Types.Handlerˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Acceptˉrejected {
+                    Reason: Normalizeˉreason(Value: Error.Kind),
+                    Expectedˉgeneration: Error.Expectedˉgeneration,
+                    Observedˉgeneration: Error.Observedˉgeneration,
+                },
+            }
+        }
+    };
+}
+
+fn Requestˉrejection(
+    Error: Types.Requestˉrejection,
+    Receivedˉbytes: u64,
+    Readˉoperations: u64,
+) -> Result.Result<Types.Receiveˉoutcome, Types.Handlerˉfailure> effects() {
+    return Result.Result.Valid {
+        Value: Types.Receiveˉoutcome.Rejected {
+            Error: Error,
+            Receivedˉbytes: Receivedˉbytes,
+            Readˉoperations: Readˉoperations,
+        },
+    };
+}
+
+fn Receive(
+    Streamˉvalue: borrow mut Stream.Requestˉstream,
+    Context: borrow Operation.Operationˉcontext,
+    Buffer: Bytes.Byteˉbuffer,
+    Headerˉbudget: Memory.Memoryˉbudget,
+    Limits: borrow Types.Limits,
+    Meter: borrow mut Types.Workˉmeter,
+) -> Result.Result<Types.Receiveˉoutcome, Types.Handlerˉfailure>
+    effects(network.service.accept, resource.release) {
+    var Input = Buffer;
+    var Received = 0u64;
+    var Readˉoperations = 0u64;
+    var Scanˉstate = Types.Headerˉscanˉstate {
+        Nextˉstart: 0u64,
+        Firstˉlineˉend: Option.Option.Absent,
+    };
+    var Head = Option.Option.Absent;
+    var Headerˉallocation = Option.Option.Present {
+        Value: Headerˉbudget,
+    };
+
+    while true {
+        let Required = match Head {
+            case Option.Option.Absent { Limits.Maximumˉrequestˉbytes }
+            case Option.Option.Present { Value: Value } {
+                Value.Bodyˉstart + Value.Bodyˉlength
+            }
+        };
+        if Received == Required {
+            return match Head {
+                case Option.Option.Present { Value: Value } {
+                    Result.Result.Valid {
+                        Value: Types.Receiveˉoutcome.Complete {
+                            Request: Types.Receivedˉrequest {
+                                Buffer: Input,
+                                Head: Value,
+                                Receivedˉbytes: Received,
+                                Readˉoperations: Readˉoperations,
+                            },
+                        },
+                    }
+                }
+                case Option.Option.Absent {
+                    Requestˉrejection(
+                        Error: Types.Requestˉrejection.Headerˉbytesˉlimit {
+                            Observed: Received,
+                            Maximum: Limits.Maximumˉheaderˉbytes,
+                        },
+                        Receivedˉbytes: Received,
+                        Readˉoperations: Readˉoperations,
+                    )
+                }
+            };
+        }
+        if Readˉoperations == Limits.Maximumˉoperations {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Operationˉlimit {
+                    Completed: Readˉoperations,
+                    Maximum: Limits.Maximumˉoperations,
+                },
+            };
+        }
+        let Remaining = Required - Received;
+        let Requested = if Remaining < Limits.Maximumˉreadˉbytes {
+            Remaining
+        } else {
+            Limits.Maximumˉreadˉbytes
+        };
+        let Target = Bytes.Borrowˉsliceˉmut(
+            Buffer: borrow mut Input,
+            Start: Received,
+            Length: Requested,
+        );
+        let Readˉoutcome = network.service.accept.Read(
+            Stream: Streamˉvalue,
+            Target: Target,
+            Context: Context,
+        );
+        Readˉoperations = Readˉoperations + 1u64;
+        let Completed = match Readˉoutcome {
+            case Stream.Readˉoutcome.Completed {
+                Delivered: Delivered,
+                Peerˉclosed: Peerˉclosed,
+            } {
+                if Delivered > Requested || (Delivered == 0u64 && !Peerˉclosed) {
+                    return Result.Result.Failure {
+                        Error: Types.Handlerˉfailure.Invalidˉprogress {
+                            Requested: Requested,
+                            Reported: Delivered,
+                            Completed: Received,
+                        },
+                    };
+                }
+                Stream.Readˉcompletion {
+                    Delivered: Delivered,
+                    Peerˉclosed: Peerˉclosed,
+                }
+            }
+            case Stream.Readˉoutcome.Rejected { Error: Error } {
+                return Result.Result.Failure {
+                    Error: Types.Handlerˉfailure.Readˉrejected {
+                        Reason: Normalizeˉreason(Value: Error.Kind),
+                        Expectedˉgeneration: Error.Expectedˉgeneration,
+                        Observedˉgeneration: Error.Observedˉgeneration,
+                        Receivedˉbytes: Received,
+                    },
+                };
+            }
+        };
+        Received = Received + Completed.Delivered;
+
+        match Head {
+            case Option.Option.Absent {
+                let Scanned = match Parser.Scan(
+                    Buffer: borrow Input,
+                    Received: Received,
+                    State: Scanˉstate,
+                    Limits: Limits,
+                    Meter: Meter,
+                ) {
+                    case Result.Result.Valid { Value: Value } { Value }
+                    case Result.Result.Failure { Error: Error } {
+                        return match Error {
+                            case Types.Handlerˉfailure.Request { Error: Error } {
+                                Requestˉrejection(
+                                    Error: Error,
+                                    Receivedˉbytes: Received,
+                                    Readˉoperations: Readˉoperations,
+                                )
+                            }
+                            case _ { Result.Result.Failure { Error: Error } }
+                        };
+                    }
+                };
+                match Scanned {
+                    case Types.Headerˉscan.Needˉmore { State: State } {
+                        Scanˉstate = State;
+                    }
+                    case Types.Headerˉscan.Complete {
+                        Firstˉlineˉend: Firstˉlineˉend,
+                        Headerˉend: Headerˉend,
+                    } {
+                        let Parseˉbudget = match Option.Take(
+                            Value: borrow mut Headerˉallocation,
+                        ) {
+                            case Option.Option.Present { Value: Value } { Value }
+                            case Option.Option.Absent {
+                                return Result.Result.Failure {
+                                    Error: Types.Handlerˉfailure.Invalidˉstate {
+                                        Stage: 1u32,
+                                    },
+                                };
+                            }
+                        };
+                        let Parsed = match Parser.Parseˉhead(
+                            Buffer: borrow Input,
+                            Firstˉlineˉend: Firstˉlineˉend,
+                            Headerˉend: Headerˉend,
+                            Headerˉbudget: Parseˉbudget,
+                            Limits: Limits,
+                            Meter: Meter,
+                        ) {
+                            case Result.Result.Valid { Value: Value } { Value }
+                            case Result.Result.Failure { Error: Error } {
+                                return match Error {
+                                    case Types.Handlerˉfailure.Request {
+                                        Error: Error,
+                                    } {
+                                        Requestˉrejection(
+                                            Error: Error,
+                                            Receivedˉbytes: Received,
+                                            Readˉoperations: Readˉoperations,
+                                        )
+                                    }
+                                    case _ {
+                                        Result.Result.Failure { Error: Error }
+                                    }
+                                };
+                            }
+                        };
+                        let Expected = Parsed.Bodyˉstart + Parsed.Bodyˉlength;
+                        if Received > Expected {
+                            return Requestˉrejection(
+                                Error: Types.Requestˉrejection.Trailingˉbytes {
+                                    Observed: Received,
+                                    Expected: Expected,
+                                },
+                                Receivedˉbytes: Received,
+                                Readˉoperations: Readˉoperations,
+                            );
+                        }
+                        Head = Option.Option.Present { Value: Parsed };
+                    }
+                }
+            }
+            case _ { }
+        }
+
+        let Completeˉrequest = match Head {
+            case Option.Option.Absent { false }
+            case Option.Option.Present { Value: Value } {
+                Received == Value.Bodyˉstart + Value.Bodyˉlength
+            }
+        };
+        if Completed.Peerˉclosed && !Completeˉrequest {
+            let Requiredˉbytes = match Head {
+                case Option.Option.Absent { Received + 1u64 }
+                case Option.Option.Present { Value: Value } {
+                    Value.Bodyˉstart + Value.Bodyˉlength
+                }
+            };
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Earlyˉpeerˉclose {
+                    Receivedˉbytes: Received,
+                    Requiredˉbytes: Requiredˉbytes,
+                },
+            };
+        }
+    }
+}
+
+fn Rejectedˉresponse(
+    Error: Types.Requestˉrejection,
+    Requestˉbytes: u64,
+    Readˉoperations: u64,
+) -> Types.Preparedˉresponse effects() {
+    let Plan = Response.Planˉrejection(Error: borrow Error);
+    return Types.Preparedˉresponse {
+        Plan: Plan,
+        Outcome: Types.Handlerˉoutcome.Requestˉrejected { Error: Error },
+        Requestˉbytes: Requestˉbytes,
+        Readˉoperations: Readˉoperations,
+    };
+}
+
+fn Prepare(
+    Received: Types.Receiveˉoutcome,
+    Root: borrow mut Memory.Memoryˉbudget,
+    Limits: borrow Types.Limits,
+) -> Result.Result<Types.Preparedˉresponse, Types.Handlerˉfailure>
+    effects(memory.allocate, resource.acquire, resource.release) {
+    return match Received {
+        case Types.Receiveˉoutcome.Rejected {
+            Error: Error,
+            Receivedˉbytes: Receivedˉbytes,
+            Readˉoperations: Readˉoperations,
+        } {
+            Result.Result.Valid {
+                Value: Rejectedˉresponse(
+                    Error: Error,
+                    Requestˉbytes: Receivedˉbytes,
+                    Readˉoperations: Readˉoperations,
+                ),
+            }
+        }
+        case Types.Receiveˉoutcome.Complete { Request: Request } {
+            let Plan = match Request.Head.Route {
+                case Types.Route.Health { Response.Planˉhealth() }
+                case Types.Route.Notˉfound { Response.Planˉnotˉfound() }
+                case Types.Route.Methodˉnotˉallowed {
+                    Response.Planˉmethodˉnotˉallowed()
+                }
+                case Types.Route.Echo {
+                    let Bodyˉbudget = try Split(
+                        Root: Root,
+                        Maximumˉbytes: BODY_TEXT_BUDGET_BYTES,
+                        Resource: Types.Resourceˉkind.Bodyˉtext,
+                    );
+                    let Body = Bytes.Borrowˉslice(
+                        Buffer: borrow Request.Buffer,
+                        Start: Request.Head.Bodyˉstart,
+                        Length: Request.Head.Bodyˉlength,
+                    );
+                    let Decoded = match Text.Decodeˉutf8ˉsliceˉreserved(
+                        Budget: Bodyˉbudget,
+                        Value: Body,
+                        Maximumˉbytes: Limits.Maximumˉbodyˉbytes,
+                        Maximumˉrunes: Limits.Maximumˉbodyˉrunes,
+                    ) {
+                        case Result.Result.Valid { Value: Value } { Value }
+                        case Result.Result.Failure { Error: Error } {
+                            return match Error {
+                                case Text.Decodeˉutf8ˉfailure.Allocation {
+                                    Error: Error,
+                                } {
+                                    Result.Result.Failure {
+                                        Error: Types.Handlerˉfailure.Allocation {
+                                            Resource: Types.Resourceˉkind.Bodyˉtext,
+                                            Error: Error,
+                                        },
+                                    }
+                                }
+                                case Text.Decodeˉutf8ˉfailure.Source {
+                                    Error: Error,
+                                } {
+                                    let Rejection = Types.Requestˉrejection.Invalidˉutf8 {
+                                        Byteˉoffset: Request.Head.Bodyˉstart
+                                            + Text.Decodeˉfailureˉbyteˉoffset(
+                                                Error: borrow Error,
+                                            ),
+                                    };
+                                    Result.Result.Valid {
+                                        Value: Rejectedˉresponse(
+                                            Error: Rejection,
+                                            Requestˉbytes: Request.Receivedˉbytes,
+                                            Readˉoperations: Request.Readˉoperations,
+                                        ),
+                                    }
+                                }
+                            };
+                        }
+                    };
+                    Response.Planˉecho(Value: Decoded)
+                }
+            };
+            Result.Result.Valid {
+                Value: Types.Preparedˉresponse {
+                    Plan: Plan,
+                    Outcome: Types.Handlerˉoutcome.Served {
+                        Route: Request.Head.Route,
+                    },
+                    Requestˉbytes: Request.Receivedˉbytes,
+                    Readˉoperations: Request.Readˉoperations,
+                },
+            }
+        }
+    };
+}
+
+fn Writeˉall(
+    Streamˉvalue: borrow mut Stream.Requestˉstream,
+    Context: borrow Operation.Operationˉcontext,
+    Value: borrow bytes,
+    Completedˉoperations: u64,
+    Maximumˉoperations: u64,
+) -> Result.Result<Types.Writeˉreport, Types.Handlerˉfailure>
+    effects(network.service.accept) {
+    var Accepted = 0u64;
+    var Operations = Completedˉoperations;
+    let Length = Bytes.Length(Value: Value);
+    while Accepted < Length {
+        if Operations == Maximumˉoperations {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Operationˉlimit {
+                    Completed: Operations,
+                    Maximum: Maximumˉoperations,
+                },
+            };
+        }
+        let Remaining = Length - Accepted;
+        let Suffix = Bytes.Borrowˉrange(
+            Value: Value,
+            Start: Accepted,
+            Length: Remaining,
+        );
+        let Outcome = network.service.accept.Write(
+            Stream: Streamˉvalue,
+            Value: Suffix,
+            Context: Context,
+        );
+        Operations = Operations + 1u64;
+        match Outcome {
+            case Stream.Writeˉoutcome.Completed {
+                Accepted: Completed,
+            } {
+                if Completed == 0u64 || Completed > Remaining {
+                    return Result.Result.Failure {
+                        Error: Types.Handlerˉfailure.Invalidˉprogress {
+                            Requested: Remaining,
+                            Reported: Completed,
+                            Completed: Accepted,
+                        },
+                    };
+                }
+                Accepted = Accepted + Completed;
+            }
+            case Stream.Writeˉoutcome.Rejected { Error: Error } {
+                return Result.Result.Failure {
+                    Error: Types.Handlerˉfailure.Writeˉrejected {
+                        Reason: Normalizeˉreason(Value: Error.Kind),
+                        Expectedˉgeneration: Error.Expectedˉgeneration,
+                        Observedˉgeneration: Error.Observedˉgeneration,
+                        Acceptedˉbytes: Accepted,
+                    },
+                };
+            }
+            case Stream.Writeˉoutcome.Indeterminate { Error: Error } {
+                return Result.Result.Failure {
+                    Error: Types.Handlerˉfailure.Writeˉindeterminate {
+                        Reason: Normalizeˉreason(Value: Error.Kind),
+                        Expectedˉgeneration: Error.Expectedˉgeneration,
+                        Observedˉgeneration: Error.Observedˉgeneration,
+                        Knownˉacceptedˉbytes: Accepted,
+                    },
+                };
+            }
+        }
+    }
+    return Result.Result.Valid {
+        Value: Types.Writeˉreport {
+            Acceptedˉbytes: Accepted,
+            Writeˉoperations: Operations - Completedˉoperations,
+        },
+    };
+}
+
+export fn Run(
+    Context: borrow Operation.Operationˉcontext,
+    Limits: Types.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Handlerˉreport, Types.Handlerˉfailure>
+    effects(
+        memory.allocate,
+        network.service.accept,
+        resource.acquire,
+        resource.release
+    ) {
+    try Validate(Limits: borrow Limits);
+    var Root = Budget;
+    let Inputˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Maximumˉrequestˉbytes,
+        Resource: Types.Resourceˉkind.Inputˉbuffer,
+    );
+    let Headerˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: HEADER_MAP_BUDGET_BYTES,
+        Resource: Types.Resourceˉkind.Headerˉmap,
+    );
+    let Buffer = match Bytes.Constructˉbuffer(
+        Budget: Inputˉbudget,
+        Length: Limits.Maximumˉrequestˉbytes,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Handlerˉfailure.Allocation {
+                    Resource: Types.Resourceˉkind.Inputˉbuffer,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    var Meter = Types.Workˉmeter {
+        Completed: 0u64,
+        Maximum: Limits.Maximumˉwork,
+    };
+
+    using Requestˉstream = try Mapˉaccept(
+        Value: network.service.accept.Acceptˉone(
+            Context: Context,
+            Limits: Stream.Streamˉlimits {
+                Maximumˉreadˉbytes: Limits.Maximumˉreadˉbytes,
+                Maximumˉwriteˉbytes: Limits.Maximumˉresponseˉbytes,
+                Maximumˉtransferˉbytes: Limits.Maximumˉrequestˉbytes
+                    + Limits.Maximumˉresponseˉbytes,
+                Maximumˉoperations: Limits.Maximumˉoperations,
+            },
+        ),
+    ) {
+        let Received = try Receive(
+            Streamˉvalue: borrow mut Requestˉstream,
+            Context: Context,
+            Buffer: Buffer,
+            Headerˉbudget: Headerˉbudget,
+            Limits: borrow Limits,
+            Meter: borrow mut Meter,
+        );
+        let Prepared = try Prepare(
+            Received: Received,
+            Root: borrow mut Root,
+            Limits: borrow Limits,
+        );
+        let Responseˉbudget = try Split(
+            Root: borrow mut Root,
+            Maximumˉbytes: Limits.Maximumˉresponseˉbytes,
+            Resource: Types.Resourceˉkind.Response,
+        );
+        let Encoded = try Response.Render(
+            Plan: borrow Prepared.Plan,
+            Budget: Responseˉbudget,
+            Maximumˉbytes: Limits.Maximumˉresponseˉbytes,
+        );
+        let Written = try Writeˉall(
+            Streamˉvalue: borrow mut Requestˉstream,
+            Context: Context,
+            Value: borrow Encoded,
+            Completedˉoperations: Prepared.Readˉoperations,
+            Maximumˉoperations: Limits.Maximumˉoperations,
+        );
+        return Result.Result.Valid {
+            Value: Types.Handlerˉreport {
+                Status: Prepared.Plan.Status,
+                Outcome: Prepared.Outcome,
+                Requestˉbytes: Prepared.Requestˉbytes,
+                Responseˉbytes: Written.Acceptedˉbytes,
+                Readˉoperations: Prepared.Readˉoperations,
+                Writeˉoperations: Written.Writeˉoperations,
+                Work: Meter.Completed,
+            },
+        };
+    }
+}
