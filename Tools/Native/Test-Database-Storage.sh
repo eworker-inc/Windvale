@@ -200,6 +200,17 @@ build_cached_hosted_application() {
     "$script_directory/Build-Cached-Hosted-Application.sh" "$@"
 }
 
+build_cached_project_object() {
+    node "$hosted_application_session" project-request \
+        "$hosted_application_session_ready" "$1" "$2" "$3"
+    local result=$?
+    if [[ $result -ne 75 ]]; then
+        return "$result"
+    fi
+    "$script_directory/Build-Cached-Project-Object.sh" \
+        "$1" "$build_driver" "$lowerer" "$2" "$3"
+}
+
 build_cached_linked_image_set() {
     local entry=$1 image=$2 map=$3
     shift 3
@@ -323,7 +334,7 @@ fi
 
 if ((development == 1 && prepare_only == 0)); then
     node "$hosted_application_session" serve \
-        "$hosted_application_session_ready" linux \
+        "$hosted_application_session_ready" linux "$build_driver" "$lowerer" \
         >"$hosted_application_session_log" 2>&1 &
     hosted_application_session_pid=$!
     if ! node "$hosted_application_session" wait \
@@ -456,8 +467,8 @@ verify_target() {
 
     if ((development == 1)); then
         local project_cache_report="$temporary_directory/$label-Project-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+        build_cached_project_object \
+            "$project_path" "$first_wvb" "$first_wvo" \
             > "$project_cache_report" || return $?
         project_checkpoint=$(sed -n \
             's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
@@ -645,8 +656,8 @@ verify_host_storage() {
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/HostStorage-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+        build_cached_project_object \
+            "$project_path" "$first_wvb" "$first_wvo" \
             > "$cache_report" || return $?
         host_storage_checkpoint=$(sed -n \
             's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
@@ -801,8 +812,8 @@ verify_host_root_writer() {
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/HostRootWriter-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+        build_cached_project_object \
+            "$project_path" "$first_wvb" "$first_wvo" \
             > "$cache_report" || return $?
         host_root_writer_checkpoint=$(sed -n \
             's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
@@ -974,8 +985,8 @@ build_host_local_component() {
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/HostLocal-$component-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+        build_cached_project_object \
+            "$project_path" "$first_wvb" "$first_wvo" \
             > "$cache_report" || return $?
         host_local_component_project_checkpoint=$(sed -n \
             's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
@@ -1272,8 +1283,8 @@ verify_host_tree_reader() {
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/HostTreeReader-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+        build_cached_project_object \
+            "$project_path" "$first_wvb" "$first_wvo" \
             > "$cache_report" || return $?
         host_tree_reader_checkpoint=$(sed -n \
             's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
@@ -1459,8 +1470,8 @@ verify_host_engine() {
 
     if ((development == 1)); then
         local cache_report="$temporary_directory/Engine-Cache.txt"
-        "$script_directory/Build-Cached-Project-Object.sh" \
-            "$project_path" "$build_driver" "$lowerer" "$first_wvb" "$first_wvo" \
+        build_cached_project_object \
+            "$project_path" "$first_wvb" "$first_wvo" \
             > "$cache_report" || return $?
         engine_checkpoint=$(sed -n \
             's/^native project object cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \

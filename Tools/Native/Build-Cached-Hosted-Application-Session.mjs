@@ -15,6 +15,10 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import {
+    Materializeˉprojectˉobjectˉhit,
+    Prepareˉprojectˉobjectˉcache
+} from './Build-Cached-Project-Object.mjs';
+import {
     Getˉhostedˉapplicationˉcacheˉkey,
     HOSTED_REPOSITORY_ROOT,
     Isˉsameˉhostedˉpath,
@@ -340,7 +344,7 @@ function Writeˉprotocolˉresponse(socket, response) {
     socket.end(`${JSON.stringify(response)}\n`);
 }
 
-async function Serve(readyInput, target) {
+async function Serve(readyInput, target, buildDriverInput, lowererInput) {
     if (target !== (WINDOWS ? 'windows' : 'linux')) {
         Reject('The hosted application session must use its current-host target.', 64);
     }
@@ -378,8 +382,14 @@ async function Serve(readyInput, target) {
         path.join(productRoot, HOST_FAMILY),
         'hosted application checkpoint family'
     );
+    if ((buildDriverInput === undefined) !== (lowererInput === undefined)) {
+        Reject('Project-object session producers must be supplied together.', 64);
+    }
+    const projectContext = buildDriverInput === undefined
+        ? null
+        : await Prepareˉprojectˉobjectˉcache(buildDriverInput, lowererInput);
     const token = randomBytes(32).toString('hex');
-    const state = { checkpointFamily, context, token };
+    const state = { checkpointFamily, context, projectContext, token };
     let requestTail = Promise.resolve();
     let shuttingDown = false;
     const server = net.createServer(socket => {
@@ -398,6 +408,21 @@ async function Serve(readyInput, target) {
                     await Removeˉreadyˉrecord(readyPath);
                     Writeˉprotocolˉresponse(socket, { ok: true });
                     server.close();
+                    return;
+                }
+                if (request.operation === 'project-object') {
+                    if (shuttingDown || state.projectContext === null) {
+                        Reject('The project-object session operation is unavailable.');
+                    }
+                    const result = await Materializeˉprojectˉobjectˉhit(
+                        state.projectContext,
+                        request.projectPath,
+                        request.outputWvb,
+                        request.outputWvo
+                    );
+                    Writeˉprotocolˉresponse(socket, result.status === 'Miss'
+                        ? { ok: true, status: 'Miss' }
+                        : { ok: true, ...result });
                     return;
                 }
                 if (request.operation !== 'request' || shuttingDown) {
@@ -507,6 +532,36 @@ async function Request(readyInput) {
     process.stdout.write(`${response.report}\n`);
 }
 
+async function Projectˉrequest(readyInput) {
+    if (process.argv.length !== 7) {
+        Reject(
+            'Usage: node Tools/Native/Build-Cached-Hosted-Application-Session.mjs ' +
+            'project-request <ready.txt> <project.wvproj> <output.wvb> <output.wvo>',
+            64
+        );
+    }
+    const ready = await Readˉreadyˉrecord(readyInput);
+    if (!Isˉprocessˉalive(ready.pid)) {
+        Reject('The project-object session is unavailable.');
+    }
+    const response = await Sendˉrequest(ready, {
+        operation: 'project-object',
+        outputWvb: path.resolve(process.argv[5]),
+        outputWvo: path.resolve(process.argv[6]),
+        projectPath: path.resolve(process.argv[4])
+    });
+    if (!response.ok) {
+        Reject(response.error);
+    }
+    if (response.status === 'Miss') {
+        process.exit(75);
+    }
+    if (response.status !== 'Hit' || typeof response.report !== 'string') {
+        Reject('The project-object session response status differs.');
+    }
+    process.stdout.write(`${response.report}\n`);
+}
+
 async function Shutdown(readyInput) {
     const readyPath = path.resolve(readyInput);
     const information = await lstat(readyPath).catch(error => {
@@ -538,8 +593,14 @@ async function Shutdown(readyInput) {
 
 async function Main() {
     const operation = process.argv[2];
-    if (operation === 'serve' && process.argv.length === 5) {
-        await Serve(process.argv[3], process.argv[4]);
+    if (operation === 'serve' &&
+        (process.argv.length === 5 || process.argv.length === 7)) {
+        await Serve(
+            process.argv[3],
+            process.argv[4],
+            process.argv[5],
+            process.argv[6]
+        );
         return;
     }
     if (operation === 'wait' && process.argv.length === 4) {
@@ -553,14 +614,18 @@ async function Main() {
         await Request(process.argv[3]);
         return;
     }
+    if (operation === 'project-request') {
+        await Projectˉrequest(process.argv[3]);
+        return;
+    }
     if (operation === 'shutdown' && process.argv.length === 4) {
         await Shutdown(process.argv[3]);
         return;
     }
     Reject(
         'Usage: node Tools/Native/Build-Cached-Hosted-Application-Session.mjs ' +
-        '<serve <ready.txt> <windows|linux>|wait <ready.txt>|request ...|' +
-        'shutdown <ready.txt>>',
+        '<serve <ready.txt> <windows|linux> [<build-driver> <lowerer>]|' +
+        'wait <ready.txt>|request ...|project-request ...|shutdown <ready.txt>>',
         64
     );
 }

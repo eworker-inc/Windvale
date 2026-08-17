@@ -15,7 +15,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { TextDecoder } from 'node:util';
 import {
-    Getˉnativeˉprojectˉcacheˉkey,
+    Getˉnativeˉprojectˉcacheˉrequest,
+    Prepareˉnativeˉprojectˉcacheˉcontext,
+    Requireˉnativeˉprojectˉcacheˉrequestˉunchanged,
     REPOSITORY_ROOT
 } from './Native-Project-Cache-Key-Core.mjs';
 
@@ -149,10 +151,11 @@ function Toˉresourceˉpath(candidate) {
 async function Createˉcheckpoint(
     checkpointFamily,
     checkpointDirectory,
-    key,
-    projectPath,
+    request,
     buildDriver
 ) {
+    const key = request.key;
+    const projectPath = request.projectPath;
     const temporary = path.join(
         checkpointFamily,
         `.new-${key}-${process.pid}-${Date.now().toString(16)}`
@@ -179,6 +182,7 @@ async function Createˉcheckpoint(
             );
         }
         const product = await Measureˉproduct(candidateWvb, 'candidate WVB');
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(request);
         await writeFile(
             path.join(temporary, 'Checkpoint.txt'),
             Checkpointˉrecord(key, product),
@@ -203,22 +207,27 @@ async function Materializeˉproject(
     projectPath,
     outputPath,
     buildDriver,
-    inventory,
+    keyContext,
     checkpointFamily
 ) {
-    const key = await Getˉnativeˉprojectˉcacheˉkey(
-        'project-wvb-v2',
-        projectPath,
-        [inventory, buildDriver]
+    const request = await Getˉnativeˉprojectˉcacheˉrequest(
+        keyContext,
+        projectPath
     );
+    const key = request.key;
     const checkpointDirectory = path.join(checkpointFamily, key);
     let status = 'Hit';
-    if (await lstat(checkpointDirectory).catch(() => null) === null) {
+    const information = await lstat(checkpointDirectory).catch(error => {
+        if (error.code === 'ENOENT') {
+            return null;
+        }
+        throw error;
+    });
+    if (information === null) {
         status = await Createˉcheckpoint(
             checkpointFamily,
             checkpointDirectory,
-            key,
-            projectPath,
+            request,
             buildDriver
         );
     }
@@ -307,6 +316,10 @@ async function Main() {
         'SHA256SUMS'
     );
     await Readˉordinaryˉfile(inventory, 'native-front-door inventory', 1_048_576);
+    const keyContext = await Prepareˉnativeˉprojectˉcacheˉcontext(
+        'project-wvb-v2',
+        [inventory, buildDriver]
+    );
 
     if (WINDOWS && process.env.WINDVALE_NATIVE_CACHE_ROOT === undefined &&
         process.env.LOCALAPPDATA === undefined) {
@@ -341,7 +354,7 @@ async function Main() {
             path.join(REPOSITORY_ROOT, ...request.project.split('/')),
             path.join(outputDirectory, `${request.artifact}.candidate.wvb`),
             buildDriver,
-            inventory,
+            keyContext,
             checkpointFamily
         );
         if (status === 'Hit') {

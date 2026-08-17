@@ -3,6 +3,7 @@
 - Date: 2026-08-17
 - Status: Implemented with Windows development evidence; independent Linux execution pending
 - Advances: [Decision 0554](0554-Content-Addressed-Hosted-Application-Development-Checkpoints.md)
+- Advanced by: [Decision 0743](0743-Prehash-Project-Cache-Producer-Context.md)
 - Contract: [Windvale native tool checkpoint 1](../../Specifications/Windvale-Native-Tool-Checkpoint.md)
 
 ## Context

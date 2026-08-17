@@ -15,7 +15,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-    Getˉnativeˉprojectˉcacheˉkey,
+    Getˉnativeˉprojectˉcacheˉrequest,
+    Prepareˉnativeˉprojectˉcacheˉcontext,
+    Requireˉnativeˉprojectˉcacheˉrequestˉunchanged,
     REPOSITORY_ROOT
 } from './Native-Project-Cache-Key-Core.mjs';
 
@@ -196,12 +198,13 @@ function Runˉproducer(application, arguments_, label) {
 async function Createˉcheckpoint(
     checkpointFamily,
     checkpointDirectory,
-    key,
-    projectPath,
+    request,
     buildDriver,
     lowerer,
     inspector
 ) {
+    const key = request.key;
+    const projectPath = request.projectPath;
     const temporary = path.join(
         checkpointFamily,
         `.new-${key}-${process.pid}-${Date.now().toString(16)}`
@@ -229,6 +232,7 @@ async function Createˉcheckpoint(
         );
         const wvb = await Measureˉproduct(candidateWvb, 'candidate WVB');
         const wvo = await Measureˉproduct(candidateWvo, 'candidate WVO');
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(request);
         await writeFile(
             path.join(temporary, 'Checkpoint.txt'),
             Checkpointˉrecord(key, wvb, wvo),
@@ -249,40 +253,21 @@ async function Createˉcheckpoint(
     }
 }
 
-async function Main() {
-    if (process.argv.length !== 7) {
-        Reject(
-            'Usage: node Tools/Native/Build-Cached-Project-Object.mjs ' +
-            '<project.wvproj> <build-driver> <lowerer> <output.wvb> <output.wvo>',
-            64
-        );
-    }
-    const projectPath = path.resolve(process.argv[2]);
-    const buildDriver = path.resolve(process.argv[3]);
-    const lowerer = path.resolve(process.argv[4]);
-    await Readˉordinaryˉfile(buildDriver, 'build driver', MAXIMUM_PRODUCT_BYTES);
-    await Readˉordinaryˉfile(lowerer, 'lowerer', MAXIMUM_PRODUCT_BYTES);
-    const outputWvb = await Requireˉoutputˉpath(
-        process.argv[5],
-        '.wvb',
-        'materialized WVB'
-    );
-    const outputWvo = await Requireˉoutputˉpath(
-        process.argv[6],
-        '.wvo',
-        'materialized WVO'
+export async function Prepareˉprojectˉobjectˉcache(
+    buildDriverInput,
+    lowererInput
+) {
+    const buildDriver = path.resolve(buildDriverInput);
+    const lowerer = path.resolve(lowererInput);
+    const keyContext = await Prepareˉnativeˉprojectˉcacheˉcontext(
+        'database-project-object-v2',
+        [buildDriver, lowerer, SCRIPT_PATH]
     );
     const inspector = path.join(REPOSITORY_ROOT, ...INSPECTOR_RELATIVE);
     const inspectorProduct = await Measureˉproduct(inspector, 'WVO inspector');
     if (inspectorProduct.sha256 !== INSPECTOR_SHA256) {
         Reject('The native WVO inspector artifact digest is invalid.');
     }
-    const key = await Getˉnativeˉprojectˉcacheˉkey(
-        'database-project-object-v2',
-        projectPath,
-        [buildDriver, lowerer, SCRIPT_PATH]
-    );
-
     if (WINDOWS && process.env.WINDVALE_NATIVE_CACHE_ROOT === undefined &&
         process.env.LOCALAPPDATA === undefined) {
         Reject('The native project cache root is unavailable.');
@@ -308,20 +293,49 @@ async function Main() {
         path.join(checkpointProductRoot, HOST_FAMILY),
         'project-object checkpoint family'
     );
-    const checkpointDirectory = path.join(checkpointFamily, key);
-    let status = 'Hit';
-    if (await lstat(checkpointDirectory).catch(() => null) === null) {
-        status = await Createˉcheckpoint(
-            checkpointFamily,
-            checkpointDirectory,
-            key,
-            projectPath,
-            buildDriver,
-            lowerer,
-            inspector
-        );
+    return {
+        buildDriver,
+        checkpointFamily,
+        inspector,
+        keyContext,
+        lowerer
+    };
+}
+
+export async function Materializeˉprojectˉobjectˉhit(
+    context,
+    projectInput,
+    outputWvbInput,
+    outputWvoInput
+) {
+    const outputWvb = await Requireˉoutputˉpath(
+        outputWvbInput,
+        '.wvb',
+        'materialized WVB'
+    );
+    const outputWvo = await Requireˉoutputˉpath(
+        outputWvoInput,
+        '.wvo',
+        'materialized WVO'
+    );
+    const request = await Getˉnativeˉprojectˉcacheˉrequest(
+        context.keyContext,
+        projectInput
+    );
+    const checkpointDirectory = path.join(context.checkpointFamily, request.key);
+    const information = await lstat(checkpointDirectory).catch(error => {
+        if (error.code === 'ENOENT') {
+            return null;
+        }
+        throw error;
+    });
+    if (information === null) {
+        return { request, status: 'Miss' };
     }
-    const checkpoint = await Validateˉcheckpoint(checkpointDirectory, key);
+    const checkpoint = await Validateˉcheckpoint(
+        checkpointDirectory,
+        request.key
+    );
     await copyFile(checkpoint.wvbPath, outputWvb);
     await copyFile(checkpoint.wvoPath, outputWvo);
     const materializedWvb = await Measureˉproduct(outputWvb, 'materialized WVB');
@@ -332,14 +346,62 @@ async function Main() {
         materializedWvo.sha256 !== checkpoint.wvo.sha256) {
         Reject('A materialized project-object product differs from its checkpoint.');
     }
+    return {
+        key: request.key,
+        report: `native project object cache status=Hit key=${request.key}`,
+        status: 'Hit'
+    };
+}
+
+async function Main() {
+    if (process.argv.length !== 7) {
+        Reject(
+            'Usage: node Tools/Native/Build-Cached-Project-Object.mjs ' +
+            '<project.wvproj> <build-driver> <lowerer> <output.wvb> <output.wvo>',
+            64
+        );
+    }
+    const context = await Prepareˉprojectˉobjectˉcache(
+        process.argv[3],
+        process.argv[4]
+    );
+    let result = await Materializeˉprojectˉobjectˉhit(
+        context,
+        process.argv[2],
+        process.argv[5],
+        process.argv[6]
+    );
+    let status = 'Hit';
+    if (result.status === 'Miss') {
+        status = await Createˉcheckpoint(
+            context.checkpointFamily,
+            path.join(context.checkpointFamily, result.request.key),
+            result.request,
+            context.buildDriver,
+            context.lowerer,
+            context.inspector
+        );
+        result = await Materializeˉprojectˉobjectˉhit(
+            context,
+            process.argv[2],
+            process.argv[5],
+            process.argv[6]
+        );
+        if (result.status !== 'Hit') {
+            Reject('The published project-object checkpoint is unavailable.');
+        }
+    }
     process.stdout.write(
-        `native project object cache status=${status} key=${key}\n`
+        `native project object cache status=${status} key=${result.key}\n`
     );
 }
 
-try {
-    await Main();
-} catch (error) {
-    process.stderr.write(`${error.message}\n`);
-    process.exit(error.exitCode ?? 1);
+if (process.argv[1] !== undefined &&
+    Isˉsameˉpath(path.resolve(process.argv[1]), SCRIPT_PATH)) {
+    try {
+        await Main();
+    } catch (error) {
+        process.stderr.write(`${error.message}\n`);
+        process.exit(error.exitCode ?? 1);
+    }
 }

@@ -3,6 +3,7 @@
 - Date: 2026-08-16
 - Status: Implemented with complete Windows development evidence; independent Linux execution pending
 - Extends: [Decision 0736](0736-Reuse-Os-X64-Verification-Trust-Checks.md)
+- Advanced by: [Decision 0743](0743-Prehash-Project-Cache-Producer-Context.md)
 - Preserves: cold no-argument qualification, 56 projects, 336 cases, immutable publication, and exact final bytes
 
 ## Context

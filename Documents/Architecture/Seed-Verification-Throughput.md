@@ -286,6 +286,30 @@ in 411,770 ms. The final change-aware all-hit owner takes 85,010 ms, down
 earlier 500,610 ms project-object-v2 result, the combined loop is 5.89 times
 faster.
 
+The remaining project-object hit still started Node and rehashed the same build
+driver, lowerer, checkpoint driver, and workspace for every project. Ten empty
+Node invocations averaged 54.4 ms and the old project-key command averaged
+124.9 ms. Project-key format 2 places that common producer closure before each
+project closure, streams it once into a clonable hash context, and lets the
+existing bounded owner session serve read-only project-object hits. Eight
+controlled standalone hits averaged 149.0 ms; eight session hits averaged 98.0
+ms. The representative TreeNode case fell from 940 through 960 ms to 810 ms
+without removing fresh application execution. The same context is reused across
+all selected OS x64 project-WVB keys. Cold publishers recheck their complete
+keyed input evidence before immutable publication, and a miss retains the
+standalone publisher.
+
+The accepted session design retains no producer file buffers. On the measured
+Windows host it used 73.78 MiB working set and 83.14 MiB private memory, versus
+69.84 MiB and 80.32 MiB for the hosted-only session. A rejected whole-buffer
+prototype used 107.45 MiB and 117.61 MiB. Producer count, producer aggregate,
+project-input count, and project aggregate are explicitly bounded. The format
+change makes older project-key entries inert and caused one deliberate cold
+migration; it does not change checkpoint products, application execution, or
+qualification boundaries. The final change-aware warm database owner takes
+81,910 ms, down 3,100 ms or 3.65 percent from 85,010 ms; its portable section
+takes 55,340 ms, down 3,070 ms or 5.26 percent from 58,410 ms.
+
 `Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
 producer, and artifact closures for the measured front-door, WebAssembly, and
 database owners plus all six database checkpoint families. Its verifier

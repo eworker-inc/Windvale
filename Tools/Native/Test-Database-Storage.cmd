@@ -148,7 +148,7 @@ if "%Development%"=="1" (
 
 if "%Development%"=="1" if "%PrepareOnly%"=="0" (
     start "" /b node "%HostedApplicationSession%" serve ^
-        "%HostedApplicationSessionReady%" windows ^
+        "%HostedApplicationSessionReady%" windows "%BuildDriver%" "%Lowerer%" ^
         >"%HostedApplicationSessionLog%" 2>&1
     node "%HostedApplicationSession%" wait "%HostedApplicationSessionReady%" >nul
     if errorlevel 1 (
@@ -715,8 +715,8 @@ set "HostStorageCheckpoint=Rebuilt"
 set "HostStorageApplicationCheckpoint=Rebuilt"
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+    call :build_cached_project_object ^
+        "%ProjectPath%" "%FirstWvb%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\HostStorage-Cache.txt"
     if errorlevel 1 (
         >&2 echo The native host-storage project-object checkpoint failed.
@@ -905,8 +905,8 @@ set "HostRootWriterCheckpoint=Rebuilt"
 set "HostRootWriterApplicationCheckpoint=Rebuilt"
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+    call :build_cached_project_object ^
+        "%ProjectPath%" "%FirstWvb%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\HostRootWriter-Cache.txt"
     if errorlevel 1 (
         >&2 echo The native host root-writer project-object checkpoint failed.
@@ -1198,8 +1198,8 @@ if /I "%Component%"=="LogicalTreePut" (
 )
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+    call :build_cached_project_object ^
+        "%ProjectPath%" "%FirstWvb%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\HostLocal-%Component%-Cache.txt"
     if errorlevel 1 exit /b 1
 ) else (
@@ -1511,8 +1511,8 @@ set "HostTreeReaderCheckpoint=Rebuilt"
 set "HostTreeReaderApplicationCheckpoint=Rebuilt"
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+    call :build_cached_project_object ^
+        "%ProjectPath%" "%FirstWvb%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\HostTreeReader-Cache.txt"
     if errorlevel 1 (
         >&2 echo The native host tree-reader project-object checkpoint failed.
@@ -1692,8 +1692,8 @@ set "EngineCheckpoint=Rebuilt"
 set "EngineApplicationCheckpoint=Rebuilt"
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+    call :build_cached_project_object ^
+        "%ProjectPath%" "%FirstWvb%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\Engine-Cache.txt"
     if errorlevel 1 exit /b 1
     set "EngineCheckpoint="
@@ -2474,8 +2474,8 @@ if "%Development%"=="1" set "LinuxApplicationCheckpoint=NotRun"
 if "%Development%"=="1" call :read_clock TargetStart
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
-        "%ProjectPath%" "%BuildDriver%" "%Lowerer%" "%FirstWvb%" "%FirstWvo%" ^
+    call :build_cached_project_object ^
+        "%ProjectPath%" "%FirstWvb%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\%~1-Project-Cache.txt"
     if errorlevel 1 exit /b 1
     set "ProjectCheckpoint="
@@ -2562,6 +2562,15 @@ set "HostedApplicationSessionResult=%ERRORLEVEL%"
 if not "%HostedApplicationSessionResult%"=="75" exit /b %HostedApplicationSessionResult%
 call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" ^
     "%~1" "%~f2" "%~f3" "%~4" "%~5" "%~f6" "%~7"
+exit /b %ERRORLEVEL%
+
+:build_cached_project_object
+node "%HostedApplicationSession%" project-request ^
+    "%HostedApplicationSessionReady%" "%~f1" "%~f2" "%~f3"
+set "ProjectObjectSessionResult=%ERRORLEVEL%"
+if not "%ProjectObjectSessionResult%"=="75" exit /b %ProjectObjectSessionResult%
+call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Object.cmd" ^
+    "%~f1" "%BuildDriver%" "%Lowerer%" "%~f2" "%~f3"
 exit /b %ERRORLEVEL%
 
 :build_cached_linked_image

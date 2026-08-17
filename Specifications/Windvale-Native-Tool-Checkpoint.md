@@ -1,7 +1,7 @@
 # Windvale native tool checkpoint 1
 
 Status: Implemented local-development contract under Decisions 0546, 0553,
-0554, 0555, 0559, 0560, 0737, and 0738.
+0554, 0555, 0559, 0560, and 0737 through 0743.
 
 ## Purpose and boundary
 
@@ -81,22 +81,35 @@ overwritten or repaired implicitly.
 `Build-Cached-Project-Object.mjs` invokes the shared project-key core through
 length-framed SHA-256 fields. In order, the fields are:
 
-1. format `windvale-native-project-cache-key 1`;
+1. format `windvale-native-project-cache-key 2`;
 2. namespace `database-project-object-v2`;
 3. the exact `Windvale.wvws` bytes;
-4. the repository-relative project identity and exact project bytes;
-5. each exact `root` and `source` path plus file bytes in declaration order;
-   and
-6. the exact build-driver and lowerer bytes in producer order; and
-7. the exact project-object checkpoint driver bytes. Those driver bytes bind
+4. the canonical producer count followed by the exact build-driver and lowerer
+   bytes in producer order;
+5. the exact project-object checkpoint driver bytes. Those driver bytes bind
    the host-specific expected WVO inspector identity and admission procedure.
+6. the repository-relative project identity and exact project bytes; and
+7. each exact `root` and `source` path plus file bytes in declaration order.
 
 The shared key core accepts only one canonical repository-owned `.wvproj`, exactly
-one root, canonical repository-contained source paths, ordinary inputs no
-larger than 67,108,864 bytes, and canonical non-link paths. The lowercase
-64-hex SHA-256 names a host-scoped `project-object-v2/<target>/<key>` entry.
-A source, manifest, workspace, producer, order, format, or namespace change
-therefore selects a different entry.
+one root, at most 1,024 declared project inputs, canonical
+repository-contained source paths, ordinary inputs no larger than 67,108,864
+bytes, an aggregate project closure no larger than 268,435,456 bytes, and
+canonical non-link paths. It accepts one through 16 producers whose aggregate
+is at most 134,217,728 bytes. Producer fields are streamed in 1 MiB chunks and
+are not retained as whole buffers. The lowercase 64-hex SHA-256 names a
+host-scoped `project-object-v2/<target>/<key>` entry. A source, manifest,
+workspace, producer, order, format, or namespace change therefore selects a
+different entry.
+
+Format 2 places the workspace and ordered producer closure before the project
+closure. One bounded owner session may validate and hash that common prefix
+once, clone the SHA-256 state for each request, and then hash the exact project
+manifest and source closure independently. The prepared context retains only
+the hash state and small path, size, and digest evidence for producers; it does
+not retain their file contents. The standalone command uses the same context
+and request functions, so session and standalone requests have one key
+implementation.
 
 The project-object `Checkpoint.txt` contains exactly six ASCII lines:
 
@@ -120,13 +133,22 @@ driver and inspector identity, while the immutable record and copy digests
 prove that the admitted bytes are unchanged. A corrupt existing entry fails
 closed and is not silently repaired.
 
+The database development owner extends its existing authenticated current-host
+session with a read-only project-object operation. A session miss returns exit
+75 without changing either output, after which the owner invokes the standalone
+publisher. Corruption is an error and does not fall back. The publisher rechecks
+the workspace, every producer, the project manifest, and every declared source
+against the request evidence after building and admission but before writing
+the record or renaming the candidate. Qualification does not start the session.
+
 ## Segmented-project key and record
 
 `Build-Cached-Segmented-Project.mjs` uses the same length-framed project-key
-core with namespace `database-segmented-project-v1`. After the workspace,
-project manifest, and ordered source closure, its producer fields bind the
-exact build driver, current-host segmented WVO producer, segmented image
-linker, image transport, and checkpoint driver in that order. The driver also
+format 2 core with namespace `database-segmented-project-v1`. After the format,
+namespace, and workspace, its producer fields bind the exact build driver,
+current-host segmented WVO producer, segmented image linker, image transport,
+and checkpoint driver in that order; the exact project manifest and ordered
+source closure follow that common producer prefix. The driver also
 verifies the three host-specific producer digests before accepting either a
 hit or a miss. The resulting lowercase 64-hex key names the host-scoped
 `segmented-project-v1/<target>/<key>` entry.
@@ -226,11 +248,13 @@ No-argument and qualification verification do not start the session.
 `Build-Cached-Project-Wvb` and the OS x64 development batch invoke the shared
 `Native-Project-Cache-Key-Core.mjs` framing through namespace `project-wvb-v2`.
 The standalone key command is a thin command-line adapter over that core.
-After the format, namespace, workspace, project identity and bytes, and declared
-root/source closure, the ordered producers are:
+After the format, namespace, and workspace, the ordered producers are:
 
 1. exact native-front-door `SHA256SUMS` inventory; and
 2. exact current-host native build-driver application.
+
+The exact project identity and bytes plus declared root/source closure follow
+that common producer prefix.
 
 The build driver writes only into a fresh private checkpoint candidate
 directory after its mandatory compiler-aligned verification succeeds. The
@@ -259,13 +283,15 @@ the cache does not reinterpret or execute the WVB.
 `Build-Cached-Os-X64-Project-Wvbs.mjs` accepts the canonical target manifest,
 one private output directory, one already staged and digest-verified build
 driver, and either one target or `all`. It validates all 56 manifest rows,
-derives every selected key in one process, and materializes one separately
+hashes the inventory and build driver into one bounded format-2 context, clones
+that state to derive every selected project key, and materializes one separately
 validated checkpoint per selected project. A miss still launches a distinct
-native build-driver process and atomically publishes one immutable entry. A
-hit rehashes its product and compares the complete record before copying and
-rehashing the private materialization. The paired owner then performs ordinary
-WVB publication, fresh lower/link/package operations, current-host execution,
-and all exact byte checks.
+native build-driver process, rechecks the complete keyed input evidence after
+the build, and atomically publishes one immutable entry. A hit rehashes its
+product and compares the complete record before copying and rehashing the
+private materialization. The paired owner then performs ordinary WVB
+publication, fresh lower/link/package operations, current-host execution, and
+all exact byte checks.
 
 The batch owns each `.new-<key>-<pid>-<nonce>` directory it allocates. A
 `finally` boundary removes that exact ordinary non-link directory after a
@@ -337,7 +363,8 @@ contracts.
 the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
 run the target-aware 50-case database owner. It obtains ordinary project
-objects through `Build-Cached-Project-Object`, the build-driver input through
+objects first through the read-only session and falls back on a true miss to
+`Build-Cached-Project-Object`; it obtains the build-driver input through
 `Build-Cached-Project-Wvb`, every ordinary one-or-more-object linked image
 through `Build-Cached-Linked-Image-Set`, and current-host executables through
 `Build-Cached-Hosted-Application`. Explicitly segmented development cases use
@@ -460,3 +487,26 @@ case falls from 1,410 through 1,490 ms to 940 through 960 ms. The all-hit
 change-aware Windows owner falls from 101,370 ms to 85,010 ms, while its
 portable section falls from 74,110 ms to 58,410 ms. The direct no-argument and
 qualification link paths remain unchanged.
+
+Project-key format 2 reduces repeated producer preparation without weakening
+per-project identity. Ten empty Node invocations averaged 54.4 ms, while the
+former standalone project-key command averaged 124.9 ms. In an isolated warm
+project-object workload, eight standalone hits averaged 149.0 ms and eight hits
+through the already-running owner session averaged 98.0 ms, a 34.23 percent
+boundary reduction and 1.52-fold speedup. The representative TreeNode case fell
+from 940 through 960 ms to 810 ms while retaining its fresh hosted execution.
+
+On the same Windows host, a hosted-only ready session used 69.84 MiB working
+set and 80.32 MiB private memory. A rejected whole-buffer project context used
+107.45 MiB and 117.61 MiB. Streaming the producer fields produced the retained
+design at 73.78 MiB and 83.14 MiB, only 3.94 MiB working-set and 2.82 MiB private
+memory above the hosted-only session. The bounded regression proves four exact
+session hits, miss and corruption output preservation, clean teardown, a stable
+prehashed producer snapshot, excessive-producer rejection, failed-publication
+cleanup, and same-key race convergence. Format 2 intentionally makes older
+project-key entries inert. A one-time Windows population passed all 51 database
+development steps in 736,610 ms and all 56 OS projects plus 336 code-emission
+cases. The final change-aware warm database owner passed in 81,910 ms, down from
+85,010 ms; its portable section fell from 58,410 ms to 55,340 ms. This saves
+3.65 percent for the complete owner and 5.26 percent for the portable section.
+Independent Linux runtime evidence remains required.

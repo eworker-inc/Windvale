@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import {
     appendFile,
+    chmod,
+    copyFile,
     mkdir,
     mkdtemp,
     readFile,
@@ -22,6 +24,18 @@ const BUILDER = path.join(
     'Native',
     'Build-Cached-Project-Object.mjs'
 );
+const SESSION = path.join(
+    REPOSITORY_ROOT,
+    'Tools',
+    'Native',
+    'Build-Cached-Hosted-Application-Session.mjs'
+);
+const KEY_TOOL = path.join(
+    REPOSITORY_ROOT,
+    'Tools',
+    'Native',
+    'Get-Native-Project-Cache-Key.mjs'
+);
 const PROJECT = path.join(
     REPOSITORY_ROOT,
     'Projects',
@@ -30,6 +44,7 @@ const PROJECT = path.join(
 );
 const WINDOWS = process.platform === 'win32';
 const HOST_FAMILY = WINDOWS ? 'windows-x64' : 'linux-x64';
+const TARGET = WINDOWS ? 'windows' : 'linux';
 const BUILD_DRIVER = path.join(
     REPOSITORY_ROOT,
     'Artifacts',
@@ -48,17 +63,87 @@ function Reject(message) {
     throw new Error(message);
 }
 
+function Runˉnode(arguments_, cacheRoot) {
+    return new Promise((resolve, reject) => {
+        const child = spawn(process.execPath, arguments_, {
+            cwd: REPOSITORY_ROOT,
+            env: {
+                ...process.env,
+                WINDVALE_NATIVE_CACHE_ROOT: cacheRoot
+            },
+            windowsHide: true
+        });
+        let stdout = '';
+        let stderr = '';
+        child.stdout.setEncoding('utf8');
+        child.stderr.setEncoding('utf8');
+        child.stdout.on('data', chunk => {
+            stdout += chunk;
+        });
+        child.stderr.on('data', chunk => {
+            stderr += chunk;
+        });
+        child.on('error', reject);
+        child.on('close', code => {
+            resolve({ code, stdout: stdout.trim(), stderr: stderr.trim() });
+        });
+    });
+}
+
+function Startˉserver(
+    readyPath,
+    cacheRoot,
+    buildDriver = BUILD_DRIVER,
+    lowerer = LOWERER
+) {
+    const child = spawn(process.execPath, [
+        SESSION,
+        'serve',
+        readyPath,
+        TARGET,
+        buildDriver,
+        lowerer
+    ], {
+        cwd: REPOSITORY_ROOT,
+        env: {
+            ...process.env,
+            WINDVALE_NATIVE_CACHE_ROOT: cacheRoot
+        },
+        windowsHide: true
+    });
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', chunk => {
+        stderr += chunk;
+    });
+    return {
+        child,
+        result: new Promise((resolve, reject) => {
+            child.on('error', reject);
+            child.on('close', code => {
+                resolve({ code, stderr: stderr.trim() });
+            });
+        })
+    };
+}
+
 function Digest(bytes) {
     return createHash('sha256').update(bytes).digest('hex');
 }
 
-async function Runˉbuilder(cacheRoot, outputWvb, outputWvo, buildDriver = BUILD_DRIVER) {
+async function Runˉbuilder(
+    cacheRoot,
+    outputWvb,
+    outputWvo,
+    buildDriver = BUILD_DRIVER,
+    lowerer = LOWERER
+) {
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, [
             BUILDER,
             PROJECT,
             buildDriver,
-            LOWERER,
+            lowerer,
             outputWvb,
             outputWvo
         ], {
@@ -156,6 +241,7 @@ async function Main() {
         os.tmpdir(),
         'windvale-project-object-checkpoint-test-'
     ));
+    let server = null;
     try {
         const outputRoot = path.join(testRoot, 'Output');
         const normalCache = path.join(testRoot, 'Normal-Cache');
@@ -179,10 +265,161 @@ async function Main() {
             key,
             'Product.wvo'
         );
+        const readyPath = path.join(testRoot, 'Session.txt');
+        server = Startˉserver(readyPath, normalCache);
+        const ready = await Runˉnode([SESSION, 'wait', readyPath], normalCache);
+        Requireˉstatus(ready, 0);
+        const sessionHits = await Promise.all([0, 1, 2, 3].map(index =>
+            Runˉnode([
+                SESSION,
+                'project-request',
+                readyPath,
+                PROJECT,
+                path.join(outputRoot, `Session-${index}.wvb`),
+                path.join(outputRoot, `Session-${index}.wvo`)
+            ], normalCache)
+        ));
+        for (let index = 0; index < sessionHits.length; index += 1) {
+            Requireˉstatus(sessionHits[index], 0, 'Hit');
+            await Requireˉsameˉproducts(
+                firstWvb,
+                firstWvo,
+                path.join(outputRoot, `Session-${index}.wvb`),
+                path.join(outputRoot, `Session-${index}.wvo`)
+            );
+        }
+
+        const sentinel = Buffer.from('project-object-sentinel\n', 'ascii');
+        const missWvb = path.join(outputRoot, 'Session-Miss.wvb');
+        const missWvo = path.join(outputRoot, 'Session-Miss.wvo');
+        await writeFile(missWvb, sentinel);
+        await writeFile(missWvo, sentinel);
+        const missProject = path.join(
+            REPOSITORY_ROOT,
+            'Projects',
+            'Tests',
+            'Windvale-Native-Test-Database-Logical-Record.wvproj'
+        );
+        const miss = await Runˉnode([
+            SESSION,
+            'project-request',
+            readyPath,
+            missProject,
+            missWvb,
+            missWvo
+        ], normalCache);
+        Requireˉstatus(miss, 75);
+        if (!(await readFile(missWvb)).equals(sentinel) ||
+            !(await readFile(missWvo)).equals(sentinel)) {
+            Reject('A project-object session miss changed an owner output.');
+        }
+
         await appendFile(checkpointWvo, Buffer.from([0xa5]));
+        const sessionRejectedWvb = path.join(
+            outputRoot,
+            'Session-Rejected.wvb'
+        );
+        const sessionRejectedWvo = path.join(
+            outputRoot,
+            'Session-Rejected.wvo'
+        );
+        await writeFile(sessionRejectedWvb, sentinel);
+        await writeFile(sessionRejectedWvo, sentinel);
+        const sessionCorrupted = await Runˉnode([
+            SESSION,
+            'project-request',
+            readyPath,
+            PROJECT,
+            sessionRejectedWvb,
+            sessionRejectedWvo
+        ], normalCache);
+        Requireˉstatus(sessionCorrupted, 1);
+        if (!(await readFile(sessionRejectedWvb)).equals(sentinel) ||
+            !(await readFile(sessionRejectedWvo)).equals(sentinel)) {
+            Reject('Corrupt project-object session changed an owner output.');
+        }
+        const shutdown = await Runˉnode([
+            SESSION,
+            'shutdown',
+            readyPath
+        ], normalCache);
+        Requireˉstatus(shutdown, 0);
+        const serverResult = await server.result;
+        Requireˉstatus(serverResult, 0);
+        server = null;
+
+        const trustedCache = path.join(testRoot, 'Trusted-Cache');
+        const trustedLowerer = path.join(
+            testRoot,
+            WINDOWS ? 'Trusted-Lowerer.exe' : 'Trusted-Lowerer.elf'
+        );
+        await copyFile(LOWERER, trustedLowerer);
+        if (!WINDOWS) {
+            await chmod(trustedLowerer, 0o755);
+        }
+        const trustedWvb = path.join(outputRoot, 'Trusted.wvb');
+        const trustedWvo = path.join(outputRoot, 'Trusted.wvo');
+        const trusted = await Runˉbuilder(
+            trustedCache,
+            trustedWvb,
+            trustedWvo,
+            BUILD_DRIVER,
+            trustedLowerer
+        );
+        Requireˉstatus(trusted, 0, 'Created');
+        const trustedReady = path.join(testRoot, 'Trusted-Session.txt');
+        server = Startˉserver(
+            trustedReady,
+            trustedCache,
+            BUILD_DRIVER,
+            trustedLowerer
+        );
+        const trustedSession = await Runˉnode(
+            [SESSION, 'wait', trustedReady],
+            trustedCache
+        );
+        Requireˉstatus(trustedSession, 0);
+        await appendFile(trustedLowerer, Buffer.from([0xa5]));
+        const trustedHitWvb = path.join(outputRoot, 'Trusted-Hit.wvb');
+        const trustedHitWvo = path.join(outputRoot, 'Trusted-Hit.wvo');
+        const trustedHit = await Runˉnode([
+            SESSION,
+            'project-request',
+            trustedReady,
+            PROJECT,
+            trustedHitWvb,
+            trustedHitWvo
+        ], trustedCache);
+        Requireˉstatus(trustedHit, 0, 'Hit');
+        await Requireˉsameˉproducts(
+            trustedWvb,
+            trustedWvo,
+            trustedHitWvb,
+            trustedHitWvo
+        );
+        const trustedShutdown = await Runˉnode(
+            [SESSION, 'shutdown', trustedReady],
+            trustedCache
+        );
+        Requireˉstatus(trustedShutdown, 0);
+        const trustedServerResult = await server.result;
+        Requireˉstatus(trustedServerResult, 0);
+        server = null;
+
+        const excessiveProducers = await Runˉnode([
+            KEY_TOOL,
+            'database-project-object-v2',
+            PROJECT,
+            ...Array(17).fill(BUILDER)
+        ], normalCache);
+        Requireˉstatus(excessiveProducers, 1);
+        if (!excessiveProducers.stderr.includes(
+            'requires one through 16 producers')) {
+            Reject('The excessive producer rejection differs.');
+        }
+
         const rejectedWvb = path.join(outputRoot, 'Rejected.wvb');
         const rejectedWvo = path.join(outputRoot, 'Rejected.wvo');
-        const sentinel = Buffer.from('project-object-sentinel\n', 'ascii');
         await writeFile(rejectedWvb, sentinel);
         await writeFile(rejectedWvo, sentinel);
         const corrupted = await Runˉbuilder(
@@ -236,9 +473,14 @@ async function Main() {
         process.stdout.write(
             'native project object checkpoint status=Passed ' +
             'creation=1 hits=1 corruption=Rejected failure=Cleaned ' +
-            'race=Created-1/Hit-3\n'
+            'race=Created-1/Hit-3 session=Hit-4/Miss-Unchanged/' +
+            'Corruption-Rejected/Lifecycle-Clean producer-snapshot=Exact ' +
+            'producer-bound=Rejected\n'
         );
     } finally {
+        if (server !== null && !server.child.killed) {
+            server.child.kill();
+        }
         await Removeˉtestˉroot(testRoot);
     }
 }
