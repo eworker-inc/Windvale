@@ -1,7 +1,7 @@
 # Windvale native tool checkpoint 1
 
 Status: Implemented local-development contract under Decisions 0546, 0553,
-0554, 0555, 0559, and 0560.
+0554, 0555, 0559, 0560, 0737, and 0738.
 
 ## Purpose and boundary
 
@@ -17,7 +17,7 @@ The cache root is outside the repository. Windows uses
 root, family, or entry reached through a Windows reparse point or Linux symbolic
 link.
 
-Project-object checkpoint 1 extends that boundary to one exact Project 2 source
+Project-object checkpoint 2 extends that boundary to one exact Project 2 source
 closure and its WVB and WVO products. It remains development-only. It never
 replaces the clean duplicate-output, paired-target, malformed-input, or
 qualification owners.
@@ -78,28 +78,30 @@ overwritten or repaired implicitly.
 
 ## Project-object key and record
 
-`Get-Native-Project-Cache-Key.mjs` derives the project-object key through
+`Build-Cached-Project-Object.mjs` invokes the shared project-key core through
 length-framed SHA-256 fields. In order, the fields are:
 
 1. format `windvale-native-project-cache-key 1`;
-2. namespace `database-project-object-v1`;
+2. namespace `database-project-object-v2`;
 3. the exact `Windvale.wvws` bytes;
 4. the repository-relative project identity and exact project bytes;
 5. each exact `root` and `source` path plus file bytes in declaration order;
    and
-6. the exact build-driver and lowerer bytes in producer order.
+6. the exact build-driver and lowerer bytes in producer order; and
+7. the exact project-object checkpoint driver bytes. Those driver bytes bind
+   the host-specific expected WVO inspector identity and admission procedure.
 
-The key helper accepts only one canonical repository-owned `.wvproj`, exactly
+The shared key core accepts only one canonical repository-owned `.wvproj`, exactly
 one root, canonical repository-contained source paths, ordinary inputs no
 larger than 67,108,864 bytes, and canonical non-link paths. The lowercase
-64-hex SHA-256 names a host-scoped `project-object-v1/<target>/<key>` entry.
+64-hex SHA-256 names a host-scoped `project-object-v2/<target>/<key>` entry.
 A source, manifest, workspace, producer, order, format, or namespace change
 therefore selects a different entry.
 
 The project-object `Checkpoint.txt` contains exactly six ASCII lines:
 
 ```text
-windvale-native-project-object-checkpoint 1
+windvale-native-project-object-checkpoint 2
 key <64-lowercase-hex>
 wvb-bytes <canonical-positive-decimal>
 wvb-sha256 <64-lowercase-hex>
@@ -108,11 +110,15 @@ wvo-sha256 <64-lowercase-hex>
 ```
 
 The record is at most 1,024 bytes. Both products are greater than zero and at
-most 67,108,864 bytes. Every hit recomputes both sizes and digests, constructs
-the complete expected record, compares it byte for byte, copies the immutable
-products to fresh owner output paths, compares both copies byte for byte, and
-runs complete structural WVO admission. A corrupt existing entry fails closed
-and is not silently repaired.
+most 67,108,864 bytes. A miss runs the exact build driver and lowerer, admits
+the candidate WVO through the digest-pinned current-host inspector, and only
+then atomically publishes the complete entry. Every hit recomputes both sizes
+and digests, constructs and compares the complete record byte for byte, copies
+the immutable products to fresh owner output paths, and rehashes both copies.
+It does not rerun WVO admission: the version-2 key binds the exact admission
+driver and inspector identity, while the immutable record and copy digests
+prove that the admitted bytes are unchanged. A corrupt existing entry fails
+closed and is not silently repaired.
 
 ## Hosted-application key and record
 
@@ -255,14 +261,24 @@ to its key, then validates it again through the ordinary hit path. Partial
 directories retain a `.new-` prefix and are never cache hits. Version 1 does not
 define eviction or automatic partial-directory cleanup.
 
+The version-2 project-object driver owns each
+`.new-<key>-<pid>-<nonce>` directory it creates. Its `finally` boundary removes
+that exact ordinary non-link directory after build, lowering, admission,
+measurement, manifest, or lost-publication-race failure, but only after proving
+the candidate remains directly inside the canonical checkpoint family. A race
+loser accepts the destination only after complete record and product
+validation. Other version-1 checkpoint families retain their specified cleanup
+contracts.
+
 `Test-Database-Storage.cmd --prepare-development-tools` and its shell peer build
 the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
-run all eight selected database behaviors. It obtains the project objects
-through `Build-Cached-Project-Object`, the build-driver input through
-`Build-Cached-Project-Wvb`, all six portable linked images through
+run the target-aware 50-case database owner. It obtains ordinary project
+objects through `Build-Cached-Project-Object`, the build-driver input through
+`Build-Cached-Project-Wvb`, portable linked images through
 `Build-Cached-Linked-Image`, and current-host executables through
-`Build-Cached-Hosted-Application`. `Verify-Changed.ps1`
+`Build-Cached-Hosted-Application`; explicitly segmented cases retain their
+separate staging path. `Verify-Changed.ps1`
 selects that development owner only when every selected database-storage
 boundary is eligible. Compiler, lowerer, specialized provider, nested-record,
 and other broad changes mark the full database-storage owner mandatory. The

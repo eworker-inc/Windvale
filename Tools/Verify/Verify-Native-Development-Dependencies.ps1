@@ -99,7 +99,7 @@ $ExpectedCheckpoints = @(
     'build-driver-v1',
     'hosted-application-v1',
     'linked-image-v1',
-    'project-object-v1',
+    'project-object-v2',
     'project-wvb-v2'
 )
 if (![Linq.Enumerable]::SequenceEqual(

@@ -6,6 +6,8 @@ Date: 2026-08-14
 
 Defines: [Windvale native tool checkpoint 1](../../Specifications/Windvale-Native-Tool-Checkpoint.md)
 
+Advanced by: [Decision 0738](0738-Reuse-Project-Object-Checkpoint-Admission.md)
+
 ## Context
 
 The settled Decision 0552 change-aware run spent 1,111.135 seconds in the

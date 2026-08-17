@@ -2441,6 +2441,7 @@ $NativeCases = @(
             'Tools/Native/Build-Cached-Linked-Image.cmd',
             'Tools/Native/Build-Cached-Linked-Image.sh',
             'Tools/Native/Build-Cached-Project-Object.cmd',
+            'Tools/Native/Build-Cached-Project-Object.mjs',
             'Tools/Native/Build-Cached-Project-Object.sh',
             'Tools/Native/Build-Cached-Project-Wvb.cmd',
             'Tools/Native/Build-Cached-Project-Wvb.sh',
@@ -2448,6 +2449,7 @@ $NativeCases = @(
             'Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs',
             'Tools/Native/Get-Native-Project-Cache-Key.mjs',
             'Tools/Native/Native-Project-Cache-Key-Core.mjs'
+            'Tools/Native/Test-Project-Object-Checkpoint.mjs'
         )
         Suites = @('os-x64-code-emission', 'database-storage')
         Gaps = @()

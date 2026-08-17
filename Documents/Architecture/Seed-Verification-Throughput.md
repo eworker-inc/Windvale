@@ -199,6 +199,23 @@ reported 89,530 ms for the same owner after also passing planner and workflow
 policy checks. The complete owner remains cold, reconstructs both target
 containers, and retains independent reproducibility and admission evidence.
 
+After the database development owner expanded to 50 cases, a complete all-hit
+Windows run still took 708,690 ms. Project-object version 1 was a false hit at
+the trust boundary: it rehashed and byte-compared an immutable admitted WVO,
+then ran the complete structural WVO inspector again. For the fifteen-module
+`TransactionParentGroups` project, the wrapper averaged 10,339.75 ms and the
+redundant admission alone averaged 9,164.48 ms. Version 2 binds the exact cache
+driver and its digest-pinned inspector policy into the project key, retains
+admission before immutable publication, and proves hits through the complete
+record plus rehashed private copies. Its first fresh creation took 23,257.74 ms;
+the next two hits took 264.10 and 250.11 ms, a 97.51 percent boundary reduction
+and 40.2-fold speedup. The complete all-hit 50-case owner falls from 708,690 ms
+to 500,610 ms, saving 208,080 ms or 29.36 percent for a 1.42-fold speedup;
+portable-case time falls from 345,980 ms to 198,870 ms. Even the first coherent
+version-2 population gate falls from the preceding 1,495,600 ms cold reference
+to 950,050 ms because each new WVO is admitted once rather than again after
+materialization. Qualification remains cache-independent.
+
 `Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
 producer, and artifact closures for the measured front-door, WebAssembly, and
 database owners plus all five database checkpoint families. Its verifier

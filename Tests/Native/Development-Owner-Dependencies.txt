@@ -6,11 +6,12 @@ database-storage|artifact|Artifacts/Native-Wvb-To-Wvo-Candidate/Manifest.json
 database-storage|checkpoint|build-driver-v1
 database-storage|checkpoint|hosted-application-v1
 database-storage|checkpoint|linked-image-v1
-database-storage|checkpoint|project-object-v1
+database-storage|checkpoint|project-object-v2
 database-storage|checkpoint|project-wvb-v2
 database-storage|producer|Tools/Native/Build-Cached-Hosted-Application.cmd
 database-storage|producer|Tools/Native/Build-Cached-Linked-Image.cmd
 database-storage|producer|Tools/Native/Build-Cached-Project-Object.cmd
+database-storage|producer|Tools/Native/Build-Cached-Project-Object.mjs
 database-storage|producer|Tools/Native/Build-Cached-Project-Wvb.cmd
 database-storage|producer|Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs
 database-storage|producer|Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs

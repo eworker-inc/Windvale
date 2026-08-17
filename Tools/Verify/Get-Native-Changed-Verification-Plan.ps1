@@ -1059,6 +1059,7 @@ function Add-Native-Tool-Suite {
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Native-Project-Cache-Key-Core',
+        'Test-Project-Object-Checkpoint',
         'Test-Database-Storage'
     )) {
         $script:DatabaseDevelopmentRequiresAllTargets = $true
