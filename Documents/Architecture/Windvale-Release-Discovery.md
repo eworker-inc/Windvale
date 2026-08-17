@@ -3,10 +3,14 @@
 ## Status and purpose
 
 This architecture defines the proposed signed metadata and transport boundary
-between one installed Windvale bootstrap and official release objects. It is not
-implemented. Package 1 and Lock 1 remain the only implemented distribution
-metadata, and the exact WVDB Query front door remains local and source-locked.
-The hosting choice and rollout order are recorded in the
+between one installed Windvale bootstrap and official release objects. Root 1,
+Channel 1, Release 1, Signature 1, network acquisition, and freshness handling
+are not implemented. Package 1 and Lock 1 remain the implemented package
+distribution metadata, while Decision 0750 adds the narrower local Installer
+Repository 1 index, verifier, and target/profile selector. That index is ready
+to become one signed release subject but is not itself public discovery,
+freshness, or network trust. The exact WVDB Query front door remains local and
+source-locked. The hosting choice and rollout order are recorded in the
 [hybrid official-source proposal](../Project/Windvale-Package-Source-Proposal.md).
 
 The official logical source is `windvale.official`. Its default network endpoint

@@ -2,7 +2,11 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { constants as ZLIB_CONSTANTS, deflateRawSync } from "node:zlib";
+import {
+    Crc32,
+    Deflateˉbytes,
+    Gzipˉdeflate,
+} from "./Deterministic-Compression.mjs";
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, "../..");
@@ -360,36 +364,6 @@ function Buildˉtarget(Input, Target) {
     };
 }
 
-const CRC32_TABLE = (() => {
-    const Table = new Uint32Array(256);
-    for (let Value = 0; Value < 256; Value++) {
-        let Current = Value;
-        for (let Bit = 0; Bit < 8; Bit++) {
-            Current = (Current & 1) !== 0 ?
-                (0xedb88320 ^ (Current >>> 1)) : (Current >>> 1);
-        }
-        Table[Value] = Current >>> 0;
-    }
-    return Table;
-})();
-
-function Crc32(Value) {
-    let Crc = 0xffffffff;
-    for (const Byte of Value) {
-        Crc = CRC32_TABLE[(Crc ^ Byte) & 0xff] ^ (Crc >>> 8);
-    }
-    return (Crc ^ 0xffffffff) >>> 0;
-}
-
-function Deflateˉbytes(Value) {
-    return deflateRawSync(Value, {
-        level: 6,
-        memLevel: 8,
-        strategy: ZLIB_CONSTANTS.Z_DEFAULT_STRATEGY,
-        windowBits: 15,
-    });
-}
-
 function Writeˉzip(Files, Compress) {
     const LocalParts = [];
     const CentralParts = [];
@@ -510,14 +484,6 @@ function Gzipˉstored(Value) {
     Trailer.writeUInt32LE(Value.length >>> 0, 4);
     Parts.push(Trailer);
     return Buffer.concat(Parts);
-}
-
-function Gzipˉdeflate(Value) {
-    const Header = Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0x00, 0xff]);
-    const Trailer = Buffer.alloc(8);
-    Trailer.writeUInt32LE(Crc32(Value), 0);
-    Trailer.writeUInt32LE(Value.length >>> 0, 4);
-    return Buffer.concat([Header, Deflateˉbytes(Value), Trailer]);
 }
 
 function Findˉtarget(Input, ArtifactPath) {

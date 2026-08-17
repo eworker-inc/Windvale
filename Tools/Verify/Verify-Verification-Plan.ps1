@@ -2721,7 +2721,33 @@ $NativeCases = @(
             'Specifications/Windvale-Installer.md',
             'LICENSE.md'
         )
-        Suites = @('scripting', 'installers', 'offline-package-stage')
+        Suites = @(
+            'scripting',
+            'installers',
+            'installer-repository',
+            'offline-package-stage'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'installer repository owner'
+        Paths = @(
+            'Tools/Release/Build-Installer-Repository.mjs',
+            'Tools/Release/Verify-Installer-Repository.mjs',
+            'Tools/Native/Test-Installer-Repository.cmd',
+            'Tools/Native/Test-Installer-Repository.mjs',
+            'Tools/Native/Test-Installer-Repository.sh',
+            'Specifications/Windvale-Installer-Repository.md'
+        )
+        Suites = @('installer-repository')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'deterministic installer compression owners'
+        Paths = @('Tools/Release/Deterministic-Compression.mjs')
+        Suites = @('installers', 'installer-repository')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2736,7 +2762,7 @@ $NativeCases = @(
             'Tools/Native/Test-Release-Envelope.sh',
             'Specifications/Windvale-Release-Envelope.md'
         )
-        Suites = @('release-envelope', 'offline-package-stage')
+        Suites = @('installer-repository', 'release-envelope', 'offline-package-stage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3010,9 +3036,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 101 -or
+if ($VerificationOwnerLines.Count -ne 102 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 100-owner inventory differs.'
+    throw 'The native verification-owner header or exact 101-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3050,7 +3076,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4626 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4638 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -2,8 +2,34 @@
   "format": "windvale-installer-input-1",
   "version": "0.2.0-dev.1",
   "channel": "development",
+  "repository": {
+    "format": "windvale-installer-repository-input-1",
+    "expectedIndexBytes": 3546,
+    "expectedIndexSha256": "33fb6b436f28981489272478cb399ca7c857146950d6a5ac4adc4f062d6a0394",
+    "expectedBlobCount": 15,
+    "expectedBlobBytes": 9290710,
+    "profiles": [
+      {
+        "id": "developer",
+        "components": ["assembler", "base", "compiler", "linker", "runner", "verifier"]
+      },
+      {
+        "id": "full",
+        "components": ["assembler", "base", "compiler", "inspector", "linker", "publisher", "runner", "verifier"]
+      },
+      {
+        "id": "publisher",
+        "components": ["base", "inspector", "publisher", "verifier"]
+      },
+      {
+        "id": "runtime",
+        "components": ["base", "runner", "verifier"]
+      }
+    ]
+  },
   "sharedFiles": [
     {
+      "component": "base",
       "source": "LICENSE.md",
       "path": "LICENSE.md",
       "bytes": 13249,
@@ -22,6 +48,7 @@
       "expectedPayloadSha256": "1f86c542450c0ce92ad886363ec2ef1112431e71314ff5115166db6fad31dfc7",
       "files": [
         {
+          "component": "compiler",
           "source": "Artifacts/Native-Front-Door/windows-x64/wvbuild.exe",
           "path": "bin/wvbuild.exe",
           "bytes": 29429248,
@@ -29,6 +56,7 @@
           "mode": "0755"
         },
         {
+          "component": "assembler",
           "source": "Artifacts/Native-Front-Door/windows-x64/wvasm.exe",
           "path": "bin/wvasm.exe",
           "bytes": 2895360,
@@ -36,6 +64,7 @@
           "mode": "0755"
         },
         {
+          "component": "linker",
           "source": "Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.exe",
           "path": "bin/wvlink.exe",
           "bytes": 1796608,
@@ -43,6 +72,7 @@
           "mode": "0755"
         },
         {
+          "component": "runner",
           "source": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
           "path": "bin/wvrun.exe",
           "bytes": 1248768,
@@ -50,6 +80,7 @@
           "mode": "0755"
         },
         {
+          "component": "inspector",
           "source": "Artifacts/Native-Front-Door/windows-x64/wvdump.exe",
           "path": "bin/wvdump.exe",
           "bytes": 795136,
@@ -57,6 +88,7 @@
           "mode": "0755"
         },
         {
+          "component": "verifier",
           "source": "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
           "path": "bin/wvverify.exe",
           "bytes": 1255936,
@@ -64,6 +96,7 @@
           "mode": "0755"
         },
         {
+          "component": "publisher",
           "source": "Artifacts/Native-Front-Door/windows-x64/wvpublish.exe",
           "path": "bin/wvpublish.exe",
           "bytes": 1371136,
@@ -81,6 +114,7 @@
       "expectedPayloadSha256": "c9a0c344fb026c648fa7e69b0a2d6886264068a2d9da48738f76a7dba1d58033",
       "files": [
         {
+          "component": "compiler",
           "source": "Artifacts/Native-Front-Door/linux-x64/wvbuild.elf",
           "path": "bin/wvbuild",
           "bytes": 29429760,
@@ -88,6 +122,7 @@
           "mode": "0755"
         },
         {
+          "component": "assembler",
           "source": "Artifacts/Native-Front-Door/linux-x64/wvasm.elf",
           "path": "bin/wvasm",
           "bytes": 2895872,
@@ -95,6 +130,7 @@
           "mode": "0755"
         },
         {
+          "component": "linker",
           "source": "Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.elf",
           "path": "bin/wvlink",
           "bytes": 1798144,
@@ -102,6 +138,7 @@
           "mode": "0755"
         },
         {
+          "component": "runner",
           "source": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
           "path": "bin/wvrun",
           "bytes": 1249280,
@@ -109,6 +146,7 @@
           "mode": "0755"
         },
         {
+          "component": "inspector",
           "source": "Artifacts/Native-Front-Door/linux-x64/wvdump.elf",
           "path": "bin/wvdump",
           "bytes": 794624,
@@ -116,6 +154,7 @@
           "mode": "0755"
         },
         {
+          "component": "verifier",
           "source": "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
           "path": "bin/wvverify",
           "bytes": 1257472,
@@ -123,6 +162,7 @@
           "mode": "0755"
         },
         {
+          "component": "publisher",
           "source": "Artifacts/Native-Front-Door/linux-x64/wvpublish.elf",
           "path": "bin/wvpublish",
           "bytes": 1369077,

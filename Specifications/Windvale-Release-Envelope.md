@@ -174,6 +174,13 @@ The installer payload manifests select their contained tools and licenses, so
 an installer is the platform tool-distribution object rather than a second copy
 of each executable in the release directory.
 
+A `0.2` successor profile may instead carry exactly one `repository|all`
+artifact containing a canonical Installer Repository 1 index. The release
+manifest binds the exact index bytes; the independently admitted index binds
+the external content-addressed blobs selected for one target and component
+profile. Release Envelope 1 does not parse that inner graph, fetch its objects,
+or reinterpret the index as additional release-manifest records.
+
 A package profile is exactly one `package|all` artifact or at least two
 `package|<package-id>` artifacts. The forms cannot be mixed. This preserves the
 published single-package `v0.1.0` envelope while allowing Milestone 4 to bind

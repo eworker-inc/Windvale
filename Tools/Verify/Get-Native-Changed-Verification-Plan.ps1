@@ -1489,6 +1489,13 @@ foreach ($Path in $Paths) {
             'Tools/Release/Build-Installers.mjs'
         )) {
             Add-Suite 'installers'
+        } elseif ($Path -eq 'Tools/Release/Deterministic-Compression.mjs') {
+            Add-Suite @('installers', 'installer-repository')
+        } elseif ($Path -in @(
+            'Tools/Release/Build-Installer-Repository.mjs',
+            'Tools/Release/Verify-Installer-Repository.mjs'
+        )) {
+            Add-Suite 'installer-repository'
         } elseif ($Path -in @(
             'Tools/Release/Create-Release-Envelope.mjs',
             'Tools/Release/Verify-Release-Envelope.mjs'
@@ -1501,6 +1508,9 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal)) {
         Add-Suite 'installers'
+        if ($Path -eq 'Distribution/Installers/Windvale-Development-Installer.json') {
+            Add-Suite 'installer-repository'
+        }
         if ($Path.EndsWith('/wv', [StringComparison]::Ordinal) -or
             $Path.EndsWith('/wv.cmd', [StringComparison]::Ordinal) -or
             $Path.EndsWith('/wv-run.ps1', [StringComparison]::Ordinal) -or
@@ -2967,8 +2977,14 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Installer.md'
         )) {
             Add-Suite 'installers'
+        } elseif ($Path -eq 'Specifications/Windvale-Installer-Repository.md') {
+            Add-Suite 'installer-repository'
         } elseif ($Path -eq 'Specifications/Windvale-Release-Envelope.md') {
-            Add-Suite @('release-envelope', 'offline-package-stage')
+            Add-Suite @(
+                'release-envelope',
+                'offline-package-stage',
+                'installer-repository'
+            )
         } elseif ($Path -eq 'Specifications/Windvale-Capability-Approval-And-Launch.md') {
             Add-Suite @('echo-command-launch', 'wvdb-approval')
         } elseif ($Path -in @(

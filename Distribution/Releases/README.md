@@ -14,6 +14,12 @@ and published the authenticated public root and signed product envelope with the
 Future releases must repeat or deliberately supersede that documented custody
 and signing policy; they must not reuse generated ceremony outputs implicitly.
 
+Decision 0750 adds a narrower, deterministic Installer Repository 1 development
+candidate. Its index is ready to be one future signed `repository|all` subject,
+but the checked-in `0.2.0-dev.1` identity is not signed or published and does
+not implement network release discovery. See
+[`Specifications/Windvale-Installer-Repository.md`](../../Specifications/Windvale-Installer-Repository.md).
+
 No private root or release key may enter the repository, CI, a release asset, or
 an ordinary build cache. Official software-held private keys use the
 passphrase-protected `.wvkey` custody wrapper from
