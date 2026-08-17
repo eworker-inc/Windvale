@@ -62,6 +62,21 @@ is syntax-checked locally; live Linux execution remains dual-host CI evidence.
 The complete no-argument reconstruction is not repeated for this dispatcher-only
 change because its construction inputs and cold qualification body are unchanged.
 
+On a Windows 11 Pro for Workstations host with an AMD Ryzen 9 3900X, 12 logical
+processors available, and 10,484,645,888 bytes of physical memory, seven
+consecutive warm `--development` runs measured 971.214 to 1,403.642
+milliseconds. The median was 1,006.353 milliseconds and the mean was 1,059.426
+milliseconds. Each run compiled the one `Function-Only` source through both
+entry points, compared the exact 816-byte results, and independently verified
+the result. Process-tree peak memory was not recorded because the short-lived
+command wrapper launches multiple native children.
+
+Compared with the previously observed 1,351,200-millisecond complete owner, the
+median development feedback latency is 1,342.7 times smaller, a 99.9255-percent
+reduction. This is an intentional workload separation, not a claim that cold
+reconstruction itself became faster: qualification still constructs the full
+paired distribution evidence.
+
 ## Reconsideration triggers
 
 Reconsider this decision if the semantic oracle no longer covers both admitted

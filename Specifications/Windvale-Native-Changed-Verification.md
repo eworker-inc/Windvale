@@ -53,9 +53,13 @@ inspection, negative admission, and failed-output preservation.
 The `seed-native-front-door` lane is the ordinary pinned identity and admission
 smoke. It binds the exact manifest and checksum-inventory identities, hashes all
 18 Windows/Linux/WVB artifacts, and admits all six WVB modules through the
-current-host verifier. Every maintained source path previously classified with
-the `seed-native-front-door` evidence gap selects this fast lane. It does not
-reconstruct products.
+current-host verifier. Changes inside the checked-in front-door artifact family
+and changes to the owner itself select this lane directly. Compiler source,
+compiler-service project, and compiler-product-launcher changes use their mapped
+behavioral and reconstruction owners without re-admitting an unchanged pinned
+front door. Other historical source-transfer mappings remain explicit until
+their affected-owner closures are audited. This lane does not reconstruct
+products.
 
 The separate `seed-native-front-door-reconstruction` lane retains the complete
 105-artifact, 185-assertion Project 1 build, publication, verification,

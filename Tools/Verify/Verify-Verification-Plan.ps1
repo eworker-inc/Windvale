@@ -45,6 +45,8 @@ $NativeCases = @(
             'Foundation/Byte-Ordering.wvproj',
             'Foundation/Decimal-Parsing.wvproj',
             'Foundation/Byte-Construction.wvproj',
+            'Examples/Compiler/Native-Stencil-Demo.wv',
+            'Projects/Examples/Native-Stencil-Demo.wvproj',
             'Projects/Examples/Foundation-Machine-Contracts-Demo.wvproj',
             'Projects/Examples/Foundation-Byte-Ordering-Demo.wvproj',
             'Projects/Examples/Foundation-Decimal-Parsing-Demo.wvproj',
@@ -157,13 +159,10 @@ $NativeCases = @(
             'Compiler/Windvale/Native-Publication-Lifetime-Core.wvproj',
             'Compiler/Windvale/Native-Publication-Lifetime.wvproj',
             'Windvale-Native-Enum-Metadata.wvproj',
-            'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
-            'Examples/Compiler/Native-Stencil-Demo.wv',
-            'Projects/Examples/Native-Stencil-Demo.wvproj'
+            'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj'
         )
         Suites = @(
             'seed',
-            'seed-native-front-door',
             'segmented-compiler-toolset-reconstruction',
             'unsafe-wvb',
             'source-containment',
@@ -199,12 +198,27 @@ $NativeCases = @(
         )
         Suites = @(
             'seed',
-            'seed-native-front-door',
             'compiler-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native front-door artifacts select their admission owner'
+        Paths = @(
+            'Artifacts/Native-Front-Door/Manifest.json',
+            'Artifacts/Native-Front-Door/SHA256SUMS'
+        )
+        Suites = @(
+            'seed-native-front-door',
+            'wvb-runner-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'installers'
         )
         Gaps = @()
         VerifyPlan = $false

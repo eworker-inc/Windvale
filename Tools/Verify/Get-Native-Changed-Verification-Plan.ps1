@@ -1114,7 +1114,6 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Build-Source-Compiler-Product') {
         Add-Compiler-Suites
         Add-Suite 'compiler-reconstruction'
-        Add-Suite 'seed-native-front-door'
     } elseif ($Stem -eq 'Measure-Source-Wvb-Compilation') {
         Add-Compiler-Suites
     } elseif ($Stem -in @(
@@ -2346,7 +2345,6 @@ foreach ($Path in $Paths) {
         'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization.wvproj'
     )) {
         Add-Compiler-Suites
-        Add-Suite 'seed-native-front-door'
         if ($Path -in @(
             'Compiler/Windvale/Source-Wvb-Core.wv',
             'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
@@ -2820,6 +2818,7 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Front-Door/',
         [StringComparison]::Ordinal)) {
         Add-Suite @(
+            'seed-native-front-door',
             'wvb-runner-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
