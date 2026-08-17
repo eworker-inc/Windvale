@@ -18,6 +18,7 @@ $RunPlanVerification = $false
 $RunWebAssemblyVerification = $false
 $RunWebAssemblyEngineVerification = $false
 $RunGitHubQualificationVerification = $false
+$SourceContainmentCompilerDevelopmentEligible = $true
 $OsX64CodeEmissionDevelopmentEligible = $true
 $OsX64CodeEmissionDevelopmentRequiresAllTargets = $false
 $SelectedOsX64CodeEmissionDevelopmentTargets =
@@ -1045,6 +1046,9 @@ function Add-Os-Suite {
 function Add-Native-Tool-Suite {
     param([Parameter(Mandatory)][string]$Path)
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
+    if ($Stem -eq 'Test-Source-Containment') {
+        $script:SourceContainmentCompilerDevelopmentEligible = $false
+    }
     if ($Stem -eq 'Build-Cached-Os-X64-Project-Wvbs') {
         $script:OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
         Add-Suite 'os-x64-code-emission'
@@ -1226,6 +1230,7 @@ function Add-Native-Tool-Suite {
         'Random-Containment-Source',
         'Test-Random-Containment'
     )) {
+        $script:SourceContainmentCompilerDevelopmentEligible = $false
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb') {
         Add-Bytecode-Suites
@@ -1408,6 +1413,10 @@ foreach ($Path in $Paths) {
         'Tools/Recovery/Verify-Managed-Bootstrap.sh'
     )) {
         $RunPlanVerification = $true
+    } elseif ($Path -eq
+        'Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm') {
+        Add-WebAssemblyEngineVerification
+        Add-Suite 'source-containment'
     } elseif ($Path -in @(
         'Tools/Verify/Verify-WebAssembly-Engine.ps1',
         'Tools/Website/Verify-WebAssembly-Playground-Package.mjs',
@@ -1861,6 +1870,7 @@ foreach ($Path in $Paths) {
             }
         }
     } elseif ($Path -eq 'Specifications/Windvale-Native-Random-Containment-Tests.md') {
+        $SourceContainmentCompilerDevelopmentEligible = $false
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Path.StartsWith('Libraries/Package/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Package/', [StringComparison]::Ordinal)) {
@@ -2929,6 +2939,9 @@ foreach ($Path in $Paths) {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-U64.wv') {
         Add-Suite 'native-u64-lowering'
+    } elseif ($Path -eq 'Tests/Native/Random-Containment/Corpus.tar.gz.b64') {
+        $SourceContainmentCompilerDevelopmentEligible = $false
+        Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Nested-Record-Fields.wv') {
         Require-Full-Database-Storage
     } elseif ($Path -eq 'Tests/Native/Plan.txt' -or
@@ -3458,6 +3471,13 @@ if (!$LibraryDevelopmentRequiresAllTargets -and
     $SelectedLibraryDevelopmentTargets.Count -eq 1) {
     $LibraryDevelopmentTarget = @($SelectedLibraryDevelopmentTargets)[0]
 }
+$SourceContainmentDevelopmentMode = if (
+    $SelectedSuites.Contains('source-containment') -and
+    $SourceContainmentCompilerDevelopmentEligible) {
+    'compiler-only'
+} else {
+    'complete'
+}
 if (!$Quiet) {
     Write-Host "Native owners: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
@@ -3465,6 +3485,7 @@ if (!$Quiet) {
     Write-Host "WebAssembly engine verification: $($RunWebAssemblyEngineVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
     Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
+    Write-Host "Source containment development mode: $SourceContainmentDevelopmentMode"
     Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
     Write-Host "Library development target: $LibraryDevelopmentTarget"
     Write-Host "Database storage development checkpoint: $((
@@ -3480,6 +3501,9 @@ if ($PassThru) {
         RunWebAssemblyEngineVerification = $RunWebAssemblyEngineVerification
         RunWebAssemblyVerification = $RunWebAssemblyVerification
         RunGitHubQualificationVerification = $RunGitHubQualificationVerification
+        UseSourceContainmentCompilerDevelopment = (
+            $SelectedSuites.Contains('source-containment') -and
+            $SourceContainmentCompilerDevelopmentEligible)
         UseOsX64CodeEmissionDevelopment = (
             $SelectedSuites.Contains('os-x64-code-emission') -and
             $OsX64CodeEmissionDevelopmentEligible)

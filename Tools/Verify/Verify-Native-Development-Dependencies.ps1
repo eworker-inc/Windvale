@@ -10,6 +10,7 @@ $Owners = @(
     'database-storage',
     'os-x64-code-emission',
     'seed-native-front-door',
+    'source-containment',
     'webassembly-engine'
 )
 $RequiredKinds = @('artifact', 'producer', 'source')
@@ -85,6 +86,7 @@ foreach ($Owner in $Owners) {
         'database-storage' { $Plan.Suites -contains 'database-storage' }
         'os-x64-code-emission' { $Plan.Suites -contains 'os-x64-code-emission' }
         'seed-native-front-door' { $Plan.Suites -contains 'seed-native-front-door' }
+        'source-containment' { $Plan.Suites -contains 'source-containment' }
         'webassembly-engine' { $Plan.RunWebAssemblyEngineVerification }
     }
     if (!$OwnerSelected) {

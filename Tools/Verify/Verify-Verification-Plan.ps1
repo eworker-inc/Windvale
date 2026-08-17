@@ -356,7 +356,11 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Random-Containment-Host.mjs',
             'Tools/Native/Random-Containment-Corpus.mjs',
+            'Tools/Native/Random-Containment-Source.mjs',
             'Tools/Native/Test-Random-Containment.mjs',
+            'Tools/Native/Test-Source-Containment.cmd',
+            'Tools/Native/Test-Source-Containment.sh',
+            'Tests/Native/Random-Containment/Corpus.tar.gz.b64',
             'Specifications/Windvale-Native-Random-Containment-Tests.md'
         )
         Suites = @(
@@ -1577,7 +1581,7 @@ $NativeCases = @(
             'Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm',
             'Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm'
         )
-        Suites = @()
+        Suites = @('source-containment')
         Gaps = @()
         VerifyPlan = $false
         VerifyWebAssemblyEngine = $true
@@ -3099,6 +3103,92 @@ foreach ($Contract in @(
             throw "$($Contract.Name) is missing '$Fragment'."
         }
     }
+}
+
+$SourceContainmentWindows = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Source-Containment.cmd')
+$SourceContainmentLinux = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Source-Containment.sh')
+$SourceContainmentRunner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Random-Containment.mjs')
+$SourceContainmentImplementation = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Random-Containment-Source.mjs')
+foreach ($Contract in @(
+    @{
+        Name = 'Windows compiler-only source containment owner'
+        Text = $SourceContainmentWindows
+        Required = @(
+            'Test-Source-Containment.cmd [--compiler-only]',
+            'Test-Random-Containment.mjs" source %Mode%'
+        )
+    },
+    @{
+        Name = 'Linux compiler-only source containment owner'
+        Text = $SourceContainmentLinux
+        Required = @(
+            'Test-Source-Containment.sh [--compiler-only]',
+            'Test-Random-Containment.mjs" source "$@"'
+        )
+    },
+    @{
+        Name = 'source containment mode parser'
+        Text = $SourceContainmentRunner
+        Required = @(
+            '<source|wvb|wvo> [--compiler-only]',
+            'process.argv.length === 4 && Compilerˉonly && Family === "source"',
+            'Compilerˉonly,'
+        )
+    },
+    @{
+        Name = 'source containment compiler-only boundary'
+        Text = $SourceContainmentImplementation
+        Required = @(
+            'Compilerˉonly = false',
+            'if (Compilerˉonly)',
+            'const Assemblerˉartifact = Hostˉartifact'
+        )
+    },
+    @{
+        Name = 'changed-file source containment dispatch'
+        Text = $ChangedVerification
+        Required = @(
+            '$Suite -eq ''source-containment''',
+            '$NativePlan.UseSourceContainmentCompilerDevelopment',
+            'mode=compiler-only',
+            '& $DevelopmentOwner --compiler-only'
+        )
+    }
+)) {
+    foreach ($Fragment in $Contract.Required) {
+        if (!$Contract.Text.Contains($Fragment, [StringComparison]::Ordinal)) {
+            throw "$($Contract.Name) is missing '$Fragment'."
+        }
+    }
+}
+
+$CompilerSourceContainmentPlan = & $NativePlanner -ChangedPath (
+    'Compiler/Windvale/Source-Lexer-Core.wv') -PassThru -Quiet
+if (!$CompilerSourceContainmentPlan.UseSourceContainmentCompilerDevelopment -or
+    $CompilerSourceContainmentPlan.Suites -notcontains 'source-containment') {
+    throw 'Compiler source containment does not select compiler-only development.'
+}
+$ContainmentOwnerPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Native/Test-Source-Containment.cmd',
+    'Tools/Native/Test-Source-Containment.sh',
+    'Tests/Native/Random-Containment/Corpus.tar.gz.b64'
+) -PassThru -Quiet
+if ($ContainmentOwnerPlan.UseSourceContainmentCompilerDevelopment -or
+    $ContainmentOwnerPlan.Suites -notcontains 'source-containment' -or
+    $ContainmentOwnerPlan.Gaps.Count -ne 0) {
+    throw 'Source containment owner changes do not retain complete development.'
+}
+$DirectCompilerContainmentPlan = & $NativePlanner -ChangedPath (
+    'Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm') `
+    -PassThru -Quiet
+if (!$DirectCompilerContainmentPlan.UseSourceContainmentCompilerDevelopment -or
+    $DirectCompilerContainmentPlan.Suites -notcontains 'source-containment' -or
+    !$DirectCompilerContainmentPlan.RunWebAssemblyEngineVerification) {
+    throw 'The direct compiler artifact does not select both development owners.'
 }
 
 $GitHubVerificationWorkflow = Get-Content -LiteralPath (

@@ -66,6 +66,7 @@ $NativePlan = if ($Plan.Scope -in @('development', 'qualification')) {
         RunWebAssemblyEngineVerification = $false
         RunWebAssemblyVerification = $false
         RunGitHubQualificationVerification = $false
+        UseSourceContainmentCompilerDevelopment = $false
         ChangedCount = $Paths.Count
     }
 }
@@ -154,6 +155,16 @@ if ($Plan.Scope -eq 'website') {
                     'Native owner compiler-reconstruction ' +
                     'mode=development-smoke')
                 & $DevelopmentOwner --development
+            } elseif ($Suite -eq 'source-containment' -and
+                $Plan.Scope -eq 'development' -and
+                $NativePlan.UseSourceContainmentCompilerDevelopment) {
+                $DevelopmentOwner = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Source-Containment.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Source-Containment.sh'
+                }
+                Write-Host 'Native owner source-containment mode=compiler-only'
+                & $DevelopmentOwner --compiler-only
             } elseif ($Suite -eq 'database-storage' -and
                 $NativePlan.UseDatabaseStorageDevelopment) {
                 $DevelopmentOwner = if ($IsWindowsHost) {

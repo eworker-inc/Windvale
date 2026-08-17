@@ -83,6 +83,14 @@ Qualification and direct no-argument owner execution retain the complete paired
 compiler and build-driver reconstruction. A development pass therefore cannot
 be cited as compiler reconstruction evidence.
 
+The `source-containment` lane likewise separates affected compiler feedback
+from complete dual-oracle evidence. Compiler and direct-compiler-artifact
+changes execute all 500 fixed compiler containment cases through
+`--compiler-only`; they do not launch the unchanged native assembler 500 times.
+Changes to the containment corpus, implementation, runner, owner commands, or
+specification retain the complete compiler-plus-assembler lane. No-argument and
+qualification execution also remain complete.
+
 WebAssembly has separate development-engine and complete-construction owners.
 The `RunWebAssemblyEngineVerification` owner validates the checked-in browser
 package and every referenced package identity, instantiates the pinned direct

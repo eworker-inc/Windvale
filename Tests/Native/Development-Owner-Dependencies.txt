@@ -56,6 +56,14 @@ seed-native-front-door|artifact|Artifacts/Native-Front-Door/SHA256SUMS
 seed-native-front-door|producer|Tools/Native/Test-Seed-Native-Front-Door.cmd
 seed-native-front-door|producer|Tools/Native/Test-Seed-Native-Front-Door.sh
 seed-native-front-door|source|Artifacts/Native-Front-Door/Manifest.json
+source-containment|artifact|Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm
+source-containment|producer|Tools/Native/Random-Containment-Corpus.mjs
+source-containment|producer|Tools/Native/Random-Containment-Host.mjs
+source-containment|producer|Tools/Native/Random-Containment-Source.mjs
+source-containment|producer|Tools/Native/Test-Random-Containment.mjs
+source-containment|producer|Tools/Native/Test-Source-Containment.cmd
+source-containment|producer|Tools/Native/Test-Source-Containment.sh
+source-containment|source|Tests/Native/Random-Containment/Corpus.tar.gz.b64
 webassembly-engine|artifact|Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm
 webassembly-engine|artifact|Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm
 webassembly-engine|producer|Tools/Website/Verify-WebAssembly-Compiler-Core.mjs

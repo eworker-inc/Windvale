@@ -67,6 +67,15 @@ one `WVA1001` report, preserve the input, and preserve an existing canonical
 WVO destination byte for byte. One source case represents both compiler and
 assembler checks but contributes one declared corpus case.
 
+The no-argument source owner always executes both halves. Its explicit
+`--compiler-only` development mode retains the exact artifact admission and all
+500 fresh-instance compiler cases but omits the unrelated assembler half. The
+changed-file dispatcher may select that mode only when compiler inputs or the
+direct compiler artifact select source containment. A corpus, runner,
+source-containment implementation, owner-command, or containment-specification
+change retains the complete two-oracle owner. Compiler-only evidence cannot be
+cited as native assembler containment or complete source-lane qualification.
+
 Node.js supplies the cross-host WebAssembly engine and bounded process
 coordination for this test. It owns no Windvale source, WVB, WVA, or WVO
 semantics. The direct compiler has no host imports, while the assembler remains
@@ -109,6 +118,9 @@ Linux uses the paired `.sh` names. The manifest-driven retirement coordinator
 runs the lanes sequentially and requires the exact summaries `500`, `1000`, and
 `500` passed cases. Local development should select only the changed lane; the
 unfiltered coordinator remains reserved for the final grouped retirement gate.
+The changed-file compiler path invokes the source command with
+`--compiler-only`; direct and qualification invocation remains no-argument and
+complete.
 
 ## Change and qualification rule
 

@@ -10,8 +10,18 @@ import { Testˉsource } from "./Random-Containment-Source.mjs";
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = path.resolve(Scriptˉdirectory, "../..");
 const Family = process.argv[2];
-if (process.argv.length !== 3 || !["source", "wvb", "wvo"].includes(Family)) {
-    console.error("Usage: node Tools/Native/Test-Random-Containment.mjs <source|wvb|wvo>");
+const Compilerˉonly = process.argv[3] === "--compiler-only";
+if (
+    !["source", "wvb", "wvo"].includes(Family) ||
+    (
+        process.argv.length !== 3 &&
+        !(process.argv.length === 4 && Compilerˉonly && Family === "source")
+    )
+) {
+    console.error(
+        "Usage: node Tools/Native/Test-Random-Containment.mjs " +
+        "<source|wvb|wvo> [--compiler-only]",
+    );
     process.exit(64);
 }
 if (process.platform !== "win32" && process.platform !== "linux") {
@@ -37,7 +47,12 @@ try {
     );
     const Cases = Corpus.filter(Item => Item.Family === Family);
     if (Family === "source") {
-        await Testˉsource(Repositoryˉroot, Temporaryˉdirectory, Cases);
+        await Testˉsource(
+            Repositoryˉroot,
+            Temporaryˉdirectory,
+            Cases,
+            Compilerˉonly,
+        );
     } else if (Family === "wvb") {
         await Testˉwvb(Repositoryˉroot, Cases);
     } else {

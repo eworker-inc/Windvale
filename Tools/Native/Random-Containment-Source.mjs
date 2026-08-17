@@ -17,8 +17,17 @@ import {
     Verifyˉartifact,
 } from "./Random-Containment-Host.mjs";
 
-export async function Testˉsource(Repositoryˉroot, Temporaryˉdirectory, Cases) {
+export async function Testˉsource(
+    Repositoryˉroot,
+    Temporaryˉdirectory,
+    Cases,
+    Compilerˉonly = false,
+) {
     Require(Cases.length === 500, "The selected source case count differs.");
+    Require(
+        typeof Compilerˉonly === "boolean",
+        "The source containment mode is invalid.",
+    );
     const Compilerˉartifact = [
         "Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm",
         18_349_927,
@@ -40,6 +49,10 @@ export async function Testˉsource(Repositoryˉroot, Temporaryˉdirectory, Cases
     for (const Case of Cases) {
         Testˉcompilerˉcase(Compilerˉmodule, Case);
         global.gc();
+    }
+
+    if (Compilerˉonly) {
+        return;
     }
 
     const Assemblerˉartifact = Hostˉartifact({
