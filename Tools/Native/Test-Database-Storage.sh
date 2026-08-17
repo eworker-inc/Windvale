@@ -311,32 +311,49 @@ verify_segmented_target() {
     local linux_application="$temporary_directory/$label-Segmented.elf"
     local windows_application="$temporary_directory/$label-Segmented.exe"
     local project_checkpoint=Rebuilt
+    local link_checkpoint=Segmented
     local application_checkpoint=Rebuilt
     local target_start=$SECONDS
 
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" \
-        "$first_wvb" >/dev/null || return $?
-    if ((development == 0)); then
+    local entry_offset fragment_count
+    if ((development == 1)); then
+        "$script_directory/Build-Cached-Segmented-Project.sh" \
+            "$project_path" "$build_driver" "$first_wvb" \
+            "$canonical_prefix" "$canonical_manifest" \
+            > "$transport_report" || return $?
+        project_checkpoint=$(sed -n \
+            's/^native segmented project cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* entry-offset=[0-9][0-9]* fragments=[1-8]$/\1/p' \
+            "$transport_report")
+        entry_offset=$(sed -n \
+            's/^native segmented project cache status=[^ ]* key=[0-9a-f][0-9a-f]* entry-offset=\([0-9][0-9]*\) fragments=[1-8]$/\1/p' \
+            "$transport_report")
+        fragment_count=$(sed -n \
+            's/^native segmented project cache status=[^ ]* key=[0-9a-f][0-9a-f]* entry-offset=[0-9][0-9]* fragments=\([1-8]\)$/\1/p' \
+            "$transport_report")
+        [[ $project_checkpoint == Created || $project_checkpoint == Hit ]] || return 1
+        link_checkpoint=$project_checkpoint
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" \
+            "$first_wvb" >/dev/null || return $?
         "$build_driver" --workspace "$workspace_path" --project "$project_path" \
             "$second_wvb" >/dev/null || return $?
         cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+        "$script_directory/Stage-Compiler-Wvb.sh" \
+            "$first_wvb" "$object_prefix" "$object_manifest" \
+            > "$stage_report" || return $?
+        "$script_directory/Link-Staged-Compiler-Wvo.sh" \
+            "$object_prefix" "$object_manifest" "$image_prefix" "$image_manifest" \
+            > "$link_report" || return $?
+        "$script_directory/Transport-Compiler-Image.sh" \
+            "$image_prefix" "$image_manifest" "$canonical_prefix" "$canonical_manifest" \
+            > "$transport_report" || return $?
+        entry_offset=$(sed -n \
+            's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=\([0-9][0-9]*\) chunks=[1-8] manifest-bytes=[0-9][0-9]*$/\1/p' \
+            "$transport_report")
+        fragment_count=$(sed -n \
+            's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=[0-9][0-9]* chunks=\([1-8]\) manifest-bytes=[0-9][0-9]*$/\1/p' \
+            "$transport_report")
     fi
-    "$script_directory/Stage-Compiler-Wvb.sh" \
-        "$first_wvb" "$object_prefix" "$object_manifest" \
-        > "$stage_report" || return $?
-    "$script_directory/Link-Staged-Compiler-Wvo.sh" \
-        "$object_prefix" "$object_manifest" "$image_prefix" "$image_manifest" \
-        > "$link_report" || return $?
-    "$script_directory/Transport-Compiler-Image.sh" \
-        "$image_prefix" "$image_manifest" "$canonical_prefix" "$canonical_manifest" \
-        > "$transport_report" || return $?
-    local entry_offset fragment_count
-    entry_offset=$(sed -n \
-        's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=\([0-9][0-9]*\) chunks=[1-8] manifest-bytes=[0-9][0-9]*$/\1/p' \
-        "$transport_report")
-    fragment_count=$(sed -n \
-        's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=[0-9][0-9]* chunks=\([1-8]\) manifest-bytes=[0-9][0-9]*$/\1/p' \
-        "$transport_report")
     case "$entry_offset" in ''|*[!0-9]*) return 1 ;; esac
     case "$fragment_count" in [1-8]) ;; *) return 1 ;; esac
 
@@ -363,8 +380,8 @@ verify_segmented_target() {
     fi
     if ((development == 1)); then
         local target_elapsed_ms=$(((SECONDS - target_start) * 1000))
-        echo "PASS  native database storage development step=portable-segmented-target item=$progress_current/$progress_total target=$development_target case=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=Segmented application=linux-$application_checkpoint"
-        portable_project_checkpoints+="$label:$project_checkpoint/link-Segmented,"
+        echo "PASS  native database storage development step=portable-segmented-target item=$progress_current/$progress_total target=$development_target case=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint application=linux-$application_checkpoint"
+        portable_project_checkpoints+="$label:$project_checkpoint/link-$link_checkpoint,"
         portable_application_checkpoints+="$label:linux-$application_checkpoint,"
     else
         "$script_directory/Package-Hosted-Wvb.sh" image 6 \
@@ -972,18 +989,32 @@ build_host_segmented_component() {
     local linux_prefix="$temporary_directory/HostLocal-$component-Linux-Image"
     local windows_prefix="$temporary_directory/HostLocal-$component-Windows-Image"
     local windows_application="$temporary_directory/HostLocal-$component.exe"
+    local project_report="$temporary_directory/HostLocal-$component-Segmented-Cache.txt"
     local overlay_report="$temporary_directory/HostLocal-$component-Linux-Overlay.txt"
 
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" \
-        "$first_wvb" >/dev/null || return $?
-    "$script_directory/Stage-Compiler-Wvb.sh" \
-        "$first_wvb" "$object_prefix" "$object_manifest" >/dev/null || return $?
-    "$script_directory/Link-Staged-Compiler-Wvo.sh" \
-        "$object_prefix" "$object_manifest" "$staged_prefix" "$staged_manifest" \
-        >/dev/null || return $?
-    "$script_directory/Transport-Compiler-Image.sh" \
-        "$staged_prefix" "$staged_manifest" "$canonical_prefix" "$canonical_manifest" \
-        >/dev/null || return $?
+    host_local_component_project_checkpoint=Segmented
+    if ((development == 1)); then
+        "$script_directory/Build-Cached-Segmented-Project.sh" \
+            "$project_path" "$build_driver" "$first_wvb" \
+            "$canonical_prefix" "$canonical_manifest" \
+            > "$project_report" || return $?
+        host_local_component_project_checkpoint=$(sed -n \
+            's/^native segmented project cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* entry-offset=[0-9][0-9]* fragments=[1-8]$/\1/p' \
+            "$project_report")
+        [[ $host_local_component_project_checkpoint == Created ||
+            $host_local_component_project_checkpoint == Hit ]] || return 1
+    else
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" \
+            "$first_wvb" >/dev/null || return $?
+        "$script_directory/Stage-Compiler-Wvb.sh" \
+            "$first_wvb" "$object_prefix" "$object_manifest" >/dev/null || return $?
+        "$script_directory/Link-Staged-Compiler-Wvo.sh" \
+            "$object_prefix" "$object_manifest" "$staged_prefix" "$staged_manifest" \
+            >/dev/null || return $?
+        "$script_directory/Transport-Compiler-Image.sh" \
+            "$staged_prefix" "$staged_manifest" "$canonical_prefix" "$canonical_manifest" \
+            >/dev/null || return $?
+    fi
     [[ -f $common && -f $linux_platform ]] || return 1
     "$script_directory/Compose-Segmented-Hosted-Overlay.sh" \
         "$canonical_prefix" "$canonical_manifest" "$common" "$linux_platform" \
@@ -993,7 +1024,6 @@ build_host_segmented_component() {
     linux_entry=$(sed -n 's/^segmented hosted overlay status=Valid .* provider-entry=\([0-9][0-9]*\) .*$/\1/p' "$overlay_report")
     case "$fragment_count" in [1-8]) ;; *) return 1 ;; esac
     case "$linux_entry" in ''|*[!0-9]*) return 1 ;; esac
-    host_local_component_project_checkpoint=Segmented
     host_local_component_application_checkpoint=Rebuilt
 
     if ((development == 1)); then
@@ -1590,6 +1620,7 @@ verify_persistent_transaction_writer() {
 
     build_host_segmented_component \
         "$project_path" PersistentTransactionWriter "$linux_application" || return $?
+    writer_project_checkpoint=$host_local_component_project_checkpoint
     writer_application_checkpoint=$host_local_component_application_checkpoint
 
     [[ -f $depth_two_committed_file ]] || return 1

@@ -1055,10 +1055,12 @@ function Add-Native-Tool-Suite {
         'Build-Cached-Linked-Image',
         'Build-Cached-Project-Object',
         'Build-Cached-Project-Wvb',
+        'Build-Cached-Segmented-Project',
         'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Native-Project-Cache-Key-Core',
+        'Test-Segmented-Project-Checkpoint',
         'Test-Project-Object-Checkpoint',
         'Test-Database-Storage'
     )) {

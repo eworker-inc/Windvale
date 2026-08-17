@@ -100,7 +100,8 @@ $ExpectedCheckpoints = @(
     'hosted-application-v1',
     'linked-image-v1',
     'project-object-v2',
-    'project-wvb-v2'
+    'project-wvb-v2',
+    'segmented-project-v1'
 )
 if (![Linq.Enumerable]::SequenceEqual(
         [string[]]$DatabaseCheckpoints, [string[]]$ExpectedCheckpoints)) {

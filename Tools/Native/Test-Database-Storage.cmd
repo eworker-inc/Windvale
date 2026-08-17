@@ -1240,19 +1240,32 @@ set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
 set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
 set "LinuxApplication=%TemporaryDirectory%\HostLocal-%Component%.elf"
 set "ApplicationReport=%TemporaryDirectory%\HostLocal-%Component%-Application-Cache.txt"
+set "ProjectReport=%TemporaryDirectory%\HostLocal-%Component%-Segmented-Cache.txt"
 set "OverlayReport=%TemporaryDirectory%\HostLocal-%Component%-Windows-Overlay.txt"
+set "ProjectCheckpoint=Segmented"
 
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
-    "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
-    "%ObjectPrefix%" "%ObjectManifest%" "%StagedPrefix%" "%StagedManifest%" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
-    "%StagedPrefix%" "%StagedManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >nul
-if errorlevel 1 exit /b 1
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Segmented-Project.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%FirstWvb%" ^
+        "%CanonicalPrefix%" "%CanonicalManifest%" >"%ProjectReport%"
+    if errorlevel 1 exit /b 1
+    set "ProjectCheckpoint="
+    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native segmented project cache status=" "%ProjectReport%"') do set "ProjectCheckpoint=%%S"
+    if not defined ProjectCheckpoint exit /b 1
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
+    if errorlevel 1 exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
+        "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >nul
+    if errorlevel 1 exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
+        "%ObjectPrefix%" "%ObjectManifest%" "%StagedPrefix%" "%StagedManifest%" >nul
+    if errorlevel 1 exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
+        "%StagedPrefix%" "%StagedManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >nul
+    if errorlevel 1 exit /b 1
+)
+if "%Development%"=="1" if /I not "%ProjectCheckpoint%"=="Created" if /I not "%ProjectCheckpoint%"=="Hit" exit /b 1
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
 call "%RepositoryRoot%\Tools\Native\Compose-Segmented-Hosted-Overlay.cmd" ^
@@ -1293,7 +1306,7 @@ if "%Development%"=="1" (
         "%LinuxApplication%" linux >nul
     if errorlevel 1 exit /b 1
 )
-endlocal
+endlocal & set "HostSegmentedComponentProjectCheckpoint=%ProjectCheckpoint%"
 exit /b 0
 
 :verify_host_tree_delete
@@ -1789,7 +1802,7 @@ set "HostTreeWriterApplicationCheckpoint=Rebuilt"
 
 call :build_host_segmented_component "%ProjectPath%" HostTreeWriter "%WindowsApplication%"
 if errorlevel 1 exit /b 1
-set "HostTreeWriterCheckpoint=Segmented"
+set "HostTreeWriterCheckpoint=%HostSegmentedComponentProjectCheckpoint%"
 if "%Development%"=="1" (
     set "HostTreeWriterApplicationCheckpoint="
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-HostTreeWriter-Application-Cache.txt"') do set "HostTreeWriterApplicationCheckpoint=%%S"
@@ -1869,6 +1882,7 @@ set "PersistentTransactionWriterApplicationCheckpoint=Rebuilt"
 
 call :build_host_segmented_component "%ProjectPath%" PersistentTransactionWriter "%WindowsApplication%"
 if errorlevel 1 exit /b 1
+set "PersistentTransactionWriterCheckpoint=%HostSegmentedComponentProjectCheckpoint%"
 if "%Development%"=="1" (
     set "PersistentTransactionWriterApplicationCheckpoint="
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native hosted application cache status=" "%TemporaryDirectory%\HostLocal-PersistentTransactionWriter-Application-Cache.txt"') do set "PersistentTransactionWriterApplicationCheckpoint=%%S"
@@ -1909,11 +1923,11 @@ set "CommittedFile=%RunDirectory%\Windvale-Database-Storage.committed"
 
 call :build_host_local_component "%PutProject%" LogicalTreePut "%PutApplication%"
 if errorlevel 1 exit /b 1
+set "PutProjectCheckpoint=%HostSegmentedComponentProjectCheckpoint%"
 call :build_host_local_component "%GetProject%" LogicalTreeGet "%GetApplication%"
 if errorlevel 1 exit /b 1
 
 if "%Development%"=="1" (
-    set "PutProjectCheckpoint=Segmented"
     set "GetProjectCheckpoint="
     set "PutApplicationCheckpoint="
     set "GetApplicationCheckpoint="
@@ -2304,32 +2318,49 @@ set "TransportReport=%TemporaryDirectory%\%~1-Transport.txt"
 set "WindowsApplication=%TemporaryDirectory%\%~1-Segmented.exe"
 set "LinuxApplication=%TemporaryDirectory%\%~1-Segmented.elf"
 set "ProjectCheckpoint=Rebuilt"
+set "LinkCheckpoint=Segmented"
 set "ApplicationCheckpoint=Rebuilt"
 if "%Development%"=="1" call :read_clock TargetStart
 
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
-if errorlevel 1 exit /b 1
-if not "%Development%"=="1" (
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Cached-Segmented-Project.cmd" ^
+        "%ProjectPath%" "%BuildDriver%" "%FirstWvb%" ^
+        "%CanonicalPrefix%" "%CanonicalManifest%" >"%TransportReport%"
+    if errorlevel 1 exit /b 1
+    set "ProjectCheckpoint="
+    set "EntryOffset="
+    set "FragmentCount="
+    for /f "tokens=6,10,12 delims== " %%S in ('findstr /b /c:"native segmented project cache status=" "%TransportReport%"') do (
+        set "ProjectCheckpoint=%%S"
+        set "EntryOffset=%%T"
+        set "FragmentCount=%%U"
+    )
+    call set "LinkCheckpoint=%%ProjectCheckpoint%%"
+) else (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
+    if errorlevel 1 exit /b 1
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvb%" >nul
     if errorlevel 1 exit /b 1
     fc /b "%FirstWvb%" "%SecondWvb%" >nul
     if errorlevel 1 exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
+        "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >"%StageReport%"
+    if errorlevel 1 exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
+        "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%LinkReport%"
+    if errorlevel 1 exit /b 1
+    call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
+        "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TransportReport%"
+    if errorlevel 1 exit /b 1
+    set "EntryOffset="
+    set "FragmentCount="
+    for /f "tokens=9,11 delims== " %%E in ('findstr /b /c:"compiler image transport status=Complete " "%TransportReport%"') do (
+        set "EntryOffset=%%E"
+        set "FragmentCount=%%F"
+    )
 )
-call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
-    "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >"%StageReport%"
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
-    "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%LinkReport%"
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
-    "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TransportReport%"
-if errorlevel 1 exit /b 1
-set "EntryOffset="
-set "FragmentCount="
-for /f "tokens=9,11 delims== " %%E in ('findstr /b /c:"compiler image transport status=Complete " "%TransportReport%"') do (
-    set "EntryOffset=%%E"
-    set "FragmentCount=%%F"
-)
+if not defined ProjectCheckpoint exit /b 1
+if "%Development%"=="1" if /I not "%ProjectCheckpoint%"=="Created" if /I not "%ProjectCheckpoint%"=="Hit" exit /b 1
 if not defined EntryOffset exit /b 1
 if not defined FragmentCount exit /b 1
 echo(%EntryOffset%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
@@ -2363,8 +2394,8 @@ if not "%Development%"=="1" (
 if "%Development%"=="1" (
     call :read_clock TargetEnd
     call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
-    call echo PASS  native database storage development step=portable-segmented-target item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% case=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=Segmented application=windows-%%ApplicationCheckpoint%%
-    endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%/link-Segmented," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%ApplicationCheckpoint%,"
+    call echo PASS  native database storage development step=portable-segmented-target item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% case=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=%LinkCheckpoint% application=windows-%%ApplicationCheckpoint%%
+    endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%/link-%LinkCheckpoint%," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%ApplicationCheckpoint%,"
     exit /b 0
 )
 endlocal

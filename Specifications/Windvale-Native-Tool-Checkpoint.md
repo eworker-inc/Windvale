@@ -120,6 +120,46 @@ driver and inspector identity, while the immutable record and copy digests
 prove that the admitted bytes are unchanged. A corrupt existing entry fails
 closed and is not silently repaired.
 
+## Segmented-project key and record
+
+`Build-Cached-Segmented-Project.mjs` uses the same length-framed project-key
+core with namespace `database-segmented-project-v1`. After the workspace,
+project manifest, and ordered source closure, its producer fields bind the
+exact build driver, current-host segmented WVO producer, segmented image
+linker, image transport, and checkpoint driver in that order. The driver also
+verifies the three host-specific producer digests before accepting either a
+hit or a miss. The resulting lowercase 64-hex key names the host-scoped
+`segmented-project-v1/<target>/<key>` entry.
+
+The segmented-project `Checkpoint.txt` contains these exact ASCII lines:
+
+```text
+windvale-native-segmented-project-checkpoint 1
+key <64-lowercase-hex>
+entry-offset <canonical-unsigned-decimal>
+fragments <1-through-8>
+wvb-bytes <canonical-positive-decimal>
+wvb-sha256 <64-lowercase-hex>
+manifest-bytes <canonical-positive-decimal>
+manifest-sha256 <64-lowercase-hex>
+fragment-0-bytes <canonical-positive-decimal>
+fragment-0-sha256 <64-lowercase-hex>
+...
+```
+
+The record is at most 4,096 bytes. The WVB is nonempty and no larger than
+67,108,864 bytes. The canonical image is nonempty and no larger than
+33,554,432 bytes across one through eight fragments of at most 4,194,304 bytes.
+The exact `WVLI 1` manifest must declare its own size, image size, entry,
+fragment count, fragment limit, and one contiguous ordered extent for every
+measured fragment. A miss builds the WVB, stages WVO fragments, links and
+transports the image, deletes intermediate products, validates the canonical
+manifest and every product digest, and atomically publishes only the admitted
+WVB, manifest, fragments, and record. A hit repeats the complete structural
+manifest, size, digest, entry-set, and record validation; it then copies each
+product to private owner paths and rehashes every copy. Corrupt entries fail
+closed and are not repaired.
+
 ## Hosted-application key and record
 
 `Get-Native-Hosted-Application-Cache-Key.mjs` derives a length-framed SHA-256
@@ -261,8 +301,8 @@ to its key, then validates it again through the ordinary hit path. Partial
 directories retain a `.new-` prefix and are never cache hits. Version 1 does not
 define eviction or automatic partial-directory cleanup.
 
-The version-2 project-object driver owns each
-`.new-<key>-<pid>-<nonce>` directory it creates. Its `finally` boundary removes
+The version-2 project-object and version-1 segmented-project drivers own each
+`.new-<key>-<pid>-<nonce>` directory they create. Their `finally` boundaries remove
 that exact ordinary non-link directory after build, lowering, admission,
 measurement, manifest, or lost-publication-race failure, but only after proving
 the candidate remains directly inside the canonical checkpoint family. A race
@@ -277,8 +317,9 @@ run the target-aware 50-case database owner. It obtains ordinary project
 objects through `Build-Cached-Project-Object`, the build-driver input through
 `Build-Cached-Project-Wvb`, portable linked images through
 `Build-Cached-Linked-Image`, and current-host executables through
-`Build-Cached-Hosted-Application`; explicitly segmented cases retain their
-separate staging path. `Verify-Changed.ps1`
+`Build-Cached-Hosted-Application`. Explicitly segmented development cases use
+`Build-Cached-Segmented-Project` for the exact WVB and canonical image before
+the unchanged hosted-application or provider-overlay path. `Verify-Changed.ps1`
 selects that development owner only when every selected database-storage
 boundary is eligible. Compiler, lowerer, specialized provider, nested-record,
 and other broad changes mark the full database-storage owner mandatory. The
@@ -357,3 +398,12 @@ with a 57,870 ms database owner; Linux passed in 1m15s with a 43,000 ms database
 owner. Every reported tool, project, link, and current-host application was a
 validated `Hit`, and all eight behaviors passed. The selected development scope
 skipped every qualification job.
+
+After adding segmented-project checkpoints, the Windows 50-case database owner
+passes with every tool, project, link, and application checkpoint reporting
+`Hit` in 323,820 ms. The preceding project-object-v2 all-hit owner took 500,610
+ms, so this boundary saves 176,790 ms or 35.31 percent and is 1.55 times faster.
+The bounded regression independently passes creation, hit, corruption
+preservation, failed-producer cleanup, and a four-way same-key publication race.
+Linux construction, corruption, race, and database execution remain
+independent-host evidence.

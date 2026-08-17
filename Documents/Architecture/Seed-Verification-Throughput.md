@@ -216,9 +216,27 @@ version-2 population gate falls from the preceding 1,495,600 ms cold reference
 to 950,050 ms because each new WVO is admitted once rather than again after
 materialization. Qualification remains cache-independent.
 
+The remaining database segmented path is checkpointed at its measured stable
+boundary. A representative project spent 11,230 ms compiling, 15,588 ms in
+segmented WVO staging, 338 ms linking, and 194 ms in canonical transport;
+compile plus staging therefore owned 97.9 percent of construction time.
+`segmented-project-v1` binds the complete project closure, build driver, all
+three digest-pinned segmented producers, and checkpoint driver, then stores the
+exact WVB plus the structurally admitted canonical manifest and fragments.
+Hits rehash the immutable entry and every private materialization. The two-case
+tree-completion section fell from 64,680 ms during population to 7,170 ms on
+hits, an 88.9 percent reduction. The composed host-tree-writer step fell from
+55,640 ms during population to 16,020 ms on hits, and the persistent writer
+from 46,390 ms to 2,520 ms. All current-host executions, provider overlays,
+restart checks, and interruption cases still run. Cold duplicate compilation
+and both-host packaging remain qualification-only evidence. The final all-hit
+50-case owner takes 323,820 ms, down from 500,610 ms: 176,790 ms or 35.31
+percent less wall time for a 1.55-fold speedup. Its portable section falls from
+198,870 ms to 115,980 ms, a 41.68 percent reduction.
+
 `Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
 producer, and artifact closures for the measured front-door, WebAssembly, and
-database owners plus all five database checkpoint families. Its verifier
+database owners plus all six database checkpoint families. Its verifier
 requires canonical ordering, ordinary repository files, complete closure kinds,
 the exact checkpoint-family set, no planner gaps, and selection of the declared
 owner.
