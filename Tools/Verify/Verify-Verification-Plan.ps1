@@ -356,11 +356,23 @@ $NativeCases = @(
     @{
         Name = 'native compiler reconstruction owner'
         Paths = @(
+            'Tools/Native/Test-Compiler-Reconstruction.cmd',
+            'Tools/Native/Test-Compiler-Reconstruction.sh',
             'Tools/Native/Construct-Compiler-Reconstruction.cmd',
             'Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json',
             'Specifications/Windvale-Native-Compiler-Reconstruction.md'
         )
         Suites = @('compiler-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native compiler development oracle'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Function-Only.wvproj',
+            'Tests/Fixtures/Source-Wvb/Function-Only.wv'
+        )
+        Suites = @('seed', 'compiler-reconstruction')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3022,6 +3034,57 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
 }
 if ($VerificationOwnerCases -ne 4626 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
+}
+
+$CompilerDevelopmentWindows = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.cmd')
+$CompilerDevelopmentLinux = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.sh')
+$ChangedVerification = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1')
+foreach ($Contract in @(
+    @{
+        Name = 'Windows compiler development owner'
+        Text = $CompilerDevelopmentWindows
+        Required = @(
+            'Usage: Tools\Native\Test-Compiler-Reconstruction.cmd [--development]',
+            'if "%Development%"=="1" goto :development',
+            'Function-Only.wv',
+            'Build-Current-Wvb.cmd',
+            'Verify-Wvb.cmd',
+            'current candidate compiler and build-driver smoke',
+            'native paired reconstruction'
+        )
+    },
+    @{
+        Name = 'Linux compiler development owner'
+        Text = $CompilerDevelopmentLinux
+        Required = @(
+            'Test-Compiler-Reconstruction.sh [--development]',
+            'if $development; then',
+            'Function-Only.wv',
+            'Build-Current-Wvb.sh',
+            'Verify-Wvb.sh',
+            'current candidate compiler and build-driver smoke',
+            'native paired reconstruction'
+        )
+    },
+    @{
+        Name = 'changed-file compiler development dispatch'
+        Text = $ChangedVerification
+        Required = @(
+            '$Suite -eq ''compiler-reconstruction''',
+            '$Plan.Scope -eq ''development''',
+            'mode=development-smoke',
+            '& $DevelopmentOwner --development'
+        )
+    }
+)) {
+    foreach ($Fragment in $Contract.Required) {
+        if (!$Contract.Text.Contains($Fragment, [StringComparison]::Ordinal)) {
+            throw "$($Contract.Name) is missing '$Fragment'."
+        }
+    }
 }
 
 $GitHubVerificationWorkflow = Get-Content -LiteralPath (

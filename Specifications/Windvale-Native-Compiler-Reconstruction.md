@@ -68,11 +68,26 @@ directory as one accepted candidate inventory.
 
 ## Focused evidence
 
-`compiler-reconstruction` owns three fixed cases: checked-in six-artifact inventory, usage
-rejection, and paired native reconstruction. The paired case is intentionally
-not an inner-loop compiler execution test; it reconstructs the WVB and both
-compiler containers plus the build-driver WVB and both of its containers, but
-does not start them. The long Stage 1/Stage 2 convergence remains
+`compiler-reconstruction` owns two explicit modes with three cases each. Its
+no-argument qualification mode checks the six-artifact inventory, rejects
+invalid constructor usage, and performs the complete paired native
+reconstruction. The paired case reconstructs the WVB and both compiler
+containers plus the build-driver WVB and both of its containers, but does not
+start them.
+
+`--development` retains the same exact six-artifact inventory and constructor
+usage checks, then replaces only the paired reconstruction with a current-host
+semantic smoke. The candidate compiler compiles the `Function-Only` oracle
+directly while the candidate build driver compiles its Project 2 manifest. Both
+paths must produce the independently verified exact 816-byte WVB at SHA-256
+`28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936`
+and compare byte for byte. This mode proves that the admitted candidate and its
+driver execute coherently; it does not prove reconstruction, cross-host output,
+or qualification.
+
+Changed-file verification invokes `--development` only for development-scoped
+plans. Qualification-scoped and direct no-argument owner execution retain the
+cold paired reconstruction. The long Stage 1/Stage 2 convergence remains
 reserved for the final grouped qualification under the compiler-seed bootstrap
 contract.
 

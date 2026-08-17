@@ -143,7 +143,18 @@ if ($Plan.Scope -eq 'website') {
     foreach ($Suite in $NativePlan.Suites) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         try {
-            if ($Suite -eq 'database-storage' -and
+            if ($Suite -eq 'compiler-reconstruction' -and
+                $Plan.Scope -eq 'development') {
+                $DevelopmentOwner = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.sh'
+                }
+                Write-Host (
+                    'Native owner compiler-reconstruction ' +
+                    'mode=development-smoke')
+                & $DevelopmentOwner --development
+            } elseif ($Suite -eq 'database-storage' -and
                 $NativePlan.UseDatabaseStorageDevelopment) {
                 $DevelopmentOwner = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.cmd'

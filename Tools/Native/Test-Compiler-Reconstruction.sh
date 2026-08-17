@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+development=false
+if [[ $# -ne 0 ]]; then
+    if [[ $# -ne 1 || $1 != '--development' ]]; then
+        echo 'Usage: ./Tools/Native/Test-Compiler-Reconstruction.sh [--development]' >&2
+        exit 64
+    fi
+    development=true
+fi
+
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 candidate="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate"
@@ -68,6 +77,30 @@ cleanup() {
     esac
 }
 trap cleanup EXIT
+
+if $development; then
+    "$candidate/linux-x64/wvcompiler.elf" \
+        "$repository_root/Tests/Fixtures/Source-Wvb/Function-Only.wv" \
+        "$test_directory/Direct.wvb" \
+        >"$test_directory/Direct.out" 2>"$test_directory/Direct.err" || fail
+    "$script_directory/Build-Current-Wvb.sh" \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Function-Only.wvproj" \
+        "$test_directory/Project.wvb" \
+        >"$test_directory/Project.out" 2>"$test_directory/Project.err" || fail
+    verify_file "$test_directory/Direct.wvb" 816 \
+        28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936 || fail
+    verify_file "$test_directory/Project.wvb" 816 \
+        28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936 || fail
+    cmp -- "$test_directory/Direct.wvb" "$test_directory/Project.wvb" || fail
+    "$script_directory/Verify-Wvb.sh" "$test_directory/Direct.wvb" \
+        >"$test_directory/Verify.out" 2>"$test_directory/Verify.err" || fail
+    [[ ! -s $test_directory/Direct.err ]] || fail
+    [[ ! -s $test_directory/Project.err ]] || fail
+    [[ ! -s $test_directory/Verify.err ]] || fail
+    pass 'current candidate compiler and build-driver smoke'
+    echo "Tests: $tests, Passed: $passed, Failed: 0"
+    exit 0
+fi
 
 "$script_directory/Construct-Compiler-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail

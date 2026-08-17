@@ -1357,6 +1357,11 @@ foreach ($Path in $Paths) {
         continue
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Function-Only.wvproj',
+        'Tests/Fixtures/Source-Wvb/Function-Only.wv'
+    )) {
+        Add-Suite @('seed', 'compiler-reconstruction')
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
         Add-Suite @('wvb-to-wvo-reconstruction', 'lowerer-rejections')
     } elseif ($Path -eq

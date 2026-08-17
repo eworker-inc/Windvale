@@ -1,6 +1,13 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+set "Development=0"
+if "%~1"=="" goto :arguments_complete
+if /I not "%~1"=="--development" goto :usage
+if not "%~2"=="" goto :usage
+set "Development=1"
+
+:arguments_complete
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate"
@@ -24,6 +31,8 @@ call :pass "candidate inventory"
 call "%RepositoryRoot%\Tools\Native\Construct-Compiler-Reconstruction.cmd" >nul 2>nul
 if not "%ERRORLEVEL%"=="64" goto :failed
 call :pass "usage rejection"
+
+if "%Development%"=="1" goto :development
 
 :allocate
 set "TestDirectory=%TEMP%\windvale-compiler-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -53,6 +62,41 @@ call :cleanup
 echo Tests: %Tests%, Passed: %Passed%, Failed: 0
 exit /b 0
 
+:development
+:allocate_development
+set "TestDirectory=%TEMP%\windvale-compiler-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
+if exist "%TestDirectory%" goto :allocate_development
+mkdir "%TestDirectory%" || goto :failed
+"%Candidate%\windows-x64\wvcompiler.exe" ^
+    "%RepositoryRoot%\Tests\Fixtures\Source-Wvb\Function-Only.wv" ^
+    "%TestDirectory%\Direct.wvb" ^
+    >"%TestDirectory%\Direct.out" 2>"%TestDirectory%\Direct.err"
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Function-Only.wvproj" ^
+    "%TestDirectory%\Project.wvb" ^
+    >"%TestDirectory%\Project.out" 2>"%TestDirectory%\Project.err"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Direct.wvb" 816 28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Project.wvb" 816 28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936
+if errorlevel 1 goto :failed
+fc /b "%TestDirectory%\Direct.wvb" "%TestDirectory%\Project.wvb" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Verify-Wvb.cmd" "%TestDirectory%\Direct.wvb" ^
+    >"%TestDirectory%\Verify.out" 2>"%TestDirectory%\Verify.err"
+if errorlevel 1 goto :failed
+for %%F in (
+    "%TestDirectory%\Direct.err"
+    "%TestDirectory%\Project.err"
+    "%TestDirectory%\Verify.err"
+) do if not "%%~zF"=="0" goto :failed
+call :pass "current candidate compiler and build-driver smoke"
+
+call :cleanup
+echo Tests: %Tests%, Passed: %Passed%, Failed: 0
+exit /b 0
+
 :pass
 set /a Tests+=1
 set /a Passed+=1
@@ -71,6 +115,10 @@ for %%R in ("%TestDirectory%") do set "ResolvedTestDirectory=%%~fR"
 echo(%ResolvedTestDirectory%| findstr /b /i /c:"%TEMP%\windvale-compiler-reconstruction-test-" >nul || exit /b 1
 if exist "%ResolvedTestDirectory%\." rmdir /s /q "%ResolvedTestDirectory%"
 exit /b 0
+
+:usage
+>&2 echo Usage: Tools\Native\Test-Compiler-Reconstruction.cmd [--development]
+exit /b 64
 
 :failed
 call :cleanup >nul 2>nul

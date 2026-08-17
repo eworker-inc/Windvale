@@ -59,6 +59,13 @@ commit or push is not a reason to run all owners. Complete and sharded runs are
 reserved for release candidates, promotions, security boundaries, or another
 named qualification need.
 
+An owner may expose an explicit development mode when its qualification command
+constructs evidence that is unnecessarily broad for an ordinary edit. The
+changed-file dispatcher must select that mode explicitly, keep its inputs and
+oracle in the development dependency registry, and leave the no-argument owner
+command as the complete qualification contract. A development-mode pass must
+not be reported as the qualification evidence it intentionally omits.
+
 The historical `Test-Retirement-Suite.cmd` and `.sh` paths are compatibility
 entry points that delegate to the current coordinator. New automation and
 documentation use the verification-owner name.

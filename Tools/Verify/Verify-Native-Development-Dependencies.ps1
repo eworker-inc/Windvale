@@ -6,6 +6,7 @@ $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $DeclarationPath = Join-Path $RepositoryRoot 'Tests/Native/Development-Owner-Dependencies.txt'
 $Planner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $Owners = @(
+    'compiler-reconstruction',
     'database-storage',
     'os-x64-code-emission',
     'seed-native-front-door',
@@ -80,6 +81,7 @@ foreach ($Owner in $Owners) {
         throw "Native development owner '$Owner' has planner gaps: $($Plan.Gaps -join ', ')"
     }
     $OwnerSelected = switch ($Owner) {
+        'compiler-reconstruction' { $Plan.Suites -contains 'compiler-reconstruction' }
         'database-storage' { $Plan.Suites -contains 'database-storage' }
         'os-x64-code-emission' { $Plan.Suites -contains 'os-x64-code-emission' }
         'seed-native-front-door' { $Plan.Suites -contains 'seed-native-front-door' }

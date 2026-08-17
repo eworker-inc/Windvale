@@ -1,4 +1,17 @@
 windvale-native-development-owner-dependencies 1
+compiler-reconstruction|artifact|Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json
+compiler-reconstruction|artifact|Artifacts/Native-Front-Door/SHA256SUMS
+compiler-reconstruction|producer|Tools/Native/Build-Current-Wvb.cmd
+compiler-reconstruction|producer|Tools/Native/Build-Current-Wvb.sh
+compiler-reconstruction|producer|Tools/Native/Construct-Compiler-Reconstruction.cmd
+compiler-reconstruction|producer|Tools/Native/Construct-Compiler-Reconstruction.sh
+compiler-reconstruction|producer|Tools/Native/Test-Compiler-Reconstruction.cmd
+compiler-reconstruction|producer|Tools/Native/Test-Compiler-Reconstruction.sh
+compiler-reconstruction|producer|Tools/Native/Verify-Wvb.cmd
+compiler-reconstruction|producer|Tools/Native/Verify-Wvb.sh
+compiler-reconstruction|source|Projects/Tests/Windvale-Native-Test-Function-Only.wvproj
+compiler-reconstruction|source|Tests/Fixtures/Source-Wvb/Function-Only.wv
+compiler-reconstruction|source|Windvale.wvws
 database-storage|artifact|Artifacts/Native-Front-Door/Manifest.json
 database-storage|artifact|Artifacts/Native-Hosted-Container-Toolset-Candidate/SHA256SUMS
 database-storage|artifact|Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Manifest.json

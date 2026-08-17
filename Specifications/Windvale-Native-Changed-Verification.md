@@ -71,6 +71,14 @@ the qualified native Project 1 front door before invoking the paired host audit.
 All three paths formerly classified with the `seed-native-console-aot` gap now
 select this lane; no gap with that name remains in the native planner.
 
+The `compiler-reconstruction` lane has a current-host development mode and a
+cold qualification mode. Development admits the exact six checked-in candidate
+artifacts and executes both the compiler and build driver over one deterministic
+Project 2 oracle. It does not reconstruct or package either host candidate.
+Qualification and direct no-argument owner execution retain the complete paired
+compiler and build-driver reconstruction. A development pass therefore cannot
+be cited as compiler reconstruction evidence.
+
 WebAssembly has separate development-engine and complete-construction owners.
 The `RunWebAssemblyEngineVerification` owner validates the checked-in browser
 package and every referenced package identity, instantiates the pinned direct
@@ -159,10 +167,11 @@ changes it:
 3. runs the planner/inventory verifier when selected;
 4. runs the focused GitHub workflow verifier when selected;
 5. invokes each selected owner through `Test-Verification-Owners.cmd --filter` on
-   Windows or the paired `.sh` coordinator on non-Windows hosts, except that an
-   eligible `database-storage` or `os-x64-code-emission` owner receives its
-   development target, including explicit checkpointed `all` when more than one
-   OS x64 project is affected;
+   Windows or the paired `.sh` coordinator on non-Windows hosts, except that
+   development-scoped `compiler-reconstruction` receives `--development`, and
+   an eligible `database-storage`, `libraries`, or `os-x64-code-emission` owner
+   receives its development target, including explicit checkpointed `all` when
+   more than one OS x64 project is affected;
 6. invokes either the pinned WebAssembly engine checkpoint or the complete
    construction-and-engine owner when selected, never both;
 7. stops at the first failure unless `-NoFailFast` is explicit; and
