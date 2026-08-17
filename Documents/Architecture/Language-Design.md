@@ -4,6 +4,12 @@
 
 Accepted evolution direction under [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0199](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), and [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended successor defaults for review. The implemented language remains exactly [Windvale Seed](../../Specifications/Seed-Language.md); examples explicitly marked as future syntax are not accepted source today.
 
+The project-owner-requested
+[Windvale Language 1.0 design](../Project/Windvale-Language-1.0-Design.md)
+proposes a complete source design before staged implementation. It remains a
+review proposal and does not change the accepted or implemented surface by
+itself.
+
 Windvale is in active early development. Through at least September 3, 2026, and until a later named decision says otherwise, obsolete source spellings, compiler models, and experimental binary encodings may be replaced without backward readers or migration layers. The repository moves as one contract; old qualification artifacts remain evidence rather than supported inputs.
 
 ## Product character
