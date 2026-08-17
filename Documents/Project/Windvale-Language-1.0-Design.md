@@ -988,6 +988,442 @@ specification begins:
 13. specify structured concurrency in the hosted profile; and
 14. specify unsafe blocks and FFI in the system profile.
 
+### How to decide
+
+An owner review may accept, revise, defer, or reject each direction. Accepting a
+direction authorizes the normative specification to define its exact grammar,
+semantics, diagnostics, and migration. It does not accept an unfinished syntax
+sketch or permit implementation-defined behavior.
+
+The options below describe realistic alternatives and their principal tradeoffs.
+They are not all equally compatible with Windvale's product character. The
+recommendation under each decision records the proposed ballot.
+
+### 1. Source names and machine identities
+
+**Option A: retain macron-separated long source names and emit short
+deterministic machine identities.**
+
+- Advantages: preserves semantic source readability and Windvale's identity
+  while reducing private symbol, object, executable, and diagnostic-map cost.
+- Costs: typing U+02C9 requires editor support, and debugging requires an exact
+  source-to-machine mapping.
+
+**Option B: retain long names in source and machine artifacts.**
+
+- Advantages: direct machine-symbol inspection can show a recognizable source
+  name.
+- Costs: larger artifacts and symbol tables, awkward external tool limits, and
+  no reduction of private implementation metadata.
+
+**Option C: replace the convention with an ASCII naming style.**
+
+- Advantages: immediate support on every keyboard and existing tool.
+- Costs: abandons the selected language identity and long semantic-word
+  separation. Supporting ASCII and macron aliases together would also create two
+  canonical spellings and should not be accepted.
+
+**Recommendation:** accept Option A. Exact names remain in source interfaces and
+diagnostics where required; private machine identities remain deterministic,
+collision-safe, and inspectable through tooling.
+
+### 2. Product character
+
+**Option A: retain the deterministic, checked, capability-oriented,
+no-exception model.**
+
+- Advantages: visible failure and authority, predictable execution, bounded
+  resource reasoning, and portable semantics.
+- Costs: more explicit source and a requirement for excellent ergonomic
+  libraries, diagnostics, and propagation syntax.
+
+**Option B: relax individual rules whenever a familiar feature is convenient.**
+
+- Advantages: may shorten individual programs during early development.
+- Costs: accumulates unrelated exceptions, creates multiple error and authority
+  models, and eventually removes the language's coherent identity.
+
+**Option C: adopt a conventional managed-language model.**
+
+- Advantages: familiar to C# and Java programmers.
+- Costs: brings hidden exceptions, ambient services, tracing-GC assumptions, and
+  a substantially larger runtime and semantic surface.
+
+**Recommendation:** accept Option A. Improve the ergonomics of explicit behavior
+rather than weakening the behavior itself.
+
+### 3. `unit` and `never`
+
+**Option A: replace `void` with first-class `unit` and add `never`.**
+
+- Advantages: `Result<unit, E>` and generic algorithms treat no-information
+  success normally; `never` precisely describes traps, termination, and other
+  non-returning control flow.
+- Costs: the names and zero-information value model require explanation for
+  developers accustomed to `void`.
+
+**Option B: retain `void` and omit `never`.**
+
+- Advantages: familiar function declarations.
+- Costs: `void` remains a special return-only rule, generic use is awkward, and
+  reachability or exhaustive matching loses information.
+
+**Option C: add `unit` but omit `never`.**
+
+- Advantages: simplifies the initial control-flow type system.
+- Costs: still cannot type a non-returning expression precisely.
+
+**Recommendation:** accept Option A. The normative specification must distinguish
+source values from ABI return conventions; `unit` need not occupy runtime
+storage.
+
+### 4. Fixed numerics, strict floating point, and `rune`
+
+**Option A: complete the fixed-width integer family and specify strict `f32`,
+`f64`, and `rune` semantics.**
+
+- Advantages: portable numeric behavior and support for scientific, graphics,
+  model, Unicode, and general application workloads.
+- Costs: NaN, rounding, overflow, subnormal, conversion, and contraction rules
+  require exact specification and cross-target tests.
+
+**Option B: retain the mostly integer Seed subset.**
+
+- Advantages: smaller immediate compiler implementation.
+- Costs: insufficient for general applications and forces target-specific or
+  foreign numeric escape paths.
+
+**Option C: inherit host-native widths or ordinary host floating behavior.**
+
+- Advantages: easiest initial lowering.
+- Costs: the same source may change limits or results by architecture, backend,
+  compiler option, or host runtime.
+
+**Recommendation:** accept Option A. Decimal, arbitrary-precision, and specialized
+numeric types remain libraries. The normative specification must include a
+complete conversion matrix and strict floating profile.
+
+### 5. Records, variants, destructuring, and value-producing control flow
+
+**Option A: require named record construction and add named update, multi-field
+variants, destructuring, and value-producing `if` and `match`.**
+
+- Advantages: wide records remain reviewable, field reordering is safe, variants
+  replace Boolean/status bundles, and control flow produces typed values without
+  temporary mutation.
+- Costs: a deliberate Seed migration and more grammar and ownership rules.
+
+**Option B: retain positional record construction and the smaller Seed surface.**
+
+- Advantages: concise construction for small records and less initial compiler
+  work.
+- Costs: fragile call sites and poor readability for the existing records with
+  dozens of fields.
+
+**Option C: permanently support both positional and named construction.**
+
+- Advantages: callers can select the shorter form.
+- Costs: preserves the fragile form indefinitely and creates two review and style
+  conventions for the same type.
+
+**Recommendation:** accept Option A. A same-name field shorthand may reduce
+repetition without making field identity positional.
+
+### 6. Static generics and compile-time protocols
+
+**Option A: include bounded static generics and protocols without inheritance or
+implicit dynamic dispatch.**
+
+- Advantages: reusable typed collections and algorithms with predictable
+  behavior and normally no runtime dispatch.
+- Costs: greater compiler complexity and possible generated-code growth through
+  specialization.
+
+**Option B: use runtime interfaces and implicit dynamic dispatch.**
+
+- Advantages: runtime extensibility and potentially less specialized code.
+- Costs: adds interface-object representation, dispatch, lifetime, allocation,
+  and reachability questions.
+
+**Option C: omit generics.**
+
+- Advantages: substantially simplifies the initial compiler.
+- Costs: duplicates collections, results, options, and algorithms for every type
+  and prevents the standard library from presenting one coherent typed surface.
+
+**Option D: adopt class inheritance as the reuse mechanism.**
+
+- Advantages: familiar to object-oriented developers.
+- Costs: introduces the combined layout, identity, allocation, mutation, and
+  dispatch model deliberately excluded above.
+
+**Recommendation:** accept Option A. Freeze only after limits for instantiation
+depth, instance count, overlap, separate compilation, and emitted-code growth are
+specified and tested.
+
+### 7. Collection families and budgets
+
+**Option A: provide fixed arrays, owned vectors and maps, immutable publication,
+lexical slices, builders, and typed arenas.**
+
+- Advantages: covers real compiler and application workloads, separates fixed
+  shape from runtime capacity, and avoids repeated immutable concatenation.
+- Costs: substantial ownership and library design; explicit maxima or resource
+  budgets can become verbose if the APIs are poor.
+
+**Option B: retain only exact-capacity `sequence<T, N>` and its builder.**
+
+- Advantages: simple capacity reasoning and deterministic iteration.
+- Costs: cannot adequately cross records and calls or serve general maps,
+  parsers, graphs, and application data.
+
+**Option C: add conventional semantically unbounded collections.**
+
+- Advantages: easiest prototype experience.
+- Costs: hidden growth and unknowable worst-case memory, latency, and failure
+  behavior.
+
+**Recommendation:** accept Option A in direction. Every growing collection must
+receive an explicit maximum or a surrounding resource-domain budget. The paper
+corpus must prove that the budget APIs remain practical.
+
+### 8. Copy, shared immutable, owned, and borrowed values
+
+**Option A: define the four value classes without requiring tracing garbage
+collection.**
+
+- Advantages: efficient copying and immutable sharing, deterministic release,
+  explicit mutation, and compile-time prevention of use-after-move and invalid
+  borrows.
+- Costs: the largest new learning and compiler-analysis burden in the proposal.
+
+**Option B: require tracing garbage collection and general managed references.**
+
+- Advantages: familiar sharing and easy construction of arbitrary cyclic object
+  graphs.
+- Costs: nondeterministic retention and pauses, a larger runtime, hidden
+  aliasing, and poor fit for bounded services, drivers, and the operating system.
+
+**Option C: expose manual allocation and free as the ordinary safe model.**
+
+- Advantages: keeps the runtime mechanism small and makes allocation locations
+  explicit.
+- Costs: permits leaks, double-free, use-after-free, and invalid aliasing in
+  ordinary application code.
+
+**Option D: use universal reference counting.**
+
+- Advantages: provides deterministic release for acyclic reference graphs.
+- Costs: adds pervasive count traffic and still leaks cycles unless another
+  cycle-management mechanism is introduced.
+
+**Recommendation:** accept Option A in direction. Move rules, borrow notation,
+escape checking, immutable publication, hidden sharing, typed arenas, and
+diagnostics require paper prototypes before source freeze.
+
+### 9. `Option<T>`, `Result<T, E>`, and `try`
+
+**Option A: standardize one typed failure model with exact propagation.**
+
+- Advantages: failure remains visible, `try` keeps the successful path concise,
+  and the model replaces widespread manual `Valid` and `Status` guards.
+- Costs: APIs must design meaningful error types and write explicit adapters when
+  crossing error domains.
+
+**Option B: introduce general exceptions.**
+
+- Advantages: short successful paths and a familiar application model.
+- Costs: invisible control flow and cleanup, resource, ABI, and verification
+  complexity.
+
+**Option C: retain Boolean and status-record conventions.**
+
+- Advantages: matches much of the currently implemented source.
+- Costs: remains repetitive, is easy to ignore, and continues the manual guard
+  patterns observed throughout the corpus.
+
+**Option D: support both exceptions and typed results.**
+
+- Advantages: gives each API local choice.
+- Costs: creates competing failure cultures and requires every caller, library,
+  and resource construct to support both control-flow models.
+
+**Recommendation:** accept Option A. Error conversion remains explicit and
+statically selected; `try` must not infer an adapter from names or context.
+
+### 10. Named arguments, function values, and closure capture
+
+**Option A: include named call arguments, first-class functions, and explicit
+copy, move, or borrow capture.**
+
+- Advantages: makes wide calls readable, enables callbacks and algorithms, and
+  exposes retained ownership and capability requirements.
+- Costs: closure representation and lifetime analysis add compiler work, while
+  capture lists add visible syntax.
+
+**Option B: add named arguments but omit closures and function values.**
+
+- Advantages: improves current call readability with a smaller implementation.
+- Costs: leaves callbacks, collection algorithms, and structured tasks awkward.
+
+**Option C: infer captures as C# commonly does.**
+
+- Advantages: concise lambdas.
+- Costs: may silently retain mutable state, resources, capabilities, large
+  values, or a borrow beyond its valid scope.
+
+**Recommendation:** accept Option A. Calls evaluate argument expressions from
+left to right as written, and capture mode is never inferred when ownership or
+authority would change.
+
+### 11. Move-only resources and `using`
+
+**Option A: separate fallible semantic completion from infallible local
+release.**
+
+- Advantages: deterministic cleanup across every exit path without discarding
+  flush, commit, finish, or shutdown failures.
+- Costs: some protocols require two visible actions: completion and release.
+
+**Option B: use one automatic close operation that may fail.**
+
+- Advantages: appears simpler at the API surface.
+- Costs: cannot unambiguously report a body failure and a close failure together,
+  and scope exit may silently lose one result.
+
+**Option C: rely on runtime finalizers.**
+
+- Advantages: requires little explicit source for abandoned resources.
+- Costs: finalizer timing is unknown, may occur under resource exhaustion, and
+  cannot safely promise semantic flush, commit, or durable completion.
+
+**Option D: add general `defer` as the primary cleanup model.**
+
+- Advantages: can express arbitrary lexical cleanup.
+- Costs: complicates ownership and failure ordering and allows fallible semantic
+  completion to hide at scope exit.
+
+**Recommendation:** accept Option A in direction. Freeze only after exact release
+order, acquisition failure, partial initialization, nested resources, and
+rules preventing a body, completion, or cleanup result from being silently
+discarded are specified.
+
+### 12. Bounded builders and interpolation
+
+**Option A: include bounded byte/text builders and bounded interpolation.**
+
+- Advantages: directly removes repeated concatenation, gives predictable memory,
+  and supports readable diagnostics and application text.
+- Costs: maximum-output derivation, escaping, formatting, and capacity failure
+  need exact contracts.
+
+**Option B: retain immutable concatenation as the primary construction model.**
+
+- Advantages: requires little new language or library work.
+- Costs: repeated append patterns continue copying and allocating throughout
+  compiler and application hot paths.
+
+**Option C: provide bounded builders but no interpolation syntax.**
+
+- Advantages: solves the copying problem with a smaller grammar.
+- Costs: ordinary diagnostics, logging, and application text remain unnecessarily
+  verbose despite having a safe bounded construction mechanism.
+
+**Option D: use conventional unbounded builders and interpolation.**
+
+- Advantages: familiar and convenient.
+- Costs: a small source expression may hide arbitrary allocation and formatting
+  work.
+
+**Recommendation:** accept Option A. Builders remain ordinary typed library APIs
+even when the compiler recognizes and optimizes them.
+
+### 13. Structured concurrency
+
+**Option A: specify lexical task scopes, joins, cancellation, bounds, and
+`async`/`await` in the hosted profile.**
+
+- Advantages: supports services, networking, UI, and agent applications without
+  detached work or leaked borrows, resources, and capabilities.
+- Costs: the most complex individual 1.0 decision; scheduler independence,
+  cancellation observation, result ordering, and teardown require extensive
+  design.
+
+**Option B: define task ownership and effects now but defer convenience syntax.**
+
+- Advantages: preserves a compatible future foundation while reducing initial
+  grammar and compiler work.
+- Costs: hosted programming may remain awkward and require a later language
+  addition.
+
+**Option C: use unstructured spawning, promises, or threads.**
+
+- Advantages: quick to prototype and initially familiar.
+- Costs: permits detached work and makes joining, cancellation, queue bounds,
+  retained capabilities, and teardown difficult to guarantee.
+
+**Option D: make concurrency entirely a library concern.**
+
+- Advantages: keeps scheduler and task syntax out of the language specification.
+- Costs: the compiler cannot reliably enforce task lifetime, borrowing, capture,
+  scope exit, and ownership transfer.
+
+**Recommendation:** accept Option A at the design level. Implementations may
+stage target support, but the Language 1.0 function, ownership, and effect model
+must account for structured tasks before source freeze.
+
+### 14. Unsafe and foreign boundaries
+
+**Option A: define visible unsafe declarations and call sites in the system
+profile with exact FFI contracts.**
+
+- Advantages: Windvale can implement its runtime, drivers, operating system, and
+  foreign adapters without weakening portable code.
+- Costs: a large security surface requiring target-specific ABI specifications,
+  malformed-boundary tests, and strong audit tooling.
+
+**Option B: defer unsafe and FFI beyond Language 1.0.**
+
+- Advantages: smaller initial source specification.
+- Costs: Windvale cannot implement its own stack without persistent
+  external-language escape paths.
+
+**Option C: permit native pointers and machine operations in ordinary code.**
+
+- Advantages: convenient for low-level implementation.
+- Costs: destroys the portable-safe boundary and makes unsafe authority difficult
+  to audit at definitions and call sites.
+
+**Option D: expose only opaque safe libraries and omit language-level unsafe
+primitives.**
+
+- Advantages: ordinary application code sees a small safe surface.
+- Costs: the libraries still require another language or hidden compiler
+  mechanisms to implement their unsafe internals.
+
+**Recommendation:** accept Option A. Unsafe behavior is visible where defined and
+invoked, remains isolated to the system profile, and never grants an undeclared
+capability by itself.
+
+### Recommended ballot and freeze conditions
+
+| Decisions | Proposed vote | Required evidence before source freeze |
+| --- | --- | --- |
+| 1–5 | Accept | Complete grammar, semantic, diagnostic, and migration examples. |
+| 6 | Accept direction | Prove deterministic selection and generic code-growth bounds. |
+| 7 | Accept direction | Design usable collection-maximum and resource-budget APIs. |
+| 8 | Accept direction | Prototype moves, borrows, immutable sharing, and typed arenas. |
+| 9–10 | Accept | Complete exact error propagation, call, and closure rules. |
+| 11 | Accept direction | Resolve cleanup ordering without discarding any result. |
+| 12 | Accept | Prove builder and interpolation output bounds. |
+| 13 | Accept direction | Complete the structured-concurrency paper corpus and semantics. |
+| 14 | Accept | Specify each supported ABI and unsafe invariant. |
+
+Decisions 8, 11, and 13 carry the highest semantic and usability risk. Their
+recommended direction is coherent with the rest of the language, but they need
+the deepest paper design and diagnostics review. Accepting the ballot does not
+permit those areas to be marked final before their freeze conditions are met.
+
 ## Explicitly outside Language 1.0
 
 The following remain outside 1.0 unless review of this document changes the
