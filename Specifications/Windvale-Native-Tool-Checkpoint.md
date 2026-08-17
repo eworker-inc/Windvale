@@ -280,48 +280,17 @@ verification-owner coordination, and qualification do not consult it.
 
 ## Linked-image key and record
 
-`Get-Native-Linked-Image-Cache-Key.mjs` derives a length-framed SHA-256 key
-from these ordered fields:
-
-1. format `windvale-native-linked-image-cache-key 1`, namespace
-   `linked-image-v1`, and current host family;
-2. canonical unsigned base address and bounded entry-symbol identity;
-3. exact input WVO bytes;
-4. exact current-host `Link-Wvo` front door; and
-5. exact current-host native linker application.
-
-The WVO, front door, and linker must be nonempty ordinary files no larger than
-67,108,864 bytes. Repository-owned producers retain canonical non-link path
-requirements. Windows-generated temporary inputs may arrive through an 8.3
-alias; the key helper rejects a linked final file, resolves the alias, and reads
-the canonical target. The lowercase 64-hex key names
-`linked-image-v1/<host-family>/<key>`.
-
-The linked-image `Checkpoint.txt` contains exactly seven ASCII lines:
-
-```text
-windvale-native-linked-image-checkpoint 1
-key <64-lowercase-hex>
-entry-offset <canonical-unsigned-decimal>
-image-bytes <canonical-positive-decimal>
-image-sha256 <64-lowercase-hex>
-map-bytes <canonical-positive-decimal>
-map-sha256 <64-lowercase-hex>
-```
-
-The record is at most 1,024 bytes. The flat image and map are nonempty and no
-larger than 67,108,864 bytes. Every hit rejects linked cache state, parses the
-exact requested entry from the map, rehashes both products, reconstructs and
-compares the complete record, materializes fresh copies, and compares both
-copies byte for byte.
-
-`Build-Cached-Linked-Image-Set.mjs` defines the ordered multi-object successor.
-Its version-2 key retains the version-1 host, base-address, entry, front-door,
-and linker fields, adds namespace `linked-image-v2`, exact canonical input
-count, every input WVO in command order, and the exact version-2 producer
-script. It accepts one through 64 WVOs. Each input and the aggregate immutable
-snapshot are bounded by the 32 MiB large-native linking admission limit. The
-lowercase key names `linked-image-v2/<host-family>/<key>`.
+`Build-Cached-Linked-Image-Set.mjs` derives a length-framed SHA-256 key from
+format `windvale-native-linked-image-cache-key 2`, namespace
+`linked-image-v2`, current host family, canonical unsigned base address,
+bounded entry-symbol identity, exact canonical input count, every exact input
+WVO in command order, the producer script, current-host `Link-Wvo` front door,
+and current-host native linker. It accepts one through 64 WVOs. Each input and
+the aggregate immutable snapshot are bounded by the 32 MiB large-native linker
+admission limit. Repository-owned producers require canonical non-link paths;
+Windows-generated temporary WVOs may use an ordinary 8.3 alias whose canonical
+target supplies the bytes. The lowercase key names
+`linked-image-v2/<host-family>/<key>`.
 
 The version-2 record contains exactly eight ASCII lines:
 
@@ -369,9 +338,8 @@ the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
 run the target-aware 50-case database owner. It obtains ordinary project
 objects through `Build-Cached-Project-Object`, the build-driver input through
-`Build-Cached-Project-Wvb`, portable linked images through
-`Build-Cached-Linked-Image`, ordered current-host multi-object images through
-`Build-Cached-Linked-Image-Set`, and current-host executables through
+`Build-Cached-Project-Wvb`, every ordinary one-or-more-object linked image
+through `Build-Cached-Linked-Image-Set`, and current-host executables through
 `Build-Cached-Hosted-Application`. Explicitly segmented development cases use
 `Build-Cached-Segmented-Project` for the exact WVB and canonical image before
 the unchanged hosted-application or provider-overlay path. `Verify-Changed.ps1`
@@ -481,6 +449,14 @@ warm Windows 50-case owner now passes in 101,370 ms instead of 281,240 ms,
 saving 179,870 ms or 63.96 percent. Host-root-writer falls from 61,810 ms to
 3,560 ms while retaining every normal, replay, interruption, recovery, fill,
 split, and read execution. The version-2 regression proves four-way same-key
-publication, input-order key separation, exact hits, corruption preservation,
-failed-link cleanup, and malformed-count rejection. Independent Linux
-execution remains required.
+publication, one-input and multi-input exact hits, input-order key separation,
+corruption preservation, failed-link cleanup, and malformed-count rejection.
+Independent Linux execution remains required.
+
+Replacing the obsolete single-input version-1 wrapper with the same version-2
+publisher reduces a controlled warm link hit from a 641.6 ms mean to 107.0 ms,
+an 83.32 percent reduction and 6.00-fold speedup. A measured TreeNode database
+case falls from 1,410 through 1,490 ms to 940 through 960 ms. The all-hit
+change-aware Windows owner falls from 101,370 ms to 85,010 ms, while its
+portable section falls from 74,110 ms to 58,410 ms. The direct no-argument and
+qualification link paths remain unchanged.

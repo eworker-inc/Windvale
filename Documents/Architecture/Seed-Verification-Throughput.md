@@ -259,18 +259,36 @@ process semantics were therefore not the bottleneck and remain unchanged.
 Ordered `linked-image-v2` checkpoints now hash one through 64 exact WVO buffers
 in command order, snapshot them before cold linking, include all current-host
 producer bytes, and publish an immutable image/map/record directory. Current-
-host database development uses this path for every eligible multi-object link;
-the single-object portable version-1 family and direct qualification paths stay
-unchanged. The final change-aware all-hit Windows owner falls from 281,240 ms to
+host database development initially used this path for every eligible multi-
+object link; direct qualification paths stay unchanged. The final change-aware
+all-hit Windows owner falls from 281,240 ms to
 101,370 ms, saving 179,870 ms or 63.96 percent for a 2.77-fold speedup in this
 slice. Host-root-writer falls from 61,810 ms to 3,560 ms, host storage from
 24,620 ms to 8,140 ms, and host-local-service from 29,010 ms to 1,450 ms.
 Relative to the earlier 500,610 ms project-object-v2 result, the combined
 development loop saves 399,240 ms or 79.75 percent and is 4.94 times faster.
 
+The remaining portable single-input path repeated a batch front door, Node key
+process, several `certutil` hashes, and copy comparisons on every hit. A
+controlled identical-input comparison measured a 641.6 ms version-1 mean and
+a 107.0 ms version-2 mean. A live TreeNode case separated 220 through 240 ms
+of project materialization, 580 through 630 ms of version-1 linking, 80 ms of
+map/copy work, 160 through 170 ms of hosted-application materialization, and
+340 through 350 ms of fresh execution. Database development now uses the
+single version-2 producer for all 38 ordinary portable single-object links and
+every eligible host multi-object link; three segmented portable cases retain
+their separate transport checkpoint. The obsolete version-1 wrappers and key
+helper have no consumer and are removed.
+The coherent population run retained 37 real new links and all 50 executions
+in 411,770 ms. The final change-aware all-hit owner takes 85,010 ms, down
+16,360 ms or 16.14 percent from 101,370 ms; the portable section falls from
+74,110 ms to 58,410 ms, saving 15,700 ms or 21.18 percent. Relative to the
+earlier 500,610 ms project-object-v2 result, the combined loop is 5.89 times
+faster.
+
 `Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
 producer, and artifact closures for the measured front-door, WebAssembly, and
-database owners plus all seven database checkpoint families. Its verifier
+database owners plus all six database checkpoint families. Its verifier
 requires canonical ordering, ordinary repository files, complete closure kinds,
 the exact checkpoint-family set, no planner gaps, and selection of the declared
 owner.

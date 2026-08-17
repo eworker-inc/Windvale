@@ -2502,8 +2502,8 @@ if not "%Development%"=="1" (
 )
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Linked-Image.cmd" ^
-        0 Main "%FirstWvo%" "%Image%" "%Map%" ^
+    call :build_cached_linked_image ^
+        Main "%Image%" "%Map%" "%FirstWvo%" ^
         >"%TemporaryDirectory%\%~1-Link-Cache.txt"
     if errorlevel 1 exit /b 1
     set "LinkCheckpoint="
@@ -2562,6 +2562,10 @@ set "HostedApplicationSessionResult=%ERRORLEVEL%"
 if not "%HostedApplicationSessionResult%"=="75" exit /b %HostedApplicationSessionResult%
 call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" ^
     "%~1" "%~f2" "%~f3" "%~4" "%~5" "%~f6" "%~7"
+exit /b %ERRORLEVEL%
+
+:build_cached_linked_image
+node "%LinkedImageSet%" 0 "%~1" "%~f2" "%~f3" 1 "%~f4"
 exit /b %ERRORLEVEL%
 
 :build_cached_linked_image_set

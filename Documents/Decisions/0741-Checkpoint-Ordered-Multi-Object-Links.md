@@ -48,17 +48,20 @@ exact `.new-<key>-<nonce>-*` sibling; its `finally` boundary removes that path
 after build, measurement, record, or lost-race failure. A race loser accepts a
 winner only after complete validation. Cache-root output aliases are rejected.
 
-Use version 2 only for current-host multi-object database development links.
-Keep portable single-object version-1 hits unchanged. No-argument and
+Initially use version 2 only for current-host multi-object database development
+links. [Decision 0742](0742-Unify-Database-Linked-Image-Checkpoints.md) extends
+the same one-through-64 contract to portable single-object development links
+and retires the now-unreferenced version-1 front doors. No-argument and
 qualification execution continue to call the direct linker and retain both-
 host construction, byte comparison, and failure evidence.
 
 ## Evidence
 
 The bounded regression passes a four-process same-key cold publication race
-with exactly one creator, byte-identical outputs, an exact warm hit, distinct
-keys for reversed input order, corruption rejection with both sentinel outputs
-unchanged, failed-link temporary cleanup, and noncanonical-count rejection.
+with exactly one creator, byte-identical outputs, exact one-input and multi-
+input warm hits, distinct keys for reversed input order, corruption rejection
+with both sentinel outputs unchanged, failed-link temporary cleanup, and
+noncanonical-count rejection.
 
 The cold full database owner publishes every distinct real three-object link
 and passes all 50 cases in 269,620 ms. The final change-aware all-hit run passes

@@ -477,10 +477,10 @@ verify_target() {
 
     if ((development == 1)); then
         local link_cache_report="$temporary_directory/$label-Link-Cache.txt"
-        "$script_directory/Build-Cached-Linked-Image.sh" \
-            0 Main "$first_wvo" "$image" "$map" > "$link_cache_report" || return $?
+        build_cached_linked_image_set Main "$image" "$map" "$first_wvo" \
+            > "$link_cache_report" || return $?
         link_checkpoint=$(sed -n \
-            's/^native linked image cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* entry=[0-9][0-9]*$/\1/p' \
+            's/^native linked image cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]* entry=[0-9][0-9]* inputs=1$/\1/p' \
             "$link_cache_report")
         [[ $link_checkpoint == Created || $link_checkpoint == Hit ]] || return 1
     else

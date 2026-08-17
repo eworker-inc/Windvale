@@ -65,14 +65,16 @@ function Runˉtool(arguments_, cacheRoot) {
     });
 }
 
-function Parseˉreport(result, expectedStatus) {
+function Parseˉreport(result, expectedStatus, expectedInputCount = 2) {
     if (result.code !== 0 || result.stderr !== '') {
         Reject(`Unexpected linked-image result ${result.code}: ${result.stderr}`);
     }
-    const match = /^native linked image cache status=(Created|Hit) key=([0-9a-f]{64}) entry=(0|[1-9][0-9]*) inputs=2$/.exec(
+    const match = /^native linked image cache status=(Created|Hit) key=([0-9a-f]{64}) entry=(0|[1-9][0-9]*) inputs=([1-9]|[1-5][0-9]|6[0-4])$/.exec(
         result.stdout
     );
-    if (match === null || (expectedStatus !== null && match[1] !== expectedStatus)) {
+    if (match === null ||
+        (expectedStatus !== null && match[1] !== expectedStatus) ||
+        Number(match[4]) !== expectedInputCount) {
         Reject(`Unexpected linked-image report: ${result.stdout}`);
     }
     return { key: match[2], status: match[1] };
@@ -160,6 +162,34 @@ async function Main() {
         await Requireˉbytes(hitImage, imageBytes, 'warm-hit image');
         await Requireˉbytes(hitMap, mapBytes, 'warm-hit map');
 
+        const singleImage = path.join(outputRoot, 'Single.bin');
+        const singleMap = path.join(outputRoot, 'Single.map');
+        const single = Parseˉreport(await Runˉtool(argumentsFor(
+            singleImage,
+            singleMap,
+            [FIRST_INPUT]
+        ), cacheRoot), 'Created', 1);
+        const singleHitImage = path.join(outputRoot, 'Single-Hit.bin');
+        const singleHitMap = path.join(outputRoot, 'Single-Hit.map');
+        const singleHit = Parseˉreport(await Runˉtool(argumentsFor(
+            singleHitImage,
+            singleHitMap,
+            [FIRST_INPUT]
+        ), cacheRoot), 'Hit', 1);
+        if (single.key === hit.key || singleHit.key !== single.key) {
+            Reject('The one-input linked-image key or hit differs.');
+        }
+        await Requireˉbytes(
+            singleHitImage,
+            await readFile(singleImage),
+            'one-input warm-hit image'
+        );
+        await Requireˉbytes(
+            singleHitMap,
+            await readFile(singleMap),
+            'one-input warm-hit map'
+        );
+
         const reversed = Parseˉreport(await Runˉtool(argumentsFor(
             path.join(outputRoot, 'Reversed.bin'),
             path.join(outputRoot, 'Reversed.map'),
@@ -233,8 +263,8 @@ async function Main() {
 
         process.stdout.write(
             'native linked image set checkpoint status=Passed ' +
-            'race=4 key-order=Distinct hit=Exact corruption=Rejected ' +
-            'failure=Clean malformed=Rejected\n'
+            'race=4 key-order=Distinct hit=Exact single=Exact ' +
+            'corruption=Rejected failure=Clean malformed=Rejected\n'
         );
     } finally {
         await Removeˉtestˉroot(testRoot);

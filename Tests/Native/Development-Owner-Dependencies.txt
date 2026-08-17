@@ -6,7 +6,6 @@ database-storage|artifact|Artifacts/Native-Wv-Linker-Candidate/Manifest.json
 database-storage|artifact|Artifacts/Native-Wvb-To-Wvo-Candidate/Manifest.json
 database-storage|checkpoint|build-driver-v1
 database-storage|checkpoint|hosted-application-v1
-database-storage|checkpoint|linked-image-v1
 database-storage|checkpoint|linked-image-v2
 database-storage|checkpoint|project-object-v2
 database-storage|checkpoint|project-wvb-v2
@@ -14,7 +13,6 @@ database-storage|checkpoint|segmented-project-v1
 database-storage|producer|Tools/Native/Build-Cached-Hosted-Application-Session.mjs
 database-storage|producer|Tools/Native/Build-Cached-Hosted-Application.cmd
 database-storage|producer|Tools/Native/Build-Cached-Linked-Image-Set.mjs
-database-storage|producer|Tools/Native/Build-Cached-Linked-Image.cmd
 database-storage|producer|Tools/Native/Build-Cached-Project-Object.cmd
 database-storage|producer|Tools/Native/Build-Cached-Project-Object.mjs
 database-storage|producer|Tools/Native/Build-Cached-Project-Wvb.cmd
@@ -22,7 +20,6 @@ database-storage|producer|Tools/Native/Build-Cached-Segmented-Project.cmd
 database-storage|producer|Tools/Native/Build-Cached-Segmented-Project.mjs
 database-storage|producer|Tools/Native/Build-Cached-Segmented-Project.sh
 database-storage|producer|Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs
-database-storage|producer|Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs
 database-storage|producer|Tools/Native/Get-Native-Project-Cache-Key.mjs
 database-storage|producer|Tools/Native/Native-Hosted-Application-Cache-Core.mjs
 database-storage|producer|Tools/Native/Native-Project-Cache-Key-Core.mjs

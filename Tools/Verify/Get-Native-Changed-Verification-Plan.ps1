@@ -1050,6 +1050,7 @@ function Add-Native-Tool-Suite {
         Add-Suite 'os-x64-code-emission'
         return
     }
+    # Retain retired version-1 stems as deletion tombstones for checkout diffs.
     if ($Stem -in @(
         'Build-Cached-Hosted-Application',
         'Build-Cached-Hosted-Application-Session',

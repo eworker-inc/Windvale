@@ -1,6 +1,6 @@
 # Decision 0560: Linked-image development checkpoints
 
-- Status: Implemented
+- Status: Superseded by [Decision 0742](0742-Unify-Database-Linked-Image-Checkpoints.md)
 - Date: 2026-08-14
 - Extends: Decisions 0553 through 0555, 0557, and 0559
 - Scope: repeated affected-owner feedback and ordinary dual-host development
