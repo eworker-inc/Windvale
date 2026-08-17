@@ -105,6 +105,187 @@ implicit numeric conversion, general exceptions, operator overloading, inferred
 overload selection, ambient reflection, hidden capability acquisition,
 unrestricted macros, preprocessors, or semantically unbounded collections.
 
+## Why familiar features are outside Language 1.0
+
+These exclusions are deliberate, but they do not mean that every excluded
+feature is inherently bad or forbidden forever. Classes, exceptions, reflection,
+operator overloading, and macros are useful in existing languages. They also
+carry semantic, compiler, runtime, tooling, security, and teaching costs.
+
+Language 1.0 accepts a feature only when its behavior remains visible enough to
+review, bounded enough to reason about, deterministic across targets, and useful
+enough to justify its permanent cost. Where Windvale excludes a familiar feature,
+it must provide a practical alternative rather than merely transferring work to
+the programmer.
+
+### Classes
+
+A class commonly combines data layout, reference identity, allocation,
+construction, mutation, visibility, dispatch, and lifetime policy in one feature.
+That combination makes the object model and generated code larger and makes it
+harder to tell which costs and aliasing behavior a value carries.
+
+Windvale separates those concerns. Records and variants describe data, modules
+provide encapsulation, protocols describe generic behavior, and owned or shared
+storage, resources, arenas, and typed handles make lifetime or identity explicit
+where it is actually required. No classes does not mean no abstraction,
+encapsulation, or reusable behavior.
+
+### Inheritance
+
+Inheritance introduces implicit behavior through a base hierarchy, couples
+distant types, complicates memory layout and construction, and often introduces
+dynamic dispatch. Adding or changing a base member can affect code that does not
+name the change.
+
+Windvale uses composition and explicit compile-time protocols. A type contains
+the values it is built from and explicitly implements the behavior it promises.
+This retains static polymorphism without requiring a class hierarchy or hidden
+dispatch.
+
+### Implicit `null`
+
+Implicit `null` silently adds an invalid state to otherwise valid types and moves
+failure from the point where absence arises to a later dereference. It also makes
+every API reader determine whether a value that appears required may secretly be
+missing.
+
+Windvale uses `Option<T>` for optional presence. Callers must handle its present
+and absent cases, while domain states more specific than absence use a named
+variant. A type that does not contain an option cannot be null.
+
+### Truthiness
+
+Truthiness requires language-specific rules for treating integers, text,
+collections, handles, and optional values as Boolean. Expressions such as
+`if Value` then hide whether the intended test is nonzero, nonempty, present,
+valid, or something else.
+
+Windvale conditions require `bool`. The program names the intended comparison or
+predicate, making boundary cases visible to readers and tools.
+
+### Implicit numeric conversion
+
+Automatic numeric conversion can change width, signedness, precision, overflow,
+and comparison behavior. Even an apparently safe widening may change later
+arithmetic or overload selection, while narrowing can silently discard data.
+
+Windvale uses named widening, narrowing, parsing, and bit-reinterpretation
+operations with exact failure and overflow behavior. Numeric literals use an
+expected type or require an explicit type when the context is insufficient.
+
+### General exceptions
+
+General exceptions add invisible control-flow edges: almost any call may leave
+its caller, unwind multiple frames, and run cleanup not apparent in the return
+type. This complicates resource accounting, deterministic teardown, ABI
+boundaries, and verification of every failure path.
+
+Windvale represents recoverable failure with `Result<T, E>`, `Option<T>`, or
+another named variant. Value-producing `try` provides concise exact-error
+propagation while preserving failure in the function type. Terminal traps remain
+for violated verified contracts and are not catchable as normal application
+results.
+
+### Operator overloading
+
+Unrestricted operator overloading lets a compact expression hide arbitrary work,
+allocation, mutation, I/O, or failure. It can make domain notation attractive,
+but it also makes cost and behavior depend on nonlocal type resolution.
+
+Language 1.0 gives operators fixed built-in meanings and uses named functions for
+domain operations. A later proposal may consider narrowly constrained arithmetic
+protocols if real Windvale programs demonstrate that named operations are
+insufficient and the proposal keeps cost, failure, and resolution visible.
+
+### Inferred overload selection
+
+Inferred overload selection allows imports, inference context, or a newly added
+overload to change which function a call means. It increases compiler work and
+often produces diagnostics far from the source of ambiguity.
+
+Windvale prefers distinct semantic names, explicit generic contracts, and one
+deterministic implementation-selection path. When the type context cannot select
+a generic instance uniquely, the program supplies the missing type information.
+
+### Ambient reflection
+
+Ambient runtime reflection requires type metadata and otherwise unreachable code
+to remain available. It complicates AOT reachability, artifact size, capability
+review, deterministic serialization, and the security boundary around private
+data.
+
+Windvale uses explicit schemas, generated tables with provenance, named format
+contracts, or a deliberately declared inspection capability. No ambient
+reflection does not prohibit intentional metadata; it requires the retained data,
+authority, and cost to be visible.
+
+### Hidden capability acquisition
+
+If a function can obtain files, networking, time, entropy, processes, or devices
+from ambient runtime state, its signature does not reveal its authority. Such
+code is harder to test, isolate, revoke, and safely reuse.
+
+Windvale declares capability requirements and binds or passes rights-limited
+providers explicitly. Importing a package or running on a capable host never
+grants authority by itself.
+
+### Unrestricted macros
+
+Arbitrary token or syntax rewriting can create a language inside the language,
+run uncontrolled work during compilation, inspect the build environment, and
+produce source that editors, reviewers, and diagnostics cannot see directly.
+
+Windvale instead provides static generics, compile-time protocols, typed
+constants, bounded derivation, and explicit generated build inputs with
+provenance. Future metaprogramming must remain deterministic, typed where
+practical, and bounded in time, memory, recursion, and output.
+
+### Preprocessors
+
+A textual preprocessor runs before ordinary parsing and therefore bypasses
+normal names, types, scopes, and grammar. Conditional preprocessing can make one
+source file mean different programs to the editor, reviewer, formatter, and
+compiler.
+
+Windvale uses typed constants, modules, packages, explicit target profiles, and
+ordinary language constructs. Generated source or data is a named build input,
+not an invisible import-time transformation.
+
+### Semantically unbounded collections
+
+A collection described as able to grow without a semantic maximum really grows
+until an allocator, process, or machine fails. That makes worst-case memory,
+time, latency, and failure behavior unknowable, especially in parsers, compilers,
+services, and the operating system.
+
+Windvale still provides dynamic vectors, maps, and builders. They grow within an
+explicit maximum or resource-domain budget and report capacity or allocation
+failure according to their contract. Bounded does not mean fixed-size; it means
+that the program and its caller can discover and reason about the limit.
+
+### Design status and tradeoffs
+
+The strongest durable principles are no implicit `null`, no truthiness, no
+implicit numeric conversion, no hidden capability acquisition, typed recoverable
+failure, and no semantically unbounded resource use. They directly support
+Windvale's safety, portability, and deterministic-resource goals.
+
+Other exclusions are Language 1.0 boundary decisions, not claims that a future
+language edition can never contain a constrained form. Explicit reflection,
+restricted metaprogramming, specialized runtime protocol values, or constrained
+domain operators may be reconsidered after representative programs provide
+evidence and a proposal defines their bounds. Compatibility pressure or
+familiarity alone is not enough to add them.
+
+This direction has real ergonomic costs. Exceptions can shorten failure paths,
+classes are familiar, operator notation can improve mathematical code, reflection
+can accelerate framework development, and unrestricted collections are
+convenient for prototypes. Language 1.0 must make its explicit alternatives
+pleasant enough for real applications. The paper design corpus and usability
+review therefore test not only whether programs can be expressed, but whether
+Windvale's safer forms remain readable and practical.
+
 ## What Language 1.0 finalization means
 
 The Language 1.0 design is complete only when every accepted feature has:
@@ -810,7 +991,8 @@ specification begins:
 ## Explicitly outside Language 1.0
 
 The following remain outside 1.0 unless review of this document changes the
-boundary:
+boundary. The reader-facing rationale and intended alternatives are described in
+"Why familiar features are outside Language 1.0" above:
 
 - classes and inheritance;
 - implicit `null`, optional coercion, and truthiness;
