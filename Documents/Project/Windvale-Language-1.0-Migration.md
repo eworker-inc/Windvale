@@ -7,7 +7,9 @@ This is the candidate repository migration plan required by
 and refined by
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 and
-[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
+[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
+with the first paper findings resolved by
+[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -107,18 +109,19 @@ changes require semantic review.
 
 | Language 1.0 area | Primary implementation owners | WVB change expected? |
 | --- | --- | --- |
-| Edition header and module metadata | Lexer, declaration parser, source graph, editor | Only when serialized metadata requires a new format. |
+| Edition header, module metadata, and target-scope registry | Lexer, declaration parser, source graph, build target admission, editor | Only when serialized metadata requires a new format. |
 | Bounded immutable package data | Parser, source graph, package/build plan, WVB/package formats, loader, publisher | Likely requires a typed content-reference table unless the value is embedded once without duplication. |
 | Names and short private identities | Bindings, WIR directory, object/debug symbol mapping | Not for private compiler identity alone. |
 | `unit` and `never` | Type model, control-flow validation, WIR lowering | Possibly shape metadata; no opcode by default. |
 | New fixed numerics and strict floats | Type checker, operators, Foundation, verifier, runtimes, native backend | Likely for new scalar operations. |
 | Named update and multi-field variants | Parser, bindings, WIR construction | Only when current aggregate operations cannot encode the result. |
 | Value `if`/`match` and destructuring | Body parser, ownership analysis, WIR control flow | Prefer lowering through existing blocks and values. |
-| Generics and protocols | Symbols, type checker, specialization cache, package interfaces | Specialized output should remain ordinary typed operations. |
+| Generics and protocols | Symbols, exact argument-type matcher, type checker, specialization cache, package interfaces | Specialized output should remain ordinary typed operations; no overload or result-context search. |
 | Ownership and borrowing | Type/ownership analysis, WIR evidence, diagnostics | Runtime move opcodes are not required when static lowering suffices. |
 | Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
 | Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
 | Function values and closures | Type checker, capture analysis, WIR, runtime/native calling convention | Likely requires versioned callable-value representation. |
+| Application entry and root binding | Package/build plan, launcher profile, capability catalog, runtime resource domain | Entry selection remains metadata; no special source function or ambient allocator. |
 | Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
 | Builders and interpolation | Foundation libraries, bounds analysis, optional intrinsics | No syntax-specific opcode required. |
 | Structured concurrency | Effects, captures, Foundation tasks, runtime providers, target schedulers | Requires an explicit verified task/runtime contract. |
@@ -136,6 +139,8 @@ reparse it.
 
 - Publish canonical specification identities.
 - Convert paper programs into parser/type/ownership fixtures.
+- Retain the accepted generic-call, capability-root, Foundation-call,
+  launcher-entry, and target-scope cases from Decision 0754.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.
@@ -144,6 +149,8 @@ reparse it.
 
 - Add explicit edition dispatch.
 - Implement standalone profile and independent metadata.
+- Resolve opaque platform keys through the canonical target-scope registry and
+  retain the structured environment/architecture/ABI/extension descriptor.
 - Preserve exact import and private identity behavior.
 - Add source-to-short-machine-name inspection without changing public identity.
 - Add `package data` parsing and exact manifest binding without native paths,
@@ -164,7 +171,9 @@ reparse it.
 
 ### Slice 4: generics and collections
 
-- Implement bounded generic selection and specialization evidence.
+- Implement unique argument-derived structural generic resolution, bounded
+  specialization, and retained solution evidence without result-context or
+  overload search.
 - Add arrays, vectors, immutable sequences, slices, ordered maps, ordered sets,
   arenas, and builders.
 - Migrate repeated concatenation and packed mutable state with before/after
@@ -181,13 +190,15 @@ reparse it.
 
 - Add named call arguments, function values, exact effect sets, and explicit
   captures.
-- Prove that generic calls and closures cannot hide capabilities or borrowed
+- Bind required module capability roots separately from lexical captures and
+  prove that generic calls and closures cannot hide authority or borrowed
   lifetime.
 
 ### Slice 7: hosted structured concurrency
 
-- Implement task scopes, typed task handles, capture, await, join, cancellation,
-  and teardown.
+- Implement the accepted `Construct`, semantic `Spawn`, and consuming `Await`
+  calls with task scopes, typed handles, capture, join, cancellation, and
+  teardown.
 - Qualify one sequential scheduler and one parallel-capable host without changing
   source semantics.
 

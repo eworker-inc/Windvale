@@ -20,6 +20,8 @@ The Language 1.0 suite, as refined by
 [Decision 0752](../Documents/Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 and
 [Decision 0753](../Documents/Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
+with the first paper findings resolved by
+[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -123,6 +125,47 @@ One build or package plan supplies the complete module set and maps canonical
 module identities to source bytes. Source imports never search host paths,
 environment variables, registries, package caches, or the network.
 
+## Platform and target scopes
+
+A `platform` item is one opaque canonical key in the Language 1.0 target-scope
+registry. Period-separated segments make the key readable; they do not create
+inheritance, prefix compatibility, or an implied hierarchy.
+
+Every concrete build target has one structured descriptor containing:
+
+- one environment identity;
+- one architecture identity;
+- one ABI identity;
+- a finite set of extension identities; and
+- a finite set of target-interface identities.
+
+A registry entry maps its key to one exact predicate over that descriptor. The
+items in a source `platform` declaration are alternatives: a module is admitted
+for a concrete target when at least one listed registry predicate matches. They
+are not dimensions to combine, provider requests, capability grants, backend
+names inferred by the compiler, or permission to weaken source semantics. A
+build plan selects one concrete descriptor per produced artifact and retains the
+registry identity used for admission. An unknown key or a listed set with no
+match rejects the build before artifact publication.
+
+The initial candidate registry entries required by the accepted suite are:
+
+| Scope | Kind | Exact predicate |
+| --- | --- | --- |
+| `windows` | Environment | Environment identity is Windows. |
+| `linux` | Environment | Environment identity is Linux. |
+| `windvale` | Environment | Environment identity is Windvale OS. |
+| `accelerator.software.v1` | Target interface | The descriptor supplies the Windvale accelerator software-kernel interface, major 1. |
+| `accelerator.spirv.v1` | Target interface | The descriptor supplies the Windvale SPIR-V accelerator-kernel interface, major 1. |
+
+The `v1` suffix on an accelerator entry versions the Windvale target interface;
+it does not select an upstream SPIR-V version. Neither accelerator scope implies
+a physical device, vendor, host environment, attachment mode, capability,
+architecture, ABI, provider implementation, or performance claim. Those facts
+remain separate fields and contracts. A later target contract may add registry
+entries without changing grammar, but changing the predicate of an existing key
+is incompatible.
+
 ## Language profiles
 
 The profiles form a source-feature inclusion order, not an authority lattice:
@@ -216,6 +259,41 @@ charged to the selected application or service resource domain even when an
 implementation maps or shares storage. Canonical packaging uses one content
 object per distinct content identity and may reference that object from multiple
 declarations without duplicating its shipped payload.
+
+## Application entry and launcher binding
+
+`authority application` classifies a module; it does not make `Main`, `Run`, or
+any other source name special. A build or package plan selects one exported,
+monomorphic function by canonical declaration identity and exact signature as an
+entry for one named launcher profile. The selected function may be synchronous
+or asynchronous only when that launcher profile admits its complete signature.
+
+Before invocation, the launcher:
+
+1. admits the exact package, module, entry, source edition, profile, concrete
+   target descriptor, and launcher profile;
+2. creates one bounded application resource domain and any owned root values
+   required by the entry, including a `Foundationˉmemory.Memoryˉbudget` when the
+   signature names one;
+3. approves the exact transitive required-capability set and binds each
+   module-bound root to one rights-limited provider with the admitted signature
+   set and limit profile;
+4. binds every ordinary entry argument by parameter position and exact type
+   under the launcher profile; and
+5. transfers the owned arguments and starts the function only after all prior
+   checks succeed.
+
+Missing, duplicate, incompatible, unauthorized, stale, oversized, or unsupported
+binding rejects launch before source execution. Partial binding is never
+published. Source cannot manufacture a replacement root budget, allocator,
+capability root, process-argument table, environment table, or host handle from
+ambient process state. The launcher profile owns conversion of the exact entry
+result or terminal task outcome into process/service completion and reclaims the
+application resource domain after structured teardown.
+
+An application may export other functions and may use any ordinary source name
+for its selected entry. Language 1.0 therefore needs no special entry keyword,
+universal entry ABI, hidden allocator, or implicit `Main` rule.
 
 ## Type system
 
@@ -406,6 +484,36 @@ evidence, and emitted-code growth have published finite limits. Exceeding a limi
 is a bounded compilation diagnostic before artifact publication. A package may
 declare a smaller admitted limit profile; it may not silently change semantics.
 
+A generic function call resolves one already named declaration; arguments never
+select an overload. Its type and compile-time constant parameters are inferred
+only by deterministic structural matching:
+
+1. each explicit argument receives one exact type without using the call's
+   result context;
+2. that type is structurally matched against the corresponding declared
+   parameter type after applying its explicit borrow or by-value mode;
+3. a direct occurrence of a generic type or constant parameter contributes one
+   candidate exact value;
+4. every repeated occurrence must contribute the same canonical value;
+5. every generic parameter must have exactly one value after all arguments are
+   matched; and
+6. the compiler substitutes that complete solution before checking protocol
+   requirements, effects, ownership, and generic admission limits.
+
+Matching may decompose exact nominal type arguments, array or function types,
+and compile-time constant arguments. It does not search protocol
+implementations, insert a conversion, infer from an unsuffixed/context-dependent
+literal, solve an arithmetic equation, or use an assignment target, expected
+result, return statement, function body, default, or import order. A parameter
+with no solution or conflicting solutions is a diagnostic at the call. Result
+context never chooses or repairs a generic instance.
+
+Edition 1 has no explicit generic-argument suffix on a call. A generic function
+that cannot satisfy the argument-derived rule is not callable in edition 1 and
+must be redesigned around an explicit typed argument or a non-generic named
+constructor. Type arguments remain valid in type, protocol-instance, and
+declaration positions owned by the grammar.
+
 Dynamic protocol values remain outside edition 1.
 
 ## Values, ownership, and memory
@@ -529,6 +637,15 @@ mutable borrow. A capture cannot silently retain a capability, mutable value,
 resource, or ambient state. A borrowing closure cannot escape the captured
 lifetime or cross a suspension boundary that would invalidate the borrow.
 
+Only referenced lexical locals are captures. A required module-bound singleton
+capability root is a resolved module dependency, not a lexical value, and a
+qualified call through that root does not add a capture-list entry. The call's
+capability identity remains in the closure's exact effect set, in the declaring
+module's required-capability set, and in the application's transitive approval
+closure. A capability reference, rights-reduced provider, session, or other
+instance stored in a local is a lexical value and must be captured explicitly by
+its ordinary copy, move, or borrow mode.
+
 Calls, captures, and returns obey the ordinary Copy/shared/owned/borrowed rules.
 Tail-call elimination is an optimization unless a named operation explicitly
 guarantees bounded tail behavior.
@@ -633,6 +750,14 @@ distinct typed outcomes where the interface can observe them.
 A module requirement states that source may need an interface. It is not a grant.
 An application or service approval admits the exact transitive requirement set,
 and a launcher binds rights-limited provider references independently.
+
+A required declaration also introduces one module-bound singleton root for
+qualified operations of that interface. The root is available only after the
+catalog resolves its exact signature set and the launcher binds an approved
+provider. It is not a source global, local instance, closure capture, storable
+authority token, or ambient lookup. Calling it requires the capability identity
+in the function's effect set. An optional-only declaration introduces no
+callable root.
 
 A capability interface has:
 
@@ -847,8 +972,10 @@ This candidate becomes frozen Language 1.0 only after:
    shipment evidence passes;
 10. the local AI accelerator workload separates any general source-language gap
     from library, target-extension, verified-representation, and provider work;
-    and
-11. a source-freeze decision records the canonical document identities.
+11. the accepted argument-derived generic, capability-root, Foundation-call,
+    launcher-entry, and target-scope cases remain coherent across all mandatory
+    workloads; and
+12. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

@@ -11,30 +11,31 @@ implementation authorization before Language 1.0 source freeze.
 
 | Boundary | Existing owner | Work proven necessary by this bundle | Core source change? |
 | --- | --- | --- | --- |
-| Edition/module/profile/platform/authority/capability parsing | Language grammar and compiler front end | Parse the seven modules and retain separate host/kernel target scopes and exact four-capability closure. | No new syntax shown. Canonical accelerator target-scope registry still needs definition. |
+| Edition/module/profile/platform/authority/capability parsing | Language grammar and compiler front end | Parse the seven modules and retain separate host/kernel target scopes and exact four-capability closure. | No new syntax. Decision 0754 defines the canonical target-scope registry and structured target descriptor. |
 | Nominal records/enums/variants, named construction, value `if`/`match` | Language semantic owner and compiler | Type the model/result/failure values and exhaustive provider/task outcomes. | No. |
-| Strict f32 and unsigned bit operations | Language semantics, Foundation numeric, runtimes/backends | Decode f16 bits, I4 nibbles, metadata, reference math, tolerance, and finite output identically. | No. Exact required numeric helper signatures must be frozen. |
-| Generic result adapters | Type checker and specialization planner | Resolve seven exact `Mapˉaccelerator<T>` instances and one exact `Mapˉspawn<W>` closure instance without overload search. | Clarification required: exact argument-derived type-parameter resolution versus an explicit generic-call spelling. |
-| Ownership, borrows, closure capture, `using` | Ownership analysis and cleanup lowering | Prove resource nesting, copied model capture, scoped task handle, retained provider generations, and exclusive kernel output. | No new form shown. Capability-root versus lexical-value capture needs a normative sentence. |
-| Async/task scope/cancel-and-join | Language effects, Foundation task, runtime scheduler | Construct one bounded scope, spawn one child, await one typed outcome, forward cancellation, join before exit, and retain one result deterministically. | Existing candidate syntax suffices; exact `Construct`, `Spawn`, and `Await` signatures remain freeze dependencies. |
+| Strict f32 and unsigned bit operations | Language semantics, Foundation numeric, runtimes/backends | Decode f16 bits, I4 nibbles, metadata, reference math, tolerance, and finite output identically. | No. Decision 0754 accepts the exact numeric helpers used here; the complete numeric matrix remains a freeze dependency. |
+| Generic result adapters | Type checker and specialization planner | Resolve seven exact `Mapˉaccelerator<T>` instances and one exact `Mapˉspawn<W>` closure instance without overload search. | No new syntax. Decision 0754 requires unique structural resolution from explicit argument types and rejects result-context inference. |
+| Ownership, borrows, closure capture, `using` | Ownership analysis and cleanup lowering | Prove resource nesting, copied model capture, scoped task handle, retained provider generations, and exclusive kernel output. | No new form. Decision 0754 separates module-bound capability roots from explicitly captured local instances. |
+| Async/task scope/cancel-and-join | Language effects, Foundation task, runtime scheduler | Construct one bounded scope, spawn one child, await one typed outcome, forward cancellation, join before exit, and retain one result deterministically. | Existing syntax suffices; Decision 0754 accepts the exact `Construct`, semantic `Spawn`, and `Await` calls used here. |
 | `package data` source semantics | Parser, source graph, package/build plan | Bind four exact resource identities, maxima, types, lengths, and digests with one 96-byte charge. | No. |
 | Package/WVB representation | Package formats, WVB owner, loader, publisher | Store typed content references without duplicating payload bytes; charge mapped/shared bytes; reject malformed bindings before publication. | No source change; likely a versioned typed content-reference table. |
-| Capability catalog and singleton call lowering | Capability catalog, source binding, WIR, runtime binding | Resolve four identity/version pairs to exact signature-set/limit profiles and lower qualified calls without ambient grants. | No new syntax if module-bound singleton references remain the accepted model. |
+| Capability catalog and singleton call lowering | Capability catalog, source binding, WIR, runtime binding | Resolve four identity/version pairs to exact signature-set/limit profiles and lower qualified calls without ambient grants. | No new syntax. Required module-bound roots are accepted dependencies; local provider instances retain ordinary capture rules. |
 | Accelerator public types and operation signatures | Future accelerator library/specification | Publish `Platformˉaccelerator` records/enums/opaque resources, exact failures, six-command graph, and `Boundedˉf32ˉv1`. | Library/capability contract, not core syntax. |
 | Resource and device accounting | Runtime/provider resource domains | Atomically reserve/release host 16,384, pinned 64, device 320, queue/submission/command/work/diagnostic ceilings. | No. |
 | Software provider | Accelerator provider and test owners | Implement all four candidate capabilities, exact I4/f16/f32 operation, kernel lane ABI, failures, generations, cancellation, and exact reference bytes. | No. This is the first semantic oracle. |
 | Kernel source admission | Compiler target analysis and kernel verifier | Admit the ordinary pure scalar `Biasˉreluˉlane` function under exact no-recursion/allocation/task/capability/barrier/atomic rules and the package-bound two-lane mapping. | No grammar change shown; separately versioned kernel restrictions are required. |
 | Kernel representation and backend | WIR orchestration, target WIR/verifier, native/accelerator backends | Lower the admitted function and interface for software and one later physical-provider format while preserving source semantics. | No; a target representation may be new. |
 | Physical provider adapters | Windows, Linux, Windvale OS, or vendor provider owners | Map the common contract to a measured provider and report generation, attachment mode, limits, numeric mode, faults, and reset. | No. Provider APIs do not define semantics. |
-| Application launch | Package/launcher/runtime contract | Supply the owned 16,384-byte root memory budget and four approved singleton capabilities to exported `Run`. | No language syntax expected; exact entry signature/binding remains a launcher contract. |
+| Application launch | Package/launcher/runtime contract | Select exported `Run`, supply the owned 16,384-byte root memory budget, bind four approved singleton roots, and translate terminal completion. | No language syntax. Decision 0754 assigns exact entry and root binding to named launcher-profile metadata. |
 | Diagnostics | Compiler, package, runtime, provider, and kernel verifier | Preserve phase, stable identity, source span or command/stage, expected/observed state, applicable bound, and at most 16 runtime records. | No. |
 | Editor tooling | Windvale editor/formatter | Classify edition-1 source, macron names, package data, async closure, task scope, effects, and target scopes; keep WVA/kernel artifacts distinct. | Uses accepted candidate grammar plus eventual kernel target metadata. |
 | Verification | Focused Language 1.0/accelerator owners | Turn all valid, boundary, rejected, cleanup, differential, deterministic, and malformed cases into bounded fixtures. | No. |
 
 ## Foundation signature dependencies
 
-The paper source uses operations whose semantic families exist in the candidate
-Foundation but whose final signatures/names are not all frozen:
+Decision 0754 accepts the exact operation names and signature shapes used by this
+paper source. Complete Foundation module signature-set identities remain pending
+until all eleven workloads are reviewed:
 
 - `Foundationˉbytes.Length` and bounds-checked `At`;
 - integer widening and `Bitsˉu32ˉtoˉf32`;
@@ -77,9 +78,10 @@ unchecked counterpart would be System-only and is unnecessary here. `Await`
 consumes the handle exactly once. Spawn rejection returns the exact owned closure
 inside `Spawnˉfailure<W>`.
 
-Paper review may rename these calls only by updating the Foundation candidate and
-all paper source coherently. It may not substitute hidden host allocation,
-exceptions, detached tasks, unchecked indexing, or implicit numeric conversion.
+A later mandatory workload may revise one accepted call only through a named
+reconsideration that updates the Foundation candidate and all paper source
+coherently. It may not substitute hidden host allocation, exceptions, detached
+tasks, unchecked indexing, or implicit numeric conversion.
 
 ## Representation planning
 

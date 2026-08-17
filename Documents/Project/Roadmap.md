@@ -25,7 +25,9 @@ starts a horizontal Language 1.0 specification track, and
 completes its ordered-set and package-data boundaries, while
 [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
 requires an eleventh local AI accelerator workload before source freeze without
-accepting accelerator syntax or implementation. The accepted direction,
+accepting accelerator syntax or implementation, and
+[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
+resolves the first workload's five general source-contract questions. The accepted direction,
 normative-candidate suite, paper corpus, accelerator/AI design evidence, and
 migration plan may advance without claiming implementation or changing the
 current Seed product. Source implementation begins only after the named

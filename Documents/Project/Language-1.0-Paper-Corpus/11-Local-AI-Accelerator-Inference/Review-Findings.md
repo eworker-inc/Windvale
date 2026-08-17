@@ -2,10 +2,13 @@
 
 ## Status
 
-First-author review complete on 2026-08-17. The bundle covers every required
-workload-11 scenario and is ready for project-owner review. It remains a draft
-paper source bundle, not an accepted corpus row, because the complete Language
-1.0 suite and several exact dependency signatures are not frozen or implemented.
+First-author review completed and the project owner accepted all five recommended
+clarifications on 2026-08-17 under
+[Decision 0754](../../../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+The dependent semantic, grammar, Foundation, migration, and paper documents now
+carry those normative-candidate rules. The bundle remains a draft-reviewed paper
+source row, not frozen or implemented source, because ten corpus workloads and
+the complete Language 1.0 signature identities are still pending.
 
 ## Required-scenario matrix
 
@@ -71,13 +74,12 @@ The source uses `Mapˉaccelerator<T>` and `Mapˉspawn<W>`. Their type parameters
 uniquely recoverable by structural equality from one exact argument type; there
 is no overload set, conversion, return-context choice, or protocol search.
 
-Recommended resolution: Language 1.0 should permit deterministic
-argument-derived generic parameter resolution only when every type/constant
+Accepted resolution: Language 1.0 permits deterministic argument-derived
+generic parameter resolution only when every type/constant
 parameter is solved uniquely from explicit argument types. A parameter not
-solved that way is a diagnostic; result context cannot guess it. If the project
-instead requires explicit generic arguments, the grammar must add one
-unambiguous call spelling and update every paper source. The current documents
-should not leave generic functions declared but uncallable.
+solved that way is a diagnostic; result context cannot guess it. Edition 1 has
+no explicit generic-call suffix. A function without sufficient argument evidence
+must take an explicit typed argument or use a non-generic named constructor.
 
 ### 2. Module-bound capability roots versus closure capture
 
@@ -86,8 +88,8 @@ async function whose signature exposes four capability effects; the application
 and library modules both declare those four requirements. No instance resource
 or local capability value is captured implicitly.
 
-Recommended resolution: clarify that an approved module-bound singleton
-capability root is not a lexical closure capture. Its use remains part of the
+Accepted resolution: an approved module-bound singleton capability root is not a
+lexical closure capture. Its use remains part of the
 function/closure effect set and module dependency closure. An instance-bearing
 capability or rights-reduced provider value stored in a local must still appear
 as an explicit copy/move/borrow capture. This preserves current singleton calls
@@ -95,11 +97,13 @@ without making future instance authority ambient.
 
 ### 3. Exact Foundation call signatures
 
-The Foundation candidate owns the required semantics but does not yet spell
-every `Bytes.Length`, bounds-checked `Bytes.At`, task-scope `Construct`, and
-`Await` signature used here. The paper source selects coherent candidate names.
+At first-author review, the Foundation candidate owned the required semantics but
+did not spell every `Bytes.Length`, bounds-checked `Bytes.At`, task-scope
+`Construct`, and `Await` signature used here. Decision 0754 accepts the coherent
+paper-selected names and signature shapes while the complete module identities
+still wait for all eleven workloads.
 
-Recommended resolution: freeze these signatures with the full eleven-workload
+Accepted resolution: retain these signatures through the full eleven-workload
 review and update source coherently if another workload proves a better shape.
 This is Foundation completion, not accelerator syntax.
 
@@ -109,7 +113,7 @@ The exported application `Run` receives one owned `Memoryˉbudget`; source canno
 manufacture ambient host memory. The candidate language does not itself own an
 application entry ABI or launcher parameter binding.
 
-Recommended resolution: the package/launcher contract should bind the selected
+Accepted resolution: the package/launcher contract binds the selected
 entry signature, root budget, and approved capability roots. Do not add a hidden
 global allocator or special `Main` semantics merely for this workload.
 
@@ -119,9 +123,11 @@ The kernel uses canonical paper scopes `accelerator.software.v1` and
 `accelerator.spirv.v1`. The grammar can carry those names today, while the build
 graph owns their meaning and alternative selection.
 
-Recommended resolution: publish their canonical target/extension registry and
-structured relationship to environment/architecture/ABI metadata in the later
-kernel contract. No grammar change is demonstrated.
+Accepted resolution: the Language 1.0 suite publishes these opaque canonical
+target-interface keys and their relationship to structured environment,
+architecture, ABI, extension, and target-interface metadata. The later kernel
+contract owns their exact admission and representation. No grammar change is
+required.
 
 ## Quantitative review record
 
@@ -157,14 +163,21 @@ retained evidence, WVB bytes, target artifact bytes, elapsed time, and peak memo
 6. The reference operation order and accelerated tolerance were separated so a
    physical provider cannot redefine strict Language 1.0 arithmetic.
 
-## Reviewer decision requested
+## Owner resolution
 
-The owner can now either:
+The owner selected all five recommendations. The suite now defines:
 
-1. accept the five recommended clarifications as the direction for the later
-   coherent Language 1.0 suite update; or
-2. request a source/boundary revision while keeping this corpus row in draft.
+1. unique argument-derived structural generic-call resolution with no
+   result-context inference or explicit generic-call suffix;
+2. module-bound singleton capability roots as dependencies rather than lexical
+   captures, while local provider instances still require explicit capture;
+3. the exact byte, numeric, scope-construction, spawn, and await calls used by
+   this workload;
+4. package/launcher ownership of entry selection, root budgets, capability-root
+   binding, ordinary arguments, and terminal completion; and
+5. an opaque target-scope registry over structured environment, architecture,
+   ABI, extension, and target-interface metadata.
 
-Even after owner acceptance, the corpus row should remain “draft reviewed” until
-the dependent Foundation and Language 1.0 documents are updated and all eleven
-paper workloads pass. This bundle alone does not freeze edition 1.
+This resolves the workload's general source blockers. It does not freeze edition
+1, the complete Foundation signature sets, the accelerator API, a kernel
+representation, or a physical provider.

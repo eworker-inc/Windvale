@@ -4,7 +4,9 @@
 
 This is the normative-candidate token and parsing companion to the
 [Language 1.0 semantic specification](Windvale-Language-1.0.md), authorized by
-[Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+[Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+and refined by
+[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
@@ -273,6 +275,11 @@ Import ::= [ Documentation ] "import" Identifier "as" Identifier ";"
 
 Platform scopes and capability requirements are unique and canonical. Required
 and optional identities cannot overlap. Imports precede all other declarations.
+Each `Platformˉscope` token is an opaque key in the semantic target-scope
+registry. The comma-separated items are alternative predicates over one
+structured build target, not grammar for combining environment, architecture,
+ABI, extension, or capability dimensions. Periods inside a key imply no prefix
+relationship.
 
 ## Declarations
 
@@ -579,6 +586,12 @@ Namedˉargument ::= Identifier ":" Expression
 
 Named and positional arguments cannot mix in one call.
 
+The postfix grammar deliberately has no type-argument suffix. A generic function
+call uses the semantic specification's exact argument-derived structural
+resolution. `<...>` remains valid only in declaration, type, and
+protocol-instance positions; it cannot be attached to a callable expression in
+edition 1.
+
 ~~~text
 Primaryˉexpression ::= Literal | "true" | "false" | "()"
                      | Identifier
@@ -617,8 +630,11 @@ Capture ::= ("copy" | "move" | "borrow" | "borrow" "mut") Identifier
 ~~~
 
 Every referenced outer local must appear exactly once in the capture list.
-Capabilities and resources follow the same rule. A noncapturing closure uses
-`[]`.
+Capability references and resources stored in lexical locals follow the same
+rule. A required module-bound singleton capability root is not a lexical local
+and therefore is not spelled in the capture list; a qualified call through it
+must still appear in the closure's exact effect clause and the module's required
+capability closure. A noncapturing closure uses `[]`.
 
 ### Unsafe expression
 

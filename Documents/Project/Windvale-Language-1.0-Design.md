@@ -5,7 +5,9 @@
 > and refined by
 > [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 > and
-> [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
+> [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
+> with the first paper findings resolved by
+> [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -212,8 +214,10 @@ overload to change which function a call means. It increases compiler work and
 often produces diagnostics far from the source of ambiguity.
 
 Windvale prefers distinct semantic names, explicit generic contracts, and one
-deterministic implementation-selection path. When the type context cannot select
-a generic instance uniquely, the program supplies the missing type information.
+deterministic implementation-selection path. Decision 0754 permits a generic
+call only when exact explicit argument types solve every parameter structurally.
+When they do not, the API takes an explicit typed witness argument or exposes a
+non-generic named constructor; result context never guesses the instance.
 
 ### Ambient reflection
 
@@ -593,6 +597,8 @@ later design example proves they are essential.
 Generic compilation is bounded:
 
 - instantiation uses exact types and compile-time constants;
+- calls derive every parameter uniquely from explicit argument types without an
+  overload set, result context, conversion, or explicit call suffix;
 - recursive instantiation depth, total instances, and emitted-code growth have
   explicit compiler limits;
 - implementations are selected deterministically and cannot overlap;
@@ -1440,7 +1446,7 @@ capability by itself.
 | Decisions | Decision 0751 status | Required evidence before source freeze |
 | --- | --- | --- |
 | 1–5 | Accept | Complete grammar, semantic, diagnostic, and migration examples. |
-| 6 | Accept direction | Prove deterministic selection and generic code-growth bounds. |
+| 6 | Accept direction | Preserve Decision 0754's exact argument-derived selection and prove generic code-growth bounds. |
 | 7 | Accept direction | Design usable collection-maximum and resource-budget APIs. |
 | 8 | Accept direction | Prototype moves, borrows, immutable sharing, and typed arenas. |
 | 9–10 | Accept | Complete exact error propagation, call, and closure rules. |

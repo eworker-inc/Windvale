@@ -2,6 +2,9 @@
 
 > Status: Pre-freeze design evidence required by
 > [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
+> The first complete paper workload and its five general findings are reviewed
+> under
+> [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 > This document refines the accepted architecture in
 > [Decision 0171](../Decisions/0171-Future-Virtualization-And-Accelerator-Architecture.md)
 > for the Language 1.0 paper corpus. It is not a normative accelerator
@@ -109,6 +112,13 @@ unbounded loops, illegal aliasing, cross-address-space references, divergent
 barrier use, invalid atomic orders, and unavailable features before publication
 when the target contract forbids them. Exact rules remain future specification
 work informed by the paper kernel.
+
+The general Language 1.0 target registry now reserves
+`accelerator.software.v1` and `accelerator.spirv.v1` as opaque
+target-interface keys over structured target descriptors. These keys do not
+select a provider, device, host ABI, upstream SPIR-V version, attachment mode,
+capability, implementation, or performance claim. The later kernel contract
+still owns exact admission, representation, and backend behavior.
 
 ### Provider layer
 
@@ -364,21 +374,39 @@ inputs only; none defines Windvale semantics.
 
 ## Freeze questions
 
-The eleventh paper review must resolve:
+Workload 11 answers the general-language portion of this review: existing
+grammar is sufficient; packed I4 remains a nominal storage format; four
+capability responsibilities are coherent for the proof; module-bound roots are
+not lexical captures; and the two kernel target names are registry keys rather
+than new syntax. Its exact software oracle, budgets, command graph, failure
+families, and comparison contract are recorded in the reviewed bundle.
 
-1. Does host/framework source need any general Language 1.0 change?
-2. Which exact tensor and quantized-format descriptors prevent invalid states?
-3. What is the smallest useful portable operation set shared by software and at
-   least two plausible hardware providers?
-4. Which capability responsibilities need separate approval and binding?
-5. Can custom kernels use existing Language 1.0 grammar with target-scoped types,
-   intrinsics, and metadata, or is one narrowly justified production required?
-6. Which address-space, atomic, barrier, numeric, and validation rules belong to
-   the first separately versioned kernel contract?
-7. Which parts lower through existing WIR/WVB, and which require new verified
-   representations without changing source semantics?
-8. What reference inputs, outputs, tolerance rules, budgets, and failure cases
-   become permanent conformance evidence?
+The review records these dispositions:
+
+1. Host/framework source needs no accelerator-specific language feature. The
+   five general call, capture, Foundation, launcher, and target clarifications
+   are now owned by the Language 1.0 suite.
+2. The workload's exact tensor, view, signed-I4, grouping, layout, accumulation,
+   and range descriptors prevent its invalid states. Their final public API
+   remains accelerator-library work.
+3. Quantized linear, bounded upload/readback, and one package-bound kernel are
+   sufficient for the first proof. A portable operation set shared by two
+   physical providers remains a later accelerator-contract qualification.
+4. Catalog, memory, portable execution, and package-bound kernel authority remain
+   separate for the proof. Later profiling, native extension, and physical
+   assignment authority also remain separate.
+5. The custom scalar-lane kernel uses existing Language 1.0 grammar. Target
+   interfaces and admission rules, not a second language production, own its
+   restrictions.
+6. Address spaces, atomics, barriers, target numeric modes, and kernel validation
+   remain in the first separately versioned kernel contract because this kernel
+   does not exercise them.
+7. Ordinary host logic lowers through shared typed WIR. Package-data and
+   capability evidence may extend verified metadata; the custom kernel may need
+   a separate verified target representation without changing source semantics.
+8. The bundle's exact inputs, strict output and digest, tolerance, budgets,
+   command order, provider evidence, failures, and teardown become the candidate
+   permanent conformance oracle.
 
 Language 1.0 may freeze when these questions either have exact answers or are
 shown to be accelerator-extension work that does not change the general source

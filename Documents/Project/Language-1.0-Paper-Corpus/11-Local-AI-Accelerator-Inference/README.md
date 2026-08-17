@@ -4,11 +4,13 @@
 
 Complete first-author paper bundle for workload 11 under
 [Decision 0753](../../../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
+with its five general findings accepted under
+[Decision 0754](../../../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
 and the
 [Language 1.0 paper corpus](../../Windvale-Language-1.0-Paper-Corpus.md).
-It is ready for semantic review but is not accepted source, an implemented
-program, a frozen accelerator contract, or evidence of physical accelerator
-support. Current compilers continue to accept Windvale Seed.
+It is a draft-reviewed corpus row, not frozen source, an implemented program, a
+frozen accelerator contract, or evidence of physical accelerator support.
+Current compilers continue to accept Windvale Seed.
 
 ## Result first
 

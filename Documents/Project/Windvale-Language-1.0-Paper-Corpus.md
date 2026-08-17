@@ -8,7 +8,9 @@ for the Language 1.0 candidate accepted under
 and refined by
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 and
-[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
+[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
+with the first workload findings resolved by
+[Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -379,6 +381,8 @@ and review questions are owned by the
 [accelerator compute and AI design](Windvale-Accelerator-Compute-And-AI-Design.md).
 The complete first-author source and evidence are in the
 [workload 11 paper bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md).
+Its project-owner review accepts five general Language/Foundation clarifications
+without freezing its paper-only accelerator API or claiming implementation.
 
 ### Required language pressure
 
@@ -489,7 +493,7 @@ source contract ambiguous.
 | Numeric or graphics processing | Pending source bundle |
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
-| Local AI accelerator inference | Draft source bundle complete; owner review pending |
+| Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

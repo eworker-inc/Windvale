@@ -4,7 +4,9 @@
 
 This is the normative-candidate Foundation companion to the
 [Language 1.0 semantic specification](Windvale-Language-1.0.md), authorized by
-[Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+[Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+and refined by
+[Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -35,9 +37,12 @@ Foundation 1:
 - keeps serialization in separately versioned format modules.
 
 The compiler may recognize `Option<T>`, `Result<T, E>`, `Localˉrelease<Self>`,
-and task suspension because language syntax depends on their exact identities.
-Recognition is by canonical module, type, major version, and signature-set
-identity, never by an unqualified source name.
+the `Task.Spawn` closure-shape relation, and task suspension because language
+typing or syntax depends on their exact identities. Recognition is by canonical
+module, declaration, type, major version, and signature-set identity, never by
+an unqualified source name. `Task.Spawn` recognition decomposes the exact
+explicit `Work` argument type; it does not search an overload or use result
+context.
 
 ## Required modules
 
@@ -367,6 +372,25 @@ named functions.
 Bit reinterpretation never emits bytes. Byte codecs name `little` or `big` byte
 order and exact width.
 
+### First accepted exact numeric signatures
+
+The first reviewed paper workload fixes these version-1 names, parameter names,
+types, results, and empty effect sets:
+
+~~~text
+export fn Widenˉu8ˉtoˉu16(Value: u8) -> u16 effects();
+export fn Widenˉu8ˉtoˉu32(Value: u8) -> u32 effects();
+export fn Widenˉu8ˉtoˉu64(Value: u8) -> u64 effects();
+export fn Widenˉu16ˉtoˉu32(Value: u16) -> u32 effects();
+export fn Widenˉu32ˉtoˉu64(Value: u32) -> u64 effects();
+export fn Bitsˉu32ˉtoˉf32(Value: u32) -> f32 effects();
+~~~
+
+The widening calls preserve mathematical value. `Bitsˉu32ˉtoˉf32` preserves
+all 32 input bits and performs no arithmetic. These exact calls are the minimum
+accepted subset, not a claim that the complete generated numeric matrix is
+frozen.
+
 ### Parsing
 
 Numeric parsing receives:
@@ -587,6 +611,21 @@ exposes backing capacity. `Bytesˉbuilder` is an owned specialized buffer with
 maximum output bytes, current length, one allocation lease, and no implicit text
 encoding.
 
+The first reviewed paper workload fixes these version-1 immutable-byte
+signatures:
+
+~~~text
+export fn Length(Value: borrow bytes) -> u64 effects();
+export fn At(Value: borrow bytes, Index: u64) -> u8 effects();
+~~~
+
+`Length` returns the current byte length, not the admitted maximum or hidden
+capacity. `At` requires `Index < Length(Value)`. It checks that precondition with
+`u64` arithmetic before reading and produces a terminal bounds trap on
+violation; it can never read outside the value or return a partial byte. Code
+parsing untrusted offsets first proves the complete range or uses a separately
+named recoverable codec. No unchecked Core or Hosted counterpart is implied.
+
 Required builder operations include:
 
 - append one byte;
@@ -715,6 +754,21 @@ rights-reduced memory budget and optional deadline/cancellation providers. It
 records one scope-exit policy selected by grammar: join, cancel then join, or fail
 then join.
 
+The first accepted construction signature is:
+
+~~~text
+export fn Construct(
+    Budget: Memoryˉbudget,
+    Limits: Taskˉlimits,
+) -> Result<Taskˉscope, Allocationˉfailure>
+    effects(memory.allocate, resource.acquire);
+~~~
+
+`Construct` consumes `Budget`. On rejection it releases any consumed local
+accounting before returning `Allocationˉfailure`; it does not recover the budget
+implicitly. The surrounding `task scope` statement supplies the one explicit
+exit policy, so `Construct` has no default or hidden policy.
+
 ### Task handle
 
 `Task<T, E>` is a move-owned handle to one child in its lexical scope. It cannot
@@ -734,6 +788,17 @@ export variant Taskˉoutcome<T, E> {
 
 Trap identity is bounded diagnostic evidence, not a catchable source exception or
 arbitrary stack trace.
+
+The accepted version-1 operation for this handle consumes it exactly once:
+
+~~~text
+export async fn Await<T, E>(Handle: Task<T, E>)
+    -> Taskˉoutcome<T, E> effects(task.suspend);
+~~~
+
+Both generic parameters are solved structurally from the explicit `Handle`
+argument. Await never detaches the child or returns while retaining a second
+source-visible owner for the handle.
 
 ### Spawn and join
 
@@ -758,12 +823,28 @@ export variant Spawnˉfailure<W> {
 }
 ~~~
 
-For one async closure type `W` returning `Result<T, E>`, the semantic signature
-is `Spawn(...) -> Result<Task<T, E>, Spawnˉfailure<W>>` with effects
-`task.spawn` and any allocation effects named by the scope. A rejected spawn
-returns the exact closure, including every moved capture, so the caller again
-owns it. Once spawn returns a task handle, the child owns the captures and a
-later task failure never rolls them back.
+For one exact async closure type `W` whose explicit no-argument call signature is
+`async fn() -> Result<T, E> effects(F)`, the accepted version-1 semantic call
+family is:
+
+~~~text
+Spawn(
+    Scope: borrow mut Taskˉscope,
+    Work: W,
+) -> Result<Task<T, E>, Spawnˉfailure<W>>
+    effects(memory.allocate, task.spawn)
+~~~
+
+`W` is solved from the explicit `Work` argument. `T`, `E`, and the exact finite
+effect set `F` are structural components of that argument's function type; none
+is selected from the result context. This is one semantic generic family, not an
+overload set or a request for explicit generic-call syntax. The caller and
+declaring module must admit `F`; Spawn's own immediate effects are
+`memory.allocate` and `task.spawn`.
+
+A rejected spawn returns the exact closure, including every moved capture, so
+the caller again owns it. Once spawn returns a task handle, the child owns the
+captures and a later task failure never rolls them back.
 
 Join ordering for join-all is child creation order, not scheduler completion
 order. An explicitly named completion-order operation may exist only with a
@@ -839,7 +920,9 @@ Before source freeze:
 
 1. every required module has a canonical major version and signature-set
    identity;
-2. all generic and protocol signatures parse under the frozen grammar;
+2. all ordinary generic and protocol signatures parse under the frozen grammar,
+   and each compiler-recognized semantic family has one canonical structural
+   relation and signature-set encoding;
 3. ownership on every success and failure path is explicit;
 4. collection algorithms have stable worst-case bounds;
 5. map ordering and arena generation behavior pass adversarial paper cases;

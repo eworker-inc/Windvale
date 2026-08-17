@@ -2,9 +2,11 @@
 
 ## Review standing
 
-The bundle is complete enough for owner review against the Language 1.0
-candidate. This record describes the source as written; it does not convert paper
-dependencies into implemented or frozen behavior.
+The owner review is complete under
+[Decision 0754](../../../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+This record describes the source as written and the accepted general
+clarifications; it does not convert paper dependencies into implemented or
+frozen behavior.
 
 ## Part metadata
 
@@ -20,8 +22,9 @@ dependencies into implemented or frozen behavior.
 
 No module is System profile. The host source contains no unsafe block, FFI,
 native handle, raw address, DMA value, platform driver API, dynamic import, or
-filesystem operation. The kernel target scopes are build-graph scopes, not host
-platform aliases.
+filesystem operation. The kernel target scopes are canonical target-interface
+registry keys over the structured build descriptor, not host platform aliases or
+capability grants.
 
 ## Value and ownership inventory
 

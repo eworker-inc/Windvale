@@ -25,8 +25,8 @@ resource payload.
 | `Inferenceˉapplication` | [`Source/Inference-Application.wv`](Source/Inference-Application.wv) | Hosted application | Windows, Linux, Windvale |
 | `Inferenceˉkernel` | [`Source/Inference-Kernel.wv`](Source/Inference-Kernel.wv) | Core kernel part | `accelerator.software.v1`, `accelerator.spirv.v1` |
 
-The build also supplies the exact candidate Foundation signatures named in the
-Language 1.0 Foundation paper and the paper-only `Platformˉaccelerator`
+The build also supplies the exact accepted normative-candidate Foundation
+signatures named in the Language 1.0 Foundation paper and the paper-only `Platformˉaccelerator`
 signatures in
 [Accelerator-Contract.md](Accelerator-Contract.md). Those supplied modules are
 dependencies, not searched source.
@@ -121,10 +121,18 @@ invalid for this exact fixture.
 
 ## Target parts and kernel binding
 
+The package plan selects exported `Inferenceˉapplication.Run` by canonical
+identity and exact monomorphic signature for its hosted launcher profile. The
+launcher creates and transfers the owned 16,384-byte root `Memoryˉbudget`,
+approves the exact four-capability transitive closure, binds four rights-limited
+module roots, and starts no source until every binding is admitted. `Run` is an
+ordinary source name, not a special language entry.
+
 The host build selects one `Platformˉaccelerator` implementation compatible with
 Windows, Linux, or Windvale. Provider selection remains runtime-visible and may
 select the software implementation. The package graph separately selects one
-kernel target part:
+kernel target part through the canonical `accelerator.software.v1` or
+`accelerator.spirv.v1` target-interface registry key:
 
 | Kernel property | Exact paper value |
 | --- | --- |
