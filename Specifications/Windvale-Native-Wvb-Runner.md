@@ -2,9 +2,12 @@
 
 ## Status and scope
 
-The profile-5 WVB runner is a current-host-focused native candidate. It admits
-the fixed portable `Main() -> i32` execution subset and binds five capabilities
-to nine ordered services. The exact candidate reconstructs from the complete
+The profile-5 WVB runner is a current-host-focused native candidate. It
+preserves the fixed portable `Main() -> i32` execution command and additionally
+owns the internal bounded scripting mode defined by
+[Decision 0735](../Documents/Decisions/0735-Implement-The-First-Windvale-Scripting-Slice.md).
+The outer runner binds five capabilities to nine ordered services. The exact
+candidate reconstructs from the complete
 Project 1 source closure through the Windvale-native compiler, lowerer, linker,
 hosted-verifier profile, and paired Windows/Linux container materializers.
 
@@ -19,15 +22,15 @@ Project 1 semantics.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 121,593 | `e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097` |
-| ABI-22 WVO | 1,078,577 | `7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16651002106d` |
-| linked fragment | 1,077,675 | `83dc076c137557495a24e65894c26c7f794e0d67f31dd59a476e1dc7715828d1` |
-| Windows application | 1,094,656 | `28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c` |
-| Linux application | 1,093,632 | `a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d` |
+| WVB runner | 136,020 | `65cdb8a1ab0776dfb4da2c89a53e53dfa67072ff3e6958adc58c461e82d1a9d6` |
+| ABI-22 WVO | 1,233,367 | `14011cc7879b2b876d5b2cf17db0ecc522a1b47d6a9eaf2e9d3773850a5c7553` |
+| linked fragment | 1,231,745 | `30078a81a9412a135066c836fbfb9340e2ce05d8692cf2f67afc0fba27d7a314` |
+| Windows application | 1,248,768 | `b30390b51542648f6e69b2078135f25b77cde18432e72b9137bdf6066e8c2f1d` |
+| Linux application | 1,249,280 | `ab318af04fab63833d569787a0977d7239e0eb53a268e508f25823eb32c212cb` |
 
-The WVO contains 1,077,216 text bytes and 459 read-only-data bytes, with 18
-symbols and 13 relocations. Linking at base zero selects `Main` at address
-14,790.
+The WVO contains 1,227,856 text bytes and 721 read-only-data bytes, with 33
+symbols and 27 relocations. Linking at base zero selects `Main` at address
+60,426.
 
 ## Construction and execution
 
@@ -54,6 +57,14 @@ budget, matching the Stage 0 CLI's default execution budget. Default output
 remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
+
+The installed `wv run` composition invokes the same candidate through its
+internal `--script <module.wvb> [argument ...]` mode only after an independent
+complete-verifier pass. That mode uses `WVXI 4`, grants the four fixed scripting
+base capabilities, replays the two bounded line-output buffers to their
+separate outer sinks, and returns guest statuses from zero through 255 exactly.
+It is an implementation boundary for `wv`; direct users should use the public
+command contract in [`Windvale-Scripting.md`](Windvale-Scripting.md).
 
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid

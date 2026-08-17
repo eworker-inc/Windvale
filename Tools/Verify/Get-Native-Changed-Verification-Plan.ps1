@@ -1401,6 +1401,11 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/webassembly-verification/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/WebAssembly/', [StringComparison]::Ordinal)) {
         Add-WebAssemblyVerification
+    } elseif ($Path.StartsWith(
+        'Tests/Fixtures/Scripting/',
+        [StringComparison]::Ordinal) -or
+        $Path -eq 'Specifications/Windvale-Scripting.md') {
+        Add-Suite 'scripting'
     } elseif ($Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -in @(
             'Verify-GitHub-Native-Qualification.ps1'
@@ -1460,6 +1465,12 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Distribution/Installers/', [StringComparison]::Ordinal)) {
         Add-Suite 'installers'
+        if ($Path.EndsWith('/wv', [StringComparison]::Ordinal) -or
+            $Path.EndsWith('/wv.cmd', [StringComparison]::Ordinal) -or
+            $Path.EndsWith('/wv-run.ps1', [StringComparison]::Ordinal) -or
+            $Path.EndsWith('Installer.json', [StringComparison]::Ordinal)) {
+            Add-Suite 'scripting'
+        }
     } elseif ($Path -eq 'LICENSE.md') {
         Add-Suite @('installers', 'offline-package-stage')
     } elseif ($Path.StartsWith('Distribution/Releases/', [StringComparison]::Ordinal)) {
@@ -2732,7 +2743,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvb-Runner-Candidate/',
         [StringComparison]::Ordinal)) {
-        Add-Suite 'wvb-runner-reconstruction'
+        Add-Suite @('wvb-runner-reconstruction', 'scripting')
         Add-Suite 'seed-native-front-door'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvo-Publisher-Candidate/',
@@ -2808,7 +2819,7 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path -eq 'Tools/Windvale.Run/Wvb-Runner-Tool.wv') {
-        Add-Suite 'wvb-runner-reconstruction'
+        Add-Suite @('wvb-runner-reconstruction', 'scripting')
         Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv') {

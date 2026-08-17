@@ -1,0 +1,9 @@
+module Scriptˉunsupportedˉauthority profile hosted;
+
+capability file.read_bytes;
+
+export fn Main() -> i32 {
+    let Value: bytes = file.read_bytes("ambient.txt");
+    if Bytesˉlength(Value) > 0u32 { return 1; }
+    return 0;
+}

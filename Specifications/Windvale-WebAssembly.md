@@ -322,6 +322,75 @@ Every well-formed version-3 execution result uses this exact `WVXO 3` layout:
 
 The exact `Hello-Windvale.wv` source compiles in the direct browser compiler to 253 WVB bytes with SHA-256 `0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f`. With the grant it succeeds after eight guest instructions, returns zero, and publishes `Hello from Windvale` plus LF; without the grant it returns `WVR3010` before executing guest code. [Decision 0421](../Documents/Decisions/0421-Import-Free-Browser-Console-Envelope.md) owns this boundary.
 
+### Native-runner interpreter: bounded scripting envelope
+
+[Decision 0735](../Documents/Decisions/0735-Implement-The-First-Windvale-Scripting-Slice.md)
+adds `WVXI 4` to the native runner's private interpreter transport without
+changing versions 1 through 3. The qualified browser project retains the
+version-3 interpreter source snapshot and its 1 MiB generated-module ceiling;
+`WVXI 4` is not a browser execution-ABI claim. The native route admits a verified
+portable capability-free module or a verified hosted module that declares any
+subset of these exact capabilities:
+
+```text
+console.write_line(text) -> void
+diagnostic.write_line(text) -> void
+process.argument(u32) -> text
+process.argument_count() -> u32
+```
+
+Capability bits zero through three correspond to that order. A declared bit
+without its request grant returns `WVR3010` with zero charged guest
+instructions. Any other identity, signature, duplicate, or capability count
+above four is outside the profile and produces no interpreter response.
+
+The request has this exact little-endian layout:
+
+| Offset | Size | Field |
+| ---: | ---: | --- |
+| 0 | 4 | ASCII `WVXI` |
+| 4 | 2 | Major version `4` |
+| 6 | 2 | Minor version `0` |
+| 8 | 4 | Guest instruction budget |
+| 12 | 4 | Maximum guest call depth |
+| 16 | 4 | Candidate WVB length |
+| 20 | 4 | Capability grant mask; no bits above three |
+| 24 | 4 | Standard-output byte limit, at most 65,536 |
+| 28 | 4 | Diagnostic-output byte limit, at most 65,536 |
+| 32 | 4 | Argument count, at most 65 |
+| 36 | 4 | Encoded argument-vector byte length |
+| 40 | 4 | Reserved, zero |
+| 44 | Candidate WVB length | Exact verified WVB bytes |
+| following | Encoded argument-vector byte length | Argument records |
+
+Each argument record is one `u32` byte length followed by that many UTF-8
+bytes. Each value is at most 4,096 bytes and the sum of value bytes is at most
+65,536. The native scripting launcher constructs this internal request only
+from its already validated immutable host argument snapshot.
+
+`console.write_line` and `diagnostic.write_line` append the exact text plus LF
+to separate bounded buffers. `process.argument_count` returns the snapshot
+count. `process.argument` copies the selected immutable value into the charged
+guest heap and returns `WVR3020` for an out-of-range index.
+
+Every well-formed version-4 result has this `WVXO 4` layout:
+
+| Offset | Size | Field |
+| ---: | ---: | --- |
+| 0 | 4 | ASCII `WVXO` |
+| 4 | 2 | Major version `4` |
+| 6 | 2 | Minor version `0` |
+| 8 | 4 | Guest status |
+| 12 | 4 | Charged guest instructions |
+| 16 | 4 | Scalar `i32` result bytes; zero on failure |
+| 20 | 4 | Standard-output byte length |
+| 24 | 4 | Diagnostic-output byte length |
+| 28 | Standard-output byte length | Exact standard-output bytes |
+| following | Diagnostic-output byte length | Exact diagnostic-output bytes |
+
+The complete verifier remains mandatory before constructing `WVXI 4`; this
+bounded profile selector is not an untrusted-WVB verifier.
+
 ### Retained profile-16 interpreter: compiler-scale execution entry
 
 The retained interpreter accepts as many as 4,096 guest functions, 64 parameters per function, 2,048 combined parameter/local cells per function, declared stack depth 64, and 400,000 aggregate decoded instructions. A request may supply a guest budget from one through 20,000,000 and call depth from one through 64. These are interpreter limits; the complete verifier retains its separately metered bounds and must run first.

@@ -1,0 +1,5 @@
+module Scriptˉportableˉmain profile portable;
+
+export fn Main() -> i32 {
+    return 0;
+}

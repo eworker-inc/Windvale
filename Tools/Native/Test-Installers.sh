@@ -29,7 +29,7 @@ development_linux_archive=windvale-0.1.0-dev.1-linux-x64.tar.gz
 windows_archive=windvale-0.1.0-windows-x64.zip
 linux_archive=windvale-0.1.0-linux-x64.tar.gz
 package_directory=windvale-0.1.0-linux-x64
-generation=0.1.0-linux-x64-83472405b2b4
+generation=0.1.0-linux-x64-9debddd57010
 
 verify_file() {
     local file=$1 expected_bytes=$2 expected_sha256=$3 description=$4
@@ -56,17 +56,17 @@ cmp --silent "$work/First-Release/$windows_archive" \
     "$work/Second-Release/$windows_archive" || exit 1
 cmp --silent "$work/First-Release/$linux_archive" \
     "$work/Second-Release/$linux_archive" || exit 1
-verify_file "$work/First-Development/$development_windows_archive" 38351998 \
-    2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186 \
+verify_file "$work/First-Development/$development_windows_archive" 38824361 \
+    8a0cc08fae0d92312b1e926c3149a7c90ad4dae7ee589d49b6f075da801776c1 \
     'Windows development installer' || exit 1
-verify_file "$work/First-Development/$development_linux_archive" 38363012 \
-    cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850 \
+verify_file "$work/First-Development/$development_linux_archive" 38835111 \
+    0edfcc8851c69513a7638ca6df1416e556c20032cd5e78b0e8060af4e024d280 \
     'Linux development installer' || exit 1
-verify_file "$work/First-Release/$windows_archive" 38351745 \
-    8e6e5dcd16ae437933e0eab739e84f5c48bf1d4045089495dccdef7f2de7deee \
+verify_file "$work/First-Release/$windows_archive" 38824096 \
+    5e45f775f30d2419a3df6e1c7217f24b5cf3bfcdfe5a7592955326f00c743f0d \
     'Windows release installer' || exit 1
-verify_file "$work/First-Release/$linux_archive" 38363012 \
-    4c99bda1b98156493df77b5e7b337265517c573e9ea3554fad2979315e88c11a \
+verify_file "$work/First-Release/$linux_archive" 38835111 \
+    77b317a44c4d8408d1804b8c645108bd9517926e897747e606cef12a7adee23b \
     'Linux release installer' || exit 1
 
 echo 'native installer step=verify-and-reject item=3/8 channel=stable'
@@ -98,6 +98,15 @@ echo 'native installer step=install-and-run item=6/8 channel=stable attempts=2'
 "$work/User-Bin/wvverify" \
     "$repository_root/Artifacts/Native-Front-Door/Wvb/Wvb-Runner.wvb" |
     grep -Fx 'wvb status=Valid profile=compiler-aligned' >/dev/null || exit 1
+set +e
+"$work/User-Bin/wv" run \
+    "$repository_root/Tests/Fixtures/Scripting/Arguments-And-Output.wv" \
+    -flag 'snow day' >"$work/Script.out" 2>"$work/Script.err"
+status=$?
+set -e
+[[ $status -eq 7 ]] || exit 1
+grep -Fqx 'first=-flag' "$work/Script.out" || exit 1
+grep -Fqx 'second=snow day' "$work/Script.err" || exit 1
 
 echo 'native installer step=detect-installed-tamper item=7/8 channel=stable'
 printf '\0' >>"$work/Installed/generations/$generation/bin/wvbuild"

@@ -17,6 +17,55 @@ fn Buildˉrequest(Module: bytes) -> bytes {
     return Bytesˉconcat(Request, Module);
 }
 
+fn Buildˉscriptˉrequest(Module: bytes, Arguments: u32) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    if Arguments < 2u32 || Arguments > 67u32 { return Invalid; }
+    var Argumentˉpayload: bytes = Invalid;
+    var Argumentˉutf8ˉbytes: u32 = 0u32;
+    var Argumentˉindex: u32 = 2u32;
+    while Argumentˉindex < Arguments {
+        let Argumentˉbytes: bytes = Textˉtoˉutf8(
+            process.argument(Argumentˉindex)
+        );
+        let Argumentˉlength: u32 = Bytesˉlength(Argumentˉbytes);
+        if Argumentˉlength > 4096u32 { return Invalid; }
+        if Argumentˉutf8ˉbytes > 65536u32 - Argumentˉlength {
+            return Invalid;
+        }
+        Argumentˉutf8ˉbytes = Argumentˉutf8ˉbytes + Argumentˉlength;
+        Argumentˉpayload = Bytesˉconcat(
+            Argumentˉpayload,
+            Bytesˉfromˉu32ˉlittle(Argumentˉlength)
+        );
+        Argumentˉpayload = Bytesˉconcat(Argumentˉpayload, Argumentˉbytes);
+        Argumentˉindex = Argumentˉindex + 1u32;
+    }
+
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(4u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1000000u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Module))
+    );
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(15u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(65536u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(65536u32));
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Arguments - 2u32)
+    );
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Argumentˉpayload))
+    );
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Module);
+    return Bytesˉconcat(Request, Argumentˉpayload);
+}
+
 fn Reportˉfailure(Status: u32, Instructions: u32) -> void {
     var Report: text = Textˉconcat(
         "wvb run status=Failed code=",
@@ -41,11 +90,130 @@ fn Isˉreportˉsteps(Input: text) -> bool {
     return true;
 }
 
+fn Isˉscriptˉmode(Input: text) -> bool {
+    let Actual: bytes = Textˉtoˉutf8(Input);
+    let Expected: bytes = Textˉtoˉutf8("--script");
+    let Length: u32 = Bytesˉlength(Actual);
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Actual, Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Emitˉlines(Value: bytes, Diagnostic: bool) -> bool {
+    var Lineˉoffset: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    let Length: u32 = Bytesˉlength(Value);
+    while Cursor < Length {
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Value, Cursor)) == 10u32 {
+            let Line: bytes = Bytesˉslice(
+                Value,
+                Lineˉoffset,
+                Cursor - Lineˉoffset
+            );
+            if !Textˉutf8ˉisˉvalid(Line) { return false; }
+            if Diagnostic {
+                diagnostic.write_line(Textˉfromˉutf8(Line));
+            } else {
+                console.write_line(Textˉfromˉutf8(Line));
+            }
+            Lineˉoffset = Cursor + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Lineˉoffset == Length;
+}
+
+fn Runˉscript(Module: bytes, Arguments: u32) -> i32 {
+    let Request: bytes = Buildˉscriptˉrequest(Module, Arguments);
+    if Bytesˉlength(Request) == 0u32 {
+        diagnostic.write_line(
+            "wvb run status=Invalidˉargumentˉsnapshot"
+        );
+        return 64;
+    }
+    let Response: bytes = Interpreter.Main(Request);
+    if Bytesˉlength(Response) < 28u32 {
+        diagnostic.write_line("wvb run status=Unsupported profile=script-main-i32");
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1331189335u32 ||
+        Bytesˉreadˉu16ˉlittle(Response, 4u32) != 4u32 ||
+        Bytesˉreadˉu16ˉlittle(Response, 6u32) != 0u32 {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    let Standardˉoutputˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Response,
+        20u32
+    );
+    let Diagnosticˉoutputˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Response,
+        24u32
+    );
+    if Standardˉoutputˉlength > Bytesˉlength(Response) - 28u32 {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    if Diagnosticˉoutputˉlength
+        != Bytesˉlength(Response) - 28u32 - Standardˉoutputˉlength {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    if !Emitˉlines(
+        Bytesˉslice(Response, 28u32, Standardˉoutputˉlength),
+        false
+    ) {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    if !Emitˉlines(
+        Bytesˉslice(
+            Response,
+            28u32 + Standardˉoutputˉlength,
+            Diagnosticˉoutputˉlength
+        ),
+        true
+    ) {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
+    if Status != 0u32 {
+        Reportˉfailure(
+            Status,
+            Bytesˉreadˉu32ˉlittle(Response, 12u32)
+        );
+        return 1;
+    }
+    let Result: i32 = Bytesˉreadˉi32ˉlittle(Response, 16u32);
+    if Result < 0 || Result > 255 {
+        diagnostic.write_line("wvb run status=Invalidˉexitˉstatus");
+        return 1;
+    }
+    return Result;
+}
+
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
     if Arguments == 0u32 {
         diagnostic.write_line("Usage: wvrun <module.wvb> [--report-steps]");
         return 64;
+    }
+    if Isˉscriptˉmode(process.argument(0u32)) {
+        if Arguments < 2u32 {
+            diagnostic.write_line("Usage: wvrun --script <module.wvb> [argument ...]");
+            return 64;
+        }
+        return Runˉscript(
+            file.read_bytes(process.argument(1u32)),
+            Arguments
+        );
     }
     if Arguments > 2u32 {
         diagnostic.write_line("Usage: wvrun <module.wvb> [--report-steps]");

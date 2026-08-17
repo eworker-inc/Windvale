@@ -52,9 +52,6 @@ export fn Main(Request: bytes) -> bytes {
     var Capabilities: u32 = 0u32;
     var Capabilityˉgrants: u32 = 0u32;
     var Standardˉoutputˉlimit: u32 = 0u32;
-    var Diagnosticˉoutputˉlimit: u32 = 0u32;
-    var Argumentˉcount: u32 = 0u32;
-    var Argumentˉoffsets: bytes = Invalid;
     var Declaredˉcapabilities: u32 = 0u32;
     var Capabilityˉkinds: bytes = Invalid;
     var Typeˉoffsetsˉoffset: u32 = 64u32;
@@ -78,34 +75,6 @@ export fn Main(Request: bytes) -> bytes {
             84u32,
             Capabilityˉkindsˉlength
         );
-    } else if Requestˉmajor == 4u32 {
-        if Bytesˉlength(Preflight) < 92u32 { return Invalid; }
-        Capabilities = Bytesˉreadˉu32ˉlittle(Preflight, 64u32);
-        Capabilityˉgrants = Bytesˉreadˉu32ˉlittle(Preflight, 68u32);
-        Standardˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Preflight, 72u32);
-        Diagnosticˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Preflight, 76u32);
-        Argumentˉcount = Bytesˉreadˉu32ˉlittle(Preflight, 80u32);
-        Declaredˉcapabilities = Bytesˉreadˉu32ˉlittle(Preflight, 84u32);
-        let Scriptˉcapabilityˉkindsˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-            Preflight,
-            88u32
-        );
-        Typeˉoffsetsˉoffset = 92u32 + Scriptˉcapabilityˉkindsˉlength
-            + Argumentˉcount * 4u32;
-        if Bytesˉlength(Preflight)
-            != Typeˉoffsetsˉoffset + Typeˉoffsetsˉlength {
-            return Invalid;
-        }
-        Capabilityˉkinds = Bytesˉslice(
-            Preflight,
-            92u32,
-            Scriptˉcapabilityˉkindsˉlength
-        );
-        Argumentˉoffsets = Bytesˉslice(
-            Preflight,
-            92u32 + Scriptˉcapabilityˉkindsˉlength,
-            Argumentˉcount * 4u32
-        );
     } else {
         if Bytesˉlength(Preflight) != 64u32 + Typeˉoffsetsˉlength {
             return Invalid;
@@ -125,8 +94,7 @@ export fn Main(Request: bytes) -> bytes {
     let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
     var Standardˉoutput: bytes = Invalid;
-    var Diagnosticˉoutput: bytes = Invalid;
-    if Requestˉmajor >= 3u32 {
+    if Requestˉmajor == 3u32 {
         if (Capabilityˉgrants & Declaredˉcapabilities)
             != Declaredˉcapabilities {
             var Deniedˉresponse: bytes = Bytesˉfromˉu32ˉlittle(
@@ -134,7 +102,7 @@ export fn Main(Request: bytes) -> bytes {
             );
             Deniedˉresponse = Bytesˉconcat(
                 Deniedˉresponse,
-                Bytesˉfromˉu16ˉlittle(Requestˉmajor)
+                Bytesˉfromˉu16ˉlittle(3u32)
             );
             Deniedˉresponse = Bytesˉconcat(
                 Deniedˉresponse,
@@ -379,7 +347,7 @@ export fn Main(Request: bytes) -> bytes {
             if Scanˉopcode == 49u32 { Width = 5u32; Supported = true; }
             if Scanˉopcode == 64u32 { Width = 5u32; Supported = true; }
             if Scanˉopcode == 65u32 {
-                if Requestˉmajor >= 3u32 { Width = 5u32; Supported = true; }
+                if Requestˉmajor == 3u32 { Width = 5u32; Supported = true; }
             }
             if Scanˉopcode == 80u32 { Supported = true; }
             if Scanˉopcode == 81u32 { Supported = true; }
@@ -3167,7 +3135,7 @@ export fn Main(Request: bytes) -> bytes {
         }
 
         if Payloadˉlength == 65u32 {
-            if Requestˉmajor < 3u32 { return Invalid; }
+            if Requestˉmajor != 3u32 { return Invalid; }
             let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
                 Module,
                 Payload + 1u32
@@ -3175,163 +3143,88 @@ export fn Main(Request: bytes) -> bytes {
             if Capabilityˉindex >= Bytesˉlength(Capabilityˉkinds) {
                 return Invalid;
             }
-            let Capabilityˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+            if U32ˉfromˉu8(Bytesˉreadˉu8(
                 Capabilityˉkinds,
                 Capabilityˉindex
-            ));
-            if Requestˉmajor == 3u32 && Capabilityˉkind != 1u32 {
+            )) != 1u32 {
                 return Invalid;
             }
-            if Capabilityˉkind < 1u32 || Capabilityˉkind > 4u32 {
+            if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
+            var Capabilityˉargumentˉisˉdescriptor: bool = false;
+            if Stackˉdescriptorˉcount <= 32u32 {
+                Capabilityˉargumentˉisˉdescriptor =
+                    ((Stackˉdescriptorˉflagsˉlow
+                        >> (Stackˉdescriptorˉcount - 1u32)) & 1u32) != 0u32;
+            } else {
+                Capabilityˉargumentˉisˉdescriptor =
+                    ((Stackˉdescriptorˉflagsˉhigh
+                        >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32;
+            }
+            if Capabilityˉargumentˉisˉdescriptor {
+                Capabilityˉargumentˉisˉdescriptor = true;
+            } else {
                 return Invalid;
             }
-            if Capabilityˉkind <= 2u32 {
-                if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
-                var Capabilityˉargumentˉisˉdescriptor: bool = false;
-                if Stackˉdescriptorˉcount <= 32u32 {
-                    Capabilityˉargumentˉisˉdescriptor =
-                        ((Stackˉdescriptorˉflagsˉlow
-                            >> (Stackˉdescriptorˉcount - 1u32)) & 1u32)
-                            != 0u32;
-                } else {
-                    Capabilityˉargumentˉisˉdescriptor =
-                        ((Stackˉdescriptorˉflagsˉhigh
-                            >> (Stackˉdescriptorˉcount - 33u32)) & 1u32)
-                            != 0u32;
-                }
-                if !Capabilityˉargumentˉisˉdescriptor { return Invalid; }
-                let Capabilityˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let Capabilityˉargument: bytes = Bytesˉslice(
-                    Stack,
-                    Capabilityˉstackˉlength - 8u32,
-                    8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    Capabilityˉstackˉlength - 8u32
-                );
-                Stackˉconsumed = 1u32;
-                Releasedˉdescriptors = Bytesˉconcat(
-                    Releasedˉdescriptors,
-                    Capabilityˉargument
-                );
-                let Capabilityˉtextˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                    Capabilityˉargument,
-                    0u32
-                );
-                let Capabilityˉtextˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Capabilityˉargument,
-                    4u32
-                );
-                if Capabilityˉtextˉoffset > Bytesˉlength(Heap) {
-                    return Invalid;
-                }
-                if Capabilityˉtextˉlength
-                    > Bytesˉlength(Heap) - Capabilityˉtextˉoffset {
-                    return Invalid;
-                }
-                var Capabilityˉoutput: bytes = Standardˉoutput;
-                var Capabilityˉoutputˉlimit: u32 = Standardˉoutputˉlimit;
-                if Capabilityˉkind == 2u32 {
-                    Capabilityˉoutput = Diagnosticˉoutput;
-                    Capabilityˉoutputˉlimit = Diagnosticˉoutputˉlimit;
-                }
-                let Capabilityˉoutputˉlength: u32 = Bytesˉlength(
-                    Capabilityˉoutput
-                );
-                if Capabilityˉoutputˉlength > Capabilityˉoutputˉlimit {
-                    return Invalid;
-                }
-                if Capabilityˉtextˉlength >= 4294967295u32 {
+            let Capabilityˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Capabilityˉargument: bytes = Bytesˉslice(
+                Stack,
+                Capabilityˉstackˉlength - 8u32,
+                8u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Capabilityˉstackˉlength - 8u32
+            );
+            Stackˉconsumed = 1u32;
+            Releasedˉdescriptors = Bytesˉconcat(
+                Releasedˉdescriptors,
+                Capabilityˉargument
+            );
+            let Capabilityˉtextˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Capabilityˉargument,
+                0u32
+            );
+            let Capabilityˉtextˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Capabilityˉargument,
+                4u32
+            );
+            if Capabilityˉtextˉoffset > Bytesˉlength(Heap) {
+                return Invalid;
+            }
+            if Capabilityˉtextˉlength
+                > Bytesˉlength(Heap) - Capabilityˉtextˉoffset {
+                return Invalid;
+            }
+            let Standardˉoutputˉlength: u32 = Bytesˉlength(Standardˉoutput);
+            if Standardˉoutputˉlength > Standardˉoutputˉlimit {
+                return Invalid;
+            }
+            if Capabilityˉtextˉlength >= 4294967295u32 {
+                Sectionˉkind = 3013u32;
+            } else {
+                let Capabilityˉwriteˉlength: u32 = Capabilityˉtextˉlength + 1u32;
+                if Capabilityˉwriteˉlength
+                    > Standardˉoutputˉlimit - Standardˉoutputˉlength {
                     Sectionˉkind = 3013u32;
                 } else {
-                    let Capabilityˉwriteˉlength: u32 =
-                        Capabilityˉtextˉlength + 1u32;
-                    if Capabilityˉwriteˉlength
-                        > Capabilityˉoutputˉlimit - Capabilityˉoutputˉlength {
-                        Sectionˉkind = 3013u32;
-                    } else {
-                        Capabilityˉoutput = Bytesˉconcat(
-                            Capabilityˉoutput,
-                            Bytesˉslice(
-                                Heap,
-                                Capabilityˉtextˉoffset,
-                                Capabilityˉtextˉlength
-                            )
-                        );
-                        Capabilityˉoutput = Bytesˉconcat(
-                            Capabilityˉoutput,
-                            Bytesˉslice(
-                                Bytesˉfromˉu32ˉlittle(10u32),
-                                0u32,
-                                1u32
-                            )
-                        );
-                        if Capabilityˉkind == 1u32 {
-                            Standardˉoutput = Capabilityˉoutput;
-                        } else {
-                            Diagnosticˉoutput = Capabilityˉoutput;
-                        }
-                    }
-                }
-            } else if Capabilityˉkind == 3u32 {
-                if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
-                var Capabilityˉindexˉisˉdescriptor: bool = false;
-                if Stackˉdescriptorˉcount <= 32u32 {
-                    Capabilityˉindexˉisˉdescriptor =
-                        ((Stackˉdescriptorˉflagsˉlow
-                            >> (Stackˉdescriptorˉcount - 1u32)) & 1u32)
-                            != 0u32;
-                } else {
-                    Capabilityˉindexˉisˉdescriptor =
-                        ((Stackˉdescriptorˉflagsˉhigh
-                            >> (Stackˉdescriptorˉcount - 33u32)) & 1u32)
-                            != 0u32;
-                }
-                if Capabilityˉindexˉisˉdescriptor { return Invalid; }
-                let Capabilityˉindexˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let Scriptˉargumentˉindex: u32 = Bytesˉreadˉu32ˉlittle(
-                    Stack,
-                    Capabilityˉindexˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    Capabilityˉindexˉstackˉlength - 8u32
-                );
-                Stackˉconsumed = 1u32;
-                Stackˉproduced = true;
-                Stackˉproducedˉkind = 1u32;
-                if Scriptˉargumentˉindex >= Argumentˉcount {
-                    Sectionˉkind = 3020u32;
-                } else {
-                    let Argumentˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
-                        Argumentˉoffsets,
-                        Scriptˉargumentˉindex * 4u32
+                    Standardˉoutput = Bytesˉconcat(
+                        Standardˉoutput,
+                        Bytesˉslice(
+                            Heap,
+                            Capabilityˉtextˉoffset,
+                            Capabilityˉtextˉlength
+                        )
                     );
-                    let Argumentˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                        Guestˉinput,
-                        Argumentˉcursor
-                    );
-                    Heapˉallocationˉrequested = true;
-                    Heapˉallocationˉvalue = Bytesˉslice(
-                        Guestˉinput,
-                        Argumentˉcursor + 4u32,
-                        Argumentˉlength
+                    Standardˉoutput = Bytesˉconcat(
+                        Standardˉoutput,
+                        Bytesˉslice(
+                            Bytesˉfromˉu32ˉlittle(10u32),
+                            0u32,
+                            1u32
+                        )
                     );
                 }
-            } else {
-                Stack = Bytesˉconcat(
-                    Stack,
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(Argumentˉcount),
-                        Zeroˉvalue
-                    )
-                );
-                Stackˉconsumed = 0u32;
-                Stackˉproduced = true;
-                Stackˉproducedˉkind = 0u32;
             }
             Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             Mainˉfound = true;
@@ -3439,43 +3332,41 @@ export fn Main(Request: bytes) -> bytes {
                     Success,
                     Bytesˉslice(Returnˉresult, 0u32, 4u32)
                 );
-                if Requestˉmajor >= 3u32 {
-                    var Streamˉsuccess: bytes = Bytesˉfromˉu32ˉlittle(
+                if Requestˉmajor == 3u32 {
+                    var Browserˉsuccess: bytes = Bytesˉfromˉu32ˉlittle(
                         1331189335u32
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu16ˉlittle(Requestˉmajor)
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉfromˉu16ˉlittle(3u32)
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
                         Bytesˉfromˉu16ˉlittle(0u32)
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(0u32)
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Zeroˉvalue
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
                         Bytesˉfromˉu32ˉlittle(Envelope)
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
                         Bytesˉslice(Returnˉresult, 0u32, 4u32)
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Standardˉoutput))
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉfromˉu32ˉlittle(
+                            Bytesˉlength(Standardˉoutput)
+                        )
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Diagnosticˉoutput))
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Zeroˉvalue
                     );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Standardˉoutput
-                    );
-                    return Bytesˉconcat(Streamˉsuccess, Diagnosticˉoutput);
+                    return Bytesˉconcat(Browserˉsuccess, Standardˉoutput);
                 }
                 if Requestˉmajor == 2u32 {
                     return Bytesˉconcat(Success, Stack);
@@ -3852,43 +3743,41 @@ export fn Main(Request: bytes) -> bytes {
         Running = Sectionˉkind == 0u32;
     }
     if Sectionˉkind != 0u32 {
-        if Requestˉmajor >= 3u32 {
-            var Streamˉfailure: bytes = Bytesˉfromˉu32ˉlittle(
+        if Requestˉmajor == 3u32 {
+            var Browserˉfailure: bytes = Bytesˉfromˉu32ˉlittle(
                 1331189335u32
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
-                Bytesˉfromˉu16ˉlittle(Requestˉmajor)
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu16ˉlittle(3u32)
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
                 Bytesˉfromˉu16ˉlittle(0u32)
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
                 Bytesˉfromˉu32ˉlittle(Sectionˉkind)
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
                 Bytesˉfromˉu32ˉlittle(Envelope)
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
                 Zeroˉvalue
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
-                Bytesˉfromˉu32ˉlittle(Bytesˉlength(Standardˉoutput))
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu32ˉlittle(
+                    Bytesˉlength(Standardˉoutput)
+                )
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
-                Bytesˉfromˉu32ˉlittle(Bytesˉlength(Diagnosticˉoutput))
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Zeroˉvalue
             );
-            Streamˉfailure = Bytesˉconcat(
-                Streamˉfailure,
-                Standardˉoutput
-            );
-            return Bytesˉconcat(Streamˉfailure, Diagnosticˉoutput);
+            return Bytesˉconcat(Browserˉfailure, Standardˉoutput);
         }
         var Guestˉfailure: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
         Guestˉfailure = Bytesˉconcat(

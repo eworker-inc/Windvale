@@ -13,8 +13,39 @@ case "${1:-}" in
     tools)
         printf '%s\n' 'wvbuild wvasm wvlink wvrun wvdump wvverify wvpublish'
         ;;
+    run)
+        if [ "$#" -lt 2 ]; then
+            echo 'Usage: wv run <source.wv> [argument ...]' >&2
+            exit 64
+        fi
+        source_path=$2
+        case "$source_path" in
+            *.wv) ;;
+            *) echo 'wv run: source must use the .wv extension' >&2; exit 64 ;;
+        esac
+        if [ ! -f "$source_path" ]; then
+            echo "wv run: source not found: $source_path" >&2
+            exit 1
+        fi
+        temporary_root=${TMPDIR:-/tmp}
+        work=$(mktemp -d "$temporary_root/windvale-run.XXXXXXXX") || exit 1
+        cleanup() {
+            case "$work" in
+                "$temporary_root"/windvale-run.*) rm -rf -- "$work" ;;
+                *) echo "Refusing to remove unexpected temporary path: $work" >&2; return 1 ;;
+            esac
+        }
+        trap cleanup EXIT HUP INT TERM
+        module_path=$work/Script.wvb
+        "$script_directory/wvbuild" "$source_path" "$module_path" >/dev/null || exit $?
+        "$script_directory/wvverify" "$module_path" >/dev/null || exit $?
+        shift 2
+        "$script_directory/wvrun" --script "$module_path" "$@"
+        exit $?
+        ;;
     help|'')
-        echo 'Usage: wv <version|doctor|tools|help>' >&2
+        echo 'Usage: wv <version|doctor|tools|run|help>' >&2
+        echo '       wv run <source.wv> [argument ...]' >&2
         echo 'Run the installed native tools directly for build, assembly, linking, execution, and inspection.' >&2
         exit 64
         ;;

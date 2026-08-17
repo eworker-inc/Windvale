@@ -7,6 +7,7 @@ compiler-reconstruction|Test-Compiler-Reconstruction|3|3|Tests: 3, Passed: 3, Fa
 segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|6|3|Tests: 6, Passed: 6, Failed: 0
 wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
+scripting|Test-Scripting|6|2|Tests: 6, Passed: 6, Failed: 0
 wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
 wvb-inspector-reconstruction|Test-Wvb-Inspector-Reconstruction|4|3|Tests: 4, Passed: 4, Failed: 0
 wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0

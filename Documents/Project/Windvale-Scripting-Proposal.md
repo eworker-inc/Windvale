@@ -3,15 +3,18 @@
 ## Status
 
 - Date: 2026-08-16
-- Status: proposed product direction; not accepted or implemented
+- Status: accepted in part and implemented for Slice 1 by
+  [Decision 0735](../Decisions/0735-Implement-The-First-Windvale-Scripting-Slice.md)
+- Implemented contract: [Windvale scripting 1](../../Specifications/Windvale-Scripting.md)
 - Source language: [Windvale Seed language](../../Specifications/Seed-Language.md)
 - Execution format: [Seed bytecode](../../Specifications/Seed-Bytecode.md)
 - Related shell direction: [Windvale shell product and architecture](../Architecture/Windvale-Shell.md)
 
 This document begins the product definition for writing and running Windvale
-scripts. It does not define a second language, change source semantics, add a
-runner command, grant a capability, or claim that the current bounded WVB runner
-can execute every example below.
+scripts. Decision 0735 accepts and implements Slice 1. Later authority,
+approval, project, caching, and source-sugar slices remain proposals. This
+document does not define a second language or change source semantics, and
+examples outside the implemented contract are not implementation claims.
 
 ## Product definition
 
@@ -60,26 +63,28 @@ The scripting experience should:
 - remain bounded, deterministic where its inputs are deterministic, and suitable
   for later packaging as an ordinary Windvale application.
 
-## Current starting point
+## Implemented starting point
 
-The repository already has the underlying pieces, but not their scripting
-composition:
+The repository now composes the first scripting slice from these underlying
+pieces:
 
 - the native compiler accepts an explicit root `.wv` source plus explicit
   dependencies and constructs canonical WVB;
 - canonical WVB must cross the semantic verifier before execution;
-- the current `wvrun` product executes a bounded capability-free subset;
+- the current `wvrun` product executes a bounded subset and its private script
+  route binds the four exact base-policy capabilities;
 - hosted Windvale applications already demonstrate immutable arguments, text and
   byte output, and rights-limited file access through narrower launch profiles;
-- the installed `wv` command currently exposes product inspection while the
+- the installed `wv` command exposes product inspection and `wv run`, while the
   native tools remain separate commands; and
 - Shell 1 deliberately excludes command files and is not yet an interactive
   source runner.
 
-These facts make a host-first source runner practical to design. They do not yet
-make `wv run Tool.wv` an implemented command.
+These facts and the focused `scripting` verification owner make
+`wv run Tool.wv` an implemented host-first command on Windows and Linux. The
+later slices below remain proposals.
 
-## Proposed command experience
+## Implemented command experience
 
 The first command shape is:
 
@@ -158,8 +163,8 @@ as a source-language change. It is not part of this proposal's first slice.
 
 `wv run` owns these internal steps:
 
-1. acquire one immutable snapshot of every explicit source input;
-2. construct the canonical source set;
+1. acquire the explicit source input through the native compiler boundary;
+2. construct the one-file canonical source set;
 3. compile it to canonical WVB;
 4. completely admit the WVB before execution;
 5. select an execution engine and concrete rights-limited providers; and
@@ -170,7 +175,8 @@ Ordinary success should print only the script's output. Diagnostics must still
 distinguish source acquisition, compilation, verifier rejection, approval,
 provider binding, runtime failure, and the program's returned status.
 
-An implementation may keep a bounded local compilation cache. A reusable cache
+The Slice 1 implementation does not keep a compilation cache. A later
+implementation may keep a bounded local compilation cache. A reusable cache
 entry must be bound to the exact source-set bytes, compiler identity, source and
 WVB contract versions, and build options that affect output. Cache reuse never
 bypasses WVB admission. A missing, stale, malformed, oversized, or unwritable
@@ -352,12 +358,10 @@ The following choices remain open until implementation evidence can answer them:
 
 ## Acceptance boundary
 
-This proposal becomes an implemented scripting contract only after a named
-decision selects the command and authority behavior, a specification freezes the
-accepted inputs and outcomes, the installed `wv` client owns the route, and
-focused Windows and Linux evidence proves construction, verification, execution,
-approval, limits, failure preservation, and cleanup.
-
-Until then, documentation and examples must describe `wv run Tool.wv` as
-proposed. The existing explicit `wvbuild`, `wvverify`, and `wvrun` commands remain
-the supported working path.
+Decision 0735 and the Windvale scripting 1 specification satisfy this boundary
+for Slice 1. The installed `wv` client owns the route, while the focused
+`scripting` owner proves construction, verification, execution, base-policy
+binding, limits, failure preservation, and cleanup on each host. Slice 2 and
+later remain proposals until their own decisions, contracts, and paired evidence
+exist. The explicit `wvbuild`, `wvverify`, and public `wvrun` commands remain
+supported lower-level paths.

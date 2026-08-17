@@ -44,6 +44,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 
 - [Seed bytecode](Seed-Bytecode.md)
 - [Seed CLI](Seed-CLI.md)
+- [Windvale scripting 1](Windvale-Scripting.md)
 - [Windvale Shell 1](Windvale-Shell-1.md)
 - [Portable standard byte output](Standard-Byte-Output-Core.md)
 - [Hosted standard byte-output capability](Standard-Byte-Output-Capability.md)

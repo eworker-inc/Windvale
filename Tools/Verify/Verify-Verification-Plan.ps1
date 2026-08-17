@@ -638,7 +638,23 @@ $NativeCases = @(
             'Tools/Windvale.Run/Wvb-Runner-Tool.wv',
             'Specifications/Windvale-Native-Wvb-Runner.md'
         )
-        Suites = @('seed-native-front-door', 'wvb-runner-reconstruction')
+        Suites = @(
+            'seed-native-front-door',
+            'wvb-runner-reconstruction',
+            'scripting'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'scripting owner'
+        Paths = @(
+            'Tools/Native/Test-Scripting.cmd',
+            'Tools/Native/Test-Scripting.sh',
+            'Tests/Fixtures/Scripting/Portable-Main.wv',
+            'Specifications/Windvale-Scripting.md'
+        )
+        Suites = @('scripting')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2663,7 +2679,7 @@ $NativeCases = @(
             'Specifications/Windvale-Installer.md',
             'LICENSE.md'
         )
-        Suites = @('installers', 'offline-package-stage')
+        Suites = @('scripting', 'installers', 'offline-package-stage')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2952,9 +2968,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 100 -or
+if ($VerificationOwnerLines.Count -ne 101 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 99-owner inventory differs.'
+    throw 'The native verification-owner header or exact 100-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -2992,7 +3008,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4620 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4626 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

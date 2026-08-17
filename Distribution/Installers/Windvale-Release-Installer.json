@@ -17,9 +17,9 @@
       "id": "windows-x64",
       "archive": "windvale-0.1.0-windows-x64.zip",
       "archiveFormat": "zip-store-1",
-      "expectedArchiveBytes": 38351745,
-      "expectedArchiveSha256": "8e6e5dcd16ae437933e0eab739e84f5c48bf1d4045089495dccdef7f2de7deee",
-      "expectedPayloadSha256": "8a09172a7a8c8fec62ef2218a3f23f3bdbf443337d92149b544ef73845aa5732",
+      "expectedArchiveBytes": 38823943,
+      "expectedArchiveSha256": "a04156e699a9156584195c402d3fe41b90683378f3099b8b6ee9fad74088b2c4",
+      "expectedPayloadSha256": "639a04bcca8870fb9d69d1d9a8a7d7bf43d25fb57c67ca0eacce310b367205cc",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/windows-x64/wvbuild.exe",
@@ -43,10 +43,10 @@
           "mode": "0755"
         },
         {
-          "source": "Artifacts/Native-Front-Door/windows-x64/wvrun.exe",
+          "source": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
           "path": "bin/wvrun.exe",
-          "bytes": 778752,
-          "sha256": "91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4",
+          "bytes": 1248768,
+          "sha256": "b30390b51542648f6e69b2078135f25b77cde18432e72b9137bdf6066e8c2f1d",
           "mode": "0755"
         },
         {
@@ -76,9 +76,9 @@
       "id": "linux-x64",
       "archive": "windvale-0.1.0-linux-x64.tar.gz",
       "archiveFormat": "tar-gzip-store-1",
-      "expectedArchiveBytes": 38363012,
-      "expectedArchiveSha256": "4c99bda1b98156493df77b5e7b337265517c573e9ea3554fad2979315e88c11a",
-      "expectedPayloadSha256": "83472405b2b4255f43158a673dbc098caa58ec442f100ea963ed19d1c78e0d59",
+      "expectedArchiveBytes": 38835111,
+      "expectedArchiveSha256": "77b317a44c4d8408d1804b8c645108bd9517926e897747e606cef12a7adee23b",
+      "expectedPayloadSha256": "9debddd570109ad4c075c501b9f2c601e40e60198f4b9a846a63a28d48583fb0",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/linux-x64/wvbuild.elf",
@@ -102,10 +102,10 @@
           "mode": "0755"
         },
         {
-          "source": "Artifacts/Native-Front-Door/linux-x64/wvrun.elf",
+          "source": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
           "path": "bin/wvrun",
-          "bytes": 778240,
-          "sha256": "8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294",
+          "bytes": 1249280,
+          "sha256": "ab318af04fab63833d569787a0977d7239e0eb53a268e508f25823eb32c212cb",
           "mode": "0755"
         },
         {

@@ -46,10 +46,12 @@ managed binaries, SDKs, WVDB, application data, credentials, and host
 configuration cannot enter the payload.
 
 The payload also contains the source license, channel and version record,
-bounded notice, small `wv` inspection client, and offline payload verifier.
-`wv` exposes only `version`, `tools`, `doctor`, and `help`; it resolves only
-sibling installation files. The native tools remain separate commands so their
-complete argument lists are not reinterpreted by a shell dispatcher.
+bounded notice, small `wv` client, and offline payload verifier. `wv` exposes
+`version`, `tools`, `doctor`, `run`, and `help`; it resolves only sibling
+installation files. `wv run` composes the installed compiler, verifier, and
+bounded runner according to [Windvale scripting 1](Windvale-Scripting.md). The
+native tools remain separate commands so their complete argument lists are not
+reinterpreted by a shell dispatcher.
 
 ## Deterministic artifacts
 
@@ -71,10 +73,10 @@ directory, an input outside `Distribution/Installers/`, or an existing output.
 
 | Channel | Target | Artifact | Bytes | SHA-256 | Payload manifest SHA-256 |
 | --- | --- | --- | ---: | --- | --- |
-| development | Windows x64 | `windvale-0.1.0-dev.1-windows-x64.zip` | 38,351,998 | `2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186` | `6147bfdb0c4b91d34b157ecb3bce8a857157f5d0c885d2579ec7ae9cd7fcf7c1` |
-| development | Linux x64 | `windvale-0.1.0-dev.1-linux-x64.tar.gz` | 38,363,012 | `cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850` | `f6f96c6df5fcdf12a70bdffd7a7ccc622a77840f5c78762c8f520b3f2c93ce06` |
-| stable | Windows x64 | `windvale-0.1.0-windows-x64.zip` | 38,351,745 | `8e6e5dcd16ae437933e0eab739e84f5c48bf1d4045089495dccdef7f2de7deee` | `8a09172a7a8c8fec62ef2218a3f23f3bdbf443337d92149b544ef73845aa5732` |
-| stable | Linux x64 | `windvale-0.1.0-linux-x64.tar.gz` | 38,363,012 | `4c99bda1b98156493df77b5e7b337265517c573e9ea3554fad2979315e88c11a` | `83472405b2b4255f43158a673dbc098caa58ec442f100ea963ed19d1c78e0d59` |
+| development | Windows x64 | `windvale-0.1.0-dev.1-windows-x64.zip` | 38,824,208 | `03a82ab273c7fae7e40393a12bce2584da79aa4bc760024ce0b85e5dc9075662` | `f95a19650f26003b62c2b929fe32cb662818de2ae1ad450ca81f8284e7b169d7` |
+| development | Linux x64 | `windvale-0.1.0-dev.1-linux-x64.tar.gz` | 38,835,111 | `0edfcc8851c69513a7638ca6df1416e556c20032cd5e78b0e8060af4e024d280` | `32e6360c9873d51691451ee4acefe227f5a6dcc10a35807a746f955a7c024fad` |
+| stable | Windows x64 | `windvale-0.1.0-windows-x64.zip` | 38,823,943 | `a04156e699a9156584195c402d3fe41b90683378f3099b8b6ee9fad74088b2c4` | `639a04bcca8870fb9d69d1d9a8a7d7bf43d25fb57c67ca0eacce310b367205cc` |
+| stable | Linux x64 | `windvale-0.1.0-linux-x64.tar.gz` | 38,835,111 | `77b317a44c4d8408d1804b8c645108bd9517926e897747e606cef12a7adee23b` | `9debddd570109ad4c075c501b9f2c601e40e60198f4b9a846a63a28d48583fb0` |
 
 The ZIP uses stored entries, UTF-8 names, fixed DOS epoch metadata, no extra
 fields, ordered files, and explicit Unix-compatible modes. The Linux artifact
@@ -118,7 +120,8 @@ activation remain later contracts.
 3. admit the stable archives and reject corrupt transport;
 4. extract the current-host stable archive through its exact format reader;
 5. reject a tampered payload before installation;
-6. install twice, run `wv version` and `wv doctor`, and invoke `wvverify`;
+6. install twice, run `wv version`, `wv doctor`, `wvverify`, and one script
+   through the installed `wv run` route;
 7. detect tampering inside the installed immutable generation; and
 8. uninstall while preserving an external sentinel.
 

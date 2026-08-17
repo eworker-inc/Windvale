@@ -23,7 +23,7 @@ set "DevelopmentLinuxArchive=windvale-0.1.0-dev.1-linux-x64.tar.gz"
 set "WindowsArchive=windvale-0.1.0-windows-x64.zip"
 set "LinuxArchive=windvale-0.1.0-linux-x64.tar.gz"
 set "PackageDirectory=windvale-0.1.0-windows-x64"
-set "Generation=0.1.0-windows-x64-8a09172a7a8c"
+set "Generation=0.1.0-windows-x64-639a04bcca88"
 
 echo native installer step=construct-candidates item=1/8 channels=2 targets=2 attempts=2
 node "%Builder%" build "%Work%\First-Development" || goto :cleanup
@@ -36,10 +36,10 @@ fc /b "%Work%\First-Development\%DevelopmentWindowsArchive%" "%Work%\Second-Deve
 fc /b "%Work%\First-Development\%DevelopmentLinuxArchive%" "%Work%\Second-Development\%DevelopmentLinuxArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%WindowsArchive%" "%Work%\Second-Release\%WindowsArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%LinuxArchive%" "%Work%\Second-Release\%LinuxArchive%" >nul || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 38351998 2c2112bef12e89b0594e2510b5ea71318b4c9ff8979b35c7fa7c20ca8703a186 "Windows development installer" || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 38363012 cbeddb17e258307b6005f5746925c5a4c3d68affca6495308abc6578d9294850 "Linux development installer" || goto :cleanup
-call :verify_file "%Work%\First-Release\%WindowsArchive%" 38351745 8e6e5dcd16ae437933e0eab739e84f5c48bf1d4045089495dccdef7f2de7deee "Windows release installer" || goto :cleanup
-call :verify_file "%Work%\First-Release\%LinuxArchive%" 38363012 4c99bda1b98156493df77b5e7b337265517c573e9ea3554fad2979315e88c11a "Linux release installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 38824208 03a82ab273c7fae7e40393a12bce2584da79aa4bc760024ce0b85e5dc9075662 "Windows development installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 38835111 0edfcc8851c69513a7638ca6df1416e556c20032cd5e78b0e8060af4e024d280 "Linux development installer" || goto :cleanup
+call :verify_file "%Work%\First-Release\%WindowsArchive%" 38823943 a04156e699a9156584195c402d3fe41b90683378f3099b8b6ee9fad74088b2c4 "Windows release installer" || goto :cleanup
+call :verify_file "%Work%\First-Release\%LinuxArchive%" 38835111 77b317a44c4d8408d1804b8c645108bd9517926e897747e606cef12a7adee23b "Linux release installer" || goto :cleanup
 
 echo native installer step=verify-and-reject item=3/8 channel=stable
 node "%Builder%" verify "%Work%\First-Release\%WindowsArchive%" "%ReleaseInput%" >nul || goto :cleanup
@@ -70,6 +70,10 @@ cmd /d /c ""%Work%\Installed\bin\wv.cmd" doctor" >nul || goto :cleanup
 echo native installer step=install-and-run check=wvverify
 cmd /d /c ""%Work%\Installed\bin\wvverify.cmd" "%RepositoryRoot%\Artifacts\Native-Front-Door\Wvb\Wvb-Runner.wvb"" >"%Work%\Wvb-Verify.txt" || goto :cleanup
 pwsh -NoLogo -NoProfile -Command "$l=[IO.File]::ReadAllLines('%Work%\Wvb-Verify.txt'); if ($l.Count -ne 1 -or $l[0] -ne 'wvb status=Valid profile=compiler-aligned') { exit 1 }" || goto :cleanup
+echo native installer step=install-and-run check=scripting
+call "%Work%\Installed\bin\wv.cmd" run "%RepositoryRoot%\Tests\Fixtures\Scripting\Arguments-And-Output.wv" -flag "snow day" >"%Work%\Script.out" 2>"%Work%\Script.err"
+if not "%ERRORLEVEL%"=="7" goto :cleanup
+pwsh -NoLogo -NoProfile -Command "$o=[IO.File]::ReadAllText('%Work%\Script.out'); $e=[IO.File]::ReadAllLines('%Work%\Script.err'); if ($o -cne ('first=-flag'+[char]10) -or $e.Count -ne 1 -or $e[0] -cne 'second=snow day') { exit 1 }" || goto :cleanup
 
 echo native installer step=detect-installed-tamper item=7/8 channel=stable
 pwsh -NoLogo -NoProfile -Command "$r='%Work%\Installed\generations\%Generation%'; $p=Join-Path $r 'bin\wvbuild.exe'; $s=[IO.File]::OpenWrite($p); try { $s.Position=$s.Length; $s.WriteByte(0) } finally { $s.Dispose() }; $b=[IO.File]::ReadAllBytes($p); $h=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($b)).ToLowerInvariant(); $m=Join-Path $r 'Payload-Manifest.txt'; $l=[IO.File]::ReadAllLines($m); for ($i=0; $i -lt $l.Count; $i++) { if ($l[$i].EndsWith(' bin/wvbuild.exe')) { $l[$i]='file ' + $h + ' ' + $b.Length + ' 0755 bin/wvbuild.exe' } }; [IO.File]::WriteAllText($m, (($l -join [char]10) + [char]10), [Text.UTF8Encoding]::new($false))" || goto :cleanup

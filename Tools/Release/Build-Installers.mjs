@@ -236,6 +236,11 @@ function Buildˉtarget(Input, Target) {
             mode: 0o755,
         });
         Addˉpayloadˉfile(PayloadFiles, {
+            path: "bin/wv-run.ps1",
+            bytes: Readˉtemplate(Target.id, "wv-run.ps1"),
+            mode: 0o755,
+        });
+        Addˉpayloadˉfile(PayloadFiles, {
             path: "bin/wv-verify-installation.ps1",
             bytes: Replaceˉtokens(
                 Readˉtemplate(Target.id, "wv-verify-installation.ps1"),

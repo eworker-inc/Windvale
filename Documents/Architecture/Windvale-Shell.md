@@ -51,7 +51,8 @@ its large dynamic object and conversion surface, ambient profiles, or its role
 as a second general-purpose programming language. Serious automation remains an
 ordinary verified Windvale application. The shell is an intentionally smaller
 interactive composition environment. The proposed
-[Windvale scripting experience](../Project/Windvale-Scripting-Proposal.md) makes
+[Windvale scripting 1](../../Specifications/Windvale-Scripting.md) and its
+[later-slice proposal](../Project/Windvale-Scripting-Proposal.md) make
 short source-first automation convenient without creating a second shell
 language or bypassing application verification and authority boundaries.
 

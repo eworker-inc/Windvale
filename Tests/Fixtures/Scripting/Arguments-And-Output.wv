@@ -1,0 +1,16 @@
+module Scriptˉargumentsˉandˉoutput profile hosted;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability process.argument;
+capability process.argument_count;
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("expected two arguments");
+        return 64;
+    }
+    console.write_line(Textˉconcat("first=", process.argument(0u32)));
+    diagnostic.write_line(Textˉconcat("second=", process.argument(1u32)));
+    return 7;
+}

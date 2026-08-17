@@ -1,24 +1,5 @@
 module WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope profile portable;
 
-fn Capabilityˉnameˉequals(
-    Module: bytes,
-    Offset: u32,
-    Length: u32,
-    Expected: text
-) -> bool {
-    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
-    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
-    var Index: u32 = 0u32;
-    while Index < Length {
-        if Bytesˉreadˉu8(Module, Offset + Index)
-            != Bytesˉreadˉu8(Expectedˉbytes, Index) {
-            return false;
-        }
-        Index = Index + 1u32;
-    }
-    return true;
-}
-
 export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
     let Requestˉlength: u32 = Bytesˉlength(Request);
@@ -28,7 +9,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     }
     let Requestˉmajor: u32 = Bytesˉreadˉu16ˉlittle(Request, 4u32);
     if Requestˉmajor < 1u32 { return Invalid; }
-    if Requestˉmajor > 4u32 { return Invalid; }
+    if Requestˉmajor > 3u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
     let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
     let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
@@ -43,9 +24,6 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     var Guestˉinputˉlength: u32 = 0u32;
     var Capabilityˉgrants: u32 = 0u32;
     var Standardˉoutputˉlimit: u32 = 0u32;
-    var Diagnosticˉoutputˉlimit: u32 = 0u32;
-    var Argumentˉcount: u32 = 0u32;
-    var Argumentˉoffsets: bytes = Invalid;
     if Requestˉmajor == 2u32 {
         if Requestˉlength < 24u32 { return Invalid; }
         Moduleˉoffset = 24u32;
@@ -70,57 +48,6 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         if Capabilityˉgrants > 1u32 { return Invalid; }
         if Standardˉoutputˉlimit > 65536u32 { return Invalid; }
         if Moduleˉlength != Requestˉlength - 32u32 { return Invalid; }
-    }
-    if Requestˉmajor == 4u32 {
-        if Requestˉlength < 44u32 { return Invalid; }
-        Moduleˉoffset = 44u32;
-        Moduleˉlength = Bytesˉreadˉu32ˉlittle(Request, 16u32);
-        Capabilityˉgrants = Bytesˉreadˉu32ˉlittle(Request, 20u32);
-        Standardˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Request, 24u32);
-        Diagnosticˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Request, 28u32);
-        Argumentˉcount = Bytesˉreadˉu32ˉlittle(Request, 32u32);
-        Guestˉinputˉlength = Bytesˉreadˉu32ˉlittle(Request, 36u32);
-        if Bytesˉreadˉu32ˉlittle(Request, 40u32) != 0u32 {
-            return Invalid;
-        }
-        if Capabilityˉgrants > 15u32 { return Invalid; }
-        if Standardˉoutputˉlimit > 65536u32 { return Invalid; }
-        if Diagnosticˉoutputˉlimit > 65536u32 { return Invalid; }
-        if Argumentˉcount > 65u32 { return Invalid; }
-        if Moduleˉlength > Requestˉlength - 44u32 { return Invalid; }
-        if Guestˉinputˉlength
-            != Requestˉlength - 44u32 - Moduleˉlength {
-            return Invalid;
-        }
-        Guestˉinputˉoffset = 44u32 + Moduleˉlength;
-        var Argumentˉcursor: u32 = Guestˉinputˉoffset;
-        var Argumentˉindex: u32 = 0u32;
-        var Argumentˉutf8ˉbytes: u32 = 0u32;
-        while Argumentˉindex < Argumentˉcount {
-            if Argumentˉcursor > Requestˉlength - 4u32 { return Invalid; }
-            Argumentˉoffsets = Bytesˉconcat(
-                Argumentˉoffsets,
-                Bytesˉfromˉu32ˉlittle(
-                    Argumentˉcursor - Guestˉinputˉoffset
-                )
-            );
-            let Argumentˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Request,
-                Argumentˉcursor
-            );
-            Argumentˉcursor = Argumentˉcursor + 4u32;
-            if Argumentˉlength > 4096u32 { return Invalid; }
-            if Argumentˉlength > Requestˉlength - Argumentˉcursor {
-                return Invalid;
-            }
-            if Argumentˉutf8ˉbytes > 65536u32 - Argumentˉlength {
-                return Invalid;
-            }
-            Argumentˉutf8ˉbytes = Argumentˉutf8ˉbytes + Argumentˉlength;
-            Argumentˉcursor = Argumentˉcursor + Argumentˉlength;
-            Argumentˉindex = Argumentˉindex + 1u32;
-        }
-        if Argumentˉcursor != Requestˉlength { return Invalid; }
     }
 
     let Module: bytes = Bytesˉslice(Request, Moduleˉoffset, Moduleˉlength);
@@ -227,81 +154,6 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             }
             Capabilityˉkinds = Bytesˉfromˉu8(1u8);
             Declaredˉcapabilities = 1u32;
-        }
-    } else if Requestˉmajor == 4u32 {
-        if Moduleˉprofile == 1u32 {
-            if Capabilityˉcount != 0u32 { return Invalid; }
-        } else {
-            if Moduleˉprofile != 2u32 { return Invalid; }
-            if Capabilityˉcount > 4u32 { return Invalid; }
-            var Scriptˉcapabilityˉcursor: u32 = Capabilities + 4u32;
-            var Scriptˉcapabilityˉindex: u32 = 0u32;
-            while Scriptˉcapabilityˉindex < Capabilityˉcount {
-                let Scriptˉcapabilityˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Module,
-                    Scriptˉcapabilityˉcursor
-                );
-                Scriptˉcapabilityˉcursor = Scriptˉcapabilityˉcursor + 4u32;
-                var Capabilityˉkind: u32 = 0u32;
-                if Capabilityˉnameˉequals(
-                    Module, Scriptˉcapabilityˉcursor,
-                    Scriptˉcapabilityˉnameˉlength, "console.write_line"
-                ) { Capabilityˉkind = 1u32; }
-                if Capabilityˉnameˉequals(
-                    Module, Scriptˉcapabilityˉcursor,
-                    Scriptˉcapabilityˉnameˉlength, "diagnostic.write_line"
-                ) { Capabilityˉkind = 2u32; }
-                if Capabilityˉnameˉequals(
-                    Module, Scriptˉcapabilityˉcursor,
-                    Scriptˉcapabilityˉnameˉlength, "process.argument"
-                ) { Capabilityˉkind = 3u32; }
-                if Capabilityˉnameˉequals(
-                    Module, Scriptˉcapabilityˉcursor,
-                    Scriptˉcapabilityˉnameˉlength, "process.argument_count"
-                ) { Capabilityˉkind = 4u32; }
-                if Capabilityˉkind == 0u32 { return Invalid; }
-                let Capabilityˉbit: u32 = 1u32 << (Capabilityˉkind - 1u32);
-                if (Declaredˉcapabilities & Capabilityˉbit) != 0u32 {
-                    return Invalid;
-                }
-                Declaredˉcapabilities = Declaredˉcapabilities | Capabilityˉbit;
-                Capabilityˉkinds = Bytesˉconcat(
-                    Capabilityˉkinds,
-                    Bytesˉslice(
-                        Bytesˉfromˉu32ˉlittle(67305985u32),
-                        Capabilityˉkind - 1u32,
-                        1u32
-                    )
-                );
-                Scriptˉcapabilityˉcursor = Scriptˉcapabilityˉcursor
-                    + Scriptˉcapabilityˉnameˉlength;
-                let Scriptˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                    Module,
-                    Scriptˉcapabilityˉcursor
-                );
-                Scriptˉcapabilityˉcursor = Scriptˉcapabilityˉcursor + 4u32;
-                if Capabilityˉkind <= 2u32 {
-                    if Scriptˉparameterˉcount != 1u32 { return Invalid; }
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Scriptˉcapabilityˉcursor))
-                        != 3u32 { return Invalid; }
-                    Scriptˉcapabilityˉcursor = Scriptˉcapabilityˉcursor + 1u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Scriptˉcapabilityˉcursor))
-                        != 0u32 { return Invalid; }
-                } else if Capabilityˉkind == 3u32 {
-                    if Scriptˉparameterˉcount != 1u32 { return Invalid; }
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Scriptˉcapabilityˉcursor))
-                        != 5u32 { return Invalid; }
-                    Scriptˉcapabilityˉcursor = Scriptˉcapabilityˉcursor + 1u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Scriptˉcapabilityˉcursor))
-                        != 3u32 { return Invalid; }
-                } else {
-                    if Scriptˉparameterˉcount != 0u32 { return Invalid; }
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Scriptˉcapabilityˉcursor))
-                        != 5u32 { return Invalid; }
-                }
-                Scriptˉcapabilityˉcursor = Scriptˉcapabilityˉcursor + 1u32;
-                Scriptˉcapabilityˉindex = Scriptˉcapabilityˉindex + 1u32;
-            }
         }
     } else {
         if Moduleˉprofile != 1u32 { return Invalid; }
@@ -458,29 +310,6 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             Bytesˉfromˉu32ˉlittle(Bytesˉlength(Capabilityˉkinds))
         );
         Result = Bytesˉconcat(Result, Capabilityˉkinds);
-    }
-    if Requestˉmajor == 4u32 {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Capabilities));
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Capabilityˉgrants));
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(Standardˉoutputˉlimit)
-        );
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(Diagnosticˉoutputˉlimit)
-        );
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Argumentˉcount));
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(Declaredˉcapabilities)
-        );
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Capabilityˉkinds))
-        );
-        Result = Bytesˉconcat(Result, Capabilityˉkinds);
-        Result = Bytesˉconcat(Result, Argumentˉoffsets);
     }
     return Bytesˉconcat(Result, Typeˉoffsets);
 }
