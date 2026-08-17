@@ -1,0 +1,143 @@
+edition 1;
+module Copyˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+
+export enum Copyˉstage: u8 {
+    Configuration = 1u8;
+    Buffer = 2u8;
+    Sourceˉopen = 3u8;
+    Destinationˉopen = 4u8;
+    Read = 5u8;
+    Write = 6u8;
+    Finish = 7u8;
+}
+
+export enum Progressˉdirection: u8 {
+    Read = 1u8;
+    Write = 2u8;
+}
+
+export enum Ioˉreason: u8 {
+    Missing = 1u8;
+    Alreadyˉexists = 2u8;
+    Wrongˉkind = 3u8;
+    Permissionˉdenied = 4u8;
+    Unavailable = 5u8;
+    Revoked = 6u8;
+    Unsupported = 7u8;
+    Invalidˉname = 8u8;
+    Invalidˉlimit = 9u8;
+    Invalidˉposition = 10u8;
+    Invalidˉresponse = 11u8;
+    Capacityˉexhausted = 12u8;
+    Shortˉacceptance = 13u8;
+    Cancelled = 14u8;
+    Providerˉlost = 15u8;
+    Providerˉrestarted = 16u8;
+    Sourceˉchanged = 17u8;
+}
+
+export record Configuration {
+    Sourceˉname: text;
+    Destinationˉname: text;
+    Maximumˉbytes: u64;
+    Chunkˉbytes: u64;
+    Maximumˉoperations: u64;
+}
+
+export record Copyˉreport {
+    Sourceˉbytes: u64;
+    Copiedˉbytes: u64;
+    Readˉcalls: u64;
+    Writeˉcalls: u64;
+    Totalˉoperations: u64;
+}
+
+export variant Copyˉfailure {
+    Invalidˉconfiguration(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(
+        Stage: Copyˉstage,
+        Error: Memory.Allocationˉfailure,
+    );
+    Openˉrejected(
+        Stage: Copyˉstage,
+        Reason: Ioˉreason,
+        Providerˉgeneration: u64,
+    );
+    Transferˉrejected(
+        Stage: Copyˉstage,
+        Position: u64,
+        Copiedˉbytes: u64,
+        Reason: Ioˉreason,
+        Providerˉgeneration: u64,
+    );
+    Cancelled(
+        Stage: Copyˉstage,
+        Position: u64,
+        Copiedˉbytes: u64,
+    );
+    Providerˉlost(
+        Stage: Copyˉstage,
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Position: u64,
+        Copiedˉbytes: u64,
+    );
+    Providerˉrestarted(
+        Stage: Copyˉstage,
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Position: u64,
+        Copiedˉbytes: u64,
+    );
+    Sourceˉchanged(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Position: u64,
+        Copiedˉbytes: u64,
+    );
+    Progressˉstalled(
+        Direction: Progressˉdirection,
+        Position: u64,
+        Copiedˉbytes: u64,
+    );
+    Operationˉlimit(
+        Completedˉoperations: u64,
+        Maximumˉoperations: u64,
+        Copiedˉbytes: u64,
+    );
+    Invalidˉprogress(
+        Stage: Copyˉstage,
+        Requested: u64,
+        Reported: u64,
+        Position: u64,
+        Copiedˉbytes: u64,
+    );
+    Mutationˉindeterminate(
+        Position: u64,
+        Copiedˉbytes: u64,
+        Reason: Ioˉreason,
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Finishˉrejected(
+        Copiedˉbytes: u64,
+        Reason: Ioˉreason,
+        Providerˉgeneration: u64,
+    );
+    Finishˉindeterminate(
+        Copiedˉbytes: u64,
+        Reason: Ioˉreason,
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+}

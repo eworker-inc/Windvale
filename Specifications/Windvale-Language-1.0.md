@@ -24,6 +24,8 @@ with the first paper findings resolved by
 [Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md),
 and the command workload findings resolved by
 [Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md),
+and the file-copy workload findings resolved by
+[Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -743,6 +745,14 @@ A resource that cannot separate semantic completion from local release cannot
 participate in automatic `using` until its exact combined-result protocol is
 specified. General `defer` is absent from edition 1.
 
+For the first accepted resource-bearing file workload, `using` remains
+release-only. A failed body skips semantic finish and returns its body failure. A
+successful body invokes one named finish explicitly and returns the exact finish
+rejection or uncertainty when it does not complete. Release then consumes the
+handle without replacing either result. A later protocol that must finish after
+body failure requires an explicit named composition value retaining both
+outcomes; it does not gain hidden completion or exception precedence.
+
 Provider revocation, generation mismatch, restart, peer exit, timeout,
 cancellation, rejection, partial progress, and indeterminate completion remain
 distinct typed outcomes where the interface can observe them.
@@ -980,7 +990,10 @@ This candidate becomes frozen Language 1.0 only after:
 12. the accepted command sequence, strict parsing, reserved-builder,
     standard-stream authority, and launcher-status cases remain coherent across
     all mandatory workloads; and
-13. a source-freeze decision records the canonical document identities.
+13. the accepted file-copy byte-buffer, resource-completion, known-partial,
+    filesystem-authority, and cancellation/lifecycle cases remain coherent
+    across all mandatory workloads; and
+14. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

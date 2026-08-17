@@ -1,0 +1,289 @@
+edition 1;
+module Copyˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability filesystem.copy.destination version 1;
+requires capability filesystem.copy.source version 1;
+
+import Copyˉengine as Engine;
+import Copyˉtypes as Types;
+import Copyˉvalidate as Validate;
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Platformˉfilesystem as Filesystem;
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+    Stage: Types.Copyˉstage,
+) -> Result.Result<T, Types.Copyˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Copyˉfailure.Allocation {
+                    Stage: Stage,
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Normalizeˉreason(
+    Value: Filesystem.Ioˉfailureˉkind,
+) -> Types.Ioˉreason effects() {
+    return match Value {
+        case Filesystem.Ioˉfailureˉkind.Missing { Types.Ioˉreason.Missing }
+        case Filesystem.Ioˉfailureˉkind.Alreadyˉexists {
+            Types.Ioˉreason.Alreadyˉexists
+        }
+        case Filesystem.Ioˉfailureˉkind.Wrongˉkind {
+            Types.Ioˉreason.Wrongˉkind
+        }
+        case Filesystem.Ioˉfailureˉkind.Permissionˉdenied {
+            Types.Ioˉreason.Permissionˉdenied
+        }
+        case Filesystem.Ioˉfailureˉkind.Unavailable {
+            Types.Ioˉreason.Unavailable
+        }
+        case Filesystem.Ioˉfailureˉkind.Revoked { Types.Ioˉreason.Revoked }
+        case Filesystem.Ioˉfailureˉkind.Unsupported {
+            Types.Ioˉreason.Unsupported
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉname {
+            Types.Ioˉreason.Invalidˉname
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉlimit {
+            Types.Ioˉreason.Invalidˉlimit
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉposition {
+            Types.Ioˉreason.Invalidˉposition
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉresponse {
+            Types.Ioˉreason.Invalidˉresponse
+        }
+        case Filesystem.Ioˉfailureˉkind.Capacityˉexhausted {
+            Types.Ioˉreason.Capacityˉexhausted
+        }
+        case Filesystem.Ioˉfailureˉkind.Shortˉacceptance {
+            Types.Ioˉreason.Shortˉacceptance
+        }
+        case Filesystem.Ioˉfailureˉkind.Cancelled {
+            Types.Ioˉreason.Cancelled
+        }
+        case Filesystem.Ioˉfailureˉkind.Providerˉlost {
+            Types.Ioˉreason.Providerˉlost
+        }
+        case Filesystem.Ioˉfailureˉkind.Providerˉrestarted {
+            Types.Ioˉreason.Providerˉrestarted
+        }
+        case Filesystem.Ioˉfailureˉkind.Sourceˉchanged {
+            Types.Ioˉreason.Sourceˉchanged
+        }
+    };
+}
+
+fn Mapˉopen<T>(
+    Value: Result.Result<T, Filesystem.Ioˉfailure>,
+    Stage: Types.Copyˉstage,
+) -> Result.Result<T, Types.Copyˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Resource } {
+            Result.Result.Valid { Value: Resource }
+        }
+        case Result.Result.Failure { Error: Error } {
+            match Error.Kind {
+                case Filesystem.Ioˉfailureˉkind.Cancelled {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Cancelled {
+                            Stage: Stage,
+                            Position: 0u64,
+                            Copiedˉbytes: 0u64,
+                        },
+                    }
+                }
+                case Filesystem.Ioˉfailureˉkind.Providerˉlost {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Providerˉlost {
+                            Stage: Stage,
+                            Expectedˉgeneration: Error.Expectedˉgeneration,
+                            Observedˉgeneration: Error.Observedˉgeneration,
+                            Position: 0u64,
+                            Copiedˉbytes: 0u64,
+                        },
+                    }
+                }
+                case Filesystem.Ioˉfailureˉkind.Providerˉrestarted {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Providerˉrestarted {
+                            Stage: Stage,
+                            Expectedˉgeneration: Error.Expectedˉgeneration,
+                            Observedˉgeneration: Error.Observedˉgeneration,
+                            Position: 0u64,
+                            Copiedˉbytes: 0u64,
+                        },
+                    }
+                }
+                case _ {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Openˉrejected {
+                            Stage: Stage,
+                            Reason: Normalizeˉreason(Value: Error.Kind),
+                            Providerˉgeneration: Error.Expectedˉgeneration,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Mapˉfinish(
+    Value: Filesystem.Finishˉoutcome,
+    Expectedˉbytes: u64,
+) -> Result.Result<unit, Types.Copyˉfailure> effects() {
+    return match Value {
+        case Filesystem.Finishˉoutcome.Completed { Length: Length } {
+            if Length == Expectedˉbytes {
+                Result.Result.Valid { Value: () }
+            } else {
+                Result.Result.Failure {
+                    Error: Types.Copyˉfailure.Invalidˉprogress {
+                        Stage: Types.Copyˉstage.Finish,
+                        Requested: Expectedˉbytes,
+                        Reported: Length,
+                        Position: Expectedˉbytes,
+                        Copiedˉbytes: Expectedˉbytes,
+                    },
+                }
+            }
+        }
+        case Filesystem.Finishˉoutcome.Rejected { Error: Error } {
+            match Error.Kind {
+                case Filesystem.Ioˉfailureˉkind.Cancelled {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Cancelled {
+                            Stage: Types.Copyˉstage.Finish,
+                            Position: Expectedˉbytes,
+                            Copiedˉbytes: Expectedˉbytes,
+                        },
+                    }
+                }
+                case Filesystem.Ioˉfailureˉkind.Providerˉlost {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Providerˉlost {
+                            Stage: Types.Copyˉstage.Finish,
+                            Expectedˉgeneration: Error.Expectedˉgeneration,
+                            Observedˉgeneration: Error.Observedˉgeneration,
+                            Position: Expectedˉbytes,
+                            Copiedˉbytes: Expectedˉbytes,
+                        },
+                    }
+                }
+                case Filesystem.Ioˉfailureˉkind.Providerˉrestarted {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Providerˉrestarted {
+                            Stage: Types.Copyˉstage.Finish,
+                            Expectedˉgeneration: Error.Expectedˉgeneration,
+                            Observedˉgeneration: Error.Observedˉgeneration,
+                            Position: Expectedˉbytes,
+                            Copiedˉbytes: Expectedˉbytes,
+                        },
+                    }
+                }
+                case _ {
+                    Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Finishˉrejected {
+                            Copiedˉbytes: Expectedˉbytes,
+                            Reason: Normalizeˉreason(Value: Error.Kind),
+                            Providerˉgeneration: Error.Expectedˉgeneration,
+                        },
+                    }
+                }
+            }
+        }
+        case Filesystem.Finishˉoutcome.Indeterminate { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Copyˉfailure.Finishˉindeterminate {
+                    Copiedˉbytes: Expectedˉbytes,
+                    Reason: Normalizeˉreason(Value: Error.Kind),
+                    Expectedˉgeneration: Error.Expectedˉgeneration,
+                    Observedˉgeneration: Error.Observedˉgeneration,
+                },
+            }
+        }
+    };
+}
+
+export fn Run(
+    Configuration: Types.Configuration,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Copyˉreport, Types.Copyˉfailure>
+    effects(
+        filesystem.copy.destination,
+        filesystem.copy.source,
+        memory.allocate,
+        resource.acquire,
+        resource.complete,
+        resource.release
+    ) {
+    try Validate.Validate(Value: borrow Configuration);
+    var Rootˉbudget = Budget;
+    let Bufferˉbudget = try Mapˉallocation(
+        Value: Memory.Split(
+            Parent: borrow mut Rootˉbudget,
+            Maximumˉbytes: Configuration.Chunkˉbytes,
+            Maximumˉchildren: 0u32,
+        ),
+        Stage: Types.Copyˉstage.Buffer,
+    );
+    var Buffer = try Mapˉallocation(
+        Value: Bytes.Constructˉbuffer(
+            Budget: Bufferˉbudget,
+            Length: Configuration.Chunkˉbytes,
+        ),
+        Stage: Types.Copyˉstage.Buffer,
+    );
+
+    using Source = try Mapˉopen(
+        Value: filesystem.copy.source.Openˉsnapshot(
+            Name: borrow Configuration.Sourceˉname,
+            Maximumˉlength: Configuration.Maximumˉbytes,
+            Maximumˉreadˉbytes: Configuration.Chunkˉbytes,
+            Maximumˉoperations: Configuration.Maximumˉoperations,
+        ),
+        Stage: Types.Copyˉstage.Sourceˉopen,
+    ) {
+        let Sourceˉbytes = Filesystem.Sourceˉlength(Source: borrow Source);
+        using Destination = try Mapˉopen(
+            Value: filesystem.copy.destination.Createˉexclusive(
+                Name: borrow Configuration.Destinationˉname,
+                Maximumˉlength: Sourceˉbytes,
+                Maximumˉwriteˉbytes: Configuration.Chunkˉbytes,
+                Maximumˉoperations: Configuration.Maximumˉoperations,
+            ),
+            Stage: Types.Copyˉstage.Destinationˉopen,
+        ) {
+            let Report = try Engine.Copy(
+                Source: borrow mut Source,
+                Destination: borrow mut Destination,
+                Buffer: borrow mut Buffer,
+                Sourceˉbytes: Sourceˉbytes,
+                Chunkˉbytes: Configuration.Chunkˉbytes,
+                Maximumˉoperations: Configuration.Maximumˉoperations,
+            );
+            try Mapˉfinish(
+                Value: filesystem.copy.destination.Finishˉdurable(
+                    Destination: borrow mut Destination,
+                    Expectedˉlength: Report.Copiedˉbytes,
+                ),
+                Expectedˉbytes: Report.Copiedˉbytes,
+            );
+            return Result.Result.Valid { Value: Report };
+        }
+    }
+}

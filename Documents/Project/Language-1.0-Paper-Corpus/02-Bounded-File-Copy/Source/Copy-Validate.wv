@@ -1,0 +1,52 @@
+edition 1;
+module Copyˉvalidate;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Copyˉtypes as Types;
+import Foundationˉresult as Result;
+
+const MAXIMUM_COPY_BYTES: u64 = 1048576u64;
+const MINIMUM_CHUNK_BYTES: u64 = 1u64;
+const MAXIMUM_CHUNK_BYTES: u64 = 65536u64;
+const MINIMUM_OPERATIONS: u64 = 1u64;
+const MAXIMUM_OPERATIONS: u64 = 2097152u64;
+
+export fn Validate(
+    Value: borrow Types.Configuration,
+) -> Result.Result<unit, Types.Copyˉfailure> effects() {
+    if Value.Maximumˉbytes > MAXIMUM_COPY_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Copyˉfailure.Invalidˉconfiguration {
+                Field: 1u32,
+                Observed: Value.Maximumˉbytes,
+                Minimum: 0u64,
+                Maximum: MAXIMUM_COPY_BYTES,
+            },
+        };
+    }
+    if Value.Chunkˉbytes < MINIMUM_CHUNK_BYTES
+        || Value.Chunkˉbytes > MAXIMUM_CHUNK_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Copyˉfailure.Invalidˉconfiguration {
+                Field: 2u32,
+                Observed: Value.Chunkˉbytes,
+                Minimum: MINIMUM_CHUNK_BYTES,
+                Maximum: MAXIMUM_CHUNK_BYTES,
+            },
+        };
+    }
+    if Value.Maximumˉoperations < MINIMUM_OPERATIONS
+        || Value.Maximumˉoperations > MAXIMUM_OPERATIONS {
+        return Result.Result.Failure {
+            Error: Types.Copyˉfailure.Invalidˉconfiguration {
+                Field: 3u32,
+                Observed: Value.Maximumˉoperations,
+                Minimum: MINIMUM_OPERATIONS,
+                Maximum: MAXIMUM_OPERATIONS,
+            },
+        };
+    }
+    return Result.Result.Valid { Value: () };
+}

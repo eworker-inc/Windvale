@@ -11,7 +11,9 @@ and
 with the first paper findings resolved by
 [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
 and the command workload findings resolved by
-[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
+[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
+and the file-copy workload findings resolved by
+[Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -145,6 +147,8 @@ reparse it.
   launcher-entry, and target-scope cases from Decision 0754.
 - Retain the accepted command sequence, strict parsing, reserved-builder,
   stream-authority, and launcher-status cases from Decision 0755.
+- Retain the accepted byte-buffer, release/completion, known-partial,
+  filesystem-authority, and cancellation/lifecycle cases from Decision 0756.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.

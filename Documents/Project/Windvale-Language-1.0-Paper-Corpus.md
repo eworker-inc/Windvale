@@ -12,7 +12,9 @@ and
 with the first reviewed bundle's findings resolved by
 [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
 and the command workload findings resolved by
-[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
+[Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
+and the file-copy workload findings resolved by
+[Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -152,6 +154,14 @@ provider defect, partial write, indeterminate mutation, finish failure, early
 
 No path may leak a resource or retry an indeterminate write. A body failure and
 finish failure cannot be silently collapsed or discarded.
+
+The complete source and evidence are in the
+[workload 2 paper bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md).
+Its owner review accepts the fixed byte-buffer, release/completion,
+known-partial-progress, independent-authority, and synchronous-cancellation
+findings. The general Foundation and language clarifications are
+normative-candidate contracts; final filesystem capability identities remain
+provisional pending later workloads.
 
 ## Workload 3: database transaction
 
@@ -494,7 +504,7 @@ source contract ambiguous.
 | Workload | Status |
 | --- | --- |
 | Command-line application | Draft reviewed; five findings accepted and resolved |
-| Bounded file copy | Pending source bundle |
+| Bounded file copy | Draft reviewed; five findings accepted and resolved |
 | Database transaction | Pending source bundle |
 | Compiler front end | Pending source bundle |
 | HTTP request handler | Pending source bundle |

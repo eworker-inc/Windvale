@@ -1,0 +1,323 @@
+edition 1;
+module Copyˉengine;
+profile hosted;
+platform windows, linux, windvale;
+authority library;
+requires capability filesystem.copy.destination version 1;
+requires capability filesystem.copy.source version 1;
+
+import Copyˉtypes as Types;
+import Foundationˉbytes as Bytes;
+import Foundationˉresource as Resource;
+import Foundationˉresult as Result;
+import Platformˉfilesystem as Filesystem;
+
+fn Normalizeˉreason(
+    Value: Filesystem.Ioˉfailureˉkind,
+) -> Types.Ioˉreason effects() {
+    return match Value {
+        case Filesystem.Ioˉfailureˉkind.Missing { Types.Ioˉreason.Missing }
+        case Filesystem.Ioˉfailureˉkind.Alreadyˉexists {
+            Types.Ioˉreason.Alreadyˉexists
+        }
+        case Filesystem.Ioˉfailureˉkind.Wrongˉkind {
+            Types.Ioˉreason.Wrongˉkind
+        }
+        case Filesystem.Ioˉfailureˉkind.Permissionˉdenied {
+            Types.Ioˉreason.Permissionˉdenied
+        }
+        case Filesystem.Ioˉfailureˉkind.Unavailable {
+            Types.Ioˉreason.Unavailable
+        }
+        case Filesystem.Ioˉfailureˉkind.Revoked { Types.Ioˉreason.Revoked }
+        case Filesystem.Ioˉfailureˉkind.Unsupported {
+            Types.Ioˉreason.Unsupported
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉname {
+            Types.Ioˉreason.Invalidˉname
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉlimit {
+            Types.Ioˉreason.Invalidˉlimit
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉposition {
+            Types.Ioˉreason.Invalidˉposition
+        }
+        case Filesystem.Ioˉfailureˉkind.Invalidˉresponse {
+            Types.Ioˉreason.Invalidˉresponse
+        }
+        case Filesystem.Ioˉfailureˉkind.Capacityˉexhausted {
+            Types.Ioˉreason.Capacityˉexhausted
+        }
+        case Filesystem.Ioˉfailureˉkind.Shortˉacceptance {
+            Types.Ioˉreason.Shortˉacceptance
+        }
+        case Filesystem.Ioˉfailureˉkind.Cancelled {
+            Types.Ioˉreason.Cancelled
+        }
+        case Filesystem.Ioˉfailureˉkind.Providerˉlost {
+            Types.Ioˉreason.Providerˉlost
+        }
+        case Filesystem.Ioˉfailureˉkind.Providerˉrestarted {
+            Types.Ioˉreason.Providerˉrestarted
+        }
+        case Filesystem.Ioˉfailureˉkind.Sourceˉchanged {
+            Types.Ioˉreason.Sourceˉchanged
+        }
+    };
+}
+
+fn Mapˉioˉfailure(
+    Error: Filesystem.Ioˉfailure,
+    Stage: Types.Copyˉstage,
+    Position: u64,
+    Copiedˉbytes: u64,
+) -> Types.Copyˉfailure effects() {
+    return match Error.Kind {
+        case Filesystem.Ioˉfailureˉkind.Cancelled {
+            Types.Copyˉfailure.Cancelled {
+                Stage: Stage,
+                Position: Position,
+                Copiedˉbytes: Copiedˉbytes,
+            }
+        }
+        case Filesystem.Ioˉfailureˉkind.Providerˉlost {
+            Types.Copyˉfailure.Providerˉlost {
+                Stage: Stage,
+                Expectedˉgeneration: Error.Expectedˉgeneration,
+                Observedˉgeneration: Error.Observedˉgeneration,
+                Position: Position,
+                Copiedˉbytes: Copiedˉbytes,
+            }
+        }
+        case Filesystem.Ioˉfailureˉkind.Providerˉrestarted {
+            Types.Copyˉfailure.Providerˉrestarted {
+                Stage: Stage,
+                Expectedˉgeneration: Error.Expectedˉgeneration,
+                Observedˉgeneration: Error.Observedˉgeneration,
+                Position: Position,
+                Copiedˉbytes: Copiedˉbytes,
+            }
+        }
+        case Filesystem.Ioˉfailureˉkind.Sourceˉchanged {
+            Types.Copyˉfailure.Sourceˉchanged {
+                Expectedˉgeneration: Error.Expectedˉgeneration,
+                Observedˉgeneration: Error.Observedˉgeneration,
+                Position: Position,
+                Copiedˉbytes: Copiedˉbytes,
+            }
+        }
+        case _ {
+            Types.Copyˉfailure.Transferˉrejected {
+                Stage: Stage,
+                Position: Position,
+                Copiedˉbytes: Copiedˉbytes,
+                Reason: Normalizeˉreason(Value: Error.Kind),
+                Providerˉgeneration: Error.Expectedˉgeneration,
+            }
+        }
+    };
+}
+
+fn Operationˉavailable(
+    Completed: u64,
+    Maximum: u64,
+    Copiedˉbytes: u64,
+) -> Result.Result<unit, Types.Copyˉfailure> effects() {
+    if Completed >= Maximum {
+        return Result.Result.Failure {
+            Error: Types.Copyˉfailure.Operationˉlimit {
+                Completedˉoperations: Completed,
+                Maximumˉoperations: Maximum,
+                Copiedˉbytes: Copiedˉbytes,
+            },
+        };
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Copy(
+    Source: borrow mut Filesystem.Sourceˉfile,
+    Destination: borrow mut Filesystem.Destinationˉfile,
+    Buffer: borrow mut Bytes.Byteˉbuffer,
+    Sourceˉbytes: u64,
+    Chunkˉbytes: u64,
+    Maximumˉoperations: u64,
+) -> Result.Result<Types.Copyˉreport, Types.Copyˉfailure>
+    effects(filesystem.copy.destination, filesystem.copy.source) {
+    var Readˉposition = 0u64;
+    var Copiedˉbytes = 0u64;
+    var Readˉcalls = 0u64;
+    var Writeˉcalls = 0u64;
+    var Operations = 0u64;
+
+    while Readˉposition < Sourceˉbytes {
+        try Operationˉavailable(
+            Completed: Operations,
+            Maximum: Maximumˉoperations,
+            Copiedˉbytes: Copiedˉbytes,
+        );
+        let Remainingˉsource = Sourceˉbytes - Readˉposition;
+        let Requestedˉread = if Remainingˉsource < Chunkˉbytes {
+            Remainingˉsource
+        } else {
+            Chunkˉbytes
+        };
+        let Target = Bytes.Borrowˉsliceˉmut(
+            Buffer: borrow mut Buffer,
+            Start: 0u64,
+            Length: Requestedˉread,
+        );
+        let Readˉoutcome = filesystem.copy.source.Readˉat(
+            Source: borrow mut Source,
+            Position: Readˉposition,
+            Target: Target,
+        );
+        Operations = Operations + 1u64;
+        Readˉcalls = Readˉcalls + 1u64;
+        let Readˉbytes = match Readˉoutcome {
+            case Filesystem.Readˉoutcome.Rejected { Error: Error } {
+                return Result.Result.Failure {
+                    Error: Mapˉioˉfailure(
+                        Error: Error,
+                        Stage: Types.Copyˉstage.Read,
+                        Position: Readˉposition,
+                        Copiedˉbytes: Copiedˉbytes,
+                    ),
+                };
+            }
+            case Filesystem.Readˉoutcome.Completed { Completed: Completed } {
+                if Completed == 0u64 {
+                    return Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Progressˉstalled {
+                            Direction: Types.Progressˉdirection.Read,
+                            Position: Readˉposition,
+                            Copiedˉbytes: Copiedˉbytes,
+                        },
+                    };
+                }
+                if Completed > Requestedˉread {
+                    return Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Invalidˉprogress {
+                            Stage: Types.Copyˉstage.Read,
+                            Requested: Requestedˉread,
+                            Reported: Completed,
+                            Position: Readˉposition,
+                            Copiedˉbytes: Copiedˉbytes,
+                        },
+                    };
+                }
+                Completed
+            }
+        };
+        Readˉposition = Readˉposition + Readˉbytes;
+
+        var Chunkˉwritten = 0u64;
+        while Chunkˉwritten < Readˉbytes {
+            try Operationˉavailable(
+                Completed: Operations,
+                Maximum: Maximumˉoperations,
+                Copiedˉbytes: Copiedˉbytes,
+            );
+            let Remainingˉchunk = Readˉbytes - Chunkˉwritten;
+            let Value = Bytes.Borrowˉslice(
+                Buffer: borrow Buffer,
+                Start: Chunkˉwritten,
+                Length: Remainingˉchunk,
+            );
+            let Writeˉoutcome = filesystem.copy.destination.Writeˉat(
+                Destination: borrow mut Destination,
+                Position: Copiedˉbytes,
+                Value: Value,
+            );
+            Operations = Operations + 1u64;
+            Writeˉcalls = Writeˉcalls + 1u64;
+            match Writeˉoutcome {
+                case Resource.Mutationˉoutcome.Rejected { Error: Error } {
+                    return Result.Result.Failure {
+                        Error: Mapˉioˉfailure(
+                            Error: Error,
+                            Stage: Types.Copyˉstage.Write,
+                            Position: Copiedˉbytes,
+                            Copiedˉbytes: Copiedˉbytes,
+                        ),
+                    };
+                }
+                case Resource.Mutationˉoutcome.Acceptedˉpartial {
+                    Completed: Completed,
+                    Error: Error,
+                } {
+                    if Completed == 0u64 {
+                        return Result.Result.Failure {
+                            Error: Types.Copyˉfailure.Progressˉstalled {
+                                Direction: Types.Progressˉdirection.Write,
+                                Position: Copiedˉbytes,
+                                Copiedˉbytes: Copiedˉbytes,
+                            },
+                        };
+                    }
+                    if Completed >= Remainingˉchunk {
+                        return Result.Result.Failure {
+                            Error: Types.Copyˉfailure.Invalidˉprogress {
+                                Stage: Types.Copyˉstage.Write,
+                                Requested: Remainingˉchunk,
+                                Reported: Completed,
+                                Position: Copiedˉbytes,
+                                Copiedˉbytes: Copiedˉbytes,
+                            },
+                        };
+                    }
+                    Copiedˉbytes = Copiedˉbytes + Completed;
+                    Chunkˉwritten = Chunkˉwritten + Completed;
+                    if Error.Kind != Filesystem.Ioˉfailureˉkind.Shortˉacceptance {
+                        return Result.Result.Failure {
+                            Error: Mapˉioˉfailure(
+                                Error: Error,
+                                Stage: Types.Copyˉstage.Write,
+                                Position: Copiedˉbytes,
+                                Copiedˉbytes: Copiedˉbytes,
+                            ),
+                        };
+                    }
+                }
+                case Resource.Mutationˉoutcome.Completed {
+                    Completed: Completed,
+                } {
+                    if Completed != Remainingˉchunk {
+                        return Result.Result.Failure {
+                            Error: Types.Copyˉfailure.Invalidˉprogress {
+                                Stage: Types.Copyˉstage.Write,
+                                Requested: Remainingˉchunk,
+                                Reported: Completed,
+                                Position: Copiedˉbytes,
+                                Copiedˉbytes: Copiedˉbytes,
+                            },
+                        };
+                    }
+                    Copiedˉbytes = Copiedˉbytes + Completed;
+                    Chunkˉwritten = Readˉbytes;
+                }
+                case Resource.Mutationˉoutcome.Indeterminate { Error: Error } {
+                    return Result.Result.Failure {
+                        Error: Types.Copyˉfailure.Mutationˉindeterminate {
+                            Position: Copiedˉbytes,
+                            Copiedˉbytes: Copiedˉbytes,
+                            Reason: Normalizeˉreason(Value: Error.Kind),
+                            Expectedˉgeneration: Error.Expectedˉgeneration,
+                            Observedˉgeneration: Error.Observedˉgeneration,
+                        },
+                    };
+                }
+            };
+        }
+    }
+
+    return Result.Result.Valid {
+        Value: Types.Copyˉreport {
+            Sourceˉbytes: Sourceˉbytes,
+            Copiedˉbytes: Copiedˉbytes,
+            Readˉcalls: Readˉcalls,
+            Writeˉcalls: Writeˉcalls,
+            Totalˉoperations: Operations,
+        },
+    };
+}

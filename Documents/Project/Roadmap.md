@@ -30,8 +30,12 @@ accepting accelerator syntax or implementation, and
 resolves the first reviewed bundle's five general source-contract questions, and
 [Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
 accepts the command workload's general Foundation and launcher findings while
-keeping its stream operation identities provisional. The
-[command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md)
+keeping its stream operation identities provisional, and
+[Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
+accepts the file-copy workload's buffer, completion, progress, authority, and
+lifecycle findings while keeping filesystem catalog identities provisional. The
+[command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
+[bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
 are now draft reviewed. The accepted direction, normative-candidate suite,

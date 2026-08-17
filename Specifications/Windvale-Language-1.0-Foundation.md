@@ -8,7 +8,9 @@ This is the normative-candidate Foundation companion to the
 and refined by
 [Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
 and
-[Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md).
+[Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
+and
+[Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -644,9 +646,10 @@ Iterator implementation.
 
 `bytes` is the shared immutable byte sequence. Each value retains current byte
 length and an admitted maximum byte length; sharing preserves both and never
-exposes backing capacity. `Bytesˉbuilder` is an owned specialized buffer with
-maximum output bytes, current length, one allocation lease, and no implicit text
-encoding.
+exposes backing capacity. `Bytesˉbuilder` is an owned specialized construction
+buffer with maximum output bytes, current length, one allocation lease, and no
+implicit text encoding. `Byteˉbuffer` is a move-owned fixed-length initialized
+buffer for bounded mutable byte I/O.
 
 The first reviewed paper workload fixes these version-1 immutable-byte
 signatures:
@@ -662,6 +665,41 @@ capacity. `At` requires `Index < Length(Value)`. It checks that precondition wit
 violation; it can never read outside the value or return a partial byte. Code
 parsing untrusted offsets first proves the complete range or uses a separately
 named recoverable codec. No unchecked Core or Hosted counterpart is implied.
+
+The file-copy workload fixes these version-1 byte-buffer signatures:
+
+~~~text
+export fn Constructˉbuffer(
+    Budget: Memoryˉbudget,
+    Length: u64,
+) -> Result<Byteˉbuffer, Allocationˉfailure>
+    effects(memory.allocate);
+
+export fn Bufferˉlength(
+    Buffer: borrow Byteˉbuffer,
+) -> u64 effects();
+
+export fn Borrowˉslice(
+    Buffer: borrow Byteˉbuffer,
+    Start: u64,
+    Length: u64,
+) -> Slice<u8> effects();
+
+export fn Borrowˉsliceˉmut(
+    Buffer: borrow mut Byteˉbuffer,
+    Start: u64,
+    Length: u64,
+) -> Mutableˉslice<u8> effects();
+~~~
+
+Construction consumes one rights-reduced budget. Success transfers its
+accounting into exactly `Length` zero-initialized bytes; failure consumes and
+locally releases the child budget without exposing a partial buffer.
+`Bufferˉlength` reports the fixed current length. Both slice calls check
+`Start + Length` and the complete buffer range before forming a borrow. Their
+results are tied to the one buffer owner and obey ordinary immutable/exclusive
+borrow rules. No safe uninitialized byte, backing capacity, native address, or
+unchecked Core/Hosted slice is exposed.
 
 Required builder operations include:
 
@@ -809,6 +847,15 @@ Only a move-owned resource may implement it. `Release`:
 
 `using` invokes this exact protocol on ordinary scope exit. A resource exposes
 separate typed operations for fallible completion.
+
+The file-copy workload fixes the first exact completion sequencing rule. A
+resource body that fails returns that body failure and does not implicitly
+finish. A successful body calls its named completion operation explicitly and
+returns that exact completion failure or uncertainty when completion does not
+succeed. Local release then consumes the handle on every ordinary path without
+replacing either result. A protocol that must complete after body failure needs
+an explicit named result capable of retaining both outcomes; it cannot assign
+hidden precedence to `using`.
 
 ### Completion outcomes
 
@@ -1031,5 +1078,8 @@ Before source freeze:
    ownership outcomes pass the paper corpus;
 10. task scope, capture, cancellation, join, and teardown pass the paper corpus;
 11. unsafe values cannot enter Core or Hosted source; and
-12. a responsibility matrix identifies ordinary source, compiler intrinsic,
+12. fixed byte-buffer initialization, slicing, ownership, and release pass the
+    paper corpus;
+13. known partial progress never permits replay of an uncertain mutation; and
+14. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.

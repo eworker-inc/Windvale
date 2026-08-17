@@ -7,7 +7,11 @@
 > and
 > [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
 > with the first paper findings resolved by
-> [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md).
+> [Decision 0754](../Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md),
+> the command findings by
+> [Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md),
+> and the bounded file-copy findings by
+> [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
