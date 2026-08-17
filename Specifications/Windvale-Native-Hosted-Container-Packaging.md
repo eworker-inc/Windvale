@@ -90,10 +90,10 @@ bootstrap or independent Linux-host qualification.
 
 The reconstruction owner also builds the current compiler build-driver WVB into
 private temporary storage through the pinned current-host build driver and feeds
-it to the reconstructed current-host staging producer. The exact 1,155,121-byte
+it to the reconstructed current-host staging producer. The exact 1,142,818-byte
 WVB at SHA-256
-`a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20`
-contains 64 records and stages into 30,158,719 object bytes across 39 chunks plus
+`125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574`
+contains 64 records and stages into 30,067,412 object bytes across 39 chunks plus
 a 492-byte manifest. This case does not execute or promote the private compiler
 WVB; general verifier, publisher, final-container, and front-door promotion
 remain separate boundaries.

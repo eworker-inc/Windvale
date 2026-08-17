@@ -88,7 +88,7 @@ cp -- "$work/Target/$linux" "$work/Target/$windows" || exit 1
 if node "$verifier" verify "$work/Target" >/dev/null 2>&1; then exit 1; fi
 
 echo 'native application approval step=reject-approval-identity-substitution item=12/13'
-sed -i 's/13650128da9229524b35910b0fb9f3f7ed2da3de3648f0207fd1e32979b30668/0000000000000000000000000000000000000000000000000000000000000000/' \
+sed -i 's/0b58e435e08045a7118353e2a454e92f4eadfdf36458693e5dd1cf85b58dfdb2/0000000000000000000000000000000000000000000000000000000000000000/' \
     "$work/Approval-Identity/$linux" || exit 1
 if node "$verifier" verify "$work/Approval-Identity" >/dev/null 2>&1; then exit 1; fi
 

@@ -33,18 +33,18 @@ fail() {
     exit 1
 }
 
-verify_file "$candidate/Wvb/Windvale-Compiler.wvb" 931035 \
-    13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 || fail
-verify_file "$candidate/windows-x64/wvcompiler.exe" 27898368 \
-    4009e6747bbf9a6d2b0b2ec90e2368ca50fda863d445534f15ef96e22a657b34 || fail
-verify_file "$candidate/linux-x64/wvcompiler.elf" 27897856 \
-    c266adf20fe2927a446483f68880ef323c480f011b0c26384716ea2f651bcd65 || fail
-verify_file "$candidate/Wvb/Compiler-Build-Driver.wvb" 1162338 \
-    a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 || fail
-verify_file "$candidate/windows-x64/wvbuild.exe" 30381568 \
-    b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3 || fail
-verify_file "$candidate/linux-x64/wvbuild.elf" 30380032 \
-    b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0 || fail
+verify_file "$candidate/Wvb/Windvale-Compiler.wvb" 935163 \
+    a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6 || fail
+verify_file "$candidate/windows-x64/wvcompiler.exe" 28172800 \
+    a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d || fail
+verify_file "$candidate/linux-x64/wvcompiler.elf" 28172288 \
+    da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b || fail
+verify_file "$candidate/Wvb/Compiler-Build-Driver.wvb" 1142818 \
+    125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 || fail
+verify_file "$candidate/windows-x64/wvbuild.exe" 30071296 \
+    f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f || fail
+verify_file "$candidate/linux-x64/wvbuild.elf" 30072832 \
+    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || fail
 pass 'candidate inventory'
 
 if "$script_directory/Construct-Compiler-Reconstruction.sh" >/dev/null 2>&1; then
@@ -71,21 +71,21 @@ trap cleanup EXIT
 
 "$script_directory/Construct-Compiler-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
-grep -Fx 'native compiler reconstruction status=Complete compiler-bytes=931035 native-bytes=27867015 entry-offset=51356 chunks=7 build-driver-bytes=1162338 build-driver-entry-offset=220460 build-driver-chunks=8' \
+grep -Fx 'native compiler reconstruction status=Complete compiler-bytes=935163 native-bytes=28141686 entry-offset=51356 chunks=7 build-driver-bytes=1142818 build-driver-entry-offset=220460 build-driver-chunks=8' \
     "$test_directory/Construct.out" >/dev/null || fail
 [[ ! -s $test_directory/Construct.err ]] || fail
-verify_file "$test_directory/Wvb/Windvale-Compiler.wvb" 931035 \
-    13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 || fail
-verify_file "$test_directory/windows-x64/wvcompiler.exe" 27898368 \
-    4009e6747bbf9a6d2b0b2ec90e2368ca50fda863d445534f15ef96e22a657b34 || fail
-verify_file "$test_directory/linux-x64/wvcompiler.elf" 27897856 \
-    c266adf20fe2927a446483f68880ef323c480f011b0c26384716ea2f651bcd65 || fail
-verify_file "$test_directory/Wvb/Compiler-Build-Driver.wvb" 1162338 \
-    a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 || fail
-verify_file "$test_directory/windows-x64/wvbuild.exe" 30381568 \
-    b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3 || fail
-verify_file "$test_directory/linux-x64/wvbuild.elf" 30380032 \
-    b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0 || fail
+verify_file "$test_directory/Wvb/Windvale-Compiler.wvb" 935163 \
+    a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6 || fail
+verify_file "$test_directory/windows-x64/wvcompiler.exe" 28172800 \
+    a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d || fail
+verify_file "$test_directory/linux-x64/wvcompiler.elf" 28172288 \
+    da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b || fail
+verify_file "$test_directory/Wvb/Compiler-Build-Driver.wvb" 1142818 \
+    125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 || fail
+verify_file "$test_directory/windows-x64/wvbuild.exe" 30071296 \
+    f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f || fail
+verify_file "$test_directory/linux-x64/wvbuild.elf" 30072832 \
+    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || fail
 pass 'native paired reconstruction'
 
 echo "Tests: $tests, Passed: $passed, Failed: 0"

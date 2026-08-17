@@ -190,7 +190,7 @@
       "patterns": [
         {
           "name": "keyword.control.flow.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:if|else|while|for|in|match|case|push|break|continue|return)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:if|else|while|for|in|match|case|try|push|break|continue|return)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },

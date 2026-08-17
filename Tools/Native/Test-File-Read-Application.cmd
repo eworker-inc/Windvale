@@ -25,14 +25,14 @@ set "BuildProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver
 set "BuildProjectResource=%BuildProject:\=/%"
 "%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
     "%BuildProjectResource%" "%WorkResource%/Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 "current build driver WVB" || goto :cleanup
+call :verify_file "%Work%\Build-Driver.wvb" 1142818 125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 "current build driver WVB" || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
 set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
 set "LowererProjectResource=%LowererProject:\=/%"
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
     "%LowererProjectResource%" "%WorkResource%/Lowerer.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 522025 318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceB85bf6 "current lowerer WVB" || goto :cleanup
+call :verify_file "%Work%\Lowerer.wvb" 523087 6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 "current lowerer WVB" || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 ^
     "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
 echo PASS  native file read phase=self-host item=1/6

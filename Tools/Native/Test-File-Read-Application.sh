@@ -40,8 +40,8 @@ echo 'START native file read phase=self-host item=1/6'
 "$front_door" --workspace "$workspace" --project \
     "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
     "$work/Build-Driver.wvb" >/dev/null || exit $?
-verify_file "$work/Build-Driver.wvb" 1162338 \
-    a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 \
+verify_file "$work/Build-Driver.wvb" 1142818 \
+    125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 \
     'current build driver WVB' || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Build-Driver.wvb" "$work/Build-Driver.elf" --development-cache \
@@ -49,8 +49,8 @@ verify_file "$work/Build-Driver.wvb" 1162338 \
 "$work/Build-Driver.elf" --workspace "$workspace" --project \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$work/Lowerer.wvb" >/dev/null || exit $?
-verify_file "$work/Lowerer.wvb" 522025 \
-    318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6 \
+verify_file "$work/Lowerer.wvb" 523087 \
+    6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 \
     'current lowerer WVB' || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Lowerer.wvb" "$work/Lowerer.elf" --development-cache >/dev/null || exit $?

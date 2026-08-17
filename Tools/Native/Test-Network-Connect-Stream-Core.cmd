@@ -28,7 +28,7 @@ set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.e
 echo START native network connect stream phase=tools item=1/4
 call "%Native%\Build-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" >nul || goto :cleanup
-call :verify_file "%Lowerer%" 7491072 85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3 || goto :cleanup
+call :verify_file "%Lowerer%" 7499264 4912b2ffb5390aeb30ce54b5eabb0e4970923b6ebd4c1d08567ee78a562cb54a || goto :cleanup
 echo PASS  native network connect stream phase=tools item=1/4
 
 echo START native network connect stream phase=compile item=2/4

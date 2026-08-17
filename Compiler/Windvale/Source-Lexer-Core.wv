@@ -91,6 +91,7 @@ export enum Compilerˉtokenˉkind {
     Shiftˉright = 85;
     I64 = 86;
     U64 = 87;
+    Try = 88;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -314,6 +315,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 108u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "let") { return Compilerˉtokenˉkind.Let; }
+        }
+        if First == 116u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "try") { return Compilerˉtokenˉkind.Try; }
         }
         if First == 117u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u32") { return Compilerˉtokenˉkind.U32; }

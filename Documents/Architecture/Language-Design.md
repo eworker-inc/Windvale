@@ -35,7 +35,7 @@ Seed currently has:
 - explicitly typed, storage-free scalar and enum constants;
 - explicit-value enums and immutable nominal records;
 - typed functions and parameters plus explicitly typed or initializer-inferred `let` and `var` locals;
-- expression statements, simple and compound assignment to mutable locals, `if`/`else if`/`else`, `while`, nearest-loop `break` and `continue`, and `return`;
+- expression statements, simple and compound assignment to mutable locals, `if`/`else if`/`else`, `while`, nearest-loop `break` and `continue`, exact `try` result propagation, and `return`;
 - checked `i32`, `i64`, `u32`, and `u64` arithmetic, byte values, short-circuit Boolean logic, numeric comparison, enum equality, calls, indexing, and field access; and
 - named and retained positional record construction plus bounded Foundation operations for text, bytes, encoding, formatting, and SHA-256; and
 - trailing commas in multiline parameter, argument, named-record, positional-record, and static-data lists;
@@ -44,7 +44,7 @@ Seed currently has:
 - bounded immutable sequences, affine builders, consuming `freeze`, explicit `push`, and deterministic `for`; and
 - checked division/remainder, unsigned bitwise/shifts, and exact text/bytes equality.
 
-Seed intentionally lacks dynamic linking, typed capability values, structured resource scope, package-backed resources, maps/sets and other general collections, generics, closures, async, floating point, and unsafe source operations.
+Seed intentionally lacks dynamic linking, instance-bearing capability values, structured resource scope, package-backed resources, maps/sets and other general collections, generics, closures, async, floating point, and unsafe source operations. It does include exact shared singleton capability references and the narrow result propagation described below.
 
 ## Near-term source direction
 
@@ -150,13 +150,33 @@ match Result {
 }
 ```
 
-Match has no fallthrough and is exhaustive. Result flow remains explicit. A later `try` expression may provide visible propagation after success/failure shape, ownership, cleanup, and return compatibility are exact. Traps remain for contract violations, corrupted state, invalid bounds, and other runtime invariants; expected provider outcomes use typed results.
+Match has no fallthrough and is exhaustive. Result flow remains explicit. The implemented `try Expression;` statement may replace only the repeated forwarding case for one exact result contract:
+
+```text
+variant Readˉresult {
+    Valid;
+    Failure(Error: Readˉerror);
+}
+
+fn Validate() -> Readˉresult {
+    try Validateˉheader();
+    return Readˉresult.Valid();
+}
+```
+
+The variant has exactly those two ordered cases, the expression and containing
+function have the same nominal return type, `Valid` carries no payload, and
+`Failure` carries one non-void payload. The expression is evaluated once;
+`Failure` returns the original value unchanged. There is no adapter, conversion,
+trap interception, hidden provider call, or implicit cleanup. Traps remain for
+contract violations, corrupted state, invalid bounds, and other runtime
+invariants; expected provider outcomes use typed results.
 
 The recommended variant contract is nominal, immutable, closed, and verifier-bounded. Every case has a stable declaration ordinal and zero or more named fields. Construction names the variant and case and supplies every payload field exactly once. There is no implicit null case, default value, open extension, integer conversion, or layout inspection.
 
 WVB records the nominal type, ordered cases, field types, ownership classes, and maximum admitted value pressure. Construction consumes or retains payload evidence according to each field's ownership class. `match` validates one arm per case, refines the selected payload types inside that arm, has no fallthrough, and rejoins only with compatible stack and ownership state. The native inline-or-descriptor representation remains an ABI choice and cannot be observed by source.
 
-The first typed results are ordinary two-case nominal variants, conventionally `Success` and `Failure`, with explicit exhaustive `match`. Windvale does not need general generics, exceptions, or a magic built-in result to gain recoverable operations. A later visible propagation expression requires one recognized result contract, compatible failure type, exact cleanup ordering, and no hidden capability calls.
+The first typed results are ordinary two-case nominal variants with explicit exhaustive `match`. The propagation-enabled subset uses exact ordered `Valid` and `Failure` cases and exact nominal return compatibility. Windvale does not need general generics, exceptions, or a magic built-in result to gain recoverable operations. Results outside that deliberately narrow declaration continue to use `match`; widening requires an explicit adapter and ownership/cleanup decision rather than inference from case names.
 
 ## Bounded collections and resources
 
@@ -291,10 +311,10 @@ import aliases rather than a global hierarchical namespace; `Foundation`,
 `Platform`, `Protocol`, and later `System` are cross-cutting library roles, not
 ambient source names or an exhaustive folder hierarchy.
 
-The recommended language order is typed rights-limited capability references and,
-separately, scoped ownership for values with an explicit caller-controlled close
-contract; then a narrow visible result-propagation form and one bounded associative
-collection selected by measured consumers. General generics, richer aggregate
+The implemented language now has typed shared singleton capability references and
+narrow visible result propagation. Scoped ownership remains separate and awaits a
+value with an explicit caller-controlled close contract; one bounded associative
+collection still awaits measured consumers. General generics, richer aggregate
 shapes, floating point, and structured concurrency remain later consumer-driven
 features. A feature becomes available on native, WebAssembly, or Windvale OS only
 after the affected target path implements and verifies it; source-only lowering
@@ -322,10 +342,10 @@ Windvale OS execution profiles:
 7. Bounded sequences/builders, consuming freeze, and bounded `for`.
 8. Division/remainder, unsigned bitwise/shifts, and text/bytes equality.
 9. A package/library product baseline using current source semantics (complete).
-10. Typed capability references and scoped ownership where an exact close contract
-    exists.
-11. Narrow result propagation and one bounded associative collection, each only
-    from measured consumers.
+10. Typed shared singleton capability references (complete); scoped ownership
+    remains pending until an exact close contract exists.
+11. Narrow result propagation (complete); one bounded associative collection
+    remains pending until measured consumers justify it.
 12. Later operators and advanced syntax only from measured consumers.
 
 Every pre-freeze implemented slice advances the reference and Windvale compilers,

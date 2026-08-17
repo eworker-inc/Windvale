@@ -15,7 +15,7 @@ Compilerˉvalidateˉsourceˉwir(Input: bytes)
 
 On success, the summary contains module, function-entry, block, operation, temporary, and operand counts plus an independently validated WVIR directory. On failure, the directory is empty and the summary identifies the first deterministic failure by module, related module, WVSD function entry, byte offset, and one-based line/column.
 
-The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, and invalid or consumed builders. Appended values `23` through `31` own those match, variant, collection, and builder failures without renumbering the retained values.
+The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, and an invalid result-propagation contract. Appended values `23` through `31` own those match, variant, collection, and builder failures, and `Invalidˉtry = 32` owns propagation failures without renumbering the retained values.
 
 ## Typed lowering rules
 
@@ -25,7 +25,7 @@ The phase currently lowers:
 - literals, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction and fields, enum members, Foundation intrinsics, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, variant construction/case tests/payload extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
-- expression statements, `return`, lexical blocks, `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
+- expression statements, exact `try` propagation, `return`, lexical blocks, `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
 - explicit jump, branch, and return terminators.
 
 Shape `0` is `void`; `1` through `6` are `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`. Record shapes start at `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at `196608`. Exact singleton capability-reference shapes are `268435456 + RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
@@ -40,13 +40,13 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `0` |
+| 6 | 2 | Minor version `1` |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
-| 20 | 4 | Block-entry size `36` |
+| 20 | 4 | Block-entry size `28` |
 | 24 | 4 | Operation count |
-| 28 | 4 | Operation-entry size `48` |
+| 28 | 4 | Operation-entry size `40` |
 | 32 | 4 | Temporary count |
 | 36 | 4 | Temporary-entry size `4` |
 | 40 | 4 | Operand count |
@@ -56,9 +56,9 @@ Sections follow in that exact order.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
-Each 36-byte block entry contains nine `u32` fields: module, function, block ID, first operation/count, terminator, value temporary, first target, and second target. The sentinel `4294967295` represents an absent value or target.
+Each 28-byte block entry contains seven `u32` fields: block ID, first operation/count, terminator, value temporary, first target, and second target. The owning function and module are derived from the enclosing canonical function range. The sentinel `4294967295` represents an absent value or target.
 
-Each 48-byte operation entry contains twelve `u32` fields: module, function, block, operation kind, result shape, result temporary, first operand/count, target, auxiliary value, source byte offset, and source byte length.
+Each 40-byte operation entry contains ten `u32` fields: block, operation kind, result shape, result temporary, first operand/count, target, auxiliary value, source byte offset, and source byte length. The owning function and module are derived from the canonical function and block ranges.
 
 The temporary section is a sequence of result shapes. The operand section is a sequence of function-local temporary IDs.
 
@@ -90,6 +90,15 @@ validator accepts the custom shape only when it names an actual required root
 capability and rejects capability shapes in records, variants, and collections.
 No WVIR operation value or directory version changes.
 
+An accepted `try` evaluates its expression once, requires its shape to equal the
+current function return shape, and resolves that shape to a nominal variant with
+exactly ordered `Valid` and `Failure` cases. The former has no payload and the
+latter has one non-void payload. Lowering emits the existing
+`Variantˉisˉcase` operation and a branch. The failure block returns the
+expression's original temporary; the success block continues. No payload
+extraction, variant reconstruction, conversion, hidden call, new WVIR operation,
+or directory-version change is introduced.
+
 A constant read resolves its WVSD 1.1 entry, reevaluates the validated root declaration under the source-symbol contract, and emits the matching scalar, Boolean, or enum constant operation, including `I64ˉconstant` and `U64ˉconstant`. Wide values carry exact low/high `u32` limbs in the operation target and auxiliary fields. No data identity, local slot, or runtime lookup is introduced.
 
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. No new WVIR operation or WVB opcode is introduced. Recursive `else if` lowers through the existing conditional blocks and terminators.
@@ -108,14 +117,14 @@ Unknown members are diagnosed against the owning intermediate nominal type.
 The fast conformance case compiles the core, runs the semantic/corruption demo, and sends a control-heavy hosted fixture through the real file-reading tool. The fixture produces:
 
 ```text
-source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=3200
+source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=2760
 ```
 
 Current deterministic candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 831,890 bytes, SHA-256 `221702d78eea74babbe3762f59da7f5445920cd093e8a42859ed2b5ce009d8e9`.
-- `Source-Wir-Demo.wvb`: 837,598 bytes, SHA-256 `67de0b84e904b4ac3b412bb6204157fb390b8a768b277522d7e78de378800a38`.
-- `Source-Wir-Tool.wvb`: 830,836 bytes, SHA-256 `385c54a5bb36c8b5b7db000123c5355939b6a51597d015dc6fa90bfc6da74927`.
+- `Source-Wir-Core.wvb`: 836,098 bytes, SHA-256 `985a03dd51b7599586181ecc9da797fba35ea69f7184ac75104ce402f0d8a542`.
+- `Source-Wir-Demo.wvb`: 843,004 bytes, SHA-256 `19441dce68e8b86288662acc4548fc687498e7b2b0d5a24e7a5041c57cdcc62f`.
+- `Source-Wir-Tool.wvb`: 834,992 bytes, SHA-256 `e3f3c1abea8ad18e171c13713af5c718f0a2914d1a5ea800f39a03fd525a37f9`.
 
 These local identities include inferred-local verification, storage-free typed-constant lowering, named-record remapping, recursive `else if`, loop-control targets, compound assignment, and structurally verified short-circuit Boolean phi nodes; they require cross-host requalification before a new qualification claim.
 

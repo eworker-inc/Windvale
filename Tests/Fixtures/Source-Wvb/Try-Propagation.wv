@@ -1,0 +1,46 @@
+module Tryˉpropagationˉoracle profile portable;
+
+variant Outcome {
+    Valid;
+    Failure(Error: i32);
+}
+
+fn Check(Fail: bool) -> Outcome {
+    if Fail { return Outcome.Failure(41); }
+    return Outcome.Valid();
+}
+
+fn Forward(Fail: bool) -> Outcome {
+    try Check(Fail);
+    return Outcome.Valid();
+}
+
+fn Successˉcode() -> i32 {
+    let Success: Outcome = Forward(false);
+    match Success {
+        case Outcome.Valid {
+            return 0;
+        }
+        case Outcome.Failure(Error) {
+            return 1;
+        }
+    }
+}
+
+fn Failureˉcode() -> i32 {
+    let Failure: Outcome = Forward(true);
+    match Failure {
+        case Outcome.Valid {
+            return 2;
+        }
+        case Outcome.Failure(Error) {
+            if Error == 41 { return 0; }
+            return 3;
+        }
+    }
+}
+
+export fn Main() -> i32 {
+    if Successˉcode() != 0 { return 1; }
+    return Failureˉcode();
+}

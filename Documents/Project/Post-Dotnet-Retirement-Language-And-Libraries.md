@@ -229,18 +229,23 @@ or provider has already failed.
 
 ### 3. Improve typed-result ergonomics without exceptions
 
-Libraries should continue to model expected outcomes as nominal variants. Once one
-explicit result declaration contract, ownership transfer, cleanup ordering, and
-function-return rule have evidence, add a narrow visible `try` propagation form.
-The first form should require an exact failure payload type or an explicit adapter;
-case names alone must not opt an arbitrary variant into propagation. It should
-expand to ordinary result inspection, construction, and early return; it must not
-catch traps, invoke hidden provider calls, perform inferred conversions, or become
-a general exception mechanism.
+Decision 0744 implements the first narrow `try Expression;` propagation statement.
+It accepts only a nominal variant whose complete declaration is exactly ordered
+`Valid;` and `Failure(Value)` and whose type exactly equals the containing
+function's non-void return type. It evaluates once, continues for `Valid`, and
+returns the original `Failure` value unchanged. This is ordinary variant case
+inspection, branching, and early return in WVIR/WVB; it does not catch traps,
+invoke hidden provider calls, perform inferred conversions, or become a general
+exception mechanism. No owned source resource currently inhabits the accepted
+variant, so the first contract introduces no implicit cleanup obligation.
 
 This is a high-value readability improvement for capability-heavy application code
 because it reduces repeated exhaustive forwarding while retaining explicit failure
-types.
+types. `Wvdbˉreaderˉvalidate` is the first measured consumer: one statement
+replaces a temporary result, a Boolean flag, an exhaustive forwarding match, and an
+otherwise unreachable defensive branch. Results with different case order, names,
+payload shape, or return type continue to use explicit `match`; adapters and owned
+failure transfer remain future decisions.
 
 ### 4. Add one bounded associative collection
 

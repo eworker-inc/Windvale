@@ -89,8 +89,10 @@ unfinished work.
   schedule rather than retaining the qualified bounded lifetime profile?
 - Which capability-reference, cleanup-order, and cleanup-failure contracts must
   exist before scoped ownership syntax is accepted?
-- Which bounded result-propagation or collection feature removes enough measured
-  application code to justify a new source-language contract?
+- Should exact `try` propagation ever admit a named adapter or an owned failure
+  payload, and what transfer and cleanup ordering would make that widening safe?
+- Which two measured consumers justify the first bounded deterministic keyed
+  collection and its capacity, collision, and iteration contract?
 - Which first unsupported package, database, or OS operation should broaden the
   shared native backend, and what interpreter/AOT/JIT agreement proves it?
 

@@ -312,14 +312,14 @@ if ((development == 1)); then
     [[ $project_wvb_checkpoint == Created || $project_wvb_checkpoint == Hit ]] || exit 1
     prepare_cached_build_driver "$build_driver_wvb" || exit $?
     lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
-    verify_file "$lowerer" 7491584 \
-        deb75ead2af0d06d2357cdf88d8cf58fefd284bf4834e6489198b517f3a4908e || exit $?
+    verify_file "$lowerer" 7499776 \
+        2ee161ac0a6e885e988e12f9e242005fdb8218776991bfb08ffc6d8417ac1e28 || exit $?
 else
     "$script_directory/Build-Current-Wvb.sh" \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
         "$build_driver_wvb" >/dev/null || exit $?
-    verify_file "$build_driver_wvb" 1162338 \
-        a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 || exit $?
+    verify_file "$build_driver_wvb" 1142818 \
+        125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 || exit $?
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
         2 "$build_driver_wvb" "$build_driver" --development-cache >/dev/null || exit $?
 

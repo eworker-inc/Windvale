@@ -123,14 +123,14 @@ if "%Development%"=="1" (
     call :prepare_cached_build_driver "%BuildDriverWvb%"
     if errorlevel 1 goto :cleanup
     set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
-    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7491072 85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3
+    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7499264 4912b2ffb5390aeb30ce54b5eabb0e4970923b6ebd4c1d08567ee78a562cb54a
     if errorlevel 1 goto :cleanup
 ) else (
     call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
         "%BuildDriverWvb%" >nul
     if errorlevel 1 goto :cleanup
-    call :verify_file "%BuildDriverWvb%" 1162338 a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20
+    call :verify_file "%BuildDriverWvb%" 1142818 125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574
     if errorlevel 1 goto :cleanup
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
         2 "%BuildDriverWvb%" "%BuildDriver%" --development-cache >nul

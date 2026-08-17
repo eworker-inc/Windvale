@@ -78,9 +78,9 @@ compiler_wvb="$test_directory/Compiler-Build-Driver.wvb"
     "$compiler_wvb" >"$test_directory/Compiler-Build.out" \
     2>"$test_directory/Compiler-Build.err" || fail
 [[ ! -s $test_directory/Compiler-Build.err ]] || fail
-[[ $(stat -c %s -- "$compiler_wvb") == 1162338 ]] || fail
+[[ $(stat -c %s -- "$compiler_wvb") == 1142818 ]] || fail
 printf '%s  %s\n' \
-    a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20 \
+    125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 \
     "$compiler_wvb" | sha256sum --check --strict --quiet || fail
 chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
 "$test_directory/linux-x64-wvstage.elf" "$compiler_wvb" \

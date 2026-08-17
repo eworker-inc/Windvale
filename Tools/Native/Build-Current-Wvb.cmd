@@ -13,7 +13,7 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "CompilerRoot=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate"
 set "BuildDriver=%CompilerRoot%\windows-x64\wvbuild.exe"
 
-call :verify_file "%BuildDriver%" 30381568 b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3 "current Windows native build driver"
+call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f "current Windows native build driver"
 if errorlevel 1 exit /b 1
 
 set "ProjectPath=%~f1"

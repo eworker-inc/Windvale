@@ -29,6 +29,7 @@ export enum Compilerˉsourceˉstatementˉkind {
     Match = 10;
     Push = 11;
     For = 12;
+    Try = 13;
 }
 
 export enum Compilerˉsourceˉexpressionˉkind {
@@ -1580,17 +1581,21 @@ export fn Compilerˉbodyˉparseˉreturnˉstatement(
     return Compilerˉbodyˉstatementˉmake(Compilerˉsourceˉstatementˉkind.Return, false, Start, Valueˉend.Nextˉoffset, Start.Offset, 0u32, Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown, Start.Offset, 0u32, Value.Offset, Value.Length, Start.Offset, 0u32, Start.Offset, 0u32, Valueˉresult);
 }
 
-export fn Compilerˉbodyˉparseˉexpressionˉstatement(
+fn Compilerˉbodyˉparseˉterminatedˉexpressionˉstatement(
     Input: bytes,
     Start: Sourceˉlexer.Compilerˉsourceˉtoken,
-    Endˉoffset: u32
+    Endˉoffset: u32,
+    Kind: Compilerˉsourceˉstatementˉkind,
+    Expressionˉoffset: u32,
+    Expressionˉline: u32,
+    Expressionˉcolumn: u32
 ) -> Compilerˉsourceˉstatement {
-    let Expression: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(Input, Start.Offset, Start.Line, Start.Column, Endˉoffset, 0u32, 0u32);
-    if Expression.Status != Compilerˉbodyˉparseˉstatus.Valid { return Compilerˉbodyˉstatementˉfailure(Compilerˉbodyˉstepˉfromˉexpression(Expression), Compilerˉsourceˉstatementˉkind.Expression, Start); }
+    let Expression: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(Input, Expressionˉoffset, Expressionˉline, Expressionˉcolumn, Endˉoffset, 0u32, 0u32);
+    if Expression.Status != Compilerˉbodyˉparseˉstatus.Valid { return Compilerˉbodyˉstatementˉfailure(Compilerˉbodyˉstepˉfromˉexpression(Expression), Kind, Start); }
     let Semicolon: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(Input, Expression.Nextˉoffset, Expression.Nextˉline, Expression.Nextˉcolumn, Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Semicolon);
-    if Semicolon.Status != Compilerˉbodyˉparseˉstatus.Valid { return Compilerˉbodyˉstatementˉfailure(Semicolon, Compilerˉsourceˉstatementˉkind.Expression, Start); }
+    if Semicolon.Status != Compilerˉbodyˉparseˉstatus.Valid { return Compilerˉbodyˉstatementˉfailure(Semicolon, Kind, Start); }
     let Result: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉstepˉvalid(Semicolon.Nextˉoffset, Semicolon.Nextˉline, Semicolon.Nextˉcolumn, 1u32, Expression.Nodes, 1u32, Expression.Depth);
-    return Compilerˉbodyˉstatementˉmake(Compilerˉsourceˉstatementˉkind.Expression, false, Start, Semicolon.Nextˉoffset, Start.Offset, 0u32, Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown, Start.Offset, 0u32, Expression.Offset, Expression.Length, Start.Offset, 0u32, Start.Offset, 0u32, Result);
+    return Compilerˉbodyˉstatementˉmake(Kind, false, Start, Semicolon.Nextˉoffset, Start.Offset, 0u32, Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown, Start.Offset, 0u32, Expression.Offset, Expression.Length, Start.Offset, 0u32, Start.Offset, 0u32, Result);
 }
 
 export fn Compilerˉbodyˉparseˉifˉstatement(
@@ -2003,6 +2008,12 @@ export fn Compilerˉparseˉnextˉstatementˉvalidated(
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.For { return Compilerˉbodyˉparseˉforˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Match { return Compilerˉbodyˉparseˉmatchˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Return { return Compilerˉbodyˉparseˉreturnˉstatement(Input, Start, Endˉoffset); }
+    if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Try {
+        return Compilerˉbodyˉparseˉterminatedˉexpressionˉstatement(
+            Input, Start, Endˉoffset, Compilerˉsourceˉstatementˉkind.Try,
+            Start.Nextˉoffset, Start.Nextˉline, Start.Nextˉcolumn
+        );
+    }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Break { return Compilerˉbodyˉparseˉloopˉcontrolˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Continue { return Compilerˉbodyˉparseˉloopˉcontrolˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace { return Compilerˉbodyˉparseˉblockˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
@@ -2010,7 +2021,10 @@ export fn Compilerˉparseˉnextˉstatementˉvalidated(
         let Lookahead: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(Input, Start.Nextˉoffset, Start.Nextˉline, Start.Nextˉcolumn, Endˉoffset);
         if Compilerˉbodyˉisˉassignmentˉoperator(Lookahead.Kind) { return Compilerˉbodyˉparseˉassignmentˉstatement(Input, Start, Endˉoffset); }
     }
-    return Compilerˉbodyˉparseˉexpressionˉstatement(Input, Start, Endˉoffset);
+    return Compilerˉbodyˉparseˉterminatedˉexpressionˉstatement(
+        Input, Start, Endˉoffset, Compilerˉsourceˉstatementˉkind.Expression,
+        Start.Offset, Start.Line, Start.Column
+    );
 }
 
 export fn Compilerˉparseˉblockˉvalidated(

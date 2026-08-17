@@ -2114,7 +2114,8 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                     Result = Compilerˉsourceˉbindingsˉphaseˉbody(Result, Assignmentˉvalue);
                 }
             }
-            if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Expression {
+            if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Expression ||
+                Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Try {
                 if Bindˉbody {
                     let Standaloneˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                         Source, Statement.Offset, Statement.Line, Statement.Column,

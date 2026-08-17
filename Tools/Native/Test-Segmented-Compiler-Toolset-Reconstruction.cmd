@@ -49,8 +49,8 @@ set "FailureStep=compiler-scale WVB build"
     >"%TestDirectory%\Compiler-Build.out" 2>"%TestDirectory%\Compiler-Build.err"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Compiler-Build.err") do if not "%%~zF"=="0" goto :failed
-for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1162338" goto :failed
-certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20" >nul
+for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1142818" goto :failed
+certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574" >nul
 if errorlevel 1 goto :failed
 set "FailureStep=compiler-scale native staging"
 "%TestDirectory%\windows-x64-wvstage.exe" "%CompilerWvb%" ^

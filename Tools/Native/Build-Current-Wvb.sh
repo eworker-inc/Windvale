@@ -26,8 +26,8 @@ verify_file() {
     }
 }
 
-verify_file "$build_driver" 30380032 \
-    b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0 \
+verify_file "$build_driver" 30072832 \
+    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 \
     'current Linux native build driver' || exit 1
 
 project_input=$1

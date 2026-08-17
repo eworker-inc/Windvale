@@ -62,10 +62,10 @@ trap cleanup EXIT
 "$repository_root/Tools/Native/Compile-Compiler-Source-Set.sh" \
     "$stage1_compiler" "$source_root" "$stage2" || exit $?
 
-verify_file "$stage2" 931035 \
-    13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4 \
+verify_file "$stage2" 935163 \
+    a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6 \
     'Stage 2 compiler WVB' || exit 1
 "$verifier" "$stage2" >"$temporary_directory/Verify.txt" || exit $?
 cmp --silent -- "$stage1" "$stage2" || exit 1
 
-echo 'native compiler convergence status=Complete compiler-bytes=931035 compiler-sha256=13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4'
+echo 'native compiler convergence status=Complete compiler-bytes=935163 compiler-sha256=a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6'

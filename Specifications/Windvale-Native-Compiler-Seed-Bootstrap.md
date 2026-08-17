@@ -26,14 +26,14 @@ The seed compiler source is the qualified semantic-freeze tree at commit
 `3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35` remains the exact Stage 0 recovery
 state for the last 921,900-byte convergence candidate. Decision 0491 repins the
 ordinary bootstrap contract to the current explicit inventory in
-`Projects/Examples/Windvale-Compiler.wvproj`. With Decision 0713's capability
-catalog extension and Decision 0712's typed singleton references, the seed emits
-a transitional 955,192-byte Stage 1 WVB at
+`Projects/Examples/Windvale-Compiler.wvproj`. With Decisions 0744 and 0745's
+exact propagation and compact WVIR records, the seed emits a transitional
+959,320-byte Stage 1 WVB at
 SHA-256
-`f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4`.
+`e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb`.
 The launcher packages that private compiler and uses it once to emit the stable
-931,035-byte Stage 2 WVB at SHA-256
-`13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4`.
+935,163-byte Stage 2 WVB at SHA-256
+`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
 Decision 0494 retains the unqualified current WVB and paired reconstruction in
 `Artifacts/Native-Compiler-Reconstruction-Candidate`; exact checkpoint
 qualification remains pending on both hosts.
@@ -120,9 +120,9 @@ independently verify the next generation, and require complete byte equality.
 source invocation shared by the seed and convergence routes. They do not discover
 files, parse the project, or weaken the project-manifest identity check.
 
-The coordinators are repinned to require identical 931,035-byte outputs at
+The coordinators are repinned to require identical 935,163-byte outputs at
 SHA-256
-`13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4`.
+`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
 The current toolset and paired compiler applications are reconstructed as
 unqualified candidates. Exact equality on Windows and Linux and promotion remain
 part of the grouped retirement qualification; a local or focused pass does not

@@ -65,7 +65,11 @@ The backend accepts:
 - capability calls with their validated catalog parameter and result shapes;
 - the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics, including exact little-endian `u64` read and construction plus lossless `u32` to `u64` widening;
 - checked `i32`/`i64`/`u32`/`u64` arithmetic including division and remainder; `u8`/`u32`/`u64` bitwise and shift operations; exact text/bytes equality; full fixed-width scalar comparison, signed negation, invariant formatting, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
-- variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, `while`, `for`, `break`, and `continue`.
+- variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, exact `try` propagation, `while`, `for`, `break`, and `continue`.
+
+`try` is source-only control-flow sugar. WVIR presents only its existing variant
+case test, branch, and return, so canonical WVB 1.11 gains no opcode, type, section,
+flag, or version change.
 
 The root owns the emitted module name, profile, capabilities, static data, and exports. Dependencies follow the WVSS contract: imports, records, enums, and exported functions only. Their functions become internal WVB functions. Invalid graph topology, dependency order/profile/shape, unknown or repeated capabilities, and portable-profile capabilities remain upstream semantic failures rather than being silently omitted.
 
@@ -273,9 +277,9 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current deterministic compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 956,733 bytes, SHA-256 `ef6b18cefb40527944da34103c891754207fad6aafea81f4168f33b3cb93a374`.
-- `Source-Wvb-Demo.wvb`: 962,310 bytes, SHA-256 `ed063a966acdd189718a3f9fd022e1a7e7a85dc4a04a713307c9d91fe6947efe`.
-- `Source-Wvb-Tool.wvb`: 955,192 bytes, SHA-256 `f547a925b49082b4cdbca3979b1889ea154178984a0e761b3a3ad649890d4cd4`.
+- `Source-Wvb-Core.wvb`: 960,861 bytes, SHA-256 `9ba45638b92d0945d343ca42f81f12ff37dba31f6e014ee57e526860f3b0423e`.
+- `Source-Wvb-Demo.wvb`: 966,821 bytes, SHA-256 `43727d290de1eb8c4ef16a781b9b453e4c849c6bcab430d8645f5b07d0a41213`.
+- `Source-Wvb-Tool.wvb`: 959,320 bytes, SHA-256 `e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb`.
 - `Source-Wvb-Memory-Adapter.wvb`: 924,951 bytes, SHA-256 `8c5f97a83d7dde34d42f411260986915679e47dcac89a486e0a3a8d94cb523a5`.
 
 Decision 0518 moved ordinary construction of the core, demo, and tool products to

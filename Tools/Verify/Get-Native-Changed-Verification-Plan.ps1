@@ -2293,6 +2293,7 @@ foreach ($Path in $Paths) {
         'Examples/Compiler/Source-Wvb-Tool.wv',
         'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv',
         'Tests/Fixtures/Source-Wvb/Pruning.wv',
+        'Tests/Fixtures/Source-Wvb/Try-Propagation.wv',
         'Projects/Compiler/Windvale-Source-Lexer-Core.wvproj',
         'Projects/Examples/Windvale-Source-Lexer-Demo.wvproj',
         'Projects/Compiler/Windvale-Source-Declaration-Parser.wvproj',

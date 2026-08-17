@@ -87,8 +87,8 @@ export fn Main() -> i32 {
         Bytesˉconcat(Valid.Directory, Bytesˉfromˉu8(0u8))
     ) { return 14; }
     let Blocksˉoffset: u32 = 48u32 + Valid.Functions * 48u32;
-    let Operationsˉoffset: u32 = Blocksˉoffset + Valid.Blocks * 36u32;
-    let Temporariesˉoffset: u32 = Operationsˉoffset + Valid.Operations * 48u32;
+    let Operationsˉoffset: u32 = Blocksˉoffset + Valid.Blocks * 28u32;
+    let Temporariesˉoffset: u32 = Operationsˉoffset + Valid.Operations * 40u32;
     let Operandsˉoffset: u32 = Temporariesˉoffset + Valid.Temporaries * 4u32;
     if Sourceˉwir.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols, Bindings,
@@ -100,7 +100,7 @@ export fn Main() -> i32 {
     ) { return 16; }
     if Sourceˉwir.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols, Bindings,
-        Sourceˉwirˉreplaceˉu32(Valid.Directory, Operationsˉoffset + 12u32, 64u32)
+        Sourceˉwirˉreplaceˉu32(Valid.Directory, Operationsˉoffset + 4u32, 64u32)
     ) { return 17; }
     if Sourceˉwir.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols, Bindings,
@@ -133,6 +133,10 @@ export fn Main() -> i32 {
     if Sourceˉwirˉstatus("module Wirˉboolean profile portable; export fn Main() -> i32 { if 1 && true { return 1; } return 0; }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉoperator { return 39; }
     if Sourceˉwirˉstatus("module Wirˉcapabilityˉreference profile hosted; capability console.write_line; fn Copy(Output: console.write_line) -> console.write_line { return Output; } fn Use(Output: console.write_line, Value: text) -> void { Output(Value); } export fn Main() -> i32 { let Output: console.write_line = Copy(console.write_line); if false { Use(Output, \"unused\"); } return 0; }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid { return 53; }
     if Sourceˉwirˉstatus("module Wirˉcapabilityˉidentity profile hosted; capability console.write_line; capability diagnostic.write_line; fn Use(Output: console.write_line, Value: text) -> void { Output(Value); } export fn Main() -> i32 { Use(diagnostic.write_line, \"wrong\"); return 0; }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉargument { return 54; }
+    if Sourceˉwirˉstatus("module Wirˉtry profile portable; variant Outcome { Valid; Failure(Error: u32); } fn Check(Fail: bool) -> Outcome { if Fail { return Outcome.Failure(1u32); } return Outcome.Valid(); } export fn Main() -> Outcome { try Check(false); return Outcome.Valid(); }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid { return 55; }
+    if Sourceˉwirˉstatus("module Wirˉtryˉreturn profile portable; variant Outcome { Valid; Failure(Error: u32); } fn Check() -> Outcome { return Outcome.Valid(); } export fn Main() -> i32 { try Check(); return 0; }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉtry { return 56; }
+    if Sourceˉwirˉstatus("module Wirˉtryˉshape profile portable; variant Outcome { Success; Failure(Error: u32); } fn Check() -> Outcome { return Outcome.Success(); } export fn Main() -> Outcome { try Check(); return Outcome.Success(); }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉtry { return 57; }
+    if Sourceˉwirˉstatus("module Wirˉtryˉscalar profile portable; export fn Main() -> i32 { try 1; return 0; }") != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉtry { return 58; }
     let Bindingˉfailure: Sourceˉwir.Compilerˉsourceˉwirˉsummary = Sourceˉwir.Compilerˉvalidateˉsourceˉwir(
         Sourceˉwirˉone("module Wirˉbinding profile portable; export fn Main() -> i32 { return Missing; }")
     );

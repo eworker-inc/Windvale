@@ -34,7 +34,7 @@ set "WorktreeAdded=1"
 call "%Recovery%\Tools\Native\Build-Wvb.cmd" "%Recovery%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Build-Driver.wvb" 1121370 ed5bbceaa0f1b4d889a7d17fe1d138d0bd5a01a593f6925ba34023ff0b0960ef || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
-call :verify_file "%Lowerer%" 7491072 85c07ef9f07b6b1351a5aa467c4e8f77de33099db9fce3c3adaf0a47191de0a3 || goto :cleanup
+call :verify_file "%Lowerer%" 7499264 4912b2ffb5390aeb30ce54b5eabb0e4970923b6ebd4c1d08567ee78a562cb54a || goto :cleanup
 echo PASS  native standard byte output phase=tools item=1/4
 
 echo START native standard byte output phase=compile item=2/4

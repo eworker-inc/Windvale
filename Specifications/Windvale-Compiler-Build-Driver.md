@@ -137,17 +137,17 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The current canonical-source reconstruction candidate is 1,162,338 bytes with
-SHA-256 `a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20`.
+The current canonical-source reconstruction candidate is 1,142,818 bytes with
+SHA-256 `125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574`.
 It stages as eight canonical native chunks with `Main` at entry offset 220,460.
 
 The current WVB 1.11 reconstruction for `windows-x64-build-driver-v1` emits a
-30,381,568-byte PE32+ application with SHA-256
-`b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3`.
+30,071,296-byte PE32+ application with SHA-256
+`f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f`.
 
 The current WVB 1.11 reconstruction for `linux-x64-build-driver-v1` emits a
-30,380,032-byte sectionless static-PIE ELF application with SHA-256
-`b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0`.
+30,072,832-byte sectionless static-PIE ELF application with SHA-256
+`628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9`.
 
 These are unqualified reconstruction candidates. `Build-Current-Wvb` uses the
 current candidate driver's raw, self-verified, non-atomic output contract because

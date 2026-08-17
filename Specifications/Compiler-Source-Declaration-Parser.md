@@ -85,9 +85,9 @@ source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums
 
 ## Current candidate artifacts
 
-- `Source-Declaration-Parser.wvb`: 151,197 bytes, SHA-256 `8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb`.
-- `Source-Declaration-Parser-Demo.wvb`: 154,365 bytes, SHA-256 `9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf`, result `0` under 20,000,000 instructions.
-- `Source-Declaration-Parser-Tool.wvb`: 151,731 bytes, SHA-256 `ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0`.
+- `Source-Declaration-Parser.wvb`: 151,414 bytes, SHA-256 `b321d235e521dcae246bd20f627e3e5c0f117110a9150a934282ce834c0ffa62`.
+- `Source-Declaration-Parser-Demo.wvb`: 154,582 bytes, SHA-256 `8696e7d83f7e7f8b0e0fc3d4d7cc9c79dab2b5bc1732c11bdf3633ff4e90fca9`, result `0` under 20,000,000 instructions.
+- `Source-Declaration-Parser-Tool.wvb`: 151,948 bytes, SHA-256 `98e06a28dbc9f39dd23930deddc2018eb169d37bbb9b28b954bd4db6894f043a`.
 
 Decision 0516 makes the native Project 1 front door the ordinary constructor
 for all three WVBs and binds the core's exact portable type/export surface

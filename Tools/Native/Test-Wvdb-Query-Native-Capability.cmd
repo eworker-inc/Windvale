@@ -23,7 +23,7 @@ call "%Native%\Build-Wvdb-Query-Package.cmd" ^
     "%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvpack" ^
     "%RepositoryRoot%\Distribution\Applications\Wvdb-Query\Windvale-Wvdb-Query.wvlock" ^
     "%Work%\Wvdb-Query.wvb" || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.wvb" 26420 24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 "locked WVDB query WVB" || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.wvb" 26145 77cb6034402942734be316b9a135d6c1b46ace5cb43a198b2aafe2d1b098027b "locked WVDB query WVB" || goto :cleanup
 
 echo native wvdb query step=capability-directory
 call "%Native%\Inspect-Wvb.cmd" "%Work%\Wvdb-Query.wvb" >"%Work%\Inspect.txt" || goto :cleanup
@@ -43,14 +43,14 @@ echo native wvdb query step=build-current-lowerer
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
     "%Work%\Lowerer.wvb" || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 522025 318717a608ba37360b9c39f53b9720944ab4463af4ab6a1ec9a267a6ceb85bf6 "variant-capable lowerer WVB" || goto :cleanup
+call :verify_file "%Work%\Lowerer.wvb" 523087 6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 "variant-capable lowerer WVB" || goto :cleanup
 
 echo native wvdb query step=package-current-lowerer
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" || goto :cleanup
 
 echo native wvdb query step=lower-application
 "%Work%\Lowerer.exe" "%Work%\Wvdb-Query.wvb" "%Work%\Wvdb-Query.wvo" || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.wvo" 239164 141be1a8194a13def42ab945dda81148719cad3e8344826e3fea5f9747e69721 "WVDB query WVO" || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.wvo" 235564 182d5d49e56bff03de1fb30c179310a814fa120055884e60e23c53e01b41c0f3 "WVDB query WVO" || goto :cleanup
 
 echo native wvdb query step=assemble-rights-reduced-hosts
 call "%Native%\Assemble-Wva.cmd" "%RepositoryRoot%\Runtime\Native\X64-Read-Only-Directory-Host.wva" "%Work%\Directory-Host.wvo" || goto :cleanup
@@ -67,16 +67,16 @@ call "%Native%\Link-Wvo.cmd" 0 Directory_host_entry "%Work%\Linux-Image.chunk-0"
     "%Work%\Wvdb-Query.wvo" "%Work%\Directory-Host.wvo" "%Work%\Directory-Linux.wvo" >"%Work%\Linux-Link.txt" || goto :cleanup
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Directory_host_entry address=" "%Work%\Windows-Link.txt"') do set "WindowsEntry=%%E"
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Directory_host_entry address=" "%Work%\Linux-Link.txt"') do set "LinuxEntry=%%E"
-if not "%WindowsEntry%"=="237360" goto :cleanup
-if not "%LinuxEntry%"=="237360" goto :cleanup
-call :verify_file "%Work%\Windows-Image.chunk-0" 240456 adbd8c52f95c79fed5646400b4d2b2b3ec070807c512291765d3a398975952ee "Windows linked image" || goto :cleanup
-call :verify_file "%Work%\Linux-Image.chunk-0" 239437 32833a1b1bb5b8c6febb2e4cabcf89ce13ffee67523cf8f82c1490e377034e21 "Linux linked image" || goto :cleanup
+if not "%WindowsEntry%"=="233760" goto :cleanup
+if not "%LinuxEntry%"=="233760" goto :cleanup
+call :verify_file "%Work%\Windows-Image.chunk-0" 236856 0abfe3194e1d412bf78b812484ac157e858efad576573e64f901e323ae20175d "Windows linked image" || goto :cleanup
+call :verify_file "%Work%\Linux-Image.chunk-0" 235837 c7b1971f792f90ed94b32abbbb4355b8ac84773ec8599127b5a37cbb40bec872 "Linux linked image" || goto :cleanup
 
 echo native wvdb query step=package-cross-host-applications
-call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" "%Work%\Windows-Image" 1 237360 "%Work%\Wvdb-Query.exe" windows || goto :cleanup
-call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" "%Work%\Linux-Image" 1 237360 "%Work%\Wvdb-Query.elf" linux || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.exe" 260096 29914b484a195ffcc4c3463ca997d68802a8d662d2c6066e0dfe07481413ca3b "Windows hosted application" || goto :cleanup
-call :verify_file "%Work%\Wvdb-Query.elf" 258048 2c7afe9857c284196dc6120cf25241df0520ec3ea5ce35bee32c21904ef10baf "Linux hosted application" || goto :cleanup
+call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" "%Work%\Windows-Image" 1 233760 "%Work%\Wvdb-Query.exe" windows || goto :cleanup
+call "%Native%\Build-Cached-Hosted-Application.cmd" 6 "%Work%\Wvdb-Query.wvb" "%Work%\Linux-Image" 1 233760 "%Work%\Wvdb-Query.elf" linux || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.exe" 256512 5780f7416938fa1329c6e85314697c81a8a29fcd35f792b7c7b5353962e944d7 "Windows hosted application" || goto :cleanup
+call :verify_file "%Work%\Wvdb-Query.elf" 258048 c457ac0470385fedc4e328abe29a4c56d2253abb3c5d91ffe2c8ead24257401c "Linux hosted application" || goto :cleanup
 
 echo native wvdb query step=create-fixture
 node "%Native%\Create-Wvdb-Query-Fixture.mjs" "%Work%\Run\Windvale-Database-Storage.bin" || goto :cleanup
@@ -138,8 +138,8 @@ if errorlevel 1 (
     goto :cleanup
 )
 
-echo native wvdb query identity host=windows wvb=24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 windows-application=29914b484a195ffcc4c3463ca997d68802a8d662d2c6066e0dfe07481413ca3b linux-application=2c7afe9857c284196dc6120cf25241df0520ec3ea5ce35bee32c21904ef10baf
-echo native wvdb query capability status=Passed cases=6 capabilities=5 wvb=24cca5d29e02f7030a1c08f6a197aef2bd3dae5736bacba7c52dac4c0a867cc9 cross-host-images=Verified
+echo native wvdb query identity host=windows wvb=77cb6034402942734be316b9a135d6c1b46ace5cb43a198b2aafe2d1b098027b windows-application=5780f7416938fa1329c6e85314697c81a8a29fcd35f792b7c7b5353962e944d7 linux-application=c457ac0470385fedc4e328abe29a4c56d2253abb3c5d91ffe2c8ead24257401c
+echo native wvdb query capability status=Passed cases=6 capabilities=5 wvb=77cb6034402942734be316b9a135d6c1b46ace5cb43a198b2aafe2d1b098027b cross-host-images=Verified
 set "Result=0"
 
 :cleanup

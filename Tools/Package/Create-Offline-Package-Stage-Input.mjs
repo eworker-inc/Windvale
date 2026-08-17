@@ -11,21 +11,21 @@ const PACKAGE_IDENTITIES = [
         "a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 " +
         "eef8bd6d8ab5c535d263fb914fa3fae6f82ee9ae16b0854de497749475f76ad1",
     "package windvale.wvdb-query 0.1.0 " +
-        "33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c " +
-        "4e4089ad6b40f6f9b435bebdd8b3321e64db6038d745c191aa54e348ee44d926",
+        "40c09378e20b5ac49d41fada61c24e786363e89bf839925cac8d9f3c715a9378 " +
+        "7fe9552317e0845b693b8a4ade1882c4a492cecf46c1bfcaaf26b45ed067be50",
 ];
 const APPROVAL_IDENTITIES = {
     inspector: "32023a688e3ab4eb6dd83f72c349bf7d2b7ddb184b49253819075f8d9af7b69f",
-    wvdb: "13650128da9229524b35910b0fb9f3f7ed2da3de3648f0207fd1e32979b30668",
+    wvdb: "0b58e435e08045a7118353e2a454e92f4eadfdf36458693e5dd1cf85b58dfdb2",
 };
 const LAUNCH_IDENTITIES = {
     "windows-x64": {
         inspector: "eac1706bc237f60b0a843cb369f5b3f07cff794d44d07079c557e1f04f9fa47b",
-        wvdb: "1cf993a1dec8f06ea3475aab1aaf27d2ac28f4acca39d7a0f475be8fa75ab530",
+        wvdb: "9012947e64e3650bba1e5dd5213a1f4c78c56318e5b5ff40804d7ca902aa3348",
     },
     "linux-x64": {
         inspector: "f5c45df84c9624fd7579fc83947a595caf206ddb5783a9b3efba15d7ad6e379b",
-        wvdb: "7c7f85d8d7877badc4353581be8c19a454e9ca375977d17b7605d58fd66bb70b",
+        wvdb: "1e61ebeac166c9b35cb852dc290ae5df97cf289b22fa8e057b4df74953786dfc",
     },
 };
 
@@ -103,8 +103,8 @@ function Createˉinput(WvdbBundlePath, InspectorBundlePath, Revision, Tree, Outp
 
     const WvdbBundle = Readˉordinary(WvdbBundlePath, "WVDB Query bundle");
     const InspectorBundle = Readˉordinary(InspectorBundlePath, "WVB Inspector bundle");
-    if (WvdbBundle.length !== 43_873 ||
-        Sha256(WvdbBundle) !== "33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c" ||
+    if (WvdbBundle.length !== 43_598 ||
+        Sha256(WvdbBundle) !== "40c09378e20b5ac49d41fada61c24e786363e89bf839925cac8d9f3c715a9378" ||
         InspectorBundle.length !== 92_781 ||
         Sha256(InspectorBundle) !== "a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9") {
         Fail("An exact package bundle identity differs.");

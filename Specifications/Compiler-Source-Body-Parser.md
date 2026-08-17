@@ -12,14 +12,14 @@ The parser recognizes:
 
 - `let` and `var` locals with an optional explicit non-void, non-array type and one required initializer;
 - simple identifier `=`, `+=`, `-=`, and `*=` assignment;
-- `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, exhaustive `match`/`case`, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
+- `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, exhaustive `match`/`case`, narrow `try` propagation, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
 - `i32`, `i64`, `u8`, `u32`, and `u64` integer literals plus string-shape and Boolean literals;
 - qualified names, field access, one call or index postfix, named record literals, variant constructors, and bounded builder construction;
 - unary `-`, `!`, `~`, and consuming `freeze`;
 - `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
 - parenthesized expressions without a synthetic group node.
 
-This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, and `For = 12`; expression kinds append `Builder = 11`. Semantic lowering proves exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11`. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
 
 An inferred local publishes `Unknown` as its syntax type kind and zero type-span length. This is an explicit parser representation of an omitted annotation, not a semantic value shape; typed WVIR construction resolves it from the initializer. Comma-separated parameter, call-argument, positional-constructor, named-record-field, and static-data lists accept one final trailing comma under the Seed grammar. `Namedˉrecord = 10` is appended to the expression-kind contract. The named form is recognized only when a qualified name is followed by `{ Identifier :`, so an ordinary condition followed by its block remains unambiguous.
 
@@ -77,9 +77,9 @@ The first failure is deterministic and includes lexical status, expected/found t
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Body-Parser.wvb`: 248,663 bytes, SHA-256 `68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589`.
-- `Source-Body-Parser-Demo.wvb`: 254,805 bytes, SHA-256 `2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f`, result `0` under 30,000,000 instructions.
-- `Source-Body-Parser-Tool.wvb`: 247,844 bytes, SHA-256 `0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f`.
+- `Source-Body-Parser.wvb`: 249,214 bytes, SHA-256 `6a0cd2ea9987778490ac15321d3604d06e49a2e327502f02070c8f83ff1089fb`.
+- `Source-Body-Parser-Demo.wvb`: 256,044 bytes, SHA-256 `08e3d5ceeada8f4361e953c5270efb4870fd53525dd5bf5ed58c2e3ad2f94654`, result `0` under 30,000,000 instructions.
+- `Source-Body-Parser-Tool.wvb`: 248,436 bytes, SHA-256 `2ecc13dbc108befc33dd86851caab804d87576443c507d13959b5232ad76b2c6`.
 
 Decision 0516 makes the native Project 1 front door the ordinary constructor
 for all three WVBs and binds the core's exact portable type/export surface

@@ -13,13 +13,13 @@ set, or replace the retained Stage 0 recovery archive.
 `Projects/Examples/Windvale-Compiler.wvproj` is 649 LF-only bytes at SHA-256
 `a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05`.
 The native seed bootstrap compiles that exact inventory to a transitional
-955,192-byte Stage 1 compiler, packages it privately, and promotes its byte-stable
-Stage 2 output as the 931,035-byte candidate at SHA-256
-`13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4`.
-Its 416 functions contain 767,871 WVB code bytes.
+959,320-byte Stage 1 compiler, packages it privately, and promotes its byte-stable
+Stage 2 output as the 935,163-byte candidate at SHA-256
+`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
+Its 418 functions contain 770,988 WVB code bytes.
 
-The current native backend produces 27,867,015 linked image bytes at SHA-256
-`69c2250a4ebb19d63be0cb14b367a5aeb5fcbb64a0b825cd275f82595a851ac9`.
+The current native backend produces 28,141,686 linked image bytes at SHA-256
+`492c79a9e1ef17fb4dd610de62491b9d1b2d181bf69267c7847121fad827fa57`.
 The retained independent recovery oracle remains evidence for the previous
 recovery checkpoint; this current native-only refresh does not claim a new
 managed differential measurement.
@@ -30,12 +30,12 @@ The retained candidate artifacts are:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Canonical WVB 1.11 | 931,035 | `13558d9dbc0d185b161b770824aa29ff90b8873903b2b5d7184a23950a6fc1e4` |
-| Windows x64 format 3 | 27,898,368 | `4009e6747bbf9a6d2b0b2ec90e2368ca50fda863d445534f15ef96e22a657b34` |
-| Linux x64 format 3 | 27,897,856 | `c266adf20fe2927a446483f68880ef323c480f011b0c26384716ea2f651bcd65` |
-| Build-driver WVB 1.11 | 1,162,338 | `a214662da422443cd70c4be12c8f0bd06cbb5bce9fe3a56e2a52c46a37445a20` |
-| Windows x64 build driver | 30,381,568 | `b0d58f4d8d6d32e09d45358035ce4521410ec1280f11fa72b66245e621ba49a3` |
-| Linux x64 build driver | 30,380,032 | `b4fdc30a7242e03f7166491bf6b415aa3b5dce8ff0e16444f6ccb24c5bcb03a0` |
+| Canonical WVB 1.11 | 935,163 | `a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6` |
+| Windows x64 format 3 | 28,172,800 | `a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d` |
+| Linux x64 format 3 | 28,172,288 | `da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b` |
+| Build-driver WVB 1.11 | 1,142,818 | `125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574` |
+| Windows x64 build driver | 30,071,296 | `f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f` |
+| Linux x64 build driver | 30,072,832 | `628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9` |
 
 `Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json` binds those
 six files. This inventory is intentionally distinct from
@@ -51,11 +51,12 @@ directory. They:
    project inventory;
 2. require the canonical current WVB identity;
 3. stage the large WVO through the admitted segmented native lowerer;
-4. link and transport one canonical 27,867,015-byte image;
+4. link and transport one canonical 28,141,686-byte image;
 5. require entry offset 51,356 and exactly seven transported chunks;
 6. package the same WVB and image for both permanent hosts through the current
    hosted-container toolset;
-7. use the frozen build driver to compile the current build-driver source, then
+7. package the reconstructed compiler for the current host and use its explicit
+   source-set launcher to compile the current build-driver closure, then
    independently stage it as eight chunks with entry offset 220,460;
 8. package the current driver for both permanent hosts under profile 2; and
 9. reread and require all six final identities.

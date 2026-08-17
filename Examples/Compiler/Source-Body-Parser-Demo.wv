@@ -115,6 +115,20 @@ export fn Main() -> i32 {
     if Loopˉsummary.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid { return 53; }
     if Loopˉsummary.Statements != 6u32 { return 54; }
 
+    let Tryˉsource: bytes = Textˉtoˉutf8("{ try Validate(); }");
+    let Tryˉsummary: Sourceˉbodies.Compilerˉsourceˉbodyˉsummary =
+        Sourceˉbodies.Compilerˉparseˉbodyˉspan(
+            Tryˉsource, 0u32, 1u32, 1u32, Bytesˉlength(Tryˉsource)
+        );
+    if Tryˉsummary.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid { return 55; }
+    let Tryˉstatement: Sourceˉbodies.Compilerˉsourceˉstatement =
+        Sourceˉbodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            Tryˉsource, 1u32, 1u32, 2u32,
+            Bytesˉlength(Tryˉsource), 0u32
+        );
+    if Tryˉstatement.Kind != Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Try { return 56; }
+    if Tryˉstatement.Expressions != 1u32 { return 57; }
+
     let Missingˉsemicolon: Sourceˉbodies.Compilerˉsourceˉbodyˉsummary = Sourceˉbodies.Compilerˉparseˉsourceˉbodies(Textˉtoˉutf8("module Bad profile portable; fn Main() -> i32 { return 0 }"));
     if Missingˉsemicolon.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken { return 26; }
     if Missingˉsemicolon.Expected != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon { return 27; }

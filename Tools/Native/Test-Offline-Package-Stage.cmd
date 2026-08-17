@@ -99,18 +99,18 @@ echo native offline package stage step=verify-offline-directory item=7/8 package
 node "%ReleaseVerifier%" verify "%Work%\Root-Key\root-public.pem" "%Work%\First" >"%Work%\Verify.txt" || goto :cleanup
 findstr /c:"release verify status=Valid version=0.1.0 channel=stage" "%Work%\Verify.txt" >nul || goto :cleanup
 findstr /c:"artifact package windvale.wvb-inspector a9be069d9eaab7a612a8833d8ce621d1598e01d250ba53a62a2ab4b2126fc4a9 92781" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
-findstr /c:"artifact package windvale.wvdb-query 33bf528ef69d5b7578ec2b2c61ca5915fb2ebd7d71346fb439753bbf5f2ab70c 43873" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
-findstr /c:"artifact generation linux-x64 ec12ed70528e77b3809380525d9abeeed87433dcff7150c96eb9dc449e8aea57 726" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
-findstr /c:"artifact generation windows-x64 d5b55b528b35adb43eb7bc9a9fe62d2ca3c5d6578642e78854b7be31013f579d 728" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact package windvale.wvdb-query 40c09378e20b5ac49d41fada61c24e786363e89bf839925cac8d9f3c715a9378 43598" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact generation linux-x64 d09fa80957b663d3f6d2e85fa8b1ccf7cb3a79c35e250a94d4a6e9f86fec4bd5 726" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
+findstr /c:"artifact generation windows-x64 7ab98618e589b58850f94a1390c9a2d887f51127c6e6d6cc4c674b319d7a4999 728" "%Work%\First\Release-Manifest.txt" >nul || goto :cleanup
 "%Work%\Generation-Verifier.exe" "%Work%\First\Artifacts\Generations\Generation-1.windows-x64.txt" >"%Work%\Generation-Windows.txt" || goto :cleanup
 findstr /c:"generation status=Valid target=windows-x64 packages=2 commands=2" "%Work%\Generation-Windows.txt" >nul || goto :cleanup
 "%Work%\Generation-Verifier.exe" "%Work%\First\Artifacts\Generations\Generation-1.linux-x64.txt" >"%Work%\Generation-Linux.txt" || goto :cleanup
 findstr /c:"generation status=Valid target=linux-x64 packages=2 commands=2" "%Work%\Generation-Linux.txt" >nul || goto :cleanup
 node "%GenerationPublisher%" publish "%Work%\Installed" ^
     "%Work%\First\Artifacts\Generations\Generation-1.windows-x64.txt" ^
-    d5b55b528b35adb43eb7bc9a9fe62d2ca3c5d6578642e78854b7be31013f579d >nul || goto :cleanup
+    7ab98618e589b58850f94a1390c9a2d887f51127c6e6d6cc4c674b319d7a4999 >nul || goto :cleanup
 node "%GenerationPublisher%" verify "%Work%\Installed" ^
-    d5b55b528b35adb43eb7bc9a9fe62d2ca3c5d6578642e78854b7be31013f579d >nul || goto :cleanup
+    7ab98618e589b58850f94a1390c9a2d887f51127c6e6d6cc4c674b319d7a4999 >nul || goto :cleanup
 
 echo native offline package stage step=reject-package-tamper item=8/8
 node "%FixtureTool%" copy "%Work%\First" "%Work%\Tampered" >nul || goto :cleanup

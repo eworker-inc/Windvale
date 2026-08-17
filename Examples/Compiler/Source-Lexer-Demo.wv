@@ -5,10 +5,10 @@ import Compilerˉsourceˉlexer as Sourceˉlexer;
 data Invalidˉutf8: bytes = [195, 40];
 
 export fn Main() -> i32 {
-    let Complete: bytes = Textˉtoˉutf8("module profile portable hosted system import capability data record enum export fn let var if else while return true false i32 u8 u32 bool text bytes void length Alphaˉbeta 0 255u8 4294967295u32 \"x\\n\\u0041\" ( ) { } [ ] ; : , . -> + - * ! = == != < <= > >= const break continue && || += -= *=");
+    let Complete: bytes = Textˉtoˉutf8("module profile portable hosted system import capability data record enum export fn let var if else while return true false i32 u8 u32 bool text bytes void length Alphaˉbeta 0 255u8 4294967295u32 \"x\\n\\u0041\" ( ) { } [ ] ; : , . -> + - * ! = == != < <= > >= const break continue && || += -= *= try");
     let Scan: Sourceˉlexer.Compilerˉsourceˉscan = Sourceˉlexer.Compilerˉlexˉsource(Complete);
     if Scan.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid { return 1; }
-    if Scan.Tokens != 63u32 { return 2; }
+    if Scan.Tokens != 64u32 { return 2; }
 
     let First: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉtokenˉat(Complete, 0u32);
     if First.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Module { return 3; }
@@ -49,6 +49,8 @@ export fn Main() -> i32 {
     if Minusˉassignment.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Minusˉequals { return 46; }
     let Starˉassignment: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉtokenˉat(Complete, 62u32);
     if Starˉassignment.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Starˉequals { return 47; }
+    let Try: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉtokenˉat(Complete, 63u32);
+    if Try.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Try { return 48; }
 
     let Withˉtrivia: bytes = Textˉtoˉutf8("// 😀\r\n\u00A0module");
     let Triviaˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉtokenˉat(Withˉtrivia, 0u32);
@@ -62,10 +64,10 @@ export fn Main() -> i32 {
     if Unicodeˉwhitespaceˉtoken.Line != 1u32 { return 35; }
     if Unicodeˉwhitespaceˉtoken.Column != 8u32 { return 36; }
 
-    let Nearˉkeywords: bytes = Textˉtoˉutf8("f fx ix ux i33 lex u33 vex boox date elso enux texx trux vood bytex breakx falsy whilx exporx hostex imporx lengtx modulx recorx returx systex profilx continux portablx capabilit capabilitx capabilityx constx");
+    let Nearˉkeywords: bytes = Textˉtoˉutf8("f fx ix ux i33 lex u33 vex boox date elso enux texx trux vood bytex breakx falsy whilx exporx hostex imporx lengtx modulx recorx returx systex profilx continux portablx capabilit capabilitx capabilityx constx tryx");
     let Nearˉkeywordˉscan: Sourceˉlexer.Compilerˉsourceˉscan = Sourceˉlexer.Compilerˉlexˉsource(Nearˉkeywords);
     if Nearˉkeywordˉscan.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid { return 37; }
-    if Nearˉkeywordˉscan.Tokens != 34u32 { return 38; }
+    if Nearˉkeywordˉscan.Tokens != 35u32 { return 38; }
     var Nearˉkeywordˉindex: u32 = 0u32;
     while Nearˉkeywordˉindex < Nearˉkeywordˉscan.Tokens {
         let Nearˉkeyword: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉtokenˉat(Nearˉkeywords, Nearˉkeywordˉindex);

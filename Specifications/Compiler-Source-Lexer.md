@@ -54,6 +54,8 @@ Token-kind values are frozen to the Stage 0 ordering:
 - `Match`, `Case`, `Variant`, `Sequence`, `Builder`, `Freeze`, `Push`, `For`, and `In` are values 69 through 77.
 - `Slash`, `Percent`, `Ampersand`, `Pipe`, `Caret`, `Tilde`, `Shiftˉleft`, and `Shiftˉright` are values 78 through 85 and cover `/`, `%`, `&`, `|`, `^`, `~`, `<<`, and `>>`.
 - `I64` and `U64` are values 86 and 87 and cover the exact type keywords `i64` and `u64`.
+- `Try` is appended as value 88 and covers the exact keyword `try` without
+  renumbering a retained token kind.
 
 An identifier begins with an ASCII letter or underscore. Later characters may also be ASCII digits or U+02C9. No other non-ASCII identifier character is accepted.
 
@@ -86,7 +88,7 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 ## Current candidate implementation
 
-`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 49,470-byte WVB 1.11 module with SHA-256 `411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 56,674-byte module with SHA-256 `f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db` and returns `0` under the 10,000,000-instruction ceiling. These wide-scalar identities are local deterministic evidence. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, the role-based path passed at `4fdc6bf`, and Decision 0055 was cross-host qualified at `1a4fca7`; those retained runs predate the new tokens.
+`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 49,687-byte WVB 1.11 module with SHA-256 `82875e97f8e9893a3e69508040b31a96c58498d79d9137a509c6a89bae39d3ba`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 57,070-byte module with SHA-256 `f676e2642995c79434b5e3c5c5a0a985c04137f38a2734c34d13c66927af8eb0` and returns `0` under the 10,000,000-instruction ceiling. These exact-`try` identities are local deterministic evidence. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, the role-based path passed at `4fdc6bf`, and Decision 0055 was cross-host qualified at `1a4fca7`; those retained runs predate the new token.
 
 Decision 0516 makes the native Project 1 front door the ordinary constructor
 for both current WVBs and binds the core's exact portable type/export surface

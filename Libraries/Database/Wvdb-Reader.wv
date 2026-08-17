@@ -191,23 +191,11 @@ export fn Wvdbˉreaderˉvalidate(Input: bytes) -> Wvdbˉvalidationˉresult {
 
     var Pageˉidentifier: u32 = 0u32;
     while Pageˉidentifier < Pageˉcount {
-        var Pageˉvalid: bool = false;
-        let Pageˉresult: Wvdbˉvalidationˉresult = Wvdbˉvalidateˉpage(
+        try Wvdbˉvalidateˉpage(
             Input,
             Pageˉcount,
             Pageˉidentifier
         );
-        match Pageˉresult {
-            case Wvdbˉvalidationˉresult.Valid {
-                Pageˉvalid = true;
-            }
-            case Wvdbˉvalidationˉresult.Failure(Failure) {
-                return Wvdbˉvalidationˉresult.Failure(Failure);
-            }
-        }
-        if !Pageˉvalid {
-            return Wvdbˉvalidationˉfailure(Wvdbˉerror.Invalidˉpageˉkind, Wvdbˉpageˉoffset(Pageˉidentifier));
-        }
         Pageˉidentifier = Pageˉidentifier + 1u32;
     }
     return Wvdbˉvalidationˉresult.Valid();

@@ -85,7 +85,7 @@ The target must be visible through the WVSD visibility matrix, and the supplied 
 
 Reads, assignments, and calls are deterministic occurrence counts, not optimization or liveness information.
 
-A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. Field existence, uniqueness, completeness, exact value types, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
+A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. Field existence, uniqueness, completeness, exact value types, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
 
 ## WVLB 1.1 binding directory
 
@@ -121,9 +121,9 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Bindings-Core.wvb`: 551,200 bytes, SHA-256 `54be5f326b982fdd33e56cb96f8b0fa21f2dcbcc6d371d57c597d7db6cd002e2`.
-- `Source-Bindings-Demo.wvb`: 557,834 bytes, SHA-256 `73af35691ea355eb49b06ee2ff6905c9293115591548e94f36ef38f0a55a8604`.
-- `Source-Bindings-Tool.wvb`: 551,123 bytes, SHA-256 `2088cb97a2614dbccb6e7504707c8584431e3e1ccd4bd98797b1d65398fdaaef`.
+- `Source-Bindings-Core.wvb`: 551,917 bytes, SHA-256 `0ea817fc499138bc8ca03fa2d29706aabedd2a4e949c2857437e153fb30de4d1`.
+- `Source-Bindings-Demo.wvb`: 558,551 bytes, SHA-256 `d80d4960412067060596f7bfa9e6bb1e04b400e600cdc1bb866ed2c0a4618231`.
+- `Source-Bindings-Tool.wvb`: 551,840 bytes, SHA-256 `ac0f807be27ff91b5575463caf58cd1df0afe97e3e0c72e916a2699f5ca4cfee`.
 
 These are local deterministic WVLB 1.1 candidate identities; they do not claim cross-host requalification.
 
