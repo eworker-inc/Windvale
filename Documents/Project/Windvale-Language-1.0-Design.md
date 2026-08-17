@@ -3,7 +3,9 @@
 > Status: Direction accepted by the project owner on 2026-08-17 under
 > [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 > and refined by
-> [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
+> [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+> and
+> [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains

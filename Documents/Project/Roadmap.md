@@ -22,10 +22,14 @@ native execution remains a derived form over the same verified semantics.
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 starts a horizontal Language 1.0 specification track, and
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
-completes its ordered-set and package-data boundaries. The accepted direction,
-normative-candidate suite, paper corpus, and migration plan may advance without
-claiming implementation or changing the current Seed product. Source
-implementation begins only after the named source-freeze gate.
+completes its ordered-set and package-data boundaries, while
+[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
+requires an eleventh local AI accelerator workload before source freeze without
+accepting accelerator syntax or implementation. The accepted direction,
+normative-candidate suite, paper corpus, accelerator/AI design evidence, and
+migration plan may advance without claiming implementation or changing the
+current Seed product. Source implementation begins only after the named
+source-freeze gate.
 
 ## How to read this roadmap
 

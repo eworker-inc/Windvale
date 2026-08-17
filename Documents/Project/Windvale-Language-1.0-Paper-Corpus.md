@@ -6,8 +6,10 @@ This document defines the mandatory pre-freeze usability and semantic evidence
 for the Language 1.0 candidate accepted under
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 and refined by
-[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
-The corpus is not complete yet. Its ten source bundles must be written and
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+and
+[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
+The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
 [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), and
@@ -49,7 +51,7 @@ Each workload produces one reviewable bundle containing:
 8. a step-by-step cleanup and cancellation walkthrough;
 9. at least five rejected or boundary source cases;
 10. expected semantic outputs independent of one backend;
-11. an implementation responsibility map; and
+11. an implementation responsibility map;
 12. every package-data binding, maximum, digest, type, retained-byte charge, and
     distinct shipped content object where applicable; and
 13. reviewer findings, revisions, and acceptance status.
@@ -366,6 +368,49 @@ foreign failure, forbidden unwind, stale generation, and unsupported target.
 Unsafe code must remain small, visible, target-scoped, and unable to leak an
 unchecked pointer or host layout into safe portable source.
 
+## Workload 11: local AI accelerator inference
+
+### Scenario
+
+Load a small versioned model and quantized weights from immutable package data,
+run one bounded inference through an explicitly bound accelerator provider, and
+compare its result with a strict software reference. The complete design pressure
+and review questions are owned by the
+[accelerator compute and AI design](Windvale-Accelerator-Compute-And-AI-Design.md).
+
+### Required language pressure
+
+- package-backed tokenizer/model metadata and quantized weights;
+- explicit accelerator capabilities, provider generation, attachment mode,
+  supported feature set, and device-memory budget;
+- bounded tensors with exact shape, stride, layout, view, alias, and
+  quantization rules;
+- nominal packed sub-byte formats without general sub-byte core integers;
+- mixed-precision matrix/tensor multiplication with named accumulation and
+  tolerance behavior;
+- asynchronous upload, dispatch, completion, cancellation, and provider loss;
+- move-owned host/device resources and borrowed tensor views; and
+- one small target-scoped custom Windvale kernel through the shared compiler
+  architecture, paired with a software/reference equivalent.
+
+### Boundary cases
+
+Include malformed metadata, digest mismatch, oversized weights, shape-product
+overflow, invalid stride or view range, incompatible quantization grouping,
+unsupported format or numeric mode, insufficient device memory, stale provider
+generation, invalid kernel, cancellation, provider loss, and diagnostic-budget
+exhaustion.
+
+### Acceptance
+
+Host/framework source must use ordinary candidate Language 1.0 without hidden
+allocation, authority, device handles, native pointers, ambient fast math, or
+unbounded queues. Sub-byte storage must have exact format semantics without new
+general scalar primitives. The custom kernel remains an explicitly target-scoped
+Windvale module compiled through the shared compiler, every resource has a
+bounded terminal release path, and the software path supplies a deterministic
+correctness oracle under one exact comparison contract.
+
 ## Quantitative review record
 
 Each workload records:
@@ -394,27 +439,39 @@ allocation.
 
 ### Ownership and borrowing
 
-Pass when workloads 2, 3, 4, 6, 7, and 10 have exact moves, borrows, publication,
-handles, and diagnostics; no valid program requires an unsafe escape merely to
-express ordinary ownership.
+Pass when workloads 2, 3, 4, 6, 7, 10, and 11 have exact moves, borrows,
+publication, handles, and diagnostics; no valid program requires an unsafe
+escape merely to express ordinary ownership.
 
 ### Resource completion
 
-Pass when workloads 2, 3, 5, and 6 prove every body, completion, cancellation,
-provider-loss, and release path without discarding a result or double-releasing.
+Pass when workloads 2, 3, 5, 6, and 11 prove every body, completion,
+cancellation, provider-loss, and release path without discarding a result or
+double-releasing.
 
 ### Structured concurrency
 
-Pass when workloads 5, 6, and 7 prove lexical scope, capture acceptance, join
-order, cancellation observation, provider restart, trap containment, and finite
-queues on both sequential and parallel-capable scheduler models.
+Pass when workloads 5, 6, 7, and 11 prove lexical scope, capture acceptance,
+join order, cancellation observation, provider restart or loss, trap
+containment, and finite queues on both sequential and parallel-capable scheduler
+models.
 
 ### Package data
 
-Pass when workloads 1, 7, and 9 prove exact binding, maximum-size admission,
+Pass when workloads 1, 7, 9, and 11 prove exact binding, maximum-size admission,
 strict text validation, imported access, resource-domain charging, missing and
 malformed rejection, no filesystem authority, and one shipped payload per
 distinct content identity.
+
+### Accelerator and AI boundary
+
+Pass when workload 11 separates ordinary host-language needs from accelerator
+library, capability, target-extension, verifier, WIR, and provider needs; proves
+exact packed/quantized and mixed-precision behavior; retains one compiler
+architecture; and has bounded memory, queue, cancellation, provider-loss,
+numeric-comparison, and teardown evidence. Every unresolved accelerator-only
+detail must have a named future owner without leaving the general Language 1.0
+source contract ambiguous.
 
 ## Corpus status
 
@@ -430,6 +487,7 @@ distinct content identity.
 | Numeric or graphics processing | Pending source bundle |
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
+| Local AI accelerator inference | Pending source bundle |
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

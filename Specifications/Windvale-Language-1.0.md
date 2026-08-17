@@ -17,7 +17,9 @@ compatibility promise.
 ## Rule ownership
 
 The Language 1.0 suite, as refined by
-[Decision 0752](../Documents/Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md),
+[Decision 0752](../Documents/Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+and
+[Decision 0753](../Documents/Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -28,6 +30,7 @@ has one owner for each kind of rule:
 | Design motivation and rejected alternatives | [Language 1.0 design](../Documents/Project/Windvale-Language-1.0-Design.md) |
 | Seed transition order and compatibility boundary | [Seed-to-1.0 migration](../Documents/Project/Windvale-Language-1.0-Migration.md) |
 | Usability and boundary evidence before source freeze | [Language 1.0 paper corpus](../Documents/Project/Windvale-Language-1.0-Paper-Corpus.md) |
+| Accelerator and AI pre-freeze design evidence | [Accelerator compute and AI design](../Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md) |
 
 When two documents appear to overlap, the owner in this table controls. A
 candidate revision updates every dependent example and cross-reference in the
@@ -834,15 +837,18 @@ This candidate becomes frozen Language 1.0 only after:
 
 1. the grammar companion has no unresolved production or precedence;
 2. the Foundation companion has exact signatures and failure behavior;
-3. the paper corpus completes all ten workloads and their rejected cases;
+3. the paper corpus completes all eleven workloads and their rejected cases;
 4. collection, ownership, cleanup, and concurrency freeze conditions pass;
 5. every rule has accepted, boundary, malformed, and rejected examples;
 6. the migration and compiler responsibility matrix is approved;
 7. editor and formatter behavior is specified;
-8. target support and cross-host evidence requirements are named; and
+8. target support and cross-host evidence requirements are named;
 9. package-data binding, accounting, malformed-input, and non-duplicating
-   shipment evidence passes; and
-10. a source-freeze decision records the canonical document identities.
+   shipment evidence passes;
+10. the local AI accelerator workload separates any general source-language gap
+    from library, target-extension, verified-representation, and provider work;
+    and
+11. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

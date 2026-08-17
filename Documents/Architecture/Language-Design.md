@@ -11,8 +11,12 @@ and [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.
 accepts the complete Language 1.0 successor direction, and
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 completes its ordered-set, package-data, static-import, default-argument, and
-identifier boundaries. Those decisions supersede the language-design sequencing
-proposed by Decision 0198. The implemented language remains exactly
+identifier boundaries.
+[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
+adds one mandatory local AI accelerator paper workload while retaining one
+language and compiler and without accepting accelerator syntax. Those decisions
+supersede the language-design sequencing proposed by Decision 0198. The
+implemented language remains exactly
 [Windvale Seed](../../Specifications/Seed-Language.md); candidate edition-1
 examples are not accepted source today.
 

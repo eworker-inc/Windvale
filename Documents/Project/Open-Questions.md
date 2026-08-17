@@ -87,11 +87,13 @@ unfinished work.
 accepts the complete Language 1.0 direction, and
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 completes its set, package-data, static-import, default-argument, and identifier
-boundaries. The active questions now belong to the candidate specification and
-paper-corpus freeze rather than feature-by-feature direction selection:
+boundaries. [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
+adds local AI accelerator evidence without accepting accelerator syntax or an
+implementation. The active questions now belong to the candidate specification
+and paper-corpus freeze rather than feature-by-feature direction selection:
 
 - Which candidate grammar or Foundation signatures must change after each of the
-  ten complete paper programs is reviewed?
+  eleven complete paper programs is reviewed?
 - Does the one candidate task-scope spelling express sequential and
   parallel-capable hosted services, GUI work, cancellation, and provider restart
   without hidden capture or teardown?
@@ -102,6 +104,19 @@ paper-corpus freeze rather than feature-by-feature direction selection:
 - Which WVB and package-table representation binds `package data` without
   duplicate payload bytes while retaining exact type, digest, length, maximum,
   and resource-domain accounting?
+- Does the local AI workload expose any general source-language gap, or can every
+  remaining need be owned by the accelerator library, capability split,
+  target-scoped kernel contract, WIR/verifier, or provider?
+- Which nominal tensor and packed/quantized-format descriptors make shape,
+  stride, layout, scale, zero point, grouping, packing order, and accumulator
+  semantics exact without general sub-byte scalar primitives?
+- What smallest portable accelerator operation set can a strict software oracle
+  and at least two plausible physical providers implement without weakening
+  numeric, resource, failure, or teardown behavior?
+- Which discovery, memory, portable-execution, kernel-load, native-extension,
+  profiling, and physical-assignment responsibilities require separate
+  capabilities, and which exact target-scoped kernel rules require a new verified
+  representation?
 - Which frozen vertical slice should implement edition 1 first without creating
   a parallel compiler or permanent Seed compatibility path?
 - Which direct consumer first requires caller-visible liveness for relocating

@@ -5,7 +5,9 @@
 This is the candidate repository migration plan required by
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 and refined by
-[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+and
+[Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -42,10 +44,13 @@ Implementation begins only after:
 4. the Foundation required signatures have canonical identities;
 5. editor and formatter grammar is synchronized;
 6. the feature responsibility matrix below is approved;
-7. compiler and runtime development limits are recorded; and
+7. compiler and runtime development limits are recorded;
 8. package-data manifest binding, accounting, malformed-input, and
-   non-duplicating shipment are specified; and
-9. the change-aware verifier maps every affected boundary to a focused owner.
+   non-duplicating shipment are specified;
+9. the local AI accelerator paper workload assigns every discovered need to the
+   general language or an explicit library, target extension, verified
+   representation, provider, or backend owner; and
+10. the change-aware verifier maps every affected boundary to a focused owner.
 
 The source freeze may permit staged implementation. It may not leave implemented
 features semantically target-dependent.
@@ -118,6 +123,7 @@ changes require semantic review.
 | Builders and interpolation | Foundation libraries, bounds analysis, optional intrinsics | No syntax-specific opcode required. |
 | Structured concurrency | Effects, captures, Foundation tasks, runtime providers, target schedulers | Requires an explicit verified task/runtime contract. |
 | Unsafe and FFI | System type checker, ABI specifications, native backend, verifier | Target- and ABI-specific additions are likely. |
+| Accelerator host and custom-kernel boundary | Libraries, capability runtime, target analysis, WIR/verifier, software oracle, provider backends | General host logic should use ordinary WIR; target kernels or new numeric operations may require separately versioned verified representations. |
 
 The assembler is not the source compiler's next stage. WVA textual input and the
 native compiler backend share instruction encoding, relocation, object
@@ -195,6 +201,12 @@ reparse it.
 Each slice includes lexer/parser, semantic analysis, WIR, Foundation, runtime,
 editor, migration, and focused verifier changes required by that feature. A
 slice does not publish an incomplete artifact as complete Language 1.0.
+
+The accelerator paper workload is a source-freeze oracle, not a ninth core
+implementation slice. After the general language slices are implemented, its
+portable host/framework code can become a consumer. Accelerator operations,
+kernel admission, verified representations, and physical providers advance under
+their own measured contracts without creating a second language or compiler.
 
 ## Repository migration order
 

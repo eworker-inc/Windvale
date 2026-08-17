@@ -1,7 +1,7 @@
 # Decision 0171: Future virtualization and accelerator architecture
 
 - Date: 2026-08-03
-- Status: Accepted architecture direction; implementation deferred
+- Status: Accepted architecture direction; implementation deferred; source-language evidence refined by [Decision 0753](0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
 - Refines: [Decision 0044](0044-First-X64-Uefi-Boot-Environment.md), [Decision 0084](0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md), and [Decision 0140](0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md)
 - Retains: pinned QEMU/Q35/TCG as the reproducible Windvale OS guest lane, explicit per-part platform scope, capability authorization, and the small-kernel/isolated-service boundary
 
