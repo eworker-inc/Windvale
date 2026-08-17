@@ -248,9 +248,29 @@ change-aware 50-case owner falls from 323,820 ms to 281,240 ms, saving another
 project-object-v2 result, the two subsequent changes save 219,370 ms or 43.82
 percent and make the owner 1.78 times faster.
 
+The next profile separated host-root execution from preparation. Twelve fresh
+publication, replay, interruption, and recovery processes took 980 ms in the
+main case, while its direct three-WVO link took 16,460 ms; project admission
+took 310 ms and application materialization 190 ms. The related root-fill,
+root-split, and read links took 15,180, 15,650, and 10,370 ms, versus 210 through
+260 ms for project hits and 140 through 170 ms for application hits. Fresh
+process semantics were therefore not the bottleneck and remain unchanged.
+
+Ordered `linked-image-v2` checkpoints now hash one through 64 exact WVO buffers
+in command order, snapshot them before cold linking, include all current-host
+producer bytes, and publish an immutable image/map/record directory. Current-
+host database development uses this path for every eligible multi-object link;
+the single-object portable version-1 family and direct qualification paths stay
+unchanged. The final change-aware all-hit Windows owner falls from 281,240 ms to
+101,370 ms, saving 179,870 ms or 63.96 percent for a 2.77-fold speedup in this
+slice. Host-root-writer falls from 61,810 ms to 3,560 ms, host storage from
+24,620 ms to 8,140 ms, and host-local-service from 29,010 ms to 1,450 ms.
+Relative to the earlier 500,610 ms project-object-v2 result, the combined
+development loop saves 399,240 ms or 79.75 percent and is 4.94 times faster.
+
 `Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
 producer, and artifact closures for the measured front-door, WebAssembly, and
-database owners plus all six database checkpoint families. Its verifier
+database owners plus all seven database checkpoint families. Its verifier
 requires canonical ordering, ordinary repository files, complete closure kinds,
 the exact checkpoint-family set, no planner gaps, and selection of the declared
 owner.

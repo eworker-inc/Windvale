@@ -2440,6 +2440,7 @@ $NativeCases = @(
             'Tools/Native/Build-Cached-Hosted-Application.sh',
             'Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs',
             'Tools/Native/Build-Cached-Linked-Image.cmd',
+            'Tools/Native/Build-Cached-Linked-Image-Set.mjs',
             'Tools/Native/Build-Cached-Linked-Image.sh',
             'Tools/Native/Build-Cached-Project-Object.cmd',
             'Tools/Native/Build-Cached-Project-Object.mjs',
@@ -2455,6 +2456,7 @@ $NativeCases = @(
             'Tools/Native/Native-Hosted-Application-Cache-Core.mjs',
             'Tools/Native/Native-Project-Cache-Key-Core.mjs',
             'Tools/Native/Test-Hosted-Application-Session.mjs',
+            'Tools/Native/Test-Linked-Image-Set-Checkpoint.mjs',
             'Tools/Native/Test-Project-Object-Checkpoint.mjs',
             'Tools/Native/Test-Segmented-Project-Checkpoint.mjs'
         )

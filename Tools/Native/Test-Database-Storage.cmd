@@ -107,6 +107,7 @@ set "PortableApplicationCheckpoints="
 set "HostedApplicationSession=%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application-Session.mjs"
 set "HostedApplicationSessionReady=%TemporaryDirectory%\Hosted-Application-Session.txt"
 set "HostedApplicationSessionLog=%TemporaryDirectory%\Hosted-Application-Session.log"
+set "LinkedImageSet=%RepositoryRoot%\Tools\Native\Build-Cached-Linked-Image-Set.mjs"
 if "%Development%"=="1" call :read_clock DevelopmentStart
 if "%Development%"=="1" call :read_clock ToolsStart
 if "%Development%"=="1" echo START native database storage development step=tools item=%ProgressCurrent%/%ProgressTotal% target=%DevelopmentTarget%
@@ -777,9 +778,15 @@ if errorlevel 1 exit /b 1
 call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%LinuxPlatform%" >nul
 if errorlevel 1 exit /b 1
 
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
-    "%CommonFirst%" "%WindowsPlatform%" >"%WindowsMap%"
+if "%Development%"=="1" (
+    call :build_cached_linked_image_set Storage_host_entry ^
+        "%WindowsImage%" "%WindowsMap%" "%FirstWvo%" ^
+        "%CommonFirst%" "%WindowsPlatform%"
+) else (
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+        Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+        "%CommonFirst%" "%WindowsPlatform%" >"%WindowsMap%"
+)
 if errorlevel 1 exit /b 1
 set "WindowsEntry="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
@@ -921,9 +928,15 @@ if "%Development%"=="1" (
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
 
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
-    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if "%Development%"=="1" (
+    call :build_cached_linked_image_set Storage_host_entry ^
+        "%WindowsImage%" "%WindowsMap%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%"
+) else (
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+        Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+)
 if errorlevel 1 exit /b 1
 set "WindowsEntry="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
@@ -1201,9 +1214,15 @@ if "%Development%"=="1" (
 )
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
-    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if "%Development%"=="1" (
+    call :build_cached_linked_image_set Storage_host_entry ^
+        "%WindowsImage%" "%WindowsMap%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%"
+) else (
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+        Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+)
 if errorlevel 1 exit /b 1
 set "WindowsEntry="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
@@ -1531,9 +1550,15 @@ if not exist "%WindowsPlatform%" (
     exit /b 1
 )
 
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
-    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if "%Development%"=="1" (
+    call :build_cached_linked_image_set Storage_host_entry ^
+        "%WindowsImage%" "%WindowsMap%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%"
+) else (
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+        Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+)
 if errorlevel 1 (
     >&2 echo The native host tree-reader Windows link failed.
     exit /b 1
@@ -1686,9 +1711,15 @@ if "%Development%"=="1" (
 )
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
-    "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+if "%Development%"=="1" (
+    call :build_cached_linked_image_set Storage_host_entry ^
+        "%WindowsImage%" "%WindowsMap%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%"
+) else (
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
+        Storage_host_entry "%WindowsImage%" "%FirstWvo%" ^
+        "%Common%" "%WindowsPlatform%" >"%WindowsMap%"
+)
 if errorlevel 1 exit /b 1
 set "WindowsEntry="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%WindowsMap%"') do set "WindowsEntry=%%E"
@@ -2531,6 +2562,11 @@ set "HostedApplicationSessionResult=%ERRORLEVEL%"
 if not "%HostedApplicationSessionResult%"=="75" exit /b %HostedApplicationSessionResult%
 call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" ^
     "%~1" "%~f2" "%~f3" "%~4" "%~5" "%~f6" "%~7"
+exit /b %ERRORLEVEL%
+
+:build_cached_linked_image_set
+node "%LinkedImageSet%" 0 "%~1" "%~f2" "%~f3" 3 ^
+    "%~f4" "%~f5" "%~f6"
 exit /b %ERRORLEVEL%
 
 :read_clock

@@ -1054,6 +1054,7 @@ function Add-Native-Tool-Suite {
         'Build-Cached-Hosted-Application',
         'Build-Cached-Hosted-Application-Session',
         'Build-Cached-Linked-Image',
+        'Build-Cached-Linked-Image-Set',
         'Build-Cached-Project-Object',
         'Build-Cached-Project-Wvb',
         'Build-Cached-Segmented-Project',
@@ -1063,6 +1064,7 @@ function Add-Native-Tool-Suite {
         'Native-Hosted-Application-Cache-Core',
         'Native-Project-Cache-Key-Core',
         'Test-Hosted-Application-Session',
+        'Test-Linked-Image-Set-Checkpoint',
         'Test-Segmented-Project-Checkpoint',
         'Test-Project-Object-Checkpoint',
         'Test-Database-Storage'

@@ -315,6 +315,38 @@ exact requested entry from the map, rehashes both products, reconstructs and
 compares the complete record, materializes fresh copies, and compares both
 copies byte for byte.
 
+`Build-Cached-Linked-Image-Set.mjs` defines the ordered multi-object successor.
+Its version-2 key retains the version-1 host, base-address, entry, front-door,
+and linker fields, adds namespace `linked-image-v2`, exact canonical input
+count, every input WVO in command order, and the exact version-2 producer
+script. It accepts one through 64 WVOs. Each input and the aggregate immutable
+snapshot are bounded by the 32 MiB large-native linking admission limit. The
+lowercase key names `linked-image-v2/<host-family>/<key>`.
+
+The version-2 record contains exactly eight ASCII lines:
+
+```text
+windvale-native-linked-image-checkpoint 2
+key <64-lowercase-hex>
+input-count <canonical-positive-decimal>
+entry-offset <canonical-unsigned-decimal>
+image-bytes <canonical-positive-decimal>
+image-sha256 <64-lowercase-hex>
+map-bytes <canonical-positive-decimal>
+map-sha256 <64-lowercase-hex>
+```
+
+On a miss, the producer writes the already-keyed input buffers to private
+ordinary snapshot files, links only those snapshots, and proves that its own
+script, the current-host front door, and the linker remain byte-exact before
+publication. A `finally` boundary removes the exact locally created
+`.new-<key>-<nonce>-*` sibling after linker, parsing, measurement, record, or
+lost-race failure, but only after proving its parent and key prefix. A race
+loser accepts the winner only after complete checkpoint validation. A hit
+validates the exact three-entry directory, canonical map entry, record, image,
+and map before copying and rehashing both private outputs. Owner outputs inside
+the cache root are rejected.
+
 ## Publication and use
 
 On a miss, the owner packages into a newly allocated sibling directory, hashes
@@ -338,7 +370,8 @@ the current build-driver WVB, prepare or validate the checkpoint, and stop.
 run the target-aware 50-case database owner. It obtains ordinary project
 objects through `Build-Cached-Project-Object`, the build-driver input through
 `Build-Cached-Project-Wvb`, portable linked images through
-`Build-Cached-Linked-Image`, and current-host executables through
+`Build-Cached-Linked-Image`, ordered current-host multi-object images through
+`Build-Cached-Linked-Image-Set`, and current-host executables through
 `Build-Cached-Hosted-Application`. Explicitly segmented development cases use
 `Build-Cached-Segmented-Project` for the exact WVB and canonical image before
 the unchanged hosted-application or provider-overlay path. `Verify-Changed.ps1`
@@ -439,3 +472,15 @@ concurrent serialized hits, corruption and miss output preservation, executable
 mode, and clean teardown. Executable-mode preservation is asserted when the
 regression runs on Linux; independent Linux session and owner execution remain
 required.
+
+Before version-2 ordered linked-image checkpoints, four measured host-root
+links took 16,460, 15,180, 15,650, and 10,370 ms even though their project and
+application checkpoints hit. Their corresponding project admissions took 210
+through 310 ms and application materializations took 140 through 190 ms. The
+warm Windows 50-case owner now passes in 101,370 ms instead of 281,240 ms,
+saving 179,870 ms or 63.96 percent. Host-root-writer falls from 61,810 ms to
+3,560 ms while retaining every normal, replay, interruption, recovery, fill,
+split, and read execution. The version-2 regression proves four-way same-key
+publication, input-order key separation, exact hits, corruption preservation,
+failed-link cleanup, and malformed-count rejection. Independent Linux
+execution remains required.

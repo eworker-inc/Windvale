@@ -115,6 +115,7 @@ hosted_application_session="$script_directory/Build-Cached-Hosted-Application-Se
 hosted_application_session_ready="$temporary_directory/Hosted-Application-Session.txt"
 hosted_application_session_log="$temporary_directory/Hosted-Application-Session.log"
 hosted_application_session_pid=
+linked_image_set="$script_directory/Build-Cached-Linked-Image-Set.mjs"
 cleanup() {
     local result=$?
     if [[ -n $hosted_application_session_pid ]]; then
@@ -197,6 +198,12 @@ build_cached_hosted_application() {
         return "$result"
     fi
     "$script_directory/Build-Cached-Hosted-Application.sh" "$@"
+}
+
+build_cached_linked_image_set() {
+    local entry=$1 image=$2 map=$3
+    shift 3
+    node "$linked_image_set" 0 "$entry" "$image" "$map" "$#" "$@"
 }
 
 accept_build_driver_checkpoint() {
@@ -677,9 +684,15 @@ verify_host_storage() {
         "$windows_platform" >/dev/null || return $?
     "$script_directory/Check-Wvo.sh" "$windows_platform" >/dev/null || return $?
 
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$linux_image" "$first_wvo" "$common_first" "$linux_platform" \
-        >"$linux_map" || return $?
+    if ((development == 1)); then
+        build_cached_linked_image_set Storage_host_entry \
+            "$linux_image" "$linux_map" \
+            "$first_wvo" "$common_first" "$linux_platform" || return $?
+    else
+        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+            "$linux_image" "$first_wvo" "$common_first" "$linux_platform" \
+            >"$linux_map" || return $?
+    fi
     local linux_entry
     linux_entry=$(sed -n \
         's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
@@ -806,9 +819,15 @@ verify_host_root_writer() {
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
 
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
-        >"$linux_map" || return $?
+    if ((development == 1)); then
+        build_cached_linked_image_set Storage_host_entry \
+            "$linux_image" "$linux_map" \
+            "$first_wvo" "$common" "$linux_platform" || return $?
+    else
+        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+            "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+            >"$linux_map" || return $?
+    fi
     local linux_entry
     linux_entry=$(sed -n \
         's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
@@ -972,9 +991,15 @@ build_host_local_component() {
         cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
-        >"$linux_map" || return $?
+    if ((development == 1)); then
+        build_cached_linked_image_set Storage_host_entry \
+            "$linux_image" "$linux_map" \
+            "$first_wvo" "$common" "$linux_platform" || return $?
+    else
+        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+            "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+            >"$linux_map" || return $?
+    fi
     local linux_entry
     linux_entry=$(sed -n \
         's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
@@ -1264,9 +1289,15 @@ verify_host_tree_reader() {
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
 
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
-        >"$linux_map" || return $?
+    if ((development == 1)); then
+        build_cached_linked_image_set Storage_host_entry \
+            "$linux_image" "$linux_map" \
+            "$first_wvo" "$common" "$linux_platform" || return $?
+    else
+        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+            "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+            >"$linux_map" || return $?
+    fi
     local linux_entry
     linux_entry=$(sed -n \
         's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
@@ -1445,9 +1476,15 @@ verify_host_engine() {
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
 
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$linux_image" "$first_wvo" "$common" "$linux_platform" \
-        >"$linux_map" || return $?
+    if ((development == 1)); then
+        build_cached_linked_image_set Storage_host_entry \
+            "$linux_image" "$linux_map" \
+            "$first_wvo" "$common" "$linux_platform" || return $?
+    else
+        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
+            "$linux_image" "$first_wvo" "$common" "$linux_platform" \
+            >"$linux_map" || return $?
+    fi
     local linux_entry
     linux_entry=$(sed -n \
         's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
