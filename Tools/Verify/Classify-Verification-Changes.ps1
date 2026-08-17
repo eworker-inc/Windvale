@@ -52,6 +52,17 @@ function Test-Editor-RelevantPath {
     )
 }
 
+function Test-LanguagePaperSourcePath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    return $Path -match (
+        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+        '[0-9]+-[^/]+/Source/[^/]+\.wv$')
+}
+
 function Test-LightweightPath {
     param(
         [Parameter(Mandatory)]
@@ -63,6 +74,10 @@ function Test-LightweightPath {
     }
 
     if ($Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal)) {
+        return $true
+    }
+
+    if (Test-LanguagePaperSourcePath $Path) {
         return $true
     }
 

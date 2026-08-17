@@ -32,8 +32,16 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every owner. The complete 92-owner, 4,337-case coordinator
-is reserved for the final grouped gate, not used as changed-file fallback.
+Candidate `.wv` listings beneath
+`Documents/Project/Language-1.0-Paper-Corpus/<workload>/Source/` are design
+evidence rather than inputs to the implemented Seed compiler. They receive the
+same lightweight checks as their surrounding paper documents and never select
+an implemented-language owner or an editor grammar check. This exception is
+limited to that numbered workload tree; a `.wv` file elsewhere must retain its
+normal implemented-source ownership or fail closed as an uncovered boundary.
+
+Unknown input must never select every owner. The complete coordinator is
+reserved for the final grouped gate, not used as changed-file fallback.
 
 The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace
 containment, deterministic source ordering, and native publication. The `libraries`

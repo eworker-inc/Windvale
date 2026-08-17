@@ -1,0 +1,370 @@
+edition 1;
+module Inferenceˉaccelerated;
+profile hosted;
+platform windows, linux, windvale;
+authority library;
+requires capability accelerator.catalog version 1;
+requires capability accelerator.execute version 1;
+requires capability accelerator.kernel version 1;
+requires capability accelerator.memory version 1;
+
+import Foundationˉresult as Result;
+import Inferenceˉdecode as Decode;
+import Inferenceˉpackage as Package;
+import Inferenceˉtypes as Types;
+import Platformˉaccelerator as Accelerator;
+
+fn Convertˉfailure(Value: Accelerator.Failure) -> Types.Inferenceˉfailure effects() {
+    return Types.Inferenceˉfailure.Acceleratorˉrejected {
+        Kind: Value.Kind,
+        Stage: Value.Stage,
+        Providerˉgeneration: Value.Providerˉgeneration,
+        Requested: Value.Requested,
+        Limit: Value.Limit,
+    };
+}
+
+fn Convertˉattachmentˉmode(
+    Value: Accelerator.Attachmentˉmode,
+) -> Types.Attachmentˉmode effects() {
+    return match Value {
+        case Accelerator.Attachmentˉmode.Software {
+            Types.Attachmentˉmode.Software
+        }
+        case Accelerator.Attachmentˉmode.Paravirtualˉshared {
+            Types.Attachmentˉmode.Paravirtualˉshared
+        }
+        case Accelerator.Attachmentˉmode.Hardwareˉpartition {
+            Types.Attachmentˉmode.Hardwareˉpartition
+        }
+        case Accelerator.Attachmentˉmode.Exclusiveˉpassthrough {
+            Types.Attachmentˉmode.Exclusiveˉpassthrough
+        }
+    };
+}
+
+fn Mapˉaccelerator<T>(
+    Value: Result.Result<T, Accelerator.Failure>,
+) -> Result.Result<T, Types.Inferenceˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Convertˉfailure(Value: Failure),
+            }
+        }
+    };
+}
+
+export async fn Run(
+    Model: borrow Types.Modelˉplan,
+) -> Result.Result<Types.Acceleratedˉresult, Types.Inferenceˉfailure>
+    effects(
+        accelerator.catalog,
+        accelerator.execute,
+        accelerator.kernel,
+        accelerator.memory,
+        resource.acquire,
+        resource.release,
+        task.suspend,
+    ) {
+    let Requirements = Accelerator.Requirements {
+        Operationˉset: 1u32,
+        Weightˉformat: 1u8,
+        Activationˉformat: 1u8,
+        Accumulatorˉformat: 1u8,
+        Weightˉlayout: 1u8,
+        Minimumˉdeviceˉbytes: Model.Maximumˉdeviceˉbytes,
+        Maximumˉqueues: 1u32,
+        Maximumˉcommands: Model.Maximumˉcommands,
+        Deterministicˉcollection: true,
+        Allowˉsoftware: true,
+        Allowˉparavirtualˉshared: true,
+        Allowˉhardwareˉpartition: false,
+        Allowˉexclusiveˉpassthrough: false,
+    };
+    let Selection = try Mapˉaccelerator(
+        Value: accelerator.catalog.Select(Requirements: Requirements),
+    );
+    let Description = accelerator.catalog.Describe(Selection: borrow Selection);
+    let Sessionˉlimits = Accelerator.Sessionˉlimits {
+        Maximumˉhostˉstateˉbytes: 4096u64,
+        Maximumˉdeviceˉbytes: Model.Maximumˉdeviceˉbytes,
+        Maximumˉpinnedˉhostˉbytes: 64u64,
+        Maximumˉqueues: 1u32,
+        Maximumˉsubmissions: 1u32,
+        Maximumˉcommands: Model.Maximumˉcommands,
+        Maximumˉdiagnostics: Model.Maximumˉdiagnostics,
+        Maximumˉworkˉunits: 64u64,
+    };
+
+    using Session = try Mapˉaccelerator(
+        Value: accelerator.memory.Openˉsession(
+            Selection: Selection,
+            Limits: Sessionˉlimits,
+        ),
+    ) {
+        let Residencyˉplan = Accelerator.Residencyˉplan {
+            Inputˉbytes: 8u64,
+            Weightˉbytes: 4u64,
+            Parameterˉbytes: 16u64,
+            Accumulatorˉbytes: 8u64,
+            Outputˉbytes: 8u64,
+            Maximumˉchargedˉbytes: Model.Maximumˉdeviceˉbytes,
+        };
+        using Residency = try Mapˉaccelerator(
+            Value: accelerator.memory.Admitˉresidency(
+                Session: borrow mut Session,
+                Plan: Residencyˉplan,
+            ),
+        ) {
+            let Inputˉview = Accelerator.Tensorˉview {
+                Slot: Accelerator.Bufferˉslot.Input,
+                Elementˉformat: Accelerator.Elementˉformat.F16,
+                Rank: 2u8,
+                Extent0: 1u32,
+                Extent1: 4u32,
+                Stride0ˉelements: 4u64,
+                Stride1ˉelements: 1u64,
+                Byteˉoffset: 0u64,
+                Byteˉlength: 8u64,
+                Rights: Accelerator.Viewˉrights.Read,
+            };
+            let Weightˉview = Accelerator.Tensorˉview {
+                Slot: Accelerator.Bufferˉslot.Weights,
+                Elementˉformat: Accelerator.Elementˉformat.Signedˉi4,
+                Rank: 2u8,
+                Extent0: 2u32,
+                Extent1: 4u32,
+                Stride0ˉelements: 4u64,
+                Stride1ˉelements: 1u64,
+                Byteˉoffset: 0u64,
+                Byteˉlength: 4u64,
+                Rights: Accelerator.Viewˉrights.Read,
+            };
+            let Scaleˉview = Accelerator.Tensorˉview {
+                Slot: Accelerator.Bufferˉslot.Parameters,
+                Elementˉformat: Accelerator.Elementˉformat.F32,
+                Rank: 1u8,
+                Extent0: 2u32,
+                Extent1: 1u32,
+                Stride0ˉelements: 1u64,
+                Stride1ˉelements: 0u64,
+                Byteˉoffset: 0u64,
+                Byteˉlength: 8u64,
+                Rights: Accelerator.Viewˉrights.Read,
+            };
+            let Accumulatorˉview = Accelerator.Tensorˉview {
+                Slot: Accelerator.Bufferˉslot.Accumulator,
+                Elementˉformat: Accelerator.Elementˉformat.F32,
+                Rank: 1u8,
+                Extent0: 2u32,
+                Extent1: 1u32,
+                Stride0ˉelements: 1u64,
+                Stride1ˉelements: 0u64,
+                Byteˉoffset: 0u64,
+                Byteˉlength: 8u64,
+                Rights: Accelerator.Viewˉrights.Readˉwrite,
+            };
+            let Biasˉview = Accelerator.Tensorˉview {
+                Slot: Accelerator.Bufferˉslot.Parameters,
+                Elementˉformat: Accelerator.Elementˉformat.F32,
+                Rank: 1u8,
+                Extent0: 2u32,
+                Extent1: 1u32,
+                Stride0ˉelements: 1u64,
+                Stride1ˉelements: 0u64,
+                Byteˉoffset: 8u64,
+                Byteˉlength: 8u64,
+                Rights: Accelerator.Viewˉrights.Read,
+            };
+            let Outputˉview = Accelerator.Tensorˉview {
+                Slot: Accelerator.Bufferˉslot.Output,
+                Elementˉformat: Accelerator.Elementˉformat.F32,
+                Rank: 1u8,
+                Extent0: 2u32,
+                Extent1: 1u32,
+                Stride0ˉelements: 1u64,
+                Stride1ˉelements: 0u64,
+                Byteˉoffset: 0u64,
+                Byteˉlength: 8u64,
+                Rights: Accelerator.Viewˉrights.Readˉwrite,
+            };
+            using Batch = try Mapˉaccelerator(
+                Value: accelerator.execute.Createˉbatch(
+                    Session: borrow mut Session,
+                    Residency: borrow mut Residency,
+                    Maximumˉcommands: Model.Maximumˉcommands,
+                ),
+            ) {
+                try Mapˉaccelerator(
+                    Value: accelerator.execute.Addˉupload(
+                        Batch: borrow mut Batch,
+                        Residency: borrow mut Residency,
+                        Slot: Accelerator.Bufferˉslot.Input,
+                        Source: Package.Tokenizerˉmetadata,
+                        Sourceˉoffset: 16u64,
+                        Sourceˉlength: 8u64,
+                    ),
+                );
+                try Mapˉaccelerator(
+                    Value: accelerator.execute.Addˉupload(
+                        Batch: borrow mut Batch,
+                        Residency: borrow mut Residency,
+                        Slot: Accelerator.Bufferˉslot.Weights,
+                        Source: Package.Quantizedˉweights,
+                        Sourceˉoffset: 0u64,
+                        Sourceˉlength: 4u64,
+                    ),
+                );
+                try Mapˉaccelerator(
+                    Value: accelerator.execute.Addˉupload(
+                        Batch: borrow mut Batch,
+                        Residency: borrow mut Residency,
+                        Slot: Accelerator.Bufferˉslot.Parameters,
+                        Source: Package.Modelˉmetadata,
+                        Sourceˉoffset: 24u64,
+                        Sourceˉlength: 16u64,
+                    ),
+                );
+
+                let Linear = Accelerator.Quantizedˉlinearˉoperation {
+                    Inputˉelements: Model.Inputˉelements,
+                    Outputˉelements: Model.Outputˉelements,
+                    Input: Inputˉview,
+                    Weights: Weightˉview,
+                    Scales: Scaleˉview,
+                    Accumulator: Accumulatorˉview,
+                    Inputˉformat: 1u8,
+                    Weightˉformat: 1u8,
+                    Weightˉlayout: 1u8,
+                    Accumulatorˉformat: 1u8,
+                    Numericˉmode: Accelerator.Numericˉmode.Boundedˉf32ˉv1,
+                };
+                try Mapˉaccelerator(
+                    Value: accelerator.execute.Addˉquantizedˉlinear(
+                        Batch: borrow mut Batch,
+                        Residency: borrow mut Residency,
+                        Operation: Linear,
+                    ),
+                );
+
+                let Kernel = Accelerator.Kernelˉoperation {
+                    Identity: "windvale.paper.bias_relu.v1",
+                    Interfaceˉidentity: "windvale.kernel.lane_f32x2.v1",
+                    Dispatchˉx: 2u32,
+                    Accumulator: Accumulatorˉview,
+                    Bias: Biasˉview,
+                    Output: Outputˉview,
+                };
+                try Mapˉaccelerator(
+                    Value: accelerator.kernel.Addˉkernel(
+                        Batch: borrow mut Batch,
+                        Residency: borrow mut Residency,
+                        Operation: Kernel,
+                    ),
+                );
+                try Mapˉaccelerator(
+                    Value: accelerator.execute.Addˉreadback(
+                        Batch: borrow mut Batch,
+                        Residency: borrow mut Residency,
+                        Slot: Accelerator.Bufferˉslot.Output,
+                        Sourceˉoffset: 0u64,
+                        Sourceˉlength: 8u64,
+                    ),
+                );
+
+                using Submission = try Mapˉaccelerator(
+                    Value: accelerator.execute.Submit(
+                        Session: borrow mut Session,
+                        Residency: borrow mut Residency,
+                        Batch: borrow mut Batch,
+                    ),
+                ) {
+                    let Terminal = try Mapˉaccelerator(
+                        Value: await accelerator.execute.Wait(
+                            Submission: borrow mut Submission,
+                        ),
+                    );
+                    match Terminal {
+                        case Accelerator.Terminal.Completed {
+                            Output: Outputˉbytes,
+                            Providerˉidentity: Providerˉidentity,
+                            Providerˉgeneration: Providerˉgeneration,
+                            Attachmentˉmode: Attachmentˉmode,
+                        } {
+                            if Providerˉgeneration != Description.Providerˉgeneration {
+                                return Result.Result.Failure {
+                                    Error: Types.Inferenceˉfailure.Providerˉevidenceˉmismatch {
+                                        Expectedˉgeneration: Description.Providerˉgeneration,
+                                        Observedˉgeneration: Providerˉgeneration,
+                                        Rule: 1u32,
+                                    },
+                                };
+                            }
+                            if Providerˉidentity != Description.Providerˉidentity {
+                                return Result.Result.Failure {
+                                    Error: Types.Inferenceˉfailure.Providerˉevidenceˉmismatch {
+                                        Expectedˉgeneration: Description.Providerˉgeneration,
+                                        Observedˉgeneration: Providerˉgeneration,
+                                        Rule: 2u32,
+                                    },
+                                };
+                            }
+                            if Attachmentˉmode != Description.Attachmentˉmode {
+                                return Result.Result.Failure {
+                                    Error: Types.Inferenceˉfailure.Providerˉevidenceˉmismatch {
+                                        Expectedˉgeneration: Description.Providerˉgeneration,
+                                        Observedˉgeneration: Providerˉgeneration,
+                                        Rule: 3u32,
+                                    },
+                                };
+                            }
+                            let Output = try Decode.Decodeˉproviderˉoutput(
+                                Value: borrow Outputˉbytes,
+                            );
+                            return Result.Result.Valid {
+                                Value: Types.Acceleratedˉresult {
+                                    Output: Output,
+                                    Providerˉidentity: Providerˉidentity,
+                                    Providerˉgeneration: Providerˉgeneration,
+                                    Attachmentˉmode: Convertˉattachmentˉmode(
+                                        Value: Attachmentˉmode,
+                                    ),
+                                },
+                            };
+                        }
+                        case Accelerator.Terminal.Cancelled {
+                            return Result.Result.Failure {
+                                Error: Types.Inferenceˉfailure.Cancelled,
+                            };
+                        }
+                        case Accelerator.Terminal.Deadlineˉreached {
+                            return Result.Result.Failure {
+                                Error: Types.Inferenceˉfailure.Deadlineˉreached,
+                            };
+                        }
+                        case Accelerator.Terminal.Providerˉlost {
+                            Generation: Generation,
+                        } {
+                            return Result.Result.Failure {
+                                Error: Types.Inferenceˉfailure.Providerˉlost {
+                                    Generation: Generation,
+                                },
+                            };
+                        }
+                        case Accelerator.Terminal.Fault {
+                            Error: Error,
+                        } {
+                            return Result.Result.Failure {
+                                Error: Convertˉfailure(Value: Error),
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

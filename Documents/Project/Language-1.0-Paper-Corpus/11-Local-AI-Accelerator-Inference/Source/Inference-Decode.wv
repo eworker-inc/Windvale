@@ -1,0 +1,355 @@
+edition 1;
+module Inferenceˉdecode;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉnumeric as Numeric;
+import Foundationˉresult as Result;
+import Inferenceˉpackage as Package;
+import Inferenceˉtypes as Types;
+
+fn Readˉu16ˉlittle(Value: borrow bytes, Offset: u64) -> u16 effects() {
+    let B0 = Numeric.Widenˉu8ˉtoˉu16(Bytes.At(Value: borrow Value, Index: Offset));
+    let B1 = Numeric.Widenˉu8ˉtoˉu16(Bytes.At(Value: borrow Value, Index: Offset + 1u64));
+    return B0 | (B1 << 8u16);
+}
+
+fn Readˉu32ˉlittle(Value: borrow bytes, Offset: u64) -> u32 effects() {
+    let B0 = Numeric.Widenˉu8ˉtoˉu32(Bytes.At(Value: borrow Value, Index: Offset));
+    let B1 = Numeric.Widenˉu8ˉtoˉu32(Bytes.At(Value: borrow Value, Index: Offset + 1u64));
+    let B2 = Numeric.Widenˉu8ˉtoˉu32(Bytes.At(Value: borrow Value, Index: Offset + 2u64));
+    let B3 = Numeric.Widenˉu8ˉtoˉu32(Bytes.At(Value: borrow Value, Index: Offset + 3u64));
+    return B0 | (B1 << 8u32) | (B2 << 16u32) | (B3 << 24u32);
+}
+
+fn Readˉu64ˉlittle(Value: borrow bytes, Offset: u64) -> u64 effects() {
+    let B0 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset));
+    let B1 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 1u64));
+    let B2 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 2u64));
+    let B3 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 3u64));
+    let B4 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 4u64));
+    let B5 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 5u64));
+    let B6 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 6u64));
+    let B7 = Numeric.Widenˉu8ˉtoˉu64(Bytes.At(Value: borrow Value, Index: Offset + 7u64));
+    return B0
+        | (B1 << 8u64)
+        | (B2 << 16u64)
+        | (B3 << 24u64)
+        | (B4 << 32u64)
+        | (B5 << 40u64)
+        | (B6 << 48u64)
+        | (B7 << 56u64);
+}
+
+fn Readˉf32ˉlittle(Value: borrow bytes, Offset: u64) -> f32 effects() {
+    return Numeric.Bitsˉu32ˉtoˉf32(Readˉu32ˉlittle(Value: borrow Value, Offset: Offset));
+}
+
+fn Hasˉtokenizerˉmagic(Value: borrow bytes) -> bool effects() {
+    return Bytes.At(Value: borrow Value, Index: 0u64) == 0x57u8
+        && Bytes.At(Value: borrow Value, Index: 1u64) == 0x56u8
+        && Bytes.At(Value: borrow Value, Index: 2u64) == 0x54u8
+        && Bytes.At(Value: borrow Value, Index: 3u64) == 0x4Bu8
+        && Bytes.At(Value: borrow Value, Index: 4u64) == 0x30u8
+        && Bytes.At(Value: borrow Value, Index: 5u64) == 0x30u8
+        && Bytes.At(Value: borrow Value, Index: 6u64) == 0x30u8
+        && Bytes.At(Value: borrow Value, Index: 7u64) == 0x31u8;
+}
+
+fn Hasˉmodelˉmagic(Value: borrow bytes) -> bool effects() {
+    return Bytes.At(Value: borrow Value, Index: 0u64) == 0x57u8
+        && Bytes.At(Value: borrow Value, Index: 1u64) == 0x56u8
+        && Bytes.At(Value: borrow Value, Index: 2u64) == 0x41u8
+        && Bytes.At(Value: borrow Value, Index: 3u64) == 0x49u8
+        && Bytes.At(Value: borrow Value, Index: 4u64) == 0x30u8
+        && Bytes.At(Value: borrow Value, Index: 5u64) == 0x30u8
+        && Bytes.At(Value: borrow Value, Index: 6u64) == 0x30u8
+        && Bytes.At(Value: borrow Value, Index: 7u64) == 0x31u8;
+}
+
+fn Decodeˉfiniteˉf16(
+    Bits: u16,
+    Sourceˉoffset: u64,
+) -> Result.Result<f32, Types.Inferenceˉfailure> effects() {
+    let Exponent = (Bits >> 10u16) & 0x1Fu16;
+    if Exponent == 0u16 || Exponent == 0x1Fu16 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉtokenizer {
+                Offset: Sourceˉoffset,
+                Rule: 5u32,
+            },
+        };
+    }
+
+    let Wide = Numeric.Widenˉu16ˉtoˉu32(Bits);
+    let Sign = (Wide & 0x8000u32) << 16u32;
+    let F32ˉexponent = Numeric.Widenˉu16ˉtoˉu32(Exponent) + 112u32;
+    let Fraction = (Wide & 0x03FFu32) << 13u32;
+    let F32ˉbits = Sign | (F32ˉexponent << 23u32) | Fraction;
+    return Result.Result.Valid {
+        Value: Numeric.Bitsˉu32ˉtoˉf32(F32ˉbits),
+    };
+}
+
+fn Isˉfiniteˉf32ˉbits(Bits: u32) -> bool effects() {
+    return ((Bits >> 23u32) & 0xFFu32) != 0xFFu32;
+}
+
+export fn Decodeˉinput() -> Result.Result<Types.Inputˉvector, Types.Inferenceˉfailure> effects() {
+    if Bytes.Length(Value: borrow Package.Tokenizerˉmetadata) != 24u64 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉtokenizer {
+                Offset: 24u64,
+                Rule: 1u32,
+            },
+        };
+    }
+    if !Hasˉtokenizerˉmagic(Value: borrow Package.Tokenizerˉmetadata) {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉtokenizer {
+                Offset: 0u64,
+                Rule: 2u32,
+            },
+        };
+    }
+    if Readˉu32ˉlittle(Value: borrow Package.Tokenizerˉmetadata, Offset: 8u64) != 4u32
+        || Readˉu32ˉlittle(Value: borrow Package.Tokenizerˉmetadata, Offset: 12u64) != 8u32 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉtokenizer {
+                Offset: 8u64,
+                Rule: 3u32,
+            },
+        };
+    }
+    if Bytes.Length(Value: borrow Package.Inputˉtokens) != 4u64
+        || Bytes.At(Value: borrow Package.Inputˉtokens, Index: 0u64) != 1u8
+        || Bytes.At(Value: borrow Package.Inputˉtokens, Index: 1u64) != 2u8
+        || Bytes.At(Value: borrow Package.Inputˉtokens, Index: 2u64) != 3u8
+        || Bytes.At(Value: borrow Package.Inputˉtokens, Index: 3u64) != 4u8 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉtokenizer {
+                Offset: 0u64,
+                Rule: 4u32,
+            },
+        };
+    }
+
+    let X0 = try Decodeˉfiniteˉf16(
+        Bits: Readˉu16ˉlittle(Value: borrow Package.Tokenizerˉmetadata, Offset: 16u64),
+        Sourceˉoffset: 16u64,
+    );
+    let X1 = try Decodeˉfiniteˉf16(
+        Bits: Readˉu16ˉlittle(Value: borrow Package.Tokenizerˉmetadata, Offset: 18u64),
+        Sourceˉoffset: 18u64,
+    );
+    let X2 = try Decodeˉfiniteˉf16(
+        Bits: Readˉu16ˉlittle(Value: borrow Package.Tokenizerˉmetadata, Offset: 20u64),
+        Sourceˉoffset: 20u64,
+    );
+    let X3 = try Decodeˉfiniteˉf16(
+        Bits: Readˉu16ˉlittle(Value: borrow Package.Tokenizerˉmetadata, Offset: 22u64),
+        Sourceˉoffset: 22u64,
+    );
+
+    return Result.Result.Valid {
+        Value: Types.Inputˉvector {
+            X0: X0,
+            X1: X1,
+            X2: X2,
+            X3: X3,
+        },
+    };
+}
+
+export fn Decodeˉmodel() -> Result.Result<Types.Modelˉplan, Types.Inferenceˉfailure> effects() {
+    if Bytes.Length(Value: borrow Package.Modelˉmetadata) != 64u64 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 64u64,
+                Rule: 1u32,
+            },
+        };
+    }
+    if !Hasˉmodelˉmagic(Value: borrow Package.Modelˉmetadata) {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 0u64,
+                Rule: 2u32,
+            },
+        };
+    }
+
+    let Inputˉelements = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 8u64);
+    let Outputˉelements = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 12u64);
+    let Weightˉbytes = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 16u64);
+    if Inputˉelements != 4u32 || Outputˉelements != 2u32 || Weightˉbytes != 4u32 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 8u64,
+                Rule: 3u32,
+            },
+        };
+    }
+    if Bytes.At(Value: borrow Package.Modelˉmetadata, Index: 20u64) != 1u8
+        || Bytes.At(Value: borrow Package.Modelˉmetadata, Index: 21u64) != 1u8
+        || Bytes.At(Value: borrow Package.Modelˉmetadata, Index: 22u64) != 1u8
+        || Bytes.At(Value: borrow Package.Modelˉmetadata, Index: 23u64) != 1u8 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 20u64,
+                Rule: 4u32,
+            },
+        };
+    }
+
+    let Scale0ˉbits = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 24u64);
+    let Scale1ˉbits = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 28u64);
+    let Bias0ˉbits = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 32u64);
+    let Bias1ˉbits = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 36u64);
+    if !Isˉfiniteˉf32ˉbits(Bits: Scale0ˉbits)
+        || !Isˉfiniteˉf32ˉbits(Bits: Scale1ˉbits)
+        || !Isˉfiniteˉf32ˉbits(Bits: Bias0ˉbits)
+        || !Isˉfiniteˉf32ˉbits(Bits: Bias1ˉbits) {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 24u64,
+                Rule: 5u32,
+            },
+        };
+    }
+
+    let Scale0 = Readˉf32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 24u64);
+    let Scale1 = Readˉf32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 28u64);
+    let Bias0 = Readˉf32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 32u64);
+    let Bias1 = Readˉf32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 36u64);
+    if Scale0 <= 0.0f32 || Scale1 <= 0.0f32 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 24u64,
+                Rule: 6u32,
+            },
+        };
+    }
+
+    let Maximumˉhostˉbytes = Readˉu64ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 40u64);
+    let Maximumˉdeviceˉbytes = Readˉu64ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 48u64);
+    let Maximumˉcommands = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 56u64);
+    let Maximumˉdiagnostics = Readˉu32ˉlittle(Value: borrow Package.Modelˉmetadata, Offset: 60u64);
+    if Maximumˉhostˉbytes < 4096u64 || Maximumˉhostˉbytes > 16384u64
+        || Maximumˉdeviceˉbytes < 320u64 || Maximumˉdeviceˉbytes > 320u64
+        || Maximumˉcommands < 6u32 || Maximumˉcommands > 8u32
+        || Maximumˉdiagnostics == 0u32 || Maximumˉdiagnostics > 16u32 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉmodel {
+                Offset: 40u64,
+                Rule: 7u32,
+            },
+        };
+    }
+
+    return Result.Result.Valid {
+        Value: Types.Modelˉplan {
+            Inputˉelements: Inputˉelements,
+            Outputˉelements: Outputˉelements,
+            Weightˉbytes: Weightˉbytes,
+            Weightˉformat: Types.Weightˉformat.Signedˉi4ˉtwosˉcomplement,
+            Activationˉformat: Types.Activationˉformat.F16ˉfinite,
+            Accumulatorˉformat: Types.Accumulatorˉformat.F32ˉstrict,
+            Weightˉlayout: Types.Weightˉlayout.Rowˉmajorˉlowˉnibbleˉfirst,
+            Scale0: Scale0,
+            Scale1: Scale1,
+            Bias0: Bias0,
+            Bias1: Bias1,
+            Maximumˉhostˉbytes: Maximumˉhostˉbytes,
+            Maximumˉdeviceˉbytes: Maximumˉdeviceˉbytes,
+            Maximumˉcommands: Maximumˉcommands,
+            Maximumˉdiagnostics: Maximumˉdiagnostics,
+        },
+    };
+}
+
+fn Decodeˉsignedˉi4(Value: u8) -> f32 effects() {
+    if Value == 0u8 { return 0.0f32; }
+    if Value == 1u8 { return 1.0f32; }
+    if Value == 2u8 { return 2.0f32; }
+    if Value == 3u8 { return 3.0f32; }
+    if Value == 4u8 { return 4.0f32; }
+    if Value == 5u8 { return 5.0f32; }
+    if Value == 6u8 { return 6.0f32; }
+    if Value == 7u8 { return 7.0f32; }
+    if Value == 8u8 { return -8.0f32; }
+    if Value == 9u8 { return -7.0f32; }
+    if Value == 10u8 { return -6.0f32; }
+    if Value == 11u8 { return -5.0f32; }
+    if Value == 12u8 { return -4.0f32; }
+    if Value == 13u8 { return -3.0f32; }
+    if Value == 14u8 { return -2.0f32; }
+    return -1.0f32;
+}
+
+export fn Weightˉvalue(
+    Row: u32,
+    Column: u32,
+) -> Result.Result<f32, Types.Inferenceˉfailure> effects() {
+    if Bytes.Length(Value: borrow Package.Quantizedˉweights) != 4u64 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉweights {
+                Offset: 4u64,
+                Rule: 1u32,
+            },
+        };
+    }
+    if Row >= 2u32 || Column >= 4u32 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉweights {
+                Offset: Numeric.Widenˉu32ˉtoˉu64(Row * 4u32 + Column),
+                Rule: 2u32,
+            },
+        };
+    }
+
+    let Byteˉindex = Row * 2u32 + Column / 2u32;
+    let Packed = Bytes.At(
+        Value: borrow Package.Quantizedˉweights,
+        Index: Numeric.Widenˉu32ˉtoˉu64(Byteˉindex),
+    );
+    let Nibble = if Column % 2u32 == 0u32 {
+        Packed & 0x0Fu8
+    } else {
+        (Packed >> 4u8) & 0x0Fu8
+    };
+    return Result.Result.Valid {
+        Value: Decodeˉsignedˉi4(Value: Nibble),
+    };
+}
+
+export fn Decodeˉproviderˉoutput(
+    Value: borrow bytes,
+) -> Result.Result<Types.Outputˉvector, Types.Inferenceˉfailure> effects() {
+    if Bytes.Length(Value: borrow Value) != 8u64 {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉproviderˉoutput {
+                Offset: 8u64,
+                Rule: 1u32,
+            },
+        };
+    }
+    let Y0ˉbits = Readˉu32ˉlittle(Value: borrow Value, Offset: 0u64);
+    let Y1ˉbits = Readˉu32ˉlittle(Value: borrow Value, Offset: 4u64);
+    if !Isˉfiniteˉf32ˉbits(Bits: Y0ˉbits) || !Isˉfiniteˉf32ˉbits(Bits: Y1ˉbits) {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Invalidˉproviderˉoutput {
+                Offset: 0u64,
+                Rule: 2u32,
+            },
+        };
+    }
+    return Result.Result.Valid {
+        Value: Types.Outputˉvector {
+            Y0: Numeric.Bitsˉu32ˉtoˉf32(Y0ˉbits),
+            Y1: Numeric.Bitsˉu32ˉtoˉf32(Y1ˉbits),
+        },
+    };
+}

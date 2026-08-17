@@ -1,0 +1,10 @@
+edition 1;
+module Inferenceˉpackage;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+export package data Tokenizerˉmetadata: bytes maximum 24u64;
+export package data Modelˉmetadata: bytes maximum 64u64;
+export package data Quantizedˉweights: bytes maximum 4u64;
+export package data Inputˉtokens: bytes maximum 4u64;

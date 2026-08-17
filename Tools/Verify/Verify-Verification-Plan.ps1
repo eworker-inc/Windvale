@@ -11,6 +11,7 @@ $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'go
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'Language 1.0 paper source'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'browser playground website contract'; Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1'); Scope = 'website'; Editor = $false; Areas = @() },
@@ -2832,6 +2833,15 @@ $NativeCases = @(
         Suites = @()
         Gaps = @()
         VerifyPlan = $true
+    },
+    @{
+        Name = 'Language 1.0 paper source routing'
+        Paths = @(
+            'Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
     },
     @{
         Name = 'verification planner'

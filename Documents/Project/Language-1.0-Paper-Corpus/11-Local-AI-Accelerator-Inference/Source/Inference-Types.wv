@@ -1,0 +1,134 @@
+edition 1;
+module Inferenceˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+export enum Weightˉformat: u8 {
+    Signedˉi4ˉtwosˉcomplement = 1u8;
+}
+
+export enum Activationˉformat: u8 {
+    F16ˉfinite = 1u8;
+}
+
+export enum Accumulatorˉformat: u8 {
+    F32ˉstrict = 1u8;
+}
+
+export enum Weightˉlayout: u8 {
+    Rowˉmajorˉlowˉnibbleˉfirst = 1u8;
+}
+
+export enum Attachmentˉmode: u8 {
+    Software = 1u8;
+    Paravirtualˉshared = 2u8;
+    Hardwareˉpartition = 3u8;
+    Exclusiveˉpassthrough = 4u8;
+}
+
+export enum Taskˉallocationˉreason: u8 {
+    Budgetˉexhausted = 1u8;
+    Targetˉunaddressable = 2u8;
+    Providerˉunavailable = 3u8;
+    Fragmented = 4u8;
+}
+
+export record Inputˉvector {
+    X0: f32;
+    X1: f32;
+    X2: f32;
+    X3: f32;
+}
+
+export record Modelˉplan {
+    Inputˉelements: u32;
+    Outputˉelements: u32;
+    Weightˉbytes: u32;
+    Weightˉformat: Weightˉformat;
+    Activationˉformat: Activationˉformat;
+    Accumulatorˉformat: Accumulatorˉformat;
+    Weightˉlayout: Weightˉlayout;
+    Scale0: f32;
+    Scale1: f32;
+    Bias0: f32;
+    Bias1: f32;
+    Maximumˉhostˉbytes: u64;
+    Maximumˉdeviceˉbytes: u64;
+    Maximumˉcommands: u32;
+    Maximumˉdiagnostics: u32;
+}
+
+export record Outputˉvector {
+    Y0: f32;
+    Y1: f32;
+}
+
+export record Acceleratedˉresult {
+    Output: Outputˉvector;
+    Providerˉidentity: text;
+    Providerˉgeneration: u64;
+    Attachmentˉmode: Attachmentˉmode;
+}
+
+export record Inferenceˉresult {
+    Score0: f32;
+    Score1: f32;
+    Selectedˉclass: u32;
+    Providerˉidentity: text;
+    Providerˉgeneration: u64;
+    Attachmentˉmode: Attachmentˉmode;
+}
+
+export record Comparisonˉlimits {
+    Maximumˉabsoluteˉerror: f32;
+    Maximumˉrelativeˉerror: f32;
+}
+
+export variant Inferenceˉfailure {
+    Invalidˉtokenizer(
+        Offset: u64,
+        Rule: u32,
+    );
+    Invalidˉmodel(
+        Offset: u64,
+        Rule: u32,
+    );
+    Invalidˉweights(
+        Offset: u64,
+        Rule: u32,
+    );
+    Invalidˉproviderˉoutput(
+        Offset: u64,
+        Rule: u32,
+    );
+    Taskˉscopeˉrejected(
+        Reason: Taskˉallocationˉreason,
+        Requestedˉbytes: u64,
+        Availableˉbytes: u64,
+    );
+    Taskˉspawnˉrejected(Reason: u32);
+    Cancelled;
+    Deadlineˉreached;
+    Providerˉlost(Generation: u64);
+    Providerˉevidenceˉmismatch(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Rule: u32,
+    );
+    Taskˉtrapped(Identity: u32);
+    Acceleratorˉrejected(
+        Kind: u32,
+        Stage: u32,
+        Providerˉgeneration: u64,
+        Requested: u64,
+        Limit: u64,
+    );
+    Outputˉmismatch(
+        Index: u32,
+        Expected: f32,
+        Observed: f32,
+        Absoluteˉerror: f32,
+        Allowedˉerror: f32,
+    );
+}

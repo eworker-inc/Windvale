@@ -1,0 +1,251 @@
+edition 1;
+module Inferenceˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability accelerator.catalog version 1;
+requires capability accelerator.execute version 1;
+requires capability accelerator.kernel version 1;
+requires capability accelerator.memory version 1;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+import Inferenceˉaccelerated as Accelerated;
+import Inferenceˉdecode as Decode;
+import Inferenceˉreference as Reference;
+import Inferenceˉtypes as Types;
+
+fn Convertˉallocationˉreason(
+    Value: Memory.Allocationˉreason,
+) -> Types.Taskˉallocationˉreason effects() {
+    return match Value {
+        case Memory.Allocationˉreason.Budgetˉexhausted {
+            Types.Taskˉallocationˉreason.Budgetˉexhausted
+        }
+        case Memory.Allocationˉreason.Targetˉunaddressable {
+            Types.Taskˉallocationˉreason.Targetˉunaddressable
+        }
+        case Memory.Allocationˉreason.Providerˉunavailable {
+            Types.Taskˉallocationˉreason.Providerˉunavailable
+        }
+        case Memory.Allocationˉreason.Fragmented {
+            Types.Taskˉallocationˉreason.Fragmented
+        }
+    };
+}
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Task.Taskˉlimits,
+) -> Result.Result<Task.Taskˉscope, Types.Inferenceˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Task.Construct(Budget: Budget, Limits: Limits) {
+        case Result.Result.Valid { Value: Scope } {
+            Result.Result.Valid { Value: Scope }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Inferenceˉfailure.Taskˉscopeˉrejected {
+                    Reason: Convertˉallocationˉreason(Value: Error.Reason),
+                    Requestedˉbytes: Error.Requestedˉbytes,
+                    Availableˉbytes: Error.Availableˉbytes,
+                },
+            }
+        }
+    };
+}
+
+fn Mapˉspawn<W>(
+    Value: Result.Result<
+        Task.Task<Types.Acceleratedˉresult, Types.Inferenceˉfailure>,
+        Task.Spawnˉfailure<W>
+    >,
+) -> Result.Result<
+    Task.Task<Types.Acceleratedˉresult, Types.Inferenceˉfailure>,
+    Types.Inferenceˉfailure
+> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Handle } {
+            Result.Result.Valid { Value: Handle }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            match Failure {
+                case Task.Spawnˉfailure.Scopeˉclosing { Work: _ } {
+                    Result.Result.Failure {
+                        Error: Types.Inferenceˉfailure.Taskˉspawnˉrejected {
+                            Reason: 1u32,
+                        },
+                    }
+                }
+                case Task.Spawnˉfailure.Taskˉlimit { Work: _ } {
+                    Result.Result.Failure {
+                        Error: Types.Inferenceˉfailure.Taskˉspawnˉrejected {
+                            Reason: 2u32,
+                        },
+                    }
+                }
+                case Task.Spawnˉfailure.Queueˉlimit { Work: _ } {
+                    Result.Result.Failure {
+                        Error: Types.Inferenceˉfailure.Taskˉspawnˉrejected {
+                            Reason: 3u32,
+                        },
+                    }
+                }
+                case Task.Spawnˉfailure.Memoryˉfailure {
+                    Error: _,
+                    Work: _,
+                } {
+                    Result.Result.Failure {
+                        Error: Types.Inferenceˉfailure.Taskˉspawnˉrejected {
+                            Reason: 4u32,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Absolute(Value: f32) -> f32 effects() {
+    return if Value < 0.0f32 {
+        -Value
+    } else {
+        Value
+    };
+}
+
+fn Compareˉone(
+    Index: u32,
+    Expected: f32,
+    Observed: f32,
+    Limits: borrow Types.Comparisonˉlimits,
+) -> Result.Result<unit, Types.Inferenceˉfailure> effects() {
+    let Absoluteˉerror = Absolute(Value: Observed - Expected);
+    let Allowedˉerror = Limits.Maximumˉabsoluteˉerror
+        + Limits.Maximumˉrelativeˉerror * Absolute(Value: Expected);
+    if Absoluteˉerror > Allowedˉerror {
+        return Result.Result.Failure {
+            Error: Types.Inferenceˉfailure.Outputˉmismatch {
+                Index: Index,
+                Expected: Expected,
+                Observed: Observed,
+                Absoluteˉerror: Absoluteˉerror,
+                Allowedˉerror: Allowedˉerror,
+            },
+        };
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export async fn Run(
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Inferenceˉresult, Types.Inferenceˉfailure>
+    effects(
+        accelerator.catalog,
+        accelerator.execute,
+        accelerator.kernel,
+        accelerator.memory,
+        memory.allocate,
+        resource.acquire,
+        resource.release,
+        task.spawn,
+        task.suspend,
+    ) {
+    let Input = try Decode.Decodeˉinput();
+    let Model = try Decode.Decodeˉmodel();
+    let Expected = try Reference.Run(Input: borrow Input, Model: borrow Model);
+    let Limits = Types.Comparisonˉlimits {
+        Maximumˉabsoluteˉerror: 0.0009765625f32,
+        Maximumˉrelativeˉerror: 0.0009765625f32,
+    };
+    let Taskˉlimits = Task.Taskˉlimits {
+        Maximumˉchildren: 1u32,
+        Maximumˉrunnable: 1u32,
+        Maximumˉcompleted: 1u32,
+        Maximumˉretainedˉbytes: 4096u64,
+        Maximumˉworkˉunits: 256u64,
+        Maximumˉcallˉdepth: 16u32,
+        Maximumˉtimers: 1u32,
+        Maximumˉdiagnostics: 16u32,
+    };
+
+    task scope Scope = try Constructˉscope(Budget: Budget, Limits: Taskˉlimits)
+        policy cancel_join {
+        let Work = async fn [copy Model]()
+            -> Result.Result<Types.Acceleratedˉresult, Types.Inferenceˉfailure>
+            effects(
+                accelerator.catalog,
+                accelerator.execute,
+                accelerator.kernel,
+                accelerator.memory,
+                resource.acquire,
+                resource.release,
+                task.suspend,
+            ) {
+            return await Accelerated.Run(Model: borrow Model);
+        };
+        let Handle = try Mapˉspawn(
+            Value: Task.Spawn(Scope: borrow mut Scope, Work: Work),
+        );
+        let Outcome = await Task.Await(Handle: Handle);
+        match Outcome {
+            case Task.Taskˉoutcome.Valid { Value: Actual } {
+                try Compareˉone(
+                    Index: 0u32,
+                    Expected: Expected.Y0,
+                    Observed: Actual.Output.Y0,
+                    Limits: borrow Limits,
+                );
+                try Compareˉone(
+                    Index: 1u32,
+                    Expected: Expected.Y1,
+                    Observed: Actual.Output.Y1,
+                    Limits: borrow Limits,
+                );
+                let Selectedˉclass = if Actual.Output.Y0 >= Actual.Output.Y1 {
+                    0u32
+                } else {
+                    1u32
+                };
+                return Result.Result.Valid {
+                    Value: Types.Inferenceˉresult {
+                        Score0: Actual.Output.Y0,
+                        Score1: Actual.Output.Y1,
+                        Selectedˉclass: Selectedˉclass,
+                        Providerˉidentity: Actual.Providerˉidentity,
+                        Providerˉgeneration: Actual.Providerˉgeneration,
+                        Attachmentˉmode: Actual.Attachmentˉmode,
+                    },
+                };
+            }
+            case Task.Taskˉoutcome.Failure { Error: Error } {
+                return Result.Result.Failure { Error: Error };
+            }
+            case Task.Taskˉoutcome.Cancelled {
+                return Result.Result.Failure {
+                    Error: Types.Inferenceˉfailure.Cancelled,
+                };
+            }
+            case Task.Taskˉoutcome.Deadlineˉreached {
+                return Result.Result.Failure {
+                    Error: Types.Inferenceˉfailure.Deadlineˉreached,
+                };
+            }
+            case Task.Taskˉoutcome.Providerˉlost {
+                return Result.Result.Failure {
+                    Error: Types.Inferenceˉfailure.Providerˉlost {
+                        Generation: 0u64,
+                    },
+                };
+            }
+            case Task.Taskˉoutcome.Trapped { Identity: Identity } {
+                return Result.Result.Failure {
+                    Error: Types.Inferenceˉfailure.Taskˉtrapped {
+                        Identity: Identity,
+                    },
+                };
+            }
+        }
+    }
+}

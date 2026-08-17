@@ -40,6 +40,17 @@ function Add-AllAreas {
     Add-Area $AllAreas
 }
 
+function Test-LanguagePaperSourcePath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    return $Path -match (
+        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+        '[0-9]+-[^/]+/Source/[^/]+\.wv$')
+}
+
 $Paths = @(
     $ChangedPath |
         ForEach-Object {
@@ -68,13 +79,16 @@ foreach ($Path in $Paths) {
     }
 
     if (
-        !$Path.StartsWith('Specifications/', [StringComparison]::Ordinal) -and
+        (Test-LanguagePaperSourcePath $Path) -or
         (
-            $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
-            $Path -eq 'LICENSE.md' -or
+            !$Path.StartsWith('Specifications/', [StringComparison]::Ordinal) -and
             (
-                $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
-                [System.IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
+                $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
+                $Path -eq 'LICENSE.md' -or
+                (
+                    $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
+                    [System.IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
+                )
             )
         )
     ) {

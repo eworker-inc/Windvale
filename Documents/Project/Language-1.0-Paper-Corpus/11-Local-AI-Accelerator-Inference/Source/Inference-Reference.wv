@@ -1,0 +1,62 @@
+edition 1;
+module Inferenceˉreference;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉresult as Result;
+import Inferenceˉdecode as Decode;
+import Inferenceˉtypes as Types;
+
+fn Accumulateˉrow0(
+    Input: borrow Types.Inputˉvector,
+) -> Result.Result<f32, Types.Inferenceˉfailure> effects() {
+    let W0 = try Decode.Weightˉvalue(Row: 0u32, Column: 0u32);
+    let W1 = try Decode.Weightˉvalue(Row: 0u32, Column: 1u32);
+    let W2 = try Decode.Weightˉvalue(Row: 0u32, Column: 2u32);
+    let W3 = try Decode.Weightˉvalue(Row: 0u32, Column: 3u32);
+    let A0 = Input.X0 * W0;
+    let A1 = A0 + Input.X1 * W1;
+    let A2 = A1 + Input.X2 * W2;
+    let A3 = A2 + Input.X3 * W3;
+    return Result.Result.Valid { Value: A3 };
+}
+
+fn Accumulateˉrow1(
+    Input: borrow Types.Inputˉvector,
+) -> Result.Result<f32, Types.Inferenceˉfailure> effects() {
+    let W0 = try Decode.Weightˉvalue(Row: 1u32, Column: 0u32);
+    let W1 = try Decode.Weightˉvalue(Row: 1u32, Column: 1u32);
+    let W2 = try Decode.Weightˉvalue(Row: 1u32, Column: 2u32);
+    let W3 = try Decode.Weightˉvalue(Row: 1u32, Column: 3u32);
+    let A0 = Input.X0 * W0;
+    let A1 = A0 + Input.X1 * W1;
+    let A2 = A1 + Input.X2 * W2;
+    let A3 = A2 + Input.X3 * W3;
+    return Result.Result.Valid { Value: A3 };
+}
+
+fn Biasˉrelu(Value: f32, Bias: f32) -> f32 effects() {
+    let Biased = Value + Bias;
+    return if Biased > 0.0f32 {
+        Biased
+    } else {
+        0.0f32
+    };
+}
+
+export fn Run(
+    Input: borrow Types.Inputˉvector,
+    Model: borrow Types.Modelˉplan,
+) -> Result.Result<Types.Outputˉvector, Types.Inferenceˉfailure> effects() {
+    let Row0 = try Accumulateˉrow0(Input: borrow Input);
+    let Row1 = try Accumulateˉrow1(Input: borrow Input);
+    let Scaled0 = Row0 * Model.Scale0;
+    let Scaled1 = Row1 * Model.Scale1;
+    return Result.Result.Valid {
+        Value: Types.Outputˉvector {
+            Y0: Biasˉrelu(Value: Scaled0, Bias: Model.Bias0),
+            Y1: Biasˉrelu(Value: Scaled1, Bias: Model.Bias1),
+        },
+    };
+}

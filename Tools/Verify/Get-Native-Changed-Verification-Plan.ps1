@@ -924,6 +924,14 @@ function Test-ArchivedManagedPath {
     )
 }
 
+function Test-LanguagePaperSourcePath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    return $Path -match (
+        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+        '[0-9]+-[^/]+/Source/[^/]+\.wv$')
+}
+
 function Require-Full-Database-Storage {
     $script:DatabaseStorageDevelopmentEligible = $false
     Add-Suite 'database-storage'
@@ -1348,6 +1356,7 @@ foreach ($Path in $Paths) {
         [IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
     )
     if (
+        (Test-LanguagePaperSourcePath $Path) -or
         $Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal) -or
         (
             $Path -ne 'LICENSE.md' -and

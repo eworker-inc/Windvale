@@ -1,0 +1,21 @@
+edition 1;
+module Inferenceˉkernel;
+profile core;
+platform accelerator.software.v1, accelerator.spirv.v1;
+authority library;
+
+// The build plan publishes this ordinary Windvale function as the exact
+// `windvale.paper.bias_relu.v1` scalar-lane entry. The target interface maps two
+// provider-validated input lanes to two independent calls and collects their
+// returned f32 values in lane order.
+export fn Biasˉreluˉlane(
+    Accumulated: f32,
+    Bias: f32,
+) -> f32 effects() {
+    let Value = Accumulated + Bias;
+    return if Value > 0.0f32 {
+        Value
+    } else {
+        0.0f32
+    };
+}

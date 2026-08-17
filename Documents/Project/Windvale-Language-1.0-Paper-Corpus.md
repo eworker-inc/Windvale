@@ -377,6 +377,8 @@ run one bounded inference through an explicitly bound accelerator provider, and
 compare its result with a strict software reference. The complete design pressure
 and review questions are owned by the
 [accelerator compute and AI design](Windvale-Accelerator-Compute-And-AI-Design.md).
+The complete first-author source and evidence are in the
+[workload 11 paper bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md).
 
 ### Required language pressure
 
@@ -487,7 +489,7 @@ source contract ambiguous.
 | Numeric or graphics processing | Pending source bundle |
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
-| Local AI accelerator inference | Pending source bundle |
+| Local AI accelerator inference | Draft source bundle complete; owner review pending |
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather
