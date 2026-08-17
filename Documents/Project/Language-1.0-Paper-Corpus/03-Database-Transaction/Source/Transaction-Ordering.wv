@@ -1,0 +1,31 @@
+edition 1;
+module Transactionˉordering;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉordering as Ordering;
+import Transactionˉtypes as Types;
+
+implement Ordering.Ordering<Types.Fieldˉkey> for Types.Fieldˉkey {
+    fn Compare(
+        Left: borrow Types.Fieldˉkey,
+        Right: borrow Types.Fieldˉkey,
+    ) -> Ordering.Orderingˉresult effects() {
+        if Left == Right {
+            return Ordering.Orderingˉresult.Equal;
+        }
+        return match Left {
+            case Types.Fieldˉkey.Identifier { Ordering.Orderingˉresult.Less }
+            case Types.Fieldˉkey.Email {
+                match Right {
+                    case Types.Fieldˉkey.Identifier {
+                        Ordering.Orderingˉresult.Greater
+                    }
+                    case _ { Ordering.Orderingˉresult.Less }
+                }
+            }
+            case Types.Fieldˉkey.Credits { Ordering.Orderingˉresult.Greater }
+        };
+    }
+}

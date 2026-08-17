@@ -11,7 +11,9 @@
 > the command findings by
 > [Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md),
 > and the bounded file-copy findings by
-> [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
+> [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md),
+> and the database-transaction findings by
+> [Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -642,10 +644,10 @@ databases, UI state, and operating-system services a structured alternative to
 packed byte offsets without introducing ambient garbage collection.
 
 Allocation is fallible whenever success depends on a supplied capacity, allocator,
-resource domain, or host. A type bound prevents excess; it is not a promise that
-memory is currently available. Allocation failure is a typed result, not a trap,
-unless a caller explicitly invokes a contract operation whose precondition proves
-reserved capacity.
+resource domain, or host. An admitted fixed or owner-stored runtime bound prevents
+excess; it is not a promise that memory is currently available. Allocation
+failure is a typed result, not a trap, unless a caller explicitly invokes a
+contract operation whose precondition proves reserved capacity.
 
 ## Collections
 
@@ -665,7 +667,7 @@ Language 1.0 should distinguish representation and runtime budget:
 | `Mutableˉslice<T>` | Exclusive lexical view into one owned mutable collection. |
 | `Map<K, V>` | Move-owned bounded deterministic associative collection with an immutable publication form. |
 | `Set<T>` | Move-owned bounded deterministic membership collection with canonical iteration and immutable publication. |
-| `Arena<T, N>` | Owned typed node store with generation-checked handles and exact maximum. |
+| `Arena<T>` | Owned typed node store with a positive immutable runtime maximum and generation-checked handles. |
 
 Collections may be fields, variant payloads, parameters, results, and elements
 when their ownership classes permit it. Immutable collections may nest. Mutable

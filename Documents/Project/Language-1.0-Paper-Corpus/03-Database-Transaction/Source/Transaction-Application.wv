@@ -1,0 +1,263 @@
+edition 1;
+module Transactionˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability database.customer.transaction version 1;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Platformˉcustomerˉdatabase as Database;
+import Transactionˉparser as Parser;
+import Transactionˉtypes as Types;
+
+fn Normalizeˉreason(
+    Value: Database.Failureˉkind,
+) -> Types.Databaseˉreason effects() {
+    return match Value {
+        case Database.Failureˉkind.Invalidˉlimit {
+            Types.Databaseˉreason.Invalidˉlimit
+        }
+        case Database.Failureˉkind.Invalidˉschema {
+            Types.Databaseˉreason.Invalidˉschema
+        }
+        case Database.Failureˉkind.Capacityˉexhausted {
+            Types.Databaseˉreason.Capacityˉexhausted
+        }
+        case Database.Failureˉkind.Permissionˉdenied {
+            Types.Databaseˉreason.Permissionˉdenied
+        }
+        case Database.Failureˉkind.Unavailable {
+            Types.Databaseˉreason.Unavailable
+        }
+        case Database.Failureˉkind.Revoked { Types.Databaseˉreason.Revoked }
+        case Database.Failureˉkind.Cancelled {
+            Types.Databaseˉreason.Cancelled
+        }
+        case Database.Failureˉkind.Providerˉlost {
+            Types.Databaseˉreason.Providerˉlost
+        }
+        case Database.Failureˉkind.Providerˉrestarted {
+            Types.Databaseˉreason.Providerˉrestarted
+        }
+        case Database.Failureˉkind.Invalidˉresponse {
+            Types.Databaseˉreason.Invalidˉresponse
+        }
+        case Database.Failureˉkind.Storageˉfailure {
+            Types.Databaseˉreason.Storageˉfailure
+        }
+    };
+}
+
+fn Mapˉparse(
+    Value: Result.Result<Types.Customerˉrow, Types.Parseˉfailure>,
+) -> Result.Result<Types.Customerˉrow, Types.Transactionˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Row } {
+            Result.Result.Valid { Value: Row }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Transactionˉfailure.Parse { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉbegin(
+    Value: Result.Result<Database.Transaction, Database.Failure>,
+) -> Result.Result<Database.Transaction, Types.Transactionˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Transaction } {
+            Result.Result.Valid { Value: Transaction }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Transactionˉfailure.Beginˉrejected {
+                    Reason: Normalizeˉreason(Value: Error.Kind),
+                    Providerˉgeneration: Error.Providerˉgeneration,
+                },
+            }
+        }
+    };
+}
+
+fn Mapˉstage(
+    Value: Result.Result<unit, Database.Failure>,
+) -> Result.Result<unit, Types.Transactionˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Transactionˉfailure.Stageˉrejected {
+                    Reason: Normalizeˉreason(Value: Error.Kind),
+                    Providerˉgeneration: Error.Providerˉgeneration,
+                },
+            }
+        }
+    };
+}
+
+export fn Run(
+    Configuration: Types.Configuration,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Transactionˉreport, Types.Transactionˉfailure>
+    effects(
+        database.customer.transaction,
+        memory.allocate,
+        resource.acquire,
+        resource.complete,
+        resource.release
+    ) {
+    var Rootˉbudget = Budget;
+    let Arenaˉbudget = match Memory.Split(
+        Parent: borrow mut Rootˉbudget,
+        Maximumˉbytes: 4096u64,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Child } { Child }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Transactionˉfailure.Parse {
+                    Error: Types.Parseˉfailure.Allocation { Error: Error },
+                },
+            };
+        }
+    };
+    let Mapˉbudget = match Memory.Split(
+        Parent: borrow mut Rootˉbudget,
+        Maximumˉbytes: 4096u64,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Child } { Child }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Transactionˉfailure.Parse {
+                    Error: Types.Parseˉfailure.Allocation { Error: Error },
+                },
+            };
+        }
+    };
+    let Row = try Mapˉparse(
+        Value: Parser.Parse(
+            Input: borrow Configuration.Fields,
+            Arenaˉbudget: Arenaˉbudget,
+            Mapˉbudget: Mapˉbudget,
+        ),
+    );
+
+    using Transaction = try Mapˉbegin(
+        Value: database.customer.transaction.Begin(
+            Expectedˉdatabaseˉgeneration:
+                Configuration.Expectedˉdatabaseˉgeneration,
+            Maximumˉoperations: Configuration.Maximumˉtransactionˉoperations,
+            Maximumˉstagedˉrows: 1u32,
+            Maximumˉretainedˉrowˉbytes: 61440u64,
+        ),
+    ) {
+        let Existing = match database.customer.transaction.Lookup(
+            Transaction: borrow mut Transaction,
+            Identifier: Row.Identifier,
+        ) {
+            case Database.Lookupˉoutcome.Found {
+                Row: Existingˉrow,
+                Revision: Revision,
+                Schemaˉversion: Schemaˉversion,
+            } {
+                if Schemaˉversion != 1u32 {
+                    return Result.Result.Failure {
+                        Error: Types.Transactionˉfailure.Existingˉschemaˉinvalid {
+                            Identifier: Row.Identifier,
+                            Schemaˉversion: Schemaˉversion,
+                        },
+                    };
+                }
+                Database.Existingˉrow {
+                    Row: Existingˉrow,
+                    Revision: Revision,
+                }
+            }
+            case Database.Lookupˉoutcome.Missing {} {
+                return Result.Result.Failure {
+                    Error: Types.Transactionˉfailure.Missingˉrow {
+                        Identifier: Row.Identifier,
+                    },
+                };
+            }
+            case Database.Lookupˉoutcome.Rejected { Error: Error } {
+                return Result.Result.Failure {
+                    Error: Types.Transactionˉfailure.Lookupˉrejected {
+                        Reason: Normalizeˉreason(Value: Error.Kind),
+                        Providerˉgeneration: Error.Providerˉgeneration,
+                    },
+                };
+            }
+        };
+        try Mapˉstage(
+            Value: database.customer.transaction.Stageˉupdate(
+                Transaction: borrow mut Transaction,
+                Expectedˉrevision: Existing.Revision,
+                Row: Row,
+            ),
+        );
+
+        return match database.customer.transaction.Commit(
+            Transaction: borrow mut Transaction,
+        ) {
+            case Database.Commitˉoutcome.Committed {
+                Commitˉidentity: Commitˉidentity,
+                Previousˉgeneration: Previousˉgeneration,
+                Generation: Generation,
+                Sequence: Sequence,
+            } {
+                Result.Result.Valid {
+                    Value: Types.Transactionˉreport {
+                        Identifier: Row.Identifier,
+                        Priorˉrevision: Existing.Revision,
+                        Commitˉidentity: Commitˉidentity,
+                        Priorˉdatabaseˉgeneration: Previousˉgeneration,
+                        Committedˉdatabaseˉgeneration: Generation,
+                        Commitˉsequence: Sequence,
+                        Requiresˉindependentˉreopen: true,
+                    },
+                }
+            }
+            case Database.Commitˉoutcome.Conflict {
+                Expectedˉrevision: Expected,
+                Observedˉrevision: Observed,
+            } {
+                Result.Result.Failure {
+                    Error: Types.Transactionˉfailure.Conflict {
+                        Expectedˉrevision: Expected,
+                        Observedˉrevision: Observed,
+                    },
+                }
+            }
+            case Database.Commitˉoutcome.Rejected { Error: Error } {
+                Result.Result.Failure {
+                    Error: Types.Transactionˉfailure.Commitˉrejected {
+                        Reason: Normalizeˉreason(Value: Error.Kind),
+                        Providerˉgeneration: Error.Providerˉgeneration,
+                    },
+                }
+            }
+            case Database.Commitˉoutcome.Indeterminate {
+                Commitˉidentity: Commitˉidentity,
+                Expectedˉgeneration: Expected,
+                Observedˉgeneration: Observed,
+                Error: Error,
+            } {
+                Result.Result.Failure {
+                    Error: Types.Transactionˉfailure.Commitˉindeterminate {
+                        Commitˉidentity: Commitˉidentity,
+                        Expectedˉgeneration: Expected,
+                        Observedˉgeneration: Observed,
+                        Reason: Normalizeˉreason(Value: Error.Kind),
+                    },
+                }
+            }
+        };
+    }
+}

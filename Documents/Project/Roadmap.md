@@ -33,9 +33,14 @@ accepts the command workload's general Foundation and launcher findings while
 keeping its stream operation identities provisional, and
 [Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
 accepts the file-copy workload's buffer, completion, progress, authority, and
-lifecycle findings while keeping filesystem catalog identities provisional. The
+lifecycle findings while keeping filesystem catalog identities provisional, and
+[Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md)
+accepts the database workload's arena, collection-observation, typed-schema,
+commit, and recovery findings while keeping its capability/schema identities
+provisional. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
 [bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
+[database-transaction bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
 are now draft reviewed. The accepted direction, normative-candidate suite,

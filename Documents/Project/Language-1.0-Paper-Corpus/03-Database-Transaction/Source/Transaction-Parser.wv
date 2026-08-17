@@ -1,0 +1,432 @@
+edition 1;
+module Transactionˉparser;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉordering as Ordering;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Transactionˉordering as Fieldˉordering;
+import Transactionˉtypes as Types;
+
+const MAXIMUM_FIELDS: u64 = 3u64;
+const MAXIMUM_EMAIL_BYTES: u64 = 128u64;
+const MAXIMUM_NUMBER_BYTES: u64 = 20u64;
+
+fn Parseˉfield(
+    Field: borrow Types.Fieldˉinput,
+) -> Result.Result<Types.Parsedˉvalue, Types.Parseˉfailure> effects() {
+    return match Field.Key {
+        case Types.Fieldˉkey.Identifier {
+            match Numeric.Parseˉu64ˉdecimalˉwhole(
+                Value: borrow Field.Value,
+                Maximumˉinputˉbytes: MAXIMUM_NUMBER_BYTES,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Result.Result.Valid {
+                        Value: Types.Parsedˉvalue.Identifier { Value: Value },
+                    }
+                }
+                case Result.Result.Failure { Error: Error } {
+                    Result.Result.Failure {
+                        Error: Types.Parseˉfailure.Invalidˉnumber {
+                            Key: Field.Key,
+                            Error: Error,
+                        },
+                    }
+                }
+            }
+        }
+        case Types.Fieldˉkey.Email {
+            let Length = Text.Byteˉlength(Value: borrow Field.Value);
+            if Length == 0u64 {
+                return Result.Result.Failure {
+                    Error: Types.Parseˉfailure.Emptyˉtext {
+                        Key: Types.Fieldˉkey.Email,
+                    },
+                };
+            }
+            if Length > MAXIMUM_EMAIL_BYTES {
+                return Result.Result.Failure {
+                    Error: Types.Parseˉfailure.Textˉlimit {
+                        Key: Types.Fieldˉkey.Email,
+                        Observedˉbytes: Length,
+                        Maximumˉbytes: MAXIMUM_EMAIL_BYTES,
+                    },
+                };
+            }
+            Result.Result.Valid {
+                Value: Types.Parsedˉvalue.Email { Value: Field.Value },
+            }
+        }
+        case Types.Fieldˉkey.Credits {
+            match Numeric.Parseˉu64ˉdecimalˉwhole(
+                Value: borrow Field.Value,
+                Maximumˉinputˉbytes: MAXIMUM_NUMBER_BYTES,
+            ) {
+                case Result.Result.Valid { Value: Value } {
+                    Result.Result.Valid {
+                        Value: Types.Parsedˉvalue.Credits { Value: Value },
+                    }
+                }
+                case Result.Result.Failure { Error: Error } {
+                    Result.Result.Failure {
+                        Error: Types.Parseˉfailure.Invalidˉnumber {
+                            Key: Field.Key,
+                            Error: Error,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Mapˉarenaˉseed(
+    Value: Result.Result<
+        Collections.Arenaˉseed<Types.Parsedˉvalue>,
+        Collections.Arenaˉinsertˉfailure<Types.Parsedˉvalue>
+    >,
+) -> Result.Result<
+    Collections.Arenaˉseed<Types.Parsedˉvalue>,
+    Types.Parseˉfailure
+> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Seed } {
+            Result.Result.Valid { Value: Seed }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error.Error },
+            }
+        }
+    };
+}
+
+fn Mapˉarenaˉinsert(
+    Value: Result.Result<
+        Collections.Handle<Types.Parsedˉvalue>,
+        Collections.Arenaˉinsertˉfailure<Types.Parsedˉvalue>
+    >,
+) -> Result.Result<
+    Collections.Handle<Types.Parsedˉvalue>,
+    Types.Parseˉfailure
+> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Handle } {
+            Result.Result.Valid { Value: Handle }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error.Error },
+            }
+        }
+    };
+}
+
+fn Mapˉmapˉinsert(
+    Value: Result.Result<
+        unit,
+        Collections.Mapˉinsertˉfailure<
+            Types.Fieldˉkey,
+            Collections.Handle<Types.Parsedˉvalue>
+        >
+    >,
+) -> Result.Result<unit, Types.Parseˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error.Error },
+            }
+        }
+    };
+}
+
+fn Expectedˉkey(
+    Position: u64,
+) -> Types.Fieldˉkey effects() {
+    if Position == 0u64 {
+        return Types.Fieldˉkey.Identifier;
+    }
+    if Position == 1u64 {
+        return Types.Fieldˉkey.Email;
+    }
+    return Types.Fieldˉkey.Credits;
+}
+
+fn Validateˉcanonicalˉiteration(
+    Fields: borrow Collections.Map<
+        Types.Fieldˉkey,
+        Collections.Handle<Types.Parsedˉvalue>
+    >,
+) -> Result.Result<unit, Types.Parseˉfailure> effects() {
+    var Position = 0u64;
+    let Count = Collections.Mapˉlength(Map: Fields);
+    while Position < Count {
+        let Observed = Collections.Mapˉkeyˉat(
+            Map: Fields,
+            Index: Position,
+        );
+        let Expected = Expectedˉkey(Position: Position);
+        if Ordering.Compare(Left: Observed, Right: borrow Expected)
+            != Ordering.Orderingˉresult.Equal {
+            return Result.Result.Failure {
+                Error: Types.Parseˉfailure.Noncanonicalˉiteration {
+                    Position: Position,
+                    Observed: Observed,
+                },
+            };
+        }
+        Position = Position + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Readˉidentifier(
+    Values: borrow Collections.Arena<Types.Parsedˉvalue>,
+    Handle: borrow Collections.Handle<Types.Parsedˉvalue>,
+) -> Result.Result<u64, Types.Parseˉfailure> effects() {
+    match Collections.Arenaˉvalidate(
+        Arena: Values,
+        Handle: Handle,
+    ) {
+        case Result.Result.Valid { Value: () } { () }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+    let Value = Collections.Arenaˉborrowˉvalidated(
+        Arena: Values,
+        Handle: Handle,
+    );
+    return match Value {
+        case Types.Parsedˉvalue.Identifier { Value: Number } {
+            Result.Result.Valid { Value: Number }
+        }
+        case _ {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Unexpectedˉvalue {
+                    Expected: Types.Fieldˉkey.Identifier,
+                },
+            }
+        }
+    };
+}
+
+fn Readˉemail(
+    Values: borrow Collections.Arena<Types.Parsedˉvalue>,
+    Handle: borrow Collections.Handle<Types.Parsedˉvalue>,
+) -> Result.Result<text, Types.Parseˉfailure> effects() {
+    match Collections.Arenaˉvalidate(
+        Arena: Values,
+        Handle: Handle,
+    ) {
+        case Result.Result.Valid { Value: () } { () }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+    let Value = Collections.Arenaˉborrowˉvalidated(
+        Arena: Values,
+        Handle: Handle,
+    );
+    return match Value {
+        case Types.Parsedˉvalue.Email { Value: Email } {
+            Result.Result.Valid { Value: Email }
+        }
+        case _ {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Unexpectedˉvalue {
+                    Expected: Types.Fieldˉkey.Email,
+                },
+            }
+        }
+    };
+}
+
+fn Readˉcredits(
+    Values: borrow Collections.Arena<Types.Parsedˉvalue>,
+    Handle: borrow Collections.Handle<Types.Parsedˉvalue>,
+) -> Result.Result<u64, Types.Parseˉfailure> effects() {
+    match Collections.Arenaˉvalidate(
+        Arena: Values,
+        Handle: Handle,
+    ) {
+        case Result.Result.Valid { Value: () } { () }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+    let Value = Collections.Arenaˉborrowˉvalidated(
+        Arena: Values,
+        Handle: Handle,
+    );
+    return match Value {
+        case Types.Parsedˉvalue.Credits { Value: Number } {
+            Result.Result.Valid { Value: Number }
+        }
+        case _ {
+            Result.Result.Failure {
+                Error: Types.Parseˉfailure.Unexpectedˉvalue {
+                    Expected: Types.Fieldˉkey.Credits,
+                },
+            }
+        }
+    };
+}
+
+export fn Parse(
+    Input: borrow Collections.Sequence<Types.Fieldˉinput>,
+    Arenaˉbudget: Memory.Memoryˉbudget,
+    Mapˉbudget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Customerˉrow, Types.Parseˉfailure>
+    effects(memory.allocate) {
+    let Count = Collections.Sequenceˉlength(Value: Input);
+    if Count == 0u64 {
+        return Result.Result.Failure { Error: Types.Parseˉfailure.Noˉfields };
+    }
+    if Count > MAXIMUM_FIELDS {
+        return Result.Result.Failure {
+            Error: Types.Parseˉfailure.Tooˉmanyˉfields {
+                Observed: Count,
+                Maximum: MAXIMUM_FIELDS,
+            },
+        };
+    }
+
+    let Firstˉfield = Collections.Sequenceˉat(Value: Input, Index: 0u64);
+    let Firstˉvalue = try Parseˉfield(Field: Firstˉfield);
+    let Seed = try Mapˉarenaˉseed(
+        Value: Collections.Arenaˉconstructˉwithˉfirst(
+            Budget: Arenaˉbudget,
+            Maximumˉnodes: MAXIMUM_FIELDS,
+            First: Firstˉvalue,
+        ),
+    );
+    let Firstˉhandle = Seed.First;
+    var Values = Seed.Owner;
+    var Fields = match Collections.Mapˉconstructˉwithˉfirst(
+        Budget: Mapˉbudget,
+        Maximumˉitems: MAXIMUM_FIELDS,
+        Key: Firstˉfield.Key,
+        Value: Firstˉhandle,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Parseˉfailure.Collection { Error: Error.Error },
+            };
+        }
+    };
+
+    var Index = 1u64;
+    while Index < Count {
+        let Field = Collections.Sequenceˉat(Value: Input, Index: Index);
+        if Collections.Mapˉcontains(
+            Map: borrow Fields,
+            Key: borrow Field.Key,
+        ) {
+            return Result.Result.Failure {
+                Error: Types.Parseˉfailure.Duplicateˉfield {
+                    Key: Field.Key,
+                    Index: Index,
+                },
+            };
+        }
+        let Parsed = try Parseˉfield(Field: Field);
+        let Handle = try Mapˉarenaˉinsert(
+            Value: Collections.Arenaˉinsert(
+                Arena: borrow mut Values,
+                Value: Parsed,
+            ),
+        );
+        try Mapˉmapˉinsert(
+            Value: Collections.Mapˉinsert(
+                Map: borrow mut Fields,
+                Key: Field.Key,
+                Value: Handle,
+            ),
+        );
+        Index = Index + 1u64;
+    }
+
+    let Identifierˉkey = Types.Fieldˉkey.Identifier;
+    let Emailˉkey = Types.Fieldˉkey.Email;
+    let Creditsˉkey = Types.Fieldˉkey.Credits;
+    if !Collections.Mapˉcontains(
+        Map: borrow Fields,
+        Key: borrow Identifierˉkey,
+    ) {
+        return Result.Result.Failure {
+            Error: Types.Parseˉfailure.Missingˉfield {
+                Key: Types.Fieldˉkey.Identifier,
+            },
+        };
+    }
+    if !Collections.Mapˉcontains(
+        Map: borrow Fields,
+        Key: borrow Emailˉkey,
+    ) {
+        return Result.Result.Failure {
+            Error: Types.Parseˉfailure.Missingˉfield {
+                Key: Types.Fieldˉkey.Email,
+            },
+        };
+    }
+    if !Collections.Mapˉcontains(
+        Map: borrow Fields,
+        Key: borrow Creditsˉkey,
+    ) {
+        return Result.Result.Failure {
+            Error: Types.Parseˉfailure.Missingˉfield {
+                Key: Types.Fieldˉkey.Credits,
+            },
+        };
+    }
+    let Identifierˉhandle = Collections.Mapˉborrowˉexisting(
+        Map: borrow Fields,
+        Key: borrow Identifierˉkey,
+    );
+    let Emailˉhandle = Collections.Mapˉborrowˉexisting(
+        Map: borrow Fields,
+        Key: borrow Emailˉkey,
+    );
+    let Creditsˉhandle = Collections.Mapˉborrowˉexisting(
+        Map: borrow Fields,
+        Key: borrow Creditsˉkey,
+    );
+
+    try Validateˉcanonicalˉiteration(Fields: borrow Fields);
+    let Identifier = try Readˉidentifier(
+        Values: borrow Values,
+        Handle: Identifierˉhandle,
+    );
+    let Email = try Readˉemail(
+        Values: borrow Values,
+        Handle: Emailˉhandle,
+    );
+    let Credits = try Readˉcredits(
+        Values: borrow Values,
+        Handle: Creditsˉhandle,
+    );
+    return Result.Result.Valid {
+        Value: Types.Customerˉrow {
+            Identifier: Identifier,
+            Email: Email,
+            Credits: Credits,
+        },
+    };
+}

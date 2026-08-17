@@ -10,7 +10,9 @@ and refined by
 and
 [Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
 and
-[Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
+[Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
+and
+[Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -571,6 +573,80 @@ future type. Serialization uses a named format and cannot assume internal nodes.
 Consuming publication produces `Immutableˉmap<K, V>` with the same canonical
 iteration order and no mutation.
 
+The database-transaction workload fixes the first exact ordered-map construction
+and observation surface:
+
+~~~text
+export variant Collectionˉfailure {
+    Invalidˉlimit(Field: u32, Observed: u64, Minimum: u64, Maximum: u64);
+    Allocation(Error: Allocationˉfailure);
+    Capacityˉexhausted(Maximum: u64);
+    Duplicate;
+    Comparisonˉlimit(Maximum: u64);
+    Wrongˉarena;
+    Slotˉoutˉofˉrange(Slot: u64, Maximum: u64);
+    Vacant(Slot: u64);
+    Staleˉgeneration(Expected: u64, Observed: u64);
+    Retired(Slot: u64);
+}
+
+export record Mapˉinsertˉfailure<K, V> {
+    Error: Collectionˉfailure;
+    Key: K;
+    Value: V;
+}
+
+export fn Mapˉconstructˉwithˉfirst<K, V>(
+    Budget: Memoryˉbudget,
+    Maximumˉitems: u64,
+    Key: K,
+    Value: V,
+) -> Result<Map<K, V>, Mapˉinsertˉfailure<K, V>>
+    effects(memory.allocate)
+    where K: Ordering<K>;
+
+export fn Mapˉinsert<K, V>(
+    Map: borrow mut Map<K, V>,
+    Key: K,
+    Value: V,
+) -> Result<unit, Mapˉinsertˉfailure<K, V>> effects()
+    where K: Ordering<K>;
+
+export fn Mapˉlength<K, V>(
+    Map: borrow Map<K, V>,
+) -> u64 effects();
+
+export fn Mapˉcontains<K, V>(
+    Map: borrow Map<K, V>,
+    Key: borrow K,
+) -> bool effects()
+    where K: Ordering<K>;
+
+export fn Mapˉborrowˉexisting<K, V>(
+    Map: borrow Map<K, V>,
+    Key: borrow K,
+) -> borrow V effects()
+    where K: Ordering<K>;
+
+export fn Mapˉkeyˉat<K, V>(
+    Map: borrow Map<K, V>,
+    Index: u64,
+) -> borrow K effects();
+~~~
+
+Construction requires a positive maximum. Its `K` and `V` derive from the
+explicit first key/value; it atomically creates the map and inserts that pair.
+Construction or insertion failure returns the original owned key/value and
+leaves no partial observable change. The budget supplies the retained-byte bound
+and success transfers its accounting into the map.
+
+`Mapˉkeyˉat` observes ascending canonical rank and requires
+`Index < Mapˉlength`. `Mapˉborrowˉexisting` requires `Mapˉcontains` to have proved
+the key present in the same immutable map state. A violated precondition traps
+before access. The borrow checker prevents intervening exclusive mutation while
+the proof/borrow owner is live. This keeps absence recoverable without placing a
+borrow inside an `Option` payload.
+
 ## Deterministic sets
 
 `Set<T>` is a move-owned finite membership collection. It requires
@@ -599,8 +675,10 @@ of this contract.
 
 ## Typed arenas and handles
 
-`Arena<T, N>` is a move-owned store of at most compile-time constant `N` nodes.
-It owns one allocation lease and every live node.
+`Arena<T>` is a move-owned store with one immutable positive runtime
+`Maximumˉnodes`. It owns one allocation lease and every live node. Construction
+validates its maximum before allocation, records it for admission and
+diagnostics, and never grows past it.
 
 `Handle<T>` is a Copy, non-owning pair of arena identity, slot index, and
 generation. Its representation is opaque and not generally serializable,
@@ -625,6 +703,56 @@ destroys every live node and invalidates every handle, including cyclic graphs.
 
 The arena provides bounded iteration over live nodes in ascending slot order.
 Graph traversal order is owned by the algorithm, not inferred from handle values.
+
+The database-transaction workload fixes these first exact arena operations:
+
+~~~text
+export record Arenaˉseed<T> {
+    Owner: Arena<T>;
+    First: Handle<T>;
+}
+
+export record Arenaˉinsertˉfailure<T> {
+    Error: Collectionˉfailure;
+    Value: T;
+}
+
+export fn Arenaˉconstructˉwithˉfirst<T>(
+    Budget: Memoryˉbudget,
+    Maximumˉnodes: u64,
+    First: T,
+) -> Result<Arenaˉseed<T>, Arenaˉinsertˉfailure<T>>
+    effects(memory.allocate);
+
+export fn Arenaˉinsert<T>(
+    Arena: borrow mut Arena<T>,
+    Value: T,
+) -> Result<Handle<T>, Arenaˉinsertˉfailure<T>> effects();
+
+export fn Arenaˉvalidate<T>(
+    Arena: borrow Arena<T>,
+    Handle: borrow Handle<T>,
+) -> Result<unit, Collectionˉfailure> effects();
+
+export fn Arenaˉborrowˉvalidated<T>(
+    Arena: borrow Arena<T>,
+    Handle: borrow Handle<T>,
+) -> borrow T effects();
+~~~
+
+The first-item constructor solves `T` from `First`, atomically constructs the
+arena and inserts the value, and returns both owner and first handle. Failure
+releases partial allocation and returns the original value unchanged. Ordinary
+insertion checks capacity before acceptance and has the same ownership-return
+rule.
+
+`Arenaˉvalidate` returns a nominal failure for wrong arena, range, vacancy, stale
+generation, or retired slot. `Arenaˉborrowˉvalidated` requires a successful
+validation for the same immutable arena/handle state and returns a direct borrow
+tied to the arena owner. Violation traps before access. No exclusive arena
+mutation can occur between proof and use while that immutable owner borrow is
+live. This avoids a borrowed value inside `Result` without weakening recoverable
+validation or memory safety.
 
 ## Bounded iterators
 
@@ -1080,6 +1208,10 @@ Before source freeze:
 11. unsafe values cannot enter Core or Hosted source; and
 12. fixed byte-buffer initialization, slicing, ownership, and release pass the
     paper corpus;
-13. known partial progress never permits replay of an uncertain mutation; and
-14. a responsibility matrix identifies ordinary source, compiler intrinsic,
+13. known partial progress never permits replay of an uncertain mutation;
+14. runtime-bounded arena capacity, generation validation, and two-step borrowed
+    observation pass the paper corpus;
+15. ordered-map first construction, ownership-return failure, presence proof,
+    and canonical rank access pass the paper corpus; and
+16. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.

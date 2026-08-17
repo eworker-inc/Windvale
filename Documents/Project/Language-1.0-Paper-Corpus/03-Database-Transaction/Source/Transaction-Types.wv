@@ -1,0 +1,93 @@
+edition 1;
+module Transactionˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+
+export enum Fieldˉkey: u8 {
+    Identifier = 1u8;
+    Email = 2u8;
+    Credits = 3u8;
+}
+
+export enum Databaseˉreason: u8 {
+    Invalidˉlimit = 1u8;
+    Invalidˉschema = 2u8;
+    Capacityˉexhausted = 3u8;
+    Permissionˉdenied = 4u8;
+    Unavailable = 5u8;
+    Revoked = 6u8;
+    Cancelled = 7u8;
+    Providerˉlost = 8u8;
+    Providerˉrestarted = 9u8;
+    Invalidˉresponse = 10u8;
+    Storageˉfailure = 11u8;
+}
+
+export record Fieldˉinput {
+    Key: Fieldˉkey;
+    Value: text;
+}
+
+export record Customerˉrow {
+    Identifier: u64;
+    Email: text;
+    Credits: u64;
+}
+
+export variant Parsedˉvalue {
+    Identifier(Value: u64);
+    Email(Value: text);
+    Credits(Value: u64);
+}
+
+export variant Parseˉfailure {
+    Noˉfields;
+    Tooˉmanyˉfields(Observed: u64, Maximum: u64);
+    Duplicateˉfield(Key: Fieldˉkey, Index: u64);
+    Missingˉfield(Key: Fieldˉkey);
+    Emptyˉtext(Key: Fieldˉkey);
+    Textˉlimit(Key: Fieldˉkey, Observedˉbytes: u64, Maximumˉbytes: u64);
+    Invalidˉnumber(Key: Fieldˉkey, Error: Numeric.Numericˉparseˉfailure);
+    Allocation(Error: Memory.Allocationˉfailure);
+    Collection(Error: Collections.Collectionˉfailure);
+    Unexpectedˉvalue(Expected: Fieldˉkey);
+    Noncanonicalˉiteration(Position: u64, Observed: Fieldˉkey);
+}
+
+export variant Transactionˉfailure {
+    Parse(Error: Parseˉfailure);
+    Beginˉrejected(Reason: Databaseˉreason, Providerˉgeneration: u64);
+    Missingˉrow(Identifier: u64);
+    Lookupˉrejected(Reason: Databaseˉreason, Providerˉgeneration: u64);
+    Existingˉschemaˉinvalid(Identifier: u64, Schemaˉversion: u32);
+    Stageˉrejected(Reason: Databaseˉreason, Providerˉgeneration: u64);
+    Conflict(Expectedˉrevision: u64, Observedˉrevision: u64);
+    Commitˉrejected(Reason: Databaseˉreason, Providerˉgeneration: u64);
+    Commitˉindeterminate(
+        Commitˉidentity: u64,
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Reason: Databaseˉreason,
+    );
+}
+
+export record Configuration {
+    Fields: Collections.Sequence<Fieldˉinput>;
+    Expectedˉdatabaseˉgeneration: u64;
+    Maximumˉtransactionˉoperations: u32;
+}
+
+export record Transactionˉreport {
+    Identifier: u64;
+    Priorˉrevision: u64;
+    Commitˉidentity: u64;
+    Priorˉdatabaseˉgeneration: u64;
+    Committedˉdatabaseˉgeneration: u64;
+    Commitˉsequence: u64;
+    Requiresˉindependentˉreopen: bool;
+}

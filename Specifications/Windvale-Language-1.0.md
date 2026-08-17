@@ -26,6 +26,8 @@ and the command workload findings resolved by
 [Decision 0755](../Documents/Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md),
 and the file-copy workload findings resolved by
 [Decision 0756](../Documents/Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md),
+and the database-transaction findings resolved by
+[Decision 0757](../Documents/Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -993,7 +995,10 @@ This candidate becomes frozen Language 1.0 only after:
 13. the accepted file-copy byte-buffer, resource-completion, known-partial,
     filesystem-authority, and cancellation/lifecycle cases remain coherent
     across all mandatory workloads; and
-14. a source-freeze decision records the canonical document identities.
+14. the accepted runtime-arena, first-item construction, two-step checked
+    observation, explicit-schema, commit, and fresh-recovery cases remain
+    coherent across all mandatory workloads; and
+15. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

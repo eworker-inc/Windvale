@@ -14,7 +14,9 @@ with the first reviewed bundle's findings resolved by
 and the command workload findings resolved by
 [Decision 0755](../Decisions/0755-Resolve-Language-1.0-Command-Workload-Findings.md)
 and the file-copy workload findings resolved by
-[Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md).
+[Decision 0756](../Decisions/0756-Resolve-Language-1.0-File-Copy-Findings.md)
+and the database-transaction findings resolved by
+[Decision 0757](../Decisions/0757-Resolve-Language-1.0-Database-Transaction-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -189,6 +191,14 @@ and reopen/recovery evidence.
 
 Typed state must be clearer than packed bytes. Transaction ownership and uncertain
 commit behavior must be evident without knowing provider internals.
+
+The complete source and evidence are in the
+[workload 3 paper bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md).
+Its owner review accepts runtime-bounded typed arenas, ownership-preserving
+first-item collection construction, two-step checked borrowed observation,
+explicit typed schema adapters, and explicit commit plus fresh-session recovery.
+The general Foundation clarifications are normative-candidate contracts; final
+database capability and schema signature identities remain provisional.
 
 ## Workload 4: compiler front end
 
@@ -505,7 +515,7 @@ source contract ambiguous.
 | --- | --- |
 | Command-line application | Draft reviewed; five findings accepted and resolved |
 | Bounded file copy | Draft reviewed; five findings accepted and resolved |
-| Database transaction | Pending source bundle |
+| Database transaction | Draft reviewed; five findings accepted and resolved |
 | Compiler front end | Pending source bundle |
 | HTTP request handler | Pending source bundle |
 | Concurrent hosted service | Pending source bundle |
