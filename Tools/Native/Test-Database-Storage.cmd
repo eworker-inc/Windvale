@@ -104,6 +104,9 @@ set "ApplicationCheckpointPersistentTransactionWriter=NotRun"
 set "ProjectWvbCheckpoint=NotRun"
 set "PortableProjectCheckpoints="
 set "PortableApplicationCheckpoints="
+set "HostedApplicationSession=%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application-Session.mjs"
+set "HostedApplicationSessionReady=%TemporaryDirectory%\Hosted-Application-Session.txt"
+set "HostedApplicationSessionLog=%TemporaryDirectory%\Hosted-Application-Session.log"
 if "%Development%"=="1" call :read_clock DevelopmentStart
 if "%Development%"=="1" call :read_clock ToolsStart
 if "%Development%"=="1" echo START native database storage development step=tools item=%ProgressCurrent%/%ProgressTotal% target=%DevelopmentTarget%
@@ -140,6 +143,17 @@ if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
         6 "%LowererWvb%" "%Lowerer%" --development-cache >nul
     if errorlevel 1 goto :cleanup
+)
+
+if "%Development%"=="1" if "%PrepareOnly%"=="0" (
+    start "" /b node "%HostedApplicationSession%" serve ^
+        "%HostedApplicationSessionReady%" windows ^
+        >"%HostedApplicationSessionLog%" 2>&1
+    node "%HostedApplicationSession%" wait "%HostedApplicationSessionReady%" >nul
+    if errorlevel 1 (
+        if exist "%HostedApplicationSessionLog%" type "%HostedApplicationSessionLog%" >&2
+        goto :cleanup
+    )
 )
 
 if "%Development%"=="1" call :read_clock ToolsEnd
@@ -442,6 +456,10 @@ if errorlevel 1 goto :cleanup
 set "Result=0"
 
 :cleanup
+if exist "%HostedApplicationSessionReady%" (
+    node "%HostedApplicationSession%" shutdown "%HostedApplicationSessionReady%" >nul 2>&1
+    if errorlevel 1 if "%Result%"=="0" set "Result=1"
+)
 for %%R in ("%TemporaryDirectory%") do set "ResolvedTemporaryDirectory=%%~fR"
 echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-storage-" >nul || exit /b 1
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
@@ -770,7 +788,7 @@ echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
         "%WindowsApplication%" windows >"%TemporaryDirectory%\HostStorage-Application-Cache.txt"
     if errorlevel 1 exit /b 1
@@ -913,7 +931,7 @@ if not defined WindowsEntry exit /b 1
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul || exit /b 1
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
         "%WindowsApplication%" windows >"%TemporaryDirectory%\HostRootWriter-Application-Cache.txt"
     if errorlevel 1 exit /b 1
@@ -1193,7 +1211,7 @@ if not defined WindowsEntry exit /b 1
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul || exit /b 1
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
         "%WindowsApplication%" windows >"%TemporaryDirectory%\HostLocal-%Component%-Application-Cache.txt"
     if errorlevel 1 exit /b 1
@@ -1283,7 +1301,7 @@ if not defined WindowsEntry exit /b 1
 echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || exit /b 1
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%WindowsPrefix%" %FragmentCount% %WindowsEntry% ^
         "%WindowsApplication%" windows >"%ApplicationReport%"
     if errorlevel 1 exit /b 1
@@ -1530,7 +1548,7 @@ echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
         "%WindowsApplication%" windows >"%TemporaryDirectory%\HostTreeReader-Application-Cache.txt"
     if errorlevel 1 (
@@ -1678,7 +1696,7 @@ if not defined WindowsEntry exit /b 1
 echo(%WindowsEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 copy /b "%WindowsImage%" "%WindowsImagePrefix%.chunk-0" >nul || exit /b 1
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
         "%WindowsApplication%" windows >"%TemporaryDirectory%\Engine-Application-Cache.txt"
     if errorlevel 1 exit /b 1
@@ -2367,7 +2385,7 @@ echo(%EntryOffset%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || exit /b 1
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%CanonicalPrefix%" %FragmentCount% %EntryOffset% ^
         "%WindowsApplication%" windows >"%TemporaryDirectory%\%~1-Segmented-Application-Cache.txt"
     if errorlevel 1 exit /b 1
@@ -2473,7 +2491,7 @@ copy /b "%Image%" "%ImagePrefix%.chunk-0" >nul
 if errorlevel 1 exit /b 1
 
 if "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" 6 ^
+    call :build_cached_hosted_application 6 ^
         "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows ^
         >"%TemporaryDirectory%\%~1-Windows-Application-Cache.txt"
     if errorlevel 1 exit /b 1
@@ -2505,6 +2523,15 @@ if "%Development%"=="1" (
 )
 endlocal
 exit /b 0
+
+:build_cached_hosted_application
+node "%HostedApplicationSession%" request "%HostedApplicationSessionReady%" ^
+    "%~1" "%~f2" "%~f3" "%~4" "%~5" "%~f6" "%~7"
+set "HostedApplicationSessionResult=%ERRORLEVEL%"
+if not "%HostedApplicationSessionResult%"=="75" exit /b %HostedApplicationSessionResult%
+call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" ^
+    "%~1" "%~f2" "%~f3" "%~4" "%~5" "%~f6" "%~7"
+exit /b %ERRORLEVEL%
 
 :read_clock
 setlocal EnableExtensions DisableDelayedExpansion

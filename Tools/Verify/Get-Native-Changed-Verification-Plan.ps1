@@ -1052,6 +1052,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Build-Cached-Hosted-Application',
+        'Build-Cached-Hosted-Application-Session',
         'Build-Cached-Linked-Image',
         'Build-Cached-Project-Object',
         'Build-Cached-Project-Wvb',
@@ -1059,7 +1060,9 @@ function Add-Native-Tool-Suite {
         'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
+        'Native-Hosted-Application-Cache-Core',
         'Native-Project-Cache-Key-Core',
+        'Test-Hosted-Application-Session',
         'Test-Segmented-Project-Checkpoint',
         'Test-Project-Object-Checkpoint',
         'Test-Database-Storage'

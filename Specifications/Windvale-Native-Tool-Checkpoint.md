@@ -162,8 +162,9 @@ closed and are not repaired.
 
 ## Hosted-application key and record
 
-`Get-Native-Hosted-Application-Cache-Key.mjs` derives a length-framed SHA-256
-key from these ordered fields:
+`Get-Native-Hosted-Application-Cache-Key.mjs` and the bounded session adapter
+use `Native-Hosted-Application-Cache-Core.mjs` to derive the same
+length-framed SHA-256 key from these ordered fields:
 
 1. format `windvale-native-hosted-application-cache-key 1` and namespace
    `hosted-application-v1`;
@@ -198,6 +199,27 @@ at most 67,108,864 bytes. Every hit rejects linked cache state, rehashes the
 application, constructs and compares the complete expected record, copies the
 application to a fresh owner path, and compares the copy byte for byte. Linux
 also requires executable mode on both the checkpoint and materialized copy.
+
+The database development owner may start one current-host hosted-application
+session after tool preparation. Session startup reads, inventory-validates,
+hashes, and retains the exact shared producer fields listed in items 4 through
+8 once. Each request still reads and hashes its exact WVB and ordered fragments,
+replays the retained producer fields through the unchanged version-1 framing,
+and therefore selects the byte-identical standalone key. A hit independently
+validates the exact checkpoint entry, record, product size and digest, copies
+the application to its private owner path, rehashes the copy, and preserves
+Linux executable mode.
+
+The session is read-only with respect to checkpoint publication. A missing key
+returns a distinguished miss without changing the owner output; the caller
+then invokes the standalone checkpoint driver, which repeats complete producer
+validation and retains its ordinary immutable publication boundary. Later
+requests can consume that published entry. Corrupt existing entries fail
+closed and do not fall back. The server binds one random 256-bit token to one
+loopback-only port and one bounded readiness record inside the owner's private
+temporary directory, serializes requests, rejects other targets and malformed
+or oversized protocol messages, and removes the readiness record on shutdown.
+No-argument and qualification verification do not start the session.
 
 ## Project-WVB key and record
 
@@ -407,3 +429,13 @@ The bounded regression independently passes creation, hit, corruption
 preservation, failed-producer cleanup, and a four-way same-key publication race.
 Linux construction, corruption, race, and database execution remain
 independent-host evidence.
+
+With hosted producer-session reuse, the same representative application hit
+takes 129 through 165 ms instead of 1,573 through 2,393 ms. The change-aware
+Windows 50-case database owner passes with every checkpoint reporting `Hit` in
+281,240 ms, down from 323,820 ms; the portable section falls from 115,980 ms to
+81,940 ms. The session regression proves exact standalone-key equivalence, four
+concurrent serialized hits, corruption and miss output preservation, executable
+mode, and clean teardown. Executable-mode preservation is asserted when the
+regression runs on Linux; independent Linux session and owner execution remain
+required.

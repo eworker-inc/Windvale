@@ -111,7 +111,25 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-database-storage.XXXXXXXX") || exit 1
+hosted_application_session="$script_directory/Build-Cached-Hosted-Application-Session.mjs"
+hosted_application_session_ready="$temporary_directory/Hosted-Application-Session.txt"
+hosted_application_session_log="$temporary_directory/Hosted-Application-Session.log"
+hosted_application_session_pid=
 cleanup() {
+    local result=$?
+    if [[ -n $hosted_application_session_pid ]]; then
+        if [[ -f $hosted_application_session_ready ]]; then
+            node "$hosted_application_session" shutdown \
+                "$hosted_application_session_ready" >/dev/null 2>&1 || {
+                    kill "$hosted_application_session_pid" >/dev/null 2>&1 || true
+                    result=1
+                }
+        elif kill -0 "$hosted_application_session_pid" >/dev/null 2>&1; then
+            kill "$hosted_application_session_pid" >/dev/null 2>&1 || true
+            result=1
+        fi
+        wait "$hosted_application_session_pid" || result=1
+    fi
     case "$temporary_directory" in
         "$temporary_root"/windvale-database-storage.*)
             rm -rf -- "$temporary_directory"
@@ -121,6 +139,7 @@ cleanup() {
             return 1
             ;;
     esac
+    return "$result"
 }
 trap cleanup EXIT
 
@@ -168,6 +187,16 @@ verify_file() {
 
 sha256_file() {
     sha256sum -- "$1" | awk '{ print $1 }'
+}
+
+build_cached_hosted_application() {
+    node "$hosted_application_session" request \
+        "$hosted_application_session_ready" "$@"
+    local result=$?
+    if [[ $result -ne 75 ]]; then
+        return "$result"
+    fi
+    "$script_directory/Build-Cached-Hosted-Application.sh" "$@"
 }
 
 accept_build_driver_checkpoint() {
@@ -285,6 +314,18 @@ else
         6 "$lowerer_wvb" "$lowerer" --development-cache >/dev/null || exit $?
 fi
 
+if ((development == 1 && prepare_only == 0)); then
+    node "$hosted_application_session" serve \
+        "$hosted_application_session_ready" linux \
+        >"$hosted_application_session_log" 2>&1 &
+    hosted_application_session_pid=$!
+    if ! node "$hosted_application_session" wait \
+        "$hosted_application_session_ready" >/dev/null; then
+        cat -- "$hosted_application_session_log" >&2
+        exit 1
+    fi
+fi
+
 if ((development == 1)); then
     tools_elapsed_ms=$(((SECONDS - tools_start) * 1000))
     echo "PASS  native database storage development step=tools item=$progress_current/$progress_total target=$development_target elapsed-ms=$tools_elapsed_ms tool=$tool_checkpoint project-wvb=$project_wvb_checkpoint"
@@ -359,7 +400,7 @@ verify_segmented_target() {
 
     if ((development == 1)); then
         local application_cache_report="$temporary_directory/$label-Segmented-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$canonical_prefix" "$fragment_count" "$entry_offset" \
             "$linux_application" linux > "$application_cache_report" || return $?
         application_checkpoint=$(sed -n \
@@ -447,7 +488,7 @@ verify_target() {
 
     if ((development == 1)); then
         local linux_application_cache_report="$temporary_directory/$label-Linux-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$image_prefix" 1 "$entry_offset" "$linux_application" linux \
             > "$linux_application_cache_report" || return $?
         linux_application_checkpoint=$(sed -n \
@@ -649,7 +690,7 @@ verify_host_storage() {
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
     if ((development == 1)); then
         local application_cache_report="$temporary_directory/HostStorage-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux > "$application_cache_report" || return $?
         host_storage_application_checkpoint=$(sed -n \
@@ -778,7 +819,7 @@ verify_host_root_writer() {
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
     if ((development == 1)); then
         local application_cache_report="$temporary_directory/HostRootWriter-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux > "$application_cache_report" || return $?
         host_root_writer_application_checkpoint=$(sed -n \
@@ -944,7 +985,7 @@ build_host_local_component() {
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
     if ((development == 1)); then
         local application_report="$temporary_directory/HostLocal-$component-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux > "$application_report" || return $?
         host_local_component_application_checkpoint=$(sed -n \
@@ -1028,7 +1069,7 @@ build_host_segmented_component() {
 
     if ((development == 1)); then
         local application_report="$temporary_directory/HostLocal-$component-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$linux_prefix" "$fragment_count" "$linux_entry" \
             "$linux_application" linux >"$application_report" || return $?
         host_local_component_application_checkpoint=$(sed -n \
@@ -1236,7 +1277,7 @@ verify_host_tree_reader() {
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
     if ((development == 1)); then
         local application_cache_report="$temporary_directory/HostTreeReader-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux > "$application_cache_report" || return $?
         host_tree_reader_application_checkpoint=$(sed -n \
@@ -1417,7 +1458,7 @@ verify_host_engine() {
     cp -- "$linux_image" "$linux_image_prefix.chunk-0" || return $?
     if ((development == 1)); then
         local application_cache_report="$temporary_directory/Engine-Application-Cache.txt"
-        "$script_directory/Build-Cached-Hosted-Application.sh" 6 \
+        build_cached_hosted_application 6 \
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux > "$application_cache_report" || return $?
         engine_application_checkpoint=$(sed -n \

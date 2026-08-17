@@ -234,6 +234,20 @@ and both-host packaging remain qualification-only evidence. The final all-hit
 percent less wall time for a 1.55-fold speedup. Its portable section falls from
 198,870 ms to 115,980 ms, a 41.68 percent reduction.
 
+Hosted-application hits now reuse producer trust within the same bounded
+database-owner invocation. Before this change, one unchanged 5.65 MiB hit took
+1,573 through 2,393 ms, including 447 through 930 ms to reopen and revalidate
+the same 72-artifact, 21.7 MiB producer closure. The owner-session service
+validates that closure once, retains its exact buffers, and reconstructs the
+unchanged version-1 key for each independently hashed WVB and fragment set.
+The same hit takes 129 through 165 ms through the session. Misses still use the
+standalone full-validation publisher; corruption never falls back. The all-hit
+change-aware 50-case owner falls from 323,820 ms to 281,240 ms, saving another
+42,580 ms or 13.15 percent. Its portable section falls from 115,980 ms to
+81,940 ms, a 29.35 percent reduction. Relative to the earlier 500,610 ms
+project-object-v2 result, the two subsequent changes save 219,370 ms or 43.82
+percent and make the owner 1.78 times faster.
+
 `Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
 producer, and artifact closures for the measured front-door, WebAssembly, and
 database owners plus all six database checkpoint families. Its verifier

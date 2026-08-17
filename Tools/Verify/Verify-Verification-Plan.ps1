@@ -2435,6 +2435,7 @@ $NativeCases = @(
         Name = 'native tool checkpoint owner'
         Paths = @(
             'Specifications/Windvale-Native-Tool-Checkpoint.md',
+            'Tools/Native/Build-Cached-Hosted-Application-Session.mjs',
             'Tools/Native/Build-Cached-Hosted-Application.cmd',
             'Tools/Native/Build-Cached-Hosted-Application.sh',
             'Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs',
@@ -2451,7 +2452,9 @@ $NativeCases = @(
             'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
             'Tools/Native/Get-Native-Linked-Image-Cache-Key.mjs',
             'Tools/Native/Get-Native-Project-Cache-Key.mjs',
-            'Tools/Native/Native-Project-Cache-Key-Core.mjs'
+            'Tools/Native/Native-Hosted-Application-Cache-Core.mjs',
+            'Tools/Native/Native-Project-Cache-Key-Core.mjs',
+            'Tools/Native/Test-Hosted-Application-Session.mjs',
             'Tools/Native/Test-Project-Object-Checkpoint.mjs',
             'Tools/Native/Test-Segmented-Project-Checkpoint.mjs'
         )
