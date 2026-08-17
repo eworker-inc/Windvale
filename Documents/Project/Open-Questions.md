@@ -84,9 +84,11 @@ unfinished work.
 ## Language, compiler, and runtime questions
 
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
-accepts the complete Language 1.0 direction. The active questions now belong to
-the candidate specification and paper-corpus freeze rather than feature-by-
-feature direction selection:
+accepts the complete Language 1.0 direction, and
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+completes its set, package-data, static-import, default-argument, and identifier
+boundaries. The active questions now belong to the candidate specification and
+paper-corpus freeze rather than feature-by-feature direction selection:
 
 - Which candidate grammar or Foundation signatures must change after each of the
   ten complete paper programs is reviewed?
@@ -97,6 +99,9 @@ feature direction selection:
   compile-time limits become the required portable minimums?
 - Which Language 1.0 features lower through current WIR/WVB and which require a
   separately versioned verified representation?
+- Which WVB and package-table representation binds `package data` without
+  duplicate payload bytes while retaining exact type, digest, length, maximum,
+  and resource-domain accounting?
 - Which frozen vertical slice should implement edition 1 first without creating
   a parallel compiler or permanent Seed compatibility path?
 - Which direct consumer first requires caller-visible liveness for relocating

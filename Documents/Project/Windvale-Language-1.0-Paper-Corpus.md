@@ -4,7 +4,9 @@
 
 This document defines the mandatory pre-freeze usability and semantic evidence
 for the Language 1.0 candidate accepted under
-[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+and refined by
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
 The corpus is not complete yet. Its ten source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -48,7 +50,9 @@ Each workload produces one reviewable bundle containing:
 9. at least five rejected or boundary source cases;
 10. expected semantic outputs independent of one backend;
 11. an implementation responsibility map; and
-12. reviewer findings, revisions, and acceptance status.
+12. every package-data binding, maximum, digest, type, retained-byte charge, and
+    distinct shipped content object where applicable; and
+13. reviewer findings, revisions, and acceptance status.
 
 Source bundles live under one future owned corpus directory only when their
 content is written; this plan does not add empty scaffolding.
@@ -89,6 +93,7 @@ capability, produce diagnostics, write exact output, and return a process status
 - strict numeric parsing;
 - Option, Result, `try`, and domain variants;
 - text and byte builders;
+- one bounded immutable package-data usage template with no filesystem grant;
 - explicit output capability;
 - no ambient environment or locale; and
 - deterministic exit-status mapping.
@@ -258,6 +263,7 @@ and run background work through a lexical task scope.
 ### Required language pressure
 
 - variants for events;
+- bounded package data for one immutable icon, theme, or layout input;
 - owned mutable state and immutable publication;
 - maps or arenas for retained nodes;
 - generation-checked handles;
@@ -315,7 +321,8 @@ deterministic dependency map, and serialize one canonical report.
 
 - raw, multiline, byte, and text literals;
 - numeric and text parsing;
-- ordered maps, sequences, and builders;
+- ordered maps, ordered sets, sequences, and builders;
+- package-data manifest entries with duplicate-content deduplication;
 - explicit format versions and no reflection serialization;
 - deterministic generic/protocol selection; and
 - bounded cycle diagnostics.
@@ -401,6 +408,13 @@ provider-loss, and release path without discarding a result or double-releasing.
 Pass when workloads 5, 6, and 7 prove lexical scope, capture acceptance, join
 order, cancellation observation, provider restart, trap containment, and finite
 queues on both sequential and parallel-capable scheduler models.
+
+### Package data
+
+Pass when workloads 1, 7, and 9 prove exact binding, maximum-size admission,
+strict text validation, imported access, resource-domain charging, missing and
+malformed rejection, no filesystem authority, and one shipped payload per
+distinct content identity.
 
 ## Corpus status
 

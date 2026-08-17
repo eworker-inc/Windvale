@@ -16,7 +16,9 @@ compatibility promise.
 
 ## Rule ownership
 
-The Language 1.0 suite has one owner for each kind of rule:
+The Language 1.0 suite, as refined by
+[Decision 0752](../Documents/Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md),
+has one owner for each kind of rule:
 
 | Contract | Owner |
 | --- | --- |
@@ -188,6 +190,29 @@ shared immutable values whose complete construction is admitted at compile time.
 Module data cannot contain an owned value, borrow, capability, resource, task,
 unsafe handle, or foreign pointer. Core and Hosted source have no mutable module
 global.
+
+A `package data` declaration creates one shared immutable `bytes` or `text`
+module value whose content is supplied by the build or package plan rather than a
+source initializer:
+
+~~~text
+export package data Schema: bytes maximum 1_048_576u64;
+~~~
+
+The maximum is an exact `u64` byte count. A `text` binding must be strict UTF-8,
+and its maximum counts encoded bytes without normalization. The plan binds the
+declaration's canonical identity to one canonical package-resource identity,
+exact digest, byte length, and type. Missing, duplicate, oversized,
+digest-mismatched, invalid-text, or incompatible bindings reject construction
+before publication.
+
+Package data is not an owned resource, runtime lookup, filesystem path,
+capability, provider grant, or automatic deserialization operation. Access has
+the ordinary semantics of shared immutable module data. Its retained bytes are
+charged to the selected application or service resource domain even when an
+implementation maps or shares storage. Canonical packaging uses one content
+object per distinct content identity and may reference that object from multiple
+declarations without duplicating its shipped payload.
 
 ## Type system
 
@@ -787,6 +812,9 @@ Language 1.0 has no:
 - ambient runtime reflection or automatic object serialization;
 - tracing-GC-dependent general object graph;
 - detached task or implicit background work;
+- dynamic source import or runtime name lookup through `import`;
+- default parameter values;
+- identifier characters outside ASCII segments and U+02C9;
 - semantically unbounded collection, queue, recursion, diagnostic, or
   compile-time work;
 - unrestricted macro, preprocessor, or compiler plugin;
@@ -812,7 +840,9 @@ This candidate becomes frozen Language 1.0 only after:
 6. the migration and compiler responsibility matrix is approved;
 7. editor and formatter behavior is specified;
 8. target support and cross-host evidence requirements are named; and
-9. a source-freeze decision records the canonical document identities.
+9. package-data binding, accounting, malformed-input, and non-duplicating
+   shipment evidence passes; and
+10. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

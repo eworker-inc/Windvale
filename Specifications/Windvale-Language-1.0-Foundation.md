@@ -50,7 +50,7 @@ The candidate required modules are:
 | `Foundationˉnumeric` | Explicit conversions, parsing, and strict float helpers. |
 | `Foundationˉordering` | Equality and deterministic total-order protocols. |
 | `Foundationˉmemory` | Allocation domains, leases, limits, and failures. |
-| `Foundationˉcollections` | Arrays, vectors, sequences, slices, maps, iterators, and arenas. |
+| `Foundationˉcollections` | Arrays, vectors, sequences, slices, maps, sets, iterators, and arenas. |
 | `Foundationˉbytes` | Immutable bytes, codecs, and bounded byte construction. |
 | `Foundationˉtext` | Unicode text, rune iteration, formatting, and bounded text construction. |
 | `Foundationˉresource` | Local-release protocol and owned-resource outcomes. |
@@ -508,6 +508,32 @@ future type. Serialization uses a named format and cannot assume internal nodes.
 Consuming publication produces `Immutableˉmap<K, V>` with the same canonical
 iteration order and no mutation.
 
+## Deterministic sets
+
+`Set<T>` is a move-owned finite membership collection. It requires
+`Ordering<T>` and uses the same total-order, budget, and worst-case-work contract
+as `Map<K, V>`.
+
+The semantic contract is an ordered set:
+
+- values are unique under `Ordering<T>.Compare == Equal`;
+- membership, insertion, and removal have bounded worst-case work proportional
+  to the map contract's published logarithmic function of maximum items;
+- iteration is ascending canonical value order;
+- successful insertion accepts ownership exactly once;
+- already-present, capacity, comparison, or allocation rejection returns the
+  original owned input and leaves the set unchanged;
+- removal returns the owned stored value, while absence leaves the set unchanged;
+- maximum items, retained bytes, comparison work, and diagnostic work are
+  finite; and
+- implementation layout, balancing, and reuse of a map-like representation are
+  unobservable.
+
+Consuming publication produces `Immutableˉset<T>` with the same canonical
+iteration order and no mutation. A host hash set, process-randomized set, bit set,
+or insertion-ordered set is a distinct future type rather than an implementation
+of this contract.
+
 ## Typed arenas and handles
 
 `Arena<T, N>` is a move-owned store of at most compile-time constant `N` nodes.
@@ -820,7 +846,9 @@ Before source freeze:
 6. numeric conversion and parsing matrices are complete;
 7. builder and interpolation maxima are computable in every admitted case;
 8. resource release cannot discard a completion or body result;
-9. task scope, capture, cancellation, join, and teardown pass the paper corpus;
-10. unsafe values cannot enter Core or Hosted source; and
-11. a responsibility matrix identifies ordinary source, compiler intrinsic,
+9. ordered set insertion, duplicate, removal, publication, capacity, and
+   ownership outcomes pass the paper corpus;
+10. task scope, capture, cancellation, join, and teardown pass the paper corpus;
+11. unsafe values cannot enter Core or Hosted source; and
+12. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.

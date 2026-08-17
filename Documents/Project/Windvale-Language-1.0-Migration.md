@@ -3,7 +3,9 @@
 ## Status
 
 This is the candidate repository migration plan required by
-[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+and refined by
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -41,7 +43,9 @@ Implementation begins only after:
 5. editor and formatter grammar is synchronized;
 6. the feature responsibility matrix below is approved;
 7. compiler and runtime development limits are recorded; and
-8. the change-aware verifier maps every affected boundary to a focused owner.
+8. package-data manifest binding, accounting, malformed-input, and
+   non-duplicating shipment are specified; and
+9. the change-aware verifier maps every affected boundary to a focused owner.
 
 The source freeze may permit staged implementation. It may not leave implemented
 features semantically target-dependent.
@@ -99,6 +103,7 @@ changes require semantic review.
 | Language 1.0 area | Primary implementation owners | WVB change expected? |
 | --- | --- | --- |
 | Edition header and module metadata | Lexer, declaration parser, source graph, editor | Only when serialized metadata requires a new format. |
+| Bounded immutable package data | Parser, source graph, package/build plan, WVB/package formats, loader, publisher | Likely requires a typed content-reference table unless the value is embedded once without duplication. |
 | Names and short private identities | Bindings, WIR directory, object/debug symbol mapping | Not for private compiler identity alone. |
 | `unit` and `never` | Type model, control-flow validation, WIR lowering | Possibly shape metadata; no opcode by default. |
 | New fixed numerics and strict floats | Type checker, operators, Foundation, verifier, runtimes, native backend | Likely for new scalar operations. |
@@ -135,6 +140,8 @@ reparse it.
 - Implement standalone profile and independent metadata.
 - Preserve exact import and private identity behavior.
 - Add source-to-short-machine-name inspection without changing public identity.
+- Add `package data` parsing and exact manifest binding without native paths,
+  filesystem authority, or duplicate content objects.
 
 ### Slice 2: values and control
 
@@ -152,8 +159,8 @@ reparse it.
 ### Slice 4: generics and collections
 
 - Implement bounded generic selection and specialization evidence.
-- Add arrays, vectors, immutable sequences, slices, ordered maps, arenas, and
-  builders.
+- Add arrays, vectors, immutable sequences, slices, ordered maps, ordered sets,
+  arenas, and builders.
 - Migrate repeated concatenation and packed mutable state with before/after
   performance measurements.
 

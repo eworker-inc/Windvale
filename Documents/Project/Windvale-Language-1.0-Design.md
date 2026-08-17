@@ -1,7 +1,9 @@
 # Windvale Language 1.0 design
 
 > Status: Direction accepted by the project owner on 2026-08-17 under
-> [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+> [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+> and refined by
+> [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -454,6 +456,19 @@ Package identity, dependency resolution, capability approval, runtime binding,
 and module import are distinct. A source requirement does not grant authority,
 and a package dependency does not imply an ambient import.
 
+Language 1.0 admits bounded immutable package data without turning a package
+resource into a native path, capability, or owned closeable resource:
+
+```text
+export package data Schema: bytes maximum 1_048_576u64;
+```
+
+The build or package plan binds the declaration to exact typed content, digest,
+length, and maximum. The source value is shared immutable module data. Edition 1
+admits only `bytes` and strict-UTF-8 `text`, requires explicit parsing for every
+structured format, and permits one content object to satisfy multiple declaration
+references without duplicate shipped payload bytes.
+
 Dynamic module loading is outside the core source contract. A future hosted
 loading API may admit verified modules as data and bind an explicitly versioned
 interface, but it cannot reinterpret edition-1 static imports.
@@ -637,22 +652,25 @@ Language 1.0 should distinguish representation and runtime budget:
 | `Slice<T>` | Borrowed immutable contiguous view. |
 | `Mutableˉslice<T>` | Exclusive lexical view into one owned mutable collection. |
 | `Map<K, V>` | Move-owned bounded deterministic associative collection with an immutable publication form. |
+| `Set<T>` | Move-owned bounded deterministic membership collection with canonical iteration and immutable publication. |
 | `Arena<T, N>` | Owned typed node store with generation-checked handles and exact maximum. |
 
 Collections may be fields, variant payloads, parameters, results, and elements
 when their ownership classes permit it. Immutable collections may nest. Mutable
 owners move explicitly; borrows do not escape.
 
-Vector, map, and arena construction requires an explicit maximum and an allocation
-source or surrounding resource budget. Growth never silently exceeds the retained
-maximum. Operations report exact success, unchanged-on-rejection, or completed
-prefix behavior; they do not hide partial mutation.
+Vector, map, set, and arena construction requires an explicit maximum and an
+allocation source or surrounding resource budget. Growth never silently exceeds
+the retained maximum. Operations report exact success, unchanged-on-rejection,
+or completed prefix behavior; they do not hide partial mutation.
 
 Map semantics must define key equality, collision or ordering behavior, duplicate
 policy, iteration order, serialization order, capacity exhaustion, and worst-case
 work independently of host hash-table layout. The accepted default is one
 canonical deterministic iteration order and a bounded worst-case algorithm;
 specialized unordered or insertion-ordered collections require distinct types.
+The standard set reuses the same total-order, capacity, worst-case-work, and
+publication rules without exposing a dummy map value or host hash-table layout.
 
 `Bytesˉbuilder` and `Textˉbuilder` are specialized owned buffers with bulk append,
 formatting, UTF-8 validation, retained maximum, and consuming freeze. They replace
@@ -990,6 +1008,12 @@ specification:
 12. include bounded text/byte builders and bounded interpolation;
 13. specify structured concurrency in the hosted profile; and
 14. specify unsafe blocks and FFI in the system profile.
+
+Decision 0752 completes five adjacent edition-1 boundaries: include a bounded
+ordered `Set<T>` in Foundation; include bounded immutable `package data` for
+`bytes` and `text`; retain static-only source imports; omit default arguments;
+and retain ASCII identifier segments joined by U+02C9. Package data is distinct
+from move-only resource instances and carries no filesystem authority.
 
 ### How to decide
 
@@ -1441,6 +1465,9 @@ boundary. The reader-facing rationale and intended alternatives are described in
 - runtime reflection and automatic object serialization;
 - tracing-GC-dependent cyclic object graphs;
 - implicit or detached background tasks;
+- dynamic source imports or runtime name lookup through `import`;
+- default parameter values;
+- broader Unicode identifiers beyond ASCII segments joined by U+02C9;
 - unbounded collections, queues, diagnostics, recursion, or compile-time work;
 - unrestricted macros, preprocessors, and compiler plugins;
 - wildcard imports and ambient preludes;

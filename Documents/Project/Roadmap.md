@@ -20,7 +20,9 @@ integration target. Portable WVB remains the shared distribution contract, and
 native execution remains a derived form over the same verified semantics.
 
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
-also starts a horizontal Language 1.0 specification track. Its accepted direction,
+starts a horizontal Language 1.0 specification track, and
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+completes its ordered-set and package-data boundaries. The accepted direction,
 normative-candidate suite, paper corpus, and migration plan may advance without
 claiming implementation or changing the current Seed product. Source
 implementation begins only after the named source-freeze gate.

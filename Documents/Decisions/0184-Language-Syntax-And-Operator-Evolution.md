@@ -1,7 +1,7 @@
 # Decision 0184: Language syntax and operator evolution
 
 - Date: 2026-08-03
-- Status: Accepted and implemented through the WVB 1.11 source-evolution batch; the paired Windows/Debian semantic-freeze baseline is qualified under [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md), while typed capability values and resource scope remain future decisions
+- Status: Accepted and implemented through the WVB 1.11 Seed source-evolution batch; the paired Windows/Debian semantic-freeze baseline is qualified under [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md), while Language 1.0 successor semantics are owned by [Decisions 0751](0751-Accept-Windvale-Language-1.0-Direction.md) and [0752](0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
 - Refines: [Decision 0179](0179-Language-Application-And-Capability-Metadata-Direction.md) and [Decision 0180](0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md)
 - Architecture: [Language design](../Architecture/Language-Design.md)
 - Retains: explicit types at public boundaries, immutable `let`, mutable `var`, checked arithmetic, no implicit conversions, deterministic left-to-right evaluation, braces, semicolons, and canonical WVB semantics

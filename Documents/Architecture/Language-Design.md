@@ -8,10 +8,13 @@ The implemented Seed evolution is accepted under
 [Decision 0199](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md),
 and [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md).
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
-accepts the complete Language 1.0 successor direction and supersedes the
-language-design sequencing proposed by Decision 0198. The implemented language
-remains exactly [Windvale Seed](../../Specifications/Seed-Language.md);
-candidate edition-1 examples are not accepted source today.
+accepts the complete Language 1.0 successor direction, and
+[Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
+completes its ordered-set, package-data, static-import, default-argument, and
+identifier boundaries. Those decisions supersede the language-design sequencing
+proposed by Decision 0198. The implemented language remains exactly
+[Windvale Seed](../../Specifications/Seed-Language.md); candidate edition-1
+examples are not accepted source today.
 
 The project owner accepted the complete
 [Windvale Language 1.0 design](../Project/Windvale-Language-1.0-Design.md)

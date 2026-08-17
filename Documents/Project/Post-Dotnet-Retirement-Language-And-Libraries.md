@@ -1,10 +1,13 @@
 # Post-.NET-retirement language and library stage
 
-> Status: The first package/application foundation is complete under Milestone 2.
-> The remaining language and library items are consumer-driven future proposals;
-> this document does not itself add source syntax, WVB behavior, packages,
-> capability interfaces, or a new roadmap milestone. A focused decision and
-> measured consumer remain required before any individual contract is accepted.
+> Status: Historical product-lane evidence. The first package/application
+> foundation is complete under Milestone 2. Language sequencing and feature
+> direction are superseded by
+> [Decisions 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+> and
+> [0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md).
+> Library and application observations remain useful evidence; this document no
+> longer selects future Language 1.0 work.
 
 ## Purpose
 

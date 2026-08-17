@@ -95,7 +95,7 @@ application as async authority await base bool borrow break bytes cancel_join
 capability case const continue copy core data derive edition effects else enum
 export f32 f64 fail_join false fn for foreign hosted i8 i16 i32 i64 if
 implement import in join let library match module move mut never optional
-platform policy profile protocol record requires return rune scope service
+maximum package platform policy profile protocol record requires return rune scope service
 system task text true try u8 u16 u32 u64 unit unsafe using var variant version
 where
 ~~~
@@ -281,7 +281,7 @@ Declaration ::= Recordˉdeclaration | Enumˉdeclaration | Variantˉdeclaration
               | Protocolˉdeclaration | Implementˉdeclaration
               | Deriveˉdeclaration | Functionˉdeclaration
               | Foreignˉdeclaration | Constantˉdeclaration
-              | Dataˉdeclaration
+              | Dataˉdeclaration | Packageˉdataˉdeclaration
 
 Visibility ::= [ "export" ]
 Genericˉparameters ::= "<" Genericˉparameter
@@ -354,18 +354,25 @@ An implementation body contains exactly the protocol functions and no data.
 `derive` is admitted only for protocols whose Foundation contract names a
 bounded compiler derivation.
 
-### Constants and data
+### Constants, data, and package data
 
 ~~~text
 Constantˉdeclaration ::= [ Documentation ] Visibility "const"
                          Constantˉidentifier ":" Type
                          "=" Constantˉexpression ";"
 Dataˉdeclaration ::= [ Documentation ] Visibility "data" Identifier ":" Type
-                     "=" Constantˉexpression ";"
+                      "=" Constantˉexpression ";"
+Packageˉdataˉdeclaration ::= [ Documentation ] Visibility "package" "data"
+                             Identifier ":" Packageˉdataˉtype "maximum"
+                             Integerˉliteral ";"
+Packageˉdataˉtype ::= "bytes" | "text"
 ~~~
 
 `const` is storage-free. `data` creates one immutable module value whose type and
 initializer are admitted by the semantic and Foundation contracts.
+`package data` creates one package-bound shared immutable module value. Its
+maximum literal must have the exact `u64` suffix. There is no optional, inferred,
+path-bearing, or runtime-loaded package-data form in edition 1.
 
 ### Functions
 

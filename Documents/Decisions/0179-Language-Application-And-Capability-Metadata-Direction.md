@@ -1,7 +1,7 @@
 # Decision 0179: Language, application, and capability-metadata direction
 
 - Date: 2026-08-03
-- Status: Accepted architecture direction; syntax, metadata encodings, and broader value families remain incremental
+- Status: Accepted architecture direction; Language 1.0 successor semantics are refined by [Decisions 0751](0751-Accept-Windvale-Language-1.0-Direction.md) and [0752](0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md), while implementation remains incremental
 - Refines: [Decision 0137](0137-Bounded-Owned-Values-Before-Dynamic-Collections.md) and [Decision 0140](0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md)
 - Retains: canonical WVB, immutable-by-default source, per-part portability, explicit capability authorization, and the current Seed naming boundary
 
