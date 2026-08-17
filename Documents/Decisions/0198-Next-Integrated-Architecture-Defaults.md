@@ -2,6 +2,7 @@
 
 - Date: 2026-08-03
 - Status: Proposed for product review; no implementation or public ABI is accepted by this record
+- Language-design status: Superseded by [Decision 0751](0751-Accept-Windvale-Language-1.0-Direction.md); the remaining cross-stack proposal is not accepted by that supersession
 - Builds from: cross-host-qualified [Decision 0196](0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md)
 - Refines: [Decision 0173](0173-Windvale-Process-Service-And-Driver-Architecture.md), [Decision 0179](0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0181](0181-Next-Windvale-Os-Mechanism-Contracts.md), [Decision 0183](0183-Product-Packaging-Trust-And-Evolution.md), [Decision 0184](0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0191](0191-Windvale-Console-Shell-And-Cli-Architecture.md), [Decision 0192](0192-Capability-Oriented-User-Space-Network-Stack.md), and [Decision 0193](0193-Simple-Windvale-Remote-Terminal-Protocol.md)
 - Architecture: [memory objects and resource domains](../Architecture/Memory-Objects-And-Resource-Domains.md), [process launch and supervision](../Architecture/Process-Launch-And-Supervision.md), [console and CLI](../Architecture/Console-Shell-And-Cli.md), [network stack](../Architecture/Network-Stack.md), [identity and trust](../Architecture/Identity-Time-Entropy-And-Trust.md), [packages and releases](../Architecture/Packages-Releases-And-Recovery.md), and [language design](../Architecture/Language-Design.md)

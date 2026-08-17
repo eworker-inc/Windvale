@@ -2970,7 +2970,16 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -eq 'Specifications/Seed-Conformance.md') {
+        if ($Path -in @(
+            'Specifications/Windvale-Language-1.0.md',
+            'Specifications/Windvale-Language-1.0-Grammar.md',
+            'Specifications/Windvale-Language-1.0-Foundation.md'
+        )) {
+            # These candidates do not describe the implemented Seed surface. Keep
+            # their routing checked without claiming current compiler conformance;
+            # source freeze must replace this with the affected implementation owners.
+            $RunPlanVerification = $true
+        } elseif ($Path -eq 'Specifications/Seed-Conformance.md') {
             $RunPlanVerification = $true
         } elseif ($Path -in @(
             'Specifications/Windvale-Development-Installer.md',

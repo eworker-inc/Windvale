@@ -19,6 +19,12 @@ Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
 native execution remains a derived form over the same verified semantics.
 
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+also starts a horizontal Language 1.0 specification track. Its accepted direction,
+normative-candidate suite, paper corpus, and migration plan may advance without
+claiming implementation or changing the current Seed product. Source
+implementation begins only after the named source-freeze gate.
+
 ## How to read this roadmap
 
 This file contains forward milestones, their dependency order, completion
@@ -497,8 +503,12 @@ provenance, revocation, and consensus boundaries are named.
 ### Language and compiler
 
 - New source semantics belong only in `Compiler/Windvale`.
-- Add syntax or ABI breadth only for a named application, library, tool, or OS
-  consumer.
+- Complete the accepted Language 1.0 semantic, grammar, Foundation, paper-corpus,
+  and migration contracts before staged implementation. A source-freeze rule
+  needs a named corpus or architecture requirement; an implementation slice
+  needs the corresponding frozen rule and consumer.
+- Do not allow implementation order, one compiler workload, or one target to
+  redefine the complete accepted source design.
 - Keep portable semantics, WVB, native lowering, and WebAssembly profiles
   explicit; a narrower target does not redefine the source language.
 - Update pinned tool products in deliberate promotion batches instead of

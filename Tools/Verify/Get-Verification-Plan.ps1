@@ -111,6 +111,13 @@ foreach ($Path in $Paths) {
         Add-Area 'assembler'
     } elseif ($Path.StartsWith('Examples/Linker/', [StringComparison]::Ordinal)) {
         Add-Area 'linker'
+    } elseif ($Path -eq 'Specifications/Windvale-Language-1.0-Grammar.md') {
+        Add-Area 'compiler'
+    } elseif ($Path -in @(
+        'Specifications/Windvale-Language-1.0.md',
+        'Specifications/Windvale-Language-1.0-Foundation.md'
+    )) {
+        Add-Area @('compiler', 'foundation', 'runtime')
     } elseif ($Path -match '^Specifications/(Compiler-|Source-Naming|Seed-Language|Seed-Records|Seed-Enums)') {
         Add-Area @('compiler', 'runtime')
     } elseif ($Path -eq 'Specifications/Windvale-Project.md') {

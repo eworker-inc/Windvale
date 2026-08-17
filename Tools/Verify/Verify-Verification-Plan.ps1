@@ -30,6 +30,8 @@ $Cases = @(
     @{ Name = 'project tool'; Paths = @('Tools/Windvale.Project/Project-Manifest-Core.wv'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'project manifest'; Paths = @('Projects/Examples/Windvale-Compiler.wvproj'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'project specification'; Paths = @('Specifications/Windvale-Project.md'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'compiler') },
+    @{ Name = 'Language 1.0 grammar candidate'; Paths = @('Specifications/Windvale-Language-1.0-Grammar.md'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
+    @{ Name = 'Language 1.0 semantic and Foundation candidates'; Paths = @('Specifications/Windvale-Language-1.0.md', 'Specifications/Windvale-Language-1.0-Foundation.md'); Scope = 'development'; Editor = $false; Areas = @('compiler', 'foundation', 'runtime') },
     @{ Name = 'bytecode specification'; Paths = @('Specifications/Seed-Bytecode.md'); Scope = 'development'; Editor = $false; Areas = @('bytecode', 'runtime') },
     @{ Name = 'test fixture'; Paths = @('Tests/Native/Wvo-Rejections/Bad-Version.wvo.b64'); Scope = 'development'; Editor = $false; Areas = $AllAreas }
 )
@@ -2819,6 +2821,17 @@ $NativeCases = @(
         Suites = @('workspace-project2')
         Gaps = @()
         VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 candidate specification routing'
+        Paths = @(
+            'Specifications/Windvale-Language-1.0.md',
+            'Specifications/Windvale-Language-1.0-Grammar.md',
+            'Specifications/Windvale-Language-1.0-Foundation.md'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
     },
     @{
         Name = 'verification planner'

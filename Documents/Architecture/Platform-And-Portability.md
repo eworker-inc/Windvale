@@ -80,7 +80,18 @@ Alternative platform implementations are selected before deriving the final grap
 
 The current Seed `portable`, `hosted`, and `system` profile byte remains an implemented validation boundary. [Decision 0145](../Decisions/0145-First-Capability-Bearing-Static-Library.md) gives the Stage 0 compiler a temporary monotonic import lattice over those profiles and requires every module to redeclare its transitive catalog capabilities. [Decision 0153](../Decisions/0153-First-Versioned-Read-Only-Directory-Capability.md) adds the first rights-limited directory operation while retaining that encoding: the `_v1` capability-name suffix temporarily carries its major version. Decision 0179 now fixes independent platform scope, authority metadata, required capabilities, and optional capabilities as four durable metadata dimensions.
 
-The proposed metadata revision makes platform scope a structured set of independently ordered environment, architecture, ABI, and named-extension requirements. Authority remains one separate closed value. Required and optional capability entries carry canonical interface identity, major version, exact signature-set identity, and limit profile; they carry neither a provider reference nor an application grant. The transition uses a new source edition and WVB version rather than overloading the current profile byte. Current WVB retains only its current version meaning during the transition, migration recompiles source and fixtures into the new tables, and retaining a legacy reader requires a named recovery case rather than becoming automatic compatibility. Exact spelling and serialized encoding remain unimplemented review questions documented by the [language-design guide](Language-Design.md).
+The accepted Language 1.0 metadata direction makes platform scope a structured
+set of independently ordered environment, architecture, ABI, and named-extension
+requirements. Authority remains one separate closed value. Required and optional
+capability entries carry canonical interface identity, major version, exact
+signature-set identity, and limit profile; they carry neither a provider
+reference nor an application grant. The candidate source spelling is owned by
+the [Language 1.0 grammar](../../Specifications/Windvale-Language-1.0-Grammar.md).
+The transition uses a new source edition and separately justified WVB version
+rather than overloading the current profile byte. Current WVB retains only its
+current meaning during the transition, migration recompiles source and fixtures,
+and a legacy reader requires a named recovery case. Source freeze, implementation,
+and serialized encoding remain pending.
 
 Portable remains a useful positive promise. A portable part depends only on deterministic language behavior, Foundation, and shared Windvale contracts whose semantics are available on every target it claims. It does not receive ambient host paths, native handles, process state, privileged instructions, or undocumented host behavior. Platform-specific parts may use explicitly named extensions without pretending those extensions are portable.
 

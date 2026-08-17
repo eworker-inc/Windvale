@@ -4,6 +4,9 @@ These documents define the current implemented or accepted contracts. Dated rati
 
 ## Language, naming, and hosted resources
 
+- [Language 1.0 semantic specification candidate](Windvale-Language-1.0.md)
+- [Language 1.0 lexical and grammar candidate](Windvale-Language-1.0-Grammar.md)
+- [Language 1.0 Foundation candidate](Windvale-Language-1.0-Foundation.md)
 - [Seed language](Seed-Language.md)
 - [Source naming](Source-Naming.md)
 - [Immutable records](Seed-Records.md)

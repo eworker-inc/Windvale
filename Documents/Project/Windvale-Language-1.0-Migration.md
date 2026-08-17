@@ -1,0 +1,286 @@
+# Windvale Seed to Language 1.0 migration plan
+
+## Status
+
+This is the candidate repository migration plan required by
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+It does not authorize implementation before the Language 1.0 source-freeze
+decision. It defines how the repository will advance once the
+[semantic specification](../../Specifications/Windvale-Language-1.0.md),
+[grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), and
+[Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md)
+are frozen.
+
+The implemented source remains
+[Windvale Seed](../../Specifications/Seed-Language.md).
+
+## Migration objective
+
+Advance the existing Windvale compiler, libraries, tools, applications, and
+operating system to one edition-1 source contract without:
+
+- creating a parallel compiler;
+- keeping permanent Seed syntax aliases;
+- routing compilation through textual assembly;
+- treating WVB or native layout as the definition of source semantics;
+- performing a repository-wide blind rewrite before compiler support exists;
+- rerunning every verification tier after every slice; or
+- claiming complete Language 1.0 support from a partial target.
+
+The migration preserves historical releases and qualification evidence rather
+than preserving obsolete readers in current code.
+
+## Preconditions
+
+Implementation begins only after:
+
+1. a named decision freezes the complete edition-1 specification identities;
+2. every paper-corpus source bundle has an accepted semantic walkthrough;
+3. ownership, cleanup, and concurrency freeze blockers are resolved;
+4. the Foundation required signatures have canonical identities;
+5. editor and formatter grammar is synchronized;
+6. the feature responsibility matrix below is approved;
+7. compiler and runtime development limits are recorded; and
+8. the change-aware verifier maps every affected boundary to a focused owner.
+
+The source freeze may permit staged implementation. It may not leave implemented
+features semantically target-dependent.
+
+## Compatibility boundary
+
+Seed and edition 1 are distinct source editions. The active-development policy
+allows one planned repository transition:
+
+- current tools continue accepting Seed until the edition-1 front door reaches
+  the agreed migration checkpoint;
+- the compiler then accepts explicit `edition 1;` source through the new path;
+- repository modules migrate in dependency order;
+- once the last required repository module and fixture migrates, the current
+  front door removes Seed parsing unless a named recovery case says otherwise;
+- no source file is guessed as Seed or edition 1;
+- no keyword, profile, positional constructor, or result-propagation alias is
+  retained merely for convenience; and
+- historical source remains buildable only from its pinned release or restored
+  recovery workspace.
+
+A temporary development compiler may accept both explicit editions while the
+repository is migrating. That is one versioned front door with two explicit
+grammars, not two compiler architectures. The overlap has a named removal
+checkpoint and is not a product compatibility promise.
+
+## Source mapping
+
+| Seed contract | Edition-1 migration |
+| --- | --- |
+| No source edition declaration | Add `edition 1;` as the first declaration. |
+| Inline module declaration with portable, hosted, or system profile | Use standalone module, language profile, platform, authority, and capability declarations. |
+| Legacy plain `capability` declaration | Replace with required or optional versioned capability metadata and explicit bound references. |
+| `void` | Replace with `unit` and `()` where an ordinary value is required. |
+| `i32`, `i64`, `u8`, `u32`, `u64` only | Retain exact meanings and admit `i8`, `i16`, `u16`, strict floats, and runes where selected. |
+| Positional record construction | Rewrite to named construction; no compatibility constructor remains. |
+| Single-payload variants | Retain valid cases and migrate payloads to named multi-field form where needed. |
+| Statement-only narrow `try` | Rewrite to value-producing exact `Result<T,E>` propagation. |
+| `sequence<T,N>` and affine local builder | Select `Array`, `Vector`, `Sequence`, slice, map, arena, byte builder, or text builder by ownership and budget. |
+| Packed bytes for mutable typed state | Replace with owned records, vectors, maps, or typed arenas unless bytes are the actual format. |
+| Manual `Valid`/`Status`/`Error` guards | Replace with standard Option, Result, named domain variants, exhaustive match, and explicit adapters. |
+| Repeated immutable concatenation | Replace construction hot paths with bounded byte or text builders. |
+| Explicit resource close on selected paths | Acquire move-only instances in `using` and keep fallible finish/commit explicit. |
+| No function values or closure capture | Add first-class functions and explicit copy/move/borrow capture only where needed. |
+| No structured tasks | Introduce lexical task scopes only after ownership and resource slices are qualified. |
+| No unsafe source | Introduce System-profile unsafe/FFI only at audited machine boundaries. |
+
+Automated migration may perform syntax-preserving mechanical changes such as
+edition headers, `void` to `unit`, and unambiguous named-record rewrites.
+Ownership, result-domain, collection, resource, capability, and concurrency
+changes require semantic review.
+
+## Implementation responsibility matrix
+
+| Language 1.0 area | Primary implementation owners | WVB change expected? |
+| --- | --- | --- |
+| Edition header and module metadata | Lexer, declaration parser, source graph, editor | Only when serialized metadata requires a new format. |
+| Names and short private identities | Bindings, WIR directory, object/debug symbol mapping | Not for private compiler identity alone. |
+| `unit` and `never` | Type model, control-flow validation, WIR lowering | Possibly shape metadata; no opcode by default. |
+| New fixed numerics and strict floats | Type checker, operators, Foundation, verifier, runtimes, native backend | Likely for new scalar operations. |
+| Named update and multi-field variants | Parser, bindings, WIR construction | Only when current aggregate operations cannot encode the result. |
+| Value `if`/`match` and destructuring | Body parser, ownership analysis, WIR control flow | Prefer lowering through existing blocks and values. |
+| Generics and protocols | Symbols, type checker, specialization cache, package interfaces | Specialized output should remain ordinary typed operations. |
+| Ownership and borrowing | Type/ownership analysis, WIR evidence, diagnostics | Runtime move opcodes are not required when static lowering suffices. |
+| Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
+| Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
+| Function values and closures | Type checker, capture analysis, WIR, runtime/native calling convention | Likely requires versioned callable-value representation. |
+| Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
+| Builders and interpolation | Foundation libraries, bounds analysis, optional intrinsics | No syntax-specific opcode required. |
+| Structured concurrency | Effects, captures, Foundation tasks, runtime providers, target schedulers | Requires an explicit verified task/runtime contract. |
+| Unsafe and FFI | System type checker, ABI specifications, native backend, verifier | Target- and ABI-specific additions are likely. |
+
+The assembler is not the source compiler's next stage. WVA textual input and the
+native compiler backend share instruction encoding, relocation, object
+construction, and ABI contracts. The compiler must not emit WVA text and then
+reparse it.
+
+## Vertical implementation slices
+
+### Slice 0: frozen contracts and reference examples
+
+- Publish canonical specification identities.
+- Convert paper programs into parser/type/ownership fixtures.
+- Add editor grammar tests.
+- Record baseline compiler time, verification time, memory, WIR size, WVB size,
+  and representative application artifact size.
+
+### Slice 1: edition, metadata, and naming
+
+- Add explicit edition dispatch.
+- Implement standalone profile and independent metadata.
+- Preserve exact import and private identity behavior.
+- Add source-to-short-machine-name inspection without changing public identity.
+
+### Slice 2: values and control
+
+- Add `unit`, `never`, missing fixed integers, strict floats, and runes.
+- Add named update, multi-field variants, destructuring, and value-producing
+  control flow.
+- Update exact diagnostics and malformed-input coverage.
+
+### Slice 3: typed failure
+
+- Publish exact Foundation Option and Result identities.
+- Implement value-producing `try` and explicit error adapters.
+- Migrate manual status families in coherent library/compiler areas.
+
+### Slice 4: generics and collections
+
+- Implement bounded generic selection and specialization evidence.
+- Add arrays, vectors, immutable sequences, slices, ordered maps, arenas, and
+  builders.
+- Migrate repeated concatenation and packed mutable state with before/after
+  performance measurements.
+
+### Slice 5: ownership, borrowing, and resources
+
+- Add Copy/shared/owned/borrowed classification.
+- Implement moves, borrow checking, freeze, handles, reverse-order release, and
+  `using`.
+- Migrate Foundation and one hosted file/resource consumer before broad rollout.
+
+### Slice 6: functions and effects
+
+- Add named call arguments, function values, exact effect sets, and explicit
+  captures.
+- Prove that generic calls and closures cannot hide capabilities or borrowed
+  lifetime.
+
+### Slice 7: hosted structured concurrency
+
+- Implement task scopes, typed task handles, capture, await, join, cancellation,
+  and teardown.
+- Qualify one sequential scheduler and one parallel-capable host without changing
+  source semantics.
+
+### Slice 8: system and FFI
+
+- Add unsafe definitions and invocation blocks.
+- Implement only named ABI and machine contracts with hostile-input and boundary
+  tests.
+- Migrate one real runtime or OS boundary before expanding.
+
+Each slice includes lexer/parser, semantic analysis, WIR, Foundation, runtime,
+editor, migration, and focused verifier changes required by that feature. A
+slice does not publish an incomplete artifact as complete Language 1.0.
+
+## Repository migration order
+
+Migrate source consumers in dependency order:
+
+1. minimal Foundation contracts required by the current slice;
+2. compiler source models and front door;
+3. runtime, verifier, and inspection tools;
+4. reusable libraries;
+5. command-line and hosted applications;
+6. native producer and publisher tools;
+7. operating-system services and system boundaries; and
+8. examples, tests, fixtures, generated artifacts, and documentation.
+
+The compiler is a major stress test but not the only ergonomics oracle.
+Applications and the paper corpus must prevent compiler-specific patterns from
+becoming the whole language design.
+
+## WVB and native-format policy
+
+Language 1.0 is a source contract. For each feature:
+
+1. define typed WIR lowering;
+2. determine whether existing WVB can represent the semantics;
+3. add a WVB version only when representation or verification genuinely changes;
+4. update verifier rejection and hostile-input cases before execution;
+5. preserve interpreter, JIT, AOT, and native semantic agreement; and
+6. version native ABI, callable, object, or relocation changes independently.
+
+Named arguments, named record order, `try`, ownership checks, generic
+specialization, and many control constructs may compile away. Source syntax is
+not a reason to add an opcode.
+
+Portable semantics, bytecode, serialization, runtime behavior, and golden hashes
+require paired-host evidence before cross-host conformance is claimed.
+
+## Verification and performance
+
+Use the narrowest reliable changed-file verifier for each coherent slice. Do not
+run Fast, Development, Standard, and Qualification sequentially for the same
+tree. A broader passing gate replaces narrower gates for that source state.
+
+Every material slice records:
+
+- input source and module count;
+- host, target, compiler identity, and profile;
+- elapsed compiler and verifier time;
+- peak or working-set memory when practical;
+- emitted WIR operations and retained evidence;
+- WVB and native artifact bytes;
+- allocation and retained collection maxima; and
+- comparison with the pre-slice reference workload.
+
+Optimized implementations keep a simple semantic oracle. Performance work must
+not weaken deterministic output, bounds, malformed-input rejection, or
+portability.
+
+## Removal checkpoint
+
+Seed removal occurs only when:
+
+- every maintained repository `.wv` file declares edition 1;
+- no current fixture or generator emits Seed source;
+- editor and formatter default to edition 1;
+- the compiler rebuilds itself from edition-1 source through the accepted native
+  front door;
+- required Foundation and runtime surfaces are qualified;
+- both permanent hosts pass the named migration gate; and
+- the exact recovery release for historical Seed remains documented.
+
+At that checkpoint, remove Seed parser branches, aliases, obsolete WVB encodings,
+and migration-only tests from current `main` unless a named recovery case retains
+one. Do not leave dead compatibility code as a second compiler.
+
+## Rollback and recovery
+
+Migration rollback uses version control, the last qualified release, and a
+separate restored workspace. It does not require current tools to accept
+half-migrated or obsolete source.
+
+A slice that fails qualification reverts or advances as one coherent semantic
+unit. Generated artifacts and caches from the failed candidate are not promoted.
+Historical evidence remains immutable and clearly labeled with its source and
+format versions.
+
+## Completion
+
+The migration is complete only when:
+
+- edition 1 is the sole current source edition;
+- the compiler, Foundation, libraries, applications, and OS source use it;
+- every implemented profile reports honest target support;
+- current WVB and native paths agree with the frozen source semantics;
+- no legacy source alias or parallel compiler remains;
+- the paper corpus has become executable conformance coverage; and
+- paired-host qualification records the final migration identities.

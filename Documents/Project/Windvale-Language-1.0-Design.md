@@ -1,8 +1,10 @@
 # Windvale Language 1.0 design
 
-> Status: Proposed for project-owner review on 2026-08-17. This document does
-> not add source syntax, change Windvale Seed, select a new WVB version, or claim
-> implementation on any target. The currently implemented language remains
+> Status: Direction accepted by the project owner on 2026-08-17 under
+> [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+> This document remains design rationale: it does not add source syntax, change
+> Windvale Seed, select a new WVB version, or claim implementation on any target.
+> The currently implemented language remains
 > [Windvale Seed](../../Specifications/Seed-Language.md). Examples in this
 > document are design sketches rather than accepted source.
 
@@ -10,8 +12,8 @@
 
 Windvale has enough real compiler, library, runtime, tool, application, and
 operating-system source to design the complete Language 1.0 contract before
-implementing its remaining features. This document proposes that contract for
-review.
+implementing its remaining features. This document records the accepted
+product-level direction and its review rationale.
 
 The desired outcome is one coherent language for ordinary applications,
 portable libraries, hosted services, compilers, runtimes, and explicitly
@@ -28,7 +30,8 @@ order from accidentally becoming the permanent language design.
 
 The design phase precedes implementation:
 
-1. review and accept or revise this product-level design;
+1. review and accept or revise this product-level design (completed by
+   Decision 0751);
 2. write a normative Language 1.0 grammar and semantic specification;
 3. freeze the source contract through a named decision;
 4. plan the Seed-to-1.0 migration and compiler implementation; and
@@ -463,7 +466,7 @@ implicit conversion, select overloads, or cross public boundaries.
 
 ### Primitive values
 
-The proposed primitive set is:
+The accepted primitive direction is:
 
 | Type | Meaning |
 | --- | --- |
@@ -493,7 +496,7 @@ an already typed value.
 
 ### Floating point
 
-`f32` and `f64` are part of the proposed 1.0 design because a general application
+`f32` and `f64` are part of the accepted 1.0 direction because a general application
 language should not require a later source redesign for graphics, media,
 scientific work, or model workloads. The normative profile must specify:
 
@@ -647,7 +650,7 @@ prefix behavior; they do not hide partial mutation.
 
 Map semantics must define key equality, collision or ordering behavior, duplicate
 policy, iteration order, serialization order, capacity exhaustion, and worst-case
-work independently of host hash-table layout. The recommended default is one
+work independently of host hash-table layout. The accepted default is one
 canonical deterministic iteration order and a bounded worst-case algorithm;
 specialized unordered or insertion-ordered collections require distinct types.
 
@@ -756,7 +759,7 @@ peer-loss behavior where relevant, and must be released exactly once. `using`
 binds one owned resource to a lexical scope and releases it on normal fallthrough,
 `return`, `break`, `continue`, and `try` propagation.
 
-The recommended cleanup model separates fallible semantic completion from
+The accepted cleanup model separates fallible semantic completion from
 infallible local release:
 
 - operations such as flush, commit, finish, shutdown, or durable close return an
@@ -771,7 +774,7 @@ implicit combined error type. A resource whose protocol cannot separate semantic
 completion from local release is not eligible for automatic `using` until its
 exact combined outcome is specified.
 
-General `defer` is outside the recommended 1.0 core. It can obscure ownership and
+General `defer` is outside the accepted 1.0 core. It can obscure ownership and
 failure ordering when `using` and explicit completion already cover resource
 lifetimes. Reconsider it only if the design corpus demonstrates non-resource
 cleanup that cannot be expressed clearly.
@@ -939,7 +942,7 @@ normal typed API.
 
 ## Paper design corpus
 
-Before source freeze, the proposed language must express complete, reviewable
+Before source freeze, the candidate language must express complete, reviewable
 examples for:
 
 1. a command-line application with parsing, diagnostics, and exit status;
@@ -958,10 +961,10 @@ These examples are design tests, not implementation claims. Each must expose
 unacceptable verbosity, hidden work, missing ownership, or semantic ambiguity
 before the grammar freezes. They later become conformance and migration inputs.
 
-## Recommended decisions for owner review
+## Accepted directions and specification guide
 
-The proposal recommends accepting these defaults before the normative
-specification begins:
+Decision 0751 accepts these directions for the normative-candidate
+specification:
 
 1. retain macron-separated long source names and compile private implementation
    names to deterministic short machine identities;
@@ -990,14 +993,15 @@ specification begins:
 
 ### How to decide
 
-An owner review may accept, revise, defer, or reject each direction. Accepting a
-direction authorizes the normative specification to define its exact grammar,
-semantics, diagnostics, and migration. It does not accept an unfinished syntax
-sketch or permit implementation-defined behavior.
+The completed owner review could accept, revise, defer, or reject each direction.
+Decision 0751 accepts Option A for all fourteen. That acceptance authorizes the
+normative specification to define exact grammar, semantics, diagnostics, and
+migration. It does not accept an unfinished syntax sketch or permit
+implementation-defined behavior.
 
 The options below describe realistic alternatives and their principal tradeoffs.
 They are not all equally compatible with Windvale's product character. The
-recommendation under each decision records the proposed ballot.
+accepted direction under each decision records the resulting ballot.
 
 ### 1. Source names and machine identities
 
@@ -1023,7 +1027,7 @@ deterministic machine identities.**
   separation. Supporting ASCII and macron aliases together would also create two
   canonical spellings and should not be accepted.
 
-**Recommendation:** accept Option A. Exact names remain in source interfaces and
+**Accepted direction:** Option A. Exact names remain in source interfaces and
 diagnostics where required; private machine identities remain deterministic,
 collision-safe, and inspectable through tooling.
 
@@ -1049,7 +1053,7 @@ no-exception model.**
 - Costs: brings hidden exceptions, ambient services, tracing-GC assumptions, and
   a substantially larger runtime and semantic surface.
 
-**Recommendation:** accept Option A. Improve the ergonomics of explicit behavior
+**Accepted direction:** Option A. Improve the ergonomics of explicit behavior
 rather than weakening the behavior itself.
 
 ### 3. `unit` and `never`
@@ -1073,7 +1077,7 @@ rather than weakening the behavior itself.
 - Advantages: simplifies the initial control-flow type system.
 - Costs: still cannot type a non-returning expression precisely.
 
-**Recommendation:** accept Option A. The normative specification must distinguish
+**Accepted direction:** Option A. The normative specification must distinguish
 source values from ABI return conventions; `unit` need not occupy runtime
 storage.
 
@@ -1099,7 +1103,7 @@ storage.
 - Costs: the same source may change limits or results by architecture, backend,
   compiler option, or host runtime.
 
-**Recommendation:** accept Option A. Decimal, arbitrary-precision, and specialized
+**Accepted direction:** Option A. Decimal, arbitrary-precision, and specialized
 numeric types remain libraries. The normative specification must include a
 complete conversion matrix and strict floating profile.
 
@@ -1126,7 +1130,7 @@ variants, destructuring, and value-producing `if` and `match`.**
 - Costs: preserves the fragile form indefinitely and creates two review and style
   conventions for the same type.
 
-**Recommendation:** accept Option A. A same-name field shorthand may reduce
+**Accepted direction:** Option A. A same-name field shorthand may reduce
 repetition without making field identity positional.
 
 ### 6. Static generics and compile-time protocols
@@ -1157,7 +1161,7 @@ implicit dynamic dispatch.**
 - Costs: introduces the combined layout, identity, allocation, mutation, and
   dispatch model deliberately excluded above.
 
-**Recommendation:** accept Option A. Freeze only after limits for instantiation
+**Accepted direction:** Option A. Freeze only after limits for instantiation
 depth, instance count, overlap, separate compilation, and emitted-code growth are
 specified and tested.
 
@@ -1183,7 +1187,7 @@ lexical slices, builders, and typed arenas.**
 - Costs: hidden growth and unknowable worst-case memory, latency, and failure
   behavior.
 
-**Recommendation:** accept Option A in direction. Every growing collection must
+**Accepted direction:** Option A. Every growing collection must
 receive an explicit maximum or a surrounding resource-domain budget. The paper
 corpus must prove that the budget APIs remain practical.
 
@@ -1217,7 +1221,7 @@ collection.**
 - Costs: adds pervasive count traffic and still leaks cycles unless another
   cycle-management mechanism is introduced.
 
-**Recommendation:** accept Option A in direction. Move rules, borrow notation,
+**Accepted direction:** Option A. Move rules, borrow notation,
 escape checking, immutable publication, hidden sharing, typed arenas, and
 diagnostics require paper prototypes before source freeze.
 
@@ -1248,7 +1252,7 @@ diagnostics require paper prototypes before source freeze.
 - Costs: creates competing failure cultures and requires every caller, library,
   and resource construct to support both control-flow models.
 
-**Recommendation:** accept Option A. Error conversion remains explicit and
+**Accepted direction:** Option A. Error conversion remains explicit and
 statically selected; `try` must not infer an adapter from names or context.
 
 ### 10. Named arguments, function values, and closure capture
@@ -1272,7 +1276,7 @@ copy, move, or borrow capture.**
 - Costs: may silently retain mutable state, resources, capabilities, large
   values, or a borrow beyond its valid scope.
 
-**Recommendation:** accept Option A. Calls evaluate argument expressions from
+**Accepted direction:** Option A. Calls evaluate argument expressions from
 left to right as written, and capture mode is never inferred when ownership or
 authority would change.
 
@@ -1303,7 +1307,7 @@ release.**
 - Costs: complicates ownership and failure ordering and allows fallible semantic
   completion to hide at scope exit.
 
-**Recommendation:** accept Option A in direction. Freeze only after exact release
+**Accepted direction:** Option A. Freeze only after exact release
 order, acquisition failure, partial initialization, nested resources, and
 rules preventing a body, completion, or cleanup result from being silently
 discarded are specified.
@@ -1335,7 +1339,7 @@ discarded are specified.
 - Costs: a small source expression may hide arbitrary allocation and formatting
   work.
 
-**Recommendation:** accept Option A. Builders remain ordinary typed library APIs
+**Accepted direction:** Option A. Builders remain ordinary typed library APIs
 even when the compiler recognizes and optimizes them.
 
 ### 13. Structured concurrency
@@ -1368,7 +1372,7 @@ even when the compiler recognizes and optimizes them.
 - Costs: the compiler cannot reliably enforce task lifetime, borrowing, capture,
   scope exit, and ownership transfer.
 
-**Recommendation:** accept Option A at the design level. Implementations may
+**Accepted direction:** Option A at the design level. Implementations may
 stage target support, but the Language 1.0 function, ownership, and effect model
 must account for structured tasks before source freeze.
 
@@ -1401,13 +1405,13 @@ primitives.**
 - Costs: the libraries still require another language or hidden compiler
   mechanisms to implement their unsafe internals.
 
-**Recommendation:** accept Option A. Unsafe behavior is visible where defined and
+**Accepted direction:** Option A. Unsafe behavior is visible where defined and
 invoked, remains isolated to the system profile, and never grants an undeclared
 capability by itself.
 
-### Recommended ballot and freeze conditions
+### Accepted ballot and freeze conditions
 
-| Decisions | Proposed vote | Required evidence before source freeze |
+| Decisions | Decision 0751 status | Required evidence before source freeze |
 | --- | --- | --- |
 | 1–5 | Accept | Complete grammar, semantic, diagnostic, and migration examples. |
 | 6 | Accept direction | Prove deterministic selection and generic code-growth bounds. |
@@ -1420,9 +1424,9 @@ capability by itself.
 | 14 | Accept | Specify each supported ABI and unsafe invariant. |
 
 Decisions 8, 11, and 13 carry the highest semantic and usability risk. Their
-recommended direction is coherent with the rest of the language, but they need
-the deepest paper design and diagnostics review. Accepting the ballot does not
-permit those areas to be marked final before their freeze conditions are met.
+accepted direction is coherent with the rest of the language, but they need the
+deepest paper design and diagnostics review. This acceptance does not permit
+those areas to be marked final before their freeze conditions are met.
 
 ## Explicitly outside Language 1.0
 
@@ -1448,13 +1452,16 @@ boundary. The reader-facing rationale and intended alternatives are described in
 
 ## Design-phase completion and handoff
 
-After owner review, the design phase produces:
+Following owner acceptance, the design and specification phase produces:
 
 1. accepted amendments to this document;
-2. the normative `Specifications/Windvale-Language-1.0.md` grammar and semantic
-   contract;
-3. the paper design corpus with accepted and rejected examples;
-4. a Seed-to-edition-1 migration inventory;
+2. the normative-candidate
+   [semantic specification](../../Specifications/Windvale-Language-1.0.md),
+   [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), and
+   [Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md);
+3. the [paper design corpus](Windvale-Language-1.0-Paper-Corpus.md) with accepted
+   and rejected examples;
+4. the [Seed-to-edition-1 migration plan](Windvale-Language-1.0-Migration.md);
 5. a feature-to-compiler/WIR/WVB/runtime/backend/editor test matrix;
 6. a named Language 1.0 source-freeze decision; and
 7. an implementation roadmap that preserves one compiler and the narrowest

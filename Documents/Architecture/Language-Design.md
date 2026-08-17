@@ -2,13 +2,26 @@
 
 ## Status
 
-Accepted evolution direction under [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0199](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), and [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended successor defaults for review. The implemented language remains exactly [Windvale Seed](../../Specifications/Seed-Language.md); examples explicitly marked as future syntax are not accepted source today.
+The implemented Seed evolution is accepted under
+[Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md),
+[Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md),
+[Decision 0199](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md),
+and [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md).
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+accepts the complete Language 1.0 successor direction and supersedes the
+language-design sequencing proposed by Decision 0198. The implemented language
+remains exactly [Windvale Seed](../../Specifications/Seed-Language.md);
+candidate edition-1 examples are not accepted source today.
 
-The project-owner-requested
+The project owner accepted the complete
 [Windvale Language 1.0 design](../Project/Windvale-Language-1.0-Design.md)
-proposes a complete source design before staged implementation. It remains a
-review proposal and does not change the accepted or implemented surface by
-itself.
+direction under
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+Normative-candidate specification work may proceed, but the decision does not
+change the implemented Seed surface or freeze source edition 1 by itself.
+The candidate suite is indexed by the
+[Language 1.0 semantic specification](../../Specifications/Windvale-Language-1.0.md),
+with separate grammar and Foundation owners linked from that document.
 
 Windvale is in active early development. Through at least September 3, 2026, and until a later named decision says otherwise, obsolete source spellings, compiler models, and experimental binary encodings may be replaced without backward readers or migration layers. The repository moves as one contract; old qualification artifacts remain evidence rather than supported inputs.
 
@@ -302,33 +315,42 @@ decision process.
 
 ## Later surface
 
-General generics, value-producing conditionals and matches, bounded interpolation, async/await, function values, closures, floating point, and visible unsafe blocks require focused ownership, ABI, resource, and consumer decisions. Unsafe machine or memory operations must eventually be visible both on their declaration and at their use; system profile alone is not sufficient syntax.
+Decision 0751 now accepts general static generics, value-producing conditionals
+and matches, bounded interpolation, structured `async`/`await`, function values,
+explicit closures, strict floating point, and visible unsafe blocks as Language
+1.0 directions. Their candidate semantics, grammar, and Foundation ownership are
+specified by the suite linked above. They remain unimplemented and are not
+source-frozen; ownership, cleanup, concurrency, ABI, resource, corpus, and target
+evidence remain mandatory before rollout. Unsafe machine or memory operations
+are visible both at declaration and invocation; system profile alone is not a
+grant.
 
 Classes, inheritance, implicit null, implicit conversions, general exceptions, operator overloading, inferred overload selection, unrestricted macros, preprocessors, ambient reflection, whitespace-sensitive blocks, hidden capability acquisition, and unbounded collections are not accepted directions.
 
 ## Post-.NET-retirement product-lane proposal
 
-Completing native retirement should make the Windvale toolchain normal before it
-makes the language broader. The proposed
+The completed native-retirement and package/application work made the Windvale
+toolchain normal before broader language design. The earlier
 [post-.NET-retirement language and library stage](../Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
-therefore recommends a package-backed useful application and compact library model
-before a larger syntax batch. Source modules remain explicit dependencies with local
-import aliases rather than a global hierarchical namespace; `Foundation`,
-`Platform`, `Protocol`, and later `System` are cross-cutting library roles, not
-ambient source names or an exhaustive folder hierarchy.
+supplied important evidence through a package-backed useful application and
+compact library model. Decision 0751 replaces its feature-by-feature
+implementation-first sequencing with complete Language 1.0 specification and
+paper-corpus review before staged implementation. Source modules remain explicit
+dependencies with local import aliases rather than a global hierarchical
+namespace; `Foundation`, `Platform`, `Protocol`, and `System` are cross-cutting
+library roles, not ambient source names or an exhaustive folder hierarchy.
 
 The implemented language now has typed shared singleton capability references and
-narrow visible result propagation. Scoped ownership remains separate and awaits a
-value with an explicit caller-controlled close contract; one bounded associative
-collection still awaits measured consumers. General generics, richer aggregate
-shapes, floating point, and structured concurrency remain later consumer-driven
-features. A feature becomes available on native, WebAssembly, or Windvale OS only
-after the affected target path implements and verifies it; source-only lowering
-into existing verified operations need not create a new backend contract. Target
-backends are not separate source languages and must not inherit support from another
-runtime by implication.
+narrow visible result propagation. Scoped ownership, general collections,
+generics, richer aggregates, floating point, and structured concurrency remain
+implementation work against the accepted candidate rather than undecided
+direction. A feature becomes available on native, WebAssembly, or Windvale OS
+only after the affected target path implements and verifies it; source-only
+lowering into existing verified operations need not create a new backend
+contract. Target backends are not separate source languages and must not inherit
+support from another runtime by implication.
 
-## Evolution order
+## Historical Seed evolution order
 
 The first eight source-language slices are implemented. Their complete WVB 1.11
 semantic-freeze baseline passed the paired Windows and Debian Qualification gate
@@ -352,9 +374,10 @@ Windvale OS execution profiles:
     remains pending until an exact close contract exists.
 11. Narrow result propagation (complete); one bounded associative collection
     remains pending until measured consumers justify it.
-12. Later operators and advanced syntax only from measured consumers.
+12. Further edition-1 implementation only from a frozen Language 1.0 vertical
+    slice with its paper-corpus and target requirements.
 
-Every pre-freeze implemented slice advances the reference and Windvale compilers,
+Every listed implemented Seed slice advanced the reference and Windvale compilers,
 editor package, specifications, WIR/WVB contracts where affected,
 interpreter/native/Wasm consumers where supported, malformed cases, deterministic
 bytes, and cross-host evidence together. Under [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md), successor source features advance through the Windvale-owned compiler rather than adding new breadth to the frozen C# recovery compiler. They still require specifications, Windvale-owned verifier evidence, editor support, deterministic fixtures, and explicit target support before a native, WebAssembly, or OS claim.

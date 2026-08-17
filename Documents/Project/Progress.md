@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 16 August 2026
+> Status snapshot: 17 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -34,7 +34,8 @@ ready, accurately labelled work at release freeze.
 | Boundary | Standing | Evidence today | Immediate next result |
 | --- | :---: | --- | --- |
 | Seed through assembler and linker | ✅ | Source semantics, WVB, verification, runtime, object, assembly, and link foundations have Windows/Linux evidence. | Preserve their contracts as later products consume them. |
-| Windvale-written compiler | ✅ | The committed twelve-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Add forward semantics only for named consumers; do not widen Stage 0. |
+| Windvale Language 1.0 | 🎯 | [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md) accepts the complete direction. The semantic, grammar, and Foundation specification candidates plus migration and ten-workload paper-corpus plans are published without changing Seed. | Write and review all ten paper source bundles, resolve ownership/cleanup/concurrency freeze blockers, and record the source-freeze identities before implementation. |
+| Windvale-written compiler | ✅ | The committed twelve-module inventory produces byte-identical 599,868-byte Stage 1 and Stage 2 compilers on Windows and Debian. | Implement only a frozen edition-1 vertical slice with its named corpus and target evidence; do not widen Stage 0. |
 | Shared accepted-subset native backend | 🔵 | Interpreter, deterministic AOT, baseline JIT, hosted execution, and native object/link/container profiles are qualified for their documented subsets. | Broaden only where the package application, tools, or OS require an unsupported operation or ownership shape. |
 | Native-only repository | ✅ | [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closed all eight retirement conditions; [Decision 0558](../Decisions/0558-Archive-Managed-Stage0-Outside-Main.md) removes all tracked managed source and direct managed entry points from `main`; final [Qualification run 31889107326](https://github.com/eworker-inc/Windvale/actions/runs/31889107326) passed on the post-archive `v0.1.0` state. | Preserve the qualified boundary; create a separate baseline tag only if it adds value beyond the exact signed product tag. |
 | Development verification | ✅ | Milestone 1 is complete under [Decision 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md): front-door feedback takes 13,900 ms, the pinned WebAssembly engine path takes 29,674 ms, and the all-hit database owner fell from 402,638 ms to 87,800 ms with all eight behaviors. Exact warm [GitHub run 31852544894, attempt 2](https://github.com/eworker-inc/Windvale/actions/runs/31852544894/attempts/2) passes end to end in 1m42s on Windows and 1m15s on Linux; three owner closures and five checkpoint families are machine-checked. | Preserve the bounded path and add another checkpoint or owner only from new measured product pressure. |

@@ -1,0 +1,818 @@
+# Windvale Language 1.0 semantic specification
+
+## Status
+
+This document is the normative-candidate semantic specification authorized by
+[Decision 0751](../Documents/Decisions/0751-Accept-Windvale-Language-1.0-Direction.md).
+It is exact enough to guide grammar review, paper programs, and implementation
+planning, but source edition 1 is not frozen or implemented yet. The currently
+implemented contract remains the
+[Windvale Seed language](Seed-Language.md).
+
+The candidate may change when required paper programs expose ambiguity,
+unacceptable ergonomics, an unbounded operation, or a target contradiction. A
+later named source-freeze decision makes accepted edition-1 source semantics a
+compatibility promise.
+
+## Rule ownership
+
+The Language 1.0 suite has one owner for each kind of rule:
+
+| Contract | Owner |
+| --- | --- |
+| Static and dynamic source semantics, profiles, effects, ownership, evaluation, and conformance | This document |
+| Tokens, literal spelling, precedence, and parsing | [Language 1.0 grammar](Windvale-Language-1.0-Grammar.md) |
+| Required standard variants, protocols, collections, builders, budgets, and failure types | [Language 1.0 Foundation](Windvale-Language-1.0-Foundation.md) |
+| Design motivation and rejected alternatives | [Language 1.0 design](../Documents/Project/Windvale-Language-1.0-Design.md) |
+| Seed transition order and compatibility boundary | [Seed-to-1.0 migration](../Documents/Project/Windvale-Language-1.0-Migration.md) |
+| Usability and boundary evidence before source freeze | [Language 1.0 paper corpus](../Documents/Project/Windvale-Language-1.0-Paper-Corpus.md) |
+
+When two documents appear to overlap, the owner in this table controls. A
+candidate revision updates every dependent example and cross-reference in the
+same coherent change.
+
+The terms **must**, **must not**, **required**, **shall**, and **shall not** are
+normative. **Should** records a strongly preferred choice whose permitted
+alternative is stated. **May** grants an implementation or source choice without
+changing observable semantics.
+
+## Product contract
+
+Windvale Language 1.0 is one deterministic, statically typed,
+capability-oriented language for portable computation, hosted applications, and
+explicit system code. It has:
+
+- immutable values and bindings by default;
+- visible mutation, ownership, borrowing, allocation, authority, and failure;
+- fixed-width checked numerics and no implicit conversions;
+- typed recoverable failure rather than catchable general exceptions;
+- bounded collections, recursion, compile-time work, tasks, queues, diagnostics,
+  and retained state;
+- verified semantics shared by interpreter, JIT, cached compilation, AOT,
+  WebAssembly, and Windvale OS targets; and
+- no dependency on a tracing garbage collector, host object model, host path
+  model, host scheduler, or host exception behavior.
+
+An optimization may change storage, register choice, sharing, layout, scheduling,
+or algorithm only when no admitted source program can observe a semantic
+difference.
+
+## Conformance and implementation status
+
+An implementation reports:
+
+- accepted source editions;
+- implemented language profiles;
+- exact platform, architecture, ABI, and extension scopes;
+- compiler and runtime resource limits;
+- strict floating-point support;
+- Foundation contract version;
+- supported capability interfaces;
+- supported unsafe ABIs; and
+- any incomplete edition-1 feature during staged development.
+
+An implementation must reject an unknown edition, unsupported profile, unmet
+limit, unsupported capability, unsupported ABI, or unavailable strict numeric
+operation. It must not guess, silently lower to host behavior, or claim complete
+Language 1.0 support for a partial surface.
+
+Complete Core conformance requires every Core rule and required Foundation Core
+type. Complete Hosted conformance includes Core plus every Hosted rule. Complete
+System conformance includes Core, Hosted semantics used by the target, and every
+claimed System ABI rule. Source conformance does not imply WVB, object, package,
+or native-byte compatibility; those formats remain separately versioned.
+
+## Source edition and module header
+
+Every source file contains exactly one module and begins with this logical
+header, whose exact token grammar is owned by the grammar companion:
+
+~~~text
+edition 1;
+module Imageˉtool;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability filesystem.read version 1;
+optional capability window.surface version 1;
+~~~
+
+The declarations occur once and in the displayed order:
+
+1. `edition` selects source syntax and semantics independently of package, WVB,
+   and object versions.
+2. `module` gives the canonical source module name.
+3. `profile` selects `core`, `hosted`, or `system` language features.
+4. `platform` lists one or more canonical platform scopes; omission and implicit
+   current-host selection are invalid.
+5. `authority` selects the part role defined by the application and system
+   architecture.
+6. required and optional capability declarations state interface identity and
+   major version without granting or binding a provider.
+
+An optional capability is metadata only until an application explicitly
+approves and binds it. A source module cannot call or capture an optional-only
+capability.
+
+One build or package plan supplies the complete module set and maps canonical
+module identities to source bytes. Source imports never search host paths,
+environment variables, registries, package caches, or the network.
+
+## Language profiles
+
+The profiles form a source-feature inclusion order, not an authority lattice:
+
+| Profile | Admitted source |
+| --- | --- |
+| Core | Deterministic computation, immutable publication, owned memory, generic algorithms, and pure libraries without capability calls, instance resources, tasks, unsafe operations, or FFI. |
+| Hosted | Core plus approved capability references, owned provider instances, resource scope, deadlines, cancellation, and structured tasks. |
+| System | Core and Hosted constructs plus visible unsafe operations, raw memory, privileged operations, and declared foreign ABIs. |
+
+A Core module may be imported by Hosted or System modules. A Hosted module may be
+imported by System. A reverse edge is rejected even when execution would not
+reach the stronger feature. Platform scope, authority, capability requirements,
+and profile remain independent dimensions.
+
+Selecting `system` does not grant unsafe permission or a capability. Each unsafe
+operation still requires an unsafe declaration and invocation context, and every
+external authority still requires an approved capability or system contract.
+
+## Names and declaration identity
+
+Source is strict UTF-8. Source identifiers use case-sensitive ASCII segments
+joined only by U+02C9 modifier letter macron:
+
+~~~text
+[A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*
+~~~
+
+U+02C9 is part of identity. Hyphen, underscore, U+00AF macron, and other
+lookalikes are not aliases. Official source uses capitalized semantic identifiers
+with macron-separated words and `ALL_CAPS_WITH_UNDERSCORES` constants as defined
+by [Source naming](Source-Naming.md).
+
+A declaration has one canonical identity consisting of edition-aware package
+identity, canonical module identity, declaration category, and source name.
+Import aliases are local vocabulary and do not change identity.
+
+Compiled private declarations use deterministic short internal identities under
+their owning WIR, WVB, object, or native format contract. Exported interfaces,
+diagnostics, source linking, and optional debug information retain the exact
+canonical information they require. Native and foreign symbols use separately
+specified collision-safe ASCII names; truncation without a collision proof is
+invalid.
+
+## Modules, imports, and visibility
+
+Declarations are private unless marked `export`. Imports:
+
+- name one supplied canonical module and one unique local alias;
+- appear before non-import declarations;
+- do not re-export declarations;
+- do not leak transitively;
+- do not create wildcard or ambient lookup; and
+- must form an acyclic static source graph.
+
+An unqualified name searches only lexical declarations and the current module.
+An imported declaration requires its alias and must be exported by the imported
+module. Resolution never depends on dependency argument order or filesystem
+layout.
+
+Packages, source imports, dynamic verified-module loading, provider binding, and
+capability approval are distinct contracts. Language 1.0 has no dynamic import
+syntax and no implicit prelude.
+
+A `const` declaration is a storage-free typed compile-time value. A `data`
+declaration creates one immutable module value and may contain only Copy or
+shared immutable values whose complete construction is admitted at compile time.
+Module data cannot contain an owned value, borrow, capability, resource, task,
+unsafe handle, or foreign pointer. Core and Hosted source have no mutable module
+global.
+
+## Type system
+
+Language 1.0 is nominally and statically typed. Every parameter, function result,
+record field, variant payload, exported value, capability reference, resource,
+and public generic boundary has an explicit type. A local `let` or `var` may
+infer the one exact type of its initializer.
+
+Inference:
+
+- performs no conversion;
+- does not cross a public signature;
+- does not select among overloads;
+- does not guess a missing generic instance;
+- does not change an ownership or effect mode; and
+- rejects an initializer whose type cannot be unique.
+
+There is no implicit `null`, truthiness, numeric conversion, enum conversion,
+rune conversion, floating conversion, pointer conversion, or common-type
+selection.
+
+### Primitive types
+
+| Type | Semantic values |
+| --- | --- |
+| `unit` | The single value `()`. |
+| `never` | No values; control cannot return normally. |
+| `bool` | Exactly `false` and `true`. |
+| `i8`, `i16`, `i32`, `i64` | Signed two's-complement integers of the named width. |
+| `u8`, `u16`, `u32`, `u64` | Unsigned integers of the named width. |
+| `f32`, `f64` | Strict IEEE 754 binary32 and binary64 values under the profile below. |
+| `rune` | One Unicode scalar value, excluding U+D800 through U+DFFF. |
+| `text` | Immutable finite Unicode scalar sequence with canonical UTF-8 interchange. |
+| `bytes` | Immutable finite octet sequence. |
+
+`unit` is an ordinary Copy value and need not occupy runtime storage. `never`
+has no literal or constructed value. A non-returning `never` expression may
+satisfy an expected result position because it produces no value; this is not a
+conversion.
+
+Portable semantics have no pointer-sized integer. Every size, index, count,
+offset, identity, and serialized field uses a fixed-width type selected by its
+owning API or format. A host-memory boundary checks that value against the target
+and resource domain before allocation or address conversion.
+
+### Integer behavior
+
+Integer arithmetic uses exact same-type operands. Addition, subtraction,
+multiplication, signed negation, division, remainder, and shifts trap on an
+undefined or out-of-range mathematical result. Division by zero traps. Signed
+minimum divided by minus one traps. A shift count outside zero through width
+minus one traps.
+
+Unsigned bitwise operations preserve the exact named width. Signed bitwise
+operations are absent from the Core operator set; a named Foundation operation
+may expose exact two's-complement bit behavior.
+
+Widening, checked narrowing, wrapping, saturating, truncating, parsing, and bit
+reinterpretation are distinct named Foundation operations. Checked conversion
+returns a typed result. Bit reinterpretation requires equal widths and is not a
+numeric conversion or byte serialization rule.
+
+### Floating-point behavior
+
+`f32` and `f64` use IEEE 754-2019 binary32 and binary64 interchange values.
+Core arithmetic uses roundTiesToEven, preserves subnormals, and does not contract
+separate operations into fused operations. A fused multiply-add is available
+only through an explicit named operation.
+
+Every arithmetic operation with a NaN input or NaN mathematical result produces
+the one canonical quiet NaN for its width: sign zero, quiet bit set, remaining
+payload zero. Positive and negative infinity and signed zero retain IEEE
+behavior. Ordered comparisons with NaN are false; inequality with NaN is true;
+positive and negative zero compare equal. Total ordering, bitwise equality, NaN
+inspection, and canonical serialization are named Foundation operations.
+
+Integer/float and `f32`/`f64` conversions are explicit. Each operation states
+rounding, range, NaN, infinity, and signed-zero behavior. Fast-math
+transformations that change a result are invalid unless source calls a separately
+specified approximate operation.
+
+### Text, runes, and bytes
+
+`text` is a sequence of Unicode scalar values. It performs no implicit
+normalization, locale comparison, case conversion, collation, or grapheme
+segmentation. Equality compares the exact scalar sequence. Canonical interchange
+encoding is shortest-form UTF-8; malformed UTF-8 is rejected before constructing
+text.
+
+Text indexing never confuses byte offsets, rune positions, and user-perceived
+graphemes. APIs use separately named and typed positions. Text iteration yields
+runes in scalar order.
+
+`bytes` is arbitrary octets. Byte order is not a property of `bytes` and must be
+named by every multi-byte codec. Converting text to bytes or bytes to text uses an
+explicit codec and typed failure.
+
+### Built-in operators
+
+Operators have fixed language meanings and never invoke a user-selected
+overload:
+
+- `bool` admits `!`, `&&`, `||`, `==`, and `!=`;
+- integers admit checked arithmetic and exact same-type comparison; unsigned
+  integers additionally admit bitwise and shift operators;
+- `f32` and `f64` admit unary minus, `+`, `-`, `*`, `/`, and IEEE comparisons;
+  remainder, fused multiply-add, total order, and approximate operations are
+  named Foundation functions;
+- `rune`, `text`, `bytes`, and enums admit exact same-type `==` and `!=`;
+- arrays, vectors, sequences, slices, maps, and arenas admit only the fixed index
+  or iteration syntax explicitly assigned by the language and Foundation
+  contracts; and
+- records, variants, functions, capabilities, resources, borrows, and unsafe
+  values have no built-in equality unless an explicit permitted protocol
+  derivation creates a named function.
+
+`+` never concatenates text, bytes, or collections. Builders own bounded
+construction. Mixed numeric operand types are rejected before evaluation.
+
+## Nominal declarations
+
+### Records
+
+A record is a nominal product with uniquely named fields and declaration-order
+layout within source semantics. Construction is named-only, supplies every field
+exactly once, evaluates field expressions from left to right as written, and
+places values into declaration order after successful evaluation.
+
+A record update evaluates its base exactly once and then replacement expressions
+from left to right. It must name each replacement once and preserves every
+unreplaced field. Update cannot silently initialize a field added by a later
+version.
+
+Records have no implicit object identity, base class, virtual table, default
+constructor, mutable interior, reflection metadata, equality, ordering, hashing,
+formatting, copying, or serialization.
+
+### Enums
+
+An enum is a closed nominal scalar with uniquely named members and explicit
+fixed-width integer tags. The tag type is declared. Duplicate tags are invalid.
+Converting a tag to an enum validates that it names a member; serialization uses
+a separately versioned format contract.
+
+### Variants
+
+A variant is a closed nominal sum. Each case has zero or more uniquely named
+fields. Construction names the variant and case and supplies every field once.
+The representation and numeric case tag are not source-observable.
+
+Matching a closed enum or variant is exhaustive. A wildcard cannot hide a
+missing closed case. An explicit discard may ignore a bound field within a named
+case.
+
+### Derived operations
+
+An operation is derived only through an explicit declaration naming one admitted
+Foundation protocol. Every contained value must implement that protocol, and the
+compiler must prove a finite operation bound. Capabilities, resources, mutable
+owners, mutable borrows, functions, unsafe handles, and foreign values cannot
+derive general equality, ordering, hashing, copying, formatting, or
+serialization.
+
+Serialization is always a named, versioned format. It is never a reflection side
+effect.
+
+## Generics and protocols
+
+Records, variants, functions, protocols, implementations, and immutable
+collection values may have exact type and compile-time constant parameters.
+Generic source is statically resolved. Language 1.0 has no class inheritance,
+overlapping implementation, inferred overload set, ambient runtime type
+discovery, or implicit dynamic interface object.
+
+A protocol declares required function signatures and associated compile-time
+facts but owns no mutable base state. An implementation names exactly one
+protocol instance and one implementing nominal type. Selection:
+
+- uses exact types and constants;
+- considers only visible explicit implementations;
+- rejects zero or multiple matches;
+- is independent of import traversal order;
+- cannot invoke a conversion to create a match; and
+- becomes part of reproducible generic identity.
+
+Recursive generic instantiation, total instances, compiler work, retained
+evidence, and emitted-code growth have published finite limits. Exceeding a limit
+is a bounded compilation diagnostic before artifact publication. A package may
+declare a smaller admitted limit profile; it may not silently change semantics.
+
+Dynamic protocol values remain outside edition 1.
+
+## Values, ownership, and memory
+
+Every type has one visible value class:
+
+| Class | Transfer |
+| --- | --- |
+| Copy | Assignment, binding, capture, and by-value argument create an independent semantic copy. |
+| Shared immutable | Copying may share hidden backing storage; no source operation observes backing identity or mutates it. |
+| Owned | Assignment, capture, return, and by-value argument move ownership unless a named bounded clone is called. |
+| Borrowed | A temporary immutable or exclusive mutable view whose lifetime is bounded by an owner. |
+
+Primitive scalars and enums are Copy. `text`, `bytes`, and immutable published
+collections are shared immutable. Mutable vectors, maps, builders, arenas,
+unique buffers, and provider resource instances are owned. Slices and views are
+borrowed. An aggregate adopts the strictest field behavior unless a safe explicit
+derivation proves another class.
+
+### Bindings and mutation
+
+`let` creates a non-reassignable binding. `var` creates a reassignable binding.
+Reassignment is not the same as interior mutation. Mutating owned storage
+requires a mutable owner or an exclusive mutable borrow; shared immutable values
+never expose mutation.
+
+There are no mutable module globals in Core or Hosted source. System-defined
+machine storage is accessed only through an explicit unsafe or capability
+contract.
+
+### Moves
+
+Moving transfers the value and invalidates the prior binding on the successful
+path. A move does not promise a bytewise copy. Use after move, double release,
+moving a borrowed owner, and moving only part of an inaccessible owned aggregate
+are compile-time errors.
+
+A by-value owned argument moves into call-evaluation temporary ownership. If a
+later argument propagates failure, ordinary cleanup releases that temporary. Once
+the call begins, a recoverable failure does not roll ownership back implicitly;
+the failure result must return the original value explicitly when the caller is
+to recover it.
+
+### Borrows
+
+An immutable borrow permits any number of simultaneous immutable borrows and no
+mutation. A mutable borrow is exclusive: while it is live, the owner and every
+other borrow are inaccessible.
+
+A borrow:
+
+- cannot outlive its owner;
+- cannot be returned unless the public lifetime-elision rule below identifies
+  its one owner;
+- cannot cross a task boundary or suspension point unless the structured scope
+  proves the owner remains live and immobile;
+- cannot close, release, resize, or move its owner; and
+- ends no later than its last statically proven use inside the enclosing lexical
+  scope.
+
+Borrow checking is compile-time and must diagnose the origin, conflicting use,
+and required lifetime with bounded related locations.
+
+Edition 1 has no named lifetime parameters. A public function may return a
+borrowed value only when its signature has exactly one borrowed parameter; the
+result lifetime and mutability are bounded by that parameter. A function with
+zero or multiple borrowed parameters cannot return a borrow. A user-declared
+record, variant, module value, owned collection, task, or closure that escapes its
+call cannot contain a borrow. Foundation may use `Option<borrow T>`,
+`Result<borrow T, E>`, and borrowed slices as ephemeral results under the same
+one-owner rule.
+
+### Allocation and release
+
+Constructing a scalar or record does not imply heap allocation. An implementation
+may use registers, inline storage, stack storage, arenas, or heap storage while
+preserving semantics.
+
+Allocation is recoverably fallible whenever it depends on capacity, an
+allocator, a resource domain, or the host. A type or collection maximum prevents
+excess; it does not promise physical availability. Allocation failure returns a
+typed Foundation result and is not a catchable exception.
+
+Owned memory is released deterministically when its owner is consumed or leaves
+scope. Shared immutable storage may use reference counts, copy-on-write, arenas,
+or another bounded unobservable strategy. Language 1.0 does not require tracing
+garbage collection.
+
+Recursive graphs use an owned typed arena and generation-checked non-owning
+handles. Destroying the arena destroys all admitted nodes and invalidates every
+handle, including cycles.
+
+Owned locals release in reverse successful acquisition order on fallthrough,
+`return`, `break`, `continue`, and `try` propagation. A terminal process or
+machine trap does not promise that user cleanup code ran; runtime teardown must
+still reclaim the enclosing resource domain.
+
+## Functions, calls, and closures
+
+A function signature contains:
+
+- exact parameter types and transfer modes;
+- exact result type;
+- language profile;
+- capability/effect requirements;
+- generic parameters and protocol requirements; and
+- unsafe or foreign status where applicable.
+
+Arguments evaluate from left to right as written. A call uses either all
+positional or all named arguments. Named arguments may appear in any order, name
+every parameter exactly once, and are reordered to parameter order only after
+their expressions succeed. Owned argument temporaries are released in reverse
+evaluation order if a later argument propagates before the call begins.
+
+Default arguments and overload selection by inferred type are absent from
+edition 1.
+
+A function value is immutable and carries its complete signature and effect set.
+A closure explicitly marks every capture as copy, move, immutable borrow, or
+mutable borrow. A capture cannot silently retain a capability, mutable value,
+resource, or ambient state. A borrowing closure cannot escape the captured
+lifetime or cross a suspension boundary that would invalidate the borrow.
+
+Calls, captures, and returns obey the ordinary Copy/shared/owned/borrowed rules.
+Tail-call elimination is an optimization unless a named operation explicitly
+guarantees bounded tail behavior.
+
+Recursion is admitted only within a declared runtime call-depth and work budget.
+The host stack size is not a source semantic limit.
+
+## Evaluation and control flow
+
+Operands, call arguments, named fields, interpolated fields, and replacement
+fields evaluate from left to right exactly once. Short-circuit Boolean operators
+do not evaluate the skipped operand. A failed or trapping expression does not
+evaluate a later expression.
+
+Conditions have exact type `bool`. No other type is truthy.
+
+`if` and `match` have statement and value-producing forms. A value-producing
+form:
+
+- evaluates its selector or condition once;
+- executes one reachable branch;
+- requires every reachable branch to produce the same exact type and compatible
+  ownership state; and
+- performs no implicit common-type conversion.
+
+Pattern matching supports enum members, variant cases with named fields, record
+patterns, explicit discard, and Boolean guards. Guards evaluate after structural
+matching and from left to right. Guarded cases do not remove the requirement for
+an exhaustive fallback over the same named cases.
+
+Destructuring preserves ownership. It cannot copy an owned field implicitly,
+leave an owned remainder inaccessible, or bind overlapping mutable access.
+
+`while` and bounded `for` are the iteration constructs. `break` and `continue`
+target the nearest enclosing loop. A `for` source exposes an exact remaining or
+maximum item bound. Lazy semantically unbounded iteration is absent.
+
+Unreachable source after an unconditional local transfer is rejected unless a
+separate diagnostic-recovery rule marks it as non-semantic input.
+
+## Results, failure, and traps
+
+Language 1.0 distinguishes:
+
+1. ordinary domain values, including named states such as Missing;
+2. recoverable typed failure represented by `Result<T, E>` or another explicit
+   nominal variant; and
+3. terminal traps for violated verified contracts, impossible checked
+   arithmetic, malformed unsafe behavior, or exhausted pre-reserved invariants.
+
+There are no catchable general exceptions. A trap cannot be converted into a
+recoverable result by ordinary source.
+
+`Option<T>` represents optional presence without null. `Result<T, E>` is the
+standard two-case recoverable result. Their exact cases are owned by the
+Foundation specification.
+
+The `try` expression:
+
+- evaluates its operand once;
+- requires the exact standard `Result<T, E>` shape;
+- yields `T` for the valid case;
+- returns the original unchanged failure from the containing function for the
+  failure case;
+- requires the containing function to return the same exact error type; and
+- performs ordinary lexical release before propagation.
+
+Changing an error type requires one explicitly named adapter. Name similarity,
+protocol search, or return context cannot infer it.
+
+## Resources and `using`
+
+A capability reference is shared authority to request an operation from one
+approved provider. An owned resource is one acquired instance such as a file,
+stream, transaction, process, task scope, or device session. They are different
+value classes.
+
+Owned resources are move-only and released exactly once. `using` binds one
+successfully acquired resource to a lexical scope and invokes its locally
+infallible release on every ordinary scope exit.
+
+Fallible semantic completion remains explicit:
+
+- flush, finish, commit, durable close, graceful shutdown, and protocol
+  completion return typed results;
+- local release invalidates the handle and returns locally retained provider
+  capacity;
+- `using` never reports a body as successful because an implicit completion
+  failed; and
+- release never silently discards a body or completion result.
+
+A resource that cannot separate semantic completion from local release cannot
+participate in automatic `using` until its exact combined-result protocol is
+specified. General `defer` is absent from edition 1.
+
+Provider revocation, generation mismatch, restart, peer exit, timeout,
+cancellation, rejection, partial progress, and indeterminate completion remain
+distinct typed outcomes where the interface can observe them.
+
+## Capabilities and effects
+
+A module requirement states that source may need an interface. It is not a grant.
+An application or service approval admits the exact transitive requirement set,
+and a launcher binds rights-limited provider references independently.
+
+A capability interface has:
+
+- canonical ASCII-safe identity;
+- major contract version;
+- exact signature-set identity;
+- platform and profile requirements;
+- limit and failure contract; and
+- revocation and provider-generation behavior.
+
+The source requirement names identity and major version. The supplied canonical
+capability catalog resolves that pair to one exact signature-set identity and
+declared limit profile, and the compiler retains those exact values in module or
+package evidence. An unknown, ambiguous, or incompatible catalog entry is a
+compile-time rejection. Two different signature sets never become compatible
+merely because malformed input gives them the same major number.
+
+A shared capability reference is Copy only when its interface explicitly permits
+shared calls. Acquiring a provider instance returns an owned resource. Rights
+reduction requires a named provider operation; source cannot manufacture or
+increase authority.
+
+Every function and function value carries an exact effect set. Exported function
+and protocol signatures state their effects, including an explicit empty
+`effects()`. A local non-exported function may omit the clause only when the
+compiler derives its one exact set from calls, allocations, tasks, unsafe
+boundaries, and captures. The derived set cannot hide a capability. Calling
+through a generic protocol or closure preserves the required effect set.
+
+Effect identities are canonical lowercase ASCII names. Required language
+identities include `memory.allocate`, `resource.acquire`,
+`resource.complete`, `resource.release`, `task.spawn`, `task.suspend`, and each
+capability interface identity. Release of already owned local accounting carries
+`resource.release` but is not external authority; provider-visible release also
+retains that provider interface effect.
+
+Core functions have an empty external effect set. Deterministic allocation within
+an admitted Core resource budget carries `memory.allocate` but is not ambient
+host authority.
+
+## Structured concurrency
+
+Hosted Language 1.0 uses lexical task scopes. Every task belongs to one live
+scope with finite limits for:
+
+- child count;
+- runnable and completion queues;
+- retained bytes;
+- work units;
+- call depth;
+- deadlines and timers; and
+- diagnostic retention.
+
+Task creation explicitly copies, moves, or borrows captures under ordinary
+closure rules. A task result and recoverable failure are typed. A scope cannot
+exit while a child remains detached.
+
+Leaving a scope follows the one policy declared at scope construction: join all,
+request cancellation then join, or fail while retaining control until teardown
+completes. The policy, join result order, and cancellation result are
+deterministic and independent of scheduler interleaving.
+
+Cancellation is a requested state observed only at specified suspension,
+provider, or explicit check points. It is not an asynchronous exception.
+Timeout, provider loss, cancellation, application failure, and trap containment
+are distinct.
+
+`async` and `await` are syntax over this task model. `await` is permitted only in
+an asynchronous hosted function or task body with a live scope. Suspension cannot
+retain an invalid borrow, implicit capability, or unbounded continuation.
+
+A scheduler may execute tasks sequentially or in parallel. Data-race freedom
+follows from ownership, immutable sharing, and exclusive mutable borrowing rather
+than from one host scheduler.
+
+The exact scope syntax and cancellation examples remain source-freeze blockers
+until the paper corpus completes the hosted service, GUI, and concurrent provider
+restart cases.
+
+## Unsafe and foreign interfaces
+
+Unsafe source is admitted only in the System profile. An unsafe operation is
+visible both where declared and where invoked. System profile and authority do
+not make a safe function implicitly unsafe.
+
+Unsafe contracts cover raw addresses, pointer arithmetic, unverified memory,
+privileged instructions, foreign calls, ABI layouts, interrupts, DMA, and other
+machine-specific behavior. Every unsafe declaration states:
+
+- platform, architecture, ABI, and extension scope;
+- alignment, range, initialization, lifetime, aliasing, and mutability;
+- ownership and release;
+- concurrency and interrupt constraints;
+- trap and foreign-unwind behavior; and
+- teardown and revocation.
+
+Portable integers do not become pointers implicitly. Raw addresses and foreign
+pointers are opaque System types. Address arithmetic uses checked named
+operations, and dereference requires an unsafe block whose contract proves the
+access.
+
+An FFI declaration names the external ABI, calling convention, exact symbol,
+ownership, error translation, and unwind boundary. Edition 1 foreign signatures
+admit exact numeric scalars and opaque Foundation foreign pointers only. They do
+not pass Windvale records, variants, `bool`, `rune`, `text`, `bytes`, enums, or
+collections by value. An adapter represents those values with exact integers,
+pointers, lengths, and separately specified ABI layout witnesses, then validates
+them before constructing safe Windvale values. No source record layout, source
+name, or host default is an external ABI automatically.
+
+Foreign unwinding may not cross into safe Windvale frames. A foreign adapter
+must translate an admitted foreign failure at the boundary or terminate through
+the declared trap policy.
+
+Safe Core and Hosted code cannot manufacture an unsafe value, raw pointer,
+foreign handle, privileged instruction, or authority token.
+
+## Compile-time behavior
+
+Compile-time constants, generic specialization, protocol selection, derived
+operations, and format-safe values execute only bounded deterministic work.
+Each compiler publishes finite step, recursion, retained-memory, output, and
+diagnostic limits and rejects excess before artifact publication.
+
+Compile-time evaluation uses ordinary Language 1.0 checked semantics. It cannot
+inspect undeclared environment state, host paths, current time, entropy, network,
+provider state, or compiler traversal order.
+
+Unrestricted macros, token rewriting, arbitrary compiler plugins, build-script
+execution during import, and ambient environment inspection are absent. Generated
+source or data is an explicit hashed build input with provenance.
+
+## Determinism and resource accounting
+
+Language 1.0 defines all source-observable ordering, including:
+
+- operand and argument evaluation;
+- field construction and update;
+- integer and floating results;
+- text, byte, and collection iteration;
+- match and cleanup;
+- task result collection and cancellation observation; and
+- serialization only through named formats.
+
+External providers may return different admitted data; this does not make
+language evaluation order undefined. Concurrent completion order is observable
+only through an API that explicitly admits and bounds it.
+
+Every allocation, retained collection, recursion path, task, queue, diagnostic,
+provider operation, and compile-time operation is subject to a static limit,
+value maximum, allocator maximum, or resource-domain budget. Exhaustion returns
+the declared typed failure unless source invoked an operation whose proven
+precondition reserved success; violating that precondition traps.
+
+## Diagnostics
+
+A deterministic diagnostic contains:
+
+- stable diagnostic identity;
+- source edition and compiler phase;
+- canonical module and source span;
+- expected and observed type, ownership, effect, or profile state;
+- a bounded set of related declarations or move/borrow locations;
+- the violated rule and admitted limit where applicable; and
+- no unbounded cascade from one malformed construct.
+
+The compiler must distinguish syntax, name, type, ownership, effect, limit,
+unsafe, profile, capability, and target-support failures. Tooling must support
+semantic rename, exact-name search, ownership explanation, capability closure,
+source-to-WIR/WVB mapping, and source-to-machine identity inspection.
+
+## Explicitly absent from edition 1
+
+Language 1.0 has no:
+
+- classes or inheritance;
+- implicit null, truthiness, or conversions;
+- catchable general exceptions;
+- operator overloading or inferred overload selection;
+- ambient runtime reflection or automatic object serialization;
+- tracing-GC-dependent general object graph;
+- detached task or implicit background work;
+- semantically unbounded collection, queue, recursion, diagnostic, or
+  compile-time work;
+- unrestricted macro, preprocessor, or compiler plugin;
+- wildcard import or ambient prelude;
+- hidden capability acquisition;
+- host-native path, handle, ABI, locale, encoding, or scheduler semantics in
+  portable source; or
+- indentation-sensitive grammar or automatic semicolon insertion.
+
+An edition after 1 may reconsider a constrained form only through a named
+decision and a complete safety, determinism, authority, bound, compatibility,
+and implementation contract.
+
+## Source-freeze requirements
+
+This candidate becomes frozen Language 1.0 only after:
+
+1. the grammar companion has no unresolved production or precedence;
+2. the Foundation companion has exact signatures and failure behavior;
+3. the paper corpus completes all ten workloads and their rejected cases;
+4. collection, ownership, cleanup, and concurrency freeze conditions pass;
+5. every rule has accepted, boundary, malformed, and rejected examples;
+6. the migration and compiler responsibility matrix is approved;
+7. editor and formatter behavior is specified;
+8. target support and cross-host evidence requirements are named; and
+9. a source-freeze decision records the canonical document identities.
+
+Until then, examples in this suite are candidate edition-1 source and are not
+accepted by current tools.

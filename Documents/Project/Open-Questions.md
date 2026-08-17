@@ -83,16 +83,26 @@ unfinished work.
 
 ## Language, compiler, and runtime questions
 
+[Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
+accepts the complete Language 1.0 direction. The active questions now belong to
+the candidate specification and paper-corpus freeze rather than feature-by-
+feature direction selection:
+
+- Which candidate grammar or Foundation signatures must change after each of the
+  ten complete paper programs is reviewed?
+- Does the one candidate task-scope spelling express sequential and
+  parallel-capable hosted services, GUI work, cancellation, and provider restart
+  without hidden capture or teardown?
+- Which finite generic-instantiation, borrow-diagnostic, collection-budget, and
+  compile-time limits become the required portable minimums?
+- Which Language 1.0 features lower through current WIR/WVB and which require a
+  separately versioned verified representation?
+- Which frozen vertical slice should implement edition 1 first without creating
+  a parallel compiler or permanent Seed compatibility path?
 - Which direct consumer first requires caller-visible liveness for relocating
   descriptor-bearing aggregate returns?
 - Which useful program justifies integrating the complete allocator-emission
   schedule rather than retaining the qualified bounded lifetime profile?
-- Which capability-reference, cleanup-order, and cleanup-failure contracts must
-  exist before scoped ownership syntax is accepted?
-- Should exact `try` propagation ever admit a named adapter or an owned failure
-  payload, and what transfer and cleanup ordering would make that widening safe?
-- Which two measured consumers justify the first bounded deterministic keyed
-  collection and its capacity, collision, and iteration contract?
 - Which first unsupported package, database, or OS operation should broaden the
   shared native backend, and what interpreter/AOT/JIT agreement proves it?
 
