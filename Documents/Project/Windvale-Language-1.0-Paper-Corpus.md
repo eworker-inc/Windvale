@@ -431,6 +431,14 @@ limit.
 Input order and map implementation cannot change canonical output. Rejection must
 occur before expensive allocation for oversized declared values.
 
+The complete draft-reviewed source and evidence are in the
+[workload 9 paper bundle](Language-1.0-Paper-Corpus/09-Package-Parser-Deterministic-Map/README.md).
+Its six accepted findings complete map mutation/publication and immutable
+observation, fix the complete ordered-set API, make Ordering equality/laws
+testable, retain explicit bounded parsing instead of reflection, define
+unobservable per-domain package-content deduplication/accounting, and use
+ordered-rank topology plus sorted cycle evidence as the deterministic oracle.
+
 ## Workload 10: system and FFI boundary
 
 ### Scenario
@@ -580,12 +588,12 @@ source contract ambiguous.
 | Concurrent hosted service | Draft reviewed; seven findings accepted and resolved |
 | GUI retained state | Draft reviewed; seven findings accepted and resolved |
 | Numeric or graphics processing | Draft reviewed; six findings accepted and resolved |
-| Package parser | Pending source bundle |
+| Package parser | Draft reviewed; six findings accepted and resolved |
 | System and FFI boundary | Pending source bundle |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-Nine of eleven workloads are draft reviewed. Workloads 9 and 10 remain to be
-written and reviewed.
+Ten of eleven workloads are draft reviewed. Workload 10 remains to be written
+and reviewed.
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

@@ -1,0 +1,5 @@
+WVLOCK1
+package util 1 deps core
+package app 1 deps util,codec
+package core 2 deps -
+package codec 1 deps core

@@ -1,0 +1,322 @@
+edition 1;
+module Packageˉgraphˉgraph;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Packageˉgraphˉordering as Identity;
+import Packageˉgraphˉtypes as Types;
+
+fn Mapˉcollection<T>(
+    Value: Result.Result<T, Collections.Collectionˉfailure>,
+) -> Result.Result<T, Types.Packageˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Packageˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Insertˉcompleted(
+    Completed: borrow mut Collections.Set<Types.Packageˉidentity>,
+    Identity: Types.Packageˉidentity,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return match Collections.Setˉinsert(Set: Completed, Value: Identity) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Appendˉidentity(
+    Values: borrow mut Collections.Vector<Types.Packageˉidentity>,
+    Identity: Types.Packageˉidentity,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return match Collections.Vectorˉappend(
+        Vector: Values,
+        Value: Identity,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Allˉdependenciesˉcomplete(
+    Dependencies: borrow Collections.Immutableˉset<Types.Packageˉidentity>,
+    Completed: borrow Collections.Set<Types.Packageˉidentity>,
+) -> bool effects() {
+    let Count = Collections.Immutableˉsetˉlength(Set: Dependencies);
+    var Index = 0u64;
+    while Index < Count {
+        if !Collections.Setˉcontains(
+            Set: Completed,
+            Value: Collections.Immutableˉsetˉborrowˉat(
+                Set: Dependencies,
+                Index: Index,
+            ),
+        ) {
+            return false;
+        }
+        Index = Index + 1u64;
+    }
+    return true;
+}
+
+fn Validateˉdependencies(
+    Packages: borrow Collections.Immutableˉmap<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    let Packageˉcount = Collections.Immutableˉmapˉlength(Map: Packages);
+    var Packageˉindex = 0u64;
+    while Packageˉindex < Packageˉcount {
+        let Package = Collections.Immutableˉmapˉborrowˉat(
+            Map: Packages,
+            Index: Packageˉindex,
+        );
+        let Dependencyˉcount = Collections.Immutableˉsetˉlength(
+            Set: borrow Package.Dependencies,
+        );
+        var Dependencyˉindex = 0u64;
+        while Dependencyˉindex < Dependencyˉcount {
+            let Dependency = Collections.Immutableˉsetˉborrowˉat(
+                Set: borrow Package.Dependencies,
+                Index: Dependencyˉindex,
+            );
+            if !Collections.Immutableˉmapˉcontains(
+                Map: Packages,
+                Key: Dependency,
+            ) {
+                return Result.Result.Failure {
+                    Error: Types.Packageˉfailure.Unknownˉdependency {
+                        Package: Types.Packageˉidentity {
+                            Value: Package.Identity.Value,
+                        },
+                        Dependency: Types.Packageˉidentity {
+                            Value: Dependency.Value,
+                        },
+                    },
+                };
+            }
+            Dependencyˉindex = Dependencyˉindex + 1u64;
+        }
+        Packageˉindex = Packageˉindex + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Buildˉremaining(
+    Packages: borrow Collections.Immutableˉmap<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >,
+    Completed: borrow Collections.Set<Types.Packageˉidentity>,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Collections.Sequence<Types.Packageˉidentity>, Types.Packageˉfailure>
+    effects(memory.allocate) {
+    var Remaining = try Mapˉcollection(
+        Value: Collections.Vectorˉconstruct::<Types.Packageˉidentity>(
+            Budget: Budget,
+            Maximumˉitems: Collections.Immutableˉmapˉlength(Map: Packages),
+        ),
+    );
+    let Count = Collections.Immutableˉmapˉlength(Map: Packages);
+    var Index = 0u64;
+    while Index < Count {
+        let Package = Collections.Immutableˉmapˉborrowˉat(
+            Map: Packages,
+            Index: Index,
+        );
+        if !Collections.Setˉcontains(
+            Set: Completed,
+            Value: borrow Package.Identity,
+        ) {
+            try Appendˉidentity(
+                Values: borrow mut Remaining,
+                Identity: Types.Packageˉidentity {
+                    Value: Package.Identity.Value,
+                },
+            );
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid {
+        Value: Collections.Vectorˉfreeze(Vector: Remaining),
+    };
+}
+
+export fn Validateˉmanifest(
+    Manifest: borrow Types.Manifestˉrecord,
+    Packages: borrow Collections.Immutableˉmap<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    let Rank = match Collections.Immutableˉmapˉfindˉrank(
+        Map: Packages,
+        Key: borrow Manifest.Root,
+    ) {
+        case Option.Option.Some { Value: Value } { Value }
+        case Option.Option.None {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Manifestˉmismatch {
+                    Field: Types.Fieldˉkind.Package,
+                },
+            };
+        }
+    };
+    let Root = Collections.Immutableˉmapˉborrowˉat(
+        Map: Packages,
+        Index: Rank,
+    );
+    if Root.Version != Manifest.Version {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Manifestˉmismatch {
+                Field: Types.Fieldˉkind.Version,
+            },
+        };
+    }
+    let Manifestˉcount = Collections.Immutableˉsetˉlength(
+        Set: borrow Manifest.Dependencies,
+    );
+    let Lockˉcount = Collections.Immutableˉsetˉlength(
+        Set: borrow Root.Dependencies,
+    );
+    if Manifestˉcount != Lockˉcount {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Manifestˉmismatch {
+                Field: Types.Fieldˉkind.Dependency,
+            },
+        };
+    }
+    var Index = 0u64;
+    while Index < Manifestˉcount {
+        if !Collections.Immutableˉsetˉcontains(
+            Set: borrow Root.Dependencies,
+            Value: Collections.Immutableˉsetˉborrowˉat(
+                Set: borrow Manifest.Dependencies,
+                Index: Index,
+            ),
+        ) {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Manifestˉmismatch {
+                    Field: Types.Fieldˉkind.Dependency,
+                },
+            };
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Topologicalˉorder(
+    Packages: borrow Collections.Immutableˉmap<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >,
+    Completedˉbudget: Memory.Memoryˉbudget,
+    Outputˉbudget: Memory.Memoryˉbudget,
+    Diagnosticˉbudget: Memory.Memoryˉbudget,
+) -> Result.Result<Collections.Sequence<Types.Packageˉidentity>, Types.Packageˉfailure>
+    effects(memory.allocate) {
+    try Validateˉdependencies(Packages: Packages);
+    let Count = Collections.Immutableˉmapˉlength(Map: Packages);
+    var Completed = try Mapˉcollection(
+        Value: Collections.Setˉconstruct::<Types.Packageˉidentity>(
+            Budget: Completedˉbudget,
+            Maximumˉitems: Count,
+        ),
+    );
+    var Output = try Mapˉcollection(
+        Value: Collections.Vectorˉconstruct::<Types.Packageˉidentity>(
+            Budget: Outputˉbudget,
+            Maximumˉitems: Count,
+        ),
+    );
+    while Collections.Vectorˉlength(Vector: borrow Output) < Count {
+        var Progress = false;
+        var Index = 0u64;
+        while Index < Count && !Progress {
+            let Package = Collections.Immutableˉmapˉborrowˉat(
+                Map: Packages,
+                Index: Index,
+            );
+            if !Collections.Setˉcontains(
+                Set: borrow Completed,
+                Value: borrow Package.Identity,
+            ) && Allˉdependenciesˉcomplete(
+                Dependencies: borrow Package.Dependencies,
+                Completed: borrow Completed,
+            ) {
+                try Appendˉidentity(
+                    Values: borrow mut Output,
+                    Identity: Types.Packageˉidentity {
+                        Value: Package.Identity.Value,
+                    },
+                );
+                try Insertˉcompleted(
+                    Completed: borrow mut Completed,
+                    Identity: Types.Packageˉidentity {
+                        Value: Package.Identity.Value,
+                    },
+                );
+                Progress = true;
+            }
+            Index = Index + 1u64;
+        }
+        if !Progress {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Dependencyˉcycle {
+                    Remaining: try Buildˉremaining(
+                        Packages: Packages,
+                        Completed: borrow Completed,
+                        Budget: Diagnosticˉbudget,
+                    ),
+                },
+            };
+        }
+    }
+    return Result.Result.Valid {
+        Value: Collections.Vectorˉfreeze(Vector: Output),
+    };
+}

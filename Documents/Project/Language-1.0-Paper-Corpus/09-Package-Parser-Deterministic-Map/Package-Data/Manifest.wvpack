@@ -1,0 +1,5 @@
+WVPACK1
+package app
+version 1
+dependency codec
+dependency util

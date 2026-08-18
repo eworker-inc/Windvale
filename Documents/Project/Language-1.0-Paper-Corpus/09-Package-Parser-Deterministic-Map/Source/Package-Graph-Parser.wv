@@ -1,0 +1,631 @@
+edition 1;
+module Packageˉgraphˉparser;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoption as Option;
+import Foundationˉordering as Ordering;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Packageˉgraphˉordering as Identity;
+import Packageˉgraphˉtypes as Types;
+
+record Cursor {
+    Runeˉindex: u64;
+    Line: u64;
+}
+
+record Wordˉcursor {
+    Runeˉindex: u64;
+}
+
+fn Isˉidentityˉrune(Value: rune, First: bool) -> bool effects() {
+    if Value >= 'a' && Value <= 'z' {
+        return true;
+    }
+    if First {
+        return false;
+    }
+    return (Value >= '0' && Value <= '9') || Value == '_';
+}
+
+fn Parseˉidentity(
+    Value: text,
+    Line: u64,
+    Column: u64,
+    Maximumˉbytes: u64,
+) -> Result.Result<Types.Packageˉidentity, Types.Packageˉfailure> effects() {
+    let Byteˉlength = Text.Byteˉlength(Value: borrow Value);
+    let Runeˉcount = Text.Runeˉcount(Value: borrow Value);
+    if Byteˉlength == 0u64 || Byteˉlength > Maximumˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Invalidˉidentity {
+                Line: Line,
+                Column: Column,
+                Value: Value,
+            },
+        };
+    }
+    var Index = 0u64;
+    while Index < Runeˉcount {
+        if !Isˉidentityˉrune(
+            Value: Text.Runeˉat(Value: borrow Value, Index: Index),
+            First: Index == 0u64,
+        ) {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Invalidˉidentity {
+                    Line: Line,
+                    Column: Column + Index,
+                    Value: Value,
+                },
+            };
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid {
+        Value: Types.Packageˉidentity { Value: Value },
+    };
+}
+
+fn Readˉline(
+    Input: borrow text,
+    Cursor: borrow mut Cursor,
+) -> Option.Option<text> effects() {
+    let Count = Text.Runeˉcount(Value: Input);
+    if Cursor.Runeˉindex == Count {
+        return Option.Option.None;
+    }
+    let Start = Cursor.Runeˉindex;
+    while Cursor.Runeˉindex < Count
+        && Text.Runeˉat(Value: Input, Index: Cursor.Runeˉindex) != '\n' {
+        Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
+    }
+    let Length = Cursor.Runeˉindex - Start;
+    let Line = Text.Shareˉrange(
+        Value: Input,
+        Startˉrune: Start,
+        Runeˉcount: Length,
+    );
+    if Cursor.Runeˉindex < Count {
+        Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
+    }
+    Cursor.Line = Cursor.Line + 1u64;
+    return Option.Option.Some { Value: Line };
+}
+
+fn Nextˉword(
+    Line: borrow text,
+    Cursor: borrow mut Wordˉcursor,
+) -> Option.Option<text> effects() {
+    let Count = Text.Runeˉcount(Value: Line);
+    while Cursor.Runeˉindex < Count
+        && Text.Runeˉat(Value: Line, Index: Cursor.Runeˉindex) == ' ' {
+        Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
+    }
+    if Cursor.Runeˉindex == Count {
+        return Option.Option.None;
+    }
+    let Start = Cursor.Runeˉindex;
+    while Cursor.Runeˉindex < Count
+        && Text.Runeˉat(Value: Line, Index: Cursor.Runeˉindex) != ' ' {
+        Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
+    }
+    return Option.Option.Some {
+        Value: Text.Shareˉrange(
+            Value: Line,
+            Startˉrune: Start,
+            Runeˉcount: Cursor.Runeˉindex - Start,
+        ),
+    };
+}
+
+fn Requireˉword(
+    Line: borrow text,
+    Cursor: borrow mut Wordˉcursor,
+    Format: Types.Formatˉkind,
+    Lineˉnumber: u64,
+    Field: Types.Fieldˉkind,
+) -> Result.Result<text, Types.Packageˉfailure> effects() {
+    return match Nextˉword(Line: Line, Cursor: Cursor) {
+        case Option.Option.Some { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Option.Option.None {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Missingˉfield {
+                    Format: Format,
+                    Field: Field,
+                },
+            }
+        }
+    };
+}
+
+fn Ensureˉend(
+    Line: borrow text,
+    Cursor: borrow mut Wordˉcursor,
+    Format: Types.Formatˉkind,
+    Lineˉnumber: u64,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return match Nextˉword(Line: Line, Cursor: Cursor) {
+        case Option.Option.None { Result.Result.Valid { Value: () } }
+        case Option.Option.Some { Value: Value } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Unknownˉfield {
+                    Format: Format,
+                    Line: Lineˉnumber,
+                    Value: Value,
+                },
+            }
+        }
+    };
+}
+
+fn Splitˉbudget(
+    Parent: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Packageˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Parent,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Child } {
+            Result.Result.Valid { Value: Child }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Insertˉdependency(
+    Dependencies: borrow mut Collections.Set<Types.Packageˉidentity>,
+    Value: Types.Packageˉidentity,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return match Collections.Setˉinsert(
+        Set: Dependencies,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Parseˉdependencies(
+    Value: text,
+    Line: u64,
+    Limits: borrow Types.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Collections.Immutableˉset<Types.Packageˉidentity>, Types.Packageˉfailure>
+    effects(memory.allocate) {
+    var Dependencies = match Collections.Setˉconstruct::<Types.Packageˉidentity>(
+        Budget: Budget,
+        Maximumˉitems: Limits.Maximumˉdependenciesˉperˉpackage,
+    ) {
+        case Result.Result.Valid { Value: Set } { Set }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+    if Value == "-" {
+        return Result.Result.Valid {
+            Value: Collections.Setˉfreeze(Set: Dependencies),
+        };
+    }
+    let Count = Text.Runeˉcount(Value: borrow Value);
+    var Start = 0u64;
+    var Index = 0u64;
+    while Index <= Count {
+        if Index == Count || Text.Runeˉat(Value: borrow Value, Index: Index) == ',' {
+            let Word = Text.Shareˉrange(
+                Value: borrow Value,
+                Startˉrune: Start,
+                Runeˉcount: Index - Start,
+            );
+            let Parsed = try Parseˉidentity(
+                Value: Word,
+                Line: Line,
+                Column: Start + 1u64,
+                Maximumˉbytes: Limits.Maximumˉidentityˉbytes,
+            );
+            try Insertˉdependency(
+                Dependencies: borrow mut Dependencies,
+                Value: Parsed,
+            );
+            Start = Index + 1u64;
+        }
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid {
+        Value: Collections.Setˉfreeze(Set: Dependencies),
+    };
+}
+
+fn Insertˉpackage(
+    Packages: borrow mut Collections.Map<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >,
+    Value: Types.Lockedˉpackage,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    let Key = Value.Identity;
+    return match Collections.Mapˉinsert(
+        Map: Packages,
+        Key: Key,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            if Failure.Error == Collections.Collectionˉfailure.Duplicate {
+                return Result.Result.Failure {
+                    Error: Types.Packageˉfailure.Duplicateˉpackage {
+                        Identity: Failure.Key,
+                    },
+                };
+            }
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            };
+        }
+    };
+}
+
+export fn Parseˉlock(
+    Input: borrow text,
+    Limits: borrow Types.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Parsedˉlock, Types.Packageˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    let Inputˉbytes = Text.Byteˉlength(Value: Input);
+    if Inputˉbytes > Limits.Maximumˉlockˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Inputˉlimit {
+                Format: Types.Formatˉkind.Lock,
+                Observed: Inputˉbytes,
+                Maximum: Limits.Maximumˉlockˉbytes,
+            },
+        };
+    }
+    var Collectionˉbudget = Budget;
+    let Mapˉbudget = try Splitˉbudget(
+        Parent: borrow mut Collectionˉbudget,
+        Maximumˉbytes: 16_384u64,
+    );
+    var Packages = match Collections.Mapˉconstruct::<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >(
+        Budget: Mapˉbudget,
+        Maximumˉitems: Limits.Maximumˉpackages,
+    ) {
+        case Result.Result.Valid { Value: Map } { Map }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+    var Cursor = Cursor { Runeˉindex: 0u64, Line: 0u64 };
+    let Magic = match Readˉline(Input: Input, Cursor: borrow mut Cursor) {
+        case Option.Option.Some { Value: Value } { Value }
+        case Option.Option.None {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Invalidˉmagic {
+                    Format: Types.Formatˉkind.Lock,
+                    Line: 1u64,
+                },
+            };
+        }
+    };
+    if Magic != "WVLOCK1" {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Invalidˉmagic {
+                Format: Types.Formatˉkind.Lock,
+                Line: 1u64,
+            },
+        };
+    }
+    while let Option.Option.Some { Value: Line } = Readˉline(
+        Input: Input,
+        Cursor: borrow mut Cursor,
+    ) {
+        if Text.Runeˉcount(Value: borrow Line) == 0u64 {
+            continue;
+        }
+        var Word = Wordˉcursor { Runeˉindex: 0u64 };
+        let Kind = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Lock,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Package,
+        );
+        if Kind != "package" {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Unknownˉfield {
+                    Format: Types.Formatˉkind.Lock,
+                    Line: Cursor.Line,
+                    Value: Kind,
+                },
+            };
+        }
+        let Identityˉword = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Lock,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Package,
+        );
+        let Packageˉidentity = try Parseˉidentity(
+            Value: Identityˉword,
+            Line: Cursor.Line,
+            Column: 9u64,
+            Maximumˉbytes: Limits.Maximumˉidentityˉbytes,
+        );
+        let Versionˉword = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Lock,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Version,
+        );
+        let Version = match Numeric.Parseˉu64ˉdecimalˉwhole(
+            Value: borrow Versionˉword,
+            Maximumˉinputˉbytes: 20u64,
+        ) {
+            case Result.Result.Valid { Value: Value } { Value }
+            case Result.Result.Failure { Error: Error } {
+                return Result.Result.Failure {
+                    Error: Types.Packageˉfailure.Invalidˉversion {
+                        Line: Cursor.Line,
+                        Error: Error,
+                    },
+                };
+            }
+        };
+        let Depsˉfield = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Lock,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Dependencies,
+        );
+        if Depsˉfield != "deps" {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Unknownˉfield {
+                    Format: Types.Formatˉkind.Lock,
+                    Line: Cursor.Line,
+                    Value: Depsˉfield,
+                },
+            };
+        }
+        let Dependencyˉword = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Lock,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Dependencies,
+        );
+        try Ensureˉend(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Lock,
+            Lineˉnumber: Cursor.Line,
+        );
+        let Setˉbudget = try Splitˉbudget(
+            Parent: borrow mut Collectionˉbudget,
+            Maximumˉbytes: 4_096u64,
+        );
+        let Dependencies = try Parseˉdependencies(
+            Value: Dependencyˉword,
+            Line: Cursor.Line,
+            Limits: Limits,
+            Budget: Setˉbudget,
+        );
+        try Insertˉpackage(
+            Packages: borrow mut Packages,
+            Value: Types.Lockedˉpackage {
+                Identity: Packageˉidentity,
+                Version: Version,
+                Dependencies: Dependencies,
+            },
+        );
+    }
+    return Result.Result.Valid {
+        Value: Types.Parsedˉlock {
+            Packages: Collections.Mapˉfreeze(Map: Packages),
+        },
+    };
+}
+
+export fn Parseˉmanifest(
+    Input: borrow text,
+    Limits: borrow Types.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Manifestˉrecord, Types.Packageˉfailure>
+    effects(memory.allocate) {
+    if Text.Byteˉlength(Value: Input) > Limits.Maximumˉmanifestˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Inputˉlimit {
+                Format: Types.Formatˉkind.Manifest,
+                Observed: Text.Byteˉlength(Value: Input),
+                Maximum: Limits.Maximumˉmanifestˉbytes,
+            },
+        };
+    }
+    var Dependencies = match Collections.Setˉconstruct::<Types.Packageˉidentity>(
+        Budget: Budget,
+        Maximumˉitems: Limits.Maximumˉdependenciesˉperˉpackage,
+    ) {
+        case Result.Result.Valid { Value: Set } { Set }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Collection { Error: Error },
+            };
+        }
+    };
+    var Cursor = Cursor { Runeˉindex: 0u64, Line: 0u64 };
+    var Root = Option.Option.None;
+    var Version = Option.Option.None;
+    var Sawˉmagic = false;
+    while let Option.Option.Some { Value: Line } = Readˉline(
+        Input: Input,
+        Cursor: borrow mut Cursor,
+    ) {
+        if Cursor.Line == 1u64 {
+            if Line != "WVPACK1" {
+                return Result.Result.Failure {
+                    Error: Types.Packageˉfailure.Invalidˉmagic {
+                        Format: Types.Formatˉkind.Manifest,
+                        Line: Cursor.Line,
+                    },
+                };
+            }
+            Sawˉmagic = true;
+            continue;
+        }
+        var Word = Wordˉcursor { Runeˉindex: 0u64 };
+        let Kind = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Manifest,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Package,
+        );
+        let Value = try Requireˉword(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Manifest,
+            Lineˉnumber: Cursor.Line,
+            Field: Types.Fieldˉkind.Package,
+        );
+        try Ensureˉend(
+            Line: borrow Line,
+            Cursor: borrow mut Word,
+            Format: Types.Formatˉkind.Manifest,
+            Lineˉnumber: Cursor.Line,
+        );
+        if Kind == "package" {
+            if Root != Option.Option.None {
+                return Result.Result.Failure {
+                    Error: Types.Packageˉfailure.Duplicateˉfield {
+                        Format: Types.Formatˉkind.Manifest,
+                        Field: Types.Fieldˉkind.Package,
+                        Line: Cursor.Line,
+                    },
+                };
+            }
+            Root = Option.Option.Some {
+                Value: try Parseˉidentity(
+                    Value: Value,
+                    Line: Cursor.Line,
+                    Column: 9u64,
+                    Maximumˉbytes: Limits.Maximumˉidentityˉbytes,
+                ),
+            };
+        } else if Kind == "version" {
+            if Version != Option.Option.None {
+                return Result.Result.Failure {
+                    Error: Types.Packageˉfailure.Duplicateˉfield {
+                        Format: Types.Formatˉkind.Manifest,
+                        Field: Types.Fieldˉkind.Version,
+                        Line: Cursor.Line,
+                    },
+                };
+            }
+            Version = Option.Option.Some {
+                Value: match Numeric.Parseˉu64ˉdecimalˉwhole(
+                    Value: borrow Value,
+                    Maximumˉinputˉbytes: 20u64,
+                ) {
+                    case Result.Result.Valid { Value: Parsed } { Parsed }
+                    case Result.Result.Failure { Error: Error } {
+                        return Result.Result.Failure {
+                            Error: Types.Packageˉfailure.Invalidˉversion {
+                                Line: Cursor.Line,
+                                Error: Error,
+                            },
+                        };
+                    }
+                },
+            };
+        } else if Kind == "dependency" {
+            try Insertˉdependency(
+                Dependencies: borrow mut Dependencies,
+                Value: try Parseˉidentity(
+                    Value: Value,
+                    Line: Cursor.Line,
+                    Column: 12u64,
+                    Maximumˉbytes: Limits.Maximumˉidentityˉbytes,
+                ),
+            );
+        } else {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Unknownˉfield {
+                    Format: Types.Formatˉkind.Manifest,
+                    Line: Cursor.Line,
+                    Value: Kind,
+                },
+            };
+        }
+    }
+    if !Sawˉmagic {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Missingˉfield {
+                Format: Types.Formatˉkind.Manifest,
+                Field: Types.Fieldˉkind.Magic,
+            },
+        };
+    }
+    let Root = match Root {
+        case Option.Option.Some { Value: Value } { Value }
+        case Option.Option.None {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Missingˉfield {
+                    Format: Types.Formatˉkind.Manifest,
+                    Field: Types.Fieldˉkind.Package,
+                },
+            };
+        }
+    };
+    let Version = match Version {
+        case Option.Option.Some { Value: Value } { Value }
+        case Option.Option.None {
+            return Result.Result.Failure {
+                Error: Types.Packageˉfailure.Missingˉfield {
+                    Format: Types.Formatˉkind.Manifest,
+                    Field: Types.Fieldˉkind.Version,
+                },
+            };
+        }
+    };
+    return Result.Result.Valid {
+        Value: Types.Manifestˉrecord {
+            Root: Root,
+            Version: Version,
+            Dependencies: Collections.Setˉfreeze(Set: Dependencies),
+        },
+    };
+}

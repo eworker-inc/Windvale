@@ -54,7 +54,10 @@ accepts the retained-GUI workload's typed-arena mutation, semantic event,
 parent-only state application, and exact frame-publication boundaries, and
 [Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md)
 accepts contextual fixed arrays, checked mutable slices, strict numeric
-operations/conversions/formatting, and bit-identical parallel policy. The
+operations/conversions/formatting, and bit-identical parallel policy, and
+[Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md)
+accepts complete deterministic collection publication, explicit bounded
+parsing, package-content dedup/accounting, and canonical graph ordering. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
 [bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
 [database-transaction bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md),
@@ -63,10 +66,11 @@ operations/conversions/formatting, and bit-identical parallel policy. The
 [concurrent-service bundle](Language-1.0-Paper-Corpus/06-Concurrent-Hosted-Service/README.md),
 [retained-GUI bundle](Language-1.0-Paper-Corpus/07-Gui-Retained-State/README.md),
 [numeric/graphics bundle](Language-1.0-Paper-Corpus/08-Numeric-Graphics-Processing/README.md),
+[package-parser bundle](Language-1.0-Paper-Corpus/09-Package-Parser-Deterministic-Map/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
-are now draft reviewed. Nine of the eleven required bundles are reviewed; the
-remaining paper work is workloads 9 and 10. The accepted direction,
+are now draft reviewed. Ten of the eleven required bundles are reviewed; the
+remaining paper work is workload 10. The accepted direction,
 normative-candidate suite,
 paper corpus, accelerator/AI design evidence, and migration plan may advance
 without claiming implementation or changing the current Seed product. Source

@@ -38,6 +38,8 @@ and the retained-GUI findings resolved by
 [Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
 and the numeric/graphics findings resolved by
 [Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
+and the package-parser findings resolved by
+[Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -275,6 +277,15 @@ charged to the selected application or service resource domain even when an
 implementation maps or shares storage. Canonical packaging uses one content
 object per distinct content identity and may reference that object from multiple
 declarations without duplicating its shipped payload.
+
+Each declaration reference still validates its own canonical declaration and
+resource identity, type, maximum, exact length, and digest. Within one admitted
+application or service resource domain, one distinct content identity incurs
+one retained-payload charge; additional declaration references incur only their
+bounded reference metadata. Separate domains retain separate admission,
+accounting, authority, revocation, and teardown. Source observes equal immutable
+values, never content-object address, mapping, interning, alias count, or storage
+identity.
 
 ## Application entry and launcher binding
 

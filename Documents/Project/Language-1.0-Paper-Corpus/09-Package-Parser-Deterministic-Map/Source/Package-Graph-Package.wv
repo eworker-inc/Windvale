@@ -1,0 +1,10 @@
+edition 1;
+module Packageˉgraphˉpackage;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+export package data Manifest: text maximum 1_024u64;
+export package data Lock: text maximum 2_048u64;
+export package data Noticeˉprimary: bytes maximum 128u64;
+export package data Noticeˉcopy: bytes maximum 128u64;

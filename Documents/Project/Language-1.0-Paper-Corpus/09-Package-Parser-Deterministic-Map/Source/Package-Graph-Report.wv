@@ -1,0 +1,164 @@
+edition 1;
+module Packageˉgraphˉreport;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Packageˉgraphˉtypes as Types;
+
+data REPORT_MAGIC: text = r"WVPKGREPORT1";
+data LOCK_MAGIC_BYTES: bytes = b"WVLOCK1\n";
+data REPORT_SEPARATORS: bytes = br#"@=,-"#;
+data EXPECTED_REPORT: text = """WVPKGREPORT1
+package app@1 deps=codec,util
+package codec@1 deps=core
+package core@2 deps=-
+package util@1 deps=core
+order=core,codec,util,app
+notice-equal=true
+""";
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Packageˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉlimit(
+    Value: Result.Result<unit, Memory.Limitˉfailure>,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Outputˉlimit { Error: Error },
+            }
+        }
+    };
+}
+
+fn Append(
+    Builder: borrow mut Text.Textˉbuilder,
+    Value: borrow text,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return Mapˉlimit(
+        Value: Text.Appendˉtext(Builder: Builder, Value: Value),
+    );
+}
+
+fn Appendˉdependencies(
+    Builder: borrow mut Text.Textˉbuilder,
+    Dependencies: borrow Collections.Immutableˉset<Types.Packageˉidentity>,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    let Count = Collections.Immutableˉsetˉlength(Set: Dependencies);
+    if Count == 0u64 {
+        return Append(Builder: Builder, Value: borrow "-");
+    }
+    var Index = 0u64;
+    while Index < Count {
+        if Index != 0u64 {
+            try Append(Builder: Builder, Value: borrow ",");
+        }
+        let Dependency = Collections.Immutableˉsetˉborrowˉat(
+            Set: Dependencies,
+            Index: Index,
+        );
+        try Append(Builder: Builder, Value: borrow Dependency.Value);
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Appendˉorder(
+    Builder: borrow mut Text.Textˉbuilder,
+    Order: borrow Collections.Sequence<Types.Packageˉidentity>,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    let Count = Collections.Sequenceˉlength(Value: Order);
+    var Index = 0u64;
+    while Index < Count {
+        if Index != 0u64 {
+            try Append(Builder: Builder, Value: borrow ",");
+        }
+        let Identity = Collections.Sequenceˉat(Value: Order, Index: Index);
+        try Append(Builder: Builder, Value: borrow Identity.Value);
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+export fn Render(
+    Packages: borrow Collections.Immutableˉmap<
+        Types.Packageˉidentity,
+        Types.Lockedˉpackage
+    >,
+    Order: borrow Collections.Sequence<Types.Packageˉidentity>,
+    Noticeˉequal: bool,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<text, Types.Packageˉfailure> effects(memory.allocate) {
+    var Builder = try Mapˉallocation(
+        Value: Text.Constructˉreserved(
+            Budget: Budget,
+            Maximumˉoutputˉbytes: Maximumˉbytes,
+        ),
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow REPORT_MAGIC);
+    try Append(Builder: borrow mut Builder, Value: borrow "\n");
+    let Count = Collections.Immutableˉmapˉlength(Map: Packages);
+    var Index = 0u64;
+    while Index < Count {
+        let Package = Collections.Immutableˉmapˉborrowˉat(
+            Map: Packages,
+            Index: Index,
+        );
+        try Append(Builder: borrow mut Builder, Value: borrow "package ");
+        try Append(
+            Builder: borrow mut Builder,
+            Value: borrow Package.Identity.Value,
+        );
+        try Append(Builder: borrow mut Builder, Value: borrow "@");
+        try Mapˉlimit(
+            Value: Text.Appendˉu64ˉdecimal(
+                Builder: borrow mut Builder,
+                Value: Package.Version,
+            ),
+        );
+        try Append(Builder: borrow mut Builder, Value: borrow " deps=");
+        try Appendˉdependencies(
+            Builder: borrow mut Builder,
+            Dependencies: borrow Package.Dependencies,
+        );
+        try Append(Builder: borrow mut Builder, Value: borrow "\n");
+        Index = Index + 1u64;
+    }
+    try Append(Builder: borrow mut Builder, Value: borrow "order=");
+    try Appendˉorder(Builder: borrow mut Builder, Order: Order);
+    try Append(Builder: borrow mut Builder, Value: borrow "\nnotice-equal=");
+    try Append(
+        Builder: borrow mut Builder,
+        Value: if Noticeˉequal { borrow "true" } else { borrow "false" },
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow "\n");
+    return Result.Result.Valid {
+        Value: Text.Freeze(Builder: Builder),
+    };
+}
+
+export fn Expected() -> text effects() {
+    return EXPECTED_REPORT;
+}

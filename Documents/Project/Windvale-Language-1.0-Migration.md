@@ -25,7 +25,9 @@ the concurrent-service findings resolved by
 and the retained-GUI findings resolved by
 [Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
 and the numeric/graphics findings resolved by
-[Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
+[Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
+and the package-parser findings resolved by
+[Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -182,6 +184,9 @@ reparse it.
 - Retain the accepted contextual array, checked mutable slice, strict f32,
   policy-bearing conversion, canonical numeric formatting, and bit-identical
   parallel-equivalence cases from Decision 0762.
+- Retain the accepted map completion/publication, complete ordered-set,
+  ordering-law, explicit bounded-parser, package-content dedup/accounting, and
+  canonical-topology cases from Decision 0763.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.

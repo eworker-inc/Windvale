@@ -1,0 +1,59 @@
+edition 1;
+module Packageˉgraphˉordering;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉordering as Ordering;
+import Foundationˉtext as Text;
+import Packageˉgraphˉtypes as Types;
+
+fn Compareˉtext(
+    Left: borrow text,
+    Right: borrow text,
+) -> Ordering.Orderingˉresult effects() {
+    let Leftˉlength = Text.Runeˉcount(Value: Left);
+    let Rightˉlength = Text.Runeˉcount(Value: Right);
+    let Sharedˉlength = if Leftˉlength < Rightˉlength {
+        Leftˉlength
+    } else {
+        Rightˉlength
+    };
+    var Index = 0u64;
+    while Index < Sharedˉlength {
+        let Leftˉrune = Text.Runeˉat(Value: Left, Index: Index);
+        let Rightˉrune = Text.Runeˉat(Value: Right, Index: Index);
+        if Leftˉrune < Rightˉrune {
+            return Ordering.Orderingˉresult.Less;
+        }
+        if Leftˉrune > Rightˉrune {
+            return Ordering.Orderingˉresult.Greater;
+        }
+        Index = Index + 1u64;
+    }
+    if Leftˉlength < Rightˉlength {
+        return Ordering.Orderingˉresult.Less;
+    }
+    if Leftˉlength > Rightˉlength {
+        return Ordering.Orderingˉresult.Greater;
+    }
+    return Ordering.Orderingˉresult.Equal;
+}
+
+implement Ordering.Ordering<Types.Packageˉidentity>
+    for Types.Packageˉidentity {
+    fn Compare(
+        Left: borrow Types.Packageˉidentity,
+        Right: borrow Types.Packageˉidentity,
+    ) -> Ordering.Orderingˉresult effects() {
+        return Compareˉtext(Left: borrow Left.Value, Right: borrow Right.Value);
+    }
+}
+
+export fn Equal(
+    Left: borrow Types.Packageˉidentity,
+    Right: borrow Types.Packageˉidentity,
+) -> bool effects() {
+    return Compareˉtext(Left: borrow Left.Value, Right: borrow Right.Value)
+        == Ordering.Orderingˉresult.Equal;
+}

@@ -1,0 +1,206 @@
+edition 1;
+module Packageˉgraphˉapplication;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Packageˉgraphˉgraph as Graph;
+import Packageˉgraphˉpackage as Package;
+import Packageˉgraphˉparser as Parser;
+import Packageˉgraphˉreport as Report;
+import Packageˉgraphˉtypes as Types;
+
+const MANIFEST_BUDGET_BYTES: u64 = 4_096u64;
+const LOCK_BUDGET_BYTES: u64 = 65_536u64;
+const COMPLETED_BUDGET_BYTES: u64 = 8_192u64;
+const ORDER_BUDGET_BYTES: u64 = 8_192u64;
+const DIAGNOSTIC_BUDGET_BYTES: u64 = 8_192u64;
+const REPORT_BUDGET_BYTES: u64 = 4_096u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Packageˉfailure.Invalidˉlimit {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Types.Limits,
+) -> Result.Result<unit, Types.Packageˉfailure> effects() {
+    if Limits.Maximumˉmanifestˉbytes < 64u64
+        || Limits.Maximumˉmanifestˉbytes > 1_024u64 {
+        return Invalid(
+            Field: 1u32,
+            Observed: Limits.Maximumˉmanifestˉbytes,
+            Minimum: 64u64,
+            Maximum: 1_024u64,
+        );
+    }
+    if Limits.Maximumˉlockˉbytes < 128u64
+        || Limits.Maximumˉlockˉbytes > 2_048u64 {
+        return Invalid(
+            Field: 2u32,
+            Observed: Limits.Maximumˉlockˉbytes,
+            Minimum: 128u64,
+            Maximum: 2_048u64,
+        );
+    }
+    if Limits.Maximumˉpackages == 0u64
+        || Limits.Maximumˉpackages > 64u64 {
+        return Invalid(
+            Field: 3u32,
+            Observed: Limits.Maximumˉpackages,
+            Minimum: 1u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Maximumˉdependenciesˉperˉpackage == 0u64
+        || Limits.Maximumˉdependenciesˉperˉpackage > 32u64 {
+        return Invalid(
+            Field: 4u32,
+            Observed: Limits.Maximumˉdependenciesˉperˉpackage,
+            Minimum: 1u64,
+            Maximum: 32u64,
+        );
+    }
+    if Limits.Maximumˉidentityˉbytes == 0u64
+        || Limits.Maximumˉidentityˉbytes > 64u64 {
+        return Invalid(
+            Field: 5u32,
+            Observed: Limits.Maximumˉidentityˉbytes,
+            Minimum: 1u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Maximumˉdiagnostics == 0u64
+        || Limits.Maximumˉdiagnostics > 32u64 {
+        return Invalid(
+            Field: 6u32,
+            Observed: Limits.Maximumˉdiagnostics,
+            Minimum: 1u64,
+            Maximum: 32u64,
+        );
+    }
+    if Limits.Maximumˉreportˉbytes < 256u64
+        || Limits.Maximumˉreportˉbytes > 4_096u64 {
+        return Invalid(
+            Field: 7u32,
+            Observed: Limits.Maximumˉreportˉbytes,
+            Minimum: 256u64,
+            Maximum: 4_096u64,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Packageˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 16u32,
+    ) {
+        case Result.Result.Valid { Value: Child } {
+            Result.Result.Valid { Value: Child }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Packageˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+export fn Run(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Types.Limits,
+) -> Result.Result<Types.Canonicalˉresult, Types.Packageˉfailure>
+    effects(memory.allocate, resource.acquire, resource.release) {
+    try Validate(Limits: borrow Limits);
+    var Root = Budget;
+    let Manifestˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: MANIFEST_BUDGET_BYTES,
+    );
+    let Lockˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: LOCK_BUDGET_BYTES,
+    );
+    let Completedˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: COMPLETED_BUDGET_BYTES,
+    );
+    let Orderˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: ORDER_BUDGET_BYTES,
+    );
+    let Diagnosticˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: DIAGNOSTIC_BUDGET_BYTES,
+    );
+    let Reportˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: REPORT_BUDGET_BYTES,
+    );
+    let Manifest = try Parser.Parseˉmanifest(
+        Input: borrow Package.Manifest,
+        Limits: borrow Limits,
+        Budget: Manifestˉbudget,
+    );
+    let Lock = try Parser.Parseˉlock(
+        Input: borrow Package.Lock,
+        Limits: borrow Limits,
+        Budget: Lockˉbudget,
+    );
+    try Graph.Validateˉmanifest(
+        Manifest: borrow Manifest,
+        Packages: borrow Lock.Packages,
+    );
+    let Order = try Graph.Topologicalˉorder(
+        Packages: borrow Lock.Packages,
+        Completedˉbudget: Completedˉbudget,
+        Outputˉbudget: Orderˉbudget,
+        Diagnosticˉbudget: Diagnosticˉbudget,
+    );
+    let Noticeˉequal = Package.Noticeˉprimary == Package.Noticeˉcopy;
+    if !Noticeˉequal {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Noticeˉcontentˉmismatch,
+        };
+    }
+    let Canonicalˉreport = try Report.Render(
+        Packages: borrow Lock.Packages,
+        Order: borrow Order,
+        Noticeˉequal: Noticeˉequal,
+        Budget: Reportˉbudget,
+        Maximumˉbytes: Limits.Maximumˉreportˉbytes,
+    );
+    if Canonicalˉreport != Report.Expected() {
+        return Result.Result.Failure {
+            Error: Types.Packageˉfailure.Manifestˉmismatch {
+                Field: Types.Fieldˉkind.Dependencies,
+            },
+        };
+    }
+    return Result.Result.Valid {
+        Value: Types.Canonicalˉresult {
+            Packages: Lock.Packages,
+            Order: Order,
+            Report: Canonicalˉreport,
+        },
+    };
+}

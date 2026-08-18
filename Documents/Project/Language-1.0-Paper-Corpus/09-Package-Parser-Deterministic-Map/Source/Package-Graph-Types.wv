@@ -1,0 +1,86 @@
+edition 1;
+module Packageˉgraphˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+
+export record Limits {
+    Maximumˉmanifestˉbytes: u64;
+    Maximumˉlockˉbytes: u64;
+    Maximumˉpackages: u64;
+    Maximumˉdependenciesˉperˉpackage: u64;
+    Maximumˉidentityˉbytes: u64;
+    Maximumˉdiagnostics: u64;
+    Maximumˉreportˉbytes: u64;
+}
+
+export record Packageˉidentity {
+    Value: text;
+}
+
+export record Manifestˉrecord {
+    Root: Packageˉidentity;
+    Version: u64;
+    Dependencies: Collections.Immutableˉset<Packageˉidentity>;
+}
+
+export record Lockedˉpackage {
+    Identity: Packageˉidentity;
+    Version: u64;
+    Dependencies: Collections.Immutableˉset<Packageˉidentity>;
+}
+
+export record Parsedˉlock {
+    Packages: Collections.Immutableˉmap<Packageˉidentity, Lockedˉpackage>;
+}
+
+export record Canonicalˉresult {
+    Packages: Collections.Immutableˉmap<Packageˉidentity, Lockedˉpackage>;
+    Order: Collections.Sequence<Packageˉidentity>;
+    Report: text;
+}
+
+export enum Formatˉkind: u8 {
+    Manifest = 1u8;
+    Lock = 2u8;
+}
+
+export enum Fieldˉkind: u8 {
+    Magic = 1u8;
+    Package = 2u8;
+    Version = 3u8;
+    Dependency = 4u8;
+    Dependencies = 5u8;
+}
+
+export variant Packageˉfailure {
+    Invalidˉlimit(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Inputˉlimit(Format: Formatˉkind, Observed: u64, Maximum: u64);
+    Maliciousˉdeclaredˉlength(Observed: u64, Maximum: u64);
+    Invalidˉmagic(Format: Formatˉkind, Line: u64);
+    Unknownˉfield(Format: Formatˉkind, Line: u64, Value: text);
+    Missingˉfield(Format: Formatˉkind, Field: Fieldˉkind);
+    Duplicateˉfield(Format: Formatˉkind, Field: Fieldˉkind, Line: u64);
+    Invalidˉidentity(Line: u64, Column: u64, Value: text);
+    Invalidˉversion(Line: u64, Error: Numeric.Numericˉparseˉfailure);
+    Duplicateˉpackage(Identity: Packageˉidentity);
+    Unknownˉdependency(
+        Package: Packageˉidentity,
+        Dependency: Packageˉidentity,
+    );
+    Dependencyˉcycle(Remaining: Collections.Sequence<Packageˉidentity>);
+    Allocation(Error: Memory.Allocationˉfailure);
+    Collection(Error: Collections.Collectionˉfailure);
+    Outputˉlimit(Error: Memory.Limitˉfailure);
+    Manifestˉmismatch(Field: Fieldˉkind);
+    Noticeˉcontentˉmismatch;
+}

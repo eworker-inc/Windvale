@@ -22,7 +22,9 @@ and
 and
 [Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md)
 and
-[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
+[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md)
+and
+[Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -780,6 +782,17 @@ export record Mapˉinsertˉfailure<K, V> {
     Value: V;
 }
 
+export record Mapˉentry<K, V> {
+    Key: K;
+    Value: V;
+}
+
+export variant Mapˉreplaceˉoutcome<V> {
+    Replaced(Previous: V);
+    Absent(Replacement: V);
+    Rejected(Error: Collectionˉfailure, Replacement: V);
+}
+
 export fn Mapˉconstruct<K, V>(
     Budget: Memoryˉbudget,
     Maximumˉitems: u64,
@@ -828,6 +841,49 @@ export fn Mapˉkeyˉat<K, V>(
     Map: borrow Map<K, V>,
     Index: u64,
 ) -> borrow K effects();
+
+export fn Mapˉreplace<K, V>(
+    Map: borrow mut Map<K, V>,
+    Key: borrow K,
+    Replacement: V,
+) -> Mapˉreplaceˉoutcome<V> effects()
+    where K: Ordering<K>;
+
+export fn Mapˉremove<K, V>(
+    Map: borrow mut Map<K, V>,
+    Key: borrow K,
+) -> Result<Option<Mapˉentry<K, V>>, Collectionˉfailure> effects()
+    where K: Ordering<K>;
+
+export fn Mapˉfreeze<K, V>(
+    Map: Map<K, V>,
+) -> Immutableˉmap<K, V> effects();
+
+export fn Immutableˉmapˉlength<K, V>(
+    Map: borrow Immutableˉmap<K, V>,
+) -> u64 effects();
+
+export fn Immutableˉmapˉcontains<K, V>(
+    Map: borrow Immutableˉmap<K, V>,
+    Key: borrow K,
+) -> bool effects()
+    where K: Ordering<K>;
+
+export fn Immutableˉmapˉfindˉrank<K, V>(
+    Map: borrow Immutableˉmap<K, V>,
+    Key: borrow K,
+) -> Option<u64> effects()
+    where K: Ordering<K>;
+
+export fn Immutableˉmapˉborrowˉat<K, V>(
+    Map: borrow Immutableˉmap<K, V>,
+    Index: u64,
+) -> borrow V effects();
+
+export fn Immutableˉmapˉkeyˉat<K, V>(
+    Map: borrow Immutableˉmap<K, V>,
+    Index: u64,
+) -> borrow K effects();
 ~~~
 
 Construction requires a positive maximum. Empty construction uses explicit
@@ -844,6 +900,15 @@ borrow is tied to the map's one borrowed owner; the key used to find a rank is n
 longer a competing lifetime source. The borrow checker prevents intervening
 exclusive mutation while a rank-derived borrow is live. `Mapˉcontains` remains a
 Boolean convenience, not a borrow-lifetime proof.
+
+Replacement first resolves the borrowed key without accepting the owned
+replacement. Success accepts it exactly once and returns the previous owned
+value. Absence or bounded comparison/allocation rejection returns the unchanged
+owned replacement. Removal returns the stored owned key and value, absence
+returns `None`, and rejection leaves the map unchanged. Consuming freeze cannot
+fail or allocate and transfers the existing accounting and canonical order.
+The immutable observation calls have the same rank, precondition, comparison,
+and borrow rules as their mutable-owner counterparts.
 
 ## Deterministic sets
 
@@ -870,6 +935,93 @@ Consuming publication produces `Immutableˉset<T>` with the same canonical
 iteration order and no mutation. A host hash set, process-randomized set, bit set,
 or insertion-ordered set is a distinct future type rather than an implementation
 of this contract.
+
+The package-parser workload fixes the complete version-1 construction,
+mutation, publication, and observation surface:
+
+~~~text
+export record Setˉinsertˉfailure<T> {
+    Error: Collectionˉfailure;
+    Value: T;
+}
+
+export fn Setˉconstruct<T>(
+    Budget: Memoryˉbudget,
+    Maximumˉitems: u64,
+) -> Result<Set<T>, Collectionˉfailure>
+    effects(memory.allocate)
+    where T: Ordering<T>;
+
+export fn Setˉconstructˉwithˉfirst<T>(
+    Budget: Memoryˉbudget,
+    Maximumˉitems: u64,
+    Value: T,
+) -> Result<Set<T>, Setˉinsertˉfailure<T>>
+    effects(memory.allocate)
+    where T: Ordering<T>;
+
+export fn Setˉinsert<T>(
+    Set: borrow mut Set<T>,
+    Value: T,
+) -> Result<unit, Setˉinsertˉfailure<T>> effects()
+    where T: Ordering<T>;
+
+export fn Setˉlength<T>(Set: borrow Set<T>) -> u64 effects();
+
+export fn Setˉcontains<T>(
+    Set: borrow Set<T>,
+    Value: borrow T,
+) -> bool effects()
+    where T: Ordering<T>;
+
+export fn Setˉfindˉrank<T>(
+    Set: borrow Set<T>,
+    Value: borrow T,
+) -> Option<u64> effects()
+    where T: Ordering<T>;
+
+export fn Setˉborrowˉat<T>(
+    Set: borrow Set<T>,
+    Index: u64,
+) -> borrow T effects();
+
+export fn Setˉremove<T>(
+    Set: borrow mut Set<T>,
+    Value: borrow T,
+) -> Result<Option<T>, Collectionˉfailure> effects()
+    where T: Ordering<T>;
+
+export fn Setˉfreeze<T>(Set: Set<T>) -> Immutableˉset<T> effects();
+
+export fn Immutableˉsetˉlength<T>(
+    Set: borrow Immutableˉset<T>,
+) -> u64 effects();
+
+export fn Immutableˉsetˉcontains<T>(
+    Set: borrow Immutableˉset<T>,
+    Value: borrow T,
+) -> bool effects()
+    where T: Ordering<T>;
+
+export fn Immutableˉsetˉfindˉrank<T>(
+    Set: borrow Immutableˉset<T>,
+    Value: borrow T,
+) -> Option<u64> effects()
+    where T: Ordering<T>;
+
+export fn Immutableˉsetˉborrowˉat<T>(
+    Set: borrow Immutableˉset<T>,
+    Index: u64,
+) -> borrow T effects();
+~~~
+
+Set construction, insertion, rank, borrow, removal, and freeze have the same
+positive-maximum, ownership-preservation, checked-rank, comparison-bound, and
+accounting rules as the corresponding map operations. Duplicate insertion
+returns `Collectionˉfailure.Duplicate` plus the original owned value. Removal
+returns the stored owned value, not the borrowed search value. Freeze is
+consuming, infallible, and allocation-free. Immutable rank observation is
+ascending under the one resolved `Ordering<T>` implementation.
 
 ## Typed arenas and handles
 
