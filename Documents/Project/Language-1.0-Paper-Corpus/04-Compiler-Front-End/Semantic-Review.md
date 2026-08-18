@@ -47,7 +47,7 @@ standard streams.
 ## Quantitative source/compiler plan
 
 The bundle has eight source modules, 2,415 physical source lines, 73 top-level
-declarations, and 78,101 source bytes. `Compile` is the largest function at 245
+declarations, and 78,109 source bytes. `Compile` is the largest function at 245
 physical lines. `Limits` is the widest record at eleven fields. The paper build
 admits at most 256 generic instances, depth 32, 4,096 functions, 65,536 WIR
 blocks, 1,000,000 WIR operations, 64 MiB retained compiler evidence, and a

@@ -54,8 +54,8 @@ is released before the successful result escapes.
 ## Source record
 
 The reviewed source contains 5 files, 943 LF-terminated lines, 44 top-level
-declarations, and 30,304 UTF-8 bytes. The largest cohesive module is
-`Foreign-Record-System.wv` at 289 lines / 10,683 bytes. These are source facts,
+declarations, and 30,309 UTF-8 bytes. The largest cohesive module is
+`Foreign-Record-System.wv` at 289 lines / 10,684 bytes. These are source facts,
 not compiler/runtime performance claims.
 
 Implementation measurements must record tokens, phase time/peak memory, generic

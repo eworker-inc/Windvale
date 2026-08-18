@@ -45,6 +45,14 @@ owns the complete edition-1 public declaration spelling and reproducible
 candidate signature-set identity for each required module. Those hashes remain
 candidate identities until the explicit source-freeze decision accepts them.
 
+The working
+[localized-source and source-vocabulary specification](Windvale-Language-1.0-Localized-Source.md)
+may bind separately shipped primary source labels, display labels, and
+documentation to those exact canonical module/signature identities. Such a
+catalog does not add a Foundation declaration, alternate implementation,
+overload, intrinsic identity, ABI alias, or runtime dependency. A stale catalog
+cannot bind after its target signature-set identity changes.
+
 ## Foundation principles
 
 Foundation 1:

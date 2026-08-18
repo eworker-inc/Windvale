@@ -12,6 +12,15 @@ behavior, failure ordering, bounds, ownership, and effects; this registry owns
 canonical module names, major versions, declaration spelling, and signature-set
 identities.
 
+The working
+[localized-source specification](Windvale-Language-1.0-Localized-Source.md)
+uses each exact signature-set hash as the binding anchor for separately shipped
+source-vocabulary catalogs. Localized module, declaration, field, case, and
+parameter labels do not enter the canonical signature identity below and do not
+create additional registry declarations. Every complete catalog must target the
+exact canonical identity set and becomes stale when that set or its signatures
+change.
+
 Each `windvale-foundation-signatures` block is one complete module signature
 set. Its identity input is the strict UTF-8 byte sequence beginning with the
 block's `module` line and ending with the LF immediately after its `end module;`

@@ -2,11 +2,17 @@
 
 ## Status
 
-This document defines the accepted naming convention for official Windvale source. The Seed grammar implements the identifier and machine-name boundaries described here. Native symbol mangling remains a future object-model contract.
+This document defines the accepted naming convention for official Windvale
+source. The Seed grammar implements the ASCII identifier and machine-name
+boundaries described here. The working Language 1.0 replacement candidate adds
+the separately bounded Unicode identifier contract in the
+[localized-source specification](Windvale-Language-1.0-Localized-Source.md).
+Native symbol mangling remains a future object-model contract.
 
 ## Source identifiers
 
-A Seed source identifier contains ASCII identifier segments joined only by the modifier letter macron `ˉ` (U+02C9):
+A Seed source identifier contains ASCII identifier segments joined only by the
+modifier letter macron `ˉ` (U+02C9):
 
 ```text
 [A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*
@@ -14,16 +20,33 @@ A Seed source identifier contains ASCII identifier segments joined only by the m
 
 Identifiers are case-sensitive. U+02C9 is the only non-ASCII character admitted by the Seed identifier grammar. Visually similar characters such as `¯` U+00AF, `-` U+002D, and `‐` U+2010 are not aliases and are rejected where an identifier is required.
 
+The working Language 1.0 form preserves that entire ASCII subset and admits
+normalized Unicode identifier segments using exact edition-pinned Unicode
+tables. U+02C9 remains the only semantic-word separator and remains part of
+identity. Language 1.0 identifier comparison is exact ordinal UTF-8 after
+admission; it performs no host normalization, case folding, collation, or
+transliteration.
+
 Official Windvale source uses these conventions:
 
-- User-defined module, type, data, function, parameter, and local names start with a capital letter.
+- In a cased script, user-defined module, type, data, function, parameter, and
+  local names start with the script's reviewed capital form where one exists.
+- In an uncased script, names use their reviewed natural form and do not invent
+  capitalization.
 - Semantic words are separated with U+02C9, as in `Moduleˉreader`, `Readˉsection`, and `Maximumˉstackˉdepth`.
+- A localized name translates the complete concept in its language's natural
+  order; it does not mechanically translate canonical macron segments one by
+  one.
 - Macron-separated names do not contain camel-case word boundaries.
-- Constants use `ALL_CAPS_WITH_UNDERSCORES`.
+- Constants use `ALL_CAPS_WITH_UNDERSCORES` in ASCII/cased official source.
+  Uncased scripts use the same semantic-segment convention as other names; the
+  declaration category already identifies a constant.
 - Keywords and primitive type names remain lowercase.
 - Source filenames capitalize the first word and use ASCII hyphens between words, as in `Module-Reader.wv`.
 
-Capitalization is an official formatter and review convention, not a Seed grammar rejection rule. Third-party programs may select another casing convention while still using valid identifiers.
+Capitalization is an official formatter and review convention, not a grammar
+rejection rule. Third-party programs may select another casing convention while
+still using valid identifiers.
 
 ## Declarations and mutation
 
@@ -43,4 +66,9 @@ Windvale bytecode declaration names are canonical UTF-8 source metadata and are 
 
 ## Unicode boundary
 
-Source files, comments, and `text` values use strict UTF-8 and support full Unicode. Restricting Seed identifiers to ASCII segments plus U+02C9 does not restrict program data or user-visible text. Broader Unicode identifier support may be considered later only with explicit normalization, security, diagnostic, and tooling rules.
+Source files, comments, and `text` values use strict UTF-8 and support full
+Unicode. Seed identifiers remain restricted to ASCII segments plus U+02C9. The
+working Language 1.0 replacement candidate admits Unicode identifiers only
+through its explicit normalization, security, diagnostic, tooling,
+source-vocabulary, malformed-input, and cross-host requirements; current Seed
+tools do not implement that boundary.

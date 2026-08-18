@@ -73,14 +73,21 @@ surface, containment boundary, and safe-publication rules. The
 [System/FFI bundle](Language-1.0-Paper-Corpus/10-System-Ffi-Boundary/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
-are now draft reviewed. All eleven required bundles are reviewed, and the
-[complete-suite source-freeze packet](Windvale-Language-1.0-Source-Freeze-Review.md)
-records the reconciled grammar, Foundation, corpus, migration, and candidate
-identities. Only the explicit project-owner source-freeze decision remains. The
-accepted direction, normative-candidate suite,
-paper corpus, accelerator/AI design evidence, and migration plan may advance
-without claiming implementation or changing the current Seed product. Source
-implementation begins only after the named source-freeze gate.
+are now draft reviewed. All eleven original required bundles are reviewed, and
+the [complete-suite source-freeze packet](Windvale-Language-1.0-Source-Freeze-Review.md)
+preserves the reconciled pre-localization grammar, Foundation, corpus, migration,
+and candidate identities. The project owner held that candidate before freeze
+and selected [one universal explicit source descriptor, stored localized
+keywords, exact public-library source vocabularies, and Unicode project
+identifiers](Windvale-Semantic-Source-Views-And-Localization.md)
+as the working Language 1.0 direction, now reflected in the
+[working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
+Source-descriptor/profile, source-lexicon, public-interface vocabulary,
+Unicode/security, conversion, editor, diagnostic, cross-host, and
+bounded-performance evidence must now
+produce a replacement candidate. This paper track may advance without
+claiming implementation or changing the current Seed product. Source
+implementation begins only after the named replacement source-freeze gate.
 
 ## How to read this roadmap
 

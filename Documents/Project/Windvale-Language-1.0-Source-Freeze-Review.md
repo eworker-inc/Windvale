@@ -2,13 +2,18 @@
 
 ## Owner decision status
 
-The Language 1.0 design is ready for the explicit project-owner source-freeze
-decision. It is not frozen or implemented yet.
+The project owner held this exact Language 1.0 candidate on 2026-08-17 and
+reopened paper design to include stored localized keyword source through one
+source-lexicon mechanism. On 2026-08-18 the owner expanded that working direction
+to exact stored localized references to canonical public-library declarations,
+Unicode project identifiers, and one universal explicit source descriptor such
+as `#!wv/1 zh-Hans@1`. This candidate is not frozen or implemented and must not
+receive the source-freeze decision while that work remains open.
 
 The owner has accepted every workload and complete-suite reconciliation finding.
 [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md)
 records those resolutions without making the separate freeze decision. The
-candidate identity is
+preserved pre-localization candidate identity is
 [`Windvale-Language-1.0-Source-Freeze-Candidate.txt`](Windvale-Language-1.0-Source-Freeze-Candidate.txt):
 
 - 2,700 exact bytes;
@@ -17,13 +22,18 @@ candidate identity is
 - 183 identity-input files totaling 1,459,498 bytes; and
 - aggregate candidate SHA-256
   `a750a141bb077fbd2ef42f8718a2bc5fbae3b02f8e862140dde436fbb91b65e3`.
+- exact repository revision
+  `c060cb3553a06ed97c4b42d751534f7f4bcaa62e`.
 
-The explicit freeze decision should cite the manifest byte length and SHA-256,
-not copy a mutable list of files into prose.
+Any historical reference to this preserved candidate should cite the manifest
+byte length, SHA-256, and repository revision rather than copy a mutable list of
+files into prose. Replacement working files need not continue matching those
+historical entries. The future freeze decision must instead cite the replacement
+manifest produced after the localization design and workloads are reconciled.
 
 ## Practical result
 
-Language 1.0 now has one coherent candidate contract:
+Language 1.0 has one coherent preserved pre-localization candidate contract:
 
 - one human semantic specification;
 - one human lexical/grammar specification and one matching machine EBNF;
@@ -34,10 +44,13 @@ Language 1.0 now has one coherent candidate contract:
 - one reproducible manifest over the specifications, decisions, workload source,
   package data, oracles, rejected cases, and implementation responsibilities.
 
-Freezing this candidate would fix the language design that implementation must
-target. It would not say that the Seed compiler already accepts edition 1, that
-Foundation is implemented, or that an editor, runtime, backend, operating
-system, or permanent host has passed edition-1 conformance.
+Before the source-localization reopening, freezing this candidate would have
+fixed the language design that implementation must target. It is now retained
+as a reproducible baseline for replacement reconciliation, not as an approval
+target. Neither the preserved candidate nor a future replacement says that the
+Seed compiler already accepts edition 1, that Foundation is implemented, or that
+an editor, runtime, backend, operating system, or permanent host has passed
+edition-1 conformance.
 
 ## Complete-suite corrections
 
@@ -67,43 +80,47 @@ The final reconciliation made these accepted corrections:
 8. Separated source-design freeze evidence from future implementation and
    qualification evidence.
 
-The corrected GUI bundle remains 8 source modules, 2,004 LF lines, and 65,936
-UTF-8 bytes. The corrected package bundle remains 7 source modules and 1,478 LF
-lines and is now 48,468 UTF-8 bytes. These are name-level corrections; their
-specified output bytes and semantic oracles do not change.
+At the preserved candidate revision, the corrected GUI bundle remains 8 source
+modules, 2,004 LF lines, and 65,936 UTF-8 bytes. The corrected package bundle
+remains 7 source modules and 1,478 LF lines and is 48,468 UTF-8 bytes. These were
+name-level corrections; their specified output bytes and semantic oracles did
+not change.
 
 ## Freeze-gate reconciliation
 
 | Gate group | Candidate evidence | Standing |
 | --- | --- | --- |
-| Grammar and precedence | Human grammar plus machine EBNF; production-set and undefined-reference audit. | Ready for owner freeze |
-| Foundation signatures and failures | Complete behavior document; eleven exact major-1 registry blocks and verified block hashes. | Ready for owner freeze |
-| Mandatory usability evidence | 11 reviewed bundles; 64 source files; 14,445 LF lines; 479,069 UTF-8 source bytes. | Passed on paper |
+| Grammar and precedence | Human grammar plus machine EBNF; production-set and undefined-reference audit. | Preserved evidence; replacement reconciliation required |
+| Foundation signatures and failures | Complete behavior document; eleven exact major-1 registry blocks and verified block hashes. | Preserved evidence; replacement reconciliation required |
+| Mandatory usability evidence | 11 reviewed bundles; 64 source files; 14,445 LF lines; 479,133 UTF-8 source bytes after explicit `en@1` descriptor migration. | Passed on paper; localized workloads remain open |
 | Ownership, cleanup, collections, and concurrency | Workloads 2–9 and 11 cover moves, borrows, release/completion, progress, maps, sets, arenas, slices, tasks, cancellation, and deterministic publication. | Passed on paper |
 | Unsafe and target boundary | Workload 10 covers profile/target/ABI admission, pointer kinds, checked scratch/range/lifetime/aliasing, untrusted results, and terminal containment. | Passed on paper |
 | Package data and shipment | Workloads 1, 7, 9, and 11 cover exact binding, strict text, accounting, content deduplication, and no implicit filesystem authority. | Passed on paper |
 | Numeric and accelerator readiness | Workloads 8 and 11 cover strict float behavior, explicit conversion policy, bit-identical parallel equivalence, quantized storage, and the library/target/provider split. | Passed on paper |
-| Compiler/library/runtime/tool ownership | Migration responsibility matrix and every bundle's implementation-responsibility document. | Ready for owner freeze |
-| Canonical identities | Candidate manifest and eleven Foundation module hashes. | Ready for owner freeze |
+| Compiler/library/runtime/tool ownership | Migration responsibility matrix and every bundle's implementation-responsibility document. | Preserved evidence; replacement reconciliation required |
+| Canonical identities | Candidate manifest and eleven Foundation module hashes. | Historical identity preserved; replacement identity required |
+| Localized source | [Option C working design](Windvale-Semantic-Source-Views-And-Localization.md) and [working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md): universal explicit source descriptor, exact composite profiles and keyword lexicons, public-interface source vocabularies, Unicode project identifiers, security, tooling, conversion, equivalence, and bounded-performance workloads. | Reopened; replacement evidence required |
 | Current implementation conformance | Deliberately deferred to migration; Seed remains the implemented language. | Not claimed |
 
-The source-freeze requirements that mention accepted, boundary, malformed, and
-rejected cases are satisfied as paper contracts: the input, expected result,
-failure owner/order, and bound are fixed. Migration must convert those contracts
-into executable parser, semantic, Foundation, editor, formatter, cross-host, and
-target tests before implementation conformance is claimed.
+The pre-localization source-freeze requirements that mention accepted, boundary,
+malformed, and rejected cases are satisfied as paper contracts: the input,
+expected result, failure owner/order, and bound are fixed. The new localized
+source, source-vocabulary, and Unicode requirements remain open. Migration must
+convert both sets into executable
+parser, semantic, Foundation, editor, formatter, cross-host, and target tests
+before implementation conformance is claimed.
 
 ## Deliberately later, not missing
 
-These items do not block the source-language freeze:
+These items do not block a replacement source-language freeze:
 
 - production capability signature identities for filesystem, streams, database,
   display, networking, and accelerators;
 - a verified accelerator kernel representation and physical GPU providers;
 - WIR/WVB/native additions proven necessary by implementation;
-- broader Unicode identifiers, localized keywords, sets beyond the accepted
-  deterministic set, dynamic module loading, default arguments, or unrestricted
-  macros;
+- broader Unicode identifiers beyond the identifier boundary selected by the
+  localization review, sets beyond the accepted deterministic set, dynamic
+  module loading, default arguments, or unrestricted macros;
 - interpolated-text syntax until its bounded destination and memory owner are
   explicit; and
 - measured compiler/runtime/editor/formatter and dual-host qualification.
@@ -111,14 +128,20 @@ These items do not block the source-language freeze:
 They remain separate versioned library, format, provider, later-edition, or
 implementation contracts. None may silently redefine edition-1 semantics.
 
-## Effect of owner approval
+Stored localized keywords, exact public-library source labels, and Unicode
+project identifiers within the selected boundary are no longer in this
+later-feature list. Their contracts and workloads now block the replacement
+Language 1.0 candidate.
 
-An explicit approval to freeze this exact candidate should produce one named
+## Replacement approval path
+
+The preserved manifest must not be frozen. After localized-source design and
+workloads are accepted, a replacement approval should produce one named
 decision that:
 
-1. cites manifest SHA-256
-   `152d7ae3b8463b395d42937b4271f757bb921d16046fd78354c7b0821c2b0099`;
-2. changes the candidate suite's status to frozen Language 1.0;
+1. cites the new replacement manifest byte length and SHA-256;
+2. changes only that replacement candidate suite's status to frozen Language
+   1.0;
 3. authorizes migration slice 0 and then the ordered vertical implementation
    slices;
 4. preserves Seed as the only implemented contract until each migration gate
@@ -126,5 +149,5 @@ decision that:
 5. requires any later semantic change to use a named decision and a new exact
    identity.
 
-Until that approval, this review packet is the final candidate presented to the
-owner, not the freeze itself.
+Until that approval, this packet and manifest remain reproducible historical
+evidence of the design before source localization, not the freeze target.

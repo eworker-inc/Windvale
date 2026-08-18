@@ -1,4 +1,4 @@
-edition 1;
+#!wv/1 en@1
 module Foreignˉrecordˉsystem;
 profile system;
 platform linux.x86_64.sysv_amd64_c_v1;

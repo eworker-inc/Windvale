@@ -19,6 +19,11 @@ It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
 
+The project owner has reopened the candidate through the working
+[localized-source and source-vocabulary addendum](Windvale-Language-1.0-Localized-Source.md).
+This companion incorporates that addendum's replacement-candidate lexical and
+source-descriptor direction. It is not a source-freeze or implementation claim.
+
 This document owns tokenization, literal spelling, delimiter rules, productions,
 and precedence. The semantic specification owns typing, ownership, effects,
 evaluation, failure, and profile behavior. The
@@ -44,12 +49,19 @@ Productions use this notation:
 - `[A]` is optional.
 - `{A}` is zero or more repetitions.
 - `{A}+` is one or more repetitions.
-- quoted text is a token.
+- quoted punctuation, delimiter, numeric, and universal-descriptor text is an
+  exact source token;
+- other quoted keyword text names the corresponding canonical keyword token
+  after source-lexicon mapping;
 - `EOF` is end of source.
 
 Lexical productions operate on Unicode scalar values after strict UTF-8
 decoding. Syntactic productions operate on tokens. A compiler must place a
 finite limit on tokens, nesting, list items, and diagnostic recovery.
+
+The source edition pins the Unicode scalar-property, normalization, and security
+tables used by localized lexicons and identifiers. Host Unicode tables are not
+grammar input. The replacement source freeze must name their exact identity.
 
 ## Source decoding and line structure
 
@@ -91,32 +103,43 @@ Documentation ::= Documentationˉtoken
 ## Identifiers and keywords
 
 ~~~text
-Asciiˉletter ::= "A" … "Z" | "a" … "z" | "_"
 Asciiˉdigit ::= "0" … "9"
-Segment ::= Asciiˉletter { Asciiˉletter | Asciiˉdigit }
-Identifier ::= Segment { "ˉ" Segment }
-Constantˉidentifier ::= ("A" … "Z" | "_")
-                        { "A" … "Z" | Asciiˉdigit | "_" }
+Identifierˉstart ::= "_" | Unicodeˉxidˉstart
+Identifierˉcontinue ::= "_" | Unicodeˉxidˉcontinue
+Identifierˉsegment ::= Identifierˉstart { Identifierˉcontinue }
+Identifier ::= Identifierˉsegment { "ˉ" Identifierˉsegment }
+Constantˉidentifier ::= Identifier
 ~~~
 
-U+02C9 is the only non-ASCII scalar admitted inside an identifier. A keyword is
-recognized only when the complete token has the exact lowercase ASCII spelling.
-A keyword followed by U+02C9 is not a keyword prefix.
+`Unicodeˉxidˉstart` and `Unicodeˉxidˉcontinue` are the exact edition-pinned
+Unicode property classes after subtracting every scalar forbidden by the
+[localized-source specification](Windvale-Language-1.0-Localized-Source.md).
+U+02C9 is excluded from both classes and remains the semantic-word separator.
+Every identifier must already use the specified normalization form. Exact
+ordinal UTF-8 bytes determine identity; no host normalization, case folding,
+collation, transliteration, or canonically-equivalent alias is admitted.
 
-Edition 1 reserves:
+A keyword is recognized only when the complete token has the selected source
+lexicon's exact primary spelling and an admitted following boundary. A keyword
+followed by U+02C9 or any identifier continuation is not a keyword prefix.
+
+Edition 1 reserves 76 body words:
 
 ~~~text
 application as async authority await base bool borrow break bytes cancel_join
-capability case const continue copy core data derive edition effects else enum
-export f32 f64 fail_join false fn for foreign hosted i8 i16 i32 i64 if
-implement import in join let library match module move mut never optional
-maximum package platform policy profile protocol record requires return rune scope service
-system task text true try u8 u16 u32 u64 unit unsafe using var variant version
-where
+capability case const continue copy core data derive effects else enum export f32
+f64 fail_join false fn for foreign hosted i8 i16 i32 i64 if implement import in
+join let library match module move mut never optional maximum package platform
+policy profile protocol record requires return rune scope service system task text
+true try u8 u16 u32 u64 unit unsafe using var variant version where
 ~~~
 
-The Foundation may define capitalized type and function names but cannot add
-keywords without a new source edition.
+The selected source profile maps the 66 words defined by the localized-source
+specification to canonical token identities. The ten fixed-width numeric type
+words remain exact in every profile. The universal source descriptor is metadata,
+not part of this reserved-word set. Registered machine identities also retain
+their exact canonical spelling. The Foundation may define types and functions
+but cannot add keywords without a new source edition.
 
 Module names, aliases, source declarations, fields, cases, and protocol names use
 `Identifier`. Constants use `Constantˉidentifier` by official convention.
@@ -256,12 +279,20 @@ interpolation in raw or byte literals are therefore lexical errors in edition 1.
 ## Module header and imports
 
 ~~~text
-Source ::= Edition Module Profile Platform Authority
+Source ::= Sourceˉdescriptor Module Profile Platform Authority
            { Capabilityˉrequirement }
            { Import }
            { Declaration } EOF
 
-Edition ::= "edition" "1" ";"
+Sourceˉdescriptor ::= "#!wv/1" " " Sourceˉprofile "@"
+                      Sourceˉprofileˉversion Sourceˉdescriptorˉend
+Sourceˉprofile ::= Sourceˉprofileˉcomponent
+                   { "." Sourceˉprofileˉcomponent }
+Sourceˉprofileˉcomponent ::= Sourceˉprofileˉatom
+                             { "-" Sourceˉprofileˉatom }
+Sourceˉprofileˉatom ::= ("A" … "Z" | "a" … "z")
+                        { "A" … "Z" | "a" … "z" | Asciiˉdigit }
+Sourceˉprofileˉversion ::= ("1" … "9") { Asciiˉdigit }
 Module ::= [ Documentation ] "module" Identifier ";"
 Profile ::= "profile" ("core" | "hosted" | "system") ";"
 Platform ::= "platform" Platformˉscope
@@ -274,6 +305,21 @@ Capabilityˉrequirement ::= ("requires" | "optional") "capability"
                            Decimalˉdigits ";"
 Import ::= [ Documentation ] "import" Identifier "as" Identifier ";"
 ~~~
+
+`Sourceˉdescriptorˉend` is the externally scanned first logical line ending.
+The descriptor begins at byte zero, is ASCII-only, has no byte-order mark,
+comment, or whitespace before it, and occupies at most 128 bytes excluding that
+line ending. Its profile identity occupies 2 through 96 bytes. Its version is a
+positive decimal integer no greater than 4,294,967,295, with no leading zero,
+sign, separator, or suffix. Profile identities and versions are case-sensitive.
+
+The fixed descriptor reader resolves the one explicit immutable source profile,
+which binds the source edition, exact keyword lexicon, public source-vocabulary
+profile, Unicode data, and their content identities. `en@1` is the canonical
+English profile but is never an ambient default. After admission, quoted keyword
+terminals in the remaining grammar refer to canonical token identities rather
+than English source bytes. The localized-source specification owns the full
+descriptor and profile-manifest contract.
 
 Platform scopes and capability requirements are unique and canonical. Required
 and optional identities cannot overlap. Imports precede all other declarations.
@@ -770,6 +816,9 @@ projection while the review must confirm:
 - exact agreement between that machine grammar and this document;
 - lexical tests for every UTF-8, identifier, comment, literal, delimiter, and
   lookalike boundary;
+- exact source-descriptor, source-profile, source-lexicon, source-vocabulary,
+  Unicode-table, keyword-boundary, and localized public-name resolution cases
+  required by the localized-source companion;
 - accepted and rejected precedence cases;
 - full-arity explicit-generic call cases proving `::` disambiguation from
   relational `<`/`>` and rejection of bare, partial, or arbitrary-callable

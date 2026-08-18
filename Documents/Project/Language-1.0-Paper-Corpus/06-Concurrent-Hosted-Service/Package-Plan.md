@@ -72,5 +72,5 @@ There is no package data, schema, generated route table, certificate, key,
 installer payload, or shipped content object in this workload.
 
 The reviewed bundle contains 3 source files, 849 LF-terminated source lines,
-17 top-level declarations, and 28,303 UTF-8 bytes. These source measurements are
+17 top-level declarations, and 28,306 UTF-8 bytes. These source measurements are
 reproducible repository facts, not compiler or runtime measurements.

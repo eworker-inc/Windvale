@@ -58,8 +58,8 @@ remain live across vector freeze.
 
 The reviewed source contains 6 files, 851 LF-terminated lines, 33 top-level
 declarations (22 functions, 3 records, 1 variant, 3 constants, and 4 module-data
-declarations), and 26,512 UTF-8 bytes. The largest module is
-`Numeric-Graphics-Audit.wv` at 268 lines / 9,659 bytes. These are source facts,
+declarations), and 26,518 UTF-8 bytes. The largest module is
+`Numeric-Graphics-Audit.wv` at 268 lines / 9,660 bytes. These are source facts,
 not compiler or runtime performance claims.
 
 Implementation measurements must record tokens, phase time/peak memory, generic

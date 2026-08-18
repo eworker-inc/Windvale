@@ -123,6 +123,6 @@ and teardown bounds remain implementation measurements rather than paper claims.
 
 The reviewed bundle contains 8 source files, 2,004 LF-terminated source lines,
 74 top-level declarations (38 functions, 14 records, 7 variants, 4 enums, 10
-constants, and 1 package-data declaration), and 65,936 UTF-8 bytes. The largest
-module is `Retained-Gui-Application.wv` at 729 lines / 25,524 bytes. These are
+constants, and 1 package-data declaration), and 65,944 UTF-8 bytes. The largest
+module is `Retained-Gui-Application.wv` at 729 lines / 25,525 bytes. These are
 reproducible source facts, not compiler or artifact measurements.

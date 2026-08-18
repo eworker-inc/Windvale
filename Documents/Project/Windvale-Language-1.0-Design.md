@@ -30,6 +30,11 @@
 > [Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 > and complete-suite reconciliation by
 > [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+> The project owner subsequently held that preserved pre-localization candidate
+> and selected stored localized keywords, exact public-library source
+> vocabularies, and Unicode project identifiers for a replacement candidate, as
+> detailed by the
+> [working localized-source specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -441,14 +446,23 @@ Language 1.0 tooling must provide:
 - a diagnostic that identifies common lookalike code points;
 - semantic rename across modules and aliases;
 - exact-name search support;
-- formatting that preserves canonical identifiers; and
+- formatting that preserves exact normalized project identifiers and selected
+  primary source labels;
+- explicit source-profile selection through the universal descriptor, canonical
+  reveal, deterministic conversion, and manifest/pack/catalog provenance; and
 - source-to-machine symbol inspection.
 
 ## Lexical and structural grammar
 
 Language 1.0 remains strict UTF-8 with LF as the repository source convention.
-Identifiers retain the constrained macron grammar rather than accepting general
-Unicode identifier categories. Comments and text values may contain full Unicode.
+The replacement working candidate begins every file with one language-neutral
+descriptor such as `#!wv/1 en@1`, then admits normalized Unicode identifier
+segments under exact edition-pinned property and security tables while retaining
+U+02C9 as the semantic-concept separator. Its explicit immutable source profile
+binds the lexicon that maps localized keyword spellings to canonical tokens and
+the vocabulary profile whose exact interface-bound catalogs map localized
+public-library labels to canonical declarations. Comments and text values
+continue to admit full Unicode independently.
 
 The language retains braces, semicolons, explicit delimiters, and deterministic
 parsing. Indentation and automatic semicolon insertion are not semantic.
@@ -1518,7 +1532,8 @@ boundary. The reader-facing rationale and intended alternatives are described in
 - default parameter values;
 - interpolated-text syntax without an explicit bounded destination and memory
   owner;
-- broader Unicode identifiers beyond ASCII segments joined by U+02C9;
+- ambient, inferred, mixed, or runtime-selected source lexicons and public source
+  vocabularies;
 - unbounded collections, queues, diagnostics, recursion, or compile-time work;
 - unrestricted macros, preprocessors, and compiler plugins;
 - wildcard imports and ambient preludes;

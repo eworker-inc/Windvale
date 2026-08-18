@@ -149,7 +149,7 @@ required.
 
 | Measure | Recorded value |
 | --- | --- |
-| Source size | 7 modules, 1,316 lines / 48,785 UTF-8 bytes, 28 functions, 6 records, 6 enums, 2 variants, 4 package-data declarations. |
+| Source size | 7 modules, 1,316 lines / 48,792 UTF-8 bytes, 28 functions, 6 records, 6 enums, 2 variants, 4 package-data declarations. |
 | Maximum source width | 4 function parameters; 15 record fields; 15 inference-failure cases; largest module 389 lines. |
 | Explicitness | 4 capabilities, 2 copied closure captures, 4 nested provider resources, 6 tensor-view descriptors, 6 commands, 5 device slots. |
 | Resources | 16,384 host bytes, 64 pinned bytes, 320 charged device bytes, 1 task/queue/submission, 8 command slots, 16 diagnostics. |

@@ -9,6 +9,13 @@ planning, but source edition 1 is not frozen or implemented yet. The currently
 implemented contract remains the
 [Windvale Seed language](Seed-Language.md).
 
+The project owner has held the preserved pre-localization candidate and reopened
+Language 1.0 to include the working
+[localized-source and source-vocabulary addendum](Windvale-Language-1.0-Localized-Source.md).
+That addendum is part of the replacement candidate under review. It does not
+retroactively change the preserved candidate identity or authorize
+implementation.
+
 The candidate may change when required paper programs expose ambiguity,
 unacceptable ergonomics, an unbounded operation, or a target contradiction. A
 later named source-freeze decision makes accepted edition-1 source semantics a
@@ -50,6 +57,7 @@ has one owner for each kind of rule:
 | --- | --- |
 | Static and dynamic source semantics, profiles, effects, ownership, evaluation, and conformance | This document |
 | Tokens, literal spelling, precedence, and parsing | [Language 1.0 grammar](Windvale-Language-1.0-Grammar.md) and its [machine projection](Windvale-Language-1.0.ebnf) |
+| Source lexicons, localized public API source labels, Unicode source identifiers, and localization-specific conformance | [Localized-source and source-vocabulary addendum](Windvale-Language-1.0-Localized-Source.md) |
 | Required standard variants, protocols, collections, builders, budgets, and failure types | [Language 1.0 Foundation](Windvale-Language-1.0-Foundation.md) and its [signature registry](Windvale-Language-1.0-Foundation-Registry.md) |
 | Design motivation and rejected alternatives | [Language 1.0 design](../Documents/Project/Windvale-Language-1.0-Design.md) |
 | Seed transition order and compatibility boundary | [Seed-to-1.0 migration](../Documents/Project/Windvale-Language-1.0-Migration.md) |
@@ -78,7 +86,9 @@ explicit system code. It has:
 - bounded collections, recursion, compile-time work, tasks, queues, diagnostics,
   and retained state;
 - verified semantics shared by interpreter, JIT, cached compilation, AOT,
-  WebAssembly, and Windvale OS targets; and
+  WebAssembly, and Windvale OS targets;
+- one canonical token and declaration model beneath explicitly selected stored
+  source lexicons and public-library vocabularies; and
 - no dependency on a tracing garbage collector, host object model, host path
   model, host scheduler, or host exception behavior.
 
@@ -111,13 +121,13 @@ System conformance includes Core, Hosted semantics used by the target, and every
 claimed System ABI rule. Source conformance does not imply WVB, object, package,
 or native-byte compatibility; those formats remain separately versioned.
 
-## Source edition and module header
+## Source descriptor and module header
 
-Every source file contains exactly one module and begins with this logical
-header, whose exact token grammar is owned by the grammar companion:
+Every source file contains exactly one module and begins with this descriptor
+and logical module header, whose exact grammar is owned by the grammar companion:
 
 ~~~text
-edition 1;
+#!wv/1 en@1
 module Imageˉtool;
 profile hosted;
 platform windows, linux, windvale;
@@ -126,10 +136,19 @@ requires capability filesystem.read version 1;
 optional capability window.surface version 1;
 ~~~
 
-The declarations occur once and in the displayed order:
+A localized file selects its exact composite source profile in the same neutral
+descriptor:
 
-1. `edition` selects source syntax and semantics independently of package, WVB,
-   and object versions.
+~~~text
+#!wv/1 zh-Hans@1
+<localized module header and body>
+~~~
+
+The declarations occur once and in this order:
+
+1. The first-line descriptor is file-format metadata selecting source edition 1 and one
+   explicit immutable composite source profile. It is not a localized language
+   declaration.
 2. `module` gives the canonical source module name.
 3. `profile` selects `core`, `hosted`, or `system` language features.
 4. `platform` lists one or more canonical platform scopes; omission and implicit
@@ -138,6 +157,11 @@ The declarations occur once and in the displayed order:
    architecture.
 6. required and optional capability declarations state interface identity and
    major version without granting or binding a provider.
+
+The universal descriptor grammar, source-profile binding, unconditional strict
+resolution, and no-fallback behavior are owned by the
+localized-source addendum. The canonical paper corpus uses explicit `en@1`;
+there is no ambient profile default.
 
 An optional capability is metadata only until an application explicitly
 approves and binds it. A source module cannot call or capture an optional-only
@@ -210,21 +234,33 @@ external authority still requires an approved capability or system contract.
 
 ## Names and declaration identity
 
-Source is strict UTF-8. Source identifiers use case-sensitive ASCII segments
-joined only by U+02C9 modifier letter macron:
+Source is strict UTF-8. Source identifiers use case-sensitive, normalized
+Unicode segments joined only by U+02C9 modifier letter macron. The exact
+edition-pinned Unicode property, normalization, security, and rejection rules
+are owned by the localized-source addendum and grammar companion. ASCII source
+identifiers remain an admitted subset:
 
 ~~~text
 [A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*
 ~~~
 
-U+02C9 is part of identity. Hyphen, underscore, U+00AF macron, and other
-lookalikes are not aliases. Official source uses capitalized semantic identifiers
-with macron-separated words and `ALL_CAPS_WITH_UNDERSCORES` constants as defined
-by [Source naming](Source-Naming.md).
+U+02C9 is part of identity. Hyphen, U+00AF macron, and other lookalikes are not
+aliases. Exact Unicode identity receives no case folding, host normalization,
+collation, transliteration, or canonically-equivalent spelling alias. Official
+source uses reviewed semantic identifiers with macron-separated concepts as
+defined by [Source naming](Source-Naming.md). Cased scripts retain the
+capitalized/constant conventions where meaningful; uncased scripts do not
+invent case.
 
 A declaration has one canonical identity consisting of edition-aware package
 identity, canonical module identity, declaration category, and source name.
 Import aliases are local vocabulary and do not change identity.
+
+A localized reference to an imported public declaration resolves through one
+exact catalog to that declaration's existing canonical identity. It does not
+create a translated export, alternate declaration, overload, ABI alias, or
+runtime lookup. Project-owned Unicode declarations retain their exact stored
+source name as their canonical source name.
 
 Compiled private declarations use deterministic short internal identities under
 their owning WIR, WVB, object, or native format contract. Exported interfaces,
@@ -1107,7 +1143,8 @@ Language 1.0 has no:
 - default parameter values;
 - interpolated-text syntax without an explicit bounded destination and memory
   owner;
-- identifier characters outside ASCII segments and U+02C9;
+- ambient, inferred, mixed, or runtime-selected source lexicons and public
+  source vocabularies;
 - semantically unbounded collection, queue, recursion, diagnostic, or
   compile-time work;
 - unrestricted macro, preprocessor, or compiler plugin;
@@ -1172,7 +1209,11 @@ This candidate becomes frozen Language 1.0 only after:
 19. the accepted contextual-array, checked-mutable-slice, strict-float,
     policy-bearing-conversion, canonical-formatting, and bit-identical-parallel
     cases remain coherent across all mandatory workloads; and
-20. a source-freeze decision records the canonical document identities.
+20. source-descriptor/profile, source-lexicon, public-library source-vocabulary,
+    Unicode identifier, conversion, editor, malformed/security, cross-host, and
+    bounded-performance workloads satisfy the localized-source addendum; and
+21. a source-freeze decision records the replacement canonical document
+    identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

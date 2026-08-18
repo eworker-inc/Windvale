@@ -77,8 +77,8 @@ from file contents after allocation.
 ## Source record
 
 The reviewed source contains 7 files, 1,478 LF-terminated lines, 60 top-level
-declarations, and 48,468 UTF-8 bytes. The largest cohesive module is
-`Package-Graph-Parser.wv` at 631 lines / 21,043 bytes. These are source facts,
+declarations, and 48,475 UTF-8 bytes. The largest cohesive module is
+`Package-Graph-Parser.wv` at 631 lines / 21,119 bytes. These are source facts,
 not compiler/runtime performance claims. The parser remains one owner because
 its cursor, lexical rules, format adapters, and preallocation checks share one
 failure-atomic invariant; implementation may extract a reusable bounded text

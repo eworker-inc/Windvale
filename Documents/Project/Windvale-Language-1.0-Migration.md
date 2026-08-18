@@ -37,6 +37,7 @@ decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
 [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md),
 [machine grammar](../../Specifications/Windvale-Language-1.0.ebnf),
+[localized-source and source-vocabulary specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md),
 [Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md),
 and
 [Foundation signature registry](../../Specifications/Windvale-Language-1.0-Foundation-Registry.md)
@@ -77,7 +78,10 @@ Implementation begins only after:
 9. the local AI accelerator paper workload assigns every discovered need to the
    general language or an explicit library, target extension, verified
    representation, provider, or backend owner; and
-10. the change-aware verifier maps every affected boundary to a focused owner.
+10. source-lexicon, public-interface source-vocabulary, Unicode/security,
+    conversion, editor, diagnostic, cross-host, and bounded-performance evidence
+    is accepted; and
+11. the change-aware verifier maps every affected boundary to a focused owner.
 
 The source freeze may permit staged implementation. It may not leave implemented
 features semantically target-dependent.
@@ -89,13 +93,15 @@ allows one planned repository transition:
 
 - current tools continue accepting Seed until the edition-1 front door reaches
   the agreed migration checkpoint;
-- the compiler then accepts explicit `edition 1;` source through the new path;
+- the compiler then accepts explicit `#!wv/1 <profile>@<version>` source through
+  the new path;
 - repository modules migrate in dependency order;
 - once the last required repository module and fixture migrates, the current
   front door removes Seed parsing unless a named recovery case says otherwise;
-- no source file is guessed as Seed or edition 1;
-- no keyword, profile, positional constructor, or result-propagation alias is
-  retained merely for convenience; and
+- no source file is guessed as Seed, Language 1.0, or a source profile;
+- no unselected keyword/source-vocabulary spelling, profile, positional
+  constructor, or result-propagation alias is retained merely for convenience;
+  and
 - historical source remains buildable only from its pinned release or restored
   recovery workspace.
 
@@ -108,7 +114,9 @@ checkpoint and is not a product compatibility promise.
 
 | Seed contract | Edition-1 migration |
 | --- | --- |
-| No source edition declaration | Add `edition 1;` as the first declaration. |
+| No source edition declaration | Add `#!wv/1 en@1` as the first physical line. |
+| ASCII/U+02C9 Seed identifiers | Preserve the admitted subset while adding exact edition-pinned normalized Unicode project identifiers and U+02C9 semantic-concept separation. |
+| Canonical keyword and public-library spellings only | Select one explicit immutable composite source profile; lower its exact spellings to canonical token and imported declaration identities. |
 | Inline module declaration with portable, hosted, or system profile | Use standalone module, language profile, platform, authority, and capability declarations. |
 | Legacy plain `capability` declaration | Replace with required or optional versioned capability metadata and explicit bound references. |
 | `void` | Replace with `unit` and `()` where an ordinary value is required. |
@@ -134,7 +142,8 @@ changes require semantic review.
 
 | Language 1.0 area | Primary implementation owners | WVB change expected? |
 | --- | --- | --- |
-| Edition header, module metadata, and target-scope registry | Lexer, declaration parser, source graph, build target admission, editor | Only when serialized metadata requires a new format. |
+| Source descriptor, module metadata, and target-scope registry | Descriptor reader, declaration parser, source graph, build target admission, editor | Only when serialized metadata requires a new format. |
+| Source profiles and lexicons, Unicode identifiers, and localized public-library source labels | Descriptor/profile reader, lexer, parser spans, public-name resolver, package/build plan, library interface catalogs, diagnostics, formatter/editor, cache, verification | No semantic WVB change for imported labels; exact Unicode project names may require updated source/debug metadata and ASCII native mangling. |
 | Bounded immutable package data | Parser, source graph, package/build plan, WVB/package formats, loader, publisher | Likely requires a typed content-reference table unless the value is embedded once without duplication. |
 | Names and short private identities | Bindings, WIR directory, object/debug symbol mapping | Not for private compiler identity alone. |
 | `unit` and `never` | Type model, control-flow validation, WIR lowering | Possibly shape metadata; no opcode by default. |
@@ -198,12 +207,17 @@ reparse it.
   caller-owned scratch/region, recoverable-data/terminal-containment, explicit
   status/unwind, and safe-publication cases from Decision 0764.
 - Add editor grammar tests.
+- Retain accepted localized-source descriptor/profile, Unicode/security, public-interface
+  vocabulary, conversion, cross-host, and bounded-performance cases.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.
 
 ### Slice 1: edition, metadata, and naming
 
 - Add explicit edition dispatch.
+- Add the bounded universal descriptor, exact profile/lexicon/catalog admission, normalized
+  Unicode identifier lexer, and public-label-to-canonical resolver before
+  ordinary semantic analysis.
 - Implement standalone profile and independent metadata.
 - Resolve opaque platform keys through the canonical target-scope registry and
   retain the structured environment/architecture/ABI/extension descriptor.
@@ -338,9 +352,10 @@ portability.
 
 Seed removal occurs only when:
 
-- every maintained repository `.wv` file declares edition 1;
+- every maintained repository `.wv` file begins with an explicit Language 1.0
+  source descriptor;
 - no current fixture or generator emits Seed source;
-- editor and formatter default to edition 1;
+- editor and formatter emit an explicit selected Language 1.0 source profile;
 - the compiler rebuilds itself from edition-1 source through the accepted native
   front door;
 - required Foundation and runtime surfaces are qualified;

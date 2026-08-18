@@ -1,4 +1,4 @@
-edition 1;
+#!wv/1 en@1
 module Inspectˉtypes;
 profile core;
 platform windows, linux, windvale;

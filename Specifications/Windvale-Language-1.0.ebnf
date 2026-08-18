@@ -1,16 +1,22 @@
 (* Windvale Language 1.0 normative-candidate machine grammar.
+   Working replacement direction includes the localized-source and
+   source-vocabulary specification; it is not frozen or implemented.
    Encoding: strict UTF-8 without BOM; canonical line ending: LF.
    This file uses ISO-style EBNF: = defines, | chooses, [] is optional,
    {} repeats zero or more, comma concatenates, and ; terminates. Inside a
-   quoted terminal, reverse solidus escapes a quotation mark or reverse solidus;
+   quoted terminal, reverse solidus escapes a quotation mark or reverse solidus.
+   Quoted punctuation, numeric, and universal-descriptor terminals are exact
+   source spellings; other quoted keyword terminals name canonical tokens after
+   the selected source lexicon maps their exact stored spelling;
    an ellipsis between two one-scalar terminals is their inclusive scalar range.
    ? name ? is an external scanner token defined below. *)
 
-Source = Edition, Module, Profile, Platform, Authority,
+Source = Sourceˉdescriptor, Module, Profile, Platform, Authority,
          { Capabilityˉrequirement }, { Import }, { Declaration }, EOF ;
 
 (* External scanner tokens. Their exact scalar contracts are normative. *)
 EOF = ? end of decoded source ? ;
+Sourceˉdescriptorˉend = ? exact first logical LF after source newline admission ? ;
 Documentationˉtoken = ? one attached documentation-comment group as specified by the grammar companion ? ;
 Runeˉscalar = ? one Unicode scalar except apostrophe, reverse solidus, LF, or CR ? ;
 Textˉscalar = ? one Unicode scalar except quotation mark, reverse solidus, LF, or CR ? ;
@@ -19,15 +25,17 @@ Multilineˉtextˉitem = ? one text scalar, LF, escape, or quote not beginning th
 Multilineˉbyteˉitem = ? one ASCII byte, LF, escape, or quote not beginning the closing triple quote ? ;
 Rawˉcontent = ? longest scalar sequence before the first exact matching quote-plus-hash delimiter ? ;
 Rawˉbyteˉcontent = ? raw content restricted to ASCII and LF ? ;
+Unicodeˉxidˉstart = ? one scalar in the edition-pinned XID_Start class after localized-source exclusions ? ;
+Unicodeˉxidˉcontinue = ? one scalar in the edition-pinned XID_Continue class after localized-source exclusions ? ;
 
 Documentation = Documentationˉtoken ;
 
-Asciiˉletter = "A" … "Z" | "a" … "z" | "_" ;
 Asciiˉdigit = "0" … "9" ;
-Segment = Asciiˉletter, { Asciiˉletter | Asciiˉdigit } ;
-Identifier = Segment, { "ˉ", Segment } ;
-Constantˉidentifier = ("A" … "Z" | "_"),
-                      { "A" … "Z" | Asciiˉdigit | "_" } ;
+Identifierˉstart = "_" | Unicodeˉxidˉstart ;
+Identifierˉcontinue = "_" | Unicodeˉxidˉcontinue ;
+Identifierˉsegment = Identifierˉstart, { Identifierˉcontinue } ;
+Identifier = Identifierˉsegment, { "ˉ", Identifierˉsegment } ;
+Constantˉidentifier = Identifier ;
 Lowerˉsegment = ("a" … "z"), { "a" … "z" | Asciiˉdigit | "_" } ;
 Qualifiedˉsourceˉname = Identifier, { ".", Identifier } ;
 Capabilityˉidentity = Lowerˉsegment, { ".", Lowerˉsegment } ;
@@ -65,7 +73,13 @@ Rawˉdelimiter = [ "#", [ "#", [ "#", [ "#", [ "#", [ "#", [ "#", [ "#" ] ] ] ] 
 Rawˉtext = "r", Rawˉdelimiter, "\"", Rawˉcontent, "\"", Rawˉdelimiter ;
 Rawˉbytes = "br", Rawˉdelimiter, "\"", Rawˉbyteˉcontent, "\"", Rawˉdelimiter ;
 
-Edition = "edition", "1", ";" ;
+Sourceˉdescriptor = "#!wv/1", " ", Sourceˉprofile, "@",
+                    Sourceˉprofileˉversion, Sourceˉdescriptorˉend ;
+Sourceˉprofile = Sourceˉprofileˉcomponent, { ".", Sourceˉprofileˉcomponent } ;
+Sourceˉprofileˉcomponent = Sourceˉprofileˉatom, { "-", Sourceˉprofileˉatom } ;
+Sourceˉprofileˉatom = ("A" … "Z" | "a" … "z"),
+                      { "A" … "Z" | "a" … "z" | Asciiˉdigit } ;
+Sourceˉprofileˉversion = ("1" … "9"), { Asciiˉdigit } ;
 Module = [ Documentation ], "module", Identifier, ";" ;
 Profile = "profile", ("core" | "hosted" | "system"), ";" ;
 Platform = "platform", Platformˉscope, { ",", Platformˉscope }, [ "," ], ";" ;

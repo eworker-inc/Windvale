@@ -58,7 +58,7 @@ separate named contract; no implicit reassociation or fast math is allowed.
 
 | Measure | Recorded value |
 | --- | --- |
-| Source | 6 files; 851 lines / 26,512 UTF-8 bytes; 33 top-level declarations; largest 268 lines. |
+| Source | 6 files; 851 lines / 26,518 UTF-8 bytes; 33 top-level declarations; largest 268 lines. |
 | Fixed data | 4 arrays / 32 u32 words / 128 semantic bytes. |
 | Execution | 8 FMA lanes / 8 replacements / 1 immutable sequence. |
 | Audit | 8 output comparisons plus 18 boundary/conversion checks. |

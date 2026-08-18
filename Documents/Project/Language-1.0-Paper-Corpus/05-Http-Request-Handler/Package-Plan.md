@@ -110,8 +110,8 @@ opaque imported types. Async calls use the shared structured-task continuation
 model rather than an HTTP-specific scheduler.
 
 The reviewed paper bundle contains 7 source files, 2,209 LF-terminated source
-lines, 72 top-level declarations, and 73,916 UTF-8 bytes. `Http-Application.wv`
-is 28,104 bytes/734 lines and `Http-Parser.wv` is 24,621 bytes/746 lines; their
+lines, 72 top-level declarations, and 73,923 UTF-8 bytes. `Http-Application.wv`
+is 28,105 bytes/734 lines and `Http-Parser.wv` is 24,622 bytes/746 lines; their
 separation keeps provider lifecycle out of pure framing code. Current Seed does
 not accept edition-1 source, so WIR, WVB, native size, compiler time, execution
 time, and working set are explicitly unmeasured rather than estimated. The

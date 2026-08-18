@@ -66,7 +66,7 @@ or other authority; a real adapter declares those capabilities separately.
 
 | Measure | Recorded value |
 | --- | --- |
-| Source | 5 files; 943 lines / 30,304 UTF-8 bytes; 44 top-level declarations; largest 289 lines. |
+| Source | 5 files; 943 lines / 30,309 UTF-8 bytes; 44 top-level declarations; largest 289 lines. |
 | Unsafe surface | 1 concrete target / 1 ABI contract / 1 foreign declaration / 1 unsafe value block / 1 call. |
 | Memory | 64-byte aligned scratch; 4-byte copied payload; three 4,096-byte child budgets. |
 | Record | 24 bytes / 10 validated fields or geometry rules / one SHA-256. |
