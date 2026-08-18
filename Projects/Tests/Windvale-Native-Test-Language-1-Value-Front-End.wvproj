@@ -1,0 +1,9 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv"
+source "Compiler/Windvale/Source-Body-Parser.wv"
+source "Compiler/Windvale/Source-Declaration-Parser.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+source "Compiler/Windvale/Source-Lexer-Core.wv"
+source "Compiler/Windvale/Source-Set-Core.wv"
+source "Foundation/Decimal-Parsing.wv"
+emit wvb

@@ -58,6 +58,14 @@ the profile artifacts. WVSS 2 is an internal phase boundary, not a serializable
 build input: the ordinary public compiler entry points require WVSS 1 and reject
 external WVSS 2 values.
 
+The first Language 1.0 Slice 2 checkpoint appends front-end token, source-type,
+and internal binding-shape identities for `unit`, `never`, `i8`, `i16`, `u16`,
+`f32`, `f64`, and `rune`. Those internal identities are not WVB type bytes and do
+not extend the accepted WVB subset below. Until their exact operations and runtime
+representations are implemented and versioned, backend admission rejects a
+function or value that would require one; it never aliases a new primitive to an
+existing WVB shape merely to produce output.
+
 ## Portable in-memory adapter
 
 `Compiler/Windvale/Source-Wvb-Memory-Adapter.wv` is the capability-free execution adapter for hosts that already own immutable source bytes, including the browser playground. Its exported contract is:

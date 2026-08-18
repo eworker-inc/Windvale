@@ -28,11 +28,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/3'
+echo 'START language 1 front door phase=frozen-fixtures item=1/4'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/3'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/4'
 
-echo 'START language 1 front door phase=descriptor item=2/3'
+echo 'START language 1 front door phase=descriptor item=2/4'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -45,9 +45,20 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/3'
+echo 'PASS  language 1 front door phase=descriptor item=2/4'
 
-echo 'START language 1 front door phase=compiler-slice item=3/3'
+echo 'START language 1 front door phase=value-front-end item=3/4'
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
+    "$work/Value-Front-End.wvb" >/dev/null || exit $?
+"$script_directory/Run-Wvb.sh" "$work/Value-Front-End.wvb" \
+    >"$work/Value-Front-End.out" 2>"$work/Value-Front-End.err" || exit $?
+[[ ! -s $work/Value-Front-End.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
+cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
+echo 'PASS  language 1 front door phase=value-front-end item=3/4'
+
+echo 'START language 1 front door phase=compiler-slice item=4/4'
 segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
     "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
     "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
@@ -102,6 +113,9 @@ expect_rejection \
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv" \
     "$work/Descriptorless.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Seed-Only-Void.wv" \
+    "$work/Seed-Only-Void.wvb" || exit 1
 if "$work/Compiler.elf" \
     "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
     "$work/Ambient.wvb" >"$work/Ambient.out" 2>"$work/Ambient.err"; then
@@ -122,5 +136,5 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=3/3'
-echo 'native language 1 front door status=Passed cases=11 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 compiler-cases=7 compiler-result=42 compiler-wvb-bytes=221'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/4'
+echo 'native language 1 front door status=Passed cases=13 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=8 compiler-result=42 compiler-wvb-bytes=221'

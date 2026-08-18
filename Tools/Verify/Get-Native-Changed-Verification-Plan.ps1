@@ -1428,11 +1428,14 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Descriptor-Core.wv',
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv',
         'Tests/Fixtures/Language-1.0/Minimum-Program.wv',
         'Tests/Fixtures/Language-1.0/Missing-Edition-Profile.wv',
+        'Tests/Fixtures/Language-1.0/Seed-Only-Void.wv',
         'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
+        'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
         'Tests/Native/Language-1.0-Fixture-Inventory.txt'
     )) {
         Add-Suite 'language-1-front-door'

@@ -64,7 +64,6 @@ set "ProgressCurrent=1"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
 
 :allocate
 set "TemporaryDirectory=%TEMP%\windvale-database-storage-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -79,7 +78,6 @@ set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%WorkspacePath:\=/%"
 set "TemporaryResource=%TemporaryDirectory:\=/%"
 set "BuildDriverProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
-set "BuildDriverProjectResource=%BuildDriverProject:\=/%"
 set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
 set "LowererProjectResource=%LowererProject:\=/%"
 set "Result=1"
@@ -113,6 +111,7 @@ if "%Development%"=="1" call :read_clock ToolsStart
 if "%Development%"=="1" echo START native database storage development step=tools item=%ProgressCurrent%/%ProgressTotal% target=%DevelopmentTarget%
 
 if "%Development%"=="1" (
+    echo Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb
     call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
         "%BuildDriverWvb%" >"%TemporaryDirectory%\Build-Driver-Wvb-Cache.txt"
@@ -120,33 +119,40 @@ if "%Development%"=="1" (
     set "ProjectWvbCheckpoint="
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project wvb cache status=" "%TemporaryDirectory%\Build-Driver-Wvb-Cache.txt"') do set "ProjectWvbCheckpoint=%%S"
     if not defined ProjectWvbCheckpoint goto :cleanup
+    echo Progress: step=database-storage-tools item=2/4 detail=package-build-driver
     call :prepare_cached_build_driver "%BuildDriverWvb%"
     if errorlevel 1 goto :cleanup
+    echo Progress: step=database-storage-tools item=3/4 detail=verify-lowerer
     set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
     call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7499264 4912b2ffb5390aeb30ce54b5eabb0e4970923b6ebd4c1d08567ee78a562cb54a
     if errorlevel 1 goto :cleanup
 ) else (
+    echo Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb
     call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
         "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
         "%BuildDriverWvb%" >nul
     if errorlevel 1 goto :cleanup
-    call :verify_file "%BuildDriverWvb%" 1142818 125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574
+    call :verify_file "%BuildDriverWvb%" 1259719 3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949
     if errorlevel 1 goto :cleanup
+    echo Progress: step=database-storage-tools item=2/4 detail=package-build-driver
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
         2 "%BuildDriverWvb%" "%BuildDriver%" --development-cache >nul
     if errorlevel 1 goto :cleanup
 
+    echo Progress: step=database-storage-tools item=3/4 detail=build-lowerer-wvb
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
         "%LowererProjectResource%" "%TemporaryResource%/Lowerer.wvb" >nul
     if errorlevel 1 goto :cleanup
     call :verify_file "%LowererWvb%" 523087 6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41
     if errorlevel 1 goto :cleanup
+    echo Progress: step=database-storage-tools item=4/4 detail=package-lowerer
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
         6 "%LowererWvb%" "%Lowerer%" --development-cache >nul
     if errorlevel 1 goto :cleanup
 )
 
 if "%Development%"=="1" if "%PrepareOnly%"=="0" (
+    echo Progress: step=database-storage-tools item=4/4 detail=start-hosted-session
     start "" /b node "%HostedApplicationSession%" serve ^
         "%HostedApplicationSessionReady%" windows "%BuildDriver%" "%Lowerer%" ^
         >"%HostedApplicationSessionLog%" 2>&1
@@ -156,6 +162,7 @@ if "%Development%"=="1" if "%PrepareOnly%"=="0" (
         goto :cleanup
     )
 )
+if "%Development%"=="1" if "%PrepareOnly%"=="1" echo Progress: step=database-storage-tools item=4/4 detail=tools-ready
 
 if "%Development%"=="1" call :read_clock ToolsEnd
 if "%Development%"=="1" call :elapsed_milliseconds ToolsStart ToolsEnd ToolsElapsedMs

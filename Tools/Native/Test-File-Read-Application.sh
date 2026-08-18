@@ -34,27 +34,30 @@ verify_file() {
 }
 
 workspace="$repository_root/Windvale.wvws"
-front_door="$repository_root/Artifacts/Native-Front-Door/linux-x64/wvbuild.elf"
 
-echo 'START native file read phase=self-host item=1/6'
-"$front_door" --workspace "$workspace" --project \
+echo 'START native file read phase=tools item=1/6'
+echo 'Progress: step=file-read-tools item=1/4 detail=build-driver-wvb'
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
     "$work/Build-Driver.wvb" >/dev/null || exit $?
-verify_file "$work/Build-Driver.wvb" 1142818 \
-    125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 \
+verify_file "$work/Build-Driver.wvb" 1259719 \
+    3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 \
     'current build driver WVB' || exit 1
+echo 'Progress: step=file-read-tools item=2/4 detail=package-build-driver'
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Build-Driver.wvb" "$work/Build-Driver.elf" --development-cache \
     >/dev/null || exit $?
+echo 'Progress: step=file-read-tools item=3/4 detail=build-lowerer-wvb'
 "$work/Build-Driver.elf" --workspace "$workspace" --project \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$work/Lowerer.wvb" >/dev/null || exit $?
 verify_file "$work/Lowerer.wvb" 523087 \
     6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 \
     'current lowerer WVB' || exit 1
+echo 'Progress: step=file-read-tools item=4/4 detail=package-lowerer'
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Lowerer.wvb" "$work/Lowerer.elf" --development-cache >/dev/null || exit $?
-echo 'PASS  native file read phase=self-host item=1/6'
+echo 'PASS  native file read phase=tools item=1/6'
 
 echo 'START native file read phase=compile item=2/6'
 echo 'native file read compile step=source'

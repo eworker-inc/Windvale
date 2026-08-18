@@ -1,0 +1,73 @@
+module Languageˉoneˉvalueˉfrontˉendˉselfˉtest profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+fn Hasˉtoken(Input: text, Expected: Lexer.Compilerˉtokenˉkind) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Input);
+    let Token: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(Bytes, 0u32, 1u32, 1u32);
+    return Token.Status == Lexer.Compilerˉlexˉstatus.Valid &&
+        Token.Kind == Expected && Token.Nextˉoffset == Bytesˉlength(Bytes);
+}
+
+fn Hasˉtype(
+    Input: text,
+    Expected: Declarations.Compilerˉsourceˉtypeˉkind
+) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Input);
+    let Type: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉtype(Bytes, 0u32, 1u32, 1u32, true, false);
+    return Type.Status == Declarations.Compilerˉparseˉstatus.Valid &&
+        Type.Typeˉkind == Expected && Type.Nextˉoffset == Bytesˉlength(Bytes);
+}
+
+export fn Main() -> i32 {
+    if !Hasˉtoken("unit", Lexer.Compilerˉtokenˉkind.Unit) { return 1; }
+    if !Hasˉtoken("never", Lexer.Compilerˉtokenˉkind.Never) { return 2; }
+    if !Hasˉtoken("i8", Lexer.Compilerˉtokenˉkind.I8) { return 3; }
+    if !Hasˉtoken("i16", Lexer.Compilerˉtokenˉkind.I16) { return 4; }
+    if !Hasˉtoken("u16", Lexer.Compilerˉtokenˉkind.U16) { return 5; }
+    if !Hasˉtoken("f32", Lexer.Compilerˉtokenˉkind.F32) { return 6; }
+    if !Hasˉtoken("f64", Lexer.Compilerˉtokenˉkind.F64) { return 7; }
+    if !Hasˉtoken("rune", Lexer.Compilerˉtokenˉkind.Rune) { return 8; }
+    if !Hasˉtoken("base", Lexer.Compilerˉtokenˉkind.Base) { return 9; }
+
+    if !Hasˉtype("unit", Declarations.Compilerˉsourceˉtypeˉkind.Unit) { return 10; }
+    if !Hasˉtype("never", Declarations.Compilerˉsourceˉtypeˉkind.Never) { return 11; }
+    if !Hasˉtype("i8", Declarations.Compilerˉsourceˉtypeˉkind.I8) { return 12; }
+    if !Hasˉtype("i16", Declarations.Compilerˉsourceˉtypeˉkind.I16) { return 13; }
+    if !Hasˉtype("u16", Declarations.Compilerˉsourceˉtypeˉkind.U16) { return 14; }
+    if !Hasˉtype("f32", Declarations.Compilerˉsourceˉtypeˉkind.F32) { return 15; }
+    if !Hasˉtype("f64", Declarations.Compilerˉsourceˉtypeˉkind.F64) { return 16; }
+    if !Hasˉtype("rune", Declarations.Compilerˉsourceˉtypeˉkind.Rune) { return 17; }
+
+    if Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        1u32, Lexer.Compilerˉtokenˉkind.Void
+    ) { return 18; }
+    if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        1u32, Lexer.Compilerˉtokenˉkind.Unit
+    ) { return 19; }
+    if Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        0u32, Lexer.Compilerˉtokenˉkind.Unit
+    ) { return 20; }
+    if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        0u32, Lexer.Compilerˉtokenˉkind.Void
+    ) { return 21; }
+
+    let Editionˉone: Lexer.Compilerˉsourceˉtoken =
+        Sourceˉset.Compilerˉsourceˉsetˉfirstˉinvalidˉeditionˉtoken(
+            Textˉtoˉutf8("unit void"), 1u32
+        );
+    if Editionˉone.Kind != Lexer.Compilerˉtokenˉkind.Void ||
+        Editionˉone.Offset != 5u32 { return 22; }
+    let Seed: Lexer.Compilerˉsourceˉtoken =
+        Sourceˉset.Compilerˉsourceˉsetˉfirstˉinvalidˉeditionˉtoken(
+            Textˉtoˉutf8("void unit"), 0u32
+        );
+    if Seed.Kind != Lexer.Compilerˉtokenˉkind.Unit || Seed.Offset != 5u32 {
+        return 23;
+    }
+    return 42;
+}

@@ -15,7 +15,7 @@ output_wvb="$output_directory/$(basename -- "$2")"
 key_tool="$script_directory/Get-Native-Project-Cache-Key.mjs"
 front_door="$repository_root/Artifacts/Native-Front-Door"
 inventory="$front_door/SHA256SUMS"
-build_driver="$front_door/linux-x64/wvbuild.elf"
+build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
 workspace="$repository_root/Windvale.wvws"
 
 for candidate in "$project" "$key_tool" \

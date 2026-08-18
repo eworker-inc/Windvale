@@ -28,11 +28,15 @@ set "ModelProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Hosted-Mo
 set "ModelProjectResource=%ModelProject:\=/%"
 
 echo START native model provider phase=tools item=1/4
+echo Progress: step=model-provider-tools item=1/4 detail=build-driver-wvb
 call "%Native%\Build-Current-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1142818 125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 || goto :cleanup
+call :verify_file "%Work%\Build-Driver.wvb" 1259719 3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 || goto :cleanup
+echo Progress: step=model-provider-tools item=2/4 detail=package-build-driver
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
+echo Progress: step=model-provider-tools item=3/4 detail=build-lowerer-wvb
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LowererProjectResource%" "%Work%/Lowerer.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Lowerer.wvb" 523087 6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 || goto :cleanup
+echo Progress: step=model-provider-tools item=4/4 detail=package-lowerer
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
 echo PASS  native model provider phase=tools item=1/4
 

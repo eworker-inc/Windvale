@@ -101,10 +101,13 @@ descriptor reader to the existing compiler, admits the exact `en@1` component
 chain only through hash-pinned Project 3 lock/profile inputs, uses a no-copy body
 view, parses the standalone Core header, and compiles one minimal edition-1 program
 deterministically through WIR and WVB. Project 2 and descriptorless Seed remain on
-their prior path; no ambient profile fallback or parallel compiler was added. The
-next official Slice 2 implements the frozen values, binding, and control-flow
-subset. Localized token execution, broad Language 1.0 semantics, and paired-host
-conformance remain later gates.
+their prior path; no ambient profile fallback or parallel compiler was added.
+Slice 2 is active: its first checkpoint appends exact primitive token/type
+identities, adds 23 bounded front-end assertions, and proves a rebuilt compiler
+rejects Seed-only `void` at the edition-1 boundary without publication. Exact
+primitive execution, aggregate construction/destructuring, value-producing
+control flow, localized token execution, and paired-host conformance remain later
+gates.
 
 ## How to read this roadmap
 

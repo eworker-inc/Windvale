@@ -92,6 +92,15 @@ export enum Compilerˉtokenˉkind {
     I64 = 86;
     U64 = 87;
     Try = 88;
+    Unit = 89;
+    Never = 90;
+    I8 = 91;
+    I16 = 92;
+    U16 = 93;
+    F32 = 94;
+    F64 = 95;
+    Rune = 96;
+    Base = 97;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -297,6 +306,7 @@ export fn Compilerˉsourceˉkeywordˉkind(
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "fn") { return Compilerˉtokenˉkind.Fn; }
         }
         if First == 105u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i8") { return Compilerˉtokenˉkind.I8; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "if") { return Compilerˉtokenˉkind.If; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "in") { return Compilerˉtokenˉkind.In; }
         }
@@ -307,9 +317,12 @@ export fn Compilerˉsourceˉkeywordˉkind(
     }
     if Length == 3u32 {
         if First == 102u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "f32") { return Compilerˉtokenˉkind.F32; }
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "f64") { return Compilerˉtokenˉkind.F64; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "for") { return Compilerˉtokenˉkind.For; }
         }
         if First == 105u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i16") { return Compilerˉtokenˉkind.I16; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i32") { return Compilerˉtokenˉkind.I32; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i64") { return Compilerˉtokenˉkind.I64; }
         }
@@ -320,6 +333,7 @@ export fn Compilerˉsourceˉkeywordˉkind(
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "try") { return Compilerˉtokenˉkind.Try; }
         }
         if First == 117u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u16") { return Compilerˉtokenˉkind.U16; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u32") { return Compilerˉtokenˉkind.U32; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u64") { return Compilerˉtokenˉkind.U64; }
         }
@@ -330,6 +344,7 @@ export fn Compilerˉsourceˉkeywordˉkind(
     }
     if Length == 4u32 {
         if First == 98u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "base") { return Compilerˉtokenˉkind.Base; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "bool") { return Compilerˉtokenˉkind.Bool; }
         }
         if First == 100u8 {
@@ -349,6 +364,12 @@ export fn Compilerˉsourceˉkeywordˉkind(
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "text") { return Compilerˉtokenˉkind.Text; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "true") { return Compilerˉtokenˉkind.True; }
         }
+        if First == 114u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "rune") { return Compilerˉtokenˉkind.Rune; }
+        }
+        if First == 117u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "unit") { return Compilerˉtokenˉkind.Unit; }
+        }
         if First == 118u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "void") { return Compilerˉtokenˉkind.Void; }
         }
@@ -367,6 +388,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 109u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "match") { return Compilerˉtokenˉkind.Match; }
+        }
+        if First == 110u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "never") { return Compilerˉtokenˉkind.Never; }
         }
         if First == 119u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "while") { return Compilerˉtokenˉkind.While; }

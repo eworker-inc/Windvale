@@ -18,6 +18,13 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   descriptor assertions and proves missing, unsupported, ambient, changed, or
   hash-mismatched profiles fail without publication. Project 2 and descriptorless
   Seed retain their prior behavior.
+- Began Language 1.0 Migration Slice 2 on the same compiler architecture. The
+  shared front end now has appended identities for `unit`, `never`, `i8`, `i16`,
+  `u16`, `f32`, `f64`, `rune`, and record-update `base`; 23 bounded assertions
+  cover token/type admission and edition separation, and a rebuilt Project 3
+  compiler rejects Seed-only `void` without publishing output. WVB/runtime scalar
+  execution, named update, destructuring, and value-producing control flow remain
+  explicitly pending.
 - Added the first user-facing hosted model chat command with masked WVSC
   credential setup and unlock, OpenAI/Anthropic/Google catalog discovery,
   bounded multi-turn conversation, typed failures, and no automatic retries.

@@ -39,6 +39,14 @@ export enum Compilerˉsourceˉtypeˉkind {
     Builder = 11;
     I64 = 12;
     U64 = 13;
+    Unit = 14;
+    Never = 15;
+    I8 = 16;
+    I16 = 17;
+    U16 = 18;
+    F32 = 19;
+    F64 = 20;
+    Rune = 21;
 }
 
 export enum Compilerˉsourceˉdeclarationˉkind {
@@ -416,12 +424,20 @@ export fn Compilerˉparseˉtype(
         );
     }
     var Kind: Compilerˉsourceˉtypeˉkind = Compilerˉsourceˉtypeˉkind.Unknown;
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I8 { Kind = Compilerˉsourceˉtypeˉkind.I8; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I16 { Kind = Compilerˉsourceˉtypeˉkind.I16; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I32 { Kind = Compilerˉsourceˉtypeˉkind.I32; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U8 { Kind = Compilerˉsourceˉtypeˉkind.U8; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U16 { Kind = Compilerˉsourceˉtypeˉkind.U16; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U32 { Kind = Compilerˉsourceˉtypeˉkind.U32; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I64 { Kind = Compilerˉsourceˉtypeˉkind.I64; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U64 { Kind = Compilerˉsourceˉtypeˉkind.U64; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bool { Kind = Compilerˉsourceˉtypeˉkind.Bool; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.F32 { Kind = Compilerˉsourceˉtypeˉkind.F32; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.F64 { Kind = Compilerˉsourceˉtypeˉkind.F64; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rune { Kind = Compilerˉsourceˉtypeˉkind.Rune; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unit { Kind = Compilerˉsourceˉtypeˉkind.Unit; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Never { Kind = Compilerˉsourceˉtypeˉkind.Never; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Text { Kind = Compilerˉsourceˉtypeˉkind.Text; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bytes { Kind = Compilerˉsourceˉtypeˉkind.Bytes; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier { Kind = Compilerˉsourceˉtypeˉkind.Named; }

@@ -164,10 +164,10 @@ ordinary `Build-Wvb` launcher and `Artifacts/Native-Front-Door` remain the
 qualified semantic-freeze baseline; their historical qualification identities
 are not repinned by forward language evolution.
 
-The Language 1.0 Slice 1 source tree is ahead of that retained candidate. The
+The active Language 1.0 Slice 2 source tree is ahead of that retained candidate. The
 candidate driver deterministically compiles the current 22-module project to a
-1,249,763-byte WVB, SHA-256
-`8abf598ce3d263337f86815b2686fff762c1120dc1865f5bbfa8fb1a7ae7ac9f`.
+1,259,719-byte WVB, SHA-256
+`3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949`.
 That WVB is current-source development evidence, not a promoted build-driver
 container identity.
 

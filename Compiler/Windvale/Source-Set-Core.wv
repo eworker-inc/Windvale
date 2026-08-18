@@ -3,6 +3,7 @@ module Compilerˉsourceˉset profile portable;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
 
 export enum Compilerˉsourceˉsetˉstatus {
     Valid = 0;
@@ -361,6 +362,59 @@ export fn Compilerˉsourceˉspansˉequal(
     return true;
 }
 
+export fn Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+    Edition: u32,
+    Kind: Sourceˉlexer.Compilerˉtokenˉkind
+) -> bool {
+    if Edition == 1u32 {
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Void { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Portable { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Length { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Sequence { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Builder { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Freeze { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Push { return false; }
+        return true;
+    }
+    if Edition == 0u32 {
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unit { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Never { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.I8 { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.I16 { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.U16 { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.F32 { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.F64 { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rune { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Base { return false; }
+        return true;
+    }
+    return false;
+}
+
+export fn Compilerˉsourceˉsetˉfirstˉinvalidˉeditionˉtoken(
+    Source: bytes,
+    Edition: u32
+) -> Sourceˉlexer.Compilerˉsourceˉtoken {
+    var Current: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, 0u32, 1u32, 1u32);
+    var Reading: bool = true;
+    while Reading {
+        if Current.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid {
+            Reading = false;
+        } else if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
+            Reading = false;
+        } else {
+            if !Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(Edition, Current.Kind) {
+                return Current;
+            }
+            Current = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Current.Nextˉoffset, Current.Nextˉline, Current.Nextˉcolumn
+            );
+        }
+    }
+    return Current;
+}
+
 export fn Compilerˉsourceˉsetˉsummaryˉfailure(
     Status: Compilerˉsourceˉsetˉstatus,
     Modules: u32,
@@ -432,6 +486,22 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
             );
         }
         let Source: bytes = View.Source;
+        let Invalidˉeditionˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉsourceˉsetˉfirstˉinvalidˉeditionˉtoken(Source, View.Edition);
+        if Invalidˉeditionˉtoken.Status == Sourceˉlexer.Compilerˉlexˉstatus.Valid &&
+            Invalidˉeditionˉtoken.Kind != Sourceˉlexer.Compilerˉtokenˉkind.End {
+            return Compilerˉsourceˉsetˉsummaryˉfailure(
+                Compilerˉsourceˉsetˉstatus.Sourceˉedition,
+                Scan.Modules,
+                Scan.Sourceˉbytes,
+                Index,
+                View.Originˉoffset + Invalidˉeditionˉtoken.Offset,
+                Invalidˉeditionˉtoken.Line,
+                Invalidˉeditionˉtoken.Column,
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
+            );
+        }
         let Parsed: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Source);
         if Parsed.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
             return Compilerˉsourceˉsetˉsummaryˉfailure(

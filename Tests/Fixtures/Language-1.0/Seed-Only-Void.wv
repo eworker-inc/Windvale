@@ -1,0 +1,9 @@
+#!wv/1 en@1
+module Languageˉoneˉseedˉonlyˉvoid;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> void {
+    return;
+}

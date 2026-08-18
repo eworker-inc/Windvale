@@ -149,7 +149,6 @@ build_driver="$temporary_directory/Build-Driver.elf"
 lowerer_wvb="$temporary_directory/Lowerer.wvb"
 lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
-front_door="$repository_root/Artifacts/Native-Front-Door/linux-x64/wvbuild.elf"
 project_checkpoint_host_storage=NotRun
 project_checkpoint_host_root_writer=NotRun
 project_checkpoint_host_local_service=NotRun
@@ -302,6 +301,7 @@ prepare_cached_build_driver() {
 }
 
 if ((development == 1)); then
+    echo 'Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb'
     project_wvb_report="$temporary_directory/Build-Driver-Wvb-Cache.txt"
     "$script_directory/Build-Cached-Project-Wvb.sh" \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
@@ -310,29 +310,36 @@ if ((development == 1)); then
         's/^native project wvb cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
         "$project_wvb_report")
     [[ $project_wvb_checkpoint == Created || $project_wvb_checkpoint == Hit ]] || exit 1
+    echo 'Progress: step=database-storage-tools item=2/4 detail=package-build-driver'
     prepare_cached_build_driver "$build_driver_wvb" || exit $?
+    echo 'Progress: step=database-storage-tools item=3/4 detail=verify-lowerer'
     lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
     verify_file "$lowerer" 7499776 \
         2ee161ac0a6e885e988e12f9e242005fdb8218776991bfb08ffc6d8417ac1e28 || exit $?
 else
+    echo 'Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb'
     "$script_directory/Build-Current-Wvb.sh" \
         "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
         "$build_driver_wvb" >/dev/null || exit $?
-    verify_file "$build_driver_wvb" 1142818 \
-        125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 || exit $?
+    verify_file "$build_driver_wvb" 1259719 \
+        3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 || exit $?
+    echo 'Progress: step=database-storage-tools item=2/4 detail=package-build-driver'
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
         2 "$build_driver_wvb" "$build_driver" --development-cache >/dev/null || exit $?
 
+    echo 'Progress: step=database-storage-tools item=3/4 detail=build-lowerer-wvb'
     "$build_driver" --workspace "$workspace_path" --project \
         "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
         "$lowerer_wvb" >/dev/null || exit $?
     verify_file "$lowerer_wvb" 523087 \
         6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 || exit $?
+    echo 'Progress: step=database-storage-tools item=4/4 detail=package-lowerer'
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
         6 "$lowerer_wvb" "$lowerer" --development-cache >/dev/null || exit $?
 fi
 
 if ((development == 1 && prepare_only == 0)); then
+    echo 'Progress: step=database-storage-tools item=4/4 detail=start-hosted-session'
     node "$hosted_application_session" serve \
         "$hosted_application_session_ready" linux "$build_driver" "$lowerer" \
         >"$hosted_application_session_log" 2>&1 &
@@ -342,6 +349,9 @@ if ((development == 1 && prepare_only == 0)); then
         cat -- "$hosted_application_session_log" >&2
         exit 1
     fi
+fi
+if ((development == 1 && prepare_only == 1)); then
+    echo 'Progress: step=database-storage-tools item=4/4 detail=tools-ready'
 fi
 
 if ((development == 1)); then

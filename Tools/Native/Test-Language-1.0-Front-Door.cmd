@@ -21,12 +21,12 @@ mkdir "%Work%" || exit /b 1
 set "Result=1"
 set "FailureStep=frozen-fixtures"
 
-echo START language 1 front door phase=frozen-fixtures item=1/3
+echo START language 1 front door phase=frozen-fixtures item=1/4
 node "%Native%\Verify-Language-1.0-Migration-Fixtures.mjs" || goto :cleanup
-echo PASS  language 1 front door phase=frozen-fixtures item=1/3
+echo PASS  language 1 front door phase=frozen-fixtures item=1/4
 
 set "FailureStep=descriptor"
-echo START language 1 front door phase=descriptor item=2/3
+echo START language 1 front door phase=descriptor item=2/4
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-A.wvb" >nul || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Descriptor-A.wvb" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
@@ -40,10 +40,18 @@ for /f "usebackq delims=" %%L in ("%Work%\Run.out") do (
 )
 if not "%RunLines%"=="1" goto :cleanup
 if not "%RunLine%"=="Result: 42" goto :cleanup
-echo PASS  language 1 front door phase=descriptor item=2/3
+echo PASS  language 1 front door phase=descriptor item=2/4
+
+set "FailureStep=value-front-end"
+echo START language 1 front door phase=value-front-end item=3/4
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Value-Front-End.wvproj" "%Work%\Value-Front-End.wvb" >nul || goto :cleanup
+call "%Native%\Run-Wvb.cmd" "%Work%\Value-Front-End.wvb" >"%Work%\Value-Front-End.out" 2>"%Work%\Value-Front-End.err" || goto :cleanup
+for %%F in ("%Work%\Value-Front-End.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"Result: 42" "%Work%\Value-Front-End.out" >nul || goto :cleanup
+echo PASS  language 1 front door phase=value-front-end item=3/4
 
 set "FailureStep=compiler-segmented-cache"
-echo START language 1 front door phase=compiler-slice item=3/3
+echo START language 1 front door phase=compiler-slice item=4/4
 call "%Native%\Build-Cached-Segmented-Project.cmd" ^
     "%RepositoryRoot%\Projects\Examples\Windvale-Compiler.wvproj" ^
     "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe" ^
@@ -101,6 +109,8 @@ set "FailureStep=compiler-negative-missing-profile"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Missing-Edition-Profile.wv" "%Work%\Missing-Profile.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-descriptorless"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Descriptorless-Edition-Header.wv" "%Work%\Descriptorless.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-seed-void"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Seed-Only-Void.wv" "%Work%\Seed-Only-Void.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-no-ambient-profile"
 "%Work%\Compiler.exe" "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" "%Work%\Ambient.wvb" >"%Work%\Ambient.out" 2>"%Work%\Ambient.err"
 if not errorlevel 1 goto :cleanup
@@ -114,7 +124,7 @@ call :expect_rejection_with_digest "%RepositoryRoot%\Tests\Fixtures\Language-1.0
 set "FailureStep=compiler-identity"
 for %%F in ("%Work%\Minimum-A.wvb") do if not "%%~zF"=="221" goto :cleanup
 certutil -hashfile "%Work%\Minimum-A.wvb" SHA256 | findstr /I /C:"25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae" >nul || goto :cleanup
-echo PASS  language 1 front door phase=compiler-slice item=3/3
+echo PASS  language 1 front door phase=compiler-slice item=4/4
 set "Result=0"
 
 :cleanup
@@ -128,10 +138,12 @@ if not "%Result%"=="0" (
     if exist "%Work%\Compile-B.err" type "%Work%\Compile-B.err" >&2
     if exist "%Work%\Minimum.out" type "%Work%\Minimum.out" >&2
     if exist "%Work%\Minimum.err" type "%Work%\Minimum.err" >&2
+    if exist "%Work%\Value-Front-End.out" type "%Work%\Value-Front-End.out" >&2
+    if exist "%Work%\Value-Front-End.err" type "%Work%\Value-Front-End.err" >&2
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=11 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 compiler-cases=7 compiler-result=42 compiler-wvb-bytes=221
+echo native language 1 front door status=Passed cases=13 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=8 compiler-result=42 compiler-wvb-bytes=221
 exit /b 0
 
 :expect_rejection

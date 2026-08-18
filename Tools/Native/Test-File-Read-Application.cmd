@@ -9,7 +9,6 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
-set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%Workspace:\=/%"
 
@@ -20,22 +19,25 @@ mkdir "%Work%" || exit /b 1
 set "WorkResource=%Work:\=/%"
 set "Result=1"
 
-echo START native file read phase=self-host item=1/6
+echo START native file read phase=tools item=1/6
 set "BuildProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
-set "BuildProjectResource=%BuildProject:\=/%"
-"%FrontDoor%" --workspace "%WorkspaceResource%" --project ^
-    "%BuildProjectResource%" "%WorkResource%/Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1142818 125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 "current build driver WVB" || goto :cleanup
+echo Progress: step=file-read-tools item=1/4 detail=build-driver-wvb
+call "%Native%\Build-Current-Wvb.cmd" ^
+    "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
+call :verify_file "%Work%\Build-Driver.wvb" 1259719 3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 "current build driver WVB" || goto :cleanup
+echo Progress: step=file-read-tools item=2/4 detail=package-build-driver
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
 set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
 set "LowererProjectResource=%LowererProject:\=/%"
+echo Progress: step=file-read-tools item=3/4 detail=build-lowerer-wvb
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
     "%LowererProjectResource%" "%WorkResource%/Lowerer.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Lowerer.wvb" 523087 6b56da9c4ee12917fc4e59f1745ebbfd854335c011f1a5c2c27613abedc1db41 "current lowerer WVB" || goto :cleanup
+echo Progress: step=file-read-tools item=4/4 detail=package-lowerer
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 ^
     "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
-echo PASS  native file read phase=self-host item=1/6
+echo PASS  native file read phase=tools item=1/6
 
 echo START native file read phase=compile item=2/6
 echo native file read compile step=source
