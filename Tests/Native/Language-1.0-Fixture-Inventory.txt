@@ -1,0 +1,18 @@
+windvale-language-1-source-fixture-inventory 1
+freeze|Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt|3702|c9517841eae6b6e86778cb1dd88711feb38929dec8fe79e084eec44fa22c512a
+bundle|Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission|2|686|0690d8ecc6874c58dd7843018431843b1e3a8b198e828e962402f9443a4a2cd4|slice-1|identity-only
+bundle|Documents/Project/Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source|2|716|0a69ec4eb2714b2ef321957f7a4b75b63d0677b247675177da4240c3b5750cb9|slice-1|identity-only-draft-language
+bundle|Documents/Project/Language-1.0-Localization-Workloads/03-Conversion-And-Source-Tooling|3|1095|63b0f861e58cb992b7f5c8f0b1289fbda936b6880e9a398fba6238b54d2e2ff9|slice-1|identity-only
+bundle|Documents/Project/Language-1.0-Localization-Workloads/04-Unicode-And-Multilingual-Security|1|695|90b1075e5a91533008b070c1a15c5028964555beac6652c769fd127b64a0aab1|slice-1|identity-only
+bundle|Documents/Project/Language-1.0-Localization-Workloads/05-Shipment-Cache-And-Cross-Host|0|0|e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|slice-1|identity-only-no-source
+bundle|Documents/Project/Language-1.0-Paper-Corpus/01-Command-Line-Application|5|22685|5cfe3cee37734ebef374a3372322a6d7da1f67175da3827bdf597536b3f331e7|slices-1-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/02-Bounded-File-Copy|4|28814|6494fee4d3c63b1458d958293572dda63cd2f704d871e42d996fc57729263750|slices-1-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/03-Database-Transaction|4|27258|da9c4a0c6c00bb8bda89b176c8552022541fafcbaed54a1c81328497dc7f634d|slices-1-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/04-Compiler-Front-End|8|78109|4a624d959ec4b8aef04844d29bf2895d94cecbe8cb7bd5cac8990a2f97d9a668|slices-1-2-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/05-Http-Request-Handler|7|73923|3d9b6f2ba243d88de47e758e069a62ec3627660cf9b29c90dfbf272b5b5b86c6|slices-1-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/06-Concurrent-Hosted-Service|3|28306|c7e237ab6950e70d7d4397c67ee211de40b7bf6aae6fa0ec2bbef2fea7a61e9d|slices-1-3-4-5-6-7|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State|8|65944|4bc768eb9f8bab485331a118979413cda6b6e518d11d1daf0cf79705e4b859b9|slices-1-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/08-Numeric-Graphics-Processing|6|26518|52135feef0e6e89a274dd897d2df73c9acf8d73d4f5cb8dc66470eb2e0f8de50|slices-1-2-4-5-6-7|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/09-Package-Parser-Deterministic-Map|7|48475|fcc2797bf5b9254a74dc9e6da20ccc8880b9237275bc8c26e542e190ff7cb2ee|slices-1-3-4-5-6|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/10-System-Ffi-Boundary|5|30309|ca2e25b448bd935f634bfe6d4ad6e664bec9e7c52bd1a2e4f203b1f8debe6435|slices-1-3-4-5-6-8|identity-only
+bundle|Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference|7|48792|c4388453d9a777571dd0aa79fa7b7aa4a985105736c4dbd78ed12277f15c7740|slices-1-2-3-4-5-6-7|identity-only

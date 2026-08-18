@@ -1,0 +1,138 @@
+module Languageˉoneˉsourceˉdescriptorˉselfˉtest profile portable;
+
+import Compilerˉsourceˉdescriptor as Descriptor;
+
+fn Read(Input: text) -> Descriptor.Compilerˉsourceˉdescriptor {
+    return Descriptor.Compilerˉreadˉsourceˉdescriptor(Textˉtoˉutf8(Input));
+}
+
+fn Hasˉstatus(
+    Input: text,
+    Status: Descriptor.Compilerˉsourceˉdescriptorˉstatus
+) -> bool {
+    let Result: Descriptor.Compilerˉsourceˉdescriptor = Read(Input);
+    return Result.Status == Status;
+}
+
+export fn Main() -> i32 {
+    let English: Descriptor.Compilerˉsourceˉdescriptor =
+        Read("#!wv/1 en@1\nmodule Example;");
+    if English.Status != Descriptor.Compilerˉsourceˉdescriptorˉstatus.Valid {
+        return 1;
+    }
+    if English.Edition != 1u32 { return 2; }
+    if English.Profileˉoffset != 7u32 { return 3; }
+    if English.Profileˉlength != 2u32 { return 4; }
+    if English.Profileˉversion != 1u32 { return 5; }
+    if English.Descriptorˉlength != 11u32 { return 6; }
+    if English.Bodyˉoffset != 12u32 { return 7; }
+
+    let Chinese: Descriptor.Compilerˉsourceˉdescriptor =
+        Read("#!wv/1 zh-Hans@17\r\nmodule Example;");
+    if Chinese.Status != Descriptor.Compilerˉsourceˉdescriptorˉstatus.Valid {
+        return 8;
+    }
+    if Chinese.Profileˉlength != 7u32 { return 9; }
+    if Chinese.Profileˉversion != 17u32 { return 10; }
+    if Chinese.Descriptorˉlength != 17u32 { return 11; }
+    if Chinese.Bodyˉoffset != 19u32 { return 12; }
+
+    let Maximum: Descriptor.Compilerˉsourceˉdescriptor =
+        Read("#!wv/1 test.unicode-v17@4294967295\n");
+    if Maximum.Status != Descriptor.Compilerˉsourceˉdescriptorˉstatus.Valid {
+        return 13;
+    }
+    if Maximum.Profileˉversion != 4294967295u32 { return 14; }
+
+    if !Hasˉstatus(
+        "module Seed profile portable;",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor
+    ) { return 15; }
+    if !Hasˉstatus(
+        "﻿#!wv/1 en@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor
+    ) { return 16; }
+    if !Hasˉstatus(
+        "#!wv/2 en@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Unsupportedˉedition
+    ) { return 17; }
+    if !Hasˉstatus(
+        "#!wv/1\ten@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Expectedˉspace
+    ) { return 18; }
+    if !Hasˉstatus(
+        "#!wv/1 a@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Profileˉtooˉshort
+    ) { return 19; }
+    if !Hasˉstatus(
+        "#!wv/1 1n@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile
+    ) { return 20; }
+    if !Hasˉstatus(
+        "#!wv/1 en-@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile
+    ) { return 21; }
+    if !Hasˉstatus(
+        "#!wv/1 en..us@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile
+    ) { return 22; }
+    if !Hasˉstatus(
+        "#!wv/1 en_us@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile
+    ) { return 23; }
+    if !Hasˉstatus(
+        "#!wv/1 en\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Missingˉprofileˉseparator
+    ) { return 24; }
+    if !Hasˉstatus(
+        "#!wv/1 en@0\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion
+    ) { return 25; }
+    if !Hasˉstatus(
+        "#!wv/1 en@\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion
+    ) { return 34; }
+    if !Hasˉstatus(
+        "#!wv/1 en@01\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion
+    ) { return 26; }
+    if !Hasˉstatus(
+        "#!wv/1 en@4294967296\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Versionˉoutˉofˉrange
+    ) { return 27; }
+    if !Hasˉstatus(
+        "#!wv/1 en@1u32\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion
+    ) { return 28; }
+    if !Hasˉstatus(
+        "#!wv/1 en@1",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Missingˉlineˉending
+    ) { return 29; }
+    if !Hasˉstatus(
+        "#!wv/1 en@1\r",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Loneˉcarriageˉreturn
+    ) { return 30; }
+    if !Hasˉstatus(
+        "#!wv/1 én@1\n",
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Nonˉascii
+    ) { return 31; }
+
+    var Longˉprofile: bytes = Textˉtoˉutf8("#!wv/1 ");
+    var Index: u32 = 0u32;
+    while Index < 7u32 {
+        Longˉprofile = Bytesˉconcat(
+            Longˉprofile,
+            Textˉtoˉutf8("aaaaaaaaaaaaaaaa")
+        );
+        Index = Index + 1u32;
+    }
+    Longˉprofile = Bytesˉconcat(Longˉprofile, Textˉtoˉutf8("@1\n"));
+    let Longˉresult: Descriptor.Compilerˉsourceˉdescriptor =
+        Descriptor.Compilerˉreadˉsourceˉdescriptor(Longˉprofile);
+    if Longˉresult.Status !=
+        Descriptor.Compilerˉsourceˉdescriptorˉstatus.Profileˉtooˉlong {
+        return 32;
+    }
+    if Longˉresult.Failureˉoffset > 103u32 { return 33; }
+    return 42;
+}

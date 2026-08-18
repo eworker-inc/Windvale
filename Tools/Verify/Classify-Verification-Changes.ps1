@@ -79,13 +79,50 @@ function Test-LanguagePaperDataPath {
     )
 }
 
+function Test-LanguageFrozenSourceDesignPath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    if ($Path.StartsWith(
+        'Documents/Project/Language-1.0-Paper-Corpus/',
+        [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Documents/Project/Language-1.0-Localization-Workloads/',
+            [StringComparison]::Ordinal)) {
+        return $true
+    }
+    if ($Path -match '^Documents/Decisions/(\d{4})-') {
+        $Number = [int]$Matches[1]
+        if ($Number -ge 751 -and $Number -le 766) { return $true }
+    }
+    return $Path -in @(
+        'Specifications/Windvale-Language-1.0.md',
+        'Specifications/Windvale-Language-1.0-Grammar.md',
+        'Specifications/Windvale-Language-1.0.ebnf',
+        'Specifications/Windvale-Language-1.0-Localized-Source.md',
+        'Specifications/Windvale-Language-1.0-Source-Profile-Formats.md',
+        'Specifications/Windvale-Language-1.0-Foundation.md',
+        'Specifications/Windvale-Language-1.0-Foundation-Registry.md',
+        'Specifications/Source-Naming.md',
+        'Documents/Project/Windvale-Language-1.0-Design.md',
+        'Documents/Project/Windvale-Language-1.0-Migration.md',
+        'Documents/Project/Windvale-Language-1.0-Paper-Corpus.md',
+        'Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md',
+        'Documents/Project/Windvale-Language-1.0-Localization-Workloads.md',
+        'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt'
+    )
+}
+
 function Test-LightweightPath {
     param(
         [Parameter(Mandatory)]
         [string]$Path
     )
 
-    if ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
+    if ((Test-LanguageFrozenSourceDesignPath $Path) -or
+        $Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         return $false
     }
 

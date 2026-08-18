@@ -11,10 +11,10 @@ $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'go
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
-    @{ Name = 'Language 1.0 paper source'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'); Scope = 'lightweight'; Editor = $false; Areas = @() },
-    @{ Name = 'Language 1.0 localization paper source'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Source/Test-Unicode-Admission.wv'); Scope = 'lightweight'; Editor = $false; Areas = @() },
-    @{ Name = 'Language 1.0 paper package data'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'); Scope = 'lightweight'; Editor = $false; Areas = @() },
-    @{ Name = 'Language 1.0 localization reference artifact'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'Language 1.0 paper source'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
+    @{ Name = 'Language 1.0 localization paper source'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Source/Test-Unicode-Admission.wv'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
+    @{ Name = 'Language 1.0 paper package data'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
+    @{ Name = 'Language 1.0 localization reference artifact'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'browser playground website contract'; Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1'); Scope = 'website'; Editor = $false; Areas = @() },
@@ -45,7 +45,7 @@ $NativeCases = @(
         Paths = @(
             'Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'
         )
-        Suites = @()
+        Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -54,7 +54,26 @@ $NativeCases = @(
         Paths = @(
             'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock'
         )
-        Suites = @()
+        Suites = @('language-1-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 frozen source and descriptor front door'
+        Paths = @(
+            'Compiler/Windvale/Source-Descriptor-Core.wv',
+            'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
+            'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
+            'Tests/Native/Language-1.0-Fixture-Inventory.txt',
+            'Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs',
+            'Tools/Native/Test-Language-1.0-Front-Door.cmd',
+            'Tools/Native/Test-Language-1.0-Front-Door.sh',
+            'Specifications/Windvale-Language-1.0-Grammar.md',
+            'Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md',
+            'Documents/Project/Language-1.0-Paper-Corpus/01-Command-Line-Application/Source/Inspect-Application.wv'
+        )
+        Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2857,7 +2876,7 @@ $NativeCases = @(
             'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )
-        Suites = @()
+        Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $true
     },
@@ -2867,7 +2886,7 @@ $NativeCases = @(
             'Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv',
             'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Source/Test-Unicode-Admission.wv'
         )
-        Suites = @()
+        Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3087,9 +3106,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 102 -or
+if ($VerificationOwnerLines.Count -ne 103 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 101-owner inventory differs.'
+    throw 'The native verification-owner header or exact 102-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3127,7 +3146,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4638 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4641 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

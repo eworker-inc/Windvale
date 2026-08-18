@@ -8,6 +8,13 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Froze the exact Windvale Language 1.0 source design and began the ordered
+  migration with an identity-pinned 16-bundle/72-source fixture inventory,
+  reproducible compiler and WIR baselines, and a bounded allocation-free
+  edition-1 descriptor reader. Its focused cross-host owner verifies all 250
+  frozen inputs and 34 accepted/rejected descriptor cases without routing
+  ordinary development through the broad compiler gates; Seed remains the only
+  implemented source contract while profile resolution and parsing advance.
 - Added the first user-facing hosted model chat command with masked WVSC
   credential setup and unlock, OpenAI/Anthropic/Google catalog discovery,
   bounded multi-turn conversation, typed failures, and no automatic retries.

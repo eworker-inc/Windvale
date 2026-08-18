@@ -945,6 +945,39 @@ function Test-LanguagePaperDataPath {
     )
 }
 
+function Test-LanguageFrozenSourceDesignPath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    if ($Path.StartsWith(
+        'Documents/Project/Language-1.0-Paper-Corpus/',
+        [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Documents/Project/Language-1.0-Localization-Workloads/',
+            [StringComparison]::Ordinal)) {
+        return $true
+    }
+    if ($Path -match '^Documents/Decisions/(\d{4})-') {
+        $Number = [int]$Matches[1]
+        if ($Number -ge 751 -and $Number -le 766) { return $true }
+    }
+    return $Path -in @(
+        'Specifications/Windvale-Language-1.0.md',
+        'Specifications/Windvale-Language-1.0-Grammar.md',
+        'Specifications/Windvale-Language-1.0.ebnf',
+        'Specifications/Windvale-Language-1.0-Localized-Source.md',
+        'Specifications/Windvale-Language-1.0-Source-Profile-Formats.md',
+        'Specifications/Windvale-Language-1.0-Foundation.md',
+        'Specifications/Windvale-Language-1.0-Foundation-Registry.md',
+        'Specifications/Source-Naming.md',
+        'Documents/Project/Windvale-Language-1.0-Design.md',
+        'Documents/Project/Windvale-Language-1.0-Migration.md',
+        'Documents/Project/Windvale-Language-1.0-Paper-Corpus.md',
+        'Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md',
+        'Documents/Project/Windvale-Language-1.0-Localization-Workloads.md',
+        'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt'
+    )
+}
+
 function Require-Full-Database-Storage {
     $script:DatabaseStorageDevelopmentEligible = $false
     Add-Suite 'database-storage'
@@ -1069,6 +1102,10 @@ function Add-Native-Tool-Suite {
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
+    }
+    if ($Stem -eq 'Verify-Language-1.0-Migration-Fixtures') {
+        Add-Suite 'language-1-front-door'
+        return
     }
     if ($Stem -eq 'Build-Cached-Os-X64-Project-Wvbs') {
         $script:OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
@@ -1368,7 +1405,10 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
         [IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
     )
-    if (
+    if (Test-LanguageFrozenSourceDesignPath $Path) {
+        Add-Suite 'language-1-front-door'
+        continue
+    } elseif (
         (Test-LanguagePaperSourcePath $Path) -or
         (Test-LanguagePaperDataPath $Path) -or
         $Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal) -or
@@ -1384,6 +1424,14 @@ foreach ($Path in $Paths) {
         continue
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Descriptor-Core.wv',
+        'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
+        'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
+        'Tests/Native/Language-1.0-Fixture-Inventory.txt'
+    )) {
+        Add-Suite 'language-1-front-door'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Function-Only.wvproj',
         'Tests/Fixtures/Source-Wvb/Function-Only.wv'

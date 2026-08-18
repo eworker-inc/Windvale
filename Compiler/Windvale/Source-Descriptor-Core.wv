@@ -1,0 +1,314 @@
+module Compilerˉsourceˉdescriptor profile portable;
+
+export enum Compilerˉsourceˉdescriptorˉstatus {
+    Valid = 0;
+    Missingˉdescriptor = 1;
+    Unsupportedˉedition = 2;
+    Expectedˉspace = 3;
+    Profileˉtooˉshort = 4;
+    Profileˉtooˉlong = 5;
+    Invalidˉprofile = 6;
+    Missingˉprofileˉseparator = 7;
+    Invalidˉversion = 8;
+    Versionˉoutˉofˉrange = 9;
+    Missingˉlineˉending = 10;
+    Loneˉcarriageˉreturn = 11;
+    Descriptorˉtooˉlong = 12;
+    Nonˉascii = 13;
+}
+
+export record Compilerˉsourceˉdescriptor {
+    Status: Compilerˉsourceˉdescriptorˉstatus;
+    Edition: u32;
+    Profileˉoffset: u32;
+    Profileˉlength: u32;
+    Profileˉversion: u32;
+    Descriptorˉlength: u32;
+    Bodyˉoffset: u32;
+    Failureˉoffset: u32;
+}
+
+fn Compilerˉsourceˉdescriptorˉfailure(
+    Status: Compilerˉsourceˉdescriptorˉstatus,
+    Offset: u32
+) -> Compilerˉsourceˉdescriptor {
+    return Compilerˉsourceˉdescriptor(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Offset
+    );
+}
+
+fn Compilerˉsourceˉdescriptorˉvalid(
+    Profileˉlength: u32,
+    Version: u32,
+    Descriptorˉlength: u32,
+    Bodyˉoffset: u32
+) -> Compilerˉsourceˉdescriptor {
+    return Compilerˉsourceˉdescriptor(
+        Compilerˉsourceˉdescriptorˉstatus.Valid,
+        1u32,
+        7u32,
+        Profileˉlength,
+        Version,
+        Descriptorˉlength,
+        Bodyˉoffset,
+        Bodyˉoffset
+    );
+}
+
+fn Compilerˉsourceˉdescriptorˉbyte(Input: bytes, Offset: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+}
+
+fn Compilerˉsourceˉdescriptorˉisˉletter(Value: u32) -> bool {
+    if Value >= 65u32 && Value <= 90u32 { return true; }
+    return Value >= 97u32 && Value <= 122u32;
+}
+
+fn Compilerˉsourceˉdescriptorˉisˉdigit(Value: u32) -> bool {
+    return Value >= 48u32 && Value <= 57u32;
+}
+
+export fn Compilerˉreadˉsourceˉdescriptor(
+    Input: bytes
+) -> Compilerˉsourceˉdescriptor {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 6u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor,
+            Total
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 0u32) != 35u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor,
+            0u32
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 1u32) != 33u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor,
+            1u32
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 2u32) != 119u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor,
+            2u32
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 3u32) != 118u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor,
+            3u32
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 4u32) != 47u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉdescriptor,
+            4u32
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 5u32) != 49u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Unsupportedˉedition,
+            5u32
+        );
+    }
+    if Total == 6u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Expectedˉspace,
+            6u32
+        );
+    }
+    if Compilerˉsourceˉdescriptorˉbyte(Input, 6u32) != 32u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Expectedˉspace,
+            6u32
+        );
+    }
+
+    var Cursor: u32 = 7u32;
+    var Atomˉstart: bool = true;
+    while Cursor < Total {
+        if Cursor >= 128u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Descriptorˉtooˉlong,
+                Cursor
+            );
+        }
+        let Value: u32 = Compilerˉsourceˉdescriptorˉbyte(Input, Cursor);
+        if Value > 127u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Nonˉascii,
+                Cursor
+            );
+        }
+        if Value == 64u32 { break; }
+        if Value == 10u32 || Value == 13u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Missingˉprofileˉseparator,
+                Cursor
+            );
+        }
+        if Cursor - 7u32 >= 96u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Profileˉtooˉlong,
+                Cursor
+            );
+        }
+        if Compilerˉsourceˉdescriptorˉisˉletter(Value) {
+            Atomˉstart = false;
+        } else if Compilerˉsourceˉdescriptorˉisˉdigit(Value) {
+            if Atomˉstart {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile,
+                    Cursor
+                );
+            }
+        } else if Value == 45u32 || Value == 46u32 {
+            if Atomˉstart {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile,
+                    Cursor
+                );
+            }
+            Atomˉstart = true;
+        } else {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile,
+                Cursor
+            );
+        }
+        Cursor = Cursor + 1u32;
+    }
+
+    if Cursor >= Total {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Missingˉprofileˉseparator,
+            Cursor
+        );
+    }
+    let Profileˉlength: u32 = Cursor - 7u32;
+    if Profileˉlength < 2u32 {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Profileˉtooˉshort,
+            Cursor
+        );
+    }
+    if Atomˉstart {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Invalidˉprofile,
+            Cursor
+        );
+    }
+
+    Cursor = Cursor + 1u32;
+    if Cursor >= Total {
+        return Compilerˉsourceˉdescriptorˉfailure(
+            Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion,
+            Cursor
+        );
+    }
+    var Version: u32 = 0u32;
+    var Versionˉdigits: u32 = 0u32;
+    while Cursor < Total {
+        let Versionˉbyte: u32 = Compilerˉsourceˉdescriptorˉbyte(Input, Cursor);
+        if Versionˉbyte == 10u32 {
+            if Versionˉdigits == 0u32 {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion,
+                    Cursor
+                );
+            }
+            if Cursor > 128u32 {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Descriptorˉtooˉlong,
+                    Cursor
+                );
+            }
+            return Compilerˉsourceˉdescriptorˉvalid(
+                Profileˉlength, Version, Cursor, Cursor + 1u32
+            );
+        }
+        if Versionˉbyte == 13u32 {
+            if Versionˉdigits == 0u32 {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion,
+                    Cursor
+                );
+            }
+            if Cursor > 128u32 {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Descriptorˉtooˉlong,
+                    Cursor
+                );
+            }
+            if Cursor + 1u32 >= Total {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Loneˉcarriageˉreturn,
+                    Cursor
+                );
+            }
+            if Compilerˉsourceˉdescriptorˉbyte(Input, Cursor + 1u32) != 10u32 {
+                return Compilerˉsourceˉdescriptorˉfailure(
+                    Compilerˉsourceˉdescriptorˉstatus.Loneˉcarriageˉreturn,
+                    Cursor
+                );
+            }
+            return Compilerˉsourceˉdescriptorˉvalid(
+                Profileˉlength, Version, Cursor, Cursor + 2u32
+            );
+        }
+        if Cursor >= 128u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Descriptorˉtooˉlong,
+                Cursor
+            );
+        }
+        if Versionˉbyte > 127u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Nonˉascii,
+                Cursor
+            );
+        }
+        if !Compilerˉsourceˉdescriptorˉisˉdigit(Versionˉbyte) {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion,
+                Cursor
+            );
+        }
+        let Digit: u32 = Versionˉbyte - 48u32;
+        if Versionˉdigits == 0u32 && Digit == 0u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Invalidˉversion,
+                Cursor
+            );
+        }
+        if Version > 429496729u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Versionˉoutˉofˉrange,
+                Cursor
+            );
+        }
+        if Version == 429496729u32 && Digit > 5u32 {
+            return Compilerˉsourceˉdescriptorˉfailure(
+                Compilerˉsourceˉdescriptorˉstatus.Versionˉoutˉofˉrange,
+                Cursor
+            );
+        }
+        Version = Version * 10u32 + Digit;
+        Versionˉdigits = Versionˉdigits + 1u32;
+        Cursor = Cursor + 1u32;
+    }
+    return Compilerˉsourceˉdescriptorˉfailure(
+        Compilerˉsourceˉdescriptorˉstatus.Missingˉlineˉending,
+        Cursor
+    );
+}

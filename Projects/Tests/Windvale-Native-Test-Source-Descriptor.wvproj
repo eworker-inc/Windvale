@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+emit wvb

@@ -93,7 +93,14 @@ identity. Source implementation begins only after the separate named replacement
 source-freeze decision. [Decision 0767](../Decisions/0767-Freeze-Windvale-Language-1.0-Source.md)
 now freezes that exact identity and authorizes Migration Slice 0. Seed remains
 the implemented language until focused executable gates advance each edition-1
-slice; the draft Chinese pack retains its independent qualification path.
+slice; the draft Chinese pack retains its independent qualification path. The
+first [migration evidence checkpoint](Windvale-Language-1.0-Migration-Evidence.md)
+now fixes all 16 workload bundles and 72 source fixtures, records the pre-slice
+compiler/WIR/memory/artifact baseline, and adds the bounded source-descriptor
+reader under one focused owner. It deliberately does not yet claim profile-pack
+resolution or Language 1.0 parsing. The next Slice 1 checkpoint connects that
+reader to the existing compiler's edition-dispatch front door and admits the
+exact locked `en@1` profile without creating a parallel compiler.
 
 ## How to read this roadmap
 
