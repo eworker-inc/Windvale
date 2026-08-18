@@ -24,6 +24,15 @@ candidate="$test_directory/Candidate.wvb"
     >"$test_directory/Run.out" 2>"$test_directory/Run.err" || exit 1
 grep -Fx 'Result: 42' "$test_directory/Run.out" >/dev/null || exit 1
 
+project3_candidate="$test_directory/Project3-Candidate.wvb"
+"$script_directory/Build-Wvb.sh" \
+    "$fixtures/Project3-Manifest-Self-Test.wvproj" "$project3_candidate" \
+    >"$test_directory/Project3.out" 2>"$test_directory/Project3.err" || exit 1
+"$script_directory/Run-Wvb.sh" "$project3_candidate" \
+    >"$test_directory/Project3-Run.out" \
+    2>"$test_directory/Project3-Run.err" || exit 1
+grep -Fx 'Result: 42' "$test_directory/Project3-Run.out" >/dev/null || exit 1
+
 reject() {
     local case_workspace=$1
     local case_project=$2
@@ -42,8 +51,9 @@ reject "$workspace" "$fixtures/Legacy-Project1.wvproj" WVP1001
 reject "$workspace" "$fixtures/Parent-Escape-Project2.wvproj" WVP1006
 reject "$workspace" "$fixtures/Absolute-Path-Project2.wvproj" WVP1006
 reject "$workspace" "$fixtures/Duplicate-Path-Project2.wvproj" WVP1007
+reject "$workspace" "$fixtures/Project2-Profile-Directive.wvproj" WVP1003
 reject "$fixtures/Invalid-Header.wvws" "$fixtures/Workspace-Project2-Build.wvproj" WVW1001
 reject "$fixtures/Trailing-Data.wvws" "$fixtures/Workspace-Project2-Build.wvproj" WVW1002
 reject "$fixtures/Nested/Windvale.wvws" "$fixtures/Workspace-Project2-Build.wvproj" WVW1003
 
-echo 'native workspace/project test status=Complete cases=8'
+echo 'native workspace/project test status=Complete cases=10'

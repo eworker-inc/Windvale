@@ -7,15 +7,15 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-The current checkpoint completes the first vertical Slice 1 path. The existing
-compiler now admits an edition-1 source descriptor, resolves only its pinned
-bootstrap `en@1` binding, exposes the remaining bytes as an immutable view,
-parses the required standalone module metadata, and compiles one minimal Core
-program deterministically through WIR and WVB. Seed remains available as the
-temporary descriptorless migration path. External lock/profile artifact loading,
-localized lexicons and vocabularies, Unicode identifier admission, most
-Language 1.0 semantics, and paired-host Language 1.0 qualification remain
-pending.
+The current checkpoint completes Migration Slice 1. The existing compiler admits
+an edition-1 source descriptor only through an explicitly supplied, hash-pinned
+source-input lock and composite source profile. It resolves the frozen `en@1`
+component chain, exposes the remaining bytes as an immutable view, parses the
+required standalone module metadata, and compiles one minimal Core program
+deterministically through WIR and WVB. Project 3 carries those artifact inputs;
+Project 2 and descriptorless Seed retain their prior behavior. Localized lexicon
+execution, public-library vocabulary lookup, Unicode identifier admission, most
+Language 1.0 semantics, and paired-host Language 1.0 qualification remain pending.
 
 ## Frozen source identity
 
@@ -55,21 +55,20 @@ line and implements the frozen universal descriptor boundary:
 - a 128-byte maximum excluding the line ending; and
 - structured status and byte offsets without allocation or an unbounded scan.
 
-The 37-case self-test covers accepted English and Simplified-Chinese descriptor
+The 33-case self-test covers accepted English and Simplified-Chinese descriptor
 shapes, the maximum profile version, missing/unsupported editions, malformed
 profiles and versions, BOM/non-ASCII input, line-ending failures, and length
-bounds. It also proves that exact `en@1` resolves to the sole English bootstrap
-binding while a well-formed `zh-Hans@17` descriptor remains unsupported. It
-returns `42`. Two builds compare byte-identically before execution. The current
-deterministic test WVB is 14,183 bytes with SHA-256
-`d48115061763bc8b6137f1e389b5aa13334308968fe71cca9c178eee50d2c73e`.
+bounds. Profile selection is deliberately absent from this syntax-only reader.
+It returns `42`; two builds compare byte-identically before execution. The
+current deterministic test WVB is 12,633 bytes with SHA-256
+`53de13cfb20e237e71d5e34e6010f193eccbe815cc58a214b8c5ee2acf76bcc2`.
 
-`Compiler/Windvale/Source-Set-Core.wv` now performs edition dispatch once per
-source-set view. A descriptorless source remains Seed edition 0. A source that
-begins with `#` must pass the bounded descriptor reader and resolve to the exact
-English binding; malformed descriptors and every other profile fail before the
-general lexer. For admitted edition 1, the view starts at the descriptor's line
-ending. `Bytesˉslice` retains the original immutable backing, avoids a
+`Compiler/Windvale/Source-Set-Core.wv` performs edition dispatch once per
+source-set view. A descriptorless external WVSS 1 source remains Seed edition 0.
+An edition-1 source must first pass the profile-aware compiler entry point; the
+ordinary entry points reject it instead of obtaining an ambient binding. For an
+admitted edition-1 module, the private source-set view starts at the descriptor's
+line ending. `Bytesˉslice` retains the original immutable backing, avoids a
 whole-source copy, and lets the existing lexer preserve the module header's
 physical line 2. The view records the raw offset/length, edition, binding,
 origin, and front-door failure offset.
@@ -81,34 +80,43 @@ standalone form in descriptorless Seed and rejects an edition-1 file that omits
 it. The WVB metadata writer consumes the same header without creating a second
 compiler path.
 
-The current profile resolver is intentionally a built-in bootstrap binding. It
-pins profile artifact
+`Compiler/Windvale/Source-Profile-Core.wv` now owns the bounded artifact admission
+boundary. The compiler receives exact `.wvlock` and `.wvsp` byte values plus the
+expected lock digest; it neither discovers a file nor searches or downloads a
+profile. It hashes the lock before parsing, selects the exact descriptor
+identity/version, hashes the supplied profile against that locked row, checks its
+identity/version/edition and fixed component chain, and publishes one resolved
+binding only after all checks succeed. The implemented English profile digest is
 `e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27`
-under lock artifact
+under lock digest
 `4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3`.
-It does not search the host or claim that external `.wvlock`/`.wvsp` admission
-is implemented.
+
+The compiler then creates a private WVSS 2 view carrying the resolved edition,
+binding, and descriptor-origin length for each module. Downstream graph, symbol,
+WIR, and WVB phases neither reparse descriptors nor rehash profile artifacts.
+WVSS 2 is not an external compiler input; public ordinary compilation continues
+to require WVSS 1.
 
 `Tests/Fixtures/Language-1.0/Minimum-Program.wv` is the first executable
 edition-1 fixture. A source-built native compiler emits the same 221-byte WVB
 twice, SHA-256
-`2f080e3bb2b43b3da2da1d3c9aea4b7d3e3e3a23432cc39ed189c553da4e1d2a`;
-the ordinary runtime returns `42`. An unsupported source profile, a missing
-edition-1 profile declaration, and a descriptorless edition-1 header all fail
-without publishing an output.
+`25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae`;
+the compiler-aligned metadata verifier accepts it and the ordinary runtime returns
+`42`. An unsupported source profile, a missing edition-1 profile declaration, a
+descriptorless edition-1 header, an absent ambient profile, a wrong lock digest,
+and changed profile bytes all fail without publishing an output.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner has seven declared cases:
-
-1. recompute the complete frozen identity and fixture inventory;
-2. build the descriptor self-test twice and compare exact WVB bytes; and
-3. execute the descriptor self-test and require the sole output `Result: 42`;
-4. construct the changed compiler through the shared segmented backend;
-5. compile the minimal edition-1 program twice, require byte identity, and run it;
-6. reject unsupported `zh-Hans@1` without publication; and
-7. reject both missing and descriptorless edition-header mismatches without
-   publication.
+The cross-host `language-1-front-door` owner reports eleven declared cases. Its
+bounded checkpoints recompute the frozen identities, compare two descriptor-test
+builds and execute them, construct the changed compiler through the shared
+segmented backend, compile the minimal edition-1 program twice through the exact
+lock/profile inputs, require byte identity and result `42`, and exercise the
+unsupported-profile, missing-profile, descriptorless-header, no-ambient-profile,
+wrong-lock-digest, and changed-profile rejection boundaries. The report separately
+states its 33 descriptor assertions, four profile-admission outcomes, and seven
+compiler outcomes rather than presenting those nested assertions as extra owners.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
 compiler boundaries map to this owner. Compiler WVB/image construction and
@@ -116,9 +124,9 @@ hosted application packaging use content-keyed cross-host caches: the first run
 earns full native evidence, while unchanged repeats materialize validated cache
 hits instead of rebuilding the 29 MiB compiler application. This is development
 evidence, not yet a paired-host conformance claim. After the Windows checkpoints
-were populated, the complete owner passed in 3,212.894 milliseconds, including
-descriptor builds, cached compiler materialization, two minimal compiles,
-execution, and all three negative admissions.
+were populated, the current eleven-case owner passed in 3,420 milliseconds,
+including descriptor builds, cached compiler materialization, two minimal
+compiles, execution, and all six negative admissions.
 
 ## Pre-slice compiler baseline
 
@@ -184,18 +192,15 @@ two repetitions, and do not replace a Linux baseline.
 ## Current-driver bootstrap boundary
 
 The qualified semantic-freeze front door predates the current compact WIR
-implementation. It rejects the enlarged 20-module build-driver source at its
+implementation. It rejects the enlarged 22-module build-driver source at its
 older retained-evidence bound, so it is not used to disguise forward-language
 source as a semantic-freeze artifact. The explicitly unqualified current
-candidate driver accepts the same exact project. Independent source-WIR
-inspection reports 630 functions, 15,768 blocks, 66,960 operations, 60,075
-temporaries, 51,780 operands, and a 3,597,612-byte directory, leaving 596,692
-bytes below the 4 MiB value ceiling.
+candidate driver accepts the same exact project.
 
-On Windows the current driver deterministically emitted a 1,182,549-byte WVB,
-SHA-256
-`1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a`.
-The independently reconstructed staging producer accepted it as 31,025,972
+On Windows the current driver deterministically emitted a 1,249,763-byte WVB
+containing 560 functions and 1,049,631 code bytes, SHA-256
+`8abf598ce3d263337f86815b2686fff762c1120dc1865f5bbfa8fb1a7ae7ac9f`.
+The independently reconstructed staging producer accepted it as 31,865,192
 object bytes across 40 chunks with a 504-byte manifest. The complete four-case
 `segmented-compiler-toolset-reconstruction` owner passed in 322,210
 milliseconds. No candidate container or qualified front-door identity was
@@ -215,8 +220,9 @@ an explicit mode selection, retained host metadata, and bounded live memory
 sampling. Linux needs the same exact baseline and owner result before paired-host
 performance or Language 1.0 conformance is claimed.
 
-The next semantic checkpoint is Slice 2: make source-profile locks and profile
-artifacts explicit project/build inputs, validate the pinned artifact chain, and
-move English token resolution behind that admitted profile without changing the
-canonical parser/IR. Seed stays on the same compiler architecture until the
-named removal checkpoint.
+Migration Slice 1 is complete: source-profile locks and composite profiles are
+explicit Project 3/build inputs, their pinned chain controls English token
+resolution, and Project 2 remains stable. The next official checkpoint is Slice 2,
+which implements the frozen values, binding, and control-flow subset over this
+same compiler architecture. Seed stays on that architecture until its named
+removal checkpoint.

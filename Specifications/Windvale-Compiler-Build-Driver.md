@@ -14,7 +14,7 @@ wvbuild <root.wv> [dependency.wv ...] <output.wvb>
 ```
 
 Its normal project form consumes an explicitly supplied Workspace 1 and Project 2
-pair and requires an explicit output:
+or Project 3 pair and requires an explicit output:
 
 ```text
 wvbuild --workspace <workspace.wvws> --project <project.wvproj> <output.wvb>
@@ -29,7 +29,7 @@ function/code/module sizes and returns `0`; invocation failure returns `64`;
 workspace, project, compilation, or verifier rejection reports a stable diagnostic
 and returns `1`.
 
-The canonical project is [`Projects/Tools/Windvale-Compiler-Build-Driver.wvproj`](../Projects/Tools/Windvale-Compiler-Build-Driver.wvproj). It composes the compiler sources, the portable Project 2 parser, the portable verifier core, and `Tools/Windvale.Build/Compiler-Build-Driver.wv` as its only hosted adapter.
+The canonical project is [`Projects/Tools/Windvale-Compiler-Build-Driver.wvproj`](../Projects/Tools/Windvale-Compiler-Build-Driver.wvproj). It composes the compiler sources, the portable Project 2/3 parser, the portable verifier core, and `Tools/Windvale.Build/Compiler-Build-Driver.wv` as its only hosted adapter.
 
 ## Project resource boundary
 
@@ -39,8 +39,16 @@ manifest's source entries through `Windvaleˉprojectˉpathˉat`. Source `import`
 declarations remain the semantic dependency graph; the driver neither discovers
 files nor guesses dependency order.
 
+For Project 3, the same scan also returns one lock path, its pinned SHA-256, and
+one composite-profile path. The driver checks their lexical identity against the
+workspace, manifest, output, every source, and each other before reading source
+content. It reads each source, lock, and profile resource exactly once and passes
+those immutable byte values to the compiler's profile-aware entry point. Project 2
+keeps its previous input set and compilation entry point exactly; it does not gain
+an implicit source profile.
+
 The hosted adapter derives each source resource name from the directory containing
-the explicit workspace marker and appends the Project 2 canonical
+the explicit workspace marker and appends the Project 2/3 canonical
 workspace-relative path. Manifest location has no source-resolution semantics.
 Resource names use `/` at this boundary on both hosts; `\` is rejected instead of
 being given platform-dependent meaning.
@@ -52,7 +60,7 @@ ordinary Windows case alias. Repository wrappers reject reparse/link-bearing
 workspaces until a canonical resource-identity capability exists. `.wvws`, `.wvproj`,
 and `.wvb` suffixes are exact and mandatory in project mode.
 
-Project failures use the existing `WVP1001` through `WVP1007` identities with one-based line and column evidence. The native 63-module bound reports `WVP1005`; conservative duplicate rejection reports `WVP1007` before source access. Malformed projects and compilation failures leave an existing output unchanged.
+Project failures use the existing `WVP1001` through `WVP1007` identities with one-based line and column evidence. The native 63-module bound reports `WVP1005`; conservative duplicate rejection reports `WVP1007` before source access. Profile failures report stable `source profile status=` and `offset=` fields. Malformed projects, profile rejection, and compilation failures leave an existing output unchanged.
 
 ## Verification and publication boundary
 
@@ -114,7 +122,7 @@ The fixed 1,024-byte metadata record reuses the qualified compiler-authority cap
 
 The larger arena and narrower name slots are profile-local. A hosted process
 argument contains at most 4,096 UTF-8 bytes. The workspace resource prefix and one
-Project 2 path are each bounded so their maximum concatenation fits the 8,192-byte
+Project 2/3 path are each bounded so their maximum concatenation fits the 8,192-byte
 slot. The retained native
 file-input leaves use `WVFI 1`'s declared name-stride field for both the
 name-length check and slot addressing. The generic host executor and standalone
@@ -157,9 +165,9 @@ qualified semantic-freeze baseline; their historical qualification identities
 are not repinned by forward language evolution.
 
 The Language 1.0 Slice 1 source tree is ahead of that retained candidate. The
-candidate driver deterministically compiles the current 20-module project to a
-1,182,549-byte WVB, SHA-256
-`1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a`.
+candidate driver deterministically compiles the current 22-module project to a
+1,249,763-byte WVB, SHA-256
+`8abf598ce3d263337f86815b2686fff762c1120dc1865f5bbfa8fb1a7ae7ac9f`.
 That WVB is current-source development evidence, not a promoted build-driver
 container identity.
 
@@ -178,9 +186,12 @@ Tools/Native/Build-Current-Wvb Projects/Tools/Windvale-Compiler-Build-Driver.wvp
 ```
 
 `Test-Workspace-Project2` executes the native driver over the checked-in workspace,
-writes and runs a valid module, and owns seven malformed or containment
-rejections. `Test-Libraries` exercises Project 2 over reusable portable and hosted
-library compositions. The qualified ordinary route preserves failed destinations;
+writes and runs a valid Project 2 module, and owns seven malformed or containment
+rejections plus portable parser coverage for the Project 3 grammar and explicit
+Project 2 rejection of profile directives.
+`Test-Language-1.0-Front-Door` owns the exact lock/profile admission, determinism,
+execution, and no-ambient-fallback cases. `Test-Libraries` exercises Project 2 over
+reusable portable and hosted library compositions. The qualified ordinary route preserves failed destinations;
 the explicitly unqualified current route retains the raw driver's non-atomic output
 and indeterminate-failure boundary.
 

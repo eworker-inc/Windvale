@@ -163,6 +163,7 @@ $NativeCases = @(
             'Compiler/Windvale/Source-Lexer-Core.wv',
             'Compiler/Windvale/Source-Declaration-Parser.wv',
             'Compiler/Windvale/Source-Body-Parser.wv',
+            'Compiler/Windvale/Source-Profile-Core.wv',
             'Compiler/Windvale/Source-Set-Core.wv',
             'Compiler/Windvale/Source-Graph-Core.wv',
             'Compiler/Windvale/Source-Symbols-Core.wv',
@@ -195,6 +196,7 @@ $NativeCases = @(
             'Projects/Compiler/Windvale-Source-Body-Parser.wvproj',
             'Projects/Examples/Windvale-Source-Body-Parser-Demo.wvproj',
             'Projects/Examples/Windvale-Source-Body-Parser-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Profile-Core.wvproj',
             'Projects/Compiler/Windvale-Source-Set-Core.wvproj',
             'Projects/Examples/Windvale-Source-Set-Demo.wvproj',
             'Projects/Examples/Windvale-Source-Set-Tool.wvproj',
@@ -245,6 +247,7 @@ $NativeCases = @(
             'segmented-compiler-toolset-reconstruction',
             'unsafe-wvb',
             'source-containment',
+            'language-1-front-door',
             'lowerer-rejections',
             'console-packager-source-reconstruction',
             'workspace-project2'
@@ -2875,10 +2878,19 @@ $NativeCases = @(
         Name = 'workspace Project 2 owner'
         Paths = @(
             'Windvale.wvws',
-            'Specifications/Windvale-Project.md',
             'Tests/Fixtures/Project/Workspace-Project2-Build.wvproj'
         )
         Suites = @('workspace-project2')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 Project 3 routing'
+        Paths = @(
+            'Specifications/Windvale-Project.md',
+            'Tests/Fixtures/Project/Language-1.0-Project3-Build.wvproj'
+        )
+        Suites = @('language-1-front-door', 'workspace-project2')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3165,7 +3177,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4645 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4651 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

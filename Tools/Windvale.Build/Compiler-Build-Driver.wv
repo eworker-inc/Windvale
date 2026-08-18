@@ -1,6 +1,7 @@
 module Windvaleˉcompilerˉbuildˉdriver profile hosted;
 
 import Compilerˉsourceˉwvb as Sourceˉwvb;
+import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -163,6 +164,56 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
         }
         Index = Index + 1u32;
     }
+    if Scan.Version == 3u32 {
+        let Lockˉpath: Project.Windvaleˉprojectˉpath =
+            Project.Windvaleˉprojectˉsourceˉlockˉpath(Manifest, Scan);
+        let Profileˉpath: Project.Windvaleˉprojectˉpath =
+            Project.Windvaleˉprojectˉsourceˉprofileˉpath(Manifest, Scan);
+        if !Lockˉpath.Found || !Profileˉpath.Found {
+            return Bytesˉfromˉu32ˉlittle(2u32);
+        }
+        let Lockˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
+            Prefix, Lockˉpath
+        );
+        let Profileˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
+            Prefix, Profileˉpath
+        );
+        if Compilerˉbuildˉdriverˉresourceˉequals(Lockˉresource, Outputˉname) ||
+            Compilerˉbuildˉdriverˉresourceˉequals(Profileˉresource, Outputˉname) {
+            return Bytesˉfromˉu32ˉlittle(1u32);
+        }
+        if Compilerˉbuildˉdriverˉresourceˉequals(Lockˉresource, Profileˉresource) {
+            var Duplicateˉartifact: bytes = Bytesˉfromˉu32ˉlittle(2u32);
+            Duplicateˉartifact = Bytesˉconcat(
+                Duplicateˉartifact, Bytesˉfromˉu32ˉlittle(Profileˉpath.Line)
+            );
+            return Bytesˉconcat(
+                Duplicateˉartifact, Bytesˉfromˉu32ˉlittle(Profileˉpath.Column)
+            );
+        }
+        Index = 0u32;
+        while Index < Scan.Modules {
+            let Sourceˉpath: Project.Windvaleˉprojectˉpath =
+                Project.Windvaleˉprojectˉpathˉat(Manifest, Scan, Index);
+            let Sourceˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
+                Prefix, Sourceˉpath
+            );
+            if Compilerˉbuildˉdriverˉresourceˉequals(
+                Lockˉresource, Sourceˉresource
+            ) || Compilerˉbuildˉdriverˉresourceˉequals(
+                Profileˉresource, Sourceˉresource
+            ) {
+                var Duplicateˉsource: bytes = Bytesˉfromˉu32ˉlittle(2u32);
+                Duplicateˉsource = Bytesˉconcat(
+                    Duplicateˉsource, Bytesˉfromˉu32ˉlittle(Sourceˉpath.Line)
+                );
+                return Bytesˉconcat(
+                    Duplicateˉsource, Bytesˉfromˉu32ˉlittle(Sourceˉpath.Column)
+                );
+            }
+            Index = Index + 1u32;
+        }
+    }
     return Bytesˉfromˉu32ˉlittle(0u32);
 }
 
@@ -269,9 +320,11 @@ fn Compilerˉbuildˉdriverˉsuccess(
     return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Bytecode)));
 }
 
-fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
-    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Input);
+fn Compilerˉbuildˉdriverˉpublishˉsummary(
+    Input: bytes,
+    Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary,
+    Outputˉpath: text
+) -> i32 {
     if Summary.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(
             Compilerˉbuildˉdriverˉcompileˉfailure(Input, Summary)
@@ -297,6 +350,46 @@ fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
     file.write_bytes(Outputˉpath, Summary.Bytecode);
     console.write_line(Compilerˉbuildˉdriverˉsuccess(Summary));
     return 0;
+}
+
+fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
+    return Compilerˉbuildˉdriverˉpublishˉsummary(
+        Input,
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Input),
+        Outputˉpath
+    );
+}
+
+fn Compilerˉbuildˉdriverˉprofileˉfailure(
+    Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation
+) -> text {
+    var Report: text = "build status=Sourceˉprofileˉrejected profile-status=";
+    Report = Textˉconcat(Report, Enumˉname(Compilation.Profileˉstatus));
+    Report = Textˉconcat(Report, " offset=");
+    return Textˉconcat(Report, U32ˉformat(Compilation.Failureˉoffset));
+}
+
+fn Compilerˉbuildˉdriverˉpublishˉprofile(
+    Input: bytes,
+    Lock: bytes,
+    Expectedˉlockˉhash: bytes,
+    Profile: bytes,
+    Outputˉpath: text
+) -> i32 {
+    let Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+            Input, Lock, Expectedˉlockˉhash, Profile, false
+        );
+    if Compilation.Profileˉstatus !=
+        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+        diagnostic.write_line(
+            Compilerˉbuildˉdriverˉprofileˉfailure(Compilation)
+        );
+        return 1;
+    }
+    return Compilerˉbuildˉdriverˉpublishˉsummary(
+        Input, Compilation.Summary, Outputˉpath
+    );
 }
 
 fn Compilerˉbuildˉdriverˉargumentˉequals(Value: text, Expected: text) -> bool {
@@ -448,10 +541,27 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
         return 1;
     }
 
-    return Compilerˉbuildˉdriverˉpublish(
-        Compilerˉbuildˉdriverˉprojectˉinput(Manifest, Scan, Prefix),
-        Outputˉpath
-    );
+    let Input: bytes = Compilerˉbuildˉdriverˉprojectˉinput(Manifest, Scan, Prefix);
+    if Scan.Version == 3u32 {
+        let Lockˉpath: Project.Windvaleˉprojectˉpath =
+            Project.Windvaleˉprojectˉsourceˉlockˉpath(Manifest, Scan);
+        let Profileˉpath: Project.Windvaleˉprojectˉpath =
+            Project.Windvaleˉprojectˉsourceˉprofileˉpath(Manifest, Scan);
+        let Lockˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
+            Prefix, Lockˉpath
+        );
+        let Profileˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
+            Prefix, Profileˉpath
+        );
+        return Compilerˉbuildˉdriverˉpublishˉprofile(
+            Input,
+            file.read_bytes(Textˉfromˉutf8(Lockˉresource)),
+            Project.Windvaleˉprojectˉsourceˉlockˉhash(Manifest, Scan),
+            file.read_bytes(Textˉfromˉutf8(Profileˉresource)),
+            Outputˉpath
+        );
+    }
+    return Compilerˉbuildˉdriverˉpublish(Input, Outputˉpath);
 }
 
 fn Compilerˉbuildˉdriverˉrunˉexplicit(Arguments: u32) -> i32 {

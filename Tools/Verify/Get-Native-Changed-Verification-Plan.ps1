@@ -1663,7 +1663,10 @@ foreach ($Path in $Paths) {
         Add-Suite 'workspace-project2'
         Add-Compiler-Suites
         if ($Path -eq 'Tools/Windvale.Build/Compiler-Build-Driver.wv') {
-            Add-Suite 'segmented-compiler-toolset-reconstruction'
+            Add-Suite @(
+                'language-1-front-door',
+                'segmented-compiler-toolset-reconstruction'
+            )
         }
     } elseif ($Path -in @(
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
@@ -2003,6 +2006,10 @@ foreach ($Path in $Paths) {
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {
         Add-Suite 'workspace-project2'
+        if ($Path -eq 'Specifications/Windvale-Project.md' -or
+            $Path -eq 'Tests/Fixtures/Project/Language-1.0-Project3-Build.wvproj') {
+            Add-Suite 'language-1-front-door'
+        }
     } elseif ($Path.StartsWith('Libraries/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Libraries/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Models/', [StringComparison]::Ordinal) -or
@@ -2368,6 +2375,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',
         'Compiler/Windvale/Source-Body-Parser.wv',
+        'Compiler/Windvale/Source-Profile-Core.wv',
         'Compiler/Windvale/Source-Set-Core.wv',
         'Compiler/Windvale/Source-Graph-Core.wv',
         'Compiler/Windvale/Source-Symbols-Core.wv',
@@ -2403,6 +2411,7 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Source-Body-Parser.wvproj',
         'Projects/Examples/Windvale-Source-Body-Parser-Demo.wvproj',
         'Projects/Examples/Windvale-Source-Body-Parser-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Profile-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Set-Core.wvproj',
         'Projects/Examples/Windvale-Source-Set-Demo.wvproj',
         'Projects/Examples/Windvale-Source-Set-Tool.wvproj',
@@ -2444,8 +2453,10 @@ foreach ($Path in $Paths) {
         Add-Compiler-Suites
         if ($Path -in @(
             'Compiler/Windvale/Source-Declaration-Parser.wv',
+            'Compiler/Windvale/Source-Profile-Core.wv',
             'Compiler/Windvale/Source-Set-Core.wv',
-            'Compiler/Windvale/Source-Wvb-Core.wv'
+            'Compiler/Windvale/Source-Wvb-Core.wv',
+            'Projects/Compiler/Windvale-Source-Profile-Core.wvproj'
         )) {
             Add-Suite 'language-1-front-door'
         }
@@ -3269,6 +3280,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Projects/Tools/Windvale-Compiler-Build-Driver.wvproj') {
         Add-Compiler-Suites
         Add-Suite @(
+            'language-1-front-door',
             'workspace-project2',
             'segmented-compiler-toolset-reconstruction'
         )

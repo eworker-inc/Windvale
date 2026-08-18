@@ -25,7 +25,7 @@ assembler-rejections|Test-Assembler-Rejections|11|2|Tests: 11, Passed: 11, Faile
 assembler-golden|Test-Assembler-Golden|4|4|Tests: 4, Passed: 4, Failed: 0
 wva-differential|Test-Wva-Differential|269|3|Tests: 269, Passed: 269, Failed: 0
 source-containment|Test-Source-Containment|500|3|Tests: 500, Passed: 500, Failed: 0
-language-1-front-door|Test-Language-1.0-Front-Door|7|2|native language 1 front door status=Passed cases=7 frozen-inputs=250 source-fixtures=72 descriptor-cases=37 compiler-cases=4 compiler-result=42 compiler-wvb-bytes=221
+language-1-front-door|Test-Language-1.0-Front-Door|11|2|native language 1 front door status=Passed cases=11 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 compiler-cases=7 compiler-result=42 compiler-wvb-bytes=221
 lowerer-rejections|Test-Lowerer-Rejections|2|3|Tests: 2, Passed: 2, Failed: 0
 linker-rejections|Test-Linker-Rejections|10|4|Tests: 10, Passed: 10, Failed: 0
 linker-hostile|Test-Linker-Hostile-Inputs|200|2|Tests: 200, Passed: 200, Failed: 0
@@ -84,7 +84,7 @@ native-external-model-gateway|Test-Native-External-Model-Gateway|14|4|native ext
 database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
 database-storage|Test-Database-Storage|57|1|native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
-workspace-project2|Test-Workspace-Project2|8|4|native workspace/project test status=Complete cases=8
+workspace-project2|Test-Workspace-Project2|10|4|native workspace/project test status=Complete cases=10
 libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
 packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11
 package-format|Test-Package-Format|82|3|native package format status=Passed result=42 modules=6 builds=7 groups=82 cross-host-images=12

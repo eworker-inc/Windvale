@@ -91,9 +91,9 @@ bootstrap or independent Linux-host qualification.
 The reconstruction owner also builds the current compiler build-driver WVB into
 private temporary storage through the explicitly unqualified current-host
 candidate driver and feeds it to the reconstructed current-host staging
-producer. The exact 1,182,549-byte WVB at SHA-256
-`1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a`
-stages into 31,025,972 object bytes across 40 chunks plus a 504-byte manifest.
+producer. The exact 1,249,763-byte WVB at SHA-256
+`8abf598ce3d263337f86815b2686fff762c1120dc1865f5bbfa8fb1a7ae7ac9f`
+stages into 31,865,192 object bytes across 40 chunks plus a 504-byte manifest.
 The qualified semantic-freeze front door and retained candidate identities are
 not repinned. This case does not execute or promote the private compiler WVB;
 general verifier, publisher, final-container, and front-door promotion remain

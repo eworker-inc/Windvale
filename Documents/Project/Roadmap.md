@@ -96,14 +96,15 @@ the implemented language until focused executable gates advance each edition-1
 slice; the draft Chinese pack retains its independent qualification path. The
 [migration evidence](Windvale-Language-1.0-Migration-Evidence.md) fixes all 16
 workload bundles and 72 source fixtures and records the pre-slice
-compiler/WIR/memory/artifact baseline. Slice 1 now connects the bounded
-descriptor reader to the existing compiler, admits only one pinned bootstrap
-`en@1` binding, uses a no-copy body view, parses the standalone Core header, and
-compiles one minimal edition-1 program deterministically through WIR and WVB.
-It deliberately does not yet claim external profile-artifact loading, localized
-token admission, broad Language 1.0 semantics, or paired-host conformance. Slice
-2 makes the source-profile lock/artifact chain an explicit build input and moves
-English token resolution behind it without creating a parallel compiler.
+compiler/WIR/memory/artifact baseline. Migration Slice 1 now connects the bounded
+descriptor reader to the existing compiler, admits the exact `en@1` component
+chain only through hash-pinned Project 3 lock/profile inputs, uses a no-copy body
+view, parses the standalone Core header, and compiles one minimal edition-1 program
+deterministically through WIR and WVB. Project 2 and descriptorless Seed remain on
+their prior path; no ambient profile fallback or parallel compiler was added. The
+next official Slice 2 implements the frozen values, binding, and control-flow
+subset. Localized token execution, broad Language 1.0 semantics, and paired-host
+conformance remain later gates.
 
 ## How to read this roadmap
 

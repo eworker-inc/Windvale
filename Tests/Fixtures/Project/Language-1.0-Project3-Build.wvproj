@@ -1,0 +1,6 @@
+windvale-project 3
+root "Tests/Fixtures/Language-1.0/Minimum-Program.wv"
+source-input-lock "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock"
+source-input-lock-sha256 4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3
+source-profile "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp"
+emit wvb

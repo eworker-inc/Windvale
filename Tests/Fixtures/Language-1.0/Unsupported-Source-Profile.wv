@@ -1,7 +1,7 @@
 #!wv/1 zh-Hans@1
 module Unsupportedˉsourceˉprofile;
 profile core;
-platform windows, linux, windvale;
+platform linux, windows, windvale;
 authority application;
 
 export fn Main() -> i32 {

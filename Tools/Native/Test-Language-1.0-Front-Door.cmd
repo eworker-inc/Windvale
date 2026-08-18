@@ -9,6 +9,10 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
+set "ProfileRoot=%RepositoryRoot%\Documents\Project\Language-1.0-Localization-Workloads\01-Source-Profile-Admission\Reference-Artifacts"
+set "SourceLock=%ProfileRoot%\Source-Inputs.wvlock"
+set "SourceProfile=%ProfileRoot%\En-Source-Profile.wvsp"
+set "SourceLockHash=4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3"
 
 :allocate
 set "Work=%TEMP%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -42,7 +46,7 @@ set "FailureStep=compiler-segmented-cache"
 echo START language 1 front door phase=compiler-slice item=3/3
 call "%Native%\Build-Cached-Segmented-Project.cmd" ^
     "%RepositoryRoot%\Projects\Examples\Windvale-Compiler.wvproj" ^
-    "%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe" ^
+    "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe" ^
     "%Work%\Compiler.wvb" "%Work%\Compiler-Image" "%Work%\Compiler.wvli" ^
     >"%Work%\Segmented.out" 2>"%Work%\Segmented.err" || goto :cleanup
 for %%F in ("%Work%\Segmented.err") do if not "%%~zF"=="0" goto :cleanup
@@ -65,10 +69,14 @@ for %%F in ("%Work%\Hosted.err") do if not "%%~zF"=="0" goto :cleanup
 type "%Work%\Hosted.out"
 set "FailureStep=compiler-minimum-a"
 "%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" ^
     "%Work%\Minimum-A.wvb" >"%Work%\Compile-A.out" 2>"%Work%\Compile-A.err" || goto :cleanup
 set "FailureStep=compiler-minimum-b"
 "%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" ^
     "%Work%\Minimum-B.wvb" >"%Work%\Compile-B.out" 2>"%Work%\Compile-B.err" || goto :cleanup
 for %%F in ("%Work%\Compile-A.err" "%Work%\Compile-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -93,9 +101,19 @@ set "FailureStep=compiler-negative-missing-profile"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Missing-Edition-Profile.wv" "%Work%\Missing-Profile.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-descriptorless"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Descriptorless-Edition-Header.wv" "%Work%\Descriptorless.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-no-ambient-profile"
+"%Work%\Compiler.exe" "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" "%Work%\Ambient.wvb" >"%Work%\Ambient.out" 2>"%Work%\Ambient.err"
+if not errorlevel 1 goto :cleanup
+if exist "%Work%\Ambient.wvb" goto :cleanup
+set "FailureStep=compiler-negative-lock-digest"
+call :expect_rejection_with_digest "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" "%Work%\Wrong-Digest.wvb" "4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c0" "%SourceProfile%" || goto :cleanup
+set "FailureStep=compiler-negative-profile-content"
+copy /y "%SourceProfile%" "%Work%\Corrupt.wvsp" >nul || goto :cleanup
+>>"%Work%\Corrupt.wvsp" echo x
+call :expect_rejection_with_digest "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" "%Work%\Corrupt.wvb" "%SourceLockHash%" "%Work%\Corrupt.wvsp" || goto :cleanup
 set "FailureStep=compiler-identity"
 for %%F in ("%Work%\Minimum-A.wvb") do if not "%%~zF"=="221" goto :cleanup
-certutil -hashfile "%Work%\Minimum-A.wvb" SHA256 | findstr /I /C:"2f080e3bb2b43b3da2da1d3c9aea4b7d3e3e3a23432cc39ed189c553da4e1d2a" >nul || goto :cleanup
+certutil -hashfile "%Work%\Minimum-A.wvb" SHA256 | findstr /I /C:"25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae" >nul || goto :cleanup
 echo PASS  language 1 front door phase=compiler-slice item=3/3
 set "Result=0"
 
@@ -113,12 +131,16 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=7 frozen-inputs=250 source-fixtures=72 descriptor-cases=37 compiler-cases=4 compiler-result=42 compiler-wvb-bytes=221
+echo native language 1 front door status=Passed cases=11 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 compiler-cases=7 compiler-result=42 compiler-wvb-bytes=221
 exit /b 0
 
 :expect_rejection
+call :expect_rejection_with_digest "%~f1" "%~f2" "%SourceLockHash%" "%SourceProfile%"
+exit /b %ERRORLEVEL%
+
+:expect_rejection_with_digest
 if exist "%~f2" exit /b 1
-"%Work%\Compiler.exe" "%~f1" "%~f2" >"%~f2.out" 2>"%~f2.err"
+"%Work%\Compiler.exe" --source-input-lock "%SourceLock%" "%~3" --source-profile "%~4" "%~f1" "%~f2" >"%~f2.out" 2>"%~f2.err"
 if not errorlevel 1 exit /b 1
 if exist "%~f2" exit /b 1
 exit /b 0

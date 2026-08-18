@@ -1,0 +1,5 @@
+windvale-project 2
+root "Compiler/Windvale/Source-Profile-Core.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+source "Foundation/Sha256.wv"
+emit wvb

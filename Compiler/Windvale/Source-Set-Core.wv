@@ -27,6 +27,7 @@ export enum Compilerˉsourceˉsetˉstatus {
 
 export record Compilerˉsourceˉsetˉscan {
     Status: Compilerˉsourceˉsetˉstatus;
+    Version: u32;
     Modules: u32;
     Directoryˉoffset: u32;
     Directoryˉlength: u32;
@@ -69,10 +70,13 @@ export fn Compilerˉsourceˉsetˉscanˉfailure(
     Offset: u32,
     Module: u32
 ) -> Compilerˉsourceˉsetˉscan {
-    return Compilerˉsourceˉsetˉscan(Status, 0u32, 16u32, 0u32, 0u32, 0u32, Offset, Module);
+    return Compilerˉsourceˉsetˉscan(
+        Status, 0u32, 0u32, 16u32, 0u32, 0u32, 0u32, Offset, Module
+    );
 }
 
 export fn Compilerˉsourceˉsetˉscanˉvalid(
+    Version: u32,
     Modules: u32,
     Directoryˉlength: u32,
     Sourcesˉoffset: u32,
@@ -80,6 +84,7 @@ export fn Compilerˉsourceˉsetˉscanˉvalid(
 ) -> Compilerˉsourceˉsetˉscan {
     return Compilerˉsourceˉsetˉscan(
         Compilerˉsourceˉsetˉstatus.Valid,
+        Version,
         Modules,
         16u32,
         Directoryˉlength,
@@ -107,7 +112,8 @@ export fn Compilerˉscanˉsourceˉset(Input: bytes) -> Compilerˉsourceˉsetˉsc
     if Bytesˉreadˉu8(Input, 3u32) != 83u8 {
         return Compilerˉsourceˉsetˉscanˉfailure(Compilerˉsourceˉsetˉstatus.Invalidˉmagic, 3u32, 0u32);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
+    let Version: u32 = Bytesˉreadˉu16ˉlittle(Input, 4u32);
+    if Version != 1u32 && Version != 2u32 {
         return Compilerˉsourceˉsetˉscanˉfailure(Compilerˉsourceˉsetˉstatus.Unsupportedˉversion, 4u32, 0u32);
     }
     if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
@@ -121,7 +127,9 @@ export fn Compilerˉscanˉsourceˉset(Input: bytes) -> Compilerˉsourceˉsetˉsc
     if Modules > 64u32 {
         return Compilerˉsourceˉsetˉscanˉfailure(Compilerˉsourceˉsetˉstatus.Invalidˉcount, 8u32, 64u32);
     }
-    let Requiredˉdirectory: u32 = Modules * 8u32;
+    var Entryˉbytes: u32 = 8u32;
+    if Version == 2u32 { Entryˉbytes = 20u32; }
+    let Requiredˉdirectory: u32 = Modules * Entryˉbytes;
     let Directoryˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     if Directoryˉlength != Requiredˉdirectory {
         return Compilerˉsourceˉsetˉscanˉfailure(Compilerˉsourceˉsetˉstatus.Invalidˉdirectory, 12u32, 0u32);
@@ -134,9 +142,21 @@ export fn Compilerˉscanˉsourceˉset(Input: bytes) -> Compilerˉsourceˉsetˉsc
     var Index: u32 = 0u32;
     var Sourceˉbytes: u32 = 0u32;
     while Index < Modules {
-        let Entryˉoffset: u32 = 16u32 + Index * 8u32;
+        let Entryˉoffset: u32 = 16u32 + Index * Entryˉbytes;
         let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
         let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 4u32);
+        if Version == 2u32 {
+            let Edition: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 8u32);
+            let Binding: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 12u32);
+            let Origin: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 16u32);
+            if Edition != 1u32 || Binding != 1u32 || Origin == 0u32 || Origin > 129u32 {
+                return Compilerˉsourceˉsetˉscanˉfailure(
+                    Compilerˉsourceˉsetˉstatus.Invalidˉentry,
+                    Entryˉoffset + 8u32,
+                    Index
+                );
+            }
+        }
         if Offset != Expectedˉoffset {
             return Compilerˉsourceˉsetˉscanˉfailure(
                 Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout,
@@ -177,6 +197,7 @@ export fn Compilerˉscanˉsourceˉset(Input: bytes) -> Compilerˉsourceˉsetˉsc
         );
     }
     return Compilerˉsourceˉsetˉscanˉvalid(
+        Version,
         Modules,
         Directoryˉlength,
         16u32 + Directoryˉlength,
@@ -234,10 +255,33 @@ export fn Compilerˉsourceˉsetˉmodule(
     if Index >= Scan.Modules {
         return Compilerˉsourceˉsetˉviewˉfailure(Compilerˉsourceˉsetˉstatus.Invalidˉcount, Index, Input);
     }
-    let Entryˉoffset: u32 = Scan.Directoryˉoffset + Index * 8u32;
+    var Entryˉbytes: u32 = 8u32;
+    if Scan.Version == 2u32 { Entryˉbytes = 20u32; }
+    let Entryˉoffset: u32 = Scan.Directoryˉoffset + Index * Entryˉbytes;
     let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 4u32);
     let Rawˉsource: bytes = Bytesˉslice(Input, Offset, Length);
+    if Scan.Version == 2u32 {
+        let Edition: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 8u32);
+        let Bindingˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 12u32);
+        let Origin: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 16u32);
+        var Binding: Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding =
+            Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None;
+        if Bindingˉvalue == 1u32 {
+            Binding = Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English;
+        }
+        return Compilerˉsourceˉsetˉview(
+            Compilerˉsourceˉsetˉstatus.Valid,
+            Index,
+            Offset,
+            Length,
+            Edition,
+            Binding,
+            Origin,
+            Origin + Length,
+            Rawˉsource
+        );
+    }
     if Bytesˉreadˉu8(Rawˉsource, 0u32) == 35u8 {
         let Descriptor: Sourceˉdescriptor.Compilerˉsourceˉdescriptor =
             Sourceˉdescriptor.Compilerˉreadˉsourceˉdescriptor(Rawˉsource);
@@ -251,33 +295,13 @@ export fn Compilerˉsourceˉsetˉmodule(
                 Input
             );
         }
-        let Resolution: Sourceˉdescriptor.Compilerˉsourceˉprofileˉresolution =
-            Sourceˉdescriptor.Compilerˉresolveˉsourceˉprofile(Rawˉsource, Descriptor);
-        if Resolution.Status !=
-            Sourceˉdescriptor.Compilerˉsourceˉprofileˉresolutionˉstatus.Valid {
-            return Compilerˉsourceˉsetˉsourceˉfailure(
-                Compilerˉsourceˉsetˉstatus.Unsupportedˉsourceˉprofile,
-                Index,
-                Offset,
-                Length,
-                Descriptor.Profileˉoffset,
-                Input
-            );
-        }
-        return Compilerˉsourceˉsetˉview(
-            Compilerˉsourceˉsetˉstatus.Valid,
+        return Compilerˉsourceˉsetˉsourceˉfailure(
+            Compilerˉsourceˉsetˉstatus.Unsupportedˉsourceˉprofile,
             Index,
             Offset,
             Length,
-            Descriptor.Edition,
-            Resolution.Binding,
-            Descriptor.Descriptorˉlength,
-            Descriptor.Descriptorˉlength,
-            Bytesˉslice(
-                Rawˉsource,
-                Descriptor.Descriptorˉlength,
-                Length - Descriptor.Descriptorˉlength
-            )
+            Descriptor.Profileˉoffset,
+            Input
         );
     }
     return Compilerˉsourceˉsetˉview(

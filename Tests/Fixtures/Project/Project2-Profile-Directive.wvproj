@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Project/Workspace-Project2-Self-Test.wv"
+source-profile "Profiles/En.wvsp"
+emit wvb

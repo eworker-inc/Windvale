@@ -1,0 +1,20 @@
+module Project3ˉmanifestˉselfˉtest profile portable;
+
+import Windvaleˉproject as Project;
+
+fn Projectˉstatus(
+    Input: text,
+    Expected: Project.Windvaleˉprojectˉstatus
+) -> bool {
+    let Scan: Project.Windvaleˉprojectˉscan =
+        Project.Windvaleˉprojectˉscanˉmanifest(Textˉtoˉutf8(Input));
+    return Scan.Status == Expected;
+}
+
+export fn Main() -> i32 {
+    if !Projectˉstatus(
+        "windvale-project 3\nroot \"Compiler/Main.wv\"\nsource-input-lock \"Profiles/Inputs.wvlock\"\nsource-input-lock-sha256 4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3\nsource-profile \"Profiles/En.wvsp\"\nemit wvb\n",
+        Project.Windvaleˉprojectˉstatus.Valid
+    ) { return 1; }
+    return 42;
+}

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated WVSS 1 source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 module, and returns the bytes without using hosted capabilities.
 
 The current slice proves the complete source set → symbols/bindings → typed WVIR → canonical cross-module identity flattening → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. It emits one self-contained module and does not introduce runtime linkage.
 
@@ -16,6 +16,47 @@ Compilerˉcompileˉsourceˉwvb(Input: bytes)
 On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB 1.11 module, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
 
 The status contract distinguishes upstream WVIR rejection, shapes and operations, invalid data, and WVB limits. The former unsupported-declaration value and the existing module-count and profile values remain reserved for stable diagnostic numbering: upstream WVIR admission now owns declaration-kind rejection, and every currently validated WVSS module count and root profile is accepted.
+
+## Language 1.0 source-profile admission
+
+The edition-1 front door has the separate portable entry point:
+
+```text
+Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+    Input: bytes,
+    Lock: bytes,
+    Expectedˉlockˉhash: bytes,
+    Profile: bytes,
+    Optimize: bool
+) -> Compilerˉsourceˉwvbˉprofileˉcompilation
+```
+
+`Input` is external WVSS 1. The lock and selected `.wvsp` are exact immutable
+bytes supplied by the build plan; the compiler performs no path lookup, registry
+search, download, installation discovery, or locale selection. Admission:
+
+1. parses each module's universal descriptor;
+2. hashes and validates the lock against the externally pinned lowercase digest;
+3. finds the descriptor's exact profile identity/version in the canonical lock;
+4. hashes and validates the supplied composite profile against the locked digest;
+5. checks its identity, version, source edition, component identities, component
+   versions, and component hashes; and
+6. resolves the currently implemented exact English component chain to the private
+   English lexer binding.
+
+The current implementation admits the frozen `en@1` composite chain only. A
+well-formed but unavailable or unsupported chain fails explicitly; there is no
+built-in or ambient `en@1` fallback. Admission hashes each supplied artifact once
+and parses it once per compilation. The result separates profile-admission status
+and failure offset from the ordinary compiler summary.
+
+After successful admission the front door removes each descriptor and creates one
+private in-memory WVSS version 2 view whose directory carries the already-resolved
+edition, lexer binding, and descriptor-origin length. Existing graph, symbol, WIR,
+optimization, and WVB phases consume that evidence without reopening or rehashing
+the profile artifacts. WVSS 2 is an internal phase boundary, not a serializable
+build input: the ordinary public compiler entry points require WVSS 1 and reject
+external WVSS 2 values.
 
 ## Portable in-memory adapter
 
@@ -36,6 +77,19 @@ The hosted tool accepts an optional leading `--complete` argument before the roo
 source path. This differential and diagnostic mode selects complete emission from
 the same executable; absence of the argument remains the optimized application
 publication path.
+
+Its edition-1 form is:
+
+```text
+source-wvb [--complete]
+  --source-input-lock <inputs.wvlock> <sha256>
+  --source-profile <profile.wvsp>
+  <root.wv> [sorted-dependency.wv ...] <output.wvb>
+```
+
+It reads every source, the lock, and the profile once and passes their byte values
+to the portable profile-aware entry point. Omitting the profile arguments is not
+an English default: ordinary edition-1 input is rejected on that path.
 
 The returned `WVCO 1` value has this exact little-endian layout:
 
@@ -277,10 +331,10 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current deterministic compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 960,861 bytes, SHA-256 `9ba45638b92d0945d343ca42f81f12ff37dba31f6e014ee57e526860f3b0423e`.
-- `Source-Wvb-Demo.wvb`: 966,821 bytes, SHA-256 `43727d290de1eb8c4ef16a781b9b453e4c849c6bcab430d8645f5b07d0a41213`.
-- `Source-Wvb-Tool.wvb`: 959,320 bytes, SHA-256 `e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb`.
-- `Source-Wvb-Memory-Adapter.wvb`: 924,951 bytes, SHA-256 `8c5f97a83d7dde34d42f411260986915679e47dcac89a486e0a3a8d94cb523a5`.
+- `Source-Wvb-Core.wvb`: 1,033,007 bytes, SHA-256 `e8ed25a0f259a8402409d9474b7ade42b8064ef84cf2298eeb05cc44a6d2df7c`.
+- `Source-Wvb-Demo.wvb`: 1,038,806 bytes, SHA-256 `1a1b68e261e736a59a9b4629e14bcab041de8f1b2b43db15b7f41918f07fdf89`.
+- `Source-Wvb-Tool.wvb`: 1,033,177 bytes, SHA-256 `cc450810ba8a62357d995c55f1312e8c33e4f8c6d9e8ade3b9fa849f68e7f4f8`.
+- `Source-Wvb-Memory-Adapter.wvb`: 1,027,855 bytes, SHA-256 `f6e668ed8782b36635870b025f5d4e7e1134017c1b62aaa92b3ae154119ed805`.
 
 Decision 0518 moved ordinary construction of the core, demo, and tool products to
 the bounded native compiler-seed launcher. Decision 0528 now routes repository
@@ -289,7 +343,9 @@ adds native capability-bearing library composition evidence. Historical
 differential results remain evidence, but the normal build and focused verification
 path for this boundary is native-owned.
 
-The memory adapter contains 425 functions and retains the admitted maximum of 1,408 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
+The memory adapter contains 472 functions. These are local candidate identities
+and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification
+must still be rerun before the candidate becomes a new cross-host bootstrap claim.
 
 The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0 and is cross-host qualified at `1a4fca7`.
 

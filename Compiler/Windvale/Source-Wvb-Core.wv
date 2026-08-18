@@ -2,7 +2,9 @@ module Compilerˉsourceˉwvb profile portable;
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
@@ -100,6 +102,18 @@ export record Compilerˉsourceˉwvbˉsummary {
     Bytecode: bytes;
     Failureˉfunction: u32;
     Failureˉoperation: u32;
+}
+
+record Compilerˉsourceˉwvbˉadmittedˉinput {
+    Status: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus;
+    Failureˉoffset: u32;
+    Input: bytes;
+}
+
+export record Compilerˉsourceˉwvbˉprofileˉcompilation {
+    Profileˉstatus: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus;
+    Failureˉoffset: u32;
+    Summary: Compilerˉsourceˉwvbˉsummary;
 }
 
 export record Compilerˉsourceˉwvbˉreachability {
@@ -3813,11 +3827,197 @@ export fn Compilerˉsourceˉwvbˉcompile(
 export fn Compilerˉcompileˉsourceˉwvb(
     Input: bytes
 ) -> Compilerˉsourceˉwvbˉsummary {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
+        return Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            0u32,
+            0u32
+        );
+    }
     return Compilerˉsourceˉwvbˉcompile(Input, false);
 }
 
 export fn Compilerˉcompileˉsourceˉwvbˉoptimized(
     Input: bytes
 ) -> Compilerˉsourceˉwvbˉsummary {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
+        return Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            0u32,
+            0u32
+        );
+    }
     return Compilerˉsourceˉwvbˉcompile(Input, true);
+}
+
+fn Compilerˉsourceˉwvbˉprofileˉfailure(
+    Input: bytes,
+    Status: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus,
+    Offset: u32
+) -> Compilerˉsourceˉwvbˉprofileˉcompilation {
+    return Compilerˉsourceˉwvbˉprofileˉcompilation(
+        Status,
+        Offset,
+        Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            0u32,
+            0u32
+        )
+    );
+}
+
+fn Compilerˉsourceˉwvbˉadmitˉinput(
+    Input: bytes,
+    Rootˉsource: bytes,
+    Rootˉdescriptor: Sourceˉdescriptor.Compilerˉsourceˉdescriptor,
+    Admission: Sourceˉprofile.Compilerˉsourceˉprofileˉadmission
+) -> Compilerˉsourceˉwvbˉadmittedˉinput {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
+        return Compilerˉsourceˉwvbˉadmittedˉinput(
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+            Scan.Failureˉoffset,
+            Compilerˉsourceˉwvbˉempty(Input)
+        );
+    }
+    let Headerˉbytes: u32 = 16u32 + Scan.Modules * 20u32;
+    if Headerˉbytes > 4194304u32 {
+        return Compilerˉsourceˉwvbˉadmittedˉinput(
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+            12u32,
+            Compilerˉsourceˉwvbˉempty(Input)
+        );
+    }
+    var Directory: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Payload: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Payloadˉbytes: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Scan.Modules {
+        let Entry: u32 = Scan.Directoryˉoffset + Index * 8u32;
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry);
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 4u32);
+        let Source: bytes = Bytesˉslice(Input, Offset, Length);
+        if Bytesˉreadˉu8(Source, 0u32) != 35u8 {
+            return Compilerˉsourceˉwvbˉadmittedˉinput(
+                Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+                Offset,
+                Compilerˉsourceˉwvbˉempty(Input)
+            );
+        }
+        let Descriptor: Sourceˉdescriptor.Compilerˉsourceˉdescriptor =
+            Sourceˉdescriptor.Compilerˉreadˉsourceˉdescriptor(Source);
+        if Descriptor.Status != Sourceˉdescriptor.Compilerˉsourceˉdescriptorˉstatus.Valid ||
+            Descriptor.Edition != Admission.Sourceˉedition ||
+            Descriptor.Profileˉversion != Rootˉdescriptor.Profileˉversion ||
+            !Sourceˉset.Compilerˉsourceˉspansˉequal(
+                Source, Descriptor.Profileˉoffset, Descriptor.Profileˉlength,
+                Rootˉsource, Rootˉdescriptor.Profileˉoffset, Rootˉdescriptor.Profileˉlength
+            ) || Descriptor.Descriptorˉlength >= Length {
+            return Compilerˉsourceˉwvbˉadmittedˉinput(
+                Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+                Offset + Descriptor.Failureˉoffset,
+                Compilerˉsourceˉwvbˉempty(Input)
+            );
+        }
+        let Bodyˉlength: u32 = Length - Descriptor.Descriptorˉlength;
+        if Payloadˉbytes > 4194304u32 - Headerˉbytes ||
+            Bodyˉlength > 4194304u32 - Headerˉbytes - Payloadˉbytes {
+            return Compilerˉsourceˉwvbˉadmittedˉinput(
+                Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+                Offset,
+                Compilerˉsourceˉwvbˉempty(Input)
+            );
+        }
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Headerˉbytes + Payloadˉbytes)
+        );
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Bodyˉlength));
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Admission.Sourceˉedition));
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(1u32));
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Descriptor.Descriptorˉlength)
+        );
+        Payload = Bytesˉconcat(
+            Payload,
+            Bytesˉslice(Source, Descriptor.Descriptorˉlength, Bodyˉlength)
+        );
+        Payloadˉbytes = Payloadˉbytes + Bodyˉlength;
+        Index = Index + 1u32;
+    }
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(2u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Scan.Modules));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Scan.Modules * 20u32));
+    return Compilerˉsourceˉwvbˉadmittedˉinput(
+        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+        Bytesˉlength(Input),
+        Bytesˉconcat(Bytesˉconcat(Header, Directory), Payload)
+    );
+}
+
+export fn Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+    Input: bytes,
+    Lock: bytes,
+    Expectedˉlockˉhash: bytes,
+    Profile: bytes,
+    Optimize: bool
+) -> Compilerˉsourceˉwvbˉprofileˉcompilation {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Scan.Version != 1u32 || Scan.Modules == 0u32 {
+        return Compilerˉsourceˉwvbˉprofileˉfailure(
+            Input,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+            Scan.Failureˉoffset
+        );
+    }
+    let Rootˉentry: u32 = Scan.Directoryˉoffset;
+    let Rootˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Rootˉentry);
+    let Rootˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Rootˉentry + 4u32);
+    let Rootˉsource: bytes = Bytesˉslice(Input, Rootˉoffset, Rootˉlength);
+    if Bytesˉreadˉu8(Rootˉsource, 0u32) != 35u8 {
+        return Compilerˉsourceˉwvbˉprofileˉfailure(
+            Input,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+            Rootˉoffset
+        );
+    }
+    let Descriptor: Sourceˉdescriptor.Compilerˉsourceˉdescriptor =
+        Sourceˉdescriptor.Compilerˉreadˉsourceˉdescriptor(Rootˉsource);
+    let Admission: Sourceˉprofile.Compilerˉsourceˉprofileˉadmission =
+        Sourceˉprofile.Compilerˉadmitˉsourceˉprofile(
+            Lock, Expectedˉlockˉhash, Profile, Rootˉsource, Descriptor
+        );
+    if Admission.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉprofileˉfailure(
+            Input, Admission.Status, Admission.Failureˉoffset
+        );
+    }
+    let Admitted: Compilerˉsourceˉwvbˉadmittedˉinput =
+        Compilerˉsourceˉwvbˉadmitˉinput(
+            Input, Rootˉsource, Descriptor, Admission
+        );
+    if Admitted.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉprofileˉfailure(
+            Input, Admitted.Status, Admitted.Failureˉoffset
+        );
+    }
+    return Compilerˉsourceˉwvbˉprofileˉcompilation(
+        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+        Bytesˉlength(Input),
+        Compilerˉsourceˉwvbˉcompile(Admitted.Input, Optimize)
+    );
 }

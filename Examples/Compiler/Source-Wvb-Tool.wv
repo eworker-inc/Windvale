@@ -1,5 +1,6 @@
 module Compilerˉsourceˉwvbˉtool profile hosted;
 
+import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
 capability console.write_line;
@@ -20,6 +21,7 @@ fn Compilerˉsourceˉwvbˉtoolˉheader(Modules: u32) -> bytes {
 fn Compilerˉsourceˉwvbˉtoolˉinput(First: u32, Modules: u32) -> bytes {
     let Empty: bytes = Textˉtoˉutf8("");
     var Directory: bytes = Empty;
+    var Payload: bytes = Empty;
     var Sourceˉoffset: u32 = 16u32 + Modules * 8u32;
     var Index: u32 = 0u32;
     while Index < Modules {
@@ -29,25 +31,22 @@ fn Compilerˉsourceˉwvbˉtoolˉinput(First: u32, Modules: u32) -> bytes {
         if Length > 4194304u32 - Sourceˉoffset { return Empty; }
         Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Sourceˉoffset));
         Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Payload = Bytesˉconcat(Payload, Source);
         Sourceˉoffset = Sourceˉoffset + Length;
         Index = Index + 1u32;
     }
-    var Result: bytes = Bytesˉconcat(
-        Compilerˉsourceˉwvbˉtoolˉheader(Modules), Directory
+    return Bytesˉconcat(
+        Bytesˉconcat(Compilerˉsourceˉwvbˉtoolˉheader(Modules), Directory),
+        Payload
     );
-    Index = 0u32;
-    while Index < Modules {
-        Result = Bytesˉconcat(
-            Result, file.read_bytes(process.argument(First + Index))
-        );
-        Index = Index + 1u32;
-    }
-    return Result;
 }
 
-fn Compilerˉsourceˉwvbˉtoolˉisˉcomplete(Argument: text) -> bool {
+fn Compilerˉsourceˉwvbˉtoolˉargumentˉequals(
+    Argument: text,
+    Expectedˉtext: text
+) -> bool {
     let Value: bytes = Textˉtoˉutf8(Argument);
-    let Expected: bytes = Textˉtoˉutf8("--complete");
+    let Expected: bytes = Textˉtoˉutf8(Expectedˉtext);
     if Bytesˉlength(Value) != Bytesˉlength(Expected) { return false; }
     var Index: u32 = 0u32;
     while Index < Bytesˉlength(Expected) {
@@ -57,6 +56,10 @@ fn Compilerˉsourceˉwvbˉtoolˉisˉcomplete(Argument: text) -> bool {
         Index = Index + 1u32;
     }
     return true;
+}
+
+fn Compilerˉsourceˉwvbˉtoolˉisˉcomplete(Argument: text) -> bool {
+    return Compilerˉsourceˉwvbˉtoolˉargumentˉequals(Argument, "--complete");
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉcompile(Input: bytes, Optimize: bool)
@@ -93,6 +96,15 @@ fn Compilerˉsourceˉwvbˉtoolˉfailure(
     return Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
 }
 
+fn Compilerˉsourceˉwvbˉtoolˉprofileˉfailure(
+    Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation
+) -> text {
+    var Report: text = "source profile status=";
+    Report = Textˉconcat(Report, Enumˉname(Compilation.Profileˉstatus));
+    Report = Textˉconcat(Report, " offset=");
+    return Textˉconcat(Report, U32ˉformat(Compilation.Failureˉoffset));
+}
+
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
     var First: u32 = 0u32;
@@ -102,6 +114,28 @@ export fn Main() -> i32 {
     ) {
         First = 1u32;
         Optimize = false;
+    }
+    var Hasˉprofileˉinputs: bool = false;
+    var Lockˉargument: u32 = 0u32;
+    var Lockˉhashˉargument: u32 = 0u32;
+    var Profileˉargument: u32 = 0u32;
+    if Arguments > First && Compilerˉsourceˉwvbˉtoolˉargumentˉequals(
+        process.argument(First), "--source-input-lock"
+    ) {
+        if Arguments - First < 7u32 ||
+            !Compilerˉsourceˉwvbˉtoolˉargumentˉequals(
+                process.argument(First + 3u32), "--source-profile"
+            ) {
+            diagnostic.write_line(
+                "Usage: source-wvb [--complete] --source-input-lock <inputs.wvlock> <sha256> --source-profile <profile.wvsp> <root.wv> [sorted-dependency.wv ...] <output.wvb>"
+            );
+            return 64;
+        }
+        Hasˉprofileˉinputs = true;
+        Lockˉargument = First + 1u32;
+        Lockˉhashˉargument = First + 2u32;
+        Profileˉargument = First + 4u32;
+        First = First + 5u32;
     }
     if Arguments - First < 2u32 {
         diagnostic.write_line(
@@ -114,10 +148,29 @@ export fn Main() -> i32 {
         diagnostic.write_line("source wvb status=Sourceˉwir wir-status=Sourceˉbindings");
         return 64;
     }
-    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Compilerˉsourceˉwvbˉtoolˉcompile(
-            Compilerˉsourceˉwvbˉtoolˉinput(First, Modules), Optimize
-        );
+    let Input: bytes = Compilerˉsourceˉwvbˉtoolˉinput(First, Modules);
+    var Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Compilerˉsourceˉwvbˉtoolˉcompile(Textˉtoˉutf8(""), Optimize);
+    if Hasˉprofileˉinputs {
+        let Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation =
+            Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+                Input,
+                file.read_bytes(process.argument(Lockˉargument)),
+                Textˉtoˉutf8(process.argument(Lockˉhashˉargument)),
+                file.read_bytes(process.argument(Profileˉargument)),
+                Optimize
+            );
+        if Compilation.Profileˉstatus !=
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+            diagnostic.write_line(
+                Compilerˉsourceˉwvbˉtoolˉprofileˉfailure(Compilation)
+            );
+            return 1;
+        }
+        Summary = Compilation.Summary;
+    } else {
+        Summary = Compilerˉsourceˉwvbˉtoolˉcompile(Input, Optimize);
+    }
     if Summary.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉwvbˉtoolˉfailure(Summary));
         return 1;

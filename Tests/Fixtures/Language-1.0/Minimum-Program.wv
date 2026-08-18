@@ -1,7 +1,7 @@
 #!wv/1 en@1
 module Languageˉoneˉminimum;
 profile core;
-platform windows, linux, windvale;
+platform linux, windows, windvale;
 authority application;
 
 export fn Main() -> i32 {

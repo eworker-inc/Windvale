@@ -1,0 +1,775 @@
+module Compilerˉsourceˉprofile profile portable;
+
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+import Foundationˉsha256 as Sha256;
+
+export enum Compilerˉsourceˉprofileˉstatus {
+    Valid = 0;
+    Invalidˉdescriptor = 1;
+    Invalidˉlockˉhash = 2;
+    Lockˉhashˉmismatch = 3;
+    Invalidˉlockˉtext = 4;
+    Invalidˉlockˉrecord = 5;
+    Invalidˉlockˉorder = 6;
+    Profileˉnotˉlocked = 7;
+    Profileˉhashˉmismatch = 8;
+    Invalidˉprofileˉtext = 9;
+    Invalidˉprofileˉrecord = 10;
+    Profileˉidentityˉmismatch = 11;
+    Unsupportedˉprofileˉbinding = 12;
+}
+
+record Compilerˉsourceˉprofileˉline {
+    Status: Compilerˉsourceˉprofileˉstatus;
+    Offset: u32;
+    Length: u32;
+    Nextˉoffset: u32;
+    Fields: u32;
+    Failureˉoffset: u32;
+}
+
+record Compilerˉsourceˉprofileˉfield {
+    Found: bool;
+    Offset: u32;
+    Length: u32;
+}
+
+export record Compilerˉsourceˉprofileˉadmission {
+    Status: Compilerˉsourceˉprofileˉstatus;
+    Binding: Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding;
+    Sourceˉedition: u32;
+    Failureˉoffset: u32;
+}
+
+fn Compilerˉsourceˉprofileˉfailure(
+    Status: Compilerˉsourceˉprofileˉstatus,
+    Offset: u32
+) -> Compilerˉsourceˉprofileˉadmission {
+    return Compilerˉsourceˉprofileˉadmission(
+        Status,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None,
+        0u32,
+        Offset
+    );
+}
+
+fn Compilerˉsourceˉprofileˉlineˉfailure(
+    Status: Compilerˉsourceˉprofileˉstatus,
+    Offset: u32
+) -> Compilerˉsourceˉprofileˉline {
+    return Compilerˉsourceˉprofileˉline(Status, Offset, 0u32, Offset, 0u32, Offset);
+}
+
+fn Compilerˉsourceˉprofileˉspanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉprofileˉspansˉcompare(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> i32 {
+    var Limit: u32 = Leftˉlength;
+    if Rightˉlength < Limit { Limit = Rightˉlength; }
+    var Index: u32 = 0u32;
+    while Index < Limit {
+        let Leftˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Left, Leftˉoffset + Index));
+        let Rightˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Right, Rightˉoffset + Index));
+        if Leftˉvalue < Rightˉvalue { return -1; }
+        if Leftˉvalue > Rightˉvalue { return 1; }
+        Index = Index + 1u32;
+    }
+    if Leftˉlength < Rightˉlength { return -1; }
+    if Leftˉlength > Rightˉlength { return 1; }
+    return 0;
+}
+
+fn Compilerˉsourceˉprofileˉspansˉequal(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Leftˉlength: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Rightˉlength: u32
+) -> bool {
+    return Compilerˉsourceˉprofileˉspansˉcompare(
+        Left, Leftˉoffset, Leftˉlength, Right, Rightˉoffset, Rightˉlength
+    ) == 0;
+}
+
+fn Compilerˉsourceˉprofileˉreadˉline(
+    Input: bytes,
+    Start: u32,
+    Invalidˉstatus: Compilerˉsourceˉprofileˉstatus
+) -> Compilerˉsourceˉprofileˉline {
+    let Total: u32 = Bytesˉlength(Input);
+    if Start >= Total {
+        return Compilerˉsourceˉprofileˉlineˉfailure(Invalidˉstatus, Start);
+    }
+    var Cursor: u32 = Start;
+    var Fields: u32 = 1u32;
+    var Fieldˉbytes: u32 = 0u32;
+    while Cursor < Total {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Value == 10u32 {
+            if Cursor == Start || Fieldˉbytes == 0u32 {
+                return Compilerˉsourceˉprofileˉlineˉfailure(Invalidˉstatus, Cursor);
+            }
+            return Compilerˉsourceˉprofileˉline(
+                Compilerˉsourceˉprofileˉstatus.Valid,
+                Start,
+                Cursor - Start,
+                Cursor + 1u32,
+                Fields,
+                Cursor + 1u32
+            );
+        }
+        if Cursor - Start >= 1024u32 {
+            return Compilerˉsourceˉprofileˉlineˉfailure(Invalidˉstatus, Cursor);
+        }
+        if Value < 33u32 || Value == 127u32 {
+            return Compilerˉsourceˉprofileˉlineˉfailure(Invalidˉstatus, Cursor);
+        }
+        if Value == 124u32 {
+            if Fieldˉbytes == 0u32 {
+                return Compilerˉsourceˉprofileˉlineˉfailure(Invalidˉstatus, Cursor);
+            }
+            Fields = Fields + 1u32;
+            Fieldˉbytes = 0u32;
+        } else {
+            Fieldˉbytes = Fieldˉbytes + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Compilerˉsourceˉprofileˉlineˉfailure(Invalidˉstatus, Cursor);
+}
+
+fn Compilerˉsourceˉprofileˉfieldˉat(
+    Input: bytes,
+    Line: Compilerˉsourceˉprofileˉline,
+    Index: u32
+) -> Compilerˉsourceˉprofileˉfield {
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Index >= Line.Fields {
+        return Compilerˉsourceˉprofileˉfield(false, Line.Offset, 0u32);
+    }
+    let Limit: u32 = Line.Offset + Line.Length;
+    var Fieldˉindex: u32 = 0u32;
+    var Start: u32 = Line.Offset;
+    var Cursor: u32 = Line.Offset;
+    while Cursor <= Limit {
+        var Boundary: bool = Cursor == Limit;
+        if !Boundary { Boundary = Bytesˉreadˉu8(Input, Cursor) == 124u8; }
+        if Boundary {
+            if Fieldˉindex == Index {
+                return Compilerˉsourceˉprofileˉfield(true, Start, Cursor - Start);
+            }
+            Fieldˉindex = Fieldˉindex + 1u32;
+            Start = Cursor + 1u32;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return Compilerˉsourceˉprofileˉfield(false, Line.Offset, 0u32);
+}
+
+fn Compilerˉsourceˉprofileˉfieldˉequals(
+    Input: bytes,
+    Line: Compilerˉsourceˉprofileˉline,
+    Index: u32,
+    Expected: text
+) -> bool {
+    let Field: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfieldˉat(Input, Line, Index);
+    if !Field.Found { return false; }
+    return Compilerˉsourceˉprofileˉspanˉequalsˉtext(
+        Input, Field.Offset, Field.Length, Expected
+    );
+}
+
+fn Compilerˉsourceˉprofileˉfieldˉisˉhash(
+    Input: bytes,
+    Field: Compilerˉsourceˉprofileˉfield
+) -> bool {
+    if !Field.Found || Field.Length != 64u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Field.Offset + Index));
+        var Hex: bool = Value >= 48u32 && Value <= 57u32;
+        if Value >= 97u32 && Value <= 102u32 { Hex = true; }
+        if !Hex { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉprofileˉfieldˉisˉidentity(
+    Input: bytes,
+    Field: Compilerˉsourceˉprofileˉfield
+) -> bool {
+    if !Field.Found || Field.Length < 2u32 || Field.Length > 96u32 { return false; }
+    var Atomˉstart: bool = true;
+    var Index: u32 = 0u32;
+    while Index < Field.Length {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Field.Offset + Index));
+        let Letter: bool =
+            (Value >= 65u32 && Value <= 90u32) ||
+            (Value >= 97u32 && Value <= 122u32);
+        let Digit: bool = Value >= 48u32 && Value <= 57u32;
+        if Letter {
+            Atomˉstart = false;
+        } else {
+            if Digit {
+                if Atomˉstart { return false; }
+            } else {
+                if Value != 45u32 && Value != 46u32 { return false; }
+                if Atomˉstart { return false; }
+                Atomˉstart = true;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return !Atomˉstart;
+}
+
+fn Compilerˉsourceˉprofileˉfieldˉisˉcount(
+    Input: bytes,
+    Field: Compilerˉsourceˉprofileˉfield,
+    Positive: bool
+) -> bool {
+    if !Field.Found || Field.Length == 0u32 || Field.Length > 10u32 { return false; }
+    if Field.Length > 1u32 && Bytesˉreadˉu8(Input, Field.Offset) == 48u8 { return false; }
+    if Positive && Bytesˉreadˉu8(Input, Field.Offset) == 48u8 { return false; }
+    var Value: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Field.Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Field.Offset + Index));
+        if Character < 48u32 || Character > 57u32 { return false; }
+        let Digit: u32 = Character - 48u32;
+        if Value > 429496729u32 { return false; }
+        if Value == 429496729u32 && Digit > 5u32 { return false; }
+        Value = Value * 10u32 + Digit;
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉprofileˉfieldˉu32(
+    Input: bytes,
+    Field: Compilerˉsourceˉprofileˉfield
+) -> u32 {
+    var Value: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Field.Length {
+        Value = Value * 10u32 +
+            U32ˉfromˉu8(Bytesˉreadˉu8(Input, Field.Offset + Index)) - 48u32;
+        Index = Index + 1u32;
+    }
+    return Value;
+}
+
+fn Compilerˉsourceˉprofileˉartifactˉtextˉvalid(
+    Input: bytes,
+    Maximum: u32,
+    Ascii: bool
+) -> bool {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length == 0u32 || Length > Maximum { return false; }
+    if !Textˉutf8ˉisˉvalid(Input) { return false; }
+    if Bytesˉreadˉu8(Input, Length - 1u32) != 10u8 { return false; }
+    if Length > 1u32 && Bytesˉreadˉu8(Input, Length - 2u32) == 10u8 { return false; }
+    if Ascii {
+        var Index: u32 = 0u32;
+        while Index < Length {
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index)) > 127u32 { return false; }
+            Index = Index + 1u32;
+        }
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉprofileˉexpectedˉhashˉvalid(Expected: bytes) -> bool {
+    return Compilerˉsourceˉprofileˉfieldˉisˉhash(
+        Expected,
+        Compilerˉsourceˉprofileˉfield(true, 0u32, Bytesˉlength(Expected))
+    );
+}
+
+fn Compilerˉsourceˉprofileˉhashˉmatches(Value: bytes, Expected: bytes) -> bool {
+    if !Compilerˉsourceˉprofileˉexpectedˉhashˉvalid(Expected) { return false; }
+    let Actual: bytes = Sha256.Foundationˉsha256ˉhex(Value);
+    return Compilerˉsourceˉprofileˉspansˉequal(
+        Actual, 0u32, Bytesˉlength(Actual), Expected, 0u32, Bytesˉlength(Expected)
+    );
+}
+
+fn Compilerˉsourceˉprofileˉprofileˉrowˉordered(
+    Lock: bytes,
+    Previousˉidentity: Compilerˉsourceˉprofileˉfield,
+    Previousˉversion: u32,
+    Identity: Compilerˉsourceˉprofileˉfield,
+    Version: u32
+) -> bool {
+    if !Previousˉidentity.Found { return true; }
+    let Comparison: i32 = Compilerˉsourceˉprofileˉspansˉcompare(
+        Lock, Previousˉidentity.Offset, Previousˉidentity.Length,
+        Lock, Identity.Offset, Identity.Length
+    );
+    if Comparison < 0 { return true; }
+    if Comparison > 0 { return false; }
+    return Previousˉversion < Version;
+}
+
+fn Compilerˉsourceˉprofileˉcatalogˉrowˉordered(
+    Lock: bytes,
+    Previousˉvocabulary: Compilerˉsourceˉprofileˉfield,
+    Previousˉversion: u32,
+    Previousˉmodule: Compilerˉsourceˉprofileˉfield,
+    Previousˉmajor: u32,
+    Previousˉinterface: Compilerˉsourceˉprofileˉfield,
+    Vocabulary: Compilerˉsourceˉprofileˉfield,
+    Version: u32,
+    Module: Compilerˉsourceˉprofileˉfield,
+    Major: u32,
+    Interface: Compilerˉsourceˉprofileˉfield
+) -> bool {
+    if !Previousˉvocabulary.Found { return true; }
+    var Comparison: i32 = Compilerˉsourceˉprofileˉspansˉcompare(
+        Lock, Previousˉvocabulary.Offset, Previousˉvocabulary.Length,
+        Lock, Vocabulary.Offset, Vocabulary.Length
+    );
+    if Comparison < 0 { return true; }
+    if Comparison > 0 { return false; }
+    if Previousˉversion < Version { return true; }
+    if Previousˉversion > Version { return false; }
+    Comparison = Compilerˉsourceˉprofileˉspansˉcompare(
+        Lock, Previousˉmodule.Offset, Previousˉmodule.Length,
+        Lock, Module.Offset, Module.Length
+    );
+    if Comparison < 0 { return true; }
+    if Comparison > 0 { return false; }
+    if Previousˉmajor < Major { return true; }
+    if Previousˉmajor > Major { return false; }
+    return Compilerˉsourceˉprofileˉspansˉcompare(
+        Lock, Previousˉinterface.Offset, Previousˉinterface.Length,
+        Lock, Interface.Offset, Interface.Length
+    ) < 0;
+}
+
+fn Compilerˉsourceˉprofileˉcomponentˉis(
+    Profile: bytes,
+    Line: Compilerˉsourceˉprofileˉline,
+    Kind: text,
+    Identity: text,
+    Version: text,
+    Hash: text
+) -> bool {
+    if Line.Fields != 4u32 { return false; }
+    return Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 0u32, Kind) &&
+        Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 1u32, Identity) &&
+        Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 2u32, Version) &&
+        Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 3u32, Hash);
+}
+
+export fn Compilerˉadmitˉsourceˉprofile(
+    Lock: bytes,
+    Expectedˉlockˉhash: bytes,
+    Profile: bytes,
+    Source: bytes,
+    Descriptor: Sourceˉdescriptor.Compilerˉsourceˉdescriptor
+) -> Compilerˉsourceˉprofileˉadmission {
+    if Descriptor.Status != Sourceˉdescriptor.Compilerˉsourceˉdescriptorˉstatus.Valid {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor,
+            Descriptor.Failureˉoffset
+        );
+    }
+    if !Compilerˉsourceˉprofileˉexpectedˉhashˉvalid(Expectedˉlockˉhash) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉhash, 0u32
+        );
+    }
+    if !Compilerˉsourceˉprofileˉhashˉmatches(Lock, Expectedˉlockˉhash) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Lockˉhashˉmismatch, 0u32
+        );
+    }
+    if !Compilerˉsourceˉprofileˉartifactˉtextˉvalid(Lock, 1048576u32, false) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉtext, 0u32
+        );
+    }
+
+    var Cursor: u32 = 0u32;
+    var Line: Compilerˉsourceˉprofileˉline = Compilerˉsourceˉprofileˉreadˉline(
+        Lock, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord
+    );
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 0u32, "windvale-source-input-lock") ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 1u32, "1") {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord, Line.Failureˉoffset
+        );
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Lock, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord
+    );
+    let Profileˉcountˉfield: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 1u32);
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 0u32, "profile-count") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(Lock, Profileˉcountˉfield, false) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord, Line.Failureˉoffset
+        );
+    }
+    let Profileˉcount: u32 =
+        Compilerˉsourceˉprofileˉfieldˉu32(Lock, Profileˉcountˉfield);
+    Cursor = Line.Nextˉoffset;
+    var Selectedˉhash: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfield(false, 0u32, 0u32);
+    var Previousˉidentity: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfield(false, 0u32, 0u32);
+    var Previousˉversion: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Profileˉcount {
+        Line = Compilerˉsourceˉprofileˉreadˉline(
+            Lock, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord
+        );
+        let Identity: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 1u32);
+        let Profileˉrowˉversionˉfield: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 2u32);
+        let Hash: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 3u32);
+        if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 4u32 ||
+            !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 0u32, "profile") ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉidentity(Lock, Identity) ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉcount(Lock, Profileˉrowˉversionˉfield, true) ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉhash(Lock, Hash) {
+            return Compilerˉsourceˉprofileˉfailure(
+                Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord,
+                Line.Failureˉoffset
+            );
+        }
+        let Profileˉrowˉversion: u32 =
+            Compilerˉsourceˉprofileˉfieldˉu32(Lock, Profileˉrowˉversionˉfield);
+        if !Compilerˉsourceˉprofileˉprofileˉrowˉordered(
+            Lock, Previousˉidentity, Previousˉversion, Identity, Profileˉrowˉversion
+        ) {
+            return Compilerˉsourceˉprofileˉfailure(
+                Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉorder, Line.Offset
+            );
+        }
+        if Profileˉrowˉversion == Descriptor.Profileˉversion &&
+            Compilerˉsourceˉprofileˉspansˉequal(
+                Lock, Identity.Offset, Identity.Length,
+                Source, Descriptor.Profileˉoffset, Descriptor.Profileˉlength
+            ) {
+            Selectedˉhash = Hash;
+        }
+        Previousˉidentity = Identity;
+        Previousˉversion = Profileˉrowˉversion;
+        Cursor = Line.Nextˉoffset;
+        Index = Index + 1u32;
+    }
+
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Lock, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord
+    );
+    let Catalogˉcountˉfield: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 1u32);
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 0u32, "catalog-count") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(Lock, Catalogˉcountˉfield, false) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord, Line.Failureˉoffset
+        );
+    }
+    let Catalogˉcount: u32 =
+        Compilerˉsourceˉprofileˉfieldˉu32(Lock, Catalogˉcountˉfield);
+    Cursor = Line.Nextˉoffset;
+    var Previousˉvocabulary: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfield(false, 0u32, 0u32);
+    Previousˉversion = 0u32;
+    var Previousˉmodule: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfield(false, 0u32, 0u32);
+    var Previousˉmajor: u32 = 0u32;
+    var Previousˉinterface: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfield(false, 0u32, 0u32);
+    Index = 0u32;
+    while Index < Catalogˉcount {
+        Line = Compilerˉsourceˉprofileˉreadˉline(
+            Lock, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord
+        );
+        let Vocabulary: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 1u32);
+        let Catalogˉversionˉfield: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 2u32);
+        let Module: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 3u32);
+        let Majorˉfield: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 4u32);
+        let Interface: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 5u32);
+        let Catalogˉhash: Compilerˉsourceˉprofileˉfield =
+            Compilerˉsourceˉprofileˉfieldˉat(Lock, Line, 6u32);
+        if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 7u32 ||
+            !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 0u32, "catalog") ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉidentity(Lock, Vocabulary) ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉcount(Lock, Catalogˉversionˉfield, true) ||
+            !Module.Found || Module.Length == 0u32 || Module.Length > 512u32 ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉcount(Lock, Majorˉfield, true) ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉhash(Lock, Interface) ||
+            !Compilerˉsourceˉprofileˉfieldˉisˉhash(Lock, Catalogˉhash) {
+            return Compilerˉsourceˉprofileˉfailure(
+                Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord,
+                Line.Failureˉoffset
+            );
+        }
+        let Catalogˉversion: u32 =
+            Compilerˉsourceˉprofileˉfieldˉu32(Lock, Catalogˉversionˉfield);
+        let Major: u32 = Compilerˉsourceˉprofileˉfieldˉu32(Lock, Majorˉfield);
+        if !Compilerˉsourceˉprofileˉcatalogˉrowˉordered(
+            Lock,
+            Previousˉvocabulary, Previousˉversion, Previousˉmodule,
+            Previousˉmajor, Previousˉinterface,
+            Vocabulary, Catalogˉversion, Module, Major, Interface
+        ) {
+            return Compilerˉsourceˉprofileˉfailure(
+                Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉorder, Line.Offset
+            );
+        }
+        Previousˉvocabulary = Vocabulary;
+        Previousˉversion = Catalogˉversion;
+        Previousˉmodule = Module;
+        Previousˉmajor = Major;
+        Previousˉinterface = Interface;
+        Cursor = Line.Nextˉoffset;
+        Index = Index + 1u32;
+    }
+
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Lock, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord
+    );
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 0u32, "end") ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Lock, Line, 1u32, "windvale-source-input-lock") ||
+        Line.Nextˉoffset != Bytesˉlength(Lock) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉlockˉrecord, Line.Failureˉoffset
+        );
+    }
+    if !Selectedˉhash.Found {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Profileˉnotˉlocked,
+            Descriptor.Profileˉoffset
+        );
+    }
+    let Expectedˉprofileˉhash: bytes = Bytesˉslice(
+        Lock, Selectedˉhash.Offset, Selectedˉhash.Length
+    );
+    if !Compilerˉsourceˉprofileˉhashˉmatches(Profile, Expectedˉprofileˉhash) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Profileˉhashˉmismatch, 0u32
+        );
+    }
+    if !Compilerˉsourceˉprofileˉartifactˉtextˉvalid(Profile, 65536u32, true) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉtext, 0u32
+        );
+    }
+
+    Cursor = 0u32;
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 0u32, "windvale-source-profile") ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 1u32, "1") {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord, Line.Failureˉoffset
+        );
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    let Profileˉidentity: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfieldˉat(Profile, Line, 1u32);
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 0u32, "identity") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉidentity(Profile, Profileˉidentity) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord, Line.Failureˉoffset
+        );
+    }
+    if !Compilerˉsourceˉprofileˉspansˉequal(
+        Profile, Profileˉidentity.Offset, Profileˉidentity.Length,
+        Source, Descriptor.Profileˉoffset, Descriptor.Profileˉlength
+    ) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Profileˉidentityˉmismatch,
+            Profileˉidentity.Offset
+        );
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    let Profileˉversionˉfield: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfieldˉat(Profile, Line, 1u32);
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 0u32, "version") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(Profile, Profileˉversionˉfield, true) ||
+        Compilerˉsourceˉprofileˉfieldˉu32(Profile, Profileˉversionˉfield) !=
+            Descriptor.Profileˉversion {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Profileˉidentityˉmismatch,
+            Profileˉversionˉfield.Offset
+        );
+    }
+    Cursor = Line.Nextˉoffset;
+    Line = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    let Editionˉfield: Compilerˉsourceˉprofileˉfield =
+        Compilerˉsourceˉprofileˉfieldˉat(Profile, Line, 1u32);
+    if Line.Status != Compilerˉsourceˉprofileˉstatus.Valid || Line.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Line, 0u32, "source-edition") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(Profile, Editionˉfield, true) ||
+        Compilerˉsourceˉprofileˉfieldˉu32(Profile, Editionˉfield) != Descriptor.Edition {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Profileˉidentityˉmismatch,
+            Editionˉfield.Offset
+        );
+    }
+
+    Cursor = Line.Nextˉoffset;
+    let Unicode: Compilerˉsourceˉprofileˉline = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    Cursor = Unicode.Nextˉoffset;
+    let Tokens: Compilerˉsourceˉprofileˉline = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    Cursor = Tokens.Nextˉoffset;
+    let Lexicon: Compilerˉsourceˉprofileˉline = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    Cursor = Lexicon.Nextˉoffset;
+    let Sourceˉvocabularyˉline: Compilerˉsourceˉprofileˉline = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    Cursor = Sourceˉvocabularyˉline.Nextˉoffset;
+    let End: Compilerˉsourceˉprofileˉline = Compilerˉsourceˉprofileˉreadˉline(
+        Profile, Cursor, Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord
+    );
+    if Unicode.Status != Compilerˉsourceˉprofileˉstatus.Valid || Unicode.Fields != 4u32 ||
+        Tokens.Status != Compilerˉsourceˉprofileˉstatus.Valid || Tokens.Fields != 4u32 ||
+        Lexicon.Status != Compilerˉsourceˉprofileˉstatus.Valid || Lexicon.Fields != 4u32 ||
+        Sourceˉvocabularyˉline.Status != Compilerˉsourceˉprofileˉstatus.Valid ||
+        Sourceˉvocabularyˉline.Fields != 4u32 ||
+        End.Status != Compilerˉsourceˉprofileˉstatus.Valid || End.Fields != 2u32 ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Unicode, 0u32, "unicode-profile") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉidentity(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Unicode, 1u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Unicode, 2u32), true
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉhash(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Unicode, 3u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Tokens, 0u32, "token-registry") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉidentity(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Tokens, 1u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Tokens, 2u32), true
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉhash(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Tokens, 3u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, Lexicon, 0u32, "keyword-lexicon") ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉidentity(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Lexicon, 1u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Lexicon, 2u32), true
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉhash(
+            Profile, Compilerˉsourceˉprofileˉfieldˉat(Profile, Lexicon, 3u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(
+            Profile, Sourceˉvocabularyˉline, 0u32, "source-vocabulary"
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉidentity(
+            Profile,
+            Compilerˉsourceˉprofileˉfieldˉat(Profile, Sourceˉvocabularyˉline, 1u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉcount(
+            Profile,
+            Compilerˉsourceˉprofileˉfieldˉat(Profile, Sourceˉvocabularyˉline, 2u32),
+            true
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉisˉhash(
+            Profile,
+            Compilerˉsourceˉprofileˉfieldˉat(Profile, Sourceˉvocabularyˉline, 3u32)
+        ) ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, End, 0u32, "end") ||
+        !Compilerˉsourceˉprofileˉfieldˉequals(Profile, End, 1u32, "windvale-source-profile") ||
+        End.Nextˉoffset != Bytesˉlength(Profile) {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Invalidˉprofileˉrecord,
+            Cursor
+        );
+    }
+
+    let English: bool =
+        Compilerˉsourceˉprofileˉcomponentˉis(
+            Profile, Unicode, "unicode-profile", "windvale.unicode17.source", "1",
+            "2772f22969972eaae52058ce2cad0f2a716181c494a2b422188cbe5215e08ce9"
+        ) &&
+        Compilerˉsourceˉprofileˉcomponentˉis(
+            Profile, Tokens, "token-registry", "windvale.language1.keyword-tokens", "1",
+            "cefa459df5dcaf22b53670a81f09c6f696188903c8e136d763da869a5ec6286e"
+        ) &&
+        Compilerˉsourceˉprofileˉcomponentˉis(
+            Profile, Lexicon, "keyword-lexicon", "windvale.source.en", "1",
+            "25049aab3ecdbdeedcedfdada97247782bf42de6f861c6bdfb0d3fe86a24b89a"
+        ) &&
+        Compilerˉsourceˉprofileˉcomponentˉis(
+            Profile, Sourceˉvocabularyˉline, "source-vocabulary", "en", "1",
+            "2bc0e795b812755056cf08cfdef0b985d9750273dcc70ab470d992ebcfe830f3"
+        );
+    if !English {
+        return Compilerˉsourceˉprofileˉfailure(
+            Compilerˉsourceˉprofileˉstatus.Unsupportedˉprofileˉbinding,
+            Unicode.Offset
+        );
+    }
+    return Compilerˉsourceˉprofileˉadmission(
+        Compilerˉsourceˉprofileˉstatus.Valid,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English,
+        Descriptor.Edition,
+        Bytesˉlength(Profile)
+    );
+}

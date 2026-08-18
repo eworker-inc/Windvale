@@ -2,12 +2,13 @@
 
 ## Status and purpose
 
-Workspace 1 (`.wvws`) and Windvale Project 2 (`.wvproj`) are the native-owned,
-deterministic build-input contracts selected by
+Workspace 1 (`.wvws`) and Windvale Projects 2 and 3 (`.wvproj`) are the
+native-owned, deterministic build-input contracts selected by
 [Decision 0528](../Documents/Decisions/0528-Workspace-Rooted-Project-2.md).
 One explicitly supplied workspace binds a source root. One project selects an exact
-root module and dependency-source inventory beneath that root and emits one
-self-contained WVB.
+root module and dependency-source inventory beneath that root. Project 3 also
+selects an exact Language 1.0 source-input lock and composite source profile. Both
+versions emit one self-contained WVB.
 
 Project manifests are not Windvale source, packages, workspaces, runtime-link
 descriptions, or build programs. Source `import` declarations remain the semantic
@@ -60,6 +61,42 @@ Directive order after the header is not semantically significant. Unknown,
 repeated singleton, malformed, missing, or out-of-bound directives are rejected
 before source compilation.
 
+## Project 3 text format
+
+Project 3 preserves Project 2's source inventory and adds the immutable inputs
+needed to admit a Language 1.0 source profile:
+
+```text
+windvale-project 3
+root "Compiler/Windvale/Main.wv"
+source "Libraries/Foundation/Bytes.wv"
+source-input-lock "Inputs/Source-Inputs.wvlock"
+source-input-lock-sha256 4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3
+source-profile "Inputs/En-Source-Profile.wvsp"
+emit wvb
+```
+
+It accepts exactly one `source-input-lock`, one
+`source-input-lock-sha256`, and one `source-profile` directive in addition to
+Project 2's root, zero-through-63 sources, and emission. The lock digest is
+exactly 64 lowercase hexadecimal digits. The two artifact paths are ordinary
+workspace-relative inputs ending in lowercase `.wvlock` and `.wvsp` respectively.
+They obey the same lexical path, containment, alias, and input/output-separation
+rules as source paths.
+
+This first Project 3 profile binds one exact source-profile identity/version for
+the complete source closure. Every source descriptor must select that same value.
+Supporting a mixed-profile source closure later must add explicit per-source
+selection without weakening the one-profile format or guessing from source text.
+
+The project binds bytes; it does not name a registry, content store, network
+location, installation, or fallback. The build provider reads the selected lock
+and profile once. The compiler hashes the lock against the manifest digest before
+parsing it, obtains the selected profile hash from the admitted lock, and hashes
+the supplied profile before parsing it. A missing, changed, malformed, unlisted,
+or unsupported profile fails without output publication. Project 2 remains
+byte-for-byte valid and does not acquire an ambient profile.
+
 ## Workspace-relative paths
 
 Every project path is relative to the workspace source root, regardless of the
@@ -67,7 +104,7 @@ directory containing the `.wvproj`. Encoded path text is nonempty and limited to
 4,096 bytes. A path:
 
 - uses `/` as its only separator;
-- ends in lowercase `.wv`;
+- ends in its directive's lowercase suffix: `.wv`, `.wvlock`, or `.wvsp`;
 - contains segments that begin and end with an ASCII letter or digit;
 - permits `.`, `_`, or `-` only inside a segment;
 - contains no native separator, colon, control character, quotation mark, empty
@@ -89,7 +126,7 @@ untrusted provider.
 
 A locally contained project normally lives beside the component or fixture it owns.
 A cross-component project normally lives under `Projects/<owner>/`. Manifest
-location is organizational and has no path-resolution semantics in Project 2.
+location is organizational and has no path-resolution semantics in Project 2 or 3.
 
 The repository root contains the explicitly supplied `Windvale.wvws` marker. It
 does not contain ordinary component, fixture, or cross-component `.wvproj` files.
@@ -104,7 +141,7 @@ windvale build --workspace <workspace.wvws> <project.wvproj> [-o <module.wvb>]
 
 The repository `Tools/Native/Build-Wvb` helpers bind the checked-in workspace and
 accept a repository project path plus optional output. Both forms invoke the same
-native Workspace 1 and Project 2 parser and build path.
+native Workspace 1 and Project 2/3 parser and build path.
 
 The build reads the workspace once, project once, and every explicit source once.
 It invokes the bounded compiler and verifies the generated WVB before atomic or
@@ -142,8 +179,9 @@ retain exit `74`.
 
 ## Windvale-owned boundary
 
-`Tools/Windvale.Project/Project-Manifest-Core.wv` owns portable Project 2 parsing
-and path extraction. It performs no host file access or ambient root discovery.
+`Tools/Windvale.Project/Project-Manifest-Core.wv` owns portable Project 2/3
+parsing and path extraction. It performs no host file access or ambient root
+discovery.
 The bounded native build driver owns exact Workspace 1 marker validation together
 with workspace-rooted resource composition.
 
@@ -162,10 +200,15 @@ No C# implementation advances for these contracts.
 
 ## Boundary and deferred features
 
-Project 2 deliberately excludes source discovery, globs, environment expansion,
+Projects 2 and 3 deliberately exclude source discovery, globs, environment expansion,
 conditional compilation, arbitrary build actions, capability authorization,
-packages, versions, lockfiles, project references, binary libraries, runtime WVB
+packages, project references, binary libraries, runtime WVB
 linking, multiple roots, tests, resources, native containers, and multiple targets.
+
+Project 3's source-input lock is not a general package lockfile. It contains exact
+source-profile and public-catalog identities and hashes only; package resolution,
+component acquisition, and approved content-store lookup remain separate build-plan
+responsibilities.
 
 Workspace 1 is a source-root binding, not a package resolver or target graph. A
 future package or project-reference layer must preserve exact source and dependency

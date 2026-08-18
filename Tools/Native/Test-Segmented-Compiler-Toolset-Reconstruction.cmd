@@ -49,8 +49,8 @@ set "FailureStep=compiler-scale WVB build"
     >"%TestDirectory%\Compiler-Build.out" 2>"%TestDirectory%\Compiler-Build.err"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Compiler-Build.err") do if not "%%~zF"=="0" goto :failed
-for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1182549" goto :failed
-certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a" >nul
+for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1249763" goto :failed
+certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"8abf598ce3d263337f86815b2686fff762c1120dc1865f5bbfa8fb1a7ae7ac9f" >nul
 if errorlevel 1 goto :failed
 set "FailureStep=compiler-scale native staging"
 "%TestDirectory%\windows-x64-wvstage.exe" "%CompilerWvb%" ^
@@ -59,7 +59,7 @@ set "FailureStep=compiler-scale native staging"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Compiler-Stage.err") do if not "%%~zF"=="0" goto :failed
 for %%F in ("%TestDirectory%\Compiler-Stage.out") do if not "%%~zF"=="86" goto :failed
-findstr /b /c:"native x64 staging status=Complete object-bytes=31025972 chunks=40 manifest-bytes=504" "%TestDirectory%\Compiler-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=31865192 chunks=40 manifest-bytes=504" "%TestDirectory%\Compiler-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "compiler-scale WVB staging"
 

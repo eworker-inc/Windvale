@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Project/Project3-Manifest-Self-Test.wv"
+source "Tools/Windvale.Project/Project-Manifest-Core.wv"
+emit wvb
