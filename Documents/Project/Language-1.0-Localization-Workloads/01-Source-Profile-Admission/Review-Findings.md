@@ -2,9 +2,9 @@
 
 ## Status
 
-These are proposed findings from the complete first-author bundle. They require
-project-owner review before they become accepted replacement-candidate
-directions. No finding is an implementation authorization or source freeze.
+These findings from the complete first-author bundle are accepted by the project
+owner as replacement-candidate directions. No finding is an implementation
+authorization or source freeze.
 
 ## Finding 1: one canonical record format is sufficient
 
@@ -86,7 +86,7 @@ remain a replacement-freeze blocker.
 | Rejected/boundary cases | 43 |
 | Current compiler/runtime implementation | None |
 
-## Proposed disposition
+## Accepted disposition
 
 Accept findings 1 through 10 as the input to localization workloads 2 through 5.
 Keep the Language 1.0 source freeze held until native-reviewed source,

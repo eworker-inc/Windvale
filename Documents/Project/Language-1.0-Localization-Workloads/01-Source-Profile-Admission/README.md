@@ -4,9 +4,10 @@
 
 Complete first-author paper bundle for the source-profile admission workload in
 the [localization workload plan](../../Windvale-Language-1.0-Localization-Workloads.md).
-Its findings are proposed for owner review. It is not a source freeze, compiler
-implementation, translation-quality claim, or cross-host performance result.
-Current compilers continue to accept Windvale Seed.
+Its technical and design findings are accepted by the project owner. It is not
+a source freeze, compiler implementation, translation-quality claim, or
+cross-host performance result. Current compilers continue to accept Windvale
+Seed.
 
 ## Result first
 

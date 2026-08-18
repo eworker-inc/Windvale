@@ -41,8 +41,9 @@ against `en@1`.
 
 The complete first-author draft is in
 [localization workload 2](Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source/README.md).
-Its artifact and paper equivalence checks pass; native terminology review and
-executable equivalence remain open.
+Its artifact and paper equivalence checks pass and the project owner accepts its
+technical/design findings; native terminology review and executable equivalence
+remain open.
 
 ### Workload 3: conversion and source tooling
 
@@ -50,6 +51,11 @@ Exercise deterministic profile conversion, formatter preservation, rename,
 copy/paste modes, canonical reveal, diagnostics, source maps, and stale-catalog
 handling. Conversion must preserve project-owned identifiers and non-source
 prose unless separately requested.
+
+The accepted first-author paper bundle is in
+[localization workload 3](Language-1.0-Localization-Workloads/03-Conversion-And-Source-Tooling/README.md).
+It fixes the product/tooling behavior and expected source bytes; implementation,
+interactive editor, and cross-host qualification remain open.
 
 ### Workload 4: Unicode and multilingual security
 

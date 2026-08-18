@@ -1,0 +1,14 @@
+#!wv/1 en@1
+module 选项ˉ选择;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import Foundationˉoption as 选项库;
+
+export fn 选择ˉ启用(已启用: bool) -> 选项库.Option<bool> effects() {
+    if 已启用 {
+        return 选项库.Option.Present { Value: true };
+    }
+    return 选项库.Option.Absent;
+}

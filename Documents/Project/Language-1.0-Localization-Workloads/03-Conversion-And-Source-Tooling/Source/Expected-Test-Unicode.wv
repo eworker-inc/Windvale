@@ -1,0 +1,14 @@
+#!wv/1 test-Unicode@1
+module 选项ˉ选择;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import 試験ˉ選択 as 选项库;
+
+export fn 选择ˉ启用(已启用: bool) -> 选项库.選択<bool> effects() {
+    条件測試 已启用 {
+        返却測試 选项库.選択.存在 { 値: 真測試 };
+    }
+    返却測試 选项库.選択.不在;
+}

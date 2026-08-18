@@ -1958,7 +1958,8 @@ questions are:
    only receive localized explanations?
 3. Should profile and authority words localize in code, or remain universal
    technical vocabulary?
-4. What should the default Copy operation produce from a localized view?
+4. Resolved by Workload 3: ordinary Copy produces exact stored source;
+   canonical-source and displayed-view copies are explicit alternatives.
 5. How should localized display width influence visual wrapping without
    changing canonical formatting?
 6. What minimum canonical identity must always remain visible in diagnostics,

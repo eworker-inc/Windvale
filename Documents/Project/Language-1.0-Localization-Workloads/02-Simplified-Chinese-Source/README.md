@@ -5,7 +5,8 @@
 Complete first-author draft for the `zh-Hans@1` source-profile workload. The
 artifact, terminology, source-equivalence, and review packets are ready for
 native-language technical review, but no native reviewer has approved them yet.
-This bundle therefore does not claim a qualified Chinese pack, implementation,
+The project owner accepts the structural and technical design findings. This
+bundle therefore still does not claim a qualified Chinese pack, implementation,
 cross-host artifact equivalence, or release readiness.
 
 ## Result first

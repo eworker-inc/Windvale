@@ -2,9 +2,9 @@
 
 ## Status
 
-These are first-author findings, not native-reviewed conclusions. They may guide
-review but cannot complete Workload 2 until the native checklist and mechanical
-rerun are accepted.
+These first-author technical and design findings are accepted by the project
+owner. They are not native-reviewed terminology conclusions and cannot complete
+Workload 2 until the native checklist and mechanical rerun are accepted.
 
 ## Finding 1: the entire mapped keyword surface can be Chinese
 
@@ -88,8 +88,9 @@ maintenance when public interfaces change.
 | Native approvals | 0 |
 | Current implementation evidence | None |
 
-## Proposed disposition
+## Accepted disposition
 
-Send the exact terminology and source packet to named native reviewers. Accept
-only the structural mechanism now; keep every Chinese spelling and the overall
-Workload 2 result in draft state until reviewed hashes and dispositions return.
+Send the exact terminology and source packet to named native reviewers. The
+structural mechanism is owner accepted; keep every Chinese spelling and the
+overall Workload 2 result in draft state until reviewed hashes and dispositions
+return.

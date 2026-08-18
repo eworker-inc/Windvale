@@ -7,9 +7,11 @@ source in Windvale Language 1.0. The project owner selected stored localized
 keywords, stored localized references to public library declarations, and
 Unicode project identifiers for the replacement Language 1.0 candidate on
 2026-08-18. The first source-profile admission workload now supplies exact
-candidate bytes and rejected cases; the remaining localization workloads and
-owner review are still open. The design is not frozen or implemented. Current
-compilers continue to implement
+candidate bytes and rejected cases. The project owner accepts the technical and
+design findings from Workloads 1 through 3; native terminology, implementation,
+multilingual-security, shipment, cross-host, and measured-performance evidence
+remain open. The design is not frozen or implemented. Current compilers continue
+to implement
 [Windvale Seed](Seed-Language.md).
 
 This document owns:
@@ -529,10 +531,25 @@ profiles. Conversion:
    resolution; and
 7. reports input/output hashes, pack hashes, and canonical semantic identity.
 
+The safe default writes a distinct output path. Replacing the input is an
+explicit operation that rechecks the original raw hash and uses atomic
+same-filesystem replacement after complete target validation, or refuses when
+that guarantee is unavailable. A conflict, failure, or cancellation preserves
+the original and removes only the operation's exact private candidate.
+
 Keyword and public-library conversion requires no AI. Project-owned identifiers
 such as `检查ˉ免运费` remain Chinese unless an explicit project vocabulary binds
 them. Automatic natural-language translation of project names, comments,
 strings, resources, schemas, or user data is outside compiler conversion.
+
+Ordinary editor Copy returns exact stored source. Canonical-source and displayed-
+view copy are separately named operations with visible provenance. Paste never
+guesses a profile from script or host locale; different-profile conversion
+requires trusted bounded provenance and an explicit user action. The formatter
+retains the file's selected profile and primary spellings. Semantic rename
+changes project-owned declarations/references by identity; an imported library
+label can change only through a new reviewed catalog plus explicit consumer
+conversion.
 
 ## Artifact and cache identity
 
@@ -603,13 +620,15 @@ language, compiler pipeline, WVB, or runtime contract.
 ## Required conformance workloads
 
 The [localization workload plan](../Documents/Project/Windvale-Language-1.0-Localization-Workloads.md)
-groups the following evidence into five bounded bundles. Workload 1 now has a
-complete first-author packet with 25 accepted cases, 43 rejected cases, exact
-reference artifacts, and a synthetic Unicode source-equivalence fixture. Its
-findings remain proposed until owner review. Workload 2 now has a complete
-first-author `zh-Hans@1` artifact, terminology, paired-source, and equivalence
-packet, but native review and executable evidence remain open. Workloads 3
-through 5 remain open.
+groups the following evidence into five bounded bundles. Workload 1 has an
+owner-accepted first-author packet with 25 accepted cases, 43 rejected cases,
+exact reference artifacts, and a synthetic Unicode source-equivalence fixture.
+Workload 2 has a complete first-author `zh-Hans@1` artifact, terminology,
+paired-source, and equivalence packet whose technical/design findings are owner
+accepted, but native review and executable evidence remain open. Workload 3 has
+an owner-accepted paper contract, 30 accepted cases, 30 rejected cases, and
+three exact expected-source fixtures; implementation/editor qualification
+remains open. Workloads 4 and 5 remain open.
 The replacement Language 1.0 candidate requires at least:
 
 1. canonical, Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin
