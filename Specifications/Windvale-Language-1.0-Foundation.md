@@ -24,7 +24,9 @@ and
 and
 [Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md)
 and
-[Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md).
+[Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md)
+and
+[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -1774,6 +1776,7 @@ claim.
 
 - `Rawˉaddress<Scope>`;
 - `Foreignˉpointer<T, Abi>`;
+- `Nullableˉforeignˉpointer<T, Abi>`;
 - `Volatileˉpointer<T, Scope>`;
 - `Dmaˉregion<Device, Generation>`; and
 - exact ABI layout witnesses.
@@ -1789,6 +1792,103 @@ Windvale record.
 
 The module may be implemented intrinsically, but its public contracts remain
 versioned and independently tested.
+
+`Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
+does not prove alignment, accessible range, initialization, lifetime, aliasing,
+ownership, or permission to dereference. When a foreign ABI admits null, its
+signature uses the distinct `Nullableˉforeignˉpointer<T, Abi>`; there is no
+implicit `null`, zero conversion, or optional-pointer spelling. An unsafe named
+`Requireˉnonˉnull` call distinguishes null and produces a non-null foreign
+pointer, but dereference still needs the complete region/layout/lifetime proof.
+
+The System/FFI paper workload fixes this first exact caller-owned scratch and
+foreign-write surface:
+
+~~~text
+export variant Foreignˉmemoryˉfailure {
+    Invalidˉlength(Observed: u64, Maximum: u64);
+    Invalidˉalignment(Observed: u64);
+    Allocation(Error: Allocationˉfailure);
+    Unsupportedˉabi;
+}
+
+export variant Foreignˉpointerˉfailure {
+    Null;
+    Addressˉoverflow(Start: u64, Length: u64, Addressˉbits: u32);
+    Outˉofˉrange(Start: u64, Length: u64, Ownerˉlength: u64);
+    Misaligned(Start: u64, Requiredˉalignment: u64);
+    Aliasing;
+    Lifetimeˉended;
+    Unsupportedˉabi;
+}
+
+export unsafe fn Requireˉnonˉnull<T, Abi>(
+    Value: Nullableˉforeignˉpointer<T, Abi>,
+) -> Result<Foreignˉpointer<T, Abi>, Foreignˉpointerˉfailure>
+    effects(unsafe.address);
+
+export fn Constructˉscratch<Abi>(
+    Budget: Memoryˉbudget,
+    Length: u64,
+    Alignment: u64,
+) -> Result<Foreignˉscratch<Abi>, Foreignˉmemoryˉfailure>
+    effects(memory.allocate);
+
+export fn Scratchˉlength<Abi>(
+    Scratch: borrow Foreignˉscratch<Abi>,
+) -> u64 effects();
+
+export unsafe fn Borrowˉwriteˉregion<Abi>(
+    Scratch: borrow mut Foreignˉscratch<Abi>,
+    Start: u64,
+    Length: u64,
+    Requiredˉalignment: u64,
+) -> Result<Foreignˉwriteˉregion<Abi>, Foreignˉpointerˉfailure>
+    effects(unsafe.address);
+
+export unsafe fn Writeˉpointer<Abi>(
+    Region: borrow Foreignˉwriteˉregion<Abi>,
+) -> Foreignˉpointer<u8, Abi> effects(unsafe.address);
+
+export fn Regionˉlength<Abi>(
+    Region: borrow Foreignˉwriteˉregion<Abi>,
+) -> u64 effects();
+
+export fn Borrowˉscratchˉslice<Abi>(
+    Scratch: borrow Foreignˉscratch<Abi>,
+    Start: u64,
+    Length: u64,
+) -> Slice<u8> effects();
+~~~
+
+Scratch construction requires positive length and power-of-two alignment, checks
+both against the selected ABI/address-width witness, allocates exactly the
+admitted extent, and zero-initializes every byte. Failure consumes and locally
+releases the supplied budget. Success owns one allocation lease; lexical drop
+releases it. Scratch cannot be shared, serialized, stored in Core/Hosted data,
+or reinterpreted as a native allocator handle.
+
+`Borrowˉwriteˉregion` checks `Start + Length`, base-address plus start/end, ABI
+address width, owner bounds, required power-of-two alignment, live lifetime, and
+exclusive alias state before publishing a region. Failure publishes no pointer
+and leaves the scratch unchanged. The region exclusively borrows the scratch;
+its pointer cannot escape that lifetime or coexist with a Windvale observation
+of the bytes. `Writeˉpointer` exposes only the region start and exact remaining
+extent to a compatible no-retain foreign signature.
+
+After the region and every derived pointer are dead, `Borrowˉscratchˉslice`
+performs ordinary checked range construction over initialized bytes. Foreign
+bytes are untrusted values and must be decoded before safe publication. The
+slice cannot expose an address or retain the scratch beyond its borrow.
+
+Calling a foreign function assumes only its declared memory-safety preconditions:
+it may write within the supplied region and no farther, obey alignment/aliasing,
+and retain no pointer when the ABI contract says no-retain. Returned bytes,
+lengths, enums, Booleans, generations, and status are still untrusted and
+recoverably validated. A foreign write outside the supplied region, use after
+the call, forbidden unwind, or calling-convention violation may already have
+destroyed process integrity and follows the ABI's terminal containment policy;
+it is not reported as an ordinary safe `Result`.
 
 ## Intrinsics and ordinary implementations
 
@@ -1849,5 +1949,11 @@ Before source freeze:
 23. contextual fixed arrays, checked immutable/exclusive slices, strict float
     operations/conversions, canonical numeric formatting, and bit-identical
     parallel equivalence pass the numeric/graphics cases; and
-24. a responsibility matrix identifies ordinary source, compiler intrinsic,
+24. complete mutable/immutable map and ordered-set ownership, canonical rank,
+    comparison-law, package-content dedup/accounting, and graph-order cases pass
+    the package-parser corpus;
+25. registered ABI identity, nullable/non-null pointer, aligned scratch, checked
+    address/range/lifetime/alias, foreign outcome, isolated containment, and safe
+    publication pass the System/FFI corpus; and
+26. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.

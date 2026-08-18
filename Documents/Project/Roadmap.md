@@ -57,7 +57,10 @@ accepts contextual fixed arrays, checked mutable slices, strict numeric
 operations/conversions/formatting, and bit-identical parallel policy, and
 [Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md)
 accepts complete deterministic collection publication, explicit bounded
-parsing, package-content dedup/accounting, and canonical graph ordering. The
+parsing, package-content dedup/accounting, and canonical graph ordering, and
+[Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md)
+accepts the concrete System ABI target, registered ABI contract, pointer/scratch
+surface, containment boundary, and safe-publication rules. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
 [bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
 [database-transaction bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md),
@@ -67,10 +70,11 @@ parsing, package-content dedup/accounting, and canonical graph ordering. The
 [retained-GUI bundle](Language-1.0-Paper-Corpus/07-Gui-Retained-State/README.md),
 [numeric/graphics bundle](Language-1.0-Paper-Corpus/08-Numeric-Graphics-Processing/README.md),
 [package-parser bundle](Language-1.0-Paper-Corpus/09-Package-Parser-Deterministic-Map/README.md),
+[System/FFI bundle](Language-1.0-Paper-Corpus/10-System-Ffi-Boundary/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
-are now draft reviewed. Ten of the eleven required bundles are reviewed; the
-remaining paper work is workload 10. The accepted direction,
+are now draft reviewed. All eleven required bundles are reviewed; complete-suite
+reconciliation and the explicit source-freeze decision remain. The accepted direction,
 normative-candidate suite,
 paper corpus, accelerator/AI design evidence, and migration plan may advance
 without claiming implementation or changing the current Seed product. Source

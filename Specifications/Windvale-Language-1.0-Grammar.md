@@ -10,7 +10,9 @@ and refined by
 and
 [Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
 and
-[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
+[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md)
+and
+[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md).
 It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
@@ -413,8 +415,11 @@ Foreignˉdeclaration ::= [ Documentation ] Visibility "unsafe" "foreign"
                         "as" Textˉliteral ";"
 ~~~
 
-The first literal is the canonical ABI identity and the second is the exact
-external symbol. Both must be ordinary non-interpolated single-line text.
+The first literal is the canonical registered ABI-contract identity and the
+second is the exact external symbol. Both must be ordinary non-interpolated
+single-line text. Calling convention, target predicate, scalar/pointer layout,
+retention, and unwind policy come from that exact registered contract; the
+literal is not a host-default calling-convention nickname.
 
 ## Types
 

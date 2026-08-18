@@ -1,0 +1,175 @@
+edition 1;
+module Foreignˉrecordˉapplication;
+profile system;
+platform linux.x86_64.sysv_amd64_c_v1;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foreignˉrecordˉreport as Report;
+import Foreignˉrecordˉsystem as System;
+import Foreignˉrecordˉtypes as Types;
+
+const SCRATCH_BUDGET_BYTES: u64 = 4_096u64;
+const PAYLOAD_BUDGET_BYTES: u64 = 4_096u64;
+const REPORT_BUDGET_BYTES: u64 = 4_096u64;
+const EXPECTED_GENERATION: u64 = 42u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Boundaryˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Boundaryˉfailure.Invalidˉlimit {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Types.Limits,
+) -> Result.Result<unit, Types.Boundaryˉfailure> effects() {
+    if Limits.Scratchˉbytes != 64u64 {
+        return Invalid(
+            Field: 1u32,
+            Observed: Limits.Scratchˉbytes,
+            Minimum: 64u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Scratchˉalignment != 8u64 {
+        return Invalid(
+            Field: 2u32,
+            Observed: Limits.Scratchˉalignment,
+            Minimum: 8u64,
+            Maximum: 8u64,
+        );
+    }
+    if Limits.Maximumˉrecordˉbytes < 20u64
+        || Limits.Maximumˉrecordˉbytes > 64u64 {
+        return Invalid(
+            Field: 3u32,
+            Observed: Limits.Maximumˉrecordˉbytes,
+            Minimum: 20u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Maximumˉpayloadˉbytes > 44u64 {
+        return Invalid(
+            Field: 4u32,
+            Observed: Limits.Maximumˉpayloadˉbytes,
+            Minimum: 0u64,
+            Maximum: 44u64,
+        );
+    }
+    if Limits.Maximumˉdiagnostics == 0u64
+        || Limits.Maximumˉdiagnostics > 16u64 {
+        return Invalid(
+            Field: 5u32,
+            Observed: Limits.Maximumˉdiagnostics,
+            Minimum: 1u64,
+            Maximum: 16u64,
+        );
+    }
+    if Limits.Reportˉbytes < 64u64 || Limits.Reportˉbytes > 4_096u64 {
+        return Invalid(
+            Field: 6u32,
+            Observed: Limits.Reportˉbytes,
+            Minimum: 64u64,
+            Maximum: 4_096u64,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Boundaryˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 0u32,
+    ) {
+        case Result.Result.Valid { Value: Child } {
+            Result.Result.Valid { Value: Child }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Boundaryˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉreport<T>(
+    Value: Result.Result<T, Types.Decodeˉfailure>,
+) -> Result.Result<T, Types.Boundaryˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Boundaryˉfailure.Decode { Error: Error },
+            }
+        }
+    };
+}
+
+export fn Run(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Types.Limits,
+) -> Result.Result<Types.Workloadˉresult, Types.Boundaryˉfailure>
+    effects(
+        memory.allocate,
+        resource.acquire,
+        resource.release,
+        unsafe.address,
+        ffi.call,
+    ) {
+    try Validate(Limits: borrow Limits);
+    var Root = Budget;
+    let Scratchˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: SCRATCH_BUDGET_BYTES,
+    );
+    let Payloadˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: PAYLOAD_BUDGET_BYTES,
+    );
+    let Reportˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: REPORT_BUDGET_BYTES,
+    );
+    let Value = try System.Acquire(
+        Scratchˉbudget: Scratchˉbudget,
+        Payloadˉbudget: Payloadˉbudget,
+        Limits: borrow Limits,
+        Expectedˉgeneration: EXPECTED_GENERATION,
+    );
+    let Canonicalˉreport = try Mapˉreport(
+        Value: Report.Render(
+            Value: borrow Value,
+            Budget: Reportˉbudget,
+            Maximumˉbytes: Limits.Reportˉbytes,
+        ),
+    );
+    if Canonicalˉreport != Report.Expected() {
+        return Result.Result.Failure {
+            Error: Types.Boundaryˉfailure.Reportˉmismatch,
+        };
+    }
+    return Result.Result.Valid {
+        Value: Types.Workloadˉresult {
+            Value: Value,
+            Report: Canonicalˉreport,
+        },
+    };
+}

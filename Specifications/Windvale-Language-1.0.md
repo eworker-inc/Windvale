@@ -40,6 +40,8 @@ and the numeric/graphics findings resolved by
 [Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
 and the package-parser findings resolved by
 [Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
+and the System/FFI findings resolved by
+[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -173,6 +175,7 @@ The initial candidate registry entries required by the accepted suite are:
 | `windows` | Environment | Environment identity is Windows. |
 | `linux` | Environment | Environment identity is Linux. |
 | `windvale` | Environment | Environment identity is Windvale OS. |
+| `linux.x86_64.sysv_amd64_c_v1` | Concrete System ABI | Environment is Linux, architecture is x86-64, ABI identity is `sysv_amd64_c_v1`, and the no-unwind C scalar/pointer interface major is 1. |
 | `accelerator.software.v1` | Target interface | The descriptor supplies the Windvale accelerator software-kernel interface, major 1. |
 | `accelerator.spirv.v1` | Target interface | The descriptor supplies the Windvale SPIR-V accelerator-kernel interface, major 1. |
 
@@ -987,9 +990,34 @@ pointers, lengths, and separately specified ABI layout witnesses, then validates
 them before constructing safe Windvale values. No source record layout, source
 name, or host default is an external ABI automatically.
 
+The declaration's first text literal is a canonical registered ABI-contract
+identity, not merely a host calling-convention nickname. Its immutable catalog
+record fixes architecture, address width, calling convention, scalar
+representation, byte order, pointer retention/ownership, alignment, symbol
+lookup scope, error-status interpretation boundary, unwind policy, and required
+target predicate. The build plan binds that exact identity and symbol. Unknown,
+unsupported, mismatched, or duplicate ABI bindings reject before artifact
+publication; the compiler never substitutes its current host ABI.
+
+A non-null `Foreignˉpointer<T, Abi>` and a
+`Nullableˉforeignˉpointer<T, Abi>` are distinct opaque System types. Neither is
+an integer or a safe reference. Null testing, address/range arithmetic, alignment
+checking, provenance/lifetime validation, pointer creation, and dereference use
+named unsafe Foundation operations. A foreign pointer tied to a caller-owned
+exclusive region cannot escape the borrow or be retained by a no-retain foreign
+signature.
+
 Foreign unwinding may not cross into safe Windvale frames. A foreign adapter
 must translate an admitted foreign failure at the boundary or terminate through
 the declared trap policy.
+
+An adapter can recover from untrusted returned bytes, lengths, enum/Boolean
+encodings, generations, and status values because it validates them before safe
+publication. It cannot recover source-level safety after a callee has written
+outside the admitted region, retained a forbidden pointer, violated aliasing or
+the calling convention, or unwound through a no-unwind boundary. Those are
+terminal ABI-contract violations under the selected containment policy, not
+ordinary typed foreign failures.
 
 Safe Core and Hosted code cannot manufacture an unsafe value, raw pointer,
 foreign handle, privileged instruction, or authority token.

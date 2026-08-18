@@ -467,6 +467,15 @@ foreign failure, forbidden unwind, stale generation, and unsupported target.
 Unsafe code must remain small, visible, target-scoped, and unable to leak an
 unchecked pointer or host layout into safe portable source.
 
+The complete draft-reviewed source and evidence are in the
+[workload 10 paper bundle](Language-1.0-Paper-Corpus/10-System-Ffi-Boundary/README.md).
+Its seven accepted findings add the first concrete System ABI target predicate,
+make the foreign ABI literal a registered complete contract, distinguish
+nullable/non-null opaque pointers, fix caller-owned aligned scratch/write-region
+operations, separate recoverable untrusted data from terminal ABI violations,
+retain explicit status/unwind translation, and publish only independently safe
+Core values without granting authority.
+
 ## Workload 11: local AI accelerator inference
 
 ### Scenario
@@ -589,11 +598,11 @@ source contract ambiguous.
 | GUI retained state | Draft reviewed; seven findings accepted and resolved |
 | Numeric or graphics processing | Draft reviewed; six findings accepted and resolved |
 | Package parser | Draft reviewed; six findings accepted and resolved |
-| System and FFI boundary | Pending source bundle |
+| System and FFI boundary | Draft reviewed; seven findings accepted and resolved |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-Ten of eleven workloads are draft reviewed. Workload 10 remains to be written
-and reviewed.
+All eleven workloads are draft reviewed. Complete-suite reconciliation and the
+source-freeze identity proposal remain; edition 1 is not frozen yet.
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

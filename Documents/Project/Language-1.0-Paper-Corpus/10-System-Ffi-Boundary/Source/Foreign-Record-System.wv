@@ -1,0 +1,289 @@
+edition 1;
+module Foreignˉrecordˉsystem;
+profile system;
+platform linux.x86_64.sysv_amd64_c_v1;
+authority system;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉresult as Result;
+import Foundationˉunsafe as Unsafe;
+import Foreignˉrecordˉdecode as Decode;
+import Foreignˉrecordˉtypes as Types;
+
+export enum Bufferˉsourceˉabi: u8 {
+    Witness = 1u8;
+}
+
+unsafe foreign "windvale.paper.buffer_source.sysv_amd64_c_v1"
+fn Readˉforeignˉrecord(
+    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,
+    Capacity: u64,
+    Expectedˉgeneration: u64,
+) -> i64 effects(ffi.call)
+as "wv_paper_buffer_source_read_v1";
+
+fn Mapˉmemory<T>(
+    Value: Result.Result<T, Unsafe.Foreignˉmemoryˉfailure>,
+) -> Result.Result<T, Types.Boundaryˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            match Error {
+                case Unsafe.Foreignˉmemoryˉfailure.Invalidˉlength {
+                    Observed: Observed,
+                    Maximum: Maximum,
+                } {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉmemory {
+                            Reason: Types.Unsafeˉmemoryˉreason.Invalidˉlength,
+                            A: Observed,
+                            B: Maximum,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉmemoryˉfailure.Invalidˉalignment {
+                    Observed: Observed,
+                } {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉmemory {
+                            Reason: Types.Unsafeˉmemoryˉreason.Invalidˉalignment,
+                            A: Observed,
+                            B: 0u64,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉmemoryˉfailure.Allocation { Error: Error } {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Allocation { Error: Error },
+                    }
+                }
+                case Unsafe.Foreignˉmemoryˉfailure.Unsupportedˉabi {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉmemory {
+                            Reason: Types.Unsafeˉmemoryˉreason.Unsupportedˉabi,
+                            A: 0u64,
+                            B: 0u64,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Mapˉpointer<T>(
+    Value: Result.Result<T, Unsafe.Foreignˉpointerˉfailure>,
+) -> Result.Result<T, Types.Boundaryˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            match Error {
+                case Unsafe.Foreignˉpointerˉfailure.Null {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Null,
+                            A: 0u64,
+                            B: 0u64,
+                            C: 0u64,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉpointerˉfailure.Addressˉoverflow {
+                    Start: Start,
+                    Length: Length,
+                    Addressˉbits: Bits,
+                } {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Addressˉoverflow,
+                            A: Start,
+                            B: Length,
+                            C: Numeric.Widenˉu32ˉtoˉu64(Bits),
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉpointerˉfailure.Outˉofˉrange {
+                    Start: Start,
+                    Length: Length,
+                    Ownerˉlength: Ownerˉlength,
+                } {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Outˉofˉrange,
+                            A: Start,
+                            B: Length,
+                            C: Ownerˉlength,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉpointerˉfailure.Misaligned {
+                    Start: Start,
+                    Requiredˉalignment: Alignment,
+                } {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Misaligned,
+                            A: Start,
+                            B: Alignment,
+                            C: 0u64,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉpointerˉfailure.Aliasing {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Aliasing,
+                            A: 0u64,
+                            B: 0u64,
+                            C: 0u64,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉpointerˉfailure.Lifetimeˉended {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Lifetimeˉended,
+                            A: 0u64,
+                            B: 0u64,
+                            C: 0u64,
+                        },
+                    }
+                }
+                case Unsafe.Foreignˉpointerˉfailure.Unsupportedˉabi {
+                    Result.Result.Failure {
+                        Error: Types.Boundaryˉfailure.Unsafeˉpointer {
+                            Reason: Types.Unsafeˉpointerˉreason.Unsupportedˉabi,
+                            A: 0u64,
+                            B: 0u64,
+                            C: 0u64,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Mapˉdecode<T>(
+    Value: Result.Result<T, Types.Decodeˉfailure>,
+) -> Result.Result<T, Types.Boundaryˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Boundaryˉfailure.Decode { Error: Error },
+            }
+        }
+    };
+}
+
+export fn Acquire(
+    Scratchˉbudget: Memory.Memoryˉbudget,
+    Payloadˉbudget: Memory.Memoryˉbudget,
+    Limits: borrow Types.Limits,
+    Expectedˉgeneration: u64,
+) -> Result.Result<Types.Publishedˉrecord, Types.Boundaryˉfailure>
+    effects(memory.allocate, unsafe.address, ffi.call) {
+    var Scratch = try Mapˉmemory(
+        Value: Unsafe.Constructˉscratch::<Bufferˉsourceˉabi>(
+            Budget: Scratchˉbudget,
+            Length: Limits.Scratchˉbytes,
+            Alignment: Limits.Scratchˉalignment,
+        ),
+    );
+    let Foreignˉresult = unsafe {
+        let Region = try Mapˉpointer(
+            Value: Unsafe.Borrowˉwriteˉregion(
+                Scratch: borrow mut Scratch,
+                Start: 0u64,
+                Length: Limits.Scratchˉbytes,
+                Requiredˉalignment: 8u64,
+            ),
+        );
+        let Destination = Unsafe.Writeˉpointer(Region: borrow Region);
+        Readˉforeignˉrecord(
+            Destination: Destination,
+            Capacity: Limits.Scratchˉbytes,
+            Expectedˉgeneration: Expectedˉgeneration,
+        )
+    };
+    if Foreignˉresult == Types.FOREIGN_REJECTED {
+        return Result.Result.Failure {
+            Error: Types.Boundaryˉfailure.Foreignˉrejected,
+        };
+    }
+    if Foreignˉresult == Types.FOREIGN_FAILED {
+        return Result.Result.Failure {
+            Error: Types.Boundaryˉfailure.Foreignˉfailed {
+                Code: Foreignˉresult,
+            },
+        };
+    }
+    if Foreignˉresult == Types.FOREIGN_STALE_GENERATION {
+        let Generationˉbytes = Unsafe.Borrowˉscratchˉslice(
+            Scratch: borrow Scratch,
+            Start: 0u64,
+            Length: 8u64,
+        );
+        return Result.Result.Failure {
+            Error: Types.Boundaryˉfailure.Staleˉgeneration {
+                Expected: Expectedˉgeneration,
+                Observed: Decode.Readˉu64ˉlittle(
+                    Value: Generationˉbytes,
+                    Offset: 0u64,
+                ),
+            },
+        };
+    }
+    if Foreignˉresult < 0i64 {
+        return Result.Result.Failure {
+            Error: Types.Boundaryˉfailure.Foreignˉinvalidˉstatus {
+                Code: Foreignˉresult,
+            },
+        };
+    }
+    let Written = match Numeric.Convertˉi64ˉtoˉu64(
+        Value: Foreignˉresult,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: _ } {
+            return Result.Result.Failure {
+                Error: Types.Boundaryˉfailure.Foreignˉinvalidˉstatus {
+                    Code: Foreignˉresult,
+                },
+            };
+        }
+    };
+    if Written > Limits.Scratchˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Boundaryˉfailure.Foreignˉlength {
+                Observed: Written,
+                Maximum: Limits.Scratchˉbytes,
+            },
+        };
+    }
+    let Writtenˉbytes = Unsafe.Borrowˉscratchˉslice(
+        Scratch: borrow Scratch,
+        Start: 0u64,
+        Length: Written,
+    );
+    return Result.Result.Valid {
+        Value: try Mapˉdecode(
+            Value: Decode.Decode(
+                Value: Writtenˉbytes,
+                Expectedˉgeneration: Expectedˉgeneration,
+                Maximumˉrecordˉbytes: Limits.Maximumˉrecordˉbytes,
+                Maximumˉpayloadˉbytes: Limits.Maximumˉpayloadˉbytes,
+                Payloadˉbudget: Payloadˉbudget,
+            ),
+        ),
+    };
+}

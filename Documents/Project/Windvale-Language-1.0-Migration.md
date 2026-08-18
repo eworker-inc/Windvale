@@ -27,7 +27,9 @@ and the retained-GUI findings resolved by
 and the numeric/graphics findings resolved by
 [Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
 and the package-parser findings resolved by
-[Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md).
+[Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
+and the System/FFI findings resolved by
+[Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -187,6 +189,9 @@ reparse it.
 - Retain the accepted map completion/publication, complete ordered-set,
   ordering-law, explicit bounded-parser, package-content dedup/accounting, and
   canonical-topology cases from Decision 0763.
+- Retain the accepted concrete ABI target, registered ABI contract, pointer-kind,
+  caller-owned scratch/region, recoverable-data/terminal-containment, explicit
+  status/unwind, and safe-publication cases from Decision 0764.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.
@@ -250,9 +255,12 @@ reparse it.
 
 ### Slice 8: system and FFI
 
-- Add unsafe definitions and invocation blocks.
-- Implement only named ABI and machine contracts with hostile-input and boundary
-  tests.
+- Add unsafe definitions/invocation blocks, registered ABI identities, concrete
+  target predicates, distinct nullable/non-null pointers, and the accepted
+  aligned scratch/write-region Foundation surface.
+- Implement only named ABI and machine contracts with hostile-input, checked
+  address/range/alignment/lifetime/alias, safe-publication, and isolated terminal-
+  containment tests.
 - Migrate one real runtime or OS boundary before expanding.
 
 Each slice includes lexer/parser, semantic analysis, WIR, Foundation, runtime,

@@ -1,0 +1,95 @@
+edition 1;
+module Foreignˉrecordˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+
+export enum Recordˉkind: u8 {
+    Snapshot = 1u8;
+    Delta = 2u8;
+}
+
+export record Publishedˉrecord {
+    Kind: Recordˉkind;
+    Enabled: bool;
+    Generation: u64;
+    Payload: bytes;
+}
+
+export record Limits {
+    Scratchˉbytes: u64;
+    Scratchˉalignment: u64;
+    Maximumˉrecordˉbytes: u64;
+    Maximumˉpayloadˉbytes: u64;
+    Maximumˉdiagnostics: u64;
+    Reportˉbytes: u64;
+}
+
+export enum Unsafeˉmemoryˉreason: u8 {
+    Invalidˉlength = 1u8;
+    Invalidˉalignment = 2u8;
+    Unsupportedˉabi = 3u8;
+}
+
+export enum Unsafeˉpointerˉreason: u8 {
+    Null = 1u8;
+    Addressˉoverflow = 2u8;
+    Outˉofˉrange = 3u8;
+    Misaligned = 4u8;
+    Aliasing = 5u8;
+    Lifetimeˉended = 6u8;
+    Unsupportedˉabi = 7u8;
+}
+
+export const FOREIGN_REJECTED: i64 = -1i64;
+export const FOREIGN_FAILED: i64 = -2i64;
+export const FOREIGN_STALE_GENERATION: i64 = -3i64;
+
+export variant Decodeˉfailure {
+    Truncated(Observed: u64, Minimum: u64);
+    Oversized(Observed: u64, Maximum: u64);
+    Invalidˉmagic;
+    Invalidˉversion(Observed: u8);
+    Invalidˉkind(Observed: u8);
+    Invalidˉboolean(Observed: u8);
+    Invalidˉreserved(Observed: u8);
+    Generationˉmismatch(Expected: u64, Observed: u64);
+    Payloadˉlengthˉoverflow(Declared: u64, Header: u64);
+    Payloadˉrange(Declared: u64, Available: u64);
+    Trailingˉbytes(Observed: u64, Expected: u64);
+    Allocation(Error: Memory.Allocationˉfailure);
+    Outputˉlimit(Error: Memory.Limitˉfailure);
+}
+
+export variant Boundaryˉfailure {
+    Invalidˉlimit(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Unsupportedˉtarget;
+    Allocation(Error: Memory.Allocationˉfailure);
+    Unsafeˉmemory(Reason: Unsafeˉmemoryˉreason, A: u64, B: u64);
+    Unsafeˉpointer(
+        Reason: Unsafeˉpointerˉreason,
+        A: u64,
+        B: u64,
+        C: u64,
+    );
+    Foreignˉrejected;
+    Foreignˉfailed(Code: i64);
+    Foreignˉinvalidˉstatus(Code: i64);
+    Foreignˉlength(Observed: u64, Maximum: u64);
+    Staleˉgeneration(Expected: u64, Observed: u64);
+    Decode(Error: Decodeˉfailure);
+    Reportˉmismatch;
+}
+
+export record Workloadˉresult {
+    Value: Publishedˉrecord;
+    Report: text;
+}

@@ -1,0 +1,250 @@
+edition 1;
+module Foreignˉrecordˉdecode;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉresult as Result;
+import Foreignˉrecordˉtypes as Types;
+
+const HEADER_BYTES: u64 = 20u64;
+const MINIMUM_RECORD_BYTES: u64 = 20u64;
+
+fn At(Value: Collections.Slice<u8>, Index: u64) -> u8 effects() {
+    return Collections.Sliceˉat(Value: Value, Index: Index);
+}
+
+fn Readˉu32ˉlittle(
+    Value: Collections.Slice<u8>,
+    Offset: u64,
+) -> u32 effects() {
+    let B0 = Numeric.Widenˉu8ˉtoˉu32(At(Value: Value, Index: Offset));
+    let B1 = Numeric.Widenˉu8ˉtoˉu32(At(Value: Value, Index: Offset + 1u64));
+    let B2 = Numeric.Widenˉu8ˉtoˉu32(At(Value: Value, Index: Offset + 2u64));
+    let B3 = Numeric.Widenˉu8ˉtoˉu32(At(Value: Value, Index: Offset + 3u64));
+    return B0 | (B1 << 8u32) | (B2 << 16u32) | (B3 << 24u32);
+}
+
+export fn Readˉu64ˉlittle(
+    Value: Collections.Slice<u8>,
+    Offset: u64,
+) -> u64 effects() {
+    let B0 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset));
+    let B1 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 1u64));
+    let B2 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 2u64));
+    let B3 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 3u64));
+    let B4 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 4u64));
+    let B5 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 5u64));
+    let B6 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 6u64));
+    let B7 = Numeric.Widenˉu8ˉtoˉu64(At(Value: Value, Index: Offset + 7u64));
+    return B0
+        | (B1 << 8u64)
+        | (B2 << 16u64)
+        | (B3 << 24u64)
+        | (B4 << 32u64)
+        | (B5 << 40u64)
+        | (B6 << 48u64)
+        | (B7 << 56u64);
+}
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Decodeˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Decodeˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉlimit(
+    Value: Result.Result<unit, Memory.Limitˉfailure>,
+) -> Result.Result<unit, Types.Decodeˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Decodeˉfailure.Outputˉlimit { Error: Error },
+            }
+        }
+    };
+}
+
+fn Copyˉpayload(
+    Value: Collections.Slice<u8>,
+    Start: u64,
+    Length: u64,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<bytes, Types.Decodeˉfailure> effects(memory.allocate) {
+    var Builder = try Mapˉallocation(
+        Value: Bytes.Constructˉreserved(
+            Budget: Budget,
+            Maximumˉoutputˉbytes: Length,
+        ),
+    );
+    var Index = 0u64;
+    while Index < Length {
+        try Mapˉlimit(
+            Value: Bytes.Appendˉu8(
+                Builder: borrow mut Builder,
+                Value: At(Value: Value, Index: Start + Index),
+            ),
+        );
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid {
+        Value: Bytes.Freeze(Builder: Builder),
+    };
+}
+
+export fn Decode(
+    Value: Collections.Slice<u8>,
+    Expectedˉgeneration: u64,
+    Maximumˉrecordˉbytes: u64,
+    Maximumˉpayloadˉbytes: u64,
+    Payloadˉbudget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Publishedˉrecord, Types.Decodeˉfailure>
+    effects(memory.allocate) {
+    let Length = Collections.Sliceˉlength(Value: Value);
+    if Length < MINIMUM_RECORD_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Truncated {
+                Observed: Length,
+                Minimum: MINIMUM_RECORD_BYTES,
+            },
+        };
+    }
+    if Length > Maximumˉrecordˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Oversized {
+                Observed: Length,
+                Maximum: Maximumˉrecordˉbytes,
+            },
+        };
+    }
+    if Maximumˉrecordˉbytes < HEADER_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Payloadˉlengthˉoverflow {
+                Declared: 0u64,
+                Header: HEADER_BYTES,
+            },
+        };
+    }
+    if At(Value: Value, Index: 0u64) != 0x57u8
+        || At(Value: Value, Index: 1u64) != 0x56u8
+        || At(Value: Value, Index: 2u64) != 0x46u8
+        || At(Value: Value, Index: 3u64) != 0x49u8 {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Invalidˉmagic,
+        };
+    }
+    let Version = At(Value: Value, Index: 4u64);
+    if Version != 1u8 {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Invalidˉversion {
+                Observed: Version,
+            },
+        };
+    }
+    let Kindˉbyte = At(Value: Value, Index: 5u64);
+    let Kind = if Kindˉbyte == 1u8 {
+        Types.Recordˉkind.Snapshot
+    } else if Kindˉbyte == 2u8 {
+        Types.Recordˉkind.Delta
+    } else {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Invalidˉkind {
+                Observed: Kindˉbyte,
+            },
+        };
+    };
+    let Enabledˉbyte = At(Value: Value, Index: 6u64);
+    let Enabled = if Enabledˉbyte == 0u8 {
+        false
+    } else if Enabledˉbyte == 1u8 {
+        true
+    } else {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Invalidˉboolean {
+                Observed: Enabledˉbyte,
+            },
+        };
+    };
+    let Reserved = At(Value: Value, Index: 7u64);
+    if Reserved != 0u8 {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Invalidˉreserved {
+                Observed: Reserved,
+            },
+        };
+    }
+    let Generation = Readˉu64ˉlittle(Value: Value, Offset: 8u64);
+    if Generation != Expectedˉgeneration {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Generationˉmismatch {
+                Expected: Expectedˉgeneration,
+                Observed: Generation,
+            },
+        };
+    }
+    let Declared = Numeric.Widenˉu32ˉtoˉu64(
+        Readˉu32ˉlittle(Value: Value, Offset: 16u64),
+    );
+    if Declared > Maximumˉpayloadˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Oversized {
+                Observed: Declared,
+                Maximum: Maximumˉpayloadˉbytes,
+            },
+        };
+    }
+    if Declared > Maximumˉrecordˉbytes - HEADER_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Payloadˉlengthˉoverflow {
+                Declared: Declared,
+                Header: HEADER_BYTES,
+            },
+        };
+    }
+    if Declared > Length - HEADER_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Payloadˉrange {
+                Declared: Declared,
+                Available: Length - HEADER_BYTES,
+            },
+        };
+    }
+    let Exactˉlength = HEADER_BYTES + Declared;
+    if Length != Exactˉlength {
+        return Result.Result.Failure {
+            Error: Types.Decodeˉfailure.Trailingˉbytes {
+                Observed: Length,
+                Expected: Exactˉlength,
+            },
+        };
+    }
+    return Result.Result.Valid {
+        Value: Types.Publishedˉrecord {
+            Kind: Kind,
+            Enabled: Enabled,
+            Generation: Generation,
+            Payload: try Copyˉpayload(
+                Value: Value,
+                Start: HEADER_BYTES,
+                Length: Declared,
+                Budget: Payloadˉbudget,
+            ),
+        },
+    };
+}

@@ -1,0 +1,134 @@
+edition 1;
+module Foreignˉrecordˉreport;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Foreignˉrecordˉtypes as Types;
+
+data EXPECTED_REPORT: text = """WVFFI1
+kind=delta
+enabled=true
+generation=42
+payload=deadbeef
+""";
+data HEX_DIGITS: text = "0123456789abcdef";
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Decodeˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Decodeˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉlimit(
+    Value: Result.Result<unit, Memory.Limitˉfailure>,
+) -> Result.Result<unit, Types.Decodeˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Decodeˉfailure.Outputˉlimit { Error: Error },
+            }
+        }
+    };
+}
+
+fn Append(
+    Builder: borrow mut Text.Textˉbuilder,
+    Value: borrow text,
+) -> Result.Result<unit, Types.Decodeˉfailure> effects() {
+    return Mapˉlimit(
+        Value: Text.Appendˉtext(Builder: Builder, Value: Value),
+    );
+}
+
+fn Appendˉhexˉbyte(
+    Builder: borrow mut Text.Textˉbuilder,
+    Value: u8,
+) -> Result.Result<unit, Types.Decodeˉfailure> effects() {
+    let High = (Value >> 4u8) & 0x0Fu8;
+    let Low = Value & 0x0Fu8;
+    try Append(
+        Builder: Builder,
+        Value: borrow Text.Shareˉrange(
+            Value: borrow HEX_DIGITS,
+            Startˉrune: Numeric.Widenˉu8ˉtoˉu64(High),
+            Runeˉcount: 1u64,
+        ),
+    );
+    return Append(
+        Builder: Builder,
+        Value: borrow Text.Shareˉrange(
+            Value: borrow HEX_DIGITS,
+            Startˉrune: Numeric.Widenˉu8ˉtoˉu64(Low),
+            Runeˉcount: 1u64,
+        ),
+    );
+}
+
+export fn Render(
+    Value: borrow Types.Publishedˉrecord,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<text, Types.Decodeˉfailure> effects(memory.allocate) {
+    var Builder = try Mapˉallocation(
+        Value: Text.Constructˉreserved(
+            Budget: Budget,
+            Maximumˉoutputˉbytes: Maximumˉbytes,
+        ),
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow "WVFFI1\nkind=");
+    try Append(
+        Builder: borrow mut Builder,
+        Value: match Value.Kind {
+            case Types.Recordˉkind.Snapshot { borrow "snapshot" }
+            case Types.Recordˉkind.Delta { borrow "delta" }
+        },
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow "\nenabled=");
+    try Append(
+        Builder: borrow mut Builder,
+        Value: if Value.Enabled { borrow "true" } else { borrow "false" },
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow "\ngeneration=");
+    try Mapˉlimit(
+        Value: Text.Appendˉu64ˉdecimal(
+            Builder: borrow mut Builder,
+            Value: Value.Generation,
+        ),
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow "\npayload=");
+    var Index = 0u64;
+    let Length = Bytes.Length(Value: borrow Value.Payload);
+    while Index < Length {
+        try Appendˉhexˉbyte(
+            Builder: borrow mut Builder,
+            Value: Bytes.At(Value: borrow Value.Payload, Index: Index),
+        );
+        Index = Index + 1u64;
+    }
+    try Append(Builder: borrow mut Builder, Value: borrow "\n");
+    return Result.Result.Valid {
+        Value: Text.Freeze(Builder: Builder),
+    };
+}
+
+export fn Expected() -> text effects() {
+    return EXPECTED_REPORT;
+}
