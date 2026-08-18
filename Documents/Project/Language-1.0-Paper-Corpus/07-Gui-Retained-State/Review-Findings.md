@@ -111,7 +111,7 @@ source grammar.
 
 | Measure | Recorded value |
 | --- | --- |
-| Source | 8 modules; 2,004 lines / 65,944 UTF-8 bytes; 74 top-level declarations; largest module 729 lines. |
+| Source | 8 modules; 2,004 lines / 65,936 UTF-8 bytes; 74 top-level declarations; largest module 729 lines. |
 | Package data | 1 object / 36 bytes / one exact SHA-256. |
 | Retained state | 4 initial widgets, 3 final live widgets, 4 stable identities. |
 | Events/tasks | 5 events, 1 batch, 1 timer tick, 1 child/handle/outcome. |

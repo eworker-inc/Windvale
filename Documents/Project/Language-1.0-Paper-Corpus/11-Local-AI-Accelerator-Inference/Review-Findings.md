@@ -8,9 +8,11 @@ clarifications on 2026-08-17 under
 Its task/context surface was reconciled after workload 6 under
 [Decision 0760](../../../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
 The dependent semantic, grammar, Foundation, migration, and paper documents now
-carry those normative-candidate rules. The bundle remains a draft-reviewed paper
-source row, not frozen or implemented source, because ten corpus workloads and
-the complete Language 1.0 signature identities are still pending.
+carry those normative-candidate rules. All eleven corpus workloads are now
+draft reviewed, and the complete-suite reconciliation has prepared the
+candidate Foundation signature identities. This bundle remains paper source,
+not frozen or implemented source, until the explicit owner source-freeze
+decision.
 
 ## Required-scenario matrix
 
@@ -104,8 +106,8 @@ without making future instance authority ambient.
 At first-author review, the Foundation candidate owned the required semantics but
 did not spell every `Bytes.Length`, bounds-checked `Bytes.At`, task-scope
 `Construct`, and `Await` signature used here. Decision 0754 accepts the coherent
-paper-selected names and signature shapes while the complete module identities
-still wait for all eleven workloads.
+paper-selected names and signature shapes; the complete-suite reconciliation
+now retains them in the canonical Foundation signature registry.
 
 Accepted resolution: retain these signatures through the full eleven-workload
 review and update source coherently if another workload proves a better shape.

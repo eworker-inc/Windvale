@@ -1,0 +1,51 @@
+windvale-language-1.0-source-freeze-candidate-v1
+date=2026-08-17
+status=candidate-not-frozen-not-implemented
+algorithm=sha256
+path_encoding=utf-8
+path_separator=/
+entry_order=ordinal-ascending-path
+entry_encoding=path=<path> LF bytes=<unsigned-decimal> LF sha256=<lowercase-hex> LF
+file_hash_input=exact-repository-file-bytes
+aggregate_hash_input=concatenated-entry-encodings
+
+[core]
+0ff4410b416028c650ee8e8f3fb7c34f53e1245bace4c73baa52e1bd2fdbf2c1 59927 Specifications/Windvale-Language-1.0.md
+5a2c88daddab783de47efd85333d15a50a91986fe93735f8ce54b0114c187226 32794 Specifications/Windvale-Language-1.0-Grammar.md
+0f86ce67e91a1a99cc649b06f7df5507dce2bab208a72b5c241a22e6e1c4f694 13882 Specifications/Windvale-Language-1.0.ebnf
+97cf5e36329d3640c8032fdd4212c3c9385753c9ef6838d7705021062f13d96d 77660 Specifications/Windvale-Language-1.0-Foundation.md
+9a58ff88f4aa9d1695ced2d3607709167b2da3eb39e8b5fbdc24c3d18ea3dddf 29674 Specifications/Windvale-Language-1.0-Foundation-Registry.md
+1b1364cdd93312c86e85c6f9dfd0a910041399a776118e1bb027c18b470bff7d 2799 Specifications/Source-Naming.md
+c6bc7f7bde9c299f5054005c5491dfc7fbf4dfce5023a8d0436685135cc4369d 73392 Documents/Project/Windvale-Language-1.0-Design.md
+dd92aae483602b5a2aef6b5c88babf1de2593e076d8e4fa948bbca257b2ce6ec 21358 Documents/Project/Windvale-Language-1.0-Migration.md
+b9efc99580320ad608a662f9752eeb02ee051210b1587a7d5c28aae88a596016 27492 Documents/Project/Windvale-Language-1.0-Paper-Corpus.md
+f0368213bae169ed4ab690439d32bc65ea45a2c6ae8efff330b8434d43a3da4c 21469 Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md
+
+[decisions]
+selection=all 15 regular files in Documents/Decisions whose names begin 0751- through 0765-
+count=15
+file_bytes=118767
+entry_stream_bytes=2433
+aggregate_sha256=57485891c7d1fb543ce155d914597ffb5c1f25382dd58e678e98d47599c3647c
+
+[paper_corpus]
+selection=all 158 regular files recursively below Documents/Project/Language-1.0-Paper-Corpus
+count=158
+file_bytes=980284
+entry_stream_bytes=28885
+aggregate_sha256=05a99c054ed8c1b019bf37cab44c71300ca8e06189e376183c0fb4b1a8df526c
+source_files=64
+source_lf_lines=14445
+source_utf8_bytes=479069
+
+[complete_candidate]
+selection=the 10 core paths above plus the decisions and paper_corpus selections
+count=183
+file_bytes=1459498
+entry_stream_bytes=32703
+aggregate_sha256=a750a141bb077fbd2ef42f8718a2bc5fbae3b02f8e862140dde436fbb91b65e3
+
+[exclusions]
+This manifest file, its review packet, roadmap/progress status, current Seed implementation,
+generated build artifacts, caches, and future executable qualification evidence are not identity inputs.
+The explicit source-freeze decision must cite this manifest's own byte length and SHA-256 after owner acceptance.

@@ -77,7 +77,7 @@ fn Readˉline(
 ) -> Option.Option<text> effects() {
     let Count = Text.Runeˉcount(Value: Input);
     if Cursor.Runeˉindex == Count {
-        return Option.Option.None;
+        return Option.Option.Absent;
     }
     let Start = Cursor.Runeˉindex;
     while Cursor.Runeˉindex < Count
@@ -94,7 +94,7 @@ fn Readˉline(
         Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
     }
     Cursor.Line = Cursor.Line + 1u64;
-    return Option.Option.Some { Value: Line };
+    return Option.Option.Present { Value: Line };
 }
 
 fn Nextˉword(
@@ -107,14 +107,14 @@ fn Nextˉword(
         Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
     }
     if Cursor.Runeˉindex == Count {
-        return Option.Option.None;
+        return Option.Option.Absent;
     }
     let Start = Cursor.Runeˉindex;
     while Cursor.Runeˉindex < Count
         && Text.Runeˉat(Value: Line, Index: Cursor.Runeˉindex) != ' ' {
         Cursor.Runeˉindex = Cursor.Runeˉindex + 1u64;
     }
-    return Option.Option.Some {
+    return Option.Option.Present {
         Value: Text.Shareˉrange(
             Value: Line,
             Startˉrune: Start,
@@ -131,10 +131,10 @@ fn Requireˉword(
     Field: Types.Fieldˉkind,
 ) -> Result.Result<text, Types.Packageˉfailure> effects() {
     return match Nextˉword(Line: Line, Cursor: Cursor) {
-        case Option.Option.Some { Value: Value } {
+        case Option.Option.Present { Value: Value } {
             Result.Result.Valid { Value: Value }
         }
-        case Option.Option.None {
+        case Option.Option.Absent {
             Result.Result.Failure {
                 Error: Types.Packageˉfailure.Missingˉfield {
                     Format: Format,
@@ -152,8 +152,8 @@ fn Ensureˉend(
     Lineˉnumber: u64,
 ) -> Result.Result<unit, Types.Packageˉfailure> effects() {
     return match Nextˉword(Line: Line, Cursor: Cursor) {
-        case Option.Option.None { Result.Result.Valid { Value: () } }
-        case Option.Option.Some { Value: Value } {
+        case Option.Option.Absent { Result.Result.Valid { Value: () } }
+        case Option.Option.Present { Value: Value } {
             Result.Result.Failure {
                 Error: Types.Packageˉfailure.Unknownˉfield {
                     Format: Format,
@@ -329,8 +329,8 @@ export fn Parseˉlock(
     };
     var Cursor = Cursor { Runeˉindex: 0u64, Line: 0u64 };
     let Magic = match Readˉline(Input: Input, Cursor: borrow mut Cursor) {
-        case Option.Option.Some { Value: Value } { Value }
-        case Option.Option.None {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
             return Result.Result.Failure {
                 Error: Types.Packageˉfailure.Invalidˉmagic {
                     Format: Types.Formatˉkind.Lock,
@@ -347,7 +347,7 @@ export fn Parseˉlock(
             },
         };
     }
-    while let Option.Option.Some { Value: Line } = Readˉline(
+    while let Option.Option.Present { Value: Line } = Readˉline(
         Input: Input,
         Cursor: borrow mut Cursor,
     ) {
@@ -487,10 +487,10 @@ export fn Parseˉmanifest(
         }
     };
     var Cursor = Cursor { Runeˉindex: 0u64, Line: 0u64 };
-    var Root = Option.Option.None;
-    var Version = Option.Option.None;
+    var Root = Option.Option.Absent;
+    var Version = Option.Option.Absent;
     var Sawˉmagic = false;
-    while let Option.Option.Some { Value: Line } = Readˉline(
+    while let Option.Option.Present { Value: Line } = Readˉline(
         Input: Input,
         Cursor: borrow mut Cursor,
     ) {
@@ -528,7 +528,7 @@ export fn Parseˉmanifest(
             Lineˉnumber: Cursor.Line,
         );
         if Kind == "package" {
-            if Root != Option.Option.None {
+            if Option.Isˉpresent(Value: borrow Root) {
                 return Result.Result.Failure {
                     Error: Types.Packageˉfailure.Duplicateˉfield {
                         Format: Types.Formatˉkind.Manifest,
@@ -537,7 +537,7 @@ export fn Parseˉmanifest(
                     },
                 };
             }
-            Root = Option.Option.Some {
+            Root = Option.Option.Present {
                 Value: try Parseˉidentity(
                     Value: Value,
                     Line: Cursor.Line,
@@ -546,7 +546,7 @@ export fn Parseˉmanifest(
                 ),
             };
         } else if Kind == "version" {
-            if Version != Option.Option.None {
+            if Option.Isˉpresent(Value: borrow Version) {
                 return Result.Result.Failure {
                     Error: Types.Packageˉfailure.Duplicateˉfield {
                         Format: Types.Formatˉkind.Manifest,
@@ -555,7 +555,7 @@ export fn Parseˉmanifest(
                     },
                 };
             }
-            Version = Option.Option.Some {
+            Version = Option.Option.Present {
                 Value: match Numeric.Parseˉu64ˉdecimalˉwhole(
                     Value: borrow Value,
                     Maximumˉinputˉbytes: 20u64,
@@ -600,8 +600,8 @@ export fn Parseˉmanifest(
         };
     }
     let Root = match Root {
-        case Option.Option.Some { Value: Value } { Value }
-        case Option.Option.None {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
             return Result.Result.Failure {
                 Error: Types.Packageˉfailure.Missingˉfield {
                     Format: Types.Formatˉkind.Manifest,
@@ -611,8 +611,8 @@ export fn Parseˉmanifest(
         }
     };
     let Version = match Version {
-        case Option.Option.Some { Value: Value } { Value }
-        case Option.Option.None {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
             return Result.Result.Failure {
                 Error: Types.Packageˉfailure.Missingˉfield {
                     Format: Types.Formatˉkind.Manifest,

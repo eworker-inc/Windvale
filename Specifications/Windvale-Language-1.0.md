@@ -42,13 +42,15 @@ and the package-parser findings resolved by
 [Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
 and the System/FFI findings resolved by
 [Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
+with complete-suite reconciliation accepted by
+[Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
 | --- | --- |
 | Static and dynamic source semantics, profiles, effects, ownership, evaluation, and conformance | This document |
-| Tokens, literal spelling, precedence, and parsing | [Language 1.0 grammar](Windvale-Language-1.0-Grammar.md) |
-| Required standard variants, protocols, collections, builders, budgets, and failure types | [Language 1.0 Foundation](Windvale-Language-1.0-Foundation.md) |
+| Tokens, literal spelling, precedence, and parsing | [Language 1.0 grammar](Windvale-Language-1.0-Grammar.md) and its [machine projection](Windvale-Language-1.0.ebnf) |
+| Required standard variants, protocols, collections, builders, budgets, and failure types | [Language 1.0 Foundation](Windvale-Language-1.0-Foundation.md) and its [signature registry](Windvale-Language-1.0-Foundation-Registry.md) |
 | Design motivation and rejected alternatives | [Language 1.0 design](../Documents/Project/Windvale-Language-1.0-Design.md) |
 | Seed transition order and compatibility boundary | [Seed-to-1.0 migration](../Documents/Project/Windvale-Language-1.0-Migration.md) |
 | Usability and boundary evidence before source freeze | [Language 1.0 paper corpus](../Documents/Project/Windvale-Language-1.0-Paper-Corpus.md) |
@@ -719,8 +721,8 @@ The host stack size is not a source semantic limit.
 
 ## Evaluation and control flow
 
-Operands, call arguments, named fields, interpolated fields, and replacement
-fields evaluate from left to right exactly once. Short-circuit Boolean operators
+Operands, call arguments, named fields, and replacement fields evaluate from
+left to right exactly once. Short-circuit Boolean operators
 do not evaluate the skipped operand. A failed or trapping expression does not
 evaluate a later expression.
 
@@ -752,9 +754,15 @@ Matching a borrowed aggregate never moves out of it. Copy and shared-immutable
 fields bind as their ordinary semantic copies under the read-through rule;
 owned fields bind only as borrows tied to the aggregate owner.
 
-`while` and bounded `for` are the iteration constructs. `break` and `continue`
-target the nearest enclosing loop. A `for` source exposes an exact remaining or
-maximum item bound. Lazy semantically unbounded iteration is absent.
+`while`, `while let`, and bounded `for` are the iteration constructs. `break`
+and `continue` target the nearest enclosing loop. An ordinary `while` condition
+has exact type `bool`. `while let Pattern = Expression` evaluates `Expression`
+once at the start of each attempted iteration, enters the body only when the
+pattern matches, and binds that iteration's pattern values within the body. A
+nonmatch terminates without a failure or extra evaluation. Ownership follows the
+same match rules, and a body `continue` begins the next attempted evaluation.
+A `for` source exposes an exact remaining or maximum item bound. Lazy
+semantically unbounded iteration is absent.
 
 Parallel execution never changes numeric semantics. A library may process
 proved-disjoint lanes concurrently only when each lane has the same operation
@@ -955,9 +963,10 @@ The concurrent hosted-service workload fixes task construction, derived context,
 explicit cancellation request, creation-order collection, runtime/provider
 failure separation, and no-replay restart behavior. The retained-GUI workload
 confirms that background work copies an immutable snapshot and that only the
-owning path applies a revalidated result. Later paper workloads may still refine
-library surfaces, but cannot add detached tasks or weaken these ownership and
-cancellation rules before source freeze.
+owning path applies a revalidated result. The numeric, package, System/FFI, and
+accelerator workloads add no contradictory task requirement. A later Foundation
+identity cannot add detached tasks or weaken these ownership and cancellation
+rules within edition 1.
 
 ## Unsafe and foreign interfaces
 
@@ -1096,6 +1105,8 @@ Language 1.0 has no:
 - detached task or implicit background work;
 - dynamic source import or runtime name lookup through `import`;
 - default parameter values;
+- interpolated-text syntax without an explicit bounded destination and memory
+  owner;
 - identifier characters outside ASCII segments and U+02C9;
 - semantically unbounded collection, queue, recursion, diagnostic, or
   compile-time work;
@@ -1111,6 +1122,14 @@ decision and a complete safety, determinism, authority, bound, compatibility,
 and implementation contract.
 
 ## Source-freeze requirements
+
+Source freeze accepts the edition-1 source contract and exact candidate
+identities; it does not claim that the current compiler implements them. In this
+section, a paper case "passes" when its accepted input, expected behavior,
+failure ordering, and bounds are complete and mutually consistent. Those cases
+become executable conformance fixtures during migration. Implementation,
+cross-host, performance, editor, and formatter qualification remains a later
+gate and cannot be claimed by the source-freeze decision.
 
 This candidate becomes frozen Language 1.0 only after:
 

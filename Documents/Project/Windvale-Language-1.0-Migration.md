@@ -29,12 +29,17 @@ and the numeric/graphics findings resolved by
 and the package-parser findings resolved by
 [Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
 and the System/FFI findings resolved by
-[Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md).
+[Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
+with complete-suite reconciliation accepted by
+[Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
-[grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), and
-[Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md)
+[grammar](../../Specifications/Windvale-Language-1.0-Grammar.md),
+[machine grammar](../../Specifications/Windvale-Language-1.0.ebnf),
+[Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md),
+and
+[Foundation signature registry](../../Specifications/Windvale-Language-1.0-Foundation-Registry.md)
 are frozen.
 
 The implemented source remains
@@ -145,7 +150,7 @@ changes require semantic review.
 | Application entry and root binding | Package/build plan, launcher profile, capability catalog, runtime resource domain | Entry selection remains metadata; no special source function or ambient allocator. |
 | Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
 | Opaque operation contexts and exact stream progress | Hosted operation/network providers, launcher, capability runtime, generation verifier | Prefer ordinary opaque values and capability calls; no language opcode. |
-| Builders and interpolation | Foundation libraries, bounds analysis, optional intrinsics | No syntax-specific opcode required. |
+| Builders and formatting | Foundation libraries, bounds analysis, optional intrinsics | No syntax-specific opcode required; interpolation syntax is outside edition 1. |
 | Structured concurrency | Effects, captures, Foundation tasks, runtime providers, target schedulers | Requires an explicit verified task/runtime contract. |
 | Unsafe and FFI | System type checker, ABI specifications, native backend, verifier | Target- and ABI-specific additions are likely. |
 | Accelerator host and custom-kernel boundary | Libraries, capability runtime, target analysis, WIR/verifier, software oracle, provider backends | General host logic should use ordinary WIR; target kernels or new numeric operations may require separately versioned verified representations. |

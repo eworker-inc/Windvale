@@ -34,8 +34,9 @@ implementation authorization before Language 1.0 source freeze.
 ## Foundation signature dependencies
 
 Decision 0754 accepts the exact operation names and signature shapes used by this
-paper source. Complete Foundation module signature-set identities remain pending
-until all eleven workloads are reviewed:
+paper source. All eleven workloads have now been reviewed, and the canonical
+Foundation registry retains the complete candidate module signature sets that
+include these dependencies:
 
 - `Foundationˉbytes.Length` and bounds-checked `At`;
 - integer widening and `Bitsˉu32ˉtoˉf32`;

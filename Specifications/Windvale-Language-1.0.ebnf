@@ -1,0 +1,231 @@
+(* Windvale Language 1.0 normative-candidate machine grammar.
+   Encoding: strict UTF-8 without BOM; canonical line ending: LF.
+   This file uses ISO-style EBNF: = defines, | chooses, [] is optional,
+   {} repeats zero or more, comma concatenates, and ; terminates. Inside a
+   quoted terminal, reverse solidus escapes a quotation mark or reverse solidus;
+   an ellipsis between two one-scalar terminals is their inclusive scalar range.
+   ? name ? is an external scanner token defined below. *)
+
+Source = Edition, Module, Profile, Platform, Authority,
+         { Capabilityˉrequirement }, { Import }, { Declaration }, EOF ;
+
+(* External scanner tokens. Their exact scalar contracts are normative. *)
+EOF = ? end of decoded source ? ;
+Documentationˉtoken = ? one attached documentation-comment group as specified by the grammar companion ? ;
+Runeˉscalar = ? one Unicode scalar except apostrophe, reverse solidus, LF, or CR ? ;
+Textˉscalar = ? one Unicode scalar except quotation mark, reverse solidus, LF, or CR ? ;
+Asciiˉbyte = ? one scalar U+0020 through U+007E except quotation mark or reverse solidus ? ;
+Multilineˉtextˉitem = ? one text scalar, LF, escape, or quote not beginning the closing triple quote ? ;
+Multilineˉbyteˉitem = ? one ASCII byte, LF, escape, or quote not beginning the closing triple quote ? ;
+Rawˉcontent = ? longest scalar sequence before the first exact matching quote-plus-hash delimiter ? ;
+Rawˉbyteˉcontent = ? raw content restricted to ASCII and LF ? ;
+
+Documentation = Documentationˉtoken ;
+
+Asciiˉletter = "A" … "Z" | "a" … "z" | "_" ;
+Asciiˉdigit = "0" … "9" ;
+Segment = Asciiˉletter, { Asciiˉletter | Asciiˉdigit } ;
+Identifier = Segment, { "ˉ", Segment } ;
+Constantˉidentifier = ("A" … "Z" | "_"),
+                      { "A" … "Z" | Asciiˉdigit | "_" } ;
+Lowerˉsegment = ("a" … "z"), { "a" … "z" | Asciiˉdigit | "_" } ;
+Qualifiedˉsourceˉname = Identifier, { ".", Identifier } ;
+Capabilityˉidentity = Lowerˉsegment, { ".", Lowerˉsegment } ;
+Platformˉscope = Lowerˉsegment, { ".", Lowerˉsegment } ;
+Abiˉidentity = Lowerˉsegment, { ".", Lowerˉsegment } ;
+Effectˉidentity = Lowerˉsegment, { ".", Lowerˉsegment } ;
+
+Decimalˉdigits = Asciiˉdigit, { [ "_" ], Asciiˉdigit } ;
+Hexˉdigit = Asciiˉdigit | "a" … "f" | "A" … "F" ;
+Hexˉdigits = Hexˉdigit, { [ "_" ], Hexˉdigit } ;
+Unicodeˉhexˉdigits = Hexˉdigit, [ Hexˉdigit, [ Hexˉdigit,
+                       [ Hexˉdigit, [ Hexˉdigit, [ Hexˉdigit ] ] ] ] ] ;
+Binaryˉdigits = ("0" | "1"), { [ "_" ], ("0" | "1") } ;
+Integerˉbody = Decimalˉdigits | "0x", Hexˉdigits | "0b", Binaryˉdigits ;
+Integerˉsuffix = "i8" | "i16" | "i32" | "i64"
+               | "u8" | "u16" | "u32" | "u64" ;
+Integerˉliteral = Integerˉbody, [ Integerˉsuffix ] ;
+Exponent = ("e" | "E"), [ "+" | "-" ], Decimalˉdigits ;
+Decimalˉfloat = Decimalˉdigits, ".", Decimalˉdigits, [ Exponent ]
+              | Decimalˉdigits, Exponent ;
+Binaryˉexponent = ("p" | "P"), [ "+" | "-" ], Decimalˉdigits ;
+Hexˉfloat = "0x", Hexˉdigits, [ ".", Hexˉdigits ], Binaryˉexponent ;
+Floatˉsuffix = "f32" | "f64" ;
+Floatˉliteral = (Decimalˉfloat | Hexˉfloat), [ Floatˉsuffix ] ;
+
+Unicodeˉescape = "\\u{", Unicodeˉhexˉdigits, "}" ;
+Textˉescape = "\\", ("\\" | "'" | "\"" | "n" | "r" | "t" | "0" | "{" | "}") ;
+Byteˉescape = Textˉescape | "\\x", Hexˉdigit, Hexˉdigit ;
+Runeˉliteral = "'", (Runeˉscalar | Textˉescape | Unicodeˉescape), "'" ;
+Textˉliteral = "\"", { Textˉscalar | Textˉescape | Unicodeˉescape }, "\"" ;
+Byteˉliteral = "b\"", { Asciiˉbyte | Byteˉescape }, "\"" ;
+Multilineˉtext = "\"\"\"", { Multilineˉtextˉitem }, "\"\"\"" ;
+Multilineˉbytes = "b\"\"\"", { Multilineˉbyteˉitem }, "\"\"\"" ;
+Rawˉdelimiter = [ "#", [ "#", [ "#", [ "#", [ "#", [ "#", [ "#", [ "#" ] ] ] ] ] ] ] ] ;
+Rawˉtext = "r", Rawˉdelimiter, "\"", Rawˉcontent, "\"", Rawˉdelimiter ;
+Rawˉbytes = "br", Rawˉdelimiter, "\"", Rawˉbyteˉcontent, "\"", Rawˉdelimiter ;
+
+Edition = "edition", "1", ";" ;
+Module = [ Documentation ], "module", Identifier, ";" ;
+Profile = "profile", ("core" | "hosted" | "system"), ";" ;
+Platform = "platform", Platformˉscope, { ",", Platformˉscope }, [ "," ], ";" ;
+Authority = "authority", ("library" | "application" | "service" | "system"), ";" ;
+Capabilityˉrequirement = ("requires" | "optional"), "capability",
+                         Capabilityˉidentity, "version", Decimalˉdigits, ";" ;
+Import = [ Documentation ], "import", Identifier, "as", Identifier, ";" ;
+
+Declaration = Recordˉdeclaration | Enumˉdeclaration | Variantˉdeclaration
+            | Protocolˉdeclaration | Implementˉdeclaration | Deriveˉdeclaration
+            | Functionˉdeclaration | Foreignˉdeclaration
+            | Constantˉdeclaration | Dataˉdeclaration | Packageˉdataˉdeclaration ;
+Visibility = [ "export" ] ;
+Genericˉparameters = "<", Genericˉparameter, { ",", Genericˉparameter }, [ "," ], ">" ;
+Genericˉparameter = Identifier | "const", Constantˉidentifier, ":", Integerˉtype ;
+Whereˉclause = "where", Requirement, { ",", Requirement }, [ "," ] ;
+Requirement = Type, ":", Protocolˉinstance ;
+Protocolˉinstance = Qualifiedˉsourceˉname, [ Typeˉarguments ] ;
+Typeˉarguments = "<", Typeˉargument, { ",", Typeˉargument }, [ "," ], ">" ;
+Typeˉargument = Type | Constantˉexpression ;
+
+Recordˉdeclaration = [ Documentation ], Visibility, "record", Identifier,
+                     [ Genericˉparameters ], [ Whereˉclause ],
+                     "{", Recordˉfield, { Recordˉfield }, "}" ;
+Recordˉfield = [ Documentation ], Identifier, ":", Type, ";" ;
+Enumˉdeclaration = [ Documentation ], Visibility, "enum", Identifier, ":",
+                   Integerˉtype, "{", Enumˉmember, { Enumˉmember }, "}" ;
+Enumˉmember = [ Documentation ], Identifier, "=", [ "-" ], Integerˉliteral, ";" ;
+Variantˉdeclaration = [ Documentation ], Visibility, "variant", Identifier,
+                      [ Genericˉparameters ], [ Whereˉclause ],
+                      "{", Variantˉcase, { Variantˉcase }, "}" ;
+Variantˉcase = [ Documentation ], Identifier,
+               [ "(", Variantˉfield, { ",", Variantˉfield }, [ "," ], ")" ], ";" ;
+Variantˉfield = Identifier, ":", Type ;
+
+Protocolˉdeclaration = [ Documentation ], Visibility, "protocol", Identifier,
+                       [ Genericˉparameters ], [ Whereˉclause ],
+                       "{", Protocolˉitem, { Protocolˉitem }, "}" ;
+Protocolˉitem = [ Documentation ], Functionˉsignature, ";" ;
+Implementˉdeclaration = [ Documentation ], "implement", Protocolˉinstance,
+                        "for", Type, [ Whereˉclause ],
+                        "{", Functionˉimplementation, { Functionˉimplementation }, "}" ;
+Functionˉimplementation = [ Documentation ], Functionˉhead, Block ;
+Deriveˉdeclaration = [ Documentation ], "derive", Protocolˉinstance,
+                     { ",", Protocolˉinstance }, [ "," ], "for", Type, ";" ;
+
+Constantˉdeclaration = [ Documentation ], Visibility, "const",
+                       Constantˉidentifier, ":", Type, "=", Constantˉexpression, ";" ;
+Dataˉdeclaration = [ Documentation ], Visibility, "data", Identifier, ":",
+                   Type, "=", Constantˉexpression, ";" ;
+Packageˉdataˉdeclaration = [ Documentation ], Visibility, "package", "data",
+                           Identifier, ":", Packageˉdataˉtype, "maximum",
+                           Integerˉliteral, ";" ;
+Packageˉdataˉtype = "bytes" | "text" ;
+
+Functionˉdeclaration = [ Documentation ], Visibility, Functionˉhead, Block ;
+Functionˉhead = [ "unsafe" ], [ "async" ], "fn", Identifier,
+                [ Genericˉparameters ], "(", [ Parameters ], ")", "->", Type,
+                [ Effectˉclause ], [ Whereˉclause ] ;
+Functionˉsignature = [ "unsafe" ], [ "async" ], "fn", Identifier,
+                     [ Genericˉparameters ], "(", [ Parameters ], ")", "->", Type,
+                     [ Effectˉclause ], [ Whereˉclause ] ;
+Parameters = Parameter, { ",", Parameter }, [ "," ] ;
+Parameter = Identifier, ":", Parameterˉtype ;
+Parameterˉtype = "borrow", [ "mut" ], Type | Type ;
+Effectˉclause = "effects", "(", [ Effectˉidentity, { ",", Effectˉidentity }, [ "," ] ], ")" ;
+Foreignˉdeclaration = [ Documentation ], Visibility, "unsafe", "foreign",
+                      Textˉliteral, Functionˉsignature, "as", Textˉliteral, ";" ;
+
+Type = Primitiveˉtype | Qualifiedˉsourceˉname, [ Typeˉarguments ]
+     | Functionˉtype | Borrowˉtype ;
+Primitiveˉtype = "unit" | "never" | "bool" | Integerˉtype | "f32" | "f64"
+               | "rune" | "text" | "bytes" ;
+Integerˉtype = "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64" ;
+Borrowˉtype = "borrow", [ "mut" ], Type ;
+Functionˉtype = [ "unsafe" ], [ "async" ], "fn", "(",
+                [ Type, { ",", Type }, [ "," ] ], ")", "->", Type,
+                [ Effectˉclause ] ;
+
+Block = "{", { Statement }, "}" ;
+Valueˉblock = "{", { Statement }, Expression, "}" ;
+Statement = Bindingˉstatement | Assignmentˉstatement | Expressionˉstatement | Ifˉstatement
+          | Matchˉstatement | Whileˉstatement | Forˉstatement
+          | Usingˉstatement | Taskˉscopeˉstatement | Unsafeˉstatement
+          | Returnˉstatement | Breakˉstatement | Continueˉstatement ;
+Bindingˉstatement = ("let" | "var"), Pattern, [ ":", Type ], "=", Expression, ";" ;
+Assignmentˉstatement = Place, Assignmentˉoperator, Expression, ";" ;
+Assignmentˉoperator = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
+Expressionˉstatement = Expression, ";" ;
+Returnˉstatement = "return", [ Expression ], ";" ;
+Breakˉstatement = "break", ";" ;
+Continueˉstatement = "continue", ";" ;
+Ifˉstatement = "if", Expression, Block,
+               { "else", "if", Expression, Block }, [ "else", Block ] ;
+Whileˉstatement = "while", Expression, Block
+                | "while", "let", Pattern, "=", Expression, Block ;
+Forˉstatement = "for", Pattern, "in", Expression, Block ;
+Matchˉstatement = "match", Expression, "{",
+                  Matchˉstatementˉarm, { Matchˉstatementˉarm }, "}" ;
+Matchˉstatementˉarm = "case", Pattern, [ "if", Expression ], Block ;
+Usingˉstatement = "using", Identifier, "=", Expression, Block ;
+Taskˉscopeˉstatement = "task", "scope", Identifier, "=", Expression,
+                       "policy", Taskˉpolicy, Block ;
+Taskˉpolicy = "join" | "cancel_join" | "fail_join" ;
+Unsafeˉstatement = "unsafe", Block ;
+
+Pattern = "_" | Qualifiedˉsourceˉname,
+          [ "{", [ Fieldˉpattern, { ",", Fieldˉpattern }, [ "," ] ], "}" ] ;
+Fieldˉpattern = Identifier, ":", Pattern ;
+
+Expression = Ifˉexpression | Matchˉexpression | Orˉexpression ;
+Ifˉexpression = "if", Expression, Valueˉblock,
+                { "else", "if", Expression, Valueˉblock },
+                "else", Valueˉblock ;
+Matchˉexpression = "match", Expression, "{",
+                   Matchˉvalueˉarm, { Matchˉvalueˉarm }, "}" ;
+Matchˉvalueˉarm = "case", Pattern, [ "if", Expression ], Valueˉblock ;
+Orˉexpression = Andˉexpression, { "||", Andˉexpression } ;
+Andˉexpression = Bitˉorˉexpression, { "&&", Bitˉorˉexpression } ;
+Bitˉorˉexpression = Bitˉxorˉexpression, { "|", Bitˉxorˉexpression } ;
+Bitˉxorˉexpression = Bitˉandˉexpression, { "^", Bitˉandˉexpression } ;
+Bitˉandˉexpression = Equalityˉexpression, { "&", Equalityˉexpression } ;
+Equalityˉexpression = Relationalˉexpression,
+                      [ ("==" | "!="), Relationalˉexpression ] ;
+Relationalˉexpression = Shiftˉexpression,
+                        [ ("<" | "<=" | ">" | ">="), Shiftˉexpression ] ;
+Shiftˉexpression = Additiveˉexpression, { ("<<" | ">>"), Additiveˉexpression } ;
+Additiveˉexpression = Multiplicativeˉexpression,
+                      { ("+" | "-"), Multiplicativeˉexpression } ;
+Multiplicativeˉexpression = Unaryˉexpression,
+                            { ("*" | "/" | "%"), Unaryˉexpression } ;
+Unaryˉexpression = ("try" | "await" | "!" | "~" | "-"), Unaryˉexpression
+                 | "borrow", [ "mut" ], Unaryˉexpression
+                 | Postfixˉexpression ;
+Postfixˉexpression = Primaryˉexpression, { Postfixˉsuffix } ;
+Postfixˉsuffix = ".", Identifier | "[", Expression, "]"
+               | "(", [ Callˉarguments ], ")" ;
+Callˉarguments = Positionalˉarguments | Namedˉarguments ;
+Positionalˉarguments = Expression, { ",", Expression }, [ "," ] ;
+Namedˉarguments = Namedˉargument, { ",", Namedˉargument }, [ "," ] ;
+Namedˉargument = Identifier, ":", Expression ;
+Explicitˉgenericˉcall = Qualifiedˉsourceˉname, "::", Typeˉarguments,
+                        "(", [ Callˉarguments ], ")" ;
+Primaryˉexpression = Literal | "true" | "false" | "()" | Identifier
+                   | "(", Expression, ")" | Arrayˉliteral
+                   | Nominalˉconstruction | Recordˉupdate
+                   | Explicitˉgenericˉcall | Closure | Unsafeˉexpression ;
+Literal = Integerˉliteral | Floatˉliteral | Runeˉliteral | Textˉliteral
+        | Byteˉliteral | Multilineˉtext | Multilineˉbytes | Rawˉtext | Rawˉbytes ;
+Arrayˉliteral = "[", [ Expression, { ",", Expression }, [ "," ] ], "]" ;
+Nominalˉconstruction = Qualifiedˉsourceˉname, "{",
+                       Fieldˉvalue, { ",", Fieldˉvalue }, [ "," ], "}" ;
+Fieldˉvalue = Identifier, ":", Expression ;
+Recordˉupdate = Qualifiedˉsourceˉname, "base", Expression, "{",
+                Fieldˉvalue, { ",", Fieldˉvalue }, [ "," ], "}" ;
+Closure = [ "async" ], "fn", Captureˉlist, "(", [ Parameters ], ")", "->",
+          Type, [ Effectˉclause ], Block ;
+Captureˉlist = "[", [ Capture, { ",", Capture }, [ "," ] ], "]" ;
+Capture = ("copy" | "move" | "borrow" | "borrow", "mut"), Identifier ;
+Unsafeˉexpression = "unsafe", Valueˉblock ;
+
+Place = Identifier, { ".", Identifier | "[", Expression, "]" } ;
+Constantˉexpression = Expression ;

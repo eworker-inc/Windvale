@@ -26,13 +26,21 @@ and the concurrent-service findings resolved by
 and the retained-GUI findings resolved by
 [Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
 and the numeric/graphics findings resolved by
-[Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
-The corpus is not complete yet. Its eleven source bundles must be written and
-reviewed against the
+[Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
+the package-parser findings by
+[Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
+the System/FFI findings by
+[Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
+and complete-suite reconciliation by
+[Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+All eleven source bundles are owner reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
-[grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), and
-[Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md)
-before the source-freeze decision.
+[grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), its
+[machine projection](../../Specifications/Windvale-Language-1.0.ebnf), the
+[Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md),
+and its
+[signature registry](../../Specifications/Windvale-Language-1.0-Foundation-Registry.md).
+The explicit source-freeze decision remains pending.
 
 Paper source is design evidence, not an implementation claim. Current tools
 continue to accept Windvale Seed.
@@ -135,8 +143,9 @@ The complete first-author source and evidence are in the
 It expresses one bounded strict UTF-8 byte/rune inspector. Its owner review
 accepts the sequence, numeric parsing, reserved-builder, stream-authority, and
 command-status recommendations. The general Foundation calls and command profile
-are normative-candidate contracts; final stream operation identities remain
-provisional pending later I/O workloads.
+are normative-candidate contracts. The paper stream interface remains a fixture
+contract; its production capability signature-set identity belongs to the later
+library/provider implementation gate and does not block source-language freeze.
 
 ## Workload 2: bounded file copy
 
@@ -172,8 +181,9 @@ The complete source and evidence are in the
 Its owner review accepts the fixed byte-buffer, release/completion,
 known-partial-progress, independent-authority, and synchronous-cancellation
 findings. The general Foundation and language clarifications are
-normative-candidate contracts; final filesystem capability identities remain
-provisional pending later workloads.
+normative-candidate contracts. The paper filesystem interface remains a fixture
+contract; its production capability signature-set identity belongs to the later
+library/provider implementation gate and does not block source-language freeze.
 
 ## Workload 3: database transaction
 
@@ -209,8 +219,10 @@ first-item collection construction, two-step checked borrowed observation,
 explicit typed schema adapters, and explicit commit plus fresh-session recovery.
 Decision 0758 later makes the map half of that observation explicitly
 rank-based so the direct borrow has only the map as lifetime owner. The general
-Foundation clarifications are normative-candidate contracts; final
-database capability and schema signature identities remain provisional.
+Foundation clarifications are normative-candidate contracts. The paper database
+and schema interfaces remain fixture contracts; production signature-set
+identities belong to the later library/provider implementation gate and do not
+block source-language freeze.
 
 ## Workload 4: compiler front end
 
@@ -601,9 +613,13 @@ source contract ambiguous.
 | System and FFI boundary | Draft reviewed; seven findings accepted and resolved |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-All eleven workloads are draft reviewed. Complete-suite reconciliation and the
-source-freeze identity proposal remain; edition 1 is not frozen yet.
+All eleven workloads are draft reviewed. Complete-suite reconciliation is
+recorded in the
+[source-freeze review packet](Windvale-Language-1.0-Source-Freeze-Review.md),
+including the candidate grammar, Foundation, document, and corpus identities.
+Edition 1 is not frozen until the explicit owner decision.
 
-The source-freeze decision cannot mark a pending row accepted. When all rows pass,
-their source becomes the first Language 1.0 conformance and migration input rather
-than disposable prose.
+The source-freeze decision cannot accept a workload row with a pending finding.
+All current rows pass owner paper review; when the explicit freeze decision
+accepts their candidate identities, their source becomes the first Language 1.0
+conformance and migration input rather than disposable prose.

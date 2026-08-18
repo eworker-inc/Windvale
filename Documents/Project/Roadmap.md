@@ -73,9 +73,11 @@ surface, containment boundary, and safe-publication rules. The
 [System/FFI bundle](Language-1.0-Paper-Corpus/10-System-Ffi-Boundary/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
-are now draft reviewed. All eleven required bundles are reviewed; complete-suite
-reconciliation and the explicit source-freeze decision remain. The accepted direction,
-normative-candidate suite,
+are now draft reviewed. All eleven required bundles are reviewed, and the
+[complete-suite source-freeze packet](Windvale-Language-1.0-Source-Freeze-Review.md)
+records the reconciled grammar, Foundation, corpus, migration, and candidate
+identities. Only the explicit project-owner source-freeze decision remains. The
+accepted direction, normative-candidate suite,
 paper corpus, accelerator/AI design evidence, and migration plan may advance
 without claiming implementation or changing the current Seed product. Source
 implementation begins only after the named source-freeze gate.

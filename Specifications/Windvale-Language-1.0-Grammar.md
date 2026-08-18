@@ -12,7 +12,9 @@ and
 and
 [Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md)
 and
-[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md).
+[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
+with complete-suite reconciliation accepted by
+[Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
 It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
@@ -23,9 +25,14 @@ evaluation, failure, and profile behavior. The
 [Foundation companion](Windvale-Language-1.0-Foundation.md) owns the identities
 and contracts of required standard types used below.
 
-Structured-task and contextual array-literal spelling remain subject to the
-complete paper corpus before source freeze. Each has one exact candidate form
-here; there is no alternate accepted spelling.
+The [machine grammar](Windvale-Language-1.0.ebnf) is the canonical
+machine-readable projection of the productions in this document. Its external
+scanner tokens are resolved by this document's strict UTF-8, comment, literal,
+and raw-delimiter contracts. A mismatch is a source-freeze
+blocker; neither file silently overrides the other.
+
+The complete paper corpus confirms the one structured-task and contextual
+array-literal spelling recorded here. There is no alternate accepted spelling.
 
 ## Grammar notation
 
@@ -134,6 +141,8 @@ follow a radix prefix. A sign is a unary operator, not part of a literal.
 Decimalˉdigits ::= Asciiˉdigit { [ "_" ] Asciiˉdigit }
 Hexˉdigit ::= Asciiˉdigit | "a" … "f" | "A" … "F"
 Hexˉdigits ::= Hexˉdigit { [ "_" ] Hexˉdigit }
+Unicodeˉhexˉdigits ::= Hexˉdigit [ Hexˉdigit [ Hexˉdigit
+                         [ Hexˉdigit [ Hexˉdigit [ Hexˉdigit ] ] ] ] ]
 Binaryˉdigits ::= ("0" | "1") { [ "_" ] ("0" | "1") }
 
 Integerˉbody ::= Decimalˉdigits
@@ -173,7 +182,7 @@ one admitted escape:
 
 ~~~text
 Runeˉliteral ::= "'" (Runeˉscalar | Textˉescape | Unicodeˉescape) "'"
-Unicodeˉescape ::= "\u{" Hexˉdigits "}"
+Unicodeˉescape ::= "\u{" Unicodeˉhexˉdigits "}"
 Textˉescape ::= "\" ( "\" | "'" | '"' | "n" | "r" | "t" | "0"
                       | "{" | "}" )
 Byteˉescape ::= Textˉescape | "\x" Hexˉdigit Hexˉdigit
@@ -229,33 +238,20 @@ Rawˉtext ::= "r" Rawˉdelimiter '"' Rawˉcontent
              '"' Rawˉdelimiter
 Rawˉbytes ::= "br" Rawˉdelimiter '"' Rawˉbyteˉcontent
               '"' Rawˉdelimiter
-Rawˉdelimiter ::= { "#" }   // zero through eight
+Rawˉdelimiter ::= [ "#" [ "#" [ "#" [ "#"
+                    [ "#" [ "#" [ "#" [ "#" ] ] ] ] ] ] ] ]
 ~~~
 
 The closing delimiter must contain exactly the opening number of hashes. Raw
 content performs no escape, normalization, or indentation processing and may
 contain LF. Raw byte content is ASCII plus LF only.
 
-Interpolated text begins with `$` followed by an ordinary or multiline text
-literal. `{ Expression }` inserts one value through the Foundation formatting
-protocol. `{{` and `}}` produce literal braces. Interpolation is not admitted in
-raw or byte literals. Every interpolation has an explicit or statically derived
-maximum output bound under the Foundation contract.
-
-~~~text
-Interpolatedˉtext ::= "$" (Interpolatedˉordinary | Interpolatedˉmultiline)
-Interpolatedˉordinary ::= '"' { Interpolationˉliteralˉitem
-                                | Interpolationˉfield } '"'
-Interpolatedˉmultiline ::= '"""' { Interpolationˉmultilineˉitem
-                                    | Interpolationˉfield } '"""'
-Interpolationˉfield ::= "{" Expression "}"
-~~~
-
-The interpolated scanner emits literal segments and interpolation delimiters.
-Inside a literal segment, `{{` and `}}` are escaped braces, a single `{` begins
-an expression, and an unmatched single `}` is rejected. An interpolation
-expression uses ordinary tokenization and balanced delimiters; braces within its
-nested literals do not close the field.
+Edition 1 has no interpolated-text literal. The complete paper corpus uses
+explicit bounded text builders and the Foundation formatting protocol, and it
+does not establish an allocation-budget or destination-owner contract for a
+standalone interpolation expression. A later edition may add interpolation only
+with those ownership and failure inputs visible. `$"..."`, `$"""..."""`, and
+interpolation in raw or byte literals are therefore lexical errors in edition 1.
 
 ## Module header and imports
 
@@ -455,16 +451,15 @@ tasks, serializable formats, or unrestricted escaping aggregates.
 Block ::= "{" { Statement } "}"
 Valueˉblock ::= "{" { Statement } Expression "}"
 
-Statement ::= Letˉstatement | Varˉstatement | Destructureˉstatement
+Statement ::= Bindingˉstatement
             | Assignmentˉstatement | Expressionˉstatement
             | Ifˉstatement | Matchˉstatement | Whileˉstatement
             | Forˉstatement | Usingˉstatement | Taskˉscopeˉstatement
             | Unsafeˉstatement
             | Returnˉstatement | Breakˉstatement | Continueˉstatement
 
-Letˉstatement ::= "let" Identifier [ ":" Type ] "=" Expression ";"
-Varˉstatement ::= "var" Identifier [ ":" Type ] "=" Expression ";"
-Destructureˉstatement ::= ("let" | "var") Pattern "=" Expression ";"
+Bindingˉstatement ::= ("let" | "var") Pattern [ ":" Type ]
+                      "=" Expression ";"
 Assignmentˉstatement ::= Place Assignmentˉoperator Expression ";"
 Assignmentˉoperator ::= "=" | "+=" | "-=" | "*=" | "/=" | "%="
 Expressionˉstatement ::= Expression ";"
@@ -473,6 +468,12 @@ Breakˉstatement ::= "break" ";"
 Continueˉstatement ::= "continue" ";"
 ~~~
 
+The optional binding type annotates the complete right-hand value before the
+pattern is applied. It is valid for a simple identifier, discard, or structured
+pattern and does not annotate one selected field. `let` makes every introduced
+binding immutable; `var` makes every introduced binding mutable, subject to the
+ordinary ownership and borrow rules.
+
 `return;` is valid only for `unit`. A `never` function has no reachable return.
 
 ~~~text
@@ -480,6 +481,7 @@ Ifˉstatement ::= "if" Expression Block
                  { "else" "if" Expression Block }
                  [ "else" Block ]
 Whileˉstatement ::= "while" Expression Block
+                  | "while" "let" Pattern "=" Expression Block
 Forˉstatement ::= "for" Pattern "in" Expression Block
 Matchˉstatement ::= "match" Expression
                     "{" Matchˉstatementˉarm { Matchˉstatementˉarm } "}"
@@ -510,9 +512,9 @@ operation. `async` marks that closure or function as suspendable; `await` waits
 for a typed task handle.
 
 The candidate deliberately keeps scheduling and scope creation in Foundation
-rather than adding a second spawn expression. The paper corpus must prove that
-this spelling expresses join, cancellation, provider restart, GUI, and service
-cases without hidden work before source freeze.
+rather than adding a second spawn expression. The complete paper corpus proves
+that this spelling expresses join, cancellation, provider restart, GUI, service,
+and accelerator cases without hidden work.
 
 The concurrent hosted-service workload confirms the spelling. Explicit
 cancellation is the ordinary Foundation call
@@ -526,10 +528,8 @@ require the existing `await` unary expression.
 
 ~~~text
 Pattern ::= "_"
-          | Identifier
           | Qualifiedˉsourceˉname
-          | Qualifiedˉsourceˉname
-            "{" [ Fieldˉpattern { "," Fieldˉpattern } [ "," ] ] "}"
+            [ "{" [ Fieldˉpattern { "," Fieldˉpattern } [ "," ] ] "}" ]
 Fieldˉpattern ::= Identifier ":" Pattern
 ~~~
 
@@ -631,7 +631,6 @@ Primaryˉexpression ::= Literal | "true" | "false" | "()"
                      | Explicitˉgenericˉcall
                      | Closure
                      | Unsafeˉexpression
-                     | Interpolatedˉtext
 
 Literal ::= Integerˉliteral | Floatˉliteral | Runeˉliteral
           | Textˉliteral | Byteˉliteral
@@ -758,9 +757,17 @@ Edition 1 deliberately rejects:
 
 ## Parser freeze evidence
 
-Before source freeze, the grammar must have:
+This is a source-design gate, not a claim that the current Seed parser accepts
+edition 1. An accepted or rejected case is complete here when its exact source,
+token/parse expectation, diagnostic category, recovery bound, and ownership in
+the future conformance suite are recorded. Migration turns those cases into
+executable parser, editor, and formatter tests before implementation
+conformance is claimed.
 
-- one machine-readable grammar generated from or checked against this document;
+Before source freeze, the machine grammar supplies the complete production
+projection while the review must confirm:
+
+- exact agreement between that machine grammar and this document;
 - lexical tests for every UTF-8, identifier, comment, literal, delimiter, and
   lookalike boundary;
 - accepted and rejected precedence cases;

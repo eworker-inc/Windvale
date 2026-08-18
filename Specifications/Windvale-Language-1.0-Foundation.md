@@ -26,7 +26,9 @@ and
 and
 [Decision 0763](../Documents/Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md)
 and
-[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md).
+[Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
+with complete-suite reconciliation accepted by
+[Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -36,10 +38,12 @@ The implemented Seed Foundation contracts remain separately owned by
 [byte ordering](Foundation-Byte-Ordering.md), and related current specifications
 until the migration plan advances them.
 
-This document owns semantic identities and behavior. The exact source grammar is
-owned by the [Language 1.0 grammar](Windvale-Language-1.0-Grammar.md). A source
-freeze must publish an exact signature-set identity for each required Foundation
-module; no hash is assigned while these signatures remain candidate.
+This document owns semantic behavior. The exact source grammar is owned by the
+[Language 1.0 grammar](Windvale-Language-1.0-Grammar.md). The
+[Foundation signature registry](Windvale-Language-1.0-Foundation-Registry.md)
+owns the complete edition-1 public declaration spelling and reproducible
+candidate signature-set identity for each required module. Those hashes remain
+candidate identities until the explicit source-freeze decision accepts them.
 
 ## Foundation principles
 
@@ -68,22 +72,23 @@ context.
 
 The candidate required modules are:
 
-| Module | Contract |
-| --- | --- |
-| `Foundationˉoption` | Optional presence. |
-| `Foundationˉresult` | Recoverable typed success/failure. |
-| `Foundationˉnumeric` | Explicit conversions, parsing, and strict float helpers. |
-| `Foundationˉordering` | Equality and deterministic total-order protocols. |
-| `Foundationˉmemory` | Allocation domains, leases, limits, and failures. |
-| `Foundationˉcollections` | Arrays, vectors, sequences, slices, maps, sets, iterators, and arenas. |
-| `Foundationˉbytes` | Immutable bytes, codecs, and bounded byte construction. |
-| `Foundationˉtext` | Unicode text, rune iteration, formatting, and bounded text construction. |
-| `Foundationˉresource` | Local-release protocol and owned-resource outcomes. |
-| `Foundationˉtask` | Hosted task scopes, task handles, cancellation, and join outcomes. |
-| `Foundationˉunsafe` | System-only raw address and foreign boundary primitives. |
+| Module | Minimum profile | Contract |
+| --- | --- | --- |
+| `Foundationˉoption` | Core | Optional presence. |
+| `Foundationˉresult` | Core | Recoverable typed success/failure. |
+| `Foundationˉnumeric` | Core | Explicit conversions, parsing, and strict float helpers. |
+| `Foundationˉordering` | Core | Equality and deterministic total-order protocols. |
+| `Foundationˉmemory` | Core | Allocation domains, leases, limits, and failures. |
+| `Foundationˉcollections` | Core | Arrays, vectors, sequences, slices, maps, sets, iterators, and arenas. |
+| `Foundationˉbytes` | Core | Immutable bytes, codecs, and bounded byte construction. |
+| `Foundationˉtext` | Core | Unicode text, rune iteration, formatting, and bounded text construction. |
+| `Foundationˉresource` | Core | Local-release protocol and owned-resource outcomes. |
+| `Foundationˉtask` | Hosted | Task scopes, task handles, cancellation, and join outcomes. |
+| `Foundationˉunsafe` | System | Raw address and foreign boundary primitives. |
 
 A compiler claiming a complete profile supplies or binds every module required
-by that profile. A package may select a compatible newer Foundation implementation
+by that profile. Hosted includes the Core rows; System includes the Core and
+Hosted rows it uses plus the System row. A package may select a compatible newer Foundation implementation
 only when its major contract and exact required signature set remain compatible.
 
 ## Standard optional presence
@@ -108,15 +113,11 @@ export variant Option<T> {
 sentinel representation. Matching is exhaustive. There is no implicit conversion
 between `Option<T>` and `T`, `bool`, a pointer, an integer, or a result.
 
-Required operations are:
-
-- `Isˉpresent(borrow Option<T>) -> bool`;
-- `Borrow(borrow Option<T>) -> Option<borrow T>`;
-- `Borrowˉmut(borrow mut Option<T>) -> Option<borrow mut T>`;
-- `Take(borrow mut Option<T>) -> Option<T>` for owned-capable `T`, leaving
-  `Absent`; and
-- explicitly named map or combine operations whose closure effects and output
-  bounds remain visible.
+The registry fixes `Isˉpresent`, immutable and exclusive `Borrow`, consuming
+`Take`, and pure consuming `Map`. `Take` leaves `Absent`. `Map` accepts one exact
+effect-free `fn(T) -> U`, evaluates it once only for `Present`, and preserves
+`Absent` without calling it. An effectful transform is written as an explicit
+`match`; edition 1 does not add effect-polymorphic convenience calls.
 
 No operation traps merely because the option is absent. An explicit
 `Requireˉpresent` contract may trap only when its source precondition proves
@@ -145,10 +146,12 @@ The language `try` expression recognizes this exact identity and:
 - releases ordinary owned locals before returning; and
 - never invokes a protocol or adapter implicitly.
 
-Required operations include exact case tests, immutable and mutable payload
-borrows, and explicitly named map operations. Mapping the failure side requires
-one function `fn(E) -> F` and produces `Result<T, F>`; it is never selected
-through overload inference.
+The registry fixes exact case tests, immutable and exclusive payload borrows,
+and pure consuming `Mapˉvalid` and `Mapˉfailure`. Mapping the valid side accepts
+one exact effect-free `fn(T) -> U`; mapping the failure side accepts one exact
+effect-free `fn(E) -> F`. The selected side is evaluated once and the other
+owned payload passes through unchanged. Effectful transforms use explicit
+`match`; no operation is selected through overload or result inference.
 
 `Result<unit, E>` is the standard recoverable no-data completion. A function that
 cannot fail returns `unit`, not `Result<unit, never>`.
@@ -240,12 +243,14 @@ fn Split(
     Maximumˉbytes: u64,
     Maximumˉchildren: u32,
 ) -> Result<Memoryˉbudget, Allocationˉfailure>
-    effects(memory.allocate, resource.acquire);
+    effects(memory.allocate);
 ~~~
 
 The parent reserves the child's maximum accounting authority until the child is
 released. Splitting never grants access outside the parent and cannot increase
-the combined maxima.
+the combined maxima. It is deterministic Core accounting under the explicit
+parent budget, not provider acquisition; therefore it carries
+`memory.allocate` but not `resource.acquire`.
 
 ### Allocation lease
 
@@ -346,7 +351,9 @@ It returns one failure without truncating or mutating input.
 
 ### Explicit lossy integer conversion
 
-When a workload requires it, these separate names may exist:
+Edition 1 does not require lossy integer conversion. A later Foundation
+signature set may add these separate names when a complete workload requires
+them:
 
 - `WrapˉSˉtoˉD` uses modulo 2 to the destination width;
 - `SaturateˉSˉtoˉD` clamps to the destination mathematical range; and
@@ -394,7 +401,7 @@ order and exact width.
 
 ### First accepted exact numeric signatures
 
-The first reviewed paper workload fixes these version-1 names, parameter names,
+The first reviewed paper workload fixed these version-1 names, parameter names,
 types, results, and empty effect sets:
 
 ~~~text
@@ -407,9 +414,9 @@ export fn Bitsˉu32ˉtoˉf32(Value: u32) -> f32 effects();
 ~~~
 
 The widening calls preserve mathematical value. `Bitsˉu32ˉtoˉf32` preserves
-all 32 input bits and performs no arithmetic. These exact calls are the minimum
-accepted subset, not a claim that the complete generated numeric matrix is
-frozen.
+all 32 input bits and performs no arithmetic. The signature registry now closes
+the complete integer, bit-reinterpretation, and integer/floating conversion
+families deterministically; these calls remain the workload-proven subset.
 
 ### Strict floating operation and conversion surface
 
@@ -476,8 +483,10 @@ truncate means toward zero and never wraps. Widening preserves every finite
 value and signed zero and canonicalizes NaN. Nearest narrowing may produce
 infinity on finite overflow and preserves signed zero; exact narrowing reports
 `Inexact` for finite overflow, underflow, or any other rounded result. These
-accepted calls are the exact workload subset; the generated source-freeze
-matrix must apply the same naming and failure rules to every required pair.
+accepted calls are the exact workload subset. The registry's finite generated
+families apply the same naming, ordering, and failure rules to every required
+pair and add the corresponding f64 classify, bitwise-equality, total-order, and
+fused-operation observations.
 
 ### Parsing
 
@@ -564,16 +573,19 @@ or repetition form is implied.
 The vector records length, current capacity, maximum items, maximum retained
 bytes, and lease generation. It never grows past either maximum.
 
-Required operation families are:
+The edition-1 registry fixes this deliberately small operation family:
 
 - immutable and exclusive mutable indexed borrow;
 - all-or-nothing append of one item;
-- explicit prefix append of a slice;
 - remove or replace with exact ownership return;
-- reserve with typed allocation failure;
 - immutable slice creation;
 - exclusive mutable slice creation; and
 - consuming freeze.
+
+Construction reserves the complete admitted item maximum, so edition 1 has no
+second reserve call and no prefix-admitting vector append. A later bulk API may
+be added under a different signature-set identity after its exact ownership and
+partial-progress contract is selected.
 
 An all-or-nothing rejected append returns the original owned item and leaves
 length, contents, capacity, and iteration unchanged. A successful append accepts
@@ -602,6 +614,27 @@ export fn Vectorˉlength<T>(
     Vector: borrow Vector<T>,
 ) -> u64 effects();
 
+export fn Vectorˉborrowˉat<T>(
+    Vector: borrow Vector<T>,
+    Index: u64,
+) -> borrow T effects();
+
+export fn Vectorˉborrowˉatˉmut<T>(
+    Vector: borrow mut Vector<T>,
+    Index: u64,
+) -> borrow mut T effects();
+
+export fn Vectorˉreplace<T>(
+    Vector: borrow mut Vector<T>,
+    Index: u64,
+    Replacement: T,
+) -> T effects();
+
+export fn Vectorˉremove<T>(
+    Vector: borrow mut Vector<T>,
+    Index: u64,
+) -> T effects();
+
 export fn Vectorˉfreeze<T>(
     Vector: Vector<T>,
 ) -> Sequence<T> effects();
@@ -611,9 +644,13 @@ Construction requires a positive maximum, consumes one budget, and reserves the
 complete representation/capacity for that item maximum. The empty generic call
 uses edition 1's explicit `::<T>` syntax. Later append cannot fail for physical
 growth; capacity rejection returns the unchanged original value and vector.
-Length reports accepted items. Freeze consumes the vector, publishes exactly its
-items in order, transfers retained accounting, and performs no fallible
-compaction.
+Length reports accepted items. Both borrow calls, replacement, and removal
+require `Index < Vectorˉlength` and trap before access on a violated proved
+precondition. Replacement accepts the new value once and returns the prior
+owned value. Removal returns the owned element and shifts later elements left
+without changing their relative order. Freeze consumes the vector, publishes
+exactly its items in order, transfers retained accounting, and performs no
+fallible compaction.
 
 ### Sequence
 
@@ -1165,10 +1202,19 @@ recoverable validation or memory safety.
 
 ## Bounded iterators
 
-The `Iterator<T>` compile-time protocol exposes:
+The exact edition-1 compile-time protocol is:
+
+~~~text
+export protocol Iterator<Self, T> {
+    fn Maximumˉremaining(Value: borrow Self) -> u64 effects();
+    fn Next(Value: borrow mut Self) -> Option<T> effects();
+}
+~~~
+
+It exposes:
 
 - exact or maximum remaining items;
-- one `Next` operation returning `Option<T>` or a borrowed item;
+- one `Next` operation returning an owned-or-Copy `Option<T>`;
 - finite per-item work and retained-state bounds; and
 - deterministic iteration order.
 
@@ -1177,7 +1223,10 @@ flat-map operation derives an admitted maximum from its input and expansion
 bound. A generator that cannot state a finite maximum is rejected.
 
 `for` accepts only compiler-known arrays, sequences, slices, maps, or an exact
-Iterator implementation.
+`Iterator<Self, T>` implementation. A borrowing iterator needs named lifetime
+representation and is not part of edition 1; compiler-known borrowed collection
+iteration retains its direct owner provenance without pretending that
+`Option<borrow T>` is an unrestricted stored value.
 
 ## Bytes and byte builder
 
@@ -1249,19 +1298,21 @@ results are tied to the one buffer owner and obey ordinary immutable/exclusive
 borrow rules. No safe uninitialized byte, backing capacity, native address, or
 unchecked Core/Hosted slice is exposed.
 
-Required builder operations include:
+The exact edition-1 builder operations are the registry calls below:
 
 - append one byte;
-- append an immutable byte slice;
+- append immutable bytes or canonical UTF-8 text;
 - append an exact-width integer with named byte order;
-- append a bounded sequence;
-- reserve;
-- truncate to an earlier valid length;
-- consume into `bytes`; and
-- inspect an immutable or exclusive mutable slice.
+- append invariant unsigned decimal; and
+- consume into `bytes`.
 
 Each append is either all-or-nothing or explicitly prefix-admitting. A failed
 all-or-nothing append leaves content and length unchanged.
+
+Edition 1's constructor commits the complete maximum, so there is no later
+reserve call. Truncation and direct builder-slice observation are omitted from
+the minimum surface: callers build a new bounded result when rollback is needed,
+which avoids publishing aliases into mutable construction state.
 
 The command workload fixes this version-1 reserved construction family:
 
@@ -1330,15 +1381,14 @@ admitted maximum UTF-8 byte length; sharing preserves those values and never
 exposes backing capacity. `Textˉbuilder` is an owned bounded UTF-8 construction
 buffer that never exposes malformed text as `text`.
 
-Required operations include:
+The exact edition-1 operations include:
 
 - append rune;
-- append text or text slice;
-- append validated UTF-8 bytes with typed failure;
-- append one bounded formatted value;
+- append text;
+- append the accepted invariant numeric forms;
 - inspect rune count and byte count separately;
-- consume into `text`; and
-- clear or truncate only at a validated scalar boundary.
+- strictly decode complete UTF-8 bytes or a byte slice; and
+- consume into `text`.
 
 Text builder maximum output is measured in bytes. Rune count is separately
 bounded by byte maximum. Failure leaves the builder unchanged unless an operation
@@ -1405,6 +1455,11 @@ export fn Appendˉtext(
     Value: borrow text,
 ) -> Result<unit, Limitˉfailure> effects();
 
+export fn Appendˉrune(
+    Builder: borrow mut Textˉbuilder,
+    Value: rune,
+) -> Result<unit, Limitˉfailure> effects();
+
 export fn Appendˉu64ˉdecimal(
     Builder: borrow mut Textˉbuilder,
     Value: u64,
@@ -1418,6 +1473,11 @@ export fn Appendˉu32ˉhexˉfixed(
 export fn Appendˉf32ˉcanonical(
     Builder: borrow mut Textˉbuilder,
     Value: f32,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Appendˉf64ˉcanonical(
+    Builder: borrow mut Textˉbuilder,
+    Value: f64,
 ) -> Result<unit, Limitˉfailure> effects();
 
 export fn Freeze(Builder: Textˉbuilder) -> text effects();
@@ -1435,17 +1495,20 @@ shared immutable range whose descriptor exposes exactly its byte/rune bounds;
 it may retain the same backing and charge and never creates a mutable alias.
 Reserved construction has the same committed-capacity, local failure-release,
 atomic append, and accounting-transfer rules as the byte builder.
+`Appendˉrune` emits the rune's canonical one-through-four-byte UTF-8 encoding.
 `Appendˉu64ˉdecimal` emits invariant shortest unsigned decimal.
 `Appendˉu32ˉhexˉfixed` emits exactly eight lowercase hexadecimal digits with no
-prefix. `Appendˉf32ˉcanonical` emits `nan`, `inf`, `-inf`, `0`, or `-0` for
-special values. A finite nonzero value uses the shortest ASCII decimal numeral
-that round-trips through the canonical f32 parser under roundTiesToEven. It has
+prefix. `Appendˉf32ˉcanonical` and `Appendˉf64ˉcanonical` emit `nan`, `inf`,
+`-inf`, `0`, or `-0` for special values. A finite nonzero value uses the shortest
+ASCII decimal numeral that round-trips through the corresponding canonical
+parser under roundTiesToEven. It has
 no plus sign, grouping, redundant leading/trailing zero, exponent plus, or
 exponent leading zero; `e` is lowercase. Among equal-byte-length round-tripping
 candidates, choose least mathematical distance to the exact value, then an even
 final coefficient digit, then ordinal ASCII order. No finite f32 result exceeds
-24 bytes. Both calls prove their whole append before mutation and use no locale,
-host formatting library, allocation, or hidden fast-math mode.
+24 bytes and no finite f64 result exceeds 32 bytes. Both calls prove their whole
+append before mutation and use no locale, host formatting library, allocation,
+or hidden fast-math mode.
 
 `Decodeˉutf8ˉsliceˉreserved` has the same validation, limits, budget,
 publication, and failure contract over one ephemeral immutable byte slice. The
@@ -1459,7 +1522,7 @@ tab each advance one scalar column. Canonical positions do not normalize text,
 translate host newlines, or count UTF-16 units, grapheme clusters, display
 cells, or locale characters.
 
-## Formatting and interpolation
+## Formatting
 
 `Formatting<T>` is a compile-time protocol with:
 
@@ -1471,17 +1534,30 @@ cells, or locale characters.
 - no capability, locale, clock, entropy, or provider access; and
 - exact escaping behavior when a named format requires it.
 
-Interpolation:
-
-- evaluates fields from left to right once;
-- computes or validates a complete maximum before output mutation;
-- rejects before mutation when that maximum exceeds the builder or surrounding
-  budget;
-- appends literal and formatted fields in source order; and
-- returns typed formatting or allocation failure rather than truncating.
-
 User-visible locale, collation, pluralization, time zone, and cultural formatting
 require explicit library data and are not the default Formatting protocol.
+
+The exact default protocol is:
+
+~~~text
+export protocol Formatting<T> {
+    fn Maximumˉutf8ˉbytes(
+        Value: borrow T,
+    ) -> Result<u64, Limitˉfailure> effects();
+
+    fn Append(
+        Builder: borrow mut Textˉbuilder,
+        Value: borrow T,
+    ) -> Result<unit, Limitˉfailure> effects();
+}
+~~~
+
+The compiler resolves one exact implementation from the field type. A named
+format is a distinct nominal wrapper with its own implementation, not an
+overload string interpreted at runtime. A caller evaluates
+`Maximumˉutf8ˉbytes` before builder mutation; `Append` cannot exceed that
+admitted value. Edition 1 uses this protocol through explicit bounded-builder
+calls and has no standalone interpolation syntax with hidden allocation.
 
 ## Local resource release
 
@@ -1766,9 +1842,9 @@ unbounded outcome list. A block `return`, `try` propagation, `break`, or
 continues the transfer.
 
 The concurrent hosted-service paper workload accepts these signatures and the
-source spelling as normative-candidate inputs. Their canonical signature-set
-identity remains a source-freeze deliverable rather than an implementation
-claim.
+source spelling as normative-candidate inputs. The registry now records their
+canonical candidate signature-set identity; accepting that identity remains an
+explicit source-freeze decision and not an implementation claim.
 
 ## Unsafe Foundation
 
@@ -1907,7 +1983,15 @@ API ambient or removes its resource accounting.
 
 ## Foundation freeze requirements
 
-Before source freeze:
+This is the Foundation source-contract gate, not an implementation qualification
+claim. A paper case passes when the exact signature, ownership, effect, bound,
+failure precedence, and expected result are coherent. Migration must make the
+same cases executable against ordinary reference implementations and any
+intrinsic lowering before Foundation conformance is reported.
+
+Before source freeze, the candidate registry supplies the exact module blocks
+and hashes while the owner decision must still accept them. The freeze review
+must confirm that:
 
 1. every required module has a canonical major version and signature-set
    identity;
@@ -1918,7 +2002,7 @@ Before source freeze:
 4. collection algorithms have stable worst-case bounds;
 5. map ordering and arena generation behavior pass adversarial paper cases;
 6. numeric conversion and parsing matrices are complete;
-7. builder and interpolation maxima are computable in every admitted case;
+7. builder and formatting maxima are computable in every admitted case;
 8. resource release cannot discard a completion or body result;
 9. ordered set insertion, duplicate, removal, publication, capacity, and
    ownership outcomes pass the paper corpus;

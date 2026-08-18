@@ -1394,6 +1394,7 @@ foreach ($Path in $Paths) {
         '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
+        'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',
         'Specifications/Windvale-Native-Changed-Verification.md',
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
@@ -2991,7 +2992,9 @@ foreach ($Path in $Paths) {
         if ($Path -in @(
             'Specifications/Windvale-Language-1.0.md',
             'Specifications/Windvale-Language-1.0-Grammar.md',
-            'Specifications/Windvale-Language-1.0-Foundation.md'
+            'Specifications/Windvale-Language-1.0.ebnf',
+            'Specifications/Windvale-Language-1.0-Foundation.md',
+            'Specifications/Windvale-Language-1.0-Foundation-Registry.md'
         )) {
             # These candidates do not describe the implemented Seed surface. Keep
             # their routing checked without claiming current compiler conformance;

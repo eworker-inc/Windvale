@@ -17,7 +17,19 @@
 > and the compiler-front-end findings by
 > [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md),
 > and the HTTP-handler findings by
-> [Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
+> [Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
+> the concurrent-service findings by
+> [Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
+> the retained-GUI findings by
+> [Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
+> the numeric/graphics findings by
+> [Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
+> the package-parser findings by
+> [Decision 0763](../Decisions/0763-Resolve-Language-1.0-Package-Parser-Findings.md),
+> the System/FFI findings by
+> [Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
+> and complete-suite reconciliation by
+> [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -695,8 +707,8 @@ publication rules without exposing a dummy map value or host hash-table layout.
 `Bytesˉbuilder` and `Textˉbuilder` are specialized owned buffers with bulk append,
 formatting, UTF-8 validation, retained maximum, and consuming freeze. They replace
 repeated immutable self-concatenation in compiler, object, package, diagnostic,
-and application hot paths. Bounded interpolation lowers to `Textˉbuilder` rather
-than constructing an unbounded hidden string.
+and application hot paths. Edition 1 keeps the destination builder and its
+memory budget explicit; Decision 0765 defers standalone interpolation syntax.
 
 `for` accepts arrays, immutable sequences, slices, maps with defined iteration,
 and an explicit bounded iterator protocol. An iterator retains an exact remaining
@@ -838,7 +850,7 @@ Generic protocols and closures retain an exact effect requirement that the calle
 can inspect statically. No function can acquire ambient authority because a
 package, module profile, or host happens to provide it.
 
-## Text, bytes, formatting, and interpolation
+## Text, bytes, and formatting
 
 `text` is valid Unicode and has no locale-dependent comparison or normalization.
 `rune` represents one Unicode scalar. Text iteration yields runes in scalar order;
@@ -852,15 +864,15 @@ directly from a byte slice. Otherwise parsers are pushed toward raw pointers or
 an avoidable buffer-to-bytes copy. These remain Foundation calls, not indexing
 syntax or an HTTP compiler feature.
 
-Bounded interpolation is accepted for 1.0 after the builder contract is fixed.
-Interpolation:
-
-- evaluates fields left to right exactly once;
-- requires an explicit formatting protocol;
-- has invariant default numeric formatting;
-- declares or derives a maximum output bound;
-- fails before exceeding that bound; and
-- has exact escaping rules for literal delimiters.
+Decision 0751 initially accepted bounded interpolation after the builder contract
+was fixed. The complete paper corpus fixed the builder and formatting protocol
+but used no interpolation source, and final reconciliation found no visible
+allocation-budget or destination-owner input for a standalone interpolated-text
+expression. Decision 0765 therefore keeps explicit bounded formatting calls and
+defers interpolation syntax to a later edition. A later proposal must preserve
+left-to-right single evaluation, invariant default formatting, exact escaping,
+precomputed output bounds, explicit memory ownership, and rejection before
+destination mutation.
 
 Locale, user-visible collation, pluralization, time zones, and cultural formatting
 belong to explicit libraries and supplied data rather than ambient process state.
@@ -1036,7 +1048,9 @@ specification:
     capture;
 11. add move-only instance resources and `using`, separating fallible completion
     from infallible local release;
-12. include bounded text/byte builders and bounded interpolation;
+12. include bounded text/byte builders and explicit bounded formatting, while
+    deferring interpolation syntax until its destination and memory owner are
+    visible;
 13. specify structured concurrency in the hosted profile; and
 14. specify unsafe blocks and FFI in the system profile.
 
@@ -1394,8 +1408,12 @@ discarded are specified.
 - Costs: a small source expression may hide arbitrary allocation and formatting
   work.
 
-**Accepted direction:** Option A. Builders remain ordinary typed library APIs
-even when the compiler recognizes and optimizes them.
+**Accepted direction after complete-suite reconciliation:** Option C. Builders
+and the formatting protocol remain ordinary typed library APIs even when the
+compiler recognizes and optimizes them. Decision 0765 defers interpolation
+syntax because the paper corpus did not prove a standalone expression with an
+explicit destination owner, memory budget, and failure path. A later edition may
+add it without changing the edition-1 builder or formatting identities.
 
 ### 13. Structured concurrency
 
@@ -1474,7 +1492,7 @@ capability by itself.
 | 8 | Accept direction | Prototype moves, borrows, immutable sharing, and typed arenas. |
 | 9–10 | Accept | Complete exact error propagation, call, and closure rules. |
 | 11 | Accept direction | Resolve cleanup ordering without discarding any result. |
-| 12 | Accept | Prove builder and interpolation output bounds. |
+| 12 | Refined by Decision 0765 | Keep explicit bounded builders/formatting; defer interpolation syntax until destination and memory ownership are explicit. |
 | 13 | Accept direction | Complete the structured-concurrency paper corpus and semantics. |
 | 14 | Accept | Specify each supported ABI and unsafe invariant. |
 
@@ -1498,6 +1516,8 @@ boundary. The reader-facing rationale and intended alternatives are described in
 - implicit or detached background tasks;
 - dynamic source imports or runtime name lookup through `import`;
 - default parameter values;
+- interpolated-text syntax without an explicit bounded destination and memory
+  owner;
 - broader Unicode identifiers beyond ASCII segments joined by U+02C9;
 - unbounded collections, queues, diagnostics, recursion, or compile-time work;
 - unrestricted macros, preprocessors, and compiler plugins;
@@ -1515,13 +1535,16 @@ Following owner acceptance, the design and specification phase produces:
 1. accepted amendments to this document;
 2. the normative-candidate
    [semantic specification](../../Specifications/Windvale-Language-1.0.md),
-   [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), and
-   [Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md);
+   [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md),
+   [machine grammar](../../Specifications/Windvale-Language-1.0.ebnf),
+   [Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md),
+   and [Foundation signature registry](../../Specifications/Windvale-Language-1.0-Foundation-Registry.md);
 3. the [paper design corpus](Windvale-Language-1.0-Paper-Corpus.md) with accepted
    and rejected examples;
 4. the [Seed-to-edition-1 migration plan](Windvale-Language-1.0-Migration.md);
 5. a feature-to-compiler/WIR/WVB/runtime/backend/editor test matrix;
-6. a named Language 1.0 source-freeze decision; and
+6. a complete [source-freeze review packet](Windvale-Language-1.0-Source-Freeze-Review.md)
+   followed by a named Language 1.0 source-freeze decision; and
 7. an implementation roadmap that preserves one compiler and the narrowest
    reliable verification path.
 

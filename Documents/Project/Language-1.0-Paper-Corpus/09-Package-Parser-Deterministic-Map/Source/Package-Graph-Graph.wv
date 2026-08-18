@@ -155,7 +155,7 @@ fn Buildˉremaining(
 ) -> Result.Result<Collections.Sequence<Types.Packageˉidentity>, Types.Packageˉfailure>
     effects(memory.allocate) {
     var Remaining = try Mapˉcollection(
-        Value: Collections.Vectorˉconstruct::<Types.Packageˉidentity>(
+        Value: Collections.Vectorˉconstructˉreserved::<Types.Packageˉidentity>(
             Budget: Budget,
             Maximumˉitems: Collections.Immutableˉmapˉlength(Map: Packages),
         ),
@@ -196,8 +196,8 @@ export fn Validateˉmanifest(
         Map: Packages,
         Key: borrow Manifest.Root,
     ) {
-        case Option.Option.Some { Value: Value } { Value }
-        case Option.Option.None {
+        case Option.Option.Present { Value: Value } { Value }
+        case Option.Option.Absent {
             return Result.Result.Failure {
                 Error: Types.Packageˉfailure.Manifestˉmismatch {
                     Field: Types.Fieldˉkind.Package,
@@ -268,7 +268,7 @@ export fn Topologicalˉorder(
         ),
     );
     var Output = try Mapˉcollection(
-        Value: Collections.Vectorˉconstruct::<Types.Packageˉidentity>(
+        Value: Collections.Vectorˉconstructˉreserved::<Types.Packageˉidentity>(
             Budget: Outputˉbudget,
             Maximumˉitems: Count,
         ),

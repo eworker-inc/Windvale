@@ -28,7 +28,7 @@ fn Appendˉcolor(
     Value: borrow Types.Color,
     Maximum: u64,
 ) -> Result.Result<unit, Types.Frameˉfailure> effects() {
-    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Red) {
+    match Bytes.Appendˉu8(Builder: Builder, Value: Value.Red) {
         case Result.Result.Valid { Value: () } { }
         case Result.Result.Failure { Error: _ } {
             return Result.Result.Failure {
@@ -36,7 +36,7 @@ fn Appendˉcolor(
             };
         }
     }
-    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Green) {
+    match Bytes.Appendˉu8(Builder: Builder, Value: Value.Green) {
         case Result.Result.Valid { Value: () } { }
         case Result.Result.Failure { Error: _ } {
             return Result.Result.Failure {
@@ -44,7 +44,7 @@ fn Appendˉcolor(
             };
         }
     }
-    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Blue) {
+    match Bytes.Appendˉu8(Builder: Builder, Value: Value.Blue) {
         case Result.Result.Valid { Value: () } { }
         case Result.Result.Failure { Error: _ } {
             return Result.Result.Failure {
@@ -52,7 +52,7 @@ fn Appendˉcolor(
             };
         }
     }
-    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Alpha) {
+    match Bytes.Appendˉu8(Builder: Builder, Value: Value.Alpha) {
         case Result.Result.Valid { Value: () } { }
         case Result.Result.Failure { Error: _ } {
             return Result.Result.Failure {

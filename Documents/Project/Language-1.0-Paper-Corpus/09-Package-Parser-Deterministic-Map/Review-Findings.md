@@ -63,7 +63,7 @@ implicit.
 
 | Measure | Recorded value |
 | --- | --- |
-| Source | 7 files; 1,478 lines / 48,368 UTF-8 bytes; 60 top-level declarations; largest 631 lines. |
+| Source | 7 files; 1,478 lines / 48,468 UTF-8 bytes; 60 top-level declarations; largest 631 lines. |
 | Package data | 4 declarations / 3 content objects / 227 unique bytes / 280 logical declaration bytes. |
 | Collections | 1 four-item immutable map; 5 dependency/completed sets; 1 four-item order sequence. |
 | Execution | 4 packages / 4 edges / 4 topology selections / no recursion. |
