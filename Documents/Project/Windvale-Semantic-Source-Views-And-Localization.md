@@ -1966,9 +1966,9 @@ questions are:
    API hovers, and exported reviews?
 7. How are project vocabulary entries bound across an intentional canonical
    rename?
-8. Do the proposed NFC, XID, Highly Restrictive, confusable-collision, and
-   join-control rules require a carefully bounded exception for any target
-   language?
+8. Resolved for edition 1 by Workload 4: keep exact NFC, XID, Highly Restrictive,
+   mixed-number, and scoped confusable rejection; do not admit join controls.
+   A later edition needs native-language evidence and a new exact profile.
 9. Can display packs contain alternative short and explanatory labels while
     source lexicons retain exactly one spelling?
 10. Should community packs be allowed for source recognition, or only for

@@ -8,10 +8,9 @@ keywords, stored localized references to public library declarations, and
 Unicode project identifiers for the replacement Language 1.0 candidate on
 2026-08-18. The first source-profile admission workload now supplies exact
 candidate bytes and rejected cases. The project owner accepts the technical and
-design findings from Workloads 1 through 3; native terminology, implementation,
-multilingual-security, shipment, cross-host, and measured-performance evidence
-remain open. The design is not frozen or implemented. Current compilers continue
-to implement
+design findings from Workloads 1 through 4; native terminology, implementation,
+shipment, cross-host, and measured-performance evidence remain open. The design
+is not frozen or implemented. Current compilers continue to implement
 [Windvale Seed](Seed-Language.md).
 
 This document owns:
@@ -255,6 +254,9 @@ the earlier candidate remain admitted.
 Every identifier must already be in the edition-selected normalization form.
 Identity is the resulting exact ordinal UTF-8 byte sequence; there is no case
 folding, locale collation, transliteration, or canonically-equivalent alias.
+One project-owned identifier contains at most 256 UTF-8 bytes, 128 Unicode
+scalars, and 32 U+02C9-delimited semantic segments. Keyword and public-label
+artifacts retain their stricter 128-byte/64-scalar bounds.
 
 The working edition-1 candidate selects `windvale.unicode17.source@1`: Unicode
 17.0.0, NFC under UAX #15 revision 57, XID properties under UAX #31 revision 43,
@@ -262,8 +264,8 @@ and identifier security data under UTS #39 revision 32. Its exact upstream files
 and SHA-256 values are recorded in the
 [source-profile artifact format companion](Windvale-Language-1.0-Source-Profile-Formats.md).
 A compiler using different host tables is not conforming. This identity remains
-subject to the remaining Unicode/security workload and owner acceptance;
-“current Unicode” is not an admissible contract.
+exact rather than meaning “current Unicode.” Workload 4 validated the required
+scripts and the project owner accepted the edition-1 security boundary.
 
 ### Rejected identifier content
 
@@ -283,11 +285,12 @@ the stricter ASCII-only level within each U+02C9-delimited semantic segment,
 rejects mixed decimal-number
 systems in one segment, and rejects distinct same-scope segments whose UTS #39
 `bidiSkeleton` values collide under either left-to-right or right-to-left
-processing. Join controls are excluded from edition 1 pending the multilingual
-security workload. That workload must challenge these rules with Chinese,
-Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin examples without depending
-on host fonts or locale. Tools may report additional visual warnings, but
-required acceptance cannot depend on rendering.
+processing. Workload 4 confirms that join controls remain excluded from edition
+1. This prevents preferred spellings in some Persian, Arabic-derived, and Indic
+orthographies; a later edition may change the rule only through exact contextual
+validation, native-language workloads, new profile bytes/hashes, and a named
+language decision. Tools may report additional visual warnings, but required
+acceptance cannot depend on rendering.
 
 ### Identity and interoperability
 
@@ -307,6 +310,31 @@ the edition's capitalized official style. An uncased script uses its reviewed
 natural form and does not invent casing. The declaration category already makes
 a constant distinguishable; uncased scripts do not need an artificial
 `ALL_CAPS` transformation.
+
+### Bidirectional source boundary
+
+Windvale keeps one logical left-to-right grammar order. Arabic and Hebrew change
+identifier or localized-token content, not declaration, expression, delimiter,
+or argument order. UTF-8 logical order is source identity; editors render lexical
+atoms rather than treating a source line as one undifferentiated bidi paragraph.
+
+After the ASCII-only descriptor, one U+061C, U+200E, or U+200F implicit
+directional mark may occur at a complete body-token/logical-line boundary. It is
+semantically ignored but retained in raw-source hashes, spans, diffs, and
+provenance. It cannot split a token. Other default-ignorables outside comment or
+text/rune/raw-literal content are invalid.
+
+Literal U+000B, U+000C, U+0085, U+2028, and U+2029 are rejected everywhere in
+raw source so displayed hard lines cannot disagree with the LF/CRLF scanner.
+Runtime text can express them through `\u{...}` escapes.
+
+Literal U+202A..U+202E and U+2066..U+2069 stateful bidi controls occur only
+inside one comment-content or text/rune/raw-literal-content atom. UAX #9 revision
+51 processing must balance within that atom and logical line at nesting depth no
+greater than 16. An unbalanced runtime value remains expressible through an
+ASCII Unicode escape. Source display and control visibility follow UTS #55
+version 2, revision 5 as detailed by
+[Workload 4](../Documents/Project/Language-1.0-Localization-Workloads/04-Unicode-And-Multilingual-Security/README.md).
 
 ## Source-vocabulary profiles and catalogs
 
@@ -628,7 +656,10 @@ paired-source, and equivalence packet whose technical/design findings are owner
 accepted, but native review and executable evidence remain open. Workload 3 has
 an owner-accepted paper contract, 30 accepted cases, 30 rejected cases, and
 three exact expected-source fixtures; implementation/editor qualification
-remains open. Workloads 4 and 5 remain open.
+remains open. Workload 4 has an owner-accepted Unicode/security contract, 32
+accepted cases, 46 rejected cases, exact Unicode-17 validation, and one
+multilingual source fixture; implementation/editor/cross-host qualification
+remains open. Workload 5 remains open.
 The replacement Language 1.0 candidate requires at least:
 
 1. canonical, Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin
@@ -670,6 +701,10 @@ Compilation fails before artifact publication for:
 - implicit canonical fallback under a selected source profile;
 - a non-normalized, forbidden, malformed, oversized, or colliding spelling;
 - an unresolvable or ambiguous localized import/member/field/case/parameter;
+- a project identifier exceeding 256 UTF-8 bytes, 128 scalars, or 32 segments;
+- a forbidden raw-source hard-line scalar, misplaced/redundant implicit
+  directional mark, cross-token stateful bidi control, unbalanced content-atom
+  control stack, or content-atom bidi nesting greater than 16;
 - source whose universal descriptor is absent from byte zero or exceeds its
   bound;
 - use of host locale, collation, case folding, Unicode tables, filesystem search,

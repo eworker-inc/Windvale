@@ -245,6 +245,10 @@ identifiers remain an admitted subset:
 [A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*
 ~~~
 
+A project-owned identifier is bounded to 256 UTF-8 bytes, 128 Unicode scalars,
+and 32 semantic segments. Source labels carried by lexicons/catalogs retain their
+stricter 128-byte/64-scalar artifact bounds.
+
 U+02C9 is part of identity. Hyphen, U+00AF macron, and other lookalikes are not
 aliases. Exact Unicode identity receives no case folding, host normalization,
 collation, transliteration, or canonically-equivalent spelling alias. Official
@@ -252,6 +256,11 @@ source uses reviewed semantic identifiers with macron-separated concepts as
 defined by [Source naming](Source-Naming.md). Cased scripts retain the
 capitalized/constant conventions where meaningful; uncased scripts do not
 invent case.
+
+Source has one logical left-to-right grammar order even when token content is
+Arabic or Hebrew. Exact implicit-mark, stateful-control, hard-line rejection,
+source-aware display, and raw-provenance behavior is owned by the localized-
+source and grammar companions; rendering never changes token order or identity.
 
 A declaration has one canonical identity consisting of edition-aware package
 identity, canonical module identity, declaration category, and source name.

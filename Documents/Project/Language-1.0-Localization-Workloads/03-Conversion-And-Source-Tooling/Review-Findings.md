@@ -71,7 +71,7 @@ and both permanent hosts produce the required results within measured bounds.
 
 ## Disposition
 
-Carry these decisions into the localized-source specification during final
-reconciliation. Workload 4 should now challenge the identifier, script,
-normalization, bidi, confusable, invisible, and join-control rules across the
-required writing systems.
+These decisions are now carried into the localized-source specification.
+Workload 4 subsequently accepted the identifier, script, normalization, bidi,
+confusable, invisible, and join-control boundary across the required writing
+systems.

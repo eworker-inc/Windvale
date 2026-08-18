@@ -61,8 +61,15 @@ interactive editor, and cross-host qualification remain open.
 
 Exercise Latin, Cyrillic, Greek, Han, Hiragana, Katakana, Hangul, Arabic, and
 Hebrew valid cases plus normalization, mixed-script, mixed-number, confusable,
-right-to-left, invisible, and boundary attacks. Native-language review determines
-whether the edition-1 join-control exclusion needs reconsideration.
+right-to-left, invisible, and boundary attacks. The edition-1 workload keeps join
+controls excluded; any later relaxation requires native-language evidence and a
+new exact Unicode-profile decision.
+
+The owner-accepted first-author paper bundle is in
+[localization workload 4](Language-1.0-Localization-Workloads/04-Unicode-And-Multilingual-Security/README.md).
+The exact Unicode 17 data validates the required scripts; join controls remain
+excluded from edition-1 identifiers, and compiler/editor/cross-host execution
+remains open.
 
 ### Workload 5: shipment, cache, and cross-host qualification
 

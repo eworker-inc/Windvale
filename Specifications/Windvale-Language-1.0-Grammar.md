@@ -65,7 +65,8 @@ normalization, and security tables used by localized lexicons and identifiers to
 defined by the
 [source-profile artifact formats](Windvale-Language-1.0-Source-Profile-Formats.md).
 Host Unicode tables are not grammar input. The replacement source freeze must
-accept that exact identity after the remaining multilingual workload evidence.
+use that exact identity; Workload 4 now supplies owner-accepted multilingual
+paper evidence while implementation/cross-host evidence remains open.
 
 ## Source decoding and line structure
 
@@ -75,6 +76,8 @@ A source file:
 - contains no surrogate value, overlong encoding, or invalid sequence;
 - accepts LF U+000A or CRLF as one logical line ending;
 - rejects a lone CR U+000D;
+- rejects literal U+000B, U+000C, U+0085, U+2028, and U+2029 everywhere,
+  including comments and text/raw literals;
 - may contain horizontal space U+0020 and tab U+0009 between tokens; and
 - treats no other Unicode whitespace as syntactic whitespace.
 
@@ -83,6 +86,12 @@ inside ordinary, multiline, and raw literal content, so a checked-in source file
 and an external Windows-edited source file do not inherit different newline
 semantics. Canonical formatted and repository source uses LF. Source-byte hashes
 remain hashes of the original admitted bytes.
+
+After the ASCII-only source descriptor, one U+061C, U+200E, or U+200F may occur
+at a complete token or logical-line boundary. The scanner ignores it for token
+semantics but retains its raw span/provenance. It cannot split a token and a
+second implicit directional mark at the same boundary is invalid. Other
+default-ignorables outside comment or text/rune/raw-literal content are invalid.
 
 Indentation is never semantic. A tab has no specified display width.
 
@@ -97,6 +106,12 @@ module or declaration when no blank line or ordinary comment intervenes.
 Documentation text excludes the leading `///` and at most one following ASCII
 space. Documentation does not change executable source semantics or artifact
 identity unless a package separately includes a documentation artifact.
+
+Literal stateful bidi controls U+202A..U+202E and U+2066..U+2069 inside comment
+or text/rune/raw-literal content must balance under UAX #9 revision 51 within one
+content atom and logical line, with nesting at most 16. They are invalid in
+identifiers or between executable tokens. An ordinary Unicode escape can express
+an unbalanced runtime scalar without placing an active control in source text.
 
 The lexer emits one `Documentationˉtoken` for the complete attached group:
 
@@ -114,6 +129,10 @@ Identifierˉsegment ::= Identifierˉstart { Identifierˉcontinue }
 Identifier ::= Identifierˉsegment { "ˉ" Identifierˉsegment }
 Constantˉidentifier ::= Identifier
 ~~~
+
+One project-owned `Identifier` contains at most 256 UTF-8 bytes, 128 Unicode
+scalars, and 32 semantic segments. Source keyword and imported-public-label
+artifacts retain their separately specified 128-byte/64-scalar limits.
 
 `Unicodeˉxidˉstart` and `Unicodeˉxidˉcontinue` are the exact edition-pinned
 Unicode property classes after subtracting every scalar forbidden by the
@@ -230,10 +249,10 @@ one exact byte. A Unicode escape is not admitted in a byte literal.
 
 The literal scanners use these exact character classes:
 
-- `Runeˉscalar` is one Unicode scalar other than apostrophe, backslash, LF, or
-  CR;
-- `Textˉscalar` is one Unicode scalar other than double quote, backslash, LF, or
-  CR;
+- `Runeˉscalar` is one Unicode scalar other than apostrophe, backslash, LF, CR,
+  or a globally forbidden raw-source line scalar;
+- `Textˉscalar` is one Unicode scalar other than double quote, backslash, LF, CR,
+  or a globally forbidden raw-source line scalar;
 - `Asciiˉbyte` is U+0020 through U+007E except double quote and backslash;
 - multiline text items are text scalars, LF, escapes, or quote characters that
   do not begin the closing triple quote;

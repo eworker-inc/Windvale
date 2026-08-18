@@ -1,7 +1,10 @@
 (* Windvale Language 1.0 normative-candidate machine grammar.
    Working replacement direction includes the localized-source and
    source-vocabulary specification; it is not frozen or implemented.
-   Encoding: strict UTF-8 without BOM; canonical line ending: LF.
+   Encoding: strict UTF-8 without BOM; canonical line ending: LF. The external
+   scanner applies the grammar companion's exact forbidden-line-scalar,
+   implicit-directional-mark, content-atom bidi-control, identifier-bound, and
+   Unicode-profile rules before these productions.
    This file uses ISO-style EBNF: = defines, | chooses, [] is optional,
    {} repeats zero or more, comma concatenates, and ; terminates. Inside a
    quoted terminal, reverse solidus escapes a quotation mark or reverse solidus.
@@ -18,8 +21,8 @@ Source = Sourceˉdescriptor, Module, Profile, Platform, Authority,
 EOF = ? end of decoded source ? ;
 Sourceˉdescriptorˉend = ? exact first logical LF after source newline admission ? ;
 Documentationˉtoken = ? one attached documentation-comment group as specified by the grammar companion ? ;
-Runeˉscalar = ? one Unicode scalar except apostrophe, reverse solidus, LF, or CR ? ;
-Textˉscalar = ? one Unicode scalar except quotation mark, reverse solidus, LF, or CR ? ;
+Runeˉscalar = ? one admitted Unicode scalar except apostrophe, reverse solidus, LF, or CR ? ;
+Textˉscalar = ? one admitted Unicode scalar except quotation mark, reverse solidus, LF, or CR ? ;
 Asciiˉbyte = ? one scalar U+0020 through U+007E except quotation mark or reverse solidus ? ;
 Multilineˉtextˉitem = ? one text scalar, LF, escape, or quote not beginning the closing triple quote ? ;
 Multilineˉbyteˉitem = ? one ASCII byte, LF, escape, or quote not beginning the closing triple quote ? ;

@@ -125,9 +125,10 @@ also applies to localized public labels competing in one resolution namespace.
 Different exact identifiers in unrelated scopes remain legal.
 
 Excluding join controls keeps the first edition deterministic and visually
-inspectable but may prevent the preferred spelling of some languages. A later
-edition may add their UTS #39 contextual rules only after native-language
-workloads demonstrate the need; a pack cannot add them on its own.
+inspectable but prevents the preferred spelling of some languages. Workload 4
+accepted that Language 1.0 limit. A later edition may add their UTS #39
+contextual rules only after native-language workloads demonstrate the need; a
+pack cannot add them on its own.
 
 ## Keyword token registry
 
