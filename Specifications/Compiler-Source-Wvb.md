@@ -61,10 +61,22 @@ external WVSS 2 values.
 The first Language 1.0 Slice 2 checkpoint appends front-end token, source-type,
 and internal binding-shape identities for `unit`, `never`, `i8`, `i16`, `u16`,
 `f32`, `f64`, and `rune`. Those internal identities are not WVB type bytes and do
-not extend the accepted WVB subset below. Until their exact operations and runtime
-representations are implemented and versioned, backend admission rejects a
-function or value that would require one; it never aliases a new primitive to an
-existing WVB shape merely to produce output.
+not generally extend the accepted WVB subset below. The second checkpoint admits
+only storage-free `unit` results: typed WIR shape zero encodes as WVB's existing
+return-only type byte zero, a unit literal emits no opcode, a unit-valued call
+uses the existing call instruction without pushing a result, and the existing
+no-value return instruction closes the function. This reuses an identical ABI
+representation without equating Seed `void` and Language 1.0 `unit` in source
+semantics. `unit` parameters/locals and the other new primitive values remain
+closed until their exact operations and runtime representations are implemented
+and versioned; the backend never aliases them to existing value shapes merely to
+produce output.
+
+The 356-byte `Unit-Control.wv` artifact proves deterministic compiler emission
+for explicit/fallthrough unit return and a unit-returning call. The current scalar
+WVB runner does not yet admit return type byte zero, so this checkpoint makes no
+unit-execution claim; its ordinary executable sentinel remains the 221-byte
+`Main() -> i32` program.
 
 ## Portable in-memory adapter
 

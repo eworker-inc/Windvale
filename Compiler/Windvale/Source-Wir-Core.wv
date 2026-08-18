@@ -42,6 +42,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Invalidˉcollection = 30;
     Invalidˉbuilder = 31;
     Invalidˉtry = 32;
+    Invalidˉunit = 33;
 }
 
 enum Compilerˉsourceˉwirˉoperation {
@@ -1402,11 +1403,14 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignature(
         Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
         Symbols.Records, Symbols.Enums, false
     );
+    var Returnˉshape: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Returnˉtype);
+    if Returnˉtype.Kind ==
+        Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit {
+        Returnˉshape = 0u32;
+    }
     return Compilerˉsourceˉwirˉsignature(
-        Parameterˉshape,
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Returnˉtype),
-        0u32,
-        0u32
+        Parameterˉshape, Returnˉshape, 0u32, 0u32
     );
 }
 
@@ -2538,6 +2542,22 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             Build, Compilerˉsourceˉwirˉoperation.Boolˉconstant, 4u32,
             Compilerˉsourceˉwirˉempty(Source), Boolean, 0u32,
             Expression.Offset, Expression.Length
+        );
+    }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unit {
+        let Unitˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                Input, Scan, Build.Currentˉmodule
+            );
+        if Unitˉview.Edition != 1u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉunit,
+                Build.Currentˉmodule,
+                Expression.Offset, Expression.Line, Expression.Column
+            );
+        }
+        return Compilerˉsourceˉwirˉvalueˉfrom(
+            Build, 0u32, Compilerˉsourceˉwirˉsentinel()
         );
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Builder {
@@ -4567,15 +4587,27 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                                 Bindingˉphase
                             );
                         }
-                        return Compilerˉsourceˉwirˉfusedˉfrom(
-                            Compilerˉsourceˉwirˉbuildˉfailure(
-                                Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
-                                Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
-                                Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                                Statement.Expressionˉoffset,
-                                Voidˉreturnˉposition.Line, Voidˉreturnˉposition.Column
-                            ),
-                            Bindingˉphase
+                        let Returnˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                            Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                                Input, Scan, Result.Currentˉmodule
+                            );
+                        if Returnˉview.Edition != 1u32 ||
+                            Voidˉreturnˉvalue.Shape != 0u32 {
+                            return Compilerˉsourceˉwirˉfusedˉfrom(
+                                Compilerˉsourceˉwirˉbuildˉfailure(
+                                    Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
+                                    Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
+                                    Result.Currentˉmodule, Result.Currentˉmodule,
+                                    Result.Currentˉfunction,
+                                    Statement.Expressionˉoffset,
+                                    Voidˉreturnˉposition.Line,
+                                    Voidˉreturnˉposition.Column
+                                ),
+                                Bindingˉphase
+                            );
+                        }
+                        Result = Compilerˉsourceˉwirˉvalueˉbuild(
+                            Voidˉreturnˉvalue
                         );
                     }
                     Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(

@@ -1,0 +1,10 @@
+module InvalidˉUnitˉLiteral profile portable;
+
+fn Invalid() -> void {
+    ();
+}
+
+export fn Main() -> i32 {
+    Invalid();
+    return 0;
+}

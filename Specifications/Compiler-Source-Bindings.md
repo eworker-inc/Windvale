@@ -85,6 +85,10 @@ The target must be visible through the WVSD visibility matrix, and the supplied 
 
 Reads, assignments, and calls are deterministic occurrence counts, not optimization or liveness information.
 
+The Language 1.0 unit literal `()` is a leaf with no name, call, local, or
+runtime-storage binding evidence. Its edition and result-shape rules remain typed
+WVIR responsibilities.
+
 A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. Field existence, uniqueness, completeness, exact value types, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
 
 ## WVLB 1.1 binding directory

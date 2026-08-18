@@ -1,0 +1,24 @@
+#!wv/1 en@1
+module UnitˉControl;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Explicitˉunit() -> unit {
+    return ();
+}
+
+fn Forwardˉunit() -> unit {
+    return Explicitˉunit();
+}
+
+fn Implicitˉunit() -> unit {
+    Forwardˉunit();
+}
+
+export fn Main() -> i32 {
+    Explicitˉunit();
+    Forwardˉunit();
+    Implicitˉunit();
+    return 42;
+}

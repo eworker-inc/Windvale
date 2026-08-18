@@ -1572,6 +1572,9 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Boolean {
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unit {
+        return Compilerˉsourceˉbindingsˉbodyˉempty();
+    }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Builder {
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }

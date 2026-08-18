@@ -14,15 +14,18 @@ component chain, exposes the remaining bytes as an immutable view, parses the
 required standalone module metadata, and compiles one minimal Core program
 deterministically through WIR and WVB. The first Slice 2 checkpoint adds exact
 front-end identities for the frozen primitive value types and prevents Seed-only
-`void` type syntax from crossing the edition-1 front door. Project 3 carries the
-profile artifacts; Project 2 and descriptorless Seed retain their prior behavior.
+`void` type syntax from crossing the edition-1 front door. The second checkpoint
+implements the storage-free return/control portion of `unit`: `()`, `return;`,
+`return ();`, unit-returning calls, and implicit fallthrough now lower through
+typed WIR and deterministic WVB. Project 3 carries the profile artifacts; Project
+2 and descriptorless Seed retain their prior behavior.
 
-This checkpoint does not complete Slice 2. Literal decoding, exact scalar
-operations, WVB/runtime representation, ordinary `unit` and `never` control
-semantics, named update, multi-field variant construction and destructuring, and
-value-producing control flow remain pending. Localized token execution,
-public-library vocabulary lookup, Unicode identifier admission, and paired-host
-Language 1.0 qualification also remain pending.
+These checkpoints do not complete Slice 2. Exact scalar/rune literal operations
+and representations, storable/passable `unit`, unit execution in the scalar WVB
+runner, `never` control semantics, named update, multi-field variant construction
+and destructuring, and value-producing control flow remain pending. Localized
+token execution, public-library vocabulary lookup, Unicode identifier admission,
+and paired-host Language 1.0 qualification also remain pending.
 
 ## Frozen source identity
 
@@ -113,7 +116,7 @@ the compiler-aligned metadata verifier accepts it and the ordinary runtime retur
 descriptorless edition-1 header, an absent ambient profile, a wrong lock digest,
 and changed profile bytes all fail without publishing an output.
 
-## Slice 2 primitive front-end checkpoint
+## Slice 2 primitive and unit checkpoints
 
 The shared lexer now assigns stable appended token identities to `unit`, `never`,
 `i8`, `i16`, `u16`, `f32`, `f64`, `rune`, and the record-update word `base`.
@@ -137,19 +140,41 @@ The focused value-front-end self-test contains 23 assertions covering all append
 keyword and primitive-type identities, both edition directions, and exact first
 invalid-token offsets. It compiles to a verified WVB and returns `42`.
 
+The body parser appends expression kind `Unit = 12` and recognizes only an empty
+parenthesized expression as `()`. A nonempty parenthesized expression retains its
+existing transparent grouping behavior. Binding a unit literal contributes no
+name, call, or runtime-storage evidence.
+
+For an admitted edition-1 function returning `unit`, typed WIR uses return shape
+zero as the storage-free result ABI. A unit literal produces no operation and no
+temporary. Explicit `return;`, `return ();`, return of a unit-valued call, and
+implicit fallthrough all close the current block with the existing no-value return
+terminator. A non-unit expression returned from `unit`, `()` returned from `i32`,
+or descriptorless Seed use of `()` is rejected without output. Seed `void` keeps
+its prior shape-zero return behavior; source editions do not acquire each other's
+type spelling.
+
+No WVIR operation, WVB opcode, or serialized-format version was added. Edition-1
+`unit` return metadata deliberately uses WVB's existing return-only type byte zero,
+because both Seed `void` and Language 1.0 `unit` have no runtime payload at that
+ABI boundary. `Tests/Fixtures/Language-1.0/Unit-Control.wv` compiles twice to the
+same 356-byte WVB with SHA-256
+`939d3728d6aa78d5e8607e4d8199c9d597f28fa51d6dbfcd189bf8b0ac9e246b`.
+That is compiler and deterministic-emission evidence, not yet scalar-runner unit
+execution evidence.
+
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports thirteen declared cases. Its
+The cross-host `language-1-front-door` owner reports seventeen declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, compile the
 minimal edition-1 program twice through the exact lock/profile inputs, require byte
-identity and result `42`, and exercise the unsupported-profile, missing-profile,
-descriptorless-header, Seed-only-`void`, no-ambient-profile, wrong-lock-digest, and
-changed-profile rejection boundaries. The report separately states its 33
-descriptor assertions, four profile-admission outcomes, 23 value-front-end
-assertions, and eight compiler outcomes rather than presenting those nested
-assertions as extra owners.
+identity and result `42`, compile the unit-control program twice, and exercise its
+three unit-specific rejection boundaries plus the prior profile and edition
+rejections. The report separately states its 33 descriptor assertions, four
+profile-admission outcomes, 23 value-front-end assertions, and twelve compiler
+outcomes rather than presenting those nested assertions as extra owners.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
 compiler boundaries map to this owner. Compiler WVB/image construction and
@@ -157,9 +182,10 @@ hosted application packaging use content-keyed cross-host caches: the first run
 earns full native evidence, while unchanged repeats materialize validated cache
 hits instead of rebuilding the 29 MiB compiler application. This is development
 evidence, not yet a paired-host conformance claim. With the Windows compiler and
-application checkpoints populated, the current thirteen-case owner passed in
-17,070 milliseconds, including both self-tests, cached compiler materialization,
-two minimal compiles, execution, and all seven negative admissions.
+application checkpoints populated, the current seventeen-case owner passed in
+19,190 milliseconds, including both self-tests, cached compiler materialization,
+the minimal executable sentinel, deterministic unit compilation, and all negative
+admissions.
 
 ## Pre-slice compiler baseline
 
@@ -256,7 +282,8 @@ performance or Language 1.0 conformance is claimed.
 Migration Slice 1 is complete: source-profile locks and composite profiles are
 explicit Project 3/build inputs, their pinned chain controls English token
 resolution, and Project 2 remains stable. Slice 2 has begun with primitive
-front-end identities and edition separation. Its completion gate remains exact
-literal/value execution plus named update, multi-field variant/destructuring, and
-value-producing control flow over this same compiler architecture. Seed stays on
-that architecture until its named removal checkpoint.
+front-end identities, edition separation, and storage-free unit return/control
+lowering. Its completion gate remains exact scalar/rune and unit execution,
+`never`, named update, multi-field variant/destructuring, and value-producing
+control flow over this same compiler architecture. Seed stays on that architecture
+until its named removal checkpoint.

@@ -103,6 +103,34 @@ for /f "usebackq delims=" %%L in ("%Work%\Minimum.out") do (
 )
 if not "%MinimumLines%"=="1" goto :cleanup
 if not "%MinimumLine%"=="Result: 42" goto :cleanup
+set "FailureStep=compiler-unit-a"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Control.wv" ^
+    "%Work%\Unit-A.wvb" >"%Work%\Unit-A.out" 2>"%Work%\Unit-A.err" || goto :cleanup
+set "FailureStep=compiler-unit-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Control.wv" ^
+    "%Work%\Unit-B.wvb" >"%Work%\Unit-B.out" 2>"%Work%\Unit-B.err" || goto :cleanup
+for %%F in ("%Work%\Unit-A.err" "%Work%\Unit-B.err") do if not "%%~zF"=="0" goto :cleanup
+set "FailureStep=compiler-unit-determinism"
+fc /b "%Work%\Unit-A.out" "%Work%\Unit-B.out" >nul || goto :cleanup
+fc /b "%Work%\Unit-A.wvb" "%Work%\Unit-B.wvb" >nul || goto :cleanup
+type "%Work%\Unit-A.out"
+for %%F in ("%Work%\Unit-A.wvb") do echo INFO  language 1 unit wvb-bytes=%%~zF
+set "FailureStep=compiler-negative-unit-return-value"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Return-Value.wv" "%Work%\Unit-Return-Value.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-nonunit-return"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Return-From-I32.wv" "%Work%\Unit-Return-From-I32.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-seed-unit"
+"%Work%\Compiler.exe" ^
+    "%RepositoryRoot%\Tests\Fixtures\Source-Wvb\Invalid-Unit-Literal.wv" ^
+    "%Work%\Seed-Unit.wvb" >"%Work%\Seed-Unit.out" 2>"%Work%\Seed-Unit.err"
+if not errorlevel 1 goto :cleanup
+if exist "%Work%\Seed-Unit.wvb" goto :cleanup
 set "FailureStep=compiler-negative-unsupported-profile"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unsupported-Source-Profile.wv" "%Work%\Unsupported.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-missing-profile"
@@ -136,6 +164,11 @@ if not "%Result%"=="0" (
     if exist "%Work%\Hosted.err" type "%Work%\Hosted.err" >&2
     if exist "%Work%\Compile-A.err" type "%Work%\Compile-A.err" >&2
     if exist "%Work%\Compile-B.err" type "%Work%\Compile-B.err" >&2
+    if exist "%Work%\Unit-A.out" type "%Work%\Unit-A.out" >&2
+    if exist "%Work%\Unit-A.err" type "%Work%\Unit-A.err" >&2
+    if exist "%Work%\Unit-B.err" type "%Work%\Unit-B.err" >&2
+    if exist "%Work%\Seed-Unit.out" type "%Work%\Seed-Unit.out" >&2
+    if exist "%Work%\Seed-Unit.err" type "%Work%\Seed-Unit.err" >&2
     if exist "%Work%\Minimum.out" type "%Work%\Minimum.out" >&2
     if exist "%Work%\Minimum.err" type "%Work%\Minimum.err" >&2
     if exist "%Work%\Value-Front-End.out" type "%Work%\Value-Front-End.out" >&2
@@ -143,7 +176,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=13 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=8 compiler-result=42 compiler-wvb-bytes=221
+echo native language 1 front door status=Passed cases=17 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=12 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356
 exit /b 0
 
 :expect_rejection

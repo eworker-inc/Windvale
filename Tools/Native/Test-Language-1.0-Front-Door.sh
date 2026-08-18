@@ -89,6 +89,21 @@ cmp -s -- "$work/Minimum-A.wvb" "$work/Minimum-B.wvb" || exit 1
 [[ ! -s $work/Minimum.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Minimum.out"
 cmp -s -- "$work/Expected-Minimum.out" "$work/Minimum.out" || exit 1
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
+    "$work/Unit-A.wvb" >"$work/Unit-A.out" 2>"$work/Unit-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
+    "$work/Unit-B.wvb" >"$work/Unit-B.out" 2>"$work/Unit-B.err" || exit $?
+[[ ! -s $work/Unit-A.err && ! -s $work/Unit-B.err ]] || exit 1
+cmp -s -- "$work/Unit-A.out" "$work/Unit-B.out" || exit 1
+cmp -s -- "$work/Unit-A.wvb" "$work/Unit-B.wvb" || exit 1
+cat -- "$work/Unit-A.out"
+printf 'INFO  language 1 unit wvb-bytes=%s\n' "$(wc -c < "$work/Unit-A.wvb")"
 expect_rejection() {
     local source=$1 output=$2
     expect_rejection_with_digest "$source" "$output" "$source_lock_hash" "$source_profile"
@@ -104,6 +119,18 @@ expect_rejection_with_digest() {
     fi
     [[ ! -e $output ]]
 }
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Unit-Return-Value.wv" \
+    "$work/Unit-Return-Value.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Unit-Return-From-I32.wv" \
+    "$work/Unit-Return-From-I32.wvb" || exit 1
+if "$work/Compiler.elf" \
+    "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Unit-Literal.wv" \
+    "$work/Seed-Unit.wvb" >"$work/Seed-Unit.out" 2>"$work/Seed-Unit.err"; then
+    exit 1
+fi
+[[ ! -e $work/Seed-Unit.wvb ]] || exit 1
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv" \
     "$work/Unsupported.wvb" || exit 1
@@ -137,4 +164,4 @@ printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
 echo 'PASS  language 1 front door phase=compiler-slice item=4/4'
-echo 'native language 1 front door status=Passed cases=13 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=8 compiler-result=42 compiler-wvb-bytes=221'
+echo 'native language 1 front door status=Passed cases=17 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=12 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356'

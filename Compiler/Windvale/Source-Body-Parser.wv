@@ -45,6 +45,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     Binary = 9;
     Namedˉrecord = 10;
     Builder = 11;
+    Unit = 12;
 }
 
 export record Compilerˉsourceˉposition {
@@ -752,6 +753,22 @@ export fn Compilerˉbodyˉparseˉprimary(
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
         if Nesting >= 64u32 {
             return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Nestingˉlimit, Token, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis);
+        }
+        let Afterˉleft: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
+            Endˉoffset
+        );
+        if Afterˉleft.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+            return Compilerˉbodyˉexpressionˉmake(
+                Compilerˉsourceˉexpressionˉkind.Unit,
+                Sourceˉlexer.Compilerˉtokenˉkind.End,
+                Token.Offset, Afterˉleft.Nextˉoffset, Token.Line, Token.Column,
+                Token.Offset, 0u32, Token.Offset, 0u32, Token.Offset, 0u32,
+                Token.Offset, Token.Offset, 0u32,
+                Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false,
+                Afterˉleft.Nextˉoffset, Afterˉleft.Nextˉline,
+                Afterˉleft.Nextˉcolumn, 1u32, 1u32
+            );
         }
         let Inner: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(Input, Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn, Endˉoffset, 0u32, Nesting + 1u32);
         if Inner.Status != Compilerˉbodyˉparseˉstatus.Valid { return Inner; }

@@ -14,12 +14,13 @@ The parser recognizes:
 - simple identifier `=`, `+=`, `-=`, and `*=` assignment;
 - `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, exhaustive `match`/`case`, narrow `try` propagation, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
 - `i32`, `i64`, `u8`, `u32`, and `u64` integer literals plus string-shape and Boolean literals;
+- the Language 1.0 empty-parentheses unit literal `()`;
 - qualified names, field access, one call or index postfix, named record literals, variant constructors, and bounded builder construction;
 - unary `-`, `!`, `~`, and consuming `freeze`;
 - `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
-- parenthesized expressions without a synthetic group node.
+- nonempty parenthesized expressions without a synthetic group node.
 
-This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11`. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11` and `Unit = 12`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. Edition admission and its storage-free semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
 
 An inferred local publishes `Unknown` as its syntax type kind and zero type-span length. This is an explicit parser representation of an omitted annotation, not a semantic value shape; typed WVIR construction resolves it from the initializer. Comma-separated parameter, call-argument, positional-constructor, named-record-field, and static-data lists accept one final trailing comma under the Seed grammar. `Namedˉrecord = 10` is appended to the expression-kind contract. The named form is recognized only when a qualified name is followed by `{ Identifier :`, so an ordinary condition followed by its block remains unambiguous.
 

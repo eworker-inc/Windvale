@@ -15,20 +15,31 @@ Compilerˉvalidateˉsourceˉwir(Input: bytes)
 
 On success, the summary contains module, function-entry, block, operation, temporary, and operand counts plus an independently validated WVIR directory. On failure, the directory is empty and the summary identifies the first deterministic failure by module, related module, WVSD function entry, byte offset, and one-based line/column.
 
-The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, and an invalid result-propagation contract. Appended values `23` through `31` own those match, variant, collection, and builder failures, and `Invalidˉtry = 32` owns propagation failures without renumbering the retained values.
+The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, and invalid unit use. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, and `Invalidˉunit = 33` owns a unit expression outside edition 1, without renumbering retained values.
 
 ## Typed lowering rules
 
 The phase currently lowers:
 
 - `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, sequence, and local builder values;
-- literals, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction and fields, enum members, Foundation intrinsics, functions, and declared capabilities;
+- literals including edition-1 `()`, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction and fields, enum members, Foundation intrinsics, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, variant construction/case tests/payload extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
 - expression statements, exact `try` propagation, `return`, lexical blocks, `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
 - explicit jump, branch, and return terminators.
 
-Shape `0` is `void`; `1` through `6` are `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`. Record shapes start at `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at `196608`. Exact singleton capability-reference shapes are `268435456 + RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
+Shape `0` is a storage-free return result: Seed spells that return-only type
+`void`, while admitted edition 1 spells the ordinary source type `unit`. It is not
+a parameter, local, temporary, or operand shape in the current checkpoint. A
+unit literal produces shape zero with the absent-value sentinel and emits no
+operation. `return;`, `return ();`, return of a unit-valued call, and fallthrough
+all produce the existing no-value return terminator; a non-unit expression cannot
+be returned from a unit function. Shapes `1` through `6` are `i32`, `u8`, `u32`,
+`bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`. Record shapes start at
+`65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at
+`196608`. Exact singleton capability-reference shapes are `268435456 +
+RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder
+element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
 
 Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. Function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries.
 
