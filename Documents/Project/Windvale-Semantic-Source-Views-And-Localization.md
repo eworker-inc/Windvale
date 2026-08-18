@@ -1815,9 +1815,10 @@ review capacity, accessibility, and the future reader population also matter.
 The [localization workload plan](Windvale-Language-1.0-Localization-Workloads.md)
 turns this exploratory sequence into five reviewable bundles. Its
 [Workload 1 packet](Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md)
-now provides the complete first-author format/admission evidence. The remaining
-native-language, tooling, multilingual-security, shipment, cache, cross-host,
-and measured-performance work stays open.
+provides the complete first-author format/admission evidence. Workloads 2 through
+5 now also have owner-accepted first-author paper findings. Native Chinese
+terminology review and all compiler, editor, package/installer, cross-host, and
+measured-performance qualification remain open.
 
 ### Stage 0: paper contract
 
@@ -1979,8 +1980,11 @@ questions are:
     diagnostics, and capability/effect explanations?
 13. Which native-language reviewers and qualification levels define
     “officially supported”?
-14. What parts belong in the base SDK, optional developer profiles, full
-    documentation profiles, and Windvale OS language installations?
+14. Resolved by Workload 5: runtime-only installations carry no development
+    localization; the minimal developer installation carries shared edition
+    data and `en@1`; other source profiles, diagnostics, and documentation are
+    independent optional packages selected explicitly through the existing
+    content-addressed installer architecture.
 15. Does the replacement candidate require project collision overrides and
     display-catalog formats, or should those remain later tooling features?
 

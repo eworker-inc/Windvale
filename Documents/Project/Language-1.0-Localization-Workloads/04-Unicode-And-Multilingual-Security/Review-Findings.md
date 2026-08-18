@@ -87,4 +87,5 @@ but they do not require the project owner to certify fluency in nine scripts.
 Carry the accepted rules into the grammar/localized-source specification and
 advance to Workload 5: installation, deduplication, offline resolution, update/
 rollback, cache generations, Windows/Linux equality, and measured time/memory
-protocols.
+protocols. Workload 5 subsequently accepted those paper contracts; executable
+and measured qualification remains open.

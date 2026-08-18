@@ -78,10 +78,18 @@ content-addressed deduplication, offline resolution, update/rollback, Windows an
 Linux equality, compiler-service cache generations, and cold/warm time and memory
 ceilings.
 
+The owner-accepted paper bundle is in
+[localization workload 5](Language-1.0-Localization-Workloads/05-Shipment-Cache-And-Cross-Host/README.md).
+It fixes the installer-selection, immutable-generation, exact-content
+deduplication, compiler-service cache, cross-host comparison, and measurement
+contracts. The current two-profile fixture contains 12,288 unique semantic
+bytes. Package/installer implementation and measured Windows/Linux
+qualification remain open.
+
 ## Completion gate
 
-After all five workloads are owner reviewed, reconcile the semantic and grammar
-specifications, Foundation registry, paper source, migration plan, editor
-contract, roadmap, and progress record. Then generate a replacement exact
-manifest and request the Language 1.0 source-freeze decision. Implementation
-begins only after that decision.
+All five workloads now have owner-reviewed paper findings. Reconcile the
+semantic and grammar specifications, Foundation registry, paper source,
+migration plan, editor contract, roadmap, and progress record. Then generate a
+replacement exact manifest and request the Language 1.0 source-freeze decision.
+Implementation begins only after that decision.

@@ -86,12 +86,15 @@ remain bounded even when timing is noisy.
 ## Threshold gate
 
 No wall-clock or retained-memory threshold is accepted yet because no
-representative implementation measurement exists. Before source freeze, both
-hosts must establish a stable baseline and the owner must accept ceilings with
-headroom. The intended product requirement is that warm profile admission is a
-small front-door lookup, not a repeated parse, and that cold work remains linear
-and negligible beside ordinary parsing/type analysis for a real module.
+representative implementation measurement exists. Replacement source freeze
+accepts the exact measurement protocol and structural linear/bounded-work
+requirements. The first implementation must establish stable Windows and Linux
+baselines, after which the owner accepts versioned ceilings with headroom as
+release and regression gates.
 
-Failure to supply those measurements blocks the replacement freeze. It does not
-justify guessing a threshold or running broad native qualification for this
-paper-only change.
+The intended product requirement is that a warm profile admission performs no
+artifact reread, rehash, or reparse, and that cold work remains linear and
+negligible beside ordinary parsing/type analysis for a real module. Missing
+measurements block implementation qualification and release, not the design
+freeze; they do not justify guessing a threshold or running broad native
+qualification for a paper-only change.

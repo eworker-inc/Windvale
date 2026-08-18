@@ -8,10 +8,10 @@ keywords, stored localized references to public library declarations, and
 Unicode project identifiers for the replacement Language 1.0 candidate on
 2026-08-18. The first source-profile admission workload now supplies exact
 candidate bytes and rejected cases. The project owner accepts the technical and
-design findings from Workloads 1 through 4; native terminology, implementation,
-shipment, cross-host, and measured-performance evidence remain open. The design
-is not frozen or implemented. Current compilers continue to implement
-[Windvale Seed](Seed-Language.md).
+design findings from Workloads 1 through 5. Native terminology review and all
+compiler, editor, package/installer, cross-host, and measured-performance
+qualification remain open. The design is not frozen or implemented. Current
+compilers continue to implement [Windvale Seed](Seed-Language.md).
 
 This document owns:
 
@@ -628,15 +628,38 @@ The exact artifact companion fixes these candidate limits:
 - one bounded rejection diagnostic plus a fixed small set of structured related
   fields per malformed pack.
 
-Workloads may reduce these limits or justify a separately bounded large-interface
-profile. They may not leave size, count, normalization work, collision work,
-diagnostic expansion, or retained compiler-service state unbounded.
+Later language decisions may reduce these limits or justify a separately bounded
+large-interface profile. They may not leave size, count, normalization work,
+collision work, diagnostic expansion, or retained compiler-service state
+unbounded.
 
-Localization artifacts ship independently. A developer installs only requested
-source lexicons, diagnostics, vocabulary catalogs, and documentation. Compiled
-runtime products carry none of them unless they deliberately include development
-tooling. Five library localizations therefore do not duplicate its executable
-code or enlarge ordinary application runtime packages.
+Localization artifacts use Windvale's existing immutable content-addressed
+package/bundle/store/generation architecture. A runtime-only installation
+selects none of them. A minimal developer installation selects the shared
+edition objects and `en@1`; `zh-Hans@1`, localized diagnostics, and localized
+documentation are independently selected optional logical packages. The host
+locale may offer a visible recommendation but cannot silently select a package,
+source profile, or semantic input.
+
+Exact SHA-256 content identity deduplicates shared Unicode and token-registry
+objects across profiles, installations, and rollback generations. An update
+publishes a new immutable profile version and installation generation; it never
+rewrites a previously selected profile in place. Offline compilation resolves
+only the descriptor and exact content hashes already present in the explicit
+build lock. Compiled runtime products carry no source-localization object unless
+they deliberately include development tooling. Five library localizations
+therefore do not duplicate executable code or enlarge ordinary application
+runtime packages.
+
+The first implementation uses three bounded compiler-service cache layers:
+validated artifacts keyed by `(format, SHA-256)`, validated composite profiles
+keyed by all ordered component/interface hashes, and source results keyed by raw
+source plus compiler, profile/catalog, dependency, option, and target identity.
+One service generation hashes and parses each distinct localization object at
+most once, publishes immutable entries through single-flight construction, and
+retains no request-owned spans, diagnostics, or durable negative admissions.
+Eviction affects performance only; a request can fall back to private bounded
+validation without changing semantic acceptance.
 
 The working Release 1 distribution target contains two official source profiles:
 `en@1` and `zh-Hans@1`. This is shipment policy rather than a semantic minimum.
@@ -659,7 +682,10 @@ three exact expected-source fixtures; implementation/editor qualification
 remains open. Workload 4 has an owner-accepted Unicode/security contract, 32
 accepted cases, 46 rejected cases, exact Unicode-17 validation, and one
 multilingual source fixture; implementation/editor/cross-host qualification
-remains open. Workload 5 remains open.
+remains open. Workload 5 has an owner-accepted paper contract, 34 accepted cases,
+42 rejected cases, an exact 12,288-byte two-profile fixture inventory, and
+bounded shipment/cache/cross-host measurement protocols; implementation and
+measured qualification remain open.
 The replacement Language 1.0 candidate requires at least:
 
 1. canonical, Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin
@@ -731,7 +757,9 @@ This addendum can enter the replacement Language 1.0 freeze only after:
   source boundary;
 - editor, formatter, diagnostic, conversion, package/build, cache, shipment, and
   cross-host ownership is explicit;
-- measured front-door time and memory bounds are accepted; and
+- the exact front-door measurement protocol and structural time/memory/cache
+  bounds are accepted, with numeric host ceilings deferred to first-
+  implementation qualification; and
 - a replacement manifest records every normative input and exact hash.
 
 Until then, this file defines the working contract to test. It does not authorize
