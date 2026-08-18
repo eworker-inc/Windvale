@@ -41,6 +41,17 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
+        Name = 'native verification owner live-stream coordinator'
+        Paths = @(
+            'Tools/Native/Stream-Verification-Owner.mjs',
+            'Tools/Native/Test-Verification-Owners.cmd',
+            'Tools/Native/Test-Verification-Owners.sh'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'Language 1.0 paper package-data evidence'
         Paths = @(
             'Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'
@@ -92,6 +103,7 @@ $NativeCases = @(
             'unsafe-wvb',
             'source-containment',
             'language-1-front-door',
+            'compiler-source-sentinel',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
@@ -233,11 +245,9 @@ $NativeCases = @(
             'unsafe-wvb',
             'source-containment',
             'language-1-front-door',
+            'compiler-source-sentinel',
             'lowerer-rejections',
-            'console-packager-source-reconstruction',
-            'model-provider',
-            'file-read-application',
-            'database-storage'
+            'console-packager-source-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -458,7 +468,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Function-Only.wvproj',
             'Tests/Fixtures/Source-Wvb/Function-Only.wv'
         )
-        Suites = @('seed', 'compiler-reconstruction')
+        Suites = @('seed', 'compiler-reconstruction', 'compiler-source-sentinel')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2584,10 +2594,9 @@ $NativeCases = @(
             'seed',
             'unsafe-wvb',
             'source-containment',
+            'compiler-source-sentinel',
             'lowerer-rejections',
-            'console-packager-source-reconstruction',
-            'model-provider',
-            'database-storage'
+            'console-packager-source-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -3140,9 +3149,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 103 -or
+if ($VerificationOwnerLines.Count -ne 104 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 102-owner inventory differs.'
+    throw 'The native verification-owner header or exact 103-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3180,7 +3189,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4653 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4658 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

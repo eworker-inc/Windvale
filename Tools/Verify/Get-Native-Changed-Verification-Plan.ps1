@@ -1158,7 +1158,11 @@ function Add-Native-Tool-Suite {
         Add-Suite 'wvdb-query-capability'
     } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
         Add-Suite @('release-envelope', 'offline-package-stage')
-    } elseif ($Stem -in @('Test-Verification-Owners', 'Test-Retirement-Suite')) {
+    } elseif ($Stem -in @(
+        'Stream-Verification-Owner',
+        'Test-Verification-Owners',
+        'Test-Retirement-Suite'
+    )) {
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
         Add-Suite @('os-process-object', 'os-probe')
@@ -1444,6 +1448,9 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Source-Wvb/Function-Only.wv'
     )) {
         Add-Suite @('seed', 'compiler-reconstruction')
+        if ($Path -eq 'Tests/Fixtures/Source-Wvb/Function-Only.wv') {
+            Add-Suite 'compiler-source-sentinel'
+        }
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
         Add-Suite @('wvb-to-wvo-reconstruction', 'lowerer-rejections')
     } elseif ($Path -eq
@@ -2454,6 +2461,14 @@ foreach ($Path in $Paths) {
         'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization.wvproj'
     )) {
         Add-Compiler-Suites
+        if ($Path.StartsWith('Compiler/Windvale/Source-', [StringComparison]::Ordinal) -or
+            $Path.StartsWith('Examples/Compiler/Source-', [StringComparison]::Ordinal) -or
+            $Path.StartsWith('Projects/Compiler/Windvale-Source-', [StringComparison]::Ordinal) -or
+            $Path.StartsWith('Projects/Examples/Windvale-Source-', [StringComparison]::Ordinal) -or
+            $Path -eq 'Projects/Examples/Windvale-Compiler.wvproj' -or
+            $Path.StartsWith('Tests/Fixtures/Source-Wvb/', [StringComparison]::Ordinal)) {
+            Add-Suite 'compiler-source-sentinel'
+        }
         if ($Path -in @(
             'Compiler/Windvale/Source-Declaration-Parser.wv',
             'Compiler/Windvale/Source-Profile-Core.wv',
@@ -2470,13 +2485,6 @@ foreach ($Path in $Paths) {
             'Projects/Examples/Windvale-Source-Wvb-Demo.wvproj'
         )) {
             Add-Suite 'segmented-compiler-toolset-reconstruction'
-        }
-        if ($Path -in @(
-            'Compiler/Windvale/Source-Symbols-Core.wv',
-            'Compiler/Windvale/Source-Wir-Core.wv'
-        )) {
-            Require-Full-Database-Storage
-            Add-Suite @('model-provider', 'file-read-application')
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
@@ -3221,8 +3229,7 @@ foreach ($Path in $Paths) {
             'Specifications/Compiler-Source-Wir.md'
         )) {
             Add-Compiler-Suites
-            Require-Full-Database-Storage
-            Add-Suite 'model-provider'
+            Add-Suite 'compiler-source-sentinel'
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
             Add-Suite 'uefi-packager'
         } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {

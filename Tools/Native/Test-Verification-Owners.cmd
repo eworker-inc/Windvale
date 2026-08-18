@@ -26,7 +26,7 @@ goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Verification-Owners.txt"
-set "PlanDigest=15d6f20e8fd8f67eb4e558f5a4b4fb9c776f91bc78dc9304c4f5d54163a31872"
+set "PlanDigest=dc4b5ee81529662e0bedc8b01e429742c1f7fa346aaa65079716db28ac01dcc6"
 certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"%PlanDigest%" >nul
 if errorlevel 1 (
     >&2 echo Native verification owner plan identity differs
@@ -88,7 +88,9 @@ set /a TotalSuites+=1
 set /a TotalCases+=%~3
 echo Progress: step=native-owner item=%Selected%/%Planned% owner=%~1
 call :read_clock SuiteStart
-call "%RepositoryRoot%\Tools\Native\%~2.cmd" > "%SuiteOutput%" 2> "%SuiteError%"
+node "%RepositoryRoot%\Tools\Native\Stream-Verification-Owner.mjs" ^
+    "%SuiteOutput%" "%SuiteError%" ^
+    "%RepositoryRoot%\Tools\Native\%~2.cmd"
 set "SuiteExit=%ERRORLEVEL%"
 call :read_clock SuiteEnd
 set /a SuiteElapsed=SuiteEnd-SuiteStart
@@ -96,20 +98,16 @@ if %SuiteElapsed% LSS 0 set /a SuiteElapsed+=8640000
 set /a SuiteElapsedMs=SuiteElapsed*10
 if not "%SuiteExit%"=="0" (
     >&2 echo FAIL  suite %~1: native command exited %SuiteExit% elapsed-ms=%SuiteElapsedMs%
-    if exist "%SuiteOutput%" type "%SuiteOutput%" >&2
-    if exist "%SuiteError%" type "%SuiteError%" >&2
     exit /b 1
 )
 for %%S in ("%SuiteError%") do if not "%%~zS"=="0" (
     >&2 echo FAIL  suite %~1: native command wrote standard error
-    type "%SuiteError%" >&2
     exit /b 1
 )
 set "ActualSummary="
 for /f "usebackq delims=" %%L in ("%SuiteOutput%") do set "ActualSummary=%%L"
 if not "%ActualSummary%"=="%~5" (
     >&2 echo FAIL  suite %~1: summary differs
-    type "%SuiteOutput%" >&2
     exit /b 1
 )
 del /f /q "%SuiteOutput%" "%SuiteError%" >nul 2>nul

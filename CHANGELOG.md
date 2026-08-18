@@ -25,6 +25,11 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   compiler rejects Seed-only `void` without publishing output. WVB/runtime scalar
   execution, named update, destructuring, and value-producing control flow remain
   explicitly pending.
+- Replaced the full database-storage proxy for ordinary source-compiler changes
+  with a focused five-case sentinel that rebuilds the changed compiler, proves
+  deterministic four-function WVB output, independently verifies it, and executes
+  it. Native owner coordinators now stream bounded child progress live while
+  retaining exact standard-error and terminal-summary enforcement.
 - Added the first user-facing hosted model chat command with masked WVSC
   credential setup and unlock, OpenAI/Anthropic/Google catalog discovery,
   bounded multi-turn conversation, typed failures, and no automatic retries.

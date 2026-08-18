@@ -16,8 +16,8 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 
 ## Registry identity and grammar
 
-`Tests/Native/Verification-Owners.txt` is 13,424 LF-only bytes with SHA-256
-`bcc0f6bf5420303f3cd7f00c438aea5a34419b7fefb8f418215305eb73622e29`.
+`Tests/Native/Verification-Owners.txt` is 13,653 LF-only bytes with SHA-256
+`dc4b5ee81529662e0bedc8b01e429742c1f7fa346aaa65079716db28ac01dcc6`.
 Its first line is exactly:
 
 ```text
@@ -34,14 +34,14 @@ The digest fixes owner order, commands, declared case counts, qualification
 allocation, and accepted terminal summaries. Each command stem resolves under
 `Tools/Native` to matching Windows `.cmd` and Linux `.sh` commands.
 
-The current registry contains exactly 102 owners and 4,641 declared cases:
+The current registry contains exactly 103 owners and 4,658 declared cases:
 
 | Qualification shard | Owners | Cases |
 | ---: | ---: | ---: |
 | 1 | 1 | 57 |
-| 2 | 28 | 1,832 |
+| 2 | 29 | 1,847 |
 | 3 | 33 | 1,517 |
-| 4 | 40 | 1,235 |
+| 4 | 40 | 1,237 |
 
 The manifest is the canonical detailed inventory. Documentation must not copy
 its entire evolving table because duplicated inventories become stale.
@@ -78,13 +78,17 @@ owner it must:
 
 1. emit bounded progress before invoking the child;
 2. invoke exactly the registered host command;
-3. require exit code `0` and empty standard error;
-4. require the last nonempty output line to equal the registered summary;
-5. count cases only from the reviewed registry; and
-6. report owner and total elapsed time outside the semantic child summary.
+3. stream child output live while retaining at most 8 MiB separately for each
+   output channel;
+4. after 30 seconds without complete-line child activity, emit an external
+   heartbeat, capped at 240 lines and excluded from the retained child log;
+5. require exit code `0` and empty standard error;
+6. require the last nonempty output line to equal the registered summary;
+7. count cases only from the reviewed registry; and
+8. report owner and total elapsed time outside the semantic child summary.
 
-The first child failure stops that coordinator process and exposes the captured
-child output. Invalid arguments and unknown filters return `64`. GitHub runs all
+The first child failure stops that coordinator process after its output has
+already been exposed live. Invalid arguments and unknown filters return `64`. GitHub runs all
 four qualification shards independently with matrix fail-fast disabled, then an
 aggregate gate requires both host matrices and the independent WebAssembly and
 compiler-convergence jobs.

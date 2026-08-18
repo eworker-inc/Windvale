@@ -33,7 +33,7 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Verification-Owners.txt"
-plan_digest=15d6f20e8fd8f67eb4e558f5a4b4fb9c776f91bc78dc9304c4f5d54163a31872
+plan_digest=dc4b5ee81529662e0bedc8b01e429742c1f7fa346aaa65079716db28ac01dcc6
 
 check_hash() {
     local path=$1
@@ -112,23 +112,22 @@ run_suite() {
     total_suites=$((total_suites + 1))
     total_cases=$((total_cases + cases))
     echo "Progress: step=native-owner item=$selected/$planned owner=$name"
-    "$repository_root/Tools/Native/$command.sh" > "$suite_output" 2> "$suite_error"
+    node "$repository_root/Tools/Native/Stream-Verification-Owner.mjs" \
+        "$suite_output" "$suite_error" \
+        "$repository_root/Tools/Native/$command.sh"
     suite_status=$?
     local suite_elapsed_ms=$(((SECONDS - suite_start) * 1000))
     if ((suite_status != 0)); then
         echo "FAIL  suite $name: native command exited $suite_status elapsed-ms=$suite_elapsed_ms" >&2
-        cat -- "$suite_output" "$suite_error" >&2
         return 1
     fi
     if [[ -s $suite_error ]]; then
         echo "FAIL  suite $name: native command wrote standard error" >&2
-        cat -- "$suite_error" >&2
         return 1
     fi
     actual_summary=$(awk 'NF { last = $0 } END { print last }' "$suite_output")
     if [[ $actual_summary != "$expected_summary" ]]; then
         echo "FAIL  suite $name: summary differs" >&2
-        cat -- "$suite_output" >&2
         return 1
     fi
     rm -f -- "$suite_output" "$suite_error"
