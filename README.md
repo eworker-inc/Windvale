@@ -1,8 +1,8 @@
 # Windvale
 
-![Four-panel Day 20 comic tracing Windvale from an AI experiment through a working system stack, measured engineering limits, and an unfinished full-system build](Documents/Project/Images/Windvale-Project-Progress-2026-08-17.png)
+![Four-panel Day 21 comic showing Windvale Language 1.0's multilingual source-profile design converging on one exact program before compiler implementation](Documents/Project/Images/Windvale-Project-Progress-2026-08-18.png)
 
-*Day 20: Windvale's AI experiment has become serious system-building work. Real limits remain, and the language, connected services, and operating system are still under construction. The experiment grows toward a full system.*
+*Day 21: Windvale Language 1.0 is now exactly specified. Its multilingual source-profile design defines how different human-language words can express one program with the same meaning. The specification is ready; teaching that contract to the compiler comes next.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
