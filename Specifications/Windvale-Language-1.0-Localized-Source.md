@@ -593,13 +593,23 @@ runtime products carry none of them unless they deliberately include development
 tooling. Five library localizations therefore do not duplicate its executable
 code or enlarge ordinary application runtime packages.
 
+The working Release 1 distribution target contains two official source profiles:
+`en@1` and `zh-Hans@1`. This is shipment policy rather than a semantic minimum.
+The Chinese profile cannot become official until native review, executable
+equivalence, security, cross-host, and installer evidence passes. Additional
+qualified profiles may ship in a later 1.0.x release without changing the
+language, compiler pipeline, WVB, or runtime contract.
+
 ## Required conformance workloads
 
 The [localization workload plan](../Documents/Project/Windvale-Language-1.0-Localization-Workloads.md)
 groups the following evidence into five bounded bundles. Workload 1 now has a
 complete first-author packet with 25 accepted cases, 43 rejected cases, exact
 reference artifacts, and a synthetic Unicode source-equivalence fixture. Its
-findings remain proposed until owner review; Workloads 2 through 5 remain open.
+findings remain proposed until owner review. Workload 2 now has a complete
+first-author `zh-Hans@1` artifact, terminology, paired-source, and equivalence
+packet, but native review and executable evidence remain open. Workloads 3
+through 5 remain open.
 The replacement Language 1.0 candidate requires at least:
 
 1. canonical, Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin

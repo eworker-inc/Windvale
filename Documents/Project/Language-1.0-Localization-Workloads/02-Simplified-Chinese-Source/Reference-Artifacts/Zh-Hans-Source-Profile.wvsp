@@ -1,0 +1,9 @@
+windvale-source-profile|1
+identity|zh-Hans
+version|1
+source-edition|1
+unicode-profile|windvale.unicode17.source|1|2772f22969972eaae52058ce2cad0f2a716181c494a2b422188cbe5215e08ce9
+token-registry|windvale.language1.keyword-tokens|1|cefa459df5dcaf22b53670a81f09c6f696188903c8e136d763da869a5ec6286e
+keyword-lexicon|windvale.source.zh-Hans|1|e8cf8c33fa2ce683f4648babd3988a968cb4fc8a18535bb80583c8e5925e258c
+source-vocabulary|zh-Hans|1|efe3e4073b3e639f6ac9820acda569b68af40c90aab8d013962f259168053cb0
+end|windvale-source-profile

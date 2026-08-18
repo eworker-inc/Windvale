@@ -87,7 +87,12 @@ now supplies proposed exact artifact formats and hashes, a Unicode 17.0.0 source
 profile, 25 accepted cases, and 43 rejected cases. Owner review plus
 native-reviewed Chinese source, conversion/editor/diagnostic, multilingual
 security, shipment/cache, cross-host, and measured-performance evidence must
-still produce a replacement candidate. This paper track may advance without
+still produce a replacement candidate. The
+[Workload 2 draft](Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source/README.md)
+now supplies all 66 Chinese keyword mappings, the complete option catalog,
+paired source, exact hashes, and reviewer checklist; native review remains open.
+Release 1 targets official `en@1` and `zh-Hans@1` profiles once qualified. This
+paper track may advance without
 claiming implementation or changing the current Seed product. Source
 implementation begins only after the named replacement source-freeze gate.
 

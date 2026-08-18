@@ -1,0 +1,8 @@
+windvale-source-vocabulary-profile|1
+identity|zh-Hans
+version|1
+source-edition|1
+unicode-profile|windvale.unicode17.source|1|2772f22969972eaae52058ce2cad0f2a716181c494a2b422188cbe5215e08ce9
+label-normalization|NFC
+catalog-format|windvale-public-source-catalog|1
+end|windvale-source-vocabulary-profile

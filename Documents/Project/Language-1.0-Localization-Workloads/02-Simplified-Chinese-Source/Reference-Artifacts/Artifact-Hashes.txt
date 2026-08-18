@@ -1,0 +1,8 @@
+windvale-localization-workload-artifacts|1
+file-count|5
+file|Source-Inputs.wvlock|586|c6e22b4cc9852b9eabeb8adb7fa07e1c01d5d9d3778147a789a2cf9f26593bd0
+file|Zh-Hans-Foundation-Option.wvcat|1182|a3cf34fb3dafddbd85fc75fe748a117d821fe3846debf3483e383a9909de3f6a
+file|Zh-Hans-Keywords.wvlex|2183|e8cf8c33fa2ce683f4648babd3988a968cb4fc8a18535bb80583c8e5925e258c
+file|Zh-Hans-Source-Profile.wvsp|523|a58160dea9f70aa0f006cbf6bbe76ffb352e5481d13f8385f58141389f6f0ffe
+file|Zh-Hans-Vocabulary.wvsvp|301|efe3e4073b3e639f6ac9820acda569b68af40c90aab8d013962f259168053cb0
+end|windvale-localization-workload-artifacts

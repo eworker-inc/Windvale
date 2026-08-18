@@ -9,6 +9,12 @@ system workloads in the
 claim implementation or authorize compiler changes before replacement source
 freeze.
 
+The working Release 1 shipment target is two official source profiles:
+`en@1` and `zh-Hans@1`. That target does not promote a draft pack; both profiles
+must satisfy their review and qualification gates. Other scripts remain required
+security/conformance evidence and additional language packs may ship later as
+independently versioned data without changing Language 1.0 semantics.
+
 The workloads test the
 [localized-source specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md)
 and exact
@@ -32,6 +38,11 @@ Create a native-reviewed `zh-Hans@1` keyword lexicon and vocabulary profile,
 localize one complete Foundation interface, and store one application body fully
 in Chinese. Prove exact canonical token, declaration, and artifact equivalence
 against `en@1`.
+
+The complete first-author draft is in
+[localization workload 2](Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source/README.md).
+Its artifact and paper equivalence checks pass; native terminology review and
+executable equivalence remain open.
 
 ### Workload 3: conversion and source tooling
 

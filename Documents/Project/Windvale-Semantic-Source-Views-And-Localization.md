@@ -1851,6 +1851,12 @@ belong to the later qualification workload.
 
 ### Stage 2: localized source and equivalence workload
 
+The first-author `zh-Hans@1` packet now contains all 66 draft keyword mappings,
+one complete Foundation interface catalog, exact hashes, and paired English/
+Chinese-profile source with the same Chinese project identities. Pinned Unicode
+and paper canonical-projection checks pass. Native terminology review and
+compiler/WIR/WVB/native equivalence remain open.
+
 - convert a real accepted paper workload into at least Bulgarian and one
   structurally different reviewed pack;
 - store a fully Chinese application body with Unicode project identifiers and
