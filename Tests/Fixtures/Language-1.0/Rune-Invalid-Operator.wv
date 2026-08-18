@@ -1,0 +1,10 @@
+#!wv/1 en@1
+module Languageˉoneˉruneˉinvalidˉoperator;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 {
+    if 'a' < 'b' { return 1; }
+    return 42;
+}

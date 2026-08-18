@@ -101,6 +101,7 @@ export enum Compilerˉtokenˉkind {
     F64 = 95;
     Rune = 96;
     Base = 97;
+    Runeˉliteral = 98;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -129,6 +130,8 @@ export enum Compilerˉlexˉstatus {
     Invalidˉunicodeˉescape = 10;
     Unpairedˉsurrogate = 11;
     Tooˉmanyˉtokens = 12;
+    Unterminatedˉrune = 13;
+    Invalidˉrune = 14;
 }
 
 export record Compilerˉsourceˉtoken {
@@ -168,6 +171,28 @@ export fn Compilerˉsourceˉutf8ˉlength(Input: bytes, Offset: u32) -> u32 {
     if First < 224u32 { return 2u32; }
     if First < 240u32 { return 3u32; }
     return 4u32;
+}
+
+export fn Compilerˉsourceˉutf8ˉscalar(Input: bytes, Offset: u32) -> u32 {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset >= Total { return 1114112u32; }
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+    if First < 128u32 { return First; }
+    let Width: u32 = Compilerˉsourceˉutf8ˉlength(Input, Offset);
+    if Width > Total - Offset { return 1114112u32; }
+    let Second: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+    if Width == 2u32 {
+        return (First - 192u32) * 64u32 + Second - 128u32;
+    }
+    let Third: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 2u32));
+    if Width == 3u32 {
+        return (First - 224u32) * 4096u32 +
+            (Second - 128u32) * 64u32 + Third - 128u32;
+    }
+    let Fourth: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 3u32));
+    return (First - 240u32) * 262144u32 +
+        (Second - 128u32) * 4096u32 +
+        (Third - 128u32) * 64u32 + Fourth - 128u32;
 }
 
 export fn Compilerˉsourceˉcolumnˉwidth(Input: bytes, Offset: u32) -> u32 {
@@ -572,6 +597,201 @@ fn Compilerˉsourceˉtokenˉmakeˉwide(
         Line, Column, Nextˉline, Nextˉcolumn,
         Numericˉkind, Numericˉvalue, Numericˉhigh,
         Failureˉoffset, Failureˉline, Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉruneˉliteral(
+    Input: bytes,
+    Start: u32,
+    Startˉline: u32,
+    Startˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start + 1u32;
+    var Column: u32 = Startˉcolumn + 1u32;
+    var Runeˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
+    var Runeˉvalue: u32 = 0u32;
+    var Runeˉfailureˉoffset: u32 = Start;
+    var Runeˉfailureˉcolumn: u32 = Startˉcolumn;
+    var Runeˉitem: bool = false;
+
+    if Cursor >= Total {
+        Runeˉstatus = Compilerˉlexˉstatus.Unterminatedˉrune;
+    } else {
+        let Runeˉfirst: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Runeˉfirst == 39u8 {
+            Runeˉstatus = Compilerˉlexˉstatus.Invalidˉrune;
+            Runeˉfailureˉoffset = Cursor;
+            Runeˉfailureˉcolumn = Column;
+        } else if Runeˉfirst == 10u8 {
+            Runeˉstatus = Compilerˉlexˉstatus.Unterminatedˉrune;
+        } else if Runeˉfirst == 13u8 {
+            Runeˉstatus = Compilerˉlexˉstatus.Unterminatedˉrune;
+        } else if Runeˉfirst == 92u8 {
+            let Runeˉescapeˉoffset: u32 = Cursor;
+            let Runeˉescapeˉcolumn: u32 = Column;
+            Cursor = Cursor + 1u32;
+            Column = Column + 1u32;
+            if Cursor >= Total {
+                Runeˉstatus = Compilerˉlexˉstatus.Unterminatedˉrune;
+            } else {
+                let Runeˉescape: u8 = Bytesˉreadˉu8(Input, Cursor);
+                if Runeˉescape == 117u8 {
+                    Cursor = Cursor + 1u32;
+                    Column = Column + 1u32;
+                    var Runeˉbraceˉpresent: bool = Cursor < Total;
+                    if Runeˉbraceˉpresent {
+                        Runeˉbraceˉpresent = Bytesˉreadˉu8(Input, Cursor) == 123u8;
+                    }
+                    if !Runeˉbraceˉpresent {
+                        Runeˉstatus = Compilerˉlexˉstatus.Invalidˉunicodeˉescape;
+                        Runeˉfailureˉoffset = Runeˉescapeˉoffset;
+                        Runeˉfailureˉcolumn = Runeˉescapeˉcolumn;
+                    } else {
+                        Cursor = Cursor + 1u32;
+                        Column = Column + 1u32;
+                        var Runeˉdigits: u32 = 0u32;
+                        var Runeˉscalar: u32 = 0u32;
+                        var Readingˉruneˉhex: bool = true;
+                        while Readingˉruneˉhex {
+                            if Cursor >= Total {
+                                Readingˉruneˉhex = false;
+                            } else {
+                                let Runeˉhex: u32 = Compilerˉsourceˉhexˉdigit(
+                                    Bytesˉreadˉu8(Input, Cursor)
+                                );
+                                if Runeˉhex == 16u32 {
+                                    Readingˉruneˉhex = false;
+                                } else {
+                                    if Runeˉdigits < 6u32 {
+                                        Runeˉscalar = Runeˉscalar * 16u32 + Runeˉhex;
+                                    }
+                                    Runeˉdigits = Runeˉdigits + 1u32;
+                                    Cursor = Cursor + 1u32;
+                                    Column = Column + 1u32;
+                                }
+                            }
+                        }
+                        var Runeˉscalarˉvalid: bool =
+                            Runeˉdigits >= 1u32 && Runeˉdigits <= 6u32;
+                        if Cursor >= Total { Runeˉscalarˉvalid = false; }
+                        if Runeˉscalarˉvalid {
+                            if Bytesˉreadˉu8(Input, Cursor) != 125u8 {
+                                Runeˉscalarˉvalid = false;
+                            }
+                        }
+                        if Runeˉscalar > 1114111u32 { Runeˉscalarˉvalid = false; }
+                        if Runeˉscalar >= 55296u32 && Runeˉscalar <= 57343u32 {
+                            Runeˉscalarˉvalid = false;
+                        }
+                        if !Runeˉscalarˉvalid {
+                            Runeˉstatus = Compilerˉlexˉstatus.Invalidˉunicodeˉescape;
+                            Runeˉfailureˉoffset = Runeˉescapeˉoffset;
+                            Runeˉfailureˉcolumn = Runeˉescapeˉcolumn;
+                        } else {
+                            Runeˉvalue = Runeˉscalar;
+                            Runeˉitem = true;
+                            Cursor = Cursor + 1u32;
+                            Column = Column + 1u32;
+                        }
+                    }
+                } else {
+                    var Runeˉescapeˉvalid: bool = true;
+                    if Runeˉescape == 92u8 { Runeˉvalue = 92u32; }
+                    else if Runeˉescape == 39u8 { Runeˉvalue = 39u32; }
+                    else if Runeˉescape == 34u8 { Runeˉvalue = 34u32; }
+                    else if Runeˉescape == 110u8 { Runeˉvalue = 10u32; }
+                    else if Runeˉescape == 114u8 { Runeˉvalue = 13u32; }
+                    else if Runeˉescape == 116u8 { Runeˉvalue = 9u32; }
+                    else if Runeˉescape == 48u8 { Runeˉvalue = 0u32; }
+                    else if Runeˉescape == 123u8 { Runeˉvalue = 123u32; }
+                    else if Runeˉescape == 125u8 { Runeˉvalue = 125u32; }
+                    else { Runeˉescapeˉvalid = false; }
+                    if !Runeˉescapeˉvalid {
+                        Runeˉstatus = Compilerˉlexˉstatus.Unsupportedˉescape;
+                        Runeˉfailureˉoffset = Runeˉescapeˉoffset;
+                        Runeˉfailureˉcolumn = Runeˉescapeˉcolumn;
+                    } else {
+                        Runeˉitem = true;
+                    }
+                    Cursor = Cursor + 1u32;
+                    Column = Column + 1u32;
+                }
+            }
+        } else {
+            Runeˉvalue = Compilerˉsourceˉutf8ˉscalar(Input, Cursor);
+            let Runeˉwidth: u32 = Compilerˉsourceˉutf8ˉlength(Input, Cursor);
+            Runeˉitem = Runeˉvalue <= 1114111u32;
+            if Runeˉvalue >= 55296u32 && Runeˉvalue <= 57343u32 {
+                Runeˉitem = false;
+            }
+            if !Runeˉitem {
+                Runeˉstatus = Compilerˉlexˉstatus.Invalidˉrune;
+                Runeˉfailureˉoffset = Cursor;
+                Runeˉfailureˉcolumn = Column;
+            }
+            Cursor = Cursor + Runeˉwidth;
+            Column = Column + Compilerˉsourceˉcolumnˉwidth(Input, Cursor - Runeˉwidth);
+        }
+    }
+
+    if Runeˉitem {
+        if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 39u8 {
+            Cursor = Cursor + 1u32;
+            Column = Column + 1u32;
+        } else {
+            Runeˉstatus = Compilerˉlexˉstatus.Unterminatedˉrune;
+            if Cursor < Total {
+                if Bytesˉreadˉu8(Input, Cursor) != 10u8 &&
+                    Bytesˉreadˉu8(Input, Cursor) != 13u8 {
+                    Runeˉstatus = Compilerˉlexˉstatus.Invalidˉrune;
+                    Runeˉfailureˉoffset = Cursor;
+                    Runeˉfailureˉcolumn = Column;
+                    var Findˉruneˉend: bool = true;
+                    while Findˉruneˉend {
+                        if Cursor >= Total {
+                            Findˉruneˉend = false;
+                        } else {
+                            let Runeˉextra: u8 = Bytesˉreadˉu8(Input, Cursor);
+                            if Runeˉextra == 39u8 {
+                                Cursor = Cursor + 1u32;
+                                Column = Column + 1u32;
+                                Findˉruneˉend = false;
+                            } else if Runeˉextra == 10u8 {
+                                Findˉruneˉend = false;
+                            } else if Runeˉextra == 13u8 {
+                                Findˉruneˉend = false;
+                            } else {
+                                let Runeˉextraˉwidth: u32 =
+                                    Compilerˉsourceˉutf8ˉlength(Input, Cursor);
+                                Column = Column +
+                                    Compilerˉsourceˉcolumnˉwidth(Input, Cursor);
+                                Cursor = Cursor + Runeˉextraˉwidth;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 39u8 {
+        Cursor = Cursor + 1u32;
+        Column = Column + 1u32;
+    }
+
+    return Compilerˉsourceˉtokenˉmake(
+        Runeˉstatus,
+        Compilerˉtokenˉkind.Runeˉliteral,
+        Start,
+        Cursor,
+        Startˉline,
+        Startˉcolumn,
+        Startˉline,
+        Column,
+        Compilerˉnumericˉkind.None,
+        Runeˉvalue,
+        Runeˉfailureˉoffset,
+        Startˉline,
+        Runeˉfailureˉcolumn
     );
 }
 
@@ -982,6 +1202,12 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                 Tokenˉcolumn
             );
         }
+    }
+
+    if First == 39u8 {
+        return Compilerˉsourceˉruneˉliteral(
+            Input, Tokenˉstart, Tokenˉline, Tokenˉcolumn
+        );
     }
 
     if First == 34u8 {

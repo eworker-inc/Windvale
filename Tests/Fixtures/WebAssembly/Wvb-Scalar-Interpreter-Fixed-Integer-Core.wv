@@ -1,5 +1,7 @@
 module WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore profile portable;
 
+import WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore as Runes;
+
 fn Result(Status: u32, Value: u32) -> bytes {
     return Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(Status),
@@ -13,7 +15,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor != 12u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 13u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -32,7 +34,10 @@ export fn Scanˉfixedˉinteger(
 
 export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
     if Kind >= 1u32 && Kind <= 10u32 { return true; }
-    return Minor == 12u32 && Kind >= 14u32 && Kind <= 16u32;
+    if Minor >= 12u32 && Minor <= 13u32 && Kind >= 14u32 && Kind <= 16u32 {
+        return true;
+    }
+    return Minor == 13u32 && Kind == 17u32;
 }
 
 export fn Scanˉfunction(
@@ -84,6 +89,13 @@ export fn Scanˉfunction(
         if Opcode >= 173u32 && Opcode <= 178u32 { Supported = true; }
         if Opcode == 192u32 {
             Width = Scanˉfixedˉinteger(
+                Module, Offset + Cursor, Length - Cursor, Minor
+            );
+            if Width == 0u32 { return 0u32; }
+            Supported = true;
+        }
+        if Opcode == 193u32 {
+            Width = Runes.Scanˉrune(
                 Module, Offset + Cursor, Length - Cursor, Minor
             );
             if Width == 0u32 { return 0u32; }

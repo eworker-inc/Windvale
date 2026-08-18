@@ -1,0 +1,26 @@
+#!wv/1 en@1
+module Languageˉoneˉruneˉprogram;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+const ANSWER: rune = '*';
+const JAPANESE: rune = '界';
+
+fn Same(Value: rune, Expected: rune) -> bool {
+    return Value == Expected;
+}
+
+export fn Main() -> i32 {
+    let Smile: rune = '\u{1F642}';
+    if ANSWER != '\u{2A}' { return 1; }
+    if JAPANESE != '界' { return 2; }
+    if !Same(Smile, '🙂') { return 3; }
+    if '\n' == '\r' { return 4; }
+    if '\\' != '\u{5C}' { return 5; }
+    if '\'' != '\u{27}' { return 6; }
+    if '\"' != '\u{22}' { return 7; }
+    if '\0' != '\u{0}' { return 8; }
+    if '\{' != '{' || '\}' != '}' { return 9; }
+    return 42;
+}

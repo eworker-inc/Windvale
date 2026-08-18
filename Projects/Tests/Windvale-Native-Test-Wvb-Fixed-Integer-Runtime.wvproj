@@ -2,4 +2,5 @@ windvale-project 2
 root "Tests/Fixtures/Language-1.0/Fixed-Integer-Runtime-Self-Test.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integers.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv"
+source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv"
 emit wvb

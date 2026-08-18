@@ -56,6 +56,7 @@ record Compilerˉsourceˉwvbˉtypeˉencoding {
     Payload: bytes;
     Hasˉcollections: bool;
     Requiresˉfixedˉintegers: bool;
+    Requiresˉrunes: bool;
 }
 
 record Compilerˉsourceˉwvbˉanalysis {
@@ -74,6 +75,7 @@ record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Hasˉcollections: bool;
     Hasˉoperators: bool;
     Requiresˉfixedˉintegers: bool;
+    Requiresˉrunes: bool;
 }
 
 record Compilerˉsourceˉwvbˉsymbolˉorder {
@@ -220,6 +222,7 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     if Shape >= 11u32 {
         if Shape <= 13u32 { return true; }
     }
+    if Shape == 16u32 { return true; }
     if Shape >= 65536u32 {
         if Shape < 65536u32 + Records { return true; }
     }
@@ -257,6 +260,7 @@ export fn Compilerˉsourceˉwvbˉshape(Shape: u32) -> bytes {
     if Shape == 11u32 { Kind = 14u8; }
     if Shape == 12u32 { Kind = 15u8; }
     if Shape == 13u32 { Kind = 16u8; }
+    if Shape == 16u32 { Kind = 17u8; }
     if Shape >= 268435456u32 {
         if Shape < 268439552u32 {
             return Bytesˉfromˉu8(5u8);
@@ -308,6 +312,17 @@ export fn Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Shape: u32) -> bool 
     if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
         Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
         return Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(
+            Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉelementˉshape(Shape)
+        );
+    }
+    return false;
+}
+
+export fn Compilerˉsourceˉwvbˉshapeˉhasˉrune(Shape: u32) -> bool {
+    if Shape == 16u32 { return true; }
+    if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
+        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+        return Compilerˉsourceˉwvbˉshapeˉhasˉrune(
             Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉelementˉshape(Shape)
         );
     }
@@ -599,12 +614,15 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
     if Operation >= 129u32 {
         if Operation <= 147u32 { return 192u8; }
     }
+    if Operation >= 148u32 {
+        if Operation <= 150u32 { return 193u8; }
+    }
     return 0u8;
 }
 
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 147u32 { return true; }
+        if Operation <= 150u32 { return true; }
     }
     return false;
 }
@@ -658,6 +676,8 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     if Operation >= 130u32 {
         if Operation <= 147u32 { Opcodeˉbytes = 3u32; }
     }
+    if Operation == 148u32 { Opcodeˉbytes = 6u32; }
+    if Operation == 149u32 || Operation == 150u32 { Opcodeˉbytes = 2u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -2008,6 +2028,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
     var Payload: bytes = Bytesˉfromˉu8(1u8);
     var Hasˉcollections: bool = false;
     var Requiresˉfixedˉintegers: bool = false;
+    var Requiresˉrunes: bool = false;
     Payload = Bytesˉconcat(
         Payload,
         Compilerˉsourceˉwvbˉencodedˉstring(
@@ -2038,7 +2059,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
             return Compilerˉsourceˉwvbˉtypeˉencoding(
                 Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                Hasˉcollections, Requiresˉfixedˉintegers
+                Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes
             );
         }
         let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
@@ -2047,12 +2068,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         ) {
             return Compilerˉsourceˉwvbˉtypeˉencoding(
                 Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                Hasˉcollections, Requiresˉfixedˉintegers
+                Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes
             );
         }
         if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Shape) {
             Requiresˉfixedˉintegers = true;
         }
+        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Shape) { Requiresˉrunes = true; }
         if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
             Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
             Hasˉcollections = true;
@@ -2071,7 +2093,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
         Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections,
-        Requiresˉfixedˉintegers
+        Requiresˉfixedˉintegers, Requiresˉrunes
     );
 }
 
@@ -2124,7 +2146,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         Memberˉindex = Memberˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload, false, false
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, false, false, false
     );
 }
 
@@ -2144,6 +2166,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
     var Payload: bytes = Bytesˉfromˉu8(3u8);
     var Hasˉcollections: bool = false;
     var Requiresˉfixedˉintegers: bool = false;
+    var Requiresˉrunes: bool = false;
     Payload = Bytesˉconcat(
         Payload,
         Compilerˉsourceˉwvbˉencodedˉstring(
@@ -2194,7 +2217,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
             if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
                 return Compilerˉsourceˉwvbˉtypeˉencoding(
                     Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                    Hasˉcollections, Requiresˉfixedˉintegers
+                    Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes
                 );
             }
             let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
@@ -2203,12 +2226,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
             ) {
                 return Compilerˉsourceˉwvbˉtypeˉencoding(
                     Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                    Hasˉcollections, Requiresˉfixedˉintegers
+                    Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes
                 );
             }
             if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Shape) {
                 Requiresˉfixedˉintegers = true;
             }
+            if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Shape) { Requiresˉrunes = true; }
             if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
                 Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
                 Hasˉcollections = true;
@@ -2230,7 +2254,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
         Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections,
-        Requiresˉfixedˉintegers
+        Requiresˉfixedˉintegers, Requiresˉrunes
     );
 }
 
@@ -2248,6 +2272,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
     var Rank: u32 = 0u32;
     var Hasˉcollections: bool = false;
     var Requiresˉfixedˉintegers: bool = false;
+    var Requiresˉrunes: bool = false;
     while Rank < Symbols.Records {
         let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Recordˉorder, Rank
@@ -2265,6 +2290,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid { return Encoded; }
         if Encoded.Hasˉcollections { Hasˉcollections = true; }
         if Encoded.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
+        if Encoded.Requiresˉrunes { Requiresˉrunes = true; }
         Payload = Bytesˉconcat(Payload, Encoded.Payload);
         Rank = Rank + 1u32;
     }
@@ -2288,6 +2314,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         }
         if Encodedˉenum.Hasˉcollections { Hasˉcollections = true; }
         if Encodedˉenum.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
+        if Encodedˉenum.Requiresˉrunes { Requiresˉrunes = true; }
         Payload = Bytesˉconcat(Payload, Encodedˉenum.Payload);
         Rank = Rank + 1u32;
     }
@@ -2312,12 +2339,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         }
         if Encodedˉvariant.Hasˉcollections { Hasˉcollections = true; }
         if Encodedˉvariant.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
+        if Encodedˉvariant.Requiresˉrunes { Requiresˉrunes = true; }
         Payload = Bytesˉconcat(Payload, Encodedˉvariant.Payload);
         Rank = Rank + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
         Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections,
-        Requiresˉfixedˉintegers
+        Requiresˉfixedˉintegers, Requiresˉrunes
     );
 }
 
@@ -2823,6 +2851,20 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             }
         }
     }
+    if Operation >= 148u32 {
+        if Operation <= 150u32 {
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu8(193u8));
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(
+                    Bytesˉfromˉu32ˉlittle(Operation - 148u32), 0u32, 1u32
+                )
+            );
+            if Operation == 148u32 {
+                Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+            }
+        }
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -2961,7 +3003,7 @@ export fn Compilerˉsourceˉwvbˉfunctionˉfailure(
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     return Compilerˉsourceˉwvbˉfunctionˉencoding(
-        Status, Empty, Empty, Operation, false, false, false
+        Status, Empty, Empty, Operation, false, false, false, false
     );
 }
 
@@ -3050,6 +3092,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     var Hasˉoperators: bool = false;
     var Requiresˉfixedˉintegers: bool =
         Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Returnˉshape);
+    var Requiresˉrunes: bool =
+        Compilerˉsourceˉwvbˉshapeˉhasˉrune(Returnˉshape);
     if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
         Returnˉshape, true, Symbols.Records, Symbols.Enums, Symbols.Variants
     ) {
@@ -3136,6 +3180,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Parameterˉshape) {
             Requiresˉfixedˉintegers = true;
         }
+        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Parameterˉshape) {
+            Requiresˉrunes = true;
+        }
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Parameterˉshape)
         );
@@ -3177,6 +3224,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Localˉshape) {
             Requiresˉfixedˉintegers = true;
         }
+        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Localˉshape) {
+            Requiresˉrunes = true;
+        }
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Localˉshape)
         );
@@ -3201,6 +3251,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         }
         if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Temporaryˉshape) {
             Requiresˉfixedˉintegers = true;
+        }
+        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Temporaryˉshape) {
+            Requiresˉrunes = true;
         }
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Temporaryˉshape)
@@ -3234,7 +3287,10 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                     Wir, Operationˉentry + 4u32
                 );
                 if Operationˉkind >= 73u32 { Hasˉoperators = true; }
-                if Operationˉkind >= 129u32 { Requiresˉfixedˉintegers = true; }
+                if Operationˉkind >= 129u32 && Operationˉkind <= 147u32 {
+                    Requiresˉfixedˉintegers = true;
+                }
+                if Operationˉkind >= 148u32 { Requiresˉrunes = true; }
                 Code = Bytesˉconcat(
                     Code,
                     Compilerˉsourceˉwvbˉemitˉoperation(
@@ -3269,7 +3325,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Analysis.Failureˉoperation,
         Hasˉcollections,
         Hasˉoperators,
-        Requiresˉfixedˉintegers
+        Requiresˉfixedˉintegers,
+        Requiresˉrunes
     );
 }
 
@@ -3773,6 +3830,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
     var Hasˉcollections: bool = Typeˉencoding.Hasˉcollections;
     var Hasˉoperators: bool = false;
     var Requiresˉfixedˉintegers: bool = Typeˉencoding.Requiresˉfixedˉintegers;
+    var Requiresˉrunes: bool = Typeˉencoding.Requiresˉrunes;
     while Functionˉrank < Emissionˉfunctions {
         let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders), Functionˉrank
@@ -3804,6 +3862,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
         if Encoded.Hasˉcollections { Hasˉcollections = true; }
         if Encoded.Hasˉoperators { Hasˉoperators = true; }
         if Encoded.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
+        if Encoded.Requiresˉrunes { Requiresˉrunes = true; }
         Functionˉpayload = Bytesˉconcat(Functionˉpayload, Encoded.Metadata);
         Codeˉpayload = Bytesˉconcat(Codeˉpayload, Encoded.Code);
         if Functionˉowner == 0u32 {
@@ -3867,6 +3926,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(1u32));
     var Wvbˉminor: u32 = 11u32;
     if Requiresˉfixedˉintegers { Wvbˉminor = 12u32; }
+    if Requiresˉrunes { Wvbˉminor = 13u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(

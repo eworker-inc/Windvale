@@ -1,10 +1,11 @@
 {
-  "format": "windvale-native-wvb-runner-candidate-3",
+  "format": "windvale-native-wvb-runner-candidate-4",
   "status": "candidate",
   "sourceDecision": "0217",
   "provenanceDecision": "0220",
   "constructionDecision": "0510",
   "fixedIntegerDecision": "0768",
+  "runeDecision": "0769",
   "qualification": "current-host-focused",
   "construction": "windvale-native-profile-5-source-reconstruction",
   "nativeSourceConstruction": "windvale-native-project-1",
@@ -13,32 +14,32 @@
       "name": "wvb-runner-wvb",
       "path": "Wvb-Runner.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 147748,
-      "sha256": "9297e6d358f2b6b4e41fa5c21b44759e23f64569156d3e3ead95815e0ef7446f",
+      "bytes": 151488,
+      "sha256": "e5948f52146a5c3be9901e2dc8c3b9e4f1ba7b2fdc75624c43f2a3a7b807d264",
       "sourceProject": "Windvale-Wvb-Runner.wvproj"
     },
     {
       "name": "wvb-runner-native-object",
       "path": "Wvb-Runner.wvo",
       "target": "x86-64-wvo-abi-22",
-      "bytes": 1334709,
-      "sha256": "a098fef0e600e060457fea99c826b6e2d2572b58a32ab0accd1101e3824d8467",
+      "bytes": 1371883,
+      "sha256": "f482eface9f6857e6a851a4503b343c6c848aa99fdbe28385aa951bc8e463905",
       "sourceWvb": "Wvb-Runner.wvb"
     },
     {
       "name": "windows-x64-wvb-runner",
       "path": "windows-x64-wvrun.exe",
       "target": "windows-x64-wvb-runner-v1",
-      "bytes": 1349632,
-      "sha256": "51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e",
+      "bytes": 1387008,
+      "sha256": "57b91dae115d14da470b265f3ce1f59a44fe94c06f0de4ae99b1c13418118ae4",
       "sourceWvo": "Wvb-Runner.wvo"
     },
     {
       "name": "linux-x64-wvb-runner",
       "path": "linux-x64-wvrun.elf",
       "target": "linux-x64-wvb-runner-v1",
-      "bytes": 1351680,
-      "sha256": "c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca",
+      "bytes": 1388544,
+      "sha256": "b6914c6b4d5c3bb069b219ce2cb329b179faf032c8b204648628775fbdfbd25e",
       "sourceWvo": "Wvb-Runner.wvo"
     }
   ]

@@ -39,7 +39,7 @@ record Compilerˉsourceˉtoken {
 
 `Offset` begins after leading whitespace and `//` comments. `Length` covers only the token. `Nextˉ*` identifies the cursor immediately after it; trivia before the following token is skipped by the next call. Failure coordinates identify the accepted deterministic error location.
 
-`Compilerˉlexˉstatus` contains `Valid`, `Sourceˉtooˉlarge`, `Invalidˉutf8`, `Invalidˉcursor`, `Invalidˉlimit`, `Unexpectedˉcharacter`, `Integerˉoutˉofˉrange`, `Unsupportedˉescape`, `Unterminatedˉstring`, `Shortˉunicodeˉescape`, `Invalidˉunicodeˉescape`, `Unpairedˉsurrogate`, and `Tooˉmanyˉtokens`.
+`Compilerˉlexˉstatus` contains `Valid`, `Sourceˉtooˉlarge`, `Invalidˉutf8`, `Invalidˉcursor`, `Invalidˉlimit`, `Unexpectedˉcharacter`, `Integerˉoutˉofˉrange`, `Unsupportedˉescape`, `Unterminatedˉstring`, `Shortˉunicodeˉescape`, `Invalidˉunicodeˉescape`, `Unpairedˉsurrogate`, `Tooˉmanyˉtokens`, `Unterminatedˉrune`, and `Invalidˉrune`.
 
 ## Token kinds
 
@@ -58,6 +58,7 @@ Token-kind values are frozen to the Stage 0 ordering:
   renumbering a retained token kind.
 - `Unit`, `Never`, `I8`, `I16`, `U16`, `F32`, `F64`, `Rune`, and `Base` are
   values 89 through 97 and cover their exact lowercase edition-1 keywords.
+- `Runeˉliteral` is appended as value 98 and covers one quoted Unicode scalar.
 
 An identifier begins with an ASCII letter or underscore. Later characters may also be ASCII digits or U+02C9. No other non-ASCII identifier character is accepted.
 
@@ -65,7 +66,7 @@ Keyword classification uses exact byte length and first ASCII byte to select onl
 
 `&&` and `||` are recognized before their valid single-character `&` and `|` prefixes. `<<`, `>>`, `<=`, and `>=` are likewise recognized before `<` and `>`. A `/` that begins `//` trivia remains a comment; otherwise it is the division token.
 
-## Numeric and string rules
+## Numeric, string, and rune rules
 
 `Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, `U32`, `I64`,
 `U64`, `I8`, `I16`, and `U16`. Unsuffixed decimal digits are `I32` and cannot
@@ -81,6 +82,13 @@ lexer owns a bounded two-limb decimal accumulator for wide literals.
 Strings accept the simple escapes `\"`, `\\`, `\n`, `\r`, and `\t`, plus `\u` followed by exactly four hexadecimal digits. Escaped UTF-16 high and low surrogates must be paired. Raw LF or CR terminates scanning with `Unterminatedˉstring`.
 
 The token preserves the original quoted source span. Decoded string construction is intentionally outside this contract.
+
+A rune literal is delimited by single quotes and contains exactly one Unicode
+scalar. It accepts a direct strict-UTF-8 scalar, the simple escapes `\\`, `\'`,
+`\"`, `\n`, `\r`, `\t`, `\0`, `\{`, and `\}`, or `\u{H}` with one through six
+hexadecimal digits. Surrogates, values above `10FFFF`, empty or multi-scalar
+literals, unsupported escapes, and missing closing quotes are rejected. The
+token's `Numericˉvalue` is the exact scalar value and `Numericˉhigh` is zero.
 
 ## Entry points
 

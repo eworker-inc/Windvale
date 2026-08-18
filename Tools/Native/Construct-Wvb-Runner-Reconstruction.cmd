@@ -60,12 +60,12 @@ set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%SourceProject%" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvb%" 147748 9297e6d358f2b6b4e41fa5c21b44759e23f64569156d3e3ead95815e0ef7446f "WVB-runner module"
+call :verify_file "%Wvb%" 151488 e5948f52146a5c3be9901e2dc8c3b9e4f1ba7b2fdc75624c43f2a3a7b807d264 "WVB-runner module"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >"%TemporaryDirectory%\Lower.out" 2>"%TemporaryDirectory%\Lower.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvo%" 1334709 a098fef0e600e060457fea99c826b6e2d2572b58a32ab0accd1101e3824d8467 "WVB-runner WVO"
+call :verify_file "%Wvo%" 1371883 f482eface9f6857e6a851a4503b343c6c848aa99fdbe28385aa951bc8e463905 "WVB-runner WVO"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Fragment%" "%Wvo%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
@@ -73,7 +73,7 @@ if errorlevel 1 goto :cleanup
 set "EntryMatch=0"
 for /f "usebackq delims=" %%L in ("%TemporaryDirectory%\Link.out") do if "%%L"=="entry name=Main address=60426" set "EntryMatch=1"
 if not "%EntryMatch%"=="1" goto :cleanup
-call :verify_file "%Fragment%" 1332849 704dfc72f74853ed9dacd962c9b814f5b294c316407815cb0c0014fcf616c30c "WVB-runner linked fragment"
+call :verify_file "%Fragment%" 1369921 f367c6047d696f1a939bba8aedf489f9def4e229512accfd7bb5de1e7d85345a "WVB-runner linked fragment"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%StartupRoot%\Windows-X64-Hosted-Inspector.wva" "%WindowsStartup%" >"%TemporaryDirectory%\Windows-Assemble.out" 2>"%TemporaryDirectory%\Windows-Assemble.err"
@@ -87,12 +87,12 @@ if errorlevel 1 goto :cleanup
 
 call :construct_target windows 1 "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin" "%WindowsStartup%" "%WindowsApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 1349632 51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e "Windows WVB-runner application"
+call :verify_file "%WindowsApplication%" 1387008 57b91dae115d14da470b265f3ce1f59a44fe94c06f0de4ae99b1c13418118ae4 "Windows WVB-runner application"
 if errorlevel 1 goto :cleanup
 
 call :construct_target linux 2 "%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin" "%LinuxStartup%" "%LinuxApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 1351680 c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca "Linux WVB-runner application"
+call :verify_file "%LinuxApplication%" 1388544 b6914c6b4d5c3bb069b219ce2cb329b179faf032c8b204648628775fbdfbd25e "Linux WVB-runner application"
 if errorlevel 1 goto :cleanup
 
 echo native WVB runner reconstruction status=Complete artifacts=4

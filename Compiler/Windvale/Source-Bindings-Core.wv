@@ -723,6 +723,7 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         if Shape >= 11u32 {
             if Shape <= 13u32 { Shapeˉvalid = true; }
         }
+        if Shape == 16u32 { Shapeˉvalid = true; }
         if Shape == 0u32 { Shapeˉvalid = Kind != 1u32; }
         if Shape > 8u32 {
             if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
@@ -1576,6 +1577,9 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unit {
+        return Compilerˉsourceˉbindingsˉbodyˉempty();
+    }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Rune {
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Builder {

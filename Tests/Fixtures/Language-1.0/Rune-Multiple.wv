@@ -1,0 +1,10 @@
+#!wv/1 en@1
+module Languageˉoneˉruneˉmultiple;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 {
+    let Invalid: rune = 'ab';
+    return 42;
+}

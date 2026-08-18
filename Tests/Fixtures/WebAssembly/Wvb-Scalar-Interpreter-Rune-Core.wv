@@ -1,0 +1,62 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore profile portable;
+
+fn Execution(Metadata: u8, Stack: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Metadata),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Stack)
+    );
+}
+
+export fn Scanˉrune(
+    Module: bytes,
+    Offset: u32,
+    Remaining: u32,
+    Minor: u32
+) -> u32 {
+    if Minor != 13u32 || Remaining < 2u32 { return 0u32; }
+    let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
+    if Operation > 2u32 { return 0u32; }
+    if Operation != 0u32 { return 2u32; }
+    if Remaining < 6u32 { return 0u32; }
+    let Scalar: u32 = Bytesˉreadˉu32ˉlittle(Module, Offset + 2u32);
+    if Scalar > 1114111u32 { return 0u32; }
+    if Scalar >= 55296u32 && Scalar <= 57343u32 { return 0u32; }
+    return 6u32;
+}
+
+export fn Executeˉrune(
+    Module: bytes,
+    Offset: u32,
+    Stack: bytes,
+    Stackˉdescriptorˉcount: u32,
+    Zeroˉvalue: bytes
+) -> bytes {
+    let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
+    if Operation == 0u32 {
+        let Scalar: u32 = Bytesˉreadˉu32ˉlittle(Module, Offset + 2u32);
+        return Execution(
+            24u8,
+            Bytesˉconcat(
+                Stack,
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Scalar), Zeroˉvalue)
+            )
+        );
+    }
+    if Stackˉdescriptorˉcount < 2u32 {
+        return Bytesˉslice(Stack, 0u32, 0u32);
+    }
+    let Stackˉlength: u32 = Bytesˉlength(Stack);
+    let Right: u32 = Bytesˉreadˉu32ˉlittle(Stack, Stackˉlength - 8u32);
+    let Left: u32 = Bytesˉreadˉu32ˉlittle(Stack, Stackˉlength - 16u32);
+    var Equal: bool = Left == Right;
+    if Operation == 2u32 { Equal = !Equal; }
+    var Value: u32 = 0u32;
+    if Equal { Value = 1u32; }
+    return Execution(
+        10u8,
+        Bytesˉconcat(
+            Bytesˉslice(Stack, 0u32, Stackˉlength - 16u32),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Zeroˉvalue)
+        )
+    );
+}

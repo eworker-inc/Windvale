@@ -21,7 +21,7 @@ The status contract distinguishes upstream source-binding rejection, evidence li
 
 The phase currently lowers:
 
-- `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, sequence, and local builder values;
+- `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `rune`, `bool`, `text`, `bytes`, record, enum, variant, sequence, and local builder values;
 - literals including edition-1 `()`, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction and fields, enum members, Foundation intrinsics, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, variant construction/case tests/payload extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
@@ -36,7 +36,7 @@ operation. `return;`, `return ();`, return of a unit-valued call, and fallthroug
 all produce the existing no-value return terminator; a non-unit expression cannot
 be returned from a unit function. Shapes `1` through `6` are `i32`, `u8`, `u32`,
 `bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`; `11`, `12`, and
-`13` are `i8`, `i16`, and `u16`. Record shapes start at
+`13` are `i8`, `i16`, and `u16`; shape `16` is `rune`. Record shapes start at
 `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at
 `196608`. Exact singleton capability-reference shapes are `268435456 +
 RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder
@@ -76,7 +76,7 @@ The temporary section is a sequence of result shapes. The operand section is a s
 
 ## Operation families
 
-Operation values `1` through `64` retain the prior constants, storage, Foundation, nominal, scalar, call, and Boolean-phi contract. Values `65` through `67` are variant create/test/payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Value `0` is invalid in published evidence.
+Operation values `1` through `64` retain the prior constants, storage, Foundation, nominal, scalar, call, and Boolean-phi contract. Values `65` through `67` are variant create/test/payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Values `148`, `149`, and `150` are rune constant, equality, and inequality. A rune constant has shape `16`, no operands, and its exact scalar in `Target`; comparisons consume two shape-`16` values and produce `bool`. Value `0` is invalid in published evidence.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 

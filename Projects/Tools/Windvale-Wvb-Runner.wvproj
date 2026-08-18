@@ -5,4 +5,5 @@ source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv"
+source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv"
 emit wvb

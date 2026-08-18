@@ -84,10 +84,13 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
             'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv',
+            'Tests/Fixtures/Language-1.0/Rune-Program.wv',
             'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Wvb-Rune-Runtime.wvproj',
             'Tests/Native/Language-1.0-Fixture-Inventory.txt',
             'Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs',
             'Tools/Native/Verify-Language-1.0-Fixed-Integers.mjs',
+            'Tools/Native/Verify-Language-1.0-Runes.mjs',
             'Tools/Native/Test-Language-1.0-Front-Door.cmd',
             'Tools/Native/Test-Language-1.0-Front-Door.sh',
             'Specifications/Windvale-Language-1.0-Grammar.md',
@@ -3196,7 +3199,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4689 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4709 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

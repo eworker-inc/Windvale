@@ -17,9 +17,9 @@
       "id": "windows-x64",
       "archive": "windvale-0.1.0-windows-x64.zip",
       "archiveFormat": "zip-store-1",
-      "expectedArchiveBytes": 38924807,
-      "expectedArchiveSha256": "a3aecf406e477029bd88883c7b613a8c032bba84d7b3b1127dac0ba8dc1fd606",
-      "expectedPayloadSha256": "faf23bcbfc8e99df6813e83f4854d2ba7625ddf68952929bc81e65138c8f8cde",
+      "expectedArchiveBytes": 38962183,
+      "expectedArchiveSha256": "bbf410e861185614483bb51ed7d6db8212999a8e95a09b8391e65785fb9813e9",
+      "expectedPayloadSha256": "c86c86ffb2a9a5f909a25e1a79e824c841c229659fb6633b1304024ed5c8b9a8",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/windows-x64/wvbuild.exe",
@@ -45,8 +45,8 @@
         {
           "source": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
           "path": "bin/wvrun.exe",
-          "bytes": 1349632,
-          "sha256": "51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e",
+          "bytes": 1387008,
+          "sha256": "57b91dae115d14da470b265f3ce1f59a44fe94c06f0de4ae99b1c13418118ae4",
           "mode": "0755"
         },
         {
@@ -76,9 +76,9 @@
       "id": "linux-x64",
       "archive": "windvale-0.1.0-linux-x64.tar.gz",
       "archiveFormat": "tar-gzip-store-1",
-      "expectedArchiveBytes": 38937521,
-      "expectedArchiveSha256": "3a2fc266799ff0e966c86996425c46b6997df46590878bd4c73973b2c6150b7c",
-      "expectedPayloadSha256": "5d632b2b70863bbfbc413e4afbcea1a0ddafd649a45604102c363caddecd9a77",
+      "expectedArchiveBytes": 38974385,
+      "expectedArchiveSha256": "4563b1b196651d25bebf8040221daa469df8cbb0f8711ef3f5e6cc937528dd84",
+      "expectedPayloadSha256": "57b3406a8706e5deed68deee005a6321a9ca109a8d01650dfb5f00fa6a3335cc",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/linux-x64/wvbuild.elf",
@@ -104,8 +104,8 @@
         {
           "source": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
           "path": "bin/wvrun",
-          "bytes": 1351680,
-          "sha256": "c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca",
+          "bytes": 1388544,
+          "sha256": "b6914c6b4d5c3bb069b219ce2cb329b179faf032c8b204648628775fbdfbd25e",
           "mode": "0755"
         },
         {

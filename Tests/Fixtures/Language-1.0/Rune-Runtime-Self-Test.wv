@@ -1,0 +1,78 @@
+module Languageˉoneˉruneˉruntimeˉselfˉtest profile portable;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore as Runes;
+
+data Runeˉconstant: bytes = [193, 0, 66, 0, 0, 0];
+data Runeˉequal: bytes = [193, 1];
+data Runeˉnotˉequal: bytes = [193, 2];
+data Invalidˉoperation: bytes = [193, 3];
+data Invalidˉsurrogate: bytes = [193, 0, 0, 216, 0, 0];
+data Zeroˉcell: bytes = [0, 0, 0, 0];
+
+fn Cell(Value: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Zeroˉcell);
+}
+
+fn Status(Result: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Result, 1u32);
+}
+
+fn Stack(Result: bytes) -> bytes {
+    return Bytesˉslice(Result, 5u32, Bytesˉlength(Result) - 5u32);
+}
+
+export fn Main() -> i32 {
+    if Runes.Scanˉrune(Runeˉconstant, 0u32, 6u32, 13u32) != 6u32 {
+        return 1;
+    }
+    if Runes.Scanˉrune(Runeˉequal, 0u32, 2u32, 13u32) != 2u32 {
+        return 2;
+    }
+    if Runes.Scanˉrune(Runeˉconstant, 0u32, 6u32, 12u32) != 0u32 {
+        return 3;
+    }
+    if Runes.Scanˉrune(Invalidˉoperation, 0u32, 2u32, 13u32) != 0u32 {
+        return 4;
+    }
+    if Runes.Scanˉrune(Invalidˉsurrogate, 0u32, 6u32, 13u32) != 0u32 {
+        return 5;
+    }
+    if Runes.Scanˉrune(Runeˉconstant, 0u32, 5u32, 13u32) != 0u32 {
+        return 6;
+    }
+
+    let Empty: bytes = Bytesˉslice(Runeˉconstant, 0u32, 0u32);
+    let Constant: bytes = Runes.Executeˉrune(
+        Runeˉconstant, 0u32, Empty, 0u32, Zeroˉcell
+    );
+    if Bytesˉlength(Constant) != 13u32 || Status(Constant) != 0u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(Constant, 0u32)) != 24u32 ||
+        Bytesˉreadˉu32ˉlittle(Stack(Constant), 0u32) != 66u32 {
+        return 7;
+    }
+
+    let Equal: bytes = Runes.Executeˉrune(
+        Runeˉequal, 0u32, Bytesˉconcat(Cell(42u32), Cell(42u32)),
+        2u32, Zeroˉcell
+    );
+    if Bytesˉlength(Equal) != 13u32 || Status(Equal) != 0u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(Equal, 0u32)) != 10u32 ||
+        Bytesˉreadˉu32ˉlittle(Stack(Equal), 0u32) != 1u32 {
+        return 8;
+    }
+
+    let Notˉequal: bytes = Runes.Executeˉrune(
+        Runeˉnotˉequal, 0u32, Bytesˉconcat(Cell(41u32), Cell(42u32)),
+        2u32, Zeroˉcell
+    );
+    if Bytesˉlength(Notˉequal) != 13u32 || Status(Notˉequal) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Stack(Notˉequal), 0u32) != 1u32 {
+        return 9;
+    }
+    if Bytesˉlength(Runes.Executeˉrune(
+        Runeˉequal, 0u32, Cell(42u32), 1u32, Zeroˉcell
+    )) != 0u32 {
+        return 10;
+    }
+    return 42;
+}

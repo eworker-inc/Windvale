@@ -22,11 +22,11 @@ Project 1 semantics.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 147,748 | `9297e6d358f2b6b4e41fa5c21b44759e23f64569156d3e3ead95815e0ef7446f` |
-| ABI-22 WVO | 1,334,709 | `a098fef0e600e060457fea99c826b6e2d2572b58a32ab0accd1101e3824d8467` |
+| WVB runner | 151,488 | `e5948f52146a5c3be9901e2dc8c3b9e4f1ba7b2fdc75624c43f2a3a7b807d264` |
+| ABI-22 WVO | 1,371,883 | `f482eface9f6857e6a851a4503b343c6c848aa99fdbe28385aa951bc8e463905` |
 | linked fragment | 1,332,849 | `704dfc72f74853ed9dacd962c9b814f5b294c316407815cb0c0014fcf616c30c` |
-| Windows application | 1,349,632 | `51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e` |
-| Linux application | 1,351,680 | `c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca` |
+| Windows application | 1,387,008 | `57b91dae115d14da470b265f3ce1f59a44fe94c06f0de4ae99b1c13418118ae4` |
+| Linux application | 1,388,544 | `b6914c6b4d5c3bb069b219ce2cb329b179faf032c8b204648628775fbdfbd25e` |
 
 The WVO contains 1,332,128 text bytes and 721 read-only-data bytes, with 39
 symbols and 27 relocations. Linking at base zero selects `Main` at address
@@ -58,12 +58,17 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The runner accepts both WVB 1.11 and 1.12. Its shared scalar interpreter
+The runner accepts WVB 1.11, 1.12, and 1.13. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
 to keep the main interpreter below compiler/lowerer function limits; they are
 not a second interpreter or alternate semantic path.
+
+The same interpreter implements the WVB 1.13 rune constant, equality, and
+inequality family from Decision 0769. Rune scanning and execution live in one
+focused core module, reject non-scalars and unknown selectors before execution,
+and retain the ordinary shared stack and control-flow path.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

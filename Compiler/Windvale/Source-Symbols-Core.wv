@@ -2570,6 +2570,11 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
         if Expression.Booleanˉvalue { Boolean = 1u32; }
         return Compilerˉsourceˉsymbolsˉconstantˉsuccess(4u32, Boolean, false);
     }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Rune {
+        return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
+            16u32, Expression.Numericˉvalue, false
+        );
+    }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
         let Prior: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉpriorˉinˉdirectory(
             Input, Scan, Symbols.Directory, Symbols.Lookup,

@@ -662,6 +662,14 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Width = 5u32;
                 }
             }
+            if Opcode == 193u32 {
+                Width = 2u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input, Functionˉcode + Cursor + 1u32
+                )) == 0u32 {
+                    Width = 6u32;
+                }
+            }
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             if Aggregateˉinstructions > 400000u32 { return Invalid; }
 
@@ -736,6 +744,22 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Secondˉkind = 16u32;
                     Hasˉpush = true;
                     Pushˉkind = 16u32;
+                }
+                Handled = true;
+            }
+            if Opcode == 193u32 {
+                let Runeˉoperation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input, Functionˉcode + Cursor + 1u32
+                ));
+                if Runeˉoperation == 0u32 {
+                    Hasˉpush = true;
+                    Pushˉkind = 17u32;
+                } else {
+                    Popˉcount = 2u32;
+                    Firstˉkind = 17u32;
+                    Secondˉkind = 17u32;
+                    Hasˉpush = true;
+                    Pushˉkind = 2u32;
                 }
                 Handled = true;
             }
@@ -1067,6 +1091,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 if Pushˉkind == 14u32 { Encodedˉkind = Bytesˉfromˉu8(14u8); }
                 if Pushˉkind == 15u32 { Encodedˉkind = Bytesˉfromˉu8(15u8); }
                 if Pushˉkind == 16u32 { Encodedˉkind = Bytesˉfromˉu8(16u8); }
+                if Pushˉkind == 17u32 { Encodedˉkind = Bytesˉfromˉu8(17u8); }
                 let Encodedˉshape: bytes = Bytesˉconcat(
                     Encodedˉkind,
                     Bytesˉfromˉu32ˉlittle(Pushˉnominal)
@@ -1265,6 +1290,15 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                     Controlˉfunctionˉcode + Controlˉcursor + 2u32
                 )) == 0u32 {
                     Controlˉwidth = 5u32;
+                }
+            }
+            if Controlˉopcode == 193u32 {
+                Controlˉwidth = 2u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input,
+                    Controlˉfunctionˉcode + Controlˉcursor + 1u32
+                )) == 0u32 {
+                    Controlˉwidth = 6u32;
                 }
             }
             Controlˉaggregateˉinstructions = Controlˉaggregateˉinstructions

@@ -17,10 +17,10 @@ check_file() {
     printf '%s  %s\n' "$expected_sha" "$path" | sha256sum --check --strict --quiet
 }
 
-if check_file "$candidate/Wvb-Runner.wvb" 147748 9297e6d358f2b6b4e41fa5c21b44759e23f64569156d3e3ead95815e0ef7446f &&
-    check_file "$candidate/Wvb-Runner.wvo" 1334709 a098fef0e600e060457fea99c826b6e2d2572b58a32ab0accd1101e3824d8467 &&
-    check_file "$candidate/windows-x64-wvrun.exe" 1349632 51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e &&
-    check_file "$candidate/linux-x64-wvrun.elf" 1351680 c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca; then
+if check_file "$candidate/Wvb-Runner.wvb" 151488 e5948f52146a5c3be9901e2dc8c3b9e4f1ba7b2fdc75624c43f2a3a7b807d264 &&
+    check_file "$candidate/Wvb-Runner.wvo" 1371883 f482eface9f6857e6a851a4503b343c6c848aa99fdbe28385aa951bc8e463905 &&
+    check_file "$candidate/windows-x64-wvrun.exe" 1387008 57b91dae115d14da470b265f3ce1f59a44fe94c06f0de4ae99b1c13418118ae4 &&
+    check_file "$candidate/linux-x64-wvrun.elf" 1388544 b6914c6b4d5c3bb069b219ce2cb329b179faf032c8b204648628775fbdfbd25e; then
     echo 'PASS candidate inventory'
     passed=$((passed + 1))
 else

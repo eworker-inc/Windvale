@@ -3,17 +3,19 @@
 ## Status
 
 This document specifies the current Windvale bytecode family: the WVB 1.11
-baseline and the WVB 1.12 fixed-width-integer extension. Windvale is in early
+baseline, the WVB 1.12 fixed-width-integer extension, and the WVB 1.13 rune
+extension. Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
 independent module metadata, nominal payload variants, bounded sequences and
 affine builders, division and remainder, unsigned bitwise/shift operations,
 exact text/bytes equality, and exact little-endian `u64` byte codecs. WVB 1.12
 adds first-class `i8`, `i16`, and `u16` shapes and their checked scalar
-instruction family. A canonical writer emits the lowest required minor version:
-1.11 when the extension is absent and 1.12 when any new shape or instruction is
-present. A WVB 1.12-capable reader accepts both versions and never admits a
-1.12-only item under a 1.11 header. The compiler-aligned verifier and scalar
+instruction family. WVB 1.13 adds a first-class Unicode-scalar `rune` shape,
+constant, equality, and inequality. A canonical writer emits the lowest required
+minor version: 1.11 when neither extension is present, 1.12 for fixed integers,
+and 1.13 for rune evidence. A WVB 1.13-capable reader accepts all three versions
+and never admits an extension under an earlier header. The compiler-aligned verifier and scalar
 runner implement that transition; other current consumers retain explicit
 narrower version boundaries until their own lowering or execution slices land.
 
@@ -32,7 +34,7 @@ narrower version boundaries until their own lowering or execution slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11 or 12
+u16      minor version: 11, 12, or 13
 u32      section count: 7
 ```
 
@@ -212,19 +214,22 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 11 variant followed by u32 nominal-type index
 12 sequence followed by element shape and u32 maximum
 13 builder followed by element shape and u32 maximum
-14 i8 (WVB 1.12 only)
-15 i16 (WVB 1.12 only)
-16 u16 (WVB 1.12 only)
+14 i8 (WVB 1.12 and later)
+15 i16 (WVB 1.12 and later)
+16 u16 (WVB 1.12 and later)
+17 rune (WVB 1.13 only)
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
 
 Function parameter, result, local, record-field, and variant-payload types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7`, `8`, or `11` followed by a `u32` Types-section index. A collection shape is byte `12` or `13`, its recursively encoded non-collection element shape, then its `u32` maximum. Nominal identity and collection kind/element/maximum are exact.
 
-`i64`, `u64`, `i8`, `i16`, and `u16` are ordinary scalar shapes. They do not
+`i64`, `u64`, `i8`, `i16`, `u16`, and `rune` are ordinary scalar shapes. They do not
 widen counts, indices, lengths, code offsets, enum backing values, or existing
 binary Foundation operations, which remain explicitly `u32` or `i32`. Shape
-bytes 14 through 16 and opcode `C0` are invalid in WVB 1.11.
+bytes 14 through 16 and opcode `C0` are invalid in WVB 1.11. Shape byte 17 and
+opcode `C1` are invalid before WVB 1.13. WVB 1.13 also admits the complete WVB
+1.12 vocabulary.
 
 ## Instruction encoding
 
@@ -360,6 +365,7 @@ BD bytes.read_u64_little consumes bytes and u32 offset, produces u64
 BE bytes.from_u64_little consumes u64, produces eight bytes
 BF u64.from_u32    consumes u32, produces the same numeric value as u64
 C0 fixed.integer   u8 type tag, u8 operation, then operation-specific payload
+C1 rune            u8 operation, then operation-specific payload
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -404,19 +410,33 @@ truncates toward zero and remainder has the dividend's sign. `u16` left shift
 discards bits above bit 15; right shift fills with zero. Signed bitwise and shift
 forms and unsigned negation are invalid bytecode.
 
+The `C1` operation byte is:
+
+| Value | Operation | Operand/result rule |
+| ---: | --- | --- |
+| 0 | constant | followed by one little-endian `u32` Unicode scalar; produces `rune` |
+| 1 | equal | two `rune` values to `bool` |
+| 2 | not equal | two `rune` values to `bool` |
+
+A rune constant is an exact Unicode scalar from `0000` through `10FFFF`,
+excluding the surrogate range `D800` through `DFFF`. There is no normalization,
+locale mapping, numeric conversion, pointer interpretation, or text allocation.
+Selectors above 2, missing immediate bytes, non-scalars, or another operand shape
+are malformed bytecode.
+
 ## Verification
 
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 or 1.12 and the Module metadata presence byte is encoded exactly as specified above; every 1.12-only shape or instruction requires 1.12.
+- The version is WVB 1.11, 1.12, or 1.13 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12 and every rune item requires 1.13.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.
 - Every record, enum, or variant declaration, nominal shape, constructor operand, field/payload access, case test, constant, and enum comparison has valid nominal identity and exact types.
 - Every collection shape has an admitted non-collection element and maximum; builder transitions and sequence operations have exact types and cannot cross forbidden boundaries.
-- Division/remainder, bitwise/shift, fixed-integer, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
+- Division/remainder, bitwise/shift, fixed-integer, rune, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.

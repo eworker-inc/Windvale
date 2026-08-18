@@ -17,13 +17,15 @@ front-end identities for the frozen primitive value types and prevents Seed-only
 `void` type syntax from crossing the edition-1 front door. The second checkpoint
 implements the storage-free return/control portion of `unit`: `()`, `return;`,
 `return ();`, unit-returning calls, and implicit fallthrough now lower through
-typed WIR and deterministic WVB. Project 3 carries the profile artifacts; Project
-2 and descriptorless Seed retain their prior behavior.
+typed WIR and deterministic WVB. Named record update, fixed-width `i8`/`i16`/`u16`
+values, and exact Unicode-scalar `rune` values now cross the compiler, verifier,
+and runtime together. Project 3 carries the profile artifacts; Project 2 and
+descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. Exact scalar/rune literal operations
-and representations, storable/passable `unit`, unit execution in the scalar WVB
-runner, `never` control semantics, named update, multi-field variant construction
-and destructuring, and value-producing control flow remain pending. Localized
+These checkpoints do not complete Slice 2. `f32`/`f64`, storable/passable `unit`,
+unit execution in the scalar WVB runner, `never` control semantics, multi-field
+variant construction and destructuring, and value-producing control flow remain
+pending. Localized
 token execution, public-library vocabulary lookup, Unicode identifier admission,
 and paired-host Language 1.0 qualification also remain pending.
 
@@ -179,19 +181,49 @@ duplicate replacement, unknown replacement, and descriptorless Seed use without
 publishing output. No WVIR operation, WVB opcode, value representation, or
 serialized-format version changes.
 
+## Slice 2 fixed integers and runes
+
+The fixed-width checkpoint admits `i8`, `i16`, and `u16` literals, typed
+constants, parameters, results, and locals with exact same-type checked
+operations. Internal shapes `11` through `13`, WVIR operations `129` through
+`147`, WVB 1.12 tags `14` through `16`, and opcode `C0` preserve the named width
+through every boundary. The deterministic 5,335-byte fixture has SHA-256
+`b3cca3ae81dfadc78d45b1f83b5bdd7a3deaff1d42624e12c2a610bdb3f222a9`
+and returns `42`; malformed selectors, shapes, widths, overflow, division by
+zero, and invalid shifts fail at their named boundaries.
+
+The rune checkpoint appends lexer token `Runeˉliteral = 98`, body expression
+kind `Rune = 14`, internal shape `16`, and WVIR operations `148` through `150`.
+A literal holds exactly one direct strict-UTF-8 scalar, admitted simple escape,
+or braced Unicode escape. Empty, multiple, unterminated, unsupported, surrogate,
+and above-`10FFFF` forms reject compilation. There is no numeric, text, locale,
+or normalization conversion.
+
+WVB 1.13 adds tag `17` and opcode `C1` for an exact scalar constant, equality,
+and inequality. The compiler chooses 1.13 only when rune evidence exists, while
+unaffected 1.11 and fixed-only 1.12 output remains stable. The verifier rejects
+version downgrade, unknown selectors/envelopes, non-scalars, shape mismatch, and
+truncation. The shared interpreter executes the family through a focused core;
+the reconstructed native runner executes the actual compiler-produced module and
+returns `42`.
+
+`Tests/Fixtures/Language-1.0/Rune-Program.wv` compiles twice to the same
+1,148-byte WVB 1.13 module with SHA-256
+`116ff74b5b9c18a76af21785b7aa9017fe4f0c4ff73fa363dfa72898cf9d3dde`.
+It covers ASCII, Japanese, emoji, all admitted simple escapes, braced escapes,
+typed constants, parameters, locals, results, equality, and inequality.
+
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports twenty-two declared cases. Its
+The cross-host `language-1-front-door` owner reports 64 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
-construct the changed compiler through the shared segmented backend, compile the
-minimal edition-1 program twice through the exact lock/profile inputs, require byte
-identity and result `42`, compile the unit-control and record-update programs twice,
-execute the record update with result `42`, and exercise their seven specific
-rejection boundaries plus the prior profile and edition rejections. The report
-separately states its 33 descriptor assertions, four profile-admission outcomes,
-23 value-front-end assertions, and seventeen compiler
-outcomes rather than presenting those nested assertions as extra owners.
+construct the changed compiler through the shared segmented backend, and retain
+the minimum, unit, record-update, and 22-case fixed-integer evidence. Its 20 rune
+cases compile the valid program twice, compare diagnostics and bytes, reject eight
+source forms, admit the canonical module, reject six byte-level corruptions, and
+execute both the reconstructed shared runner and focused runtime core. The
+report keeps nested assertions separate from the top-level owner count.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
 compiler boundaries map to this owner. Compiler WVB/image construction and
@@ -301,10 +333,11 @@ performance or Language 1.0 conformance is claimed.
 
 Migration Slice 1 is complete: source-profile locks and composite profiles are
 explicit Project 3/build inputs, their pinned chain controls English token
-resolution, and Project 2 remains stable. Slice 2 has begun with primitive
+resolution, and Project 2 remains stable. Slice 2 now includes primitive
 front-end identities, edition separation, storage-free unit return/control
-lowering, and named record update over the retained nominal record representation.
-Its completion gate remains exact scalar/rune and unit execution,
-`never`, multi-field variant/destructuring, and value-producing
+lowering, named record update, fixed-width integer execution, and exact rune
+execution over one compiler architecture. Its completion gate remains
+`f32`/`f64`, complete unit execution, `never`, multi-field variant/destructuring,
+and value-producing
 control flow over this same compiler architecture. Seed stays on that architecture
 until its named removal checkpoint.

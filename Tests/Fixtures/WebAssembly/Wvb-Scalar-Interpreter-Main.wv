@@ -4,6 +4,7 @@ import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore as Runes;
 
 data Stackˉeffects: bytes = [
     0, 4, 4, 12, 4, 1, 4, 5, 4, 4, 12, 5, 15, 6, 6, 6,
@@ -3057,6 +3058,29 @@ export fn Main(Request: bytes) -> bytes {
             Stackˉproduced = true;
             Aggregateˉinstructions = Aggregateˉinstructions +
                 (Fixedˉmetadata >> 2u32);
+            Mainˉfound = true;
+        }
+
+        if Payloadˉlength == 193u32 {
+            let Runeˉexecutionˉresult: bytes = Runes.Executeˉrune(
+                    Module, Payload, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
+                );
+            if Bytesˉlength(Runeˉexecutionˉresult) < 5u32 { return Invalid; }
+            let Runeˉmetadata: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Runeˉexecutionˉresult, 0u32)
+            );
+            Sectionˉkind = Bytesˉreadˉu32ˉlittle(
+                Runeˉexecutionˉresult, 1u32
+            );
+            Stack = Bytesˉslice(
+                Runeˉexecutionˉresult,
+                5u32,
+                Bytesˉlength(Runeˉexecutionˉresult) - 5u32
+            );
+            Stackˉconsumed = Runeˉmetadata & 3u32;
+            Stackˉproduced = true;
+            Aggregateˉinstructions = Aggregateˉinstructions +
+                (Runeˉmetadata >> 2u32);
             Mainˉfound = true;
         }
 

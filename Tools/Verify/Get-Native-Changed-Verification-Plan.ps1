@@ -1105,7 +1105,8 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Verify-Language-1.0-Migration-Fixtures',
-        'Verify-Language-1.0-Fixed-Integers'
+        'Verify-Language-1.0-Fixed-Integers',
+        'Verify-Language-1.0-Runes'
     )) {
         Add-Suite 'language-1-front-door'
         return
@@ -3365,7 +3366,10 @@ foreach ($Path in $Paths) {
         Add-Suite 'libraries'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {
         Add-Suite 'wvb-to-wvo-reconstruction'
-    } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj') {
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Wvb-Rune-Runtime.wvproj'
+    )) {
         Add-Suite 'language-1-front-door'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj'

@@ -21,6 +21,10 @@ cleanup() {
                 rm -f -- "$work/Fixed-Integer-Malformed"/*
                 rmdir -- "$work/Fixed-Integer-Malformed"
             fi
+            if [[ -d $work/Rune-Malformed ]]; then
+                rm -f -- "$work/Rune-Malformed"/*
+                rmdir -- "$work/Rune-Malformed"
+            fi
             rm -f -- "$work"/*
             rmdir -- "$work"
             ;;
@@ -32,11 +36,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/5'
+echo 'START language 1 front door phase=frozen-fixtures item=1/6'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/5'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/6'
 
-echo 'START language 1 front door phase=descriptor item=2/5'
+echo 'START language 1 front door phase=descriptor item=2/6'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -49,9 +53,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/5'
+echo 'PASS  language 1 front door phase=descriptor item=2/6'
 
-echo 'START language 1 front door phase=value-front-end item=3/5'
+echo 'START language 1 front door phase=value-front-end item=3/6'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -60,9 +64,9 @@ echo 'START language 1 front door phase=value-front-end item=3/5'
 [[ ! -s $work/Value-Front-End.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
 cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
-echo 'PASS  language 1 front door phase=value-front-end item=3/5'
+echo 'PASS  language 1 front door phase=value-front-end item=3/6'
 
-echo 'START language 1 front door phase=compiler-slice item=4/5'
+echo 'START language 1 front door phase=compiler-slice item=4/6'
 segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
     "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
     "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
@@ -207,9 +211,9 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/5'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/6'
 
-echo 'START language 1 front door phase=fixed-integers item=5/5'
+echo 'START language 1 front door phase=fixed-integers item=5/6'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -307,5 +311,68 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
     "$(wc -c < "$work/Fixed-Integer-A.wvb")"
-echo 'PASS  language 1 front door phase=fixed-integers item=5/5'
-echo 'native language 1 front door status=Passed cases=44 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335'
+echo 'PASS  language 1 front door phase=fixed-integers item=5/6'
+
+echo 'START language 1 front door phase=runes item=6/6'
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
+    "$work/Rune-A.wvb" \
+    >"$work/Rune-A.out" 2>"$work/Rune-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
+    "$work/Rune-B.wvb" \
+    >"$work/Rune-B.out" 2>"$work/Rune-B.err" || exit $?
+[[ ! -s $work/Rune-A.err && ! -s $work/Rune-B.err ]] || exit 1
+cmp -s -- "$work/Rune-A.out" "$work/Rune-B.out" || exit 1
+cmp -s -- "$work/Rune-A.wvb" "$work/Rune-B.wvb" || exit 1
+
+for name in Empty Multiple Surrogate Out-Of-Range Invalid-Escape Unterminated Type-Mismatch Invalid-Operator; do
+    expect_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Rune-$name.wv" \
+        "$work/Rune-$name.wvb" || exit 1
+done
+
+"$work/Verifier.elf" "$work/Rune-A.wvb" \
+    >"$work/Verify-Rune.out" 2>"$work/Verify-Rune.err" || exit $?
+grep -Fq 'wvb status=Valid profile=compiler-aligned' \
+    "$work/Verify-Rune.out" || exit 1
+node "$script_directory/Verify-Language-1.0-Runes.mjs" \
+    "$work/Verifier.elf" "$work/Rune-A.wvb" \
+    "$work/Rune-Malformed" || exit $?
+
+"$script_directory/Run-Wvb.sh" "$work/Rune-A.wvb" \
+    >"$work/Rune-Run.out" 2>"$work/Rune-Run.err" || exit $?
+[[ ! -s $work/Rune-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Rune.out"
+cmp -s -- "$work/Expected-Rune.out" "$work/Rune-Run.out" || exit 1
+
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-Rune-Runtime.wvproj" \
+    "$work/Rune-Runtime.wvb" >/dev/null || exit $?
+"$script_directory/Lower-Wvb-To-Wvo.sh" \
+    "$work/Rune-Runtime.wvb" "$work/Rune-Runtime.wvo" \
+    >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$work/Rune-Runtime.wvo" \
+    >/dev/null || exit $?
+"$script_directory/Link-Wvo.sh" 1048576 Main \
+    "$work/Rune-Runtime.bin" "$work/Rune-Runtime.wvo" \
+    >"$work/Rune-Runtime.wvmap" || exit $?
+runtime_address=$(sed -n \
+    's/^entry name=Main address=\([0-9][0-9]*\)$/\1/p' \
+    "$work/Rune-Runtime.wvmap")
+[[ $runtime_address =~ ^[0-9]+$ && $runtime_address -ge 1048576 ]] || exit 1
+runtime_entry=$((runtime_address - 1048576))
+"$script_directory/Package-Console.sh" linux-x64-console-v1 \
+    "$work/Rune-Runtime.bin" "$runtime_entry" \
+    "$work/Rune-Runtime.elf" >/dev/null || exit $?
+"$work/Rune-Runtime.elf"
+runtime_result=$?
+[[ $runtime_result -eq 42 ]] || exit 1
+rune_wvb_bytes=$(wc -c < "$work/Rune-A.wvb")
+printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
+echo 'PASS  language 1 front door phase=runes item=6/6'
+printf 'native language 1 front door status=Passed cases=64 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s\n' "$rune_wvb_bytes"
