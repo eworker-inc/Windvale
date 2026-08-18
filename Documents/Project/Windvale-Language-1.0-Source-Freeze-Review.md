@@ -2,13 +2,14 @@
 
 ## Owner decision status
 
-The replacement Language 1.0 design candidate is complete but not frozen or
-implemented. [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md)
+The exact replacement Language 1.0 source design is frozen by
+[Decision 0767](../Decisions/0767-Freeze-Windvale-Language-1.0-Source.md). It is
+not implemented. [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md)
 accepts the original eleven-workload reconciliation, and
 [Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
 accepts the five localized-source workloads and their complete-suite
-reconciliation. A separate source-freeze decision must cite the exact
-replacement manifest before migration implementation begins.
+reconciliation. Decision 0767 cites the exact replacement manifest and
+authorizes ordered migration implementation.
 
 The earlier pre-localization candidate remains immutable historical evidence in
 [`Windvale-Language-1.0-Source-Freeze-Candidate.txt`](Windvale-Language-1.0-Source-Freeze-Candidate.txt):
@@ -113,7 +114,7 @@ Decision 0766 adds these replacement corrections:
 | Unicode and multilingual security | Workload 4: 32 accepted, 46 rejected, exact Unicode-17 validation, and multilingual source. | Passed on paper |
 | Shipment, cache, cross-host, and performance | Workload 5: 34 accepted, 42 rejected, exact 12,288-byte fixture inventory, and qualification protocol. | Passed on paper |
 | Compiler/library/runtime/tool ownership | Migration responsibility matrix plus workload implementation-responsibility records. | Passed on paper |
-| Canonical identity | Replacement exact manifest over all selected normative and evidence inputs. | Ready for explicit freeze decision |
+| Canonical identity | Replacement exact manifest over all selected normative and evidence inputs, promoted by Decision 0767. | Frozen source design |
 | Current implementation conformance | Deliberately assigned to migration and qualification; Seed remains implemented. | Not claimed |
 
 ## Native-language review boundary
@@ -155,21 +156,17 @@ Each remains a separately versioned implementation, library, provider, package,
 tooling, or later-edition decision. None may silently redefine edition-1
 semantics.
 
-## Replacement approval path
+## Implementation path after freeze
 
-The preserved pre-localization manifest must not be frozen. The explicit
-replacement source-freeze decision should:
+Decision 0767 completes the replacement approval path. Migration now proceeds
+through Slice 0 and the ordered vertical slices while:
 
-1. cite the replacement manifest's exact byte length and SHA-256;
-2. change only that replacement suite's status to frozen Language 1.0;
-3. authorize migration slice 0 and then the ordered vertical implementation
-   slices;
-4. preserve Seed as the only implemented contract until each migration gate
-   passes;
-5. keep `zh-Hans@1` draft until its language-specific promotion evidence exists;
-   and
-6. require any later semantic change to use a named decision and new exact
-   identity.
+1. Seed remains the implemented contract until each replacement gate passes;
+2. paper cases become executable parser, semantic, ownership, failure, editor,
+   cross-host, and performance fixtures;
+3. `zh-Hans@1` remains draft until its independent language-specific promotion
+   evidence exists; and
+4. any semantic change uses a named decision and new exact identity.
 
-Until that approval, the replacement suite is complete candidate design, not an
-implemented or compatibility-promised language.
+The source design is frozen. Complete implementation and conformance remain
+future earned states.

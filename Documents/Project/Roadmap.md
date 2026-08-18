@@ -90,7 +90,10 @@ records 250 identity inputs and aggregate SHA-256
 The `zh-Hans@1` terminology remains an honest draft pending native and executable
 qualification; that blocks official Chinese shipment, not the generic design
 identity. Source implementation begins only after the separate named replacement
-source-freeze decision.
+source-freeze decision. [Decision 0767](../Decisions/0767-Freeze-Windvale-Language-1.0-Source.md)
+now freezes that exact identity and authorizes Migration Slice 0. Seed remains
+the implemented language until focused executable gates advance each edition-1
+slice; the draft Chinese pack retains its independent qualification path.
 
 ## How to read this roadmap
 
