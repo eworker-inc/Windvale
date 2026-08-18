@@ -46,6 +46,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     Namedˉrecord = 10;
     Builder = 11;
     Unit = 12;
+    Recordˉupdate = 13;
 }
 
 export record Compilerˉsourceˉposition {
@@ -701,6 +702,159 @@ export fn Compilerˉbodyˉisˉassignmentˉoperator(Kind: Sourceˉlexer.Compiler�
     return false;
 }
 
+fn Compilerˉbodyˉparseˉrecordˉfields(
+    Input: bytes,
+    Endˉoffset: u32,
+    Nesting: u32,
+    Name: Compilerˉsourceˉnameˉview,
+    Left: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Kind: Compilerˉsourceˉexpressionˉkind,
+    Baseˉoffset: u32,
+    Baseˉlength: u32,
+    Baseˉnodes: u32,
+    Baseˉdepth: u32,
+    Line: u32,
+    Column: u32
+) -> Compilerˉsourceˉexpression {
+    var Recordˉcursor: u32 = Left.Nextˉoffset;
+    var Recordˉline: u32 = Left.Nextˉline;
+    var Recordˉcolumn: u32 = Left.Nextˉcolumn;
+    let Firstˉfield: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+        Input, Recordˉcursor, Recordˉline, Recordˉcolumn, Endˉoffset
+    );
+    var Recordˉitemsˉoffset: u32 = Firstˉfield.Offset;
+    var Recordˉitemsˉend: u32 = Firstˉfield.Offset;
+    var Recordˉitems: u32 = 0u32;
+    var Recordˉnodes: u32 = 1u32 + Baseˉnodes;
+    var Recordˉdepth: u32 = 1u32;
+    if Baseˉnodes > 0u32 {
+        Recordˉdepth = Compilerˉbodyˉmaximum(
+            Recordˉdepth, Baseˉdepth + 1u32
+        );
+    }
+    if Recordˉdepth > 64u32 {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
+            Left,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    if Recordˉnodes > 4096u32 {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Itemˉlimit,
+            Left,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    var Recordˉreading: bool = true;
+    while Recordˉreading {
+        let Field: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Recordˉcursor, Recordˉline, Recordˉcolumn, Endˉoffset
+        );
+        if Field.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace {
+            Recordˉreading = false;
+            let Recordˉend: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+                Input, Recordˉcursor, Recordˉline, Recordˉcolumn,
+                Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            );
+            if Recordˉend.Status != Compilerˉbodyˉparseˉstatus.Valid {
+                return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Recordˉend);
+            }
+            return Compilerˉbodyˉexpressionˉmake(
+                Kind,
+                Sourceˉlexer.Compilerˉtokenˉkind.End,
+                Name.Offset,
+                Recordˉend.Nextˉoffset,
+                Line,
+                Column,
+                Name.Offset,
+                Name.Length,
+                Baseˉoffset,
+                Baseˉlength,
+                Name.Offset,
+                0u32,
+                Recordˉitemsˉoffset,
+                Recordˉitemsˉend,
+                Recordˉitems,
+                Sourceˉlexer.Compilerˉnumericˉkind.None,
+                0u32,
+                false,
+                Recordˉend.Nextˉoffset,
+                Recordˉend.Nextˉline,
+                Recordˉend.Nextˉcolumn,
+                Recordˉnodes,
+                Recordˉdepth
+            );
+        }
+        if Recordˉitems >= 64u32 {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Itemˉlimit,
+                Field,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            );
+        }
+        let Afterˉfield: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+            Input, Recordˉcursor, Recordˉline, Recordˉcolumn,
+            Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+        );
+        if Afterˉfield.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Afterˉfield);
+        }
+        let Afterˉcolon: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+            Input, Afterˉfield.Nextˉoffset, Afterˉfield.Nextˉline,
+            Afterˉfield.Nextˉcolumn, Endˉoffset,
+            Sourceˉlexer.Compilerˉtokenˉkind.Colon
+        );
+        if Afterˉcolon.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Afterˉcolon);
+        }
+        let Fieldˉvalue: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(
+            Input, Afterˉcolon.Nextˉoffset, Afterˉcolon.Nextˉline,
+            Afterˉcolon.Nextˉcolumn, Endˉoffset, 0u32, Nesting + 1u32
+        );
+        if Fieldˉvalue.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Fieldˉvalue;
+        }
+        Recordˉitemsˉend = Fieldˉvalue.Offset + Fieldˉvalue.Length;
+        Recordˉitems = Recordˉitems + 1u32;
+        Recordˉnodes = Recordˉnodes + Fieldˉvalue.Nodes;
+        Recordˉdepth = Compilerˉbodyˉmaximum(
+            Recordˉdepth, Fieldˉvalue.Depth + 1u32
+        );
+        if Recordˉnodes > 4096u32 {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Itemˉlimit,
+                Field,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            );
+        }
+        Recordˉcursor = Fieldˉvalue.Nextˉoffset;
+        Recordˉline = Fieldˉvalue.Nextˉline;
+        Recordˉcolumn = Fieldˉvalue.Nextˉcolumn;
+        let Recordˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Recordˉcursor, Recordˉline, Recordˉcolumn, Endˉoffset
+        );
+        if Recordˉseparator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            Recordˉcursor = Recordˉseparator.Nextˉoffset;
+            Recordˉline = Recordˉseparator.Nextˉline;
+            Recordˉcolumn = Recordˉseparator.Nextˉcolumn;
+        } else {
+            if Recordˉseparator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace {
+                return Compilerˉbodyˉexpressionˉfailure(
+                    Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                    Recordˉseparator,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+                );
+            }
+        }
+    }
+    return Compilerˉbodyˉexpressionˉfailure(
+        Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+        Firstˉfield,
+        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+    );
+}
+
 export fn Compilerˉbodyˉparseˉprimary(
     Input: bytes,
     Offset: u32,
@@ -823,6 +977,101 @@ export fn Compilerˉbodyˉparseˉprimary(
         );
     }
     let Postfix: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(Input, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn, Endˉoffset);
+    if Postfix.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Base {
+        if Nesting >= 64u32 {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
+                Postfix,
+                Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
+            );
+        }
+        var Searchˉcursor: u32 = Postfix.Nextˉoffset;
+        var Searchˉline: u32 = Postfix.Nextˉline;
+        var Searchˉcolumn: u32 = Postfix.Nextˉcolumn;
+        var Parentheses: u32 = 0u32;
+        var Brackets: u32 = 0u32;
+        var Fieldsˉleft: Sourceˉlexer.Compilerˉsourceˉtoken = Postfix;
+        var Fieldsˉfound: bool = false;
+        while !Fieldsˉfound {
+            let Candidate: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+                Input, Searchˉcursor, Searchˉline, Searchˉcolumn, Endˉoffset
+            );
+            if Candidate.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid {
+                return Compilerˉbodyˉexpressionˉfailure(
+                    Compilerˉbodyˉparseˉstatus.Lexicalˉerror,
+                    Candidate,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
+                );
+            }
+            if Candidate.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
+                return Compilerˉbodyˉexpressionˉfailure(
+                    Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                    Candidate,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
+                );
+            }
+            if Candidate.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace &&
+                Parentheses == 0u32 && Brackets == 0u32 {
+                Fieldsˉleft = Candidate;
+                Fieldsˉfound = true;
+            } else {
+                if Candidate.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
+                    Parentheses = Parentheses + 1u32;
+                }
+                if Candidate.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+                    if Parentheses > 0u32 { Parentheses = Parentheses - 1u32; }
+                }
+                if Candidate.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbracket {
+                    Brackets = Brackets + 1u32;
+                }
+                if Candidate.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket {
+                    if Brackets > 0u32 { Brackets = Brackets - 1u32; }
+                }
+                Searchˉcursor = Candidate.Nextˉoffset;
+                Searchˉline = Candidate.Nextˉline;
+                Searchˉcolumn = Candidate.Nextˉcolumn;
+            }
+        }
+        let Firstˉreplacement: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Fieldsˉleft.Nextˉoffset, Fieldsˉleft.Nextˉline,
+            Fieldsˉleft.Nextˉcolumn, Endˉoffset
+        );
+        if Firstˉreplacement.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                Firstˉreplacement,
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+            );
+        }
+        let Firstˉreplacementˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Firstˉreplacement.Nextˉoffset, Firstˉreplacement.Nextˉline,
+            Firstˉreplacement.Nextˉcolumn, Endˉoffset
+        );
+        if Firstˉreplacementˉcolon.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                Firstˉreplacementˉcolon,
+                Sourceˉlexer.Compilerˉtokenˉkind.Colon
+            );
+        }
+        let Baseˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+            Input, Name.Offset, Line, Column, Postfix.Nextˉoffset
+        );
+        let Baseˉvalue: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(
+            Input, Postfix.Nextˉoffset, Baseˉposition.Line, Baseˉposition.Column,
+            Fieldsˉleft.Offset, 0u32, Nesting + 1u32
+        );
+        if Baseˉvalue.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Baseˉvalue;
+        }
+        return Compilerˉbodyˉparseˉrecordˉfields(
+            Input, Endˉoffset, Nesting, Name, Fieldsˉleft,
+            Compilerˉsourceˉexpressionˉkind.Recordˉupdate,
+            Baseˉvalue.Offset, Baseˉvalue.Length,
+            Baseˉvalue.Nodes, Baseˉvalue.Depth,
+            Line, Column
+        );
+    }
     if Postfix.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
         let Firstˉfield: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
             Input, Postfix.Nextˉoffset, Postfix.Nextˉline, Postfix.Nextˉcolumn, Endˉoffset
@@ -840,113 +1089,12 @@ export fn Compilerˉbodyˉparseˉprimary(
                         Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
                     );
                 }
-                var Recordˉcursor: u32 = Postfix.Nextˉoffset;
-                var Recordˉline: u32 = Postfix.Nextˉline;
-                var Recordˉcolumn: u32 = Postfix.Nextˉcolumn;
-                var Recordˉitemsˉoffset: u32 = Firstˉfield.Offset;
-                var Recordˉitemsˉend: u32 = Firstˉfield.Offset;
-                var Recordˉitems: u32 = 0u32;
-                var Recordˉnodes: u32 = 1u32;
-                var Recordˉdepth: u32 = 1u32;
-                var Recordˉreading: bool = true;
-                while Recordˉreading {
-                    let Field: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
-                        Input, Recordˉcursor, Recordˉline, Recordˉcolumn, Endˉoffset
-                    );
-                    if Field.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace {
-                        Recordˉreading = false;
-                        let Recordˉend: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
-                            Input, Recordˉcursor, Recordˉline, Recordˉcolumn,
-                            Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
-                        );
-                        if Recordˉend.Status != Compilerˉbodyˉparseˉstatus.Valid {
-                            return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Recordˉend);
-                        }
-                        return Compilerˉbodyˉexpressionˉmake(
-                            Compilerˉsourceˉexpressionˉkind.Namedˉrecord,
-                            Sourceˉlexer.Compilerˉtokenˉkind.End,
-                            Name.Offset,
-                            Recordˉend.Nextˉoffset,
-                            Line,
-                            Column,
-                            Name.Offset,
-                            Name.Length,
-                            Name.Offset,
-                            0u32,
-                            Name.Offset,
-                            0u32,
-                            Recordˉitemsˉoffset,
-                            Recordˉitemsˉend,
-                            Recordˉitems,
-                            Sourceˉlexer.Compilerˉnumericˉkind.None,
-                            0u32,
-                            false,
-                            Recordˉend.Nextˉoffset,
-                            Recordˉend.Nextˉline,
-                            Recordˉend.Nextˉcolumn,
-                            Recordˉnodes,
-                            Recordˉdepth
-                        );
-                    }
-                    if Recordˉitems >= 64u32 {
-                        return Compilerˉbodyˉexpressionˉfailure(
-                            Compilerˉbodyˉparseˉstatus.Itemˉlimit,
-                            Field,
-                            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
-                        );
-                    }
-                    let Afterˉfield: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
-                        Input, Recordˉcursor, Recordˉline, Recordˉcolumn,
-                        Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Identifier
-                    );
-                    if Afterˉfield.Status != Compilerˉbodyˉparseˉstatus.Valid {
-                        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Afterˉfield);
-                    }
-                    let Afterˉcolon: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
-                        Input, Afterˉfield.Nextˉoffset, Afterˉfield.Nextˉline,
-                        Afterˉfield.Nextˉcolumn, Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Colon
-                    );
-                    if Afterˉcolon.Status != Compilerˉbodyˉparseˉstatus.Valid {
-                        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Afterˉcolon);
-                    }
-                    let Fieldˉvalue: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(
-                        Input, Afterˉcolon.Nextˉoffset, Afterˉcolon.Nextˉline,
-                        Afterˉcolon.Nextˉcolumn, Endˉoffset, 0u32, Nesting + 1u32
-                    );
-                    if Fieldˉvalue.Status != Compilerˉbodyˉparseˉstatus.Valid { return Fieldˉvalue; }
-                    Recordˉitemsˉend = Fieldˉvalue.Offset + Fieldˉvalue.Length;
-                    Recordˉitems = Recordˉitems + 1u32;
-                    Recordˉnodes = Recordˉnodes + Fieldˉvalue.Nodes;
-                    Recordˉdepth = Compilerˉbodyˉmaximum(
-                        Recordˉdepth, Fieldˉvalue.Depth + 1u32
-                    );
-                    if Recordˉnodes > 4096u32 {
-                        return Compilerˉbodyˉexpressionˉfailure(
-                            Compilerˉbodyˉparseˉstatus.Itemˉlimit,
-                            Field,
-                            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
-                        );
-                    }
-                    Recordˉcursor = Fieldˉvalue.Nextˉoffset;
-                    Recordˉline = Fieldˉvalue.Nextˉline;
-                    Recordˉcolumn = Fieldˉvalue.Nextˉcolumn;
-                    let Recordˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
-                        Input, Recordˉcursor, Recordˉline, Recordˉcolumn, Endˉoffset
-                    );
-                    if Recordˉseparator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-                        Recordˉcursor = Recordˉseparator.Nextˉoffset;
-                        Recordˉline = Recordˉseparator.Nextˉline;
-                        Recordˉcolumn = Recordˉseparator.Nextˉcolumn;
-                    } else {
-                        if Recordˉseparator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace {
-                            return Compilerˉbodyˉexpressionˉfailure(
-                                Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
-                                Recordˉseparator,
-                                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
-                            );
-                        }
-                    }
-                }
+                return Compilerˉbodyˉparseˉrecordˉfields(
+                    Input, Endˉoffset, Nesting, Name, Postfix,
+                    Compilerˉsourceˉexpressionˉkind.Namedˉrecord,
+                    Name.Offset, 0u32, 0u32, 0u32,
+                    Line, Column
+                );
             }
         }
     }

@@ -78,6 +78,15 @@ WVB runner does not yet admit return type byte zero, so this checkpoint makes no
 unit-execution claim; its ordinary executable sentinel remains the 221-byte
 `Main() -> i32` program.
 
+The next Slice 2 checkpoint admits Language 1.0 named record update without a
+format change. Typed WIR has already evaluated one exact-nominal base and every
+replacement in source order, filled unreplaced declaration-order operands through
+existing record-field operations, and emitted the existing record-construction
+operation. The backend therefore sees only retained WVB 1.11 record instructions.
+The deterministic 1,116-byte `Record-Update.wv` artifact executes through the
+ordinary scalar runner and returns `42`; wrong-nominal bases, duplicate or unknown
+replacement fields, and descriptorless Seed use are rejected without output.
+
 ## Portable in-memory adapter
 
 `Compiler/Windvale/Source-Wvb-Memory-Adapter.wv` is the capability-free execution adapter for hosts that already own immutable source bytes, including the browser playground. Its exported contract is:

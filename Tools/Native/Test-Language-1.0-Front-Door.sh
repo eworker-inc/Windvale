@@ -104,6 +104,30 @@ cmp -s -- "$work/Unit-A.out" "$work/Unit-B.out" || exit 1
 cmp -s -- "$work/Unit-A.wvb" "$work/Unit-B.wvb" || exit 1
 cat -- "$work/Unit-A.out"
 printf 'INFO  language 1 unit wvb-bytes=%s\n' "$(wc -c < "$work/Unit-A.wvb")"
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
+    "$work/Record-Update-A.wvb" \
+    >"$work/Record-Update-A.out" 2>"$work/Record-Update-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
+    "$work/Record-Update-B.wvb" \
+    >"$work/Record-Update-B.out" 2>"$work/Record-Update-B.err" || exit $?
+[[ ! -s $work/Record-Update-A.err && ! -s $work/Record-Update-B.err ]] || exit 1
+cmp -s -- "$work/Record-Update-A.out" "$work/Record-Update-B.out" || exit 1
+cmp -s -- "$work/Record-Update-A.wvb" "$work/Record-Update-B.wvb" || exit 1
+cat -- "$work/Record-Update-A.out"
+printf 'INFO  language 1 record-update wvb-bytes=%s\n' \
+    "$(wc -c < "$work/Record-Update-A.wvb")"
+"$script_directory/Run-Wvb.sh" "$work/Record-Update-A.wvb" \
+    >"$work/Record-Update.out" 2>"$work/Record-Update.err" || exit $?
+[[ ! -s $work/Record-Update.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Record-Update.out"
+cmp -s -- "$work/Expected-Record-Update.out" \
+    "$work/Record-Update.out" || exit 1
 expect_rejection() {
     local source=$1 output=$2
     expect_rejection_with_digest "$source" "$output" "$source_lock_hash" "$source_profile"
@@ -131,6 +155,22 @@ if "$work/Compiler.elf" \
     exit 1
 fi
 [[ ! -e $work/Seed-Unit.wvb ]] || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Record-Update-Wrong-Base.wv" \
+    "$work/Record-Update-Wrong-Base.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Record-Update-Duplicate-Field.wv" \
+    "$work/Record-Update-Duplicate-Field.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Record-Update-Unknown-Field.wv" \
+    "$work/Record-Update-Unknown-Field.wvb" || exit 1
+if "$work/Compiler.elf" \
+    "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Record-Update.wv" \
+    "$work/Seed-Record-Update.wvb" \
+    >"$work/Seed-Record-Update.out" 2>"$work/Seed-Record-Update.err"; then
+    exit 1
+fi
+[[ ! -e $work/Seed-Record-Update.wvb ]] || exit 1
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv" \
     "$work/Unsupported.wvb" || exit 1
@@ -164,4 +204,4 @@ printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
 echo 'PASS  language 1 front door phase=compiler-slice item=4/4'
-echo 'native language 1 front door status=Passed cases=17 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=12 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356'
+echo 'native language 1 front door status=Passed cases=22 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116'

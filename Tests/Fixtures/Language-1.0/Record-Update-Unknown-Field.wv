@@ -1,0 +1,21 @@
+#!wv/1 en@1
+module RecordˉUpdateˉUnknownˉField;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+record Deliveryˉpolicy {
+    Fee: i32;
+    Active: bool;
+}
+
+export fn Main() -> i32 {
+    let Original = Deliveryˉpolicy {
+        Fee: 9,
+        Active: true,
+    };
+    let Invalid = Deliveryˉpolicy base Original {
+        Missing: 1,
+    };
+    return Invalid.Fee;
+}

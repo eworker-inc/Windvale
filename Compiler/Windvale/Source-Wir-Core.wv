@@ -43,6 +43,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Invalidˉbuilder = 31;
     Invalidˉtry = 32;
     Invalidˉunit = 33;
+    Invalidˉrecordˉupdate = 34;
 }
 
 enum Compilerˉsourceˉwirˉoperation {
@@ -2326,6 +2327,21 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
+    let Isˉupdate: bool =
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Recordˉupdate;
+    if Isˉupdate {
+        let Updateˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                Input, Scan, Build.Currentˉmodule
+            );
+        if Updateˉview.Edition != 1u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉupdate,
+                Build.Currentˉmodule,
+                Expression.Offset, Expression.Line, Expression.Column
+            );
+        }
+    }
     let Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉcallable(
         Input, Scan, Symbols, Build.Currentˉmodule, Source,
         Expression.Valueˉoffset, Expression.Valueˉlength
@@ -2374,6 +2390,39 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
     }
     var Seen: bytes = Seenˉresult.Value;
     var Result: Compilerˉsourceˉwirˉbuild = Build;
+    var Baseˉtemporary: u32 = Compilerˉsourceˉwirˉsentinel();
+    if Isˉupdate {
+        let Baseˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line, Expression.Column,
+                Expression.Firstˉoffset
+            );
+        let Baseˉvalue: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉcompileˉexpression(
+                Input, Scan, Symbols,
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source,
+                Expression.Firstˉoffset, Baseˉposition.Line,
+                Baseˉposition.Column,
+                Expression.Firstˉoffset + Expression.Firstˉlength,
+                Result
+            );
+        if Baseˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
+            return Baseˉvalue;
+        }
+        if Baseˉvalue.Shape != Signature.Returnˉshape {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Baseˉvalue),
+                Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉupdate,
+                Callable.Module,
+                Expression.Firstˉoffset,
+                Baseˉposition.Line,
+                Baseˉposition.Column
+            );
+        }
+        Baseˉtemporary = Baseˉvalue.Temporary;
+        Result = Compilerˉsourceˉwirˉvalueˉbuild(Baseˉvalue);
+    }
     var Cursor: u32 = Expression.Itemsˉoffset;
     var Currentˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
         Source, Expression.Offset, Expression.Line, Expression.Column,
@@ -2469,11 +2518,46 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
     var Missing: u32 = 0u32;
     while Missing < Callable.Items {
         if Bytesˉreadˉu8(Seen, Missing) == 0u8 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Result, Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield,
-                Callable.Module,
-                Expression.Offset, Expression.Line, Expression.Column
-            );
+            if !Isˉupdate {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Result, Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield,
+                    Callable.Module,
+                    Expression.Offset, Expression.Line, Expression.Column
+                );
+            }
+            let Preservedˉsignature: Compilerˉsourceˉwirˉsignature =
+                Compilerˉsourceˉwirˉrecordˉsignature(
+                    Input, Scan, Symbols, Callable, Missing
+                );
+            let Preserved: Compilerˉsourceˉwirˉvalue =
+                Compilerˉsourceˉwirˉemit(
+                    Result,
+                    Compilerˉsourceˉwirˉoperation.Recordˉfield,
+                    Preservedˉsignature.Parameterˉshape,
+                    Compilerˉsourceˉwirˉoneˉoperand(Baseˉtemporary),
+                    Signature.Target,
+                    Missing,
+                    Expression.Firstˉoffset,
+                    Expression.Firstˉlength
+                );
+            if Preserved.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                return Preserved;
+            }
+            let Preservedˉoperands: Byteˉconstruction.Foundationˉbytesˉresult =
+                Byteˉconstruction.Foundationˉbytesˉreplace(
+                    Recordˉoperands, Missing * 4u32, 4u32,
+                    Bytesˉfromˉu32ˉlittle(Preserved.Temporary)
+                );
+            if !Preservedˉoperands.Valid {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Preserved),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
+                    Callable.Module,
+                    Expression.Offset, Expression.Line, Expression.Column
+                );
+            }
+            Recordˉoperands = Preservedˉoperands.Value;
+            Result = Compilerˉsourceˉwirˉvalueˉbuild(Preserved);
         }
         Missing = Missing + 1u32;
     }
@@ -2932,7 +3016,8 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             Expression.Offset, Expression.Length
         );
     }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Namedˉrecord {
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Namedˉrecord ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Recordˉupdate {
         return Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
             Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
             Source, Expression, Build

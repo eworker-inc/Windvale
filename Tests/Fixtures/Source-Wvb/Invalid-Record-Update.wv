@@ -1,0 +1,15 @@
+module InvalidˉRecordˉUpdate profile portable;
+
+record Deliveryˉpolicy {
+    Fee: i32;
+}
+
+export fn Main() -> i32 {
+    let Original = Deliveryˉpolicy {
+        Fee: 9,
+    };
+    let Invalid = Deliveryˉpolicy base Original {
+        Fee: 0,
+    };
+    return Invalid.Fee;
+}

@@ -25,9 +25,12 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   compiler rejects Seed-only `void` without publishing output. The next bounded
   checkpoint parses `()` and implements storage-free `unit` returns, fallthrough,
   and unit-returning calls through typed WIR and deterministic WVB while rejecting
-  cross-edition or mismatched returns. Scalar unit execution, `never`, the remaining
-  numeric/rune values, named update, destructuring, and value-producing control
-  flow remain explicitly pending.
+  cross-edition or mismatched returns. Named record update now evaluates one exact
+  nominal base and source-ordered replacements, preserves other fields through the
+  existing record operations, deterministically emits a 1,116-byte executable WVB,
+  and rejects wrong bases, duplicate/unknown fields, and Seed use. Scalar unit
+  execution, `never`, the remaining numeric/rune values, destructuring, and
+  value-producing control flow remain explicitly pending.
 - Replaced the full database-storage proxy for ordinary source-compiler changes
   with a focused five-case sentinel that rebuilds the changed compiler, proves
   deterministic four-function WVB output, independently verifies it, and executes

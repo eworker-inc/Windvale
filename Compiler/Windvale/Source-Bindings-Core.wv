@@ -1677,8 +1677,24 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
         if Index.Status != Compilerˉsourceˉbindingˉstatus.Valid { return Index; }
         return Compilerˉsourceˉbindingsˉbodyˉcounts(Index.Reads + 1u32, Index.Assignments, Index.Calls);
     }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Namedˉrecord {
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Namedˉrecord ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Recordˉupdate {
         var Fields: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbodyˉempty();
+        if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Recordˉupdate {
+            let Baseˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line, Expression.Column,
+                Expression.Firstˉoffset
+            );
+            Fields = Compilerˉsourceˉbindingsˉbindˉexpression(
+                Input, Scan, Symbols, Payload, Bindingˉfirst, Bindingˉentries,
+                Module, Function, Source,
+                Expression.Firstˉoffset, Baseˉposition.Line, Baseˉposition.Column,
+                Expression.Firstˉoffset + Expression.Firstˉlength
+            );
+            if Fields.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+                return Fields;
+            }
+        }
         var Fieldˉcursor: u32 = Expression.Itemsˉoffset;
         var Fieldˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
             Source, Expression.Offset, Expression.Line, Expression.Column,

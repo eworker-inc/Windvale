@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉbindings` is the portable body-binding phase introduced and cross-host qualified under Decision 0034. The later WVIR integration adds prepared-symbol and local-only entry points while preserving the qualified full-binding and WVLB contracts. It consumes one complete, valid, acyclic WVSS 1 graph; reuses WVSD 1 declaration evidence; binds function parameters, locals, data reads, assignments, positional and named record construction, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
+`Compilerˉsourceˉbindings` is the portable body-binding phase introduced and cross-host qualified under Decision 0034. The later WVIR integration adds prepared-symbol and local-only entry points while preserving the qualified full-binding and WVLB contracts. It consumes one complete, valid, acyclic WVSS 1 graph; reuses WVSD 1 declaration evidence; binds function parameters, locals, data reads, assignments, positional and named record construction and update, functions, capabilities, and Foundation intrinsics; and publishes independently validated local-binding evidence.
 
 Complete expression types, field ownership, operator/result types, return proof, and WIR construction now belong to `Compilerˉsourceˉwir`; this phase remains the owner of binding identity and diagnostic precedence. It does not emit WVB.
 
@@ -89,7 +89,7 @@ The Language 1.0 unit literal `()` is a leaf with no name, call, local, or
 runtime-storage binding evidence. Its edition and result-shape rules remain typed
 WVIR responsibilities.
 
-A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. Field existence, uniqueness, completeness, exact value types, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
+A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. A Language 1.0 record update binds its base once, then its replacement values left to right, before applying the same target-resolution and constructor-call evidence. Field existence, uniqueness, completeness or preservation, exact base/value types, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
 
 ## WVLB 1.1 binding directory
 

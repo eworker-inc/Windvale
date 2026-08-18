@@ -1,0 +1,37 @@
+#!wv/1 en@1
+module RecordˉUpdate;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+record Deliveryˉpolicy {
+    Fee: i32;
+    Days: u32;
+    Active: bool;
+}
+
+export fn Main() -> i32 {
+    let Original = Deliveryˉpolicy {
+        Fee: 9,
+        Days: 5u32,
+        Active: true,
+    };
+    let Updated = Deliveryˉpolicy base Original {
+        Days: 2u32,
+        Fee: 0,
+    };
+    let Nested = Deliveryˉpolicy base (Deliveryˉpolicy {
+        Fee: 3,
+        Days: 7u32,
+        Active: true,
+    }) {
+        Active: false,
+    };
+    if Updated.Fee != 0 { return 1; }
+    if Updated.Days != 2u32 { return 2; }
+    if !Updated.Active { return 3; }
+    if Nested.Fee != 3 { return 4; }
+    if Nested.Days != 7u32 { return 5; }
+    if Nested.Active { return 6; }
+    return 42;
+}

@@ -121,6 +121,35 @@ fc /b "%Work%\Unit-A.out" "%Work%\Unit-B.out" >nul || goto :cleanup
 fc /b "%Work%\Unit-A.wvb" "%Work%\Unit-B.wvb" >nul || goto :cleanup
 type "%Work%\Unit-A.out"
 for %%F in ("%Work%\Unit-A.wvb") do echo INFO  language 1 unit wvb-bytes=%%~zF
+set "FailureStep=compiler-record-update-a"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update.wv" ^
+    "%Work%\Record-Update-A.wvb" >"%Work%\Record-Update-A.out" 2>"%Work%\Record-Update-A.err" || goto :cleanup
+set "FailureStep=compiler-record-update-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update.wv" ^
+    "%Work%\Record-Update-B.wvb" >"%Work%\Record-Update-B.out" 2>"%Work%\Record-Update-B.err" || goto :cleanup
+for %%F in ("%Work%\Record-Update-A.err" "%Work%\Record-Update-B.err") do if not "%%~zF"=="0" goto :cleanup
+set "FailureStep=compiler-record-update-determinism"
+fc /b "%Work%\Record-Update-A.out" "%Work%\Record-Update-B.out" >nul || goto :cleanup
+fc /b "%Work%\Record-Update-A.wvb" "%Work%\Record-Update-B.wvb" >nul || goto :cleanup
+type "%Work%\Record-Update-A.out"
+for %%F in ("%Work%\Record-Update-A.wvb") do echo INFO  language 1 record-update wvb-bytes=%%~zF
+set "FailureStep=compiler-record-update-execution"
+call "%Native%\Run-Wvb.cmd" "%Work%\Record-Update-A.wvb" >"%Work%\Record-Update.out" 2>"%Work%\Record-Update.err" || goto :cleanup
+for %%F in ("%Work%\Record-Update.err") do if not "%%~zF"=="0" goto :cleanup
+set "RecordUpdateLine="
+set /a RecordUpdateLines=0
+for /f "usebackq delims=" %%L in ("%Work%\Record-Update.out") do (
+    set "RecordUpdateLine=%%L"
+    set /a RecordUpdateLines+=1
+)
+if not "%RecordUpdateLines%"=="1" goto :cleanup
+if not "%RecordUpdateLine%"=="Result: 42" goto :cleanup
 set "FailureStep=compiler-negative-unit-return-value"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Return-Value.wv" "%Work%\Unit-Return-Value.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-nonunit-return"
@@ -131,6 +160,18 @@ set "FailureStep=compiler-negative-seed-unit"
     "%Work%\Seed-Unit.wvb" >"%Work%\Seed-Unit.out" 2>"%Work%\Seed-Unit.err"
 if not errorlevel 1 goto :cleanup
 if exist "%Work%\Seed-Unit.wvb" goto :cleanup
+set "FailureStep=compiler-negative-record-update-base"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update-Wrong-Base.wv" "%Work%\Record-Update-Wrong-Base.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-record-update-duplicate"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update-Duplicate-Field.wv" "%Work%\Record-Update-Duplicate-Field.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-record-update-unknown"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update-Unknown-Field.wv" "%Work%\Record-Update-Unknown-Field.wvb" || goto :cleanup
+set "FailureStep=compiler-negative-seed-record-update"
+"%Work%\Compiler.exe" ^
+    "%RepositoryRoot%\Tests\Fixtures\Source-Wvb\Invalid-Record-Update.wv" ^
+    "%Work%\Seed-Record-Update.wvb" >"%Work%\Seed-Record-Update.out" 2>"%Work%\Seed-Record-Update.err"
+if not errorlevel 1 goto :cleanup
+if exist "%Work%\Seed-Record-Update.wvb" goto :cleanup
 set "FailureStep=compiler-negative-unsupported-profile"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unsupported-Source-Profile.wv" "%Work%\Unsupported.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-missing-profile"
@@ -167,8 +208,15 @@ if not "%Result%"=="0" (
     if exist "%Work%\Unit-A.out" type "%Work%\Unit-A.out" >&2
     if exist "%Work%\Unit-A.err" type "%Work%\Unit-A.err" >&2
     if exist "%Work%\Unit-B.err" type "%Work%\Unit-B.err" >&2
+    if exist "%Work%\Record-Update-A.out" type "%Work%\Record-Update-A.out" >&2
+    if exist "%Work%\Record-Update-A.err" type "%Work%\Record-Update-A.err" >&2
+    if exist "%Work%\Record-Update-B.err" type "%Work%\Record-Update-B.err" >&2
+    if exist "%Work%\Record-Update.out" type "%Work%\Record-Update.out" >&2
+    if exist "%Work%\Record-Update.err" type "%Work%\Record-Update.err" >&2
     if exist "%Work%\Seed-Unit.out" type "%Work%\Seed-Unit.out" >&2
     if exist "%Work%\Seed-Unit.err" type "%Work%\Seed-Unit.err" >&2
+    if exist "%Work%\Seed-Record-Update.out" type "%Work%\Seed-Record-Update.out" >&2
+    if exist "%Work%\Seed-Record-Update.err" type "%Work%\Seed-Record-Update.err" >&2
     if exist "%Work%\Minimum.out" type "%Work%\Minimum.out" >&2
     if exist "%Work%\Minimum.err" type "%Work%\Minimum.err" >&2
     if exist "%Work%\Value-Front-End.out" type "%Work%\Value-Front-End.out" >&2
@@ -176,7 +224,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=17 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=12 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356
+echo native language 1 front door status=Passed cases=22 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116
 exit /b 0
 
 :expect_rejection

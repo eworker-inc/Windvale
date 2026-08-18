@@ -15,12 +15,12 @@ The parser recognizes:
 - `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, exhaustive `match`/`case`, narrow `try` propagation, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
 - `i32`, `i64`, `u8`, `u32`, and `u64` integer literals plus string-shape and Boolean literals;
 - the Language 1.0 empty-parentheses unit literal `()`;
-- qualified names, field access, one call or index postfix, named record literals, variant constructors, and bounded builder construction;
+- qualified names, field access, one call or index postfix, named record literals, Language 1.0 named record updates, variant constructors, and bounded builder construction;
 - unary `-`, `!`, `~`, and consuming `freeze`;
 - `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
 - nonempty parenthesized expressions without a synthetic group node.
 
-This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11` and `Unit = 12`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. Edition admission and its storage-free semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11`, `Unit = 12`, and `Recordˉupdate = 13`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. A record update retains the target name, one base-expression span, and the nonempty replacement-field interior/count. A base expression containing its own top-level brace construction is parenthesized at the current parser boundary so the replacement list remains lexically unambiguous. Edition admission, base nominal identity, field checks, and exact evaluation semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
 
 An inferred local publishes `Unknown` as its syntax type kind and zero type-span length. This is an explicit parser representation of an omitted annotation, not a semantic value shape; typed WVIR construction resolves it from the initializer. Comma-separated parameter, call-argument, positional-constructor, named-record-field, and static-data lists accept one final trailing comma under the Seed grammar. `Namedˉrecord = 10` is appended to the expression-kind contract. The named form is recognized only when a qualified name is followed by `{ Identifier :`, so an ordinary condition followed by its block remains unambiguous.
 
@@ -30,7 +30,7 @@ An inferred local publishes `Unknown` as its syntax type kind and zero type-span
 
 `Compilerˉsourceˉexpression` records the root kind/operator, whole span, literal/name/operator payload span, first and second child spans, call-argument interior/count, numeric classification plus low/high `u32` value limbs, Boolean value, next cursor, node count/tree depth, and first failure evidence.
 
-These records are flat scalar/enum data. They do not own child records or runtime handles. To traverse a child, derive its position from a known parent position with `Compilerˉbodyˉpositionˉbetween`, then parse the bounded child span. Call arguments and named-record field/value pairs are streamed from the recorded interior rather than retained as a collection. An `else if` stores the nested `if` statement as its second span; consumers accept that one-statement span recursively as well as ordinary brace-delimited block spans.
+These records are flat scalar/enum data. They do not own child records or runtime handles. To traverse a child, derive its position from a known parent position with `Compilerˉbodyˉpositionˉbetween`, then parse the bounded child span. Call arguments, named-record field/value pairs, and record-update replacements are streamed from the recorded interior rather than retained as a collection. An `else if` stores the nested `if` statement as its second span; consumers accept that one-statement span recursively as well as ordinary brace-delimited block spans.
 
 `Compilerˉsourceˉbodyˉsummary` reports functions, top-level statements, total statements, expression nodes, maximum statement/expression depths, final cursor, and failure evidence.
 
@@ -70,7 +70,7 @@ The pass enforces:
 - the lower-layer 4,194,304-byte source and 262,144-token ceilings;
 - at most 64 statement nestings;
 - at most 64 expression nestings/tree depth;
-- at most 64 call arguments or named-record fields and 16 qualified-name parts;
+- at most 64 call arguments, named-record fields, or record-update replacements and 16 qualified-name parts;
 - at most 4,096 statements per function body;
 - at most 4,096 nodes in one expression and 262,144 expression nodes in one body.
 

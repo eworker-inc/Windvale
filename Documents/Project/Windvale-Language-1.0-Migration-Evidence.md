@@ -163,17 +163,34 @@ same 356-byte WVB with SHA-256
 That is compiler and deterministic-emission evidence, not yet scalar-runner unit
 execution evidence.
 
+The next checkpoint appends body expression kind `Recordˉupdate = 13` for the
+frozen `Qualifiedˉsourceˉname base Expression { Field: Value, ... }` form. Binding
+visits the base once, visits replacements left to right, then resolves the target.
+Typed WIR requires the base to have the target's exact nominal record shape,
+rejects duplicate or unknown replacements, preserves every unreplaced field, and
+uses only the existing record-field and record-create operations. A base expression
+that contains its own top-level brace construction is parenthesized at this parser
+checkpoint to expose the replacement-list boundary explicitly.
+
+`Tests/Fixtures/Language-1.0/Record-Update.wv` compiles twice to the same
+1,116-byte WVB, executes through the scalar runner, proves replacement plus field
+preservation, and returns `42`. Separate cases reject a wrong-nominal base,
+duplicate replacement, unknown replacement, and descriptorless Seed use without
+publishing output. No WVIR operation, WVB opcode, value representation, or
+serialized-format version changes.
+
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports seventeen declared cases. Its
+The cross-host `language-1-front-door` owner reports twenty-two declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, compile the
 minimal edition-1 program twice through the exact lock/profile inputs, require byte
-identity and result `42`, compile the unit-control program twice, and exercise its
-three unit-specific rejection boundaries plus the prior profile and edition
-rejections. The report separately states its 33 descriptor assertions, four
-profile-admission outcomes, 23 value-front-end assertions, and twelve compiler
+identity and result `42`, compile the unit-control and record-update programs twice,
+execute the record update with result `42`, and exercise their seven specific
+rejection boundaries plus the prior profile and edition rejections. The report
+separately states its 33 descriptor assertions, four profile-admission outcomes,
+23 value-front-end assertions, and seventeen compiler
 outcomes rather than presenting those nested assertions as extra owners.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
@@ -182,10 +199,13 @@ hosted application packaging use content-keyed cross-host caches: the first run
 earns full native evidence, while unchanged repeats materialize validated cache
 hits instead of rebuilding the 29 MiB compiler application. This is development
 evidence, not yet a paired-host conformance claim. With the Windows compiler and
-application checkpoints populated, the current seventeen-case owner passed in
-19,190 milliseconds, including both self-tests, cached compiler materialization,
-the minimal executable sentinel, deterministic unit compilation, and all negative
-admissions.
+application checkpoints populated, the prior seventeen-case owner passed in
+19,190 milliseconds. The first twenty-two-case Windows run rebuilt both changed
+compiler cache products in 343,830 milliseconds; all child checks passed and only
+the then-stale registry summary rejected the owner. After sharing the field parser
+between construction and update, the final registered cold run passed all 22 cases
+in 344,610 milliseconds. Its immediately following warm-cache run passed in
+20,810 milliseconds, including 20,350 milliseconds in the owner itself.
 
 ## Pre-slice compiler baseline
 
@@ -282,8 +302,9 @@ performance or Language 1.0 conformance is claimed.
 Migration Slice 1 is complete: source-profile locks and composite profiles are
 explicit Project 3/build inputs, their pinned chain controls English token
 resolution, and Project 2 remains stable. Slice 2 has begun with primitive
-front-end identities, edition separation, and storage-free unit return/control
-lowering. Its completion gate remains exact scalar/rune and unit execution,
-`never`, named update, multi-field variant/destructuring, and value-producing
+front-end identities, edition separation, storage-free unit return/control
+lowering, and named record update over the retained nominal record representation.
+Its completion gate remains exact scalar/rune and unit execution,
+`never`, multi-field variant/destructuring, and value-producing
 control flow over this same compiler architecture. Seed stays on that architecture
 until its named removal checkpoint.
