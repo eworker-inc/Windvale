@@ -8,7 +8,9 @@ This is the normative-candidate token and parsing companion to the
 and refined by
 [Decision 0754](../Documents/Decisions/0754-Resolve-First-Language-1.0-Paper-Findings.md)
 and
-[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
+[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
+and
+[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
 It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
@@ -19,9 +21,9 @@ evaluation, failure, and profile behavior. The
 [Foundation companion](Windvale-Language-1.0-Foundation.md) owns the identities
 and contracts of required standard types used below.
 
-Structured-task spelling is the highest-risk grammar in this candidate and
-remains subject to the paper corpus before source freeze. It has one exact
-candidate form here; there is no alternate accepted spelling.
+Structured-task and contextual array-literal spelling remain subject to the
+complete paper corpus before source freeze. Each has one exact candidate form
+here; there is no alternate accepted spelling.
 
 ## Grammar notation
 
@@ -618,6 +620,7 @@ not an arbitrary callable expression.
 Primaryˉexpression ::= Literal | "true" | "false" | "()"
                      | Identifier
                      | "(" Expression ")"
+                     | Arrayˉliteral
                      | Nominalˉconstruction
                      | Recordˉupdate
                      | Explicitˉgenericˉcall
@@ -630,12 +633,21 @@ Literal ::= Integerˉliteral | Floatˉliteral | Runeˉliteral
           | Multilineˉtext | Multilineˉbytes
           | Rawˉtext | Rawˉbytes
 
+Arrayˉliteral ::= "[" [ Expression { "," Expression } [ "," ] ] "]"
+
 Nominalˉconstruction ::= Qualifiedˉsourceˉname
                          "{" Fieldˉvalue { "," Fieldˉvalue } [ "," ] "}"
 Fieldˉvalue ::= Identifier ":" Expression
 Recordˉupdate ::= Qualifiedˉsourceˉname "base" Expression
                   "{" Fieldˉvalue { "," Fieldˉvalue } [ "," ] "}"
 ~~~
+
+An array literal requires one exact expected `Array<T, N>` type. It contains
+exactly `N` expressions of exact type `T`, including zero expressions when
+`N = 0`, and evaluates them from left to right once. It does not infer a common
+element type, perform conversion, allocate dynamic backing, or provide a
+repetition shorthand. Brackets remain unambiguous with postfix indexing and a
+closure capture list because those occupy different grammar positions.
 
 Name resolution distinguishes record construction from variant-case construction
 and distinguishes an enum member, no-data variant case, function, module alias,
@@ -694,6 +706,7 @@ Constantˉexpression ::= Expression
 - earlier constants;
 - enum members;
 - record and variant construction from constant fields;
+- contextual fixed-array literals from constant elements;
 - checked pure operators;
 - value-producing `if` and `match`;
 - admitted bounded Foundation constant functions; and
@@ -725,6 +738,8 @@ Edition 1 deliberately rejects:
 - mixing named and positional call arguments;
 - implicit record fields or positional record construction;
 - empty variant payload parentheses;
+- an array literal without one exact expected `Array<T, N>` type;
+- array repetition syntax or inferred common element type;
 - chained comparisons;
 - expression assignment;
 - omitted `else` in a value-producing `if`;
@@ -747,6 +762,9 @@ Before source freeze, the grammar must have:
 - full-arity explicit-generic call cases proving `::` disambiguation from
   relational `<`/`>` and rejection of bare, partial, or arbitrary-callable
   suffixes;
+- contextual fixed-array literal cases proving exact count/type, empty arrays,
+  trailing commas, left-to-right evaluation, and disambiguation from indexing
+  and closure capture lists;
 - complete examples for every declaration, type, statement, expression, pattern,
   closure, resource, task, and unsafe form;
 - bounded recovery tests for truncated and malicious source; and

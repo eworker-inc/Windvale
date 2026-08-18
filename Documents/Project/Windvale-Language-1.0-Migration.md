@@ -23,7 +23,9 @@ and the HTTP-handler findings resolved by
 the concurrent-service findings resolved by
 [Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
 and the retained-GUI findings resolved by
-[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md).
+[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
+and the numeric/graphics findings resolved by
+[Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -171,6 +173,15 @@ reparse it.
 - Retain the accepted checked slice/immutable byte views, strict slice decode,
   invariant byte decimal append, opaque operation context, and exact
   reliable-stream progress cases from Decision 0759.
+- Retain the accepted task construction, derived context, cancellation,
+  creation-order result collection, and runtime/provider failure separation
+  cases from Decision 0760.
+- Retain the accepted arena replace/remove, closed events, parent-only stale
+  result application, identity tombstone, and exact immutable-frame publication
+  cases from Decision 0761.
+- Retain the accepted contextual array, checked mutable slice, strict f32,
+  policy-bearing conversion, canonical numeric formatting, and bit-identical
+  parallel-equivalence cases from Decision 0762.
 - Add editor grammar tests.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.

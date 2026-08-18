@@ -1,0 +1,53 @@
+edition 1;
+module Numericˉgraphicsˉfixture;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+
+export const LANE_COUNT: u64 = 8u64;
+
+export data LEFT_BITS: Collections.Array<u32, 8u64> = [
+    0x3f800001u32,
+    0x40000000u32,
+    0xc0000000u32,
+    0x00000001u32,
+    0x7f7fffffu32,
+    0x7f800000u32,
+    0x80000000u32,
+    0x00000000u32,
+];
+
+export data RIGHT_BITS: Collections.Array<u32, 8u64> = [
+    0x3f7ffffeu32,
+    0x40400000u32,
+    0x40400000u32,
+    0x3f800000u32,
+    0x40000000u32,
+    0x00000000u32,
+    0x3f800000u32,
+    0x3f800000u32,
+];
+
+export data ADDEND_BITS: Collections.Array<u32, 8u64> = [
+    0xbf800000u32,
+    0x40800000u32,
+    0x40800000u32,
+    0x00000000u32,
+    0x00000000u32,
+    0x3f800000u32,
+    0x80000000u32,
+    0x80000000u32,
+];
+
+export data EXPECTED_BITS: Collections.Array<u32, 8u64> = [
+    0xa8800000u32,
+    0x41200000u32,
+    0xc0000000u32,
+    0x00000001u32,
+    0x7f800000u32,
+    0x7fc00000u32,
+    0x80000000u32,
+    0x00000000u32,
+];

@@ -36,6 +36,8 @@ and the concurrent-service findings resolved by
 [Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
 and the retained-GUI findings resolved by
 [Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
+and the numeric/graphics findings resolved by
+[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -389,6 +391,14 @@ rounding, range, NaN, infinity, and signed-zero behavior. Fast-math
 transformations that change a result are invalid unless source calls a separately
 specified approximate operation.
 
+The numeric/graphics workload fixes one observable contraction case:
+`Fusedˉmultiplyˉaddˉf32` performs one final rounding, while the ordinary source
+`A * B + C` performs two roundings. A compiler, vectorizer, GPU provider, or
+parallel library cannot exchange those forms, reassociate lanes, flush
+subnormals, change signed zero, preserve arbitrary NaN payloads after arithmetic,
+or select a host formatting rule. Exact bit observation, classification, total
+ordering, and canonical text formatting use the named Foundation calls.
+
 ### Text, runes, and bytes
 
 `text` is a sequence of Unicode scalar values. It performs no implicit
@@ -700,6 +710,12 @@ fields evaluate from left to right exactly once. Short-circuit Boolean operators
 do not evaluate the skipped operand. A failed or trapping expression does not
 evaluate a later expression.
 
+An array literal is a value expression only under one exact expected
+`Array<T, N>` type. It evaluates exactly `N` exact-`T` elements left to right,
+including no elements for `N = 0`, and creates fixed inline semantics rather
+than a dynamically allocated or growable collection. It performs no common-type
+selection, conversion, elision, or repetition.
+
 Conditions have exact type `bool`. No other type is truthy.
 
 `if` and `match` have statement and value-producing forms. A value-producing
@@ -725,6 +741,13 @@ owned fields bind only as borrows tied to the aggregate owner.
 `while` and bounded `for` are the iteration constructs. `break` and `continue`
 target the nearest enclosing loop. A `for` source exposes an exact remaining or
 maximum item bound. Lazy semantically unbounded iteration is absent.
+
+Parallel execution never changes numeric semantics. A library may process
+proved-disjoint lanes concurrently only when each lane has the same operation
+order and the final ordered publication is bit-identical to the sequential
+oracle. Reductions, scans, or algorithms whose result depends on grouping require
+a separately named order/accuracy contract; an optimizer cannot infer one from
+ordinary loops.
 
 Unreachable source after an unconditional local transfer is rejected unless a
 separate diagnostic-recovery rule marks it as non-semantic input.
@@ -1088,7 +1111,10 @@ This candidate becomes frozen Language 1.0 only after:
 18. the accepted arena replacement/removal, closed-event, Core/Hosted,
     parent-only application, stable-tombstone, and exact-frame-publication cases
     remain coherent across all mandatory workloads; and
-19. a source-freeze decision records the canonical document identities.
+19. the accepted contextual-array, checked-mutable-slice, strict-float,
+    policy-bearing-conversion, canonical-formatting, and bit-identical-parallel
+    cases remain coherent across all mandatory workloads; and
+20. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

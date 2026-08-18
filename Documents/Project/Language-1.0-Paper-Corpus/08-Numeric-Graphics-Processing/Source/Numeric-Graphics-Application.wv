@@ -1,0 +1,127 @@
+edition 1;
+module Numericˉgraphicsˉapplication;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Numericˉgraphicsˉaudit as Audit;
+import Numericˉgraphicsˉfixture as Fixture;
+import Numericˉgraphicsˉreport as Report;
+import Numericˉgraphicsˉtransform as Transform;
+import Numericˉgraphicsˉtypes as Types;
+
+const MAXIMUM_LANES: u64 = 64u64;
+const MAXIMUM_CHILD_BYTES: u64 = 65536u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Workloadˉfailure.Invalidˉlimit {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Types.Limits,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    if Limits.Maximumˉlanes < Fixture.LANE_COUNT
+        || Limits.Maximumˉlanes > MAXIMUM_LANES {
+        return Invalid(
+            Field: 1u32,
+            Observed: Limits.Maximumˉlanes,
+            Minimum: Fixture.LANE_COUNT,
+            Maximum: MAXIMUM_LANES,
+        );
+    }
+    if Limits.Outputˉbytes == 0u64
+        || Limits.Outputˉbytes > MAXIMUM_CHILD_BYTES {
+        return Invalid(
+            Field: 2u32,
+            Observed: Limits.Outputˉbytes,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_CHILD_BYTES,
+        );
+    }
+    if Limits.Reportˉbytes < 328u64
+        || Limits.Reportˉbytes > MAXIMUM_CHILD_BYTES {
+        return Invalid(
+            Field: 3u32,
+            Observed: Limits.Reportˉbytes,
+            Minimum: 328u64,
+            Maximum: MAXIMUM_CHILD_BYTES,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<Memory.Memoryˉbudget, Types.Workloadˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 1u32,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+export fn Run(
+    Limits: Types.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Types.Workloadˉresult, Types.Workloadˉfailure>
+    effects(memory.allocate, resource.acquire, resource.release) {
+    try Validate(Limits: borrow Limits);
+    var Root = Budget;
+    let Outputˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Outputˉbytes,
+    );
+    let Reportˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Reportˉbytes,
+    );
+    let Values = try Transform.Execute(
+        Left: borrow Fixture.LEFT_BITS,
+        Right: borrow Fixture.RIGHT_BITS,
+        Addend: borrow Fixture.ADDEND_BITS,
+        Budget: Outputˉbudget,
+        Maximumˉlanes: Limits.Maximumˉlanes,
+    );
+    let Auditˉvalue = try Audit.Validate(
+        Values: borrow Values,
+        Expected: borrow Fixture.EXPECTED_BITS,
+    );
+    let Reportˉvalue = try Report.Render(
+        Values: borrow Values,
+        Audit: borrow Auditˉvalue,
+        Budget: Reportˉbudget,
+        Maximumˉbytes: Limits.Reportˉbytes,
+    );
+    return Result.Result.Valid {
+        Value: Types.Workloadˉresult {
+            Values: Values,
+            Audit: Auditˉvalue,
+            Report: Reportˉvalue,
+        },
+    };
+}

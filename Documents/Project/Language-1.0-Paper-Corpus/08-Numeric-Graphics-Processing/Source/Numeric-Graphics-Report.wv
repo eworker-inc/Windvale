@@ -1,0 +1,140 @@
+edition 1;
+module Numericˉgraphicsˉreport;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉresult as Result;
+import Foundationˉtext as Text;
+import Numericˉgraphicsˉtypes as Types;
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Workloadˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉlimit(
+    Value: Result.Result<unit, Memory.Limitˉfailure>,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Formattingˉlimit {
+                    Error: Error,
+                },
+            }
+        }
+    };
+}
+
+fn Append(
+    Builder: borrow mut Text.Textˉbuilder,
+    Value: borrow text,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return Mapˉlimit(
+        Value: Text.Appendˉtext(Builder: Builder, Value: Value),
+    );
+}
+
+fn Appendˉbits(
+    Builder: borrow mut Text.Textˉbuilder,
+    Value: u32,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return Mapˉlimit(
+        Value: Text.Appendˉu32ˉhexˉfixed(
+            Builder: Builder,
+            Value: Value,
+        ),
+    );
+}
+
+fn Appendˉlane(
+    Builder: borrow mut Text.Textˉbuilder,
+    Index: u64,
+    Value: f32,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    try Append(Builder: Builder, Value: borrow "lane=");
+    try Mapˉlimit(
+        Value: Text.Appendˉu64ˉdecimal(Builder: Builder, Value: Index),
+    );
+    try Append(Builder: Builder, Value: borrow " bits=");
+    try Appendˉbits(
+        Builder: Builder,
+        Value: Numeric.Bitsˉf32ˉtoˉu32(Value: Value),
+    );
+    try Append(Builder: Builder, Value: borrow " value=");
+    try Mapˉlimit(
+        Value: Text.Appendˉf32ˉcanonical(Builder: Builder, Value: Value),
+    );
+    return Append(Builder: Builder, Value: borrow "\n");
+}
+
+fn Appendˉnamedˉbits(
+    Builder: borrow mut Text.Textˉbuilder,
+    Name: borrow text,
+    Value: u32,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    try Append(Builder: Builder, Value: Name);
+    try Appendˉbits(Builder: Builder, Value: Value);
+    return Append(Builder: Builder, Value: borrow "\n");
+}
+
+export fn Render(
+    Values: borrow Collections.Sequence<f32>,
+    Audit: borrow Types.Auditˉreport,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<text, Types.Workloadˉfailure>
+    effects(memory.allocate) {
+    var Builder = try Mapˉallocation(
+        Value: Text.Constructˉreserved(
+            Budget: Budget,
+            Maximumˉoutputˉbytes: Maximumˉbytes,
+        ),
+    );
+    try Append(Builder: borrow mut Builder, Value: borrow "WVNUM1\n");
+    let Length = Collections.Sequenceˉlength(Value: Values);
+    var Index = 0u64;
+    while Index < Length {
+        try Appendˉlane(
+            Builder: borrow mut Builder,
+            Index: Index,
+            Value: Collections.Sequenceˉat(Value: Values, Index: Index),
+        );
+        Index = Index + 1u64;
+    }
+    try Appendˉnamedˉbits(
+        Builder: borrow mut Builder,
+        Name: borrow "nearest_u32=",
+        Value: Audit.Nearestˉintegerˉbits,
+    );
+    try Appendˉnamedˉbits(
+        Builder: borrow mut Builder,
+        Name: borrow "narrow_f64=",
+        Value: Audit.Narrowˉnearestˉbits,
+    );
+    try Appendˉnamedˉbits(
+        Builder: borrow mut Builder,
+        Name: borrow "separate_lane0=",
+        Value: Audit.Separateˉlane0ˉbits,
+    );
+    return Result.Result.Valid {
+        Value: Text.Freeze(Builder: Builder),
+    };
+}

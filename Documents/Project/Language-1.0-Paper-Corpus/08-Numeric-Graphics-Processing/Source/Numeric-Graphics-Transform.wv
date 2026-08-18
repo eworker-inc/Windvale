@@ -1,0 +1,211 @@
+edition 1;
+module Numericˉgraphicsˉtransform;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉresult as Result;
+import Numericˉgraphicsˉtypes as Types;
+
+fn Mapˉallocation<T>(
+    Value: Result.Result<T, Memory.Allocationˉfailure>,
+) -> Result.Result<T, Types.Workloadˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉslice<T>(
+    Value: Result.Result<T, Collections.Sliceˉfailure>,
+) -> Result.Result<T, Types.Workloadˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Slice { Error: Error },
+            }
+        }
+    };
+}
+
+fn Appendˉzero(
+    Output: borrow mut Collections.Vector<f32>,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return match Collections.Vectorˉappend(
+        Vector: Output,
+        Value: 0.0f32,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            }
+        }
+    };
+}
+
+export fn Transform(
+    Left: Collections.Slice<u32>,
+    Right: Collections.Slice<u32>,
+    Addend: Collections.Slice<u32>,
+    Output: Collections.Mutableˉslice<f32>,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    let Length = Collections.Sliceˉlength(Value: Left);
+    let Rightˉlength = Collections.Sliceˉlength(Value: Right);
+    if Rightˉlength != Length {
+        return Result.Result.Failure {
+            Error: Types.Workloadˉfailure.Invalidˉlimit {
+                Field: 2u32,
+                Observed: Rightˉlength,
+                Minimum: Length,
+                Maximum: Length,
+            },
+        };
+    }
+    let Addendˉlength = Collections.Sliceˉlength(Value: Addend);
+    if Addendˉlength != Length {
+        return Result.Result.Failure {
+            Error: Types.Workloadˉfailure.Invalidˉlimit {
+                Field: 3u32,
+                Observed: Addendˉlength,
+                Minimum: Length,
+                Maximum: Length,
+            },
+        };
+    }
+    let Outputˉlength = Collections.Mutableˉsliceˉlength(Value: Output);
+    if Outputˉlength != Length {
+        return Result.Result.Failure {
+            Error: Types.Workloadˉfailure.Invalidˉlimit {
+                Field: 4u32,
+                Observed: Outputˉlength,
+                Minimum: Length,
+                Maximum: Length,
+            },
+        };
+    }
+
+    var Index = 0u64;
+    while Index < Length {
+        let Leftˉvalue = Numeric.Bitsˉu32ˉtoˉf32(
+            Value: Collections.Sliceˉat(Value: Left, Index: Index),
+        );
+        let Rightˉvalue = Numeric.Bitsˉu32ˉtoˉf32(
+            Value: Collections.Sliceˉat(Value: Right, Index: Index),
+        );
+        let Addendˉvalue = Numeric.Bitsˉu32ˉtoˉf32(
+            Value: Collections.Sliceˉat(Value: Addend, Index: Index),
+        );
+        let Value = Numeric.Fusedˉmultiplyˉaddˉf32(
+            Left: Leftˉvalue,
+            Right: Rightˉvalue,
+            Addend: Addendˉvalue,
+        );
+        let _ = Collections.Mutableˉsliceˉreplace(
+            Value: Output,
+            Index: Index,
+            Replacement: Value,
+        );
+        Index = Index + 1u64;
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Fill<const N: u64>(
+    Left: borrow Collections.Array<u32, N>,
+    Right: borrow Collections.Array<u32, N>,
+    Addend: borrow Collections.Array<u32, N>,
+    Output: borrow mut Collections.Vector<f32>,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    let Leftˉslice = try Mapˉslice(
+        Value: Collections.Arrayˉslice(
+            Value: Left,
+            Start: 0u64,
+            Length: N,
+        ),
+    );
+    let Rightˉslice = try Mapˉslice(
+        Value: Collections.Arrayˉslice(
+            Value: Right,
+            Start: 0u64,
+            Length: N,
+        ),
+    );
+    let Addendˉslice = try Mapˉslice(
+        Value: Collections.Arrayˉslice(
+            Value: Addend,
+            Start: 0u64,
+            Length: N,
+        ),
+    );
+    let Outputˉslice = try Mapˉslice(
+        Value: Collections.Vectorˉsliceˉmut(
+            Value: Output,
+            Start: 0u64,
+            Length: N,
+        ),
+    );
+
+    return Transform(
+        Left: Leftˉslice,
+        Right: Rightˉslice,
+        Addend: Addendˉslice,
+        Output: Outputˉslice,
+    );
+}
+
+export fn Execute<const N: u64>(
+    Left: borrow Collections.Array<u32, N>,
+    Right: borrow Collections.Array<u32, N>,
+    Addend: borrow Collections.Array<u32, N>,
+    Budget: Memory.Memoryˉbudget,
+    Maximumˉlanes: u64,
+) -> Result.Result<Collections.Sequence<f32>, Types.Workloadˉfailure>
+    effects(memory.allocate) {
+    if N == 0u64 || N > Maximumˉlanes {
+        return Result.Result.Failure {
+            Error: Types.Workloadˉfailure.Invalidˉlimit {
+                Field: 1u32,
+                Observed: N,
+                Minimum: 1u64,
+                Maximum: Maximumˉlanes,
+            },
+        };
+    }
+    var Output = try Mapˉallocation(
+        Value: Collections.Vectorˉconstructˉreserved::<f32>(
+            Budget: Budget,
+            Maximumˉitems: N,
+        ),
+    );
+    var Index = 0u64;
+    while Index < N {
+        try Appendˉzero(Output: borrow mut Output);
+        Index = Index + 1u64;
+    }
+    try Fill(
+        Left: Left,
+        Right: Right,
+        Addend: Addend,
+        Output: borrow mut Output,
+    );
+    return Result.Result.Valid {
+        Value: Collections.Vectorˉfreeze(Vector: Output),
+    };
+}

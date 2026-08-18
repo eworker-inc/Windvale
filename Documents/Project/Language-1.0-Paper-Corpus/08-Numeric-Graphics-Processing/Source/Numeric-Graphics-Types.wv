@@ -1,0 +1,52 @@
+edition 1;
+module Numericˉgraphicsˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+
+export record Limits {
+    Maximumˉlanes: u64;
+    Outputˉbytes: u64;
+    Reportˉbytes: u64;
+}
+
+export variant Workloadˉfailure {
+    Invalidˉlimit(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(Error: Memory.Allocationˉfailure);
+    Collection(Error: Collections.Collectionˉfailure);
+    Slice(Error: Collections.Sliceˉfailure);
+    Outputˉmismatch(Index: u64, Expected: u32, Observed: u32);
+    Boundaryˉmismatch(Check: u32, Expected: u64, Observed: u64);
+    Conversionˉmismatch(
+        Check: u32,
+        Error: Numeric.Floatingˉconversionˉfailure,
+    );
+    Formattingˉlimit(Error: Memory.Limitˉfailure);
+}
+
+export record Auditˉreport {
+    Laneˉcount: u64;
+    Canonicalˉnanˉbits: u32;
+    Positiveˉzeroˉbits: u32;
+    Negativeˉzeroˉbits: u32;
+    Minimumˉsubnormalˉbits: u32;
+    Overflowˉbits: u32;
+    Nearestˉintegerˉbits: u32;
+    Narrowˉnearestˉbits: u32;
+    Separateˉlane0ˉbits: u32;
+}
+
+export record Workloadˉresult {
+    Values: Collections.Sequence<f32>;
+    Audit: Auditˉreport;
+    Report: text;
+}

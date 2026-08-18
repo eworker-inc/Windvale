@@ -24,7 +24,9 @@ and the HTTP-handler findings resolved by
 and the concurrent-service findings resolved by
 [Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
 and the retained-GUI findings resolved by
-[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md).
+[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
+and the numeric/graphics findings resolved by
+[Decision 0762](../Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -392,6 +394,15 @@ The source must be practical for numeric work without silently enabling
 fast-math or target-dependent results. Named domain operations must remain
 readable without unrestricted operator overloading.
 
+The complete draft-reviewed source and evidence are in the
+[workload 8 paper bundle](Language-1.0-Paper-Corpus/08-Numeric-Graphics-Processing/README.md).
+Its six accepted findings add contextual fixed-array literals, complete checked
+array/vector slice creation and mutable replacement, fix the strict f32
+operation/observation subset, retain policy-bearing conversions and the complete
+generated-matrix freeze gate, require canonical bounded numeric formatting, and
+keep parallel execution bit-identical to the sequential oracle without adding
+parallel syntax or implicit fast math.
+
 ## Workload 9: package parser and deterministic map
 
 ### Scenario
@@ -568,13 +579,13 @@ source contract ambiguous.
 | HTTP request handler | Draft reviewed; five findings accepted and resolved |
 | Concurrent hosted service | Draft reviewed; seven findings accepted and resolved |
 | GUI retained state | Draft reviewed; seven findings accepted and resolved |
-| Numeric or graphics processing | Pending source bundle |
+| Numeric or graphics processing | Draft reviewed; six findings accepted and resolved |
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-Eight of eleven workloads are draft reviewed. Workloads 8 through 10 remain to
-be written and reviewed.
+Nine of eleven workloads are draft reviewed. Workloads 9 and 10 remain to be
+written and reviewed.
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,
 their source becomes the first Language 1.0 conformance and migration input rather

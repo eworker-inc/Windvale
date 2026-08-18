@@ -1,0 +1,268 @@
+edition 1;
+module Numericˉgraphicsˉaudit;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉnumeric as Numeric;
+import Foundationˉordering as Ordering;
+import Foundationˉresult as Result;
+import Numericˉgraphicsˉtypes as Types;
+
+fn Mismatch(
+    Check: u32,
+    Expected: u64,
+    Observed: u64,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Workloadˉfailure.Boundaryˉmismatch {
+            Check: Check,
+            Expected: Expected,
+            Observed: Observed,
+        },
+    };
+}
+
+fn Checkˉbits(
+    Check: u32,
+    Value: f32,
+    Expected: u32,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    let Observed = Numeric.Bitsˉf32ˉtoˉu32(Value: Value);
+    if Observed != Expected {
+        return Mismatch(
+            Check: Check,
+            Expected: Numeric.Widenˉu32ˉtoˉu64(Value: Expected),
+            Observed: Numeric.Widenˉu32ˉtoˉu64(Value: Observed),
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Expectˉinexact(
+    Check: u32,
+    Value: Result.Result<f32, Numeric.Floatingˉconversionˉfailure>,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Mismatch(
+                Check: Check,
+                Expected: 1u64,
+                Observed: Numeric.Widenˉu32ˉtoˉu64(
+                    Value: Numeric.Bitsˉf32ˉtoˉu32(Value: Accepted),
+                ),
+            )
+        }
+        case Result.Result.Failure { Error: Error } {
+            match Error {
+                case Numeric.Floatingˉconversionˉfailure.Inexact {
+                    Result.Result.Valid { Value: () }
+                }
+                case _ {
+                    Result.Result.Failure {
+                        Error: Types.Workloadˉfailure.Conversionˉmismatch {
+                            Check: Check,
+                            Error: Error,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Expectˉconversionˉfailure<T>(
+    Check: u32,
+    Value: Result.Result<T, Numeric.Floatingˉconversionˉfailure>,
+    Expected: Numeric.Floatingˉconversionˉfailure,
+) -> Result.Result<unit, Types.Workloadˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: _ } {
+            Mismatch(Check: Check, Expected: 1u64, Observed: 0u64)
+        }
+        case Result.Result.Failure { Error: Error } {
+            let Matches = match Expected {
+                case Numeric.Floatingˉconversionˉfailure.Notˉaˉnumber {
+                    match Error {
+                        case Numeric.Floatingˉconversionˉfailure.Notˉaˉnumber {
+                            true
+                        }
+                        case _ { false }
+                    }
+                }
+                case Numeric.Floatingˉconversionˉfailure.Infinite {
+                    match Error {
+                        case Numeric.Floatingˉconversionˉfailure.Infinite {
+                            true
+                        }
+                        case _ { false }
+                    }
+                }
+                case _ { false }
+            };
+            if !Matches {
+                return Result.Result.Failure {
+                    Error: Types.Workloadˉfailure.Conversionˉmismatch {
+                        Check: Check,
+                        Error: Error,
+                    },
+                };
+            }
+            Result.Result.Valid { Value: () }
+        }
+    };
+}
+
+export fn Validate<const N: u64>(
+    Values: borrow Collections.Sequence<f32>,
+    Expected: borrow Collections.Array<u32, N>,
+) -> Result.Result<Types.Auditˉreport, Types.Workloadˉfailure> effects() {
+    let Length = Collections.Sequenceˉlength(Value: Values);
+    if Length != N {
+        return Result.Result.Failure {
+            Error: Types.Workloadˉfailure.Invalidˉlimit {
+                Field: 2u32,
+                Observed: Length,
+                Minimum: N,
+                Maximum: N,
+            },
+        };
+    }
+    var Index = 0u64;
+    while Index < N {
+        let Observed = Numeric.Bitsˉf32ˉtoˉu32(
+            Value: Collections.Sequenceˉat(
+                Value: Values,
+                Index: Index,
+            ),
+        );
+        let Expectedˉbits = Expected[Index];
+        if Observed != Expectedˉbits {
+            return Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Outputˉmismatch {
+                    Index: Index,
+                    Expected: Expectedˉbits,
+                    Observed: Observed,
+                },
+            };
+        }
+        Index = Index + 1u64;
+    }
+
+    let Payloadˉnan = Numeric.Bitsˉu32ˉtoˉf32(Value: 0x7fa12345u32);
+    let Canonicalˉnan = Payloadˉnan + 0.0f32;
+    try Checkˉbits(Check: 1u32, Value: Canonicalˉnan, Expected: 0x7fc00000u32);
+    let Positiveˉzero = 0.0f32 * 1.0f32;
+    try Checkˉbits(Check: 2u32, Value: Positiveˉzero, Expected: 0x00000000u32);
+    let Negativeˉzero = Numeric.Bitsˉu32ˉtoˉf32(Value: 0x80000000u32) * 1.0f32;
+    try Checkˉbits(Check: 3u32, Value: Negativeˉzero, Expected: 0x80000000u32);
+    let Minimumˉsubnormal = Numeric.Bitsˉu32ˉtoˉf32(Value: 0x00000001u32) * 1.0f32;
+    try Checkˉbits(Check: 4u32, Value: Minimumˉsubnormal, Expected: 0x00000001u32);
+    let Overflow = Numeric.Bitsˉu32ˉtoˉf32(Value: 0x7f7fffffu32) * 2.0f32;
+    try Checkˉbits(Check: 5u32, Value: Overflow, Expected: 0x7f800000u32);
+
+    if Numeric.Classifyˉf32(Value: Canonicalˉnan)
+        != Numeric.Floatingˉclass.Notˉaˉnumber {
+        return Mismatch(Check: 6u32, Expected: 9u64, Observed: 0u64);
+    }
+    if Numeric.Classifyˉf32(Value: Negativeˉzero)
+        != Numeric.Floatingˉclass.Negativeˉzero {
+        return Mismatch(Check: 7u32, Expected: 4u64, Observed: 0u64);
+    }
+    if Numeric.Totalˉcompareˉf32(Left: Negativeˉzero, Right: Positiveˉzero)
+        != Ordering.Orderingˉresult.Less {
+        return Mismatch(Check: 8u32, Expected: 1u64, Observed: 0u64);
+    }
+    if Numeric.Bitwiseˉequalˉf32(Left: Negativeˉzero, Right: Positiveˉzero)
+        || Negativeˉzero != Positiveˉzero {
+        return Mismatch(Check: 9u32, Expected: 1u64, Observed: 0u64);
+    }
+
+    try Expectˉinexact(
+        Check: 10u32,
+        Value: Numeric.Convertˉu32ˉtoˉf32ˉexact(Value: 16777217u32),
+    );
+    let Nearestˉinteger = Numeric.Convertˉu32ˉtoˉf32ˉnearest(
+        Value: 16777217u32,
+    );
+    try Checkˉbits(
+        Check: 11u32,
+        Value: Nearestˉinteger,
+        Expected: 0x4b800000u32,
+    );
+    let Halfway = Numeric.Bitsˉu64ˉtoˉf64(
+        Value: 0x3ff0000010000000u64,
+    );
+    let Narrowˉnearest = Numeric.Narrowˉf64ˉtoˉf32ˉnearest(Value: Halfway);
+    try Checkˉbits(
+        Check: 12u32,
+        Value: Narrowˉnearest,
+        Expected: 0x3f800000u32,
+    );
+    try Expectˉinexact(
+        Check: 13u32,
+        Value: Numeric.Narrowˉf64ˉtoˉf32ˉexact(Value: Halfway),
+    );
+    let Truncated = match Numeric.Convertˉf32ˉtoˉi32ˉtruncate(
+        Value: -42.75f32,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Workloadˉfailure.Conversionˉmismatch {
+                    Check: 14u32,
+                    Error: Error,
+                },
+            };
+        }
+    };
+    if Truncated != -42i32 {
+        return Mismatch(Check: 14u32, Expected: 42u64, Observed: 0u64);
+    }
+    try Expectˉconversionˉfailure::<i32>(
+        Check: 15u32,
+        Value: Numeric.Convertˉf32ˉtoˉi32ˉtruncate(Value: Canonicalˉnan),
+        Expected: Numeric.Floatingˉconversionˉfailure.Notˉaˉnumber,
+    );
+    try Expectˉconversionˉfailure::<i32>(
+        Check: 16u32,
+        Value: Numeric.Convertˉf32ˉtoˉi32ˉtruncate(Value: Overflow),
+        Expected: Numeric.Floatingˉconversionˉfailure.Infinite,
+    );
+
+    let Widened = Numeric.Widenˉf32ˉtoˉf64(Value: 1.5f32);
+    let Widenedˉbits = Numeric.Bitsˉf64ˉtoˉu64(Value: Widened);
+    if Widenedˉbits != 0x3ff8000000000000u64 {
+        return Mismatch(
+            Check: 17u32,
+            Expected: 0x3ff8000000000000u64,
+            Observed: Widenedˉbits,
+        );
+    }
+
+    let A = Numeric.Bitsˉu32ˉtoˉf32(Value: 0x3f800001u32);
+    let B = Numeric.Bitsˉu32ˉtoˉf32(Value: 0x3f7ffffeu32);
+    let Separate = A * B + -1.0f32;
+    try Checkˉbits(Check: 18u32, Value: Separate, Expected: 0x00000000u32);
+
+    return Result.Result.Valid {
+        Value: Types.Auditˉreport {
+            Laneˉcount: N,
+            Canonicalˉnanˉbits: Numeric.Bitsˉf32ˉtoˉu32(Value: Canonicalˉnan),
+            Positiveˉzeroˉbits: Numeric.Bitsˉf32ˉtoˉu32(Value: Positiveˉzero),
+            Negativeˉzeroˉbits: Numeric.Bitsˉf32ˉtoˉu32(Value: Negativeˉzero),
+            Minimumˉsubnormalˉbits: Numeric.Bitsˉf32ˉtoˉu32(
+                Value: Minimumˉsubnormal,
+            ),
+            Overflowˉbits: Numeric.Bitsˉf32ˉtoˉu32(Value: Overflow),
+            Nearestˉintegerˉbits: Numeric.Bitsˉf32ˉtoˉu32(
+                Value: Nearestˉinteger,
+            ),
+            Narrowˉnearestˉbits: Numeric.Bitsˉf32ˉtoˉu32(
+                Value: Narrowˉnearest,
+            ),
+            Separateˉlane0ˉbits: Numeric.Bitsˉf32ˉtoˉu32(Value: Separate),
+        },
+    };
+}

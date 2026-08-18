@@ -20,7 +20,9 @@ and
 and
 [Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
 and
-[Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md).
+[Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md)
+and
+[Decision 0762](../Documents/Decisions/0762-Resolve-Language-1.0-Numeric-Graphics-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -405,6 +407,74 @@ all 32 input bits and performs no arithmetic. These exact calls are the minimum
 accepted subset, not a claim that the complete generated numeric matrix is
 frozen.
 
+### Strict floating operation and conversion surface
+
+The numeric/graphics workload fixes these additional version-1 names:
+
+~~~text
+export enum Floatingˉclass: u8 {
+    Negativeˉinfinity = 1u8;
+    Negativeˉnormal = 2u8;
+    Negativeˉsubnormal = 3u8;
+    Negativeˉzero = 4u8;
+    Positiveˉzero = 5u8;
+    Positiveˉsubnormal = 6u8;
+    Positiveˉnormal = 7u8;
+    Positiveˉinfinity = 8u8;
+    Notˉaˉnumber = 9u8;
+}
+
+export fn Bitsˉf32ˉtoˉu32(Value: f32) -> u32 effects();
+export fn Bitsˉf64ˉtoˉu64(Value: f64) -> u64 effects();
+export fn Bitsˉu64ˉtoˉf64(Value: u64) -> f64 effects();
+export fn Classifyˉf32(Value: f32) -> Floatingˉclass effects();
+export fn Bitwiseˉequalˉf32(Left: f32, Right: f32) -> bool effects();
+export fn Totalˉcompareˉf32(
+    Left: f32,
+    Right: f32,
+) -> Orderingˉresult effects();
+export fn Fusedˉmultiplyˉaddˉf32(
+    Left: f32,
+    Right: f32,
+    Addend: f32,
+) -> f32 effects();
+export fn Convertˉu32ˉtoˉf32ˉnearest(Value: u32) -> f32 effects();
+export fn Convertˉu32ˉtoˉf32ˉexact(
+    Value: u32,
+) -> Result<f32, Floatingˉconversionˉfailure> effects();
+export fn Convertˉf32ˉtoˉi32ˉtruncate(
+    Value: f32,
+) -> Result<i32, Floatingˉconversionˉfailure> effects();
+export fn Widenˉf32ˉtoˉf64(Value: f32) -> f64 effects();
+export fn Narrowˉf64ˉtoˉf32ˉnearest(Value: f64) -> f32 effects();
+export fn Narrowˉf64ˉtoˉf32ˉexact(
+    Value: f64,
+) -> Result<f32, Floatingˉconversionˉfailure> effects();
+~~~
+
+The bit calls preserve every bit without arithmetic. `Classifyˉf32` observes
+the input bits and returns the exact sign/category; all NaN encodings use the one
+`Notˉaˉnumber` case. `Bitwiseˉequalˉf32` compares all 32 bits.
+`Totalˉcompareˉf32` implements IEEE 754 `totalOrder`, including `-0 < +0` and
+the specified ordering of NaN signs, signaling/quiet state, and payloads; it is
+a named observation and does not make `f32` implement `Ordering<f32>`.
+
+`Fusedˉmultiplyˉaddˉf32` computes the infinitely precise product and sum with
+one final roundTiesToEven operation. It preserves subnormals, follows IEEE
+signed-zero/infinity rules, and canonicalizes every NaN result to `0x7fc00000`.
+Ordinary `Left * Right + Addend` remains two separately rounded operations and
+must not contract to this call.
+
+The nearest conversions use roundTiesToEven. The exact forms return `Inexact`
+when the mathematical source is in range but not exactly representable.
+Float-to-integer conversion reports NaN, infinity, and range before inexactness;
+truncate means toward zero and never wraps. Widening preserves every finite
+value and signed zero and canonicalizes NaN. Nearest narrowing may produce
+infinity on finite overflow and preserves signed zero; exact narrowing reports
+`Inexact` for finite overflow, underflow, or any other rounded result. These
+accepted calls are the exact workload subset; the generated source-freeze
+matrix must apply the same naming and failure rules to every required pair.
+
 ### Parsing
 
 Numeric parsing receives:
@@ -469,6 +539,12 @@ An array:
 Array construction names or supplies every element exactly once. Repetition
 syntax, if later admitted, may repeat only a Copy value and evaluates that value
 once.
+
+The numeric/graphics workload fixes array literals as the first construction
+form. A literal has an exact expected `Array<T, N>` type, contains exactly `N`
+elements of exact type `T`, evaluates them left to right once, and allocates no
+dynamic backing. No element conversion, inferred common type, omitted element,
+or repetition form is implied.
 
 ## Owned vectors and immutable sequences
 
@@ -607,6 +683,53 @@ export fn Sliceˉat<T>(
 proved precondition. Its result inherits the ephemeral slice's one underlying
 owner and cannot escape it. Decision 0758's Copy/shared read-through applies to
 the result; it does not expose an address or add unchecked indexing.
+
+The numeric/graphics workload fixes checked range creation and exclusive
+replacement:
+
+~~~text
+export variant Sliceˉfailure {
+    Rangeˉoverflow(Start: u64, Length: u64);
+    Outˉofˉrange(Start: u64, Length: u64, Ownerˉlength: u64);
+}
+
+export fn Arrayˉslice<T, const N: u64>(
+    Value: borrow Array<T, N>,
+    Start: u64,
+    Length: u64,
+) -> Result<Slice<T>, Sliceˉfailure> effects();
+
+export fn Vectorˉslice<T>(
+    Value: borrow Vector<T>,
+    Start: u64,
+    Length: u64,
+) -> Result<Slice<T>, Sliceˉfailure> effects();
+
+export fn Vectorˉsliceˉmut<T>(
+    Value: borrow mut Vector<T>,
+    Start: u64,
+    Length: u64,
+) -> Result<Mutableˉslice<T>, Sliceˉfailure> effects();
+
+export fn Mutableˉsliceˉlength<T>(
+    Value: Mutableˉslice<T>,
+) -> u64 effects();
+
+export fn Mutableˉsliceˉreplace<T>(
+    Value: Mutableˉslice<T>,
+    Index: u64,
+    Replacement: T,
+) -> T effects();
+~~~
+
+Every range call checks `Start + Length` for overflow and against the exact
+owner length before publishing a view. Failure publishes no borrow. Mutable
+slice creation exclusively borrows the vector for the view's lifetime, so the
+vector cannot resize, freeze, move, or be observed concurrently. Replacement
+checks `Index < Mutableˉsliceˉlength` before mutation, returns the previous owned
+element, and accepts the replacement exactly once. The check is a proved
+precondition trap, matching `Sliceˉat`; there is no partial mutation or
+unchecked Core counterpart.
 
 ## Deterministic maps
 
@@ -1133,6 +1256,16 @@ export fn Appendˉu64ˉdecimal(
     Value: u64,
 ) -> Result<unit, Limitˉfailure> effects();
 
+export fn Appendˉu32ˉhexˉfixed(
+    Builder: borrow mut Textˉbuilder,
+    Value: u32,
+) -> Result<unit, Limitˉfailure> effects();
+
+export fn Appendˉf32ˉcanonical(
+    Builder: borrow mut Textˉbuilder,
+    Value: f32,
+) -> Result<unit, Limitˉfailure> effects();
+
 export fn Freeze(Builder: Textˉbuilder) -> text effects();
 ~~~
 
@@ -1149,6 +1282,16 @@ it may retain the same backing and charge and never creates a mutable alias.
 Reserved construction has the same committed-capacity, local failure-release,
 atomic append, and accounting-transfer rules as the byte builder.
 `Appendˉu64ˉdecimal` emits invariant shortest unsigned decimal.
+`Appendˉu32ˉhexˉfixed` emits exactly eight lowercase hexadecimal digits with no
+prefix. `Appendˉf32ˉcanonical` emits `nan`, `inf`, `-inf`, `0`, or `-0` for
+special values. A finite nonzero value uses the shortest ASCII decimal numeral
+that round-trips through the canonical f32 parser under roundTiesToEven. It has
+no plus sign, grouping, redundant leading/trailing zero, exponent plus, or
+exponent leading zero; `e` is lowercase. Among equal-byte-length round-tripping
+candidates, choose least mathematical distance to the exact value, then an even
+final coefficient digit, then ordinal ASCII order. No finite f32 result exceeds
+24 bytes. Both calls prove their whole append before mutation and use no locale,
+host formatting library, allocation, or hidden fast-math mode.
 
 `Decodeˉutf8ˉsliceˉreserved` has the same validation, limits, budget,
 publication, and failure contract over one ephemeral immutable byte slice. The
@@ -1547,5 +1690,12 @@ Before source freeze:
 20. deadline/cancellation context and exact stream progress remain compatible
     with the structured-service workload without permitting indeterminate
     mutation replay; and
-21. a responsibility matrix identifies ordinary source, compiler intrinsic,
+21. task construction, derived context, cancellation, result collection, and
+    runtime/provider failure separation pass the concurrent-service cases;
+22. typed arena replacement/removal, generation-safe tombstones, and immutable
+    frame publication pass the retained-GUI cases;
+23. contextual fixed arrays, checked immutable/exclusive slices, strict float
+    operations/conversions, canonical numeric formatting, and bit-identical
+    parallel equivalence pass the numeric/graphics cases; and
+24. a responsibility matrix identifies ordinary source, compiler intrinsic,
     runtime, provider, and target-specific ownership for each operation.
