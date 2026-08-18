@@ -1,0 +1,14 @@
+#!wv/1 en@1
+module Languageˉoneˉfixedˉintegerˉinvalidˉshift;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Invalidˉshift() -> u16 {
+    return 1u16 << 16u32;
+}
+
+export fn Main() -> i32 {
+    let Value: u16 = Invalidˉshift();
+    return 42;
+}

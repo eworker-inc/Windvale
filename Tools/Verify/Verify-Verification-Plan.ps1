@@ -83,8 +83,11 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
             'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv',
+            'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj',
             'Tests/Native/Language-1.0-Fixture-Inventory.txt',
             'Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs',
+            'Tools/Native/Verify-Language-1.0-Fixed-Integers.mjs',
             'Tools/Native/Test-Language-1.0-Front-Door.cmd',
             'Tools/Native/Test-Language-1.0-Front-Door.sh',
             'Specifications/Windvale-Language-1.0-Grammar.md',
@@ -637,6 +640,9 @@ $NativeCases = @(
         Name = 'portable WVB metadata-aware verifier owner'
         Paths = @(
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
+            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
             'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv',
             'Projects/Tests/Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj',
@@ -648,6 +654,7 @@ $NativeCases = @(
             'wvb-inspector-reconstruction',
             'unsafe-wvb',
             'wvb-containment',
+            'language-1-front-door',
             'model-provider',
             'file-read-application',
             'libraries'
@@ -3189,7 +3196,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4667 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4689 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

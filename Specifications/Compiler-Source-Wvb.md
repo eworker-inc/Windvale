@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 or 1.12 module, and returns the bytes without using hosted capabilities.
 
 The current slice proves the complete source set → symbols/bindings → typed WVIR → canonical cross-module identity flattening → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. It emits one self-contained module and does not introduce runtime linkage.
 
@@ -13,7 +13,7 @@ Compilerˉcompileˉsourceˉwvb(Input: bytes)
     -> Compilerˉsourceˉwvbˉsummary
 ```
 
-On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB 1.11 module, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
+On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB module using the lowest required minor version, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
 
 The status contract distinguishes upstream WVIR rejection, shapes and operations, invalid data, and WVB limits. The former unsupported-declaration value and the existing module-count and profile values remain reserved for stable diagnostic numbering: upstream WVIR admission now owns declaration-kind rejection, and every currently validated WVSS module count and root profile is accepted.
 
@@ -60,8 +60,8 @@ external WVSS 2 values.
 
 The first Language 1.0 Slice 2 checkpoint appends front-end token, source-type,
 and internal binding-shape identities for `unit`, `never`, `i8`, `i16`, `u16`,
-`f32`, `f64`, and `rune`. Those internal identities are not WVB type bytes and do
-not generally extend the accepted WVB subset below. The second checkpoint admits
+`f32`, `f64`, and `rune`. Those internal identities are not automatically WVB
+type bytes. The second checkpoint admits
 only storage-free `unit` results: typed WIR shape zero encodes as WVB's existing
 return-only type byte zero, a unit literal emits no opcode, a unit-valued call
 uses the existing call instruction without pushing a result, and the existing
@@ -70,7 +70,9 @@ representation without equating Seed `void` and Language 1.0 `unit` in source
 semantics. `unit` parameters/locals and the other new primitive values remain
 closed until their exact operations and runtime representations are implemented
 and versioned; the backend never aliases them to existing value shapes merely to
-produce output.
+produce output. The fixed-integer checkpoint now admits `i8`, `i16`, and `u16`
+as stored values and operations through WVB 1.12. `f32`, `f64`, `rune`, and
+non-result `unit` remain closed.
 
 The 356-byte `Unit-Control.wv` artifact proves deterministic compiler emission
 for explicit/fallthrough unit return and a unit-returning call. The current scalar
@@ -142,12 +144,12 @@ The backend accepts:
 - private or exported functions, static data, storage-free constants, records, enums, and variants in any valid source declaration order;
 - `[i32]`, `text`, and `bytes` static data;
 - immutable nominal record, enum, and variant declarations plus bounded sequence and local affine-builder shapes;
-- `void`, `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, and sequence function returns, parameters, explicitly typed or initializer-inferred locals, and temporaries, with builders restricted to verified locals;
+- `void`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, and sequence function returns, parameters, explicitly typed or initializer-inferred locals, and temporaries, with builders restricted to verified locals;
 - literal operations produced directly or by typed-constant substitution, parameter/local load and store, static-data length and integer-array indexing, and function calls;
 - positional and named record construction through the same canonical operation, record field reads, enum constants, exact equality/inequality, and declared names;
 - capability calls with their validated catalog parameter and result shapes;
 - the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics, including exact little-endian `u64` read and construction plus lossless `u32` to `u64` widening;
-- checked `i32`/`i64`/`u32`/`u64` arithmetic including division and remainder; `u8`/`u32`/`u64` bitwise and shift operations; exact text/bytes equality; full fixed-width scalar comparison, signed negation, invariant formatting, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
+- checked `i8`/`i16`/`i32`/`i64`/`u16`/`u32`/`u64` arithmetic including division and remainder; `u8`/`u16`/`u32`/`u64` bitwise and shift operations; exact text/bytes equality; full admitted scalar comparison, signed negation, invariant formatting, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
 - variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, exact `try` propagation, `while`, `for`, `break`, and `continue`.
 
 `try` is source-only control-flow sugar. WVIR presents only its existing variant
@@ -227,13 +229,20 @@ WVSD assigns canonical nominal indices independently of source order or module o
 
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
-Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. These encodings apply uniformly to parameters, results, user locals, and compiler temporaries.
+Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. These encodings apply uniformly to parameters, results, user locals, and compiler temporaries.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 
 WVIR operations `126` and `127` lower to WVB opcodes `BD` and `BE` for `Bytesˉreadˉu64ˉlittle` and `Bytesˉfromˉu64ˉlittle`. They are ordinary members of the canonical WVB 1.11 vocabulary; the backend does not select another minor version when they occur.
 
 WVIR operation `128` lowers to WVB opcode `BF` for `U64ˉfromˉu32`. It preserves the complete `u32` numeric domain exactly and is likewise part of canonical WVB 1.11.
+
+WVIR operations `129` through `147` lower to WVB 1.12 opcode `C0`, followed
+by the WVB fixed-integer type tag and operation selector. A constant additionally
+carries its raw little-endian `u16`; `i8` requires a zero high byte. Comparisons
+produce `bool`, signed negation is admitted only for `i8`/`i16`, and bitwise or
+shift selectors are admitted only for `u16`. The backend never emits an invalid
+type/selector pair.
 
 Named-record syntax has disappeared by this boundary: typed WVIR has already evaluated source fields left to right and reordered their temporary operands to canonical declaration order. It therefore lowers through the same record-construction opcode and value layout as the retained positional spelling.
 
@@ -302,8 +311,28 @@ Primitive WVIR shapes map to WVB shapes as follows:
 | 6 | `bytes` | 6 |
 | 7 | `i64` | 9 |
 | 8 | `u64` | 10 |
+| 11 | `i8` | 14 |
+| 12 | `i16` | 15 |
+| 13 | `u16` | 16 |
 
-The encoder writes canonical Module, Capabilities, Data, Functions, Code, Exports, and Types section envelopes in WVB 1.11. Every module carries the metadata-presence byte, including modules without metadata. Capabilities and Types contain canonical zero counts when absent and canonical entries when their accepted declarations are present. Function metadata includes user locals followed by temporary locals, contiguous code offsets, exact code lengths, and the computed maximum stack depth.
+The encoder writes canonical Module, Capabilities, Data, Functions, Code,
+Exports, and Types section envelopes. It emits WVB 1.12 when any function,
+field, payload, collection element, local, temporary, result, or operation uses
+`i8`, `i16`, or `u16`; otherwise it emits the byte-identical WVB 1.11 baseline.
+Every module carries the metadata-presence byte, including modules without
+metadata. Capabilities and Types contain canonical zero counts when absent and
+canonical entries when their accepted declarations are present. Function
+metadata includes user locals followed by temporary locals, contiguous code
+offsets, exact code lengths, and the computed maximum stack depth.
+
+`Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv` exercises literals,
+typed constants, parameters/locals/results, checked arithmetic, comparison,
+signed negation, and `u16` bitwise/shift behavior. It publishes deterministically
+as a 5,335-byte WVB 1.12 module with SHA-256
+`b3cca3ae81dfadc78d45b1f83b5bdd7a3deaff1d42624e12c2a610bdb3f222a9`
+and executes with result `42`. The unchanged minimum edition-1
+program remains exactly 221-byte WVB 1.11 with SHA-256
+`25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae`.
 
 ## Verification
 

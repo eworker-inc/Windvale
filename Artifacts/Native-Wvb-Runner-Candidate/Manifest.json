@@ -4,6 +4,7 @@
   "sourceDecision": "0217",
   "provenanceDecision": "0220",
   "constructionDecision": "0510",
+  "fixedIntegerDecision": "0768",
   "qualification": "current-host-focused",
   "construction": "windvale-native-profile-5-source-reconstruction",
   "nativeSourceConstruction": "windvale-native-project-1",
@@ -12,32 +13,32 @@
       "name": "wvb-runner-wvb",
       "path": "Wvb-Runner.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 136020,
-      "sha256": "65cdb8a1ab0776dfb4da2c89a53e53dfa67072ff3e6958adc58c461e82d1a9d6",
+      "bytes": 147748,
+      "sha256": "9297e6d358f2b6b4e41fa5c21b44759e23f64569156d3e3ead95815e0ef7446f",
       "sourceProject": "Windvale-Wvb-Runner.wvproj"
     },
     {
       "name": "wvb-runner-native-object",
       "path": "Wvb-Runner.wvo",
       "target": "x86-64-wvo-abi-22",
-      "bytes": 1233367,
-      "sha256": "14011cc7879b2b876d5b2cf17db0ecc522a1b47d6a9eaf2e9d3773850a5c7553",
+      "bytes": 1334709,
+      "sha256": "a098fef0e600e060457fea99c826b6e2d2572b58a32ab0accd1101e3824d8467",
       "sourceWvb": "Wvb-Runner.wvb"
     },
     {
       "name": "windows-x64-wvb-runner",
       "path": "windows-x64-wvrun.exe",
       "target": "windows-x64-wvb-runner-v1",
-      "bytes": 1248768,
-      "sha256": "b30390b51542648f6e69b2078135f25b77cde18432e72b9137bdf6066e8c2f1d",
+      "bytes": 1349632,
+      "sha256": "51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e",
       "sourceWvo": "Wvb-Runner.wvo"
     },
     {
       "name": "linux-x64-wvb-runner",
       "path": "linux-x64-wvrun.elf",
       "target": "linux-x64-wvb-runner-v1",
-      "bytes": 1249280,
-      "sha256": "ab318af04fab63833d569787a0977d7239e0eb53a268e508f25823eb32c212cb",
+      "bytes": 1351680,
+      "sha256": "c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca",
       "sourceWvo": "Wvb-Runner.wvo"
     }
   ]

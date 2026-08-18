@@ -1,0 +1,11 @@
+#!wv/1 en@1
+module Languageˉoneˉfixedˉintegerˉconstantˉoverflow;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+const TOO_LARGE: i8 = 127i8 + 1i8;
+
+export fn Main() -> i32 {
+    return 42;
+}

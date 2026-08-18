@@ -110,6 +110,9 @@ export enum Compilerˉnumericˉkind {
     U32 = 3;
     I64 = 4;
     U64 = 5;
+    I8 = 6;
+    I16 = 7;
+    U16 = 8;
 }
 
 export enum Compilerˉlexˉstatus {
@@ -846,7 +849,14 @@ export fn Compilerˉlexˉnextˉafterˉscan(
             let Digitˉend: u32 = Cursor;
             var Numericˉkind: Compilerˉnumericˉkind = Compilerˉnumericˉkind.I32;
             if Total - Cursor >= 2u32 {
-                if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "u8") {
+                if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "i8") {
+                    let I8ˉfollowing: u32 = Cursor + 2u32;
+                    if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, I8ˉfollowing, Total) == 0u32 {
+                        Numericˉkind = Compilerˉnumericˉkind.I8;
+                        Cursor = I8ˉfollowing;
+                        Column = Column + 2u32;
+                    }
+                } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "u8") {
                     let U8ˉfollowing: u32 = Cursor + 2u32;
                     if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U8ˉfollowing, Total) == 0u32 {
                         Numericˉkind = Compilerˉnumericˉkind.U8;
@@ -864,11 +874,25 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                             Cursor = I64ˉfollowing;
                             Column = Column + 3u32;
                         }
+                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "i16") {
+                        let I16ˉfollowing: u32 = Cursor + 3u32;
+                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, I16ˉfollowing, Total) == 0u32 {
+                            Numericˉkind = Compilerˉnumericˉkind.I16;
+                            Cursor = I16ˉfollowing;
+                            Column = Column + 3u32;
+                        }
                     } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u32") {
                         let U32ˉfollowing: u32 = Cursor + 3u32;
                         if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U32ˉfollowing, Total) == 0u32 {
                             Numericˉkind = Compilerˉnumericˉkind.U32;
                             Cursor = U32ˉfollowing;
+                            Column = Column + 3u32;
+                        }
+                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u16") {
+                        let U16ˉfollowing: u32 = Cursor + 3u32;
+                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U16ˉfollowing, Total) == 0u32 {
+                            Numericˉkind = Compilerˉnumericˉkind.U16;
+                            Cursor = U16ˉfollowing;
                             Column = Column + 3u32;
                         }
                     } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u64") {
@@ -924,6 +948,21 @@ export fn Compilerˉlexˉnextˉafterˉscan(
             }
             if Numericˉkind == Compilerˉnumericˉkind.U8 {
                 if Parsed.Value > 255u32 {
+                    Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                }
+            }
+            if Numericˉkind == Compilerˉnumericˉkind.I8 {
+                if Parsed.Value > 127u32 {
+                    Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                }
+            }
+            if Numericˉkind == Compilerˉnumericˉkind.I16 {
+                if Parsed.Value > 32767u32 {
+                    Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                }
+            }
+            if Numericˉkind == Compilerˉnumericˉkind.U16 {
+                if Parsed.Value > 65535u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }

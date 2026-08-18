@@ -1,0 +1,68 @@
+#!wv/1 en@1
+module Languageˉoneˉfixedˉintegerˉprogram;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+const I8_ANSWER: i8 = 40i8 + 2i8;
+const I8_NEGATIVE: i8 = -7i8;
+const I16_ANSWER: i16 = 84i16 / 2i16;
+const U16_ANSWER: u16 = 40u16 | 2u16;
+
+fn I8ˉworks() -> bool {
+    if I8_ANSWER != 42i8 || I8_NEGATIVE != -7i8 { return false; }
+    let Sum: i8 = 120i8 + 7i8;
+    let Difference: i8 = 0i8 - 127i8;
+    let Product: i8 = 6i8 * 7i8;
+    let Quotient: i8 = 126i8 / 3i8;
+    let Remainder: i8 = 127i8 % 5i8;
+    let Negative: i8 = -7i8;
+    return Sum == 127i8 && Difference == -127i8 &&
+        Product == 42i8 && Quotient == 42i8 && Remainder == 2i8 &&
+        Negative < 0i8 && Negative <= -7i8 && Sum > Negative &&
+        Sum >= 127i8 && Sum != Negative;
+}
+
+fn I16ˉworks() -> bool {
+    if I16_ANSWER != 42i16 { return false; }
+    let Sum: i16 = 32000i16 + 767i16;
+    let Difference: i16 = 0i16 - 32767i16;
+    let Product: i16 = 256i16 * 127i16;
+    let Quotient: i16 = 32766i16 / 2i16;
+    let Remainder: i16 = 32767i16 % 10i16;
+    let Negative: i16 = -32767i16;
+    return Sum == 32767i16 && Difference == -32767i16 &&
+        Product == 32512i16 && Quotient == 16383i16 &&
+        Remainder == 7i16 && Negative < 0i16 &&
+        Negative <= -32767i16 && Sum > Negative && Sum >= 32767i16 &&
+        Sum != Negative;
+}
+
+fn U16ˉworks() -> bool {
+    if U16_ANSWER != 42u16 { return false; }
+    let Sum: u16 = 65000u16 + 535u16;
+    let Difference: u16 = 65535u16 - 1u16;
+    let Product: u16 = 255u16 * 257u16;
+    let Quotient: u16 = 65535u16 / 3u16;
+    let Remainder: u16 = 65535u16 % 256u16;
+    let And: u16 = 61680u16 & 3855u16;
+    let Or: u16 = 61680u16 | 3855u16;
+    let Xor: u16 = 43690u16 ^ 21845u16;
+    let Complement: u16 = ~0u16;
+    let Shiftˉleft: u16 = 1u16 << 15u32;
+    let Shiftˉright: u16 = 32768u16 >> 15u32;
+    return Sum == 65535u16 && Difference == 65534u16 &&
+        Product == 65535u16 && Quotient == 21845u16 &&
+        Remainder == 255u16 && And == 0u16 && Or == 65535u16 &&
+        Xor == 65535u16 && Complement == 65535u16 &&
+        Shiftˉleft == 32768u16 && Shiftˉright == 1u16 &&
+        0u16 < Sum && 0u16 <= Sum && Sum > 0u16 && Sum >= 65535u16 &&
+        Sum != 0u16;
+}
+
+export fn Main() -> i32 {
+    if !I8ˉworks() { return 1; }
+    if !I16ˉworks() { return 2; }
+    if !U16ˉworks() { return 3; }
+    return 42;
+}

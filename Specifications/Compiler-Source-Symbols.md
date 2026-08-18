@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current candidate retains Decision 0050's bidirectional nominal identity evidence and Decision 0055's bounded nominal-range lookup while adding typed-constant validation under Decision 0184. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces, signature types, and deterministic root constants, and publishes evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current candidate retains Decision 0050's bidirectional nominal identity evidence and Decision 0055's bounded nominal-range lookup, adds typed-constant validation under Decision 0184, and extends that evaluator to `i8`, `i16`, and `u16` under Decision 0768. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces, signature types, and deterministic root constants, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 
@@ -89,7 +89,7 @@ A named signature type resolves by exact ordinal UTF-8 name against the global n
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
-Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. Wide integers are evaluated with explicit low/high `u32` limbs so their range and overflow behavior do not inherit the host runtime.
+Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. Wide integers are evaluated with explicit low/high `u32` limbs; narrow signed constants retain sign plus bounded magnitude until WIR emits their exact named-width two's-complement bits. No width or overflow behavior inherits the host runtime.
 
 ## WVSD 1.1 declaration directory
 

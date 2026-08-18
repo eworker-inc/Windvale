@@ -18,7 +18,7 @@ Windows/Linux applications. The route runs on the current Windows host and
 consumes retained same-release native toolsets; independent Linux execution,
 clean bootstrap, qualification, promotion, and recovery release remain.
 
-These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one typed walk under a `u64` host meter. It constructs fixed-width per-function local-shape and control-boundary directories before the typed and reachability checks, avoiding repeated variable-width rescans without changing acceptance. The WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
+These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. It accepts WVB 1.11 and WVB 1.12, admits fixed-integer tags 14 through 16 and opcode `C0` only under 1.12, and rejects invalid type/operation combinations or immediate widths. The native application retains one typed walk under a `u64` host meter. It constructs fixed-width per-function local-shape and control-boundary directories before the typed and reachability checks, avoiding repeated variable-width rescans without changing acceptance. The WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
 The canonical source project is [`Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj`](../Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 
@@ -185,7 +185,7 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current source reconstruction candidate is 1,248,768 bytes with SHA-256 `b30390b51542648f6e69b2078135f25b77cde18432e72b9137bdf6066e8c2f1d`.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current source reconstruction candidate is 1,349,632 bytes with SHA-256 `51ba52c7509584cbf5c2adc8ae42ac0939b2b311eb9366c812f7f19367fc4e7e`.
 
 `windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current bounded-reporting source candidate is 1,037,312 bytes with SHA-256 `5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03`.
 
@@ -206,7 +206,7 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
-`linux-x64-wvb-runner-v1` uses metadata profile `5`. The current source reconstruction candidate is 1,249,280 bytes with SHA-256 `ab318af04fab63833d569787a0977d7239e0eb53a268e508f25823eb32c212cb`.
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The current source reconstruction candidate is 1,351,680 bytes with SHA-256 `c5b836c8fc9974d120307b45e918d31c2595428232d764540feaf818059a49ca`.
 
 `linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current bounded-reporting source candidate is 1,036,288 bytes with SHA-256 `fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840`.
 
@@ -251,7 +251,7 @@ through the native WVB build/lower/link and hosted-container tools.
 
 The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
 
-The current source-built runner WVB is 136,020 bytes with SHA-256 `65cdb8a1ab0776dfb4da2c89a53e53dfa67072ff3e6958adc58c461e82d1a9d6`. Its exact current native object is 1,233,367 bytes with SHA-256 `14011cc7879b2b876d5b2cf17db0ecc522a1b47d6a9eaf2e9d3773850a5c7553`.
+The current source-built runner WVB is 147,748 bytes with SHA-256 `9297e6d358f2b6b4e41fa5c21b44759e23f64569156d3e3ead95815e0ef7446f`. Its exact current native object is 1,334,709 bytes with SHA-256 `a098fef0e600e060457fea99c826b6e2d2572b58a32ab0accd1101e3824d8467`.
 
 The WVO inspector candidate is 73,322 bytes with SHA-256 `40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070`.
 

@@ -83,6 +83,14 @@ export fn Iˉcontrolˉdirectory(
             (Opcode >= 151u32 && Opcode <= 153u32) {
             Width = 9u32;
         }
+        if Opcode == 192u32 {
+            Width = 3u32;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input, Functionˉcode + Cursor + 2u32
+            )) == 0u32 {
+                Width = 5u32;
+            }
+        }
         if Width > Codeˉlength - Cursor {
             return Hˉcontrolˉdirectory(false, Empty, Empty);
         }
@@ -95,6 +103,9 @@ export fn Iˉcontrolˉdirectory(
         var Chunk: bytes = Bytesˉfromˉu8(Boundary);
         if Width == 2u32 {
             Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu8(0u8));
+        }
+        if Width == 3u32 {
+            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu16ˉlittle(0u32));
         }
         if Width == 5u32 {
             Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu32ˉlittle(0u32));

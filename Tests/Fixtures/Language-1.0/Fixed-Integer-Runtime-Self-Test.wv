@@ -1,0 +1,86 @@
+module Languageˉoneˉfixedˉintegerˉruntimeˉselfˉtest profile portable;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegers as Runtime;
+
+data I8ˉconstant: bytes = [192, 14, 0, 127, 0];
+data I8ˉadd: bytes = [192, 14, 1];
+data Invalidˉkind: bytes = [192, 13, 0, 1, 0];
+data Zeroˉcell: bytes = [0, 0, 0, 0];
+
+fn Status(Result: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Result, 0u32);
+}
+
+fn Value(Result: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Result, 4u32);
+}
+
+fn Cell(Value: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Zeroˉcell);
+}
+
+export fn Main() -> i32 {
+    if Fixed.Scanˉfixedˉinteger(
+        I8ˉconstant, 0u32, 5u32, 12u32
+    ) != 5u32 { return 1; }
+    if Fixed.Scanˉfixedˉinteger(
+        Invalidˉkind, 0u32, 5u32, 12u32
+    ) != 0u32 { return 2; }
+    if Fixed.Scanˉfixedˉinteger(
+        I8ˉconstant, 0u32, 5u32, 11u32
+    ) != 0u32 { return 3; }
+
+    let Empty: bytes = Bytesˉslice(I8ˉconstant, 0u32, 0u32);
+    let Constant: Runtime.Fixedˉintegerˉexecution =
+        Runtime.Executeˉfixedˉinteger(
+            I8ˉconstant, 0u32, Empty, 0u32, Zeroˉcell
+        );
+    if !Constant.Valid || Constant.Status != 0u32 ||
+        Constant.Consumed != 0u32 || Constant.Advance != 5u32 ||
+        Bytesˉlength(Constant.Stack) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Constant.Stack, 0u32) != 127u32 {
+        return 4;
+    }
+    let Addˉstack: bytes = Bytesˉconcat(Cell(20u32), Cell(22u32));
+    let Executedˉadd: Runtime.Fixedˉintegerˉexecution =
+        Runtime.Executeˉfixedˉinteger(
+            I8ˉadd, 0u32, Addˉstack, 2u32, Zeroˉcell
+        );
+    if !Executedˉadd.Valid || Executedˉadd.Status != 0u32 ||
+        Executedˉadd.Consumed != 2u32 || Executedˉadd.Advance != 3u32 ||
+        Bytesˉlength(Executedˉadd.Stack) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Executedˉadd.Stack, 0u32) != 42u32 {
+        return 5;
+    }
+
+    let Add: bytes = Fixed.Evaluateˉfixedˉinteger(
+        14u32, 1u32, 20u32, 22u32
+    );
+    if Status(Add) != 0u32 || Value(Add) != 42u32 { return 6; }
+    let Overflow: bytes = Fixed.Evaluateˉfixedˉinteger(
+        14u32, 1u32, 127u32, 1u32
+    );
+    if Status(Overflow) != 3007u32 { return 7; }
+    let Divideˉbyˉzero: bytes = Fixed.Evaluateˉfixedˉinteger(
+        15u32, 4u32, 1u32, 0u32
+    );
+    if Status(Divideˉbyˉzero) != 3032u32 { return 8; }
+    let Invalidˉshift: bytes = Fixed.Evaluateˉfixedˉinteger(
+        16u32, 17u32, 1u32, 16u32
+    );
+    if Status(Invalidˉshift) != 3033u32 { return 9; }
+
+    let Signedˉdivision: bytes = Fixed.Evaluateˉfixedˉinteger(
+        15u32, 4u32, 4294967170u32, 3u32
+    );
+    if Status(Signedˉdivision) != 0u32 ||
+        Value(Signedˉdivision) != 4294967254u32 { return 10; }
+    let Signedˉremainder: bytes = Fixed.Evaluateˉfixedˉinteger(
+        15u32, 5u32, 4294967169u32, 5u32
+    );
+    if Status(Signedˉremainder) != 0u32 ||
+        Value(Signedˉremainder) != 4294967294u32 { return 11; }
+
+    return 42;
+}

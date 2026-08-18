@@ -1,0 +1,282 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore profile portable;
+
+fn Result(Status: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Status),
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
+}
+
+export fn Scanˉfixedˉinteger(
+    Module: bytes,
+    Offset: u32,
+    Remaining: u32,
+    Minor: u32
+) -> u32 {
+    if Minor != 12u32 || Remaining < 3u32 { return 0u32; }
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
+    let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
+    if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
+    var Width: u32 = 3u32;
+    if Operation == 0u32 {
+        Width = 5u32;
+        if Remaining < Width { return 0u32; }
+        if Kind == 14u32 && Bytesˉreadˉu8(Module, Offset + 4u32) != 0u8 {
+            return 0u32;
+        }
+    }
+    if Operation == 6u32 && Kind == 16u32 { return 0u32; }
+    if Operation >= 13u32 && Kind != 16u32 { return 0u32; }
+    return Width;
+}
+
+export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
+    if Kind >= 1u32 && Kind <= 10u32 { return true; }
+    return Minor == 12u32 && Kind >= 14u32 && Kind <= 16u32;
+}
+
+export fn Scanˉfunction(
+    Module: bytes,
+    Offset: u32,
+    Length: u32,
+    Minor: u32,
+    Requestˉmajor: u32
+) -> u32 {
+    var Cursor: u32 = 0u32;
+    var Instructions: u32 = 0u32;
+    while Cursor < Length {
+        let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+            Module, Offset + Cursor
+        ));
+        var Width: u32 = 1u32;
+        var Supported: bool = false;
+        if Opcode == 1u32 { Width = 5u32; Supported = true; }
+        if Opcode == 2u32 { Width = 2u32; Supported = true; }
+        if Opcode >= 3u32 && Opcode <= 7u32 {
+            Width = 5u32;
+            Supported = true;
+        }
+        if Opcode == 8u32 { Width = 2u32; Supported = true; }
+        if Opcode == 9u32 || Opcode == 10u32 {
+            Width = 5u32;
+            Supported = true;
+        }
+        if Opcode >= 11u32 && Opcode <= 15u32 { Supported = true; }
+        if Opcode >= 16u32 && Opcode <= 22u32 { Supported = true; }
+        if Opcode >= 32u32 && Opcode <= 40u32 { Supported = true; }
+        if Opcode == 48u32 || Opcode == 49u32 || Opcode == 64u32 {
+            Width = 5u32;
+            Supported = true;
+        }
+        if Opcode == 65u32 && Requestˉmajor >= 3u32 {
+            Width = 5u32;
+            Supported = true;
+        }
+        if Opcode == 80u32 || Opcode == 81u32 { Supported = true; }
+        if Opcode >= 96u32 && Opcode <= 103u32 { Supported = true; }
+        if Opcode == 104u32 || Opcode == 105u32 {
+            Width = 5u32;
+            Supported = true;
+        }
+        if Opcode == 106u32 { Width = 9u32; Supported = true; }
+        if Opcode >= 107u32 && Opcode <= 125u32 { Supported = true; }
+        if Opcode == 161u32 || Opcode == 162u32 { Supported = true; }
+        if Opcode >= 173u32 && Opcode <= 178u32 { Supported = true; }
+        if Opcode == 192u32 {
+            Width = Scanˉfixedˉinteger(
+                Module, Offset + Cursor, Length - Cursor, Minor
+            );
+            if Width == 0u32 { return 0u32; }
+            Supported = true;
+        }
+        if !Supported || Width > Length - Cursor { return 0u32; }
+        Cursor = Cursor + Width;
+        Instructions = Instructions + 1u32;
+        if Instructions > 400000u32 { return 0u32; }
+    }
+    return Instructions;
+}
+
+export fn Evaluateˉfixedˉinteger(
+    Kind: u32,
+    Operation: u32,
+    Left: u32,
+    Right: u32
+) -> bytes {
+    if Kind == 16u32 {
+        var Unsignedˉvalue: u32 = 0u32;
+        if Operation == 1u32 { Unsignedˉvalue = Left + Right; }
+        if Operation == 2u32 {
+            if Left < Right { return Result(3007u32, 0u32); }
+            Unsignedˉvalue = Left - Right;
+        }
+        if Operation == 3u32 { Unsignedˉvalue = Left * Right; }
+        if Operation == 4u32 || Operation == 5u32 {
+            if Right == 0u32 { return Result(3032u32, 0u32); }
+            if Operation == 4u32 { Unsignedˉvalue = Left / Right; }
+            if Operation == 5u32 { Unsignedˉvalue = Left % Right; }
+        }
+        var Unsignedˉmatches: bool = false;
+        if Operation == 7u32 { Unsignedˉmatches = Left == Right; }
+        if Operation == 8u32 { Unsignedˉmatches = Left != Right; }
+        if Operation == 9u32 { Unsignedˉmatches = Left < Right; }
+        if Operation == 10u32 { Unsignedˉmatches = Left <= Right; }
+        if Operation == 11u32 { Unsignedˉmatches = Left > Right; }
+        if Operation == 12u32 { Unsignedˉmatches = Left >= Right; }
+        if Operation >= 7u32 && Operation <= 12u32 {
+            if Unsignedˉmatches { Unsignedˉvalue = 1u32; }
+            return Result(0u32, Unsignedˉvalue);
+        }
+        if Operation == 13u32 { Unsignedˉvalue = Left & Right; }
+        if Operation == 14u32 { Unsignedˉvalue = Left | Right; }
+        if Operation == 15u32 { Unsignedˉvalue = Left ^ Right; }
+        if Operation == 16u32 { Unsignedˉvalue = (~Left) & 65535u32; }
+        if Operation == 17u32 || Operation == 18u32 {
+            if Right >= 16u32 { return Result(3033u32, 0u32); }
+            if Operation == 17u32 {
+                Unsignedˉvalue = (Left << Right) & 65535u32;
+            }
+            if Operation == 18u32 { Unsignedˉvalue = Left >> Right; }
+        }
+        if Unsignedˉvalue > 65535u32 { return Result(3007u32, 0u32); }
+        return Result(0u32, Unsignedˉvalue);
+    }
+
+    let Signedˉleft: i32 = Bytesˉreadˉi32ˉlittle(
+        Bytesˉfromˉu32ˉlittle(Left), 0u32
+    );
+    let Signedˉright: i32 = Bytesˉreadˉi32ˉlittle(
+        Bytesˉfromˉu32ˉlittle(Right), 0u32
+    );
+    var Signedˉminimum: i32 = -128;
+    var Signedˉmaximum: i32 = 127;
+    if Kind == 15u32 {
+        Signedˉminimum = -32768;
+        Signedˉmaximum = 32767;
+    }
+    var Signedˉvalue: i32 = 0;
+    if Operation == 1u32 { Signedˉvalue = Signedˉleft + Signedˉright; }
+    if Operation == 2u32 { Signedˉvalue = Signedˉleft - Signedˉright; }
+    if Operation == 3u32 { Signedˉvalue = Signedˉleft * Signedˉright; }
+    if Operation == 4u32 || Operation == 5u32 {
+        if Signedˉright == 0 { return Result(3032u32, 0u32); }
+        let Leftˉnegative: bool = Signedˉleft < 0;
+        let Rightˉnegative: bool = Signedˉright < 0;
+        var Leftˉmagnitude: u32 = Left;
+        var Rightˉmagnitude: u32 = Right;
+        if Leftˉnegative {
+            Leftˉmagnitude = 4294967295u32 - Left + 1u32;
+        }
+        if Rightˉnegative {
+            Rightˉmagnitude = 4294967295u32 - Right + 1u32;
+        }
+        var Signedˉmagnitude: u32 =
+            Leftˉmagnitude / Rightˉmagnitude;
+        var Resultˉnegative: bool = Leftˉnegative != Rightˉnegative;
+        if Operation == 5u32 {
+            Signedˉmagnitude = Leftˉmagnitude % Rightˉmagnitude;
+            Resultˉnegative = Leftˉnegative;
+        }
+        var Signedˉraw: u32 = Signedˉmagnitude;
+        if Resultˉnegative && Signedˉmagnitude != 0u32 {
+            Signedˉraw = 4294967295u32 - Signedˉmagnitude + 1u32;
+        }
+        Signedˉvalue = Bytesˉreadˉi32ˉlittle(
+            Bytesˉfromˉu32ˉlittle(Signedˉraw), 0u32
+        );
+    }
+    if Operation == 6u32 { Signedˉvalue = -Signedˉleft; }
+    var Signedˉmatches: bool = false;
+    if Operation == 7u32 { Signedˉmatches = Signedˉleft == Signedˉright; }
+    if Operation == 8u32 { Signedˉmatches = Signedˉleft != Signedˉright; }
+    if Operation == 9u32 { Signedˉmatches = Signedˉleft < Signedˉright; }
+    if Operation == 10u32 { Signedˉmatches = Signedˉleft <= Signedˉright; }
+    if Operation == 11u32 { Signedˉmatches = Signedˉleft > Signedˉright; }
+    if Operation == 12u32 { Signedˉmatches = Signedˉleft >= Signedˉright; }
+    if Operation >= 7u32 && Operation <= 12u32 {
+        var Signedˉflag: u32 = 0u32;
+        if Signedˉmatches { Signedˉflag = 1u32; }
+        return Result(0u32, Signedˉflag);
+    }
+    if Signedˉvalue < Signedˉminimum || Signedˉvalue > Signedˉmaximum {
+        return Result(3007u32, 0u32);
+    }
+    return Result(
+        0u32,
+        Bytesˉreadˉu32ˉlittle(Bytesˉfromˉi32ˉlittle(Signedˉvalue), 0u32)
+    );
+}
+
+fn Execution(Metadata: u8, Status: u32, Stack: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Metadata),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Status), Stack)
+    );
+}
+
+export fn Executeˉfixedˉinteger(
+    Module: bytes,
+    Offset: u32,
+    Stack: bytes,
+    Stackˉdescriptorˉcount: u32,
+    Zeroˉvalue: bytes
+) -> bytes {
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
+    let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
+    if Operation == 0u32 {
+        let Raw: u32 = Bytesˉreadˉu16ˉlittle(Module, Offset + 3u32);
+        var Constant: u32 = Raw;
+        if Kind == 14u32 && Raw >= 128u32 {
+            Constant = 4294967040u32 + Raw;
+        }
+        if Kind == 15u32 && Raw >= 32768u32 {
+            Constant = 4294901760u32 + Raw;
+        }
+        return Execution(
+            20u8,
+            0u32,
+            Bytesˉconcat(
+                Stack,
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Constant), Zeroˉvalue)
+            )
+        );
+    }
+
+    var Operands: u32 = 2u32;
+    if Operation == 6u32 || Operation == 16u32 { Operands = 1u32; }
+    if Stackˉdescriptorˉcount < Operands {
+        return Bytesˉslice(Stack, 0u32, 0u32);
+    }
+    var Remainingˉstack: bytes = Stack;
+    var Stackˉlength: u32 = Bytesˉlength(Remainingˉstack);
+    var Right: u32 = 0u32;
+    var Left: u32 = Bytesˉreadˉu32ˉlittle(
+        Remainingˉstack, Stackˉlength - 8u32
+    );
+    Remainingˉstack = Bytesˉslice(
+        Remainingˉstack, 0u32, Stackˉlength - 8u32
+    );
+    if Operands == 2u32 {
+        Right = Left;
+        Stackˉlength = Bytesˉlength(Remainingˉstack);
+        Left = Bytesˉreadˉu32ˉlittle(
+            Remainingˉstack, Stackˉlength - 8u32
+        );
+        Remainingˉstack = Bytesˉslice(
+            Remainingˉstack, 0u32, Stackˉlength - 8u32
+        );
+    }
+    let Evaluated: bytes = Evaluateˉfixedˉinteger(
+        Kind, Operation, Left, Right
+    );
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Evaluated, 0u32);
+    if Status == 0u32 {
+        Remainingˉstack = Bytesˉconcat(
+            Remainingˉstack,
+            Bytesˉconcat(Bytesˉslice(Evaluated, 4u32, 4u32), Zeroˉvalue)
+        );
+    }
+    var Metadata: u8 = 14u8;
+    if Operands == 1u32 { Metadata = 13u8; }
+    return Execution(Metadata, Status, Remainingˉstack);
+}

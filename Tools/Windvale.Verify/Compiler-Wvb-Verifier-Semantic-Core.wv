@@ -64,7 +64,8 @@ export fn Bˉstructure(Input: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 2u32)) != 66u32 { return Invalid; }
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return Invalid; }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 { return Invalid; }
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    if Minor != 11u32 && Minor != 12u32 { return Invalid; }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -226,7 +227,11 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     if Payloadˉcursor >= Payloadˉend { return Invalid; }
                     Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
                     if Raw < 1u32 { return Invalid; }
-                    if Raw > 11u32 { return Invalid; }
+                    if Raw > 11u32 {
+                        if Minor != 12u32 || Raw < 14u32 || Raw > 16u32 {
+                            return Invalid;
+                        }
+                    }
                     Payloadˉcursor = Payloadˉcursor + 1u32;
                     if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 {
                         if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -236,7 +241,11 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                 }
                 if Payloadˉcursor >= Payloadˉend { return Invalid; }
                 Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                if Raw > 11u32 { return Invalid; }
+                if Raw > 11u32 {
+                    if Minor != 12u32 || Raw < 14u32 || Raw > 16u32 {
+                        return Invalid;
+                    }
+                }
                 Payloadˉcursor = Payloadˉcursor + 1u32;
                 if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 {
                     if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -251,7 +260,11 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     if Payloadˉcursor >= Payloadˉend { return Invalid; }
                     Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
                     if Raw < 1u32 { return Invalid; }
-                    if Raw > 11u32 { return Invalid; }
+                    if Raw > 11u32 {
+                        if Minor != 12u32 || Raw < 14u32 || Raw > 16u32 {
+                            return Invalid;
+                        }
+                    }
                     Payloadˉcursor = Payloadˉcursor + 1u32;
                     if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 {
                         if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -321,6 +334,36 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                 }
                 if Raw >= 155u32 {
                     if Raw <= 191u32 { Width = 1u32; }
+                }
+                if Raw == 192u32 {
+                    if Minor != 12u32 { return Invalid; }
+                    if 3u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                    let Fixedˉkind: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Input, Payloadˉcursor + 1u32)
+                    );
+                    let Fixedˉoperation: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Input, Payloadˉcursor + 2u32)
+                    );
+                    if Fixedˉkind < 14u32 || Fixedˉkind > 16u32 {
+                        return Invalid;
+                    }
+                    if Fixedˉoperation > 18u32 { return Invalid; }
+                    if Fixedˉoperation == 0u32 {
+                        Width = 5u32;
+                        if 5u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
+                        if Fixedˉkind == 14u32 &&
+                            Bytesˉreadˉu8(Input, Payloadˉcursor + 4u32) != 0u8 {
+                            return Invalid;
+                        }
+                    } else {
+                        Width = 3u32;
+                    }
+                    if Fixedˉoperation == 6u32 && Fixedˉkind == 16u32 {
+                        return Invalid;
+                    }
+                    if Fixedˉoperation >= 13u32 && Fixedˉkind != 16u32 {
+                        return Invalid;
+                    }
                 }
                 if Width == 0u32 { return Invalid; }
                 if Width > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -403,7 +446,11 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                         if Payloadˉcursor >= Payloadˉend { return Invalid; }
                         Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
                         if Length < 1u32 { return Invalid; }
-                        if Length > 11u32 { return Invalid; }
+                        if Length > 11u32 {
+                            if Minor != 12u32 || Length < 14u32 || Length > 16u32 {
+                                return Invalid;
+                            }
+                        }
                         Payloadˉcursor = Payloadˉcursor + 1u32;
                         if Length == 7u32 || Length == 8u32 || Length == 11u32 {
                             if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -428,7 +475,13 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                             Payloadˉcursor = Payloadˉcursor + Length;
                             if Payloadˉcursor >= Payloadˉend { return Invalid; }
                             Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                            if Length < 1u32 || Length > 11u32 { return Invalid; }
+                            if Length < 1u32 { return Invalid; }
+                            if Length > 11u32 {
+                                if Minor != 12u32 || Length < 14u32 ||
+                                    Length > 16u32 {
+                                    return Invalid;
+                                }
+                            }
                             Payloadˉcursor = Payloadˉcursor + 1u32;
                             if Length == 7u32 || Length == 8u32 || Length == 11u32 {
                                 if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -1234,6 +1287,14 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             if Opcode == 129u32 { Width = 9u32; }
             if Opcode >= 151u32 {
                 if Opcode <= 154u32 { Width = 9u32; }
+            }
+            if Opcode == 192u32 {
+                Width = 3u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input, Codeˉpayload + Codeˉoffset + Cursor + 2u32
+                )) == 0u32 {
+                    Width = 5u32;
+                }
             }
             Operand = 0u32;
             if Width >= 5u32 {

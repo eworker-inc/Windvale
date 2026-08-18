@@ -25,7 +25,7 @@ assembler-rejections|Test-Assembler-Rejections|11|2|Tests: 11, Passed: 11, Faile
 assembler-golden|Test-Assembler-Golden|4|4|Tests: 4, Passed: 4, Failed: 0
 wva-differential|Test-Wva-Differential|269|3|Tests: 269, Passed: 269, Failed: 0
 source-containment|Test-Source-Containment|500|3|Tests: 500, Passed: 500, Failed: 0
-language-1-front-door|Test-Language-1.0-Front-Door|22|2|native language 1 front door status=Passed cases=22 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116
+language-1-front-door|Test-Language-1.0-Front-Door|44|2|native language 1 front door status=Passed cases=44 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335
 compiler-source-sentinel|Test-Compiler-Source-Sentinel|5|2|native compiler source sentinel status=Passed cases=5 source-functions=4 result=6
 lowerer-rejections|Test-Lowerer-Rejections|2|3|Tests: 2, Passed: 2, Failed: 0
 linker-rejections|Test-Linker-Rejections|10|4|Tests: 10, Passed: 10, Failed: 0

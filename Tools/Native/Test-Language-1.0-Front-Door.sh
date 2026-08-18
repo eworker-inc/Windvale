@@ -17,6 +17,10 @@ work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || e
 cleanup() {
     case "$work" in
         "$temporary_root"/windvale-language-1-front-door.*)
+            if [[ -d $work/Fixed-Integer-Malformed ]]; then
+                rm -f -- "$work/Fixed-Integer-Malformed"/*
+                rmdir -- "$work/Fixed-Integer-Malformed"
+            fi
             rm -f -- "$work"/*
             rmdir -- "$work"
             ;;
@@ -28,11 +32,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/4'
+echo 'START language 1 front door phase=frozen-fixtures item=1/5'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/4'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/5'
 
-echo 'START language 1 front door phase=descriptor item=2/4'
+echo 'START language 1 front door phase=descriptor item=2/5'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -45,9 +49,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/4'
+echo 'PASS  language 1 front door phase=descriptor item=2/5'
 
-echo 'START language 1 front door phase=value-front-end item=3/4'
+echo 'START language 1 front door phase=value-front-end item=3/5'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -56,9 +60,9 @@ echo 'START language 1 front door phase=value-front-end item=3/4'
 [[ ! -s $work/Value-Front-End.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
 cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
-echo 'PASS  language 1 front door phase=value-front-end item=3/4'
+echo 'PASS  language 1 front door phase=value-front-end item=3/5'
 
-echo 'START language 1 front door phase=compiler-slice item=4/4'
+echo 'START language 1 front door phase=compiler-slice item=4/5'
 segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
     "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
     "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
@@ -203,5 +207,105 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/4'
-echo 'native language 1 front door status=Passed cases=22 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/5'
+
+echo 'START language 1 front door phase=fixed-integers item=5/5'
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
+    "$work/Fixed-Integer-A.wvb" \
+    >"$work/Fixed-Integer-A.out" 2>"$work/Fixed-Integer-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
+    "$work/Fixed-Integer-B.wvb" \
+    >"$work/Fixed-Integer-B.out" 2>"$work/Fixed-Integer-B.err" || exit $?
+[[ ! -s $work/Fixed-Integer-A.err && ! -s $work/Fixed-Integer-B.err ]] || exit 1
+cmp -s -- "$work/Fixed-Integer-A.out" "$work/Fixed-Integer-B.out" || exit 1
+cmp -s -- "$work/Fixed-Integer-A.wvb" "$work/Fixed-Integer-B.wvb" || exit 1
+
+for name in Overflow Divide-By-Zero Invalid-Shift; do
+    "$work/Compiler.elf" \
+        --source-input-lock "$source_lock" "$source_lock_hash" \
+        --source-profile "$source_profile" \
+        "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-$name.wv" \
+        "$work/Fixed-Integer-$name.wvb" \
+        >"$work/Fixed-Integer-$name.out" 2>"$work/Fixed-Integer-$name.err" || exit $?
+done
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Literal-Out-Of-Range.wv" \
+    "$work/Fixed-Integer-Literal-Out-Of-Range.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Type-Mismatch.wv" \
+    "$work/Fixed-Integer-Type-Mismatch.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Signed-Bitwise.wv" \
+    "$work/Fixed-Integer-Signed-Bitwise.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Constant-Overflow.wv" \
+    "$work/Fixed-Integer-Constant-Overflow.wvb" || exit 1
+
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj" \
+    "$work/Verifier.wvb" >"$work/Verifier-Build.out" \
+    2>"$work/Verifier-Build.err" || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 2 \
+    "$work/Verifier.wvb" "$work/Verifier.elf" linux \
+    >"$work/Verifier-Package.out" 2>"$work/Verifier-Package.err" || exit $?
+for name in A Overflow Divide-By-Zero Invalid-Shift; do
+    "$work/Verifier.elf" "$work/Fixed-Integer-$name.wvb" \
+        >"$work/Verify-$name.out" 2>"$work/Verify-$name.err" || exit $?
+    grep -Fq 'wvb status=Valid profile=compiler-aligned' \
+        "$work/Verify-$name.out" || exit 1
+done
+node "$script_directory/Verify-Language-1.0-Fixed-Integers.mjs" \
+    "$work/Verifier.elf" "$work/Fixed-Integer-A.wvb" \
+    "$work/Fixed-Integer-Malformed" || exit $?
+
+"$script_directory/Run-Wvb.sh" "$work/Fixed-Integer-A.wvb" \
+    >"$work/Fixed-Integer-Run.out" 2>"$work/Fixed-Integer-Run.err" || exit $?
+[[ ! -s $work/Fixed-Integer-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Fixed-Integer.out"
+cmp -s -- "$work/Expected-Fixed-Integer.out" \
+    "$work/Fixed-Integer-Run.out" || exit 1
+expect_runtime_failure() {
+    local input=$1 status=$2
+    if "$script_directory/Run-Wvb.sh" "$input" \
+        >"$work/Runtime-$status.out" 2>"$work/Runtime-$status.err"; then
+        return 1
+    fi
+    grep -Fq "wvb run status=Failed code=$status " \
+        "$work/Runtime-$status.err"
+}
+expect_runtime_failure "$work/Fixed-Integer-Overflow.wvb" 3007 || exit 1
+expect_runtime_failure "$work/Fixed-Integer-Divide-By-Zero.wvb" 3032 || exit 1
+expect_runtime_failure "$work/Fixed-Integer-Invalid-Shift.wvb" 3033 || exit 1
+
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj" \
+    "$work/Fixed-Integer-Runtime.wvb" >/dev/null || exit $?
+"$script_directory/Lower-Wvb-To-Wvo.sh" \
+    "$work/Fixed-Integer-Runtime.wvb" "$work/Fixed-Integer-Runtime.wvo" \
+    >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$work/Fixed-Integer-Runtime.wvo" \
+    >/dev/null || exit $?
+"$script_directory/Link-Wvo.sh" 1048576 Main \
+    "$work/Fixed-Integer-Runtime.bin" "$work/Fixed-Integer-Runtime.wvo" \
+    >"$work/Fixed-Integer-Runtime.wvmap" || exit $?
+runtime_address=$(sed -n \
+    's/^entry name=Main address=\([0-9][0-9]*\)$/\1/p' \
+    "$work/Fixed-Integer-Runtime.wvmap")
+[[ $runtime_address =~ ^[0-9]+$ && $runtime_address -ge 1048576 ]] || exit 1
+runtime_entry=$((runtime_address - 1048576))
+"$script_directory/Package-Console.sh" linux-x64-console-v1 \
+    "$work/Fixed-Integer-Runtime.bin" "$runtime_entry" \
+    "$work/Fixed-Integer-Runtime.elf" >/dev/null || exit $?
+"$work/Fixed-Integer-Runtime.elf"
+runtime_result=$?
+[[ $runtime_result -eq 42 ]] || exit 1
+printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
+    "$(wc -c < "$work/Fixed-Integer-A.wvb")"
+echo 'PASS  language 1 front door phase=fixed-integers item=5/5'
+echo 'native language 1 front door status=Passed cases=44 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335'

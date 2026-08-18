@@ -4,7 +4,7 @@
 
 This document specifies the source-language subset implemented by Windvale Seed. It is deliberately small and may break during early development. Through at least September 3, 2026, and until a named decision replaces the policy, superseded source and binary contracts require no backward parser, reader, alias, or migration layer; repository inputs and fixtures advance to the current contract together. Source is strict UTF-8. Identifiers are case-sensitive ASCII segments joined by U+02C9 and match `[A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*`. Official source follows [Windvale source naming conventions](Source-Naming.md).
 
-The C# Stage 0 compiler, the Windvale-written compiler, and the reference runtime implement the complete scalar source and canonical WVB surface below, including `i64` and `u64`. Baseline native, WebAssembly, and Windvale OS consumers remain explicit narrower WVB 1.11 subsets until their separately verified lowering contracts advance.
+The Windvale-written compiler and current native WVB runner implement the scalar source and canonical WVB surface below, including `i64`, `u64`, `i8`, `i16`, and `u16`. The retained Stage 0 recovery compiler remains a WVB 1.11 differential boundary and does not define the new fixed-integer extension. Other native, WebAssembly, and Windvale OS consumers remain explicit narrower subsets until their separately verified lowering contracts advance.
 
 ## Module shape
 
@@ -53,9 +53,11 @@ Every module must explicitly declare each catalog capability required anywhere i
 ## Types
 
 - `void` is valid only as a function or capability return type.
+- `i8` and `i16` are signed 8- and 16-bit integers. Arithmetic overflow traps deterministically.
 - `i32` is a signed 32-bit integer. Arithmetic overflow traps deterministically.
 - `i64` is a signed 64-bit integer. Arithmetic overflow traps deterministically.
 - `u8` is an unsigned 8-bit integer used for individual byte values.
+- `u16` is an unsigned 16-bit integer. Arithmetic overflow and underflow trap deterministically.
 - `u32` is an unsigned 32-bit integer used for byte offsets, lengths, and binary fields. Arithmetic overflow and underflow trap deterministically.
 - `u64` is an unsigned 64-bit integer for persistent identities, counters, and binary fields that exceed `u32`. Arithmetic overflow and underflow trap deterministically.
 - `bool` contains only `true` or `false`.
@@ -68,7 +70,7 @@ Every module must explicitly declare each catalog capability required anywhere i
 - `sequence<T, N>` is an immutable sequence of at most `N` values; `builder<T, N>` is its affine mutable construction state. `N` is 1 through 4095 and collections cannot directly contain collections.
 - `[i32]` is immutable module data. It is not a general runtime array type in Seed.
 
-Parameters and local variables may also carry an exact required root capability reference, and functions may return one. Capability references are freely copyable, shared, and non-owned, but cannot be record fields, variant payloads, collection elements, module data, or constants. A builder is restricted to one explicitly typed mutable local and cannot cross a call, return, record, variant, data, constant, or assignment boundary. Module data may be `text`, `[i32]`, or `bytes`. Typed constants may be `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, or a declared enum type.
+Parameters and local variables may also carry an exact required root capability reference, and functions may return one. Capability references are freely copyable, shared, and non-owned, but cannot be record fields, variant payloads, collection elements, module data, or constants. A builder is restricted to one explicitly typed mutable local and cannot cross a call, return, record, variant, data, constant, or assignment boundary. Module data may be `text`, `[i32]`, or `bytes`. Typed constants may be `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, or a declared enum type.
 
 ## Declarations
 
@@ -147,7 +149,7 @@ continue;
 return [<expression>];
 ```
 
-`let` locals and parameters are immutable. `var` locals may be assigned after initialization. `+=`, `-=`, and `*=` are statement-only compound assignments to a simple mutable-local name. They read the target once before evaluating the right operand, apply the underlying checked same-type operation, and store only after that operation succeeds; they are not expressions and cannot be chained. Both compilers admit the same `i32`, `i64`, `u32`, and `u64` types as the underlying operators.
+`let` locals and parameters are immutable. `var` locals may be assigned after initialization. `+=`, `-=`, and `*=` are statement-only compound assignments to a simple mutable-local name. They read the target once before evaluating the right operand, apply the underlying checked same-type operation, and store only after that operation succeeds; they are not expressions and cannot be chained. The current compiler admits `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, and `u64` as underlying arithmetic types.
 
 A local without a type annotation receives the initializer's one exact non-void type; inference performs no conversion, does not cross a function boundary, and does not affect explicitly typed parameters or function results. A void initializer is rejected. Blocks use lexical scope. Parameters and locals must have unique names within their function in Seed; nested shadowing is rejected to keep diagnostics and lowering simple. `break` exits the nearest enclosing `while` or `for`; `continue` transfers to that loop's next condition or element. Either statement outside a loop is rejected. `return`, `break`, and `continue` are unconditional block exits, so a later statement in the same block is unreachable and rejected.
 
@@ -166,8 +168,11 @@ return type satisfy this contract.
 Seed supports:
 
 - Decimal `i32` literals
+- Decimal `i8` literals with an `i8` suffix, from `0i8` through `127i8`
+- Decimal `i16` literals with an `i16` suffix, from `0i16` through `32767i16`
 - Decimal `i64` literals with an `i64` suffix, from `0i64` through `9223372036854775807i64`
 - Decimal `u8` literals with a `u8` suffix, from `0u8` through `255u8`
+- Decimal `u16` literals with a `u16` suffix, from `0u16` through `65535u16`
 - Decimal `u32` literals with a `u32` suffix, from `0u32` through `4294967295u32`
 - Decimal `u64` literals with a `u64` suffix, from `0u64` through `18446744073709551615u64`
 - `true` and `false`
@@ -189,12 +194,12 @@ Seed supports:
 - Consuming builder publication: `freeze Builder`
 - Immutable sequence indexing and `length(Sequence)`
 - Parentheses
-- Unary `-` for `i32` or `i64`, `!` for `bool`, and `~` for `u8`, `u32`, or `u64`
-- `*`, `/`, `%`, `+`, and `-` on two values of the same `i32`, `i64`, `u32`, or `u64` type
-- `&`, `|`, and `^` on two values of the same `u8`, `u32`, or `u64` type
-- `<<` and `>>` on a `u8`, `u32`, or `u64` value with a `u32` shift count
-- `<`, `<=`, `>`, and `>=` on two values of the same `i32`, `i64`, `u32`, or `u64` type
-- `==` and `!=` on two values of the same `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, or nominal enum type
+- Unary `-` for `i8`, `i16`, `i32`, or `i64`, `!` for `bool`, and `~` for `u8`, `u16`, `u32`, or `u64`
+- `*`, `/`, `%`, `+`, and `-` on two values of the same `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, or `u64` type
+- `&`, `|`, and `^` on two values of the same `u8`, `u16`, `u32`, or `u64` type
+- `<<` and `>>` on a `u8`, `u16`, `u32`, or `u64` value with a `u32` shift count
+- `<`, `<=`, `>`, and `>=` on two values of the same `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, or `u64` type
+- `==` and `!=` on two values of the same `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, `text`, `bytes`, or nominal enum type
 - `&&` and `||` on two `bool` values
 
 From strongest to weakest, the implemented binary precedence families are `*`, `/`, `%`; `+`, `-`; `<<`, `>>`; `<`, `<=`, `>`, `>=`; `==`, `!=`; `&`; `^`; `|`; `&&`; then `||`. Unary operators and postfix calls, indexing, field access, and qualification bind more strongly. Binary operators are left-associative and operands are evaluated from left to right. `&&` evaluates its right operand only when the left operand is `true`; `||` evaluates its right operand only when the left operand is `false`. A skipped operand has no call, mutation, allocation, or trap behavior. Seed does not include truthiness or implicit conversions.
@@ -209,7 +214,7 @@ A typed constant initializer may contain literals, members of declared enums, ea
 
 Constants are substituted as ordinary typed literal or enum operations. They do not create WVB data, locals, runtime exports, handles, or observable storage. `export const` is accepted so the source declaration need not change when module privacy and qualified constant imports arrive, but the current root-only composition slice does not publish a constant through the WVB Exports section.
 
-The Stage 0 reference compiler and the Windvale-written compiler implement constants of every admitted Seed scalar width. Both lower `i64` and `u64` constants to exact canonical WVB 1.11 values and reject checked overflow or underflow before publication.
+The Windvale-written compiler implements constants of every admitted scalar width. It lowers `i64` and `u64` constants to canonical WVB 1.11 and `i8`, `i16`, and `u16` constants to the WVB 1.12 fixed-integer family, rejecting checked overflow or underflow before publication. The retained Stage 0 recovery compiler covers only its frozen WVB 1.11 surface.
 
 Records are nominal rather than structural: separately declared record types are incompatible even when their fields have identical names and types. A named record literal must provide every declared field exactly once; unknown, duplicate, and missing fields reject compilation. Field expressions evaluate left to right in source order, then the compiler constructs the value in canonical field declaration order. Positional construction remains accepted during repository migration and evaluates in its declaration-order argument order. Construction creates an immutable value, field access returns the selected value, and Seed provides no field assignment or record equality. Record values can cross function boundaries and be stored in `let` or `var` locals; `var` permits replacing the whole value, not mutating a field.
 

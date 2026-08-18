@@ -2199,6 +2199,32 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉcompare(
     return 1;
 }
 
+fn Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Shape: u32) -> bool {
+    return Shape == 1u32 || Shape == 7u32 || Shape == 11u32 || Shape == 12u32;
+}
+
+fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉlimit(
+    Shape: u32,
+    Negative: bool
+) -> u32 {
+    if Shape == 11u32 {
+        if Negative { return 128u32; }
+        return 127u32;
+    }
+    if Shape == 12u32 {
+        if Negative { return 32768u32; }
+        return 32767u32;
+    }
+    if Negative { return 2147483648u32; }
+    return 2147483647u32;
+}
+
+fn Compilerˉsourceˉsymbolsˉconstantˉunsignedˉlimit(Shape: u32) -> u32 {
+    if Shape == 2u32 { return 255u32; }
+    if Shape == 13u32 { return 65535u32; }
+    return 4294967295u32;
+}
+
 export fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉadd(
     Left: Compilerˉsourceˉconstantˉvalue,
     Right: Compilerˉsourceˉconstantˉvalue,
@@ -2211,8 +2237,9 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉadd(
         if Right.Magnitude != 0u32 { Rightˉnegative = !Rightˉnegative; }
     }
     if Left.Negative == Rightˉnegative {
-        var Limit: u32 = 2147483647u32;
-        if Left.Negative { Limit = 2147483648u32; }
+        let Limit: u32 = Compilerˉsourceˉsymbolsˉconstantˉsignedˉlimit(
+            Left.Shape, Left.Negative
+        );
         if Right.Magnitude > Limit - Left.Magnitude {
             return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
                 Compilerˉsourceˉsymbolˉstatus.Constantˉoverflow,
@@ -2221,20 +2248,20 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉadd(
             );
         }
         return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-            1u32,
+            Left.Shape,
             Left.Magnitude + Right.Magnitude,
             Left.Negative
         );
     }
     if Left.Magnitude >= Right.Magnitude {
         return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-            1u32,
+            Left.Shape,
             Left.Magnitude - Right.Magnitude,
             Left.Negative
         );
     }
     return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-        1u32,
+        Left.Shape,
         Right.Magnitude - Left.Magnitude,
         Rightˉnegative
     );
@@ -2303,10 +2330,16 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉmultiply(
     Module: u32,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression
 ) -> Compilerˉsourceˉconstantˉvalue {
-    var Limit: u32 = 4294967295u32;
-    if Left.Shape == 1u32 {
-        Limit = 2147483647u32;
-        if Left.Negative != Right.Negative { Limit = 2147483648u32; }
+    var Limit: u32 = Compilerˉsourceˉsymbolsˉconstantˉunsignedˉlimit(
+        Left.Shape
+    );
+    let Signed: bool = Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(
+        Left.Shape
+    );
+    if Signed {
+        Limit = Compilerˉsourceˉsymbolsˉconstantˉsignedˉlimit(
+            Left.Shape, Left.Negative != Right.Negative
+        );
     }
     if Left.Magnitude != 0u32 {
         let Division: Compilerˉsourceˉconstantˉdivision =
@@ -2320,7 +2353,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉmultiply(
         }
     }
     var Negative: bool = false;
-    if Left.Shape == 1u32 {
+    if Signed {
         Negative = Left.Negative != Right.Negative;
     }
     return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
@@ -2337,7 +2370,10 @@ fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉdivideˉvalues(
     Module: u32,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression
 ) -> Compilerˉsourceˉconstantˉvalue {
-    if Left.Negative && Left.Magnitude == 2147483648u32 &&
+    if Left.Negative &&
+        Left.Magnitude == Compilerˉsourceˉsymbolsˉconstantˉsignedˉlimit(
+            Left.Shape, true
+        ) &&
         Right.Negative && Right.Magnitude == 1u32 {
         return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
             Compilerˉsourceˉsymbolˉstatus.Constantˉoverflow,
@@ -2350,11 +2386,11 @@ fn Compilerˉsourceˉsymbolsˉconstantˉsignedˉdivideˉvalues(
         );
     if Isˉremainder {
         return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-            1u32, Division.Remainder, Left.Negative
+            Left.Shape, Division.Remainder, Left.Negative
         );
     }
     return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-        1u32, Division.Quotient, Left.Negative != Right.Negative
+        Left.Shape, Division.Quotient, Left.Negative != Right.Negative
     );
 }
 
@@ -2412,19 +2448,19 @@ fn Compilerˉsourceˉsymbolsˉconstantˉdivideˉvalues(
             Module, Expression
         );
     }
-    if Left.Shape == 1u32 {
+    if Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Left.Shape) {
         return Compilerˉsourceˉsymbolsˉconstantˉsignedˉdivideˉvalues(
             Left, Right, Isˉremainder, Module, Expression
         );
     }
-    if Left.Shape == 3u32 {
+    if Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 13u32 {
         if Isˉremainder {
             return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-                3u32, Left.Magnitude % Right.Magnitude, false
+                Left.Shape, Left.Magnitude % Right.Magnitude, false
             );
         }
         return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-            3u32, Left.Magnitude / Right.Magnitude, false
+            Left.Shape, Left.Magnitude / Right.Magnitude, false
         );
     }
     if Left.Shape == 7u32 || Left.Shape == 8u32 {
@@ -2447,6 +2483,7 @@ fn Compilerˉsourceˉsymbolsˉconstantˉshiftˉvalues(
 ) -> Compilerˉsourceˉconstantˉvalue {
     var Width: u32 = 0u32;
     if Left.Shape == 2u32 { Width = 8u32; }
+    if Left.Shape == 13u32 { Width = 16u32; }
     if Left.Shape == 3u32 { Width = 32u32; }
     if Left.Shape == 8u32 { Width = 64u32; }
     if Width == 0u32 || Right.High != 0u32 || Right.Magnitude >= Width {
@@ -2455,10 +2492,11 @@ fn Compilerˉsourceˉsymbolsˉconstantˉshiftˉvalues(
             Module, Expression
         );
     }
-    if Left.Shape == 2u32 || Left.Shape == 3u32 {
+    if Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 13u32 {
         var Shifted: u32 = Left.Magnitude << Right.Magnitude;
         if Shiftˉright { Shifted = Left.Magnitude >> Right.Magnitude; }
         if Left.Shape == 2u32 { Shifted = Shifted % 256u32; }
+        if Left.Shape == 13u32 { Shifted = Shifted % 65536u32; }
         return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
             Left.Shape, Shifted, false
         );
@@ -2515,6 +2553,9 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U32 { Shape = 3u32; }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I64 { Shape = 7u32; }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U64 { Shape = 8u32; }
+        if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I8 { Shape = 11u32; }
+        if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I16 { Shape = 12u32; }
+        if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U16 { Shape = 13u32; }
         if Shape == 7u32 || Shape == 8u32 {
             return Compilerˉsourceˉsymbolsˉconstantˉsuccessˉwide(
                 Shape, Expression.Numericˉvalue, Expression.Numericˉhigh, false
@@ -2594,7 +2635,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             );
         if Operand.Status != Compilerˉsourceˉsymbolˉstatus.Valid { return Operand; }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
-            if Operand.Shape != 1u32 && Operand.Shape != 7u32 {
+            if !Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Operand.Shape) {
                 return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
                     Compilerˉsourceˉsymbolˉstatus.Invalidˉconstantˉinitializer,
                     Module,
@@ -2602,7 +2643,10 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
                 );
             }
             if Operand.Negative {
-                var Minimum: bool = Operand.Shape == 1u32 && Operand.Magnitude == 2147483648u32;
+                var Minimum: bool = Operand.Shape != 7u32 &&
+                    Operand.Magnitude == Compilerˉsourceˉsymbolsˉconstantˉsignedˉlimit(
+                        Operand.Shape, true
+                    );
                 if Operand.Shape == 7u32 {
                     Minimum = Operand.High == 2147483648u32 && Operand.Magnitude == 0u32;
                 }
@@ -2620,7 +2664,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
                 );
             }
             return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-                1u32, Operand.Magnitude, !Operand.Negative
+                Operand.Shape, Operand.Magnitude, !Operand.Negative
             );
         }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Bang {
@@ -2641,6 +2685,11 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             if Operand.Shape == 3u32 {
                 return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
                     3u32, ~Operand.Magnitude, false
+                );
+            }
+            if Operand.Shape == 13u32 {
+                return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
+                    13u32, 65535u32 - Operand.Magnitude, false
                 );
             }
             if Operand.Shape == 8u32 {
@@ -2742,13 +2791,17 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             );
         }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus {
-            if Left.Shape == 1u32 {
+            if Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Left.Shape) &&
+                Left.Shape != 7u32 {
                 return Compilerˉsourceˉsymbolsˉconstantˉsignedˉadd(
                     Left, Right, false, Module, Expression
                 );
             }
-            if Left.Shape == 3u32 {
-                if Right.Magnitude > 4294967295u32 - Left.Magnitude {
+            if Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 13u32 {
+                let Limit: u32 = Compilerˉsourceˉsymbolsˉconstantˉunsignedˉlimit(
+                    Left.Shape
+                );
+                if Right.Magnitude > Limit - Left.Magnitude {
                     return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
                         Compilerˉsourceˉsymbolˉstatus.Constantˉoverflow,
                         Module,
@@ -2756,7 +2809,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
                     );
                 }
                 return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-                    3u32, Left.Magnitude + Right.Magnitude, false
+                    Left.Shape, Left.Magnitude + Right.Magnitude, false
                 );
             }
             if Left.Shape == 7u32 {
@@ -2781,12 +2834,13 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             }
         }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
-            if Left.Shape == 1u32 {
+            if Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Left.Shape) &&
+                Left.Shape != 7u32 {
                 return Compilerˉsourceˉsymbolsˉconstantˉsignedˉadd(
                     Left, Right, true, Module, Expression
                 );
             }
-            if Left.Shape == 3u32 {
+            if Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 13u32 {
                 if Left.Magnitude < Right.Magnitude {
                     return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
                         Compilerˉsourceˉsymbolˉstatus.Constantˉoverflow,
@@ -2795,7 +2849,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
                     );
                 }
                 return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
-                    3u32, Left.Magnitude - Right.Magnitude, false
+                    Left.Shape, Left.Magnitude - Right.Magnitude, false
                 );
             }
             if Left.Shape == 7u32 {
@@ -2820,12 +2874,13 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             }
         }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star {
-            if Left.Shape == 1u32 {
+            if Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Left.Shape) &&
+                Left.Shape != 7u32 {
                 return Compilerˉsourceˉsymbolsˉconstantˉmultiply(
                     Left, Right, Module, Expression
                 );
             }
-            if Left.Shape == 3u32 {
+            if Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 13u32 {
                 return Compilerˉsourceˉsymbolsˉconstantˉmultiply(
                     Left, Right, Module, Expression
                 );
@@ -2869,7 +2924,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Ampersand ||
             Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe ||
             Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Caret {
-            if Left.Shape == 2u32 || Left.Shape == 3u32 {
+            if Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 13u32 {
                 var Bitwiseˉvalue: u32 = Left.Magnitude & Right.Magnitude;
                 if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe {
                     Bitwiseˉvalue = Left.Magnitude | Right.Magnitude;
@@ -2927,9 +2982,13 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greaterˉequals { Isˉcomparison = true; }
         if Isˉcomparison {
             var Comparable: bool = Left.Shape == 1u32;
+            if Left.Shape == 2u32 { Comparable = true; }
             if Left.Shape == 3u32 { Comparable = true; }
             if Left.Shape == 7u32 { Comparable = true; }
             if Left.Shape == 8u32 { Comparable = true; }
+            if Left.Shape == 11u32 { Comparable = true; }
+            if Left.Shape == 12u32 { Comparable = true; }
+            if Left.Shape == 13u32 { Comparable = true; }
             if !Comparable {
                 return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
                     Compilerˉsourceˉsymbolˉstatus.Invalidˉconstantˉinitializer,
@@ -2938,7 +2997,7 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
                 );
             }
             var Comparison: i32 = 0;
-            if Left.Shape == 1u32 || Left.Shape == 7u32 {
+            if Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Left.Shape) {
                 Comparison = Compilerˉsourceˉsymbolsˉconstantˉsignedˉcompare(
                     Left, Right
                 );

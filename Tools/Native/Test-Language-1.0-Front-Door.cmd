@@ -21,12 +21,12 @@ mkdir "%Work%" || exit /b 1
 set "Result=1"
 set "FailureStep=frozen-fixtures"
 
-echo START language 1 front door phase=frozen-fixtures item=1/4
+echo START language 1 front door phase=frozen-fixtures item=1/5
 node "%Native%\Verify-Language-1.0-Migration-Fixtures.mjs" || goto :cleanup
-echo PASS  language 1 front door phase=frozen-fixtures item=1/4
+echo PASS  language 1 front door phase=frozen-fixtures item=1/5
 
 set "FailureStep=descriptor"
-echo START language 1 front door phase=descriptor item=2/4
+echo START language 1 front door phase=descriptor item=2/5
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-A.wvb" >nul || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Descriptor-A.wvb" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
@@ -40,18 +40,18 @@ for /f "usebackq delims=" %%L in ("%Work%\Run.out") do (
 )
 if not "%RunLines%"=="1" goto :cleanup
 if not "%RunLine%"=="Result: 42" goto :cleanup
-echo PASS  language 1 front door phase=descriptor item=2/4
+echo PASS  language 1 front door phase=descriptor item=2/5
 
 set "FailureStep=value-front-end"
-echo START language 1 front door phase=value-front-end item=3/4
+echo START language 1 front door phase=value-front-end item=3/5
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Value-Front-End.wvproj" "%Work%\Value-Front-End.wvb" >nul || goto :cleanup
 call "%Native%\Run-Wvb.cmd" "%Work%\Value-Front-End.wvb" >"%Work%\Value-Front-End.out" 2>"%Work%\Value-Front-End.err" || goto :cleanup
 for %%F in ("%Work%\Value-Front-End.err") do if not "%%~zF"=="0" goto :cleanup
 findstr /c:"Result: 42" "%Work%\Value-Front-End.out" >nul || goto :cleanup
-echo PASS  language 1 front door phase=value-front-end item=3/4
+echo PASS  language 1 front door phase=value-front-end item=3/5
 
 set "FailureStep=compiler-segmented-cache"
-echo START language 1 front door phase=compiler-slice item=4/4
+echo START language 1 front door phase=compiler-slice item=4/5
 call "%Native%\Build-Cached-Segmented-Project.cmd" ^
     "%RepositoryRoot%\Projects\Examples\Windvale-Compiler.wvproj" ^
     "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe" ^
@@ -193,7 +193,89 @@ call :expect_rejection_with_digest "%RepositoryRoot%\Tests\Fixtures\Language-1.0
 set "FailureStep=compiler-identity"
 for %%F in ("%Work%\Minimum-A.wvb") do if not "%%~zF"=="221" goto :cleanup
 certutil -hashfile "%Work%\Minimum-A.wvb" SHA256 | findstr /I /C:"25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae" >nul || goto :cleanup
-echo PASS  language 1 front door phase=compiler-slice item=4/4
+echo PASS  language 1 front door phase=compiler-slice item=4/5
+
+set "FailureStep=fixed-integer-compile-a"
+echo START language 1 front door phase=fixed-integers item=5/5
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Program.wv" ^
+    "%Work%\Fixed-Integer-A.wvb" >"%Work%\Fixed-Integer-A.out" 2>"%Work%\Fixed-Integer-A.err" || goto :cleanup
+set "FailureStep=fixed-integer-compile-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Program.wv" ^
+    "%Work%\Fixed-Integer-B.wvb" >"%Work%\Fixed-Integer-B.out" 2>"%Work%\Fixed-Integer-B.err" || goto :cleanup
+set "FailureStep=fixed-integer-determinism"
+for %%F in ("%Work%\Fixed-Integer-A.err" "%Work%\Fixed-Integer-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Fixed-Integer-A.out" "%Work%\Fixed-Integer-B.out" >nul || goto :cleanup
+fc /b "%Work%\Fixed-Integer-A.wvb" "%Work%\Fixed-Integer-B.wvb" >nul || goto :cleanup
+
+set "FailureStep=fixed-integer-trap-inputs"
+for %%N in (Overflow Divide-By-Zero Invalid-Shift) do (
+    "%Work%\Compiler.exe" ^
+        --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+        --source-profile "%SourceProfile%" ^
+        "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-%%N.wv" ^
+        "%Work%\Fixed-Integer-%%N.wvb" >"%Work%\Fixed-Integer-%%N.out" 2>"%Work%\Fixed-Integer-%%N.err" || goto :cleanup
+)
+set "FailureStep=fixed-integer-source-rejections"
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Literal-Out-Of-Range.wv" "%Work%\Fixed-Integer-Literal-Out-Of-Range.wvb" || goto :cleanup
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Type-Mismatch.wv" "%Work%\Fixed-Integer-Type-Mismatch.wvb" || goto :cleanup
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Signed-Bitwise.wv" "%Work%\Fixed-Integer-Signed-Bitwise.wvb" || goto :cleanup
+call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Constant-Overflow.wv" "%Work%\Fixed-Integer-Constant-Overflow.wvb" || goto :cleanup
+
+set "FailureStep=fixed-integer-verifier-build"
+call "%Native%\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Wvb-Verifier.wvproj" ^
+    "%Work%\Verifier.wvb" >"%Work%\Verifier-Build.out" 2>"%Work%\Verifier-Build.err" || goto :cleanup
+set "FailureStep=fixed-integer-verifier-package"
+call "%Native%\Package-Hosted-Wvb.cmd" 2 ^
+    "%Work%\Verifier.wvb" "%Work%\Verifier.exe" windows ^
+    >"%Work%\Verifier-Package.out" 2>"%Work%\Verifier-Package.err" || goto :cleanup
+set "FailureStep=fixed-integer-verifier"
+for %%N in (A Overflow Divide-By-Zero Invalid-Shift) do (
+    "%Work%\Verifier.exe" "%Work%\Fixed-Integer-%%N.wvb" ^
+        >"%Work%\Verify-%%N.out" 2>"%Work%\Verify-%%N.err" || goto :cleanup
+    findstr /c:"wvb status=Valid profile=compiler-aligned" "%Work%\Verify-%%N.out" >nul || goto :cleanup
+)
+set "FailureStep=fixed-integer-malformed"
+node "%Native%\Verify-Language-1.0-Fixed-Integers.mjs" ^
+    "%Work%\Verifier.exe" "%Work%\Fixed-Integer-A.wvb" ^
+    "%Work%\Fixed-Integer-Malformed" || goto :cleanup
+
+set "FailureStep=fixed-integer-execution"
+call "%Native%\Run-Wvb.cmd" "%Work%\Fixed-Integer-A.wvb" ^
+    >"%Work%\Fixed-Integer-Run.out" 2>"%Work%\Fixed-Integer-Run.err" || goto :cleanup
+for %%F in ("%Work%\Fixed-Integer-Run.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"Result: 42" "%Work%\Fixed-Integer-Run.out" >nul || goto :cleanup
+call :expect_runtime_failure "%Work%\Fixed-Integer-Overflow.wvb" 3007 || goto :cleanup
+call :expect_runtime_failure "%Work%\Fixed-Integer-Divide-By-Zero.wvb" 3032 || goto :cleanup
+call :expect_runtime_failure "%Work%\Fixed-Integer-Invalid-Shift.wvb" 3033 || goto :cleanup
+
+set "FailureStep=fixed-integer-runtime-oracle-build"
+call "%Native%\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj" ^
+    "%Work%\Fixed-Integer-Runtime.wvb" >nul || goto :cleanup
+call "%Native%\Lower-Wvb-To-Wvo.cmd" ^
+    "%Work%\Fixed-Integer-Runtime.wvb" "%Work%\Fixed-Integer-Runtime.wvo" >nul || goto :cleanup
+call "%Native%\Check-Wvo.cmd" "%Work%\Fixed-Integer-Runtime.wvo" >nul || goto :cleanup
+call "%Native%\Link-Wvo.cmd" 1048576 Main ^
+    "%Work%\Fixed-Integer-Runtime.bin" "%Work%\Fixed-Integer-Runtime.wvo" ^
+    >"%Work%\Fixed-Integer-Runtime.wvmap" || goto :cleanup
+set "RuntimeAddress="
+for /f "tokens=5 delims== " %%E in ('findstr /b /c:"entry name=Main address=" "%Work%\Fixed-Integer-Runtime.wvmap"') do set "RuntimeAddress=%%E"
+if not defined RuntimeAddress goto :cleanup
+set /a RuntimeEntry=RuntimeAddress-1048576
+call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
+    "%Work%\Fixed-Integer-Runtime.bin" %RuntimeEntry% ^
+    "%Work%\Fixed-Integer-Runtime.exe" >nul || goto :cleanup
+"%Work%\Fixed-Integer-Runtime.exe"
+if not "%ERRORLEVEL%"=="42" goto :cleanup
+for %%F in ("%Work%\Fixed-Integer-A.wvb") do echo INFO  language 1 fixed-integer wvb-bytes=%%~zF
+echo PASS  language 1 front door phase=fixed-integers item=5/5
 set "Result=0"
 
 :cleanup
@@ -224,7 +306,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=22 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116
+echo native language 1 front door status=Passed cases=44 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335
 exit /b 0
 
 :expect_rejection
@@ -237,3 +319,9 @@ if exist "%~f2" exit /b 1
 if not errorlevel 1 exit /b 1
 if exist "%~f2" exit /b 1
 exit /b 0
+
+:expect_runtime_failure
+call "%Native%\Run-Wvb.cmd" "%~f1" >"%Work%\Runtime-%~2.out" 2>"%Work%\Runtime-%~2.err"
+if not errorlevel 1 exit /b 1
+findstr /b /c:"wvb run status=Failed code=%~2 " "%Work%\Runtime-%~2.err" >nul
+exit /b %ERRORLEVEL%

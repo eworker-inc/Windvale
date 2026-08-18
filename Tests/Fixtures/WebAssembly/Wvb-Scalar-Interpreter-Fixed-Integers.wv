@@ -1,0 +1,51 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegers profile portable;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Core;
+
+export record Fixedˉintegerˉscan {
+    Valid: bool;
+    Width: u32;
+}
+
+export record Fixedˉintegerˉexecution {
+    Valid: bool;
+    Status: u32;
+    Stack: bytes;
+    Consumed: u32;
+    Advance: u32;
+}
+
+export fn Scanˉfixedˉinteger(
+    Module: bytes,
+    Offset: u32,
+    Remaining: u32,
+    Minor: u32
+) -> Fixedˉintegerˉscan {
+    let Width: u32 = Core.Scanˉfixedˉinteger(
+        Module, Offset, Remaining, Minor
+    );
+    return Fixedˉintegerˉscan(Width != 0u32, Width);
+}
+
+export fn Executeˉfixedˉinteger(
+    Module: bytes,
+    Offset: u32,
+    Stack: bytes,
+    Stackˉdescriptorˉcount: u32,
+    Zeroˉvalue: bytes
+) -> Fixedˉintegerˉexecution {
+    let Result: bytes = Core.Executeˉfixedˉinteger(
+        Module, Offset, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
+    );
+    if Bytesˉlength(Result) < 5u32 {
+        return Fixedˉintegerˉexecution(false, 0u32, Stack, 0u32, 0u32);
+    }
+    let Metadata: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Result, 0u32));
+    return Fixedˉintegerˉexecution(
+        true,
+        Bytesˉreadˉu32ˉlittle(Result, 1u32),
+        Bytesˉslice(Result, 5u32, Bytesˉlength(Result) - 5u32),
+        Metadata & 3u32,
+        Metadata >> 2u32
+    );
+}

@@ -2,6 +2,7 @@ module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
 
 import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 
 data Stackˉeffects: bytes = [
@@ -35,6 +36,7 @@ export fn Main(Request: bytes) -> bytes {
         Bytesˉreadˉu32ˉlittle(Preflight, 12u32),
         Bytesˉreadˉu32ˉlittle(Preflight, 16u32)
     );
+    let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
     let Guestˉinput: bytes = Bytesˉslice(
         Request,
         Bytesˉreadˉu32ˉlittle(Preflight, 20u32),
@@ -206,8 +208,9 @@ export fn Main(Request: bytes) -> bytes {
                     }
                 }
             }
-            if Shapeˉkind < 1u32 { return Invalid; }
-            if Shapeˉkind > 10u32 { return Invalid; }
+            if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) {
+                return Invalid;
+            }
             Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 {
@@ -244,8 +247,9 @@ export fn Main(Request: bytes) -> bytes {
         let Returnˉkind: u32 = U32ˉfromˉu8(
             Bytesˉreadˉu8(Module, Functionˉcursor)
         );
-        if Returnˉkind < 1u32 { return Invalid; }
-        if Returnˉkind > 10u32 { return Invalid; }
+        if !Fixed.Shapeˉisˉsupported(Returnˉkind, Moduleˉminor) {
+            return Invalid;
+        }
         Functionˉcursor = Functionˉcursor + 1u32;
         if Returnˉkind == 7u32 {
             if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
@@ -272,8 +276,9 @@ export fn Main(Request: bytes) -> bytes {
         var Localˉnominalˉtoken: u32 = 0u32;
         while Shapeˉindex < Localˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
-            if Shapeˉkind < 1u32 { return Invalid; }
-            if Shapeˉkind > 10u32 { return Invalid; }
+            if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) {
+                return Invalid;
+            }
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 {
@@ -348,75 +353,19 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉcodeˉlength = Functionˉcodeˉlength;
         }
 
-        var Scan: u32 = 0u32;
-        while Scan < Functionˉcodeˉlength {
-            let Scanˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
-                Module,
-                Code + Functionˉcodeˉoffset + Scan
-            ));
-            var Width: u32 = 1u32;
-            var Supported: bool = false;
-            if Scanˉopcode == 1u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 2u32 { Width = 2u32; Supported = true; }
-            if Scanˉopcode == 3u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 4u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 5u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 6u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 7u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 8u32 { Width = 2u32; Supported = true; }
-            if Scanˉopcode == 9u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 10u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode >= 11u32 {
-                if Scanˉopcode <= 15u32 { Supported = true; }
-            }
-            if Scanˉopcode >= 16u32 {
-                if Scanˉopcode <= 22u32 { Supported = true; }
-            }
-            if Scanˉopcode >= 32u32 {
-                if Scanˉopcode <= 40u32 { Supported = true; }
-            }
-            if Scanˉopcode == 48u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 49u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 64u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 65u32 {
-                if Requestˉmajor >= 3u32 { Width = 5u32; Supported = true; }
-            }
-            if Scanˉopcode == 80u32 { Supported = true; }
-            if Scanˉopcode == 81u32 { Supported = true; }
-            if Scanˉopcode >= 96u32 {
-                if Scanˉopcode <= 103u32 { Supported = true; }
-            }
-            if Scanˉopcode == 104u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 105u32 { Width = 5u32; Supported = true; }
-            if Scanˉopcode == 106u32 { Width = 9u32; Supported = true; }
-            if Scanˉopcode >= 107u32 {
-                if Scanˉopcode <= 109u32 { Supported = true; }
-            }
-            if Scanˉopcode >= 110u32 {
-                if Scanˉopcode <= 112u32 { Supported = true; }
-            }
-            if Scanˉopcode >= 113u32 {
-                if Scanˉopcode <= 116u32 { Supported = true; }
-            }
-            if Scanˉopcode == 117u32 { Supported = true; }
-            if Scanˉopcode == 118u32 { Supported = true; }
-            if Scanˉopcode >= 119u32 {
-                if Scanˉopcode <= 125u32 { Supported = true; }
-            }
-            if Scanˉopcode == 161u32 { Supported = true; }
-            if Scanˉopcode == 162u32 { Supported = true; }
-            if Scanˉopcode >= 173u32 {
-                if Scanˉopcode <= 178u32 { Supported = true; }
-            }
-            if Supported {
-                Supported = true;
-            } else {
-                return Invalid;
-            }
-            Scan = Scan + Width;
-            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            if Aggregateˉinstructions > 400000u32 { return Invalid; }
+        let Scannedˉinstructions: u32 = Fixed.Scanˉfunction(
+            Module,
+            Code + Functionˉcodeˉoffset,
+            Functionˉcodeˉlength,
+            Moduleˉminor,
+            Requestˉmajor
+        );
+        if Scannedˉinstructions == 0u32 { return Invalid; }
+        if Aggregateˉinstructions > 400000u32 - Scannedˉinstructions {
+            return Invalid;
         }
+        Aggregateˉinstructions = Aggregateˉinstructions +
+            Scannedˉinstructions;
         Functionˉindex = Functionˉindex + 1u32;
     }
     if Functionˉcursor != Functionsˉend { return Invalid; }
@@ -3085,6 +3034,29 @@ export fn Main(Request: bytes) -> bytes {
             } else {
                 Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             }
+            Mainˉfound = true;
+        }
+
+        if Payloadˉlength == 192u32 {
+            let Fixedˉexecutionˉresult: bytes = Fixed.Executeˉfixedˉinteger(
+                    Module, Payload, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
+                );
+            if Bytesˉlength(Fixedˉexecutionˉresult) < 5u32 { return Invalid; }
+            let Fixedˉmetadata: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Fixedˉexecutionˉresult, 0u32)
+            );
+            Sectionˉkind = Bytesˉreadˉu32ˉlittle(
+                Fixedˉexecutionˉresult, 1u32
+            );
+            Stack = Bytesˉslice(
+                Fixedˉexecutionˉresult,
+                5u32,
+                Bytesˉlength(Fixedˉexecutionˉresult) - 5u32
+            );
+            Stackˉconsumed = Fixedˉmetadata & 3u32;
+            Stackˉproduced = true;
+            Aggregateˉinstructions = Aggregateˉinstructions +
+                (Fixedˉmetadata >> 2u32);
             Mainˉfound = true;
         }
 

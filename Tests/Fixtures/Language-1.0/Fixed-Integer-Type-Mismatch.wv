@@ -1,0 +1,10 @@
+#!wv/1 en@1
+module Languageˉoneˉfixedˉintegerˉtypeˉmismatch;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 {
+    let Invalid: i16 = 1i8 + 1i16;
+    return 42;
+}

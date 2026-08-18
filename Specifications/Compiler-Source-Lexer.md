@@ -56,6 +56,8 @@ Token-kind values are frozen to the Stage 0 ordering:
 - `I64` and `U64` are values 86 and 87 and cover the exact type keywords `i64` and `u64`.
 - `Try` is appended as value 88 and covers the exact keyword `try` without
   renumbering a retained token kind.
+- `Unit`, `Never`, `I8`, `I16`, `U16`, `F32`, `F64`, `Rune`, and `Base` are
+  values 89 through 97 and cover their exact lowercase edition-1 keywords.
 
 An identifier begins with an ASCII letter or underscore. Later characters may also be ASCII digits or U+02C9. No other non-ASCII identifier character is accepted.
 
@@ -65,7 +67,16 @@ Keyword classification uses exact byte length and first ASCII byte to select onl
 
 ## Numeric and string rules
 
-`Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, `U32`, `I64`, and `U64`. Unsuffixed decimal digits are `I32` and cannot exceed 2,147,483,647. The exact suffixes `u8`, `u32`, `i64`, and `u64` require a non-identifier boundary and enforce 255, 4,294,967,295, 9,223,372,036,854,775,807, and 18,446,744,073,709,551,615 respectively. Narrow values use `Numericˉvalue` with `Numericˉhigh` zero; wide values use the two fields as a little-endian low/high `u32` pair. Narrow digits are parsed by `Foundationˉu32ˉdecimalˉparse`; the lexer owns a bounded two-limb decimal accumulator for wide literals.
+`Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, `U32`, `I64`,
+`U64`, `I8`, `I16`, and `U16`. Unsuffixed decimal digits are `I32` and cannot
+exceed 2,147,483,647. The exact suffixes `i8`, `i16`, `u8`, `u16`, `u32`,
+`i64`, and `u64` require a non-identifier boundary and enforce 127, 32,767,
+255, 65,535, 4,294,967,295, 9,223,372,036,854,775,807, and
+18,446,744,073,709,551,615 respectively. A preceding unary minus is separate
+syntax, not part of the token. Narrow values use `Numericˉvalue` with
+`Numericˉhigh` zero; wide values use the two fields as a little-endian low/high
+`u32` pair. Narrow digits are parsed by `Foundationˉu32ˉdecimalˉparse`; the
+lexer owns a bounded two-limb decimal accumulator for wide literals.
 
 Strings accept the simple escapes `\"`, `\\`, `\n`, `\r`, and `\t`, plus `\u` followed by exactly four hexadecimal digits. Escaped UTF-16 high and low surrogates must be paired. Raw LF or CR terminates scanning with `Unterminatedˉstring`.
 

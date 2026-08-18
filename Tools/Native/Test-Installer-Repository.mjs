@@ -106,20 +106,20 @@ try {
     const Report = Run(Verifier, ["verify", First]);
     if (!Report.includes(
         "status=Valid version=0.2.0-dev.1 targets=2 profiles=4 objects=15 " +
-        "blobs=15 blob-bytes=9290710 index-sha256=" +
-        "33fb6b436f28981489272478cb399ca7c857146950d6a5ac4adc4f062d6a0394")) {
+        "blobs=15 blob-bytes=9336414 index-sha256=" +
+        "10e6736317493ddaccfb3be638d2c7628880c19fcb47965973893fc4cfdd6408")) {
         Fail("Installer repository verification report differs.");
     }
 
     const Selections = [
         {
             target: "windows-x64", profile: "runtime", objects: 3,
-            downloadBytes: 550475, expandedBytes: 2517953,
+            downloadBytes: 573303, expandedBytes: 2618817,
             components: ["base", "runner", "verifier"], reject: ["linux-x64", "wvbuild"],
         },
         {
             target: "linux-x64", profile: "developer", objects: 6,
-            downloadBytes: 4197615, expandedBytes: 36643777,
+            downloadBytes: 4220491, expandedBytes: 36746177,
             components: ["assembler", "base", "compiler", "linker", "runner", "verifier"],
             reject: [".exe", "wvdump", "wvpublish"],
         },
@@ -131,7 +131,7 @@ try {
         },
         {
             target: "linux-x64", profile: "full", objects: 8,
-            downloadBytes: 4644930, expandedBytes: 38807478,
+            downloadBytes: 4667806, expandedBytes: 38909878,
             components: [
                 "assembler", "base", "compiler", "inspector",
                 "linker", "publisher", "runner", "verifier",

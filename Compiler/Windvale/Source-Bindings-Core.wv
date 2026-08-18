@@ -720,6 +720,9 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         if Kind > 3u32 { return false; }
         if Slot >= 4096u32 { return false; }
         var Shapeˉvalid: bool = Shape <= 8u32;
+        if Shape >= 11u32 {
+            if Shape <= 13u32 { Shapeˉvalid = true; }
+        }
         if Shape == 0u32 { Shapeˉvalid = Kind != 1u32; }
         if Shape > 8u32 {
             if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(

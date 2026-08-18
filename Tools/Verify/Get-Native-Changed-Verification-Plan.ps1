@@ -1103,7 +1103,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
-    if ($Stem -eq 'Verify-Language-1.0-Migration-Fixtures') {
+    if ($Stem -in @(
+        'Verify-Language-1.0-Migration-Fixtures',
+        'Verify-Language-1.0-Fixed-Integers'
+    )) {
         Add-Suite 'language-1-front-door'
         return
     }
@@ -1428,18 +1431,12 @@ foreach ($Path in $Paths) {
         continue
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
-    } elseif ($Path -in @(
+    } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
+        $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
-        'Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv',
-        'Tests/Fixtures/Language-1.0/Minimum-Program.wv',
-        'Tests/Fixtures/Language-1.0/Missing-Edition-Profile.wv',
-        'Tests/Fixtures/Language-1.0/Seed-Only-Void.wv',
-        'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
-        'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
-        'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
         'Tests/Native/Language-1.0-Fixture-Inventory.txt'
     )) {
         Add-Suite 'language-1-front-door'
@@ -1681,6 +1678,8 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
         'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
     )) {
@@ -1689,7 +1688,8 @@ foreach ($Path in $Paths) {
             'libraries',
             'model-provider',
             'file-read-application',
-            'wvb-inspector-reconstruction'
+            'wvb-inspector-reconstruction',
+            'language-1-front-door'
         )
         if ($Path -in @(
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
@@ -2473,6 +2473,10 @@ foreach ($Path in $Paths) {
             'Compiler/Windvale/Source-Declaration-Parser.wv',
             'Compiler/Windvale/Source-Profile-Core.wv',
             'Compiler/Windvale/Source-Set-Core.wv',
+            'Compiler/Windvale/Source-Symbols-Core.wv',
+            'Compiler/Windvale/Source-Bindings-Core.wv',
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Wir-Core.wv',
             'Compiler/Windvale/Source-Wvb-Core.wv',
             'Projects/Compiler/Windvale-Source-Profile-Core.wvproj'
         )) {
@@ -3361,6 +3365,8 @@ foreach ($Path in $Paths) {
         Add-Suite 'libraries'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {
         Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj') {
+        Add-Suite 'language-1-front-door'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj'
     )) {

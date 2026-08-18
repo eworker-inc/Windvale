@@ -2,7 +2,20 @@
 
 ## Status
 
-This document specifies the sole current Windvale bytecode format, WVB 1.11. Windvale is in early development and does not preserve obsolete experimental WVB encodings unless a named compatibility case is approved. WVB 1.11 includes 64-bit scalars, independent module metadata, nominal payload variants, bounded sequences and affine builders, division and remainder, fixed-width unsigned bitwise/shift operations, exact text/bytes equality, and exact little-endian `u64` byte codecs. Every canonical writer emits 1.11 and every general WVB reader or verifier rejects any other version.
+This document specifies the current Windvale bytecode family: the WVB 1.11
+baseline and the WVB 1.12 fixed-width-integer extension. Windvale is in early
+development and does not preserve obsolete experimental WVB encodings unless a
+named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
+independent module metadata, nominal payload variants, bounded sequences and
+affine builders, division and remainder, unsigned bitwise/shift operations,
+exact text/bytes equality, and exact little-endian `u64` byte codecs. WVB 1.12
+adds first-class `i8`, `i16`, and `u16` shapes and their checked scalar
+instruction family. A canonical writer emits the lowest required minor version:
+1.11 when the extension is absent and 1.12 when any new shape or instruction is
+present. A WVB 1.12-capable reader accepts both versions and never admits a
+1.12-only item under a 1.11 header. The compiler-aligned verifier and scalar
+runner implement that transition; other current consumers retain explicit
+narrower version boundaries until their own lowering or execution slices land.
 
 ## Encoding
 
@@ -19,11 +32,14 @@ This document specifies the sole current Windvale bytecode format, WVB 1.11. Win
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11
+u16      minor version: 11 or 12
 u32      section count: 7
 ```
 
-The version identifies one complete vocabulary. Feature-dependent version selection and lowest-required-version calculation are not part of the current contract.
+The minor version identifies the admitted vocabulary. Canonical source
+publication calculates the lowest required version from all function, local,
+temporary, record-field, variant-payload, collection-element, and instruction
+shapes. An otherwise ordinary module remains byte-identical WVB 1.11.
 
 Every section has this envelope:
 
@@ -196,13 +212,19 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 11 variant followed by u32 nominal-type index
 12 sequence followed by element shape and u32 maximum
 13 builder followed by element shape and u32 maximum
+14 i8 (WVB 1.12 only)
+15 i16 (WVB 1.12 only)
+16 u16 (WVB 1.12 only)
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
 
 Function parameter, result, local, record-field, and variant-payload types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7`, `8`, or `11` followed by a `u32` Types-section index. A collection shape is byte `12` or `13`, its recursively encoded non-collection element shape, then its `u32` maximum. Nominal identity and collection kind/element/maximum are exact.
 
-`i64` and `u64` are ordinary scalar shapes. They do not widen counts, indices, lengths, code offsets, enum backing values, or existing binary Foundation operations, which remain explicitly `u32` or `i32`.
+`i64`, `u64`, `i8`, `i16`, and `u16` are ordinary scalar shapes. They do not
+widen counts, indices, lengths, code offsets, enum backing values, or existing
+binary Foundation operations, which remain explicitly `u32` or `i32`. Shape
+bytes 14 through 16 and opcode `C0` are invalid in WVB 1.11.
 
 ## Instruction encoding
 
@@ -337,6 +359,7 @@ BC bytes.not_equal
 BD bytes.read_u64_little consumes bytes and u32 offset, produces u64
 BE bytes.from_u64_little consumes u64, produces eight bytes
 BF u64.from_u32    consumes u32, produces the same numeric value as u64
+C0 fixed.integer   u8 type tag, u8 operation, then operation-specific payload
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -348,19 +371,52 @@ BF u64.from_u32    consumes u32, produces the same numeric value as u64
 51 return
 ```
 
+The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
+operation byte is:
+
+| Value | Operation | Operand/result rule |
+| ---: | --- | --- |
+| 0 | constant | followed by one raw little-endian `u16`; `i8` requires the high byte to be zero |
+| 1 | add | two same-type values to one same-type value |
+| 2 | subtract | two same-type values to one same-type value |
+| 3 | multiply | two same-type values to one same-type value |
+| 4 | divide | two same-type values to one same-type value |
+| 5 | remainder | two same-type values to one same-type value |
+| 6 | negate | one signed value to one same-type value |
+| 7 | equal | two same-type values to `bool` |
+| 8 | not equal | two same-type values to `bool` |
+| 9 | less | two same-type values to `bool` |
+| 10 | less equal | two same-type values to `bool` |
+| 11 | greater | two same-type values to `bool` |
+| 12 | greater equal | two same-type values to `bool` |
+| 13 | bitwise and | two `u16` values to `u16` |
+| 14 | bitwise or | two `u16` values to `u16` |
+| 15 | bitwise xor | two `u16` values to `u16` |
+| 16 | bitwise not | one `u16` value to `u16` |
+| 17 | shift left | `u16` value and `u32` count to `u16` |
+| 18 | shift right | `u16` value and `u32` count to `u16` |
+
+The raw constant is the exact named-width two's-complement or unsigned bit
+pattern. Arithmetic is checked. Overflow traps with `WVR3007`, division by zero
+with `WVR3032`, and a shift count outside 0 through 15 with `WVR3033`. Signed
+minimum divided or remaindered by minus one is overflow. Signed division
+truncates toward zero and remainder has the dividend's sign. `u16` left shift
+discards bits above bit 15; right shift fills with zero. Signed bitwise and shift
+forms and unsigned negation are invalid bytecode.
+
 ## Verification
 
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is exactly WVB 1.11 and the Module metadata presence byte is encoded exactly as specified above.
+- The version is WVB 1.11 or 1.12 and the Module metadata presence byte is encoded exactly as specified above; every 1.12-only shape or instruction requires 1.12.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.
 - Every record, enum, or variant declaration, nominal shape, constructor operand, field/payload access, case test, constant, and enum comparison has valid nominal identity and exact types.
 - Every collection shape has an admitted non-collection element and maximum; builder transitions and sequence operations have exact types and cannot cross forbidden boundaries.
-- Division/remainder, bitwise/shift, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
+- Division/remainder, bitwise/shift, fixed-integer, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
