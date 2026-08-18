@@ -2,21 +2,32 @@
 
 ## Status and scope
 
-This contract owns the unqualified current-source compiler candidate separately
-from the promoted semantic-freeze seed. It reconstructs the canonical compiler
-WVB and paired format-3 applications without invoking .NET. It does not promote
-the candidate, execute either reconstructed compiler over the complete source
-set, or replace the retained Stage 0 recovery archive.
+This contract owns a retained unqualified compiler candidate separately from
+the promoted semantic-freeze seed. At a named refresh checkpoint it reconstructs
+the canonical compiler WVB and paired format-3 applications without invoking
+.NET. It does not promote the candidate, execute either reconstructed compiler
+over the complete source set, or replace the retained Stage 0 recovery archive.
 
 ## Exact candidate
 
-`Projects/Examples/Windvale-Compiler.wvproj` is 649 LF-only bytes at SHA-256
+The retained candidate was built from a 649-byte
+`Projects/Examples/Windvale-Compiler.wvproj` at SHA-256
 `a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05`.
 The native seed bootstrap compiles that exact inventory to a transitional
 959,320-byte Stage 1 compiler, packages it privately, and promotes its byte-stable
 Stage 2 output as the 935,163-byte candidate at SHA-256
 `a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
 Its 418 functions contain 770,988 WVB code bytes.
+
+The Language 1.0 Slice 1 tree is intentionally source-ahead: its current
+project manifest is 702 LF-only bytes at SHA-256
+`7855dcc07ef7102c287e593aa6f77ac2ea1be3c63fc51e380d87c8bda6c3b2ed`.
+The development candidate constructed from that tree is 975,403 WVB bytes at
+SHA-256
+`f4609cdc5d25850a418b1497879e07b3ec5013b134e3e92e3f93997537b54595`.
+It is measured migration evidence, not a replacement for the six retained
+artifacts below. A later explicit candidate refresh must update the complete
+compiler/build-driver artifact family and paired identities together.
 
 The current native backend produces 28,141,686 linked image bytes at SHA-256
 `492c79a9e1ef17fb4dd610de62491b9d1b2d181bf69267c7847121fad827fa57`.
@@ -44,8 +55,8 @@ seed and must not be silently repinned to an unqualified source state.
 
 ## Native construction
 
-`Construct-Compiler-Reconstruction.cmd` and `.sh` accept one existing output
-directory. They:
+At a candidate refresh, `Construct-Compiler-Reconstruction.cmd` and `.sh`
+accept one existing output directory. They:
 
 1. invoke the digest-bound native seed bootstrap promotion over the exact
    project inventory;

@@ -33,9 +33,9 @@ call :verify_family Compiler-Image-Canonical-Transport.wvb windows-x64-wvimagetr
 if errorlevel 1 goto :failed
 call :pass "compiler-image transport reconstruction"
 
-set "FailureStep=compiler-scale build-driver identity"
-set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
-certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec" >nul
+set "FailureStep=compiler-scale current build-driver identity"
+set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
+certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f" >nul
 if errorlevel 1 goto :failed
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%Workspace:\=/%"
@@ -49,8 +49,8 @@ set "FailureStep=compiler-scale WVB build"
     >"%TestDirectory%\Compiler-Build.out" 2>"%TestDirectory%\Compiler-Build.err"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Compiler-Build.err") do if not "%%~zF"=="0" goto :failed
-for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1142818" goto :failed
-certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574" >nul
+for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1182549" goto :failed
+certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a" >nul
 if errorlevel 1 goto :failed
 set "FailureStep=compiler-scale native staging"
 "%TestDirectory%\windows-x64-wvstage.exe" "%CompilerWvb%" ^
@@ -59,7 +59,7 @@ set "FailureStep=compiler-scale native staging"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Compiler-Stage.err") do if not "%%~zF"=="0" goto :failed
 for %%F in ("%TestDirectory%\Compiler-Stage.out") do if not "%%~zF"=="86" goto :failed
-findstr /b /c:"native x64 staging status=Complete object-bytes=30378291 chunks=39 manifest-bytes=492" "%TestDirectory%\Compiler-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=31025972 chunks=40 manifest-bytes=504" "%TestDirectory%\Compiler-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "compiler-scale WVB staging"
 

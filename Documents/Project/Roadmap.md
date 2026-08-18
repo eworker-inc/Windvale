@@ -94,13 +94,16 @@ source-freeze decision. [Decision 0767](../Decisions/0767-Freeze-Windvale-Langua
 now freezes that exact identity and authorizes Migration Slice 0. Seed remains
 the implemented language until focused executable gates advance each edition-1
 slice; the draft Chinese pack retains its independent qualification path. The
-first [migration evidence checkpoint](Windvale-Language-1.0-Migration-Evidence.md)
-now fixes all 16 workload bundles and 72 source fixtures, records the pre-slice
-compiler/WIR/memory/artifact baseline, and adds the bounded source-descriptor
-reader under one focused owner. It deliberately does not yet claim profile-pack
-resolution or Language 1.0 parsing. The next Slice 1 checkpoint connects that
-reader to the existing compiler's edition-dispatch front door and admits the
-exact locked `en@1` profile without creating a parallel compiler.
+[migration evidence](Windvale-Language-1.0-Migration-Evidence.md) fixes all 16
+workload bundles and 72 source fixtures and records the pre-slice
+compiler/WIR/memory/artifact baseline. Slice 1 now connects the bounded
+descriptor reader to the existing compiler, admits only one pinned bootstrap
+`en@1` binding, uses a no-copy body view, parses the standalone Core header, and
+compiles one minimal edition-1 program deterministically through WIR and WVB.
+It deliberately does not yet claim external profile-artifact loading, localized
+token admission, broad Language 1.0 semantics, or paired-host conformance. Slice
+2 makes the source-profile lock/artifact chain an explicit build input and moves
+English token resolution behind it without creating a parallel compiler.
 
 ## How to read this roadmap
 

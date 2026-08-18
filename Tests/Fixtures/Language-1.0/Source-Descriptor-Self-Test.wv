@@ -26,6 +26,18 @@ export fn Main() -> i32 {
     if English.Profileˉversion != 1u32 { return 5; }
     if English.Descriptorˉlength != 11u32 { return 6; }
     if English.Bodyˉoffset != 12u32 { return 7; }
+    let Englishˉresolution: Descriptor.Compilerˉsourceˉprofileˉresolution =
+        Descriptor.Compilerˉresolveˉsourceˉprofile(
+            Textˉtoˉutf8("#!wv/1 en@1\nmodule Example;"), English
+        );
+    if Englishˉresolution.Status !=
+        Descriptor.Compilerˉsourceˉprofileˉresolutionˉstatus.Valid {
+        return 35;
+    }
+    if Englishˉresolution.Binding !=
+        Descriptor.Compilerˉsourceˉprofileˉbinding.English {
+        return 36;
+    }
 
     let Chinese: Descriptor.Compilerˉsourceˉdescriptor =
         Read("#!wv/1 zh-Hans@17\r\nmodule Example;");
@@ -36,6 +48,14 @@ export fn Main() -> i32 {
     if Chinese.Profileˉversion != 17u32 { return 10; }
     if Chinese.Descriptorˉlength != 17u32 { return 11; }
     if Chinese.Bodyˉoffset != 19u32 { return 12; }
+    let Chineseˉresolution: Descriptor.Compilerˉsourceˉprofileˉresolution =
+        Descriptor.Compilerˉresolveˉsourceˉprofile(
+            Textˉtoˉutf8("#!wv/1 zh-Hans@17\r\nmodule Example;"), Chinese
+        );
+    if Chineseˉresolution.Status !=
+        Descriptor.Compilerˉsourceˉprofileˉresolutionˉstatus.Unsupportedˉprofile {
+        return 37;
+    }
 
     let Maximum: Descriptor.Compilerˉsourceˉdescriptor =
         Read("#!wv/1 test.unicode-v17@4294967295\n");

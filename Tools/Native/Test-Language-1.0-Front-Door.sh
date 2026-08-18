@@ -24,11 +24,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/2'
+echo 'START language 1 front door phase=frozen-fixtures item=1/3'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/2'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/3'
 
-echo 'START language 1 front door phase=descriptor item=2/2'
+echo 'START language 1 front door phase=descriptor item=2/3'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -41,5 +41,56 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/2'
-echo 'native language 1 front door status=Passed cases=3 frozen-inputs=250 source-fixtures=72 descriptor-cases=34 local-result=42'
+echo 'PASS  language 1 front door phase=descriptor item=2/3'
+
+echo 'START language 1 front door phase=compiler-slice item=3/3'
+segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
+    "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
+    "$repository_root/Artifacts/Native-Front-Door/linux-x64/wvbuild.elf" \
+    "$work/Compiler.wvb" "$work/Compiler-Image" "$work/Compiler.wvli") || exit $?
+compiler_entry=$(printf '%s\n' "$segmented_report" | sed -n \
+    's/^native segmented project cache status=[A-Za-z]* key=[0-9a-f]* entry-offset=\([0-9][0-9]*\) fragments=[1-8]$/\1/p')
+compiler_fragments=$(printf '%s\n' "$segmented_report" | sed -n \
+    's/^native segmented project cache status=[A-Za-z]* key=[0-9a-f]* entry-offset=[0-9][0-9]* fragments=\([1-8]\)$/\1/p')
+[[ $compiler_entry =~ ^(0|[1-9][0-9]*)$ && $compiler_fragments =~ ^[1-8]$ ]] || exit 1
+"$script_directory/Build-Cached-Hosted-Application.sh" 1 \
+    "$work/Compiler.wvb" "$work/Compiler-Image" "$compiler_fragments" \
+    "$compiler_entry" "$work/Compiler.elf" linux >/dev/null || exit $?
+"$work/Compiler.elf" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
+    "$work/Minimum-A.wvb" >"$work/Compile-A.out" 2>"$work/Compile-A.err" || exit $?
+"$work/Compiler.elf" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
+    "$work/Minimum-B.wvb" >"$work/Compile-B.out" 2>"$work/Compile-B.err" || exit $?
+[[ ! -s $work/Compile-A.err && ! -s $work/Compile-B.err ]] || exit 1
+cmp -s -- "$work/Compile-A.out" "$work/Compile-B.out" || exit 1
+cmp -s -- "$work/Minimum-A.wvb" "$work/Minimum-B.wvb" || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Minimum-A.wvb" \
+    >"$work/Minimum.out" 2>"$work/Minimum.err" || exit $?
+[[ ! -s $work/Minimum.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Minimum.out"
+cmp -s -- "$work/Expected-Minimum.out" "$work/Minimum.out" || exit 1
+expect_rejection() {
+    local source=$1 output=$2
+    [[ ! -e $output ]] || return 1
+    if "$work/Compiler.elf" "$source" "$output" \
+        >"$output.out" 2>"$output.err"; then
+        return 1
+    fi
+    [[ ! -e $output ]]
+}
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv" \
+    "$work/Unsupported.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Missing-Edition-Profile.wv" \
+    "$work/Missing-Profile.wvb" || exit 1
+expect_rejection \
+    "$repository_root/Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv" \
+    "$work/Descriptorless.wvb" || exit 1
+[[ $(wc -c < "$work/Minimum-A.wvb") -eq 221 ]] || exit 1
+printf '%s  %s\n' \
+    '2f080e3bb2b43b3da2da1d3c9aea4b7d3e3e3a23432cc39ed189c553da4e1d2a' \
+    "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
+echo 'PASS  language 1 front door phase=compiler-slice item=3/3'
+echo 'native language 1 front door status=Passed cases=7 frozen-inputs=250 source-fixtures=72 descriptor-cases=37 compiler-cases=4 compiler-result=42 compiler-wvb-bytes=221'

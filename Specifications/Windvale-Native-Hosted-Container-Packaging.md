@@ -89,14 +89,15 @@ candidate remains an input seed, so this command is not a non-circular
 bootstrap or independent Linux-host qualification.
 
 The reconstruction owner also builds the current compiler build-driver WVB into
-private temporary storage through the pinned current-host build driver and feeds
-it to the reconstructed current-host staging producer. The exact 1,142,818-byte
-WVB at SHA-256
-`125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574`
-contains 64 records and stages into 30,067,412 object bytes across 39 chunks plus
-a 492-byte manifest. This case does not execute or promote the private compiler
-WVB; general verifier, publisher, final-container, and front-door promotion
-remain separate boundaries.
+private temporary storage through the explicitly unqualified current-host
+candidate driver and feeds it to the reconstructed current-host staging
+producer. The exact 1,182,549-byte WVB at SHA-256
+`1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a`
+stages into 31,025,972 object bytes across 40 chunks plus a 504-byte manifest.
+The qualified semantic-freeze front door and retained candidate identities are
+not repinned. This case does not execute or promote the private compiler WVB;
+general verifier, publisher, final-container, and front-door promotion remain
+separate boundaries.
 
 ## Ordered path
 

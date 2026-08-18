@@ -67,9 +67,9 @@ verify_family Compiler-Image-Canonical-Transport.wvb \
     windows-x64-wvimagetransport.exe linux-x64-wvimagetransport.elf || fail
 pass 'compiler-image transport reconstruction'
 
-build_driver="$repository_root/Artifacts/Native-Front-Door/linux-x64/wvbuild.elf"
+build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
 printf '%s  %s\n' \
-    d228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969 \
+    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 \
     "$build_driver" | sha256sum --check --strict --quiet || fail
 workspace="$repository_root/Windvale.wvws"
 compiler_project="$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj"
@@ -78,9 +78,9 @@ compiler_wvb="$test_directory/Compiler-Build-Driver.wvb"
     "$compiler_wvb" >"$test_directory/Compiler-Build.out" \
     2>"$test_directory/Compiler-Build.err" || fail
 [[ ! -s $test_directory/Compiler-Build.err ]] || fail
-[[ $(stat -c %s -- "$compiler_wvb") == 1142818 ]] || fail
+[[ $(stat -c %s -- "$compiler_wvb") == 1182549 ]] || fail
 printf '%s  %s\n' \
-    125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574 \
+    1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a \
     "$compiler_wvb" | sha256sum --check --strict --quiet || fail
 chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
 "$test_directory/linux-x64-wvstage.elf" "$compiler_wvb" \
@@ -89,7 +89,7 @@ chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
     2>"$test_directory/Compiler-Stage.err" || fail
 [[ ! -s $test_directory/Compiler-Stage.err ]] || fail
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=30378291 chunks=39 manifest-bytes=492' \
+    'native x64 staging status=Complete object-bytes=31025972 chunks=40 manifest-bytes=504' \
     "$test_directory/Compiler-Stage.out" >/dev/null || fail
 pass 'compiler-scale WVB staging'
 

@@ -313,19 +313,37 @@ export fn Compilerˉsourceˉwvbˉmoduleˉmetadata(
         );
     }
 
-    let Platform: Sourceˉlexer.Compilerˉsourceˉtoken =
+    var Cursor: u32 = Form.Nextˉoffset;
+    var Line: u32 = Form.Nextˉline;
+    var Column: u32 = Form.Nextˉcolumn;
+    let Headerˉmetadata: Sourceˉlexer.Compilerˉsourceˉtoken =
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Form.Nextˉoffset, Form.Nextˉline, Form.Nextˉcolumn
+            Source, Cursor, Line, Column
         );
+    if Headerˉmetadata.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Profile {
+        let Profileˉvalue: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Headerˉmetadata.Nextˉoffset, Headerˉmetadata.Nextˉline, Headerˉmetadata.Nextˉcolumn
+            );
+        let Profileˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Profileˉvalue.Nextˉoffset, Profileˉvalue.Nextˉline, Profileˉvalue.Nextˉcolumn
+            );
+        Cursor = Profileˉend.Nextˉoffset;
+        Line = Profileˉend.Nextˉline;
+        Column = Profileˉend.Nextˉcolumn;
+    }
+    let Platform: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, Cursor, Line, Column);
     if Platform.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Platform {
         return Compilerˉsourceˉwvbˉdataˉencoding(
             Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
             Compilerˉsourceˉwvbˉempty(Source)
         );
     }
-    var Cursor: u32 = Platform.Nextˉoffset;
-    var Line: u32 = Platform.Nextˉline;
-    var Column: u32 = Platform.Nextˉcolumn;
+    Cursor = Platform.Nextˉoffset;
+    Line = Platform.Nextˉline;
+    Column = Platform.Nextˉcolumn;
     var Platformˉcount: u32 = 0u32;
     var Platformˉentries: bytes = Compilerˉsourceˉwvbˉempty(Source);
     var Readingˉplatforms: bool = true;

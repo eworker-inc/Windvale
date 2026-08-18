@@ -1786,17 +1786,60 @@ export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
     if Afterˉmoduleˉend.Status != Compilerˉparseˉstatus.Valid {
         return Compilerˉsourceˉheader(Afterˉmoduleˉend.Status, Afterˉmoduleˉend.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Afterˉmoduleˉend.Nextˉoffset, Afterˉmoduleˉend.Nextˉline, Afterˉmoduleˉend.Nextˉcolumn, Afterˉmoduleˉend.Failureˉoffset, Afterˉmoduleˉend.Failureˉline, Afterˉmoduleˉend.Failureˉcolumn, Afterˉmoduleˉend.Expected, Afterˉmoduleˉend.Found);
     }
+
+    var Cursor: u32 = Afterˉmoduleˉend.Nextˉoffset;
+    var Currentˉline: u32 = Afterˉmoduleˉend.Nextˉline;
+    var Currentˉcolumn: u32 = Afterˉmoduleˉend.Nextˉcolumn;
+    var Declaredˉprofile: Compilerˉsourceˉprofile = Compilerˉsourceˉprofile.None;
+    let Metadataˉform: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Cursor, Currentˉline, Currentˉcolumn);
+    if Metadataˉform.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Profile {
+        let Profileˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input, Metadataˉform.Nextˉoffset, Metadataˉform.Nextˉline, Metadataˉform.Nextˉcolumn
+            );
+        if Profileˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier &&
+            Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+                Input, Profileˉtoken.Offset, Profileˉtoken.Length, "core"
+            ) {
+            Declaredˉprofile = Compilerˉsourceˉprofile.Portable;
+        }
+        if Profileˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Hosted {
+            Declaredˉprofile = Compilerˉsourceˉprofile.Hosted;
+        }
+        if Profileˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.System {
+            Declaredˉprofile = Compilerˉsourceˉprofile.System;
+        }
+        if Declaredˉprofile == Compilerˉsourceˉprofile.None {
+            let Badˉprofile: Compilerˉparseˉstep = Compilerˉparseˉstepˉfromˉtoken(
+                Compilerˉparseˉstatus.Invalidˉprofile,
+                Profileˉtoken,
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+            );
+            return Compilerˉsourceˉheader(Badˉprofile.Status, Badˉprofile.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Badˉprofile.Nextˉoffset, Badˉprofile.Nextˉline, Badˉprofile.Nextˉcolumn, Badˉprofile.Failureˉoffset, Badˉprofile.Failureˉline, Badˉprofile.Failureˉcolumn, Badˉprofile.Expected, Badˉprofile.Found);
+        }
+        let Afterˉdeclaredˉprofile: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+            Input, Profileˉtoken.Nextˉoffset, Profileˉtoken.Nextˉline, Profileˉtoken.Nextˉcolumn,
+            Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
+        );
+        if Afterˉdeclaredˉprofile.Status != Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉheader(Afterˉdeclaredˉprofile.Status, Afterˉdeclaredˉprofile.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Afterˉdeclaredˉprofile.Nextˉoffset, Afterˉdeclaredˉprofile.Nextˉline, Afterˉdeclaredˉprofile.Nextˉcolumn, Afterˉdeclaredˉprofile.Failureˉoffset, Afterˉdeclaredˉprofile.Failureˉline, Afterˉdeclaredˉprofile.Failureˉcolumn, Afterˉdeclaredˉprofile.Expected, Afterˉdeclaredˉprofile.Found);
+        }
+        Cursor = Afterˉdeclaredˉprofile.Nextˉoffset;
+        Currentˉline = Afterˉdeclaredˉprofile.Nextˉline;
+        Currentˉcolumn = Afterˉdeclaredˉprofile.Nextˉcolumn;
+    }
     let Afterˉplatform: Compilerˉparseˉstep = Compilerˉparseˉconsume(
-        Input, Afterˉmoduleˉend.Nextˉoffset, Afterˉmoduleˉend.Nextˉline, Afterˉmoduleˉend.Nextˉcolumn,
+        Input, Cursor, Currentˉline, Currentˉcolumn,
         Sourceˉlexer.Compilerˉtokenˉkind.Platform
     );
     if Afterˉplatform.Status != Compilerˉparseˉstatus.Valid {
         return Compilerˉsourceˉheader(Afterˉplatform.Status, Afterˉplatform.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Afterˉplatform.Nextˉoffset, Afterˉplatform.Nextˉline, Afterˉplatform.Nextˉcolumn, Afterˉplatform.Failureˉoffset, Afterˉplatform.Failureˉline, Afterˉplatform.Failureˉcolumn, Afterˉplatform.Expected, Afterˉplatform.Found);
     }
 
-    var Cursor: u32 = Afterˉplatform.Nextˉoffset;
-    var Currentˉline: u32 = Afterˉplatform.Nextˉline;
-    var Currentˉcolumn: u32 = Afterˉplatform.Nextˉcolumn;
+    Cursor = Afterˉplatform.Nextˉoffset;
+    Currentˉline = Afterˉplatform.Nextˉline;
+    Currentˉcolumn = Afterˉplatform.Nextˉcolumn;
     var Platforms: u32 = 0u32;
     var Readingˉplatforms: bool = true;
     while Readingˉplatforms {
@@ -1857,10 +1900,14 @@ export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
         return Compilerˉsourceˉheader(End.Status, End.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn, End.Failureˉoffset, End.Failureˉline, End.Failureˉcolumn, End.Expected, End.Found);
     }
 
-    var Profile: Compilerˉsourceˉprofile = Compilerˉsourceˉprofile.Portable;
-    if Authority.Kind == Sourceˉlexer.Compilerˉtokenˉkind.System {
+    var Profile: Compilerˉsourceˉprofile = Declaredˉprofile;
+    if Profile == Compilerˉsourceˉprofile.None {
+        Profile = Compilerˉsourceˉprofile.Portable;
+    }
+    if Declaredˉprofile == Compilerˉsourceˉprofile.None &&
+        Authority.Kind == Sourceˉlexer.Compilerˉtokenˉkind.System {
         Profile = Compilerˉsourceˉprofile.System;
-    } else {
+    } else if Declaredˉprofile == Compilerˉsourceˉprofile.None {
         let Requirement: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Input, End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn
         );
@@ -1868,6 +1915,25 @@ export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
         if Requirement.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Optional { Profile = Compilerˉsourceˉprofile.Hosted; }
     }
     return Compilerˉsourceˉheader(Compilerˉparseˉstatus.Valid, Sourceˉlexer.Compilerˉlexˉstatus.Valid, Profile, Name.Offset, Name.Length, End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn, End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.End, Sourceˉlexer.Compilerˉtokenˉkind.End);
+}
+
+export fn Compilerˉsourceˉusesˉstandaloneˉprofile(Input: bytes) -> bool {
+    let Module: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, 0u32, 1u32, 1u32);
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Module.Nextˉoffset, Module.Nextˉline, Module.Nextˉcolumn
+        );
+    let Moduleˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+        );
+    if Moduleˉend.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon { return false; }
+    let Next: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Moduleˉend.Nextˉoffset, Moduleˉend.Nextˉline, Moduleˉend.Nextˉcolumn
+        );
+    return Next.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Profile;
 }
 
 export fn Compilerˉparseˉheaderˉvalidated(Input: bytes) -> Compilerˉsourceˉheader {

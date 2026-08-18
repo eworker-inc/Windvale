@@ -8,13 +8,15 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
-- Froze the exact Windvale Language 1.0 source design and began the ordered
-  migration with an identity-pinned 16-bundle/72-source fixture inventory,
-  reproducible compiler and WIR baselines, and a bounded allocation-free
-  edition-1 descriptor reader. Its focused cross-host owner verifies all 250
-  frozen inputs and 34 accepted/rejected descriptor cases without routing
-  ordinary development through the broad compiler gates; Seed remains the only
-  implemented source contract while profile resolution and parsing advance.
+- Froze the exact Windvale Language 1.0 source design and completed the first
+  vertical compiler slice over its identity-pinned 16-bundle/72-source fixture
+  inventory. The existing compiler now admits only the pinned bootstrap
+  `en@1`, passes a no-copy post-descriptor view into the canonical parser,
+  accepts the standalone Core module header, and emits a deterministic
+  executable 221-byte WVB for the first edition-1 program. Its cached seven-case
+  cross-host owner also retains 37 bounded descriptor/resolver checks and proves
+  unsupported or mismatched profiles fail without publication; descriptorless
+  Seed remains the temporary migration path.
 - Added the first user-facing hosted model chat command with masked WVSC
   credential setup and unlock, OpenAI/Anthropic/Google catalog discovery,
   bounded multi-turn conversation, typed failures, and no automatic retries.

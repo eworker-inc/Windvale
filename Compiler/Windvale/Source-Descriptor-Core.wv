@@ -17,6 +17,21 @@ export enum Compilerˉsourceˉdescriptorˉstatus {
     Nonˉascii = 13;
 }
 
+export enum Compilerˉsourceˉprofileˉbinding {
+    None = 0;
+    English = 1;
+}
+
+export enum Compilerˉsourceˉprofileˉresolutionˉstatus {
+    Valid = 0;
+    Unsupportedˉprofile = 1;
+}
+
+export record Compilerˉsourceˉprofileˉresolution {
+    Status: Compilerˉsourceˉprofileˉresolutionˉstatus;
+    Binding: Compilerˉsourceˉprofileˉbinding;
+}
+
 export record Compilerˉsourceˉdescriptor {
     Status: Compilerˉsourceˉdescriptorˉstatus;
     Edition: u32;
@@ -73,6 +88,36 @@ fn Compilerˉsourceˉdescriptorˉisˉletter(Value: u32) -> bool {
 
 fn Compilerˉsourceˉdescriptorˉisˉdigit(Value: u32) -> bool {
     return Value >= 48u32 && Value <= 57u32;
+}
+
+// Slice 1 deliberately has one built-in source-profile binding. Its immutable
+// profile artifact is e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27
+// under lock artifact 4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3.
+// External lock/profile artifact admission replaces this bootstrap binding.
+export fn Compilerˉresolveˉsourceˉprofile(
+    Input: bytes,
+    Descriptor: Compilerˉsourceˉdescriptor
+) -> Compilerˉsourceˉprofileˉresolution {
+    if Descriptor.Status != Compilerˉsourceˉdescriptorˉstatus.Valid {
+        return Compilerˉsourceˉprofileˉresolution(
+            Compilerˉsourceˉprofileˉresolutionˉstatus.Unsupportedˉprofile,
+            Compilerˉsourceˉprofileˉbinding.None
+        );
+    }
+    if Descriptor.Edition == 1u32 &&
+        Descriptor.Profileˉversion == 1u32 &&
+        Descriptor.Profileˉlength == 2u32 &&
+        Compilerˉsourceˉdescriptorˉbyte(Input, Descriptor.Profileˉoffset) == 101u32 &&
+        Compilerˉsourceˉdescriptorˉbyte(Input, Descriptor.Profileˉoffset + 1u32) == 110u32 {
+        return Compilerˉsourceˉprofileˉresolution(
+            Compilerˉsourceˉprofileˉresolutionˉstatus.Valid,
+            Compilerˉsourceˉprofileˉbinding.English
+        );
+    }
+    return Compilerˉsourceˉprofileˉresolution(
+        Compilerˉsourceˉprofileˉresolutionˉstatus.Unsupportedˉprofile,
+        Compilerˉsourceˉprofileˉbinding.None
+    );
 }
 
 export fn Compilerˉreadˉsourceˉdescriptor(

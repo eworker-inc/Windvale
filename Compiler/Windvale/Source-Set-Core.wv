@@ -2,6 +2,7 @@ module Compilerˉsourceˉset profile portable;
 
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 
 export enum Compilerˉsourceˉsetˉstatus {
     Valid = 0;
@@ -19,6 +20,9 @@ export enum Compilerˉsourceˉsetˉstatus {
     Dependencyˉprofile = 12;
     Dependencyˉshape = 13;
     Privateˉdependencyˉfunction = 14;
+    Sourceˉdescriptor = 15;
+    Unsupportedˉsourceˉprofile = 16;
+    Sourceˉedition = 17;
 }
 
 export record Compilerˉsourceˉsetˉscan {
@@ -37,6 +41,10 @@ export record Compilerˉsourceˉsetˉview {
     Index: u32;
     Offset: u32;
     Length: u32;
+    Edition: u32;
+    Profileˉbinding: Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding;
+    Originˉoffset: u32;
+    Failureˉoffset: u32;
     Source: bytes;
 }
 
@@ -181,7 +189,38 @@ export fn Compilerˉsourceˉsetˉviewˉfailure(
     Index: u32,
     Input: bytes
 ) -> Compilerˉsourceˉsetˉview {
-    return Compilerˉsourceˉsetˉview(Status, Index, 0u32, 0u32, Bytesˉslice(Input, 0u32, 0u32));
+    return Compilerˉsourceˉsetˉview(
+        Status,
+        Index,
+        0u32,
+        0u32,
+        0u32,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None,
+        0u32,
+        0u32,
+        Bytesˉslice(Input, 0u32, 0u32)
+    );
+}
+
+export fn Compilerˉsourceˉsetˉsourceˉfailure(
+    Status: Compilerˉsourceˉsetˉstatus,
+    Index: u32,
+    Offset: u32,
+    Length: u32,
+    Failureˉoffset: u32,
+    Input: bytes
+) -> Compilerˉsourceˉsetˉview {
+    return Compilerˉsourceˉsetˉview(
+        Status,
+        Index,
+        Offset,
+        Length,
+        1u32,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None,
+        0u32,
+        Failureˉoffset,
+        Bytesˉslice(Input, Offset, Length)
+    );
 }
 
 export fn Compilerˉsourceˉsetˉmodule(
@@ -198,12 +237,59 @@ export fn Compilerˉsourceˉsetˉmodule(
     let Entryˉoffset: u32 = Scan.Directoryˉoffset + Index * 8u32;
     let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset);
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 4u32);
+    let Rawˉsource: bytes = Bytesˉslice(Input, Offset, Length);
+    if Bytesˉreadˉu8(Rawˉsource, 0u32) == 35u8 {
+        let Descriptor: Sourceˉdescriptor.Compilerˉsourceˉdescriptor =
+            Sourceˉdescriptor.Compilerˉreadˉsourceˉdescriptor(Rawˉsource);
+        if Descriptor.Status != Sourceˉdescriptor.Compilerˉsourceˉdescriptorˉstatus.Valid {
+            return Compilerˉsourceˉsetˉsourceˉfailure(
+                Compilerˉsourceˉsetˉstatus.Sourceˉdescriptor,
+                Index,
+                Offset,
+                Length,
+                Descriptor.Failureˉoffset,
+                Input
+            );
+        }
+        let Resolution: Sourceˉdescriptor.Compilerˉsourceˉprofileˉresolution =
+            Sourceˉdescriptor.Compilerˉresolveˉsourceˉprofile(Rawˉsource, Descriptor);
+        if Resolution.Status !=
+            Sourceˉdescriptor.Compilerˉsourceˉprofileˉresolutionˉstatus.Valid {
+            return Compilerˉsourceˉsetˉsourceˉfailure(
+                Compilerˉsourceˉsetˉstatus.Unsupportedˉsourceˉprofile,
+                Index,
+                Offset,
+                Length,
+                Descriptor.Profileˉoffset,
+                Input
+            );
+        }
+        return Compilerˉsourceˉsetˉview(
+            Compilerˉsourceˉsetˉstatus.Valid,
+            Index,
+            Offset,
+            Length,
+            Descriptor.Edition,
+            Resolution.Binding,
+            Descriptor.Descriptorˉlength,
+            Descriptor.Descriptorˉlength,
+            Bytesˉslice(
+                Rawˉsource,
+                Descriptor.Descriptorˉlength,
+                Length - Descriptor.Descriptorˉlength
+            )
+        );
+    }
     return Compilerˉsourceˉsetˉview(
         Compilerˉsourceˉsetˉstatus.Valid,
         Index,
         Offset,
         Length,
-        Bytesˉslice(Input, Offset, Length)
+        0u32,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None,
+        0u32,
+        Length,
+        Rawˉsource
     );
 }
 
@@ -308,6 +394,19 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
     var Functions: u32 = 0u32;
     while Index < Scan.Modules {
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+        if View.Status != Compilerˉsourceˉsetˉstatus.Valid {
+            return Compilerˉsourceˉsetˉsummaryˉfailure(
+                View.Status,
+                Scan.Modules,
+                Scan.Sourceˉbytes,
+                Index,
+                View.Failureˉoffset,
+                1u32,
+                View.Failureˉoffset + 1u32,
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
+            );
+        }
         let Source: bytes = View.Source;
         let Parsed: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Source);
         if Parsed.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
@@ -316,7 +415,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                 Scan.Modules,
                 Scan.Sourceˉbytes,
                 Index,
-                Parsed.Failureˉoffset,
+                View.Originˉoffset + Parsed.Failureˉoffset,
                 Parsed.Failureˉline,
                 Parsed.Failureˉcolumn,
                 Parsed.Status,
@@ -331,7 +430,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                 Scan.Modules,
                 Scan.Sourceˉbytes,
                 Index,
-                Bodies.Failureˉoffset,
+                View.Originˉoffset + Bodies.Failureˉoffset,
                 Bodies.Failureˉline,
                 Bodies.Failureˉcolumn,
                 Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
@@ -346,6 +445,34 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
             1u32,
             Header.Nameˉoffset
         );
+        let Standaloneˉprofile: bool =
+            Sourceˉdeclarations.Compilerˉsourceˉusesˉstandaloneˉprofile(Source);
+        if View.Edition == 1u32 && !Standaloneˉprofile {
+            return Compilerˉsourceˉsetˉsummaryˉfailure(
+                Compilerˉsourceˉsetˉstatus.Sourceˉedition,
+                Scan.Modules,
+                Scan.Sourceˉbytes,
+                Index,
+                View.Originˉoffset + Header.Nameˉoffset,
+                Nameˉposition.Line,
+                Nameˉposition.Column,
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
+            );
+        }
+        if View.Edition == 0u32 && Standaloneˉprofile {
+            return Compilerˉsourceˉsetˉsummaryˉfailure(
+                Compilerˉsourceˉsetˉstatus.Sourceˉedition,
+                Scan.Modules,
+                Scan.Sourceˉbytes,
+                Index,
+                Header.Nameˉoffset,
+                Nameˉposition.Line,
+                Nameˉposition.Column,
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
+            );
+        }
 
         var Previous: u32 = 0u32;
         while Previous < Index {
@@ -364,7 +491,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                     Scan.Modules,
                     Scan.Sourceˉbytes,
                     Index,
-                    Header.Nameˉoffset,
+                    View.Originˉoffset + Header.Nameˉoffset,
                     Nameˉposition.Line,
                     Nameˉposition.Column,
                     Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
@@ -390,7 +517,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                     Scan.Modules,
                     Scan.Sourceˉbytes,
                     Index,
-                    Header.Nameˉoffset,
+                    View.Originˉoffset + Header.Nameˉoffset,
                     Nameˉposition.Line,
                     Nameˉposition.Column,
                     Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,

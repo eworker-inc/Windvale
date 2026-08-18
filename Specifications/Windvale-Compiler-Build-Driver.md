@@ -137,7 +137,7 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The current canonical-source reconstruction candidate is 1,142,818 bytes with
+The retained unqualified reconstruction candidate is 1,142,818 bytes with
 SHA-256 `125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574`.
 It stages as eight canonical native chunks with `Main` at entry offset 220,460.
 
@@ -149,21 +149,29 @@ The current WVB 1.11 reconstruction for `linux-x64-build-driver-v1` emits a
 30,072,832-byte sectionless static-PIE ELF application with SHA-256
 `628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9`.
 
-These are unqualified reconstruction candidates. `Build-Current-Wvb` uses the
-current candidate driver's raw, self-verified, non-atomic output contract because
-the semantic-freeze publisher does not admit forward-language WVB. The ordinary `Build-Wvb` launcher and
-`Artifacts/Native-Front-Door` remain the qualified semantic-freeze baseline;
-their historical qualification identities are not repinned by forward language
-evolution.
+These are retained unqualified reconstruction candidates. `Build-Current-Wvb`
+uses the candidate driver's raw, self-verified, non-atomic output contract
+because the semantic-freeze publisher does not admit forward-language WVB. The
+ordinary `Build-Wvb` launcher and `Artifacts/Native-Front-Door` remain the
+qualified semantic-freeze baseline; their historical qualification identities
+are not repinned by forward language evolution.
 
-The retained recovery construction route is recorded separately. The normal source
-construction route is:
+The Language 1.0 Slice 1 source tree is ahead of that retained candidate. The
+candidate driver deterministically compiles the current 20-module project to a
+1,182,549-byte WVB, SHA-256
+`1c2fa49bdd35a12125072b361b244521d2a0f22ccb432c99f701d1f2c229ff6a`.
+That WVB is current-source development evidence, not a promoted build-driver
+container identity.
+
+The retained recovery construction route is recorded separately. Projects that
+remain inside the qualified semantic-freeze compiler use:
 
 ```text
 Tools/Native/Build-Wvb Projects/Tools/Windvale-Compiler-Build-Driver.wvproj <output.wvb>
 ```
 
-Forward-language consumers use the explicitly unqualified current route:
+The current build-driver source and other forward-language consumers use the
+explicitly unqualified current route:
 
 ```text
 Tools/Native/Build-Current-Wvb Projects/Tools/Windvale-Compiler-Build-Driver.wvproj <output.wvb>
