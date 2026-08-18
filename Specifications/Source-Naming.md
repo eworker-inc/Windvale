@@ -4,8 +4,10 @@
 
 This document defines the accepted naming convention for official Windvale
 source. The Seed grammar implements the ASCII identifier and machine-name
-boundaries described here. The working Language 1.0 replacement candidate adds
-the separately bounded Unicode identifier contract in the
+boundaries described here. The Language 1.0 replacement candidate adds the
+separately bounded Unicode identifier contract accepted by
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+and defined in the
 [localized-source specification](Windvale-Language-1.0-Localized-Source.md).
 Native symbol mangling remains a future object-model contract.
 
@@ -20,7 +22,7 @@ modifier letter macron `ˉ` (U+02C9):
 
 Identifiers are case-sensitive. U+02C9 is the only non-ASCII character admitted by the Seed identifier grammar. Visually similar characters such as `¯` U+00AF, `-` U+002D, and `‐` U+2010 are not aliases and are rejected where an identifier is required.
 
-The working Language 1.0 form preserves that entire ASCII subset and admits
+The Language 1.0 replacement form preserves that entire ASCII subset and admits
 normalized Unicode identifier segments using the exact candidate
 `windvale.unicode17.source@1` profile defined by the
 [source-profile artifact formats](Windvale-Language-1.0-Source-Profile-Formats.md).
@@ -70,8 +72,9 @@ Windvale bytecode declaration names are canonical UTF-8 source metadata and are 
 
 Source files, comments, and `text` values use strict UTF-8 and support full
 Unicode. Seed identifiers remain restricted to ASCII segments plus U+02C9. The
-working Language 1.0 replacement candidate admits Unicode identifiers only
+Language 1.0 replacement candidate admits Unicode identifiers only
 through its explicit normalization, security, diagnostic, tooling,
 source-vocabulary, malformed-input, and cross-host requirements; current Seed
-tools do not implement that boundary. The Unicode 17.0.0 candidate remains
-subject to multilingual workload review and replacement-freeze acceptance.
+tools do not implement that boundary. The exact Unicode 17.0.0 design boundary
+is owner accepted and remains subject to replacement-freeze acceptance and
+later executable qualification.

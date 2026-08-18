@@ -9,12 +9,13 @@ planning, but source edition 1 is not frozen or implemented yet. The currently
 implemented contract remains the
 [Windvale Seed language](Seed-Language.md).
 
-The project owner has held the preserved pre-localization candidate and reopened
-Language 1.0 to include the working
+The project owner held the preserved pre-localization candidate and reopened
+Language 1.0 to include the
 [localized-source and source-vocabulary addendum](Windvale-Language-1.0-Localized-Source.md).
-That addendum is part of the replacement candidate under review. It does not
-retroactively change the preserved candidate identity or authorize
-implementation.
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+accepts the five localization workload findings and reconciles that addendum
+into the replacement candidate. It does not retroactively change the preserved
+candidate identity, freeze edition 1, or authorize implementation.
 
 The candidate may change when required paper programs expose ambiguity,
 unacceptable ergonomics, an unbounded operation, or a target contradiction. A
@@ -51,6 +52,8 @@ and the System/FFI findings resolved by
 [Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 with complete-suite reconciliation accepted by
 [Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md),
+and localized-source reconciliation accepted by
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -1219,9 +1222,11 @@ This candidate becomes frozen Language 1.0 only after:
 19. the accepted contextual-array, checked-mutable-slice, strict-float,
     policy-bearing-conversion, canonical-formatting, and bit-identical-parallel
     cases remain coherent across all mandatory workloads; and
-20. source-descriptor/profile, source-lexicon, public-library source-vocabulary,
-    Unicode identifier, conversion, editor, malformed/security, cross-host, and
-    bounded-performance workloads satisfy the localized-source addendum; and
+20. the owner-reviewed source-descriptor/profile, source-lexicon,
+    public-library source-vocabulary, Unicode identifier, conversion, editor,
+    malformed/security, cross-host, and bounded-performance paper contracts
+    satisfy the localized-source addendum, with executable and measured
+    qualification assigned to implementation; and
 21. a source-freeze decision records the replacement canonical document
     identities.
 

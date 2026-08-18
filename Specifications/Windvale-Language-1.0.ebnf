@@ -1,5 +1,5 @@
 (* Windvale Language 1.0 normative-candidate machine grammar.
-   Working replacement direction includes the localized-source and
+   The replacement candidate includes the localized-source and
    source-vocabulary specification; it is not frozen or implemented.
    Encoding: strict UTF-8 without BOM; canonical line ending: LF. The external
    scanner applies the grammar companion's exact forbidden-line-scalar,

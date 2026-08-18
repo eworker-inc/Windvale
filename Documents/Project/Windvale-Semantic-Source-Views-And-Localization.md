@@ -6,21 +6,20 @@ This product and architecture exploration began on 2026-08-17 and was updated
 on 2026-08-18. The project owner selected stored localized keyword source—Model
 C below—then selected stored localized references to canonical public library
 declarations and Unicode project identifiers so the raw program body can remain
-in the author's language. The current source-freeze candidate remains held while
-the contract and workloads are detailed. The working normative-candidate rules
-now live in the
+in the author's language. All five workload findings and the resulting scope
+decisions are accepted by
+[Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
+The normative-candidate rules now live in the
 [localized-source specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
-Neither document is a replacement freeze, implementation claim, or authorization
-to change the compiler.
+This exploration remains rationale rather than a replacement freeze,
+implementation claim, or authorization to change the compiler.
 
-The preserved Language 1.0 candidate remains one canonical source language with
-77 exact lowercase ASCII keywords and identifiers made from ASCII segments
-joined by U+02C9. It is not frozen. The replacement candidate is expected to
-include an exact source-lexicon mechanism after new workloads resolve its
-grammar, identity, Unicode, tooling, security, and reproducibility boundaries.
-The replacement working direction now includes Unicode source identifiers and
-exact public-library source-vocabulary catalogs explicitly rather than allowing
-either feature to enter through keyword localization implicitly.
+The preserved Language 1.0 candidate remains historical evidence of one
+canonical ASCII-keyword source. It is not frozen. The replacement candidate now
+includes the exact source-lexicon mechanism, Unicode source identifiers, and
+exact public-library source-vocabulary catalogs after the five workloads
+resolved their grammar, identity, Unicode, tooling, security, shipment, cache,
+and reproducibility boundaries.
 
 ### Current freeze state
 
@@ -29,9 +28,12 @@ The preserved source-freeze candidate manifest is 2,700 bytes with SHA-256
 Its exact inputs remain retrievable at repository revision
 `c060cb3553a06ed97c4b42d751534f7f4bcaa62e`. It remains reproducible evidence of
 the design before source localization, but the project owner has directed that
-it not be frozen. This working document does not mutate that identity. A later
-accepted localization decision will update the normative inputs and produce a
-new manifest with a new exact identity.
+it not be frozen. This working document does not mutate that identity. Decision
+0766 instead produces the 3,702-byte
+[`Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt`](Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt)
+with SHA-256
+`c9517841eae6b6e86778cb1dd88711feb38929dec8fe79e084eec44fa22c512a`
+and its own exact 250-input identity.
 
 ## Product idea
 
@@ -798,9 +800,10 @@ to named debug/source records.
 ### Cache behavior
 
 The safe first cache key contains raw source hash, lexicon pack hash, vocabulary
-profile, every catalog/override hash, source edition, compiler identity, options,
+profile, every catalog hash, source edition, compiler identity, options,
 dependencies, and target. This cannot confuse spans or diagnostics from
-different spellings.
+different spellings. Decision 0766 admits no project-override format in edition
+1.
 
 A later optimized cache may reuse canonical semantic evidence across localized
 source forms
@@ -1381,9 +1384,9 @@ maximum temperature, free delivery, or transaction state.
 
 A project may store its own module, declaration, field, case, parameter, alias,
 and local identifiers directly in normalized Unicode. Their exact admitted
-source spelling is their canonical project-owned name. A project display catalog
-can additionally map those exact identities to labels and explanations for
-readers using another language:
+source spelling is their canonical project-owned name. Later presentation
+tooling may propose a project display catalog that maps those exact identities
+to labels and explanations for readers using another language:
 
 ~~~text
 canonical declaration identity -> localized display label
@@ -1391,14 +1394,16 @@ canonical field identity       -> localized display label
 canonical variant identity     -> localized display label
 ~~~
 
-Project catalogs need a stable binding to package/module/declaration identity
-and, where necessary, a declaration or interface fingerprint. A rename makes
-the old entry unresolved instead of silently applying it to a different symbol.
+Such a future catalog needs a stable binding to package/module/declaration
+identity and, where necessary, a declaration or interface fingerprint. A rename
+must make the old entry unresolved instead of silently applying it to a
+different symbol. Language 1.0 defines no project display-catalog format.
 
-A separate project source-vocabulary override may disambiguate two imported
-canonical modules whose library catalogs choose the same localized module label.
-That override binds exact canonical module identities to unique stored labels and
-is a content-addressed build input; dependency order never decides the result.
+Decision 0766 rejects a project source-vocabulary override from Language 1.0
+because no workload defined its exact format. Two imported canonical modules
+whose catalogs choose the same localized module label produce a hard ambiguity
+failure. A later edition may define explicit disambiguation; dependency order
+never decides the result.
 
 AI may draft project vocabulary, explanations, and localized review summaries.
 The catalog must record whether an item is machine-generated, human-reviewed,
@@ -1616,9 +1621,9 @@ semantic-concept separator. A localized label translates the complete concept
 in its language's natural order rather than mechanically translating canonical
 macron segments one by one.
 
-The working specification deliberately leaves the exact Unicode table version
-and mixed-script/confusable profile as replacement-freeze blockers. This is an
-explicit open contract to qualify, not a permission to inherit host behavior.
+Workload 4 and Decision 0766 resolve the exact Unicode version and mixed-script/
+confusable profile for the replacement candidate. Implementation must use those
+pinned inputs rather than inheriting host behavior.
 
 ## Compiler architecture for localized source
 
@@ -1825,7 +1830,8 @@ measured-performance qualification remain open.
 - inventory the 76 body words and exact 66-token mapped set;
 - assign stable candidate token IDs and define the descriptor grammar;
 - define bounded composite source-profile, source-lexicon, source-vocabulary
-  profile/interface catalog, project override, and display-catalog candidates;
+  profile/interface catalog, and evaluate project-override/display-catalog
+  alternatives;
 - draft Unicode, bidi, and provenance rules;
 - choose prototype languages and native reviewers; and
 - create examples using real Windvale compiler, library, application, and OS
@@ -1943,52 +1949,63 @@ not normative until the owner accepts the resulting evidence:
     registered machine identities remain ASCII-safe.
 12. Application/runtime localization remains separate and explicit.
 
-## Open design questions
+## Reconciled design questions
 
 Workload 1 proposes exact answers for artifact serialization and hash binding,
 the Unicode 17.0.0 profile, cache identity/publication, complete interface-bound
 catalogs, and the exclusion of non-source-addressable generic-parameter labels.
 Those answers live in the
 [source-profile artifact formats](../../Specifications/Windvale-Language-1.0-Source-Profile-Formats.md)
-and remain subject to owner review and later workload challenge. The unresolved
-questions are:
+and are owner accepted by Decision 0766. The original questions now resolve as
+follows:
 
-1. Which of the 66 mapped technical terms should an individual qualified pack
-   translate, and which should explicitly retain the canonical spelling?
-2. Should primitive words such as `bool`, `text`, and `rune` localize inline or
-   only receive localized explanations?
-3. Should profile and authority words localize in code, or remain universal
-   technical vocabulary?
+1. Pack-owned terminology: each exact qualified lexicon chooses whether a
+   mapped word translates or explicitly retains its canonical spelling. Native
+   review decides naturalness; the language core does not impose translations.
+2. Primitive words in the 66-token registry may localize. The ten fixed-width
+   numeric type names remain universal exact machine-facing spellings.
+3. Profile and authority keywords may localize because they map to canonical
+   tokens. Registered profile, platform, authority, capability, and effect
+   identities remain universal ASCII-safe machine keys.
 4. Resolved by Workload 3: ordinary Copy produces exact stored source;
    canonical-source and displayed-view copies are explicit alternatives.
-5. How should localized display width influence visual wrapping without
-   changing canonical formatting?
-6. What minimum canonical identity must always remain visible in diagnostics,
-   API hovers, and exported reviews?
-7. How are project vocabulary entries bound across an intentional canonical
-   rename?
+5. Resolved by Workload 3: visual wrapping is presentation-only and cannot
+   change canonical formatter output or stored source without an explicit edit.
+6. Resolved by Workload 3: stored spelling/span is primary source evidence;
+   structured diagnostics retain stable canonical identity, and tools provide
+   an explicit canonical reveal. Ordinary UI need not duplicate both inline.
+7. Language 1.0 has no project display-vocabulary format. Semantic rename
+   changes project declarations/references by identity; any future display
+   catalog must bind exact identities and become stale after a rename.
 8. Resolved for edition 1 by Workload 4: keep exact NFC, XID, Highly Restrictive,
    mixed-number, and scoped confusable rejection; do not admit join controls.
    A later edition needs native-language evidence and a new exact profile.
-9. Can display packs contain alternative short and explanatory labels while
-    source lexicons retain exactly one spelling?
-10. Should community packs be allowed for source recognition, or only for
-    non-semantic presentation until separately qualified?
-11. Should localized reviews show translated project identifiers inline, in an
-    adjacent annotation, or only through hover and explanation panels?
-12. How much understanding comes from keywords versus domain vocabulary,
-    diagnostics, and capability/effect explanations?
-13. Which native-language reviewers and qualification levels define
-    “officially supported”?
+9. Later non-semantic display packs may contain short/explanatory alternatives;
+   Language 1.0 source lexicons/catalogs retain exactly one primary spelling and
+   define no display-catalog format.
+10. Namespaced community profiles may be explicit source inputs using the same
+    formats/security rules. They remain community data until the native review,
+    executable qualification, and distribution gates pass.
+11. Translated project-identifier views remain later presentation tooling.
+    Edition 1 stores and compiles the exact project name and may reveal canonical
+    imported identities through hover/review tools.
+12. This remains a product-research measurement rather than a semantic question;
+    it cannot change source or build identity implicitly.
+13. Workload 2 fixes four states: draft, native-reviewed, qualified, and
+    officially distributed. Qualification requires a native technical reviewer,
+    an independent fluent readability reviewer, exact reviewed hashes,
+    mechanical checks, and executable Windows/Linux evidence.
 14. Resolved by Workload 5: runtime-only installations carry no development
     localization; the minimal developer installation carries shared edition
     data and `en@1`; other source profiles, diagnostics, and documentation are
     independent optional packages selected explicitly through the existing
     content-addressed installer architecture.
-15. Does the replacement candidate require project collision overrides and
-    display-catalog formats, or should those remain later tooling features?
+15. Resolved by Decision 0766: no project collision-override or semantic display-
+    catalog format enters Language 1.0. Ambiguous localized imports fail. Any
+    later disambiguation/presentation format needs a versioned workload and
+    decision.
 
-## Working recommendation
+## Accepted recommendation
 
 Windvale should include stored localized keywords, stored localized references
 to canonical public-library declarations, and Unicode project identifiers in the
@@ -2013,9 +2030,8 @@ The first useful product should:
    identities continuously inspectable;
 8. ship localization content independently so installers select only desired
    languages and profiles; and
-9. require real source, malformed/security, conversion, library-vocabulary,
-   editor, cross-host, and performance workloads before generating a replacement
-   source-freeze identity.
+9. retain the five completed paper workloads as source-freeze evidence and make
+   them executable during implementation qualification.
 
 This direction can make Windvale unusual without making it fragmented: the
 program remains exact for machines, while its explanation becomes adaptable for

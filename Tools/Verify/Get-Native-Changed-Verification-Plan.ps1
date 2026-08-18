@@ -1399,6 +1399,7 @@ foreach ($Path in $Paths) {
         '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
+        'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',
         'Specifications/Windvale-Native-Changed-Verification.md',
@@ -2998,6 +2999,8 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Language-1.0.md',
             'Specifications/Windvale-Language-1.0-Grammar.md',
             'Specifications/Windvale-Language-1.0.ebnf',
+            'Specifications/Windvale-Language-1.0-Localized-Source.md',
+            'Specifications/Windvale-Language-1.0-Source-Profile-Formats.md',
             'Specifications/Windvale-Language-1.0-Foundation.md',
             'Specifications/Windvale-Language-1.0-Foundation-Registry.md'
         )) {

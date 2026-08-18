@@ -6,13 +6,15 @@ This is the normative-candidate, machine-extractable signature registry for the
 [Language 1.0 Foundation specification](Windvale-Language-1.0-Foundation.md).
 Its complete-suite role is accepted by
 [Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+Its localized-source catalog binding role is accepted by
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
 It fixes the complete edition-1 public declaration surface without claiming that
 the current Seed Foundation implements it. The Foundation specification owns
 behavior, failure ordering, bounds, ownership, and effects; this registry owns
 canonical module names, major versions, declaration spelling, and signature-set
 identities.
 
-The working
+The owner-accepted replacement-candidate
 [localized-source specification](Windvale-Language-1.0-Localized-Source.md)
 uses each exact signature-set hash as the binding anchor for separately shipped
 source-vocabulary catalogs. Localized module, declaration, field, case, and

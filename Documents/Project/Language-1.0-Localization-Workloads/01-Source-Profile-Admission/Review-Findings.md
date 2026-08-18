@@ -69,7 +69,8 @@ race losers, avoid durable negative caching, and bound generation teardown.
 Accept the one-pass, no-pairwise-scan structural requirements and measurement
 protocol. Do not invent time or memory thresholds before a representative
 validator/compiler front door is measured on Windows and Linux. Those results
-remain a replacement-freeze blocker.
+remain an implementation-qualification and release blocker, not a design-freeze
+blocker.
 
 ## Quantitative record
 
@@ -89,7 +90,7 @@ remain a replacement-freeze blocker.
 ## Accepted disposition
 
 Accept findings 1 through 10 as the input to localization workloads 2 through 5.
-Keep the Language 1.0 source freeze held until native-reviewed source,
-conversion/tooling, multilingual security, shipment/cache, cross-host, and
-measured performance evidence is complete and reconciled into a replacement
-manifest.
+All later paper workloads are now reconciled by Decision 0766. Native review of
+an optional natural-language pack and executable/measured results remain
+qualification gates; the exact formats, algorithms, cases, structural bounds,
+and measurement protocol may enter the replacement design manifest.

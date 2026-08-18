@@ -2,155 +2,174 @@
 
 ## Owner decision status
 
-The project owner held this exact Language 1.0 candidate on 2026-08-17 and
-reopened paper design to include stored localized keyword source through one
-source-lexicon mechanism. On 2026-08-18 the owner expanded that working direction
-to exact stored localized references to canonical public-library declarations,
-Unicode project identifiers, and one universal explicit source descriptor such
-as `#!wv/1 zh-Hans@1`. This candidate is not frozen or implemented and must not
-receive the source-freeze decision while that work remains open.
+The replacement Language 1.0 design candidate is complete but not frozen or
+implemented. [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md)
+accepts the original eleven-workload reconciliation, and
+[Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+accepts the five localized-source workloads and their complete-suite
+reconciliation. A separate source-freeze decision must cite the exact
+replacement manifest before migration implementation begins.
 
-The owner has accepted every workload and complete-suite reconciliation finding.
-[Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md)
-records those resolutions without making the separate freeze decision. The
-preserved pre-localization candidate identity is
+The earlier pre-localization candidate remains immutable historical evidence in
 [`Windvale-Language-1.0-Source-Freeze-Candidate.txt`](Windvale-Language-1.0-Source-Freeze-Candidate.txt):
 
 - 2,700 exact bytes;
-- SHA-256
+- manifest SHA-256
   `152d7ae3b8463b395d42937b4271f757bb921d16046fd78354c7b0821c2b0099`;
-- 183 identity-input files totaling 1,459,498 bytes; and
+- 183 identity-input files totaling 1,459,498 bytes;
 - aggregate candidate SHA-256
-  `a750a141bb077fbd2ef42f8718a2bc5fbae3b02f8e862140dde436fbb91b65e3`.
-- exact repository revision
-  `c060cb3553a06ed97c4b42d751534f7f4bcaa62e`.
+  `a750a141bb077fbd2ef42f8718a2bc5fbae3b02f8e862140dde436fbb91b65e3`;
+  and
+- repository revision `c060cb3553a06ed97c4b42d751534f7f4bcaa62e`.
 
-Any historical reference to this preserved candidate should cite the manifest
-byte length, SHA-256, and repository revision rather than copy a mutable list of
-files into prose. Replacement working files need not continue matching those
-historical entries. The future freeze decision must instead cite the replacement
-manifest produced after the localization design and workloads are reconciled.
+The replacement candidate has its own exact
+[`Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt`](Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt)
+manifest:
+
+- 3,702 exact bytes;
+- manifest SHA-256
+  `c9517841eae6b6e86778cb1dd88711feb38929dec8fe79e084eec44fa22c512a`;
+- 250 identity-input files totaling 1,724,854 bytes; and
+- aggregate candidate SHA-256
+  `fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a`.
+
+It does not edit or silently reinterpret the historical identity above.
 
 ## Practical result
 
-Language 1.0 has one coherent preserved pre-localization candidate contract:
+The replacement candidate now contains one coherent source design:
 
-- one human semantic specification;
-- one human lexical/grammar specification and one matching machine EBNF;
-- one behavioral Foundation specification and eleven exact, independently
-  hashed Foundation major-1 module signature sets;
-- one accepted design rationale and Seed migration plan;
-- eleven owner-reviewed application/system workloads; and
-- one reproducible manifest over the specifications, decisions, workload source,
-  package data, oracles, rejected cases, and implementation responsibilities.
+- one semantic specification;
+- one human grammar and matching machine EBNF;
+- one exact Foundation behavior contract and eleven independently hashed
+  Foundation major-1 signature sets;
+- eleven owner-reviewed application/system workload bundles;
+- one universal explicit source descriptor and seven exact source-profile data
+  formats;
+- one canonical token/declaration model beneath exact stored source lexicons and
+  public-library vocabularies;
+- exact Unicode 17.0.0 identifier, script, number, confusable, bidirectional,
+  source-display, and provenance rules;
+- deterministic conversion, formatter, editor, diagnostic, copy/paste, and
+  source-map contracts;
+- content-addressed shipment, immutable update/rollback, compiler-service cache,
+  cross-host comparison, and performance-measurement contracts; and
+- one ordered Seed-to-edition-1 migration plan without a parallel compiler.
 
-Before the source-localization reopening, freezing this candidate would have
-fixed the language design that implementation must target. It is now retained
-as a reproducible baseline for replacement reconciliation, not as an approval
-target. Neither the preserved candidate nor a future replacement says that the
-Seed compiler already accepts edition 1, that Foundation is implemented, or that
-an editor, runtime, backend, operating system, or permanent host has passed
-edition-1 conformance.
+This is a design identity. It does not mean that the Seed compiler accepts
+edition 1, that the new Foundation exists, or that an editor, runtime, backend,
+installer, operating system, or permanent host has passed edition-1
+qualification.
 
-## Complete-suite corrections
+## Complete-suite reconciliation
 
-The final reconciliation made these accepted corrections:
+Decision 0765 retains these original corrections:
 
-1. Added the complete machine grammar with 147 defined productions/tokens and no
-   undefined reference. It projects all 138 human-document productions plus
-   nine explicitly owned external scanner tokens.
-2. Added the complete Foundation registry and exact candidate signature hashes
-   for all eleven required modules. It closes previously prose-only Option,
-   Result, iterator, formatting, vector, numeric-family, and profile boundaries.
-3. Added the `while let Pattern = Expression` loop already required twice by the
-   package-parser workload.
-4. Replaced overlapping simple/destructuring statements with one unambiguous
-   binding production.
-5. Encoded the exact one-through-six Unicode-escape digit bound and
-   zero-through-eight raw-literal delimiter bound in both grammar forms.
-6. Corrected paper source to use `Bytes.Appendˉu8`,
-   `Collections.Vectorˉconstructˉreserved`, and the canonical
-   `Option.Present`/`Option.Absent` cases. The package parser now uses
-   `Option.Isˉpresent` rather than an invalid overloaded equality test. The
-   registry's `Sequenceˉlength` and `Sequenceˉat` parameter is now `Value`,
-   matching the named argument in every paper call.
-7. Deferred standalone interpolation syntax because no workload supplied its
-   explicit destination owner, allocation budget, or failure path; the bounded
-   formatting protocol and builders remain in edition 1.
-8. Separated source-design freeze evidence from future implementation and
-   qualification evidence.
+1. one complete machine grammar with all human productions and externally owned
+   scanner tokens;
+2. one complete Foundation registry and eleven exact module signature hashes;
+3. the required `while let Pattern = Expression` loop;
+4. one unambiguous binding production over `Pattern`;
+5. exact Unicode-escape and raw-delimiter bounds;
+6. corrected Foundation spellings in paper source;
+7. explicit bounded formatting while standalone interpolation remains later;
+   and
+8. a strict separation between source-design evidence and implementation
+   qualification.
 
-At the preserved candidate revision, the corrected GUI bundle remains 8 source
-modules, 2,004 LF lines, and 65,936 UTF-8 bytes. The corrected package bundle
-remains 7 source modules and 1,478 LF lines and is 48,468 UTF-8 bytes. These were
-name-level corrections; their specified output bytes and semantic oracles did
-not change.
+Decision 0766 adds these replacement corrections:
+
+1. every file begins with `#!wv/1 <profile>@<version>` and has no ambient or
+   omitted language default;
+2. stored localized keywords and public-library labels lower to one canonical
+   token and declaration model;
+3. project-owned identifiers use exact pinned Unicode semantics while registered
+   machine identities remain ASCII-safe;
+4. the exact seven artifact formats are the complete edition-1 semantic pack
+   surface;
+5. one logical left-to-right grammar remains valid for every script;
+6. ambiguous localized imports fail because no untested project-override format
+   enters edition 1;
+7. display catalogs and translated project-name views remain non-semantic later
+   tooling;
+8. runtime, source profile, diagnostics, documentation, and application
+   localization are separate package selections;
+9. exact content deduplication and generation-scoped caches avoid repeated pack
+   storage, hashing, and parsing; and
+10. numeric performance ceilings follow first-implementation measurement rather
+    than being invented before the compiler exists.
 
 ## Freeze-gate reconciliation
 
-| Gate group | Candidate evidence | Standing |
+| Gate group | Replacement evidence | Standing |
 | --- | --- | --- |
-| Grammar and precedence | Human grammar plus machine EBNF; production-set and undefined-reference audit. | Preserved evidence; replacement reconciliation required |
-| Foundation signatures and failures | Complete behavior document; eleven exact major-1 registry blocks and verified block hashes. | Preserved evidence; replacement reconciliation required |
-| Mandatory usability evidence | 11 reviewed bundles; 64 source files; 14,445 LF lines; 479,133 UTF-8 source bytes after explicit `en@1` descriptor migration. | Passed on paper; localized workloads remain open |
-| Ownership, cleanup, collections, and concurrency | Workloads 2–9 and 11 cover moves, borrows, release/completion, progress, maps, sets, arenas, slices, tasks, cancellation, and deterministic publication. | Passed on paper |
-| Unsafe and target boundary | Workload 10 covers profile/target/ABI admission, pointer kinds, checked scratch/range/lifetime/aliasing, untrusted results, and terminal containment. | Passed on paper |
-| Package data and shipment | Workloads 1, 7, 9, and 11 cover exact binding, strict text, accounting, content deduplication, and no implicit filesystem authority. | Passed on paper |
-| Numeric and accelerator readiness | Workloads 8 and 11 cover strict float behavior, explicit conversion policy, bit-identical parallel equivalence, quantized storage, and the library/target/provider split. | Passed on paper |
-| Compiler/library/runtime/tool ownership | Migration responsibility matrix and every bundle's implementation-responsibility document. | Preserved evidence; replacement reconciliation required |
-| Canonical identities | Candidate manifest and eleven Foundation module hashes. | Historical identity preserved; replacement identity required |
-| Localized source | [Option C working design](Windvale-Semantic-Source-Views-And-Localization.md), [working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md), [Workload 1 packet](Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md), and [Workload 2 draft](Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source/README.md): exact formats and Unicode profile plus 66 draft Chinese keywords, a complete option catalog, paired source, and review checklist. | Reopened; Workload 1 acceptance, Workload 2 native review/executable evidence, and Workloads 3–5 required |
-| Current implementation conformance | Deliberately deferred to migration; Seed remains the implemented language. | Not claimed |
+| Grammar and precedence | Human grammar plus machine EBNF, explicit descriptor, canonical-token mapping, Unicode external scanners, and production audit. | Passed on paper |
+| Foundation signatures and failures | Complete behavior document; eleven exact major-1 registry blocks and verified block hashes. | Passed on paper |
+| Application/system usability | 11 reviewed bundles; 64 source files; complete accepted/rejected, ownership, capability, failure, and cleanup walkthroughs. | Passed on paper |
+| Ownership, collections, concurrency, unsafe, targets, and AI readiness | Decisions 0752 through 0764 and the eleven bundles. | Passed on paper |
+| Source-profile admission | Workload 1: seven formats, 11 artifacts, 25 accepted and 43 rejected cases. | Passed on paper |
+| Simplified Chinese source | Workload 2: 66-keyword draft, one complete 16-label catalog, paired source, exact hashes, and mechanical equivalence. | Mechanism passed; terminology remains draft |
+| Conversion and source tooling | Workload 3: 30 accepted, 30 rejected, and three exact expected-source fixtures. | Passed on paper |
+| Unicode and multilingual security | Workload 4: 32 accepted, 46 rejected, exact Unicode-17 validation, and multilingual source. | Passed on paper |
+| Shipment, cache, cross-host, and performance | Workload 5: 34 accepted, 42 rejected, exact 12,288-byte fixture inventory, and qualification protocol. | Passed on paper |
+| Compiler/library/runtime/tool ownership | Migration responsibility matrix plus workload implementation-responsibility records. | Passed on paper |
+| Canonical identity | Replacement exact manifest over all selected normative and evidence inputs. | Ready for explicit freeze decision |
+| Current implementation conformance | Deliberately assigned to migration and qualification; Seed remains implemented. | Not claimed |
 
-The pre-localization source-freeze requirements that mention accepted, boundary,
-malformed, and rejected cases are satisfied as paper contracts: the input,
-expected result, failure owner/order, and bound are fixed. The new localized
-source, source-vocabulary, and Unicode requirements now have complete proposed
-Workload 1 admission evidence, but owner acceptance and the remaining native,
-tooling, multilingual-security, shipment/cache, cross-host, and performance
-evidence remain open. Migration must
-convert both sets into executable
-parser, semantic, Foundation, editor, formatter, cross-host, and target tests
-before implementation conformance is claimed.
+## Native-language review boundary
 
-## Deliberately later, not missing
+No AI author can certify that every Chinese technical term sounds natural to a
+native programmer. The exact `zh-Hans@1` artifacts therefore remain `draft`.
+Promotion requires the named native technical reviewer, an independent fluent
+readability reviewer, exact reviewed hashes, rerun mechanical checks, executable
+Windows/Linux evidence, and an official distribution decision.
 
-These items do not block a replacement source-language freeze:
+That honest limitation does not block freezing the generic Language 1.0
+mechanism. The exact descriptor, format, Unicode, lookup, conversion, failure,
+and shipment rules are language-independent and have a synthetic Unicode oracle.
+`en@1` remains the minimal canonical developer profile. An optional Chinese pack
+cannot be described or shipped as official until its separate qualification
+gate passes.
 
-- production capability signature identities for filesystem, streams, database,
-  display, networking, and accelerators;
-- a verified accelerator kernel representation and physical GPU providers;
-- WIR/WVB/native additions proven necessary by implementation;
-- broader Unicode identifiers beyond the identifier boundary selected by the
-  localization review, sets beyond the accepted deterministic set, dynamic
-  module loading, default arguments, or unrestricted macros;
-- interpolated-text syntax until its bounded destination and memory owner are
-  explicit; and
-- measured compiler/runtime/editor/formatter and dual-host qualification.
+## Deliberately later or implementation-owned
 
-They remain separate versioned library, format, provider, later-edition, or
-implementation contracts. None may silently redefine edition-1 semantics.
+These items do not block source-language freeze:
 
-Stored localized keywords, exact public-library source labels, and Unicode
-project identifiers within the selected boundary are no longer in this
-later-feature list. Their contracts and workloads now block the replacement
-Language 1.0 candidate.
+- executable compiler/parser/type/ownership/formatter/editor cases derived from
+  the paper workloads;
+- native Chinese terminology approval and any additional official language pack;
+- measured Windows/Linux compiler-service time, allocation, retained-state, and
+  cache ceilings;
+- package/installer implementation and signed language-pack distribution;
+- production capability identities for filesystem, streams, database, display,
+  networking, and accelerators;
+- verified accelerator representations and physical GPU providers;
+- WIR, WVB, object, or native additions proven necessary by implementation;
+- a project localized-name override, non-semantic display catalog, translated
+  project-identifier view, join-control relaxation, default arguments, dynamic
+  module loading, unrestricted macros, or standalone interpolation; and
+- target-specific optimization or packaging work that does not alter the source
+  contract.
+
+Each remains a separately versioned implementation, library, provider, package,
+tooling, or later-edition decision. None may silently redefine edition-1
+semantics.
 
 ## Replacement approval path
 
-The preserved manifest must not be frozen. After localized-source design and
-workloads are accepted, a replacement approval should produce one named
-decision that:
+The preserved pre-localization manifest must not be frozen. The explicit
+replacement source-freeze decision should:
 
-1. cites the new replacement manifest byte length and SHA-256;
-2. changes only that replacement candidate suite's status to frozen Language
-   1.0;
-3. authorizes migration slice 0 and then the ordered vertical implementation
+1. cite the replacement manifest's exact byte length and SHA-256;
+2. change only that replacement suite's status to frozen Language 1.0;
+3. authorize migration slice 0 and then the ordered vertical implementation
    slices;
-4. preserves Seed as the only implemented contract until each migration gate
-   passes; and
-5. requires any later semantic change to use a named decision and a new exact
+4. preserve Seed as the only implemented contract until each migration gate
+   passes;
+5. keep `zh-Hans@1` draft until its language-specific promotion evidence exists;
+   and
+6. require any later semantic change to use a named decision and new exact
    identity.
 
-Until that approval, this packet and manifest remain reproducible historical
-evidence of the design before source localization, not the freeze target.
+Until that approval, the replacement suite is complete candidate design, not an
+implemented or compatibility-promised language.

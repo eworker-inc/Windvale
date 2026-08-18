@@ -2,16 +2,17 @@
 
 ## Status and ownership
 
-This document is the working normative-candidate addendum for localized stored
+This document is the normative-candidate addendum for localized stored
 source in Windvale Language 1.0. The project owner selected stored localized
 keywords, stored localized references to public library declarations, and
 Unicode project identifiers for the replacement Language 1.0 candidate on
-2026-08-18. The first source-profile admission workload now supplies exact
-candidate bytes and rejected cases. The project owner accepts the technical and
-design findings from Workloads 1 through 5. Native terminology review and all
-compiler, editor, package/installer, cross-host, and measured-performance
-qualification remain open. The design is not frozen or implemented. Current
-compilers continue to implement [Windvale Seed](Seed-Language.md).
+2026-08-18. [Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+accepts the reconciled technical and design findings from Workloads 1 through 5
+and makes this exact addendum part of the replacement candidate. Native
+terminology review and all compiler, editor, package/installer, cross-host, and
+measured-performance qualification remain open. The design is not frozen or
+implemented. Current compilers continue to implement
+[Windvale Seed](Seed-Language.md).
 
 This document owns:
 
@@ -171,12 +172,12 @@ profile selects their source-vocabulary identity/version, not an unbounded list
 of libraries.
 
 The [source-profile artifact format companion](Windvale-Language-1.0-Source-Profile-Formats.md)
-defines the exact working byte serialization, record order, length bounds,
+defines the exact candidate byte serialization, record order, length bounds,
 duplicate and unknown-record behavior, external whole-file content-hash
 coverage, malformed-input behavior, and companion component formats. Workload 1
-provides exact `en@1` and synthetic `test-Unicode@1` reference chains. These are
-normative candidates for owner review, not frozen artifacts or qualified
-language packs.
+provides exact `en@1` and synthetic `test-Unicode@1` reference chains. Decision
+0766 owner-accepts them as candidate evidence; they are not implemented
+artifacts or independently qualified language packs.
 
 ## Source lexicons
 
@@ -187,7 +188,7 @@ The source edition assigns stable ASCII identities such as `KW_MODULE`,
 English spellings or compiler-private integers, are the external lexicon
 contract. The ordered token registry has one exact SHA-256 identity.
 
-The working edition-1 boundary maps the following 66 existing words:
+The edition-1 candidate maps the following 66 existing words:
 
 ~~~text
 application as async authority await base bool borrow break bytes cancel_join
@@ -258,7 +259,7 @@ One project-owned identifier contains at most 256 UTF-8 bytes, 128 Unicode
 scalars, and 32 U+02C9-delimited semantic segments. Keyword and public-label
 artifacts retain their stricter 128-byte/64-scalar bounds.
 
-The working edition-1 candidate selects `windvale.unicode17.source@1`: Unicode
+The edition-1 candidate selects `windvale.unicode17.source@1`: Unicode
 17.0.0, NFC under UAX #15 revision 57, XID properties under UAX #31 revision 43,
 and identifier security data under UTS #39 revision 32. Its exact upstream files
 and SHA-256 values are recorded in the
@@ -280,7 +281,7 @@ An identifier rejects:
 - adjacent, leading, or trailing U+02C9 separators; and
 - any scalar excluded by the edition's exact identifier security profile.
 
-The working candidate requires the UTS #39 Highly Restrictive script level or
+The candidate requires the UTS #39 Highly Restrictive script level or
 the stricter ASCII-only level within each U+02C9-delimited semantic segment,
 rejects mixed decimal-number
 systems in one segment, and rejects distinct same-scope segments whose UTS #39
@@ -373,8 +374,9 @@ items include:
 - public named parameters.
 
 Documentation, summaries, alternate search terms, pronunciation, and extended
-explanations may accompany the source labels, but are non-semantic presentation
-records. Only one primary label per canonical identity is admitted as source.
+explanations may be shipped in separate non-semantic presentation data. They are
+not records in the Language 1.0 source catalog. Only one primary label per
+canonical identity is admitted as source.
 
 A catalog is declarative data. It has no code, imports, macro expansion,
 callbacks, compiler hooks, filesystem access, network access, environment
@@ -438,11 +440,11 @@ The resolver immediately lowers a localized public label to the canonical
 declaration identity. Later semantic phases do not receive or compare the
 localized spelling except through source-map and diagnostic provenance.
 
-A dependency closure whose localized module labels collide is rejected unless
-the explicit project build input supplies a reviewed project vocabulary override
-that assigns unique source labels to those exact canonical modules. An override
-is itself immutable, content-addressed, and part of the source-build identity;
-the compiler never resolves an ambiguity by import order.
+A dependency closure whose localized module labels collide is rejected. Language
+1.0 has no project source-vocabulary override or implicit disambiguation format;
+the compiler never resolves ambiguity by dependency or import order. A future
+edition may add an exact source-level or build-input disambiguation contract only
+through a separately versioned format, workload, and language decision.
 
 ## Strictness and fallback
 
@@ -566,7 +568,7 @@ that guarantee is unavailable. A conflict, failure, or cancellation preserves
 the original and removes only the operation's exact private candidate.
 
 Keyword and public-library conversion requires no AI. Project-owned identifiers
-such as `检查ˉ免运费` remain Chinese unless an explicit project vocabulary binds
+such as `检查ˉ免运费` remain Chinese unless an explicit semantic rename changes
 them. Automatic natural-language translation of project names, comments,
 strings, resources, schemas, or user data is outside compiler conversion.
 
@@ -599,7 +601,7 @@ The safe initial compiler-cache key contains:
 - composite source-profile identity, version, and manifest hash;
 - source-lexicon identity and content hash;
 - source-vocabulary profile identity and version;
-- every applicable catalog and override content hash;
+- every applicable catalog content hash;
 - dependency/interface hashes;
 - options; and
 - target identity.
@@ -686,31 +688,35 @@ remains open. Workload 5 has an owner-accepted paper contract, 34 accepted cases
 42 rejected cases, an exact 12,288-byte two-profile fixture inventory, and
 bounded shipment/cache/cross-host measurement protocols; implementation and
 measured qualification remain open.
-The replacement Language 1.0 candidate requires at least:
+The replacement source-freeze candidate requires the owner-reviewed paper
+contracts above: exact `en@1` and synthetic Unicode admission chains, the
+complete draft `zh-Hans@1` chain and Chinese paired source, deterministic three-
+profile conversion outputs, the cross-script Unicode/security matrix, and the
+shipment/cache/cross-host protocol. It does not require several additional
+natural-language packs merely to prove the one generic mechanism.
 
-1. canonical, Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin
-   source-profile/lexicon cases;
-2. one English library consumed through at least five exact source-vocabulary
-   catalogs;
-3. a fully Chinese stored application using localized module, member, field,
-   case, and named-parameter labels plus Chinese project identifiers;
-4. deterministic Chinese-to-canonical and Chinese-to-another-locale conversion;
-5. byte-identical canonical token, resolved-declaration, WIR, WVB, object, and
+The first implementation and release conformance program must then make these
+paper contracts executable:
+
+1. exact profile, component, catalog, lock, and descriptor admission plus every
+   named malformed/rejected case;
+2. the fully Chinese stored application using localized module, member, case,
+   and named-parameter labels plus Chinese project identifiers;
+3. deterministic localized-to-canonical and between-profile conversion;
+4. byte-identical canonical token, resolved-declaration, WIR, WVB, object, and
    executable semantic sections where only admitted localized labels differ;
-6. strict rejection of missing, stale, extra, duplicate, ambiguous, corrupted,
-   mismatched-hash, mismatched-interface, wrong-edition, and oversized packs;
-7. normalization, confusable, mixed-script, invisible, bidi, boundary, prefix,
-   malformed UTF-8, and adversarial lookup cases;
-8. public-library change cases proving stale vocabulary cannot bind to a changed
+5. normalization, confusable, mixed-script, mixed-number, invisible, bidi,
+   boundary, prefix, malformed UTF-8, and adversarial lookup cases;
+6. public-library change cases proving stale vocabulary cannot bind to a changed
    declaration or parameter;
-9. editor, formatter, copy/paste, search, rename, source-map, debugger, and Git
+7. editor, formatter, copy/paste, search, rename, source-map, debugger, and Git
    semantic-review cases;
-10. Windows and Linux cross-host equality using the same exact Unicode tables
-    and pack bytes;
-11. bounded compiler time, allocation, retained-state, cache, and diagnostic
-    measurements against canonical source; and
-12. native-language technical review with explicit draft, reviewed, qualified,
-    and officially distributed statuses.
+8. Windows and Linux cross-host equality using the exact pinned Unicode and pack
+   bytes;
+9. bounded compiler time, allocation, retained state, cache, and diagnostics
+   measured against canonical source; and
+10. for each officially shipped natural-language profile, the explicit draft,
+    native-reviewed, qualified, and officially-distributed gates.
 
 ## Required failures
 
@@ -749,8 +755,6 @@ This addendum can enter the replacement Language 1.0 freeze only after:
   accepted;
 - the universal descriptor and source-profile/component serializations remain
   exact after the remaining workloads;
-- project-override and any display-catalog serializations required for the
-  replacement candidate are exact;
 - human and machine grammar projections agree;
 - all required workloads and rejected cases are reviewed;
 - the Foundation registry and all paper programs are reconciled with the new
@@ -762,5 +766,5 @@ This addendum can enter the replacement Language 1.0 freeze only after:
   implementation qualification; and
 - a replacement manifest records every normative input and exact hash.
 
-Until then, this file defines the working contract to test. It does not authorize
-compiler implementation or alter the implemented Seed language.
+Until then, this file defines the replacement candidate contract. It does not
+authorize compiler implementation or alter the implemented Seed language.

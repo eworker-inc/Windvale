@@ -2,12 +2,15 @@
 
 ## Status and ownership
 
-This is the working normative-candidate serialization contract for the
+This is the normative-candidate serialization contract for the
 [localized-source specification](Windvale-Language-1.0-Localized-Source.md).
 It was first exercised by
 [localization workload 1](../Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md).
-It is not frozen or implemented. The replacement Language 1.0 source-freeze
-decision must accept an exact revision and manifest before implementation begins.
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+accepts these seven formats as the complete localization-data surface for the
+replacement candidate. They are not frozen or implemented. The replacement
+Language 1.0 source-freeze decision must accept an exact revision and manifest
+before implementation begins.
 
 This document owns the byte encoding, record grammar, ordering, bounds, hash
 coverage, and admission order for:
@@ -97,7 +100,7 @@ not use host Unicode tables.
 
 ### Edition-1 Unicode policy
 
-The working edition-1 profile is `windvale.unicode17.source@1` and pins Unicode
+The edition-1 candidate profile is `windvale.unicode17.source@1` and pins Unicode
 17.0.0, UAX #15 revision 57, UAX #31 revision 43, and UTS #39 revision 32.
 
 Each identifier segment:
@@ -303,9 +306,10 @@ identity/version alone. Composite cache entries retain their component hashes.
 Negative results may be request-local but are not retained across untrusted
 requests by default.
 
-The Language 1.0 replacement freeze requires measured ceilings for cold
-validation, warm lookup, peak allocation, retained bytes, and failure
-diagnostics. A conforming compiler must remain linear in admitted artifact bytes
-plus admitted entries, with bounded hashing, comparison, collision, and
-diagnostic work. Workload-specific candidate thresholds are recorded outside
-this normative format contract until measurements exist on both permanent hosts.
+The Language 1.0 replacement freeze accepts the exact measurement protocol and
+structural ceilings. A conforming compiler must remain linear in admitted
+artifact bytes plus admitted entries, with bounded hashing, comparison,
+collision, and diagnostic work. The first implementation records cold
+validation, warm lookup, peak allocation, retained bytes, and failure diagnostics
+on both permanent hosts; reviewed numeric ceilings then become implementation
+qualification and release gates rather than guessed source-design inputs.

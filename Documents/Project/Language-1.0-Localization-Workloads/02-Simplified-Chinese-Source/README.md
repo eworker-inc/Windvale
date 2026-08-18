@@ -90,9 +90,10 @@ The pack remains `draft` until the named checklist is completed. Reviewers may
 change any spelling; each change creates new artifact hashes and must rerun the
 collision and equivalence checks.
 
-## Workload completion rule
+## Language-specific qualification rule
 
-Workload 2 completes only when:
+The first-author paper/design findings are accepted, but `zh-Hans@1` language-
+specific review completes only when:
 
 1. every keyword and catalog label has a recorded native disposition;
 2. the final terminology has no exact, keyword, namespace, or confusable

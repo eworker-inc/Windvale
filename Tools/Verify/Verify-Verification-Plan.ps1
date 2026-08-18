@@ -2850,8 +2850,11 @@ $NativeCases = @(
             'Specifications/Windvale-Language-1.0.md',
             'Specifications/Windvale-Language-1.0-Grammar.md',
             'Specifications/Windvale-Language-1.0.ebnf',
+            'Specifications/Windvale-Language-1.0-Localized-Source.md',
+            'Specifications/Windvale-Language-1.0-Source-Profile-Formats.md',
             'Specifications/Windvale-Language-1.0-Foundation.md',
             'Specifications/Windvale-Language-1.0-Foundation-Registry.md',
+            'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )
         Suites = @()

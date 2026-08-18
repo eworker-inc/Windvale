@@ -7,7 +7,8 @@ localized-source boundary. It complements the eleven accepted application and
 system workloads in the
 [Language 1.0 paper corpus](Windvale-Language-1.0-Paper-Corpus.md). It does not
 claim implementation or authorize compiler changes before replacement source
-freeze.
+freeze. [Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+accepts all five workloads' reconciled paper/design findings.
 
 The working Release 1 shipment target is two official source profiles:
 `en@1` and `zh-Hans@1`. That target does not promote a draft pack; both profiles

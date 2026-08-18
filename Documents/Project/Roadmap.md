@@ -76,25 +76,21 @@ and
 are now draft reviewed. All eleven original required bundles are reviewed, and
 the [complete-suite source-freeze packet](Windvale-Language-1.0-Source-Freeze-Review.md)
 preserves the reconciled pre-localization grammar, Foundation, corpus, migration,
-and candidate identities. The project owner held that candidate before freeze
-and selected [one universal explicit source descriptor, stored localized
-keywords, exact public-library source vocabularies, and Unicode project
-identifiers](Windvale-Semantic-Source-Views-And-Localization.md)
-as the working Language 1.0 direction, now reflected in the
-[working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
-The [first localization workload](Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md)
-now supplies proposed exact artifact formats and hashes, a Unicode 17.0.0 source
-profile, 25 accepted cases, and 43 rejected cases. Owner review plus
-native-reviewed Chinese source, conversion/editor/diagnostic, multilingual
-security, shipment/cache, cross-host, and measured-performance evidence must
-still produce a replacement candidate. The
-[Workload 2 draft](Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source/README.md)
-now supplies all 66 Chinese keyword mappings, the complete option catalog,
-paired source, exact hashes, and reviewer checklist; native review remains open.
-Release 1 targets official `en@1` and `zh-Hans@1` profiles once qualified. This
-paper track may advance without
-claiming implementation or changing the current Seed product. Source
-implementation begins only after the named replacement source-freeze gate.
+and historical candidate identities. The project owner held that candidate and
+selected [one universal explicit source descriptor, stored localized keywords,
+exact public-library source vocabularies, and Unicode project identifiers](Windvale-Semantic-Source-Views-And-Localization.md).
+[Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+now accepts all five localization workloads and reconciles their exact formats,
+conversion/tooling, Unicode/security, shipment/cache, cross-host, and
+measurement contracts into the
+[replacement specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
+The [replacement manifest](Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt)
+records 250 identity inputs and aggregate SHA-256
+`fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a`.
+The `zh-Hans@1` terminology remains an honest draft pending native and executable
+qualification; that blocks official Chinese shipment, not the generic design
+identity. Source implementation begins only after the separate named replacement
+source-freeze decision.
 
 ## How to read this roadmap
 

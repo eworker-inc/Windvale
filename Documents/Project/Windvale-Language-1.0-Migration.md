@@ -32,6 +32,9 @@ and the System/FFI findings resolved by
 [Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 with complete-suite reconciliation accepted by
 [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+The five localized-source workloads and replacement reconciliation are accepted
+by
+[Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -80,8 +83,9 @@ Implementation begins only after:
    general language or an explicit library, target extension, verified
    representation, provider, or backend owner; and
 10. source-lexicon, public-interface source-vocabulary, Unicode/security,
-    conversion, editor, diagnostic, cross-host, and bounded-performance evidence
-    is accepted; and
+    conversion, editor, diagnostic, shipment/cache, cross-host, and bounded-
+    performance paper contracts are accepted, with executable and measured
+    results retained as implementation qualification; and
 11. the change-aware verifier maps every affected boundary to a focused owner.
 
 The source freeze may permit staged implementation. It may not leave implemented
@@ -208,8 +212,9 @@ reparse it.
   caller-owned scratch/region, recoverable-data/terminal-containment, explicit
   status/unwind, and safe-publication cases from Decision 0764.
 - Add editor grammar tests.
-- Retain accepted localized-source descriptor/profile, Unicode/security, public-interface
-  vocabulary, conversion, cross-host, and bounded-performance cases.
+- Retain accepted localized-source descriptor/profile, Unicode/security,
+  public-interface vocabulary, conversion, editor, shipment/cache, cross-host,
+  and bounded-performance cases.
 - Record baseline compiler time, verification time, memory, WIR size, WVB size,
   and representative application artifact size.
 

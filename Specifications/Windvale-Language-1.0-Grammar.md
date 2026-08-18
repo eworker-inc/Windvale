@@ -15,14 +15,17 @@ and
 [Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 with complete-suite reconciliation accepted by
 [Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+Localized-source reconciliation is accepted by
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
 It defines candidate edition-1 spelling exactly enough for paper programs and
 parser planning. Current compilers implement
 [Windvale Seed](Seed-Language.md), not this grammar.
 
-The project owner has reopened the candidate through the working
+The project owner reopened the candidate through the
 [localized-source and source-vocabulary addendum](Windvale-Language-1.0-Localized-Source.md).
-This companion incorporates that addendum's replacement-candidate lexical and
-source-descriptor direction. It is not a source-freeze or implementation claim.
+This companion now incorporates that addendum's owner-accepted replacement-
+candidate lexical and source-descriptor contract. It is not a source-freeze or
+implementation claim.
 
 This document owns tokenization, literal spelling, delimiter rules, productions,
 and precedence. The semantic specification owns typing, ownership, effects,
@@ -59,7 +62,7 @@ Lexical productions operate on Unicode scalar values after strict UTF-8
 decoding. Syntactic productions operate on tokens. A compiler must place a
 finite limit on tokens, nesting, list items, and diagnostic recovery.
 
-The working source edition candidate pins the Unicode scalar-property,
+The replacement source edition candidate pins the Unicode scalar-property,
 normalization, and security tables used by localized lexicons and identifiers to
 `windvale.unicode17.source@1`, whose exact Unicode 17.0.0 inputs and hashes are
 defined by the

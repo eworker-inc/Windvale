@@ -1,0 +1,68 @@
+windvale-language-1.0-replacement-source-freeze-candidate-v2
+date=2026-08-18
+status=candidate-not-frozen-not-implemented
+algorithm=sha256
+path_encoding=utf-8
+path_separator=/
+entry_order=ordinal-ascending-path
+entry_encoding=path=<path> LF bytes=<unsigned-decimal> LF sha256=<lowercase-hex> LF
+file_hash_input=exact-repository-file-bytes
+aggregate_hash_input=concatenated-entry-encodings
+
+[core]
+d803344bb7fbb5c2baafcf35d6c6b9f75962e04002e27d32218270eea762dc34 63295 Specifications/Windvale-Language-1.0.md
+b4371cf1b9327ea511adbc88a10d2cf5eb89be22bc7e6417fd54a777695eca73 37917 Specifications/Windvale-Language-1.0-Grammar.md
+8f40ef7d1a6ff7e156bd5a804b92aa5783ba0bdc6f99b55bfe51eefb546aadc8 15259 Specifications/Windvale-Language-1.0.ebnf
+32e20416db6c88374e182e959055683112c0fa53639bd5bf114a31fb3e391bf8 36939 Specifications/Windvale-Language-1.0-Localized-Source.md
+b7abcfc81462e554284fa5b25fc752ae382a90216c470ba2bab030af251ee29d 12420 Specifications/Windvale-Language-1.0-Source-Profile-Formats.md
+e81907c08b76b8c463b491058ba4706bac371652251321eee7397355e6edb850 78310 Specifications/Windvale-Language-1.0-Foundation.md
+0ecb30a4155341263b408fdbc0daef662486d60ec1fc642842a0ac850398d4a9 30355 Specifications/Windvale-Language-1.0-Foundation-Registry.md
+5e12ba35c82eceee501eda6e4d59c5bdf577cf6778dcfab05c41e7c706c74121 4322 Specifications/Source-Naming.md
+ebdc5c0c788e7a7a1891829867f1e2418f28a7e9b8679da027888f474641497d 74663 Documents/Project/Windvale-Language-1.0-Design.md
+aa06daf1178960fa4afcc33ee2f9c71e17682c186e66a2041eee51d8bc77305e 23379 Documents/Project/Windvale-Language-1.0-Migration.md
+b5c68fa1e0303d356fdc3b11a6a06af8674281c36e900b634d17339a897f658a 27845 Documents/Project/Windvale-Language-1.0-Paper-Corpus.md
+f0368213bae169ed4ab690439d32bc65ea45a2c6ae8efff330b8434d43a3da4c 21469 Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md
+4c1406b252964dd3bcd8be2019f5205ea1e1da9d23529575acc8a55b6d73b592 4756 Documents/Project/Windvale-Language-1.0-Localization-Workloads.md
+
+[decisions]
+selection=all 16 regular files in Documents/Decisions whose names begin 0751- through 0766-
+count=16
+file_bytes=126070
+entry_stream_bytes=2603
+aggregate_sha256=39573331530bceee4481f9758f2f98adc1911b5df58275769ee482d0d0567c0b
+
+[paper_corpus]
+selection=all 158 regular files recursively below Documents/Project/Language-1.0-Paper-Corpus
+count=158
+file_bytes=980348
+entry_stream_bytes=28885
+aggregate_sha256=56a33590b66a51654f0e98e780767ba249e711c742bead7846bb986cb468798e
+source_files=64
+source_lf_lines=14445
+source_utf8_bytes=479133
+
+[localization_corpus]
+selection=all 63 regular files recursively below Documents/Project/Language-1.0-Localization-Workloads
+count=63
+file_bytes=187507
+entry_stream_bytes=12718
+aggregate_sha256=67619c45ddc2f038e8b509a4bcf068e5d0cce1799ee52a90b7dd12f84f1526ac
+source_files=8
+source_lf_lines=135
+source_utf8_bytes=3192
+artifact_files=16
+artifact_bytes=17670
+
+[complete_candidate]
+selection=the 13 core paths above plus the decisions, paper_corpus, and localization_corpus selections
+count=250
+file_bytes=1724854
+entry_stream_bytes=46043
+aggregate_sha256=fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a
+
+[exclusions]
+This manifest file, the source-freeze review packet, roadmap/progress status, mutable exploratory rationale,
+current Seed implementation, generated build artifacts, caches, and future executable/native-language qualification
+evidence are not identity inputs. Draft natural-language artifacts in the localization corpus are mechanism evidence,
+not qualified or officially distributed language packs. The explicit replacement source-freeze decision must cite
+this manifest's own byte length and SHA-256 after owner acceptance.

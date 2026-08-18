@@ -29,6 +29,8 @@ and
 [Decision 0764](../Documents/Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 with complete-suite reconciliation accepted by
 [Decision 0765](../Documents/Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+Localized-source reconciliation is accepted by
+[Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -45,7 +47,7 @@ owns the complete edition-1 public declaration spelling and reproducible
 candidate signature-set identity for each required module. Those hashes remain
 candidate identities until the explicit source-freeze decision accepts them.
 
-The working
+The owner-accepted replacement-candidate
 [localized-source and source-vocabulary specification](Windvale-Language-1.0-Localized-Source.md)
 may bind separately shipped primary source labels, display labels, and
 documentation to those exact canonical module/signature identities. Such a

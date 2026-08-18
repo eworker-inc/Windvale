@@ -30,14 +30,15 @@
 > [Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 > and complete-suite reconciliation by
 > [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
-> The project owner subsequently held that preserved pre-localization candidate
-> and selected stored localized keywords, exact public-library source
-> vocabularies, and Unicode project identifiers for a replacement candidate, as
-> detailed by the
-> [working localized-source specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
-> Its first paper workload proposes exact source-profile artifact formats and a
-> Unicode 17.0.0 profile; those candidates remain under review and do not
-> authorize implementation.
+> The project owner subsequently held that preserved pre-localization candidate,
+> selected stored localized keywords, exact public-library source vocabularies,
+> and Unicode project identifiers, and accepted the five-workload reconciliation
+> through
+> [Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
+> The exact replacement contract is detailed by the
+> [localized-source specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
+> That accepted candidate does not freeze edition 1, authorize implementation,
+> or promote draft Chinese terminology.
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains
@@ -458,7 +459,7 @@ Language 1.0 tooling must provide:
 ## Lexical and structural grammar
 
 Language 1.0 remains strict UTF-8 with LF as the repository source convention.
-The replacement working candidate begins every file with one language-neutral
+The replacement candidate begins every file with one language-neutral
 descriptor such as `#!wv/1 en@1`, then admits normalized Unicode identifier
 segments under exact edition-pinned property and security tables while retaining
 U+02C9 as the semantic-concept separator. Its explicit immutable source profile

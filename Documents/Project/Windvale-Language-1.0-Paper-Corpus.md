@@ -33,6 +33,10 @@ the System/FFI findings by
 [Decision 0764](../Decisions/0764-Resolve-Language-1.0-System-Ffi-Findings.md),
 and complete-suite reconciliation by
 [Decision 0765](../Decisions/0765-Complete-Language-1.0-Source-Freeze-Candidate.md).
+The complementary five localization workload findings are accepted by
+[Decision 0766](../Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md)
+and are inventoried by the
+[localization workload plan](Windvale-Language-1.0-Localization-Workloads.md).
 All eleven source bundles are owner reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
 [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md), its
@@ -613,11 +617,12 @@ source contract ambiguous.
 | System and FFI boundary | Draft reviewed; seven findings accepted and resolved |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-All eleven workloads are draft reviewed. Complete-suite reconciliation is
+All eleven application/system workloads and all five localization workloads
+have owner-reviewed paper findings. Complete-suite reconciliation is
 recorded in the
 [source-freeze review packet](Windvale-Language-1.0-Source-Freeze-Review.md),
-including the candidate grammar, Foundation, document, and corpus identities.
-Edition 1 is not frozen until the explicit owner decision.
+including the candidate grammar, Foundation, localization, document, and corpus
+identities. Edition 1 is not frozen until the explicit owner decision.
 
 The source-freeze decision cannot accept a workload row with a pending finding.
 All current rows pass owner paper review; when the explicit freeze decision
