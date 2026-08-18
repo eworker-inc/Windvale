@@ -1,0 +1,7 @@
+edition 1;
+module Retainedˉguiˉpackage;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+export package data Theme: bytes maximum 64u64;

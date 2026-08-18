@@ -22,7 +22,9 @@ and the compiler-front-end findings resolved by
 and the HTTP-handler findings resolved by
 [Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
 and the concurrent-service findings resolved by
-[Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
+[Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
+and the retained-GUI findings resolved by
+[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md).
 The corpus is not complete yet. Its eleven source bundles must be written and
 reviewed against the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),
@@ -353,6 +355,15 @@ attempted mutable alias.
 The program must not require classes, tracing-GC cycles, implicit UI-thread
 globals, or detached tasks to remain readable.
 
+The complete draft-reviewed source and evidence are in the
+[workload 7 paper bundle](Language-1.0-Paper-Corpus/07-Gui-Retained-State/README.md).
+Its seven accepted findings complete typed-arena replacement/removal, use closed
+semantic event variants, preserve a Core/Hosted and three-capability boundary,
+apply copied background results only on the owning path, accept explicit stable
+identity tombstones, require exact immutable-frame publication outcomes, and
+retain exact package bytes for the first small theme instead of inventing schema
+or reflection syntax.
+
 ## Workload 8: numeric or graphics processing
 
 ### Scenario
@@ -556,13 +567,13 @@ source contract ambiguous.
 | Compiler front end | Draft reviewed; six findings accepted and resolved |
 | HTTP request handler | Draft reviewed; five findings accepted and resolved |
 | Concurrent hosted service | Draft reviewed; seven findings accepted and resolved |
-| GUI retained state | Pending source bundle |
+| GUI retained state | Draft reviewed; seven findings accepted and resolved |
 | Numeric or graphics processing | Pending source bundle |
 | Package parser | Pending source bundle |
 | System and FFI boundary | Pending source bundle |
 | Local AI accelerator inference | Draft reviewed; five general findings accepted and resolved |
 
-Seven of eleven workloads are draft reviewed. Workloads 7 through 10 remain to
+Eight of eleven workloads are draft reviewed. Workloads 8 through 10 remain to
 be written and reviewed.
 
 The source-freeze decision cannot mark a pending row accepted. When all rows pass,

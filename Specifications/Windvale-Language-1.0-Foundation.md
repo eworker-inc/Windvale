@@ -18,7 +18,9 @@ and
 and
 [Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md)
 and
-[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md).
+[Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
+and
+[Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md).
 It specifies the standard nominal values and protocols required for one coherent
 Language 1.0 surface. It is not the currently implemented Foundation library.
 
@@ -793,6 +795,11 @@ export record Arenaˉinsertˉfailure<T> {
     Value: T;
 }
 
+export record Arenaˉreplaceˉfailure<T> {
+    Error: Collectionˉfailure;
+    Value: T;
+}
+
 export fn Arenaˉconstruct<T>(
     Budget: Memoryˉbudget,
     Maximumˉnodes: u64,
@@ -810,6 +817,17 @@ export fn Arenaˉinsert<T>(
     Arena: borrow mut Arena<T>,
     Value: T,
 ) -> Result<Handle<T>, Arenaˉinsertˉfailure<T>> effects();
+
+export fn Arenaˉreplace<T>(
+    Arena: borrow mut Arena<T>,
+    Handle: borrow Handle<T>,
+    Value: T,
+) -> Result<T, Arenaˉreplaceˉfailure<T>> effects();
+
+export fn Arenaˉremove<T>(
+    Arena: borrow mut Arena<T>,
+    Handle: borrow Handle<T>,
+) -> Result<T, Collectionˉfailure> effects();
 
 export fn Arenaˉvalidate<T>(
     Arena: borrow Arena<T>,
@@ -845,6 +863,16 @@ first-item constructor solves `T` from `First`, atomically constructs the arena
 and inserts the value, and returns both owner and first handle. Failure releases
 partial allocation and returns the original value unchanged. Ordinary insertion
 checks capacity before acceptance and has the same ownership-return rule.
+
+`Arenaˉreplace` validates the exact arena/slot/generation before mutation.
+Success installs `Value` without changing the slot generation and returns the
+previous owned node. Failure leaves the arena unchanged and returns the proposed
+owned `Value` inside `Arenaˉreplaceˉfailure`. `Arenaˉremove` validates before
+mutation; success vacates the slot, advances its generation or retires it before
+wrap, and returns the removed owned node. Failure leaves the arena unchanged.
+Both operations are bounded by the arena's admitted maximum and comparison-free
+slot validation. A successful prior validation under the same uninterrupted
+exclusive arena borrow proves that the corresponding mutation cannot fail.
 
 `Arenaˉvalidate` returns a nominal failure for wrong arena, range, vacancy, stale
 generation, or retired slot. `Arenaˉborrowˉvalidated` requires a successful

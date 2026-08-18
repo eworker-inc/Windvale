@@ -27,6 +27,7 @@ SHA256SUMS text eol=lf
 *.wvprov text eol=lf
 *.wvapproval text eol=lf
 *.wvlaunch text eol=lf
+*.wvtheme binary
 *.ps1 text eol=lf
 *.cmd text eol=crlf
 *.sh text eol=lf

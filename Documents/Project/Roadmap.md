@@ -45,15 +45,24 @@ publication findings, and
 [Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md)
 accepts the HTTP workload's checked slices, strict slice decode, byte decimal
 formatting, opaque operation context, and exact reliable-stream progress
-findings while leaving the service catalog identity provisional. The
+findings while leaving the service catalog identity provisional,
+[Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md)
+accepts the concurrent-service workload's task, context, cancellation, and
+asynchronous-provider boundaries, and
+[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md)
+accepts the retained-GUI workload's typed-arena mutation, semantic event,
+parent-only state application, and exact frame-publication boundaries. The
 [command-line application bundle](Language-1.0-Paper-Corpus/01-Command-Line-Application/README.md),
 [bounded file-copy bundle](Language-1.0-Paper-Corpus/02-Bounded-File-Copy/README.md),
 [database-transaction bundle](Language-1.0-Paper-Corpus/03-Database-Transaction/README.md),
 [compiler-front-end bundle](Language-1.0-Paper-Corpus/04-Compiler-Front-End/README.md),
 [HTTP request-handler bundle](Language-1.0-Paper-Corpus/05-Http-Request-Handler/README.md),
+[concurrent-service bundle](Language-1.0-Paper-Corpus/06-Concurrent-Hosted-Service/README.md),
+[retained-GUI bundle](Language-1.0-Paper-Corpus/07-Gui-Retained-State/README.md),
 and
 [local AI accelerator bundle](Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/README.md)
-are now draft reviewed. The accepted direction, normative-candidate suite,
+are now draft reviewed. Eight of the eleven required bundles are reviewed; the
+remaining paper work is workloads 8 through 10. The accepted direction, normative-candidate suite,
 paper corpus, accelerator/AI design evidence, and migration plan may advance
 without claiming implementation or changing the current Seed product. Source
 implementation begins only after the named source-freeze gate.

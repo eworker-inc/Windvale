@@ -1,0 +1,572 @@
+edition 1;
+module Retainedˉguiˉstate;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Retainedˉguiˉtypes as Types;
+
+fn Collectionˉfailure(
+    Error: Collections.Collectionˉfailure,
+) -> Result.Result<Types.Retainedˉstate, Types.Stateˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Types.Stateˉfailure.Collection { Error: Error },
+    };
+}
+
+fn Insertˉwidget(
+    Widgets: borrow mut Collections.Arena<Types.Widget>,
+    Value: Types.Widget,
+) -> Result.Result<Collections.Handle<Types.Widget>, Types.Stateˉfailure>
+    effects() {
+    return match Collections.Arenaˉinsert(Arena: Widgets, Value: Value) {
+        case Result.Result.Valid { Value: Handle } {
+            Result.Result.Valid { Value: Handle }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Types.Stateˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            }
+        }
+    };
+}
+
+fn Insertˉidentity(
+    Identities: borrow mut Collections.Map<
+        u32,
+        Collections.Handle<Types.Widget>
+    >,
+    Identity: u32,
+    Handle: Collections.Handle<Types.Widget>,
+) -> Result.Result<unit, Types.Stateˉfailure> effects() {
+    return match Collections.Mapˉinsert(
+        Map: Identities,
+        Key: Identity,
+        Value: Handle,
+    ) {
+        case Result.Result.Valid { Value: () } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            match Failure.Error {
+                case Collections.Collectionˉfailure.Duplicate {
+                    Result.Result.Failure {
+                        Error: Types.Stateˉfailure.Duplicateˉidentity {
+                            Identity: Identity,
+                        },
+                    }
+                }
+                case _ {
+                    Result.Result.Failure {
+                        Error: Types.Stateˉfailure.Collection {
+                            Error: Failure.Error,
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Placeholder(
+    Identity: u32,
+    Kind: Types.Widgetˉkind,
+) -> Types.Widget effects() {
+    return Types.Widget {
+        Identity: Identity,
+        Kind: Kind,
+        Bounds: Types.Rectangle {
+            X: 0u32,
+            Y: 0u32,
+            Width: 0u32,
+            Height: 0u32,
+        },
+        Visible: true,
+    };
+}
+
+export fn Construct(
+    Arenaˉbudget: Memory.Memoryˉbudget,
+    Mapˉbudget: Memory.Memoryˉbudget,
+    Width: u32,
+    Height: u32,
+    Limits: borrow Types.Limits,
+) -> Result.Result<Types.Retainedˉstate, Types.Stateˉfailure>
+    effects(memory.allocate, resource.release) {
+    if Width < 32u32 || Height < 32u32
+        || Width > Limits.Maximumˉsurfaceˉwidth
+        || Height > Limits.Maximumˉsurfaceˉheight {
+        return Result.Result.Failure {
+            Error: Types.Stateˉfailure.Invalidˉsurface {
+                Width: Width,
+                Height: Height,
+                Minimumˉwidth: 32u32,
+                Minimumˉheight: 32u32,
+                Maximumˉwidth: Limits.Maximumˉsurfaceˉwidth,
+                Maximumˉheight: Limits.Maximumˉsurfaceˉheight,
+            },
+        };
+    }
+    if Limits.Maximumˉwidgets < 4u64 || Limits.Maximumˉwidgets > 64u64 {
+        return Result.Result.Failure {
+            Error: Types.Stateˉfailure.Collection {
+                Error: Collections.Collectionˉfailure.Invalidˉlimit {
+                    Field: 1u32,
+                    Observed: Limits.Maximumˉwidgets,
+                    Minimum: 4u64,
+                    Maximum: 64u64,
+                },
+            },
+        };
+    }
+
+    let Backgroundˉvalue = Placeholder(
+        Identity: 1u32,
+        Kind: Types.Widgetˉkind.Background,
+    );
+    let Seed = match Collections.Arenaˉconstructˉwithˉfirst(
+        Budget: Arenaˉbudget,
+        Maximumˉnodes: Limits.Maximumˉwidgets,
+        First: Backgroundˉvalue,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Failure } {
+            return Collectionˉfailure(Error: Failure.Error);
+        }
+    };
+    var Widgets = Seed.Owner;
+    let Background = Seed.First;
+    let Counter = try Insertˉwidget(
+        Widgets: borrow mut Widgets,
+        Value: Placeholder(
+            Identity: 2u32,
+            Kind: Types.Widgetˉkind.Counter,
+        ),
+    );
+    let Action = try Insertˉwidget(
+        Widgets: borrow mut Widgets,
+        Value: Placeholder(
+            Identity: 3u32,
+            Kind: Types.Widgetˉkind.Action,
+        ),
+    );
+    let Status = try Insertˉwidget(
+        Widgets: borrow mut Widgets,
+        Value: Placeholder(
+            Identity: 4u32,
+            Kind: Types.Widgetˉkind.Status,
+        ),
+    );
+
+    var Identities = match Collections.Mapˉconstructˉwithˉfirst(
+        Budget: Mapˉbudget,
+        Maximumˉitems: Limits.Maximumˉwidgets,
+        Key: 1u32,
+        Value: Background,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Failure } {
+            return match Failure.Error {
+                case Collections.Collectionˉfailure.Duplicate {
+                    Result.Result.Failure {
+                        Error: Types.Stateˉfailure.Duplicateˉidentity {
+                            Identity: 1u32,
+                        },
+                    }
+                }
+                case _ { Collectionˉfailure(Error: Failure.Error) }
+            };
+        }
+    };
+    try Insertˉidentity(
+        Identities: borrow mut Identities,
+        Identity: 2u32,
+        Handle: Counter,
+    );
+    try Insertˉidentity(
+        Identities: borrow mut Identities,
+        Identity: 3u32,
+        Handle: Action,
+    );
+    try Insertˉidentity(
+        Identities: borrow mut Identities,
+        Identity: 4u32,
+        Handle: Status,
+    );
+
+    return Result.Result.Valid {
+        Value: Types.Retainedˉstate {
+            Widgets: Widgets,
+            Identities: Identities,
+            Handles: Types.Widgetˉhandles {
+                Background: Background,
+                Counter: Counter,
+                Action: Action,
+                Status: Option.Option.Present { Value: Status },
+            },
+            Surfaceˉwidth: Width,
+            Surfaceˉheight: Height,
+            Counter: 0u64,
+            Eventˉsequence: 0u64,
+            Layoutˉgeneration: 1u64,
+            Closed: false,
+        },
+    };
+}
+
+export fn Snapshot(
+    State: borrow Types.Retainedˉstate,
+) -> Types.Layoutˉsnapshot effects() {
+    return Types.Layoutˉsnapshot {
+        Surfaceˉwidth: State.Surfaceˉwidth,
+        Surfaceˉheight: State.Surfaceˉheight,
+        Baseˉlayoutˉgeneration: State.Layoutˉgeneration,
+        Background: State.Handles.Background,
+        Counter: State.Handles.Counter,
+        Action: State.Handles.Action,
+        Status: State.Handles.Status,
+    };
+}
+
+export fn Readˉwidget(
+    State: borrow Types.Retainedˉstate,
+    Handle: borrow Collections.Handle<Types.Widget>,
+) -> Result.Result<Types.Widget, Types.Stateˉfailure> effects() {
+    match Collections.Arenaˉvalidate(
+        Arena: borrow State.Widgets,
+        Handle: Handle,
+    ) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Stateˉfailure.Collection { Error: Error },
+            };
+        }
+    }
+    let Value = Collections.Arenaˉborrowˉvalidated(
+        Arena: borrow State.Widgets,
+        Handle: Handle,
+    );
+    return Result.Result.Valid { Value: Value };
+}
+
+export fn Readˉidentity(
+    State: borrow Types.Retainedˉstate,
+    Identity: u32,
+) -> Result.Result<Types.Widget, Types.Stateˉfailure> effects() {
+    let Rank = match Collections.Mapˉfindˉrank(
+        Map: borrow State.Identities,
+        Key: borrow Identity,
+    ) {
+        case Option.Option.Absent {
+            return Result.Result.Failure {
+                Error: Types.Stateˉfailure.Missingˉidentity {
+                    Identity: Identity,
+                },
+            };
+        }
+        case Option.Option.Present { Value: Value } { Value }
+    };
+    let Handle = Collections.Mapˉborrowˉat(
+        Map: borrow State.Identities,
+        Index: Rank,
+    );
+    return Readˉwidget(State: State, Handle: Handle);
+}
+
+fn Replace(
+    State: borrow mut Types.Retainedˉstate,
+    Handle: borrow Collections.Handle<Types.Widget>,
+    Value: Types.Widget,
+) -> Result.Result<unit, Types.Stateˉfailure> effects() {
+    return match Collections.Arenaˉreplace(
+        Arena: borrow mut State.Widgets,
+        Handle: Handle,
+        Value: Value,
+    ) {
+        case Result.Result.Valid { Value: _ } {
+            Result.Result.Valid { Value: () }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            Result.Result.Failure {
+                Error: Types.Stateˉfailure.Collection {
+                    Error: Failure.Error,
+                },
+            }
+        }
+    };
+}
+
+export fn Applyˉlayout(
+    State: borrow mut Types.Retainedˉstate,
+    Layout: Types.Layoutˉresult,
+) -> Result.Result<Types.Layoutˉapplication, Types.Stateˉfailure>
+    effects() {
+    if Layout.Baseˉlayoutˉgeneration != State.Layoutˉgeneration {
+        return Result.Result.Valid {
+            Value: Types.Layoutˉapplication.Staleˉsnapshot {
+                Expected: Layout.Baseˉlayoutˉgeneration,
+                Observed: State.Layoutˉgeneration,
+            },
+        };
+    }
+    let Backgroundˉhandle = State.Handles.Background;
+    let Counterˉhandle = State.Handles.Counter;
+    let Actionˉhandle = State.Handles.Action;
+    let Statusˉhandle = State.Handles.Status;
+
+    match Collections.Arenaˉvalidate(
+        Arena: borrow State.Widgets,
+        Handle: borrow Backgroundˉhandle,
+    ) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Valid {
+                Value: Types.Layoutˉapplication.Staleˉwidget { Error: Error },
+            };
+        }
+    }
+    match Collections.Arenaˉvalidate(
+        Arena: borrow State.Widgets,
+        Handle: borrow Counterˉhandle,
+    ) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Valid {
+                Value: Types.Layoutˉapplication.Staleˉwidget { Error: Error },
+            };
+        }
+    }
+    match Collections.Arenaˉvalidate(
+        Arena: borrow State.Widgets,
+        Handle: borrow Actionˉhandle,
+    ) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Valid {
+                Value: Types.Layoutˉapplication.Staleˉwidget { Error: Error },
+            };
+        }
+    }
+    match Statusˉhandle {
+        case Option.Option.Absent {
+            match Layout.Status {
+                case Option.Option.Absent { }
+                case Option.Option.Present { Value: _ } {
+                    return Result.Result.Failure {
+                        Error: Types.Stateˉfailure.Layoutˉstatusˉmismatch {
+                            Expectedˉpresent: false,
+                            Observedˉpresent: true,
+                        },
+                    };
+                }
+            }
+        }
+        case Option.Option.Present { Value: Handle } {
+            match Layout.Status {
+                case Option.Option.Absent {
+                    return Result.Result.Failure {
+                        Error: Types.Stateˉfailure.Layoutˉstatusˉmismatch {
+                            Expectedˉpresent: true,
+                            Observedˉpresent: false,
+                        },
+                    };
+                }
+                case Option.Option.Present { Value: _ } {
+                    match Collections.Arenaˉvalidate(
+                        Arena: borrow State.Widgets,
+                        Handle: borrow Handle,
+                    ) {
+                        case Result.Result.Valid { Value: () } { }
+                        case Result.Result.Failure { Error: Error } {
+                            return Result.Result.Valid {
+                                Value: Types.Layoutˉapplication.Staleˉwidget {
+                                    Error: Error,
+                                },
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    try Replace(
+        State: State,
+        Handle: borrow Backgroundˉhandle,
+        Value: Layout.Background,
+    );
+    try Replace(
+        State: State,
+        Handle: borrow Counterˉhandle,
+        Value: Layout.Counter,
+    );
+    try Replace(
+        State: State,
+        Handle: borrow Actionˉhandle,
+        Value: Layout.Action,
+    );
+    match Statusˉhandle {
+        case Option.Option.Absent { }
+        case Option.Option.Present { Value: Handle } {
+            match Layout.Status {
+                case Option.Option.Absent { }
+                case Option.Option.Present { Value: Value } {
+                    match Replace(
+                        State: State,
+                        Handle: borrow Handle,
+                        Value: Value,
+                    ) {
+                        case Result.Result.Valid { Value: () } { }
+                        case Result.Result.Failure { Error: Error } {
+                            return match Error {
+                                case Types.Stateˉfailure.Collection {
+                                    Error: Failure,
+                                } {
+                                    Result.Result.Valid {
+                                        Value: Types.Layoutˉapplication.Staleˉwidget {
+                                            Error: Failure,
+                                        },
+                                    }
+                                }
+                                case _ {
+                                    Result.Result.Failure { Error: Error }
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return Result.Result.Valid {
+        Value: Types.Layoutˉapplication.Applied {
+            Newˉgeneration: State.Layoutˉgeneration,
+        },
+    };
+}
+
+fn Inside(
+    X: u32,
+    Y: u32,
+    Bounds: borrow Types.Rectangle,
+) -> bool effects() {
+    if X < Bounds.X || Y < Bounds.Y {
+        return false;
+    }
+    return X - Bounds.X < Bounds.Width && Y - Bounds.Y < Bounds.Height;
+}
+
+export fn Applyˉevent(
+    State: borrow mut Types.Retainedˉstate,
+    Event: borrow Types.Event,
+    Limits: borrow Types.Limits,
+) -> Result.Result<Types.Stateˉchange, Types.Stateˉfailure>
+    effects() {
+    let Change = match Event {
+        case Types.Event.Pointerˉpressed { X: X, Y: Y } {
+            let Action = try Readˉidentity(
+                State: borrow State,
+                Identity: 3u32,
+            );
+            if Action.Visible && Inside(
+                X: X,
+                Y: Y,
+                Bounds: borrow Action.Bounds,
+            ) {
+                State.Counter = State.Counter + 1u64;
+                Types.Stateˉchange.Changed
+            } else {
+                Types.Stateˉchange.Unchanged
+            }
+        }
+        case Types.Event.Resize { Width: Width, Height: Height } {
+            if Width < 32u32 || Height < 32u32
+                || Width > Limits.Maximumˉsurfaceˉwidth
+                || Height > Limits.Maximumˉsurfaceˉheight {
+                return Result.Result.Failure {
+                    Error: Types.Stateˉfailure.Invalidˉsurface {
+                        Width: Width,
+                        Height: Height,
+                        Minimumˉwidth: 32u32,
+                        Minimumˉheight: 32u32,
+                        Maximumˉwidth: Limits.Maximumˉsurfaceˉwidth,
+                        Maximumˉheight: Limits.Maximumˉsurfaceˉheight,
+                    },
+                };
+            } else {
+                State.Surfaceˉwidth = Width;
+                State.Surfaceˉheight = Height;
+                State.Layoutˉgeneration = State.Layoutˉgeneration + 1u64;
+                Types.Stateˉchange.Layoutˉrequested
+            }
+        }
+        case Types.Event.Requestˉlayout {
+            Types.Stateˉchange.Layoutˉrequested
+        }
+        case Types.Event.Removeˉstatus {
+            match State.Handles.Status {
+                case Option.Option.Absent {
+                    Types.Stateˉchange.Unchanged
+                }
+                case Option.Option.Present { Value: Handle } {
+                    match Collections.Arenaˉvalidate(
+                        Arena: borrow State.Widgets,
+                        Handle: borrow Handle,
+                    ) {
+                        case Result.Result.Valid { Value: () } { }
+                        case Result.Result.Failure { Error: Error } {
+                            return Result.Result.Failure {
+                                Error: Types.Stateˉfailure.Collection {
+                                    Error: Error,
+                                },
+                            };
+                        }
+                    }
+                    let Removedˉhandle = match Option.Take(
+                        Value: borrow mut State.Handles.Status,
+                    ) {
+                        case Option.Option.Absent {
+                            return Result.Result.Failure {
+                                Error: Types.Stateˉfailure.Layoutˉstatusˉmismatch {
+                                    Expectedˉpresent: true,
+                                    Observedˉpresent: false,
+                                },
+                            };
+                        }
+                        case Option.Option.Present { Value: Value } { Value }
+                    };
+                    match Collections.Arenaˉremove(
+                        Arena: borrow mut State.Widgets,
+                        Handle: borrow Removedˉhandle,
+                    ) {
+                        case Result.Result.Valid { Value: _ } {
+                            State.Layoutˉgeneration =
+                                State.Layoutˉgeneration + 1u64;
+                            Types.Stateˉchange.Layoutˉrequested
+                        }
+                        case Result.Result.Failure { Error: Error } {
+                            return Result.Result.Failure {
+                                Error: Types.Stateˉfailure.Collection {
+                                    Error: Error,
+                                },
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        case Types.Event.Close {
+            State.Closed = true;
+            Types.Stateˉchange.Closed
+        }
+    };
+    State.Eventˉsequence = State.Eventˉsequence + 1u64;
+    return Result.Result.Valid { Value: Change };
+}

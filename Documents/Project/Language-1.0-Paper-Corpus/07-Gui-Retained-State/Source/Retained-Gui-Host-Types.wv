@@ -1,0 +1,97 @@
+edition 1;
+module Retainedˉguiˉhostˉtypes;
+profile hosted;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉtask as Task;
+import Retainedˉguiˉtypes as Types;
+
+export enum Providerˉdomain: u8 {
+    Surface = 1u8;
+    Input = 2u8;
+    Timer = 3u8;
+}
+
+export enum Providerˉreason: u8 {
+    Rejected = 1u8;
+    Cancelled = 2u8;
+    Deadlineˉreached = 3u8;
+    Revoked = 4u8;
+    Lost = 5u8;
+    Restarted = 6u8;
+    Invalidˉresponse = 7u8;
+}
+
+export record Providerˉfailure {
+    Domain: Providerˉdomain;
+    Reason: Providerˉreason;
+    Expectedˉgeneration: u64;
+    Observedˉgeneration: u64;
+}
+
+export record Publishˉreceipt {
+    Surfaceˉgeneration: u64;
+    Frameˉsequence: u64;
+    Acceptedˉbytes: u64;
+}
+
+export enum Spawnˉreason: u8 {
+    Scopeˉclosing = 1u8;
+    Taskˉlimit = 2u8;
+    Queueˉlimit = 3u8;
+    Memoryˉfailure = 4u8;
+}
+
+export record Limits {
+    Core: Types.Limits;
+    Taskˉbytes: u64;
+    Tasks: Task.Taskˉlimits;
+}
+
+export variant Applicationˉfailure {
+    Invalidˉconfiguration(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(Error: Memory.Allocationˉfailure);
+    Theme(Error: Types.Themeˉfailure);
+    State(Error: Types.Stateˉfailure);
+    Frame(Error: Types.Frameˉfailure);
+    Provider(Error: Providerˉfailure);
+    Publishˉrejected(Error: Providerˉfailure);
+    Publishˉindeterminate(Error: Providerˉfailure);
+    Taskˉscope(Error: Task.Taskˉscopeˉfailure);
+    Spawn(Reason: Spawnˉreason);
+    Backgroundˉcancelled;
+    Backgroundˉdeadline;
+    Backgroundˉruntimeˉlost(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Backgroundˉruntimeˉrestarted(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Backgroundˉtrapped(Identity: u32);
+    Eventˉbatchˉlimit(Observed: u64, Maximum: u64);
+    Eventˉbatchˉsequence(Expected: u64, Observed: u64);
+    Eventˉafterˉclose(Index: u64);
+}
+
+export record Applicationˉreport {
+    Initialˉpublish: Publishˉreceipt;
+    Finalˉpublish: Option.Option<Publishˉreceipt>;
+    Processedˉevents: u64;
+    Counter: u64;
+    Backgroundˉlayout: Types.Layoutˉapplication;
+    Finalˉlayout: Types.Layoutˉapplication;
+    Closed: bool;
+    Inputˉgeneration: u64;
+    Timerˉgeneration: u64;
+    Timerˉsequence: u64;
+}

@@ -1,0 +1,158 @@
+edition 1;
+module Retainedˉguiˉtypes;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+
+export record Color {
+    Red: u8;
+    Green: u8;
+    Blue: u8;
+    Alpha: u8;
+}
+
+export record Theme {
+    Background: Color;
+    Foreground: Color;
+    Accent: Color;
+}
+
+export variant Themeˉfailure {
+    Wrongˉlength(Observed: u64, Expected: u64);
+    Wrongˉmagic(Byteˉoffset: u64, Observed: u8, Expected: u8);
+    Wrongˉseparator(Byteˉoffset: u64, Observed: u8);
+    Invalidˉhex(Byteˉoffset: u64, Observed: u8);
+}
+
+export record Rectangle {
+    X: u32;
+    Y: u32;
+    Width: u32;
+    Height: u32;
+}
+
+export enum Widgetˉkind: u8 {
+    Background = 1u8;
+    Counter = 2u8;
+    Action = 3u8;
+    Status = 4u8;
+}
+
+export record Widget {
+    Identity: u32;
+    Kind: Widgetˉkind;
+    Bounds: Rectangle;
+    Visible: bool;
+}
+
+export record Widgetˉhandles {
+    Background: Collections.Handle<Widget>;
+    Counter: Collections.Handle<Widget>;
+    Action: Collections.Handle<Widget>;
+    Status: Option.Option<Collections.Handle<Widget>>;
+}
+
+export record Retainedˉstate {
+    Widgets: Collections.Arena<Widget>;
+    Identities: Collections.Map<u32, Collections.Handle<Widget>>;
+    Handles: Widgetˉhandles;
+    Surfaceˉwidth: u32;
+    Surfaceˉheight: u32;
+    Counter: u64;
+    Eventˉsequence: u64;
+    Layoutˉgeneration: u64;
+    Closed: bool;
+}
+
+export record Layoutˉsnapshot {
+    Surfaceˉwidth: u32;
+    Surfaceˉheight: u32;
+    Baseˉlayoutˉgeneration: u64;
+    Background: Collections.Handle<Widget>;
+    Counter: Collections.Handle<Widget>;
+    Action: Collections.Handle<Widget>;
+    Status: Option.Option<Collections.Handle<Widget>>;
+}
+
+export record Layoutˉresult {
+    Baseˉlayoutˉgeneration: u64;
+    Background: Widget;
+    Counter: Widget;
+    Action: Widget;
+    Status: Option.Option<Widget>;
+    Work: u64;
+}
+
+export variant Event {
+    Pointerˉpressed(X: u32, Y: u32);
+    Resize(Width: u32, Height: u32);
+    Requestˉlayout;
+    Removeˉstatus;
+    Close;
+}
+
+export variant Stateˉchange {
+    Unchanged;
+    Changed;
+    Layoutˉrequested;
+    Closed;
+}
+
+export variant Layoutˉapplication {
+    Applied(Newˉgeneration: u64);
+    Staleˉsnapshot(Expected: u64, Observed: u64);
+    Staleˉwidget(Error: Collections.Collectionˉfailure);
+}
+
+export variant Stateˉfailure {
+    Invalidˉsurface(
+        Width: u32,
+        Height: u32,
+        Minimumˉwidth: u32,
+        Minimumˉheight: u32,
+        Maximumˉwidth: u32,
+        Maximumˉheight: u32,
+    );
+    Collection(Error: Collections.Collectionˉfailure);
+    Duplicateˉidentity(Identity: u32);
+    Missingˉidentity(Identity: u32);
+    Layoutˉstatusˉmismatch(
+        Expectedˉpresent: bool,
+        Observedˉpresent: bool,
+    );
+    Arithmeticˉoverflow(Field: u32);
+}
+
+export record Pixelˉframe {
+    Width: u32;
+    Height: u32;
+    Stride: u64;
+    Pixels: bytes;
+    Stateˉeventˉsequence: u64;
+    Layoutˉgeneration: u64;
+}
+
+export variant Frameˉfailure {
+    Allocation(Error: Memory.Allocationˉfailure);
+    Byteˉlimit(Maximum: u64);
+    Workˉlimit(Observed: u64, Maximum: u64);
+    Arithmeticˉoverflow(Field: u32);
+    State(Error: Stateˉfailure);
+}
+
+export record Limits {
+    Maximumˉsurfaceˉwidth: u32;
+    Maximumˉsurfaceˉheight: u32;
+    Maximumˉwidgets: u64;
+    Maximumˉeventsˉperˉbatch: u64;
+    Maximumˉeventˉbatches: u64;
+    Maximumˉframeˉbytes: u64;
+    Maximumˉrenderˉwork: u64;
+    Stateˉbytes: u64;
+    Identityˉmapˉbytes: u64;
+    Frameˉbytes: u64;
+}

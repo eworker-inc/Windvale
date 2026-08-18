@@ -12,6 +12,7 @@ $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'Language 1.0 paper source'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'Language 1.0 paper package data'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'browser playground website contract'; Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1'); Scope = 'website'; Editor = $false; Areas = @() },
@@ -37,6 +38,15 @@ $Cases = @(
     @{ Name = 'test fixture'; Paths = @('Tests/Native/Wvo-Rejections/Bad-Version.wvo.b64'); Scope = 'development'; Editor = $false; Areas = $AllAreas }
 )
 $NativeCases = @(
+    @{
+        Name = 'Language 1.0 paper package-data evidence'
+        Paths = @(
+            'Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
+    },
     @{
         Name = 'Seed native front-door source owners'
         Paths = @(

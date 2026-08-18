@@ -19,7 +19,11 @@ and the database-transaction findings resolved by
 and the compiler-front-end findings resolved by
 [Decision 0758](../Decisions/0758-Resolve-Language-1.0-Compiler-Front-End-Findings.md)
 and the HTTP-handler findings resolved by
-[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md).
+[Decision 0759](../Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
+the concurrent-service findings resolved by
+[Decision 0760](../Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
+and the retained-GUI findings resolved by
+[Decision 0761](../Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md).
 It does not authorize implementation before the Language 1.0 source-freeze
 decision. It defines how the repository will advance once the
 [semantic specification](../../Specifications/Windvale-Language-1.0.md),

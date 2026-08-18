@@ -1,0 +1,100 @@
+edition 1;
+module Retainedˉguiˉlayout;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Retainedˉguiˉtypes as Types;
+
+fn Widget(
+    Identity: u32,
+    Kind: Types.Widgetˉkind,
+    Bounds: Types.Rectangle,
+) -> Types.Widget effects() {
+    return Types.Widget {
+        Identity: Identity,
+        Kind: Kind,
+        Bounds: Bounds,
+        Visible: true,
+    };
+}
+
+export fn Compute(
+    Snapshot: Types.Layoutˉsnapshot,
+    Maximumˉwidth: u32,
+    Maximumˉheight: u32,
+) -> Result.Result<Types.Layoutˉresult, Types.Stateˉfailure> effects() {
+    if Snapshot.Surfaceˉwidth < 32u32 || Snapshot.Surfaceˉheight < 32u32
+        || Snapshot.Surfaceˉwidth > Maximumˉwidth
+        || Snapshot.Surfaceˉheight > Maximumˉheight {
+        return Result.Result.Failure {
+            Error: Types.Stateˉfailure.Invalidˉsurface {
+                Width: Snapshot.Surfaceˉwidth,
+                Height: Snapshot.Surfaceˉheight,
+                Minimumˉwidth: 32u32,
+                Minimumˉheight: 32u32,
+                Maximumˉwidth: Maximumˉwidth,
+                Maximumˉheight: Maximumˉheight,
+            },
+        };
+    }
+    let Innerˉwidth = Snapshot.Surfaceˉwidth - 8u32;
+    let Actionˉwidth = Innerˉwidth / 2u32;
+    let Actionˉx = 4u32 + (Innerˉwidth - Actionˉwidth) / 2u32;
+    let Statusˉheight = Snapshot.Surfaceˉheight - 32u32;
+    return Result.Result.Valid {
+        Value: Types.Layoutˉresult {
+            Baseˉlayoutˉgeneration: Snapshot.Baseˉlayoutˉgeneration,
+            Background: Widget(
+                Identity: 1u32,
+                Kind: Types.Widgetˉkind.Background,
+                Bounds: Types.Rectangle {
+                    X: 0u32,
+                    Y: 0u32,
+                    Width: Snapshot.Surfaceˉwidth,
+                    Height: Snapshot.Surfaceˉheight,
+                },
+            ),
+            Counter: Widget(
+                Identity: 2u32,
+                Kind: Types.Widgetˉkind.Counter,
+                Bounds: Types.Rectangle {
+                    X: 4u32,
+                    Y: 4u32,
+                    Width: Innerˉwidth,
+                    Height: 8u32,
+                },
+            ),
+            Action: Widget(
+                Identity: 3u32,
+                Kind: Types.Widgetˉkind.Action,
+                Bounds: Types.Rectangle {
+                    X: Actionˉx,
+                    Y: Snapshot.Surfaceˉheight - 16u32,
+                    Width: Actionˉwidth,
+                    Height: 12u32,
+                },
+            ),
+            Status: match Snapshot.Status {
+                case Option.Option.Absent { Option.Option.Absent }
+                case Option.Option.Present { Value: _ } {
+                    Option.Option.Present {
+                        Value: Widget(
+                            Identity: 4u32,
+                            Kind: Types.Widgetˉkind.Status,
+                            Bounds: Types.Rectangle {
+                                X: 4u32,
+                                Y: 14u32,
+                                Width: Innerˉwidth,
+                                Height: Statusˉheight,
+                            },
+                        ),
+                    }
+                }
+            },
+            Work: 20u64,
+        },
+    };
+}

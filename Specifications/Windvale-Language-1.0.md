@@ -34,6 +34,8 @@ and the HTTP-handler findings resolved by
 [Decision 0759](../Documents/Decisions/0759-Resolve-Language-1.0-Http-Handler-Findings.md),
 and the concurrent-service findings resolved by
 [Decision 0760](../Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md),
+and the retained-GUI findings resolved by
+[Decision 0761](../Documents/Decisions/0761-Resolve-Language-1.0-Retained-Gui-Findings.md),
 has one owner for each kind of rule:
 
 | Contract | Owner |
@@ -638,6 +640,12 @@ Recursive graphs use an owned typed arena and generation-checked non-owning
 handles. Destroying the arena destroys all admitted nodes and invalidates every
 handle, including cycles.
 
+Replacing or removing an arena node is an explicit Foundation mutation through
+an exclusive arena borrow. It validates the complete arena/slot/generation
+before mutation, returns owned inputs/old values according to its exact result,
+and cannot make a stale handle alias a successor. Collection presence or handle
+equality alone never proves liveness.
+
 Owned locals release in reverse successful acquisition order on fallthrough,
 `return`, `break`, `continue`, and `try` propagation. A terminal process or
 machine trap does not promise that user cleanup code ran; runtime teardown must
@@ -908,9 +916,11 @@ than from one host scheduler.
 
 The concurrent hosted-service workload fixes task construction, derived context,
 explicit cancellation request, creation-order collection, runtime/provider
-failure separation, and no-replay restart behavior. GUI and later paper
-workloads may still refine library surfaces, but cannot add detached tasks or
-weaken these ownership and cancellation rules before source freeze.
+failure separation, and no-replay restart behavior. The retained-GUI workload
+confirms that background work copies an immutable snapshot and that only the
+owning path applies a revalidated result. Later paper workloads may still refine
+library surfaces, but cannot add detached tasks or weaken these ownership and
+cancellation rules before source freeze.
 
 ## Unsafe and foreign interfaces
 
@@ -1069,7 +1079,16 @@ This candidate becomes frozen Language 1.0 only after:
 15. the accepted explicit-generic, Copy-read, rank-borrow, immutable-arena,
     source-position, diagnostic-saturation, exact-byte, and phase-publication
     cases remain coherent across all mandatory workloads; and
-16. a source-freeze decision records the canonical document identities.
+16. the accepted checked-slice, strict-decoding, byte-decimal, opaque-context,
+    exact-stream-progress, and asynchronous-endpoint cases remain coherent
+    across all mandatory workloads; and
+17. the accepted task construction, derived-context, cancellation, child-result,
+    task/provider failure separation, suspension, and no-replay cases remain
+    coherent across all mandatory workloads; and
+18. the accepted arena replacement/removal, closed-event, Core/Hosted,
+    parent-only application, stable-tombstone, and exact-frame-publication cases
+    remain coherent across all mandatory workloads; and
+19. a source-freeze decision records the canonical document identities.
 
 Until then, examples in this suite are candidate edition-1 source and are not
 accepted by current tools.

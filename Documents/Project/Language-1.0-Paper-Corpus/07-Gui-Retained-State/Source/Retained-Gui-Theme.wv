@@ -1,0 +1,116 @@
+edition 1;
+module Retainedˉguiˉtheme;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉresult as Result;
+import Retainedˉguiˉpackage as Package;
+import Retainedˉguiˉtypes as Types;
+
+const THEME_BYTES: u64 = 36u64;
+
+fn Require(
+    Offset: u64,
+    Expected: u8,
+) -> Result.Result<unit, Types.Themeˉfailure> effects() {
+    let Observed = Bytes.At(Value: borrow Package.Theme, Index: Offset);
+    return if Observed == Expected {
+        Result.Result.Valid { Value: () }
+    } else {
+        Result.Result.Failure {
+            Error: Types.Themeˉfailure.Wrongˉmagic {
+                Byteˉoffset: Offset,
+                Observed: Observed,
+                Expected: Expected,
+            },
+        }
+    };
+}
+
+fn Requireˉseparator(
+    Offset: u64,
+) -> Result.Result<unit, Types.Themeˉfailure> effects() {
+    let Observed = Bytes.At(Value: borrow Package.Theme, Index: Offset);
+    return if Observed == 10u8 {
+        Result.Result.Valid { Value: () }
+    } else {
+        Result.Result.Failure {
+            Error: Types.Themeˉfailure.Wrongˉseparator {
+                Byteˉoffset: Offset,
+                Observed: Observed,
+            },
+        }
+    };
+}
+
+fn Hex(
+    Offset: u64,
+) -> Result.Result<u8, Types.Themeˉfailure> effects() {
+    let Value = Bytes.At(Value: borrow Package.Theme, Index: Offset);
+    if Value >= 48u8 && Value <= 57u8 {
+        return Result.Result.Valid { Value: Value - 48u8 };
+    }
+    if Value >= 97u8 && Value <= 102u8 {
+        return Result.Result.Valid { Value: Value - 87u8 };
+    }
+    return Result.Result.Failure {
+        Error: Types.Themeˉfailure.Invalidˉhex {
+            Byteˉoffset: Offset,
+            Observed: Value,
+        },
+    };
+}
+
+fn Pair(
+    Offset: u64,
+) -> Result.Result<u8, Types.Themeˉfailure> effects() {
+    let High = try Hex(Offset: Offset);
+    let Low = try Hex(Offset: Offset + 1u64);
+    return Result.Result.Valid { Value: High * 16u8 + Low };
+}
+
+fn Color(
+    Offset: u64,
+) -> Result.Result<Types.Color, Types.Themeˉfailure> effects() {
+    return Result.Result.Valid {
+        Value: Types.Color {
+            Red: try Pair(Offset: Offset),
+            Green: try Pair(Offset: Offset + 2u64),
+            Blue: try Pair(Offset: Offset + 4u64),
+            Alpha: try Pair(Offset: Offset + 6u64),
+        },
+    };
+}
+
+export fn Decode() -> Result.Result<Types.Theme, Types.Themeˉfailure> effects() {
+    let Length = Bytes.Length(Value: borrow Package.Theme);
+    if Length != THEME_BYTES {
+        return Result.Result.Failure {
+            Error: Types.Themeˉfailure.Wrongˉlength {
+                Observed: Length,
+                Expected: THEME_BYTES,
+            },
+        };
+    }
+    try Require(Offset: 0u64, Expected: 87u8);
+    try Require(Offset: 1u64, Expected: 86u8);
+    try Require(Offset: 2u64, Expected: 84u8);
+    try Require(Offset: 3u64, Expected: 72u8);
+    try Require(Offset: 4u64, Expected: 69u8);
+    try Require(Offset: 5u64, Expected: 77u8);
+    try Require(Offset: 6u64, Expected: 69u8);
+    try Require(Offset: 7u64, Expected: 49u8);
+    try Requireˉseparator(Offset: 8u64);
+    try Requireˉseparator(Offset: 17u64);
+    try Requireˉseparator(Offset: 26u64);
+    try Requireˉseparator(Offset: 35u64);
+    return Result.Result.Valid {
+        Value: Types.Theme {
+            Background: try Color(Offset: 9u64),
+            Foreground: try Color(Offset: 18u64),
+            Accent: try Color(Offset: 27u64),
+        },
+    };
+}

@@ -1,0 +1,225 @@
+edition 1;
+module Retainedˉguiˉrender;
+profile core;
+platform windows, linux, windvale;
+authority library;
+
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Retainedˉguiˉstate as State;
+import Retainedˉguiˉtypes as Types;
+
+fn Inside(
+    X: u32,
+    Y: u32,
+    Bounds: borrow Types.Rectangle,
+) -> bool effects() {
+    if X < Bounds.X || Y < Bounds.Y {
+        return false;
+    }
+    return X - Bounds.X < Bounds.Width && Y - Bounds.Y < Bounds.Height;
+}
+
+fn Appendˉcolor(
+    Builder: borrow mut Bytes.Bytesˉbuilder,
+    Value: borrow Types.Color,
+    Maximum: u64,
+) -> Result.Result<unit, Types.Frameˉfailure> effects() {
+    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Red) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: _ } {
+            return Result.Result.Failure {
+                Error: Types.Frameˉfailure.Byteˉlimit { Maximum: Maximum },
+            };
+        }
+    }
+    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Green) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: _ } {
+            return Result.Result.Failure {
+                Error: Types.Frameˉfailure.Byteˉlimit { Maximum: Maximum },
+            };
+        }
+    }
+    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Blue) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: _ } {
+            return Result.Result.Failure {
+                Error: Types.Frameˉfailure.Byteˉlimit { Maximum: Maximum },
+            };
+        }
+    }
+    match Bytes.Appendˉbyte(Builder: Builder, Value: Value.Alpha) {
+        case Result.Result.Valid { Value: () } { }
+        case Result.Result.Failure { Error: _ } {
+            return Result.Result.Failure {
+                Error: Types.Frameˉfailure.Byteˉlimit { Maximum: Maximum },
+            };
+        }
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Mapˉstate(
+    Value: Result.Result<Types.Widget, Types.Stateˉfailure>,
+) -> Result.Result<Types.Widget, Types.Frameˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Types.Frameˉfailure.State { Error: Error },
+            }
+        }
+    };
+}
+
+export fn Build(
+    Stateˉvalue: borrow Types.Retainedˉstate,
+    Theme: borrow Types.Theme,
+    Budget: Memory.Memoryˉbudget,
+    Limits: borrow Types.Limits,
+) -> Result.Result<Types.Pixelˉframe, Types.Frameˉfailure>
+    effects(memory.allocate) {
+    if Stateˉvalue.Surfaceˉwidth < 32u32
+        || Stateˉvalue.Surfaceˉheight < 32u32
+        || Stateˉvalue.Surfaceˉwidth > Limits.Maximumˉsurfaceˉwidth
+        || Stateˉvalue.Surfaceˉheight > Limits.Maximumˉsurfaceˉheight {
+        return Result.Result.Failure {
+            Error: Types.Frameˉfailure.State {
+                Error: Types.Stateˉfailure.Invalidˉsurface {
+                    Width: Stateˉvalue.Surfaceˉwidth,
+                    Height: Stateˉvalue.Surfaceˉheight,
+                    Minimumˉwidth: 32u32,
+                    Minimumˉheight: 32u32,
+                    Maximumˉwidth: Limits.Maximumˉsurfaceˉwidth,
+                    Maximumˉheight: Limits.Maximumˉsurfaceˉheight,
+                },
+            },
+        };
+    }
+    let Width = Numeric.Widenˉu32ˉtoˉu64(Stateˉvalue.Surfaceˉwidth);
+    let Height = Numeric.Widenˉu32ˉtoˉu64(Stateˉvalue.Surfaceˉheight);
+    let Pixels = Width * Height;
+    if Pixels > Limits.Maximumˉrenderˉwork {
+        return Result.Result.Failure {
+            Error: Types.Frameˉfailure.Workˉlimit {
+                Observed: Pixels,
+                Maximum: Limits.Maximumˉrenderˉwork,
+            },
+        };
+    }
+    if Pixels > 4611686018427387903u64 {
+        return Result.Result.Failure {
+            Error: Types.Frameˉfailure.Arithmeticˉoverflow {
+                Field: 1u32,
+            },
+        };
+    }
+    let Required = Pixels * 4u64;
+    if Required > Limits.Maximumˉframeˉbytes {
+        return Result.Result.Failure {
+            Error: Types.Frameˉfailure.Byteˉlimit {
+                Maximum: Limits.Maximumˉframeˉbytes,
+            },
+        };
+    }
+
+    let Counter = try Mapˉstate(
+        Value: State.Readˉwidget(
+            State: Stateˉvalue,
+            Handle: borrow Stateˉvalue.Handles.Counter,
+        ),
+    );
+    let Action = try Mapˉstate(
+        Value: State.Readˉwidget(
+            State: Stateˉvalue,
+            Handle: borrow Stateˉvalue.Handles.Action,
+        ),
+    );
+    let Status = match Stateˉvalue.Handles.Status {
+        case Option.Option.Absent { Option.Option.Absent }
+        case Option.Option.Present { Value: Handle } {
+            Option.Option.Present {
+                Value: try Mapˉstate(
+                    Value: State.Readˉwidget(
+                        State: Stateˉvalue,
+                        Handle: borrow Handle,
+                    ),
+                ),
+            }
+        }
+    };
+    var Builder = match Bytes.Constructˉreserved(
+        Budget: Budget,
+        Maximumˉoutputˉbytes: Required,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            return Result.Result.Failure {
+                Error: Types.Frameˉfailure.Allocation { Error: Error },
+            };
+        }
+    };
+
+    var Y = 0u32;
+    while Y < Stateˉvalue.Surfaceˉheight {
+        var X = 0u32;
+        while X < Stateˉvalue.Surfaceˉwidth {
+            let Color = if Action.Visible && Inside(
+                X: X,
+                Y: Y,
+                Bounds: borrow Action.Bounds,
+            ) {
+                Theme.Accent
+            } else if Counter.Visible && Inside(
+                X: X,
+                Y: Y,
+                Bounds: borrow Counter.Bounds,
+            ) {
+                if Stateˉvalue.Counter % 2u64 == 0u64 {
+                    Theme.Foreground
+                } else {
+                    Theme.Accent
+                }
+            } else {
+                match Status {
+                    case Option.Option.Present { Value: Statusˉwidget } {
+                        if Statusˉwidget.Visible && Inside(
+                            X: X,
+                            Y: Y,
+                            Bounds: borrow Statusˉwidget.Bounds,
+                        ) {
+                            Theme.Foreground
+                        } else {
+                            Theme.Background
+                        }
+                    }
+                    case Option.Option.Absent { Theme.Background }
+                }
+            };
+            try Appendˉcolor(
+                Builder: borrow mut Builder,
+                Value: borrow Color,
+                Maximum: Required,
+            );
+            X = X + 1u32;
+        }
+        Y = Y + 1u32;
+    }
+
+    return Result.Result.Valid {
+        Value: Types.Pixelˉframe {
+            Width: Stateˉvalue.Surfaceˉwidth,
+            Height: Stateˉvalue.Surfaceˉheight,
+            Stride: Width * 4u64,
+            Pixels: Bytes.Freeze(Builder: Builder),
+            Stateˉeventˉsequence: Stateˉvalue.Eventˉsequence,
+            Layoutˉgeneration: Stateˉvalue.Layoutˉgeneration,
+        },
+    };
+}

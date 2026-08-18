@@ -51,6 +51,17 @@ function Test-LanguagePaperSourcePath {
         '[0-9]+-[^/]+/Source/[^/]+\.wv$')
 }
 
+function Test-LanguagePaperPackageDataPath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    return $Path -match (
+        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+        '[0-9]+-[^/]+/Package-Data/[^/]+$')
+}
+
 $Paths = @(
     $ChangedPath |
         ForEach-Object {
@@ -80,6 +91,7 @@ foreach ($Path in $Paths) {
 
     if (
         (Test-LanguagePaperSourcePath $Path) -or
+        (Test-LanguagePaperPackageDataPath $Path) -or
         (
             !$Path.StartsWith('Specifications/', [StringComparison]::Ordinal) -and
             (

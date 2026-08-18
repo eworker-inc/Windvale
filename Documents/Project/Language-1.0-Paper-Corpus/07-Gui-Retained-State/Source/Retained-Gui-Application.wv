@@ -1,0 +1,729 @@
+edition 1;
+module Retainedˉguiˉapplication;
+profile hosted;
+platform windows, linux, windvale;
+authority application;
+requires capability display.surface version 1;
+requires capability input.event_batch version 1;
+requires capability timer.tick version 1;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉnumeric as Numeric;
+import Foundationˉoperation as Operation;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+import Platformˉgui as Gui;
+import Retainedˉguiˉhostˉtypes as Host;
+import Retainedˉguiˉlayout as Layout;
+import Retainedˉguiˉrender as Render;
+import Retainedˉguiˉstate as State;
+import Retainedˉguiˉtheme as Theme;
+import Retainedˉguiˉtypes as Types;
+
+const INITIAL_WIDTH: u32 = 48u32;
+const INITIAL_HEIGHT: u32 = 40u32;
+const MAXIMUM_SURFACE_DIMENSION: u32 = 256u32;
+const MAXIMUM_FRAME_BYTES: u64 = 262144u64;
+const MAXIMUM_EVENTS_PER_BATCH: u64 = 64u64;
+const MAXIMUM_EVENT_BATCHES: u64 = 16u64;
+const MAXIMUM_STATE_BYTES: u64 = 65536u64;
+const MAXIMUM_MAP_BYTES: u64 = 32768u64;
+const MAXIMUM_TASK_BYTES: u64 = 65536u64;
+
+fn Invalid(
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64,
+) -> Result.Result<unit, Host.Applicationˉfailure> effects() {
+    return Result.Result.Failure {
+        Error: Host.Applicationˉfailure.Invalidˉconfiguration {
+            Field: Field,
+            Observed: Observed,
+            Minimum: Minimum,
+            Maximum: Maximum,
+        },
+    };
+}
+
+fn Validate(
+    Limits: borrow Host.Limits,
+) -> Result.Result<unit, Host.Applicationˉfailure> effects() {
+    if Limits.Core.Maximumˉsurfaceˉwidth < 64u32
+        || Limits.Core.Maximumˉsurfaceˉwidth > MAXIMUM_SURFACE_DIMENSION {
+        return Invalid(
+            Field: 1u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Core.Maximumˉsurfaceˉwidth,
+            ),
+            Minimum: 64u64,
+            Maximum: Numeric.Widenˉu32ˉtoˉu64(
+                Value: MAXIMUM_SURFACE_DIMENSION,
+            ),
+        );
+    }
+    if Limits.Core.Maximumˉsurfaceˉheight < 48u32
+        || Limits.Core.Maximumˉsurfaceˉheight > MAXIMUM_SURFACE_DIMENSION {
+        return Invalid(
+            Field: 2u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Core.Maximumˉsurfaceˉheight,
+            ),
+            Minimum: 48u64,
+            Maximum: Numeric.Widenˉu32ˉtoˉu64(
+                Value: MAXIMUM_SURFACE_DIMENSION,
+            ),
+        );
+    }
+    if Limits.Core.Maximumˉwidgets < 4u64
+        || Limits.Core.Maximumˉwidgets > 64u64 {
+        return Invalid(
+            Field: 3u32,
+            Observed: Limits.Core.Maximumˉwidgets,
+            Minimum: 4u64,
+            Maximum: 64u64,
+        );
+    }
+    if Limits.Core.Maximumˉeventsˉperˉbatch == 0u64
+        || Limits.Core.Maximumˉeventsˉperˉbatch > MAXIMUM_EVENTS_PER_BATCH {
+        return Invalid(
+            Field: 4u32,
+            Observed: Limits.Core.Maximumˉeventsˉperˉbatch,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_EVENTS_PER_BATCH,
+        );
+    }
+    if Limits.Core.Maximumˉeventˉbatches == 0u64
+        || Limits.Core.Maximumˉeventˉbatches > MAXIMUM_EVENT_BATCHES {
+        return Invalid(
+            Field: 5u32,
+            Observed: Limits.Core.Maximumˉeventˉbatches,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_EVENT_BATCHES,
+        );
+    }
+    if Limits.Core.Maximumˉframeˉbytes < 16384u64
+        || Limits.Core.Maximumˉframeˉbytes > MAXIMUM_FRAME_BYTES {
+        return Invalid(
+            Field: 6u32,
+            Observed: Limits.Core.Maximumˉframeˉbytes,
+            Minimum: 16384u64,
+            Maximum: MAXIMUM_FRAME_BYTES,
+        );
+    }
+    if Limits.Core.Maximumˉrenderˉwork < 4096u64
+        || Limits.Core.Maximumˉrenderˉwork > 65536u64 {
+        return Invalid(
+            Field: 7u32,
+            Observed: Limits.Core.Maximumˉrenderˉwork,
+            Minimum: 4096u64,
+            Maximum: 65536u64,
+        );
+    }
+    if Limits.Core.Stateˉbytes == 0u64
+        || Limits.Core.Stateˉbytes > MAXIMUM_STATE_BYTES {
+        return Invalid(
+            Field: 8u32,
+            Observed: Limits.Core.Stateˉbytes,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_STATE_BYTES,
+        );
+    }
+    if Limits.Core.Identityˉmapˉbytes == 0u64
+        || Limits.Core.Identityˉmapˉbytes > MAXIMUM_MAP_BYTES {
+        return Invalid(
+            Field: 9u32,
+            Observed: Limits.Core.Identityˉmapˉbytes,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_MAP_BYTES,
+        );
+    }
+    if Limits.Core.Frameˉbytes < Limits.Core.Maximumˉframeˉbytes
+        || Limits.Core.Frameˉbytes > MAXIMUM_FRAME_BYTES {
+        return Invalid(
+            Field: 10u32,
+            Observed: Limits.Core.Frameˉbytes,
+            Minimum: Limits.Core.Maximumˉframeˉbytes,
+            Maximum: MAXIMUM_FRAME_BYTES,
+        );
+    }
+    if Limits.Taskˉbytes == 0u64 || Limits.Taskˉbytes > MAXIMUM_TASK_BYTES {
+        return Invalid(
+            Field: 11u32,
+            Observed: Limits.Taskˉbytes,
+            Minimum: 1u64,
+            Maximum: MAXIMUM_TASK_BYTES,
+        );
+    }
+    if Limits.Tasks.Maximumˉchildren == 0u32
+        || Limits.Tasks.Maximumˉchildren > 8u32 {
+        return Invalid(
+            Field: 12u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉchildren,
+            ),
+            Minimum: 1u64,
+            Maximum: 8u64,
+        );
+    }
+    if Limits.Tasks.Maximumˉrunnable == 0u32
+        || Limits.Tasks.Maximumˉrunnable > Limits.Tasks.Maximumˉchildren {
+        return Invalid(
+            Field: 13u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉrunnable,
+            ),
+            Minimum: 1u64,
+            Maximum: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉchildren,
+            ),
+        );
+    }
+    if Limits.Tasks.Maximumˉcompleted == 0u32
+        || Limits.Tasks.Maximumˉcompleted > Limits.Tasks.Maximumˉchildren {
+        return Invalid(
+            Field: 14u32,
+            Observed: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉcompleted,
+            ),
+            Minimum: 1u64,
+            Maximum: Numeric.Widenˉu32ˉtoˉu64(
+                Value: Limits.Tasks.Maximumˉchildren,
+            ),
+        );
+    }
+    if Limits.Tasks.Maximumˉretainedˉbytes == 0u64
+        || Limits.Tasks.Maximumˉretainedˉbytes > Limits.Taskˉbytes {
+        return Invalid(
+            Field: 15u32,
+            Observed: Limits.Tasks.Maximumˉretainedˉbytes,
+            Minimum: 1u64,
+            Maximum: Limits.Taskˉbytes,
+        );
+    }
+    return Result.Result.Valid { Value: () };
+}
+
+fn Split(
+    Root: borrow mut Memory.Memoryˉbudget,
+    Maximumˉbytes: u64,
+) -> Result.Result<Memory.Memoryˉbudget, Host.Applicationˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Memory.Split(
+        Parent: Root,
+        Maximumˉbytes: Maximumˉbytes,
+        Maximumˉchildren: 1u32,
+    ) {
+        case Result.Result.Valid { Value: Value } {
+            Result.Result.Valid { Value: Value }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Allocation { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉtheme(
+    Value: Result.Result<Types.Theme, Types.Themeˉfailure>,
+) -> Result.Result<Types.Theme, Host.Applicationˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Themeˉvalue } {
+            Result.Result.Valid { Value: Themeˉvalue }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Theme { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉstate<T>(
+    Value: Result.Result<T, Types.Stateˉfailure>,
+) -> Result.Result<T, Host.Applicationˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.State { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉframe(
+    Value: Result.Result<Types.Pixelˉframe, Types.Frameˉfailure>,
+) -> Result.Result<Types.Pixelˉframe, Host.Applicationˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Frame } {
+            Result.Result.Valid { Value: Frame }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Frame { Error: Error },
+            }
+        }
+    };
+}
+
+fn Convertˉproviderˉreason(
+    Value: Gui.Failureˉreason,
+) -> Host.Providerˉreason effects() {
+    return match Value {
+        case Gui.Failureˉreason.Rejected { Host.Providerˉreason.Rejected }
+        case Gui.Failureˉreason.Cancelled { Host.Providerˉreason.Cancelled }
+        case Gui.Failureˉreason.Deadlineˉreached {
+            Host.Providerˉreason.Deadlineˉreached
+        }
+        case Gui.Failureˉreason.Revoked { Host.Providerˉreason.Revoked }
+        case Gui.Failureˉreason.Lost { Host.Providerˉreason.Lost }
+        case Gui.Failureˉreason.Restarted { Host.Providerˉreason.Restarted }
+        case Gui.Failureˉreason.Invalidˉresponse {
+            Host.Providerˉreason.Invalidˉresponse
+        }
+    };
+}
+
+fn Convertˉprovider(
+    Domain: Host.Providerˉdomain,
+    Value: Gui.Failure,
+) -> Host.Providerˉfailure effects() {
+    return Host.Providerˉfailure {
+        Domain: Domain,
+        Reason: Convertˉproviderˉreason(Value: Value.Reason),
+        Expectedˉgeneration: Value.Expectedˉgeneration,
+        Observedˉgeneration: Value.Observedˉgeneration,
+    };
+}
+
+fn Mapˉprovider<T>(
+    Domain: Host.Providerˉdomain,
+    Value: Result.Result<T, Gui.Failure>,
+) -> Result.Result<T, Host.Applicationˉfailure> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Accepted } {
+            Result.Result.Valid { Value: Accepted }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Provider {
+                    Error: Convertˉprovider(Domain: Domain, Value: Error),
+                },
+            }
+        }
+    };
+}
+
+async fn Publish(
+    Endpoint: Gui.Surfaceˉendpoint,
+    Context: borrow Operation.Operationˉcontext,
+    Frame: Types.Pixelˉframe,
+) -> Result.Result<Host.Publishˉreceipt, Host.Applicationˉfailure>
+    effects(display.surface, resource.release, task.suspend) {
+    return match await display.surface.Publish(
+        Endpoint: Endpoint,
+        Context: Context,
+        Frame: Frame,
+    ) {
+        case Result.Result.Valid { Value: Receipt } {
+            Result.Result.Valid {
+                Value: Host.Publishˉreceipt {
+                    Surfaceˉgeneration: Receipt.Surfaceˉgeneration,
+                    Frameˉsequence: Receipt.Frameˉsequence,
+                    Acceptedˉbytes: Receipt.Acceptedˉbytes,
+                },
+            }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            match Failure {
+                case Gui.Publishˉfailure.Rejected {
+                    Error: Error,
+                    Frame: _,
+                } {
+                    Result.Result.Failure {
+                        Error: Host.Applicationˉfailure.Publishˉrejected {
+                            Error: Convertˉprovider(
+                                Domain: Host.Providerˉdomain.Surface,
+                                Value: Error,
+                            ),
+                        },
+                    }
+                }
+                case Gui.Publishˉfailure.Indeterminate { Error: Error } {
+                    Result.Result.Failure {
+                        Error: Host.Applicationˉfailure.Publishˉindeterminate {
+                            Error: Convertˉprovider(
+                                Domain: Host.Providerˉdomain.Surface,
+                                Value: Error,
+                            ),
+                        },
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Task.Taskˉlimits,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<Task.Taskˉscope, Host.Applicationˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return match Task.Construct(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: Parentˉcontext,
+    ) {
+        case Result.Result.Valid { Value: Scope } {
+            Result.Result.Valid { Value: Scope }
+        }
+        case Result.Result.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Taskˉscope { Error: Error },
+            }
+        }
+    };
+}
+
+fn Mapˉspawn<W>(
+    Value: Result.Result<
+        Task.Task<Types.Layoutˉresult, Types.Stateˉfailure>,
+        Task.Spawnˉfailure<W>
+    >,
+) -> Result.Result<
+    Task.Task<Types.Layoutˉresult, Types.Stateˉfailure>,
+    Host.Applicationˉfailure
+> effects() {
+    return match Value {
+        case Result.Result.Valid { Value: Handle } {
+            Result.Result.Valid { Value: Handle }
+        }
+        case Result.Result.Failure { Error: Failure } {
+            let Reason = match Failure {
+                case Task.Spawnˉfailure.Scopeˉclosing { Work: _ } {
+                    Host.Spawnˉreason.Scopeˉclosing
+                }
+                case Task.Spawnˉfailure.Taskˉlimit { Work: _ } {
+                    Host.Spawnˉreason.Taskˉlimit
+                }
+                case Task.Spawnˉfailure.Queueˉlimit { Work: _ } {
+                    Host.Spawnˉreason.Queueˉlimit
+                }
+                case Task.Spawnˉfailure.Memoryˉfailure {
+                    Error: _,
+                    Work: _,
+                } {
+                    Host.Spawnˉreason.Memoryˉfailure
+                }
+            };
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Spawn { Reason: Reason },
+            }
+        }
+    };
+}
+
+fn Applyˉbackgroundˉoutcome(
+    Stateˉvalue: borrow mut Types.Retainedˉstate,
+    Outcome: Task.Taskˉoutcome<
+        Types.Layoutˉresult,
+        Types.Stateˉfailure
+    >,
+) -> Result.Result<Types.Layoutˉapplication, Host.Applicationˉfailure>
+    effects() {
+    return match Outcome {
+        case Task.Taskˉoutcome.Valid { Value: Value } {
+            Mapˉstate(
+                Value: State.Applyˉlayout(State: Stateˉvalue, Layout: Value),
+            )
+        }
+        case Task.Taskˉoutcome.Failure { Error: Error } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.State { Error: Error },
+            }
+        }
+        case Task.Taskˉoutcome.Cancelled {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Backgroundˉcancelled,
+            }
+        }
+        case Task.Taskˉoutcome.Deadlineˉreached {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Backgroundˉdeadline,
+            }
+        }
+        case Task.Taskˉoutcome.Runtimeˉlost {
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+        } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Backgroundˉruntimeˉlost {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                },
+            }
+        }
+        case Task.Taskˉoutcome.Runtimeˉrestarted {
+            Expectedˉgeneration: Expected,
+            Observedˉgeneration: Observed,
+        } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Backgroundˉruntimeˉrestarted {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                },
+            }
+        }
+        case Task.Taskˉoutcome.Trapped { Identity: Identity } {
+            Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Backgroundˉtrapped {
+                    Identity: Identity,
+                },
+            }
+        }
+    };
+}
+
+export async fn Run(
+    Surface: Gui.Surfaceˉendpoint,
+    Input: Gui.Inputˉendpoint,
+    Timer: Gui.Timerˉendpoint,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+    Limits: Host.Limits,
+    Budget: Memory.Memoryˉbudget,
+) -> Result.Result<Host.Applicationˉreport, Host.Applicationˉfailure>
+    effects(
+        display.surface,
+        input.event_batch,
+        memory.allocate,
+        resource.acquire,
+        resource.release,
+        task.spawn,
+        task.suspend,
+        timer.tick,
+    ) {
+    try Validate(Limits: borrow Limits);
+    let Coreˉlimits = Limits.Core;
+    let Themeˉvalue = try Mapˉtheme(Value: Theme.Decode());
+    var Root = Budget;
+    let Stateˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Coreˉlimits.Stateˉbytes,
+    );
+    let Mapˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Coreˉlimits.Identityˉmapˉbytes,
+    );
+    let Initialˉframeˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Coreˉlimits.Frameˉbytes,
+    );
+    let Finalˉframeˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Coreˉlimits.Frameˉbytes,
+    );
+    let Taskˉbudget = try Split(
+        Root: borrow mut Root,
+        Maximumˉbytes: Limits.Taskˉbytes,
+    );
+    var Stateˉvalue = try Mapˉstate(
+        Value: State.Construct(
+            Arenaˉbudget: Stateˉbudget,
+            Mapˉbudget: Mapˉbudget,
+            Width: INITIAL_WIDTH,
+            Height: INITIAL_HEIGHT,
+            Limits: borrow Coreˉlimits,
+        ),
+    );
+    let Initialˉlayout = try Mapˉstate(
+        Value: Layout.Compute(
+            Snapshot: State.Snapshot(State: borrow Stateˉvalue),
+            Maximumˉwidth: Coreˉlimits.Maximumˉsurfaceˉwidth,
+            Maximumˉheight: Coreˉlimits.Maximumˉsurfaceˉheight,
+        ),
+    );
+    let _ = try Mapˉstate(
+        Value: State.Applyˉlayout(
+            State: borrow mut Stateˉvalue,
+            Layout: Initialˉlayout,
+        ),
+    );
+    let Initialˉframe = try Mapˉframe(
+        Value: Render.Build(
+            Stateˉvalue: borrow Stateˉvalue,
+            Theme: borrow Themeˉvalue,
+            Budget: Initialˉframeˉbudget,
+            Limits: borrow Coreˉlimits,
+        ),
+    );
+    let Initialˉpublish = try await Publish(
+        Endpoint: Surface,
+        Context: Parentˉcontext,
+        Frame: Initialˉframe,
+    );
+
+    task scope Scope = try Constructˉscope(
+        Budget: Taskˉbudget,
+        Limits: Limits.Tasks,
+        Parentˉcontext: Parentˉcontext,
+    ) policy cancel_join {
+        let Context = Task.Operationˉcontext(Scope: borrow Scope);
+        let Snapshot = State.Snapshot(State: borrow Stateˉvalue);
+        let Maximumˉwidth = Coreˉlimits.Maximumˉsurfaceˉwidth;
+        let Maximumˉheight = Coreˉlimits.Maximumˉsurfaceˉheight;
+        let Work = async fn [
+            copy Snapshot,
+            copy Maximumˉwidth,
+            copy Maximumˉheight,
+        ]() -> Result.Result<Types.Layoutˉresult, Types.Stateˉfailure>
+            effects() {
+            return Layout.Compute(
+                Snapshot: Snapshot,
+                Maximumˉwidth: Maximumˉwidth,
+                Maximumˉheight: Maximumˉheight,
+            );
+        };
+        let Handle = try Mapˉspawn(
+            Value: Task.Spawn(Scope: borrow mut Scope, Work: Work),
+        );
+
+        var Processedˉevents = 0u64;
+        var Batchˉcount = 0u64;
+        var Expectedˉbatchˉsequence = 1u64;
+        var Expectedˉtimerˉsequence = 1u64;
+        var Inputˉgeneration = 0u64;
+        var Timerˉgeneration = 0u64;
+        var Timerˉsequence = 0u64;
+        while !Stateˉvalue.Closed
+            && Batchˉcount < Coreˉlimits.Maximumˉeventˉbatches {
+            let Tick = try Mapˉprovider(
+                Domain: Host.Providerˉdomain.Timer,
+                Value: await timer.tick.Next(
+                    Endpoint: Timer,
+                    Context: borrow Context,
+                    Expectedˉsequence: Expectedˉtimerˉsequence,
+                ),
+            );
+            Timerˉgeneration = Tick.Providerˉgeneration;
+            Timerˉsequence = Tick.Sequence;
+            Expectedˉtimerˉsequence = Expectedˉtimerˉsequence + 1u64;
+
+            let Batch = try Mapˉprovider(
+                Domain: Host.Providerˉdomain.Input,
+                Value: await input.event_batch.Next(
+                    Endpoint: Input,
+                    Context: borrow Context,
+                    Maximumˉevents: Coreˉlimits.Maximumˉeventsˉperˉbatch,
+                    Expectedˉsequence: Expectedˉbatchˉsequence,
+                ),
+            );
+            Inputˉgeneration = Batch.Providerˉgeneration;
+            if Batch.Sequence != Expectedˉbatchˉsequence {
+                return Result.Result.Failure {
+                    Error: Host.Applicationˉfailure.Eventˉbatchˉsequence {
+                        Expected: Expectedˉbatchˉsequence,
+                        Observed: Batch.Sequence,
+                    },
+                };
+            }
+            let Count = Collections.Sequenceˉlength(
+                Value: borrow Batch.Events,
+            );
+            if Count > Coreˉlimits.Maximumˉeventsˉperˉbatch {
+                return Result.Result.Failure {
+                    Error: Host.Applicationˉfailure.Eventˉbatchˉlimit {
+                        Observed: Count,
+                        Maximum: Coreˉlimits.Maximumˉeventsˉperˉbatch,
+                    },
+                };
+            }
+            var Index = 0u64;
+            while Index < Count {
+                if Stateˉvalue.Closed {
+                    return Result.Result.Failure {
+                        Error: Host.Applicationˉfailure.Eventˉafterˉclose {
+                            Index: Index,
+                        },
+                    };
+                }
+                let Event = Collections.Sequenceˉat(
+                    Value: borrow Batch.Events,
+                    Index: Index,
+                );
+                let _ = try Mapˉstate(
+                    Value: State.Applyˉevent(
+                        State: borrow mut Stateˉvalue,
+                        Event: Event,
+                        Limits: borrow Coreˉlimits,
+                    ),
+                );
+                Processedˉevents = Processedˉevents + 1u64;
+                Index = Index + 1u64;
+            }
+            Batchˉcount = Batchˉcount + 1u64;
+            Expectedˉbatchˉsequence = Expectedˉbatchˉsequence + 1u64;
+        }
+        if !Stateˉvalue.Closed {
+            return Result.Result.Failure {
+                Error: Host.Applicationˉfailure.Eventˉbatchˉlimit {
+                    Observed: Batchˉcount,
+                    Maximum: Coreˉlimits.Maximumˉeventˉbatches,
+                },
+            };
+        }
+
+        let Backgroundˉlayout = try Applyˉbackgroundˉoutcome(
+            Stateˉvalue: borrow mut Stateˉvalue,
+            Outcome: await Task.Await(Handle: Handle),
+        );
+        let Freshˉlayout = try Mapˉstate(
+            Value: Layout.Compute(
+                Snapshot: State.Snapshot(State: borrow Stateˉvalue),
+                Maximumˉwidth: Coreˉlimits.Maximumˉsurfaceˉwidth,
+                Maximumˉheight: Coreˉlimits.Maximumˉsurfaceˉheight,
+            ),
+        );
+        let Finalˉlayout = try Mapˉstate(
+            Value: State.Applyˉlayout(
+                State: borrow mut Stateˉvalue,
+                Layout: Freshˉlayout,
+            ),
+        );
+        let Finalˉframe = try Mapˉframe(
+            Value: Render.Build(
+                Stateˉvalue: borrow Stateˉvalue,
+                Theme: borrow Themeˉvalue,
+                Budget: Finalˉframeˉbudget,
+                Limits: borrow Coreˉlimits,
+            ),
+        );
+        let Finalˉpublish = try await Publish(
+            Endpoint: Surface,
+            Context: borrow Context,
+            Frame: Finalˉframe,
+        );
+        return Result.Result.Valid {
+            Value: Host.Applicationˉreport {
+                Initialˉpublish: Initialˉpublish,
+                Finalˉpublish: Option.Option.Present {
+                    Value: Finalˉpublish,
+                },
+                Processedˉevents: Processedˉevents,
+                Counter: Stateˉvalue.Counter,
+                Backgroundˉlayout: Backgroundˉlayout,
+                Finalˉlayout: Finalˉlayout,
+                Closed: Stateˉvalue.Closed,
+                Inputˉgeneration: Inputˉgeneration,
+                Timerˉgeneration: Timerˉgeneration,
+                Timerˉsequence: Timerˉsequence,
+            },
+        };
+    }
+}

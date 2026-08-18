@@ -932,6 +932,14 @@ function Test-LanguagePaperSourcePath {
         '[0-9]+-[^/]+/Source/[^/]+\.wv$')
 }
 
+function Test-LanguagePaperPackageDataPath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    return $Path -match (
+        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+        '[0-9]+-[^/]+/Package-Data/[^/]+$')
+}
+
 function Require-Full-Database-Storage {
     $script:DatabaseStorageDevelopmentEligible = $false
     Add-Suite 'database-storage'
@@ -1357,6 +1365,7 @@ foreach ($Path in $Paths) {
     )
     if (
         (Test-LanguagePaperSourcePath $Path) -or
+        (Test-LanguagePaperPackageDataPath $Path) -or
         $Path.StartsWith('Tools/Editors/', [StringComparison]::Ordinal) -or
         (
             $Path -ne 'LICENSE.md' -and
