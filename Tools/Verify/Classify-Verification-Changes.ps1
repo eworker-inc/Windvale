@@ -59,19 +59,24 @@ function Test-LanguagePaperSourcePath {
     )
 
     return $Path -match (
-        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+        '^Documents/Project/Language-1\.0-(?:Paper-Corpus|Localization-Workloads)/' +
         '[0-9]+-[^/]+/Source/[^/]+\.wv$')
 }
 
-function Test-LanguagePaperPackageDataPath {
+function Test-LanguagePaperDataPath {
     param(
         [Parameter(Mandatory)]
         [string]$Path
     )
 
-    return $Path -match (
-        '^Documents/Project/Language-1\.0-Paper-Corpus/' +
-        '[0-9]+-[^/]+/Package-Data/[^/]+$')
+    return (
+        $Path -match (
+            '^Documents/Project/Language-1\.0-Paper-Corpus/' +
+            '[0-9]+-[^/]+/Package-Data/[^/]+$') -or
+        $Path -match (
+            '^Documents/Project/Language-1\.0-Localization-Workloads/' +
+            '[0-9]+-[^/]+/Reference-Artifacts/[^/]+$')
+    )
 }
 
 function Test-LightweightPath {
@@ -89,7 +94,7 @@ function Test-LightweightPath {
     }
 
     if ((Test-LanguagePaperSourcePath $Path) -or
-        (Test-LanguagePaperPackageDataPath $Path)) {
+        (Test-LanguagePaperDataPath $Path)) {
         return $true
     }
 

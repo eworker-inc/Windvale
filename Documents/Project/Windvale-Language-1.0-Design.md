@@ -35,6 +35,9 @@
 > vocabularies, and Unicode project identifiers for a replacement candidate, as
 > detailed by the
 > [working localized-source specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
+> Its first paper workload proposes exact source-profile artifact formats and a
+> Unicode 17.0.0 profile; those candidates remain under review and do not
+> authorize implementation.
 > This document remains design rationale: it does not add source syntax, change
 > Windvale Seed, select a new WVB version, or claim implementation on any target.
 > The currently implemented language remains

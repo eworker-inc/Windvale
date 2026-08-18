@@ -1,0 +1,14 @@
+#!wv/1 en@1
+module Admissionˉtest;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import Foundationˉoption as Selected;
+
+export fn Choose(Flag: bool) -> Selected.Option<bool> effects() {
+    if Flag {
+        return Selected.Option.Present { Value: true };
+    }
+    return Selected.Option.Absent;
+}

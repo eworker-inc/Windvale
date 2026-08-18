@@ -99,13 +99,16 @@ not change.
 | Numeric and accelerator readiness | Workloads 8 and 11 cover strict float behavior, explicit conversion policy, bit-identical parallel equivalence, quantized storage, and the library/target/provider split. | Passed on paper |
 | Compiler/library/runtime/tool ownership | Migration responsibility matrix and every bundle's implementation-responsibility document. | Preserved evidence; replacement reconciliation required |
 | Canonical identities | Candidate manifest and eleven Foundation module hashes. | Historical identity preserved; replacement identity required |
-| Localized source | [Option C working design](Windvale-Semantic-Source-Views-And-Localization.md) and [working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md): universal explicit source descriptor, exact composite profiles and keyword lexicons, public-interface source vocabularies, Unicode project identifiers, security, tooling, conversion, equivalence, and bounded-performance workloads. | Reopened; replacement evidence required |
+| Localized source | [Option C working design](Windvale-Semantic-Source-Views-And-Localization.md), [working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md), and [Workload 1 packet](Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md): universal descriptor, seven exact candidate artifact formats, Unicode 17.0.0 profile, 25 accepted and 43 rejected admission cases, and canonical/synthetic-Unicode reference chains. | Reopened; Workload 1 owner review and Workloads 2–5 required |
 | Current implementation conformance | Deliberately deferred to migration; Seed remains the implemented language. | Not claimed |
 
 The pre-localization source-freeze requirements that mention accepted, boundary,
 malformed, and rejected cases are satisfied as paper contracts: the input,
 expected result, failure owner/order, and bound are fixed. The new localized
-source, source-vocabulary, and Unicode requirements remain open. Migration must
+source, source-vocabulary, and Unicode requirements now have complete proposed
+Workload 1 admission evidence, but owner acceptance and the remaining native,
+tooling, multilingual-security, shipment/cache, cross-host, and performance
+evidence remain open. Migration must
 convert both sets into executable
 parser, semantic, Foundation, editor, formatter, cross-host, and target tests
 before implementation conformance is claimed.

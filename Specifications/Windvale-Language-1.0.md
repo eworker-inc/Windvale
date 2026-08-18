@@ -58,6 +58,7 @@ has one owner for each kind of rule:
 | Static and dynamic source semantics, profiles, effects, ownership, evaluation, and conformance | This document |
 | Tokens, literal spelling, precedence, and parsing | [Language 1.0 grammar](Windvale-Language-1.0-Grammar.md) and its [machine projection](Windvale-Language-1.0.ebnf) |
 | Source lexicons, localized public API source labels, Unicode source identifiers, and localization-specific conformance | [Localized-source and source-vocabulary addendum](Windvale-Language-1.0-Localized-Source.md) |
+| Exact source-profile component bytes, bounds, hashes, and admission order | [Source-profile artifact formats](Windvale-Language-1.0-Source-Profile-Formats.md) |
 | Required standard variants, protocols, collections, builders, budgets, and failure types | [Language 1.0 Foundation](Windvale-Language-1.0-Foundation.md) and its [signature registry](Windvale-Language-1.0-Foundation-Registry.md) |
 | Design motivation and rejected alternatives | [Language 1.0 design](../Documents/Project/Windvale-Language-1.0-Design.md) |
 | Seed transition order and compatibility boundary | [Seed-to-1.0 migration](../Documents/Project/Windvale-Language-1.0-Migration.md) |

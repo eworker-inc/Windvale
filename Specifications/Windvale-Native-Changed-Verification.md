@@ -33,12 +33,20 @@ unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
 Candidate `.wv` listings beneath
-`Documents/Project/Language-1.0-Paper-Corpus/<workload>/Source/` are design
-evidence rather than inputs to the implemented Seed compiler. They receive the
-same lightweight checks as their surrounding paper documents and never select
-an implemented-language owner or an editor grammar check. This exception is
-limited to that numbered workload tree; a `.wv` file elsewhere must retain its
-normal implemented-source ownership or fail closed as an uncovered boundary.
+`Documents/Project/Language-1.0-Paper-Corpus/<workload>/Source/` and
+`Documents/Project/Language-1.0-Localization-Workloads/<workload>/Source/` are
+design evidence rather than inputs to the implemented Seed compiler. They
+receive the same lightweight checks as their surrounding paper documents and
+never select an implemented-language owner or an editor grammar check. This
+exception is limited to those numbered workload trees; a `.wv` file elsewhere
+must retain its normal implemented-source ownership or fail closed as an
+uncovered boundary.
+
+Exact files under a numbered localization workload's `Reference-Artifacts/`
+directory are likewise paper inputs, not currently implemented package or
+compiler formats. They receive lightweight integrity review until a source
+freeze assigns executable parsers and focused verification owners. The exception
+does not apply to the same extensions elsewhere.
 
 Unknown input must never select every owner. The complete coordinator is
 reserved for the final grouped gate, not used as changed-file fallback.

@@ -8,6 +8,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Language 1.0 lexical and grammar candidate](Windvale-Language-1.0-Grammar.md)
 - [Language 1.0 machine grammar candidate](Windvale-Language-1.0.ebnf)
 - [Language 1.0 localized-source and source-vocabulary working addendum](Windvale-Language-1.0-Localized-Source.md)
+- [Language 1.0 source-profile artifact format candidate](Windvale-Language-1.0-Source-Profile-Formats.md)
 - [Language 1.0 Foundation candidate](Windvale-Language-1.0-Foundation.md)
 - [Language 1.0 Foundation signature registry candidate](Windvale-Language-1.0-Foundation-Registry.md)
 - [Seed language](Seed-Language.md)

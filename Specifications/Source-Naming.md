@@ -21,8 +21,10 @@ modifier letter macron `ˉ` (U+02C9):
 Identifiers are case-sensitive. U+02C9 is the only non-ASCII character admitted by the Seed identifier grammar. Visually similar characters such as `¯` U+00AF, `-` U+002D, and `‐` U+2010 are not aliases and are rejected where an identifier is required.
 
 The working Language 1.0 form preserves that entire ASCII subset and admits
-normalized Unicode identifier segments using exact edition-pinned Unicode
-tables. U+02C9 remains the only semantic-word separator and remains part of
+normalized Unicode identifier segments using the exact candidate
+`windvale.unicode17.source@1` profile defined by the
+[source-profile artifact formats](Windvale-Language-1.0-Source-Profile-Formats.md).
+U+02C9 remains the only semantic-word separator and remains part of
 identity. Language 1.0 identifier comparison is exact ordinal UTF-8 after
 admission; it performs no host normalization, case folding, collation, or
 transliteration.
@@ -71,4 +73,5 @@ Unicode. Seed identifiers remain restricted to ASCII segments plus U+02C9. The
 working Language 1.0 replacement candidate admits Unicode identifiers only
 through its explicit normalization, security, diagnostic, tooling,
 source-vocabulary, malformed-input, and cross-host requirements; current Seed
-tools do not implement that boundary.
+tools do not implement that boundary. The Unicode 17.0.0 candidate remains
+subject to multilingual workload review and replacement-freeze acceptance.

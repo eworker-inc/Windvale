@@ -1812,6 +1812,13 @@ review capacity, accessibility, and the future reader population also matter.
 
 ## Staged exploration
 
+The [localization workload plan](Windvale-Language-1.0-Localization-Workloads.md)
+turns this exploratory sequence into five reviewable bundles. Its
+[Workload 1 packet](Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md)
+now provides the complete first-author format/admission evidence. The remaining
+native-language, tooling, multilingual-security, shipment, cache, cross-host,
+and measured-performance work stays open.
+
 ### Stage 0: paper contract
 
 - inventory the 76 body words and exact 66-token mapped set;
@@ -1825,13 +1832,22 @@ review capacity, accessibility, and the future reader population also matter.
 
 ### Stage 1: descriptor, profile, and pack admission workload
 
+The paper format/admission slice is complete as a proposed candidate: seven
+strict artifact formats, exact reference hashes, 25 accepted cases, 43 rejected
+cases, one canonical English chain, and one synthetic Unicode chain. The
+synthetic chain challenges the mechanism but does not qualify any natural
+language. Actual cold/warm compiler measurements require an implementation and
+belong to the later qualification workload.
+
 - parse the canonical first-line source descriptor without the general lexer;
 - validate immutable identity/version/hash/edition/Unicode/token-registry and
   public-interface binding;
-- admit one complete non-English reference pack;
+- admit one complete synthetic Unicode reference profile before native-language
+  qualification;
 - reject every malformed, duplicate, missing, collision, normalization,
   boundary, mixed-lexicon, and limit case; and
-- measure cold/warm pack loading, retained memory, and failure bounds.
+- define the cold/warm loading, retained-memory, and failure measurement
+  protocol; execute it once a representative implementation exists.
 
 ### Stage 2: localized source and equivalence workload
 
@@ -1922,45 +1938,44 @@ not normative until the owner accepts the resulting evidence:
 
 ## Open design questions
 
-1. What exact byte serialization, record order, unknown-record behavior, and
-   content-hash coverage should the composite source-profile manifest use?
-2. What exact immutable identity/version and build-plan hash-binding syntax
-   should each source-profile component use?
-3. Which of the 66 mapped technical terms should an individual qualified pack
+Workload 1 proposes exact answers for artifact serialization and hash binding,
+the Unicode 17.0.0 profile, cache identity/publication, complete interface-bound
+catalogs, and the exclusion of non-source-addressable generic-parameter labels.
+Those answers live in the
+[source-profile artifact formats](../../Specifications/Windvale-Language-1.0-Source-Profile-Formats.md)
+and remain subject to owner review and later workload challenge. The unresolved
+questions are:
+
+1. Which of the 66 mapped technical terms should an individual qualified pack
    translate, and which should explicitly retain the canonical spelling?
-4. Should primitive words such as `bool`, `text`, and `rune` localize inline or
+2. Should primitive words such as `bool`, `text`, and `rune` localize inline or
    only receive localized explanations?
-5. Should profile and authority words localize in code, or remain universal
+3. Should profile and authority words localize in code, or remain universal
    technical vocabulary?
-6. What should the default Copy operation produce from a localized view?
-7. How should localized display width influence visual wrapping without
+4. What should the default Copy operation produce from a localized view?
+5. How should localized display width influence visual wrapping without
    changing canonical formatting?
-8. What minimum canonical identity must always remain visible in diagnostics,
+6. What minimum canonical identity must always remain visible in diagnostics,
    API hovers, and exported reviews?
-9. How are project vocabulary entries bound across an intentional canonical
+7. How are project vocabulary entries bound across an intentional canonical
    rename?
-10. Which normalization form and scalar restrictions are correct for pack data,
-    and do any target languages require carefully bounded exceptions?
-11. Can display packs contain alternative short and explanatory labels while
+8. Do the proposed NFC, XID, Highly Restrictive, confusable-collision, and
+   join-control rules require a carefully bounded exception for any target
+   language?
+9. Can display packs contain alternative short and explanatory labels while
     source lexicons retain exactly one spelling?
-12. Should community packs be allowed for source recognition, or only for
+10. Should community packs be allowed for source recognition, or only for
     non-semantic presentation until separately qualified?
-13. How do pack identities participate in compiler-service caches and
-    reproducible source/debug records?
-14. Should localized reviews show translated project identifiers inline, in an
+11. Should localized reviews show translated project identifiers inline, in an
     adjacent annotation, or only through hover and explanation panels?
-15. How much understanding comes from keywords versus domain vocabulary,
+12. How much understanding comes from keywords versus domain vocabulary,
     diagnostics, and capability/effect explanations?
-16. Which native-language reviewers and qualification levels define
+13. Which native-language reviewers and qualification levels define
     “officially supported”?
-17. What parts belong in the base SDK, optional developer profiles, full
+14. What parts belong in the base SDK, optional developer profiles, full
     documentation profiles, and Windvale OS language installations?
-18. Which exact Unicode table version, normalization form, script groups, and
-    confusable-collision rules safely admit the selected Unicode identifiers?
-19. What exact source-vocabulary profile, public-interface catalog, and project
-    collision-override serialization should Language 1.0 freeze?
-20. Should a public catalog translate generic-parameter labels, and if so, where
-    are those labels source-addressable rather than explanatory only?
+15. Does the replacement candidate require project collision overrides and
+    display-catalog formats, or should those remain later tooling features?
 
 ## Working recommendation
 

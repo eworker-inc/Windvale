@@ -6,8 +6,10 @@ This document is the working normative-candidate addendum for localized stored
 source in Windvale Language 1.0. The project owner selected stored localized
 keywords, stored localized references to public library declarations, and
 Unicode project identifiers for the replacement Language 1.0 candidate on
-2026-08-18. The design remains open for paper workloads and is not frozen or
-implemented. Current compilers continue to implement
+2026-08-18. The first source-profile admission workload now supplies exact
+candidate bytes and rejected cases; the remaining localization workloads and
+owner review are still open. The design is not frozen or implemented. Current
+compilers continue to implement
 [Windvale Seed](Seed-Language.md).
 
 This document owns:
@@ -26,6 +28,8 @@ ownership, effects, capabilities, evaluation, and canonical declaration
 semantics. The [grammar companion](Windvale-Language-1.0-Grammar.md) and
 [machine grammar](Windvale-Language-1.0.ebnf) own syntax after applying this
 document's front-door mapping. The
+[source-profile artifact format companion](Windvale-Language-1.0-Source-Profile-Formats.md)
+owns the exact candidate serialization, limits, hashes, and admission order. The
 [Foundation specification](Windvale-Language-1.0-Foundation.md) and its
 [signature registry](Windvale-Language-1.0-Foundation-Registry.md) remain the
 canonical public API contracts. This addendum creates no translated Foundation
@@ -143,10 +147,10 @@ The descriptor reader does not load imports, search installed packs, normalize
 source, invoke the general parser, or execute localization code. A malformed
 descriptor produces one bounded front-door diagnostic before module parsing.
 
-## Composite source-profile manifest
+## Composite source profile
 
 The descriptor identity/version resolves through explicit locked build input to
-one content-addressed manifest. Its candidate logical record set is:
+one content-addressed `.wvsp` artifact. Its semantic fields are:
 
 ~~~text
 format                 windvale.source-profile/1
@@ -159,16 +163,19 @@ keyword-lexicon        <identity>@<version>#<sha256>
 source-vocabulary      <identity>@<version>#<sha256>
 ~~~
 
-The manifest binds components; it does not embed executable code, library
+The profile binds components; it does not embed executable code, library
 catalogs, filesystem paths, URLs, installation searches, or locale fallback.
 Public-library catalogs remain separately bound to exact interface hashes. The
 profile selects their source-vocabulary identity/version, not an unbounded list
 of libraries.
 
-This record set is the working semantic shape, not yet the frozen byte
-serialization. The replacement freeze must select exact encoding, record order,
-length bounds, duplicate and unknown-record behavior, external content-hash coverage, and
-malformed-input diagnostics. One admitted manifest is at most 64 KiB.
+The [source-profile artifact format companion](Windvale-Language-1.0-Source-Profile-Formats.md)
+defines the exact working byte serialization, record order, length bounds,
+duplicate and unknown-record behavior, external whole-file content-hash
+coverage, malformed-input behavior, and companion component formats. Workload 1
+provides exact `en@1` and synthetic `test-Unicode@1` reference chains. These are
+normative candidates for owner review, not frozen artifacts or qualified
+language packs.
 
 ## Source lexicons
 
@@ -247,10 +254,14 @@ Every identifier must already be in the edition-selected normalization form.
 Identity is the resulting exact ordinal UTF-8 byte sequence; there is no case
 folding, locale collation, transliteration, or canonically-equivalent alias.
 
-The source edition pins one exact Unicode scalar-property, normalization, and
-security-table identity. A compiler using different host tables is not
-conforming. The replacement freeze must name the exact table version after the
-Unicode workloads pass; “current Unicode” is not an admissible contract.
+The working edition-1 candidate selects `windvale.unicode17.source@1`: Unicode
+17.0.0, NFC under UAX #15 revision 57, XID properties under UAX #31 revision 43,
+and identifier security data under UTS #39 revision 32. Its exact upstream files
+and SHA-256 values are recorded in the
+[source-profile artifact format companion](Windvale-Language-1.0-Source-Profile-Formats.md).
+A compiler using different host tables is not conforming. This identity remains
+subject to the remaining Unicode/security workload and owner acceptance;
+“current Unicode” is not an admissible contract.
 
 ### Rejected identifier content
 
@@ -265,11 +276,16 @@ An identifier rejects:
 - adjacent, leading, or trailing U+02C9 separators; and
 - any scalar excluded by the edition's exact identifier security profile.
 
-Mixed-script and confusable handling is a replacement-freeze blocker. The
-workload must select exact script-group and confusable-collision behavior for
-Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin examples without
-depending on host fonts or locale. Tools may report additional visual warnings,
-but required acceptance cannot depend on rendering.
+The working candidate requires the UTS #39 Highly Restrictive script level or
+the stricter ASCII-only level within each U+02C9-delimited semantic segment,
+rejects mixed decimal-number
+systems in one segment, and rejects distinct same-scope segments whose UTS #39
+`bidiSkeleton` values collide under either left-to-right or right-to-left
+processing. Join controls are excluded from edition 1 pending the multilingual
+security workload. That workload must challenge these rules with Chinese,
+Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin examples without depending
+on host fonts or locale. Tools may report additional visual warnings, but
+required acceptance cannot depend on rendering.
 
 ### Identity and interoperability
 
@@ -550,15 +566,19 @@ non-sharing correctness oracle remains required.
 
 ## Pack bounds and shipment
 
-Candidate limits before workload measurement are:
+The exact artifact companion fixes these candidate limits:
 
 - at most 64 KiB for one source lexicon;
 - at most 64 KiB for one composite source-profile manifest;
+- at most 64 KiB for one Unicode profile, keyword-token registry, or
+  source-vocabulary profile;
 - exactly the token registry's mapped entry count;
 - at most 128 UTF-8 bytes and 64 scalars per primary source label;
 - at most 1 MiB for one public-library source-vocabulary catalog;
+- at most 1 MiB for one source-input lock;
 - at most 65,536 source-addressable identities per catalog;
-- at most 128 bytes for an ASCII-safe pack/profile identity;
+- at most 96 bytes for an ASCII-safe component identity;
+- at most 1,024 UTF-8 bytes for one artifact record, excluding LF;
 - at most 64 catalogs per source module; and
 - one bounded rejection diagnostic plus a fixed small set of structured related
   fields per malformed pack.
@@ -575,6 +595,11 @@ code or enlarge ordinary application runtime packages.
 
 ## Required conformance workloads
 
+The [localization workload plan](../Documents/Project/Windvale-Language-1.0-Localization-Workloads.md)
+groups the following evidence into five bounded bundles. Workload 1 now has a
+complete first-author packet with 25 accepted cases, 43 rejected cases, exact
+reference artifacts, and a synthetic Unicode source-equivalence fixture. Its
+findings remain proposed until owner review; Workloads 2 through 5 remain open.
 The replacement Language 1.0 candidate requires at least:
 
 1. canonical, Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, and Latin
@@ -630,12 +655,12 @@ name as its primary spelling.
 
 This addendum can enter the replacement Language 1.0 freeze only after:
 
-- the exact Unicode table and normalization/security profile are selected;
-- the universal descriptor and composite source-profile manifest serialization
-  are exact;
-- the source-lexicon token registry and pack serialization are exact;
-- the source-vocabulary profile, catalog, and project-override serializations
-  are exact;
+- the Workload 1 exact artifact and Unicode-profile candidates are owner
+  accepted;
+- the universal descriptor and source-profile/component serializations remain
+  exact after the remaining workloads;
+- project-override and any display-catalog serializations required for the
+  replacement candidate are exact;
 - human and machine grammar projections agree;
 - all required workloads and rejected cases are reviewed;
 - the Foundation registry and all paper programs are reconciled with the new

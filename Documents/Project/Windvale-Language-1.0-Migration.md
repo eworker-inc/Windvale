@@ -38,6 +38,7 @@ decision. It defines how the repository will advance once the
 [grammar](../../Specifications/Windvale-Language-1.0-Grammar.md),
 [machine grammar](../../Specifications/Windvale-Language-1.0.ebnf),
 [localized-source and source-vocabulary specification](../../Specifications/Windvale-Language-1.0-Localized-Source.md),
+[source-profile artifact formats](../../Specifications/Windvale-Language-1.0-Source-Profile-Formats.md),
 [Foundation contract](../../Specifications/Windvale-Language-1.0-Foundation.md),
 and
 [Foundation signature registry](../../Specifications/Windvale-Language-1.0-Foundation-Registry.md)

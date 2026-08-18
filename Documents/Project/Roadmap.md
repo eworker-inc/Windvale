@@ -82,10 +82,12 @@ keywords, exact public-library source vocabularies, and Unicode project
 identifiers](Windvale-Semantic-Source-Views-And-Localization.md)
 as the working Language 1.0 direction, now reflected in the
 [working specification addendum](../../Specifications/Windvale-Language-1.0-Localized-Source.md).
-Source-descriptor/profile, source-lexicon, public-interface vocabulary,
-Unicode/security, conversion, editor, diagnostic, cross-host, and
-bounded-performance evidence must now
-produce a replacement candidate. This paper track may advance without
+The [first localization workload](Language-1.0-Localization-Workloads/01-Source-Profile-Admission/README.md)
+now supplies proposed exact artifact formats and hashes, a Unicode 17.0.0 source
+profile, 25 accepted cases, and 43 rejected cases. Owner review plus
+native-reviewed Chinese source, conversion/editor/diagnostic, multilingual
+security, shipment/cache, cross-host, and measured-performance evidence must
+still produce a replacement candidate. This paper track may advance without
 claiming implementation or changing the current Seed product. Source
 implementation begins only after the named replacement source-freeze gate.
 

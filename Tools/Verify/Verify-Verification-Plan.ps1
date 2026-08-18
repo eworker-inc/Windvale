@@ -12,7 +12,9 @@ $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'Language 1.0 paper source'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'Language 1.0 localization paper source'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Source/Test-Unicode-Admission.wv'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'Language 1.0 paper package data'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'Language 1.0 localization reference artifact'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'browser playground website contract'; Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1'); Scope = 'website'; Editor = $false; Areas = @() },
@@ -42,6 +44,15 @@ $NativeCases = @(
         Name = 'Language 1.0 paper package-data evidence'
         Paths = @(
             'Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 localization reference-artifact evidence'
+        Paths = @(
+            'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock'
         )
         Suites = @()
         Gaps = @()
@@ -2850,7 +2861,8 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 paper source routing'
         Paths = @(
-            'Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'
+            'Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv',
+            'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Source/Test-Unicode-Admission.wv'
         )
         Suites = @()
         Gaps = @()

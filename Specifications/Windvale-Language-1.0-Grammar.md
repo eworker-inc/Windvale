@@ -59,9 +59,13 @@ Lexical productions operate on Unicode scalar values after strict UTF-8
 decoding. Syntactic productions operate on tokens. A compiler must place a
 finite limit on tokens, nesting, list items, and diagnostic recovery.
 
-The source edition pins the Unicode scalar-property, normalization, and security
-tables used by localized lexicons and identifiers. Host Unicode tables are not
-grammar input. The replacement source freeze must name their exact identity.
+The working source edition candidate pins the Unicode scalar-property,
+normalization, and security tables used by localized lexicons and identifiers to
+`windvale.unicode17.source@1`, whose exact Unicode 17.0.0 inputs and hashes are
+defined by the
+[source-profile artifact formats](Windvale-Language-1.0-Source-Profile-Formats.md).
+Host Unicode tables are not grammar input. The replacement source freeze must
+accept that exact identity after the remaining multilingual workload evidence.
 
 ## Source decoding and line structure
 
@@ -318,8 +322,9 @@ which binds the source edition, exact keyword lexicon, public source-vocabulary
 profile, Unicode data, and their content identities. `en@1` is the canonical
 English profile but is never an ambient default. After admission, quoted keyword
 terminals in the remaining grammar refer to canonical token identities rather
-than English source bytes. The localized-source specification owns the full
-descriptor and profile-manifest contract.
+than English source bytes. The localized-source specification owns the semantic
+descriptor/profile contract; the source-profile artifact format companion owns
+its exact candidate bytes and admission order.
 
 Platform scopes and capability requirements are unique and canonical. Required
 and optional identities cannot overlap. Imports precede all other declarations.

@@ -1,0 +1,14 @@
+#!wv/1 test-Unicode@1
+module Admissionˉtest;
+profile core;
+platform windows, linux, windvale;
+authority application;
+
+import 試験ˉ選択 as Selected;
+
+export fn Choose(Flag: bool) -> Selected.選択<bool> effects() {
+    条件測試 Flag {
+        返却測試 Selected.選択.存在 { 値: 真測試 };
+    }
+    返却測試 Selected.選択.不在;
+}
