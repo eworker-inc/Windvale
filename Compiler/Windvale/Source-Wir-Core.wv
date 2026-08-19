@@ -50,173 +50,6 @@ export enum Compilerˉsourceˉwirˉstatus {
     Invalidˉvalueˉblock = 38;
 }
 
-enum Compilerˉsourceˉwirˉoperation {
-    None = 0;
-    I32ˉconstant = 1;
-    U8ˉconstant = 2;
-    U32ˉconstant = 3;
-    Boolˉconstant = 4;
-    Textˉconstant = 5;
-    Bytesˉconstant = 6;
-    Loadˉlocal = 7;
-    Storeˉlocal = 8;
-    Dataˉlength = 9;
-    Dataˉloadˉi32 = 10;
-    Bytesˉlength = 11;
-    Bytesˉslice = 12;
-    Bytesˉreadˉu8 = 13;
-    Bytesˉreadˉu16ˉlittle = 14;
-    Bytesˉreadˉu32ˉlittle = 15;
-    Bytesˉreadˉi32ˉlittle = 16;
-    Recordˉcreate = 17;
-    Recordˉfield = 18;
-    Enumˉconstant = 19;
-    Enumˉequal = 20;
-    Enumˉnotˉequal = 21;
-    Enumˉname = 22;
-    I32ˉformat = 23;
-    U8ˉformat = 24;
-    U32ˉformat = 25;
-    U32ˉfromˉu8 = 26;
-    Textˉconcat = 27;
-    Textˉutf8ˉisˉvalid = 28;
-    Textˉfromˉutf8 = 29;
-    Textˉquote = 30;
-    Bytesˉconcat = 31;
-    Bytesˉfromˉu8 = 32;
-    Bytesˉfromˉu16ˉlittle = 33;
-    Bytesˉfromˉu32ˉlittle = 34;
-    Bytesˉfromˉi32ˉlittle = 35;
-    Bytesˉsha256ˉhex = 36;
-    Textˉtoˉutf8 = 37;
-    I32ˉadd = 38;
-    I32ˉsubtract = 39;
-    I32ˉmultiply = 40;
-    I32ˉnegate = 41;
-    U32ˉadd = 42;
-    U32ˉsubtract = 43;
-    U32ˉmultiply = 44;
-    I32ˉequal = 45;
-    I32ˉnotˉequal = 46;
-    I32ˉless = 47;
-    I32ˉlessˉequal = 48;
-    I32ˉgreater = 49;
-    I32ˉgreaterˉequal = 50;
-    Boolˉequal = 51;
-    Boolˉnotˉequal = 52;
-    Boolˉnot = 53;
-    U32ˉequal = 54;
-    U32ˉnotˉequal = 55;
-    U32ˉless = 56;
-    U32ˉlessˉequal = 57;
-    U32ˉgreater = 58;
-    U32ˉgreaterˉequal = 59;
-    U8ˉequal = 60;
-    U8ˉnotˉequal = 61;
-    Callˉfunction = 62;
-    Callˉcapability = 63;
-    Valueˉphi = 64;
-    Variantˉcreate = 65;
-    Variantˉisˉcase = 66;
-    Variantˉpayload = 67;
-    Builderˉcreate = 68;
-    Builderˉpush = 69;
-    Builderˉfreeze = 70;
-    Sequenceˉlength = 71;
-    Sequenceˉelement = 72;
-    I32ˉdivide = 73;
-    I32ˉremainder = 74;
-    U32ˉdivide = 75;
-    U32ˉremainder = 76;
-    U8ˉbitwiseˉand = 77;
-    U8ˉbitwiseˉor = 78;
-    U8ˉbitwiseˉxor = 79;
-    U8ˉbitwiseˉnot = 80;
-    U8ˉshiftˉleft = 81;
-    U8ˉshiftˉright = 82;
-    U32ˉbitwiseˉand = 83;
-    U32ˉbitwiseˉor = 84;
-    U32ˉbitwiseˉxor = 85;
-    U32ˉbitwiseˉnot = 86;
-    U32ˉshiftˉleft = 87;
-    U32ˉshiftˉright = 88;
-    Textˉequal = 89;
-    Textˉnotˉequal = 90;
-    Bytesˉequal = 91;
-    Bytesˉnotˉequal = 92;
-    I64ˉconstant = 93;
-    U64ˉconstant = 94;
-    I64ˉformat = 95;
-    U64ˉformat = 96;
-    I64ˉadd = 97;
-    I64ˉsubtract = 98;
-    I64ˉmultiply = 99;
-    I64ˉnegate = 100;
-    U64ˉadd = 101;
-    U64ˉsubtract = 102;
-    U64ˉmultiply = 103;
-    I64ˉequal = 104;
-    I64ˉnotˉequal = 105;
-    I64ˉless = 106;
-    I64ˉlessˉequal = 107;
-    I64ˉgreater = 108;
-    I64ˉgreaterˉequal = 109;
-    U64ˉequal = 110;
-    U64ˉnotˉequal = 111;
-    U64ˉless = 112;
-    U64ˉlessˉequal = 113;
-    U64ˉgreater = 114;
-    U64ˉgreaterˉequal = 115;
-    I64ˉdivide = 116;
-    I64ˉremainder = 117;
-    U64ˉdivide = 118;
-    U64ˉremainder = 119;
-    U64ˉbitwiseˉand = 120;
-    U64ˉbitwiseˉor = 121;
-    U64ˉbitwiseˉxor = 122;
-    U64ˉbitwiseˉnot = 123;
-    U64ˉshiftˉleft = 124;
-    U64ˉshiftˉright = 125;
-    Bytesˉreadˉu64ˉlittle = 126;
-    Bytesˉfromˉu64ˉlittle = 127;
-    U64ˉfromˉu32 = 128;
-    Fixedˉintegerˉconstant = 129;
-    Fixedˉintegerˉadd = 130;
-    Fixedˉintegerˉsubtract = 131;
-    Fixedˉintegerˉmultiply = 132;
-    Fixedˉintegerˉdivide = 133;
-    Fixedˉintegerˉremainder = 134;
-    Fixedˉintegerˉnegate = 135;
-    Fixedˉintegerˉequal = 136;
-    Fixedˉintegerˉnotˉequal = 137;
-    Fixedˉintegerˉless = 138;
-    Fixedˉintegerˉlessˉequal = 139;
-    Fixedˉintegerˉgreater = 140;
-    Fixedˉintegerˉgreaterˉequal = 141;
-    Fixedˉintegerˉbitwiseˉand = 142;
-    Fixedˉintegerˉbitwiseˉor = 143;
-    Fixedˉintegerˉbitwiseˉxor = 144;
-    Fixedˉintegerˉbitwiseˉnot = 145;
-    Fixedˉintegerˉshiftˉleft = 146;
-    Fixedˉintegerˉshiftˉright = 147;
-    Runeˉconstant = 148;
-    Runeˉequal = 149;
-    Runeˉnotˉequal = 150;
-    Floatingˉconstant = 151;
-    Floatingˉadd = 152;
-    Floatingˉsubtract = 153;
-    Floatingˉmultiply = 154;
-    Floatingˉdivide = 155;
-    Floatingˉnegate = 156;
-    Floatingˉequal = 157;
-    Floatingˉnotˉequal = 158;
-    Floatingˉless = 159;
-    Floatingˉlessˉequal = 160;
-    Floatingˉgreater = 161;
-    Floatingˉgreaterˉequal = 162;
-    Unitˉconstant = 163;
-    Variantˉfield = 164;
-}
 
 enum Compilerˉsourceˉwirˉterminator {
     None = 0;
@@ -224,6 +57,172 @@ enum Compilerˉsourceˉwirˉterminator {
     Branch = 2;
     Return = 3;
 }
+
+const WIR_OPERATION_NONE: u32 = 0u32;
+const WIR_OPERATION_I32_CONSTANT: u32 = 1u32;
+const WIR_OPERATION_U8_CONSTANT: u32 = 2u32;
+const WIR_OPERATION_U32_CONSTANT: u32 = 3u32;
+const WIR_OPERATION_BOOL_CONSTANT: u32 = 4u32;
+const WIR_OPERATION_TEXT_CONSTANT: u32 = 5u32;
+const WIR_OPERATION_BYTES_CONSTANT: u32 = 6u32;
+const WIR_OPERATION_LOAD_LOCAL: u32 = 7u32;
+const WIR_OPERATION_STORE_LOCAL: u32 = 8u32;
+const WIR_OPERATION_DATA_LENGTH: u32 = 9u32;
+const WIR_OPERATION_DATA_LOAD_I32: u32 = 10u32;
+const WIR_OPERATION_BYTES_LENGTH: u32 = 11u32;
+const WIR_OPERATION_BYTES_SLICE: u32 = 12u32;
+const WIR_OPERATION_BYTES_READ_U8: u32 = 13u32;
+const WIR_OPERATION_BYTES_READ_U16_LITTLE: u32 = 14u32;
+const WIR_OPERATION_BYTES_READ_U32_LITTLE: u32 = 15u32;
+const WIR_OPERATION_BYTES_READ_I32_LITTLE: u32 = 16u32;
+const WIR_OPERATION_RECORD_CREATE: u32 = 17u32;
+const WIR_OPERATION_RECORD_FIELD: u32 = 18u32;
+const WIR_OPERATION_ENUM_CONSTANT: u32 = 19u32;
+const WIR_OPERATION_ENUM_EQUAL: u32 = 20u32;
+const WIR_OPERATION_ENUM_NOT_EQUAL: u32 = 21u32;
+const WIR_OPERATION_ENUM_NAME: u32 = 22u32;
+const WIR_OPERATION_I32_FORMAT: u32 = 23u32;
+const WIR_OPERATION_U8_FORMAT: u32 = 24u32;
+const WIR_OPERATION_U32_FORMAT: u32 = 25u32;
+const WIR_OPERATION_U32_FROM_U8: u32 = 26u32;
+const WIR_OPERATION_TEXT_CONCAT: u32 = 27u32;
+const WIR_OPERATION_TEXT_UTF8_IS_VALID: u32 = 28u32;
+const WIR_OPERATION_TEXT_FROM_UTF8: u32 = 29u32;
+const WIR_OPERATION_TEXT_QUOTE: u32 = 30u32;
+const WIR_OPERATION_BYTES_CONCAT: u32 = 31u32;
+const WIR_OPERATION_BYTES_FROM_U8: u32 = 32u32;
+const WIR_OPERATION_BYTES_FROM_U16_LITTLE: u32 = 33u32;
+const WIR_OPERATION_BYTES_FROM_U32_LITTLE: u32 = 34u32;
+const WIR_OPERATION_BYTES_FROM_I32_LITTLE: u32 = 35u32;
+const WIR_OPERATION_BYTES_SHA256_HEX: u32 = 36u32;
+const WIR_OPERATION_TEXT_TO_UTF8: u32 = 37u32;
+const WIR_OPERATION_I32_ADD: u32 = 38u32;
+const WIR_OPERATION_I32_SUBTRACT: u32 = 39u32;
+const WIR_OPERATION_I32_MULTIPLY: u32 = 40u32;
+const WIR_OPERATION_I32_NEGATE: u32 = 41u32;
+const WIR_OPERATION_U32_ADD: u32 = 42u32;
+const WIR_OPERATION_U32_SUBTRACT: u32 = 43u32;
+const WIR_OPERATION_U32_MULTIPLY: u32 = 44u32;
+const WIR_OPERATION_I32_EQUAL: u32 = 45u32;
+const WIR_OPERATION_I32_NOT_EQUAL: u32 = 46u32;
+const WIR_OPERATION_I32_LESS: u32 = 47u32;
+const WIR_OPERATION_I32_LESS_EQUAL: u32 = 48u32;
+const WIR_OPERATION_I32_GREATER: u32 = 49u32;
+const WIR_OPERATION_I32_GREATER_EQUAL: u32 = 50u32;
+const WIR_OPERATION_BOOL_EQUAL: u32 = 51u32;
+const WIR_OPERATION_BOOL_NOT_EQUAL: u32 = 52u32;
+const WIR_OPERATION_BOOL_NOT: u32 = 53u32;
+const WIR_OPERATION_U32_EQUAL: u32 = 54u32;
+const WIR_OPERATION_U32_NOT_EQUAL: u32 = 55u32;
+const WIR_OPERATION_U32_LESS: u32 = 56u32;
+const WIR_OPERATION_U32_LESS_EQUAL: u32 = 57u32;
+const WIR_OPERATION_U32_GREATER: u32 = 58u32;
+const WIR_OPERATION_U32_GREATER_EQUAL: u32 = 59u32;
+const WIR_OPERATION_U8_EQUAL: u32 = 60u32;
+const WIR_OPERATION_U8_NOT_EQUAL: u32 = 61u32;
+const WIR_OPERATION_CALL_FUNCTION: u32 = 62u32;
+const WIR_OPERATION_CALL_CAPABILITY: u32 = 63u32;
+const WIR_OPERATION_VALUE_PHI: u32 = 64u32;
+const WIR_OPERATION_VARIANT_CREATE: u32 = 65u32;
+const WIR_OPERATION_VARIANT_IS_CASE: u32 = 66u32;
+const WIR_OPERATION_VARIANT_PAYLOAD: u32 = 67u32;
+const WIR_OPERATION_BUILDER_CREATE: u32 = 68u32;
+const WIR_OPERATION_BUILDER_PUSH: u32 = 69u32;
+const WIR_OPERATION_BUILDER_FREEZE: u32 = 70u32;
+const WIR_OPERATION_SEQUENCE_LENGTH: u32 = 71u32;
+const WIR_OPERATION_SEQUENCE_ELEMENT: u32 = 72u32;
+const WIR_OPERATION_I32_DIVIDE: u32 = 73u32;
+const WIR_OPERATION_I32_REMAINDER: u32 = 74u32;
+const WIR_OPERATION_U32_DIVIDE: u32 = 75u32;
+const WIR_OPERATION_U32_REMAINDER: u32 = 76u32;
+const WIR_OPERATION_U8_BITWISE_AND: u32 = 77u32;
+const WIR_OPERATION_U8_BITWISE_OR: u32 = 78u32;
+const WIR_OPERATION_U8_BITWISE_XOR: u32 = 79u32;
+const WIR_OPERATION_U8_BITWISE_NOT: u32 = 80u32;
+const WIR_OPERATION_U8_SHIFT_LEFT: u32 = 81u32;
+const WIR_OPERATION_U8_SHIFT_RIGHT: u32 = 82u32;
+const WIR_OPERATION_U32_BITWISE_AND: u32 = 83u32;
+const WIR_OPERATION_U32_BITWISE_OR: u32 = 84u32;
+const WIR_OPERATION_U32_BITWISE_XOR: u32 = 85u32;
+const WIR_OPERATION_U32_BITWISE_NOT: u32 = 86u32;
+const WIR_OPERATION_U32_SHIFT_LEFT: u32 = 87u32;
+const WIR_OPERATION_U32_SHIFT_RIGHT: u32 = 88u32;
+const WIR_OPERATION_TEXT_EQUAL: u32 = 89u32;
+const WIR_OPERATION_TEXT_NOT_EQUAL: u32 = 90u32;
+const WIR_OPERATION_BYTES_EQUAL: u32 = 91u32;
+const WIR_OPERATION_BYTES_NOT_EQUAL: u32 = 92u32;
+const WIR_OPERATION_I64_CONSTANT: u32 = 93u32;
+const WIR_OPERATION_U64_CONSTANT: u32 = 94u32;
+const WIR_OPERATION_I64_FORMAT: u32 = 95u32;
+const WIR_OPERATION_U64_FORMAT: u32 = 96u32;
+const WIR_OPERATION_I64_ADD: u32 = 97u32;
+const WIR_OPERATION_I64_SUBTRACT: u32 = 98u32;
+const WIR_OPERATION_I64_MULTIPLY: u32 = 99u32;
+const WIR_OPERATION_I64_NEGATE: u32 = 100u32;
+const WIR_OPERATION_U64_ADD: u32 = 101u32;
+const WIR_OPERATION_U64_SUBTRACT: u32 = 102u32;
+const WIR_OPERATION_U64_MULTIPLY: u32 = 103u32;
+const WIR_OPERATION_I64_EQUAL: u32 = 104u32;
+const WIR_OPERATION_I64_NOT_EQUAL: u32 = 105u32;
+const WIR_OPERATION_I64_LESS: u32 = 106u32;
+const WIR_OPERATION_I64_LESS_EQUAL: u32 = 107u32;
+const WIR_OPERATION_I64_GREATER: u32 = 108u32;
+const WIR_OPERATION_I64_GREATER_EQUAL: u32 = 109u32;
+const WIR_OPERATION_U64_EQUAL: u32 = 110u32;
+const WIR_OPERATION_U64_NOT_EQUAL: u32 = 111u32;
+const WIR_OPERATION_U64_LESS: u32 = 112u32;
+const WIR_OPERATION_U64_LESS_EQUAL: u32 = 113u32;
+const WIR_OPERATION_U64_GREATER: u32 = 114u32;
+const WIR_OPERATION_U64_GREATER_EQUAL: u32 = 115u32;
+const WIR_OPERATION_I64_DIVIDE: u32 = 116u32;
+const WIR_OPERATION_I64_REMAINDER: u32 = 117u32;
+const WIR_OPERATION_U64_DIVIDE: u32 = 118u32;
+const WIR_OPERATION_U64_REMAINDER: u32 = 119u32;
+const WIR_OPERATION_U64_BITWISE_AND: u32 = 120u32;
+const WIR_OPERATION_U64_BITWISE_OR: u32 = 121u32;
+const WIR_OPERATION_U64_BITWISE_XOR: u32 = 122u32;
+const WIR_OPERATION_U64_BITWISE_NOT: u32 = 123u32;
+const WIR_OPERATION_U64_SHIFT_LEFT: u32 = 124u32;
+const WIR_OPERATION_U64_SHIFT_RIGHT: u32 = 125u32;
+const WIR_OPERATION_BYTES_READ_U64_LITTLE: u32 = 126u32;
+const WIR_OPERATION_BYTES_FROM_U64_LITTLE: u32 = 127u32;
+const WIR_OPERATION_U64_FROM_U32: u32 = 128u32;
+const WIR_OPERATION_FIXED_INTEGER_CONSTANT: u32 = 129u32;
+const WIR_OPERATION_FIXED_INTEGER_ADD: u32 = 130u32;
+const WIR_OPERATION_FIXED_INTEGER_SUBTRACT: u32 = 131u32;
+const WIR_OPERATION_FIXED_INTEGER_MULTIPLY: u32 = 132u32;
+const WIR_OPERATION_FIXED_INTEGER_DIVIDE: u32 = 133u32;
+const WIR_OPERATION_FIXED_INTEGER_REMAINDER: u32 = 134u32;
+const WIR_OPERATION_FIXED_INTEGER_NEGATE: u32 = 135u32;
+const WIR_OPERATION_FIXED_INTEGER_EQUAL: u32 = 136u32;
+const WIR_OPERATION_FIXED_INTEGER_NOT_EQUAL: u32 = 137u32;
+const WIR_OPERATION_FIXED_INTEGER_LESS: u32 = 138u32;
+const WIR_OPERATION_FIXED_INTEGER_LESS_EQUAL: u32 = 139u32;
+const WIR_OPERATION_FIXED_INTEGER_GREATER: u32 = 140u32;
+const WIR_OPERATION_FIXED_INTEGER_GREATER_EQUAL: u32 = 141u32;
+const WIR_OPERATION_FIXED_INTEGER_BITWISE_AND: u32 = 142u32;
+const WIR_OPERATION_FIXED_INTEGER_BITWISE_OR: u32 = 143u32;
+const WIR_OPERATION_FIXED_INTEGER_BITWISE_XOR: u32 = 144u32;
+const WIR_OPERATION_FIXED_INTEGER_BITWISE_NOT: u32 = 145u32;
+const WIR_OPERATION_FIXED_INTEGER_SHIFT_LEFT: u32 = 146u32;
+const WIR_OPERATION_FIXED_INTEGER_SHIFT_RIGHT: u32 = 147u32;
+const WIR_OPERATION_RUNE_CONSTANT: u32 = 148u32;
+const WIR_OPERATION_RUNE_EQUAL: u32 = 149u32;
+const WIR_OPERATION_RUNE_NOT_EQUAL: u32 = 150u32;
+const WIR_OPERATION_FLOATING_CONSTANT: u32 = 151u32;
+const WIR_OPERATION_FLOATING_ADD: u32 = 152u32;
+const WIR_OPERATION_FLOATING_SUBTRACT: u32 = 153u32;
+const WIR_OPERATION_FLOATING_MULTIPLY: u32 = 154u32;
+const WIR_OPERATION_FLOATING_DIVIDE: u32 = 155u32;
+const WIR_OPERATION_FLOATING_NEGATE: u32 = 156u32;
+const WIR_OPERATION_FLOATING_EQUAL: u32 = 157u32;
+const WIR_OPERATION_FLOATING_NOT_EQUAL: u32 = 158u32;
+const WIR_OPERATION_FLOATING_LESS: u32 = 159u32;
+const WIR_OPERATION_FLOATING_LESS_EQUAL: u32 = 160u32;
+const WIR_OPERATION_FLOATING_GREATER: u32 = 161u32;
+const WIR_OPERATION_FLOATING_GREATER_EQUAL: u32 = 162u32;
+const WIR_OPERATION_UNIT_CONSTANT: u32 = 163u32;
+const WIR_OPERATION_VARIANT_FIELD: u32 = 164u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -457,23 +456,9 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉvalid(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Allowˉvoid: bool
 ) -> bool {
-    if Shape == 0u32 { return Allowˉvoid; }
-    if Shape <= 8u32 { return true; }
-    if Shape == 9u32 { return true; }
-    if Shape == 10u32 { return Allowˉvoid; }
-    if Shape >= 11u32 {
-        if Shape <= 15u32 { return true; }
-    }
-    if Shape == 16u32 { return true; }
-    if Shape >= 65536u32 {
-        if Shape < 65536u32 + Symbols.Records { return true; }
-    }
-    if Shape >= 131072u32 + Symbols.Records {
-        if Shape < 131072u32 + Symbols.Records + Symbols.Enums { return true; }
-    }
-    if Shape >= 196608u32 + Symbols.Records + Symbols.Enums {
-        if Shape < 196608u32 + Symbols.Records + Symbols.Enums + Symbols.Variants { return true; }
-    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
+        Shape, Symbols.Records, Symbols.Enums, Symbols.Variants, Allowˉvoid
+    ) { return true; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
         Symbols.Directory, Shape
     ) { return true; }
@@ -519,175 +504,6 @@ export fn Compilerˉsourceˉwirˉcollectionˉdescriptor(Shape: u32) -> u32 {
     return 3221225472u32 + Element - 12288u32;
 }
 
-export fn Compilerˉsourceˉwirˉoperationˉvalue(
-    Operation: Compilerˉsourceˉwirˉoperation
-) -> u32 {
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉconstant { return 1u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉconstant { return 2u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉconstant { return 3u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Boolˉconstant { return 4u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉconstant { return 5u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉconstant { return 6u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Loadˉlocal { return 7u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Storeˉlocal { return 8u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Dataˉlength { return 9u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Dataˉloadˉi32 { return 10u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉlength { return 11u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉslice { return 12u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu8 { return 13u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu16ˉlittle { return 14u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu32ˉlittle { return 15u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉi32ˉlittle { return 16u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Recordˉcreate { return 17u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Recordˉfield { return 18u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Enumˉconstant { return 19u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Enumˉequal { return 20u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Enumˉnotˉequal { return 21u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Enumˉname { return 22u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉformat { return 23u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉformat { return 24u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉformat { return 25u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉfromˉu8 { return 26u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉconcat { return 27u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉutf8ˉisˉvalid { return 28u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉfromˉutf8 { return 29u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉquote { return 30u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉconcat { return 31u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu8 { return 32u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu16ˉlittle { return 33u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu32ˉlittle { return 34u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉi32ˉlittle { return 35u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉsha256ˉhex { return 36u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉtoˉutf8 { return 37u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉadd { return 38u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉsubtract { return 39u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉmultiply { return 40u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉnegate { return 41u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉadd { return 42u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉsubtract { return 43u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉmultiply { return 44u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉequal { return 45u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉnotˉequal { return 46u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉless { return 47u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉlessˉequal { return 48u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉgreater { return 49u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉgreaterˉequal { return 50u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Boolˉequal { return 51u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Boolˉnotˉequal { return 52u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Boolˉnot { return 53u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉequal { return 54u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉnotˉequal { return 55u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉless { return 56u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉlessˉequal { return 57u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉgreater { return 58u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉgreaterˉequal { return 59u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉequal { return 60u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉnotˉequal { return 61u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Callˉfunction { return 62u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Callˉcapability { return 63u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Valueˉphi { return 64u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Variantˉcreate { return 65u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Variantˉisˉcase { return 66u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Variantˉpayload { return 67u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Builderˉcreate { return 68u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Builderˉpush { return 69u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Builderˉfreeze { return 70u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Sequenceˉlength { return 71u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Sequenceˉelement { return 72u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉdivide { return 73u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I32ˉremainder { return 74u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉdivide { return 75u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉremainder { return 76u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉand { return 77u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉor { return 78u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉxor { return 79u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉnot { return 80u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉshiftˉleft { return 81u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U8ˉshiftˉright { return 82u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉand { return 83u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉor { return 84u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉxor { return 85u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉnot { return 86u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉshiftˉleft { return 87u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U32ˉshiftˉright { return 88u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉequal { return 89u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Textˉnotˉequal { return 90u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉequal { return 91u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉnotˉequal { return 92u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉconstant { return 93u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉconstant { return 94u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉformat { return 95u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉformat { return 96u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉadd { return 97u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉsubtract { return 98u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉmultiply { return 99u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉnegate { return 100u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉadd { return 101u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉsubtract { return 102u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉmultiply { return 103u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉequal { return 104u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉnotˉequal { return 105u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉless { return 106u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉlessˉequal { return 107u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉgreater { return 108u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉgreaterˉequal { return 109u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉequal { return 110u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉnotˉequal { return 111u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉless { return 112u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉlessˉequal { return 113u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉgreater { return 114u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉgreaterˉequal { return 115u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉdivide { return 116u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉremainder { return 117u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉdivide { return 118u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉremainder { return 119u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉand { return 120u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉor { return 121u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉxor { return 122u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉnot { return 123u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉshiftˉleft { return 124u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉshiftˉright { return 125u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu64ˉlittle { return 126u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu64ˉlittle { return 127u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉfromˉu32 { return 128u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉconstant { return 129u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉadd { return 130u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉsubtract { return 131u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉmultiply { return 132u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉdivide { return 133u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉremainder { return 134u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉnegate { return 135u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉequal { return 136u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉnotˉequal { return 137u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉless { return 138u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉlessˉequal { return 139u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉgreater { return 140u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉgreaterˉequal { return 141u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉand { return 142u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉor { return 143u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉxor { return 144u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉnot { return 145u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉshiftˉleft { return 146u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉshiftˉright { return 147u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Runeˉconstant { return 148u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Runeˉequal { return 149u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Runeˉnotˉequal { return 150u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉconstant { return 151u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉadd { return 152u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉsubtract { return 153u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉmultiply { return 154u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉdivide { return 155u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉnegate { return 156u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉequal { return 157u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉnotˉequal { return 158u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉless { return 159u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉlessˉequal { return 160u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉgreater { return 161u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Floatingˉgreaterˉequal { return 162u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Unitˉconstant { return 163u32; }
-    if Operation == Compilerˉsourceˉwirˉoperation.Variantˉfield { return 164u32; }
-    return 0u32;
-}
 
 export fn Compilerˉsourceˉwirˉterminatorˉvalue(
     Terminator: Compilerˉsourceˉwirˉterminator
@@ -1137,7 +953,7 @@ export fn Compilerˉsourceˉwirˉmergeˉfunction(
 
 export fn Compilerˉsourceˉwirˉemit(
     Build: Compilerˉsourceˉwirˉbuild,
-    Operation: Compilerˉsourceˉwirˉoperation,
+    Operation: u32,
     Shape: u32,
     Operandˉbytes: bytes,
     Target: u32,
@@ -1187,7 +1003,7 @@ export fn Compilerˉsourceˉwirˉemit(
         Temporaries = Temporaries + 1u32;
     }
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(Build.Currentˉblock);
-    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Compilerˉsourceˉwirˉoperationˉvalue(Operation)));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Operation));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Shape));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Temporary));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Firstˉoperand));
@@ -1233,35 +1049,35 @@ export fn Compilerˉsourceˉwirˉintrinsicˉoperation(
     Source: bytes,
     Offset: u32,
     Length: u32
-) -> Compilerˉsourceˉwirˉoperation {
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉlength") { return Compilerˉsourceˉwirˉoperation.Bytesˉlength; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉslice") { return Compilerˉsourceˉwirˉoperation.Bytesˉslice; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu8") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu16ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu32ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉi32ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu64ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return Compilerˉsourceˉwirˉoperation.Bytesˉconcat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu16ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu32ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉi32ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu64ˉlittle; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return Compilerˉsourceˉwirˉoperation.Bytesˉsha256ˉhex; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return Compilerˉsourceˉwirˉoperation.U32ˉfromˉu8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return Compilerˉsourceˉwirˉoperation.U64ˉfromˉu32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return Compilerˉsourceˉwirˉoperation.I32ˉformat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return Compilerˉsourceˉwirˉoperation.U8ˉformat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return Compilerˉsourceˉwirˉoperation.U32ˉformat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return Compilerˉsourceˉwirˉoperation.I64ˉformat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return Compilerˉsourceˉwirˉoperation.U64ˉformat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return Compilerˉsourceˉwirˉoperation.Textˉconcat; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return Compilerˉsourceˉwirˉoperation.Textˉutf8ˉisˉvalid; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉfromˉutf8") { return Compilerˉsourceˉwirˉoperation.Textˉfromˉutf8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return Compilerˉsourceˉwirˉoperation.Textˉquote; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return Compilerˉsourceˉwirˉoperation.Textˉtoˉutf8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Enumˉname") { return Compilerˉsourceˉwirˉoperation.Enumˉname; }
-    return Compilerˉsourceˉwirˉoperation.None;
+) -> u32 {
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉlength") { return WIR_OPERATION_BYTES_LENGTH; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉslice") { return WIR_OPERATION_BYTES_SLICE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu8") { return WIR_OPERATION_BYTES_READ_U8; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") { return WIR_OPERATION_BYTES_READ_U16_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") { return WIR_OPERATION_BYTES_READ_U32_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return WIR_OPERATION_BYTES_READ_I32_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return WIR_OPERATION_BYTES_READ_U64_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return WIR_OPERATION_BYTES_CONCAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return WIR_OPERATION_BYTES_FROM_U8; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return WIR_OPERATION_BYTES_FROM_U16_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu32ˉlittle") { return WIR_OPERATION_BYTES_FROM_U32_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return WIR_OPERATION_BYTES_FROM_I32_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return WIR_OPERATION_BYTES_FROM_U64_LITTLE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return WIR_OPERATION_BYTES_SHA256_HEX; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return WIR_OPERATION_U32_FROM_U8; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return WIR_OPERATION_U64_FROM_U32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return WIR_OPERATION_I32_FORMAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return WIR_OPERATION_U8_FORMAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return WIR_OPERATION_U32_FORMAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return WIR_OPERATION_I64_FORMAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return WIR_OPERATION_U64_FORMAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return WIR_OPERATION_TEXT_CONCAT; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return WIR_OPERATION_TEXT_UTF8_IS_VALID; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉfromˉutf8") { return WIR_OPERATION_TEXT_FROM_UTF8; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return WIR_OPERATION_TEXT_QUOTE; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return WIR_OPERATION_TEXT_TO_UTF8; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Enumˉname") { return WIR_OPERATION_ENUM_NAME; }
+    return WIR_OPERATION_NONE;
 }
 
 export fn Compilerˉsourceˉwirˉintrinsicˉparameterˉshape(
@@ -1927,7 +1743,7 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
     if Local.Found {
         return Compilerˉsourceˉwirˉemit(
             Build,
-            Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+            WIR_OPERATION_LOAD_LOCAL,
             Local.Shape,
             Compilerˉsourceˉwirˉempty(Source),
             Local.Slot,
@@ -1977,8 +1793,8 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
                 Value.Failureˉoffset, Value.Failureˉline, Value.Failureˉcolumn
             );
         }
-        var Operation: Compilerˉsourceˉwirˉoperation =
-            Compilerˉsourceˉwirˉoperation.I32ˉconstant;
+        var Operation: u32 =
+            WIR_OPERATION_I32_CONSTANT;
         var Target: u32 = Value.Magnitude;
         var Auxiliary: u32 = Value.High;
         if Value.Shape == 1u32 {
@@ -1987,13 +1803,13 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
             }
         }
         if Value.Shape == 2u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.U8ˉconstant;
+            Operation = WIR_OPERATION_U8_CONSTANT;
         }
         if Value.Shape == 3u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.U32ˉconstant;
+            Operation = WIR_OPERATION_U32_CONSTANT;
         }
         if Value.Shape == 7u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.I64ˉconstant;
+            Operation = WIR_OPERATION_I64_CONSTANT;
             if Value.Negative {
                 if Target == 0u32 {
                     Auxiliary = 4294967295u32 - Auxiliary + 1u32;
@@ -2004,10 +1820,10 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
             }
         }
         if Value.Shape == 8u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.U64ˉconstant;
+            Operation = WIR_OPERATION_U64_CONSTANT;
         }
         if Value.Shape == 11u32 || Value.Shape == 12u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉconstant;
+            Operation = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
             if Value.Negative {
                 if Value.Shape == 11u32 {
                     Target = 256u32 - Value.Magnitude;
@@ -2017,20 +1833,20 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
             }
         }
         if Value.Shape == 13u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉconstant;
+            Operation = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
         }
         if Value.Shape == 16u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Runeˉconstant;
+            Operation = WIR_OPERATION_RUNE_CONSTANT;
         }
         if Value.Shape == 14u32 || Value.Shape == 15u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Floatingˉconstant;
+            Operation = WIR_OPERATION_FLOATING_CONSTANT;
         }
         if Value.Shape == 4u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Boolˉconstant;
+            Operation = WIR_OPERATION_BOOL_CONSTANT;
         }
         if Value.Shape >= 131072u32 + Symbols.Records {
             if Value.Shape < 131072u32 + Symbols.Records + Symbols.Enums {
-            Operation = Compilerˉsourceˉwirˉoperation.Enumˉconstant;
+            Operation = WIR_OPERATION_ENUM_CONSTANT;
             Target = Value.Shape - 131072u32;
             Auxiliary = Value.Magnitude;
             }
@@ -2048,7 +1864,7 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
     if Capability.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
         return Compilerˉsourceˉwirˉemit(
             Build,
-            Compilerˉsourceˉwirˉoperation.U32ˉconstant,
+            WIR_OPERATION_U32_CONSTANT,
             268435456u32 + Capability.Directoryˉentry,
             Compilerˉsourceˉwirˉempty(Source),
             0u32,
@@ -2073,14 +1889,14 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
     );
     if Kind == Compilerˉsourceˉwirˉdataˉkind.Text {
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Textˉconstant, 5u32,
+            Build, WIR_OPERATION_TEXT_CONSTANT, 5u32,
             Compilerˉsourceˉwirˉempty(Source), Data.Directoryˉentry, 0u32,
             Expression.Offset, Expression.Length
         );
     }
     if Kind == Compilerˉsourceˉwirˉdataˉkind.Bytes {
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Bytesˉconstant, 6u32,
+            Build, WIR_OPERATION_BYTES_CONSTANT, 6u32,
             Compilerˉsourceˉwirˉempty(Source), Data.Directoryˉentry, 0u32,
             Expression.Offset, Expression.Length
         );
@@ -2156,7 +1972,7 @@ fn Compilerˉsourceˉwirˉcompileˉrecordˉpath(
         }
         Result = Compilerˉsourceˉwirˉemit(
             Compilerˉsourceˉwirˉvalueˉbuild(Result),
-            Compilerˉsourceˉwirˉoperation.Recordˉfield,
+            WIR_OPERATION_RECORD_FIELD,
             Pathˉfield.Shape,
             Compilerˉsourceˉwirˉoneˉoperand(Result.Temporary),
             Result.Shape - 65536u32,
@@ -2230,14 +2046,14 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
             );
         }
         let Target: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Loadˉlocal, Local.Shape,
+            Build, WIR_OPERATION_LOAD_LOCAL, Local.Shape,
             Compilerˉsourceˉwirˉempty(Source), Local.Slot, 0u32,
             Expression.Firstˉoffset, Expression.Firstˉlength
         );
         let Firstˉfield: Compilerˉsourceˉwirˉvalue =
             Compilerˉsourceˉwirˉemit(
                 Compilerˉsourceˉwirˉvalueˉbuild(Target),
-                Compilerˉsourceˉwirˉoperation.Recordˉfield,
+                WIR_OPERATION_RECORD_FIELD,
                 Field.Shape,
                 Compilerˉsourceˉwirˉoneˉoperand(Target.Temporary),
                 Local.Shape - 65536u32,
@@ -2271,7 +2087,7 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
     if Capability.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
         return Compilerˉsourceˉwirˉemit(
             Build,
-            Compilerˉsourceˉwirˉoperation.U32ˉconstant,
+            WIR_OPERATION_U32_CONSTANT,
             268435456u32 + Capability.Directoryˉentry,
             Compilerˉsourceˉwirˉempty(Source),
             0u32,
@@ -2351,7 +2167,7 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
     }
     return Compilerˉsourceˉwirˉemit(
         Build,
-        Compilerˉsourceˉwirˉoperation.Enumˉconstant,
+        WIR_OPERATION_ENUM_CONSTANT,
         Member.Shape,
         Compilerˉsourceˉwirˉempty(Source),
         Member.Shape - 131072u32,
@@ -2364,194 +2180,194 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
 export fn Compilerˉsourceˉwirˉbinaryˉoperation(
     Operator: Sourceˉlexer.Compilerˉtokenˉkind,
     Shape: u32
-) -> Compilerˉsourceˉwirˉoperation {
+) -> u32 {
     if Shape == 14u32 || Shape == 15u32 {
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉadd;
+            return WIR_OPERATION_FLOATING_ADD;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉsubtract;
+            return WIR_OPERATION_FLOATING_SUBTRACT;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉmultiply;
+            return WIR_OPERATION_FLOATING_MULTIPLY;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Slash {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉdivide;
+            return WIR_OPERATION_FLOATING_DIVIDE;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Equalsˉequals {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉequal;
+            return WIR_OPERATION_FLOATING_EQUAL;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Bangˉequals {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉnotˉequal;
+            return WIR_OPERATION_FLOATING_NOT_EQUAL;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Less {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉless;
+            return WIR_OPERATION_FLOATING_LESS;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Lessˉequals {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉlessˉequal;
+            return WIR_OPERATION_FLOATING_LESS_EQUAL;
         }
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greater {
-            return Compilerˉsourceˉwirˉoperation.Floatingˉgreater;
+            return WIR_OPERATION_FLOATING_GREATER;
         }
-        return Compilerˉsourceˉwirˉoperation.Floatingˉgreaterˉequal;
+        return WIR_OPERATION_FLOATING_GREATER_EQUAL;
     }
     if Shape == 16u32 {
         if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Equalsˉequals {
-            return Compilerˉsourceˉwirˉoperation.Runeˉequal;
+            return WIR_OPERATION_RUNE_EQUAL;
         }
-        return Compilerˉsourceˉwirˉoperation.Runeˉnotˉequal;
+        return WIR_OPERATION_RUNE_NOT_EQUAL;
     }
     if Shape >= 11u32 {
         if Shape <= 13u32 {
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉadd;
+                return WIR_OPERATION_FIXED_INTEGER_ADD;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉsubtract;
+                return WIR_OPERATION_FIXED_INTEGER_SUBTRACT;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉmultiply;
+                return WIR_OPERATION_FIXED_INTEGER_MULTIPLY;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Slash {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉdivide;
+                return WIR_OPERATION_FIXED_INTEGER_DIVIDE;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Percent {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉremainder;
+                return WIR_OPERATION_FIXED_INTEGER_REMAINDER;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Equalsˉequals {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉequal;
+                return WIR_OPERATION_FIXED_INTEGER_EQUAL;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Bangˉequals {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉnotˉequal;
+                return WIR_OPERATION_FIXED_INTEGER_NOT_EQUAL;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Less {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉless;
+                return WIR_OPERATION_FIXED_INTEGER_LESS;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Lessˉequals {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉlessˉequal;
+                return WIR_OPERATION_FIXED_INTEGER_LESS_EQUAL;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greater {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉgreater;
+                return WIR_OPERATION_FIXED_INTEGER_GREATER;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greaterˉequals {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉgreaterˉequal;
+                return WIR_OPERATION_FIXED_INTEGER_GREATER_EQUAL;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Ampersand {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉand;
+                return WIR_OPERATION_FIXED_INTEGER_BITWISE_AND;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉor;
+                return WIR_OPERATION_FIXED_INTEGER_BITWISE_OR;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Caret {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉxor;
+                return WIR_OPERATION_FIXED_INTEGER_BITWISE_XOR;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉleft {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉshiftˉleft;
+                return WIR_OPERATION_FIXED_INTEGER_SHIFT_LEFT;
             }
             if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright {
-                return Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉshiftˉright;
+                return WIR_OPERATION_FIXED_INTEGER_SHIFT_RIGHT;
             }
         }
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉadd; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉadd; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉadd; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉadd;
+        if Shape == 1u32 { return WIR_OPERATION_I32_ADD; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_ADD; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_ADD; }
+        return WIR_OPERATION_U32_ADD;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉsubtract; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉsubtract; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉsubtract; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉsubtract;
+        if Shape == 1u32 { return WIR_OPERATION_I32_SUBTRACT; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_SUBTRACT; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_SUBTRACT; }
+        return WIR_OPERATION_U32_SUBTRACT;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉmultiply; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉmultiply; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉmultiply; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉmultiply;
+        if Shape == 1u32 { return WIR_OPERATION_I32_MULTIPLY; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_MULTIPLY; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_MULTIPLY; }
+        return WIR_OPERATION_U32_MULTIPLY;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Slash {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉdivide; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉdivide; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉdivide; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉdivide;
+        if Shape == 1u32 { return WIR_OPERATION_I32_DIVIDE; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_DIVIDE; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_DIVIDE; }
+        return WIR_OPERATION_U32_DIVIDE;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Percent {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉremainder; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉremainder; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉremainder; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉremainder;
+        if Shape == 1u32 { return WIR_OPERATION_I32_REMAINDER; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_REMAINDER; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_REMAINDER; }
+        return WIR_OPERATION_U32_REMAINDER;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Ampersand {
-        if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉand; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉand; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉand;
+        if Shape == 2u32 { return WIR_OPERATION_U8_BITWISE_AND; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_BITWISE_AND; }
+        return WIR_OPERATION_U32_BITWISE_AND;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe {
-        if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉor; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉor; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉor;
+        if Shape == 2u32 { return WIR_OPERATION_U8_BITWISE_OR; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_BITWISE_OR; }
+        return WIR_OPERATION_U32_BITWISE_OR;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Caret {
-        if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉxor; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉxor; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉxor;
+        if Shape == 2u32 { return WIR_OPERATION_U8_BITWISE_XOR; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_BITWISE_XOR; }
+        return WIR_OPERATION_U32_BITWISE_XOR;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉleft {
-        if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉshiftˉleft; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉshiftˉleft; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉshiftˉleft;
+        if Shape == 2u32 { return WIR_OPERATION_U8_SHIFT_LEFT; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_SHIFT_LEFT; }
+        return WIR_OPERATION_U32_SHIFT_LEFT;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright {
-        if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉshiftˉright; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉshiftˉright; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉshiftˉright;
+        if Shape == 2u32 { return WIR_OPERATION_U8_SHIFT_RIGHT; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_SHIFT_RIGHT; }
+        return WIR_OPERATION_U32_SHIFT_RIGHT;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Less {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉless; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉless; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉless; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉless;
+        if Shape == 1u32 { return WIR_OPERATION_I32_LESS; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_LESS; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_LESS; }
+        return WIR_OPERATION_U32_LESS;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Lessˉequals {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉlessˉequal; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉlessˉequal; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉlessˉequal; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉlessˉequal;
+        if Shape == 1u32 { return WIR_OPERATION_I32_LESS_EQUAL; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_LESS_EQUAL; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_LESS_EQUAL; }
+        return WIR_OPERATION_U32_LESS_EQUAL;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greater {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉgreater; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉgreater; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉgreater; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉgreater;
+        if Shape == 1u32 { return WIR_OPERATION_I32_GREATER; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_GREATER; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_GREATER; }
+        return WIR_OPERATION_U32_GREATER;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greaterˉequals {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉgreaterˉequal; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉgreaterˉequal; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉgreaterˉequal; }
-        return Compilerˉsourceˉwirˉoperation.U32ˉgreaterˉequal;
+        if Shape == 1u32 { return WIR_OPERATION_I32_GREATER_EQUAL; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_GREATER_EQUAL; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_GREATER_EQUAL; }
+        return WIR_OPERATION_U32_GREATER_EQUAL;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Equalsˉequals {
-        if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉequal; }
-        if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉequal; }
-        if Shape == 3u32 { return Compilerˉsourceˉwirˉoperation.U32ˉequal; }
-        if Shape == 4u32 { return Compilerˉsourceˉwirˉoperation.Boolˉequal; }
-        if Shape == 5u32 { return Compilerˉsourceˉwirˉoperation.Textˉequal; }
-        if Shape == 6u32 { return Compilerˉsourceˉwirˉoperation.Bytesˉequal; }
-        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉequal; }
-        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉequal; }
-        return Compilerˉsourceˉwirˉoperation.Enumˉequal;
+        if Shape == 1u32 { return WIR_OPERATION_I32_EQUAL; }
+        if Shape == 2u32 { return WIR_OPERATION_U8_EQUAL; }
+        if Shape == 3u32 { return WIR_OPERATION_U32_EQUAL; }
+        if Shape == 4u32 { return WIR_OPERATION_BOOL_EQUAL; }
+        if Shape == 5u32 { return WIR_OPERATION_TEXT_EQUAL; }
+        if Shape == 6u32 { return WIR_OPERATION_BYTES_EQUAL; }
+        if Shape == 7u32 { return WIR_OPERATION_I64_EQUAL; }
+        if Shape == 8u32 { return WIR_OPERATION_U64_EQUAL; }
+        return WIR_OPERATION_ENUM_EQUAL;
     }
-    if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉnotˉequal; }
-    if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉnotˉequal; }
-    if Shape == 3u32 { return Compilerˉsourceˉwirˉoperation.U32ˉnotˉequal; }
-    if Shape == 4u32 { return Compilerˉsourceˉwirˉoperation.Boolˉnotˉequal; }
-    if Shape == 5u32 { return Compilerˉsourceˉwirˉoperation.Textˉnotˉequal; }
-    if Shape == 6u32 { return Compilerˉsourceˉwirˉoperation.Bytesˉnotˉequal; }
-    if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉnotˉequal; }
-    if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉnotˉequal; }
-    return Compilerˉsourceˉwirˉoperation.Enumˉnotˉequal;
+    if Shape == 1u32 { return WIR_OPERATION_I32_NOT_EQUAL; }
+    if Shape == 2u32 { return WIR_OPERATION_U8_NOT_EQUAL; }
+    if Shape == 3u32 { return WIR_OPERATION_U32_NOT_EQUAL; }
+    if Shape == 4u32 { return WIR_OPERATION_BOOL_NOT_EQUAL; }
+    if Shape == 5u32 { return WIR_OPERATION_TEXT_NOT_EQUAL; }
+    if Shape == 6u32 { return WIR_OPERATION_BYTES_NOT_EQUAL; }
+    if Shape == 7u32 { return WIR_OPERATION_I64_NOT_EQUAL; }
+    if Shape == 8u32 { return WIR_OPERATION_U64_NOT_EQUAL; }
+    return WIR_OPERATION_ENUM_NOT_EQUAL;
 }
 
 fn Compilerˉsourceˉwirˉcompileˉnamedˉvariant(
@@ -2726,7 +2542,7 @@ fn Compilerˉsourceˉwirˉcompileˉnamedˉvariant(
         Missing = Missing + 1u32;
     }
     return Compilerˉsourceˉwirˉemit(
-        Result, Compilerˉsourceˉwirˉoperation.Variantˉcreate,
+        Result, WIR_OPERATION_VARIANT_CREATE,
         196608u32 + Signature.Target, Operands,
         Signature.Target, Signature.Auxiliary,
         Expression.Offset, Expression.Length
@@ -2953,7 +2769,7 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
             let Preserved: Compilerˉsourceˉwirˉvalue =
                 Compilerˉsourceˉwirˉemit(
                     Result,
-                    Compilerˉsourceˉwirˉoperation.Recordˉfield,
+                    WIR_OPERATION_RECORD_FIELD,
                     Preservedˉsignature.Parameterˉshape,
                     Compilerˉsourceˉwirˉoneˉoperand(Baseˉtemporary),
                     Signature.Target,
@@ -2983,7 +2799,7 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
         Missing = Missing + 1u32;
     }
     return Compilerˉsourceˉwirˉemit(
-        Result, Compilerˉsourceˉwirˉoperation.Recordˉcreate,
+        Result, WIR_OPERATION_RECORD_CREATE,
         Signature.Returnˉshape, Recordˉoperands,
         Signature.Target, Signature.Auxiliary,
         Expression.Offset, Expression.Length
@@ -3042,7 +2858,7 @@ fn Compilerˉsourceˉwirˉpropagateˉtry(
 ) -> Compilerˉsourceˉwirˉbuild {
     let Isˉvalid: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Operand),
-        Compilerˉsourceˉwirˉoperation.Variantˉisˉcase, 4u32,
+        WIR_OPERATION_VARIANT_IS_CASE, 4u32,
         Compilerˉsourceˉwirˉoneˉoperand(Operand.Temporary),
         Operand.Shape - 196608u32, 0u32, Offset, Length
     );
@@ -3153,7 +2969,7 @@ fn Compilerˉsourceˉwirˉcompileˉvalueˉtry(
         );
     }
     return Compilerˉsourceˉwirˉemit(
-        Propagated, Compilerˉsourceˉwirˉoperation.Variantˉpayload,
+        Propagated, WIR_OPERATION_VARIANT_PAYLOAD,
         Validˉfield.Shape,
         Compilerˉsourceˉwirˉoneˉoperand(Operand.Temporary),
         Operand.Shape - 196608u32, 0u32,
@@ -3340,7 +3156,7 @@ fn Compilerˉsourceˉwirˉjoinˉbranchˉvalues(
         );
         return Compilerˉsourceˉwirˉemit(
             Compilerˉsourceˉwirˉbeginˉreservedˉblock(Result, Bothˉjoin),
-            Compilerˉsourceˉwirˉoperation.Valueˉphi,
+            WIR_OPERATION_VALUE_PHI,
             First.Shape,
             Compilerˉsourceˉwirˉtwoˉoperands(
                 First.Temporary, Second.Temporary
@@ -3579,35 +3395,35 @@ fn Compilerˉsourceˉwirˉcompileˉliteralˉexpression(
 ) -> Compilerˉsourceˉwirˉvalue {
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Integer {
         var Integerˉshape: u32 = 1u32;
-        var Integerˉoperation: Compilerˉsourceˉwirˉoperation =
-            Compilerˉsourceˉwirˉoperation.I32ˉconstant;
+        var Integerˉoperation: u32 =
+            WIR_OPERATION_I32_CONSTANT;
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U8 {
             Integerˉshape = 2u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.U8ˉconstant;
+            Integerˉoperation = WIR_OPERATION_U8_CONSTANT;
         }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U32 {
             Integerˉshape = 3u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.U32ˉconstant;
+            Integerˉoperation = WIR_OPERATION_U32_CONSTANT;
         }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I64 {
             Integerˉshape = 7u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.I64ˉconstant;
+            Integerˉoperation = WIR_OPERATION_I64_CONSTANT;
         }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U64 {
             Integerˉshape = 8u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.U64ˉconstant;
+            Integerˉoperation = WIR_OPERATION_U64_CONSTANT;
         }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I8 {
             Integerˉshape = 11u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉconstant;
+            Integerˉoperation = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
         }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I16 {
             Integerˉshape = 12u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉconstant;
+            Integerˉoperation = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
         }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U16 {
             Integerˉshape = 13u32;
-            Integerˉoperation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉconstant;
+            Integerˉoperation = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
         }
         return Compilerˉsourceˉwirˉemit(
             Build, Integerˉoperation, Integerˉshape,
@@ -3622,7 +3438,7 @@ fn Compilerˉsourceˉwirˉcompileˉliteralˉexpression(
             Floatingˉshape = 15u32;
         }
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Floatingˉconstant,
+            Build, WIR_OPERATION_FLOATING_CONSTANT,
             Floatingˉshape, Compilerˉsourceˉwirˉempty(Source),
             Expression.Numericˉvalue, Expression.Numericˉhigh,
             Expression.Offset, Expression.Length
@@ -3630,7 +3446,7 @@ fn Compilerˉsourceˉwirˉcompileˉliteralˉexpression(
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.String {
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Textˉconstant, 5u32,
+            Build, WIR_OPERATION_TEXT_CONSTANT, 5u32,
             Compilerˉsourceˉwirˉempty(Source),
             Expression.Valueˉoffset, Expression.Valueˉlength,
             Expression.Offset, Expression.Length
@@ -3640,14 +3456,14 @@ fn Compilerˉsourceˉwirˉcompileˉliteralˉexpression(
         var Boolean: u32 = 0u32;
         if Expression.Booleanˉvalue { Boolean = 1u32; }
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Boolˉconstant, 4u32,
+            Build, WIR_OPERATION_BOOL_CONSTANT, 4u32,
             Compilerˉsourceˉwirˉempty(Source), Boolean, 0u32,
             Expression.Offset, Expression.Length
         );
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Rune {
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Runeˉconstant, 16u32,
+            Build, WIR_OPERATION_RUNE_CONSTANT, 16u32,
             Compilerˉsourceˉwirˉempty(Source), Expression.Numericˉvalue, 0u32,
             Expression.Offset, Expression.Length
         );
@@ -3664,7 +3480,7 @@ fn Compilerˉsourceˉwirˉcompileˉliteralˉexpression(
         );
     }
     return Compilerˉsourceˉwirˉemit(
-        Build, Compilerˉsourceˉwirˉoperation.Unitˉconstant, 9u32,
+        Build, WIR_OPERATION_UNIT_CONSTANT, 9u32,
         Compilerˉsourceˉwirˉempty(Source), 0u32, 0u32,
         Expression.Offset, Expression.Length
     );
@@ -3713,25 +3529,25 @@ fn Compilerˉsourceˉwirˉcompileˉunaryˉexpression(
         }
         return Compilerˉsourceˉwirˉemit(
             Compilerˉsourceˉwirˉvalueˉbuild(Operand),
-            Compilerˉsourceˉwirˉoperation.Builderˉfreeze,
+            WIR_OPERATION_BUILDER_FREEZE,
             Operand.Shape - 268435456u32,
             Compilerˉsourceˉwirˉoneˉoperand(Operand.Temporary),
             0u32, 0u32, Expression.Offset, Expression.Length
         );
     }
     var Required: u32 = 4u32;
-    var Operation: Compilerˉsourceˉwirˉoperation =
-        Compilerˉsourceˉwirˉoperation.Boolˉnot;
+    var Operation: u32 =
+        WIR_OPERATION_BOOL_NOT;
     if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
         Required = Operand.Shape;
         if Operand.Shape == 1u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.I32ˉnegate;
+            Operation = WIR_OPERATION_I32_NEGATE;
         } else if Operand.Shape == 7u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.I64ˉnegate;
+            Operation = WIR_OPERATION_I64_NEGATE;
         } else if Operand.Shape == 11u32 || Operand.Shape == 12u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉnegate;
+            Operation = WIR_OPERATION_FIXED_INTEGER_NEGATE;
         } else if Operand.Shape == 14u32 || Operand.Shape == 15u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Floatingˉnegate;
+            Operation = WIR_OPERATION_FLOATING_NEGATE;
         } else {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Compilerˉsourceˉwirˉvalueˉbuild(Operand),
@@ -3744,13 +3560,13 @@ fn Compilerˉsourceˉwirˉcompileˉunaryˉexpression(
     if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Tilde {
         Required = Operand.Shape;
         if Operand.Shape == 2u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉnot;
+            Operation = WIR_OPERATION_U8_BITWISE_NOT;
         } else if Operand.Shape == 3u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉnot;
+            Operation = WIR_OPERATION_U32_BITWISE_NOT;
         } else if Operand.Shape == 8u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉnot;
+            Operation = WIR_OPERATION_U64_BITWISE_NOT;
         } else if Operand.Shape == 13u32 {
-            Operation = Compilerˉsourceˉwirˉoperation.Fixedˉintegerˉbitwiseˉnot;
+            Operation = WIR_OPERATION_FIXED_INTEGER_BITWISE_NOT;
         } else {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Compilerˉsourceˉwirˉvalueˉbuild(Operand),
@@ -3844,7 +3660,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             );
         }
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Builderˉcreate,
+            Build, WIR_OPERATION_BUILDER_CREATE,
             Builderˉshape, Compilerˉsourceˉwirˉempty(Source),
             Compilerˉsourceˉwirˉcollectionˉdescriptor(Builderˉshape),
             Compilerˉsourceˉwirˉcollectionˉmaximum(Builderˉshape),
@@ -3916,7 +3732,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             );
             let Short: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                 Compilerˉsourceˉwirˉbeginˉreservedˉblock(Branchˉbuild, Shortˉblock),
-                Compilerˉsourceˉwirˉoperation.Boolˉconstant,
+                WIR_OPERATION_BOOL_CONSTANT,
                 4u32,
                 Compilerˉsourceˉwirˉempty(Source),
                 Shortˉvalue,
@@ -3970,7 +3786,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             );
             return Compilerˉsourceˉwirˉemit(
                 Compilerˉsourceˉwirˉbeginˉreservedˉblock(Joined, Joinˉblock),
-                Compilerˉsourceˉwirˉoperation.Valueˉphi,
+                WIR_OPERATION_VALUE_PHI,
                 4u32,
                 Compilerˉsourceˉwirˉtwoˉoperands(Short.Temporary, Shortˉright.Temporary),
                 Shortˉblock,
@@ -4102,14 +3918,14 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             }
             let Indexedˉsequence: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                 Compilerˉsourceˉwirˉvalueˉbuild(Index),
-                Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+                WIR_OPERATION_LOAD_LOCAL,
                 Indexedˉlocal.Shape, Compilerˉsourceˉwirˉempty(Source),
                 Indexedˉlocal.Slot, 0u32,
                 Expression.Valueˉoffset, Expression.Valueˉlength
             );
             return Compilerˉsourceˉwirˉemit(
                 Compilerˉsourceˉwirˉvalueˉbuild(Indexedˉsequence),
-                Compilerˉsourceˉwirˉoperation.Sequenceˉelement,
+                WIR_OPERATION_SEQUENCE_ELEMENT,
                 Compilerˉsourceˉwirˉcollectionˉelementˉshape(Indexedˉlocal.Shape),
                 Compilerˉsourceˉwirˉtwoˉoperands(Indexedˉsequence.Temporary, Index.Temporary),
                 0u32, 0u32, Expression.Offset, Expression.Length
@@ -4146,7 +3962,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
         }
         return Compilerˉsourceˉwirˉemit(
             Compilerˉsourceˉwirˉvalueˉbuild(Index),
-            Compilerˉsourceˉwirˉoperation.Dataˉloadˉi32,
+            WIR_OPERATION_DATA_LOAD_I32,
             1u32,
             Compilerˉsourceˉwirˉoneˉoperand(Index.Temporary),
             Data.Directoryˉentry, 0u32,
@@ -4220,7 +4036,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 );
                 return Compilerˉsourceˉwirˉemit(
                     Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉlengthˉvalue),
-                    Compilerˉsourceˉwirˉoperation.Sequenceˉlength,
+                    WIR_OPERATION_SEQUENCE_LENGTH,
                     3u32,
                     Compilerˉsourceˉwirˉoneˉoperand(Collectionˉlengthˉvalue.Temporary),
                     0u32, 0u32, Expression.Offset, Expression.Length
@@ -4254,7 +4070,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             );
         }
         return Compilerˉsourceˉwirˉemit(
-            Build, Compilerˉsourceˉwirˉoperation.Dataˉlength, 1u32,
+            Build, WIR_OPERATION_DATA_LENGTH, 1u32,
             Compilerˉsourceˉwirˉempty(Source),
             Data.Directoryˉentry, 0u32,
             Expression.Offset, Expression.Length
@@ -4353,7 +4169,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         Input, Scan, Symbols, Callable,
         Source, Expression.Valueˉoffset, Expression.Valueˉlength, 0u32
     );
-    var Operation: Compilerˉsourceˉwirˉoperation = Compilerˉsourceˉwirˉoperation.Callˉfunction;
+    var Operation: u32 = WIR_OPERATION_CALL_FUNCTION;
     var Target: u32 = Signature.Target;
     var Auxiliary: u32 = Signature.Auxiliary;
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic {
@@ -4364,13 +4180,13 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         Auxiliary = 0u32;
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Record {
-        Operation = Compilerˉsourceˉwirˉoperation.Recordˉcreate;
+        Operation = WIR_OPERATION_RECORD_CREATE;
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Variantˉcase {
-        Operation = Compilerˉsourceˉwirˉoperation.Variantˉcreate;
+        Operation = WIR_OPERATION_VARIANT_CREATE;
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
-        Operation = Compilerˉsourceˉwirˉoperation.Callˉcapability;
+        Operation = WIR_OPERATION_CALL_CAPABILITY;
     }
     if Signature.Returnˉshape == 10u32 {
         let Neverˉcall: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
@@ -4527,7 +4343,7 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     );
     let Collectionˉforˉsequenceˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉsequence),
-        Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+        WIR_OPERATION_STORE_LOCAL,
         0u32,
         Compilerˉsourceˉwirˉoneˉoperand(Collectionˉforˉsequence.Temporary),
         Collectionˉforˉsequenceˉslot, 0u32,
@@ -4535,13 +4351,13 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     );
     let Collectionˉforˉzero: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉsequenceˉstored),
-        Compilerˉsourceˉwirˉoperation.U32ˉconstant,
+        WIR_OPERATION_U32_CONSTANT,
         3u32, Compilerˉsourceˉwirˉempty(Source),
         0u32, 0u32, Statement.Offset, Statement.Length
     );
     let Collectionˉforˉindexˉinitialized: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉzero),
-        Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+        WIR_OPERATION_STORE_LOCAL,
         0u32, Compilerˉsourceˉwirˉoneˉoperand(Collectionˉforˉzero.Temporary),
         Collectionˉforˉindexˉslot, 0u32,
         Statement.Offset, Statement.Length
@@ -4562,28 +4378,28 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     );
     Result = Compilerˉsourceˉwirˉbeginˉreservedˉblock(Result, Collectionˉforˉheader);
     let Collectionˉforˉheaderˉindex: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
-        Result, Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+        Result, WIR_OPERATION_LOAD_LOCAL,
         3u32, Compilerˉsourceˉwirˉempty(Source),
         Collectionˉforˉindexˉslot, 0u32,
         Statement.Offset, Statement.Length
     );
     let Collectionˉforˉheaderˉsequence: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉheaderˉindex),
-        Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+        WIR_OPERATION_LOAD_LOCAL,
         Collectionˉforˉsequence.Shape, Compilerˉsourceˉwirˉempty(Source),
         Collectionˉforˉsequenceˉslot, 0u32,
         Statement.Expressionˉoffset, Statement.Expressionˉlength
     );
     let Collectionˉforˉlength: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉheaderˉsequence),
-        Compilerˉsourceˉwirˉoperation.Sequenceˉlength,
+        WIR_OPERATION_SEQUENCE_LENGTH,
         3u32,
         Compilerˉsourceˉwirˉoneˉoperand(Collectionˉforˉheaderˉsequence.Temporary),
         0u32, 0u32, Statement.Expressionˉoffset, Statement.Expressionˉlength
     );
     let Collectionˉforˉcondition: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉlength),
-        Compilerˉsourceˉwirˉoperation.U32ˉless,
+        WIR_OPERATION_U32_LESS,
         4u32,
         Compilerˉsourceˉwirˉtwoˉoperands(
             Collectionˉforˉheaderˉindex.Temporary,
@@ -4599,21 +4415,21 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     );
     Result = Compilerˉsourceˉwirˉbeginˉreservedˉblock(Result, Collectionˉforˉbody);
     let Collectionˉforˉbodyˉsequence: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
-        Result, Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+        Result, WIR_OPERATION_LOAD_LOCAL,
         Collectionˉforˉsequence.Shape, Compilerˉsourceˉwirˉempty(Source),
         Collectionˉforˉsequenceˉslot, 0u32,
         Statement.Expressionˉoffset, Statement.Expressionˉlength
     );
     let Collectionˉforˉbodyˉindex: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉbodyˉsequence),
-        Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+        WIR_OPERATION_LOAD_LOCAL,
         3u32, Compilerˉsourceˉwirˉempty(Source),
         Collectionˉforˉindexˉslot, 0u32,
         Statement.Offset, Statement.Length
     );
     let Collectionˉforˉelement: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉbodyˉindex),
-        Compilerˉsourceˉwirˉoperation.Sequenceˉelement,
+        WIR_OPERATION_SEQUENCE_ELEMENT,
         Collectionˉforˉbinding.Shape,
         Compilerˉsourceˉwirˉtwoˉoperands(
             Collectionˉforˉbodyˉsequence.Temporary,
@@ -4623,7 +4439,7 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     );
     let Collectionˉforˉelementˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉelement),
-        Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+        WIR_OPERATION_STORE_LOCAL,
         0u32, Compilerˉsourceˉwirˉoneˉoperand(Collectionˉforˉelement.Temporary),
         Collectionˉforˉbinding.Slot, 0u32,
         Statement.Offset, Statement.Length
@@ -4657,20 +4473,20 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     }
     Result = Compilerˉsourceˉwirˉbeginˉreservedˉblock(Result, Collectionˉforˉincrement);
     let Collectionˉforˉincrementˉindex: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
-        Result, Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+        Result, WIR_OPERATION_LOAD_LOCAL,
         3u32, Compilerˉsourceˉwirˉempty(Source),
         Collectionˉforˉindexˉslot, 0u32,
         Statement.Offset, Statement.Length
     );
     let Collectionˉforˉone: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉincrementˉindex),
-        Compilerˉsourceˉwirˉoperation.U32ˉconstant,
+        WIR_OPERATION_U32_CONSTANT,
         3u32, Compilerˉsourceˉwirˉempty(Source),
         1u32, 0u32, Statement.Offset, Statement.Length
     );
     let Collectionˉforˉincremented: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉone),
-        Compilerˉsourceˉwirˉoperation.U32ˉadd,
+        WIR_OPERATION_U32_ADD,
         3u32,
         Compilerˉsourceˉwirˉtwoˉoperands(
             Collectionˉforˉincrementˉindex.Temporary,
@@ -4680,7 +4496,7 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
     );
     let Collectionˉforˉincrementˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉincremented),
-        Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+        WIR_OPERATION_STORE_LOCAL,
         0u32, Compilerˉsourceˉwirˉoneˉoperand(Collectionˉforˉincremented.Temporary),
         Collectionˉforˉindexˉslot, 0u32,
         Statement.Offset, Statement.Length
@@ -4753,7 +4569,7 @@ fn Compilerˉsourceˉwirˉcompileˉpush(
     }
     let Collectionˉpushˉloaded: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉpushˉvalue),
-        Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+        WIR_OPERATION_LOAD_LOCAL,
         Collectionˉpushˉbinding.Shape,
         Compilerˉsourceˉwirˉempty(Source),
         Collectionˉpushˉbinding.Slot, 0u32,
@@ -4761,7 +4577,7 @@ fn Compilerˉsourceˉwirˉcompileˉpush(
     );
     let Collectionˉpushed: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉpushˉloaded),
-        Compilerˉsourceˉwirˉoperation.Builderˉpush,
+        WIR_OPERATION_BUILDER_PUSH,
         Collectionˉpushˉbinding.Shape,
         Compilerˉsourceˉwirˉtwoˉoperands(
             Collectionˉpushˉloaded.Temporary,
@@ -4771,7 +4587,7 @@ fn Compilerˉsourceˉwirˉcompileˉpush(
     );
     let Collectionˉpushˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉpushed),
-        Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+        WIR_OPERATION_STORE_LOCAL,
         0u32, Compilerˉsourceˉwirˉoneˉoperand(Collectionˉpushed.Temporary),
         Collectionˉpushˉbinding.Slot, 0u32,
         Statement.Offset, Statement.Length
@@ -5083,7 +4899,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
             if Matchˉisˉvariant {
                 let Dispatchˉcase: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                     Matchˉbodies,
-                    Compilerˉsourceˉwirˉoperation.Variantˉisˉcase,
+                    WIR_OPERATION_VARIANT_IS_CASE,
                     4u32,
                     Compilerˉsourceˉwirˉoneˉoperand(Matchˉvalue.Temporary),
                     Matchˉvalue.Shape - 196608u32,
@@ -5096,7 +4912,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
             } else {
                 let Dispatchˉconstant: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                     Matchˉbodies,
-                    Compilerˉsourceˉwirˉoperation.Enumˉconstant,
+                    WIR_OPERATION_ENUM_CONSTANT,
                     Matchˉvalue.Shape,
                     Compilerˉsourceˉwirˉempty(Source),
                     Matchˉvalue.Shape - 131072u32,
@@ -5106,7 +4922,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
                 );
                 let Dispatchˉequal: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                     Compilerˉsourceˉwirˉvalueˉbuild(Dispatchˉconstant),
-                    Compilerˉsourceˉwirˉoperation.Enumˉequal,
+                    WIR_OPERATION_ENUM_EQUAL,
                     4u32,
                     Compilerˉsourceˉwirˉtwoˉoperands(
                         Matchˉvalue.Temporary,
@@ -5721,7 +5537,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                 }
                 let Localˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                     Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue),
-                    Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+                    WIR_OPERATION_STORE_LOCAL,
                     0u32,
                     Compilerˉsourceˉwirˉoneˉoperand(Localˉvalue.Temporary),
                     Localˉbinding.Slot, 0u32,
@@ -5788,7 +5604,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                 if Isˉcompound {
                     let Loaded: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                         Assignmentˉbuild,
-                        Compilerˉsourceˉwirˉoperation.Loadˉlocal,
+                        WIR_OPERATION_LOAD_LOCAL,
                         Assignmentˉbinding.Shape,
                         Compilerˉsourceˉwirˉempty(Source),
                         Assignmentˉbinding.Slot,
@@ -5868,7 +5684,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                 }
                 let Assignmentˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
                     Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
-                    Compilerˉsourceˉwirˉoperation.Storeˉlocal,
+                    WIR_OPERATION_STORE_LOCAL,
                     0u32,
                     Compilerˉsourceˉwirˉoneˉoperand(Assignmentˉvalue.Temporary),
                     Assignmentˉbinding.Slot, 0u32,
@@ -5950,7 +5766,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     let Unitˉreturnˉvalue: Compilerˉsourceˉwirˉvalue =
                         Compilerˉsourceˉwirˉemit(
                             Result,
-                            Compilerˉsourceˉwirˉoperation.Unitˉconstant,
+                            WIR_OPERATION_UNIT_CONSTANT,
                             9u32,
                             Compilerˉsourceˉwirˉempty(Source),
                             0u32,
@@ -6371,7 +6187,7 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
             let Unitˉfallthrough: Compilerˉsourceˉwirˉvalue =
                 Compilerˉsourceˉwirˉemit(
                     Result,
-                    Compilerˉsourceˉwirˉoperation.Unitˉconstant,
+                    WIR_OPERATION_UNIT_CONSTANT,
                     9u32,
                     Compilerˉsourceˉwirˉempty(Source),
                     0u32,
@@ -7547,7 +7363,7 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
             );
         let Payload: Compilerˉsourceˉwirˉvalue =
             Compilerˉsourceˉwirˉemit(
-                Build, Compilerˉsourceˉwirˉoperation.Variantˉpayload,
+                Build, WIR_OPERATION_VARIANT_PAYLOAD,
                 Legacyˉfield.Shape,
                 Compilerˉsourceˉwirˉoneˉoperand(Value),
                 Nominal, Caseˉindex,
@@ -7556,7 +7372,7 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
         let Legacyˉstored: Compilerˉsourceˉwirˉvalue =
             Compilerˉsourceˉwirˉemit(
                 Compilerˉsourceˉwirˉvalueˉbuild(Payload),
-                Compilerˉsourceˉwirˉoperation.Storeˉlocal, 0u32,
+                WIR_OPERATION_STORE_LOCAL, 0u32,
                 Compilerˉsourceˉwirˉoneˉoperand(Payload.Temporary),
                 Legacyˉbinding.Slot, 0u32,
                 Case.Bindingˉoffset, Case.Bindingˉlength
@@ -7612,7 +7428,7 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
             let Selected: Compilerˉsourceˉwirˉvalue =
                 Compilerˉsourceˉwirˉemit(
                     Result,
-                    Compilerˉsourceˉwirˉoperation.Variantˉfield,
+                    WIR_OPERATION_VARIANT_FIELD,
                     Member.Shape,
                     Compilerˉsourceˉwirˉoneˉoperand(Value),
                     Nominal, Caseˉindex * 64u32 + Member.Index,
@@ -7621,7 +7437,7 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
             let Fieldˉstored: Compilerˉsourceˉwirˉvalue =
                 Compilerˉsourceˉwirˉemit(
                     Compilerˉsourceˉwirˉvalueˉbuild(Selected),
-                    Compilerˉsourceˉwirˉoperation.Storeˉlocal, 0u32,
+                    WIR_OPERATION_STORE_LOCAL, 0u32,
                     Compilerˉsourceˉwirˉoneˉoperand(Selected.Temporary),
                     Fieldˉbinding.Slot, 0u32,
                     Name.Offset, Name.Length

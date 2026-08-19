@@ -243,23 +243,9 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     Enums: u32,
     Variants: u32
 ) -> bool {
-    if Shape == 0u32 { return Allowˉvoid; }
-    if Shape <= 8u32 { return true; }
-    if Shape == 9u32 { return true; }
-    if Shape == 10u32 { return Allowˉvoid; }
-    if Shape >= 11u32 {
-        if Shape <= 15u32 { return true; }
-    }
-    if Shape == 16u32 { return true; }
-    if Shape >= 65536u32 {
-        if Shape < 65536u32 + Records { return true; }
-    }
-    if Shape >= 131072u32 + Records {
-        if Shape < 131072u32 + Records + Enums { return true; }
-    }
-    if Shape >= 196608u32 + Records + Enums {
-        if Shape < 196608u32 + Records + Enums + Variants { return true; }
-    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
+        Shape, Records, Enums, Variants, Allowˉvoid
+    ) { return true; }
     if Shape >= 268435456u32 {
         if Shape < 268439552u32 { return true; }
     }
@@ -570,136 +556,73 @@ export fn Compilerˉsourceˉwvbˉmoduleˉmetadata(
     );
 }
 
-export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
-    if Operation == 11u32 { return 11u8; }
-    if Operation == 12u32 { return 12u8; }
-    if Operation == 13u32 { return 13u8; }
-    if Operation == 14u32 { return 14u8; }
-    if Operation == 15u32 { return 15u8; }
-    if Operation == 16u32 { return 114u8; }
-    if Operation == 17u32 { return 104u8; }
-    if Operation == 18u32 { return 105u8; }
-    if Operation == 19u32 { return 106u8; }
-    if Operation == 20u32 { return 107u8; }
-    if Operation == 21u32 { return 108u8; }
-    if Operation == 22u32 { return 109u8; }
-    if Operation == 23u32 { return 110u8; }
-    if Operation == 24u32 { return 111u8; }
-    if Operation == 25u32 { return 112u8; }
-    if Operation == 26u32 { return 118u8; }
-    if Operation == 27u32 { return 113u8; }
-    if Operation == 28u32 { return 115u8; }
-    if Operation == 29u32 { return 116u8; }
-    if Operation == 30u32 { return 117u8; }
-    if Operation == 31u32 { return 119u8; }
-    if Operation == 32u32 { return 120u8; }
-    if Operation == 33u32 { return 121u8; }
-    if Operation == 34u32 { return 122u8; }
-    if Operation == 35u32 { return 123u8; }
-    if Operation == 36u32 { return 125u8; }
-    if Operation == 37u32 { return 124u8; }
-    if Operation == 38u32 { return 16u8; }
-    if Operation == 39u32 { return 17u8; }
-    if Operation == 40u32 { return 18u8; }
-    if Operation == 41u32 { return 19u8; }
-    if Operation == 42u32 { return 20u8; }
-    if Operation == 43u32 { return 21u8; }
-    if Operation == 44u32 { return 22u8; }
-    if Operation == 45u32 { return 32u8; }
-    if Operation == 46u32 { return 33u8; }
-    if Operation == 47u32 { return 34u8; }
-    if Operation == 48u32 { return 35u8; }
-    if Operation == 49u32 { return 36u8; }
-    if Operation == 50u32 { return 37u8; }
-    if Operation == 51u32 { return 38u8; }
-    if Operation == 52u32 { return 39u8; }
-    if Operation == 53u32 { return 40u8; }
-    if Operation == 54u32 { return 96u8; }
-    if Operation == 55u32 { return 97u8; }
-    if Operation == 56u32 { return 98u8; }
-    if Operation == 57u32 { return 99u8; }
-    if Operation == 58u32 { return 100u8; }
-    if Operation == 59u32 { return 101u8; }
-    if Operation == 60u32 { return 102u8; }
-    if Operation == 61u32 { return 103u8; }
-    if Operation == 65u32 { return 151u8; }
-    if Operation == 66u32 { return 152u8; }
-    if Operation == 67u32 { return 153u8; }
-    if Operation == 68u32 { return 154u8; }
-    if Operation == 69u32 { return 155u8; }
-    if Operation == 70u32 { return 156u8; }
-    if Operation == 71u32 { return 157u8; }
-    if Operation == 72u32 { return 158u8; }
-    if Operation == 73u32 { return 159u8; }
-    if Operation == 74u32 { return 160u8; }
-    if Operation == 75u32 { return 161u8; }
-    if Operation == 76u32 { return 162u8; }
-    if Operation == 77u32 { return 167u8; }
-    if Operation == 78u32 { return 168u8; }
-    if Operation == 79u32 { return 169u8; }
-    if Operation == 80u32 { return 170u8; }
-    if Operation == 81u32 { return 171u8; }
-    if Operation == 82u32 { return 172u8; }
-    if Operation == 83u32 { return 173u8; }
-    if Operation == 84u32 { return 174u8; }
-    if Operation == 85u32 { return 175u8; }
-    if Operation == 86u32 { return 176u8; }
-    if Operation == 87u32 { return 177u8; }
-    if Operation == 88u32 { return 178u8; }
-    if Operation == 89u32 { return 185u8; }
-    if Operation == 90u32 { return 186u8; }
-    if Operation == 91u32 { return 187u8; }
-    if Operation == 92u32 { return 188u8; }
-    if Operation == 93u32 { return 128u8; }
-    if Operation == 94u32 { return 129u8; }
-    if Operation == 95u32 { return 149u8; }
-    if Operation == 96u32 { return 150u8; }
-    if Operation == 97u32 { return 130u8; }
-    if Operation == 98u32 { return 131u8; }
-    if Operation == 99u32 { return 132u8; }
-    if Operation == 100u32 { return 133u8; }
-    if Operation == 101u32 { return 134u8; }
-    if Operation == 102u32 { return 135u8; }
-    if Operation == 103u32 { return 136u8; }
-    if Operation == 104u32 { return 137u8; }
-    if Operation == 105u32 { return 138u8; }
-    if Operation == 106u32 { return 139u8; }
-    if Operation == 107u32 { return 140u8; }
-    if Operation == 108u32 { return 141u8; }
-    if Operation == 109u32 { return 142u8; }
-    if Operation == 110u32 { return 143u8; }
-    if Operation == 111u32 { return 144u8; }
-    if Operation == 112u32 { return 145u8; }
-    if Operation == 113u32 { return 146u8; }
-    if Operation == 114u32 { return 147u8; }
-    if Operation == 115u32 { return 148u8; }
-    if Operation == 116u32 { return 163u8; }
-    if Operation == 117u32 { return 164u8; }
-    if Operation == 118u32 { return 165u8; }
-    if Operation == 119u32 { return 166u8; }
-    if Operation == 120u32 { return 179u8; }
-    if Operation == 121u32 { return 180u8; }
-    if Operation == 122u32 { return 181u8; }
-    if Operation == 123u32 { return 182u8; }
-    if Operation == 124u32 { return 183u8; }
-    if Operation == 125u32 { return 184u8; }
-    if Operation == 126u32 { return 189u8; }
-    if Operation == 127u32 { return 190u8; }
-    if Operation == 128u32 { return 191u8; }
-    if Operation >= 129u32 {
-        if Operation <= 147u32 { return 192u8; }
+export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> bytes {
+    if Operation >= 11u32 && Operation <= 15u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation);
     }
-    if Operation >= 148u32 {
-        if Operation <= 150u32 { return 193u8; }
+    if Operation == 16u32 { return Compilerˉsourceˉwvbˉlowˉbyte(114u32); }
+    if Operation >= 17u32 && Operation <= 25u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 87u32);
     }
-    if Operation >= 151u32 {
-        if Operation <= 162u32 { return 194u8; }
+    if Operation == 26u32 { return Compilerˉsourceˉwvbˉlowˉbyte(118u32); }
+    if Operation == 27u32 { return Compilerˉsourceˉwvbˉlowˉbyte(113u32); }
+    if Operation >= 28u32 && Operation <= 30u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 87u32);
     }
-    if Operation == 163u32 { return 195u8; }
-    if Operation == 164u32 { return 196u8; }
-    return 0u8;
+    if Operation >= 31u32 && Operation <= 35u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 88u32);
+    }
+    if Operation == 36u32 { return Compilerˉsourceˉwvbˉlowˉbyte(125u32); }
+    if Operation == 37u32 { return Compilerˉsourceˉwvbˉlowˉbyte(124u32); }
+    if Operation >= 38u32 && Operation <= 44u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation - 22u32);
+    }
+    if Operation >= 45u32 && Operation <= 53u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation - 13u32);
+    }
+    if Operation >= 54u32 && Operation <= 61u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 42u32);
+    }
+    if Operation >= 65u32 && Operation <= 76u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 86u32);
+    }
+    if Operation >= 77u32 && Operation <= 88u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 90u32);
+    }
+    if Operation >= 89u32 && Operation <= 92u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 96u32);
+    }
+    if Operation >= 93u32 && Operation <= 94u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 35u32);
+    }
+    if Operation >= 95u32 && Operation <= 96u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 54u32);
+    }
+    if Operation >= 97u32 && Operation <= 115u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 33u32);
+    }
+    if Operation >= 116u32 && Operation <= 119u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 47u32);
+    }
+    if Operation >= 120u32 && Operation <= 125u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 59u32);
+    }
+    if Operation >= 126u32 && Operation <= 128u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 63u32);
+    }
+    if Operation >= 129u32 && Operation <= 147u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(192u32);
+    }
+    if Operation >= 148u32 && Operation <= 150u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(193u32);
+    }
+    if Operation >= 151u32 && Operation <= 162u32 {
+        return Compilerˉsourceˉwvbˉlowˉbyte(194u32);
+    }
+    if Operation == 163u32 { return Compilerˉsourceˉwvbˉlowˉbyte(195u32); }
+    if Operation == 164u32 { return Compilerˉsourceˉwvbˉlowˉbyte(196u32); }
+    return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
-
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
         if Operation <= 164u32 { return true; }
@@ -714,59 +637,34 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
 ) -> u32 {
     if Operation == 64u32 { return 0u32; }
     var Opcodeˉbytes: u32 = 0u32;
-    if Operation == 1u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 2u32 { Opcodeˉbytes = 2u32; }
-    if Operation == 3u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 4u32 { Opcodeˉbytes = 2u32; }
-    if Operation == 5u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 6u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 7u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 8u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 9u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 10u32 { Opcodeˉbytes = 5u32; }
-    if Operation >= 11u32 {
-        if Operation <= 16u32 { Opcodeˉbytes = 1u32; }
+    if Operation == 1u32 || Operation == 3u32 ||
+        (Operation >= 5u32 && Operation <= 10u32) ||
+        Operation == 17u32 || Operation == 18u32 ||
+        Operation == 62u32 || Operation == 63u32 ||
+        Operation == 129u32 {
+        Opcodeˉbytes = 5u32;
     }
-    if Operation == 17u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 18u32 { Opcodeˉbytes = 5u32; }
+    if Operation == 2u32 || Operation == 4u32 ||
+        Operation == 149u32 || Operation == 150u32 {
+        Opcodeˉbytes = 2u32;
+    }
+    if Operation >= 11u32 && Operation <= 16u32 { Opcodeˉbytes = 1u32; }
     if Operation == 19u32 { Opcodeˉbytes = 9u32; }
-    if Operation >= 20u32 {
-        if Operation <= 22u32 { Opcodeˉbytes = 1u32; }
+    if Operation >= 20u32 && Operation <= 61u32 { Opcodeˉbytes = 1u32; }
+    if Operation >= 65u32 && Operation <= 68u32 { Opcodeˉbytes = 9u32; }
+    if Operation >= 69u32 && Operation <= 92u32 { Opcodeˉbytes = 1u32; }
+    if Operation == 93u32 || Operation == 94u32 || Operation == 164u32 {
+        Opcodeˉbytes = 9u32;
     }
-    if Operation >= 23u32 {
-        if Operation <= 61u32 { Opcodeˉbytes = 1u32; }
-    }
-    if Operation == 62u32 { Opcodeˉbytes = 5u32; }
-    if Operation == 63u32 { Opcodeˉbytes = 5u32; }
-    if Operation >= 65u32 {
-        if Operation <= 67u32 { Opcodeˉbytes = 9u32; }
-    }
-    if Operation == 68u32 { Opcodeˉbytes = 9u32; }
-    if Operation >= 69u32 {
-        if Operation <= 72u32 { Opcodeˉbytes = 1u32; }
-    }
-    if Operation >= 73u32 {
-        if Operation <= 92u32 { Opcodeˉbytes = 1u32; }
-    }
-    if Operation == 93u32 || Operation == 94u32 { Opcodeˉbytes = 9u32; }
-    if Operation >= 95u32 {
-        if Operation <= 128u32 { Opcodeˉbytes = 1u32; }
-    }
-    if Operation == 129u32 { Opcodeˉbytes = 5u32; }
-    if Operation >= 130u32 {
-        if Operation <= 147u32 { Opcodeˉbytes = 3u32; }
-    }
+    if Operation >= 95u32 && Operation <= 128u32 { Opcodeˉbytes = 1u32; }
+    if Operation >= 130u32 && Operation <= 147u32 { Opcodeˉbytes = 3u32; }
     if Operation == 148u32 { Opcodeˉbytes = 6u32; }
-    if Operation == 149u32 || Operation == 150u32 { Opcodeˉbytes = 2u32; }
     if Operation == 151u32 {
         Opcodeˉbytes = 7u32;
         if Shape == 15u32 { Opcodeˉbytes = 11u32; }
     }
-    if Operation >= 152u32 {
-        if Operation <= 162u32 { Opcodeˉbytes = 3u32; }
-    }
+    if Operation >= 152u32 && Operation <= 162u32 { Opcodeˉbytes = 3u32; }
     if Operation == 163u32 { Opcodeˉbytes = 1u32; }
-    if Operation == 164u32 { Opcodeˉbytes = 9u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -2695,6 +2593,13 @@ export fn Compilerˉsourceˉwvbˉinstructionˉu32(Opcode: u8, Value: u32) -> byt
     return Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Value));
 }
 
+fn Compilerˉsourceˉwvbˉinstructionˉbytesˉu32(
+    Opcode: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Opcode, Bytesˉfromˉu32ˉlittle(Value));
+}
+
 export fn Compilerˉsourceˉwvbˉtemporaryˉslot(
     Temporary: u32,
     Parameters: u32,
@@ -2783,7 +2688,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     }
     if Operation == 93u32 || Operation == 94u32 {
         Result = Bytesˉconcat(
-            Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+            Result, Compilerˉsourceˉwvbˉopcode(Operation)
         );
         Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
         Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
@@ -2935,7 +2840,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
         if Operation <= 67u32 {
             Result = Bytesˉconcat(
                 Result,
-                Compilerˉsourceˉwvbˉinstructionˉu32(
+                Compilerˉsourceˉwvbˉinstructionˉbytesˉu32(
                     Compilerˉsourceˉwvbˉopcode(Operation), Target
                 )
             );
@@ -2945,7 +2850,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     if Operation == 68u32 {
         Result = Bytesˉconcat(
             Result,
-            Compilerˉsourceˉwvbˉinstructionˉu32(
+            Compilerˉsourceˉwvbˉinstructionˉbytesˉu32(
                 Compilerˉsourceˉwvbˉopcode(Operation), Target
             )
         );
@@ -2954,21 +2859,21 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     if Operation >= 69u32 {
         if Operation <= 72u32 {
             Result = Bytesˉconcat(
-                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+                Result, Compilerˉsourceˉwvbˉopcode(Operation)
             );
         }
     }
     if Operation >= 73u32 {
         if Operation <= 92u32 {
             Result = Bytesˉconcat(
-                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+                Result, Compilerˉsourceˉwvbˉopcode(Operation)
             );
         }
     }
     if Operation >= 95u32 {
         if Operation <= 128u32 {
             Result = Bytesˉconcat(
-                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+                Result, Compilerˉsourceˉwvbˉopcode(Operation)
             );
         }
     }
@@ -3044,21 +2949,21 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
-                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+                Result, Compilerˉsourceˉwvbˉopcode(Operation)
             );
         }
     }
     if Operation >= 20u32 {
         if Operation <= 22u32 {
             Result = Bytesˉconcat(
-                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+                Result, Compilerˉsourceˉwvbˉopcode(Operation)
             );
         }
     }
     if Operation >= 23u32 {
         if Operation <= 61u32 {
             Result = Bytesˉconcat(
-                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+                Result, Compilerˉsourceˉwvbˉopcode(Operation)
             );
         }
     }

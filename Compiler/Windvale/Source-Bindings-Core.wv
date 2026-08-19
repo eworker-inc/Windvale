@@ -227,59 +227,13 @@ export fn Compilerˉsourceˉbindingsˉkind(Value: u32) -> Compilerˉsourceˉbind
 export fn Compilerˉsourceˉbindingsˉshape(
     Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding
 ) -> u32 {
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { return 1u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit { return 9u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Never { return 10u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I8 { return 11u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I16 { return 12u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U16 { return 13u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F32 { return 14u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F64 { return 15u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Rune { return 16u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { return 2u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { return 3u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { return 7u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { return 8u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { return 4u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text { return 5u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { return 6u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence { return Binding.Nominalˉindex; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder { return Binding.Nominalˉindex; }
-    if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
-        return 268435456u32 + Binding.Nominalˉindex;
-    }
-    if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
-        return 65536u32 + Binding.Nominalˉindex;
-    }
-    if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
-        return 131072u32 + Binding.Nominalˉindex;
-    }
-    if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
-        return 196608u32 + Binding.Nominalˉindex;
-    }
-    return 0u32;
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(Binding);
 }
 
 export fn Compilerˉsourceˉbindingsˉsourceˉshape(
     Kind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind
 ) -> u32 {
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { return 1u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit { return 9u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Never { return 10u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I8 { return 11u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I16 { return 12u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U16 { return 13u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F32 { return 14u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F64 { return 15u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Rune { return 16u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { return 2u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { return 3u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { return 7u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { return 8u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { return 4u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text { return 5u32; }
-    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { return 6u32; }
-    return 0u32;
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉprimitiveˉshape(Kind);
 }
 
 export fn Compilerˉsourceˉbindingsˉheader(Entries: u32, Ranges: u32) -> bytes {

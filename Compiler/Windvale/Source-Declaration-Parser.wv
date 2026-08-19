@@ -155,6 +155,32 @@ export record Compilerˉsourceˉmoduleˉsummary {
     Found: Sourceˉlexer.Compilerˉtokenˉkind;
 }
 
+export fn Compilerˉsourceˉtypeˉkindˉfromˉtoken(
+    Kind: Sourceˉlexer.Compilerˉtokenˉkind
+) -> Compilerˉsourceˉtypeˉkind {
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.I8 { return Compilerˉsourceˉtypeˉkind.I8; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.I16 { return Compilerˉsourceˉtypeˉkind.I16; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.I32 { return Compilerˉsourceˉtypeˉkind.I32; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.U8 { return Compilerˉsourceˉtypeˉkind.U8; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.U16 { return Compilerˉsourceˉtypeˉkind.U16; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.U32 { return Compilerˉsourceˉtypeˉkind.U32; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.I64 { return Compilerˉsourceˉtypeˉkind.I64; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.U64 { return Compilerˉsourceˉtypeˉkind.U64; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bool { return Compilerˉsourceˉtypeˉkind.Bool; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.F32 { return Compilerˉsourceˉtypeˉkind.F32; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.F64 { return Compilerˉsourceˉtypeˉkind.F64; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rune { return Compilerˉsourceˉtypeˉkind.Rune; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unit { return Compilerˉsourceˉtypeˉkind.Unit; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Never { return Compilerˉsourceˉtypeˉkind.Never; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Text { return Compilerˉsourceˉtypeˉkind.Text; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bytes { return Compilerˉsourceˉtypeˉkind.Bytes; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Void { return Compilerˉsourceˉtypeˉkind.Void; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier { return Compilerˉsourceˉtypeˉkind.Named; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Sequence { return Compilerˉsourceˉtypeˉkind.Sequence; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Builder { return Compilerˉsourceˉtypeˉkind.Builder; }
+    return Compilerˉsourceˉtypeˉkind.Unknown;
+}
+
 export fn Compilerˉparseˉstepˉvalid(
     Offset: u32,
     Line: u32,
@@ -440,26 +466,10 @@ export fn Compilerˉparseˉtype(
             Collectionˉkind, Maximum.Numericˉvalue
         );
     }
-    var Kind: Compilerˉsourceˉtypeˉkind = Compilerˉsourceˉtypeˉkind.Unknown;
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I8 { Kind = Compilerˉsourceˉtypeˉkind.I8; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I16 { Kind = Compilerˉsourceˉtypeˉkind.I16; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I32 { Kind = Compilerˉsourceˉtypeˉkind.I32; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U8 { Kind = Compilerˉsourceˉtypeˉkind.U8; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U16 { Kind = Compilerˉsourceˉtypeˉkind.U16; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U32 { Kind = Compilerˉsourceˉtypeˉkind.U32; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I64 { Kind = Compilerˉsourceˉtypeˉkind.I64; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U64 { Kind = Compilerˉsourceˉtypeˉkind.U64; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bool { Kind = Compilerˉsourceˉtypeˉkind.Bool; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.F32 { Kind = Compilerˉsourceˉtypeˉkind.F32; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.F64 { Kind = Compilerˉsourceˉtypeˉkind.F64; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rune { Kind = Compilerˉsourceˉtypeˉkind.Rune; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unit { Kind = Compilerˉsourceˉtypeˉkind.Unit; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Never { Kind = Compilerˉsourceˉtypeˉkind.Never; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Text { Kind = Compilerˉsourceˉtypeˉkind.Text; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bytes { Kind = Compilerˉsourceˉtypeˉkind.Bytes; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier { Kind = Compilerˉsourceˉtypeˉkind.Named; }
-    if Allowˉvoid {
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Void { Kind = Compilerˉsourceˉtypeˉkind.Void; }
+    var Kind: Compilerˉsourceˉtypeˉkind =
+        Compilerˉsourceˉtypeˉkindˉfromˉtoken(Token.Kind);
+    if Kind == Compilerˉsourceˉtypeˉkind.Void && !Allowˉvoid {
+        Kind = Compilerˉsourceˉtypeˉkind.Unknown;
     }
     if Kind == Compilerˉsourceˉtypeˉkind.Unknown {
         return Compilerˉparseˉstepˉfromˉtoken(

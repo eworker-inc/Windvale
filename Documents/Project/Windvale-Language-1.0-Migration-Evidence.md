@@ -322,6 +322,25 @@ object package across 42 chunks with a 528-byte manifest. Unary lowering and
 repeated symbol guards were consolidated to remain below the existing output
 bound; no limit was widened.
 
+## Slice 3 compiler-capacity checkpoint
+
+Decision 0777 consolidates token-to-type, binding-to-shape, declared-shape,
+WIR-operation, WVB-opcode, and WVB-operation-length identity without changing
+source or serialized semantics. Independent exhaustive comparisons preserve all
+165 operation-to-opcode mappings and every operation-length result for no
+shape, an ordinary shape, and the shape-15 floating-constant case.
+
+The complete 505-function compiler rebuild contains 939,424 code bytes and
+1,132,084 module bytes. Native planning reports 33,187,051 machine-code bytes
+and 2,472 relocation bytes, removing 32,851 module bytes and 265,572 native
+machine-code bytes relative to Decision 0776. The retained object envelope now
+leaves an estimated 337,262 bytes below the unchanged 32 MiB limit. That margin
+is not sufficient for the specialization table, substituted Foundation fields,
+and deterministic type emission required by the remainder of Slice 3. A
+versioned bounded source/type-analysis phase artifact and independently useful
+WVB-emission phase are therefore the next measured capacity boundary; generic
+semantics remain unclaimed here.
+
 ## Slice 2 named variant fields
 
 The edition-1 declaration parser admits zero through 64 uniquely named fields

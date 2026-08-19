@@ -1423,6 +1423,75 @@ export fn Compilerˉsourceˉsymbolsˉtypeˉfailure(
     );
 }
 
+export fn Compilerˉsourceˉsymbolsˉprimitiveˉshape(
+    Kind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind
+) -> u32 {
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { return 1u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { return 2u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { return 3u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { return 4u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text { return 5u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { return 6u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { return 7u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { return 8u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit { return 9u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Never { return 10u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I8 { return 11u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I16 { return 12u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U16 { return 13u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F32 { return 14u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F64 { return 15u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Rune { return 16u32; }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
+    Binding: Compilerˉsourceˉtypeˉbinding
+) -> u32 {
+    let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
+    if Primitive != 0u32 { return Primitive; }
+    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence ||
+        Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
+        return Binding.Nominalˉindex;
+    }
+    if Binding.Nominalˉkind ==
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
+        return 268435456u32 + Binding.Nominalˉindex;
+    }
+    if Binding.Nominalˉkind ==
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+        return 65536u32 + Binding.Nominalˉindex;
+    }
+    if Binding.Nominalˉkind ==
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
+        return 131072u32 + Binding.Nominalˉindex;
+    }
+    if Binding.Nominalˉkind ==
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+        return 196608u32 + Binding.Nominalˉindex;
+    }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
+    Shape: u32,
+    Records: u32,
+    Enums: u32,
+    Variants: u32,
+    Allowˉnoˉvalue: bool
+) -> bool {
+    if Shape == 0u32 { return Allowˉnoˉvalue; }
+    if Shape <= 9u32 { return true; }
+    if Shape == 10u32 { return Allowˉnoˉvalue; }
+    if Shape >= 11u32 && Shape <= 16u32 { return true; }
+    if Shape >= 65536u32 && Shape < 65536u32 + Records { return true; }
+    if Shape >= 131072u32 + Records &&
+        Shape < 131072u32 + Records + Enums { return true; }
+    if Shape >= 196608u32 + Records + Enums &&
+        Shape < 196608u32 + Records + Enums + Variants { return true; }
+    return false;
+}
+
 export fn Compilerˉsourceˉsymbolsˉbindˉtype(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -1439,27 +1508,8 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
     Forˉfield: bool
 ) -> Compilerˉsourceˉtypeˉbinding {
     let Token: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, Offset, Line, Column);
-    var Kind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown;
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I8 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I8; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I16 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I16; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I32 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U8 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U16 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U16; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U32 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I64 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U64 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bool { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.F32 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F32; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.F64 { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F64; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rune { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Rune; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unit { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Never { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Never; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Text { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bytes { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Void { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Void; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Sequence { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence; }
-    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Builder { Kind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder; }
+    let Kind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind =
+        Sourceˉdeclarations.Compilerˉsourceˉtypeˉkindˉfromˉtoken(Token.Kind);
     let Variants: u32 = Compilerˉsourceˉsymbolsˉdirectoryˉkindˉcount(Directory, 8u32);
     let Nominalˉsentinel: u32 = Records + Enums + Variants;
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence || Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
@@ -1488,26 +1538,17 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
                 Element.Nominalˉmodule, Token
             );
         }
-        var Elementˉshape: u32 = 0u32;
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { Elementˉshape = 1u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit { Elementˉshape = 9u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Never { Elementˉshape = 10u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I8 { Elementˉshape = 11u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I16 { Elementˉshape = 12u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U16 { Elementˉshape = 13u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F32 { Elementˉshape = 14u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F64 { Elementˉshape = 15u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Rune { Elementˉshape = 16u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { Elementˉshape = 2u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { Elementˉshape = 3u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { Elementˉshape = 7u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { Elementˉshape = 8u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { Elementˉshape = 4u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text { Elementˉshape = 5u32; }
-        if Element.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { Elementˉshape = 6u32; }
-        if Element.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record { Elementˉshape = 4096u32 + Element.Nominalˉindex; }
-        if Element.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum { Elementˉshape = 8192u32 + Element.Nominalˉindex; }
-        if Element.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant { Elementˉshape = 12288u32 + Element.Nominalˉindex; }
+        var Elementˉshape: u32 =
+            Compilerˉsourceˉsymbolsˉtypeˉshape(Element);
+        if Elementˉshape >= 65536u32 && Elementˉshape < 131072u32 {
+            Elementˉshape = 4096u32 + Element.Nominalˉindex;
+        }
+        if Elementˉshape >= 131072u32 && Elementˉshape < 196608u32 {
+            Elementˉshape = 8192u32 + Element.Nominalˉindex;
+        }
+        if Elementˉshape >= 196608u32 && Elementˉshape < 262144u32 {
+            Elementˉshape = 12288u32 + Element.Nominalˉindex;
+        }
         let Comma: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Element.Nextˉoffset, Element.Nextˉline, Element.Nextˉcolumn
         );
@@ -1661,20 +1702,10 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
 export fn Compilerˉsourceˉsymbolsˉconstantˉshape(
     Binding: Compilerˉsourceˉtypeˉbinding
 ) -> u32 {
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { return 1u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unit { return 9u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Never { return 10u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I8 { return 11u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I16 { return 12u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U16 { return 13u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F32 { return 14u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.F64 { return 15u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Rune { return 16u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { return 2u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { return 3u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { return 7u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { return 8u32; }
-    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { return 4u32; }
+    let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
+    if Primitive != 0u32 && Primitive != 5u32 && Primitive != 6u32 {
+        return Primitive;
+    }
     if Binding.Nominalˉkind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
         return 131072u32 + Binding.Nominalˉindex;
     }
