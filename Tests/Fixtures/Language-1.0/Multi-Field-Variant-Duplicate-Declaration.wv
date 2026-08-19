@@ -1,0 +1,11 @@
+#!wv/1 en@1
+module MultiˉFieldˉVariantˉDuplicateˉDeclaration;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Deliveryˉresult {
+    Delivered(Code: i32, Code: u32);
+}
+
+export fn Main() -> i32 { return 0; }

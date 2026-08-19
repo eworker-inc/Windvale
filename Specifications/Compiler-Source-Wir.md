@@ -15,16 +15,16 @@ Compilerˉvalidateˉsourceˉwir(Input: bytes)
 
 On success, the summary contains module, function-entry, block, operation, temporary, and operand counts plus an independently validated WVIR directory. On failure, the directory is empty and the summary identifies the first deterministic failure by module, related module, WVSD function entry, byte offset, and one-based line/column.
 
-The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, invalid unit use, and invalid record update. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, `Invalidˉunit = 33` owns a unit expression outside edition 1, and `Invalidˉrecordˉupdate = 34` owns a cross-edition or wrong-nominal-base update, without renumbering retained values.
+The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, invalid unit use, invalid record update, and invalid named variant construction. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, `Invalidˉunit = 33` owns a unit expression outside edition 1, `Invalidˉrecordˉupdate = 34` owns a cross-edition or wrong-nominal-base update, and values `35` through `37` own an invalid variant literal plus duplicate or missing variant fields, without renumbering retained values.
 
 ## Typed lowering rules
 
 The phase currently lowers:
 
 - `unit`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `rune`, `bool`, `text`, `bytes`, record, enum, variant, sequence, and local builder values, plus return-only `never` control evidence;
-- literals including edition-1 `()`, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction and fields, enum members, Foundation intrinsics, functions, and declared capabilities;
+- literals including edition-1 `()`, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction, named variant construction, aggregate fields, enum members, Foundation intrinsics, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
-- exhaustive enum/variant match, variant construction/case tests/payload extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
+- exhaustive enum/variant match, named variant-field destructuring, variant construction/case tests/field extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
 - expression statements, exact `try` propagation, `return`, lexical blocks, `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
 - explicit jump, branch, and return terminators.
 
@@ -78,7 +78,7 @@ The temporary section is a sequence of result shapes. The operand section is a s
 
 ## Operation families
 
-Operation values `1` through `64` retain the prior constants, storage, Foundation, nominal, scalar, call, and Boolean-phi contract. Values `65` through `67` are variant create/test/payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Values `148`, `149`, and `150` are rune constant, equality, and inequality. A rune constant has shape `16`, no operands, and its exact scalar in `Target`; comparisons consume two shape-`16` values and produce `bool`. Values `151` through `162` are the `f32`/`f64` constant, arithmetic, negation, and comparison family. Value `163` is `Unitˉconstant`: it has shape `9`, no operands, and zero target and auxiliary fields. Value `0` is invalid in published evidence.
+Operation values `1` through `64` retain the prior constants, storage, Foundation, nominal, scalar, call, and Boolean-phi contract. Values `65` through `67` are variant create/test/legacy one-field payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Values `148`, `149`, and `150` are rune constant, equality, and inequality. A rune constant has shape `16`, no operands, and its exact scalar in `Target`; comparisons consume two shape-`16` values and produce `bool`. Values `151` through `162` are the `f32`/`f64` constant, arithmetic, negation, and comparison family. Value `163` is `Unitˉconstant`: it has shape `9`, no operands, and zero target and auxiliary fields. Value `164` is `Variantˉfield`: it consumes one exact nominal variant, stores the canonical variant index in `Target`, packs `case * 64 + field` in `Auxiliary`, and produces that field's exact shape. Value `0` is invalid in published evidence.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -90,7 +90,7 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 - canonical function ranges aligned with WVSD and WVLB, parameter/local counts, and source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership, kind, source span, result shape, temporary sequencing, and operand sequencing;
-- prior-temporary use, local slots, inferred-local establishment by a non-void first store, consistent later local loads/stores, data and nominal identities, field/member/case indices, variant payload presence, collection descriptors, builder transitions, call targets, arity, dynamic parameter/result shapes, ordinary unit values, and return-only never shapes;
+- prior-temporary use, local slots, inferred-local establishment by a non-void first store, consistent later local loads/stores, data and nominal identities, field/member/case indices, variant field counts and exact field shapes, collection descriptors, builder transitions, call targets, arity, dynamic parameter/result shapes, ordinary unit values, and return-only never shapes;
 - Boolean phi placement as the first operation of its join block, two distinct valid predecessor blocks, one Boolean operand owned by each predecessor, an unconditional jump from both predecessors to the join, and no branch or third predecessor targeting that join; and
 - rejection of trailing bytes and corrupted function, block, operation, temporary, or operand entries.
 
@@ -117,6 +117,23 @@ A constant read resolves its WVSD 1.1 entry, reevaluates the validated root decl
 
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. A Language 1.0 record update first lowers its exact same-nominal base once, lowers each uniquely named replacement left to right, extracts every unreplaced declaration-order field from that one base temporary with `Recordˉfield = 18`, and emits the same `Recordˉcreate = 17` operation. Field extraction is storage-only and occurs after the source-ordered replacement evaluations; it adds no user-visible evaluation. No new WVIR operation, value representation, or WVB opcode is introduced. Recursive `else if` lowers through the existing conditional blocks and terminators.
 
+An edition-1 variant case has zero through 64 uniquely named fields. Named
+construction evaluates every supplied expression left to right exactly once,
+rejects unknown, duplicate, missing, or mismatched fields, reorders only the
+result temporary identities to declaration order, and emits `Variantˉcreate =
+65` with exactly that many operands. A no-data case uses the explicit source
+construction braces and emits zero operands. The older positional spelling and
+`Variantˉpayload = 67` remain the descriptorless Seed one-field path.
+
+A named variant match pattern must name every declared field exactly once; names
+may appear in any order and `_` discards without creating a binding. Each other
+binding is immutable and scoped to its arm. Lowering first emits the retained
+case test and branch, then emits `Variantˉfield = 164` for each bound field with
+the exact variant operand, nominal index, packed case/field identity, and result
+shape. WIR remains version 1.1 because operation identities are already an
+explicit field of its bounded directory; independent validation rejects a bad
+case, field, arity, operand nominal, packed identity, or result type.
+
 A dotted local record path emits one `Recordˉfield = 18` operation per segment
 in source order. Each intermediate result must retain an exact record nominal
 shape; a scalar or enum before the final segment is an invalid field target.
@@ -134,13 +151,19 @@ The fast conformance case compiles the core, runs the semantic/corruption demo, 
 source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=2760
 ```
 
-Current deterministic candidate artifacts are:
+The last retained deterministic candidate artifacts before the named
+variant-field checkpoint were:
 
 - `Source-Wir-Core.wvb`: 836,098 bytes, SHA-256 `985a03dd51b7599586181ecc9da797fba35ea69f7184ac75104ce402f0d8a542`.
 - `Source-Wir-Demo.wvb`: 843,004 bytes, SHA-256 `19441dce68e8b86288662acc4548fc687498e7b2b0d5a24e7a5041c57cdcc62f`.
 - `Source-Wir-Tool.wvb`: 834,992 bytes, SHA-256 `e3f3c1abea8ad18e171c13713af5c718f0a2914d1a5ea800f39a03fd525a37f9`.
 
-These local identities include inferred-local verification, storage-free typed-constant lowering, named-record remapping, recursive `else if`, loop-control targets, compound assignment, and structurally verified short-circuit Boolean phi nodes; they require cross-host requalification before a new qualification claim.
+These historical identities include inferred-local verification, storage-free
+typed-constant lowering, named-record remapping, recursive `else if`,
+loop-control targets, compound assignment, and structurally verified
+short-circuit Boolean phi nodes. They do not identify the current modified
+source; refreshed whole-compiler identities require cross-host requalification
+before a new qualification claim.
 
 Decision 0518 moves ordinary construction of all three products to the generic
 native Project front door and moves exact core inspection to the paired native

@@ -2,9 +2,14 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.15 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.16 module, and returns the bytes without using hosted capabilities.
 
-The current slice proves the complete source set → symbols/bindings → typed WVIR → canonical cross-module identity flattening → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. It emits one self-contained module and does not introduce runtime linkage.
+For the execution subset through WVB 1.15, the current implementation proves the
+complete source set → symbols/bindings → typed WVIR → canonical cross-module
+identity flattening → static data, nominal and capability metadata, and code →
+WVB → verifier → runtime path. WVB 1.16 named variant fields currently stop at
+the independent verifier, as specified below. Every accepted compilation emits
+one self-contained module and does not introduce runtime linkage.
 
 ## Public result
 
@@ -71,6 +76,14 @@ as stored values and operations through WVB 1.12. The rune checkpoint admits
 exact Unicode-scalar values and equality through WVB 1.13. The floating-point
 checkpoint admits `f32` and `f64` stored values, exact hexadecimal literals,
 arithmetic, unary negation, and comparison through WVB 1.14.
+
+The multi-field-variant checkpoint admits zero through 64 named fields per
+case. Cases with zero or one field retain their exact WVB 1.11 metadata bytes;
+a case with two through 64 fields uses WVB 1.16 field-list marker `2`. WVIR
+`Variantˉcreate = 65` continues to lower to opcode `97` with exact
+declaration-order operands. WVIR `Variantˉfield = 164` lowers to WVB opcode
+`C4`, carrying the nominal index and packed `case * 64 + field` identity. Either
+multi-field metadata or a `C4` instruction selects version 1.16.
 
 The 731-byte WVB 1.15 `Unit-Control.wv` artifact proves parameters, locals,
 assignment, record storage, explicit/fallthrough returns, and a unit-returning
@@ -224,7 +237,7 @@ widening the one-byte native nominal-type encoding.
 
 ## Nominal type translation
 
-WVSD assigns canonical nominal indices independently of source order or module ownership: records sorted by ordinal name first, then enums sorted by ordinal name. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.
+WVSD assigns canonical nominal indices independently of source order or module ownership: records sorted by ordinal name first, then enums, then variants. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.
 
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
@@ -259,6 +272,14 @@ WVIR operation `163` lowers to the one-byte WVB 1.15 opcode `C3`. It produces
 one canonical unit stack cell and has no immediate. Any unit or never shape or
 unit operation selects WVB 1.15; an unaffected module keeps its prior lowest
 required version.
+
+WVIR operation `164` lowers to the nine-byte WVB 1.16 opcode `C4`, followed by
+the canonical variant Types index and packed `case * 64 + field` selector. It
+consumes one exact nominal variant and produces the selected field's exact
+shape. The retained opcode `99` is valid only for a case with exactly one field;
+it cannot reinterpret a multi-field case as one payload. Any `C4` operation
+selects WVB 1.16 even when it addresses the legacy marker-`1` encoding of a
+single-field case.
 
 Named-record syntax has disappeared by this boundary: typed WVIR has already evaluated source fields left to right and reordered their temporary operands to canonical declaration order. It therefore lowers through the same record-construction opcode and value layout as the retained positional spelling.
 
@@ -335,8 +356,9 @@ Primitive WVIR shapes map to WVB shapes as follows:
 | 16 | `rune` | 17 |
 
 The encoder writes canonical Module, Capabilities, Data, Functions, Code,
-Exports, and Types section envelopes. It emits WVB 1.15 for any unit or never
-evidence, otherwise WVB 1.14 for floating evidence, WVB 1.13 for rune evidence,
+Exports, and Types section envelopes. It emits WVB 1.16 for multi-field variant
+metadata or a named variant-field instruction, otherwise WVB 1.15 for unit or
+never evidence, WVB 1.14 for floating evidence, WVB 1.13 for rune evidence,
 WVB 1.12 for fixed-width integer evidence, and the byte-identical WVB 1.11
 baseline when no extension occurs.
 Every module carries the metadata-presence byte, including modules without
@@ -368,6 +390,26 @@ behavior. It publishes deterministically as a 2,809-byte WVB 1.14 module and
 executes with result `42`. Four source-rejection cases and eight independent
 malformed-WVB mutations prove suffix, spelling, type/operator, header, type,
 selector, immediate-width, and operand-shape boundaries without publication.
+
+`Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv` covers a three-field case,
+one no-data case, trailing commas, source-order evaluation with
+declaration-order construction, named destructuring in a different order, and
+zero-field named construction, plus empty `if` and `else` blocks that remain
+unambiguous beside that construction syntax. It compiles twice to the same
+918-byte WVB 1.16 module with SHA-256
+`f3ceb596f1bcedda877ceea5aeb99aff1d5bcfa3b984fdae0e16eb21570562d1`.
+`Named-Variant-Field.wv` isolates a one-field marker-`1` case plus opcode `C4`
+and therefore proves instruction-driven 1.16 selection in a deterministic
+428-byte module with SHA-256
+`2dea4aa515633e85863e51279f320d53f09c2bf4628b72d93fdc79559479209f`.
+Both pass the compiler-aligned verifier. Nine source rejections and nine
+byte-level mutations cover declaration, construction, destructuring, version,
+marker, count, nominal, case, field, type, and truncation boundaries.
+
+The current scalar and native lowering consumers remain explicit subsets below
+WVB 1.16 and do not execute these two fixtures. This checkpoint proves source →
+WIR → WVB → independent verifier; runtime representation and execution advance
+in their own named checkpoint before a WVB 1.16 execution claim.
 
 ## Verification
 
@@ -422,12 +464,18 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 `Tests/Fixtures/Source-Wvb/Wide-Scalars.wv` covers checked `i64`/`u64` constants, arithmetic, comparisons, bitwise operations, formatting, and exact little-endian `u64` byte construction and reading. Both backends produce the exact 2,750-byte WVB module with SHA-256 `b898bc07461f7d93b2c8bd5806e06fa5c98cdaa5c11a7f4ce1fef89b77a7bf69`; it executes with result `64`.
 
-The current deterministic compiler artifacts are:
+The last retained deterministic compiler artifacts before the WVB 1.16 named
+variant-field checkpoint were:
 
 - `Source-Wvb-Core.wvb`: 1,033,007 bytes, SHA-256 `e8ed25a0f259a8402409d9474b7ade42b8064ef84cf2298eeb05cc44a6d2df7c`.
 - `Source-Wvb-Demo.wvb`: 1,038,806 bytes, SHA-256 `1a1b68e261e736a59a9b4629e14bcab041de8f1b2b43db15b7f41918f07fdf89`.
 - `Source-Wvb-Tool.wvb`: 1,033,177 bytes, SHA-256 `cc450810ba8a62357d995c55f1312e8c33e4f8c6d9e8ade3b9fa849f68e7f4f8`.
 - `Source-Wvb-Memory-Adapter.wvb`: 1,027,855 bytes, SHA-256 `f6e668ed8782b36635870b025f5d4e7e1134017c1b62aaa92b3ae154119ed805`.
+
+These identities remain historical inputs and are not a claim about the current
+modified source. The WVB 1.16 checkpoint instead records its exact focused
+fixture identities above; refreshed whole-compiler artifact identities require
+the later paired-host qualification gate.
 
 Decision 0518 moved ordinary construction of the core, demo, and tool products to
 the bounded native compiler-seed launcher. Decision 0528 now routes repository

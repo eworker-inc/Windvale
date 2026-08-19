@@ -1,0 +1,44 @@
+#!wv/1 en@1
+module MultiˉFieldˉVariant;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Deliveryˉresult {
+    Delivered(Code: i32, Attempts: u32, Active: bool,);
+    Waiting;
+}
+
+fn Read(Value: Deliveryˉresult) -> i32 {
+    match Value {
+        case Deliveryˉresult.Delivered {
+            Active: Active,
+            Code: Code,
+            Attempts: Attempts,
+        } {
+            if !Active { return 1; }
+            if false {
+            } else {
+            }
+            if Attempts != 2u32 { return 2; }
+            return Code;
+        }
+        case Deliveryˉresult.Waiting {
+            return 0;
+        }
+    }
+}
+
+fn Waiting() -> Deliveryˉresult {
+    return Deliveryˉresult.Waiting {};
+}
+
+export fn Main() -> i32 {
+    let Value = Deliveryˉresult.Delivered {
+        Active: true,
+        Attempts: 2u32,
+        Code: 42,
+    };
+    if false { return Read(Waiting()); }
+    return Read(Value);
+}

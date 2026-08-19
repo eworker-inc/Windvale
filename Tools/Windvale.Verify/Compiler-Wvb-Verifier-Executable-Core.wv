@@ -17,6 +17,25 @@ fn Hˉshapeˉwidth(Input: bytes, Cursor: u32) -> u32 {
     return 1u32;
 }
 
+fn Hˉvariantˉcaseˉend(Input: bytes, Cursor: u32) -> u32 {
+    let Marker: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+    var Next: u32 = Cursor + 1u32;
+    var Fields: u32 = 0u32;
+    if Marker == 1u32 { Fields = 1u32; }
+    if Marker == 2u32 {
+        Fields = Bytesˉreadˉu32ˉlittle(Input, Next);
+        Next = Next + 4u32;
+    }
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
+        Next = Next + 4u32 + Nameˉlength;
+        Next = Next + Hˉshapeˉwidth(Input, Next);
+        Field = Field + 1u32;
+    }
+    return Next;
+}
+
 fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
     var Next: u32 = Cursor + 1u32;
@@ -33,13 +52,7 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
         } else if Kind == 2u32 {
             Next = Next + 4u32;
         } else {
-            let Payloadˉpresent: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Next));
-            Next = Next + 1u32;
-            if Payloadˉpresent == 1u32 {
-                let Payloadˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
-                Next = Next + 4u32 + Payloadˉnameˉlength;
-                Next = Next + Hˉshapeˉwidth(Input, Next);
-            }
+            Next = Hˉvariantˉcaseˉend(Input, Next);
         }
         Item = Item + 1u32;
     }
@@ -74,39 +87,37 @@ fn Hˉvariantˉcaseˉat(
     while Currentˉcase < Caseˉindex {
         let Skippedˉcaseˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
         Cursor = Cursor + 4u32 + Skippedˉcaseˉnameˉlength;
-        let Payloadˉpresent: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-        Cursor = Cursor + 1u32;
-        if Payloadˉpresent == 1u32 {
-            let Skippedˉpayloadˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
-            Cursor = Cursor + 4u32 + Skippedˉpayloadˉnameˉlength;
-            Cursor = Cursor + Hˉshapeˉwidth(Input, Cursor);
-        }
+        Cursor = Hˉvariantˉcaseˉend(Input, Cursor);
         Currentˉcase = Currentˉcase + 1u32;
     }
     let Selectedˉcaseˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
     Cursor = Cursor + 4u32 + Selectedˉcaseˉnameˉlength;
-    let Hasˉpayload: bool = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) == 1u32;
+    let Marker: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
     Cursor = Cursor + 1u32;
-    if !Hasˉpayload {
-        return Bytesˉconcat(
-            Bytesˉfromˉu8(0u8),
-            Bytesˉconcat(Bytesˉfromˉu8(0u8), Bytesˉfromˉu32ˉlittle(0u32))
-        );
+    var Fields: u32 = 0u32;
+    if Marker == 1u32 { Fields = 1u32; }
+    if Marker == 2u32 {
+        Fields = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
     }
-    let Selectedˉpayloadˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
-    Cursor = Cursor + 4u32 + Selectedˉpayloadˉnameˉlength;
-    let Payloadˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-    var Payloadˉnominal: u32 = 0u32;
-    if Payloadˉkind == 7u32 || Payloadˉkind == 8u32 || Payloadˉkind == 11u32 {
-        Payloadˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Fields);
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Selectedˉfieldˉnameˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32 + Selectedˉfieldˉnameˉlength;
+        let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        var Fieldˉnominal: u32 = 0u32;
+        if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
+            Fieldˉkind == 11u32 {
+            Fieldˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        }
+        Result = Bytesˉconcat(Result, Bytesˉslice(Input, Cursor, 1u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Fieldˉnominal));
+        Cursor = Cursor + Hˉshapeˉwidth(Input, Cursor);
+        Field = Field + 1u32;
     }
-    return Bytesˉconcat(
-        Bytesˉfromˉu8(1u8),
-        Bytesˉconcat(
-            Bytesˉslice(Input, Cursor, 1u32),
-            Bytesˉfromˉu32ˉlittle(Payloadˉnominal)
-        )
-    );
+    return Result;
 }
 
 export fn Hˉoperationˉfailure(Stack: bytes, Depth: u32) -> Hˉoperationˉstate {
@@ -139,32 +150,40 @@ export fn Hˉvariant(
         Variantˉtype,
         Variantˉcaseˉindex
     );
-    if Bytesˉlength(Variantˉcase) != 6u32 {
+    if Bytesˉlength(Variantˉcase) < 4u32 {
         return Hˉoperationˉfailure(Stack, Depth);
     }
-    let Hasˉpayload: bool = U32ˉfromˉu8(
-        Bytesˉreadˉu8(Variantˉcase, 0u32)
-    ) == 1u32;
-    let Payloadˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Variantˉcase, 1u32));
-    let Payloadˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Variantˉcase, 2u32);
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Variantˉcase, 0u32);
+    if Bytesˉlength(Variantˉcase) != 4u32 + Fields * 5u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
     var Resultˉstack: bytes = Stack;
     var Resultˉdepth: u32 = Depth;
     if Opcode == 151u32 {
-        if Hasˉpayload {
+        var Remainingˉfields: u32 = Fields;
+        while Remainingˉfields > 0u32 {
             if Resultˉdepth == 0u32 {
                 return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
             }
+            let Fieldˉshape: u32 = 4u32 + (Remainingˉfields - 1u32) * 5u32;
+            let Fieldˉkind: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Variantˉcase, Fieldˉshape)
+            );
+            let Fieldˉnominal: u32 = Bytesˉreadˉu32ˉlittle(
+                Variantˉcase, Fieldˉshape + 1u32
+            );
             let Payloadˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
             if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Payloadˉoffset)) !=
-                Payloadˉkind {
+                Fieldˉkind {
                 return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
             }
             if Bytesˉreadˉu32ˉlittle(Resultˉstack, Payloadˉoffset + 1u32) !=
-                Payloadˉnominal {
+                Fieldˉnominal {
                 return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
             }
             Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Payloadˉoffset);
             Resultˉdepth = Resultˉdepth - 1u32;
+            Remainingˉfields = Remainingˉfields - 1u32;
         }
         return Hˉoperationˉstate(
             true,
@@ -197,9 +216,11 @@ export fn Hˉvariant(
             0u32
         );
     }
-    if !Hasˉpayload {
+    if Fields != 1u32 {
         return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
     }
+    let Payloadˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Variantˉcase, 4u32));
+    let Payloadˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Variantˉcase, 5u32);
     return Hˉoperationˉstate(
         true,
         Resultˉstack,
@@ -207,6 +228,46 @@ export fn Hˉvariant(
         true,
         Payloadˉkind,
         Payloadˉnominal
+    );
+}
+
+fn Hˉvariantˉfield(
+    Input: bytes,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    let Variantˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Functionˉcode + Cursor + 1u32
+    );
+    let Selection: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Functionˉcode + Cursor + 5u32
+    );
+    let Caseˉindex: u32 = Selection / 64u32;
+    let Fieldˉindex: u32 = Selection % 64u32;
+    let Variantˉcase: bytes = Hˉvariantˉcaseˉat(
+        Input, Types, Variantˉtype, Caseˉindex
+    );
+    if Bytesˉlength(Variantˉcase) < 4u32 { return Hˉoperationˉfailure(Stack, Depth); }
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Variantˉcase, 0u32);
+    if Fieldˉindex >= Fields || Depth == 0u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Variantˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Variantˉoffset)) != 11u32 ||
+        Bytesˉreadˉu32ˉlittle(Stack, Variantˉoffset + 1u32) != Variantˉtype {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Fieldˉshape: u32 = 4u32 + Fieldˉindex * 5u32;
+    return Hˉoperationˉstate(
+        true,
+        Bytesˉslice(Stack, 0u32, Variantˉoffset),
+        Depth - 1u32,
+        true,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Variantˉcase, Fieldˉshape)),
+        Bytesˉreadˉu32ˉlittle(Variantˉcase, Fieldˉshape + 1u32)
     );
 }
 
@@ -654,6 +715,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             if Opcode == 128u32 { Width = 9u32; }
             if Opcode == 129u32 { Width = 9u32; }
             if Opcode >= 151u32 && Opcode <= 153u32 { Width = 9u32; }
+            if Opcode == 196u32 { Width = 9u32; }
             if Opcode == 192u32 {
                 Width = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -1014,6 +1076,23 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Pushˉnominal = Variantˉstate.Pushˉnominal;
                 Handled = true;
             }
+            if Opcode == 196u32 {
+                let Variantˉfieldˉstate: Hˉoperationˉstate = Hˉvariantˉfield(
+                    Input,
+                    Functionˉcode,
+                    Cursor,
+                    Types,
+                    Stack,
+                    Depth
+                );
+                if !Variantˉfieldˉstate.Valid { return Invalid; }
+                Stack = Variantˉfieldˉstate.Stack;
+                Depth = Variantˉfieldˉstate.Depth;
+                Hasˉpush = Variantˉfieldˉstate.Hasˉpush;
+                Pushˉkind = Variantˉfieldˉstate.Pushˉkind;
+                Pushˉnominal = Variantˉfieldˉstate.Pushˉnominal;
+                Handled = true;
+            }
 
             if Opcode == 104u32 || Opcode == 105u32 {
                 let Recordˉstate: Hˉoperationˉstate = Hˉrecord(
@@ -1339,6 +1418,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             if Controlˉopcode >= 151u32 && Controlˉopcode <= 153u32 {
                 Controlˉwidth = 9u32;
             }
+            if Controlˉopcode == 196u32 { Controlˉwidth = 9u32; }
             if Controlˉopcode == 192u32 {
                 Controlˉwidth = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(

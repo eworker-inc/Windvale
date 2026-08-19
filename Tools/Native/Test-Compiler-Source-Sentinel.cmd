@@ -18,24 +18,17 @@ set "Result=1"
 set "FailureStep=compiler"
 
 echo START compiler source sentinel phase=compiler item=1/5
-call "%Native%\Build-Cached-Segmented-Project.cmd" ^
-    "%RepositoryRoot%\Projects\Examples\Windvale-Compiler.wvproj" ^
-    "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe" ^
-    "%Work%\Compiler.wvb" "%Work%\Compiler-Image" "%Work%\Compiler.wvli" ^
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
+    "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\Wvb\Windvale-Compiler.wvb" ^
+    "%Work%\Bootstrap-Compiler.exe" --development-cache || goto :cleanup
+call "%Native%\Compile-Compiler-Source-Set.cmd" ^
+    "%Work%\Bootstrap-Compiler.exe" ^
+    "%RepositoryRoot%" "%Work%\Compiler.wvb" ^
     >"%Work%\Segmented.out" 2>"%Work%\Segmented.err" || goto :cleanup
 for %%F in ("%Work%\Segmented.err") do if not "%%~zF"=="0" goto :cleanup
 type "%Work%\Segmented.out"
-set "CompilerEntry="
-set "CompilerFragments="
-for /f "tokens=10,12 delims== " %%E in ('findstr /b /c:"native segmented project cache status=" "%Work%\Segmented.out"') do (
-    set "CompilerEntry=%%E"
-    set "CompilerFragments=%%F"
-)
-if not defined CompilerEntry goto :cleanup
-if not defined CompilerFragments goto :cleanup
-call "%Native%\Build-Cached-Hosted-Application.cmd" 1 ^
-    "%Work%\Compiler.wvb" "%Work%\Compiler-Image" ^
-    %CompilerFragments% %CompilerEntry% "%Work%\Compiler.exe" windows || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 1 ^
+    "%Work%\Compiler.wvb" "%Work%\Compiler.exe" --development-cache || goto :cleanup
 echo PASS  compiler source sentinel phase=compiler item=1/5
 
 set "FailureStep=compile"

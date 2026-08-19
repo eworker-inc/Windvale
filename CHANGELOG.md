@@ -32,7 +32,11 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   and rejects wrong bases, duplicate/unknown fields, and Seed use. WVB 1.12 fixed
   integers, WVB 1.13 runes, and WVB 1.14 strict floating point also execute
   through the same path. Multi-field destructuring and value-producing control
-  flow remain explicitly pending.
+  flow were the next explicit boundaries. Named zero-through-64-field variant
+  construction and destructuring now compile deterministically through WIR and
+  WVB 1.16 and pass the compiler-aligned verifier, with legacy zero/one-field
+  metadata bytes preserved. The current scalar/native execution consumers remain
+  narrower; WVB 1.16 execution and value-producing control are still pending.
 - Replaced the full database-storage proxy for ordinary source-compiler changes
   with a focused five-case sentinel that rebuilds the changed compiler, proves
   deterministic four-function WVB output, independently verifies it, and executes

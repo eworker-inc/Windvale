@@ -1121,8 +1121,12 @@ export fn Compilerˉbodyˉparseˉprimary(
             Input, Firstˉfield.Nextˉoffset, Firstˉfield.Nextˉline,
             Firstˉfield.Nextˉcolumn, Endˉoffset
         );
-        if Firstˉfield.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
-            if Firstˉcolon.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+        if (Firstˉfield.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace &&
+                Name.Parts >= 2u32) ||
+            Firstˉfield.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+            if (Firstˉfield.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace &&
+                    Name.Parts >= 2u32) ||
+                Firstˉcolon.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Colon {
                 if Nesting >= 64u32 {
                     return Compilerˉbodyˉexpressionˉfailure(
                         Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
@@ -1623,6 +1627,131 @@ export fn Compilerˉbodyˉparseˉmatchˉcase(
         Cursor = Right.Nextˉoffset;
         Currentˉline = Right.Nextˉline;
         Currentˉcolumn = Right.Nextˉcolumn;
+    } else if Bindingˉstart.Kind ==
+        Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
+        let Firstˉfield: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉbodyˉtoken(
+                Input, Bindingˉstart.Nextˉoffset,
+                Bindingˉstart.Nextˉline, Bindingˉstart.Nextˉcolumn,
+                Endˉoffset
+            );
+        var Isˉfieldˉpattern: bool = false;
+        if Firstˉfield.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+            let Firstˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Compilerˉbodyˉtoken(
+                    Input, Firstˉfield.Nextˉoffset,
+                    Firstˉfield.Nextˉline, Firstˉfield.Nextˉcolumn,
+                    Endˉoffset
+                );
+            Isˉfieldˉpattern =
+                Firstˉcolon.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Colon;
+        }
+        if Isˉfieldˉpattern {
+            var Patternˉcursor: u32 = Bindingˉstart.Nextˉoffset;
+            var Patternˉline: u32 = Bindingˉstart.Nextˉline;
+            var Patternˉcolumn: u32 = Bindingˉstart.Nextˉcolumn;
+            var Patternˉfields: u32 = 0u32;
+            var Readingˉfields: bool = true;
+            var Patternˉright: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Bindingˉstart;
+            while Readingˉfields {
+                let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Compilerˉbodyˉtoken(
+                        Input, Patternˉcursor, Patternˉline,
+                        Patternˉcolumn, Endˉoffset
+                    );
+                if Field.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+                    return Compilerˉbodyˉmatchˉcaseˉfailure(
+                        Compilerˉbodyˉstepˉfromˉtoken(
+                            Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                            Field,
+                            Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                        )
+                    );
+                }
+                let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Compilerˉbodyˉtoken(
+                        Input, Field.Nextˉoffset,
+                        Field.Nextˉline, Field.Nextˉcolumn, Endˉoffset
+                    );
+                if Colon.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+                    return Compilerˉbodyˉmatchˉcaseˉfailure(
+                        Compilerˉbodyˉstepˉfromˉtoken(
+                            Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                            Colon,
+                            Sourceˉlexer.Compilerˉtokenˉkind.Colon
+                        )
+                    );
+                }
+                let Pattern: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Compilerˉbodyˉtoken(
+                        Input, Colon.Nextˉoffset,
+                        Colon.Nextˉline, Colon.Nextˉcolumn, Endˉoffset
+                    );
+                if Pattern.Kind !=
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+                    return Compilerˉbodyˉmatchˉcaseˉfailure(
+                        Compilerˉbodyˉstepˉfromˉtoken(
+                            Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                            Pattern,
+                            Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                        )
+                    );
+                }
+                Patternˉfields = Patternˉfields + 1u32;
+                if Patternˉfields > 64u32 {
+                    return Compilerˉbodyˉmatchˉcaseˉfailure(
+                        Compilerˉbodyˉstepˉfromˉtoken(
+                            Compilerˉbodyˉparseˉstatus.Itemˉlimit,
+                            Field,
+                            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+                        )
+                    );
+                }
+                let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Compilerˉbodyˉtoken(
+                        Input, Pattern.Nextˉoffset,
+                        Pattern.Nextˉline, Pattern.Nextˉcolumn, Endˉoffset
+                    );
+                if Separator.Kind ==
+                    Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                    let Afterˉcomma: Sourceˉlexer.Compilerˉsourceˉtoken =
+                        Compilerˉbodyˉtoken(
+                            Input, Separator.Nextˉoffset,
+                            Separator.Nextˉline, Separator.Nextˉcolumn,
+                            Endˉoffset
+                        );
+                    if Afterˉcomma.Kind ==
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace {
+                        Patternˉright = Afterˉcomma;
+                        Readingˉfields = false;
+                    } else {
+                        Patternˉcursor = Separator.Nextˉoffset;
+                        Patternˉline = Separator.Nextˉline;
+                        Patternˉcolumn = Separator.Nextˉcolumn;
+                    }
+                } else {
+                    if Separator.Kind !=
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace {
+                        return Compilerˉbodyˉmatchˉcaseˉfailure(
+                            Compilerˉbodyˉstepˉfromˉtoken(
+                                Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                                Separator,
+                                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+                            )
+                        );
+                    }
+                    Patternˉright = Separator;
+                    Readingˉfields = false;
+                }
+            }
+            Bindingˉoffset = Bindingˉstart.Offset;
+            Bindingˉlength =
+                Patternˉright.Nextˉoffset - Bindingˉstart.Offset;
+            Cursor = Patternˉright.Nextˉoffset;
+            Currentˉline = Patternˉright.Nextˉline;
+            Currentˉcolumn = Patternˉright.Nextˉcolumn;
+        }
     }
     let Blockˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
         Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset

@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module NamedˉVariantˉField;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Outcome {
+    Valid(Value: i32);
+}
+
+fn Read(Value: Outcome) -> i32 {
+    match Value {
+        case Outcome.Valid { Value: Result } { return Result; }
+    }
+}
+
+export fn Main() -> i32 {
+    let Value = Outcome.Valid { Value: 42 };
+    return Read(Value);
+}

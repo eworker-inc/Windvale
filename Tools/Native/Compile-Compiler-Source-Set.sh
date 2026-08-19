@@ -17,8 +17,10 @@ OUTPUT="$OUTPUT_DIRECTORY/$(basename -- "$3")"
     "$SOURCE_ROOT/Compiler/Windvale/Source-Bindings-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Body-Parser.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Declaration-Parser.wv" \
+    "$SOURCE_ROOT/Compiler/Windvale/Source-Descriptor-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Graph-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Lexer-Core.wv" \
+    "$SOURCE_ROOT/Compiler/Windvale/Source-Profile-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Set-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Symbols-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Wir-Core.wv" \
@@ -26,4 +28,5 @@ OUTPUT="$OUTPUT_DIRECTORY/$(basename -- "$3")"
     "$SOURCE_ROOT/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv" \
     "$SOURCE_ROOT/Foundation/Byte-Construction.wv" \
     "$SOURCE_ROOT/Foundation/Decimal-Parsing.wv" \
+    "$SOURCE_ROOT/Foundation/Sha256.wv" \
     "$OUTPUT"

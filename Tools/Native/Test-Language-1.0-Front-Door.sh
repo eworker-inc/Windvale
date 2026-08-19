@@ -17,14 +17,14 @@ work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || e
 cleanup() {
     case "$work" in
         "$temporary_root"/windvale-language-1-front-door.*)
-            if [[ -d $work/Fixed-Integer-Malformed ]]; then
-                rm -f -- "$work/Fixed-Integer-Malformed"/*
-                rmdir -- "$work/Fixed-Integer-Malformed"
-            fi
-            if [[ -d $work/Rune-Malformed ]]; then
-                rm -f -- "$work/Rune-Malformed"/*
-                rmdir -- "$work/Rune-Malformed"
-            fi
+            for malformed in \
+                Fixed-Integer-Malformed Rune-Malformed Floating-Malformed \
+                Unit-Never-Malformed Multi-Field-Variant-Malformed; do
+                if [[ -d $work/$malformed ]]; then
+                    rm -f -- "$work/$malformed"/*
+                    rmdir -- "$work/$malformed"
+                fi
+            done
             rm -f -- "$work"/*
             rmdir -- "$work"
             ;;
@@ -36,11 +36,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/8'
+echo 'START language 1 front door phase=frozen-fixtures item=1/9'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/8'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/9'
 
-echo 'START language 1 front door phase=descriptor item=2/8'
+echo 'START language 1 front door phase=descriptor item=2/9'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -53,9 +53,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/8'
+echo 'PASS  language 1 front door phase=descriptor item=2/9'
 
-echo 'START language 1 front door phase=value-front-end item=3/8'
+echo 'START language 1 front door phase=value-front-end item=3/9'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -64,21 +64,17 @@ echo 'START language 1 front door phase=value-front-end item=3/8'
 [[ ! -s $work/Value-Front-End.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
 cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
-echo 'PASS  language 1 front door phase=value-front-end item=3/8'
+echo 'PASS  language 1 front door phase=value-front-end item=3/9'
 
-echo 'START language 1 front door phase=compiler-slice item=4/8'
-segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
-    "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
-    "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
-    "$work/Compiler.wvb" "$work/Compiler-Image" "$work/Compiler.wvli") || exit $?
-compiler_entry=$(printf '%s\n' "$segmented_report" | sed -n \
-    's/^native segmented project cache status=[A-Za-z]* key=[0-9a-f]* entry-offset=\([0-9][0-9]*\) fragments=[1-8]$/\1/p')
-compiler_fragments=$(printf '%s\n' "$segmented_report" | sed -n \
-    's/^native segmented project cache status=[A-Za-z]* key=[0-9a-f]* entry-offset=[0-9][0-9]* fragments=\([1-8]\)$/\1/p')
-[[ $compiler_entry =~ ^(0|[1-9][0-9]*)$ && $compiler_fragments =~ ^[1-8]$ ]] || exit 1
-"$script_directory/Build-Cached-Hosted-Application.sh" 1 \
-    "$work/Compiler.wvb" "$work/Compiler-Image" "$compiler_fragments" \
-    "$compiler_entry" "$work/Compiler.elf" linux >/dev/null || exit $?
+echo 'START language 1 front door phase=compiler-slice item=4/9'
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" \
+    "$work/Bootstrap-Compiler.elf" --development-cache || exit $?
+"$script_directory/Compile-Compiler-Source-Set.sh" \
+    "$work/Bootstrap-Compiler.elf" \
+    "$repository_root" "$work/Compiler.wvb" || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 1 \
+    "$work/Compiler.wvb" "$work/Compiler.elf" --development-cache || exit $?
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -211,9 +207,9 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/8'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/9'
 
-echo 'START language 1 front door phase=fixed-integers item=5/8'
+echo 'START language 1 front door phase=fixed-integers item=5/9'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -311,9 +307,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
     "$(wc -c < "$work/Fixed-Integer-A.wvb")"
-echo 'PASS  language 1 front door phase=fixed-integers item=5/8'
+echo 'PASS  language 1 front door phase=fixed-integers item=5/9'
 
-echo 'START language 1 front door phase=runes item=6/8'
+echo 'START language 1 front door phase=runes item=6/9'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -374,9 +370,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 rune_wvb_bytes=$(wc -c < "$work/Rune-A.wvb")
 printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
-echo 'PASS  language 1 front door phase=runes item=6/8'
+echo 'PASS  language 1 front door phase=runes item=6/9'
 
-echo 'START language 1 front door phase=floating item=7/8'
+echo 'START language 1 front door phase=floating item=7/9'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -443,9 +439,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 floating_wvb_bytes=$(wc -c < "$work/Floating-A.wvb")
 printf 'INFO  language 1 floating wvb-bytes=%s\n' "$floating_wvb_bytes"
-echo 'PASS  language 1 front door phase=floating item=7/8'
+echo 'PASS  language 1 front door phase=floating item=7/9'
 
-echo 'START language 1 front door phase=unit-never item=8/8'
+echo 'START language 1 front door phase=unit-never item=8/9'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -483,5 +479,54 @@ unit_wvb_bytes=$(wc -c < "$work/Unit-A.wvb")
 never_wvb_bytes=$(wc -c < "$work/Never-A.wvb")
 printf 'INFO  language 1 unit-never unit-wvb-bytes=%s never-wvb-bytes=%s\n' \
     "$unit_wvb_bytes" "$never_wvb_bytes"
-echo 'PASS  language 1 front door phase=unit-never item=8/8'
-printf 'native language 1 front door status=Passed cases=96 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s\n' "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes"
+echo 'PASS  language 1 front door phase=unit-never item=8/9'
+
+echo 'START language 1 front door phase=multi-field-variants item=9/9'
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv" \
+    "$work/Multi-Field-Variant-A.wvb" \
+    >"$work/Multi-Field-Variant-A.out" \
+    2>"$work/Multi-Field-Variant-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv" \
+    "$work/Multi-Field-Variant-B.wvb" \
+    >"$work/Multi-Field-Variant-B.out" \
+    2>"$work/Multi-Field-Variant-B.err" || exit $?
+[[ ! -s $work/Multi-Field-Variant-A.err && \
+    ! -s $work/Multi-Field-Variant-B.err ]] || exit 1
+cmp -s -- "$work/Multi-Field-Variant-A.out" \
+    "$work/Multi-Field-Variant-B.out" || exit 1
+cmp -s -- "$work/Multi-Field-Variant-A.wvb" \
+    "$work/Multi-Field-Variant-B.wvb" || exit 1
+
+for name in \
+    Duplicate-Declaration Empty-Payload Missing-Field Duplicate-Field \
+    Unknown-Field Type-Mismatch Pattern-Missing-Field \
+    Pattern-Duplicate-Field Pattern-Unknown-Field; do
+    expect_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant-$name.wv" \
+        "$work/Multi-Field-Variant-$name.wvb" || exit 1
+done
+
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Named-Variant-Field.wv" \
+    "$work/Named-Variant-Field.wvb" \
+    >"$work/Named-Variant-Field.out" \
+    2>"$work/Named-Variant-Field.err" || exit $?
+[[ ! -s $work/Named-Variant-Field.err ]] || exit 1
+
+node "$script_directory/Verify-Language-1.0-Multi-Field-Variants.mjs" \
+    "$work/Verifier.elf" "$work/Multi-Field-Variant-A.wvb" \
+    "$work/Named-Variant-Field.wvb" \
+    "$work/Multi-Field-Variant-Malformed" || exit $?
+multi_field_variant_wvb_bytes=$(wc -c < "$work/Multi-Field-Variant-A.wvb")
+printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
+    "$multi_field_variant_wvb_bytes"
+echo 'PASS  language 1 front door phase=multi-field-variants item=9/9'
+printf 'native language 1 front door status=Passed cases=117 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=21 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"

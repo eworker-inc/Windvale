@@ -17,13 +17,16 @@ for the frozen primitive value types and prevents Seed-only `void` type syntax
 from crossing the edition-1 front door. Named record update, fixed-width
 `i8`/`i16`/`u16`, exact Unicode-scalar `rune`, `f32`/`f64`, ordinary one-value
 `unit`, and return-only `never` now cross the compiler, verifier, and scalar
-runtime together. Project 3 carries the profile artifacts; Project 2 and
+runtime together. Named zero-through-64-field variant construction and
+destructuring now cross the compiler and compiler-aligned verifier through WVB
+1.16 while current execution consumers retain their narrower boundary. Project
+3 carries the profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. Multi-field variant construction and
-destructuring and value-producing control flow remain pending. Localized
-token execution, public-library vocabulary lookup, Unicode identifier admission,
-and paired-host Language 1.0 qualification also remain pending.
+These checkpoints do not complete Slice 2. WVB 1.16 variant execution and
+value-producing control flow remain pending. Localized token execution,
+public-library vocabulary lookup, Unicode identifier admission, and paired-host
+Language 1.0 qualification also remain pending.
 
 ## Frozen source identity
 
@@ -194,6 +197,44 @@ duplicate replacement, unknown replacement, and descriptorless Seed use without
 publishing output. No WVIR operation, WVB opcode, value representation, or
 serialized-format version changes.
 
+## Slice 2 named variant fields
+
+The edition-1 declaration parser admits zero through 64 uniquely named fields
+per variant case and rejects an empty parenthesized list. Named construction
+uses `Type.Case { Field: Value, ... }`; it requires every declared field exactly
+once, evaluates source expressions left to right, and supplies WIR constructor
+operands in declaration order. A no-data case uses `{}` and emits zero operands.
+Descriptorless Seed retains its zero/one positional payload syntax.
+
+Named match patterns use `case Type.Case { Field: Binding, Other: _ }`. Every
+declared field appears exactly once in any order, `_` creates no binding, and
+other immutable bindings are scoped to the selected arm. WIR operation
+`Variantˉfield = 164` consumes the exact nominal variant and carries the nominal
+index plus packed `case * 64 + field` identity. The retained `Variantˉcreate =
+65` now validates exact zero-through-64 operand arity; the older
+`Variantˉpayload = 67` remains restricted to exactly one field.
+
+WVB 1.16 adds Types marker `2`, followed by a canonical field count and named
+shapes, plus opcode `C4` for exact field extraction. Marker `0` and marker `1`
+remain byte-identical for zero-field and one-field cases. Either marker `2` or
+opcode `C4` selects 1.16. This includes a one-field named pattern, which retains
+marker `1` but still requires the new opcode and version.
+
+`Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv` compiles twice to the same
+918-byte WVB 1.16 module with SHA-256
+`f3ceb596f1bcedda877ceea5aeb99aff1d5bcfa3b984fdae0e16eb21570562d1`.
+Its empty `if` and `else` blocks also prove that a one-part condition followed
+by a block is not reinterpreted as zero-field named construction.
+`Named-Variant-Field.wv` isolates instruction-driven version selection in a
+428-byte WVB 1.16 module with SHA-256
+`2dea4aa515633e85863e51279f320d53f09c2bf4628b72d93fdc79559479209f`.
+Both pass the compiler-aligned verifier. Nine source fixtures reject duplicate
+declarations, empty payload declarations, missing/duplicate/unknown constructor
+fields, type mismatch, and missing/duplicate/unknown pattern fields. Nine WVB
+mutations reject version, marker, field-count, nominal, case, field, type, and
+truncation corruption. Current scalar and native lowering consumers do not yet
+claim WVB 1.16 execution.
+
 ## Slice 2 fixed integers, runes, and floating point
 
 The fixed-width checkpoint admits `i8`, `i16`, and `u16` literals, typed
@@ -244,7 +285,7 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 96 declared cases. Its
+The cross-host `language-1-front-door` owner reports 117 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
@@ -256,6 +297,10 @@ floating cases add deterministic compilation, four source rejections, eight
 malformed-WVB rejections, current-runner execution, and a focused raw-bit runtime
 self-test. Its 21 unit/never cases add deterministic compilation, four source
 rejections, eleven malformed-WVB rejections, and two executions returning `42`.
+Its 21 named-variant-field cases add deterministic multi-field compilation, one
+isolated one-field version-selection module, nine source rejections, two valid
+verifier admissions, and nine malformed-WVB rejections. The WVB 1.16 cases are
+not sent to a narrower execution consumer.
 The report keeps nested assertions separate from the top-level owner count.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
@@ -370,7 +415,8 @@ resolution, and Project 2 remains stable. Slice 2 now includes primitive
 front-end identities, edition separation, named record update, fixed-width
 integer execution, exact rune execution, strict floating point, and complete
 unit/never semantics over the compiler-aligned WVB 1.15 verifier and scalar
-runtime checkpoint. Its completion gate remains multi-field
-variant/destructuring and value-producing control flow over this same compiler
-architecture. Seed stays on that architecture until its named removal
-checkpoint.
+runtime checkpoint. Named variant construction and destructuring now reach the
+compiler-aligned WVB 1.16 verifier while execution remains an explicit narrower
+consumer boundary. Slice 2 completion still requires WVB 1.16 variant execution
+and value-producing control flow over this same compiler architecture. Seed
+stays on that architecture until its named removal checkpoint.

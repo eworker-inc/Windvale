@@ -106,9 +106,11 @@ Slice 2 is active: its primitive identities, 23 bounded front-end assertions,
 named record update, WVB 1.12 fixed integers, WVB 1.13 runes, WVB 1.14 strict
 floating point, and WVB 1.15 ordinary `unit` plus return-only `never` now cross
 the shared compiler, verifier, and scalar runner. The rebuilt compiler rejects
-Seed-only `void` at the edition-1 boundary without publication. Multi-field
-aggregate construction/destructuring, value-producing control flow, localized
-token execution, and paired-host conformance remain later gates.
+Seed-only `void` at the edition-1 boundary without publication. Named variant
+construction and destructuring now cross the compiler and independent verifier
+through WVB 1.16; current scalar/native execution consumers remain explicitly
+narrower. WVB 1.16 execution, value-producing control flow, localized token
+execution, and paired-host conformance remain later gates.
 
 ## How to read this roadmap
 

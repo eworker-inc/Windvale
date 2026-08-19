@@ -25,19 +25,14 @@ cleanup() {
 trap cleanup EXIT
 
 echo 'START compiler source sentinel phase=compiler item=1/5'
-segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
-    "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
-    "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
-    "$work/Compiler.wvb" "$work/Compiler-Image" "$work/Compiler.wvli") || exit $?
-printf '%s\n' "$segmented_report"
-compiler_entry=$(printf '%s\n' "$segmented_report" | sed -n \
-    's/^native segmented project cache status=[A-Za-z]* key=[0-9a-f]* entry-offset=\([0-9][0-9]*\) fragments=[1-8]$/\1/p')
-compiler_fragments=$(printf '%s\n' "$segmented_report" | sed -n \
-    's/^native segmented project cache status=[A-Za-z]* key=[0-9a-f]* entry-offset=[0-9][0-9]* fragments=\([1-8]\)$/\1/p')
-[[ $compiler_entry =~ ^(0|[1-9][0-9]*)$ && $compiler_fragments =~ ^[1-8]$ ]] || exit 1
-"$script_directory/Build-Cached-Hosted-Application.sh" 1 \
-    "$work/Compiler.wvb" "$work/Compiler-Image" "$compiler_fragments" \
-    "$compiler_entry" "$work/Compiler.elf" linux || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" \
+    "$work/Bootstrap-Compiler.elf" --development-cache || exit $?
+"$script_directory/Compile-Compiler-Source-Set.sh" \
+    "$work/Bootstrap-Compiler.elf" \
+    "$repository_root" "$work/Compiler.wvb" || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 1 \
+    "$work/Compiler.wvb" "$work/Compiler.elf" --development-cache || exit $?
 echo 'PASS  compiler source sentinel phase=compiler item=1/5'
 
 echo 'START compiler source sentinel phase=compile item=2/5'

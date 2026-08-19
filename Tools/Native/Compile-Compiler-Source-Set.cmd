@@ -17,8 +17,10 @@ if not exist "%SourceRoot%\." goto :usage
     "%SourceRoot%\Compiler\Windvale\Source-Bindings-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Body-Parser.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Declaration-Parser.wv" ^
+    "%SourceRoot%\Compiler\Windvale\Source-Descriptor-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Graph-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Lexer-Core.wv" ^
+    "%SourceRoot%\Compiler\Windvale\Source-Profile-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Set-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Symbols-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Wir-Core.wv" ^
@@ -26,6 +28,7 @@ if not exist "%SourceRoot%\." goto :usage
     "%SourceRoot%\Compiler\Windvale\Source-Wvb-Temporary-Slots.wv" ^
     "%SourceRoot%\Foundation\Byte-Construction.wv" ^
     "%SourceRoot%\Foundation\Decimal-Parsing.wv" ^
+    "%SourceRoot%\Foundation\Sha256.wv" ^
     "%Output%"
 exit /b %ERRORLEVEL%
 

@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module MultiˉFieldˉVariantˉPatternˉDuplicateˉField;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Deliveryˉresult {
+    Delivered(Code: i32, Attempts: u32);
+}
+
+fn Read(Value: Deliveryˉresult) -> i32 {
+    match Value {
+        case Deliveryˉresult.Delivered {
+            Code: Code,
+            Code: Other,
+        } { return Code; }
+    }
+}
+
+export fn Main() -> i32 { return 0; }

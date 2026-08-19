@@ -54,11 +54,16 @@ record Compilerˉsourceˉwvbˉcapabilityˉencoding {
 record Compilerˉsourceˉwvbˉtypeˉencoding {
     Status: Compilerˉsourceˉwvbˉstatus;
     Payload: bytes;
-    Hasˉcollections: bool;
-    Requiresˉfixedˉintegers: bool;
-    Requiresˉrunes: bool;
-    Requiresˉfloating: bool;
-    Requiresˉunitˉorˉnever: bool;
+    Features: u32;
+}
+
+record Compilerˉsourceˉwvbˉvariantˉfieldsˉencoding {
+    Status: Compilerˉsourceˉwvbˉstatus;
+    Payload: bytes;
+    Nextˉoffset: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+    Features: u32;
 }
 
 record Compilerˉsourceˉwvbˉanalysis {
@@ -74,12 +79,7 @@ record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Metadata: bytes;
     Code: bytes;
     Failureˉoperation: u32;
-    Hasˉcollections: bool;
-    Hasˉoperators: bool;
-    Requiresˉfixedˉintegers: bool;
-    Requiresˉrunes: bool;
-    Requiresˉfloating: bool;
-    Requiresˉunitˉorˉnever: bool;
+    Features: u32;
 }
 
 record Compilerˉsourceˉwvbˉsymbolˉorder {
@@ -359,6 +359,27 @@ export fn Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Shape: u32) -> bool
         );
     }
     return false;
+}
+
+fn Compilerˉsourceˉwvbˉshapeˉfeatures(Shape: u32) -> u32 {
+    var Features: u32 = 0u32;
+    if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
+        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+        Features = Features | 1u32;
+    }
+    if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Shape) {
+        Features = Features | 2u32;
+    }
+    if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Shape) {
+        Features = Features | 4u32;
+    }
+    if Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Shape) {
+        Features = Features | 8u32;
+    }
+    if Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Shape) {
+        Features = Features | 16u32;
+    }
+    return Features;
 }
 
 export fn Compilerˉsourceˉwvbˉprofile(
@@ -653,12 +674,13 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
         if Operation <= 162u32 { return 194u8; }
     }
     if Operation == 163u32 { return 195u8; }
+    if Operation == 164u32 { return 196u8; }
     return 0u8;
 }
 
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 163u32 { return true; }
+        if Operation <= 164u32 { return true; }
     }
     return false;
 }
@@ -722,6 +744,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
         if Operation <= 162u32 { Opcodeˉbytes = 3u32; }
     }
     if Operation == 163u32 { Opcodeˉbytes = 1u32; }
+    if Operation == 164u32 { Opcodeˉbytes = 9u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -2070,11 +2093,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         Source, Header, Symbols, Entry
     );
     var Payload: bytes = Bytesˉfromˉu8(1u8);
-    var Hasˉcollections: bool = false;
-    var Requiresˉfixedˉintegers: bool = false;
-    var Requiresˉrunes: bool = false;
-    var Requiresˉfloating: bool = false;
-    var Requiresˉunitˉorˉnever: bool = false;
+    var Features: u32 = 0u32;
     Payload = Bytesˉconcat(
         Payload,
         Compilerˉsourceˉwvbˉencodedˉstring(
@@ -2104,9 +2123,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         );
         if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
             return Compilerˉsourceˉwvbˉtypeˉencoding(
-                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes,
-                Requiresˉfloating, Requiresˉunitˉorˉnever
+                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty, Features
             );
         }
         let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
@@ -2114,23 +2131,10 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
             Shape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
         ) {
             return Compilerˉsourceˉwvbˉtypeˉencoding(
-                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes,
-                Requiresˉfloating, Requiresˉunitˉorˉnever
+                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty, Features
             );
         }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Shape) {
-            Requiresˉfixedˉintegers = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Shape) { Requiresˉrunes = true; }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Shape) { Requiresˉfloating = true; }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Shape) {
-            Requiresˉunitˉorˉnever = true;
-        }
-        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
-            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
-            Hasˉcollections = true;
-        }
+        Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Shape);
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉstring(Source, Field.Offset, Field.Length)
         );
@@ -2144,9 +2148,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         Fieldˉindex = Fieldˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections,
-        Requiresˉfixedˉintegers, Requiresˉrunes, Requiresˉfloating,
-        Requiresˉunitˉorˉnever
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Features
     );
 }
 
@@ -2199,8 +2201,117 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         Memberˉindex = Memberˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload, false, false, false, false,
-        false
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, 0u32
+    );
+}
+
+fn Compilerˉsourceˉwvbˉencodeˉvariantˉfields(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Owner: u32,
+    Source: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Compilerˉsourceˉwvbˉvariantˉfieldsˉencoding {
+    let Empty: bytes = Compilerˉsourceˉwvbˉempty(Source);
+    var Fields: bytes = Empty;
+    var Fieldˉcount: u32 = 0u32;
+    var Cursor: u32 = Offset;
+    var Currentˉline: u32 = Line;
+    var Currentˉcolumn: u32 = Column;
+    var Features: u32 = 0u32;
+    var Reading: bool = true;
+    var Nextˉoffset: u32 = 0u32;
+    var Nextˉline: u32 = 0u32;
+    var Nextˉcolumn: u32 = 0u32;
+    while Reading {
+        let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+            );
+        let Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+                Input, Scan, Symbols.Directory, Symbols.Lookup,
+                Symbols.Visibility, Owner, Source,
+                Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                Symbols.Records, Symbols.Enums, false
+            );
+        if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉvariantˉfieldsˉencoding(
+                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
+                0u32, 0u32, 0u32, 0u32
+            );
+        }
+        let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
+        if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
+            Shape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
+        ) {
+            return Compilerˉsourceˉwvbˉvariantˉfieldsˉencoding(
+                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
+                0u32, 0u32, 0u32, 0u32
+            );
+        }
+        Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Shape);
+        Fields = Bytesˉconcat(
+            Fields, Compilerˉsourceˉwvbˉstring(Source, Name.Offset, Name.Length)
+        );
+        Fields = Bytesˉconcat(Fields, Compilerˉsourceˉwvbˉshape(Shape));
+        Fieldˉcount = Fieldˉcount + 1u32;
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Binding.Nextˉoffset,
+                Binding.Nextˉline, Binding.Nextˉcolumn
+            );
+        if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            let Afterˉcomma: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Separator.Nextˉoffset,
+                    Separator.Nextˉline, Separator.Nextˉcolumn
+                );
+            if Afterˉcomma.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+                let Trailingˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        Source, Afterˉcomma.Nextˉoffset,
+                        Afterˉcomma.Nextˉline, Afterˉcomma.Nextˉcolumn
+                    );
+                Nextˉoffset = Trailingˉend.Nextˉoffset;
+                Nextˉline = Trailingˉend.Nextˉline;
+                Nextˉcolumn = Trailingˉend.Nextˉcolumn;
+                Reading = false;
+            } else {
+                Cursor = Separator.Nextˉoffset;
+                Currentˉline = Separator.Nextˉline;
+                Currentˉcolumn = Separator.Nextˉcolumn;
+            }
+        } else {
+            let Rightˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Separator.Nextˉoffset,
+                    Separator.Nextˉline, Separator.Nextˉcolumn
+                );
+            Nextˉoffset = Rightˉend.Nextˉoffset;
+            Nextˉline = Rightˉend.Nextˉline;
+            Nextˉcolumn = Rightˉend.Nextˉcolumn;
+            Reading = false;
+        }
+    }
+    var Payload: bytes = Bytesˉfromˉu8(1u8);
+    if Fieldˉcount > 1u32 {
+        Payload = Bytesˉfromˉu8(2u8);
+        Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Fieldˉcount));
+        Features = Features | 32u32;
+    }
+    Payload = Bytesˉconcat(Payload, Fields);
+    return Compilerˉsourceˉwvbˉvariantˉfieldsˉencoding(
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload,
+        Nextˉoffset, Nextˉline, Nextˉcolumn, Features
     );
 }
 
@@ -2218,11 +2329,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
     let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
         Compilerˉsourceˉwvbˉdeclaration(Source, Header, Symbols, Entry);
     var Payload: bytes = Bytesˉfromˉu8(3u8);
-    var Hasˉcollections: bool = false;
-    var Requiresˉfixedˉintegers: bool = false;
-    var Requiresˉrunes: bool = false;
-    var Requiresˉfloating: bool = false;
-    var Requiresˉunitˉorˉnever: bool = false;
+    var Features: u32 = 0u32;
     Payload = Bytesˉconcat(
         Payload,
         Compilerˉsourceˉwvbˉencodedˉstring(
@@ -2248,76 +2355,37 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
             Payload,
             Compilerˉsourceˉwvbˉstring(Source, Caseˉname.Offset, Caseˉname.Length)
         );
-        var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
+        var Nextˉoffset: u32 = Afterˉname.Nextˉoffset;
+        var Nextˉline: u32 = Afterˉname.Nextˉline;
+        var Nextˉcolumn: u32 = Afterˉname.Nextˉcolumn;
         if Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(1u8));
-            let Payloadˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn
-            );
-            Payload = Bytesˉconcat(
-                Payload,
-                Compilerˉsourceˉwvbˉstring(
-                    Source, Payloadˉname.Offset, Payloadˉname.Length
-                )
-            );
-            let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Payloadˉname.Nextˉoffset, Payloadˉname.Nextˉline, Payloadˉname.Nextˉcolumn
-            );
-            let Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-                    Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility,
-                    Owner, Source,
-                    Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
-                    Symbols.Records, Symbols.Enums, false
+            let Encodedˉfields:
+                Compilerˉsourceˉwvbˉvariantˉfieldsˉencoding =
+                Compilerˉsourceˉwvbˉencodeˉvariantˉfields(
+                    Input, Scan, Symbols, Owner, Source,
+                    Afterˉname.Nextˉoffset, Afterˉname.Nextˉline,
+                    Afterˉname.Nextˉcolumn
                 );
-            if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            if Encodedˉfields.Status != Compilerˉsourceˉwvbˉstatus.Valid {
                 return Compilerˉsourceˉwvbˉtypeˉencoding(
-                    Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                    Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes,
-                    Requiresˉfloating, Requiresˉunitˉorˉnever
+                    Encodedˉfields.Status, Empty, Features
                 );
             }
-            let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
-            if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-                Shape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
-            ) {
-                return Compilerˉsourceˉwvbˉtypeˉencoding(
-                    Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty,
-                    Hasˉcollections, Requiresˉfixedˉintegers, Requiresˉrunes,
-                    Requiresˉfloating, Requiresˉunitˉorˉnever
-                );
-            }
-            if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Shape) {
-                Requiresˉfixedˉintegers = true;
-            }
-            if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Shape) { Requiresˉrunes = true; }
-            if Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Shape) { Requiresˉfloating = true; }
-            if Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Shape) {
-                Requiresˉunitˉorˉnever = true;
-            }
-            if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
-                Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
-                Hasˉcollections = true;
-            }
-            Payload = Bytesˉconcat(Payload, Compilerˉsourceˉwvbˉshape(Shape));
-            let Right: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
-            );
-            End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
-            );
+            Payload = Bytesˉconcat(Payload, Encodedˉfields.Payload);
+            Features = Features | Encodedˉfields.Features;
+            Nextˉoffset = Encodedˉfields.Nextˉoffset;
+            Nextˉline = Encodedˉfields.Nextˉline;
+            Nextˉcolumn = Encodedˉfields.Nextˉcolumn;
         } else {
             Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(0u8));
         }
-        Cursor = End.Nextˉoffset;
-        Line = End.Nextˉline;
-        Column = End.Nextˉcolumn;
+        Cursor = Nextˉoffset;
+        Line = Nextˉline;
+        Column = Nextˉcolumn;
         Caseˉindex = Caseˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections,
-        Requiresˉfixedˉintegers, Requiresˉrunes, Requiresˉfloating,
-        Requiresˉunitˉorˉnever
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Features
     );
 }
 
@@ -2333,11 +2401,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         Symbols.Records + Symbols.Enums + Symbols.Variants
     );
     var Rank: u32 = 0u32;
-    var Hasˉcollections: bool = false;
-    var Requiresˉfixedˉintegers: bool = false;
-    var Requiresˉrunes: bool = false;
-    var Requiresˉfloating: bool = false;
-    var Requiresˉunitˉorˉnever: bool = false;
+    var Features: u32 = 0u32;
     while Rank < Symbols.Records {
         let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Recordˉorder, Rank
@@ -2353,11 +2417,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
                 Input, Scan, View.Source, Header, Symbols, Entry
             );
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid { return Encoded; }
-        if Encoded.Hasˉcollections { Hasˉcollections = true; }
-        if Encoded.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
-        if Encoded.Requiresˉrunes { Requiresˉrunes = true; }
-        if Encoded.Requiresˉfloating { Requiresˉfloating = true; }
-        if Encoded.Requiresˉunitˉorˉnever { Requiresˉunitˉorˉnever = true; }
+        Features = Features | Encoded.Features;
         Payload = Bytesˉconcat(Payload, Encoded.Payload);
         Rank = Rank + 1u32;
     }
@@ -2379,11 +2439,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         if Encodedˉenum.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Encodedˉenum;
         }
-        if Encodedˉenum.Hasˉcollections { Hasˉcollections = true; }
-        if Encodedˉenum.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
-        if Encodedˉenum.Requiresˉrunes { Requiresˉrunes = true; }
-        if Encodedˉenum.Requiresˉfloating { Requiresˉfloating = true; }
-        if Encodedˉenum.Requiresˉunitˉorˉnever { Requiresˉunitˉorˉnever = true; }
+        Features = Features | Encodedˉenum.Features;
         Payload = Bytesˉconcat(Payload, Encodedˉenum.Payload);
         Rank = Rank + 1u32;
     }
@@ -2406,18 +2462,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         if Encodedˉvariant.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Encodedˉvariant;
         }
-        if Encodedˉvariant.Hasˉcollections { Hasˉcollections = true; }
-        if Encodedˉvariant.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
-        if Encodedˉvariant.Requiresˉrunes { Requiresˉrunes = true; }
-        if Encodedˉvariant.Requiresˉfloating { Requiresˉfloating = true; }
-        if Encodedˉvariant.Requiresˉunitˉorˉnever { Requiresˉunitˉorˉnever = true; }
+        Features = Features | Encodedˉvariant.Features;
         Payload = Bytesˉconcat(Payload, Encodedˉvariant.Payload);
         Rank = Rank + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections,
-        Requiresˉfixedˉintegers, Requiresˉrunes, Requiresˉfloating,
-        Requiresˉunitˉorˉnever
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Features
     );
 }
 
@@ -2964,6 +3014,11 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     if Operation == 163u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu8(195u8));
     }
+    if Operation == 164u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(196u8));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -3102,8 +3157,7 @@ export fn Compilerˉsourceˉwvbˉfunctionˉfailure(
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     return Compilerˉsourceˉwvbˉfunctionˉencoding(
-        Status, Empty, Empty, Operation, false, false, false, false, false,
-        false
+        Status, Empty, Empty, Operation, 0u32
     );
 }
 
@@ -3186,18 +3240,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
     let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
     let Returnˉshape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 44u32);
-    var Hasˉcollections: bool =
-        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Returnˉshape) ||
-        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Returnˉshape);
-    var Hasˉoperators: bool = false;
-    var Requiresˉfixedˉintegers: bool =
-        Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Returnˉshape);
-    var Requiresˉrunes: bool =
-        Compilerˉsourceˉwvbˉshapeˉhasˉrune(Returnˉshape);
-    var Requiresˉfloating: bool =
-        Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Returnˉshape);
-    var Requiresˉunitˉorˉnever: bool =
-        Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Returnˉshape);
+    var Features: u32 = Compilerˉsourceˉwvbˉshapeˉfeatures(Returnˉshape);
     if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
         Returnˉshape, true, Symbols.Records, Symbols.Enums, Symbols.Variants
     ) {
@@ -3277,22 +3320,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 Analysis.Failureˉoperation
             );
         }
-        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Parameterˉshape) ||
-            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Parameterˉshape) {
-            Hasˉcollections = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Parameterˉshape) {
-            Requiresˉfixedˉintegers = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Parameterˉshape) {
-            Requiresˉrunes = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Parameterˉshape) {
-            Requiresˉfloating = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Parameterˉshape) {
-            Requiresˉunitˉorˉnever = true;
-        }
+        Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Parameterˉshape);
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Parameterˉshape)
         );
@@ -3327,22 +3355,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 Analysis.Failureˉoperation
             );
         }
-        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Localˉshape) ||
-            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Localˉshape) {
-            Hasˉcollections = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Localˉshape) {
-            Requiresˉfixedˉintegers = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Localˉshape) {
-            Requiresˉrunes = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Localˉshape) {
-            Requiresˉfloating = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Localˉshape) {
-            Requiresˉunitˉorˉnever = true;
-        }
+        Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Localˉshape);
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Localˉshape)
         );
@@ -3361,22 +3374,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 Analysis.Failureˉoperation
             );
         }
-        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Temporaryˉshape) ||
-            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Temporaryˉshape) {
-            Hasˉcollections = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfixedˉinteger(Temporaryˉshape) {
-            Requiresˉfixedˉintegers = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉrune(Temporaryˉshape) {
-            Requiresˉrunes = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉfloating(Temporaryˉshape) {
-            Requiresˉfloating = true;
-        }
-        if Compilerˉsourceˉwvbˉshapeˉhasˉunitˉorˉnever(Temporaryˉshape) {
-            Requiresˉunitˉorˉnever = true;
-        }
+        Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Temporaryˉshape);
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Temporaryˉshape)
         );
@@ -3408,15 +3406,17 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
                     Wir, Operationˉentry + 4u32
                 );
-                if Operationˉkind >= 73u32 { Hasˉoperators = true; }
                 if Operationˉkind >= 129u32 && Operationˉkind <= 147u32 {
-                    Requiresˉfixedˉintegers = true;
+                    Features = Features | 2u32;
                 }
                 if Operationˉkind >= 148u32 && Operationˉkind <= 150u32 {
-                    Requiresˉrunes = true;
+                    Features = Features | 4u32;
                 }
-                if Operationˉkind >= 151u32 { Requiresˉfloating = true; }
-                if Operationˉkind == 163u32 { Requiresˉunitˉorˉnever = true; }
+                if Operationˉkind >= 151u32 && Operationˉkind <= 162u32 {
+                    Features = Features | 8u32;
+                }
+                if Operationˉkind == 163u32 { Features = Features | 16u32; }
+                if Operationˉkind == 164u32 { Features = Features | 32u32; }
                 Code = Bytesˉconcat(
                     Code,
                     Compilerˉsourceˉwvbˉemitˉoperation(
@@ -3449,12 +3449,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Metadata,
         Code,
         Analysis.Failureˉoperation,
-        Hasˉcollections,
-        Hasˉoperators,
-        Requiresˉfixedˉintegers,
-        Requiresˉrunes,
-        Requiresˉfloating,
-        Requiresˉunitˉorˉnever
+        Features
     );
 }
 
@@ -3955,13 +3950,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
     var Exportˉcount: u32 = 0u32;
     var Codeˉoffset: u32 = 0u32;
     var Functionˉrank: u32 = 0u32;
-    var Hasˉcollections: bool = Typeˉencoding.Hasˉcollections;
-    var Hasˉoperators: bool = false;
-    var Requiresˉfixedˉintegers: bool = Typeˉencoding.Requiresˉfixedˉintegers;
-    var Requiresˉrunes: bool = Typeˉencoding.Requiresˉrunes;
-    var Requiresˉfloating: bool = Typeˉencoding.Requiresˉfloating;
-    var Requiresˉunitˉorˉnever: bool =
-        Typeˉencoding.Requiresˉunitˉorˉnever;
+    var Features: u32 = Typeˉencoding.Features;
     while Functionˉrank < Emissionˉfunctions {
         let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders), Functionˉrank
@@ -3990,12 +3979,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
                 Encoded.Failureˉoperation
             );
         }
-        if Encoded.Hasˉcollections { Hasˉcollections = true; }
-        if Encoded.Hasˉoperators { Hasˉoperators = true; }
-        if Encoded.Requiresˉfixedˉintegers { Requiresˉfixedˉintegers = true; }
-        if Encoded.Requiresˉrunes { Requiresˉrunes = true; }
-        if Encoded.Requiresˉfloating { Requiresˉfloating = true; }
-        if Encoded.Requiresˉunitˉorˉnever { Requiresˉunitˉorˉnever = true; }
+        Features = Features | Encoded.Features;
         Functionˉpayload = Bytesˉconcat(Functionˉpayload, Encoded.Metadata);
         Codeˉpayload = Bytesˉconcat(Codeˉpayload, Encoded.Code);
         if Functionˉowner == 0u32 {
@@ -4058,10 +4042,11 @@ export fn Compilerˉsourceˉwvbˉcompile(
     var Bytecode: bytes = Textˉtoˉutf8("WVB1");
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(1u32));
     var Wvbˉminor: u32 = 11u32;
-    if Requiresˉfixedˉintegers { Wvbˉminor = 12u32; }
-    if Requiresˉrunes { Wvbˉminor = 13u32; }
-    if Requiresˉfloating { Wvbˉminor = 14u32; }
-    if Requiresˉunitˉorˉnever { Wvbˉminor = 15u32; }
+    if (Features & 2u32) != 0u32 { Wvbˉminor = 12u32; }
+    if (Features & 4u32) != 0u32 { Wvbˉminor = 13u32; }
+    if (Features & 8u32) != 0u32 { Wvbˉminor = 14u32; }
+    if (Features & 16u32) != 0u32 { Wvbˉminor = 15u32; }
+    if (Features & 32u32) != 0u32 { Wvbˉminor = 16u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(

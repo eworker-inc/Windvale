@@ -1100,22 +1100,49 @@ export fn Compilerˉsourceˉbindingsˉfindˉvariantˉcase(
         var Arity: u32 = 0u32;
         var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
         if Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            Arity = 1u32;
-            let Payloadˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn
-            );
-            let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Payloadˉname.Nextˉoffset, Payloadˉname.Nextˉline, Payloadˉname.Nextˉcolumn
-            );
-            let Type: Sourceˉdeclarations.Compilerˉparseˉstep = Sourceˉdeclarations.Compilerˉparseˉtype(
-                View.Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn, false, false
-            );
-            let Right: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
-            );
-            End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
-            );
+            var Fieldˉcursor: u32 = Afterˉname.Nextˉoffset;
+            var Fieldˉline: u32 = Afterˉname.Nextˉline;
+            var Fieldˉcolumn: u32 = Afterˉname.Nextˉcolumn;
+            var Readingˉfields: bool = true;
+            while Readingˉfields {
+                let Field: Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
+                    Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
+                        View.Source, Fieldˉcursor, Fieldˉline, Fieldˉcolumn
+                    );
+                Arity = Arity + 1u32;
+                let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Field.Nextˉoffset, Field.Nextˉline,
+                        Field.Nextˉcolumn
+                    );
+                if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                    let Callableˉafterˉcomma:
+                        Sourceˉlexer.Compilerˉsourceˉtoken =
+                        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                            View.Source, Separator.Nextˉoffset,
+                            Separator.Nextˉline, Separator.Nextˉcolumn
+                        );
+                    if Callableˉafterˉcomma.Kind ==
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+                        Readingˉfields = false;
+                        End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                            View.Source, Callableˉafterˉcomma.Nextˉoffset,
+                            Callableˉafterˉcomma.Nextˉline,
+                            Callableˉafterˉcomma.Nextˉcolumn
+                        );
+                    } else {
+                        Fieldˉcursor = Separator.Nextˉoffset;
+                        Fieldˉline = Separator.Nextˉline;
+                        Fieldˉcolumn = Separator.Nextˉcolumn;
+                    }
+                } else {
+                    Readingˉfields = false;
+                    End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Separator.Nextˉoffset,
+                        Separator.Nextˉline, Separator.Nextˉcolumn
+                    );
+                }
+            }
         }
         let Caseˉoffset: u32 = Offset + Lastˉdot + 1u32;
         let Caseˉlength: u32 = Length - Lastˉdot - 1u32;
@@ -1773,7 +1800,9 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
                 Expression.Valueˉoffset, Recordˉposition.Line, Recordˉposition.Column
             );
         }
-        if Record.Kind != Compilerˉsourceˉcallableˉkind.Record {
+        if Record.Kind != Compilerˉsourceˉcallableˉkind.Record &&
+            (Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Recordˉupdate ||
+                Record.Kind != Compilerˉsourceˉcallableˉkind.Variantˉcase) {
             return Compilerˉsourceˉbindingsˉbodyˉfailure(
                 Fields, Compilerˉsourceˉbindingˉstatus.Unknownˉcall,
                 Module, Record.Module, Function,
@@ -1936,6 +1965,166 @@ export fn Compilerˉsourceˉbindingsˉphaseˉmerge(
     return Compilerˉsourceˉbindingsˉphaseˉfrom(Build, Body);
 }
 
+fn Compilerˉsourceˉbindingsˉvariantˉfieldˉshape(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Owner: u32,
+    View: Sourceˉset.Compilerˉsourceˉsetˉview,
+    Fields: u32,
+    Fieldsˉoffset: u32,
+    Fieldsˉline: u32,
+    Fieldsˉcolumn: u32,
+    Queryˉsource: bytes,
+    Queryˉoffset: u32,
+    Queryˉlength: u32
+) -> u32 {
+    var Cursor: u32 = Fieldsˉoffset;
+    var Line: u32 = Fieldsˉline;
+    var Column: u32 = Fieldsˉcolumn;
+    var Index: u32 = 0u32;
+    while Index < Fields {
+        let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Cursor, Line, Column
+            );
+        let Field: Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
+            Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
+                View.Source, Cursor, Line, Column
+            );
+        if Name.Length == Queryˉlength {
+            if Sourceˉset.Compilerˉsourceˉspansˉequal(
+                View.Source, Name.Offset, Name.Length,
+                Queryˉsource, Queryˉoffset, Queryˉlength
+            ) {
+                let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Name.Nextˉoffset,
+                        Name.Nextˉline, Name.Nextˉcolumn
+                    );
+                let Type: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+                        Input, Scan, Symbols.Directory, Symbols.Lookup,
+                        Symbols.Visibility, Owner, View.Source,
+                        Colon.Nextˉoffset, Colon.Nextˉline,
+                        Colon.Nextˉcolumn,
+                        Symbols.Records, Symbols.Enums, false
+                    );
+                return Compilerˉsourceˉbindingsˉshape(Type);
+            }
+        }
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Field.Nextˉoffset,
+                Field.Nextˉline, Field.Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Line = Separator.Nextˉline;
+        Column = Separator.Nextˉcolumn;
+        Index = Index + 1u32;
+    }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉbindingsˉcollectˉmatchˉfields(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Case: Sourceˉbodies.Compilerˉsourceˉmatchˉcase,
+    Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch,
+    View: Sourceˉset.Compilerˉsourceˉsetˉview,
+    Fields: u32,
+    Fieldsˉoffset: u32,
+    Fieldsˉline: u32,
+    Fieldsˉcolumn: u32,
+    Patternˉstart: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Build: Compilerˉsourceˉbindingˉbuild
+) -> Compilerˉsourceˉbindingˉbuild {
+    var Result: Compilerˉsourceˉbindingˉbuild = Build;
+    var Cursor: u32 = Patternˉstart.Nextˉoffset;
+    var Line: u32 = Patternˉstart.Nextˉline;
+    var Column: u32 = Patternˉstart.Nextˉcolumn;
+    var Index: u32 = 0u32;
+    while Index < Fields {
+        let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Line, Column
+            );
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Field.Nextˉoffset,
+                Field.Nextˉline, Field.Nextˉcolumn
+            );
+        let Binding: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Colon.Nextˉoffset,
+                Colon.Nextˉline, Colon.Nextˉcolumn
+            );
+        let Shape: u32 =
+            Compilerˉsourceˉbindingsˉvariantˉfieldˉshape(
+                Input, Scan, Symbols, Nominal.Module, View,
+                Fields, Fieldsˉoffset, Fieldsˉline, Fieldsˉcolumn,
+                Source, Field.Offset, Field.Length
+            );
+        let Discard: bool = Binding.Length == 1u32 &&
+            Bytesˉreadˉu8(Source, Binding.Offset) == 95u8;
+        if Shape != 0u32 && !Discard {
+            let Position: Sourceˉbodies.Compilerˉsourceˉposition =
+                Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                    Source, Case.Bindingˉoffset, 1u32, 1u32,
+                    Binding.Offset
+                );
+            if Compilerˉsourceˉbindingsˉpriorˉlocal(
+                Source, Result.Payload,
+                Result.Entries - Result.Nextˉslot, Result.Entries,
+                Module, Function, Binding.Offset, Binding.Length
+            ) {
+                return Compilerˉsourceˉbindingsˉbuildˉfailure(
+                    Result, Compilerˉsourceˉbindingˉstatus.Duplicateˉlocal,
+                    Module, Nominal.Module, Function,
+                    Binding.Offset, Position.Line, Position.Column
+                );
+            }
+            if Result.Nextˉslot >= 4096u32 {
+                return Compilerˉsourceˉbindingsˉbuildˉfailure(
+                    Result, Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
+                    Module, Nominal.Module, Function,
+                    Binding.Offset, Position.Line, Position.Column
+                );
+            }
+            if Bytesˉlength(Result.Payload) > 4194252u32 {
+                return Compilerˉsourceˉbindingsˉbuildˉfailure(
+                    Result, Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit,
+                    Module, Nominal.Module, Function,
+                    Binding.Offset, Position.Line, Position.Column
+                );
+            }
+            let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
+                Module, Function, Compilerˉsourceˉbindingˉkind.Let,
+                Result.Nextˉslot, Binding.Offset, Binding.Length, Shape,
+                Case.Blockˉoffset,
+                Case.Blockˉoffset + Case.Blockˉlength
+            );
+            Result = Compilerˉsourceˉbindingsˉappend(
+                Result, Entry, false
+            );
+        }
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Binding.Nextˉoffset,
+                Binding.Nextˉline, Binding.Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Line = Separator.Nextˉline;
+        Column = Separator.Nextˉcolumn;
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
 export fn Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -1973,53 +2162,123 @@ export fn Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
     var Column: u32 = Left.Nextˉcolumn;
     var Index: u32 = 0u32;
     while Index < Declaration.Items {
-        let Targetˉcase: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            View.Source, Cursor, Line, Column
-        );
-        let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            View.Source, Targetˉcase.Nextˉoffset, Targetˉcase.Nextˉline, Targetˉcase.Nextˉcolumn
-        );
+        let Targetˉcase: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Cursor, Line, Column
+            );
+        let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Targetˉcase.Nextˉoffset,
+                Targetˉcase.Nextˉline, Targetˉcase.Nextˉcolumn
+            );
         var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
+        var Fields: u32 = 0u32;
+        var Fieldsˉoffset: u32 = Afterˉname.Nextˉoffset;
+        var Fieldsˉline: u32 = Afterˉname.Nextˉline;
+        var Fieldsˉcolumn: u32 = Afterˉname.Nextˉcolumn;
         if Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            let Payloadˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn
-            );
-            let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Payloadˉname.Nextˉoffset, Payloadˉname.Nextˉline, Payloadˉname.Nextˉcolumn
-            );
-            let Payloadˉtype: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility, Nominal.Module,
-                View.Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
-                Symbols.Records, Symbols.Enums, false
-            );
-            let Right: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Payloadˉtype.Nextˉoffset, Payloadˉtype.Nextˉline, Payloadˉtype.Nextˉcolumn
-            );
-            End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
-            );
-            if Targetˉcase.Length == Case.Memberˉlength {
-                if Sourceˉset.Compilerˉsourceˉspansˉequal(
-                    View.Source, Targetˉcase.Offset, Targetˉcase.Length,
-                    Source, Case.Memberˉoffset, Case.Memberˉlength
-                ) {
-                    if Build.Nextˉslot >= 4096u32 {
-                        return Compilerˉsourceˉbindingsˉbuildˉfailure(
-                            Build, Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
-                            Module, Nominal.Module, Function,
-                            Case.Bindingˉoffset, Line, Column
-                        );
-                    }
-                    let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
-                        Module, Function, Compilerˉsourceˉbindingˉkind.Let,
-                        Build.Nextˉslot, Case.Bindingˉoffset, Case.Bindingˉlength,
-                        Compilerˉsourceˉbindingsˉshape(Payloadˉtype),
-                        Case.Blockˉoffset,
-                        Case.Blockˉoffset + Case.Blockˉlength
+            var Fieldˉcursor: u32 = Fieldsˉoffset;
+            var Fieldˉline: u32 = Fieldsˉline;
+            var Fieldˉcolumn: u32 = Fieldsˉcolumn;
+            var Readingˉfields: bool = true;
+            while Readingˉfields {
+                let Field: Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
+                    Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
+                        View.Source, Fieldˉcursor, Fieldˉline, Fieldˉcolumn
                     );
-                    return Compilerˉsourceˉbindingsˉappend(Build, Entry, false);
+                Fields = Fields + 1u32;
+                let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Field.Nextˉoffset,
+                        Field.Nextˉline, Field.Nextˉcolumn
+                    );
+                if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                    let Caseˉafterˉcomma:
+                        Sourceˉlexer.Compilerˉsourceˉtoken =
+                        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                            View.Source, Separator.Nextˉoffset,
+                            Separator.Nextˉline, Separator.Nextˉcolumn
+                        );
+                    if Caseˉafterˉcomma.Kind ==
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+                        Readingˉfields = false;
+                        End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                            View.Source, Caseˉafterˉcomma.Nextˉoffset,
+                            Caseˉafterˉcomma.Nextˉline,
+                            Caseˉafterˉcomma.Nextˉcolumn
+                        );
+                    } else {
+                        Fieldˉcursor = Separator.Nextˉoffset;
+                        Fieldˉline = Separator.Nextˉline;
+                        Fieldˉcolumn = Separator.Nextˉcolumn;
+                    }
+                } else {
+                    Readingˉfields = false;
+                    End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Separator.Nextˉoffset,
+                        Separator.Nextˉline, Separator.Nextˉcolumn
+                    );
                 }
             }
+        }
+        var Matches: bool = Targetˉcase.Length == Case.Memberˉlength;
+        if Matches {
+            Matches = Sourceˉset.Compilerˉsourceˉspansˉequal(
+                View.Source, Targetˉcase.Offset, Targetˉcase.Length,
+                Source, Case.Memberˉoffset, Case.Memberˉlength
+            );
+        }
+        if Matches {
+            let Patternˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Case.Bindingˉoffset, 1u32, 1u32
+                );
+            if Patternˉstart.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
+                if Fields != 1u32 { return Build; }
+                let Declaredˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Fieldsˉoffset,
+                        Fieldsˉline, Fieldsˉcolumn
+                    );
+                let Declaredˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Declaredˉname.Nextˉoffset,
+                        Declaredˉname.Nextˉline, Declaredˉname.Nextˉcolumn
+                    );
+                let Declaredˉtype:
+                    Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+                        Input, Scan, Symbols.Directory, Symbols.Lookup,
+                        Symbols.Visibility, Nominal.Module, View.Source,
+                        Declaredˉcolon.Nextˉoffset,
+                        Declaredˉcolon.Nextˉline,
+                        Declaredˉcolon.Nextˉcolumn,
+                        Symbols.Records, Symbols.Enums, false
+                    );
+                if Build.Nextˉslot >= 4096u32 {
+                    return Compilerˉsourceˉbindingsˉbuildˉfailure(
+                        Build, Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
+                        Module, Nominal.Module, Function,
+                        Case.Bindingˉoffset, Line, Column
+                    );
+                }
+                let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
+                    Module, Function, Compilerˉsourceˉbindingˉkind.Let,
+                    Build.Nextˉslot,
+                    Case.Bindingˉoffset, Case.Bindingˉlength,
+                    Compilerˉsourceˉbindingsˉshape(Declaredˉtype),
+                    Case.Blockˉoffset,
+                    Case.Blockˉoffset + Case.Blockˉlength
+                );
+                return Compilerˉsourceˉbindingsˉappend(Build, Entry, false);
+            }
+
+            return Compilerˉsourceˉbindingsˉcollectˉmatchˉfields(
+                Input, Scan, Symbols, Module, Function, Source, Case,
+                Nominal, View, Fields, Fieldsˉoffset,
+                Fieldsˉline, Fieldsˉcolumn, Patternˉstart, Build
+            );
         }
         Cursor = End.Nextˉoffset;
         Line = End.Nextˉline;
