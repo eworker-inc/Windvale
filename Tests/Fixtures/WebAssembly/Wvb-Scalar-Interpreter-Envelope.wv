@@ -131,7 +131,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-    if Moduleˉminor < 11u32 || Moduleˉminor > 15u32 { return Invalid; }
+    if Moduleˉminor < 11u32 || Moduleˉminor > 16u32 { return Invalid; }
     if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -324,9 +324,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             Bytesˉfromˉu32ˉlittle(Typeˉcursor)
         );
         let Typeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉcursor));
-        if Typeˉkind != 1u32 {
-            if Typeˉkind != 2u32 { return Invalid; }
-        }
+        if Typeˉkind < 1u32 || Typeˉkind > 3u32 { return Invalid; }
         Typeˉcursor = Typeˉcursor + 1u32;
         Typeˉcursor = Typeˉcursor + 4u32
             + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
@@ -352,18 +350,19 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 if Fieldˉshapeˉkind < 1u32 { return Invalid; }
                 if Fieldˉshapeˉkind > 10u32 {
                     var Extendedˉfieldˉshape: bool = Moduleˉminor >= 12u32 &&
-                        Moduleˉminor <= 15u32 && Fieldˉshapeˉkind >= 14u32 &&
+                        Moduleˉminor <= 16u32 && Fieldˉshapeˉkind >= 14u32 &&
                         Fieldˉshapeˉkind <= 16u32;
-                    if Moduleˉminor >= 13u32 && Moduleˉminor <= 15u32 &&
+                    if Moduleˉminor >= 13u32 && Moduleˉminor <= 16u32 &&
                         Fieldˉshapeˉkind == 17u32 {
                         Extendedˉfieldˉshape = true;
                     }
-                    if Moduleˉminor >= 14u32 && Moduleˉminor <= 15u32 &&
+                    if Moduleˉminor >= 14u32 && Moduleˉminor <= 16u32 &&
                         Fieldˉshapeˉkind >= 18u32 &&
                         Fieldˉshapeˉkind <= 19u32 {
                         Extendedˉfieldˉshape = true;
                     }
-                    if Moduleˉminor == 15u32 && Fieldˉshapeˉkind == 20u32 {
+                    if Moduleˉminor >= 15u32 && Moduleˉminor <= 16u32 &&
+                        Fieldˉshapeˉkind == 20u32 {
                         Extendedˉfieldˉshape = true;
                     }
                     if !Extendedˉfieldˉshape {
@@ -383,8 +382,69 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                     }
                     Typeˉcursor = Typeˉcursor + 4u32;
                 }
-            } else {
+            } else if Typeˉkind == 2u32 {
                 Typeˉcursor = Typeˉcursor + 4u32;
+            } else {
+                let Variantˉfieldˉmarker: u32 = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Module, Typeˉcursor)
+                );
+                Typeˉcursor = Typeˉcursor + 1u32;
+                var Variantˉfieldˉcount: u32 = 0u32;
+                if Variantˉfieldˉmarker == 1u32 {
+                    Variantˉfieldˉcount = 1u32;
+                } else if Variantˉfieldˉmarker == 2u32 {
+                    if Moduleˉminor != 16u32 { return Invalid; }
+                    Variantˉfieldˉcount = Bytesˉreadˉu32ˉlittle(
+                        Module,
+                        Typeˉcursor
+                    );
+                    Typeˉcursor = Typeˉcursor + 4u32;
+                    if Variantˉfieldˉcount < 2u32 ||
+                        Variantˉfieldˉcount > 64u32 {
+                        return Invalid;
+                    }
+                } else if Variantˉfieldˉmarker != 0u32 {
+                    return Invalid;
+                }
+                var Variantˉfieldˉindex: u32 = 0u32;
+                while Variantˉfieldˉindex < Variantˉfieldˉcount {
+                    Typeˉcursor = Typeˉcursor + 4u32
+                        + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
+                    let Variantˉfieldˉshape: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Module, Typeˉcursor)
+                    );
+                    if Variantˉfieldˉshape < 1u32 { return Invalid; }
+                    if Variantˉfieldˉshape > 10u32 {
+                        var Extendedˉvariantˉshape: bool =
+                            Moduleˉminor >= 12u32 && Moduleˉminor <= 16u32 &&
+                            Variantˉfieldˉshape >= 14u32 &&
+                            Variantˉfieldˉshape <= 16u32;
+                        if Moduleˉminor >= 13u32 && Moduleˉminor <= 16u32 &&
+                            Variantˉfieldˉshape == 17u32 {
+                            Extendedˉvariantˉshape = true;
+                        }
+                        if Moduleˉminor >= 14u32 && Moduleˉminor <= 16u32 &&
+                            Variantˉfieldˉshape >= 18u32 &&
+                            Variantˉfieldˉshape <= 19u32 {
+                            Extendedˉvariantˉshape = true;
+                        }
+                        if Moduleˉminor >= 15u32 && Moduleˉminor <= 16u32 &&
+                            Variantˉfieldˉshape == 20u32 {
+                            Extendedˉvariantˉshape = true;
+                        }
+                        if !Extendedˉvariantˉshape { return Invalid; }
+                    }
+                    Typeˉcursor = Typeˉcursor + 1u32;
+                    if Variantˉfieldˉshape == 7u32 ||
+                        Variantˉfieldˉshape == 8u32 {
+                        if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor)
+                            >= Typeˉcount {
+                            return Invalid;
+                        }
+                        Typeˉcursor = Typeˉcursor + 4u32;
+                    }
+                    Variantˉfieldˉindex = Variantˉfieldˉindex + 1u32;
+                }
             }
             Typeˉmemberˉindex = Typeˉmemberˉindex + 1u32;
         }

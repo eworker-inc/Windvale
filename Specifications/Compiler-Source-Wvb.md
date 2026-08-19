@@ -4,12 +4,13 @@
 
 `Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.16 module, and returns the bytes without using hosted capabilities.
 
-For the execution subset through WVB 1.15, the current implementation proves the
-complete source set → symbols/bindings → typed WVIR → canonical cross-module
-identity flattening → static data, nominal and capability metadata, and code →
-WVB → verifier → runtime path. WVB 1.16 named variant fields currently stop at
-the independent verifier, as specified below. Every accepted compilation emits
-one self-contained module and does not introduce runtime linkage.
+For the execution subset through WVB 1.16, the current implementation proves
+the complete source set → symbols/bindings → typed WVIR → canonical
+cross-module identity flattening → static data, nominal and capability metadata,
+and code → WVB → verifier → source-built scalar runtime path. Every accepted
+compilation emits one self-contained module and does not introduce runtime
+linkage. Direct native lowering, browser packaging, and Windvale OS execution
+retain their separately versioned subsets.
 
 ## Public result
 
@@ -402,14 +403,27 @@ unambiguous beside that construction syntax. It compiles twice to the same
 and therefore proves instruction-driven 1.16 selection in a deterministic
 428-byte module with SHA-256
 `2dea4aa515633e85863e51279f320d53f09c2bf4628b72d93fdc79559479209f`.
-Both pass the compiler-aligned verifier. Nine source rejections and nine
+Both pass the compiler-aligned verifier and execute through the source-built
+native scalar runner with result `42`; the multi-field fixture takes 76 guest
+instructions and the named single-field fixture takes 26. Nine source
+rejections and ten
 byte-level mutations cover declaration, construction, destructuring, version,
-marker, count, nominal, case, field, type, and truncation boundaries.
+marker, count, nominal, case, field, type, runtime case mismatch, and truncation
+boundaries. The in-range case-mismatch module is rejected by the verifier and
+fails direct scalar execution with `WVR3017`.
 
-The current scalar and native lowering consumers remain explicit subsets below
-WVB 1.16 and do not execute these two fixtures. This checkpoint proves source →
-WIR → WVB → independent verifier; runtime representation and execution advance
-in their own named checkpoint before a WVB 1.16 execution claim.
+The scalar representation uses one eight-byte value cell and the existing
+fixed 768-cell immutable aggregate arena. The low `u32` is the first field slot
+or `0xffffffff`; the high `u32` is
+`0x80000000 + (type + 1) * 256 + case`. Stack values, active locals, and saved
+frame locals are roots. A bounded mark/sweep pass reclaims unreachable record
+and variant spans and releases descriptor fields before one retry. The
+512-byte one-field pressure fixture performs 900 replacements, returns `42` in
+26,134 guest instructions, and proves reclamation beyond arena capacity.
+
+Direct native lowering, browser packaging, and Windvale OS execution remain
+explicit subsets below WVB 1.16. Decision 0773 owns this scalar execution
+checkpoint without silently advancing those consumers.
 
 ## Verification
 

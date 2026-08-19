@@ -525,8 +525,38 @@ node "$script_directory/Verify-Language-1.0-Multi-Field-Variants.mjs" \
     "$work/Verifier.elf" "$work/Multi-Field-Variant-A.wvb" \
     "$work/Named-Variant-Field.wvb" \
     "$work/Multi-Field-Variant-Malformed" || exit $?
+"$work/Floating-Runner.elf" "$work/Multi-Field-Variant-A.wvb" \
+    >"$work/Multi-Field-Variant-Run.out" \
+    2>"$work/Multi-Field-Variant-Run.err" || exit $?
+"$work/Floating-Runner.elf" "$work/Named-Variant-Field.wvb" \
+    >"$work/Named-Variant-Field-Run.out" \
+    2>"$work/Named-Variant-Field-Run.err" || exit $?
+[[ ! -s $work/Multi-Field-Variant-Run.err && \
+    ! -s $work/Named-Variant-Field-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Variant.out"
+cmp -s -- "$work/Expected-Variant.out" \
+    "$work/Multi-Field-Variant-Run.out" || exit 1
+cmp -s -- "$work/Expected-Variant.out" \
+    "$work/Named-Variant-Field-Run.out" || exit 1
+if "$work/Floating-Runner.elf" \
+    "$work/Multi-Field-Variant-Malformed/runtime-case-mismatch.wvb" \
+    >"$work/Multi-Field-Variant-Mismatch.out" \
+    2>"$work/Multi-Field-Variant-Mismatch.err"; then
+    exit 1
+fi
+grep -F 'wvb run status=Failed code=3017 ' \
+    "$work/Multi-Field-Variant-Mismatch.err" >/dev/null || exit 1
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-Variant-Runtime-Pressure.wvproj" \
+    "$work/Variant-Runtime-Pressure.wvb" >/dev/null || exit $?
+"$work/Floating-Runner.elf" "$work/Variant-Runtime-Pressure.wvb" \
+    >"$work/Variant-Runtime-Pressure.out" \
+    2>"$work/Variant-Runtime-Pressure.err" || exit $?
+[[ ! -s $work/Variant-Runtime-Pressure.err ]] || exit 1
+cmp -s -- "$work/Expected-Variant.out" \
+    "$work/Variant-Runtime-Pressure.out" || exit 1
 multi_field_variant_wvb_bytes=$(wc -c < "$work/Multi-Field-Variant-A.wvb")
 printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
     "$multi_field_variant_wvb_bytes"
 echo 'PASS  language 1 front door phase=multi-field-variants item=9/9'
-printf 'native language 1 front door status=Passed cases=117 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=21 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=121 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"

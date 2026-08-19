@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 15u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 16u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -35,14 +35,15 @@ export fn Scanˉfixedˉinteger(
 
 export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
     if Kind >= 1u32 && Kind <= 10u32 { return true; }
-    if Minor >= 12u32 && Minor <= 15u32 && Kind >= 14u32 && Kind <= 16u32 {
+    if Minor >= 11u32 && Minor <= 16u32 && Kind == 11u32 { return true; }
+    if Minor >= 12u32 && Minor <= 16u32 && Kind >= 14u32 && Kind <= 16u32 {
         return true;
     }
-    if Minor >= 13u32 && Minor <= 15u32 && Kind == 17u32 { return true; }
-    if Minor >= 14u32 && Minor <= 15u32 && Kind >= 18u32 && Kind <= 19u32 {
+    if Minor >= 13u32 && Minor <= 16u32 && Kind == 17u32 { return true; }
+    if Minor >= 14u32 && Minor <= 16u32 && Kind >= 18u32 && Kind <= 19u32 {
         return true;
     }
-    return Minor == 15u32 && Kind >= 20u32 && Kind <= 21u32;
+    return Minor >= 15u32 && Minor <= 16u32 && Kind >= 20u32 && Kind <= 21u32;
 }
 
 export fn Scanˉfunction(
@@ -96,6 +97,10 @@ export fn Scanˉfunction(
         }
         if Opcode >= 134u32 && Opcode <= 136u32 { Supported = true; }
         if Opcode >= 143u32 && Opcode <= 148u32 { Supported = true; }
+        if Opcode >= 151u32 && Opcode <= 153u32 {
+            Width = 9u32;
+            Supported = true;
+        }
         if Opcode == 161u32 || Opcode == 162u32 { Supported = true; }
         if Opcode >= 173u32 && Opcode <= 178u32 { Supported = true; }
         if Opcode >= 179u32 && Opcode <= 184u32 { Supported = true; }
@@ -122,7 +127,12 @@ export fn Scanˉfunction(
             Supported = true;
         }
         if Opcode == 195u32 {
-            if Minor != 15u32 { return 0u32; }
+            if Minor < 15u32 || Minor > 16u32 { return 0u32; }
+            Supported = true;
+        }
+        if Opcode == 196u32 {
+            if Minor != 16u32 { return 0u32; }
+            Width = 9u32;
             Supported = true;
         }
         if !Supported || Width > Length - Cursor { return 0u32; }

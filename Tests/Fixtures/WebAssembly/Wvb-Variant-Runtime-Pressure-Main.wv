@@ -1,0 +1,19 @@
+module WebAssemblyˉwvbˉvariantˉruntimeˉpressure profile portable;
+
+variant Sample {
+    Item(Value: i32);
+}
+
+export fn Main() -> i32 {
+    var Current = Sample.Item(0);
+    var Index: u32 = 0u32;
+    while Index < 900u32 {
+        Current = Sample.Item(42);
+        Index = Index + 1u32;
+    }
+    match Current {
+        case Sample.Item(Value) {
+            return Value;
+        }
+    }
+}

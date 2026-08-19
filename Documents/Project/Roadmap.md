@@ -108,9 +108,10 @@ floating point, and WVB 1.15 ordinary `unit` plus return-only `never` now cross
 the shared compiler, verifier, and scalar runner. The rebuilt compiler rejects
 Seed-only `void` at the edition-1 boundary without publication. Named variant
 construction and destructuring now cross the compiler and independent verifier
-through WVB 1.16; current scalar/native execution consumers remain explicitly
-narrower. WVB 1.16 execution, value-producing control flow, localized token
-execution, and paired-host conformance remain later gates.
+through WVB 1.16 and execute through the source-built native scalar runner with
+one bounded shared record/variant arena. Direct native lowering, browser, and OS
+consumers remain explicitly narrower. Value-producing control flow, localized
+token execution, and paired-host conformance remain later gates.
 
 ## How to read this roadmap
 

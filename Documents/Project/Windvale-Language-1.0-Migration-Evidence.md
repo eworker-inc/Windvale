@@ -18,13 +18,13 @@ from crossing the edition-1 front door. Named record update, fixed-width
 `i8`/`i16`/`u16`, exact Unicode-scalar `rune`, `f32`/`f64`, ordinary one-value
 `unit`, and return-only `never` now cross the compiler, verifier, and scalar
 runtime together. Named zero-through-64-field variant construction and
-destructuring now cross the compiler and compiler-aligned verifier through WVB
-1.16 while current execution consumers retain their narrower boundary. Project
-3 carries the profile artifacts; Project 2 and
+destructuring now cross the compiler, compiler-aligned verifier, and
+source-built native scalar runner through WVB 1.16. Project 3 carries the
+profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. WVB 1.16 variant execution and
-value-producing control flow remain pending. Localized token execution,
+These checkpoints do not complete Slice 2. Value-producing control flow remains
+pending. Localized token execution,
 public-library vocabulary lookup, Unicode identifier admission, and paired-host
 Language 1.0 qualification also remain pending.
 
@@ -228,12 +228,27 @@ by a block is not reinterpreted as zero-field named construction.
 `Named-Variant-Field.wv` isolates instruction-driven version selection in a
 428-byte WVB 1.16 module with SHA-256
 `2dea4aa515633e85863e51279f320d53f09c2bf4628b72d93fdc79559479209f`.
-Both pass the compiler-aligned verifier. Nine source fixtures reject duplicate
+Both pass the compiler-aligned verifier and execute through the source-built
+native scalar runner with result `42` in 76 and 26 guest instructions,
+respectively. Nine source fixtures reject duplicate
 declarations, empty payload declarations, missing/duplicate/unknown constructor
 fields, type mismatch, and missing/duplicate/unknown pattern fields. Nine WVB
 mutations reject version, marker, field-count, nominal, case, field, type, and
-truncation corruption. Current scalar and native lowering consumers do not yet
-claim WVB 1.16 execution.
+truncation corruption. A tenth mutation preserves an in-range but inconsistent
+runtime case path: the verifier rejects it and direct scalar execution fails
+with `WVR3017` after 32 guest instructions.
+
+The runtime stores the first field slot and the exact nominal/case owner in one
+eight-byte cell. Variants share the existing fixed 768-cell immutable aggregate
+arena with records and allocate exactly their declared fields. Stack aggregate
+flags, active locals, and saved frame locals are roots. The bounded collector
+uses the selected record or variant field directory to mark nested record and
+variant values, sweeps unreachable spans, releases descriptor fields, and
+retries once.
+The separate 512-byte WVB 1.11 one-field pressure oracle performs 900 variant
+replacements, forces collection beyond capacity, and returns `42` after 26,134
+guest instructions. Direct native lowering, browser packaging, and Windvale OS
+execution remain narrower consumers.
 
 ## Slice 2 fixed integers, runes, and floating point
 
@@ -285,7 +300,7 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 117 declared cases. Its
+The cross-host `language-1-front-door` owner reports 121 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
@@ -297,10 +312,11 @@ floating cases add deterministic compilation, four source rejections, eight
 malformed-WVB rejections, current-runner execution, and a focused raw-bit runtime
 self-test. Its 21 unit/never cases add deterministic compilation, four source
 rejections, eleven malformed-WVB rejections, and two executions returning `42`.
-Its 21 named-variant-field cases add deterministic multi-field compilation, one
+Its 25 named-variant-field cases add deterministic multi-field compilation, one
 isolated one-field version-selection module, nine source rejections, two valid
-verifier admissions, and nine malformed-WVB rejections. The WVB 1.16 cases are
-not sent to a narrower execution consumer.
+verifier admissions, ten malformed-WVB rejections, two valid WVB 1.16 scalar
+executions, an explicit `WVR3017` case-mismatch execution, and the bounded
+900-replacement pressure execution.
 The report keeps nested assertions separate from the top-level owner count.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
@@ -416,7 +432,7 @@ front-end identities, edition separation, named record update, fixed-width
 integer execution, exact rune execution, strict floating point, and complete
 unit/never semantics over the compiler-aligned WVB 1.15 verifier and scalar
 runtime checkpoint. Named variant construction and destructuring now reach the
-compiler-aligned WVB 1.16 verifier while execution remains an explicit narrower
-consumer boundary. Slice 2 completion still requires WVB 1.16 variant execution
-and value-producing control flow over this same compiler architecture. Seed
-stays on that architecture until its named removal checkpoint.
+compiler-aligned WVB 1.16 verifier and source-built native scalar runner with a
+shared bounded aggregate collector. Slice 2 completion still requires
+value-producing control flow over this same compiler architecture. Seed stays
+on that architecture until its named removal checkpoint.

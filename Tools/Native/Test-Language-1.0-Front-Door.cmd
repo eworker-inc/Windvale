@@ -505,6 +505,36 @@ set "FailureStep=multi-field-variant-verifier"
 node "%Native%\Verify-Language-1.0-Multi-Field-Variants.mjs" ^
     "%Work%\Verifier.exe" "%Work%\Multi-Field-Variant-A.wvb" "%Work%\Named-Variant-Field.wvb" ^
     "%Work%\Multi-Field-Variant-Malformed" || goto :cleanup
+set "FailureStep=multi-field-variant-runtime-execution"
+"%Work%\Floating-Runner.exe" "%Work%\Multi-Field-Variant-A.wvb" ^
+    >"%Work%\Multi-Field-Variant-Run.out" 2>"%Work%\Multi-Field-Variant-Run.err" || goto :cleanup
+set "FailureStep=multi-field-variant-runtime-diagnostic"
+for %%F in ("%Work%\Multi-Field-Variant-Run.err") do if not "%%~zF"=="0" goto :cleanup
+set "FailureStep=multi-field-variant-runtime-result"
+call :expect_result_42 "%Work%\Multi-Field-Variant-Run.out" || goto :cleanup
+set "FailureStep=named-single-field-variant-runtime"
+"%Work%\Floating-Runner.exe" "%Work%\Named-Variant-Field.wvb" ^
+    >"%Work%\Named-Variant-Field-Run.out" 2>"%Work%\Named-Variant-Field-Run.err" || goto :cleanup
+for %%F in ("%Work%\Named-Variant-Field-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Named-Variant-Field-Run.out" || goto :cleanup
+set "FailureStep=multi-field-variant-runtime-mismatch"
+"%Work%\Floating-Runner.exe" ^
+    "%Work%\Multi-Field-Variant-Malformed\runtime-case-mismatch.wvb" ^
+    >"%Work%\Multi-Field-Variant-Mismatch.out" ^
+    2>"%Work%\Multi-Field-Variant-Mismatch.err"
+if not errorlevel 1 goto :cleanup
+findstr /b /c:"wvb run status=Failed code=3017 " ^
+    "%Work%\Multi-Field-Variant-Mismatch.err" >nul || goto :cleanup
+set "FailureStep=variant-runtime-pressure-build"
+call "%Native%\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Wvb-Variant-Runtime-Pressure.wvproj" ^
+    "%Work%\Variant-Runtime-Pressure.wvb" >nul || goto :cleanup
+set "FailureStep=variant-runtime-pressure-execution"
+"%Work%\Floating-Runner.exe" "%Work%\Variant-Runtime-Pressure.wvb" ^
+    >"%Work%\Variant-Runtime-Pressure.out" ^
+    2>"%Work%\Variant-Runtime-Pressure.err" || goto :cleanup
+for %%F in ("%Work%\Variant-Runtime-Pressure.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Variant-Runtime-Pressure.out" || goto :cleanup
 for %%F in ("%Work%\Multi-Field-Variant-A.wvb") do set "MultiFieldVariantWvbBytes=%%~zF"
 echo INFO  language 1 multi-field-variants wvb-bytes=%MultiFieldVariantWvbBytes%
 echo PASS  language 1 front door phase=multi-field-variants item=9/9
@@ -554,6 +584,14 @@ if not "%Result%"=="0" (
     if exist "%Work%\Multi-Field-Variant-B.err" type "%Work%\Multi-Field-Variant-B.err" >&2
     if exist "%Work%\Named-Variant-Field.out" type "%Work%\Named-Variant-Field.out" >&2
     if exist "%Work%\Named-Variant-Field.err" type "%Work%\Named-Variant-Field.err" >&2
+    if exist "%Work%\Multi-Field-Variant-Run.out" type "%Work%\Multi-Field-Variant-Run.out" >&2
+    if exist "%Work%\Multi-Field-Variant-Run.err" type "%Work%\Multi-Field-Variant-Run.err" >&2
+    if exist "%Work%\Named-Variant-Field-Run.out" type "%Work%\Named-Variant-Field-Run.out" >&2
+    if exist "%Work%\Named-Variant-Field-Run.err" type "%Work%\Named-Variant-Field-Run.err" >&2
+    if exist "%Work%\Multi-Field-Variant-Mismatch.out" type "%Work%\Multi-Field-Variant-Mismatch.out" >&2
+    if exist "%Work%\Multi-Field-Variant-Mismatch.err" type "%Work%\Multi-Field-Variant-Mismatch.err" >&2
+    if exist "%Work%\Variant-Runtime-Pressure.out" type "%Work%\Variant-Runtime-Pressure.out" >&2
+    if exist "%Work%\Variant-Runtime-Pressure.err" type "%Work%\Variant-Runtime-Pressure.err" >&2
     if exist "%Work%\Seed-Unit.out" type "%Work%\Seed-Unit.out" >&2
     if exist "%Work%\Seed-Unit.err" type "%Work%\Seed-Unit.err" >&2
     if exist "%Work%\Seed-Record-Update.out" type "%Work%\Seed-Record-Update.out" >&2
@@ -565,7 +603,19 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=117 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=21 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
+echo native language 1 front door status=Passed cases=121 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
+exit /b 0
+
+:expect_result_42
+setlocal EnableDelayedExpansion
+set "ResultLine="
+set /a ResultLines=0
+for /f "usebackq delims=" %%L in ("%~f1") do (
+    set "ResultLine=%%L"
+    set /a ResultLines+=1 >nul
+)
+if not "!ResultLines!"=="1" exit /b 1
+if not "!ResultLine!"=="Result: 42" exit /b 1
 exit /b 0
 
 :expect_rejection

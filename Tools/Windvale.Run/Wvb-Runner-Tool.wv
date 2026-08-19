@@ -1,6 +1,7 @@
 module Wvbˉrunnerˉtool profile hosted;
 
 import WebAssemblyˉwvbˉscalarˉinterpreter as Interpreter;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 
 capability console.write_line;
@@ -230,10 +231,18 @@ export fn Main() -> i32 {
     }
 
     let Module: bytes = file.read_bytes(process.argument(0u32));
-    let Response: bytes = Interpreter.Main(Buildˉrequest(Module));
+    let Request: bytes = Buildˉrequest(Module);
+    let Response: bytes = Interpreter.Main(Request);
     if Bytesˉlength(Response) != 20u32 {
+        var Phase: text = "execution";
+        if Bytesˉlength(Envelopeˉreader.Interpreterˉenvelope(Request)) < 64u32 {
+            Phase = "envelope";
+        }
         diagnostic.write_line(
-            "wvb run status=Unsupported profile=portable-main-i32"
+            Textˉconcat(
+                "wvb run status=Unsupported profile=portable-main-i32 phase=",
+                Phase
+            )
         );
         return 1;
     }

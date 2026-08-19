@@ -24,6 +24,564 @@ data Stackˉeffects: bytes = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
+fn Variantˉcaseˉfields(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Type: u32,
+    Case: u32
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets,
+        Type * 4u32
+    ) + 1u32;
+    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    let Caseˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    if Case >= Caseˉcount { return Invalid; }
+    Cursor = Cursor + 4u32;
+    var Caseˉindex: u32 = 0u32;
+    while Caseˉindex <= Case {
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        let Marker: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+        Cursor = Cursor + 1u32;
+        var Fieldˉcount: u32 = 0u32;
+        if Marker == 1u32 {
+            Fieldˉcount = 1u32;
+        } else if Marker == 2u32 {
+            Fieldˉcount = Bytesˉreadˉu32ˉlittle(Module, Cursor);
+            Cursor = Cursor + 4u32;
+        } else if Marker != 0u32 {
+            return Invalid;
+        }
+        let Fieldˉcursor: u32 = Cursor;
+        var Fieldˉindex: u32 = 0u32;
+        while Fieldˉindex < Fieldˉcount {
+            Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+            let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+            Cursor = Cursor + 1u32;
+            if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
+                Fieldˉkind == 11u32 {
+                Cursor = Cursor + 4u32;
+            }
+            Fieldˉindex = Fieldˉindex + 1u32;
+        }
+        if Caseˉindex == Case {
+            return Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Fieldˉcount),
+                Bytesˉfromˉu32ˉlittle(Fieldˉcursor)
+            );
+        }
+        Caseˉindex = Caseˉindex + 1u32;
+    }
+    return Invalid;
+}
+
+fn Aggregateˉfieldˉdirectory(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Owner: u32
+) -> bytes {
+    if Owner >= 2147483648u32 {
+        let Token: u32 = Owner - 2147483648u32;
+        return Variantˉcaseˉfields(
+            Module,
+            Typeˉoffsets,
+            Token / 256u32 - 1u32,
+            Token % 256u32
+        );
+    }
+    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets,
+        (Owner - 1u32) * 4u32
+    ) + 1u32;
+    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Fields),
+        Bytesˉfromˉu32ˉlittle(Cursor + 4u32)
+    );
+}
+
+fn Stackˉaggregateˉroots(
+    Stack: bytes,
+    Lowˉflags: u32,
+    Highˉflags: u32
+) -> bytes {
+    var Roots: bytes = Bytesˉslice(Stack, 0u32, 0u32);
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Stack) {
+        var Selected: bool = false;
+        if Cursor < 256u32 {
+            Selected = ((Lowˉflags >> (Cursor / 8u32)) & 1u32) != 0u32;
+        } else {
+            Selected = ((Highˉflags >> ((Cursor - 256u32) / 8u32))
+                & 1u32) != 0u32;
+        }
+        if Selected {
+            Roots = Bytesˉconcat(Roots, Bytesˉslice(Stack, Cursor, 8u32));
+        }
+        Cursor = Cursor + 8u32;
+    }
+    return Roots;
+}
+
+fn Localˉaggregateˉroots(
+    Values: bytes,
+    Valueˉoffset: u32,
+    Shapes: bytes,
+    Shapeˉoffset: u32,
+    Length: u32
+) -> bytes {
+    var Roots: bytes = Bytesˉslice(Values, 0u32, 0u32);
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Shapes, Shapeˉoffset + Offset);
+        if Kind == 7u32 || Kind == 11u32 {
+            Roots = Bytesˉconcat(
+                Roots,
+                Bytesˉslice(Values, Valueˉoffset + Offset, 8u32)
+            );
+        }
+        Offset = Offset + 8u32;
+    }
+    return Roots;
+}
+
+fn Frameˉaggregateˉroots(
+    Frames: bytes,
+    Functionˉcount: u32,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉshapeˉoffsets: bytes,
+    Localˉshapes: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Frames, 0u32, 0u32);
+    var Roots: bytes = Empty;
+    var End: u32 = Bytesˉlength(Frames);
+    while End > 0u32 {
+        if End < 8u32 { return Empty; }
+        let Function: u32 = Bytesˉreadˉu32ˉlittle(Frames, End - 4u32);
+        if Function >= Functionˉcount { return Empty; }
+        let Localˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata,
+            Function * 8u32 + 4u32
+        );
+        if Localˉlength > End - 8u32 { return Empty; }
+        let Start: u32 = End - 8u32 - Localˉlength;
+        let Shapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉshapeˉoffsets,
+            Function * 4u32
+        );
+        Roots = Bytesˉconcat(
+            Roots,
+            Localˉaggregateˉroots(
+                Frames,
+                Start + 4u32,
+                Localˉshapes,
+                Shapeˉoffset,
+                Localˉlength
+            )
+        );
+        End = Start;
+    }
+    return Bytesˉconcat(Bytesˉfromˉu8(1u8), Roots);
+}
+
+fn Aggregateˉselectedˉfieldˉvalues(
+    Module: bytes,
+    Fields: u32,
+    Fieldˉcount: u32,
+    Values: bytes,
+    Valueˉslot: u32,
+    Descriptors: bool
+) -> bytes {
+    var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
+    var Cursor: u32 = Fields;
+    var Index: u32 = 0u32;
+    while Index < Fieldˉcount {
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+        Cursor = Cursor + 1u32;
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
+            Cursor = Cursor + 4u32;
+        }
+        var Selected: bool = Kind == 7u32 || Kind == 11u32;
+        if Descriptors { Selected = Kind == 3u32 || Kind == 6u32; }
+        if Selected {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Values, (Valueˉslot + Index) * 8u32, 8u32)
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Markˉaggregateˉroots(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Metadata: bytes,
+    Capacity: u32,
+    Initialˉmarks: bytes,
+    Initialˉroots: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Initialˉmarks, 0u32, 0u32);
+    var Marks: bytes = Initialˉmarks;
+    var Roots: bytes = Initialˉroots;
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Roots) {
+        let Remaining: u32 = Bytesˉlength(Roots) - Cursor;
+        if Remaining >= 8u32 {
+            let Slot: u32 = Bytesˉreadˉu32ˉlittle(Roots, Cursor);
+            let Type: u32 = Bytesˉreadˉu32ˉlittle(Roots, Cursor + 4u32);
+            if Slot < Capacity {
+                let Entry: u32 = Slot * 8u32;
+                let Owner: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry);
+                let Size: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry + 4u32);
+                if Size > 0u32 && Owner == Type {
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(Marks, Slot)) == 0u32 {
+                        Marks = Bytesˉconcat(
+                            Bytesˉconcat(
+                                Bytesˉslice(Marks, 0u32, Slot),
+                                Bytesˉfromˉu8(1u8)
+                            ),
+                            Bytesˉslice(Marks, Slot + 1u32, Capacity - Slot - 1u32)
+                        );
+                        let Directory: bytes = Aggregateˉfieldˉdirectory(
+                            Module,
+                            Typeˉoffsets,
+                            Owner
+                        );
+                        if Bytesˉlength(Directory) != 8u32 ||
+                            Bytesˉreadˉu32ˉlittle(Directory, 0u32) != Size {
+                            return Empty;
+                        }
+                        Roots = Bytesˉconcat(
+                            Roots,
+                            Aggregateˉselectedˉfieldˉvalues(
+                                Module,
+                                Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+                                Size,
+                                Records,
+                                Slot,
+                                false
+                            )
+                        );
+                    }
+                }
+            }
+        }
+        Cursor = Cursor + 8u32;
+    }
+    return Marks;
+}
+
+fn Sweepˉaggregates(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Metadata: bytes,
+    Marks: bytes,
+    Capacity: u32,
+    Zeroˉcell: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Metadata, 0u32, 0u32);
+    var Nextˉmetadata: bytes = Empty;
+    var Released: bytes = Empty;
+    var Slot: u32 = 0u32;
+    while Slot < Capacity {
+        let Entry: u32 = Slot * 8u32;
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry + 4u32);
+        var Value: bytes = Zeroˉcell;
+        if Size > 0u32 {
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Marks, Slot)) != 0u32 {
+                Value = Bytesˉslice(Metadata, Entry, 8u32);
+            } else {
+                let Owner: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry);
+                if Owner == 0u32 { return Empty; }
+                let Directory: bytes = Aggregateˉfieldˉdirectory(
+                    Module,
+                    Typeˉoffsets,
+                    Owner
+                );
+                if Bytesˉlength(Directory) != 8u32 ||
+                    Bytesˉreadˉu32ˉlittle(Directory, 0u32) != Size {
+                    return Empty;
+                }
+                Released = Bytesˉconcat(
+                    Released,
+                    Aggregateˉselectedˉfieldˉvalues(
+                        Module,
+                        Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+                        Size,
+                        Records,
+                        Slot,
+                        true
+                    )
+                );
+            }
+        }
+        Nextˉmetadata = Bytesˉconcat(Nextˉmetadata, Value);
+        Slot = Slot + 1u32;
+    }
+    return Bytesˉconcat(Nextˉmetadata, Released);
+}
+
+fn Aggregateˉcreation(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Opcode: u32,
+    Instruction: u32
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Type: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 1u32);
+    var Owner: u32 = Type + 1u32;
+    if Opcode == 151u32 {
+        Owner = 2147483648u32
+            + (Type + 1u32) * 256u32
+            + Bytesˉreadˉu32ˉlittle(Module, Instruction + 5u32);
+    }
+    let Directory: bytes = Aggregateˉfieldˉdirectory(
+        Module,
+        Typeˉoffsets,
+        Owner
+    );
+    if Bytesˉlength(Directory) != 8u32 { return Invalid; }
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Owner), Directory);
+}
+
+fn Fieldˉshapeˉat(
+    Module: bytes,
+    Fields: u32,
+    Field: u32
+) -> u32 {
+    var Cursor: u32 = Fields;
+    var Index: u32 = 0u32;
+    while Index < Field {
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+        Cursor = Cursor + 1u32;
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
+            Cursor = Cursor + 4u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+}
+
+fn Variantˉfieldˉselection(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Opcode: u32,
+    Instruction: u32
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Type: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 1u32);
+    var Case: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 5u32);
+    var Field: u32 = 0u32;
+    if Opcode == 196u32 {
+        Field = Case % 64u32;
+        Case = Case / 64u32;
+    }
+    let Directory: bytes = Variantˉcaseˉfields(
+        Module,
+        Typeˉoffsets,
+        Type,
+        Case
+    );
+    if Bytesˉlength(Directory) != 8u32 ||
+        Field >= Bytesˉreadˉu32ˉlittle(Directory, 0u32) {
+        return Invalid;
+    }
+    let Shape: u32 = Fieldˉshapeˉat(
+        Module,
+        Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+        Field
+    );
+    let Token: u32 = 2147483648u32
+        + (Type + 1u32) * 256u32
+        + Case;
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Token),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Field),
+            Bytesˉfromˉu32ˉlittle(Shape)
+        )
+    );
+}
+
+fn Variantˉcaseˉtest(
+    Module: bytes,
+    Instruction: u32,
+    Stack: bytes,
+    Zeroˉvalue: bytes
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Stack, 0u32, 0u32);
+    let Stackˉlength: u32 = Bytesˉlength(Stack);
+    if Stackˉlength < 8u32 { return Invalid; }
+    let Type: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 1u32);
+    let Case: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 5u32);
+    let Token: u32 = Bytesˉreadˉu32ˉlittle(Stack, Stackˉlength - 4u32);
+    var Result: u32 = 0u32;
+    if Token == 2147483648u32 + (Type + 1u32) * 256u32 + Case {
+        Result = 1u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Result), Zeroˉvalue)
+    );
+}
+
+fn Defaultˉfieldˉvalue(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Shape: u32,
+    Zeroˉcell: bytes
+) -> bytes {
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+    if Kind == 7u32 {
+        let Type: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(4294967295u32),
+            Bytesˉfromˉu32ˉlittle(Type + 1u32)
+        );
+    }
+    if Kind == 8u32 {
+        let Enumˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+        var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
+            Typeˉoffsets,
+            Enumˉtype * 4u32
+        ) + 1u32;
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor) + 4u32;
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        return Bytesˉconcat(
+            Bytesˉslice(Module, Cursor, 4u32),
+            Bytesˉfromˉu32ˉlittle(Enumˉtype + 1u32)
+        );
+    }
+    if Kind == 11u32 {
+        let Variantˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(4294967295u32),
+            Bytesˉfromˉu32ˉlittle(
+                2147483648u32 + (Variantˉtype + 1u32) * 256u32
+            )
+        );
+    }
+    return Zeroˉcell;
+}
+
+fn Retainˉdescriptor(
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Value: bytes
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Allocations, 0u32, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Length == 0u32 { return Allocations; }
+    var Allocationˉindex: u32 = 4294967295u32;
+    var Scan: u32 = 0u32;
+    while Scan < Allocationˉcount {
+        let Entry: u32 = Scan * 12u32;
+        let References: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 8u32
+        );
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Allocations, Entry);
+        let Allocationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 4u32
+        );
+        let Valueˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+        if References > 0u32 && Valueˉoffset >= Offset {
+            if Valueˉoffset - Offset <= Allocationˉlength {
+                if Length <= Allocationˉlength - (Valueˉoffset - Offset) {
+                    Allocationˉindex = Scan;
+                    Scan = Allocationˉcount;
+                }
+            }
+        }
+        Scan = Scan + 1u32;
+    }
+    if Allocationˉindex == 4294967295u32 { return Invalid; }
+    let Selectedˉentry: u32 = Allocationˉindex * 12u32;
+    let Selectedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+        Allocations,
+        Selectedˉentry + 8u32
+    );
+    if Selectedˉreferences == 4294967295u32 { return Invalid; }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Allocations, 0u32, Selectedˉentry),
+            Bytesˉconcat(
+                Bytesˉslice(Allocations, Selectedˉentry, 8u32),
+                Bytesˉfromˉu32ˉlittle(Selectedˉreferences + 1u32)
+            )
+        ),
+        Bytesˉslice(
+            Allocations,
+            Selectedˉentry + 12u32,
+            Bytesˉlength(Allocations) - Selectedˉentry - 12u32
+        )
+    );
+}
+
+fn Releaseˉdescriptor(
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Value: bytes
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Allocations, 0u32, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Length == 0u32 { return Allocations; }
+    var Allocationˉindex: u32 = 4294967295u32;
+    var Scan: u32 = 0u32;
+    while Scan < Allocationˉcount {
+        let Entry: u32 = Scan * 12u32;
+        let References: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 8u32
+        );
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Allocations, Entry);
+        let Allocationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 4u32
+        );
+        let Valueˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+        if References > 0u32 && Valueˉoffset >= Offset {
+            if Valueˉoffset - Offset <= Allocationˉlength {
+                if Length <= Allocationˉlength - (Valueˉoffset - Offset) {
+                    Allocationˉindex = Scan;
+                    Scan = Allocationˉcount;
+                }
+            }
+        }
+        Scan = Scan + 1u32;
+    }
+    if Allocationˉindex == 4294967295u32 { return Invalid; }
+    let Selectedˉentry: u32 = Allocationˉindex * 12u32;
+    let Selectedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+        Allocations,
+        Selectedˉentry + 8u32
+    );
+    if Selectedˉreferences == 0u32 { return Invalid; }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Allocations, 0u32, Selectedˉentry),
+            Bytesˉconcat(
+                Bytesˉslice(Allocations, Selectedˉentry, 8u32),
+                Bytesˉfromˉu32ˉlittle(Selectedˉreferences - 1u32)
+            )
+        ),
+        Bytesˉslice(
+            Allocations,
+            Selectedˉentry + 12u32,
+            Bytesˉlength(Allocations) - Selectedˉentry - 12u32
+        )
+    );
+}
+
 fn Evaluateˉi32ˉbasic(Opcode: u32, Left: i32, Right: i32) -> i32 {
     if Opcode == 16u32 { return Left + Right; }
     if Opcode == 17u32 { return Left - Right; }
@@ -419,18 +977,8 @@ export fn Main(Request: bytes) -> bytes {
             if Shapeˉkind == 21u32 { return Invalid; }
             Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
-            if Shapeˉkind == 7u32 {
-                Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
-                    Module,
-                    Functionˉcursor
-                );
-                if Parameterˉnominalˉtoken >= Typeˉcount {
-                    return Invalid;
-                }
-                Parameterˉnominalˉtoken = Parameterˉnominalˉtoken + 1u32;
-                Functionˉcursor = Functionˉcursor + 4u32;
-            }
-            if Shapeˉkind == 8u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 {
                 Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -457,13 +1005,8 @@ export fn Main(Request: bytes) -> bytes {
             return Invalid;
         }
         Functionˉcursor = Functionˉcursor + 1u32;
-        if Returnˉkind == 7u32 {
-            if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
-                return Invalid;
-            }
-            Functionˉcursor = Functionˉcursor + 4u32;
-        }
-        if Returnˉkind == 8u32 {
+        if Returnˉkind == 7u32 || Returnˉkind == 8u32 ||
+            Returnˉkind == 11u32 {
             if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
                 return Invalid;
             }
@@ -488,18 +1031,8 @@ export fn Main(Request: bytes) -> bytes {
             if Shapeˉkind == 21u32 { return Invalid; }
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
-            if Shapeˉkind == 7u32 {
-                Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
-                    Module,
-                    Functionˉcursor
-                );
-                if Localˉnominalˉtoken >= Typeˉcount {
-                    return Invalid;
-                }
-                Localˉnominalˉtoken = Localˉnominalˉtoken + 1u32;
-                Functionˉcursor = Functionˉcursor + 4u32;
-            }
-            if Shapeˉkind == 8u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 {
                 Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -833,7 +1366,8 @@ export fn Main(Request: bytes) -> bytes {
                 Loadedˉlocalˉindex * 8u32,
                 8u32
             );
-            if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 8u32 {
+            if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 8u32 ||
+                Loadedˉshapeˉkind == 11u32 {
                 let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
                     Localˉshapes,
                     Loadedˉshapeˉoffset + 4u32
@@ -867,94 +1401,36 @@ export fn Main(Request: bytes) -> bytes {
                                 Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
                             );
                         }
+                        if Loadedˉshapeˉkind == 11u32 {
+                            Loadedˉvalue = Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(4294967295u32),
+                                Bytesˉfromˉu32ˉlittle(
+                                    2147483648u32
+                                        + Loadedˉnominalˉtoken * 256u32
+                                )
+                            );
+                        }
                     }
                 }
             }
             if Loadedˉshapeˉkind == 3u32 || Loadedˉshapeˉkind == 6u32 {
                 Stackˉproducedˉkind = 1u32;
-                let Loadedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Loadedˉvalue,
-                    4u32
+                let Loadedˉallocations: bytes = Retainˉdescriptor(
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Loadedˉvalue
                 );
-                if Loadedˉlength > 0u32 {
-                    var Loadedˉallocationˉindex: u32 = 4294967295u32;
-                    var Loadedˉallocationˉscan: u32 = 0u32;
-                    while Loadedˉallocationˉscan < Heapˉallocationˉcount {
-                        let Loadedˉscanˉentry: u32 =
-                            Loadedˉallocationˉscan * 12u32;
-                        let Loadedˉscanˉreferences: u32 =
-                            Bytesˉreadˉu32ˉlittle(
-                                Heapˉallocations,
-                                Loadedˉscanˉentry + 8u32
-                            );
-                        let Loadedˉscanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Loadedˉscanˉentry
-                        );
-                        let Loadedˉscanˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Loadedˉscanˉentry + 4u32
-                        );
-                        let Loadedˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                            Loadedˉvalue,
-                            0u32
-                        );
-                        if Loadedˉscanˉreferences > 0u32 {
-                            if Loadedˉoffset >= Loadedˉscanˉoffset {
-                                if Loadedˉoffset - Loadedˉscanˉoffset
-                                    <= Loadedˉscanˉlength {
-                                    if Loadedˉlength <= Loadedˉscanˉlength
-                                        - (Loadedˉoffset - Loadedˉscanˉoffset) {
-                                        Loadedˉallocationˉindex =
-                                            Loadedˉallocationˉscan;
-                                        Loadedˉallocationˉscan =
-                                            Heapˉallocationˉcount;
-                                    }
-                                }
-                            }
-                        }
-                        Loadedˉallocationˉscan = Loadedˉallocationˉscan + 1u32;
-                    }
-                    if Loadedˉallocationˉindex == 4294967295u32 {
-                        return Invalid;
-                    }
-                    let Loadedˉallocationˉentry: u32 =
-                        Loadedˉallocationˉindex * 12u32;
-                    let Loadedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
-                        Heapˉallocations,
-                        Loadedˉallocationˉentry + 8u32
-                    );
-                    if Loadedˉreferences == 4294967295u32 { return Invalid; }
-                    let Loadedˉallocationˉprefix: bytes = Bytesˉslice(
-                        Heapˉallocations,
-                        0u32,
-                        Loadedˉallocationˉentry
-                    );
-                    let Loadedˉallocationˉsuffix: bytes = Bytesˉslice(
-                        Heapˉallocations,
-                        Loadedˉallocationˉentry + 12u32,
-                        Bytesˉlength(Heapˉallocations)
-                            - Loadedˉallocationˉentry - 12u32
-                    );
-                    Heapˉallocations = Bytesˉconcat(
-                        Bytesˉconcat(
-                            Loadedˉallocationˉprefix,
-                            Bytesˉconcat(
-                                Bytesˉslice(
-                                    Heapˉallocations,
-                                    Loadedˉallocationˉentry,
-                                    8u32
-                                ),
-                                Bytesˉfromˉu32ˉlittle(
-                                    Loadedˉreferences + 1u32
-                                )
-                            )
-                        ),
-                        Loadedˉallocationˉsuffix
-                    );
+                if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 4u32) > 0u32 &&
+                    Bytesˉlength(Loadedˉallocations) == 0u32 {
+                    return Invalid;
                 }
+                if Bytesˉlength(Loadedˉallocations)
+                    != Bytesˉlength(Heapˉallocations) {
+                    return Invalid;
+                }
+                Heapˉallocations = Loadedˉallocations;
             }
-            if Loadedˉshapeˉkind == 7u32 {
+            if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 11u32 {
                 Stackˉproducedˉkind = 2u32;
             }
             Stack = Bytesˉconcat(Stack, Loadedˉvalue);
@@ -993,80 +1469,19 @@ export fn Main(Request: bytes) -> bytes {
                     4u32
                 );
                 if Previousˉstoredˉlength > 0u32 {
-                    var Storedˉallocationˉindex: u32 = 4294967295u32;
-                    var Storedˉallocationˉscan: u32 = 0u32;
-                    while Storedˉallocationˉscan < Heapˉallocationˉcount {
-                        let Storedˉscanˉentry: u32 =
-                            Storedˉallocationˉscan * 12u32;
-                        let Storedˉscanˉreferences: u32 =
-                            Bytesˉreadˉu32ˉlittle(
-                                Heapˉallocations,
-                                Storedˉscanˉentry + 8u32
-                            );
-                        let Storedˉscanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Storedˉscanˉentry
-                        );
-                        let Storedˉscanˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Storedˉscanˉentry + 4u32
-                        );
-                        let Previousˉstoredˉoffset: u32 =
-                            Bytesˉreadˉu32ˉlittle(Previousˉstoredˉvalue, 0u32);
-                        if Storedˉscanˉreferences > 0u32 {
-                            if Previousˉstoredˉoffset >= Storedˉscanˉoffset {
-                                if Previousˉstoredˉoffset - Storedˉscanˉoffset
-                                    <= Storedˉscanˉlength {
-                                    if Previousˉstoredˉlength
-                                        <= Storedˉscanˉlength
-                                            - (Previousˉstoredˉoffset
-                                                - Storedˉscanˉoffset) {
-                                        Storedˉallocationˉindex =
-                                            Storedˉallocationˉscan;
-                                        Storedˉallocationˉscan =
-                                            Heapˉallocationˉcount;
-                                    }
-                                }
-                            }
-                        }
-                        Storedˉallocationˉscan = Storedˉallocationˉscan + 1u32;
-                    }
-                    if Storedˉallocationˉindex == 4294967295u32 {
+                    let Storedˉallocations: bytes = Releaseˉdescriptor(
+                        Heapˉallocations,
+                        Heapˉallocationˉcount,
+                        Previousˉstoredˉvalue
+                    );
+                    if Bytesˉlength(Storedˉallocations) == 0u32 {
                         return Invalid;
                     }
-                    let Storedˉallocationˉentry: u32 =
-                        Storedˉallocationˉindex * 12u32;
-                    let Storedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
-                        Heapˉallocations,
-                        Storedˉallocationˉentry + 8u32
-                    );
-                    let Storedˉallocationˉprefix: bytes = Bytesˉslice(
-                        Heapˉallocations,
-                        0u32,
-                        Storedˉallocationˉentry
-                    );
-                    let Storedˉallocationˉsuffix: bytes = Bytesˉslice(
-                        Heapˉallocations,
-                        Storedˉallocationˉentry + 12u32,
-                        Bytesˉlength(Heapˉallocations)
-                            - Storedˉallocationˉentry - 12u32
-                    );
-                    Heapˉallocations = Bytesˉconcat(
-                        Bytesˉconcat(
-                            Storedˉallocationˉprefix,
-                            Bytesˉconcat(
-                                Bytesˉslice(
-                                    Heapˉallocations,
-                                    Storedˉallocationˉentry,
-                                    8u32
-                                ),
-                                Bytesˉfromˉu32ˉlittle(
-                                    Storedˉreferences - 1u32
-                                )
-                            )
-                        ),
-                        Storedˉallocationˉsuffix
-                    );
+                    if Bytesˉlength(Storedˉallocations)
+                        != Bytesˉlength(Heapˉallocations) {
+                        return Invalid;
+                    }
+                    Heapˉallocations = Storedˉallocations;
                 }
             }
             let Storedˉprefix: bytes = Bytesˉslice(
@@ -1248,7 +1663,9 @@ export fn Main(Request: bytes) -> bytes {
         }
 
         if Payloadˉlength >= 96u32 {
-        if Payloadˉlength <= 125u32 {
+        if Payloadˉlength <= 125u32 ||
+            (Payloadˉlength >= 151u32 && Payloadˉlength <= 153u32) ||
+            Payloadˉlength == 196u32 {
         if Payloadˉlength <= 103u32 {
             Stack = Executeˉbaseˉcomparison(
                 Payloadˉlength, Stack, Zeroˉvalue
@@ -1258,26 +1675,26 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 104u32 {
-            let Recordˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        if Payloadˉlength == 104u32 || Payloadˉlength == 151u32 {
+            let Recordˉcreation: bytes = Aggregateˉcreation(
                 Module,
-                Payload + 1u32
-            );
-            var Recordˉtypeˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
                 Typeˉoffsets,
-                Recordˉtype * 4u32
-            ) + 1u32;
-            let Recordˉtypeˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Module,
-                Recordˉtypeˉcursor
+                Payloadˉlength,
+                Payload
             );
-            Recordˉtypeˉcursor = Recordˉtypeˉcursor
-                + 4u32
-                + Recordˉtypeˉnameˉlength;
+            if Bytesˉlength(Recordˉcreation) != 12u32 { return Invalid; }
+            let Recordˉowner: u32 = Bytesˉreadˉu32ˉlittle(
+                Recordˉcreation,
+                0u32
+            );
             let Recordˉfieldˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                Module,
-                Recordˉtypeˉcursor
+                Recordˉcreation,
+                4u32
             );
+            let Recordˉtypeˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+                Recordˉcreation,
+                8u32
+            ) - 4u32;
             Stackˉconsumed = Recordˉfieldˉcount;
             Stackˉproduced = true;
             Stackˉproducedˉkind = 2u32;
@@ -1346,401 +1763,101 @@ export fn Main(Request: bytes) -> bytes {
                                 );
                                 // Dynamic stack flags and verified static shapes
                                 // admit only actual record cells as roots.
-                                var Recordˉreachableˉvalues: bytes = Invalid;
-                                var Recordˉreachableˉcursor: u32 = 0u32;
-                                while Recordˉreachableˉcursor
-                                    < Bytesˉlength(Stack) {
-                                    if Recordˉreachableˉcursor < 256u32 {
-                                        if ((Stackˉrecordˉflagsˉlow
-                                            >> (Recordˉreachableˉcursor / 8u32))
-                                            & 1u32) != 0u32 {
-                                            Recordˉreachableˉvalues = Bytesˉconcat(
-                                                Recordˉreachableˉvalues,
-                                                Bytesˉslice(
-                                                    Stack,
-                                                    Recordˉreachableˉcursor,
-                                                    8u32
-                                                )
-                                            );
-                                        }
-                                    } else {
-                                        if ((Stackˉrecordˉflagsˉhigh
-                                            >> ((Recordˉreachableˉcursor
-                                                - 256u32) / 8u32)) & 1u32)
-                                            != 0u32 {
-                                        Recordˉreachableˉvalues = Bytesˉconcat(
-                                            Recordˉreachableˉvalues,
-                                            Bytesˉslice(
-                                                Stack,
-                                                Recordˉreachableˉcursor,
-                                                8u32
-                                            )
-                                        );
-                                        }
-                                    }
-                                    Recordˉreachableˉcursor =
-                                        Recordˉreachableˉcursor + 8u32;
-                                }
-                                var Recordˉconstructionˉfieldˉcursor: u32 =
-                                    Recordˉtypeˉcursor + 4u32;
-                                var Recordˉconstructionˉfieldˉindex: u32 = 0u32;
-                                while Recordˉconstructionˉfieldˉindex
-                                    < Recordˉfieldˉcount {
-                                    let Recordˉconstructionˉnameˉlength: u32 =
-                                        Bytesˉreadˉu32ˉlittle(
-                                            Module,
-                                            Recordˉconstructionˉfieldˉcursor
-                                        );
-                                    Recordˉconstructionˉfieldˉcursor =
-                                        Recordˉconstructionˉfieldˉcursor
-                                            + 4u32
-                                            + Recordˉconstructionˉnameˉlength;
-                                    let Recordˉconstructionˉfieldˉkind: u32 =
-                                        U32ˉfromˉu8(Bytesˉreadˉu8(
-                                            Module,
-                                            Recordˉconstructionˉfieldˉcursor
-                                        ));
-                                    Recordˉconstructionˉfieldˉcursor =
-                                        Recordˉconstructionˉfieldˉcursor + 1u32;
-                                    if Recordˉconstructionˉfieldˉkind == 7u32 ||
-                                        Recordˉconstructionˉfieldˉkind == 8u32 ||
-                                        Recordˉconstructionˉfieldˉkind == 11u32 {
-                                        Recordˉconstructionˉfieldˉcursor =
-                                            Recordˉconstructionˉfieldˉcursor + 4u32;
-                                    }
-                                    if Recordˉconstructionˉfieldˉkind == 7u32 {
-                                        Recordˉreachableˉvalues = Bytesˉconcat(
-                                            Recordˉreachableˉvalues,
-                                            Bytesˉslice(
-                                                Recordˉfields,
-                                                Recordˉconstructionˉfieldˉindex
-                                                    * 8u32,
-                                                8u32
-                                            )
-                                        );
-                                    }
-                                    Recordˉconstructionˉfieldˉindex =
-                                        Recordˉconstructionˉfieldˉindex + 1u32;
-                                }
+                                var Recordˉreachableˉvalues: bytes =
+                                    Stackˉaggregateˉroots(
+                                        Stack,
+                                        Stackˉrecordˉflagsˉlow,
+                                        Stackˉrecordˉflagsˉhigh
+                                    );
+                                Recordˉreachableˉvalues = Bytesˉconcat(
+                                    Recordˉreachableˉvalues,
+                                    Aggregateˉselectedˉfieldˉvalues(
+                                        Module,
+                                        Recordˉtypeˉcursor + 4u32,
+                                        Recordˉfieldˉcount,
+                                        Recordˉfields,
+                                        0u32,
+                                        false
+                                    )
+                                );
                                 let Recordˉactiveˉshapeˉoffset: u32 =
                                     Bytesˉreadˉu32ˉlittle(
                                         Functionˉshapeˉoffsets,
                                         Functionˉindex * 4u32
                                     );
-                                var Recordˉactiveˉlocalˉoffset: u32 = 0u32;
-                                while Recordˉactiveˉlocalˉoffset
-                                    < Functionˉcursor {
-                                    let Recordˉactiveˉlocalˉkind: u32 =
-                                        Bytesˉreadˉu32ˉlittle(
-                                            Localˉshapes,
-                                            Recordˉactiveˉshapeˉoffset
-                                                + Recordˉactiveˉlocalˉoffset
+                                Recordˉreachableˉvalues = Bytesˉconcat(
+                                    Recordˉreachableˉvalues,
+                                    Localˉaggregateˉroots(
+                                        Locals,
+                                        0u32,
+                                        Localˉshapes,
+                                        Recordˉactiveˉshapeˉoffset,
+                                        Functionˉcursor
+                                    )
+                                );
+                                let Recordˉframeˉroots: bytes =
+                                    Frameˉaggregateˉroots(
+                                        Frames,
+                                        Functionˉcount,
+                                        Functionˉframeˉmetadata,
+                                        Functionˉshapeˉoffsets,
+                                        Localˉshapes
                                     );
-                                    if Recordˉactiveˉlocalˉkind == 7u32 {
-                                        Recordˉreachableˉvalues = Bytesˉconcat(
-                                            Recordˉreachableˉvalues,
-                                            Bytesˉslice(
-                                                Locals,
-                                                Recordˉactiveˉlocalˉoffset,
-                                                8u32
-                                            )
-                                        );
-                                    }
-                                    Recordˉactiveˉlocalˉoffset =
-                                        Recordˉactiveˉlocalˉoffset + 8u32;
+                                if Bytesˉlength(Recordˉframeˉroots) == 0u32 {
+                                    return Invalid;
                                 }
-                                var Recordˉframeˉend: u32 = Bytesˉlength(Frames);
-                                while Recordˉframeˉend > 0u32 {
-                                    if Recordˉframeˉend < 8u32 { return Invalid; }
-                                    let Recordˉframeˉfunction: u32 =
-                                        Bytesˉreadˉu32ˉlittle(
-                                            Frames,
-                                            Recordˉframeˉend - 4u32
-                                        );
-                                    if Recordˉframeˉfunction >= Functionˉcount {
-                                        return Invalid;
-                                    }
-                                    let Recordˉframeˉlocalˉlength: u32 =
-                                        Bytesˉreadˉu32ˉlittle(
-                                            Functionˉframeˉmetadata,
-                                            Recordˉframeˉfunction * 8u32 + 4u32
-                                        );
-                                    if Recordˉframeˉlocalˉlength
-                                        > Recordˉframeˉend - 8u32 {
-                                        return Invalid;
-                                    }
-                                    let Recordˉframeˉstart: u32 =
-                                        Recordˉframeˉend
-                                            - 8u32
-                                            - Recordˉframeˉlocalˉlength;
-                                    let Recordˉframeˉshapeˉoffset: u32 =
-                                        Bytesˉreadˉu32ˉlittle(
-                                            Functionˉshapeˉoffsets,
-                                            Recordˉframeˉfunction * 4u32
-                                        );
-                                    var Recordˉframeˉlocalˉoffset: u32 = 0u32;
-                                    while Recordˉframeˉlocalˉoffset
-                                        < Recordˉframeˉlocalˉlength {
-                                        let Recordˉframeˉlocalˉkind: u32 =
-                                            Bytesˉreadˉu32ˉlittle(
-                                                Localˉshapes,
-                                                Recordˉframeˉshapeˉoffset
-                                                    + Recordˉframeˉlocalˉoffset
-                                            );
-                                        if Recordˉframeˉlocalˉkind == 7u32 {
-                                            Recordˉreachableˉvalues = Bytesˉconcat(
-                                                Recordˉreachableˉvalues,
-                                                Bytesˉslice(
-                                                    Frames,
-                                                    Recordˉframeˉstart
-                                                        + 4u32
-                                                        + Recordˉframeˉlocalˉoffset,
-                                                    8u32
-                                                )
-                                            );
-                                        }
-                                        Recordˉframeˉlocalˉoffset =
-                                            Recordˉframeˉlocalˉoffset + 8u32;
-                                    }
-                                    Recordˉframeˉend = Recordˉframeˉstart;
+                                Recordˉreachableˉvalues = Bytesˉconcat(
+                                    Recordˉreachableˉvalues,
+                                    Bytesˉslice(
+                                        Recordˉframeˉroots,
+                                        1u32,
+                                        Bytesˉlength(Recordˉframeˉroots) - 1u32
+                                    )
+                                );
+                                let Recordˉmarkˉscan: bytes =
+                                    Markˉaggregateˉroots(
+                                        Module,
+                                        Typeˉoffsets,
+                                        Records,
+                                        Recordˉmetadata,
+                                        Recordˉcapacity,
+                                        Recordˉmarks,
+                                        Recordˉreachableˉvalues
+                                    );
+                                if Bytesˉlength(Recordˉmarkˉscan)
+                                    != Recordˉcapacity {
+                                    return Invalid;
                                 }
-                                Recordˉreachableˉcursor = 0u32;
-                                while Recordˉreachableˉcursor
-                                    < Bytesˉlength(Recordˉreachableˉvalues) {
-                                    let Recordˉreachableˉremaining: u32 =
-                                        Bytesˉlength(Recordˉreachableˉvalues)
-                                            - Recordˉreachableˉcursor;
-                                    if Recordˉreachableˉremaining >= 8u32 {
-                                        let Recordˉreachableˉslot: u32 =
-                                            Bytesˉreadˉu32ˉlittle(
-                                                Recordˉreachableˉvalues,
-                                                Recordˉreachableˉcursor
-                                            );
-                                        let Recordˉreachableˉtype: u32 =
-                                            Bytesˉreadˉu32ˉlittle(
-                                                Recordˉreachableˉvalues,
-                                                Recordˉreachableˉcursor + 4u32
-                                            );
-                                        if Recordˉreachableˉslot < Recordˉcapacity {
-                                            let Recordˉreachableˉentry: u32 =
-                                                Recordˉreachableˉslot * 8u32;
-                                            let Recordˉreachableˉowner: u32 =
-                                                Bytesˉreadˉu32ˉlittle(
-                                                    Recordˉmetadata,
-                                                    Recordˉreachableˉentry
-                                                );
-                                            let Recordˉreachableˉsize: u32 =
-                                                Bytesˉreadˉu32ˉlittle(
-                                                    Recordˉmetadata,
-                                                    Recordˉreachableˉentry
-                                                        + 4u32
-                                                );
-                                            if Recordˉreachableˉsize > 0u32 {
-                                                if Recordˉreachableˉowner
-                                                    == Recordˉreachableˉtype {
-                                                    if U32ˉfromˉu8(
-                                                        Bytesˉreadˉu8(
-                                                            Recordˉmarks,
-                                                            Recordˉreachableˉslot
-                                                        )
-                                                    ) == 0u32 {
-                                                        let Recordˉmarkˉprefix:
-                                                            bytes = Bytesˉslice(
-                                                                Recordˉmarks,
-                                                                0u32,
-                                                                Recordˉreachableˉslot
-                                                            );
-                                                        let Recordˉmarkˉsuffix:
-                                                            bytes = Bytesˉslice(
-                                                                Recordˉmarks,
-                                                                Recordˉreachableˉslot
-                                                                    + 1u32,
-                                                                Recordˉcapacity
-                                                                    - 1u32
-                                                                    - Recordˉreachableˉslot
-                                                            );
-                                                        Recordˉmarks = Bytesˉconcat(
-                                                            Bytesˉconcat(
-                                                                Recordˉmarkˉprefix,
-                                                                Bytesˉfromˉu8(1u8)
-                                                            ),
-                                                            Recordˉmarkˉsuffix
-                                                        );
-                                                        var Recordˉnestedˉfieldˉcursor:
-                                                            u32 = Bytesˉreadˉu32ˉlittle(
-                                                                Typeˉoffsets,
-                                                                (Recordˉreachableˉowner
-                                                                    - 1u32) * 4u32
-                                                            ) + 1u32;
-                                                        let Recordˉnestedˉnameˉlength:
-                                                            u32 = Bytesˉreadˉu32ˉlittle(
-                                                                Module,
-                                                                Recordˉnestedˉfieldˉcursor
-                                                            );
-                                                        Recordˉnestedˉfieldˉcursor =
-                                                            Recordˉnestedˉfieldˉcursor
-                                                                + 4u32
-                                                                + Recordˉnestedˉnameˉlength
-                                                                + 4u32;
-                                                        var Recordˉnestedˉfieldˉindex:
-                                                            u32 = 0u32;
-                                                        while Recordˉnestedˉfieldˉindex
-                                                            < Recordˉreachableˉsize {
-                                                            let Recordˉnestedˉfieldˉnameˉlength:
-                                                                u32 = Bytesˉreadˉu32ˉlittle(
-                                                                    Module,
-                                                                    Recordˉnestedˉfieldˉcursor
-                                                                );
-                                                            Recordˉnestedˉfieldˉcursor =
-                                                                Recordˉnestedˉfieldˉcursor
-                                                                    + 4u32
-                                                                    + Recordˉnestedˉfieldˉnameˉlength;
-                                                            let Recordˉnestedˉfieldˉkind:
-                                                                u32 = U32ˉfromˉu8(
-                                                                    Bytesˉreadˉu8(
-                                                                        Module,
-                                                                        Recordˉnestedˉfieldˉcursor
-                                                                    )
-                                                                );
-                                                            Recordˉnestedˉfieldˉcursor =
-                                                                Recordˉnestedˉfieldˉcursor
-                                                                    + 1u32;
-                                                            if Recordˉnestedˉfieldˉkind
-                                                                >= 7u32 {
-                                                                Recordˉnestedˉfieldˉcursor =
-                                                                    Recordˉnestedˉfieldˉcursor
-                                                                        + 4u32;
-                                                            }
-                                                            if Recordˉnestedˉfieldˉkind
-                                                                == 7u32 {
-                                                                Recordˉreachableˉvalues =
-                                                                    Bytesˉconcat(
-                                                                        Recordˉreachableˉvalues,
-                                                                        Bytesˉslice(
-                                                                            Records,
-                                                                            Recordˉreachableˉslot
-                                                                                * 8u32
-                                                                                + Recordˉnestedˉfieldˉindex
-                                                                                    * 8u32,
-                                                                            8u32
-                                                                        )
-                                                                    );
-                                                            }
-                                                            Recordˉnestedˉfieldˉindex =
-                                                                Recordˉnestedˉfieldˉindex
-                                                                    + 1u32;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Recordˉreachableˉcursor =
-                                        Recordˉreachableˉcursor + 8u32;
-                                }
+                                Recordˉmarks = Recordˉmarkˉscan;
 
-                                var Recordˉnextˉmetadata: bytes = Invalid;
-                                Recordˉscanˉslot = 0u32;
-                                while Recordˉscanˉslot < Recordˉcapacity {
-                                    let Recordˉmetadataˉentry: u32 =
-                                        Recordˉscanˉslot * 8u32;
-                                    let Recordˉmetadataˉsize: u32 =
-                                        Bytesˉreadˉu32ˉlittle(
-                                            Recordˉmetadata,
-                                            Recordˉmetadataˉentry + 4u32
-                                        );
-                                    var Recordˉmetadataˉvalue: bytes =
-                                        Zeroˉcell;
-                                    if Recordˉmetadataˉsize > 0u32 {
-                                        if U32ˉfromˉu8(Bytesˉreadˉu8(
-                                            Recordˉmarks,
-                                            Recordˉscanˉslot
-                                        )) != 0u32 {
-                                            Recordˉmetadataˉvalue = Bytesˉslice(
-                                                Recordˉmetadata,
-                                                Recordˉmetadataˉentry,
-                                                8u32
-                                            );
-                                        } else {
-                                            let Reclaimedˉrecordˉowner: u32 =
-                                                Bytesˉreadˉu32ˉlittle(
-                                                    Recordˉmetadata,
-                                                    Recordˉmetadataˉentry
-                                                );
-                                            if Reclaimedˉrecordˉowner == 0u32 {
-                                                return Invalid;
-                                            }
-                                            var Reclaimedˉfieldˉcursor: u32 =
-                                                Bytesˉreadˉu32ˉlittle(
-                                                    Typeˉoffsets,
-                                                    (Reclaimedˉrecordˉowner - 1u32)
-                                                        * 4u32
-                                                ) + 1u32;
-                                            let Reclaimedˉtypeˉnameˉlength: u32 =
-                                                Bytesˉreadˉu32ˉlittle(
-                                                    Module,
-                                                    Reclaimedˉfieldˉcursor
-                                                );
-                                            Reclaimedˉfieldˉcursor =
-                                                Reclaimedˉfieldˉcursor
-                                                    + 4u32
-                                                    + Reclaimedˉtypeˉnameˉlength
-                                                    + 4u32;
-                                            var Reclaimedˉfieldˉindex: u32 = 0u32;
-                                            while Reclaimedˉfieldˉindex
-                                                < Recordˉmetadataˉsize {
-                                                let Reclaimedˉfieldˉnameˉlength:
-                                                    u32 = Bytesˉreadˉu32ˉlittle(
-                                                        Module,
-                                                        Reclaimedˉfieldˉcursor
-                                                    );
-                                                Reclaimedˉfieldˉcursor =
-                                                    Reclaimedˉfieldˉcursor
-                                                        + 4u32
-                                                        + Reclaimedˉfieldˉnameˉlength;
-                                                let Reclaimedˉfieldˉkind: u32 =
-                                                    U32ˉfromˉu8(Bytesˉreadˉu8(
-                                                        Module,
-                                                        Reclaimedˉfieldˉcursor
-                                                    ));
-                                                Reclaimedˉfieldˉcursor =
-                                                    Reclaimedˉfieldˉcursor + 1u32;
-                                                if Reclaimedˉfieldˉkind == 7u32 ||
-                                                    Reclaimedˉfieldˉkind == 8u32 ||
-                                                    Reclaimedˉfieldˉkind == 11u32 {
-                                                    Reclaimedˉfieldˉcursor =
-                                                        Reclaimedˉfieldˉcursor
-                                                            + 4u32;
-                                                }
-                                                if Reclaimedˉfieldˉkind == 3u32
-                                                    || Reclaimedˉfieldˉkind
-                                                        == 6u32 {
-                                                    Releasedˉdescriptors =
-                                                        Bytesˉconcat(
-                                                            Releasedˉdescriptors,
-                                                            Bytesˉslice(
-                                                                Records,
-                                                                Recordˉscanˉslot
-                                                                    * 8u32
-                                                                    + Reclaimedˉfieldˉindex
-                                                                        * 8u32,
-                                                                8u32
-                                                            )
-                                                        );
-                                                }
-                                                Reclaimedˉfieldˉindex =
-                                                    Reclaimedˉfieldˉindex + 1u32;
-                                            }
-                                        }
-                                    }
-                                    Recordˉnextˉmetadata = Bytesˉconcat(
-                                        Recordˉnextˉmetadata,
-                                        Recordˉmetadataˉvalue
+                                let Recordˉsweep: bytes =
+                                    Sweepˉaggregates(
+                                        Module,
+                                        Typeˉoffsets,
+                                        Records,
+                                        Recordˉmetadata,
+                                        Recordˉmarks,
+                                        Recordˉcapacity,
+                                        Zeroˉcell
                                     );
-                                    Recordˉscanˉslot =
-                                        Recordˉscanˉslot + 1u32;
+                                if Bytesˉlength(Recordˉsweep)
+                                    < Recordˉmetadataˉlength {
+                                    return Invalid;
                                 }
-                                Recordˉmetadata = Recordˉnextˉmetadata;
+                                Recordˉmetadata = Bytesˉslice(
+                                    Recordˉsweep,
+                                    0u32,
+                                    Recordˉmetadataˉlength
+                                );
+                                Releasedˉdescriptors = Bytesˉconcat(
+                                    Releasedˉdescriptors,
+                                    Bytesˉslice(
+                                        Recordˉsweep,
+                                        Recordˉmetadataˉlength,
+                                        Bytesˉlength(Recordˉsweep)
+                                            - Recordˉmetadataˉlength
+                                    )
+                                );
                             }
                         }
                     }
@@ -1768,7 +1885,7 @@ export fn Main(Request: bytes) -> bytes {
                             - Recordˉmetadataˉoffset
                     );
                     let Recordˉmetadataˉallocation: bytes = Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(Recordˉtype + 1u32),
+                        Bytesˉfromˉu32ˉlittle(Recordˉowner),
                         Bytesˉfromˉu32ˉlittle(Recordˉfieldˉcount)
                     );
                     Recordˉmetadata = Bytesˉconcat(
@@ -1805,15 +1922,37 @@ export fn Main(Request: bytes) -> bytes {
                     Stack,
                     Bytesˉconcat(
                         Bytesˉfromˉu32ˉlittle(Recordˉslot),
-                        Bytesˉfromˉu32ˉlittle(Recordˉtype + 1u32)
+                        Bytesˉfromˉu32ˉlittle(Recordˉowner)
                     )
                 );
             }
-            Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+            if Payloadˉlength == 104u32 {
+                Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+            } else {
+                Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+            }
             Mainˉfound = true;
         }
-        if Payloadˉlength == 105u32 {
-            let Fieldˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        if Payloadˉlength == 152u32 {
+            let Variantˉtestedˉstack: bytes = Variantˉcaseˉtest(
+                Module,
+                Payload,
+                Stack,
+                Zeroˉvalue
+            );
+            if Bytesˉlength(Variantˉtestedˉstack) != Bytesˉlength(Stack) {
+                return Invalid;
+            }
+            Stack = Variantˉtestedˉstack;
+            Stackˉconsumed = 1u32;
+            Stackˉproduced = true;
+            Stackˉproducedˉkind = 0u32;
+            Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+            Mainˉfound = true;
+        }
+        if Payloadˉlength == 105u32 || Payloadˉlength == 153u32 ||
+            Payloadˉlength == 196u32 {
+            var Fieldˉindex: u32 = Bytesˉreadˉu32ˉlittle(
                 Module,
                 Payload + 1u32
             );
@@ -1822,93 +1961,68 @@ export fn Main(Request: bytes) -> bytes {
                 Stack,
                 Fieldˉstackˉlength - 8u32
             );
-            let Fieldˉrecordˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            let Fieldˉrecordˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
                 Stack,
                 Fieldˉstackˉlength - 4u32
-            ) - 1u32;
-            Stack = Bytesˉslice(Stack, 0u32, Fieldˉstackˉlength - 8u32);
-            var Fieldˉtypeˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
-                Typeˉoffsets,
-                Fieldˉrecordˉtype * 4u32
-            ) + 1u32;
-            let Fieldˉtypeˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Module,
-                Fieldˉtypeˉcursor
             );
-            Fieldˉtypeˉcursor = Fieldˉtypeˉcursor
-                + 4u32
-                + Fieldˉtypeˉnameˉlength
-                + 4u32;
-            var Selectedˉfieldˉcursor: u32 = Fieldˉtypeˉcursor;
-            var Scannedˉfield: u32 = 0u32;
-            while Scannedˉfield <= Fieldˉindex {
-                let Fieldˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Module,
-                    Fieldˉtypeˉcursor
-                );
-                Fieldˉtypeˉcursor = Fieldˉtypeˉcursor
-                    + 4u32
-                    + Fieldˉnameˉlength;
-                if Scannedˉfield == Fieldˉindex {
-                    Selectedˉfieldˉcursor = Fieldˉtypeˉcursor;
-                }
-                let Scannedˉfieldˉkind: u32 = U32ˉfromˉu8(
-                    Bytesˉreadˉu8(Module, Fieldˉtypeˉcursor)
-                );
-                Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 1u32;
-                if Scannedˉfieldˉkind == 7u32 ||
-                    Scannedˉfieldˉkind == 8u32 ||
-                    Scannedˉfieldˉkind == 11u32 {
-                    Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32;
-                }
-                Scannedˉfield = Scannedˉfield + 1u32;
-            }
-            var Fieldˉvalue: bytes = Zeroˉcell;
-            if Fieldˉrecordˉslot == 4294967295u32 {
-                let Defaultˉfieldˉkind: u32 = U32ˉfromˉu8(
-                    Bytesˉreadˉu8(Module, Selectedˉfieldˉcursor)
-                );
-                if Defaultˉfieldˉkind == 7u32 {
-                    let Defaultˉrecordˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Stack = Bytesˉslice(Stack, 0u32, Fieldˉstackˉlength - 8u32);
+            var Selectedˉfieldˉcursor: u32 = 0u32;
+            if Payloadˉlength == 105u32 {
+                let Fieldˉrecordˉdirectory: bytes =
+                    Aggregateˉfieldˉdirectory(
                         Module,
-                        Selectedˉfieldˉcursor + 1u32
-                    );
-                    Fieldˉvalue = Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(4294967295u32),
-                        Bytesˉfromˉu32ˉlittle(Defaultˉrecordˉtype + 1u32)
-                    );
-                }
-                if Defaultˉfieldˉkind == 8u32 {
-                    let Defaultˉenumˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-                        Module,
-                        Selectedˉfieldˉcursor + 1u32
-                    );
-                    var Defaultˉenumˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
                         Typeˉoffsets,
-                        Defaultˉenumˉtype * 4u32
-                    ) + 1u32;
-                    let Defaultˉenumˉnameˉlength: u32 =
-                        Bytesˉreadˉu32ˉlittle(Module, Defaultˉenumˉcursor);
-                    Defaultˉenumˉcursor = Defaultˉenumˉcursor
-                        + 4u32
-                        + Defaultˉenumˉnameˉlength
-                        + 4u32;
-                    let Defaultˉmemberˉnameˉlength: u32 =
-                        Bytesˉreadˉu32ˉlittle(Module, Defaultˉenumˉcursor);
-                    Defaultˉenumˉcursor = Defaultˉenumˉcursor
-                        + 4u32
-                        + Defaultˉmemberˉnameˉlength;
-                    Fieldˉvalue = Bytesˉconcat(
-                        Bytesˉslice(Module, Defaultˉenumˉcursor, 4u32),
-                        Bytesˉfromˉu32ˉlittle(Defaultˉenumˉtype + 1u32)
+                        Fieldˉrecordˉtoken
                     );
+                if Bytesˉlength(Fieldˉrecordˉdirectory) != 8u32 {
+                    return Invalid;
                 }
+                Selectedˉfieldˉcursor = Fieldˉshapeˉat(
+                    Module,
+                    Bytesˉreadˉu32ˉlittle(Fieldˉrecordˉdirectory, 4u32),
+                    Fieldˉindex
+                );
             } else {
-                Fieldˉvalue = Bytesˉslice(
-                    Records,
-                    Fieldˉrecordˉslot * 8u32 + Fieldˉindex * 8u32,
+                let Fieldˉvariantˉselection: bytes = Variantˉfieldˉselection(
+                    Module,
+                    Typeˉoffsets,
+                    Payloadˉlength,
+                    Payload
+                );
+                if Bytesˉlength(Fieldˉvariantˉselection) != 12u32 {
+                    return Invalid;
+                }
+                Fieldˉindex = Bytesˉreadˉu32ˉlittle(
+                    Fieldˉvariantˉselection,
+                    4u32
+                );
+                Selectedˉfieldˉcursor = Bytesˉreadˉu32ˉlittle(
+                    Fieldˉvariantˉselection,
                     8u32
                 );
+                if Fieldˉrecordˉtoken != Bytesˉreadˉu32ˉlittle(
+                    Fieldˉvariantˉselection,
+                    0u32
+                ) {
+                    Sectionˉkind = 3017u32;
+                }
+            }
+            var Fieldˉvalue: bytes = Zeroˉcell;
+            if Sectionˉkind == 0u32 {
+                if Fieldˉrecordˉslot == 4294967295u32 {
+                    Fieldˉvalue = Defaultˉfieldˉvalue(
+                        Module,
+                        Typeˉoffsets,
+                        Selectedˉfieldˉcursor,
+                        Zeroˉcell
+                    );
+                } else {
+                    Fieldˉvalue = Bytesˉslice(
+                        Records,
+                        Fieldˉrecordˉslot * 8u32 + Fieldˉindex * 8u32,
+                        8u32
+                    );
+                }
             }
             let Selectedˉfieldˉkind: u32 = U32ˉfromˉu8(
                 Bytesˉreadˉu8(Module, Selectedˉfieldˉcursor)
@@ -1918,88 +2032,32 @@ export fn Main(Request: bytes) -> bytes {
             if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
                 Stackˉproducedˉkind = 1u32;
             }
-            if Selectedˉfieldˉkind == 7u32 {
+            if Selectedˉfieldˉkind == 7u32 || Selectedˉfieldˉkind == 11u32 {
                 Stackˉproducedˉkind = 2u32;
             }
             if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
-                let Fieldˉdescriptorˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Fieldˉvalue,
-                    4u32
+                let Retainedˉallocations: bytes = Retainˉdescriptor(
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Fieldˉvalue
                 );
-                if Fieldˉdescriptorˉlength > 0u32 {
-                    var Fieldˉallocationˉindex: u32 = 4294967295u32;
-                    var Fieldˉallocationˉscan: u32 = 0u32;
-                    while Fieldˉallocationˉscan < Heapˉallocationˉcount {
-                        let Fieldˉscanˉentry: u32 = Fieldˉallocationˉscan * 12u32;
-                        let Fieldˉscanˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Fieldˉscanˉentry + 8u32
-                        );
-                        let Fieldˉscanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Fieldˉscanˉentry
-                        );
-                        let Fieldˉscanˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                            Heapˉallocations,
-                            Fieldˉscanˉentry + 4u32
-                        );
-                        let Fieldˉdescriptorˉoffset: u32 =
-                            Bytesˉreadˉu32ˉlittle(Fieldˉvalue, 0u32);
-                        if Fieldˉscanˉreferences > 0u32 {
-                            if Fieldˉdescriptorˉoffset >= Fieldˉscanˉoffset {
-                                if Fieldˉdescriptorˉoffset - Fieldˉscanˉoffset
-                                    <= Fieldˉscanˉlength {
-                                    if Fieldˉdescriptorˉlength
-                                        <= Fieldˉscanˉlength
-                                            - (Fieldˉdescriptorˉoffset
-                                                - Fieldˉscanˉoffset) {
-                                        Fieldˉallocationˉindex =
-                                            Fieldˉallocationˉscan;
-                                        Fieldˉallocationˉscan =
-                                            Heapˉallocationˉcount;
-                                    }
-                                }
-                            }
-                        }
-                        Fieldˉallocationˉscan = Fieldˉallocationˉscan + 1u32;
-                    }
-                    if Fieldˉallocationˉindex == 4294967295u32 {
+                if Bytesˉreadˉu32ˉlittle(Fieldˉvalue, 4u32) > 0u32 {
+                    if Bytesˉlength(Retainedˉallocations) == 0u32 {
                         return Invalid;
                     }
-                    let Fieldˉallocationˉentry: u32 =
-                        Fieldˉallocationˉindex * 12u32;
-                    let Fieldˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
-                        Heapˉallocations,
-                        Fieldˉallocationˉentry + 8u32
-                    );
-                    if Fieldˉreferences == 4294967295u32 { return Invalid; }
-                    Heapˉallocations = Bytesˉconcat(
-                        Bytesˉconcat(
-                            Bytesˉslice(
-                                Heapˉallocations,
-                                0u32,
-                                Fieldˉallocationˉentry
-                            ),
-                            Bytesˉconcat(
-                                Bytesˉslice(
-                                    Heapˉallocations,
-                                    Fieldˉallocationˉentry,
-                                    8u32
-                                ),
-                                Bytesˉfromˉu32ˉlittle(Fieldˉreferences + 1u32)
-                            )
-                        ),
-                        Bytesˉslice(
-                            Heapˉallocations,
-                            Fieldˉallocationˉentry + 12u32,
-                            Bytesˉlength(Heapˉallocations)
-                                - Fieldˉallocationˉentry - 12u32
-                        )
-                    );
                 }
+                if Bytesˉlength(Retainedˉallocations)
+                    != Bytesˉlength(Heapˉallocations) {
+                    return Invalid;
+                }
+                Heapˉallocations = Retainedˉallocations;
             }
             Stack = Bytesˉconcat(Stack, Fieldˉvalue);
-            Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+            if Payloadˉlength == 105u32 {
+                Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+            } else {
+                Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+            }
             Mainˉfound = true;
         }
         if Payloadˉlength == 106u32 {
@@ -3323,90 +3381,29 @@ export fn Main(Request: bytes) -> bytes {
         if Sectionˉkind == 0u32 {
             var Releasedˉcursor: u32 = 0u32;
             while Releasedˉcursor < Bytesˉlength(Releasedˉdescriptors) {
-                let Releasedˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                let Releasedˉvalue: bytes = Bytesˉslice(
                     Releasedˉdescriptors,
-                    Releasedˉcursor
+                    Releasedˉcursor,
+                    8u32
                 );
                 let Releasedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Releasedˉdescriptors,
-                    Releasedˉcursor + 4u32
+                    Releasedˉvalue,
+                    4u32
                 );
                 if Releasedˉlength > 0u32 {
-                    var Releasedˉallocationˉindex: u32 = 4294967295u32;
-                    var Releasedˉallocationˉscan: u32 = 0u32;
-                    while Releasedˉallocationˉscan
-                        < Heapˉallocationˉcount {
-                        let Releasedˉscanˉentry: u32 =
-                            Releasedˉallocationˉscan * 12u32;
-                        let Releasedˉscanˉreferences: u32 =
-                            Bytesˉreadˉu32ˉlittle(
-                                Heapˉallocations,
-                                Releasedˉscanˉentry + 8u32
-                            );
-                        let Releasedˉscanˉoffset: u32 =
-                            Bytesˉreadˉu32ˉlittle(
-                                Heapˉallocations,
-                                Releasedˉscanˉentry
-                            );
-                        let Releasedˉscanˉlength: u32 =
-                            Bytesˉreadˉu32ˉlittle(
-                                Heapˉallocations,
-                                Releasedˉscanˉentry + 4u32
-                            );
-                        if Releasedˉscanˉreferences > 0u32 {
-                            if Releasedˉoffset >= Releasedˉscanˉoffset {
-                                if Releasedˉoffset - Releasedˉscanˉoffset
-                                    <= Releasedˉscanˉlength {
-                                    if Releasedˉlength
-                                        <= Releasedˉscanˉlength
-                                            - (Releasedˉoffset
-                                                - Releasedˉscanˉoffset) {
-                                        Releasedˉallocationˉindex =
-                                            Releasedˉallocationˉscan;
-                                        Releasedˉallocationˉscan =
-                                            Heapˉallocationˉcount;
-                                    }
-                                }
-                            }
-                        }
-                        Releasedˉallocationˉscan =
-                            Releasedˉallocationˉscan + 1u32;
-                    }
-                    if Releasedˉallocationˉindex == 4294967295u32 {
+                    let Releasedˉallocations: bytes = Releaseˉdescriptor(
+                        Heapˉallocations,
+                        Heapˉallocationˉcount,
+                        Releasedˉvalue
+                    );
+                    if Bytesˉlength(Releasedˉallocations) == 0u32 {
                         return Invalid;
                     }
-                    let Releasedˉallocationˉentry: u32 =
-                        Releasedˉallocationˉindex * 12u32;
-                    let Releasedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
-                        Heapˉallocations,
-                        Releasedˉallocationˉentry + 8u32
-                    );
-                    if Releasedˉreferences == 0u32 { return Invalid; }
-                    Heapˉallocations = Bytesˉconcat(
-                        Bytesˉconcat(
-                            Bytesˉslice(
-                                Heapˉallocations,
-                                0u32,
-                                Releasedˉallocationˉentry
-                            ),
-                            Bytesˉconcat(
-                                Bytesˉslice(
-                                    Heapˉallocations,
-                                    Releasedˉallocationˉentry,
-                                    8u32
-                                ),
-                                Bytesˉfromˉu32ˉlittle(
-                                    Releasedˉreferences - 1u32
-                                )
-                            )
-                        ),
-                        Bytesˉslice(
-                            Heapˉallocations,
-                            Releasedˉallocationˉentry + 12u32,
-                            Bytesˉlength(Heapˉallocations)
-                                - Releasedˉallocationˉentry - 12u32
-                        )
-                    );
+                    if Bytesˉlength(Releasedˉallocations)
+                        != Bytesˉlength(Heapˉallocations) {
+                        return Invalid;
+                    }
+                    Heapˉallocations = Releasedˉallocations;
                 }
                 Releasedˉcursor = Releasedˉcursor + 8u32;
             }
@@ -3558,7 +3555,9 @@ export fn Main(Request: bytes) -> bytes {
             }
         }
         if Sectionˉkind == 0u32 {
-            if Stackˉconsumed > Stackˉdescriptorˉcount { return Invalid; }
+            if Stackˉconsumed > Stackˉdescriptorˉcount {
+                return Invalid;
+            }
             let Stackˉremainingˉcount: u32 =
                 Stackˉdescriptorˉcount - Stackˉconsumed;
             if Stackˉremainingˉcount < 32u32 {
@@ -3628,7 +3627,9 @@ export fn Main(Request: bytes) -> bytes {
             }
         }
         if Sectionˉkind == 0u32 {
-            if Aggregateˉinstructions > Mainˉcodeˉlength { return Invalid; }
+            if Aggregateˉinstructions > Mainˉcodeˉlength {
+                return Invalid;
+            }
         }
         }
         Running = Sectionˉkind == 0u32;

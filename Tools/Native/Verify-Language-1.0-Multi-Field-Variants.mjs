@@ -205,9 +205,11 @@ if (Multiˉvariants.length !== 1 || Multiˉvariants[0].Case.Fieldˉcount !== 3) 
 const Multi = Multiˉvariants[0];
 const Creates = Opcodeˉpositions(Module, 151).filter(Position =>
     Module.Bytes.readUInt32LE(Position + 1) === Multi.Variant.Index);
+const Caseˉtests = Opcodeˉpositions(Module, 152).filter(Position =>
+    Module.Bytes.readUInt32LE(Position + 1) === Multi.Variant.Index);
 const Fields = Opcodeˉpositions(Module, 196).filter(Position =>
     Module.Bytes.readUInt32LE(Position + 1) === Multi.Variant.Index);
-if (Creates.length === 0 || Fields.length !== 3) {
+if (Creates.length === 0 || Caseˉtests.length === 0 || Fields.length !== 3) {
     Reject("The valid module does not exercise multi-field construction and extraction.");
 }
 
@@ -244,6 +246,10 @@ const Cases = [
     ["field-type-mismatch", Bytes => { Bytes[Multi.Case.Fields[0].Shapeˉoffset] = 4; }],
     ["field-nominal-out-of-range", Bytes =>
         Bytes.writeUInt32LE(Types.Count, Fields[0] + 1)],
+    ["runtime-case-mismatch", Bytes => {
+        Bytes.writeUInt32LE(Multi.Caseˉindex + 1, Creates[0] + 5);
+        Bytes.writeUInt32LE(Multi.Caseˉindex + 1, Caseˉtests[0] + 5);
+    }],
     ["constructor-case-out-of-range", Bytes =>
         Bytes.writeUInt32LE(Multi.Variant.Cases.length, Creates[0] + 5)],
 ];

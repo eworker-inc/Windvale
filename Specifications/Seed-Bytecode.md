@@ -22,11 +22,12 @@ the zero-field and one-field metadata bytes. A canonical writer emits the lowest
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
 never evidence, and 1.16 for multi-field variant metadata or field extraction.
-A WVB 1.16-capable reader accepts all six versions and never
-admits an extension under an earlier header. The compiler-aligned verifier
-implements that transition. The current scalar runner accepts through WVB 1.15
-and rejects WVB 1.16; it and other execution consumers retain explicit narrower
-version boundaries until their own lowering or execution slices land.
+A WVB 1.16-capable reader accepts all six versions and never admits an
+extension under an earlier header. The compiler-aligned verifier and the
+source-built native scalar runner implement that transition. Other native,
+browser, WebAssembly-package, and Windvale OS execution consumers retain
+explicit narrower version boundaries until their own lowering or execution
+slices land.
 
 ## Encoding
 
