@@ -1,0 +1,9 @@
+#!wv/1 en@1
+module Foundationˉresult;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 {
+    return try 42;
+}

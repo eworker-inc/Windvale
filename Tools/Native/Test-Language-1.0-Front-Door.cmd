@@ -21,12 +21,12 @@ mkdir "%Work%" || exit /b 1
 set "Result=1"
 set "FailureStep=frozen-fixtures"
 
-echo START language 1 front door phase=frozen-fixtures item=1/9
+echo START language 1 front door phase=frozen-fixtures item=1/10
 node "%Native%\Verify-Language-1.0-Migration-Fixtures.mjs" || goto :cleanup
-echo PASS  language 1 front door phase=frozen-fixtures item=1/9
+echo PASS  language 1 front door phase=frozen-fixtures item=1/10
 
 set "FailureStep=descriptor"
-echo START language 1 front door phase=descriptor item=2/9
+echo START language 1 front door phase=descriptor item=2/10
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-A.wvb" >nul || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Descriptor-A.wvb" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
@@ -40,18 +40,18 @@ for /f "usebackq delims=" %%L in ("%Work%\Run.out") do (
 )
 if not "%RunLines%"=="1" goto :cleanup
 if not "%RunLine%"=="Result: 42" goto :cleanup
-echo PASS  language 1 front door phase=descriptor item=2/9
+echo PASS  language 1 front door phase=descriptor item=2/10
 
 set "FailureStep=value-front-end"
-echo START language 1 front door phase=value-front-end item=3/9
+echo START language 1 front door phase=value-front-end item=3/10
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Value-Front-End.wvproj" "%Work%\Value-Front-End.wvb" >nul || goto :cleanup
 call "%Native%\Run-Wvb.cmd" "%Work%\Value-Front-End.wvb" >"%Work%\Value-Front-End.out" 2>"%Work%\Value-Front-End.err" || goto :cleanup
 for %%F in ("%Work%\Value-Front-End.err") do if not "%%~zF"=="0" goto :cleanup
 findstr /c:"Result: 42" "%Work%\Value-Front-End.out" >nul || goto :cleanup
-echo PASS  language 1 front door phase=value-front-end item=3/9
+echo PASS  language 1 front door phase=value-front-end item=3/10
 
 set "FailureStep=compiler-bootstrap-profile"
-echo START language 1 front door phase=compiler-slice item=4/9
+echo START language 1 front door phase=compiler-slice item=4/10
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\Wvb\Windvale-Compiler.wvb" ^
     "%Work%\Bootstrap-Compiler.exe" --development-cache ^
@@ -300,10 +300,10 @@ call :expect_rejection_with_digest "%RepositoryRoot%\Tests\Fixtures\Language-1.0
 set "FailureStep=compiler-identity"
 for %%F in ("%Work%\Minimum-A.wvb") do if not "%%~zF"=="221" goto :cleanup
 certutil -hashfile "%Work%\Minimum-A.wvb" SHA256 | findstr /I /C:"25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae" >nul || goto :cleanup
-echo PASS  language 1 front door phase=compiler-slice item=4/9
+echo PASS  language 1 front door phase=compiler-slice item=4/10
 
 set "FailureStep=fixed-integer-compile-a"
-echo START language 1 front door phase=fixed-integers item=5/9
+echo START language 1 front door phase=fixed-integers item=5/10
 "%Work%\Compiler.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -382,10 +382,10 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
 "%Work%\Fixed-Integer-Runtime.exe"
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 for %%F in ("%Work%\Fixed-Integer-A.wvb") do echo INFO  language 1 fixed-integer wvb-bytes=%%~zF
-echo PASS  language 1 front door phase=fixed-integers item=5/9
+echo PASS  language 1 front door phase=fixed-integers item=5/10
 
 set "FailureStep=rune-compile-a"
-echo START language 1 front door phase=runes item=6/9
+echo START language 1 front door phase=runes item=6/10
 "%Work%\Compiler.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -445,10 +445,10 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 for %%F in ("%Work%\Rune-A.wvb") do set "RuneWvbBytes=%%~zF"
 echo INFO  language 1 rune wvb-bytes=%RuneWvbBytes%
-echo PASS  language 1 front door phase=runes item=6/9
+echo PASS  language 1 front door phase=runes item=6/10
 
 set "FailureStep=floating-compile-a"
-echo START language 1 front door phase=floating item=7/9
+echo START language 1 front door phase=floating item=7/10
 "%Work%\Compiler.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -523,10 +523,10 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 for %%F in ("%Work%\Floating-A.wvb") do set "FloatingWvbBytes=%%~zF"
 echo INFO  language 1 floating wvb-bytes=%FloatingWvbBytes%
-echo PASS  language 1 front door phase=floating item=7/9
+echo PASS  language 1 front door phase=floating item=7/10
 
 set "FailureStep=unit-never-compile-a"
-echo START language 1 front door phase=unit-never item=8/9
+echo START language 1 front door phase=unit-never item=8/10
 "%Work%\Compiler.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -581,10 +581,10 @@ if not "%NeverRunLine%"=="Result: 42" goto :cleanup
 for %%F in ("%Work%\Unit-A.wvb") do set "UnitWvbBytes=%%~zF"
 for %%F in ("%Work%\Never-A.wvb") do set "NeverWvbBytes=%%~zF"
 echo INFO  language 1 unit-never unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes%
-echo PASS  language 1 front door phase=unit-never item=8/9
+echo PASS  language 1 front door phase=unit-never item=8/10
 
 set "FailureStep=multi-field-variant-compile-a"
-echo START language 1 front door phase=multi-field-variants item=9/9
+echo START language 1 front door phase=multi-field-variants item=9/10
 "%Work%\Compiler.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -660,7 +660,44 @@ for %%F in ("%Work%\Variant-Runtime-Pressure.err") do if not "%%~zF"=="0" goto :
 call :expect_result_42 "%Work%\Variant-Runtime-Pressure.out" || goto :cleanup
 for %%F in ("%Work%\Multi-Field-Variant-A.wvb") do set "MultiFieldVariantWvbBytes=%%~zF"
 echo INFO  language 1 multi-field-variants wvb-bytes=%MultiFieldVariantWvbBytes%
-echo PASS  language 1 front door phase=multi-field-variants item=9/9
+echo PASS  language 1 front door phase=multi-field-variants item=9/10
+
+set "FailureStep=typed-failure-compile-a"
+echo START language 1 front door phase=typed-failure item=10/10
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Result-Try.wv" ^
+    "%Work%\Result-Try-A.wvb" >"%Work%\Result-Try-A.out" 2>"%Work%\Result-Try-A.err" || goto :cleanup
+set "FailureStep=typed-failure-compile-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Result-Try.wv" ^
+    "%Work%\Result-Try-B.wvb" >"%Work%\Result-Try-B.out" 2>"%Work%\Result-Try-B.err" || goto :cleanup
+set "FailureStep=typed-failure-determinism"
+for %%F in ("%Work%\Result-Try-A.err" "%Work%\Result-Try-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Result-Try-A.out" "%Work%\Result-Try-B.out" >nul || goto :cleanup
+fc /b "%Work%\Result-Try-A.wvb" "%Work%\Result-Try-B.wvb" >nul || goto :cleanup
+
+set "FailureStep=typed-failure-source-rejections"
+for %%N in (Lookalike Wrong-Value-Field Extra-Case Scalar) do (
+    call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Result-Try-%%N.wv" "%Work%\Result-Try-%%N.wvb" || goto :cleanup
+)
+
+set "FailureStep=typed-failure-verifier"
+"%Work%\Verifier.exe" "%Work%\Result-Try-A.wvb" ^
+    >"%Work%\Verify-Result-Try.out" 2>"%Work%\Verify-Result-Try.err" || goto :cleanup
+findstr /c:"wvb status=Valid profile=compiler-aligned" "%Work%\Verify-Result-Try.out" >nul || goto :cleanup
+
+set "FailureStep=typed-failure-runtime"
+"%Work%\Floating-Runner.exe" "%Work%\Result-Try-A.wvb" ^
+    >"%Work%\Result-Try-Run.out" 2>"%Work%\Result-Try-Run.err" || goto :cleanup
+for %%F in ("%Work%\Result-Try-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Result-Try-Run.out" || goto :cleanup
+for %%F in ("%Work%\Result-Try-A.wvb") do set "ResultTryWvbBytes=%%~zF"
+echo INFO  language 1 typed-failure wvb-bytes=%ResultTryWvbBytes%
+echo PASS  language 1 front door phase=typed-failure item=10/10
 set "Result=0"
 
 :cleanup
@@ -715,6 +752,13 @@ if not "%Result%"=="0" (
     if exist "%Work%\Multi-Field-Variant-Mismatch.err" type "%Work%\Multi-Field-Variant-Mismatch.err" >&2
     if exist "%Work%\Variant-Runtime-Pressure.out" type "%Work%\Variant-Runtime-Pressure.out" >&2
     if exist "%Work%\Variant-Runtime-Pressure.err" type "%Work%\Variant-Runtime-Pressure.err" >&2
+    if exist "%Work%\Result-Try-A.out" type "%Work%\Result-Try-A.out" >&2
+    if exist "%Work%\Result-Try-A.err" type "%Work%\Result-Try-A.err" >&2
+    if exist "%Work%\Result-Try-B.err" type "%Work%\Result-Try-B.err" >&2
+    if exist "%Work%\Verify-Result-Try.out" type "%Work%\Verify-Result-Try.out" >&2
+    if exist "%Work%\Verify-Result-Try.err" type "%Work%\Verify-Result-Try.err" >&2
+    if exist "%Work%\Result-Try-Run.out" type "%Work%\Result-Try-Run.out" >&2
+    if exist "%Work%\Result-Try-Run.err" type "%Work%\Result-Try-Run.err" >&2
     if exist "%Work%\Seed-Unit.out" type "%Work%\Seed-Unit.out" >&2
     if exist "%Work%\Seed-Unit.err" type "%Work%\Seed-Unit.err" >&2
     if exist "%Work%\Seed-Record-Update.out" type "%Work%\Seed-Record-Update.out" >&2
@@ -733,7 +777,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=136 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
+echo native language 1 front door status=Passed cases=141 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes%
 exit /b 0
 
 :expect_result_42

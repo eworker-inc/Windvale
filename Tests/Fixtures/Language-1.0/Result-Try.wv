@@ -1,0 +1,43 @@
+#!wv/1 en@1
+module Foundationˉresult;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Result {
+    Valid(Value: i32);
+    Failure(Error: u32);
+}
+
+fn Read(Fail: bool) -> Result {
+    if Fail {
+        return Result.Failure { Error: 7u32 };
+    }
+    return Result.Valid { Value: 41 };
+}
+
+fn Forward(Fail: bool) -> Result {
+    let Value: i32 = try Read(Fail);
+    return Result.Valid { Value: Value + 1 };
+}
+
+fn Statementˉforward() -> Result {
+    try Read(false);
+    return Result.Valid { Value: 42 };
+}
+
+fn Observe(Value: Result) -> i32 {
+    return match Value {
+        case Result.Valid { Value: Item } { Item }
+        case Result.Failure { Error: Error } {
+            if Error == 7u32 { 42 } else { 0 }
+        }
+    };
+}
+
+export fn Main() -> i32 {
+    if Observe(Forward(false)) != 42 { return 1; }
+    if Observe(Forward(true)) != 42 { return 2; }
+    if Observe(Statementˉforward()) != 42 { return 3; }
+    return 42;
+}

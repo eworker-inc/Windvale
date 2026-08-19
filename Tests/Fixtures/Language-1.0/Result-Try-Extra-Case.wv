@@ -1,0 +1,24 @@
+#!wv/1 en@1
+module Foundationˉresult;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Result {
+    Valid(Value: i32);
+    Failure(Error: u32);
+    Pending;
+}
+
+fn Read() -> Result {
+    return Result.Valid { Value: 42 };
+}
+
+fn Forward() -> Result {
+    let Value: i32 = try Read();
+    return Result.Valid { Value: Value };
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

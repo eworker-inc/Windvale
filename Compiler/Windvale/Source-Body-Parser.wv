@@ -696,6 +696,7 @@ export fn Compilerˉbodyˉunaryˉprecedence(Kind: Sourceˉlexer.Compilerˉtoken�
     if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bang { return 13u32; }
     if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Tilde { return 13u32; }
     if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Freeze { return 13u32; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Try { return 13u32; }
     return 0u32;
 }
 

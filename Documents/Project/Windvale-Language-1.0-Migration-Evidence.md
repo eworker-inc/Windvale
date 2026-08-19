@@ -7,7 +7,7 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slice 1 is complete and Slice 2 is active. The existing compiler admits
+Migration Slices 1 and 2 are complete and Slice 3 is active. The existing compiler admits
 an edition-1 source descriptor only through an explicitly supplied, hash-pinned
 source-input lock and composite source profile. It resolves the frozen `en@1`
 component chain, exposes the remaining bytes as an immutable view, parses the
@@ -25,7 +25,12 @@ descriptorless Seed retain their prior behavior.
 
 Value-producing `if` and exhaustive enum/variant `match` now cross the reference
 compiler and scalar runtime, completing Slice 2's planned value-and-control
-compiler surface. Final paired-host and broad integration evidence remains
+compiler surface. The first Slice 3 checkpoint adds value-producing `try` over
+a strict concrete specialization of the frozen Foundation Result identity. It
+extracts `Valid.Value`, propagates the original `Failure` value unchanged, and
+rejects structural lookalikes; generic Foundation publication, distinct success
+result shapes, explicit error adapters, and manual-status migration remain open.
+Final paired-host and broad integration evidence remains
 deferred to the seven-slice integration gate. Localized token execution,
 public-library vocabulary lookup, Unicode identifier admission, and paired-host
 Language 1.0 qualification also remain pending.
@@ -285,6 +290,38 @@ in 371.69 seconds, including every retained numeric, unit/never, and WVB 1.16
 variant phase. Heavy storage, broad OS, paired-host, and complete Qualification
 gates remain deferred to the final seven-slice integration gate.
 
+## Slice 3 value-producing `try` checkpoint
+
+The body parser admits `try` at unary precedence and WIR compiles its operand
+exactly once. Edition-1 use requires a nominal `Result` declaration in the
+edition-1 `Foundationˉresult` module with exactly the ordered cases
+`Valid(Value: T)` and `Failure(Error: E)`. A same-shaped variant in another
+module, a changed field name, an additional case, or a scalar operand is
+rejected without output.
+
+The existing result value is tested once. Its failure edge returns that original
+value unchanged; its success edge extracts `Value` and resumes the surrounding
+expression. Statement `try` uses the same path and discards the extracted value.
+The accepted checkpoint requires the operand and containing return value to use
+the same concrete Result shape. This is a strict pre-generics subset: the final
+`Result<T, E>` to `Result<U, E>` rule remains closed until bounded generic
+specialization can prove exact shared `E`.
+
+`Result-Try.wv` exercises valid extraction, unchanged failure propagation, and
+statement-form reuse. It compiles twice to the same 1,430-byte WVB with SHA-256
+`afa5b9ca60eacb30042a8c6621f12969d06a105510a3379b26b49e883fb9b0cf`,
+passes the current compiler-aligned verifier, and returns `42` through the
+source-built scalar runner. The focused Windows owner passed all 141 cases over
+10 visible phases. The matching Linux gate is encoded but not claimed as local
+execution evidence.
+
+The 501-function compiler contains 964,105 code bytes and 1,164,935 module
+bytes. Native planning reports 33,452,623 machine-code bytes and 2,472
+relocation bytes. The unchanged segmented stage accepts a 33,482,742-byte
+object package across 42 chunks with a 528-byte manifest. Unary lowering and
+repeated symbol guards were consolidated to remain below the existing output
+bound; no limit was widened.
+
 ## Slice 2 named variant fields
 
 The edition-1 declaration parser admits zero through 64 uniquely named fields
@@ -388,9 +425,9 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 121 declared cases. Its
+The cross-host `language-1-front-door` owner reports 141 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
-builds and execute them, build and execute the 23-assertion value-front-end test,
+builds and execute them, build and execute the 25-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
 the minimum, unit, record-update, and 22-case fixed-integer evidence. Its 20 rune
 cases compile the valid program twice, compare diagnostics and bytes, reject eight
@@ -405,6 +442,10 @@ isolated one-field version-selection module, nine source rejections, two valid
 verifier admissions, ten malformed-WVB rejections, two valid WVB 1.16 scalar
 executions, an explicit `WVR3017` case-mismatch execution, and the bounded
 900-replacement pressure execution.
+Value-producing `if`, value-producing enum/variant `match`, and the first
+identity-checked concrete Result `try` checkpoint reuse that one rebuilt compiler
+and the same verifier/runtime artifacts. The typed-failure phase adds one
+deterministic success/failure program and four source rejections.
 The report keeps nested assertions separate from the top-level owner count.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
