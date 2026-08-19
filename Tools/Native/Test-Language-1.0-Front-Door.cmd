@@ -146,6 +146,46 @@ for /f "usebackq delims=" %%L in ("%Work%\Record-Update.out") do (
 )
 if not "%RecordUpdateLines%"=="1" goto :cleanup
 if not "%RecordUpdateLine%"=="Result: 42" goto :cleanup
+set "FailureStep=compiler-value-if-a"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Control.wv" ^
+    "%Work%\Value-If-A.wvb" >"%Work%\Value-If-A.out" 2>"%Work%\Value-If-A.err" || goto :cleanup
+set "FailureStep=compiler-value-if-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Control.wv" ^
+    "%Work%\Value-If-B.wvb" >"%Work%\Value-If-B.out" 2>"%Work%\Value-If-B.err" || goto :cleanup
+for %%F in ("%Work%\Value-If-A.err" "%Work%\Value-If-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Value-If-A.out" "%Work%\Value-If-B.out" >nul || goto :cleanup
+fc /b "%Work%\Value-If-A.wvb" "%Work%\Value-If-B.wvb" >nul || goto :cleanup
+set "FailureStep=compiler-value-if-execution"
+call "%Native%\Run-Wvb.cmd" "%Work%\Value-If-A.wvb" >"%Work%\Value-If.out" 2>"%Work%\Value-If.err" || goto :cleanup
+for %%F in ("%Work%\Value-If.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Value-If.out" || goto :cleanup
+set "FailureStep=compiler-value-if-lazy"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-If-Lazy.wv" ^
+    "%Work%\Value-If-Lazy.wvb" >"%Work%\Value-If-Lazy.out" 2>"%Work%\Value-If-Lazy.err" || goto :cleanup
+for %%F in ("%Work%\Value-If-Lazy.err") do if not "%%~zF"=="0" goto :cleanup
+call "%Native%\Run-Wvb.cmd" "%Work%\Value-If-Lazy.wvb" >"%Work%\Value-If-Lazy-Run.out" 2>"%Work%\Value-If-Lazy-Run.err" || goto :cleanup
+for %%F in ("%Work%\Value-If-Lazy-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Value-If-Lazy-Run.out" || goto :cleanup
+set "FailureStep=compiler-value-if-source-rejections"
+for %%N in (Missing-Else Trailing-Semicolon Type-Mismatch Invalid-Condition) do (
+    call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-If-%%N.wv" "%Work%\Value-If-%%N.wvb" || goto :cleanup
+)
+set "FailureStep=compiler-negative-seed-value-if"
+"%Work%\Compiler.exe" ^
+    "%RepositoryRoot%\Tests\Fixtures\Source-Wvb\Invalid-Value-If.wv" ^
+    "%Work%\Seed-Value-If.wvb" >"%Work%\Seed-Value-If.out" 2>"%Work%\Seed-Value-If.err"
+if not errorlevel 1 goto :cleanup
+if exist "%Work%\Seed-Value-If.wvb" goto :cleanup
+for %%F in ("%Work%\Value-If-A.wvb") do set "ValueIfWvbBytes=%%~zF"
 set "FailureStep=compiler-negative-unit-return-value"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Return-Value.wv" "%Work%\Unit-Return-Value.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-nonunit-return"
@@ -603,7 +643,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=121 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
+echo native language 1 front door status=Passed cases=128 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=24 compiler-cases=24 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
 exit /b 0
 
 :expect_result_42

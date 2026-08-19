@@ -1,6 +1,7 @@
 module Languageˉoneˉvalueˉfrontˉendˉselfˉtest profile portable;
 
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉbodyˉparser as Bodies;
 import Compilerˉsourceˉlexer as Lexer;
 import Compilerˉsourceˉset as Sourceˉset;
 
@@ -69,5 +70,8 @@ export fn Main() -> i32 {
     if Seed.Kind != Lexer.Compilerˉtokenˉkind.Unit || Seed.Offset != 5u32 {
         return 23;
     }
+    let Ifˉkind: Bodies.Compilerˉsourceˉexpressionˉkind =
+        Bodies.Compilerˉsourceˉexpressionˉkind.If;
+    if Ifˉkind != Bodies.Compilerˉsourceˉexpressionˉkind.If { return 24; }
     return 42;
 }

@@ -147,6 +147,48 @@ expect_rejection_with_digest() {
     fi
     [[ ! -e $output ]]
 }
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
+    "$work/Value-If-A.wvb" >"$work/Value-If-A.out" 2>"$work/Value-If-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
+    "$work/Value-If-B.wvb" >"$work/Value-If-B.out" 2>"$work/Value-If-B.err" || exit $?
+[[ ! -s $work/Value-If-A.err && ! -s $work/Value-If-B.err ]] || exit 1
+cmp -s -- "$work/Value-If-A.out" "$work/Value-If-B.out" || exit 1
+cmp -s -- "$work/Value-If-A.wvb" "$work/Value-If-B.wvb" || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Value-If-A.wvb" \
+    >"$work/Value-If.out" 2>"$work/Value-If.err" || exit $?
+[[ ! -s $work/Value-If.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Value-If.out"
+cmp -s -- "$work/Expected-Value-If.out" "$work/Value-If.out" || exit 1
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-If-Lazy.wv" \
+    "$work/Value-If-Lazy.wvb" >"$work/Value-If-Lazy.out" \
+    2>"$work/Value-If-Lazy.err" || exit $?
+[[ ! -s $work/Value-If-Lazy.err ]] || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Value-If-Lazy.wvb" \
+    >"$work/Value-If-Lazy-Run.out" 2>"$work/Value-If-Lazy-Run.err" || exit $?
+[[ ! -s $work/Value-If-Lazy-Run.err ]] || exit 1
+cmp -s -- "$work/Expected-Value-If.out" "$work/Value-If-Lazy-Run.out" || exit 1
+for name in Missing-Else Trailing-Semicolon Type-Mismatch Invalid-Condition; do
+    expect_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Value-If-$name.wv" \
+        "$work/Value-If-$name.wvb" || exit 1
+done
+if "$work/Compiler.elf" \
+    "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Value-If.wv" \
+    "$work/Seed-Value-If.wvb" \
+    >"$work/Seed-Value-If.out" 2>"$work/Seed-Value-If.err"; then
+    exit 1
+fi
+[[ ! -e $work/Seed-Value-If.wvb ]] || exit 1
+value_if_wvb_bytes=$(wc -c < "$work/Value-If-A.wvb")
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Return-Value.wv" \
     "$work/Unit-Return-Value.wvb" || exit 1
@@ -559,4 +601,4 @@ multi_field_variant_wvb_bytes=$(wc -c < "$work/Multi-Field-Variant-A.wvb")
 printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
     "$multi_field_variant_wvb_bytes"
 echo 'PASS  language 1 front door phase=multi-field-variants item=9/9'
-printf 'native language 1 front door status=Passed cases=121 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=128 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=24 compiler-cases=24 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$value_if_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"

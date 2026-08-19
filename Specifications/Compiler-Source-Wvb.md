@@ -19,7 +19,7 @@ Compilerˉcompileˉsourceˉwvb(Input: bytes)
     -> Compilerˉsourceˉwvbˉsummary
 ```
 
-On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB module using the lowest required minor version, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
+On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB module using the lowest required minor version, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved plus the one-based source line when the upstream WVIR boundary supplied it. Command-line and build-driver diagnostics print that location instead of leaving a long compiler phase silent about its source failure.
 
 The status contract distinguishes upstream WVIR rejection, shapes and operations, invalid data, and WVB limits. The former unsupported-declaration value and the existing module-count and profile values remain reserved for stable diagnostic numbering: upstream WVIR admission now owns declaration-kind rejection, and every currently validated WVSS module count and root profile is accepted.
 
@@ -332,7 +332,7 @@ indices, shapes, emitted instructions, and canonical WVB bytes.
 
 The backend makes two deterministic passes over each function. The first computes every block byte offset, exact function code length, and maximum operand-stack depth. The second emits code using those offsets, so branches never require mutable backpatching.
 
-`Boolˉphi = 64` is typed control evidence rather than a new WVB opcode. It has zero operation bytes. Each unconditional predecessor jump to a phi join emits the selected Boolean temporary load and phi-result local store immediately before the ordinary jump. The right-operand block is reached only by the conditional branch, so skipped short-circuit operands retain no bytecode execution path. WVIR validation forbids a conditional or third predecessor from targeting such a join.
+`Valueˉphi = 64` is typed control evidence rather than a new WVB opcode. It has zero operation bytes. Each unconditional predecessor jump to a phi join emits the selected exact-shape temporary load and phi-result local store immediately before the ordinary jump. This serves both value-producing `if` and the retained Boolean short-circuit lowering. Only the selected predecessor has a bytecode execution path, and WVIR validation forbids a conditional or third predecessor from targeting such a join. No WVB opcode or minor-version change is required.
 
 The complete source set is fully validated before WVB emission. Declaration reads during emission therefore begin at their already validated byte offsets with relative diagnostic coordinates instead of rescanning from the module header to reconstruct absolute line and column. All source-facing syntax and semantic diagnostics are established by the checked upstream boundary; backend emission consumes only accepted offsets and declaration shapes. This optimization does not change accepted source, emitted bytes, or public diagnostic identities.
 

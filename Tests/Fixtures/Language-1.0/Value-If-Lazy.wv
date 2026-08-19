@@ -1,0 +1,18 @@
+#!wv/1 en@1
+module ValueˉIfˉLazy;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Recurse() -> i32 {
+    return Recurse();
+}
+
+export fn Main() -> i32 {
+    return if true {
+        let Value: i32 = 42;
+        Value
+    } else {
+        Recurse()
+    };
+}

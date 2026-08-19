@@ -93,7 +93,9 @@ fn Compilerˉsourceˉwvbˉtoolˉfailure(
     Report = Textˉconcat(Report, " function=");
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
     Report = Textˉconcat(Report, " operation=");
-    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
+    Report = Textˉconcat(Report, " line=");
+    return Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉprofileˉfailure(

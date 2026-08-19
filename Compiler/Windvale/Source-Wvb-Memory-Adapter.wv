@@ -21,6 +21,8 @@ fn Compilerˉsourceˉwvbˉmemoryˉdiagnostic(
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
     Report = Textˉconcat(Report, " operation=");
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
     return Textˉtoˉutf8(Report);
 }
 

@@ -285,6 +285,8 @@ fn Compilerˉbuildˉdriverˉcompileˉfailure(
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉfunction));
     Report = Textˉconcat(Report, " operation=");
     Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉoperation));
+    Report = Textˉconcat(Report, " source-line=");
+    Report = Textˉconcat(Report, U32ˉformat(Summary.Failureˉline));
     Report = Textˉconcat(Report, " binding-status=");
     Report = Textˉconcat(Report, Enumˉname(Wir.Bindingˉstatus));
     Report = Textˉconcat(Report, " symbol-status=");

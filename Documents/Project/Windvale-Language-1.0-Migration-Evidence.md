@@ -23,8 +23,9 @@ source-built native scalar runner through WVB 1.16. Project 3 carries the
 profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. Value-producing control flow remains
-pending. Localized token execution,
+These checkpoints do not complete Slice 2. Value-producing `if` now crosses the
+reference compiler and scalar runtime; value-producing `match` remains pending.
+Localized token execution,
 public-library vocabulary lookup, Unicode identifier admission, and paired-host
 Language 1.0 qualification also remain pending.
 
@@ -137,9 +138,12 @@ This preflight is an intermediate canonical-token guard; final profile-aware tok
 classification and localized spellings remain Slice 1 follow-through and must not
 be inferred from these English-token tests.
 
-The focused value-front-end self-test contains 23 assertions covering all appended
-keyword and primitive-type identities, both edition directions, and exact first
-invalid-token offsets. It compiles to a verified WVB and returns `42`.
+The focused value-front-end self-test contains 24 assertions covering all appended
+keyword and primitive-type identities, both edition directions, exact first
+invalid-token offsets, and the stable value-`if` expression-kind identity. It
+compiles to a verified WVB and returns `42`; real parser behavior is covered by
+the source-built compiler fixtures below rather than recursively interpreting
+the parser inside the bounded scalar runner.
 
 The body parser appends expression kind `Unit = 12` and recognizes only an empty
 parenthesized expression as `()`. A nonempty parenthesized expression retains its
@@ -196,6 +200,46 @@ preservation, and returns `42`. Separate cases reject a wrong-nominal base,
 duplicate replacement, unknown replacement, and descriptorless Seed use without
 publishing output. No WVIR operation, WVB opcode, value representation, or
 serialized-format version changes.
+
+## Slice 2 value-producing `if`
+
+The body parser appends expression kind `If = 16` without renumbering retained
+kinds. An edition-1 value `if` requires one Boolean condition, a braced then arm,
+and an `else` arm that is either another value `if` or a braced value block.
+Each value block contains zero or more ordinary statements and exactly one final
+expression without a semicolon. The final expression is not reinterpreted as an
+expression statement, and branch-local bindings end at the arm's closing brace.
+
+Typed WIR evaluates the condition once, reaches exactly one arm, requires both
+reachable arm values to have the same exact shape, and joins them through
+`Valueˉphi = 64`. That operation is the generalized identity of the retained
+Boolean short-circuit phi: validation now requires two same-shape operands and
+the same non-void/non-never result shape, two distinct unconditional
+predecessors, and no conditional or third predecessor. A `never` arm contributes
+no value; the reachable arm continues without a conversion. The WVB backend
+materializes the selected value in the phi-result local on the predecessor edge,
+so no opcode, module representation, or WVB minor-version change is required.
+
+`Tests/Fixtures/Language-1.0/Value-Control.wv` covers a Boolean local, two
+branch-local declarations, mutation, a final name expression, and recursive
+`else if`. It compiles twice to the same 529-byte WVB with SHA-256
+`c9b5cecdfb26478844dc8c6e6e97683758693d419fab36b360705eb99ff5d0e8`
+and executes through the source-built scalar runner with result `42`.
+`Value-If-Lazy.wv` places an unbounded recursive call in the unselected arm,
+compiles to 350 bytes with SHA-256
+`d18209374d076eea7ff9eb3bde6b2a71e7c01999cb91a01e3d154818e18aa386`,
+and also returns `42`, proving that the skipped arm has no runtime execution
+path. Four source fixtures reject a missing `else`, a semicolon after an arm's
+purported final value, an exact arm-type mismatch, and a non-Boolean condition
+without publishing output. A fifth fixture proves that descriptorless Seed
+rejects the value form while retaining its existing statement `if`.
+
+The focused Windows `language-1-front-door` owner passed all 128 cases in
+365.93 seconds. It rebuilt the compiler once, reused that image for the
+value-control cases, and completed all retained fixed-integer, rune, floating,
+unit/never, and named-variant phases. Heavy storage, broad OS, paired-host, and
+complete Qualification gates did not run; the final Slice 2 integration gate
+owns that broader evidence.
 
 ## Slice 2 named variant fields
 

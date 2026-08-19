@@ -110,6 +110,7 @@ export record Compilerˉsourceˉwvbˉsummary {
     Bytecode: bytes;
     Failureˉfunction: u32;
     Failureˉoperation: u32;
+    Failureˉline: u32;
 }
 
 record Compilerˉsourceˉwvbˉadmittedˉinput {
@@ -159,7 +160,28 @@ export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
         0u32,
         Compilerˉsourceˉwvbˉempty(Input),
         Function,
-        Operation
+        Operation,
+        0u32
+    );
+}
+
+fn Compilerˉsourceˉwvbˉsummaryˉfailureˉat(
+    Input: bytes,
+    Status: Compilerˉsourceˉwvbˉstatus,
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
+    Function: u32,
+    Operation: u32,
+    Line: u32
+) -> Compilerˉsourceˉwvbˉsummary {
+    return Compilerˉsourceˉwvbˉsummary(
+        Status,
+        Wirˉstatus,
+        0u32,
+        0u32,
+        Compilerˉsourceˉwvbˉempty(Input),
+        Function,
+        Operation,
+        Line
     );
 }
 
@@ -3774,12 +3796,13 @@ export fn Compilerˉsourceˉwvbˉcompile(
     let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
         Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
     if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉsummaryˉfailure(
+        return Compilerˉsourceˉwvbˉsummaryˉfailureˉat(
             Input,
             Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
             Wirˉsummary.Status,
             Wirˉsummary.Failureˉfunction,
-            0u32
+            0u32,
+            Wirˉsummary.Failureˉline
         );
     }
     let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
@@ -4087,7 +4110,8 @@ export fn Compilerˉsourceˉwvbˉcompile(
         Bytesˉlength(Codeˉpayload),
         Bytecode,
         Symbols.Functions,
-        Wirˉsummary.Operations
+        Wirˉsummary.Operations,
+        0u32
     );
 }
 
