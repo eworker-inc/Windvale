@@ -2565,6 +2565,18 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             Shape, Expression.Numericˉvalue, false
         );
     }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Floating {
+        var Floatingˉshape: u32 = 14u32;
+        if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.F64 {
+            Floatingˉshape = 15u32;
+        }
+        return Compilerˉsourceˉsymbolsˉconstantˉsuccessˉwide(
+            Floatingˉshape,
+            Expression.Numericˉvalue,
+            Expression.Numericˉhigh,
+            false
+        );
+    }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Boolean {
         var Boolean: u32 = 0u32;
         if Expression.Booleanˉvalue { Boolean = 1u32; }
@@ -2640,6 +2652,17 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             );
         if Operand.Status != Compilerˉsourceˉsymbolˉstatus.Valid { return Operand; }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+            if Operand.Shape == 14u32 {
+                return Compilerˉsourceˉsymbolsˉconstantˉsuccessˉwide(
+                    14u32, Operand.Magnitude ^ 2147483648u32, 0u32, false
+                );
+            }
+            if Operand.Shape == 15u32 {
+                return Compilerˉsourceˉsymbolsˉconstantˉsuccessˉwide(
+                    15u32, Operand.Magnitude,
+                    Operand.High ^ 2147483648u32, false
+                );
+            }
             if !Compilerˉsourceˉsymbolsˉconstantˉshapeˉisˉsigned(Operand.Shape) {
                 return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
                     Compilerˉsourceˉsymbolˉstatus.Invalidˉconstantˉinitializer,

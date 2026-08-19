@@ -1,0 +1,39 @@
+#!wv/1 en@1
+module Languageˉoneˉfloatingˉprogram;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn F32ˉworks() -> bool {
+    let Sum: f32 = 0x1.0p+0f32 + 0x1.0p+1f32;
+    let Difference: f32 = 0x1.0p+2f32 - 0x1.0p+0f32;
+    let Product: f32 = 0x1.8p+0f32 * 0x1.0p+1f32;
+    let Quotient: f32 = 0x1.0p+2f32 / 0x1.0p+1f32;
+    let Negative: f32 = -0x1.cp+2f32;
+    let Positiveˉzero: f32 = 0x0p+0f32;
+    let Negativeˉzero: f32 = -0x0p+0f32;
+    let Infinity: f32 = 0x1.0p+0f32 / Positiveˉzero;
+    let Notˉaˉnumber: f32 = Infinity - Infinity;
+    return 0x1.4p+5f32 + 0x1.0p+1f32 == 0x1.5p+5f32 &&
+        Sum == 0x1.8p+1f32 && Difference == 0x1.8p+1f32 &&
+        Product == 0x1.8p+1f32 && Quotient == 0x1.0p+1f32 &&
+        Negative < Positiveˉzero && Negative <= -0x1.cp+2f32 &&
+        Sum > Negative && Sum >= 0x1.8p+1f32 && Sum != Negative &&
+        Positiveˉzero == Negativeˉzero && Notˉaˉnumber != Notˉaˉnumber &&
+        !(Notˉaˉnumber == Notˉaˉnumber);
+}
+
+fn F64ˉworks() -> bool {
+    let Sum: f64 = 0x1.0p+0f64 + 0x1.0p+1f64;
+    let Product: f64 = 0x1.8p+0f64 * 0x1.0p+1f64;
+    let Quotient: f64 = 0x1.0p+2f64 / 0x1.0p+1f64;
+    return -0x1.cp+2f64 == -0x1.cp+2f64 &&
+        Sum == 0x1.8p+1f64 && Product == 0x1.8p+1f64 &&
+        Quotient == 0x1.0p+1f64 && Sum > -0x1.cp+2f64;
+}
+
+export fn Main() -> i32 {
+    if !F32ˉworks() { return 1; }
+    if !F64ˉworks() { return 2; }
+    return 42;
+}

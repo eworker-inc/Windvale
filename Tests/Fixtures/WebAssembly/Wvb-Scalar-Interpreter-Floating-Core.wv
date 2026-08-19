@@ -1,0 +1,626 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉfloatingˉcore profile portable;
+
+record Floatingˉformat {
+    Precision: u32;
+    Fractionˉbits: u32;
+    Exponentˉbits: u32;
+    Bias: i32;
+    Minimumˉexponent: i32;
+    Maximumˉexponent: i32;
+    Signˉmask: u64;
+    Fractionˉmask: u64;
+    Exponentˉfieldˉmask: u64;
+    Infinity: u64;
+    Canonicalˉnan: u64;
+    Widthˉmask: u64;
+}
+
+record Floatingˉdecoded {
+    Sign: bool;
+    Exponent: i32;
+    Significand: u64;
+    Zero: bool;
+    Infinity: bool;
+    Nan: bool;
+    Magnitude: u64;
+}
+
+record Floatingˉwide {
+    Low: u64;
+    High: u64;
+}
+
+fn Format(Kind: u32) -> Floatingˉformat {
+    if Kind == 18u32 {
+        return Floatingˉformat(
+            24u32,
+            23u32,
+            8u32,
+            127,
+            -126,
+            127,
+            2147483648u64,
+            8388607u64,
+            255u64,
+            2139095040u64,
+            2143289344u64,
+            4294967295u64
+        );
+    }
+    return Floatingˉformat(
+        53u32,
+        52u32,
+        11u32,
+        1023,
+        -1022,
+        1023,
+        9223372036854775808u64,
+        4503599627370495u64,
+        2047u64,
+        9218868437227405312u64,
+        9221120237041090560u64,
+        18446744073709551615u64
+    );
+}
+
+fn U32ˉfromˉpositiveˉi32(Value: i32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉi32ˉlittle(Value), 0u32);
+}
+
+fn U32ˉfromˉlowˉu64(Value: u64) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Value), 0u32);
+}
+
+fn Rawˉfromˉwords(Low: u32, High: u32) -> u64 {
+    return Bytesˉreadˉu64ˉlittle(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Low),
+            Bytesˉfromˉu32ˉlittle(High)
+        ),
+        0u32
+    );
+}
+
+fn Rawˉbytes(Value: u64) -> bytes {
+    return Bytesˉfromˉu64ˉlittle(Value);
+}
+
+fn Shiftˉrightˉjam(Value: u64, Distance: u32) -> u64 {
+    if Distance == 0u32 { return Value; }
+    if Distance >= 64u32 {
+        if Value != 0u64 { return 1u64; }
+        return 0u64;
+    }
+    let Mask: u64 = (1u64 << Distance) - 1u64;
+    var Result: u64 = Value >> Distance;
+    if (Value & Mask) != 0u64 { Result = Result | 1u64; }
+    return Result;
+}
+
+fn Shiftˉwideˉrightˉjam(Value: Floatingˉwide, Distance: u32) -> u64 {
+    if Distance == 0u32 {
+        var Unshifted: u64 = Value.Low;
+        if Value.High != 0u64 { Unshifted = Unshifted | 1u64; }
+        return Unshifted;
+    }
+    if Distance < 64u32 {
+        var Shiftedˉlow: u64 = (Value.Low >> Distance) |
+            (Value.High << (64u32 - Distance));
+        let Shiftedˉmask: u64 = (1u64 << Distance) - 1u64;
+        if (Value.Low & Shiftedˉmask) != 0u64 {
+            Shiftedˉlow = Shiftedˉlow | 1u64;
+        }
+        return Shiftedˉlow;
+    }
+    if Distance == 64u32 {
+        var Wholeˉhigh: u64 = Value.High;
+        if Value.Low != 0u64 { Wholeˉhigh = Wholeˉhigh | 1u64; }
+        return Wholeˉhigh;
+    }
+    if Distance < 128u32 {
+        let Highˉdistance: u32 = Distance - 64u32;
+        var Partialˉhigh: u64 = Value.High >> Highˉdistance;
+        var Lost: bool = Value.Low != 0u64;
+        if Highˉdistance > 0u32 {
+            let Highˉmask: u64 = (1u64 << Highˉdistance) - 1u64;
+            if (Value.High & Highˉmask) != 0u64 { Lost = true; }
+        }
+        if Lost { Partialˉhigh = Partialˉhigh | 1u64; }
+        return Partialˉhigh;
+    }
+    if Value.Low != 0u64 || Value.High != 0u64 { return 1u64; }
+    return 0u64;
+}
+
+fn Multiplyˉwide(Left: u64, Right: u64) -> Floatingˉwide {
+    let Mask: u64 = 4294967295u64;
+    let Leftˉlow: u64 = Left & Mask;
+    let Leftˉhigh: u64 = Left >> 32u32;
+    let Rightˉlow: u64 = Right & Mask;
+    let Rightˉhigh: u64 = Right >> 32u32;
+    let Productˉzero: u64 = Leftˉlow * Rightˉlow;
+    let Productˉone: u64 = Leftˉlow * Rightˉhigh;
+    let Productˉtwo: u64 = Leftˉhigh * Rightˉlow;
+    let Productˉthree: u64 = Leftˉhigh * Rightˉhigh;
+    let Middle: u64 = (Productˉzero >> 32u32) +
+        (Productˉone & Mask) + (Productˉtwo & Mask);
+    let Upper: u64 = (Productˉone >> 32u32) +
+        (Productˉtwo >> 32u32) + (Productˉthree & Mask) +
+        (Middle >> 32u32);
+    let Low: u64 = (Productˉzero & Mask) | ((Middle & Mask) << 32u32);
+    let High: u64 = (Upper & Mask) |
+        ((Productˉthree >> 32u32) + (Upper >> 32u32)) << 32u32;
+    return Floatingˉwide(Low, High);
+}
+
+fn Decode(Rawˉinput: u64, Valueˉformat: Floatingˉformat) -> Floatingˉdecoded {
+    let Raw: u64 = Rawˉinput & Valueˉformat.Widthˉmask;
+    let Sign: bool = (Raw & Valueˉformat.Signˉmask) != 0u64;
+    let Magnitude: u64 = Raw & (Valueˉformat.Signˉmask - 1u64);
+    let Fraction: u64 = Magnitude & Valueˉformat.Fractionˉmask;
+    let Exponentˉfieldˉraw: u64 =
+        (Magnitude >> Valueˉformat.Fractionˉbits) &
+        Valueˉformat.Exponentˉfieldˉmask;
+    let Exponentˉfield: u32 = U32ˉfromˉlowˉu64(Exponentˉfieldˉraw);
+    let Maximumˉfield: u32 = U32ˉfromˉlowˉu64(
+        Valueˉformat.Exponentˉfieldˉmask
+    );
+    if Exponentˉfield == Maximumˉfield {
+        return Floatingˉdecoded(
+            Sign,
+            0,
+            0u64,
+            false,
+            Fraction == 0u64,
+            Fraction != 0u64,
+            Magnitude
+        );
+    }
+    if Exponentˉfield == 0u32 {
+        if Fraction == 0u64 {
+            return Floatingˉdecoded(
+                Sign, Valueˉformat.Minimumˉexponent, 0u64,
+                true, false, false, Magnitude
+            );
+        }
+        var Subnormalˉsignificand: u64 = Fraction;
+        var Subnormalˉexponent: i32 = Valueˉformat.Minimumˉexponent;
+        let Hidden: u64 = 1u64 << Valueˉformat.Fractionˉbits;
+        while Subnormalˉsignificand < Hidden {
+            Subnormalˉsignificand = Subnormalˉsignificand << 1u32;
+            Subnormalˉexponent = Subnormalˉexponent - 1;
+        }
+        return Floatingˉdecoded(
+            Sign, Subnormalˉexponent, Subnormalˉsignificand,
+            false, false, false, Magnitude
+        );
+    }
+    let Normalˉexponent: i32 = Bytesˉreadˉi32ˉlittle(
+        Bytesˉfromˉu32ˉlittle(Exponentˉfield), 0u32
+    ) - Valueˉformat.Bias;
+    return Floatingˉdecoded(
+        Sign,
+        Normalˉexponent,
+        (1u64 << Valueˉformat.Fractionˉbits) | Fraction,
+        false,
+        false,
+        false,
+        Magnitude
+    );
+}
+
+fn Signedˉraw(Sign: bool, Magnitude: u64, Valueˉformat: Floatingˉformat) -> u64 {
+    if Sign { return Valueˉformat.Signˉmask | Magnitude; }
+    return Magnitude;
+}
+
+fn Roundˉpack(
+    Sign: bool,
+    Extendedˉinput: u64,
+    Exponentˉinput: i32,
+    Valueˉformat: Floatingˉformat
+) -> u64 {
+    if Exponentˉinput > Valueˉformat.Maximumˉexponent {
+        return Signedˉraw(Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    var Extended: u64 = Extendedˉinput;
+    var Exponent: i32 = Exponentˉinput;
+    var Subnormal: bool = false;
+    if Exponent < Valueˉformat.Minimumˉexponent {
+        let Subnormalˉdistance: u32 = U32ˉfromˉpositiveˉi32(
+            Valueˉformat.Minimumˉexponent - Exponent
+        );
+        Extended = Shiftˉrightˉjam(Extended, Subnormalˉdistance);
+        Exponent = Valueˉformat.Minimumˉexponent;
+        Subnormal = true;
+    }
+    let Roundˉbits: u64 = Extended & 7u64;
+    var Main: u64 = Extended >> 3u32;
+    if Roundˉbits > 4u64 ||
+        (Roundˉbits == 4u64 && (Main & 1u64) != 0u64) {
+        Main = Main + 1u64;
+    }
+    if Main == 0u64 { return Signedˉraw(Sign, 0u64, Valueˉformat); }
+    let Hidden: u64 = 1u64 << Valueˉformat.Fractionˉbits;
+    if Subnormal && Main < Hidden {
+        return Signedˉraw(Sign, Main, Valueˉformat);
+    }
+    if Main == Hidden * 2u64 {
+        Main = Hidden;
+        Exponent = Exponent + 1;
+    }
+    if Exponent > Valueˉformat.Maximumˉexponent {
+        return Signedˉraw(Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    let Exponentˉfieldˉsigned: i32 = Exponent + Valueˉformat.Bias;
+    let Exponentˉfield: u32 = U32ˉfromˉpositiveˉi32(
+        Exponentˉfieldˉsigned
+    );
+    let Magnitude: u64 = (U64ˉfromˉu32(Exponentˉfield) <<
+        Valueˉformat.Fractionˉbits) | (Main - Hidden);
+    return Signedˉraw(Sign, Magnitude, Valueˉformat);
+}
+
+fn Add(
+    Leftˉraw: u64,
+    Rightˉrawˉinput: u64,
+    Subtract: bool,
+    Valueˉformat: Floatingˉformat
+) -> u64 {
+    var Rightˉraw: u64 = Rightˉrawˉinput;
+    if Subtract { Rightˉraw = Rightˉraw ^ Valueˉformat.Signˉmask; }
+    var Left: Floatingˉdecoded = Decode(Leftˉraw, Valueˉformat);
+    var Right: Floatingˉdecoded = Decode(Rightˉraw, Valueˉformat);
+    if Left.Nan || Right.Nan { return Valueˉformat.Canonicalˉnan; }
+    if Left.Infinity {
+        if Right.Infinity && Left.Sign != Right.Sign {
+            return Valueˉformat.Canonicalˉnan;
+        }
+        return Signedˉraw(Left.Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    if Right.Infinity {
+        return Signedˉraw(Right.Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    if Left.Zero && Right.Zero {
+        return Signedˉraw(Left.Sign && Right.Sign, 0u64, Valueˉformat);
+    }
+    if Left.Zero { return Rightˉraw & Valueˉformat.Widthˉmask; }
+    if Right.Zero { return Leftˉraw & Valueˉformat.Widthˉmask; }
+
+    if Left.Exponent < Right.Exponent ||
+        (Left.Exponent == Right.Exponent &&
+            Left.Significand < Right.Significand) {
+        let Swap: Floatingˉdecoded = Left;
+        Left = Right;
+        Right = Swap;
+    }
+    let Exponentˉdifference: u32 = U32ˉfromˉpositiveˉi32(
+        Left.Exponent - Right.Exponent
+    );
+    let Leftˉextended: u64 = Left.Significand << 3u32;
+    let Rightˉextended: u64 = Shiftˉrightˉjam(
+        Right.Significand << 3u32,
+        Exponentˉdifference
+    );
+    var Resultˉextended: u64 = 0u64;
+    var Resultˉexponent: i32 = Left.Exponent;
+    if Left.Sign == Right.Sign {
+        Resultˉextended = Leftˉextended + Rightˉextended;
+        if (Resultˉextended &
+            (1u64 << (Valueˉformat.Precision + 3u32))) != 0u64 {
+            Resultˉextended = Shiftˉrightˉjam(Resultˉextended, 1u32);
+            Resultˉexponent = Resultˉexponent + 1;
+        }
+        return Roundˉpack(
+            Left.Sign, Resultˉextended, Resultˉexponent, Valueˉformat
+        );
+    }
+    if Leftˉextended == Rightˉextended { return 0u64; }
+    Resultˉextended = Leftˉextended - Rightˉextended;
+    let Targetˉleading: u64 = 1u64 << (Valueˉformat.Precision + 2u32);
+    while Resultˉextended < Targetˉleading {
+        Resultˉextended = Resultˉextended << 1u32;
+        Resultˉexponent = Resultˉexponent - 1;
+    }
+    return Roundˉpack(
+        Left.Sign, Resultˉextended, Resultˉexponent, Valueˉformat
+    );
+}
+
+fn Multiply(
+    Leftˉraw: u64,
+    Rightˉraw: u64,
+    Valueˉformat: Floatingˉformat
+) -> u64 {
+    let Left: Floatingˉdecoded = Decode(Leftˉraw, Valueˉformat);
+    let Right: Floatingˉdecoded = Decode(Rightˉraw, Valueˉformat);
+    if Left.Nan || Right.Nan { return Valueˉformat.Canonicalˉnan; }
+    let Sign: bool = Left.Sign != Right.Sign;
+    if (Left.Infinity && Right.Zero) ||
+        (Right.Infinity && Left.Zero) {
+        return Valueˉformat.Canonicalˉnan;
+    }
+    if Left.Infinity || Right.Infinity {
+        return Signedˉraw(Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    if Left.Zero || Right.Zero {
+        return Signedˉraw(Sign, 0u64, Valueˉformat);
+    }
+    let Product: Floatingˉwide = Multiplyˉwide(
+        Left.Significand, Right.Significand
+    );
+    let Upperˉleadingˉindex: u32 = Valueˉformat.Precision * 2u32 - 1u32;
+    var Upperˉleading: bool = false;
+    if Upperˉleadingˉindex < 64u32 {
+        Upperˉleading = (Product.Low &
+            (1u64 << Upperˉleadingˉindex)) != 0u64;
+    } else {
+        Upperˉleading = (Product.High &
+            (1u64 << (Upperˉleadingˉindex - 64u32))) != 0u64;
+    }
+    var Shift: u32 = Valueˉformat.Precision - 4u32;
+    var Exponent: i32 = Left.Exponent + Right.Exponent;
+    if Upperˉleading {
+        Shift = Valueˉformat.Precision - 3u32;
+        Exponent = Exponent + 1;
+    }
+    let Extended: u64 = Shiftˉwideˉrightˉjam(Product, Shift);
+    return Roundˉpack(Sign, Extended, Exponent, Valueˉformat);
+}
+
+fn Divide(
+    Leftˉraw: u64,
+    Rightˉraw: u64,
+    Valueˉformat: Floatingˉformat
+) -> u64 {
+    let Left: Floatingˉdecoded = Decode(Leftˉraw, Valueˉformat);
+    let Right: Floatingˉdecoded = Decode(Rightˉraw, Valueˉformat);
+    if Left.Nan || Right.Nan { return Valueˉformat.Canonicalˉnan; }
+    let Sign: bool = Left.Sign != Right.Sign;
+    if (Left.Infinity && Right.Infinity) || (Left.Zero && Right.Zero) {
+        return Valueˉformat.Canonicalˉnan;
+    }
+    if Left.Infinity {
+        return Signedˉraw(Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    if Right.Infinity { return Signedˉraw(Sign, 0u64, Valueˉformat); }
+    if Right.Zero {
+        return Signedˉraw(Sign, Valueˉformat.Infinity, Valueˉformat);
+    }
+    if Left.Zero { return Signedˉraw(Sign, 0u64, Valueˉformat); }
+
+    var Numerator: u64 = Left.Significand;
+    let Denominator: u64 = Right.Significand;
+    var Exponent: i32 = Left.Exponent - Right.Exponent;
+    if Numerator < Denominator {
+        Numerator = Numerator << 1u32;
+        Exponent = Exponent - 1;
+    }
+    let Quotientˉbits: u32 = Valueˉformat.Precision + 3u32;
+    var Quotient: u64 = 0u64;
+    var Remainder: u64 = Numerator;
+    var Index: u32 = 0u32;
+    while Index < Quotientˉbits {
+        Quotient = Quotient << 1u32;
+        if Remainder >= Denominator {
+            Remainder = Remainder - Denominator;
+            Quotient = Quotient | 1u64;
+        }
+        if Index + 1u32 < Quotientˉbits {
+            Remainder = Remainder << 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if Remainder != 0u64 { Quotient = Quotient | 1u64; }
+    return Roundˉpack(Sign, Quotient, Exponent, Valueˉformat);
+}
+
+fn Compare(
+    Leftˉraw: u64,
+    Rightˉraw: u64,
+    Operation: u32,
+    Valueˉformat: Floatingˉformat
+) -> bool {
+    let Left: Floatingˉdecoded = Decode(Leftˉraw, Valueˉformat);
+    let Right: Floatingˉdecoded = Decode(Rightˉraw, Valueˉformat);
+    if Left.Nan || Right.Nan { return Operation == 7u32; }
+    var Equal: bool = Left.Magnitude == Right.Magnitude &&
+        Left.Sign == Right.Sign;
+    if Left.Zero && Right.Zero { Equal = true; }
+    if Operation == 6u32 { return Equal; }
+    if Operation == 7u32 { return !Equal; }
+    var Less: bool = false;
+    if !Equal {
+        if Left.Sign != Right.Sign {
+            Less = Left.Sign;
+        } else if Left.Sign {
+            Less = Left.Magnitude > Right.Magnitude;
+        } else {
+            Less = Left.Magnitude < Right.Magnitude;
+        }
+    }
+    if Operation == 8u32 { return Less; }
+    if Operation == 9u32 { return Less || Equal; }
+    if Operation == 10u32 { return !Less && !Equal; }
+    return !Less;
+}
+
+fn Evaluation(Status: u32, Value: u64) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Status), Rawˉbytes(Value));
+}
+
+export fn Evaluateˉfloatingˉraw(
+    Kind: u32,
+    Operation: u32,
+    Leftˉlow: u32,
+    Leftˉhigh: u32,
+    Rightˉlow: u32,
+    Rightˉhigh: u32
+) -> u64 {
+    let Valueˉformat: Floatingˉformat = Format(Kind);
+    let Left: u64 = Rawˉfromˉwords(Leftˉlow, Leftˉhigh) &
+        Valueˉformat.Widthˉmask;
+    let Right: u64 = Rawˉfromˉwords(Rightˉlow, Rightˉhigh) &
+        Valueˉformat.Widthˉmask;
+    var Value: u64 = 0u64;
+    if Operation == 1u32 {
+        Value = Add(Left, Right, false, Valueˉformat);
+    }
+    if Operation == 2u32 {
+        Value = Add(Left, Right, true, Valueˉformat);
+    }
+    if Operation == 3u32 { Value = Multiply(Left, Right, Valueˉformat); }
+    if Operation == 4u32 { Value = Divide(Left, Right, Valueˉformat); }
+    if Operation == 5u32 {
+        let Negated: Floatingˉdecoded = Decode(Left, Valueˉformat);
+        if Negated.Nan { Value = Valueˉformat.Canonicalˉnan; }
+        else { Value = Left ^ Valueˉformat.Signˉmask; }
+    }
+    if Operation >= 6u32 {
+        if Compare(Left, Right, Operation, Valueˉformat) { Value = 1u64; }
+    }
+    return Value;
+}
+
+export fn Evaluateˉfloating(
+    Kind: u32,
+    Operation: u32,
+    Leftˉlow: u32,
+    Leftˉhigh: u32,
+    Rightˉlow: u32,
+    Rightˉhigh: u32
+) -> bytes {
+    if Kind < 18u32 || Kind > 19u32 || Operation > 11u32 {
+        return Evaluation(3035u32, 0u64);
+    }
+    return Evaluation(
+        0u32,
+        Evaluateˉfloatingˉraw(
+            Kind,
+            Operation,
+            Leftˉlow,
+            Leftˉhigh,
+            Rightˉlow,
+            Rightˉhigh
+        )
+    );
+}
+
+export fn Scanˉfloating(
+    Module: bytes,
+    Offset: u32,
+    Remaining: u32,
+    Minor: u32
+) -> u32 {
+    if Minor != 14u32 || Remaining < 3u32 { return 0u32; }
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
+    let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
+    if Kind < 18u32 || Kind > 19u32 || Operation > 11u32 {
+        return 0u32;
+    }
+    if Operation == 0u32 {
+        var Width: u32 = 7u32;
+        if Kind == 19u32 { Width = 11u32; }
+        if Remaining < Width { return 0u32; }
+        return Width;
+    }
+    return 3u32;
+}
+
+fn Execution(Metadata: u8, Status: u32, Stack: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Metadata),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Status), Stack)
+    );
+}
+
+export fn Executeˉfloating(
+    Module: bytes,
+    Offset: u32,
+    Stack: bytes,
+    Stackˉdescriptorˉcount: u32,
+    Zeroˉvalue: bytes
+) -> bytes {
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
+    let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
+    if Operation == 0u32 {
+        let Low: u32 = Bytesˉreadˉu32ˉlittle(Module, Offset + 3u32);
+        var High: u32 = 0u32;
+        if Kind == 19u32 {
+            High = Bytesˉreadˉu32ˉlittle(Module, Offset + 7u32);
+            return Execution(
+                44u8,
+                0u32,
+                Bytesˉconcat(
+                    Stack,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Low),
+                        Bytesˉfromˉu32ˉlittle(High)
+                    )
+                )
+            );
+        }
+        return Execution(
+            28u8,
+            0u32,
+            Bytesˉconcat(
+                Stack,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Low),
+                    Bytesˉfromˉu32ˉlittle(High)
+                )
+            )
+        );
+    }
+
+    var Operands: u32 = 2u32;
+    if Operation == 5u32 { Operands = 1u32; }
+    if Stackˉdescriptorˉcount < Operands {
+        return Bytesˉslice(Stack, 0u32, 0u32);
+    }
+    var Remainingˉstack: bytes = Stack;
+    var Stackˉlength: u32 = Bytesˉlength(Remainingˉstack);
+    var Rightˉlow: u32 = 0u32;
+    var Rightˉhigh: u32 = 0u32;
+    var Leftˉlow: u32 = Bytesˉreadˉu32ˉlittle(
+        Remainingˉstack, Stackˉlength - 8u32
+    );
+    var Leftˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+        Remainingˉstack, Stackˉlength - 4u32
+    );
+    Remainingˉstack = Bytesˉslice(
+        Remainingˉstack, 0u32, Stackˉlength - 8u32
+    );
+    if Operands == 2u32 {
+        Rightˉlow = Leftˉlow;
+        Rightˉhigh = Leftˉhigh;
+        Stackˉlength = Bytesˉlength(Remainingˉstack);
+        Leftˉlow = Bytesˉreadˉu32ˉlittle(
+            Remainingˉstack, Stackˉlength - 8u32
+        );
+        Leftˉhigh = Bytesˉreadˉu32ˉlittle(
+            Remainingˉstack, Stackˉlength - 4u32
+        );
+        Remainingˉstack = Bytesˉslice(
+            Remainingˉstack, 0u32, Stackˉlength - 8u32
+        );
+    }
+    let Evaluated: bytes = Evaluateˉfloating(
+        Kind,
+        Operation,
+        Leftˉlow,
+        Leftˉhigh,
+        Rightˉlow,
+        Rightˉhigh
+    );
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Evaluated, 0u32);
+    if Status == 0u32 {
+        Remainingˉstack = Bytesˉconcat(
+            Remainingˉstack,
+            Bytesˉslice(Evaluated, 4u32, 8u32)
+        );
+    }
+    var Metadata: u8 = 14u8;
+    if Operands == 1u32 { Metadata = 13u8; }
+    return Execution(Metadata, Status, Remainingˉstack);
+}

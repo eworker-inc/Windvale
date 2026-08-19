@@ -4,7 +4,6 @@ import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
-import WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore as Runes;
 
 data Stackˉeffects: bytes = [
     0, 4, 4, 12, 4, 1, 4, 5, 4, 4, 12, 5, 15, 6, 6, 6,
@@ -15,15 +14,220 @@ data Stackˉeffects: bytes = [
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 4, 6, 6, 13, 13, 13,
     13, 14, 6, 5, 13, 13, 5, 14, 13, 13, 13, 13, 13, 13, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 4, 0, 0, 0, 0, 6, 6, 6, 0, 0, 0, 0, 0, 0, 6,
+    6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6,
-    5, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    5, 6, 6, 6, 6, 6, 5, 6, 6, 0, 0, 0, 0, 0, 13, 5,
+    4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
+
+fn Evaluateˉi32ˉbasic(Opcode: u32, Left: i32, Right: i32) -> i32 {
+    if Opcode == 16u32 { return Left + Right; }
+    if Opcode == 17u32 { return Left - Right; }
+    return Left * Right;
+}
+
+fn Evaluateˉu32ˉbasic(Opcode: u32, Left: u32, Right: u32) -> u32 {
+    if Opcode == 20u32 { return Left + Right; }
+    if Opcode == 21u32 { return Left - Right; }
+    return Left * Right;
+}
+
+fn Evaluateˉbytesˉread(
+    Heap: bytes,
+    Opcode: u32,
+    Sourceˉoffset: u32,
+    Sourceˉlength: u32,
+    Offset: u32
+) -> bytes {
+    var Width: u32 = 1u32;
+    if Opcode == 14u32 { Width = 2u32; }
+    if Opcode == 15u32 { Width = 4u32; }
+    if Offset > Sourceˉlength || Width > Sourceˉlength - Offset {
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(3008u32),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+    }
+    var Value: u32 = 0u32;
+    if Opcode == 13u32 {
+        Value = U32ˉfromˉu8(Bytesˉreadˉu8(Heap, Sourceˉoffset + Offset));
+    }
+    if Opcode == 14u32 {
+        Value = Bytesˉreadˉu16ˉlittle(Heap, Sourceˉoffset + Offset);
+    }
+    if Opcode == 15u32 {
+        Value = Bytesˉreadˉu32ˉlittle(Heap, Sourceˉoffset + Offset);
+    }
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
+}
+
+fn Evaluateˉu32ˉextended(
+    Opcode: u32,
+    Left: u32,
+    Right: u32
+) -> bytes {
+    if (Opcode == 161u32 || Opcode == 162u32) && Right == 0u32 {
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(3032u32),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+    }
+    if (Opcode == 177u32 || Opcode == 178u32) && Right >= 32u32 {
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(3033u32),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+    }
+    var Value: u32 = 0u32;
+    if Opcode == 161u32 { Value = Left / Right; }
+    if Opcode == 162u32 { Value = Left % Right; }
+    if Opcode == 173u32 { Value = Left & Right; }
+    if Opcode == 174u32 { Value = Left | Right; }
+    if Opcode == 175u32 { Value = Left ^ Right; }
+    if Opcode == 177u32 { Value = Left << Right; }
+    if Opcode == 178u32 { Value = Left >> Right; }
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
+}
+
+fn Isˉbaseˉnumeric(Opcode: u32) -> bool {
+    if Opcode >= 16u32 && Opcode <= 22u32 { return true; }
+    if Opcode == 161u32 || Opcode == 162u32 { return true; }
+    return Opcode >= 173u32 && Opcode <= 178u32;
+}
+
+fn Executeˉbaseˉnumeric(
+    Opcode: u32,
+    Inputˉstack: bytes,
+    Zeroˉvalue: bytes
+) -> bytes {
+    var Operands: u32 = 2u32;
+    if Opcode == 19u32 || Opcode == 176u32 { Operands = 1u32; }
+    if Bytesˉlength(Inputˉstack) < Operands * 8u32 {
+        return Bytesˉslice(Inputˉstack, 0u32, 0u32);
+    }
+    var Stack: bytes = Inputˉstack;
+    var Stackˉlength: u32 = Bytesˉlength(Stack);
+    let Rightˉraw: u32 = Bytesˉreadˉu32ˉlittle(
+        Stack, Stackˉlength - 8u32
+    );
+    Stack = Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32);
+    var Leftˉraw: u32 = Rightˉraw;
+    if Operands == 2u32 {
+        Stackˉlength = Bytesˉlength(Stack);
+        Leftˉraw = Bytesˉreadˉu32ˉlittle(Stack, Stackˉlength - 8u32);
+        Stack = Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32);
+    }
+    var Status: u32 = 0u32;
+    var Value: u32 = 0u32;
+    if Opcode >= 16u32 && Opcode <= 18u32 {
+        let Leftˉsigned: i32 = Bytesˉreadˉi32ˉlittle(
+            Bytesˉfromˉu32ˉlittle(Leftˉraw), 0u32
+        );
+        let Rightˉsigned: i32 = Bytesˉreadˉi32ˉlittle(
+            Bytesˉfromˉu32ˉlittle(Rightˉraw), 0u32
+        );
+        Value = Bytesˉreadˉu32ˉlittle(
+            Bytesˉfromˉi32ˉlittle(Evaluateˉi32ˉbasic(
+                Opcode, Leftˉsigned, Rightˉsigned
+            )),
+            0u32
+        );
+    }
+    if Opcode == 19u32 {
+        let Negatedˉsigned: i32 = Bytesˉreadˉi32ˉlittle(
+            Bytesˉfromˉu32ˉlittle(Leftˉraw), 0u32
+        );
+        Value = Bytesˉreadˉu32ˉlittle(
+            Bytesˉfromˉi32ˉlittle(-Negatedˉsigned), 0u32
+        );
+    }
+    if Opcode >= 20u32 && Opcode <= 22u32 {
+        Value = Evaluateˉu32ˉbasic(Opcode, Leftˉraw, Rightˉraw);
+    }
+    if Opcode == 161u32 || Opcode == 162u32 ||
+        (Opcode >= 173u32 && Opcode <= 175u32) ||
+        Opcode == 177u32 || Opcode == 178u32 {
+        let Extended: bytes = Evaluateˉu32ˉextended(
+            Opcode, Leftˉraw, Rightˉraw
+        );
+        Status = Bytesˉreadˉu32ˉlittle(Extended, 0u32);
+        Value = Bytesˉreadˉu32ˉlittle(Extended, 4u32);
+    }
+    if Opcode == 176u32 { Value = ~Leftˉraw; }
+    if Status == 0u32 {
+        Stack = Bytesˉconcat(
+            Stack,
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Zeroˉvalue)
+        );
+    }
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Status), Stack);
+}
+
+fn Executeˉbaseˉcomparison(
+    Opcode: u32,
+    Inputˉstack: bytes,
+    Zeroˉvalue: bytes
+) -> bytes {
+    var Operands: u32 = 2u32;
+    if Opcode == 40u32 { Operands = 1u32; }
+    if Bytesˉlength(Inputˉstack) < Operands * 8u32 {
+        return Bytesˉslice(Inputˉstack, 0u32, 0u32);
+    }
+    var Stack: bytes = Inputˉstack;
+    var Stackˉlength: u32 = Bytesˉlength(Stack);
+    let Rightˉraw: u32 = Bytesˉreadˉu32ˉlittle(
+        Stack, Stackˉlength - 8u32
+    );
+    Stack = Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32);
+    var Leftˉraw: u32 = Rightˉraw;
+    if Operands == 2u32 {
+        Stackˉlength = Bytesˉlength(Stack);
+        Leftˉraw = Bytesˉreadˉu32ˉlittle(Stack, Stackˉlength - 8u32);
+        Stack = Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32);
+    }
+    var Matches: bool = false;
+    if Opcode >= 32u32 && Opcode <= 37u32 {
+        let Leftˉsigned: i32 = Bytesˉreadˉi32ˉlittle(
+            Bytesˉfromˉu32ˉlittle(Leftˉraw), 0u32
+        );
+        let Rightˉsigned: i32 = Bytesˉreadˉi32ˉlittle(
+            Bytesˉfromˉu32ˉlittle(Rightˉraw), 0u32
+        );
+        if Opcode == 32u32 { Matches = Leftˉsigned == Rightˉsigned; }
+        if Opcode == 33u32 { Matches = Leftˉsigned != Rightˉsigned; }
+        if Opcode == 34u32 { Matches = Leftˉsigned < Rightˉsigned; }
+        if Opcode == 35u32 { Matches = Leftˉsigned <= Rightˉsigned; }
+        if Opcode == 36u32 { Matches = Leftˉsigned > Rightˉsigned; }
+        if Opcode == 37u32 { Matches = Leftˉsigned >= Rightˉsigned; }
+    }
+    if Opcode == 38u32 || Opcode == 96u32 || Opcode == 102u32 {
+        Matches = Leftˉraw == Rightˉraw;
+    }
+    if Opcode == 39u32 || Opcode == 97u32 || Opcode == 103u32 {
+        Matches = Leftˉraw != Rightˉraw;
+    }
+    if Opcode == 40u32 { Matches = Leftˉraw == 0u32; }
+    if Opcode == 98u32 { Matches = Leftˉraw < Rightˉraw; }
+    if Opcode == 99u32 { Matches = Leftˉraw <= Rightˉraw; }
+    if Opcode == 100u32 { Matches = Leftˉraw > Rightˉraw; }
+    if Opcode == 101u32 { Matches = Leftˉraw >= Rightˉraw; }
+    var Value: u32 = 0u32;
+    if Matches { Value = 1u32; }
+    return Bytesˉconcat(
+        Stack,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Zeroˉvalue)
+    );
+}
 
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
@@ -463,7 +667,7 @@ export fn Main(Request: bytes) -> bytes {
         var Heapˉallocationˉvalue: bytes = Invalid;
 
         if Payloadˉlength <= 22u32 {
-        if Payloadˉlength == 1u32 {
+        if Payloadˉlength == 1u32 || Payloadˉlength == 9u32 {
             Stack = Bytesˉconcat(
                 Stack,
                 Bytesˉconcat(
@@ -474,7 +678,7 @@ export fn Main(Request: bytes) -> bytes {
             Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             Mainˉfound = true;
         }
-        if Payloadˉlength == 2u32 {
+        if Payloadˉlength == 2u32 || Payloadˉlength == 8u32 {
             Stack = Bytesˉconcat(
                 Stack,
                 Bytesˉconcat(
@@ -485,30 +689,6 @@ export fn Main(Request: bytes) -> bytes {
                 )
             );
             Aggregateˉinstructions = Aggregateˉinstructions + 2u32;
-            Mainˉfound = true;
-        }
-        if Payloadˉlength == 8u32 {
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(
-                        Bytesˉreadˉu8(Module, Payload + 1u32)
-                    )),
-                    Zeroˉvalue
-                )
-            );
-            Aggregateˉinstructions = Aggregateˉinstructions + 2u32;
-            Mainˉfound = true;
-        }
-        if Payloadˉlength == 9u32 {
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉslice(Module, Payload + 1u32, 4u32),
-                    Zeroˉvalue
-                )
-            );
-            Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             Mainˉfound = true;
         }
 
@@ -1013,273 +1193,42 @@ export fn Main(Request: bytes) -> bytes {
                         Bytesˉfromˉu32ˉlittle(Bytesˉreadˉsourceˉlength)
                     )
                 );
-                var Bytesˉreadˉwidth: u32 = 1u32;
-                if Payloadˉlength == 14u32 { Bytesˉreadˉwidth = 2u32; }
-                if Payloadˉlength == 15u32 { Bytesˉreadˉwidth = 4u32; }
-                var Bytesˉreadˉvalid: bool = true;
-                if Bytesˉreadˉoffset > Bytesˉreadˉsourceˉlength {
-                    Bytesˉreadˉvalid = false;
-                } else {
-                    if Bytesˉreadˉwidth
-                        > Bytesˉreadˉsourceˉlength - Bytesˉreadˉoffset {
-                        Bytesˉreadˉvalid = false;
-                    }
-                }
-                if Bytesˉreadˉvalid {
-                    var Bytesˉreadˉresult: u32 = 0u32;
-                    if Payloadˉlength == 13u32 {
-                        Bytesˉreadˉresult = U32ˉfromˉu8(Bytesˉreadˉu8(
-                            Heap,
-                            Bytesˉreadˉsourceˉoffset + Bytesˉreadˉoffset
-                        ));
-                    }
-                    if Payloadˉlength == 14u32 {
-                        Bytesˉreadˉresult = Bytesˉreadˉu16ˉlittle(
-                            Heap,
-                            Bytesˉreadˉsourceˉoffset + Bytesˉreadˉoffset
-                        );
-                    }
-                    if Payloadˉlength == 15u32 {
-                        Bytesˉreadˉresult = Bytesˉreadˉu32ˉlittle(
-                            Heap,
-                            Bytesˉreadˉsourceˉoffset + Bytesˉreadˉoffset
-                        );
-                    }
+                let Bytesˉreadˉevaluation: bytes = Evaluateˉbytesˉread(
+                    Heap,
+                    Payloadˉlength,
+                    Bytesˉreadˉsourceˉoffset,
+                    Bytesˉreadˉsourceˉlength,
+                    Bytesˉreadˉoffset
+                );
+                Sectionˉkind = Bytesˉreadˉu32ˉlittle(
+                    Bytesˉreadˉevaluation, 0u32
+                );
+                if Sectionˉkind == 0u32 {
                     Stack = Bytesˉconcat(
                         Stack,
                         Bytesˉconcat(
-                            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉresult),
+                            Bytesˉslice(Bytesˉreadˉevaluation, 4u32, 4u32),
                             Zeroˉvalue
                         )
                     );
-                } else {
-                    Sectionˉkind = 3008u32;
                 }
                 Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
                 Mainˉfound = true;
             }
         }
 
-        if Payloadˉlength >= 16u32 {
-            if Payloadˉlength <= 18u32 {
-                var I32ˉbinaryˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let I32ˉbinaryˉright: i32 = Bytesˉreadˉi32ˉlittle(
-                    Stack,
-                    I32ˉbinaryˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    I32ˉbinaryˉstackˉlength - 8u32
-                );
-                I32ˉbinaryˉstackˉlength = Bytesˉlength(Stack);
-                let I32ˉbinaryˉleft: i32 = Bytesˉreadˉi32ˉlittle(
-                    Stack,
-                    I32ˉbinaryˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    I32ˉbinaryˉstackˉlength - 8u32
-                );
-                var I32ˉbinaryˉresult: i32 = 0;
-                if Payloadˉlength == 16u32 {
-                    I32ˉbinaryˉresult = I32ˉbinaryˉleft + I32ˉbinaryˉright;
-                }
-                if Payloadˉlength == 17u32 {
-                    I32ˉbinaryˉresult = I32ˉbinaryˉleft - I32ˉbinaryˉright;
-                }
-                if Payloadˉlength == 18u32 {
-                    I32ˉbinaryˉresult = I32ˉbinaryˉleft * I32ˉbinaryˉright;
-                }
-                Stack = Bytesˉconcat(
-                    Stack,
-                    Bytesˉconcat(
-                        Bytesˉfromˉi32ˉlittle(I32ˉbinaryˉresult),
-                        Zeroˉvalue
-                    )
-                );
-                Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-                Mainˉfound = true;
-            }
-        }
-        if Payloadˉlength == 19u32 {
-            let I32ˉnegateˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let I32ˉnegateˉvalue: i32 = Bytesˉreadˉi32ˉlittle(
-                Stack,
-                I32ˉnegateˉstackˉlength - 8u32
+        if Isˉbaseˉnumeric(Payloadˉlength) {
+            let Baseˉnumericˉresult: bytes = Executeˉbaseˉnumeric(
+                Payloadˉlength, Stack, Zeroˉvalue
+            );
+            if Bytesˉlength(Baseˉnumericˉresult) < 4u32 { return Invalid; }
+            Sectionˉkind = Bytesˉreadˉu32ˉlittle(
+                Baseˉnumericˉresult, 0u32
             );
             Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                I32ˉnegateˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉfromˉi32ˉlittle(-I32ˉnegateˉvalue),
-                    Zeroˉvalue
-                )
-            );
-            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            Mainˉfound = true;
-        }
-        if Payloadˉlength >= 20u32 {
-            if Payloadˉlength <= 22u32 {
-                var U32ˉbinaryˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let U32ˉbinaryˉright: u32 = Bytesˉreadˉu32ˉlittle(
-                    Stack,
-                    U32ˉbinaryˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    U32ˉbinaryˉstackˉlength - 8u32
-                );
-                U32ˉbinaryˉstackˉlength = Bytesˉlength(Stack);
-                let U32ˉbinaryˉleft: u32 = Bytesˉreadˉu32ˉlittle(
-                    Stack,
-                    U32ˉbinaryˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    U32ˉbinaryˉstackˉlength - 8u32
-                );
-                var U32ˉbinaryˉresult: u32 = 0u32;
-                if Payloadˉlength == 20u32 {
-                    U32ˉbinaryˉresult = U32ˉbinaryˉleft + U32ˉbinaryˉright;
-                }
-                if Payloadˉlength == 21u32 {
-                    U32ˉbinaryˉresult = U32ˉbinaryˉleft - U32ˉbinaryˉright;
-                }
-                if Payloadˉlength == 22u32 {
-                    U32ˉbinaryˉresult = U32ˉbinaryˉleft * U32ˉbinaryˉright;
-                }
-                Stack = Bytesˉconcat(
-                    Stack,
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(U32ˉbinaryˉresult),
-                        Zeroˉvalue
-                    )
-                );
-                Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-                Mainˉfound = true;
-            }
-        }
-
-        var Isˉu32ˉextendedˉbinary: bool = false;
-        if Payloadˉlength == 161u32 { Isˉu32ˉextendedˉbinary = true; }
-        if Payloadˉlength == 162u32 { Isˉu32ˉextendedˉbinary = true; }
-        if Payloadˉlength >= 173u32 {
-            if Payloadˉlength <= 175u32 { Isˉu32ˉextendedˉbinary = true; }
-        }
-        if Payloadˉlength == 177u32 { Isˉu32ˉextendedˉbinary = true; }
-        if Payloadˉlength == 178u32 { Isˉu32ˉextendedˉbinary = true; }
-        if Isˉu32ˉextendedˉbinary {
-            var U32ˉextendedˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let U32ˉextendedˉright: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                U32ˉextendedˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                U32ˉextendedˉstackˉlength - 8u32
-            );
-            U32ˉextendedˉstackˉlength = Bytesˉlength(Stack);
-            let U32ˉextendedˉleft: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                U32ˉextendedˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                U32ˉextendedˉstackˉlength - 8u32
-            );
-            var U32ˉextendedˉvalid: bool = true;
-            if Payloadˉlength == 161u32 {
-                if U32ˉextendedˉright == 0u32 {
-                    Sectionˉkind = 3032u32;
-                    U32ˉextendedˉvalid = false;
-                }
-            }
-            if Payloadˉlength == 162u32 {
-                if U32ˉextendedˉright == 0u32 {
-                    Sectionˉkind = 3032u32;
-                    U32ˉextendedˉvalid = false;
-                }
-            }
-            if Payloadˉlength == 177u32 {
-                if U32ˉextendedˉright >= 32u32 {
-                    Sectionˉkind = 3033u32;
-                    U32ˉextendedˉvalid = false;
-                }
-            }
-            if Payloadˉlength == 178u32 {
-                if U32ˉextendedˉright >= 32u32 {
-                    Sectionˉkind = 3033u32;
-                    U32ˉextendedˉvalid = false;
-                }
-            }
-            if U32ˉextendedˉvalid {
-                var U32ˉextendedˉresult: u32 = 0u32;
-                if Payloadˉlength == 161u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        / U32ˉextendedˉright;
-                }
-                if Payloadˉlength == 162u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        % U32ˉextendedˉright;
-                }
-                if Payloadˉlength == 173u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        & U32ˉextendedˉright;
-                }
-                if Payloadˉlength == 174u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        | U32ˉextendedˉright;
-                }
-                if Payloadˉlength == 175u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        ^ U32ˉextendedˉright;
-                }
-                if Payloadˉlength == 177u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        << U32ˉextendedˉright;
-                }
-                if Payloadˉlength == 178u32 {
-                    U32ˉextendedˉresult = U32ˉextendedˉleft
-                        >> U32ˉextendedˉright;
-                }
-                Stack = Bytesˉconcat(
-                    Stack,
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(U32ˉextendedˉresult),
-                        Zeroˉvalue
-                    )
-                );
-            }
-            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            Mainˉfound = true;
-        }
-        if Payloadˉlength == 176u32 {
-            let U32ˉnotˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let U32ˉnotˉvalue: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                U32ˉnotˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                U32ˉnotˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(~U32ˉnotˉvalue),
-                    Zeroˉvalue
-                )
+                Baseˉnumericˉresult,
+                4u32,
+                Bytesˉlength(Baseˉnumericˉresult) - 4u32
             );
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
@@ -1287,233 +1236,24 @@ export fn Main(Request: bytes) -> bytes {
         }
 
         else {
-        if Payloadˉlength >= 32u32 {
-        if Payloadˉlength <= 40u32 {
-        if Payloadˉlength <= 37u32 {
-                var I32ˉcompareˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let I32ˉcompareˉright: i32 = Bytesˉreadˉi32ˉlittle(
-                    Stack,
-                    I32ˉcompareˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    I32ˉcompareˉstackˉlength - 8u32
-                );
-                I32ˉcompareˉstackˉlength = Bytesˉlength(Stack);
-                let I32ˉcompareˉleft: i32 = Bytesˉreadˉi32ˉlittle(
-                    Stack,
-                    I32ˉcompareˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    I32ˉcompareˉstackˉlength - 8u32
-                );
-                var I32ˉcomparisonˉmatches: bool = false;
-                if Payloadˉlength == 32u32 {
-                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
-                        == I32ˉcompareˉright;
-                }
-                if Payloadˉlength == 33u32 {
-                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
-                        != I32ˉcompareˉright;
-                }
-                if Payloadˉlength == 34u32 {
-                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
-                        < I32ˉcompareˉright;
-                }
-                if Payloadˉlength == 35u32 {
-                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
-                        <= I32ˉcompareˉright;
-                }
-                if Payloadˉlength == 36u32 {
-                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
-                        > I32ˉcompareˉright;
-                }
-                if Payloadˉlength == 37u32 {
-                    I32ˉcomparisonˉmatches = I32ˉcompareˉleft
-                        >= I32ˉcompareˉright;
-                }
-                var I32ˉcomparisonˉflag: u32 = 0u32;
-                if I32ˉcomparisonˉmatches {
-                    I32ˉcomparisonˉflag = 1u32;
-                }
-                Stack = Bytesˉconcat(
-                    Stack,
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(I32ˉcomparisonˉflag),
-                        Zeroˉvalue
-                    )
-                );
-                Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-                Mainˉfound = true;
-        }
-        if Payloadˉlength == 38u32 {
-            var Boolˉequalˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let Boolˉequalˉright: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                Boolˉequalˉstackˉlength - 8u32
+        if Payloadˉlength >= 32u32 && Payloadˉlength <= 40u32 {
+            Stack = Executeˉbaseˉcomparison(
+                Payloadˉlength, Stack, Zeroˉvalue
             );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                Boolˉequalˉstackˉlength - 8u32
-            );
-            Boolˉequalˉstackˉlength = Bytesˉlength(Stack);
-            let Boolˉequalˉleft: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                Boolˉequalˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                Boolˉequalˉstackˉlength - 8u32
-            );
-            var Boolˉequalˉflag: u32 = 0u32;
-            if Boolˉequalˉleft == Boolˉequalˉright {
-                Boolˉequalˉflag = 1u32;
-            }
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Boolˉequalˉflag),
-                    Zeroˉvalue
-                )
-            );
+            if Bytesˉlength(Stack) == 0u32 { return Invalid; }
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
-        }
-        if Payloadˉlength == 39u32 {
-            var Boolˉnotˉequalˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let Boolˉnotˉequalˉright: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                Boolˉnotˉequalˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                Boolˉnotˉequalˉstackˉlength - 8u32
-            );
-            Boolˉnotˉequalˉstackˉlength = Bytesˉlength(Stack);
-            let Boolˉnotˉequalˉleft: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                Boolˉnotˉequalˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                Boolˉnotˉequalˉstackˉlength - 8u32
-            );
-            var Boolˉnotˉequalˉflag: u32 = 0u32;
-            if Boolˉnotˉequalˉleft != Boolˉnotˉequalˉright {
-                Boolˉnotˉequalˉflag = 1u32;
-            }
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Boolˉnotˉequalˉflag),
-                    Zeroˉvalue
-                )
-            );
-            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            Mainˉfound = true;
-        }
-        if Payloadˉlength == 40u32 {
-            let Boolˉnotˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let Boolˉnotˉvalue: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                Boolˉnotˉstackˉlength - 8u32
-            );
-            Stack = Bytesˉslice(
-                Stack,
-                0u32,
-                Boolˉnotˉstackˉlength - 8u32
-            );
-            var Boolˉnotˉflag: u32 = 0u32;
-            if Boolˉnotˉvalue == 0u32 { Boolˉnotˉflag = 1u32; }
-            Stack = Bytesˉconcat(
-                Stack,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Boolˉnotˉflag),
-                    Zeroˉvalue
-                )
-            );
-            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            Mainˉfound = true;
-        }
-        }
         }
 
         if Payloadˉlength >= 96u32 {
         if Payloadˉlength <= 125u32 {
         if Payloadˉlength <= 103u32 {
-                var U32ˉcompareˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let U32ˉcompareˉright: u32 = Bytesˉreadˉu32ˉlittle(
-                    Stack,
-                    U32ˉcompareˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    U32ˉcompareˉstackˉlength - 8u32
-                );
-                U32ˉcompareˉstackˉlength = Bytesˉlength(Stack);
-                let U32ˉcompareˉleft: u32 = Bytesˉreadˉu32ˉlittle(
-                    Stack,
-                    U32ˉcompareˉstackˉlength - 8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    U32ˉcompareˉstackˉlength - 8u32
-                );
-                var U32ˉcomparisonˉmatches: bool = false;
-                if Payloadˉlength == 96u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        == U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 97u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        != U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 98u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        < U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 99u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        <= U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 100u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        > U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 101u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        >= U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 102u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        == U32ˉcompareˉright;
-                }
-                if Payloadˉlength == 103u32 {
-                    U32ˉcomparisonˉmatches = U32ˉcompareˉleft
-                        != U32ˉcompareˉright;
-                }
-                var U32ˉcomparisonˉflag: u32 = 0u32;
-                if U32ˉcomparisonˉmatches {
-                    U32ˉcomparisonˉflag = 1u32;
-                }
-                Stack = Bytesˉconcat(
-                    Stack,
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(U32ˉcomparisonˉflag),
-                        Zeroˉvalue
-                    )
-                );
-                Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-                Mainˉfound = true;
+            Stack = Executeˉbaseˉcomparison(
+                Payloadˉlength, Stack, Zeroˉvalue
+            );
+            if Bytesˉlength(Stack) == 0u32 { return Invalid; }
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            Mainˉfound = true;
         }
 
         if Payloadˉlength == 104u32 {
@@ -3038,49 +2778,87 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 192u32 {
-            let Fixedˉexecutionˉresult: bytes = Fixed.Executeˉfixedˉinteger(
-                    Module, Payload, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
-                );
-            if Bytesˉlength(Fixedˉexecutionˉresult) < 5u32 { return Invalid; }
-            let Fixedˉmetadata: u32 = U32ˉfromˉu8(
-                Bytesˉreadˉu8(Fixedˉexecutionˉresult, 0u32)
+        if Payloadˉlength >= 192u32 && Payloadˉlength <= 194u32 {
+            let Scalarˉexecutionˉresult: bytes = Fixed.Executeˉscalar(
+                Module,
+                Payload,
+                Stack,
+                Stackˉdescriptorˉcount,
+                Zeroˉvalue
+            );
+            if Bytesˉlength(Scalarˉexecutionˉresult) < 5u32 {
+                return Invalid;
+            }
+            let Scalarˉmetadata: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Scalarˉexecutionˉresult, 0u32)
             );
             Sectionˉkind = Bytesˉreadˉu32ˉlittle(
-                Fixedˉexecutionˉresult, 1u32
+                Scalarˉexecutionˉresult,
+                1u32
             );
             Stack = Bytesˉslice(
-                Fixedˉexecutionˉresult,
+                Scalarˉexecutionˉresult,
                 5u32,
-                Bytesˉlength(Fixedˉexecutionˉresult) - 5u32
+                Bytesˉlength(Scalarˉexecutionˉresult) - 5u32
             );
-            Stackˉconsumed = Fixedˉmetadata & 3u32;
-            Stackˉproduced = true;
+            Stackˉconsumed = Scalarˉmetadata & 3u32;
             Aggregateˉinstructions = Aggregateˉinstructions +
-                (Fixedˉmetadata >> 2u32);
+                (Scalarˉmetadata >> 2u32);
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 193u32 {
-            let Runeˉexecutionˉresult: bytes = Runes.Executeˉrune(
-                    Module, Payload, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
-                );
-            if Bytesˉlength(Runeˉexecutionˉresult) < 5u32 { return Invalid; }
-            let Runeˉmetadata: u32 = U32ˉfromˉu8(
-                Bytesˉreadˉu8(Runeˉexecutionˉresult, 0u32)
+        var Isˉu64ˉinstruction: bool = Payloadˉlength == 129u32;
+        if Payloadˉlength >= 134u32 && Payloadˉlength <= 136u32 {
+            Isˉu64ˉinstruction = true;
+        }
+        if Payloadˉlength >= 143u32 && Payloadˉlength <= 148u32 {
+            Isˉu64ˉinstruction = true;
+        }
+        if Payloadˉlength >= 179u32 && Payloadˉlength <= 184u32 {
+            Isˉu64ˉinstruction = true;
+        }
+        if Payloadˉlength == 191u32 { Isˉu64ˉinstruction = true; }
+        if Isˉu64ˉinstruction {
+            let U64ˉexecutionˉresult: bytes = Fixed.Executeˉscalar(
+                Module,
+                Payload,
+                Stack,
+                Stackˉdescriptorˉcount,
+                Zeroˉvalue
+            );
+            if Bytesˉlength(U64ˉexecutionˉresult) < 5u32 { return Invalid; }
+            let U64ˉmetadata: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(U64ˉexecutionˉresult, 0u32)
             );
             Sectionˉkind = Bytesˉreadˉu32ˉlittle(
-                Runeˉexecutionˉresult, 1u32
+                U64ˉexecutionˉresult,
+                1u32
             );
             Stack = Bytesˉslice(
-                Runeˉexecutionˉresult,
+                U64ˉexecutionˉresult,
                 5u32,
-                Bytesˉlength(Runeˉexecutionˉresult) - 5u32
+                Bytesˉlength(U64ˉexecutionˉresult) - 5u32
             );
-            Stackˉconsumed = Runeˉmetadata & 3u32;
-            Stackˉproduced = true;
+            Stackˉconsumed = U64ˉmetadata & 3u32;
             Aggregateˉinstructions = Aggregateˉinstructions +
-                (Runeˉmetadata >> 2u32);
+                (U64ˉmetadata >> 2u32);
+            Mainˉfound = true;
+        }
+
+        if Payloadˉlength == 190u32 {
+            let U64ˉbytesˉstackˉlength: u32 = Bytesˉlength(Stack);
+            Heapˉallocationˉrequested = true;
+            Heapˉallocationˉvalue = Bytesˉslice(
+                Stack,
+                U64ˉbytesˉstackˉlength - 8u32,
+                8u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                U64ˉbytesˉstackˉlength - 8u32
+            );
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
         }
 

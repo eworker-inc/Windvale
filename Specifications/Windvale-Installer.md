@@ -82,10 +82,10 @@ directory, an input outside `Distribution/Installers/`, or an existing output.
 
 | Channel | Target | Artifact | Bytes | SHA-256 | Payload manifest SHA-256 |
 | --- | --- | --- | ---: | --- | --- |
-| development | Windows x64 | `windvale-0.2.0-dev.1-windows-x64.zip` | 4,689,548 | `e0e991559faa6bb9b374c05839fc7b0f8a01845f8e9e182cf98d9ed3713382bf` | `e55f22a343aa934cb8297a5c7c30b1adf0ab4ea34eaa4fc219fd6b89fbf5d8de` |
-| development | Linux x64 | `windvale-0.2.0-dev.1-linux-x64.tar.gz` | 4,685,130 | `40ff329f196315af53bb558bcb817931f59e2ec7faee6c1d1c0f28e1537c61d7` | `5b50da6015ae0d48c3e350b87c8abbda9cf5a509e5c5a0c22dfaab8d8d33120d` |
-| stable | Windows x64 | `windvale-0.1.0-windows-x64.zip` | 38,962,183 | `bbf410e861185614483bb51ed7d6db8212999a8e95a09b8391e65785fb9813e9` | `c86c86ffb2a9a5f909a25e1a79e824c841c229659fb6633b1304024ed5c8b9a8` |
-| stable | Linux x64 | `windvale-0.1.0-linux-x64.tar.gz` | 38,974,385 | `4563b1b196651d25bebf8040221daa469df8cbb0f8711ef3f5e6cc937528dd84` | `57b3406a8706e5deed68deee005a6321a9ca109a8d01650dfb5f00fa6a3335cc` |
+| development | Windows x64 | `windvale-0.2.0-dev.1-windows-x64.zip` | 4,766,049 | `ffb023fb76a0ce60657819bb35e59ab7a0924c11dfe8ac54bd6b65c7f6bc72a1` | `b841f13809d7c9feac917d67895427b8c7bc5ed6b57283110a0b415487f81606` |
+| development | Linux x64 | `windvale-0.2.0-dev.1-linux-x64.tar.gz` | 4,761,772 | `fa4f8f189e53a72591ac0c67f6b1121e1e9af2cda8fb63da4375be1224de626d` | `4db4b44446138d0f9219c9f299f86d2608afb218a04addf430b50f33127035a8` |
+| stable | Windows x64 | `windvale-0.1.0-windows-x64.zip` | 39,397,383 | `845ecbf153eac44036080cebab7a7ce5c63ded5cd739bf24c37d5bc183039bef` | `84c5ee9b0ccdadc5144eabc0c3c9a0588a7bc51ccba08ec8bb8dd6e50dbd086f` |
+| stable | Linux x64 | `windvale-0.1.0-linux-x64.tar.gz` | 39,408,596 | `c79f71a3072192659f4ababc02fe5406071973491db0269a9a595d3ca874575d` | `3b3b2ebe1a6bfd9260ba63575538856a0f1bad5b7234e4eda48cd421b19fa7f3` |
 
 The stable ZIP uses stored entries. Its Linux peer uses deterministic
 uncompressed DEFLATE blocks. The development successor instead uses raw zlib

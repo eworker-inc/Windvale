@@ -1,6 +1,7 @@
 module Wvbˉrunnerˉtool profile hosted;
 
 import WebAssemblyˉwvbˉscalarˉinterpreter as Interpreter;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -255,10 +256,17 @@ export fn Main() -> i32 {
         Reportˉfailure(Status, Instructions);
         return 1;
     }
-
     console.write_line(Textˉconcat(
         "Result: ",
-        I32ˉformat(Bytesˉreadˉi32ˉlittle(Response, 16u32))
+        Textˉfromˉutf8(Formatting.Interpreterˉformatˉinteger(
+            Bytesˉconcat(
+                Bytesˉfromˉu8(1u8),
+                Bytesˉconcat(
+                    Bytesˉslice(Response, 16u32, 4u32),
+                    Bytesˉfromˉu32ˉlittle(0u32)
+                )
+            )
+        ))
     ));
     if Reportˉsteps {
         console.write_line(Textˉconcat(

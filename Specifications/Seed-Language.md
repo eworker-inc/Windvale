@@ -4,7 +4,7 @@
 
 This document specifies the source-language subset implemented by Windvale Seed. It is deliberately small and may break during early development. Through at least September 3, 2026, and until a named decision replaces the policy, superseded source and binary contracts require no backward parser, reader, alias, or migration layer; repository inputs and fixtures advance to the current contract together. Source is strict UTF-8. Identifiers are case-sensitive ASCII segments joined by U+02C9 and match `[A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*`. Official source follows [Windvale source naming conventions](Source-Naming.md).
 
-The Windvale-written compiler and current native WVB runner implement the scalar source and canonical WVB surface below, including `i64`, `u64`, `i8`, `i16`, `u16`, and `rune`. The retained Stage 0 recovery compiler remains a WVB 1.11 differential boundary and does not define the fixed-integer or rune extensions. Other native, WebAssembly, and Windvale OS consumers remain explicit narrower subsets until their separately verified lowering contracts advance.
+The Windvale-written compiler and current native WVB runner implement the scalar source and canonical WVB surface below, including `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64`. The retained Stage 0 recovery compiler remains a WVB 1.11 differential boundary and does not define the fixed-integer, rune, or floating-point extensions. Other native, WebAssembly, and Windvale OS consumers remain explicit narrower subsets until their separately verified lowering contracts advance.
 
 ## Module shape
 
@@ -15,7 +15,7 @@ module <Name> profile <portable|hosted|system>;
 import <Moduleˉname> as <Alias>;
 capability <qualified.name>;
 [export] data <Name>: <text|[i32]|bytes> = <literal>;
-[export] const <ALL_CAPS_NAME>: <integer|rune|bool|enum-type> = <constant-expression>;
+[export] const <ALL_CAPS_NAME>: <integer|floating|rune|bool|enum-type> = <constant-expression>;
 [export] record <Name> { <Field>: <value-type>; ... }
 [export] enum <Name> { <Member> = <nonnegative-i32>; ... }
 [export] variant <Name> { <Case>[(<Payload>: <value-type>)]; ... }
@@ -60,6 +60,8 @@ Every module must explicitly declare each catalog capability required anywhere i
 - `u16` is an unsigned 16-bit integer. Arithmetic overflow and underflow trap deterministically.
 - `u32` is an unsigned 32-bit integer used for byte offsets, lengths, and binary fields. Arithmetic overflow and underflow trap deterministically.
 - `u64` is an unsigned 64-bit integer for persistent identities, counters, and binary fields that exceed `u32`. Arithmetic overflow and underflow trap deterministically.
+- `f32` is an IEEE 754 binary32 value with deterministic round-to-nearest, ties-to-even arithmetic and canonical NaN results.
+- `f64` is an IEEE 754 binary64 value with deterministic round-to-nearest, ties-to-even arithmetic and canonical NaN results.
 - `rune` is one exact Unicode scalar value from `U+0000` through `U+10FFFF`, excluding surrogates. It is not text and has no implicit numeric representation.
 - `bool` contains only `true` or `false`.
 - `text` is immutable, valid Unicode stored canonically as UTF-8 in modules.
@@ -71,7 +73,7 @@ Every module must explicitly declare each catalog capability required anywhere i
 - `sequence<T, N>` is an immutable sequence of at most `N` values; `builder<T, N>` is its affine mutable construction state. `N` is 1 through 4095 and collections cannot directly contain collections.
 - `[i32]` is immutable module data. It is not a general runtime array type in Seed.
 
-Parameters and local variables may also carry an exact required root capability reference, and functions may return one. Capability references are freely copyable, shared, and non-owned, but cannot be record fields, variant payloads, collection elements, module data, or constants. A builder is restricted to one explicitly typed mutable local and cannot cross a call, return, record, variant, data, constant, or assignment boundary. Module data may be `text`, `[i32]`, or `bytes`. Typed constants may be `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `rune`, `bool`, or a declared enum type.
+Parameters and local variables may also carry an exact required root capability reference, and functions may return one. Capability references are freely copyable, shared, and non-owned, but cannot be record fields, variant payloads, collection elements, module data, or constants. A builder is restricted to one explicitly typed mutable local and cannot cross a call, return, record, variant, data, constant, or assignment boundary. Module data may be `text`, `[i32]`, or `bytes`. Typed constants may be `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `rune`, `bool`, or a declared enum type.
 
 ## Declarations
 
@@ -176,6 +178,7 @@ Seed supports:
 - Decimal `u16` literals with a `u16` suffix, from `0u16` through `65535u16`
 - Decimal `u32` literals with a `u32` suffix, from `0u32` through `4294967295u32`
 - Decimal `u64` literals with a `u64` suffix, from `0u64` through `18446744073709551615u64`
+- Hexadecimal floating literals with a mandatory binary exponent and exact `f32` or `f64` suffix, such as `0x1.8p+1f32` or `0x1.0p-20f64`
 - `true` and `false`
 - String literals with `\"`, `\\`, `\n`, `\r`, `\t`, and `\uXXXX` escapes
 - Rune literals containing exactly one direct Unicode scalar, one admitted simple escape, or `\u{H}` with one through six hexadecimal digits
@@ -196,27 +199,27 @@ Seed supports:
 - Consuming builder publication: `freeze Builder`
 - Immutable sequence indexing and `length(Sequence)`
 - Parentheses
-- Unary `-` for `i8`, `i16`, `i32`, or `i64`, `!` for `bool`, and `~` for `u8`, `u16`, `u32`, or `u64`
-- `*`, `/`, `%`, `+`, and `-` on two values of the same `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, or `u64` type
+- Unary `-` for `i8`, `i16`, `i32`, `i64`, `f32`, or `f64`, `!` for `bool`, and `~` for `u8`, `u16`, `u32`, or `u64`
+- `*`, `/`, `+`, and `-` on two values of the same `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, `u64`, `f32`, or `f64` type; `%` is limited to those integer types
 - `&`, `|`, and `^` on two values of the same `u8`, `u16`, `u32`, or `u64` type
 - `<<` and `>>` on a `u8`, `u16`, `u32`, or `u64` value with a `u32` shift count
-- `<`, `<=`, `>`, and `>=` on two values of the same `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, or `u64` type
-- `==` and `!=` on two values of the same `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `rune`, `bool`, `text`, `bytes`, or nominal enum type
+- `<`, `<=`, `>`, and `>=` on two values of the same `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, `u64`, `f32`, or `f64` type
+- `==` and `!=` on two values of the same `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `rune`, `bool`, `text`, `bytes`, or nominal enum type
 - `&&` and `||` on two `bool` values
 
 From strongest to weakest, the implemented binary precedence families are `*`, `/`, `%`; `+`, `-`; `<<`, `>>`; `<`, `<=`, `>`, `>=`; `==`, `!=`; `&`; `^`; `|`; `&&`; then `||`. Unary operators and postfix calls, indexing, field access, and qualification bind more strongly. Binary operators are left-associative and operands are evaluated from left to right. `&&` evaluates its right operand only when the left operand is `true`; `||` evaluates its right operand only when the left operand is `false`. A skipped operand has no call, mutation, allocation, or trap behavior. Seed does not include truthiness or implicit conversions.
 
-Division and remainder trap on zero. Signed minimum divided or remaindered by `-1` also traps. Otherwise signed division truncates toward zero and remainder has the dividend's sign. Shift counts must be less than the left operand's fixed width or trap; right shift fills with zero and left shift discards high bits. Rune equality compares the one scalar value directly. Text equality is exact ordinal Unicode-scalar equality with no normalization or locale behavior. Bytes equality compares exact octets. Records, variants, sequences, builders, capabilities, resources, and functions have no general equality operator.
+Integer division and remainder trap on zero. Signed minimum divided or remaindered by `-1` also traps. Otherwise signed division truncates toward zero and remainder has the dividend's sign. Floating arithmetic follows IEEE 754 binary32 or binary64 with round-to-nearest, ties-to-even, signed zero, subnormals, and infinities; division by zero and invalid operations produce IEEE results rather than traps. Every produced NaN is the canonical quiet NaN for its type. Positive and negative zero compare equal. A comparison involving NaN is false except `!=`, which is true. Floating values have no remainder, bitwise, shift, truthiness, or implicit numeric-conversion operation. A hexadecimal floating literal has at least one whole hexadecimal digit, an optional dot followed by at least one fractional hexadecimal digit, mandatory `p` or `P`, an optional exponent sign, at least one decimal exponent digit, and a lowercase `f32` or `f64` suffix. The compiler rounds its exact mathematical value once to the named format using round-to-nearest, ties-to-even; decimal floating literals and an omitted suffix are rejected. Shift counts must be less than the left operand's fixed width or trap; right shift fills with zero and left shift discards high bits. Rune equality compares the one scalar value directly. Text equality is exact ordinal Unicode-scalar equality with no normalization or locale behavior. Bytes equality compares exact octets. Records, variants, sequences, builders, capabilities, resources, and functions have no general equality operator.
 
 A multiline comma-separated parameter list, call or positional-record argument list, named-record field list, or static-data array may retain one trailing comma after its final item. The comma does not create an empty item and does not affect declaration order, evaluation order, or emitted WVB.
 
 ## Typed constants
 
-A typed constant initializer may contain literals, members of declared enums, earlier constants in the same root module, parentheses, and the operators already admitted for those exact runtime value types. Evaluation is deterministic and checked. Boolean `&&` and `||` retain their runtime short-circuit order during constant evaluation, so an unreachable invalid, unresolved, or would-trap right operand is not evaluated. A forward or cyclic reference on an evaluated path, call, capability use, data read, allocation-bearing expression, target inspection, unsupported operator, type mismatch, or evaluation that would trap rejects compilation before WIR or WVB publication.
+A typed constant initializer may contain literals, members of declared enums, earlier constants in the same root module, parentheses, and the operators admitted below. Integer, Boolean, rune, and enum constants admit their exact supported operators. The first floating-point checkpoint guarantees hexadecimal `f32` and `f64` literals, earlier constants of the same type, parentheses, and unary `-`; compile-time floating arithmetic and comparison folding are not yet part of the portable source contract. Evaluation is deterministic and checked. Boolean `&&` and `||` retain their runtime short-circuit order during constant evaluation, so an unreachable invalid, unresolved, or would-trap right operand is not evaluated. A forward or cyclic reference on an evaluated path, call, capability use, data read, allocation-bearing expression, target inspection, unsupported operator, type mismatch, or evaluation that would trap rejects compilation before WIR or WVB publication.
 
 Constants are substituted as ordinary typed literal or enum operations. They do not create WVB data, locals, runtime exports, handles, or observable storage. `export const` is accepted so the source declaration need not change when module privacy and qualified constant imports arrive, but the current root-only composition slice does not publish a constant through the WVB Exports section.
 
-The Windvale-written compiler implements constants of every admitted scalar width. It lowers `i64` and `u64` constants to canonical WVB 1.11, `i8`, `i16`, and `u16` constants to the WVB 1.12 fixed-integer family, and rune constants to WVB 1.13, rejecting checked overflow, underflow, or a non-scalar before publication. The retained Stage 0 recovery compiler covers only its frozen WVB 1.11 surface.
+The Windvale-written compiler implements constants of every admitted scalar width. It lowers `i64` and `u64` constants to canonical WVB 1.11, `i8`, `i16`, and `u16` constants to the WVB 1.12 fixed-integer family, rune constants to WVB 1.13, and the guaranteed floating literal forms to WVB 1.14, rejecting checked overflow, underflow, or a non-scalar before publication. The retained Stage 0 recovery compiler covers only its frozen WVB 1.11 surface.
 
 Records are nominal rather than structural: separately declared record types are incompatible even when their fields have identical names and types. A named record literal must provide every declared field exactly once; unknown, duplicate, and missing fields reject compilation. Field expressions evaluate left to right in source order, then the compiler constructs the value in canonical field declaration order. Positional construction remains accepted during repository migration and evaluates in its declaration-order argument order. Construction creates an immutable value, field access returns the selected value, and Seed provides no field assignment or record equality. Record values can cross function boundaries and be stored in `let` or `var` locals; `var` permits replacing the whole value, not mutating a field.
 

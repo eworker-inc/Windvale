@@ -102,6 +102,7 @@ export enum Compilerˉtokenˉkind {
     Rune = 96;
     Base = 97;
     Runeˉliteral = 98;
+    Floatingˉliteral = 99;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -114,6 +115,8 @@ export enum Compilerˉnumericˉkind {
     I8 = 6;
     I16 = 7;
     U16 = 8;
+    F32 = 9;
+    F64 = 10;
 }
 
 export enum Compilerˉlexˉstatus {
@@ -132,6 +135,7 @@ export enum Compilerˉlexˉstatus {
     Tooˉmanyˉtokens = 12;
     Unterminatedˉrune = 13;
     Invalidˉrune = 14;
+    Invalidˉfloatingˉliteral = 15;
 }
 
 export record Compilerˉsourceˉtoken {
@@ -161,6 +165,45 @@ export record Compilerˉsourceˉscan {
     Endˉoffset: u32;
     Endˉline: u32;
     Endˉcolumn: u32;
+}
+
+record Compilerˉsourceˉsignedˉmagnitude {
+    Negative: bool;
+    Magnitude: u32;
+}
+
+record Compilerˉsourceˉfloatingˉbits {
+    Valid: bool;
+    Low: u32;
+    High: u32;
+}
+
+record Compilerˉsourceˉhexˉfloatingˉmantissa {
+    Valid: bool;
+    Cursor: u32;
+    Column: u32;
+    Digitsˉbefore: u32;
+    Leadingˉfound: bool;
+    Leadingˉindex: u32;
+    Leadingˉnibble: u32;
+    Accumulatedˉdigits: u32;
+    Accumulated: u64;
+    Sticky: bool;
+}
+
+record Compilerˉsourceˉhexˉfloatingˉexponent {
+    Valid: bool;
+    Cursor: u32;
+    Column: u32;
+    Negative: bool;
+    Magnitude: u32;
+}
+
+record Compilerˉsourceˉhexˉfloatingˉsuffix {
+    Valid: bool;
+    Cursor: u32;
+    Column: u32;
+    Kind: Compilerˉnumericˉkind;
 }
 
 export fn Compilerˉsourceˉutf8ˉlength(Input: bytes, Offset: u32) -> u32 {
@@ -597,6 +640,419 @@ fn Compilerˉsourceˉtokenˉmakeˉwide(
         Line, Column, Nextˉline, Nextˉcolumn,
         Numericˉkind, Numericˉvalue, Numericˉhigh,
         Failureˉoffset, Failureˉline, Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉsignedˉadd(
+    Left: Compilerˉsourceˉsignedˉmagnitude,
+    Right: Compilerˉsourceˉsignedˉmagnitude
+) -> Compilerˉsourceˉsignedˉmagnitude {
+    if Left.Negative == Right.Negative {
+        return Compilerˉsourceˉsignedˉmagnitude(
+            Left.Negative, Left.Magnitude + Right.Magnitude
+        );
+    }
+    if Left.Magnitude >= Right.Magnitude {
+        return Compilerˉsourceˉsignedˉmagnitude(
+            Left.Negative, Left.Magnitude - Right.Magnitude
+        );
+    }
+    return Compilerˉsourceˉsignedˉmagnitude(
+        Right.Negative, Right.Magnitude - Left.Magnitude
+    );
+}
+
+fn Compilerˉsourceˉfloatingˉshiftˉrightˉjam(
+    Value: u64,
+    Distance: u32,
+    Sticky: bool
+) -> u64 {
+    if Distance == 0u32 {
+        if Sticky { return Value | 1u64; }
+        return Value;
+    }
+    if Distance >= 64u32 {
+        if Value != 0u64 || Sticky { return 1u64; }
+        return 0u64;
+    }
+    let Mask: u64 = (1u64 << Distance) - 1u64;
+    var Result: u64 = Value >> Distance;
+    if (Value & Mask) != 0u64 || Sticky { Result = Result | 1u64; }
+    return Result;
+}
+
+fn Compilerˉsourceˉfloatingˉbitsˉfromˉraw(Raw: u64) -> Compilerˉsourceˉfloatingˉbits {
+    let Encoded: bytes = Bytesˉfromˉu64ˉlittle(Raw);
+    return Compilerˉsourceˉfloatingˉbits(
+        true,
+        Bytesˉreadˉu32ˉlittle(Encoded, 0u32),
+        Bytesˉreadˉu32ˉlittle(Encoded, 4u32)
+    );
+}
+
+fn Compilerˉsourceˉfloatingˉroundˉpack(
+    Extended: u64,
+    Exponent: Compilerˉsourceˉsignedˉmagnitude,
+    Precision: u32,
+    Bias: u32,
+    Minimumˉexponentˉmagnitude: u32,
+    Maximumˉexponent: u32,
+    Exponentˉbits: u32
+) -> Compilerˉsourceˉfloatingˉbits {
+    let Fractionˉbits: u32 = Precision - 1u32;
+    let Hidden: u64 = 1u64 << Fractionˉbits;
+    let Infiniteˉfield: u64 = (1u64 << Exponentˉbits) - 1u64;
+    let Infinite: u64 = Infiniteˉfield << Fractionˉbits;
+    if !Exponent.Negative && Exponent.Magnitude > Maximumˉexponent {
+        return Compilerˉsourceˉfloatingˉbitsˉfromˉraw(Infinite);
+    }
+
+    var Roundedˉextended: u64 = Extended;
+    var Subnormal: bool = false;
+    if Exponent.Negative && Exponent.Magnitude > Minimumˉexponentˉmagnitude {
+        Roundedˉextended = Compilerˉsourceˉfloatingˉshiftˉrightˉjam(
+            Roundedˉextended,
+            Exponent.Magnitude - Minimumˉexponentˉmagnitude,
+            false
+        );
+        Subnormal = true;
+    }
+
+    let Roundˉbits: u64 = Roundedˉextended & 7u64;
+    var Main: u64 = Roundedˉextended >> 3u32;
+    if Roundˉbits > 4u64 || (Roundˉbits == 4u64 && (Main & 1u64) != 0u64) {
+        Main = Main + 1u64;
+    }
+    if Main == 0u64 {
+        return Compilerˉsourceˉfloatingˉbitsˉfromˉraw(0u64);
+    }
+    if Subnormal {
+        if Main >= Hidden {
+            return Compilerˉsourceˉfloatingˉbitsˉfromˉraw(
+                (1u64 << Fractionˉbits) + Main - Hidden
+            );
+        }
+        return Compilerˉsourceˉfloatingˉbitsˉfromˉraw(Main);
+    }
+
+    var Exponentˉfield: u32 = Bias;
+    if Exponent.Negative {
+        Exponentˉfield = Bias - Exponent.Magnitude;
+    } else {
+        Exponentˉfield = Bias + Exponent.Magnitude;
+    }
+    if Main == Hidden * 2u64 {
+        Main = Hidden;
+        Exponentˉfield = Exponentˉfield + 1u32;
+    }
+    if Exponentˉfield >= (1u32 << Exponentˉbits) - 1u32 {
+        return Compilerˉsourceˉfloatingˉbitsˉfromˉraw(Infinite);
+    }
+    let Raw: u64 = U64ˉfromˉu32(Exponentˉfield) << Fractionˉbits |
+        (Main - Hidden);
+    return Compilerˉsourceˉfloatingˉbitsˉfromˉraw(Raw);
+}
+
+fn Compilerˉsourceˉhexˉfloatingˉmantissaˉscan(
+    Input: bytes,
+    Start: u32,
+    Startˉcolumn: u32
+) -> Compilerˉsourceˉhexˉfloatingˉmantissa {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start + 2u32;
+    var Column: u32 = Startˉcolumn + 2u32;
+    var Valid: bool = Total - Start >= 3u32;
+    var Digits: u32 = 0u32;
+    var Digitsˉbefore: u32 = 0u32;
+    var Leadingˉfound: bool = false;
+    var Leadingˉindex: u32 = 0u32;
+    var Leadingˉnibble: u32 = 0u32;
+    var Accumulatedˉdigits: u32 = 0u32;
+    var Accumulated: u64 = 0u64;
+    var Sticky: bool = false;
+
+    var Readingˉwhole: bool = Valid;
+    while Readingˉwhole {
+        if Cursor >= Total {
+            Readingˉwhole = false;
+        } else {
+            let Wholeˉdigit: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Input, Cursor));
+            if Wholeˉdigit == 16u32 {
+                Readingˉwhole = false;
+            } else {
+                if !Leadingˉfound && Wholeˉdigit != 0u32 {
+                    Leadingˉfound = true;
+                    Leadingˉindex = Digits;
+                    Leadingˉnibble = Wholeˉdigit;
+                }
+                if Leadingˉfound {
+                    if Accumulatedˉdigits < 16u32 {
+                        Accumulated = Accumulated * 16u64 + U64ˉfromˉu32(Wholeˉdigit);
+                        Accumulatedˉdigits = Accumulatedˉdigits + 1u32;
+                    } else if Wholeˉdigit != 0u32 {
+                        Sticky = true;
+                    }
+                }
+                Digits = Digits + 1u32;
+                Cursor = Cursor + 1u32;
+                Column = Column + 1u32;
+            }
+        }
+    }
+    Digitsˉbefore = Digits;
+    if Digitsˉbefore == 0u32 { Valid = false; }
+
+    if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 46u8 {
+        Cursor = Cursor + 1u32;
+        Column = Column + 1u32;
+        let Fractionˉstart: u32 = Digits;
+        var Readingˉfraction: bool = true;
+        while Readingˉfraction {
+            if Cursor >= Total {
+                Readingˉfraction = false;
+            } else {
+                let Fractionˉdigit: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Input, Cursor));
+                if Fractionˉdigit == 16u32 {
+                    Readingˉfraction = false;
+                } else {
+                    if !Leadingˉfound && Fractionˉdigit != 0u32 {
+                        Leadingˉfound = true;
+                        Leadingˉindex = Digits;
+                        Leadingˉnibble = Fractionˉdigit;
+                    }
+                    if Leadingˉfound {
+                        if Accumulatedˉdigits < 16u32 {
+                            Accumulated = Accumulated * 16u64 + U64ˉfromˉu32(Fractionˉdigit);
+                            Accumulatedˉdigits = Accumulatedˉdigits + 1u32;
+                        } else if Fractionˉdigit != 0u32 {
+                            Sticky = true;
+                        }
+                    }
+                    Digits = Digits + 1u32;
+                    Cursor = Cursor + 1u32;
+                    Column = Column + 1u32;
+                }
+            }
+        }
+        if Digits == Fractionˉstart { Valid = false; }
+    }
+
+    return Compilerˉsourceˉhexˉfloatingˉmantissa(
+        Valid, Cursor, Column, Digitsˉbefore,
+        Leadingˉfound, Leadingˉindex, Leadingˉnibble,
+        Accumulatedˉdigits, Accumulated, Sticky
+    );
+}
+
+fn Compilerˉsourceˉhexˉfloatingˉexponentˉscan(
+    Input: bytes,
+    Start: u32,
+    Startˉcolumn: u32,
+    Initiallyˉvalid: bool
+) -> Compilerˉsourceˉhexˉfloatingˉexponent {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start;
+    var Column: u32 = Startˉcolumn;
+    var Valid: bool = Initiallyˉvalid;
+
+    var Exponentˉnegative: bool = false;
+    var Exponentˉmagnitude: u32 = 0u32;
+    if Cursor >= Total { Valid = false; }
+    if Cursor < Total {
+        let Marker: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Marker != 112u8 && Marker != 80u8 { Valid = false; }
+        else {
+            Cursor = Cursor + 1u32;
+            Column = Column + 1u32;
+            if Cursor < Total {
+                let Sign: u8 = Bytesˉreadˉu8(Input, Cursor);
+                if Sign == 43u8 || Sign == 45u8 {
+                    Exponentˉnegative = Sign == 45u8;
+                    Cursor = Cursor + 1u32;
+                    Column = Column + 1u32;
+                }
+            }
+            var Exponentˉdigits: u32 = 0u32;
+            var Readingˉexponent: bool = true;
+            while Readingˉexponent {
+                if Cursor >= Total {
+                    Readingˉexponent = false;
+                } else {
+                    let Exponentˉdigit: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+                    if Exponentˉdigit < 48u32 || Exponentˉdigit > 57u32 {
+                        Readingˉexponent = false;
+                    } else {
+                        if Exponentˉmagnitude <= 1000000u32 {
+                            Exponentˉmagnitude = Exponentˉmagnitude * 10u32 + Exponentˉdigit - 48u32;
+                        }
+                        Exponentˉdigits = Exponentˉdigits + 1u32;
+                        Cursor = Cursor + 1u32;
+                        Column = Column + 1u32;
+                    }
+                }
+            }
+            if Exponentˉdigits == 0u32 { Valid = false; }
+        }
+    }
+
+    return Compilerˉsourceˉhexˉfloatingˉexponent(
+        Valid, Cursor, Column, Exponentˉnegative, Exponentˉmagnitude
+    );
+}
+
+fn Compilerˉsourceˉhexˉfloatingˉsuffixˉscan(
+    Input: bytes,
+    Start: u32,
+    Startˉcolumn: u32,
+    Initiallyˉvalid: bool
+) -> Compilerˉsourceˉhexˉfloatingˉsuffix {
+    let Total: u32 = Bytesˉlength(Input);
+    var Cursor: u32 = Start;
+    var Column: u32 = Startˉcolumn;
+    var Valid: bool = Initiallyˉvalid;
+
+    var Numericˉkind: Compilerˉnumericˉkind = Compilerˉnumericˉkind.None;
+    if Total - Cursor >= 3u32 {
+        if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "f32") {
+            Numericˉkind = Compilerˉnumericˉkind.F32;
+        } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "f64") {
+            Numericˉkind = Compilerˉnumericˉkind.F64;
+        }
+        if Numericˉkind != Compilerˉnumericˉkind.None {
+            let Following: u32 = Cursor + 3u32;
+            if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(
+                Input, Following, Total
+            ) != 0u32 {
+                Numericˉkind = Compilerˉnumericˉkind.None;
+            } else {
+                Cursor = Following;
+                Column = Column + 3u32;
+            }
+        }
+    }
+    if Numericˉkind == Compilerˉnumericˉkind.None { Valid = false; }
+
+    return Compilerˉsourceˉhexˉfloatingˉsuffix(
+        Valid, Cursor, Column, Numericˉkind
+    );
+}
+
+fn Compilerˉsourceˉhexˉfloatingˉconvert(
+    Mantissa: Compilerˉsourceˉhexˉfloatingˉmantissa,
+    Exponentˉscan: Compilerˉsourceˉhexˉfloatingˉexponent,
+    Numericˉkind: Compilerˉnumericˉkind
+) -> Compilerˉsourceˉfloatingˉbits {
+    if !Mantissa.Valid || !Exponentˉscan.Valid ||
+        Numericˉkind == Compilerˉnumericˉkind.None {
+        return Compilerˉsourceˉfloatingˉbits(false, 0u32, 0u32);
+    }
+    if !Mantissa.Leadingˉfound {
+        return Compilerˉsourceˉfloatingˉbits(true, 0u32, 0u32);
+    }
+
+    var Nibbleˉhigh: u32 = 0u32;
+    if Mantissa.Leadingˉnibble >= 2u32 { Nibbleˉhigh = 1u32; }
+    if Mantissa.Leadingˉnibble >= 4u32 { Nibbleˉhigh = 2u32; }
+    if Mantissa.Leadingˉnibble >= 8u32 { Nibbleˉhigh = 3u32; }
+    var Exponent: Compilerˉsourceˉsignedˉmagnitude =
+        Compilerˉsourceˉsignedˉmagnitude(
+            Exponentˉscan.Negative, Exponentˉscan.Magnitude
+        );
+    if Mantissa.Leadingˉindex < Mantissa.Digitsˉbefore {
+        Exponent = Compilerˉsourceˉsignedˉadd(
+            Exponent,
+            Compilerˉsourceˉsignedˉmagnitude(
+                false,
+                (Mantissa.Digitsˉbefore - Mantissa.Leadingˉindex - 1u32) * 4u32
+            )
+        );
+    } else {
+        Exponent = Compilerˉsourceˉsignedˉadd(
+            Exponent,
+            Compilerˉsourceˉsignedˉmagnitude(
+                true,
+                (Mantissa.Leadingˉindex - Mantissa.Digitsˉbefore + 1u32) * 4u32
+            )
+        );
+    }
+    Exponent = Compilerˉsourceˉsignedˉadd(
+        Exponent,
+        Compilerˉsourceˉsignedˉmagnitude(false, Nibbleˉhigh)
+    );
+
+    var Precision: u32 = 24u32;
+    var Bias: u32 = 127u32;
+    var Minimum: u32 = 126u32;
+    var Maximum: u32 = 127u32;
+    var Exponentˉbits: u32 = 8u32;
+    if Numericˉkind == Compilerˉnumericˉkind.F64 {
+        Precision = 53u32;
+        Bias = 1023u32;
+        Minimum = 1022u32;
+        Maximum = 1023u32;
+        Exponentˉbits = 11u32;
+    }
+    let Accumulatedˉbitˉlength: u32 =
+        (Mantissa.Accumulatedˉdigits - 1u32) * 4u32 + Nibbleˉhigh + 1u32;
+    let Targetˉbits: u32 = Precision + 3u32;
+    var Extended: u64 = Mantissa.Accumulated;
+    if Accumulatedˉbitˉlength > Targetˉbits {
+        Extended = Compilerˉsourceˉfloatingˉshiftˉrightˉjam(
+            Extended,
+            Accumulatedˉbitˉlength - Targetˉbits,
+            Mantissa.Sticky
+        );
+    } else {
+        Extended = Extended << (Targetˉbits - Accumulatedˉbitˉlength);
+        if Mantissa.Sticky { Extended = Extended | 1u64; }
+    }
+    return Compilerˉsourceˉfloatingˉroundˉpack(
+        Extended, Exponent, Precision, Bias, Minimum, Maximum, Exponentˉbits
+    );
+}
+
+fn Compilerˉsourceˉhexˉfloatingˉliteral(
+    Input: bytes,
+    Start: u32,
+    Startˉline: u32,
+    Startˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    let Mantissa: Compilerˉsourceˉhexˉfloatingˉmantissa =
+        Compilerˉsourceˉhexˉfloatingˉmantissaˉscan(
+            Input, Start, Startˉcolumn
+        );
+    let Exponent: Compilerˉsourceˉhexˉfloatingˉexponent =
+        Compilerˉsourceˉhexˉfloatingˉexponentˉscan(
+            Input, Mantissa.Cursor, Mantissa.Column, Mantissa.Valid
+        );
+    let Suffix: Compilerˉsourceˉhexˉfloatingˉsuffix =
+        Compilerˉsourceˉhexˉfloatingˉsuffixˉscan(
+            Input, Exponent.Cursor, Exponent.Column, Exponent.Valid
+        );
+    let Bits: Compilerˉsourceˉfloatingˉbits =
+        Compilerˉsourceˉhexˉfloatingˉconvert(
+            Mantissa, Exponent, Suffix.Kind
+        );
+
+    var Status: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
+    if !Suffix.Valid || !Bits.Valid {
+        Status = Compilerˉlexˉstatus.Invalidˉfloatingˉliteral;
+    }
+    return Compilerˉsourceˉtokenˉmakeˉwide(
+        Status,
+        Compilerˉtokenˉkind.Floatingˉliteral,
+        Start,
+        Suffix.Cursor,
+        Startˉline,
+        Startˉcolumn,
+        Startˉline,
+        Suffix.Column,
+        Suffix.Kind,
+        Bits.Low,
+        Bits.High,
+        Start,
+        Startˉline,
+        Startˉcolumn
     );
 }
 
@@ -1046,6 +1502,14 @@ export fn Compilerˉlexˉnextˉafterˉscan(
     let Firstˉvalue: u32 = U32ˉfromˉu8(First);
     if Firstˉvalue >= 48u32 {
         if Firstˉvalue <= 57u32 {
+            if Firstˉvalue == 48u32 && Total - Tokenˉstart >= 2u32 {
+                let Prefix: u8 = Bytesˉreadˉu8(Input, Tokenˉstart + 1u32);
+                if Prefix == 120u8 || Prefix == 88u8 {
+                    return Compilerˉsourceˉhexˉfloatingˉliteral(
+                        Input, Tokenˉstart, Tokenˉline, Tokenˉcolumn
+                    );
+                }
+            }
             Cursor = Cursor + 1u32;
             Column = Column + 1u32;
             var Readingˉdigits: bool = true;

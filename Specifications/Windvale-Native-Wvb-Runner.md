@@ -22,13 +22,13 @@ Project 1 semantics.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 151,488 | `e5948f52146a5c3be9901e2dc8c3b9e4f1ba7b2fdc75624c43f2a3a7b807d264` |
-| ABI-22 WVO | 1,371,883 | `f482eface9f6857e6a851a4503b343c6c848aa99fdbe28385aa951bc8e463905` |
-| linked fragment | 1,332,849 | `704dfc72f74853ed9dacd962c9b814f5b294c316407815cb0c0014fcf616c30c` |
-| Windows application | 1,387,008 | `57b91dae115d14da470b265f3ce1f59a44fe94c06f0de4ae99b1c13418118ae4` |
-| Linux application | 1,388,544 | `b6914c6b4d5c3bb069b219ce2cb329b179faf032c8b204648628775fbdfbd25e` |
+| WVB runner | 183,537 | `1926cf33e359c56c8b457cbd96c685ffee052feb9f1330053c43d77e18f38d3e` |
+| ABI-22 WVO | 1,808,213 | `dfcfb2360d496a5ab873539b4d6dbcdfe3824e8593dfe3e007cc71cd9bc55480` |
+| linked fragment | 1,805,265 | `62985dc1a0090726b3b9e96810f6c37d476b1e9d8e54e9d85ce26c38d11689ab` |
+| Windows application | 1,822,208 | `7a2f245b405d01c1f0f9c7f2b9e9cbe0d88370232e8cf1843616207aa155e7bd` |
+| Linux application | 1,822,720 | `7dac00ed67f7622af2fcd4c9ededd17afced3ad54ea309d749320249188b15b4` |
 
-The WVO contains 1,332,128 text bytes and 721 read-only-data bytes, with 39
+The WVO contains 1,804,544 text bytes and 721 read-only-data bytes, with 71
 symbols and 27 relocations. Linking at base zero selects `Main` at address
 60,426.
 
@@ -58,7 +58,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The runner accepts WVB 1.11, 1.12, and 1.13. Its shared scalar interpreter
+The source-built runner accepts WVB 1.11 through 1.14. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -69,6 +69,16 @@ The same interpreter implements the WVB 1.13 rune constant, equality, and
 inequality family from Decision 0769. Rune scanning and execution live in one
 focused core module, reject non-scalars and unknown selectors before execution,
 and retain the ordinary shared stack and control-flow path.
+
+The WVB 1.14 floating core executes raw binary32 and binary64 values with a
+software integer implementation of round-to-nearest, ties-to-even arithmetic,
+canonical NaN, signed zero, subnormals, infinities, unary negation, and all six
+comparisons. It does not inherit host floating-point modes or locale behavior.
+The same bounded scalar path executes the `u64` constant, arithmetic,
+comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
+operations emitted by the compiler's exact floating-literal parser. The focused
+Language 1.0 owner executes both the compiler front-end self-test and the
+compiler-produced floating program through the retained candidate.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

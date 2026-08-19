@@ -721,7 +721,7 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         if Slot >= 4096u32 { return false; }
         var Shapeˉvalid: bool = Shape <= 8u32;
         if Shape >= 11u32 {
-            if Shape <= 13u32 { Shapeˉvalid = true; }
+            if Shape <= 15u32 { Shapeˉvalid = true; }
         }
         if Shape == 16u32 { Shapeˉvalid = true; }
         if Shape == 0u32 { Shapeˉvalid = Kind != 1u32; }
@@ -1580,6 +1580,9 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Rune {
+        return Compilerˉsourceˉbindingsˉbodyˉempty();
+    }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Floating {
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Builder {

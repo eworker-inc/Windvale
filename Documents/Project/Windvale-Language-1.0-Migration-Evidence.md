@@ -17,12 +17,12 @@ front-end identities for the frozen primitive value types and prevents Seed-only
 `void` type syntax from crossing the edition-1 front door. The second checkpoint
 implements the storage-free return/control portion of `unit`: `()`, `return;`,
 `return ();`, unit-returning calls, and implicit fallthrough now lower through
-typed WIR and deterministic WVB. Named record update, fixed-width `i8`/`i16`/`u16`
-values, and exact Unicode-scalar `rune` values now cross the compiler, verifier,
-and runtime together. Project 3 carries the profile artifacts; Project 2 and
+typed WIR and deterministic WVB. Named record update, fixed-width `i8`/`i16`/`u16`,
+exact Unicode-scalar `rune`, and first `f32`/`f64` values now cross the compiler,
+verifier, and runtime together. Project 3 carries the profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. `f32`/`f64`, storable/passable `unit`,
+These checkpoints do not complete Slice 2. Storable/passable `unit`,
 unit execution in the scalar WVB runner, `never` control semantics, multi-field
 variant construction and destructuring, and value-producing control flow remain
 pending. Localized
@@ -181,7 +181,7 @@ duplicate replacement, unknown replacement, and descriptorless Seed use without
 publishing output. No WVIR operation, WVB opcode, value representation, or
 serialized-format version changes.
 
-## Slice 2 fixed integers and runes
+## Slice 2 fixed integers, runes, and floating point
 
 The fixed-width checkpoint admits `i8`, `i16`, and `u16` literals, typed
 constants, parameters, results, and locals with exact same-type checked
@@ -213,17 +213,36 @@ returns `42`.
 It covers ASCII, Japanese, emoji, all admitted simple escapes, braced escapes,
 typed constants, parameters, locals, results, equality, and inequality.
 
+The floating-point checkpoint adds strict suffixed hexadecimal literals,
+internal shapes `14` and `15`, WVIR operations `151` through `162`, and WVB 1.14
+type tags `18`/`19` plus opcode `C2`. The source lexer converts the exact
+hexadecimal value directly to binary32 or binary64 with round-to-nearest,
+ties-to-even. The compiler preserves raw bits through literals, locals,
+parameters, results, arithmetic, unary negation, and every comparison without an
+implicit conversion.
+
+The shared scalar interpreter implements the two IEEE formats with integer
+operations over raw bits. It preserves subnormals, infinities, and signed zero;
+canonicalizes every NaN result; and therefore does not inherit a host
+floating-point mode. `Tests/Fixtures/Language-1.0/Floating-Program.wv` compiles
+twice to the same 2,809-byte WVB 1.14 module with SHA-256
+`c783fd85deca397814da71a87ec543ec75f800d4ecd10549c53091d48fd54327`
+and executes with result `42` through the current source-built runner.
+
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 64 declared cases. Its
+The cross-host `language-1-front-door` owner reports 91 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
 the minimum, unit, record-update, and 22-case fixed-integer evidence. Its 20 rune
 cases compile the valid program twice, compare diagnostics and bytes, reject eight
 source forms, admit the canonical module, reject six byte-level corruptions, and
-execute both the reconstructed shared runner and focused runtime core. The
-report keeps nested assertions separate from the top-level owner count.
+execute both the reconstructed shared runner and focused runtime core. The 27
+floating cases add deterministic compilation, four source rejections, eight
+malformed-WVB rejections, current-runner execution, and a focused raw-bit runtime
+self-test. The report keeps nested assertions separate from the top-level owner
+count.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
 compiler boundaries map to this owner. Compiler WVB/image construction and
@@ -335,9 +354,9 @@ Migration Slice 1 is complete: source-profile locks and composite profiles are
 explicit Project 3/build inputs, their pinned chain controls English token
 resolution, and Project 2 remains stable. Slice 2 now includes primitive
 front-end identities, edition separation, storage-free unit return/control
-lowering, named record update, fixed-width integer execution, and exact rune
-execution over one compiler architecture. Its completion gate remains
-`f32`/`f64`, complete unit execution, `never`, multi-field variant/destructuring,
-and value-producing
+lowering, named record update, fixed-width integer execution, exact rune
+execution, and the first strict floating-point vertical checkpoint over one
+compiler architecture. Its completion gate remains complete unit execution,
+`never`, multi-field variant/destructuring, and value-producing
 control flow over this same compiler architecture. Seed stays on that architecture
 until its named removal checkpoint.

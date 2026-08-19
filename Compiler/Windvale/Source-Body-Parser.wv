@@ -48,6 +48,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     Unit = 12;
     Recordˉupdate = 13;
     Rune = 14;
+    Floating = 15;
 }
 
 export record Compilerˉsourceˉposition {
@@ -871,6 +872,34 @@ export fn Compilerˉbodyˉparseˉprimary(
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Integer {
         return Compilerˉbodyˉexpressionˉmakeˉwide(
             Compilerˉsourceˉexpressionˉkind.Integer,
+            Sourceˉlexer.Compilerˉtokenˉkind.End,
+            Token.Offset,
+            Token.Nextˉoffset,
+            Token.Line,
+            Token.Column,
+            Token.Offset,
+            Token.Length,
+            Token.Offset,
+            0u32,
+            Token.Offset,
+            0u32,
+            Token.Offset,
+            Token.Offset,
+            0u32,
+            Token.Numericˉkind,
+            Token.Numericˉvalue,
+            Token.Numericˉhigh,
+            false,
+            Token.Nextˉoffset,
+            Token.Nextˉline,
+            Token.Nextˉcolumn,
+            1u32,
+            1u32
+        );
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Floatingˉliteral {
+        return Compilerˉbodyˉexpressionˉmakeˉwide(
+            Compilerˉsourceˉexpressionˉkind.Floating,
             Sourceˉlexer.Compilerˉtokenˉkind.End,
             Token.Offset,
             Token.Nextˉoffset,

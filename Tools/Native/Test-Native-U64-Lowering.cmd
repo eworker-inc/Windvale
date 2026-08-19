@@ -14,8 +14,7 @@ set "TemporaryDirectory=%TEMP%\windvale-native-u64-lowering-%RANDOM%-%RANDOM%-%R
 if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 
-set "LowererWvb=%TemporaryDirectory%\Lowerer.wvb"
-set "Lowerer=%TemporaryDirectory%\Lowerer.exe"
+set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 set "TargetWvb=%TemporaryDirectory%\Target.wvb"
 set "TargetWvo=%TemporaryDirectory%\Target.wvo"
 set "Image=%TemporaryDirectory%\Target.bin"
@@ -30,37 +29,32 @@ set "PageLinuxApplication=%TemporaryDirectory%\Page.elf"
 set "PageFixture=%RepositoryRoot%\Tests\Fixtures\Database\Native-Hosted-Snapshot-Page.txt"
 set "Result=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
-    "%LowererWvb%" >nul
-if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-    6 "%LowererWvb%" "%Lowerer%" >nul
+call :verify "%Lowerer%" 7597568 61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9 "native lowerer candidate"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Wvb-To-Wvo-U64.wvproj" ^
     "%TargetWvb%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%TargetWvb%" 1493 f1179c830314160635728125d1bfe826c18edc4be1a0b5284b002f3b8a93d66f "u64 WVB"
+call :verify "%TargetWvb%" 2103 754862810b90e638755edf253c4b88b045bca44c2b3b58d5d76d48eba35dfc2f "u64 WVB"
 if errorlevel 1 goto :cleanup
 
 "%Lowerer%" "%TargetWvb%" "%TargetWvo%" >nul
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%TargetWvo%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%TargetWvo%" 12032 08e2fe2f0813237b4b75938a411cd1e1ea20af9e3373b6ae0ebe71842b559fdd "u64 WVO"
+call :verify "%TargetWvo%" 16178 29158614e7f23ede1b6a3fdab8e97cff64c4f390cb576834dd573a7255bd88da "u64 WVO"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Image%" "%TargetWvo%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%Image%" 11848 8deabde0d548d857dad200289516594ed12b4521c62751dbe94de0749d38467b "u64 flat image"
+call :verify "%Image%" 15960 fc425d7b173cc97f97c4782647c74cd7d923e888c35b6a8f38218010587f4517 "u64 flat image"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 ^
     "%Image%" 0 "%WindowsApplication%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%WindowsApplication%" 13824 517fc7203d194a047aa6fa482e2983e55d481ba4a2f0d7fc271c2455d0342235 "u64 Windows application"
+call :verify "%WindowsApplication%" 17920 774173b5499d3802d080da8c7e6f40a683ab50c022f782c305751af4cefc8a04 "u64 Windows application"
 if errorlevel 1 goto :cleanup
 "%WindowsApplication%" >nul
 if not "%ERRORLEVEL%"=="42" goto :cleanup
@@ -68,7 +62,7 @@ if not "%ERRORLEVEL%"=="42" goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" linux-x64-console-v1 ^
     "%Image%" 0 "%LinuxApplication%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%LinuxApplication%" 16496 b373bc39174005770df74af46bb6ff30af5829a6a93b37ec192799c6c74f9992 "u64 Linux application"
+call :verify "%LinuxApplication%" 20592 9ce2307a029d3d50a56d11432b2c9d8813f756fa23e990e9814cf1692463ab66 "u64 Linux application"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^

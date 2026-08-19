@@ -83,13 +83,13 @@ fn Findˉlifetime(
     while Operation < Operationˉcount {
         if Definition == 4294967295u32 {
             let Definitionˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Operation) * 48u32;
+                (Firstˉoperation + Operation) * 40u32;
             if Bytesˉreadˉu32ˉlittle(
-                Wir, Definitionˉentry + 20u32
+                Wir, Definitionˉentry + 12u32
             ) == Temporary {
                 Definition = Operation;
                 Kind = Bytesˉreadˉu32ˉlittle(
-                    Wir, Definitionˉentry + 12u32
+                    Wir, Definitionˉentry + 4u32
                 );
             }
         }
@@ -105,9 +105,9 @@ fn Findˉlifetime(
     var Block: u32 = 0u32;
     while Block < Blockˉcount {
         let Blockˉentry: u32 = Blocksˉoffset +
-            (Firstˉblock + Block) * 36u32;
+            (Firstˉblock + Block) * 28u32;
         let Value: u32 = Bytesˉreadˉu32ˉlittle(
-            Wir, Blockˉentry + 24u32
+            Wir, Blockˉentry + 16u32
         );
         if Value == Temporary {
             Lastˉuse = Operationˉcount + Block;
@@ -120,12 +120,12 @@ fn Findˉlifetime(
         while Reverse > Definition {
             let Useˉoperation: u32 = Reverse - 1u32;
             let Useˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Useˉoperation) * 48u32;
+                (Firstˉoperation + Useˉoperation) * 40u32;
             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Useˉentry + 24u32
+                Wir, Useˉentry + 16u32
             );
             let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Useˉentry + 28u32
+                Wir, Useˉentry + 20u32
             );
             var Operand: u32 = 0u32;
             var Found: bool = false;
@@ -149,6 +149,7 @@ fn Findˉlifetime(
             }
         }
     }
+
     return Compilerˉsourceˉwvbˉtemporaryˉlifetime(
         true, Definition, Lastˉuse, Kind, Definition + 1u32
     );

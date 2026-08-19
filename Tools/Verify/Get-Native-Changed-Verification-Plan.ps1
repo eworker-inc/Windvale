@@ -1106,7 +1106,8 @@ function Add-Native-Tool-Suite {
     if ($Stem -in @(
         'Verify-Language-1.0-Migration-Fixtures',
         'Verify-Language-1.0-Fixed-Integers',
-        'Verify-Language-1.0-Runes'
+        'Verify-Language-1.0-Runes',
+        'Verify-Language-1.0-Floating'
     )) {
         Add-Suite 'language-1-front-door'
         return
@@ -1438,6 +1439,8 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
         'Tests/Native/Language-1.0-Fixture-Inventory.txt'
     )) {
         Add-Suite 'language-1-front-door'

@@ -18,10 +18,22 @@ fn Wideˉcalculation(
     return (Left + Right) * Multiplier / Divisor + U64ˉfromˉu32(Extra);
 }
 
+fn Wideˉreturn() -> u64 {
+    return 4613937818241073152u64;
+}
+
 export fn Main() -> i32 {
     let Maximum: u64 = Bytesˉreadˉu64ˉlittle(MAXIMUM_VALUE, 0u32);
     if Maximum != 18446744073709551615u64 { return 1; }
     if Maximum <= 4294967295u64 { return 2; }
+    if Wideˉreturn() != 4613937818241073152u64 { return 3; }
+
+    let Highˉmask: u64 = 17361641481138401520u64;
+    let Lowˉmask: u64 = 1085102592571150095u64;
+    if (Highˉmask & Lowˉmask) != 0u64 { return 4; }
+    if (Highˉmask | Lowˉmask) != 18446744073709551615u64 { return 5; }
+    if (Highˉmask ^ Lowˉmask) != 18446744073709551615u64 { return 6; }
+    if ~0u64 != 18446744073709551615u64 { return 7; }
 
     let Calculated: u64 = Wideˉcalculation(
         40u64,
@@ -31,14 +43,14 @@ export fn Main() -> i32 {
         3u64
     );
     let Wrapped: Wideˉvalue = Wideˉvalue(Calculated);
-    if Wrapped.Value != 42u64 { return 3; }
-    if Wrapped.Value - 2u64 != 40u64 { return 4; }
+    if Wrapped.Value != 42u64 { return 8; }
+    if Wrapped.Value - 2u64 != 40u64 { return 9; }
     let Encoded: bytes = Bytesˉfromˉu64ˉlittle(Wrapped.Value);
-    if Bytesˉlength(Encoded) != 8u32 { return 5; }
-    if Bytesˉreadˉu64ˉlittle(Encoded, 0u32) != 42u64 { return 6; }
+    if Bytesˉlength(Encoded) != 8u32 { return 10; }
+    if Bytesˉreadˉu64ˉlittle(Encoded, 0u32) != 42u64 { return 11; }
     if Bytesˉreadˉu8(Encoded, 0u32) != 42u8 ||
         Bytesˉreadˉu8(Encoded, 7u32) != 0u8 {
-        return 7;
+        return 12;
     }
     return 42;
 }

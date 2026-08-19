@@ -214,7 +214,7 @@
       "patterns": [
         {
           "name": "storage.type.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:i32|i64|u8|u32|u64|bool|text|bytes|sequence|builder|void)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|rune|bool|text|bytes|sequence|builder|unit|never|void)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },
@@ -237,7 +237,18 @@
     "numbers": {
       "patterns": [
         {
-          "match": "(?<![A-Za-z0-9_ˉ])([0-9]+)(u8|u32|i64|u64)?(?![A-Za-z0-9_ˉ])",
+          "match": "(?<![A-Za-z0-9_ˉ])(0[xX][0-9A-Fa-f]+(?:\\.[0-9A-Fa-f]+)?[pP][+-]?[0-9]+)(f32|f64)(?![A-Za-z0-9_ˉ])",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.float.hexadecimal.windvale"
+            },
+            "2": {
+              "name": "storage.type.numeric.suffix.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])([0-9]+)(i8|i16|i64|u8|u16|u32|u64)?(?![A-Za-z0-9_ˉ])",
           "captures": {
             "1": {
               "name": "constant.numeric.integer.decimal.windvale"

@@ -6,7 +6,9 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Segmented-Compiler-Toolset-Candidate"
 set /a Tests=0
 set /a Passed=0
+set "FailureStep=usage-contract"
 
+echo START segmented compiler toolset reconstruction step=construction
 call "%RepositoryRoot%\Tools\Native\Construct-Segmented-Compiler-Toolset.cmd" >nul 2>nul
 if not "%ERRORLEVEL%"=="64" goto :failed
 
@@ -20,46 +22,59 @@ if errorlevel 1 goto :failed
 findstr /x /c:"native segmented compiler toolset construction status=Complete artifacts=9" "%TestDirectory%\Construct.out" >nul
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Construct.err") do if not "%%~zF"=="0" goto :failed
+echo INFO  segmented compiler toolset reconstruction step=construction status=Complete
 
+set "FailureStep=WVO staging producer identity"
+echo START segmented compiler toolset reconstruction phase=WVO-staging-producer item=1/4
 call :verify_family Wvo-Staging-Producer.wvb windows-x64-wvstage.exe linux-x64-wvstage.elf
 if errorlevel 1 goto :failed
 call :pass "WVO staging producer reconstruction"
 
+set "FailureStep=compiler-image staging identity"
+echo START segmented compiler toolset reconstruction phase=compiler-image-staging item=2/4
 call :verify_family Compiler-Image-Staging.wvb windows-x64-wvlinkstage.exe linux-x64-wvlinkstage.elf
 if errorlevel 1 goto :failed
 call :pass "compiler-image staging reconstruction"
 
+set "FailureStep=compiler-image transport identity"
+echo START segmented compiler toolset reconstruction phase=compiler-image-transport item=3/4
 call :verify_family Compiler-Image-Canonical-Transport.wvb windows-x64-wvimagetransport.exe linux-x64-wvimagetransport.elf
 if errorlevel 1 goto :failed
 call :pass "compiler-image transport reconstruction"
 
-set "FailureStep=compiler-scale current build-driver identity"
+set "FailureStep=compiler-scale current compiler producer identity"
 set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
 certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f" >nul
 if errorlevel 1 goto :failed
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%Workspace:\=/%"
-set "CompilerProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
+set "CompilerProject=%RepositoryRoot%\Projects\Examples\Windvale-Compiler.wvproj"
 set "CompilerProjectResource=%CompilerProject:\=/%"
-set "CompilerWvb=%TestDirectory%\Compiler-Build-Driver.wvb"
+set "CompilerWvb=%TestDirectory%\Windvale-Compiler.wvb"
 set "CompilerWvbResource=%CompilerWvb:\=/%"
+echo START segmented compiler toolset reconstruction phase=compiler-scale item=4/4
 set "FailureStep=compiler-scale WVB build"
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
     "%CompilerProjectResource%" "%CompilerWvbResource%" ^
     >"%TestDirectory%\Compiler-Build.out" 2>"%TestDirectory%\Compiler-Build.err"
 if errorlevel 1 goto :failed
+set "FailureStep=compiler-scale WVB diagnostic"
 for %%F in ("%TestDirectory%\Compiler-Build.err") do if not "%%~zF"=="0" goto :failed
-for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1259719" goto :failed
-certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949" >nul
+set "FailureStep=compiler-scale WVB identity"
+for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1116697" goto :failed
+certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"8a60d9998909051eef97d6f871a060c74316452ebba5534bb9f2fe130ed9bcdf" >nul
 if errorlevel 1 goto :failed
+echo INFO  segmented compiler toolset reconstruction phase=compiler-scale step=WVB-build status=Complete bytes=1116697
 set "FailureStep=compiler-scale native staging"
+echo START segmented compiler toolset reconstruction phase=compiler-scale step=native-staging
 "%TestDirectory%\windows-x64-wvstage.exe" "%CompilerWvb%" ^
     "%TestDirectory%\Compiler-Object" "%TestDirectory%\Compiler-Object.wvop" ^
     >"%TestDirectory%\Compiler-Stage.out" 2>"%TestDirectory%\Compiler-Stage.err"
 if errorlevel 1 goto :failed
+set "FailureStep=compiler-scale native staging diagnostic"
 for %%F in ("%TestDirectory%\Compiler-Stage.err") do if not "%%~zF"=="0" goto :failed
-for %%F in ("%TestDirectory%\Compiler-Stage.out") do if not "%%~zF"=="86" goto :failed
-findstr /b /c:"native x64 staging status=Complete object-bytes=32003453 chunks=40 manifest-bytes=504" "%TestDirectory%\Compiler-Stage.out" >nul
+set "FailureStep=compiler-scale native staging report"
+findstr /b /c:"native x64 staging status=Complete object-bytes=31134274 chunks=40 manifest-bytes=504" "%TestDirectory%\Compiler-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "compiler-scale WVB staging"
 

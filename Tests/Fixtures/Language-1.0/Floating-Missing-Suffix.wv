@@ -1,0 +1,11 @@
+#!wv/1 en@1
+module Languageˉoneˉfloatingˉmissingˉsuffix;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 {
+    let Value: f32 = 0x1.0p+0;
+    if Value == Value { return 42; }
+    return 1;
+}

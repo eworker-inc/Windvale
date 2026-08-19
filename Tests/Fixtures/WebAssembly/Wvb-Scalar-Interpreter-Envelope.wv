@@ -132,7 +132,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
     if Moduleˉminor != 11u32 && Moduleˉminor != 12u32 &&
-        Moduleˉminor != 13u32 { return Invalid; }
+        Moduleˉminor != 13u32 && Moduleˉminor != 14u32 { return Invalid; }
     if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -353,9 +353,14 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 if Fieldˉshapeˉkind < 1u32 { return Invalid; }
                 if Fieldˉshapeˉkind > 10u32 {
                     var Extendedˉfieldˉshape: bool = Moduleˉminor >= 12u32 &&
-                        Moduleˉminor <= 13u32 && Fieldˉshapeˉkind >= 14u32 &&
+                        Moduleˉminor <= 14u32 && Fieldˉshapeˉkind >= 14u32 &&
                         Fieldˉshapeˉkind <= 16u32;
-                    if Moduleˉminor == 13u32 && Fieldˉshapeˉkind == 17u32 {
+                    if Moduleˉminor >= 13u32 && Moduleˉminor <= 14u32 &&
+                        Fieldˉshapeˉkind == 17u32 {
+                        Extendedˉfieldˉshape = true;
+                    }
+                    if Moduleˉminor == 14u32 && Fieldˉshapeˉkind >= 18u32 &&
+                        Fieldˉshapeˉkind <= 19u32 {
                         Extendedˉfieldˉshape = true;
                     }
                     if !Extendedˉfieldˉshape {

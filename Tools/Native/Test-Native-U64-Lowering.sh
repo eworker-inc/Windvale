@@ -41,8 +41,7 @@ verify_file() {
     }
 }
 
-lowerer_wvb="$temporary_directory/Lowerer.wvb"
-lowerer="$temporary_directory/Lowerer.elf"
+lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 target_wvb="$temporary_directory/Target.wvb"
 target_wvo="$temporary_directory/Target.wvo"
 image="$temporary_directory/Target.bin"
@@ -56,34 +55,32 @@ page_linux_application="$temporary_directory/Page.elf"
 page_windows_application="$temporary_directory/Page.exe"
 page_fixture="$repository_root/Tests/Fixtures/Database/Native-Hosted-Snapshot-Page.txt"
 
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
-    "$lowerer_wvb" >/dev/null || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-    6 "$lowerer_wvb" "$lowerer" >/dev/null || exit $?
+verify_file "$lowerer" 7598080 \
+    a58fd44c8c19da19a1699b33392996a673e291f6d9f951eb578f829c4b2b5452 \
+    'native lowerer candidate' || exit $?
 
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-U64.wvproj" \
     "$target_wvb" >/dev/null || exit $?
-verify_file "$target_wvb" 1493 \
-    f1179c830314160635728125d1bfe826c18edc4be1a0b5284b002f3b8a93d66f \
+verify_file "$target_wvb" 2103 \
+    754862810b90e638755edf253c4b88b045bca44c2b3b58d5d76d48eba35dfc2f \
     'u64 WVB' || exit $?
 
 "$lowerer" "$target_wvb" "$target_wvo" >/dev/null || exit $?
 "$script_directory/Check-Wvo.sh" "$target_wvo" >/dev/null || exit $?
-verify_file "$target_wvo" 12032 \
-    08e2fe2f0813237b4b75938a411cd1e1ea20af9e3373b6ae0ebe71842b559fdd \
+verify_file "$target_wvo" 16178 \
+    29158614e7f23ede1b6a3fdab8e97cff64c4f390cb576834dd573a7255bd88da \
     'u64 WVO' || exit $?
 
 "$script_directory/Link-Wvo.sh" 0 Main "$image" "$target_wvo" >/dev/null || exit $?
-verify_file "$image" 11848 \
-    8deabde0d548d857dad200289516594ed12b4521c62751dbe94de0749d38467b \
+verify_file "$image" 15960 \
+    fc425d7b173cc97f97c4782647c74cd7d923e888c35b6a8f38218010587f4517 \
     'u64 flat image' || exit $?
 
 "$script_directory/Package-Console.sh" linux-x64-console-v1 \
     "$image" 0 "$linux_application" >/dev/null || exit $?
-verify_file "$linux_application" 16496 \
-    b373bc39174005770df74af46bb6ff30af5829a6a93b37ec192799c6c74f9992 \
+verify_file "$linux_application" 20592 \
+    9ce2307a029d3d50a56d11432b2c9d8813f756fa23e990e9814cf1692463ab66 \
     'u64 Linux application' || exit $?
 "$linux_application" >/dev/null
 application_result=$?
@@ -94,8 +91,8 @@ fi
 
 "$script_directory/Package-Console.sh" windows-x64-console-v1 \
     "$image" 0 "$windows_application" >/dev/null || exit $?
-verify_file "$windows_application" 13824 \
-    517fc7203d194a047aa6fa482e2983e55d481ba4a2f0d7fc271c2455d0342235 \
+verify_file "$windows_application" 17920 \
+    774173b5499d3802d080da8c7e6f40a683ab50c022f782c305751af4cefc8a04 \
     'u64 Windows application' || exit $?
 
 "$script_directory/Build-Wvb.sh" \

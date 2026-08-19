@@ -123,7 +123,10 @@ $KeywordCases = [ordered]@{
     'control-keywords' = @('if', 'else', 'while', 'for', 'in', 'match', 'case', 'push', 'break', 'continue', 'return')
     'storage-keywords' = @('let', 'var', 'freeze')
     'profile-keywords' = @('portable', 'hosted', 'system')
-    'type-keywords' = @('i32', 'i64', 'u8', 'u32', 'u64', 'bool', 'text', 'bytes', 'sequence', 'builder', 'void')
+    'type-keywords' = @(
+        'i8', 'i16', 'i32', 'i64', 'u8', 'u16', 'u32', 'u64',
+        'f32', 'f64', 'rune', 'bool', 'text', 'bytes', 'sequence',
+        'builder', 'unit', 'never', 'void')
     'boolean-literals' = @('true', 'false')
     'built-in-functions' = @('length')
 }
@@ -149,14 +152,21 @@ Assert-Condition ($ConstantDeclaration.Success -and $ConstantDeclaration.Length 
 Assert-Condition ($ConstantDeclaration.Groups[2].Value -eq 'MAXIMUM_RECORDS') `
     'The editor grammar must scope the ALL_CAPS constant name separately.'
 
-$NumberPattern = Get-RulePattern $Grammar 'numbers'
+$FloatingNumberPattern = Get-RulePattern $Grammar 'numbers'
+$NumberPattern = Get-RulePattern $Grammar 'numbers' 1
 foreach ($Number in @(
     '0',
     '2147483647',
+    '0i8',
+    '127i8',
+    '0i16',
+    '32767i16',
     '0i64',
     '9223372036854775807i64',
     '0u8',
     '255u8',
+    '0u16',
+    '65535u16',
     '0u32',
     '4294967295u32',
     '0u64',
@@ -165,6 +175,21 @@ foreach ($Number in @(
 }
 foreach ($Identifier in @('Value0', '0u32suffix', '0u64suffix', 'Fieldˉ0u8')) {
     Assert-Condition (!$NumberPattern.IsMatch($Identifier)) "Identifier '$Identifier' is incorrectly matched as a numeric token."
+}
+foreach ($Number in @(
+    '0x0p+0f32',
+    '0X1.8P+1f32',
+    '0x1.0p-149f32',
+    '0x1.0000000000000p+0f64')) {
+    Assert-FullMatch $FloatingNumberPattern $Number 'Floating numeric token'
+}
+foreach ($Invalid in @(
+    '0x1.0f32',
+    '0x1.p+0f32',
+    '0x1.0p+0',
+    '0x1.0p+0f64suffix')) {
+    Assert-Condition (!$FloatingNumberPattern.IsMatch($Invalid)) `
+        "Invalid floating token '$Invalid' is incorrectly matched by the grammar."
 }
 
 $NamedRecordPattern = Get-RulePattern $Grammar 'named-record-literals'

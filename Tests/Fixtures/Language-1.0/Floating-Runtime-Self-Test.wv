@@ -1,0 +1,95 @@
+module Languageˉoneˉfloatingˉruntimeˉselfˉtest profile portable;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfloatingˉcore as Floating;
+
+fn Matches(
+    Result: bytes,
+    Expectedˉlow: u32,
+    Expectedˉhigh: u32
+) -> bool {
+    return Bytesˉlength(Result) == 12u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 0u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Result, 4u32) == Expectedˉlow &&
+        Bytesˉreadˉu32ˉlittle(Result, 8u32) == Expectedˉhigh;
+}
+
+fn Testˉf32() -> i32 {
+    let F32ˉadd: bytes = Floating.Evaluateˉfloating(
+        18u32, 1u32, 1065353216u32, 0u32, 1073741824u32, 0u32
+    );
+    if !Matches(F32ˉadd, 1077936128u32, 0u32) { return 1; }
+
+    let F32ˉsubtract: bytes = Floating.Evaluateˉfloating(
+        18u32, 2u32, 1082130432u32, 0u32, 1065353216u32, 0u32
+    );
+    if !Matches(F32ˉsubtract, 1077936128u32, 0u32) { return 2; }
+
+    let F32ˉmultiply: bytes = Floating.Evaluateˉfloating(
+        18u32, 3u32, 1069547520u32, 0u32, 1073741824u32, 0u32
+    );
+    if !Matches(F32ˉmultiply, 1077936128u32, 0u32) { return 3; }
+
+    let F32ˉdivide: bytes = Floating.Evaluateˉfloating(
+        18u32, 4u32, 1082130432u32, 0u32, 1073741824u32, 0u32
+    );
+    if !Matches(F32ˉdivide, 1073741824u32, 0u32) { return 4; }
+
+    let F32ˉinfinity: bytes = Floating.Evaluateˉfloating(
+        18u32, 4u32, 1065353216u32, 0u32, 0u32, 0u32
+    );
+    if !Matches(F32ˉinfinity, 2139095040u32, 0u32) { return 5; }
+
+    let F32ˉnan: bytes = Floating.Evaluateˉfloating(
+        18u32, 2u32, 2139095040u32, 0u32, 2139095040u32, 0u32
+    );
+    if !Matches(F32ˉnan, 2143289344u32, 0u32) { return 6; }
+
+    let F32ˉnanˉequal: bytes = Floating.Evaluateˉfloating(
+        18u32, 6u32, 2143289344u32, 0u32, 2143289344u32, 0u32
+    );
+    if !Matches(F32ˉnanˉequal, 0u32, 0u32) { return 7; }
+
+    let F32ˉnanˉnotˉequal: bytes = Floating.Evaluateˉfloating(
+        18u32, 7u32, 2143289344u32, 0u32, 2143289344u32, 0u32
+    );
+    if !Matches(F32ˉnanˉnotˉequal, 1u32, 0u32) { return 8; }
+
+    let F32ˉsignedˉzero: bytes = Floating.Evaluateˉfloating(
+        18u32, 6u32, 0u32, 0u32, 2147483648u32, 0u32
+    );
+    if !Matches(F32ˉsignedˉzero, 1u32, 0u32) { return 9; }
+
+    let F32ˉsubnormal: bytes = Floating.Evaluateˉfloating(
+        18u32, 3u32, 1u32, 0u32, 1065353216u32, 0u32
+    );
+    if !Matches(F32ˉsubnormal, 1u32, 0u32) { return 10; }
+
+    return 0;
+}
+
+fn Testˉf64() -> i32 {
+    let F64ˉadd: bytes = Floating.Evaluateˉfloating(
+        19u32, 1u32, 0u32, 1072693248u32, 0u32, 1073741824u32
+    );
+    if !Matches(F64ˉadd, 0u32, 1074266112u32) { return 11; }
+
+    let F64ˉmultiply: bytes = Floating.Evaluateˉfloating(
+        19u32, 3u32, 0u32, 1073217536u32, 0u32, 1073741824u32
+    );
+    if !Matches(F64ˉmultiply, 0u32, 1074266112u32) { return 12; }
+
+    let F64ˉdivide: bytes = Floating.Evaluateˉfloating(
+        19u32, 4u32, 0u32, 1074790400u32, 0u32, 1073741824u32
+    );
+    if !Matches(F64ˉdivide, 0u32, 1073741824u32) { return 13; }
+
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let F32ˉresult: i32 = Testˉf32();
+    if F32ˉresult != 0 { return F32ˉresult; }
+    let F64ˉresult: i32 = Testˉf64();
+    if F64ˉresult != 0 { return F64ˉresult; }
+    return 42;
+}

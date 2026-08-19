@@ -36,11 +36,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/6'
+echo 'START language 1 front door phase=frozen-fixtures item=1/7'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/6'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/7'
 
-echo 'START language 1 front door phase=descriptor item=2/6'
+echo 'START language 1 front door phase=descriptor item=2/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -53,9 +53,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/6'
+echo 'PASS  language 1 front door phase=descriptor item=2/7'
 
-echo 'START language 1 front door phase=value-front-end item=3/6'
+echo 'START language 1 front door phase=value-front-end item=3/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -64,9 +64,9 @@ echo 'START language 1 front door phase=value-front-end item=3/6'
 [[ ! -s $work/Value-Front-End.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
 cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
-echo 'PASS  language 1 front door phase=value-front-end item=3/6'
+echo 'PASS  language 1 front door phase=value-front-end item=3/7'
 
-echo 'START language 1 front door phase=compiler-slice item=4/6'
+echo 'START language 1 front door phase=compiler-slice item=4/7'
 segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
     "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
     "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
@@ -211,9 +211,9 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/6'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/7'
 
-echo 'START language 1 front door phase=fixed-integers item=5/6'
+echo 'START language 1 front door phase=fixed-integers item=5/7'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -311,9 +311,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
     "$(wc -c < "$work/Fixed-Integer-A.wvb")"
-echo 'PASS  language 1 front door phase=fixed-integers item=5/6'
+echo 'PASS  language 1 front door phase=fixed-integers item=5/7'
 
-echo 'START language 1 front door phase=runes item=6/6'
+echo 'START language 1 front door phase=runes item=6/7'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -374,5 +374,74 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 rune_wvb_bytes=$(wc -c < "$work/Rune-A.wvb")
 printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
-echo 'PASS  language 1 front door phase=runes item=6/6'
-printf 'native language 1 front door status=Passed cases=64 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s\n' "$rune_wvb_bytes"
+echo 'PASS  language 1 front door phase=runes item=6/7'
+
+echo 'START language 1 front door phase=floating item=7/7'
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
+    "$work/Floating-A.wvb" \
+    >"$work/Floating-A.out" 2>"$work/Floating-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
+    "$work/Floating-B.wvb" \
+    >"$work/Floating-B.out" 2>"$work/Floating-B.err" || exit $?
+[[ ! -s $work/Floating-A.err && ! -s $work/Floating-B.err ]] || exit 1
+cmp -s -- "$work/Floating-A.out" "$work/Floating-B.out" || exit 1
+cmp -s -- "$work/Floating-A.wvb" "$work/Floating-B.wvb" || exit 1
+
+for name in Decimal-Literal Missing-Suffix Type-Mismatch Invalid-Operator; do
+    expect_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Floating-$name.wv" \
+        "$work/Floating-$name.wvb" || exit 1
+done
+
+"$work/Verifier.elf" "$work/Floating-A.wvb" \
+    >"$work/Verify-Floating.out" 2>"$work/Verify-Floating.err" || exit $?
+grep -Fq 'wvb status=Valid profile=compiler-aligned' \
+    "$work/Verify-Floating.out" || exit 1
+node "$script_directory/Verify-Language-1.0-Floating.mjs" \
+    "$work/Verifier.elf" "$work/Floating-A.wvb" \
+    "$work/Floating-Malformed" || exit $?
+
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tools/Windvale-Wvb-Runner.wvproj" \
+    "$work/Floating-Runner.wvb" >/dev/null || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 5 \
+    "$work/Floating-Runner.wvb" "$work/Floating-Runner.elf" linux \
+    >/dev/null || exit $?
+"$work/Floating-Runner.elf" "$work/Floating-A.wvb" \
+    >"$work/Floating-Run.out" 2>"$work/Floating-Run.err" || exit $?
+[[ ! -s $work/Floating-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Floating.out"
+cmp -s -- "$work/Expected-Floating.out" "$work/Floating-Run.out" || exit 1
+
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj" \
+    "$work/Floating-Runtime.wvb" >/dev/null || exit $?
+"$script_directory/Lower-Wvb-To-Wvo.sh" \
+    "$work/Floating-Runtime.wvb" "$work/Floating-Runtime.wvo" \
+    >/dev/null || exit $?
+"$script_directory/Check-Wvo.sh" "$work/Floating-Runtime.wvo" \
+    >/dev/null || exit $?
+"$script_directory/Link-Wvo.sh" 1048576 Main \
+    "$work/Floating-Runtime.bin" "$work/Floating-Runtime.wvo" \
+    >"$work/Floating-Runtime.wvmap" || exit $?
+runtime_address=$(sed -n \
+    's/^entry name=Main address=\([0-9][0-9]*\)$/\1/p' \
+    "$work/Floating-Runtime.wvmap")
+[[ $runtime_address =~ ^[0-9]+$ && $runtime_address -ge 1048576 ]] || exit 1
+runtime_entry=$((runtime_address - 1048576))
+"$script_directory/Package-Console.sh" linux-x64-console-v1 \
+    "$work/Floating-Runtime.bin" "$runtime_entry" \
+    "$work/Floating-Runtime.elf" >/dev/null || exit $?
+"$work/Floating-Runtime.elf"
+runtime_result=$?
+[[ $runtime_result -eq 42 ]] || exit 1
+floating_wvb_bytes=$(wc -c < "$work/Floating-A.wvb")
+printf 'INFO  language 1 floating wvb-bytes=%s\n' "$floating_wvb_bytes"
+echo 'PASS  language 1 front door phase=floating item=7/7'
+printf 'native language 1 front door status=Passed cases=91 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s\n' "$rune_wvb_bytes" "$floating_wvb_bytes"

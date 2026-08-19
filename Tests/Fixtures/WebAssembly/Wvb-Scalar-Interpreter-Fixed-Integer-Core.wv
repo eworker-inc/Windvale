@@ -1,6 +1,7 @@
 module WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore profile portable;
 
 import WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore as Runes;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfloatingˉcore as Floating;
 
 fn Result(Status: u32, Value: u32) -> bytes {
     return Bytesˉconcat(
@@ -15,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 13u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 14u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -34,10 +35,11 @@ export fn Scanˉfixedˉinteger(
 
 export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
     if Kind >= 1u32 && Kind <= 10u32 { return true; }
-    if Minor >= 12u32 && Minor <= 13u32 && Kind >= 14u32 && Kind <= 16u32 {
+    if Minor >= 12u32 && Minor <= 14u32 && Kind >= 14u32 && Kind <= 16u32 {
         return true;
     }
-    return Minor == 13u32 && Kind == 17u32;
+    if Minor >= 13u32 && Minor <= 14u32 && Kind == 17u32 { return true; }
+    return Minor == 14u32 && Kind >= 18u32 && Kind <= 19u32;
 }
 
 export fn Scanˉfunction(
@@ -85,8 +87,16 @@ export fn Scanˉfunction(
         }
         if Opcode == 106u32 { Width = 9u32; Supported = true; }
         if Opcode >= 107u32 && Opcode <= 125u32 { Supported = true; }
+        if Opcode == 129u32 {
+            Width = 9u32;
+            Supported = true;
+        }
+        if Opcode >= 134u32 && Opcode <= 136u32 { Supported = true; }
+        if Opcode >= 143u32 && Opcode <= 148u32 { Supported = true; }
         if Opcode == 161u32 || Opcode == 162u32 { Supported = true; }
         if Opcode >= 173u32 && Opcode <= 178u32 { Supported = true; }
+        if Opcode >= 179u32 && Opcode <= 184u32 { Supported = true; }
+        if Opcode == 190u32 || Opcode == 191u32 { Supported = true; }
         if Opcode == 192u32 {
             Width = Scanˉfixedˉinteger(
                 Module, Offset + Cursor, Length - Cursor, Minor
@@ -96,6 +106,13 @@ export fn Scanˉfunction(
         }
         if Opcode == 193u32 {
             Width = Runes.Scanˉrune(
+                Module, Offset + Cursor, Length - Cursor, Minor
+            );
+            if Width == 0u32 { return 0u32; }
+            Supported = true;
+        }
+        if Opcode == 194u32 {
+            Width = Floating.Scanˉfloating(
                 Module, Offset + Cursor, Length - Cursor, Minor
             );
             if Width == 0u32 { return 0u32; }
@@ -291,4 +308,109 @@ export fn Executeˉfixedˉinteger(
     var Metadata: u8 = 14u8;
     if Operands == 1u32 { Metadata = 13u8; }
     return Execution(Metadata, Status, Remainingˉstack);
+}
+
+export fn Executeˉscalar(
+    Module: bytes,
+    Offset: u32,
+    Stack: bytes,
+    Stackˉdescriptorˉcount: u32,
+    Zeroˉvalue: bytes
+) -> bytes {
+    let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset));
+    if Opcode == 129u32 ||
+        (Opcode >= 134u32 && Opcode <= 136u32) ||
+        (Opcode >= 143u32 && Opcode <= 148u32) ||
+        (Opcode >= 179u32 && Opcode <= 184u32) ||
+        Opcode == 191u32 {
+        if Opcode == 129u32 {
+            return Execution(
+                36u8, 0u32,
+                Bytesˉconcat(
+                    Stack,
+                    Bytesˉslice(Module, Offset + 1u32, 8u32)
+                )
+            );
+        }
+        if Stackˉdescriptorˉcount < 1u32 {
+            return Bytesˉslice(Stack, 0u32, 0u32);
+        }
+        let Stackˉlength: u32 = Bytesˉlength(Stack);
+        if Opcode == 191u32 {
+            return Execution(
+                5u8, 0u32,
+                Bytesˉconcat(
+                    Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32),
+                    Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(
+                        Bytesˉreadˉu32ˉlittle(Stack, Stackˉlength - 8u32)
+                    ))
+                )
+            );
+        }
+        var Operands: u32 = 2u32;
+        if Opcode == 182u32 { Operands = 1u32; }
+        if Stackˉdescriptorˉcount < Operands {
+            return Bytesˉslice(Stack, 0u32, 0u32);
+        }
+        var Right: u64 = 0u64;
+        var Left: u64 = Bytesˉreadˉu64ˉlittle(
+            Stack, Stackˉlength - 8u32
+        );
+        var Remainingˉstack: bytes = Bytesˉslice(
+            Stack, 0u32, Stackˉlength - 8u32
+        );
+        if Operands == 2u32 {
+            Right = Left;
+            Left = Bytesˉreadˉu64ˉlittle(
+                Remainingˉstack,
+                Bytesˉlength(Remainingˉstack) - 8u32
+            );
+            Remainingˉstack = Bytesˉslice(
+                Remainingˉstack,
+                0u32,
+                Bytesˉlength(Remainingˉstack) - 8u32
+            );
+        }
+        var Value: u64 = 0u64;
+        if Opcode == 134u32 { Value = Left + Right; }
+        if Opcode == 135u32 { Value = Left - Right; }
+        if Opcode == 136u32 { Value = Left * Right; }
+        if Opcode == 143u32 && Left == Right { Value = 1u64; }
+        if Opcode == 144u32 && Left != Right { Value = 1u64; }
+        if Opcode == 145u32 && Left < Right { Value = 1u64; }
+        if Opcode == 146u32 && Left <= Right { Value = 1u64; }
+        if Opcode == 147u32 && Left > Right { Value = 1u64; }
+        if Opcode == 148u32 && Left >= Right { Value = 1u64; }
+        if Opcode == 179u32 { Value = Left & Right; }
+        if Opcode == 180u32 { Value = Left | Right; }
+        if Opcode == 181u32 { Value = Left ^ Right; }
+        if Opcode == 182u32 { Value = ~Left; }
+        if Opcode == 183u32 || Opcode == 184u32 {
+            let Shift: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack, Stackˉlength - 8u32
+            );
+            if Shift >= 64u32 { return Execution(6u8, 3033u32, Remainingˉstack); }
+            if Opcode == 183u32 { Value = Left << Shift; }
+            if Opcode == 184u32 { Value = Left >> Shift; }
+        }
+        var Metadata: u8 = 6u8;
+        if Operands == 1u32 { Metadata = 5u8; }
+        return Execution(
+            Metadata, 0u32,
+            Bytesˉconcat(Remainingˉstack, Bytesˉfromˉu64ˉlittle(Value))
+        );
+    }
+    if Opcode == 192u32 {
+        return Executeˉfixedˉinteger(
+            Module, Offset, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
+        );
+    }
+    if Opcode == 193u32 {
+        return Runes.Executeˉrune(
+            Module, Offset, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
+        );
+    }
+    return Floating.Executeˉfloating(
+        Module, Offset, Stack, Stackˉdescriptorˉcount, Zeroˉvalue
+    );
 }

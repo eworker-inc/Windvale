@@ -134,6 +134,18 @@ fn Emitˉvalueˉcall(
         Output,
         Parameters
     );
+    if Returnˉtype == 10u8 {
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 133u8);
+        Output = Appendˉbyte(Output, 210u8);
+        Output = Appendˉbyte(Output, 15u8);
+        Output = Appendˉbyte(Output, 133u8);
+        Output = Appendˉu32(
+            Output,
+            Relativeˉu32(Propagateˉoffset, Bytesˉlength(Output) + 4u32)
+        );
+        return Storeˉrax(Output, Resultˉslot);
+    }
     Output = Appendˉbyte(Output, 72u8);
     Output = Appendˉbyte(Output, 137u8);
     Output = Appendˉbyte(Output, 194u8);

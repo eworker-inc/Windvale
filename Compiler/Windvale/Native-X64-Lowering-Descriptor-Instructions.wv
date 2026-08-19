@@ -115,6 +115,51 @@ data U32ˉshiftˉrightˉtemplate: bytes = [
     137, 132, 36, 0, 0, 0, 0
 ];
 
+data U64ˉbitwiseˉandˉtemplate: bytes = [
+    72, 139, 132, 36, 0, 0, 0, 0,
+    72, 139, 140, 36, 0, 0, 0, 0,
+    72, 33, 200,
+    72, 137, 132, 36, 0, 0, 0, 0
+];
+
+data U64ˉbitwiseˉorˉtemplate: bytes = [
+    72, 139, 132, 36, 0, 0, 0, 0,
+    72, 139, 140, 36, 0, 0, 0, 0,
+    72, 9, 200,
+    72, 137, 132, 36, 0, 0, 0, 0
+];
+
+data U64ˉbitwiseˉxorˉtemplate: bytes = [
+    72, 139, 132, 36, 0, 0, 0, 0,
+    72, 139, 140, 36, 0, 0, 0, 0,
+    72, 49, 200,
+    72, 137, 132, 36, 0, 0, 0, 0
+];
+
+data U64ˉbitwiseˉnotˉtemplate: bytes = [
+    72, 139, 132, 36, 0, 0, 0, 0,
+    72, 247, 208,
+    72, 137, 132, 36, 0, 0, 0, 0
+];
+
+data U64ˉshiftˉleftˉtemplate: bytes = [
+    72, 139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    131, 249, 64,
+    15, 131, 0, 0, 0, 0,
+    72, 211, 224,
+    72, 137, 132, 36, 0, 0, 0, 0
+];
+
+data U64ˉshiftˉrightˉtemplate: bytes = [
+    72, 139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    131, 249, 64,
+    15, 131, 0, 0, 0, 0,
+    72, 211, 232,
+    72, 137, 132, 36, 0, 0, 0, 0
+];
+
 data Scalarˉaddˉtemplate: bytes = [
     139, 132, 36, 0, 0, 0, 0,
     139, 140, 36, 0, 0, 0, 0,
@@ -270,6 +315,47 @@ export fn Compilerˉnativeˉx64ˉemitˉscalarˉarithmetic(
         );
         Wide = Patchˉu32(Wide, Wideˉstoreˉoffset, Target * 16u32);
         return Bytesˉconcat(Result, Wide);
+    }
+    if U32ˉfromˉu8(Opcode) >= 179u32 &&
+        U32ˉfromˉu8(Opcode) <= 184u32 {
+        var Wideˉmachine: bytes = U64ˉbitwiseˉandˉtemplate;
+        if Opcode == 180u8 { Wideˉmachine = U64ˉbitwiseˉorˉtemplate; }
+        if Opcode == 181u8 { Wideˉmachine = U64ˉbitwiseˉxorˉtemplate; }
+        if Opcode == 182u8 {
+            Wideˉmachine = Patchˉu32(
+                U64ˉbitwiseˉnotˉtemplate, 4u32, Left * 16u32
+            );
+            Wideˉmachine = Patchˉu32(
+                Wideˉmachine, 15u32, Target * 16u32
+            );
+            return Bytesˉconcat(Result, Wideˉmachine);
+        }
+        if Opcode == 183u8 { Wideˉmachine = U64ˉshiftˉleftˉtemplate; }
+        if Opcode == 184u8 { Wideˉmachine = U64ˉshiftˉrightˉtemplate; }
+        Wideˉmachine = Patchˉu32(
+            Wideˉmachine, 4u32, Left * 16u32
+        );
+        if Opcode == 183u8 || Opcode == 184u8 {
+            Wideˉmachine = Patchˉu32(
+                Wideˉmachine, 11u32, Right * 16u32
+            );
+            Wideˉmachine = Patchˉu32(
+                Wideˉmachine,
+                20u32,
+                Failureˉtarget - Bytesˉlength(Result) - 24u32
+            );
+            Wideˉmachine = Patchˉu32(
+                Wideˉmachine, 31u32, Target * 16u32
+            );
+        } else {
+            Wideˉmachine = Patchˉu32(
+                Wideˉmachine, 12u32, Right * 16u32
+            );
+            Wideˉmachine = Patchˉu32(
+                Wideˉmachine, 23u32, Target * 16u32
+            );
+        }
+        return Bytesˉconcat(Result, Wideˉmachine);
     }
     var Machine: bytes = U32ˉbitwiseˉandˉtemplate;
     if Opcode == 174u8 { Machine = U32ˉbitwiseˉorˉtemplate; }

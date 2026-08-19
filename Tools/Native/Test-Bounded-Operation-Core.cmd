@@ -28,7 +28,7 @@ set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.e
 echo START native bounded operation phase=tools item=1/4
 call "%Native%\Build-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" >nul || goto :cleanup
-call :verify_file "%Lowerer%" 7499264 4912b2ffb5390aeb30ce54b5eabb0e4970923b6ebd4c1d08567ee78a562cb54a || goto :cleanup
+call :verify_file "%Lowerer%" 7597568 61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9 || goto :cleanup
 echo PASS  native bounded operation phase=tools item=1/4
 
 echo START native bounded operation phase=compile item=2/4
