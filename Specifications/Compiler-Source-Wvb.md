@@ -23,6 +23,23 @@ On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one comp
 
 The status contract distinguishes upstream WVIR rejection, shapes and operations, invalid data, and WVB limits. The former unsupported-declaration value and the existing module-count and profile values remain reserved for stable diagnostic numbering: upstream WVIR admission now owns declaration-kind rejection, and every currently validated WVSS module count and root profile is accepted.
 
+The backend body also has a prepared-evidence entry point for the internal
+analysis/emission phase split:
+
+```text
+Compilerˉemitˉpreparedˉsourceˉwvb(
+    Input, Scan, Symbols, Bindings, Wirˉsummary, Optimize
+) -> Compilerˉsourceˉwvbˉsummary
+```
+
+The ordinary one-shot compiler prepares those exact values and delegates to
+this function. Untrusted persisted evidence must enter through
+`Compilerˉsourceˉemission`, which validates WVCA, WVLB, and WVIR before calling
+the prepared backend. The prepared function is not an alternate semantic path
+and does not by itself authorize callers to bypass validation. The artifact and
+validation contract is specified in
+[source-analysis phase artifact](Compiler-Source-Analysis.md).
+
 ## Language 1.0 source-profile admission
 
 The edition-1 front door has the separate portable entry point:

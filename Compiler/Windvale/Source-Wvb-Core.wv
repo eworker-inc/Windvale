@@ -3686,34 +3686,14 @@ export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
     );
 }
 
-export fn Compilerˉsourceˉwvbˉcompile(
+export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary,
     Optimize: bool
 ) -> Compilerˉsourceˉwvbˉsummary {
-    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
-        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
-        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
-            Input, Scan, Symbols
-        );
-    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
-    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉsummaryˉfailureˉat(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Wirˉsummary.Status,
-            Wirˉsummary.Failureˉfunction,
-            0u32,
-            Wirˉsummary.Failureˉline
-        );
-    }
-    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
-            Symbols, Wirˉcompilation
-        );
     let Root: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
         Input, Scan, 0u32
     );
@@ -4017,6 +3997,39 @@ export fn Compilerˉsourceˉwvbˉcompile(
         Symbols.Functions,
         Wirˉsummary.Operations,
         0u32
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉcompile(
+    Input: bytes,
+    Optimize: bool
+) -> Compilerˉsourceˉwvbˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
+    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉsummaryˉfailureˉat(
+            Input,
+            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Wirˉsummary.Status,
+            Wirˉsummary.Failureˉfunction,
+            0u32,
+            Wirˉsummary.Failureˉline
+        );
+    }
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbols, Wirˉcompilation
+        );
+    return Compilerˉemitˉpreparedˉsourceˉwvb(
+        Input, Scan, Symbols, Bindings, Wirˉsummary, Optimize
     );
 }
 

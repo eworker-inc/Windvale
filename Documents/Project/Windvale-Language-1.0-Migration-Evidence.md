@@ -341,6 +341,37 @@ versioned bounded source/type-analysis phase artifact and independently useful
 WVB-emission phase are therefore the next measured capacity boundary; generic
 semantics remain unclaimed here.
 
+## Slice 3 analysis/emission phase checkpoint
+
+Decision 0778 adds the fixed 104-byte `WVCA 1.0` manifest over separate
+canonical WVSS, WVLB, and WVIR values. Every manifest count is independently
+provable: the consumer rescans WVSS, reconstructs source symbols, validates the
+complete WVLB directory, compares the WVIR header, and validates the complete
+WVIR directory before prepared emission can begin. Unverified diagnostic and
+performance counters are deliberately absent.
+
+The WVB backend body is now `Compilerˉemitˉpreparedˉsourceˉwvb`. The retained
+one-shot compiler constructs the same scan, symbols, bindings, and WIR summary
+and delegates to that body, while the source-emission adapter accepts persisted
+evidence only through the independent validator. Canonical WVB remains the
+distribution contract; WVCA is an internal compiler-phase artifact.
+
+The analysis core compiles to 952,903 bytes with 386 retained functions and
+787,036 code bytes. Its deterministic and corruption fixture compiles to
+957,810 bytes with 392 functions and 791,178 code bytes. The emission closure
+compiles to 743,989 bytes with 349 functions and 615,041 code bytes, 34.3%
+smaller than the one-shot compiler module before native packaging. The complete
+compiler reconstructs with 506 functions, 939,530 code bytes, and 1,132,278 module bytes,
+so the compatibility wrapper adds only 106 code bytes and 194 module bytes over
+Decision 0777. The available scalar, general native, and WebAssembly execution
+paths reject the compiler-heavy focused fixture at their documented operation,
+module, or code boundaries; runtime execution is therefore not claimed by this
+checkpoint. No storage, OS, or broad qualification gate was run.
+
+Analyzer/emitter command-line products, cache-key publication, generic
+specialization, distinct-success-shape `try`, and manual status migration remain
+open.
+
 ## Slice 2 named variant fields
 
 The edition-1 declaration parser admits zero through 64 uniquely named fields

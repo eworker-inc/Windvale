@@ -1,0 +1,62 @@
+module Compilerˉsourceˉemission profile portable;
+
+import Compilerˉsourceˉanalysis as Sourceˉanalysis;
+import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwvb as Sourceˉwvb;
+
+export enum Compilerˉsourceˉemissionˉstatus {
+    Valid = 0;
+    Invalidˉanalysis = 1;
+}
+
+export record Compilerˉsourceˉemission {
+    Status: Compilerˉsourceˉemissionˉstatus;
+    Analysisˉstatus: Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus;
+    Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary;
+}
+
+fn Compilerˉsourceˉemissionˉfailure(
+    Input: bytes,
+    Status: Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus
+) -> Compilerˉsourceˉemission {
+    return Compilerˉsourceˉemission(
+        Compilerˉsourceˉemissionˉstatus.Invalidˉanalysis,
+        Status,
+        Sourceˉwvb.Compilerˉsourceˉwvbˉsummary(
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
+            0u32, 0u32,
+            Bytesˉslice(Input, 0u32, 0u32),
+            0u32, 0u32, 0u32
+        )
+    );
+}
+
+export fn Compilerˉemitˉsourceˉanalysis(
+    Input: bytes,
+    Manifest: bytes,
+    Bindingˉdirectory: bytes,
+    Wirˉdirectory: bytes,
+    Optimize: bool
+) -> Compilerˉsourceˉemission {
+    let Analysis: Sourceˉanalysis.Compilerˉsourceˉanalysisˉvalidation =
+        Sourceˉanalysis.Compilerˉvalidateˉsourceˉanalysis(
+            Input, Manifest, Bindingˉdirectory, Wirˉdirectory
+        );
+    if Analysis.Status !=
+        Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+        return Compilerˉsourceˉemissionˉfailure(Input, Analysis.Status);
+    }
+    return Compilerˉsourceˉemission(
+        Compilerˉsourceˉemissionˉstatus.Valid,
+        Analysis.Status,
+        Sourceˉwvb.Compilerˉemitˉpreparedˉsourceˉwvb(
+            Input,
+            Analysis.Scan,
+            Analysis.Symbols,
+            Analysis.Bindings,
+            Analysis.Wir,
+            Optimize
+        )
+    );
+}

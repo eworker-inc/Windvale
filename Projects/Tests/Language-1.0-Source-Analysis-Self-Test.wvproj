@@ -1,0 +1,15 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv"
+source "Compiler/Windvale/Source-Analysis-Core.wv"
+source "Compiler/Windvale/Source-Bindings-Core.wv"
+source "Compiler/Windvale/Source-Body-Parser.wv"
+source "Compiler/Windvale/Source-Declaration-Parser.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+source "Compiler/Windvale/Source-Graph-Core.wv"
+source "Compiler/Windvale/Source-Lexer-Core.wv"
+source "Compiler/Windvale/Source-Set-Core.wv"
+source "Compiler/Windvale/Source-Symbols-Core.wv"
+source "Compiler/Windvale/Source-Wir-Core.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Decimal-Parsing.wv"
+emit wvb

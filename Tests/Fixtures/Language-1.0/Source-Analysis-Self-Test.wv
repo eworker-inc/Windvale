@@ -1,0 +1,141 @@
+module Languageˉoneˉsourceˉanalysisˉselfˉtest profile portable;
+
+import Compilerˉsourceˉanalysis as Analysis;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+fn One(Source: text) -> bytes {
+    let Body: bytes = Textˉtoˉutf8(Source);
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(8u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(24u32));
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body))
+    );
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+        );
+    return Replaced.Value;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+        );
+    return Replaced.Value;
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Status(
+    Input: bytes,
+    Manifest: bytes,
+    Bindings: bytes,
+    Wir: bytes
+) -> Analysis.Compilerˉsourceˉanalysisˉstatus {
+    let Checked: Analysis.Compilerˉsourceˉanalysisˉvalidation =
+        Analysis.Compilerˉvalidateˉsourceˉanalysis(
+            Input, Manifest, Bindings, Wir
+        );
+    return Checked.Status;
+}
+
+export fn Main() -> i32 {
+    let Input: bytes = One(Textˉconcat(
+        "module Analysisˉfixture profile portable; ",
+        "export fn Main() -> i32 { return 7; }"
+    ));
+    let Prepared: Analysis.Compilerˉsourceˉanalysis =
+        Analysis.Compilerˉprepareˉsourceˉanalysis(Input);
+    if Prepared.Status != Analysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+        return 1;
+    }
+    if Bytesˉlength(Prepared.Manifest) != 104u32 ||
+        Bytesˉlength(Prepared.Bindings) <= 24u32 ||
+        Bytesˉlength(Prepared.Wir) <= 48u32 {
+        return 2;
+    }
+    let Repeated: Analysis.Compilerˉsourceˉanalysis =
+        Analysis.Compilerˉprepareˉsourceˉanalysis(Input);
+    if !Bytesˉequal(Prepared.Manifest, Repeated.Manifest) ||
+        !Bytesˉequal(Prepared.Bindings, Repeated.Bindings) ||
+        !Bytesˉequal(Prepared.Wir, Repeated.Wir) {
+        return 3;
+    }
+    let Checked: Analysis.Compilerˉsourceˉanalysisˉvalidation =
+        Analysis.Compilerˉvalidateˉsourceˉanalysis(
+            Input, Prepared.Manifest, Prepared.Bindings, Prepared.Wir
+        );
+    if Checked.Status != Analysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+        return 4;
+    }
+    if Status(
+        Input,
+        Bytesˉslice(Prepared.Manifest, 0u32, 103u32),
+        Prepared.Bindings, Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 5;
+    }
+    if Status(
+        Input, Replaceˉu8(Prepared.Manifest, 0u32, 0u8),
+        Prepared.Bindings, Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 6;
+    }
+    if Status(
+        Input, Replaceˉu32(Prepared.Manifest, 12u32, 0u32),
+        Prepared.Bindings, Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 7;
+    }
+    if Status(
+        Input, Replaceˉu32(Prepared.Manifest, 48u32, 0u32),
+        Prepared.Bindings, Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
+        return 8;
+    }
+    if Status(
+        Input, Replaceˉu32(Prepared.Manifest, 100u32, 1u32),
+        Prepared.Bindings, Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 9;
+    }
+    if Status(
+        Input, Prepared.Manifest,
+        Replaceˉu8(Prepared.Bindings, 0u32, 0u8), Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings {
+        return 10;
+    }
+    if Status(
+        Input, Prepared.Manifest, Prepared.Bindings,
+        Replaceˉu8(Prepared.Wir, 0u32, 0u8)
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
+        return 11;
+    }
+    if Status(
+        Input, Replaceˉu32(Prepared.Manifest, 80u32, 0u32),
+        Prepared.Bindings, Prepared.Wir
+    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
+        return 12;
+    }
+    return 0;
+}
