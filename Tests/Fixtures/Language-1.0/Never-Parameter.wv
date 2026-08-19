@@ -1,0 +1,13 @@
+#!wv/1 en@1
+module NeverˉParameter;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Invalid(Value: never) -> i32 {
+    return 42;
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

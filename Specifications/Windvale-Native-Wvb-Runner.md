@@ -58,7 +58,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The source-built runner accepts WVB 1.11 through 1.14. Its shared scalar interpreter
+The source-built runner accepts WVB 1.11 through 1.15. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -74,6 +74,10 @@ The WVB 1.14 floating core executes raw binary32 and binary64 values with a
 software integer implementation of round-to-nearest, ties-to-even arithmetic,
 canonical NaN, signed zero, subnormals, infinities, unary negation, and all six
 comparisons. It does not inherit host floating-point modes or locale behavior.
+The WVB 1.15 path represents `unit` as one canonical zero scalar cell and
+executes opcode `C3` through the ordinary stack, local, record, call, and return
+machinery. It admits `never` only as a function result; a call pushes no value,
+and verified bytecode cannot return from that function.
 The same bounded scalar path executes the `u64` constant, arithmetic,
 comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
 operations emitted by the compiler's exact floating-literal parser. The focused

@@ -4,7 +4,8 @@
 
 This document specifies the current Windvale bytecode family: the WVB 1.11
 baseline, the WVB 1.12 fixed-width-integer extension, the WVB 1.13 rune
-extension, and the WVB 1.14 floating-point extension. Windvale is in early
+extension, the WVB 1.14 floating-point extension, and the WVB 1.15 `unit` and
+`never` extension. Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
 independent module metadata, nominal payload variants, bounded sequences and
@@ -14,10 +15,12 @@ adds first-class `i8`, `i16`, and `u16` shapes and their checked scalar
 instruction family. WVB 1.13 adds a first-class Unicode-scalar `rune` shape,
 constant, equality, and inequality. WVB 1.14 adds first-class IEEE 754
 binary32 and binary64 shapes and one exact floating-point instruction family.
-A canonical writer emits the lowest required
-minor version: 1.11 when neither extension is present, 1.12 for fixed integers,
-1.13 for rune evidence, and 1.14 for floating-point evidence. A WVB 1.14-capable
-reader accepts all four versions and never admits an extension under an earlier
+WVB 1.15 adds an ordinary one-value `unit` shape, a return-only uninhabited
+`never` shape, and the canonical unit constant. A canonical writer emits the lowest required
+minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
+1.13 for rune evidence, 1.14 for floating-point evidence, and 1.15 for unit or
+never evidence. A WVB 1.15-capable reader accepts all five versions and never
+admits an extension under an earlier
 header. The compiler-aligned verifier and scalar
 runner implement that transition; other current consumers retain explicit
 narrower version boundaries until their own lowering or execution slices land.
@@ -37,7 +40,7 @@ narrower version boundaries until their own lowering or execution slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11, 12, 13, or 14
+u16      minor version: 11, 12, 13, 14, or 15
 u32      section count: 7
 ```
 
@@ -223,9 +226,18 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 17 rune (WVB 1.13 and later)
 18 f32 (WVB 1.14 and later)
 19 f64 (WVB 1.14 and later)
+20 unit (WVB 1.15 and later)
+21 never (WVB 1.15 and later)
 ```
 
-`void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
+`void` and `never` are valid only as return types. `unit` is an ordinary value
+shape in parameters, results, locals, fields, payloads, and operand-stack
+values. It has exactly one logical value; a runtime may erase its native storage,
+but the bytecode stack represents it as a canonical zero scalar cell. `never`
+has no values and therefore cannot appear in a parameter, local, field, payload,
+collection element, or operand-stack value. Immutable integer arrays are module
+data and are not operand-stack values. A `bytes` value is an immutable sequence
+or slice view and can be stored in locals, passed to functions, and returned.
 
 Function parameter, result, local, record-field, and variant-payload types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7`, `8`, or `11` followed by a `u32` Types-section index. A collection shape is byte `12` or `13`, its recursively encoded non-collection element shape, then its `u32` maximum. Nominal identity and collection kind/element/maximum are exact.
 
@@ -235,8 +247,9 @@ widen counts, indices, lengths, code offsets, enum backing values, or existing
 binary Foundation operations, which remain explicitly `u32` or `i32`. Shape
 bytes 14 through 16 and opcode `C0` are invalid in WVB 1.11. Shape byte 17 and
 opcode `C1` are invalid before WVB 1.13. Shape bytes 18 and 19 and opcode `C2`
-are invalid before WVB 1.14. Each later version admits the complete vocabulary
-of every earlier version.
+are invalid before WVB 1.14. Shape bytes 20 and 21 and opcode `C3` are invalid
+before WVB 1.15. Each later version admits the complete vocabulary of every
+earlier version.
 
 ## Instruction encoding
 
@@ -374,6 +387,7 @@ BF u64.from_u32    consumes u32, produces the same numeric value as u64
 C0 fixed.integer   u8 type tag, u8 operation, then operation-specific payload
 C1 rune            u8 operation, then operation-specific payload
 C2 floating        u8 type tag, u8 operation, then operation-specific payload
+C3 unit.const      no immediate; produces the sole `unit` value
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -463,12 +477,19 @@ either floating type or any other value type. An unknown selector, a wrong type
 tag, a truncated or over-wide immediate, or mismatched operands is malformed
 bytecode.
 
+`C3` has no immediate payload and produces one canonical `unit` operand-stack
+value. It is not a `void` placeholder: calls returning `unit` push one value and
+the ordinary return instruction consumes that value. Calls returning `never`
+push no value because normal return from the callee is impossible. A function
+whose result is `never` contains no return instruction; its verified reachable
+control flow cannot fall through.
+
 ## Verification
 
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11, 1.12, 1.13, or 1.14 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, and every floating-point item requires 1.14.
+- The version is WVB 1.11, 1.12, 1.13, 1.14, or 1.15 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, and every unit or never item requires 1.15.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -479,8 +500,10 @@ Verification is required before execution and rejects a module unless:
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
-- Calls consume the declared parameter types and push only a non-void result.
-- Returns match the function return type.
+- Calls consume the declared parameter types, push one result for every result
+  other than `void` or `never`, and push nothing for `void` or `never`.
+- Returns match the function return type; a `never` function has no return
+  instruction.
 - Control cannot fall past the end of a function.
 - Every instruction is reachable in Seed.
 - Computed maximum stack depth equals the declared maximum.

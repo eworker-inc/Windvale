@@ -447,7 +447,7 @@ export fn Hˉcall(
         true,
         Resultˉstack,
         Resultˉdepth,
-        Pushˉkind != 0u32,
+        Pushˉkind != 0u32 && Pushˉkind != 21u32,
         Pushˉkind,
         Pushˉnominal
     );
@@ -758,6 +758,11 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Hasˉpush = true;
                     Pushˉkind = 16u32;
                 }
+                Handled = true;
+            }
+            if Opcode == 195u32 {
+                Hasˉpush = true;
+                Pushˉkind = 20u32;
                 Handled = true;
             }
             if Opcode == 193u32 {
@@ -1081,6 +1086,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             }
             if Opcode == 81u32 {
                 let Returnˉexpectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Returnˉtype));
+                if Returnˉexpectedˉkind == 21u32 { return Invalid; }
                 var Returnˉexpectedˉnominal: u32 = 0u32;
                 if Returnˉexpectedˉkind == 7u32 || Returnˉexpectedˉkind == 8u32 ||
                     Returnˉexpectedˉkind == 11u32 {
@@ -1141,6 +1147,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 if Pushˉkind == 17u32 { Encodedˉkind = Bytesˉfromˉu8(17u8); }
                 if Pushˉkind == 18u32 { Encodedˉkind = Bytesˉfromˉu8(18u8); }
                 if Pushˉkind == 19u32 { Encodedˉkind = Bytesˉfromˉu8(19u8); }
+                if Pushˉkind == 20u32 { Encodedˉkind = Bytesˉfromˉu8(20u8); }
                 let Encodedˉshape: bytes = Bytesˉconcat(
                     Encodedˉkind,
                     Bytesˉfromˉu32ˉlittle(Pushˉnominal)

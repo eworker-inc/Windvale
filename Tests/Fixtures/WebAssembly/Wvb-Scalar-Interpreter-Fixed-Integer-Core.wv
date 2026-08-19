@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 14u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 15u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -35,11 +35,14 @@ export fn Scanˉfixedˉinteger(
 
 export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
     if Kind >= 1u32 && Kind <= 10u32 { return true; }
-    if Minor >= 12u32 && Minor <= 14u32 && Kind >= 14u32 && Kind <= 16u32 {
+    if Minor >= 12u32 && Minor <= 15u32 && Kind >= 14u32 && Kind <= 16u32 {
         return true;
     }
-    if Minor >= 13u32 && Minor <= 14u32 && Kind == 17u32 { return true; }
-    return Minor == 14u32 && Kind >= 18u32 && Kind <= 19u32;
+    if Minor >= 13u32 && Minor <= 15u32 && Kind == 17u32 { return true; }
+    if Minor >= 14u32 && Minor <= 15u32 && Kind >= 18u32 && Kind <= 19u32 {
+        return true;
+    }
+    return Minor == 15u32 && Kind >= 20u32 && Kind <= 21u32;
 }
 
 export fn Scanˉfunction(
@@ -116,6 +119,10 @@ export fn Scanˉfunction(
                 Module, Offset + Cursor, Length - Cursor, Minor
             );
             if Width == 0u32 { return 0u32; }
+            Supported = true;
+        }
+        if Opcode == 195u32 {
+            if Minor != 15u32 { return 0u32; }
             Supported = true;
         }
         if !Supported || Width > Length - Cursor { return 0u32; }
@@ -318,6 +325,13 @@ export fn Executeˉscalar(
     Zeroˉvalue: bytes
 ) -> bytes {
     let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset));
+    if Opcode == 195u32 {
+        return Execution(
+            4u8,
+            0u32,
+            Bytesˉconcat(Stack, Bytesˉconcat(Zeroˉvalue, Zeroˉvalue))
+        );
+    }
     if Opcode == 129u32 ||
         (Opcode >= 134u32 && Opcode <= 136u32) ||
         (Opcode >= 143u32 && Opcode <= 148u32) ||

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11, 1.12, 1.13, or 1.14 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.15 module, and returns the bytes without using hosted capabilities.
 
 The current slice proves the complete source set → symbols/bindings → typed WVIR → canonical cross-module identity flattening → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. It emits one self-contained module and does not introduce runtime linkage.
 
@@ -58,30 +58,26 @@ the profile artifacts. WVSS 2 is an internal phase boundary, not a serializable
 build input: the ordinary public compiler entry points require WVSS 1 and reject
 external WVSS 2 values.
 
-The first Language 1.0 Slice 2 checkpoint appends front-end token, source-type,
+The first Language 1.0 Slice 2 checkpoint appended front-end token, source-type,
 and internal binding-shape identities for `unit`, `never`, `i8`, `i16`, `u16`,
-`f32`, `f64`, and `rune`. Those internal identities are not automatically WVB
-type bytes. The second checkpoint admits
-only storage-free `unit` results: typed WIR shape zero encodes as WVB's existing
-return-only type byte zero, a unit literal emits no opcode, a unit-valued call
-uses the existing call instruction without pushing a result, and the existing
-no-value return instruction closes the function. This reuses an identical ABI
-representation without equating Seed `void` and Language 1.0 `unit` in source
-semantics. `unit` parameters/locals and the other new primitive values initially remained
-closed until their exact operations and runtime representations are implemented
-and versioned; the backend never aliases them to existing value shapes merely to
-produce output. The fixed-integer checkpoint now admits `i8`, `i16`, and `u16`
+`f32`, `f64`, and `rune`; subsequent checkpoints carry their implemented forms
+through explicit WVB versions rather than aliasing an existing shape. WVB 1.15
+now maps internal shapes `9` and `10` to `unit` and `never` tags `20` and `21`.
+`Unitˉconstant = 163` lowers to opcode `C3`, a unit-returning call pushes its one
+value, and a typed return consumes it. `never` is return-only; a call emits no
+result value and its source-WIR path has no normal continuation. The
+fixed-integer checkpoint now admits `i8`, `i16`, and `u16`
 as stored values and operations through WVB 1.12. The rune checkpoint admits
 exact Unicode-scalar values and equality through WVB 1.13. The floating-point
 checkpoint admits `f32` and `f64` stored values, exact hexadecimal literals,
-arithmetic, unary negation, and comparison through WVB 1.14. Non-result `unit`
-remains closed.
+arithmetic, unary negation, and comparison through WVB 1.14.
 
-The 356-byte `Unit-Control.wv` artifact proves deterministic compiler emission
-for explicit/fallthrough unit return and a unit-returning call. The current scalar
-WVB runner does not yet admit return type byte zero, so this checkpoint makes no
-unit-execution claim; its ordinary executable sentinel remains the 221-byte
-`Main() -> i32` program.
+The 731-byte WVB 1.15 `Unit-Control.wv` artifact proves parameters, locals,
+assignment, record storage, explicit/fallthrough returns, and a unit-returning
+call. `Never-Control.wv` proves non-returning call propagation, a never-valued
+loop condition, Boolean short-circuiting, and unconditional loops in an
+853-byte WVB 1.15 artifact. Both execute through the
+current scalar runner and return `42`.
 
 The next Slice 2 checkpoint admits Language 1.0 named record update without a
 format change. Typed WIR has already evaluated one exact-nominal base and every
@@ -232,7 +228,7 @@ WVSD assigns canonical nominal indices independently of source order or module o
 
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
-Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. These encodings apply uniformly to parameters, results, user locals, and compiler temporaries.
+Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 
@@ -258,6 +254,11 @@ constant, add, subtract, multiply, divide, negate, equality, inequality, and the
 four ordered comparisons. A constant additionally carries its raw little-endian
 `u32` or `u64` bits. Any `f32`/`f64` shape or floating operation selects WVB
 1.14; an unaffected module keeps its prior lowest required version.
+
+WVIR operation `163` lowers to the one-byte WVB 1.15 opcode `C3`. It produces
+one canonical unit stack cell and has no immediate. Any unit or never shape or
+unit operation selects WVB 1.15; an unaffected module keeps its prior lowest
+required version.
 
 Named-record syntax has disappeared by this boundary: typed WVIR has already evaluated source fields left to right and reordered their temporary operands to canonical declaration order. It therefore lowers through the same record-construction opcode and value layout as the retained positional spelling.
 
@@ -326,16 +327,18 @@ Primitive WVIR shapes map to WVB shapes as follows:
 | 6 | `bytes` | 6 |
 | 7 | `i64` | 9 |
 | 8 | `u64` | 10 |
+| 9 | `unit` | 20 |
+| 10 | `never` | 21 |
 | 11 | `i8` | 14 |
 | 12 | `i16` | 15 |
 | 13 | `u16` | 16 |
 | 16 | `rune` | 17 |
 
 The encoder writes canonical Module, Capabilities, Data, Functions, Code,
-Exports, and Types section envelopes. It emits WVB 1.13 when any function,
-field, payload, collection element, local, temporary, result, or operation uses
-`rune`; otherwise it emits WVB 1.12 when any such evidence uses `i8`, `i16`, or
-`u16`, and the byte-identical WVB 1.11 baseline when neither extension occurs.
+Exports, and Types section envelopes. It emits WVB 1.15 for any unit or never
+evidence, otherwise WVB 1.14 for floating evidence, WVB 1.13 for rune evidence,
+WVB 1.12 for fixed-width integer evidence, and the byte-identical WVB 1.11
+baseline when no extension occurs.
 Every module carries the metadata-presence byte, including modules without
 metadata. Capabilities and Types contain canonical zero counts when absent and
 canonical entries when their accepted declarations are present. Function

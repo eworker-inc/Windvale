@@ -512,7 +512,9 @@ export fn Scanˉfloating(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor != 14u32 || Remaining < 3u32 { return 0u32; }
+    if (Minor != 14u32 && Minor != 15u32) || Remaining < 3u32 {
+        return 0u32;
+    }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 18u32 || Kind > 19u32 || Operation > 11u32 {

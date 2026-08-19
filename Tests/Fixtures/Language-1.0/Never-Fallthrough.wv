@@ -1,0 +1,12 @@
+#!wv/1 en@1
+module NeverˉFallthrough;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Stop() -> never {
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

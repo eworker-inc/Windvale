@@ -18,7 +18,7 @@ data Stackˉeffects: bytes = [
     6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6,
     5, 6, 6, 6, 6, 6, 5, 6, 6, 0, 0, 0, 0, 0, 13, 5,
-    4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -416,6 +416,7 @@ export fn Main(Request: bytes) -> bytes {
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) {
                 return Invalid;
             }
+            if Shapeˉkind == 21u32 { return Invalid; }
             Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 {
@@ -484,6 +485,7 @@ export fn Main(Request: bytes) -> bytes {
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) {
                 return Invalid;
             }
+            if Shapeˉkind == 21u32 { return Invalid; }
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 {
@@ -1400,7 +1402,9 @@ export fn Main(Request: bytes) -> bytes {
                                         ));
                                     Recordˉconstructionˉfieldˉcursor =
                                         Recordˉconstructionˉfieldˉcursor + 1u32;
-                                    if Recordˉconstructionˉfieldˉkind >= 7u32 {
+                                    if Recordˉconstructionˉfieldˉkind == 7u32 ||
+                                        Recordˉconstructionˉfieldˉkind == 8u32 ||
+                                        Recordˉconstructionˉfieldˉkind == 11u32 {
                                         Recordˉconstructionˉfieldˉcursor =
                                             Recordˉconstructionˉfieldˉcursor + 4u32;
                                     }
@@ -1701,7 +1705,9 @@ export fn Main(Request: bytes) -> bytes {
                                                     ));
                                                 Reclaimedˉfieldˉcursor =
                                                     Reclaimedˉfieldˉcursor + 1u32;
-                                                if Reclaimedˉfieldˉkind >= 7u32 {
+                                                if Reclaimedˉfieldˉkind == 7u32 ||
+                                                    Reclaimedˉfieldˉkind == 8u32 ||
+                                                    Reclaimedˉfieldˉkind == 11u32 {
                                                     Reclaimedˉfieldˉcursor =
                                                         Reclaimedˉfieldˉcursor
                                                             + 4u32;
@@ -1850,7 +1856,9 @@ export fn Main(Request: bytes) -> bytes {
                     Bytesˉreadˉu8(Module, Fieldˉtypeˉcursor)
                 );
                 Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 1u32;
-                if Scannedˉfieldˉkind >= 7u32 {
+                if Scannedˉfieldˉkind == 7u32 ||
+                    Scannedˉfieldˉkind == 8u32 ||
+                    Scannedˉfieldˉkind == 11u32 {
                     Fieldˉtypeˉcursor = Fieldˉtypeˉcursor + 4u32;
                 }
                 Scannedˉfield = Scannedˉfield + 1u32;
@@ -2778,7 +2786,7 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength >= 192u32 && Payloadˉlength <= 194u32 {
+        if Payloadˉlength >= 192u32 && Payloadˉlength <= 195u32 {
             let Scalarˉexecutionˉresult: bytes = Fixed.Executeˉscalar(
                 Module,
                 Payload,

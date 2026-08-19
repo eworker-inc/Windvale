@@ -36,11 +36,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/7'
+echo 'START language 1 front door phase=frozen-fixtures item=1/8'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/7'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/8'
 
-echo 'START language 1 front door phase=descriptor item=2/7'
+echo 'START language 1 front door phase=descriptor item=2/8'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -53,9 +53,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/7'
+echo 'PASS  language 1 front door phase=descriptor item=2/8'
 
-echo 'START language 1 front door phase=value-front-end item=3/7'
+echo 'START language 1 front door phase=value-front-end item=3/8'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -64,9 +64,9 @@ echo 'START language 1 front door phase=value-front-end item=3/7'
 [[ ! -s $work/Value-Front-End.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
 cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
-echo 'PASS  language 1 front door phase=value-front-end item=3/7'
+echo 'PASS  language 1 front door phase=value-front-end item=3/8'
 
-echo 'START language 1 front door phase=compiler-slice item=4/7'
+echo 'START language 1 front door phase=compiler-slice item=4/8'
 segmented_report=$("$script_directory/Build-Cached-Segmented-Project.sh" \
     "$repository_root/Projects/Examples/Windvale-Compiler.wvproj" \
     "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf" \
@@ -211,9 +211,9 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/7'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/8'
 
-echo 'START language 1 front door phase=fixed-integers item=5/7'
+echo 'START language 1 front door phase=fixed-integers item=5/8'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -311,9 +311,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
     "$(wc -c < "$work/Fixed-Integer-A.wvb")"
-echo 'PASS  language 1 front door phase=fixed-integers item=5/7'
+echo 'PASS  language 1 front door phase=fixed-integers item=5/8'
 
-echo 'START language 1 front door phase=runes item=6/7'
+echo 'START language 1 front door phase=runes item=6/8'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -374,9 +374,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 rune_wvb_bytes=$(wc -c < "$work/Rune-A.wvb")
 printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
-echo 'PASS  language 1 front door phase=runes item=6/7'
+echo 'PASS  language 1 front door phase=runes item=6/8'
 
-echo 'START language 1 front door phase=floating item=7/7'
+echo 'START language 1 front door phase=floating item=7/8'
 "$work/Compiler.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -443,5 +443,45 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 floating_wvb_bytes=$(wc -c < "$work/Floating-A.wvb")
 printf 'INFO  language 1 floating wvb-bytes=%s\n' "$floating_wvb_bytes"
-echo 'PASS  language 1 front door phase=floating item=7/7'
-printf 'native language 1 front door status=Passed cases=91 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=356 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s\n' "$rune_wvb_bytes" "$floating_wvb_bytes"
+echo 'PASS  language 1 front door phase=floating item=7/8'
+
+echo 'START language 1 front door phase=unit-never item=8/8'
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
+    "$work/Never-A.wvb" \
+    >"$work/Never-A.out" 2>"$work/Never-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
+    "$work/Never-B.wvb" \
+    >"$work/Never-B.out" 2>"$work/Never-B.err" || exit $?
+[[ ! -s $work/Never-A.err && ! -s $work/Never-B.err ]] || exit 1
+cmp -s -- "$work/Never-A.out" "$work/Never-B.out" || exit 1
+cmp -s -- "$work/Never-A.wvb" "$work/Never-B.wvb" || exit 1
+
+for name in Fallthrough Return Parameter Unreachable; do
+    expect_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Never-$name.wv" \
+        "$work/Never-$name.wvb" || exit 1
+done
+
+node "$script_directory/Verify-Language-1.0-Unit-Never.mjs" \
+    "$work/Verifier.elf" "$work/Unit-A.wvb" "$work/Never-A.wvb" \
+    "$work/Unit-Never-Malformed" || exit $?
+"$work/Floating-Runner.elf" "$work/Unit-A.wvb" \
+    >"$work/Unit-Run.out" 2>"$work/Unit-Run.err" || exit $?
+"$work/Floating-Runner.elf" "$work/Never-A.wvb" \
+    >"$work/Never-Run.out" 2>"$work/Never-Run.err" || exit $?
+[[ ! -s $work/Unit-Run.err && ! -s $work/Never-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Unit-Never.out"
+cmp -s -- "$work/Expected-Unit-Never.out" "$work/Unit-Run.out" || exit 1
+cmp -s -- "$work/Expected-Unit-Never.out" "$work/Never-Run.out" || exit 1
+unit_wvb_bytes=$(wc -c < "$work/Unit-A.wvb")
+never_wvb_bytes=$(wc -c < "$work/Never-A.wvb")
+printf 'INFO  language 1 unit-never unit-wvb-bytes=%s never-wvb-bytes=%s\n' \
+    "$unit_wvb_bytes" "$never_wvb_bytes"
+echo 'PASS  language 1 front door phase=unit-never item=8/8'
+printf 'native language 1 front door status=Passed cases=96 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=23 compiler-cases=17 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 compiler-result=42 compiler-wvb-bytes=221 unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s\n' "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes"

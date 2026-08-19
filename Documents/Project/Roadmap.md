@@ -103,12 +103,12 @@ view, parses the standalone Core header, and compiles one minimal edition-1 prog
 deterministically through WIR and WVB. Project 2 and descriptorless Seed remain on
 their prior path; no ambient profile fallback or parallel compiler was added.
 Slice 2 is active: its primitive identities, 23 bounded front-end assertions,
-storage-free unit return/control, named record update, WVB 1.12 fixed integers,
-WVB 1.13 runes, and WVB 1.14 strict floating-point checkpoint now cross the
-shared compiler, verifier, and scalar runner. The rebuilt compiler rejects
-Seed-only `void` at the edition-1 boundary without publication. Complete
-unit/`never`, aggregate construction/destructuring, value-producing control flow,
-localized token execution, and paired-host conformance remain later gates.
+named record update, WVB 1.12 fixed integers, WVB 1.13 runes, WVB 1.14 strict
+floating point, and WVB 1.15 ordinary `unit` plus return-only `never` now cross
+the shared compiler, verifier, and scalar runner. The rebuilt compiler rejects
+Seed-only `void` at the edition-1 boundary without publication. Multi-field
+aggregate construction/destructuring, value-producing control flow, localized
+token execution, and paired-host conformance remain later gates.
 
 ## How to read this roadmap
 

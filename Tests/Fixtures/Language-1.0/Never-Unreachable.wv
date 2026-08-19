@@ -1,0 +1,15 @@
+#!wv/1 en@1
+module NeverˉUnreachable;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Stop() -> never {
+    while true {
+    }
+}
+
+export fn Main() -> i32 {
+    Stop();
+    return 42;
+}

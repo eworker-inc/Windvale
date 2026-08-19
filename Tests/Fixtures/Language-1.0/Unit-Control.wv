@@ -4,6 +4,11 @@ profile core;
 platform linux, windows, windvale;
 authority application;
 
+record Unitˉbox {
+    Marker: unit;
+    Value: i32;
+}
+
 fn Explicitˉunit() -> unit {
     return ();
 }
@@ -16,9 +21,22 @@ fn Implicitˉunit() -> unit {
     Forwardˉunit();
 }
 
+fn Copyˉunit(Value: unit) -> unit {
+    let Copy: unit = Value;
+    var Mutable: unit = Copy;
+    Mutable = ();
+    return Mutable;
+}
+
 export fn Main() -> i32 {
     Explicitˉunit();
     Forwardˉunit();
     Implicitˉunit();
-    return 42;
+    let Box: Unitˉbox = Unitˉbox {
+        Marker: Copyˉunit(()),
+        Value: 42,
+    };
+    let Marker: unit = Box.Marker;
+    Copyˉunit(Marker);
+    return Box.Value;
 }

@@ -1,0 +1,13 @@
+#!wv/1 en@1
+module NeverˉReturn;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Stop() -> never {
+    return ();
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

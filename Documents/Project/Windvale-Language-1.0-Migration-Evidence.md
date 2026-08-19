@@ -12,20 +12,16 @@ an edition-1 source descriptor only through an explicitly supplied, hash-pinned
 source-input lock and composite source profile. It resolves the frozen `en@1`
 component chain, exposes the remaining bytes as an immutable view, parses the
 required standalone module metadata, and compiles one minimal Core program
-deterministically through WIR and WVB. The first Slice 2 checkpoint adds exact
-front-end identities for the frozen primitive value types and prevents Seed-only
-`void` type syntax from crossing the edition-1 front door. The second checkpoint
-implements the storage-free return/control portion of `unit`: `()`, `return;`,
-`return ();`, unit-returning calls, and implicit fallthrough now lower through
-typed WIR and deterministic WVB. Named record update, fixed-width `i8`/`i16`/`u16`,
-exact Unicode-scalar `rune`, and first `f32`/`f64` values now cross the compiler,
-verifier, and runtime together. Project 3 carries the profile artifacts; Project 2 and
+deterministically through WIR and WVB. Slice 2 adds exact front-end identities
+for the frozen primitive value types and prevents Seed-only `void` type syntax
+from crossing the edition-1 front door. Named record update, fixed-width
+`i8`/`i16`/`u16`, exact Unicode-scalar `rune`, `f32`/`f64`, ordinary one-value
+`unit`, and return-only `never` now cross the compiler, verifier, and scalar
+runtime together. Project 3 carries the profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. Storable/passable `unit`,
-unit execution in the scalar WVB runner, `never` control semantics, multi-field
-variant construction and destructuring, and value-producing control flow remain
-pending. Localized
+These checkpoints do not complete Slice 2. Multi-field variant construction and
+destructuring and value-producing control flow remain pending. Localized
 token execution, public-library vocabulary lookup, Unicode identifier admission,
 and paired-host Language 1.0 qualification also remain pending.
 
@@ -118,7 +114,7 @@ the compiler-aligned metadata verifier accepts it and the ordinary runtime retur
 descriptorless edition-1 header, an absent ambient profile, a wrong lock digest,
 and changed profile bytes all fail without publishing an output.
 
-## Slice 2 primitive and unit checkpoints
+## Slice 2 primitive, unit, and never checkpoints
 
 The shared lexer now assigns stable appended token identities to `unit`, `never`,
 `i8`, `i16`, `u16`, `f32`, `f64`, `rune`, and the record-update word `base`.
@@ -145,25 +141,42 @@ invalid-token offsets. It compiles to a verified WVB and returns `42`.
 The body parser appends expression kind `Unit = 12` and recognizes only an empty
 parenthesized expression as `()`. A nonempty parenthesized expression retains its
 existing transparent grouping behavior. Binding a unit literal contributes no
-name, call, or runtime-storage evidence.
+name or call evidence; typed WIR gives it ordinary shape `9` and emits
+`Unitˉconstant = 163`. Explicit `return;`, `return ();`, return of a unit-valued
+call, and implicit fallthrough all produce and return that same one logical
+value. Parameters, locals, assignment, and record fields preserve the unit type;
+the runtime may represent its unobservable physical payload as a canonical zero
+scalar cell. A non-unit expression returned from `unit`, `()` returned from
+`i32`, or descriptorless Seed use of `()` is rejected without output. Seed
+`void` retains shape zero and its no-value return behavior.
 
-For an admitted edition-1 function returning `unit`, typed WIR uses return shape
-zero as the storage-free result ABI. A unit literal produces no operation and no
-temporary. Explicit `return;`, `return ();`, return of a unit-valued call, and
-implicit fallthrough all close the current block with the existing no-value return
-terminator. A non-unit expression returned from `unit`, `()` returned from `i32`,
-or descriptorless Seed use of `()` is rejected without output. Seed `void` keeps
-its prior shape-zero return behavior; source editions do not acquire each other's
-type spelling.
+Internal shape `10` is the logical `never` result and is never a temporary,
+parameter, local, record field, or serialized stack value. A call to a
+never-returning function emits the ordinary physical call with no result,
+terminates its WIR block with a verified self-loop, and propagates logical shape
+`10` through its enclosing expression. It therefore satisfies an expected result
+position without a conversion and makes a following statement unreachable.
+Fallthrough or a value-return statement in a `never` function is rejected. The
+compiler recognizes `while true` as non-fallthrough unless an admitted break path
+reaches the loop's after-block; encoded WIR still retains canonical explicit
+edges for independent validation.
 
-No WVIR operation, WVB opcode, or serialized-format version was added. Edition-1
-`unit` return metadata deliberately uses WVB's existing return-only type byte zero,
-because both Seed `void` and Language 1.0 `unit` have no runtime payload at that
-ABI boundary. `Tests/Fixtures/Language-1.0/Unit-Control.wv` compiles twice to the
-same 356-byte WVB with SHA-256
-`939d3728d6aa78d5e8607e4d8199c9d597f28fa51d6dbfcd189bf8b0ac9e246b`.
-That is compiler and deterministic-emission evidence, not yet scalar-runner unit
-execution evidence.
+WVB 1.15 adds type tags `20`/`21` for unit/never and opcode `C3` for a unit
+constant. The compiler-aligned verifier restricts never to function results,
+rejects any return instruction in a never function, and treats a call to never
+as pushing no value. The scalar runtime executes unit through its ordinary
+stack, local, record, call, and return path and applies the same never call
+effect. `Tests/Fixtures/Language-1.0/Unit-Control.wv` compiles twice to the same
+731-byte WVB with SHA-256
+`f047706f0b4915e59120b54eef5746efe22eae9c2c658860082fe131fa85ad3c`.
+`Never-Control.wv` compiles twice to the same 853-byte WVB with SHA-256
+`955be78835ecec4bcd4be3b563932d5a933422c6ce1cbdd74ee928d4f9bf9a04`.
+Both execute through the source-built runner and return `42`. Four source
+fixtures reject never fallthrough, a return from never, a never parameter, and
+a statement after a never call. The positive fixture also proves a never-valued
+loop condition and a never right operand behind a finite Boolean short path.
+Eleven independent WVB mutations cover version,
+shape, opcode, type mismatch, forbidden never positions, and return behavior.
 
 The next checkpoint appends body expression kind `Recordˉupdate = 13` for the
 frozen `Qualifiedˉsourceˉname base Expression { Field: Value, ... }` form. Binding
@@ -231,7 +244,7 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 91 declared cases. Its
+The cross-host `language-1-front-door` owner reports 96 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 23-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
@@ -241,8 +254,9 @@ source forms, admit the canonical module, reject six byte-level corruptions, and
 execute both the reconstructed shared runner and focused runtime core. The 27
 floating cases add deterministic compilation, four source rejections, eight
 malformed-WVB rejections, current-runner execution, and a focused raw-bit runtime
-self-test. The report keeps nested assertions separate from the top-level owner
-count.
+self-test. Its 21 unit/never cases add deterministic compilation, four source
+rejections, eleven malformed-WVB rejections, and two executions returning `42`.
+The report keeps nested assertions separate from the top-level owner count.
 
 Frozen design inputs, descriptor files, edition-1 fixtures, and the integrated
 compiler boundaries map to this owner. Compiler WVB/image construction and
@@ -353,10 +367,10 @@ performance or Language 1.0 conformance is claimed.
 Migration Slice 1 is complete: source-profile locks and composite profiles are
 explicit Project 3/build inputs, their pinned chain controls English token
 resolution, and Project 2 remains stable. Slice 2 now includes primitive
-front-end identities, edition separation, storage-free unit return/control
-lowering, named record update, fixed-width integer execution, exact rune
-execution, and the first strict floating-point vertical checkpoint over one
-compiler architecture. Its completion gate remains complete unit execution,
-`never`, multi-field variant/destructuring, and value-producing
-control flow over this same compiler architecture. Seed stays on that architecture
-until its named removal checkpoint.
+front-end identities, edition separation, named record update, fixed-width
+integer execution, exact rune execution, strict floating point, and complete
+unit/never semantics over the compiler-aligned WVB 1.15 verifier and scalar
+runtime checkpoint. Its completion gate remains multi-field
+variant/destructuring and value-producing control flow over this same compiler
+architecture. Seed stays on that architecture until its named removal
+checkpoint.

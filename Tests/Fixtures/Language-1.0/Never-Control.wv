@@ -1,0 +1,49 @@
+#!wv/1 en@1
+module NeverˉControl;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Stop() -> never {
+    while true {
+    }
+}
+
+fn Selectˉvalue(Returnˉnow: bool) -> i32 {
+    if Returnˉnow {
+        return 42;
+    }
+    Stop();
+}
+
+fn Neverˉcondition() -> i32 {
+    while Stop() {
+    }
+}
+
+fn Shortˉcircuit(Useˉstop: bool) -> bool {
+    return Useˉstop && Stop();
+}
+
+fn Loopˉwithˉbreak() -> i32 {
+    while true {
+        break;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    if false {
+        return Stop();
+    }
+    if false {
+        return Neverˉcondition();
+    }
+    if Loopˉwithˉbreak() != 42 {
+        return 1;
+    }
+    if Shortˉcircuit(false) {
+        return 2;
+    }
+    return Selectˉvalue(true);
+}

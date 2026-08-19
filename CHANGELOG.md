@@ -23,14 +23,16 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
   `u16`, `f32`, `f64`, `rune`, and record-update `base`; 23 bounded assertions
   cover token/type admission and edition separation, and a rebuilt Project 3
   compiler rejects Seed-only `void` without publishing output. The next bounded
-  checkpoint parses `()` and implements storage-free `unit` returns, fallthrough,
-  and unit-returning calls through typed WIR and deterministic WVB while rejecting
-  cross-edition or mismatched returns. Named record update now evaluates one exact
+  checkpoint parses `()` and carries ordinary `unit` parameters, locals, record
+  fields, calls, and returns plus return-only `never` control through typed WIR,
+  WVB 1.15, the compiler-aligned verifier, and the scalar runtime. Named record
+  update now evaluates one exact
   nominal base and source-ordered replacements, preserves other fields through the
   existing record operations, deterministically emits a 1,116-byte executable WVB,
-  and rejects wrong bases, duplicate/unknown fields, and Seed use. Scalar unit
-  execution, `never`, the remaining numeric/rune values, destructuring, and
-  value-producing control flow remain explicitly pending.
+  and rejects wrong bases, duplicate/unknown fields, and Seed use. WVB 1.12 fixed
+  integers, WVB 1.13 runes, and WVB 1.14 strict floating point also execute
+  through the same path. Multi-field destructuring and value-producing control
+  flow remain explicitly pending.
 - Replaced the full database-storage proxy for ordinary source-compiler changes
   with a focused five-case sentinel that rebuilds the changed compiler, proves
   deterministic four-function WVB output, independently verifies it, and executes

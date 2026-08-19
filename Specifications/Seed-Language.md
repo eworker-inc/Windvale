@@ -4,7 +4,7 @@
 
 This document specifies the source-language subset implemented by Windvale Seed. It is deliberately small and may break during early development. Through at least September 3, 2026, and until a named decision replaces the policy, superseded source and binary contracts require no backward parser, reader, alias, or migration layer; repository inputs and fixtures advance to the current contract together. Source is strict UTF-8. Identifiers are case-sensitive ASCII segments joined by U+02C9 and match `[A-Za-z_][A-Za-z0-9_]*(ˉ[A-Za-z_][A-Za-z0-9_]*)*`. Official source follows [Windvale source naming conventions](Source-Naming.md).
 
-The Windvale-written compiler and current native WVB runner implement the scalar source and canonical WVB surface below, including `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64`. The retained Stage 0 recovery compiler remains a WVB 1.11 differential boundary and does not define the fixed-integer, rune, or floating-point extensions. Other native, WebAssembly, and Windvale OS consumers remain explicit narrower subsets until their separately verified lowering contracts advance.
+The Windvale-written compiler and current native WVB runner implement the scalar source and canonical WVB surface below, including `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, `f64`, and the admitted edition-1 `unit` and `never` checkpoint. The retained Stage 0 recovery compiler remains a WVB 1.11 differential boundary and does not define the fixed-integer, rune, floating-point, unit, or never extensions. Other native, WebAssembly, and Windvale OS consumers remain explicit narrower subsets until their separately verified lowering contracts advance.
 
 ## Module shape
 
@@ -53,6 +53,11 @@ Every module must explicitly declare each catalog capability required anywhere i
 ## Types
 
 - `void` is valid only as a function or capability return type.
+- In admitted edition-1 source, `unit` is the ordinary Copy type with the sole
+  value `()`. It may be passed, returned, or stored, including in a record; an
+  implementation may erase physical storage without erasing its type or value.
+- In admitted edition-1 source, `never` is permitted only as a function result
+  type. It has no value, local, parameter, field, payload, or literal.
 - `i8` and `i16` are signed 8- and 16-bit integers. Arithmetic overflow traps deterministically.
 - `i32` is a signed 32-bit integer. Arithmetic overflow traps deterministically.
 - `i64` is a signed 64-bit integer. Arithmetic overflow traps deterministically.
@@ -156,6 +161,14 @@ return [<expression>];
 
 A local without a type annotation receives the initializer's one exact non-void type; inference performs no conversion, does not cross a function boundary, and does not affect explicitly typed parameters or function results. A void initializer is rejected. Blocks use lexical scope. Parameters and locals must have unique names within their function in Seed; nested shadowing is rejected to keep diagnostics and lowering simple. `break` exits the nearest enclosing `while` or `for`; `continue` transfers to that loop's next condition or element. Either statement outside a loop is rejected. `return`, `break`, and `continue` are unconditional block exits, so a later statement in the same block is unreachable and rejected.
 
+An admitted edition-1 `unit` function may use `return;`, `return ();`, or
+implicit fallthrough; each produces the same ordinary unit value. A call whose
+result is `never` cannot return normally and satisfies any expected result
+position without a conversion. The enclosing control-flow path ends at that
+expression, so a following statement is unreachable. A `never` function must
+prove non-returning control flow: fallthrough and every value-return statement
+are rejected.
+
 `try Expression;` is a narrow result-propagation statement. The expression is
 evaluated exactly once and its exact type must equal the containing function's
 non-void return type. That nominal variant must declare exactly two cases in this
@@ -180,6 +193,7 @@ Seed supports:
 - Decimal `u64` literals with a `u64` suffix, from `0u64` through `18446744073709551615u64`
 - Hexadecimal floating literals with a mandatory binary exponent and exact `f32` or `f64` suffix, such as `0x1.8p+1f32` or `0x1.0p-20f64`
 - `true` and `false`
+- The admitted edition-1 unit literal `()`
 - String literals with `\"`, `\\`, `\n`, `\r`, `\t`, and `\uXXXX` escapes
 - Rune literals containing exactly one direct Unicode scalar, one admitted simple escape, or `\u{H}` with one through six hexadecimal digits
 - Local and parameter reads
@@ -219,7 +233,7 @@ A typed constant initializer may contain literals, members of declared enums, ea
 
 Constants are substituted as ordinary typed literal or enum operations. They do not create WVB data, locals, runtime exports, handles, or observable storage. `export const` is accepted so the source declaration need not change when module privacy and qualified constant imports arrive, but the current root-only composition slice does not publish a constant through the WVB Exports section.
 
-The Windvale-written compiler implements constants of every admitted scalar width. It lowers `i64` and `u64` constants to canonical WVB 1.11, `i8`, `i16`, and `u16` constants to the WVB 1.12 fixed-integer family, rune constants to WVB 1.13, and the guaranteed floating literal forms to WVB 1.14, rejecting checked overflow, underflow, or a non-scalar before publication. The retained Stage 0 recovery compiler covers only its frozen WVB 1.11 surface.
+The Windvale-written compiler implements constants of every admitted scalar width. It lowers `i64` and `u64` constants to canonical WVB 1.11, `i8`, `i16`, and `u16` constants to the WVB 1.12 fixed-integer family, rune constants to WVB 1.13, the guaranteed floating literal forms to WVB 1.14, and edition-1 unit or never evidence to WVB 1.15, rejecting checked overflow, underflow, or a non-scalar before publication. The retained Stage 0 recovery compiler covers only its frozen WVB 1.11 surface.
 
 Records are nominal rather than structural: separately declared record types are incompatible even when their fields have identical names and types. A named record literal must provide every declared field exactly once; unknown, duplicate, and missing fields reject compilation. Field expressions evaluate left to right in source order, then the compiler constructs the value in canonical field declaration order. Positional construction remains accepted during repository migration and evaluates in its declaration-order argument order. Construction creates an immutable value, field access returns the selected value, and Seed provides no field assignment or record equality. Record values can cross function boundaries and be stored in `let` or `var` locals; `var` permits replacing the whole value, not mutating a field.
 
