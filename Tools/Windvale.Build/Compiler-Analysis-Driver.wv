@@ -1,0 +1,114 @@
+module Windvaleˉcompilerˉanalysisˉdriver profile hosted;
+
+import Compilerˉsourceˉanalysis as Analysis;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Empty() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Header(Modules: u32) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Modules * 8u32)
+    );
+}
+
+fn Buildˉsourceˉset(Modules: u32) -> bytes {
+    let Headerˉbytes: u32 = 16u32 + Modules * 8u32;
+    var Directory: bytes = Empty();
+    var Payload: bytes = Empty();
+    var Payloadˉbytes: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = file.read_bytes(process.argument(Index));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 ||
+            Payloadˉbytes > 4194304u32 - Headerˉbytes ||
+            Length > 4194304u32 - Headerˉbytes - Payloadˉbytes {
+            return Empty();
+        }
+        Directory = Bytesˉconcat(
+            Directory,
+            Bytesˉfromˉu32ˉlittle(Headerˉbytes + Payloadˉbytes)
+        );
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Length)
+        );
+        Payload = Bytesˉconcat(Payload, Source);
+        Payloadˉbytes = Payloadˉbytes + Length;
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(Bytesˉconcat(Header(Modules), Directory), Payload);
+}
+
+fn Failure(
+    Prepared: Analysis.Compilerˉsourceˉanalysis
+) -> text {
+    var Report: text = "source analysis status=";
+    Report = Textˉconcat(Report, Enumˉname(Prepared.Status));
+    Report = Textˉconcat(Report, " symbol-status=");
+    Report = Textˉconcat(Report, Enumˉname(Prepared.Symbolˉstatus));
+    Report = Textˉconcat(Report, " binding-status=");
+    Report = Textˉconcat(Report, Enumˉname(Prepared.Bindingˉstatus));
+    Report = Textˉconcat(Report, " wir-status=");
+    return Textˉconcat(Report, Enumˉname(Prepared.Wirˉstatus));
+}
+
+fn Success(
+    Sourceˉset: bytes,
+    Prepared: Analysis.Compilerˉsourceˉanalysis
+) -> text {
+    var Report: text = "source analysis status=Published source-bytes=";
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Sourceˉset)));
+    Report = Textˉconcat(Report, " manifest-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Prepared.Manifest)));
+    Report = Textˉconcat(Report, " binding-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Prepared.Bindings)));
+    Report = Textˉconcat(Report, " wir-bytes=");
+    return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Prepared.Wir)));
+}
+
+export fn Main() -> i32 {
+    let Arguments: u32 = process.argument_count();
+    if Arguments < 5u32 {
+        diagnostic.write_line(
+            Textˉconcat(
+                "Usage: wvanalyze <root.wv> [dependency.wv ...] ",
+                "<output.wvss> <output.wvca> <output.wvlb> <output.wvir>"
+            )
+        );
+        return 64;
+    }
+    let Modules: u32 = Arguments - 4u32;
+    if Modules > 64u32 {
+        diagnostic.write_line("source analysis status=Moduleˉlimit");
+        return 64;
+    }
+    let Sourceˉset: bytes = Buildˉsourceˉset(Modules);
+    if Bytesˉlength(Sourceˉset) == 0u32 {
+        diagnostic.write_line("source analysis status=Invalidˉinput");
+        return 1;
+    }
+    let Prepared: Analysis.Compilerˉsourceˉanalysis =
+        Analysis.Compilerˉprepareˉsourceˉanalysis(Sourceˉset);
+    if Prepared.Status != Analysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+        diagnostic.write_line(Failure(Prepared));
+        return 1;
+    }
+    file.write_bytes(process.argument(Modules), Sourceˉset);
+    file.write_bytes(process.argument(Modules + 1u32), Prepared.Manifest);
+    file.write_bytes(process.argument(Modules + 2u32), Prepared.Bindings);
+    file.write_bytes(process.argument(Modules + 3u32), Prepared.Wir);
+    console.write_line(Success(Sourceˉset, Prepared));
+    return 0;
+}

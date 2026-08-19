@@ -368,9 +368,20 @@ paths reject the compiler-heavy focused fixture at their documented operation,
 module, or code boundaries; runtime execution is therefore not claimed by this
 checkpoint. No storage, OS, or broad qualification gate was run.
 
-Analyzer/emitter command-line products, cache-key publication, generic
-specialization, distinct-success-shape `try`, and manual status migration remain
-open.
+Decision 0779 publishes independent hosted analyzer and emitter front doors plus
+a development-only, target-aware Project 2 cache. The analyzer packages in
+eight bounded fragments at 30,276,096 bytes and the emitter in five at
+16,976,384 bytes without raising a tool limit. The retained one-shot path and
+the split path produce the same 12,633-byte descriptor fixture with SHA-256
+`53de13cfb20e237e71d5e34e6010f193eccbe815cc58a214b8c5ee2acf76bcc2`.
+Small producer-identity manifests move roughly 47 MiB of executable hashing out
+of cache hits; five Windows x64 warm samples have a 143.2-millisecond median,
+down from the earlier approximately 285-millisecond hit.
+
+The cache admits only unoptimized `portable-wvb-v1` Project 2 input and is not
+qualification evidence. Generic specialization, distinct-success-shape `try`,
+manual status migration, Project 3 profile-aware caching, paired-host equality,
+and final broad integration remain open.
 
 ## Slice 2 named variant fields
 

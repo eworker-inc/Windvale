@@ -1,0 +1,66 @@
+module Windvaleˉcompilerˉemissionˉdriver profile hosted;
+
+import Compilerˉsourceˉemission as Emission;
+import Compilerˉsourceˉwvb as Sourceˉwvb;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Failure(Result: Emission.Compilerˉsourceˉemission) -> text {
+    var Report: text = "source emission status=";
+    Report = Textˉconcat(Report, Enumˉname(Result.Status));
+    Report = Textˉconcat(Report, " analysis-status=");
+    Report = Textˉconcat(Report, Enumˉname(Result.Analysisˉstatus));
+    Report = Textˉconcat(Report, " wvb-status=");
+    return Textˉconcat(Report, Enumˉname(Result.Compilation.Status));
+}
+
+fn Success(Result: Emission.Compilerˉsourceˉemission) -> text {
+    var Report: text = "source emission status=Published functions=";
+    Report = Textˉconcat(
+        Report, U32ˉformat(Result.Compilation.Functions)
+    );
+    Report = Textˉconcat(Report, " code-bytes=");
+    Report = Textˉconcat(
+        Report, U32ˉformat(Result.Compilation.Codeˉbytes)
+    );
+    Report = Textˉconcat(Report, " module-bytes=");
+    return Textˉconcat(
+        Report, U32ˉformat(Bytesˉlength(Result.Compilation.Bytecode))
+    );
+}
+
+export fn Main() -> i32 {
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 5u32 {
+        diagnostic.write_line(
+            Textˉconcat(
+                "Usage: wvemit <input.wvss> <input.wvca> <input.wvlb> ",
+                "<input.wvir> <output.wvb>"
+            )
+        );
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Result: Emission.Compilerˉsourceˉemission =
+        Emission.Compilerˉemitˉsourceˉanalysis(
+            Input,
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32)),
+            file.read_bytes(process.argument(3u32)),
+            false
+        );
+    if Result.Status != Emission.Compilerˉsourceˉemissionˉstatus.Valid ||
+        Result.Compilation.Status !=
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
+        diagnostic.write_line(Failure(Result));
+        return 1;
+    }
+    file.write_bytes(process.argument(4u32), Result.Compilation.Bytecode);
+    console.write_line(Success(Result));
+    return 0;
+}

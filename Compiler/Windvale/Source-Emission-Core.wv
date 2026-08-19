@@ -1,6 +1,7 @@
 module Compilerˉsourceˉemission profile portable;
 
 import Compilerˉsourceˉanalysis as Sourceˉanalysis;
+import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
@@ -47,6 +48,14 @@ export fn Compilerˉemitˉsourceˉanalysis(
         Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus.Valid {
         return Compilerˉsourceˉemissionˉfailure(Input, Analysis.Status);
     }
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉanalysis.Compilerˉsourceˉanalysisˉvalidatedˉbindings(
+            Input, Manifest, Bindingˉdirectory, Analysis.Symbols
+        );
+    let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉanalysis.Compilerˉsourceˉanalysisˉvalidatedˉwir(
+            Input, Manifest, Wirˉdirectory, Bindings, Analysis.Symbols
+        );
     return Compilerˉsourceˉemission(
         Compilerˉsourceˉemissionˉstatus.Valid,
         Analysis.Status,
@@ -54,8 +63,8 @@ export fn Compilerˉemitˉsourceˉanalysis(
             Input,
             Analysis.Scan,
             Analysis.Symbols,
-            Analysis.Bindings,
-            Analysis.Wir,
+            Bindings,
+            Wir,
             Optimize
         )
     );

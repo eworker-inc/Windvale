@@ -48,6 +48,16 @@ The statuses distinguish an invalid manifest, rejected source symbols, source
 WIR construction failure, invalid supplied WVLB, and invalid supplied WVIR.
 Failure publishes no substitute evidence.
 
+The validation result retains status, the reconstructed source-set scan, and
+the reconstructed symbol summary. Keeping the larger WVLB and WVIR summaries
+out of that result preserves the native backend's fixed 64-cell record bound.
+After, and only after, a successful validation of the exact same four input
+values, `Compilerˉsourceˉanalysisˉvalidatedˉbindings` and
+`Compilerˉsourceˉanalysisˉvalidatedˉwir` materialize the already-proven
+summaries for the prepared emitter. They are low-level phase plumbing with that
+precondition, not alternate validators. The safe public emission adapter owns
+their ordering.
+
 ## WVCA 1.0 manifest
 
 All integers are unsigned little-endian. The manifest has no padding and its
@@ -121,6 +131,44 @@ they came from a local cache. A cache hit avoids source type analysis only after
 the supplied evidence passes this validation boundary. Cache identity and
 publication policy are tool concerns and must additionally bind exact compiler
 and option identities; WVCA alone is not a cache key.
+
+## Command-line products and development reuse
+
+The hosted analyzer front door accepts an ordered Project 2 source closure:
+
+```text
+wvanalyze <root.wv> [dependency.wv ...]
+    <output.wvss> <output.wvca> <output.wvlb> <output.wvir>
+```
+
+The hosted emitter accepts exactly that persisted set and publishes unoptimized
+portable WVB:
+
+```text
+wvemit <input.wvss> <input.wvca> <input.wvlb> <input.wvir> <output.wvb>
+```
+
+These are two products over one semantic compiler. The analyzer owns source
+scanning, symbols, binding, and typed WIR construction. The emitter revalidates
+all persisted values and calls the same prepared backend as the retained
+one-shot compiler. Optimization is not an implicit command-line mode; a later
+optimized product must have a distinct target and producer identity.
+
+`Build-Cached-Split-Project-Wvb` is a development-only Project 2 coordinator.
+Its analysis key binds the complete project source closure and exact analyzer
+identity. Its emission key additionally binds the exact emitter identity and
+the checkpoint binds the selected analysis key. Both identities name target
+`portable-wvb-v1` and the current host family. A cache hit hashes and validates
+the small phase values and resulting WVB, but neither reads nor launches the
+large compiler executables. A miss hashes the selected executable immediately
+before and after execution against its packaging-time identity. Consequently a
+stale or corrupt producer cannot publish under another producer's key, while a
+valid warm analysis result can be reused without repeating source analysis or
+large executable hashes.
+
+This cache is not qualification evidence. Release and cross-host conformance
+continue to use canonical WVB and the named broad gates independently of local
+development cache state.
 
 ## Verification boundary
 

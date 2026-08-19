@@ -1119,6 +1119,15 @@ function Add-Native-Tool-Suite {
         Add-Suite 'os-x64-code-emission'
         return
     }
+    if ($Stem -in @(
+        'Build-Cached-Split-Project-Wvb',
+        'Test-Cached-Split-Project-Wvb',
+        'Test-Compiler-Split-Development',
+        'Write-Split-Compiler-Producer-Identity'
+    )) {
+        Add-Suite 'compiler-split-development'
+        return
+    }
     # Retain retired version-1 stems as deletion tombstones for checkout diffs.
     if ($Stem -in @(
         'Build-Cached-Hosted-Application',
@@ -1435,6 +1444,21 @@ foreach ($Path in $Paths) {
         continue
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Analysis-Core.wv',
+        'Compiler/Windvale/Source-Emission-Core.wv',
+        'Projects/Compiler/Windvale-Source-Analysis-Core.wvproj',
+        'Projects/Compiler/Windvale-Source-Emission-Core.wvproj',
+        'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
+        'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
+        'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
+        'Specifications/Compiler-Source-Analysis.md',
+        'Specifications/Compiler-Split-Development-Cache.md',
+        'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv',
+        'Tools/Windvale.Build/Compiler-Analysis-Driver.wv',
+        'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
+    )) {
+        Add-Suite 'compiler-split-development'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',

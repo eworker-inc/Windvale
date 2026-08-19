@@ -27,6 +27,7 @@ wva-differential|Test-Wva-Differential|269|3|Tests: 269, Passed: 269, Failed: 0
 source-containment|Test-Source-Containment|500|3|Tests: 500, Passed: 500, Failed: 0
 language-1-front-door|Test-Language-1.0-Front-Door|141|2|native language 1 front door status=Passed cases=141 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=529 value-match-wvb-bytes=588 value-match-never-wvb-bytes=422 unit-wvb-bytes=731 never-wvb-bytes=853 record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=1148 floating-wvb-bytes=2809 multi-field-variant-wvb-bytes=918 typed-failure-wvb-bytes=1430
 compiler-source-sentinel|Test-Compiler-Source-Sentinel|5|2|native compiler source sentinel status=Passed cases=5 source-functions=4 result=6
+compiler-split-development|Test-Compiler-Split-Development|4|3|compiler split development status=Passed cases=4 source-analysis-wvb-bytes=956883 analyzer-wvb-bytes=949355 emitter-wvb-bytes=746557 cleanup=Verified
 lowerer-rejections|Test-Lowerer-Rejections|2|3|Tests: 2, Passed: 2, Failed: 0
 linker-rejections|Test-Linker-Rejections|10|4|Tests: 10, Passed: 10, Failed: 0
 linker-hostile|Test-Linker-Hostile-Inputs|200|2|Tests: 200, Passed: 200, Failed: 0

@@ -753,6 +753,28 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'compiler split development owner'
+        Paths = @(
+            'Compiler/Windvale/Source-Analysis-Core.wv',
+            'Compiler/Windvale/Source-Emission-Core.wv',
+            'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
+            'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
+            'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
+            'Specifications/Compiler-Split-Development-Cache.md',
+            'Tools/Native/Build-Cached-Split-Project-Wvb.mjs',
+            'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+            'Tools/Native/Test-Compiler-Split-Development.cmd',
+            'Tools/Native/Test-Compiler-Split-Development.sh',
+            'Tools/Native/Test-Compiler-Split-Development.mjs',
+            'Tools/Native/Write-Split-Compiler-Producer-Identity.mjs',
+            'Tools/Windvale.Build/Compiler-Analysis-Driver.wv',
+            'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
+        )
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'WVB runner reconstruction owner'
         Paths = @(
             'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd',
@@ -3165,9 +3187,9 @@ $NativeCases = @(
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 104 -or
+if ($VerificationOwnerLines.Count -ne 105 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 103-owner inventory differs.'
+    throw 'The native verification-owner header or exact 104-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3205,7 +3227,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4786 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4790 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -34,6 +34,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Body, local, and call bindings](Compiler-Source-Bindings.md)
 - [Typed source IR](Compiler-Source-Wir.md)
 - [Source-analysis phase artifact](Compiler-Source-Analysis.md)
+- [Split-compiler development cache](Compiler-Split-Development-Cache.md)
 - [Source-to-WVB backend](Compiler-Source-Wvb.md)
 - [Project manifest](Windvale-Project.md)
 - [Package manifest and deterministic lock](Windvale-Package.md)

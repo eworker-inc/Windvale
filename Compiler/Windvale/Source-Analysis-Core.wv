@@ -30,8 +30,6 @@ export record Compilerˉsourceˉanalysisˉvalidation {
     Status: Compilerˉsourceˉanalysisˉstatus;
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan;
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary;
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary;
-    Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary;
 }
 
 fn Compilerˉsourceˉanalysisˉempty(Input: bytes) -> bytes {
@@ -127,7 +125,6 @@ fn Compilerˉsourceˉanalysisˉvalidationˉfailure(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Status: Compilerˉsourceˉanalysisˉstatus
 ) -> Compilerˉsourceˉanalysisˉvalidation {
-    let Empty: bytes = Compilerˉsourceˉanalysisˉempty(Input);
     let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉsummaryˉfailure(
             Input,
@@ -140,28 +137,50 @@ fn Compilerˉsourceˉanalysisˉvalidationˉfailure(
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
             Scan.Failureˉoffset, 0u32, 0u32
         );
-    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉbindings.Compilerˉsourceˉbindingˉsummary(
-            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
-            Symbols.Status,
-            Scan.Modules,
-            0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
-            Empty,
-            Scan.Failureˉmodule, Scan.Failureˉmodule,
-            0u32, Scan.Failureˉoffset, 0u32, 0u32
-        );
-    let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉsourceˉwirˉsummary(
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
-            Bindings.Status,
-            Scan.Modules,
-            0u32, 0u32, 0u32, 0u32, 0u32,
-            Empty,
-            Scan.Failureˉmodule, Scan.Failureˉmodule,
-            0u32, Scan.Failureˉoffset, 0u32, 0u32
-        );
-    return Compilerˉsourceˉanalysisˉvalidation(
-        Status, Scan, Symbols, Bindings, Wir
+    return Compilerˉsourceˉanalysisˉvalidation(Status, Scan, Symbols);
+}
+
+export fn Compilerˉsourceˉanalysisˉvalidatedˉbindings(
+    Input: bytes,
+    Manifest: bytes,
+    Bindingˉdirectory: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> Sourceˉbindings.Compilerˉsourceˉbindingˉsummary {
+    let Bindingˉentries: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, 68u32);
+    let Bindingˉparameters: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, 72u32);
+    return Sourceˉbindings.Compilerˉsourceˉbindingˉsummary(
+        Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+        Symbols.Modules, Symbols.Functions,
+        Bindingˉparameters, Bindingˉentries - Bindingˉparameters,
+        0u32, 0u32, 0u32,
+        Bindingˉdirectory,
+        Symbols.Modules, Symbols.Modules, Symbols.Functions,
+        Bytesˉlength(Input), 0u32, 0u32
+    );
+}
+
+export fn Compilerˉsourceˉanalysisˉvalidatedˉwir(
+    Input: bytes,
+    Manifest: bytes,
+    Wirˉdirectory: bytes,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> Sourceˉwir.Compilerˉsourceˉwirˉsummary {
+    return Sourceˉwir.Compilerˉsourceˉwirˉsummary(
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid,
+        Bindings.Status,
+        Symbols.Modules,
+        Bytesˉreadˉu32ˉlittle(Manifest, 80u32),
+        Bytesˉreadˉu32ˉlittle(Manifest, 84u32),
+        Bytesˉreadˉu32ˉlittle(Manifest, 88u32),
+        Bytesˉreadˉu32ˉlittle(Manifest, 92u32),
+        Bytesˉreadˉu32ˉlittle(Manifest, 96u32),
+        Wirˉdirectory,
+        Symbols.Modules, Symbols.Modules, Symbols.Functions,
+        Bytesˉlength(Input), 0u32, 0u32
     );
 }
 
@@ -281,7 +300,6 @@ export fn Compilerˉvalidateˉsourceˉanalysis(
         );
     }
     return Compilerˉsourceˉanalysisˉvalidation(
-        Compilerˉsourceˉanalysisˉstatus.Valid,
-        Scan, Symbols, Bindings, Wir
+        Compilerˉsourceˉanalysisˉstatus.Valid, Scan, Symbols
     );
 }
