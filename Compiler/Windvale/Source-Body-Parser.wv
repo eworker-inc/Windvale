@@ -983,7 +983,8 @@ export fn Compilerˉbodyˉparseˉvalueˉblock(
     var Expressions: u32 = 0u32;
     var Statementˉdepth: u32 = 0u32;
     var Expressionˉdepth: u32 = 0u32;
-    while true {
+    var Parsing: bool = true;
+    while Parsing {
         let Current: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
             Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
         );
