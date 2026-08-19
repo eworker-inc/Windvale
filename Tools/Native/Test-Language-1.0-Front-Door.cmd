@@ -186,6 +186,77 @@ set "FailureStep=compiler-negative-seed-value-if"
 if not errorlevel 1 goto :cleanup
 if exist "%Work%\Seed-Value-If.wvb" goto :cleanup
 for %%F in ("%Work%\Value-If-A.wvb") do set "ValueIfWvbBytes=%%~zF"
+set "FailureStep=compiler-value-match-a"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match.wv" ^
+    "%Work%\Value-Match-A.wvb" >"%Work%\Value-Match-A.out" 2>"%Work%\Value-Match-A.err" || goto :cleanup
+set "FailureStep=compiler-value-match-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match.wv" ^
+    "%Work%\Value-Match-B.wvb" >"%Work%\Value-Match-B.out" 2>"%Work%\Value-Match-B.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-A.err" "%Work%\Value-Match-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Value-Match-A.out" "%Work%\Value-Match-B.out" >nul || goto :cleanup
+fc /b "%Work%\Value-Match-A.wvb" "%Work%\Value-Match-B.wvb" >nul || goto :cleanup
+set "FailureStep=compiler-value-match-execution"
+call "%Native%\Run-Wvb.cmd" "%Work%\Value-Match-A.wvb" >"%Work%\Value-Match.out" 2>"%Work%\Value-Match.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Value-Match.out" || goto :cleanup
+set "FailureStep=compiler-value-match-lazy"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Lazy.wv" ^
+    "%Work%\Value-Match-Lazy.wvb" >"%Work%\Value-Match-Lazy.out" 2>"%Work%\Value-Match-Lazy.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-Lazy.err") do if not "%%~zF"=="0" goto :cleanup
+call "%Native%\Run-Wvb.cmd" "%Work%\Value-Match-Lazy.wvb" >"%Work%\Value-Match-Lazy-Run.out" 2>"%Work%\Value-Match-Lazy-Run.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-Lazy-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Value-Match-Lazy-Run.out" || goto :cleanup
+set "FailureStep=compiler-value-match-never-a"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Never.wv" ^
+    "%Work%\Value-Match-Never-A.wvb" >"%Work%\Value-Match-Never-A.out" 2>"%Work%\Value-Match-Never-A.err" || goto :cleanup
+set "FailureStep=compiler-value-match-never-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Never.wv" ^
+    "%Work%\Value-Match-Never-B.wvb" >"%Work%\Value-Match-Never-B.out" 2>"%Work%\Value-Match-Never-B.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-Never-A.err" "%Work%\Value-Match-Never-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Value-Match-Never-A.out" "%Work%\Value-Match-Never-B.out" >nul || goto :cleanup
+fc /b "%Work%\Value-Match-Never-A.wvb" "%Work%\Value-Match-Never-B.wvb" >nul || goto :cleanup
+set "FailureStep=compiler-value-match-variant-a"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Variant.wv" ^
+    "%Work%\Value-Match-Variant-A.wvb" >"%Work%\Value-Match-Variant-A.out" 2>"%Work%\Value-Match-Variant-A.err" || goto :cleanup
+set "FailureStep=compiler-value-match-variant-b"
+"%Work%\Compiler.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Variant.wv" ^
+    "%Work%\Value-Match-Variant-B.wvb" >"%Work%\Value-Match-Variant-B.out" 2>"%Work%\Value-Match-Variant-B.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-Variant-A.err" "%Work%\Value-Match-Variant-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Value-Match-Variant-A.out" "%Work%\Value-Match-Variant-B.out" >nul || goto :cleanup
+fc /b "%Work%\Value-Match-Variant-A.wvb" "%Work%\Value-Match-Variant-B.wvb" >nul || goto :cleanup
+set "FailureStep=compiler-value-match-source-rejections"
+for %%N in (Missing-Case Trailing-Semicolon Type-Mismatch) do (
+    call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-%%N.wv" "%Work%\Value-Match-%%N.wvb" || goto :cleanup
+)
+set "FailureStep=compiler-negative-seed-value-match"
+"%Work%\Compiler.exe" ^
+    "%RepositoryRoot%\Tests\Fixtures\Source-Wvb\Invalid-Value-Match.wv" ^
+    "%Work%\Seed-Value-Match.wvb" >"%Work%\Seed-Value-Match.out" 2>"%Work%\Seed-Value-Match.err"
+if not errorlevel 1 goto :cleanup
+if exist "%Work%\Seed-Value-Match.wvb" goto :cleanup
+for %%F in ("%Work%\Value-Match-A.wvb") do set "ValueMatchWvbBytes=%%~zF"
+for %%F in ("%Work%\Value-Match-Never-A.wvb") do set "ValueMatchNeverWvbBytes=%%~zF"
 set "FailureStep=compiler-negative-unit-return-value"
 call :expect_rejection "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Return-Value.wv" "%Work%\Unit-Return-Value.wvb" || goto :cleanup
 set "FailureStep=compiler-negative-nonunit-return"
@@ -345,11 +416,13 @@ node "%Native%\Verify-Language-1.0-Runes.mjs" ^
     "%Work%\Verifier.exe" "%Work%\Rune-A.wvb" ^
     "%Work%\Rune-Malformed" || goto :cleanup
 
-set "FailureStep=rune-execution"
+set "FailureStep=rune-execution-run"
 call "%Native%\Run-Wvb.cmd" "%Work%\Rune-A.wvb" ^
     >"%Work%\Rune-Run.out" 2>"%Work%\Rune-Run.err" || goto :cleanup
+set "FailureStep=rune-execution-diagnostic"
 for %%F in ("%Work%\Rune-Run.err") do if not "%%~zF"=="0" goto :cleanup
-findstr /x /c:"Result: 42" "%Work%\Rune-Run.out" >nul || goto :cleanup
+set "FailureStep=rune-execution-result"
+call :expect_result_42 "%Work%\Rune-Run.out" || goto :cleanup
 
 set "FailureStep=rune-runtime-oracle-build"
 call "%Native%\Build-Wvb.cmd" ^
@@ -552,6 +625,16 @@ set "FailureStep=multi-field-variant-runtime-diagnostic"
 for %%F in ("%Work%\Multi-Field-Variant-Run.err") do if not "%%~zF"=="0" goto :cleanup
 set "FailureStep=multi-field-variant-runtime-result"
 call :expect_result_42 "%Work%\Multi-Field-Variant-Run.out" || goto :cleanup
+set "FailureStep=value-match-variant-runtime"
+"%Work%\Floating-Runner.exe" "%Work%\Value-Match-Variant-A.wvb" ^
+    >"%Work%\Value-Match-Variant-Run.out" 2>"%Work%\Value-Match-Variant-Run.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-Variant-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Value-Match-Variant-Run.out" || goto :cleanup
+set "FailureStep=value-match-never-runtime"
+"%Work%\Floating-Runner.exe" "%Work%\Value-Match-Never-A.wvb" ^
+    >"%Work%\Value-Match-Never-Run.out" 2>"%Work%\Value-Match-Never-Run.err" || goto :cleanup
+for %%F in ("%Work%\Value-Match-Never-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Value-Match-Never-Run.out" || goto :cleanup
 set "FailureStep=named-single-field-variant-runtime"
 "%Work%\Floating-Runner.exe" "%Work%\Named-Variant-Field.wvb" ^
     >"%Work%\Named-Variant-Field-Run.out" 2>"%Work%\Named-Variant-Field-Run.err" || goto :cleanup
@@ -640,10 +723,17 @@ if not "%Result%"=="0" (
     if exist "%Work%\Minimum.err" type "%Work%\Minimum.err" >&2
     if exist "%Work%\Value-Front-End.out" type "%Work%\Value-Front-End.out" >&2
     if exist "%Work%\Value-Front-End.err" type "%Work%\Value-Front-End.err" >&2
+    if exist "%Work%\Value-Match-A.err" type "%Work%\Value-Match-A.err" >&2
+    if exist "%Work%\Value-Match-Lazy.err" type "%Work%\Value-Match-Lazy.err" >&2
+    if exist "%Work%\Value-Match-Lazy-Run.err" type "%Work%\Value-Match-Lazy-Run.err" >&2
+    if exist "%Work%\Value-Match-Never-A.err" type "%Work%\Value-Match-Never-A.err" >&2
+    if exist "%Work%\Value-Match-Never-Run.err" type "%Work%\Value-Match-Never-Run.err" >&2
+    if exist "%Work%\Value-Match-Variant-A.err" type "%Work%\Value-Match-Variant-A.err" >&2
+    if exist "%Work%\Value-Match-Variant-Run.err" type "%Work%\Value-Match-Variant-Run.err" >&2
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=128 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=24 compiler-cases=24 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
+echo native language 1 front door status=Passed cases=136 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes%
 exit /b 0
 
 :expect_result_42

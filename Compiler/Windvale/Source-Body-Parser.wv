@@ -50,6 +50,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     Rune = 14;
     Floating = 15;
     If = 16;
+    Match = 17;
 }
 
 export record Compilerˉsourceˉposition {
@@ -1563,6 +1564,59 @@ export fn Compilerˉparseˉexpressionˉvalidated(
             Input, First, Endˉoffset, Nesting
         );
     }
+    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Match {
+        let Matchˉform: Compilerˉsourceˉstatement =
+            Compilerˉbodyˉparseˉmatchˉstatement(
+                Input, First, Endˉoffset, Nesting, true
+            );
+        if Matchˉform.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(
+                Compilerˉbodyˉstepˉfromˉstatement(Matchˉform)
+            );
+        }
+        let Matchˉnodes: u32 = Matchˉform.Expressions + 1u32;
+        let Matchˉdepth: u32 =
+            Matchˉform.Maximumˉexpressionˉdepth + 1u32;
+        if Matchˉnodes > 262144u32 {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Itemˉlimit,
+                First,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            );
+        }
+        if Matchˉdepth > 64u32 {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
+                First,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            );
+        }
+        return Compilerˉbodyˉexpressionˉmake(
+            Compilerˉsourceˉexpressionˉkind.Match,
+            Sourceˉlexer.Compilerˉtokenˉkind.Match,
+            Matchˉform.Offset,
+            Matchˉform.Offset + Matchˉform.Length,
+            Matchˉform.Line,
+            Matchˉform.Column,
+            Matchˉform.Expressionˉoffset,
+            Matchˉform.Expressionˉlength,
+            Matchˉform.Firstˉblockˉoffset,
+            Matchˉform.Firstˉblockˉlength,
+            Matchˉform.Offset,
+            0u32,
+            Matchˉform.Nameˉoffset,
+            Matchˉform.Firstˉblockˉoffset + Matchˉform.Firstˉblockˉlength,
+            Matchˉform.Nameˉlength,
+            Sourceˉlexer.Compilerˉnumericˉkind.None,
+            0u32,
+            false,
+            Matchˉform.Nextˉoffset,
+            Matchˉform.Nextˉline,
+            Matchˉform.Nextˉcolumn,
+            Matchˉnodes,
+            Matchˉdepth
+        );
+    }
     let Unaryˉprecedence: u32 = Compilerˉbodyˉunaryˉprecedence(First.Kind);
     var Left: Compilerˉsourceˉexpression = Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Expectedˉexpression, First, Sourceˉlexer.Compilerˉtokenˉkind.Identifier);
     if Unaryˉprecedence > 0u32 {
@@ -1857,7 +1911,8 @@ export fn Compilerˉbodyˉparseˉmatchˉcase(
     Line: u32,
     Column: u32,
     Endˉoffset: u32,
-    Statementˉnesting: u32
+    Statementˉnesting: u32,
+    Valueˉform: bool
 ) -> Compilerˉsourceˉmatchˉcase {
     let Caseˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
         Input, Offset, Line, Column, Endˉoffset
@@ -2093,14 +2148,60 @@ export fn Compilerˉbodyˉparseˉmatchˉcase(
             Currentˉcolumn = Patternˉright.Nextˉcolumn;
         }
     }
-    let Blockˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
-        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
-    );
-    let Block: Compilerˉbodyˉparseˉstep = Compilerˉparseˉblockˉvalidated(
-        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset, Statementˉnesting + 1u32
-    );
-    if Block.Status != Compilerˉbodyˉparseˉstatus.Valid {
-        return Compilerˉbodyˉmatchˉcaseˉfailure(Block);
+    var Blockˉoffset: u32 = Cursor;
+    var Blockˉlength: u32 = 0u32;
+    var Nextˉoffset: u32 = Cursor;
+    var Nextˉline: u32 = Currentˉline;
+    var Nextˉcolumn: u32 = Currentˉcolumn;
+    var Statements: u32 = 0u32;
+    var Expressions: u32 = 0u32;
+    var Statementˉdepth: u32 = 0u32;
+    var Expressionˉdepth: u32 = 0u32;
+    if Valueˉform {
+        let Valueˉblock: Compilerˉsourceˉvalueˉblock =
+            Compilerˉbodyˉparseˉvalueˉblock(
+                Input, Cursor, Currentˉline, Currentˉcolumn,
+                Endˉoffset, Statementˉnesting + 1u32
+            );
+        if Valueˉblock.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Compilerˉbodyˉmatchˉcaseˉfailure(
+                Compilerˉbodyˉstepˉfailure(
+                    Valueˉblock.Status,
+                    Valueˉblock.Lexicalˉstatus,
+                    Valueˉblock.Failureˉoffset,
+                    Valueˉblock.Failureˉline,
+                    Valueˉblock.Failureˉcolumn,
+                    Valueˉblock.Expected,
+                    Valueˉblock.Found
+                )
+            );
+        }
+        Blockˉoffset = Valueˉblock.Blockˉoffset;
+        Blockˉlength = Valueˉblock.Blockˉlength;
+        Nextˉoffset = Valueˉblock.Nextˉoffset;
+        Nextˉline = Valueˉblock.Nextˉline;
+        Nextˉcolumn = Valueˉblock.Nextˉcolumn;
+        Statements = Valueˉblock.Statements;
+        Expressions = Valueˉblock.Expressions;
+        Statementˉdepth = Valueˉblock.Maximumˉstatementˉdepth;
+        Expressionˉdepth = Valueˉblock.Maximumˉexpressionˉdepth;
+    } else {
+        let Block: Compilerˉbodyˉparseˉstep =
+            Compilerˉparseˉblockˉvalidated(
+                Input, Cursor, Currentˉline, Currentˉcolumn,
+                Endˉoffset, Statementˉnesting + 1u32
+            );
+        if Block.Status != Compilerˉbodyˉparseˉstatus.Valid {
+            return Compilerˉbodyˉmatchˉcaseˉfailure(Block);
+        }
+        Blockˉlength = Block.Nextˉoffset - Cursor;
+        Nextˉoffset = Block.Nextˉoffset;
+        Nextˉline = Block.Nextˉline;
+        Nextˉcolumn = Block.Nextˉcolumn;
+        Statements = Block.Statements;
+        Expressions = Block.Expressions;
+        Statementˉdepth = Block.Maximumˉstatementˉdepth;
+        Expressionˉdepth = Block.Maximumˉexpressionˉdepth;
     }
     return Compilerˉsourceˉmatchˉcase(
         Compilerˉbodyˉparseˉstatus.Valid,
@@ -2111,18 +2212,18 @@ export fn Compilerˉbodyˉparseˉmatchˉcase(
         Memberˉlength,
         Bindingˉoffset,
         Bindingˉlength,
-        Blockˉstart.Offset,
-        Block.Nextˉoffset - Blockˉstart.Offset,
-        Block.Nextˉoffset,
-        Block.Nextˉline,
-        Block.Nextˉcolumn,
-        Block.Statements,
-        Block.Expressions,
-        Block.Maximumˉstatementˉdepth,
-        Block.Maximumˉexpressionˉdepth,
-        Block.Nextˉoffset,
-        Block.Nextˉline,
-        Block.Nextˉcolumn,
+        Blockˉoffset,
+        Blockˉlength,
+        Nextˉoffset,
+        Nextˉline,
+        Nextˉcolumn,
+        Statements,
+        Expressions,
+        Statementˉdepth,
+        Expressionˉdepth,
+        Nextˉoffset,
+        Nextˉline,
+        Nextˉcolumn,
         Sourceˉlexer.Compilerˉtokenˉkind.End,
         Sourceˉlexer.Compilerˉtokenˉkind.End
     );
@@ -2342,81 +2443,37 @@ export fn Compilerˉbodyˉparseˉmatchˉstatement(
     Input: bytes,
     Start: Sourceˉlexer.Compilerˉsourceˉtoken,
     Endˉoffset: u32,
-    Statementˉnesting: u32
+    Statementˉnesting: u32,
+    Valueˉform: bool
 ) -> Compilerˉsourceˉstatement {
-    var Scanˉoffset: u32 = Start.Nextˉoffset;
-    var Scanˉline: u32 = Start.Nextˉline;
-    var Scanˉcolumn: u32 = Start.Nextˉcolumn;
-    var Parentheses: u32 = 0u32;
-    var Brackets: u32 = 0u32;
-    var Foundˉbody: bool = false;
-    var Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
-        Input, Scanˉoffset, Scanˉline, Scanˉcolumn, Endˉoffset
-    );
-    while !Foundˉbody {
-        let Token: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
-            Input, Scanˉoffset, Scanˉline, Scanˉcolumn, Endˉoffset
-        );
-        if Token.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid {
-            return Compilerˉbodyˉstatementˉfailure(
-                Compilerˉbodyˉstepˉfromˉtoken(
-                    Compilerˉbodyˉparseˉstatus.Lexicalˉerror,
-                    Token,
-                    Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
-                ),
-                Compilerˉsourceˉstatementˉkind.Match,
-                Start
-            );
-        }
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
-            return Compilerˉbodyˉstatementˉfailure(
-                Compilerˉbodyˉstepˉfromˉtoken(
-                    Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
-                    Token,
-                    Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
-                ),
-                Compilerˉsourceˉstatementˉkind.Match,
-                Start
-            );
-        }
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            Parentheses = Parentheses + 1u32;
-        }
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
-            if Parentheses > 0u32 { Parentheses = Parentheses - 1u32; }
-        }
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbracket {
-            Brackets = Brackets + 1u32;
-        }
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket {
-            if Brackets > 0u32 { Brackets = Brackets - 1u32; }
-        }
-        if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
-            if Parentheses == 0u32 {
-                if Brackets == 0u32 {
-                    Foundˉbody = true;
-                    Bodyˉstart = Token;
-                }
-            }
-        }
-        if !Foundˉbody {
-            Scanˉoffset = Token.Nextˉoffset;
-            Scanˉline = Token.Nextˉline;
-            Scanˉcolumn = Token.Nextˉcolumn;
-        }
-    }
     let Value: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(
         Input,
         Start.Nextˉoffset,
         Start.Nextˉline,
         Start.Nextˉcolumn,
-        Bodyˉstart.Offset,
+        Endˉoffset,
         0u32,
         0u32
     );
     if Value.Status != Compilerˉbodyˉparseˉstatus.Valid {
         return Compilerˉbodyˉstatementˉfailure(
             Compilerˉbodyˉstepˉfromˉexpression(Value),
+            Compilerˉsourceˉstatementˉkind.Match,
+            Start
+        );
+    }
+    let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn,
+            Endˉoffset
+        );
+    if Bodyˉstart.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
+        return Compilerˉbodyˉstatementˉfailure(
+            Compilerˉbodyˉstepˉfromˉtoken(
+                Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                Bodyˉstart,
+                Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
+            ),
             Compilerˉsourceˉstatementˉkind.Match,
             Start
         );
@@ -2474,9 +2531,10 @@ export fn Compilerˉbodyˉparseˉmatchˉstatement(
                 Result
             );
         }
-        let Case: Compilerˉsourceˉmatchˉcase = Compilerˉbodyˉparseˉmatchˉcase(
+        let Case: Compilerˉsourceˉmatchˉcase =
+            Compilerˉbodyˉparseˉmatchˉcase(
             Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset,
-            Statementˉnesting + 1u32
+            Statementˉnesting + 1u32, Valueˉform
         );
         if Case.Status != Compilerˉbodyˉparseˉstatus.Valid {
             return Compilerˉbodyˉstatementˉfailure(
@@ -2682,7 +2740,7 @@ export fn Compilerˉparseˉnextˉstatementˉvalidated(
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.While { return Compilerˉbodyˉparseˉwhileˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Push { return Compilerˉbodyˉparseˉpushˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.For { return Compilerˉbodyˉparseˉforˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
-    if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Match { return Compilerˉbodyˉparseˉmatchˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
+    if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Match { return Compilerˉbodyˉparseˉmatchˉstatement(Input, Start, Endˉoffset, Statementˉnesting, false); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Return { return Compilerˉbodyˉparseˉreturnˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Try {
         return Compilerˉbodyˉparseˉterminatedˉexpressionˉstatement(

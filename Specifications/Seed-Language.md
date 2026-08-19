@@ -242,6 +242,12 @@ Enums are also nominal. A member expression produces its declared enum type, sep
 
 Statement-form `match` evaluates its discriminant once, has no fallthrough or wildcard arm, rejects duplicate cases, and must cover every member or case of the exact nominal enum or variant. A descriptorless Seed enum pattern is `case Type.Member`; its variant patterns are `case Type.Case` for no payload or `case Type.Case(Name)` for one payload. Edition 1 additionally accepts `case Type.Case { Field: Binding, Other: _ }`: every declared field appears exactly once in any order, `_` discards, and each immutable binding exists only inside that arm. Each reachable arm must terminate its own statement block normally or explicitly, and control continues after the match when an arm falls through its closing brace.
 
+Descriptorless Seed has no value-producing `match`. Edition 1 adds that separate
+form over the same exhaustive enum and named-variant patterns. Its selector is
+evaluated once, only the selected value block executes, and every reachable arm
+must yield the same exact type without an implicit conversion. The WIR/WVB path
+uses ordinary branches and `Valueˉphi`; it does not add a bytecode match opcode.
+
 Descriptorless Seed variant construction evaluates its optional payload exactly once and preserves exact nominal identity. Edition-1 named construction uses `Type.Case { Field: Value, ... }`, requires every field exactly once, evaluates values left to right, and stores them in declaration order; a no-data case uses `{}`. The runtime default selects the first declared case and recursively defaults its fields. Field extraction is verifier-typed and traps only if malformed bytecode attempts to extract a case different from the selected one; valid source reaches extraction only through the matching arm.
 
 An empty `builder<T, N>()` is uniquely owned. `push Builder, Value` evaluates the value, then consumes the old builder state and replaces the same mutable local only after a successful bounded append. `freeze Builder` consumes the builder and publishes the corresponding immutable `sequence<T, N>`. Source rejects any later use of a consumed builder; the runtime also traps malformed reuse with `WVR3031`. Pushing at the declared maximum traps with `WVR3030`. `for Name in Sequence` evaluates the sequence once, binds each element immutably in ascending index order, and supports nearest-loop `break` and `continue`.

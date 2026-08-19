@@ -1,0 +1,13 @@
+module Invalidˉvalueˉmatch profile portable;
+
+enum Selection {
+    Chosen = 0;
+    Rejected = 1;
+}
+
+export fn Main() -> i32 {
+    return match Selection.Chosen {
+        case Selection.Chosen { 42 }
+        case Selection.Rejected { 0 }
+    };
+}

@@ -1,0 +1,21 @@
+#!wv/1 en@1
+module ValueˉMatchˉLazy;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Selection {
+    Chosen = 0;
+    Rejected = 1;
+}
+
+fn Recurse() -> i32 {
+    return Recurse();
+}
+
+export fn Main() -> i32 {
+    return match Selection.Chosen {
+        case Selection.Chosen { 42 }
+        case Selection.Rejected { Recurse() }
+    };
+}

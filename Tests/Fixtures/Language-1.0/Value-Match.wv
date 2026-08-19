@@ -1,0 +1,27 @@
+#!wv/1 en@1
+module ValueˉMatch;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Selection {
+    Chosen = 0;
+    Alternate = 1;
+    Deferred = 2;
+}
+
+fn Select() -> Selection {
+    return Selection.Chosen;
+}
+
+fn Read() -> i32 {
+    return match Select() {
+        case Selection.Alternate { 1 }
+        case Selection.Chosen { 42 }
+        case Selection.Deferred { 2 }
+    };
+}
+
+export fn Main() -> i32 {
+    return Read();
+}

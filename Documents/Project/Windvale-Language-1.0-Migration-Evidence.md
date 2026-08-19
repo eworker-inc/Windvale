@@ -23,9 +23,10 @@ source-built native scalar runner through WVB 1.16. Project 3 carries the
 profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
-These checkpoints do not complete Slice 2. Value-producing `if` now crosses the
-reference compiler and scalar runtime; value-producing `match` remains pending.
-Localized token execution,
+Value-producing `if` and exhaustive enum/variant `match` now cross the reference
+compiler and scalar runtime, completing Slice 2's planned value-and-control
+compiler surface. Final paired-host and broad integration evidence remains
+deferred to the seven-slice integration gate. Localized token execution,
 public-library vocabulary lookup, Unicode identifier admission, and paired-host
 Language 1.0 qualification also remain pending.
 
@@ -240,6 +241,49 @@ value-control cases, and completed all retained fixed-integer, rune, floating,
 unit/never, and named-variant phases. Heavy storage, broad OS, paired-host, and
 complete Qualification gates did not run; the final Slice 2 integration gate
 owns that broader evidence.
+
+## Slice 2 value-producing `match`
+
+The body parser appends expression kind `Match = 17` and reuses the same bounded
+match/case view for statement and value forms. The ordinary expression parser
+owns the selector boundary, including a brace-form nominal construction, rather
+than a second delimiter scanner. Edition-1 arms are value blocks; descriptorless
+Seed retains statement match and rejects the value form.
+
+Typed WIR evaluates the selector once, requires an exact nominal enum or variant,
+retains complete duplicate-free exhaustiveness, and binds named variant fields
+only inside their selected arm. Reachable results must have the same exact shape
+and join pairwise through the existing `Valueˉphi = 64`. Only the selected arm
+has a runtime path, and a `never` arm contributes no value. No WVIR operation,
+WVB opcode, module version, verifier rule, or scalar representation changes.
+
+`Value-Match.wv` uses a call selector and three enum arms, selects the middle
+arm, exercises two pairwise value joins, and compiles twice to the same
+588-byte WVB with SHA-256
+`320ae22a8f38aea54884cacb7c07be841bf6500f2527aadf58e2f24083c86226`.
+It returns `42`. `Value-Match-Lazy.wv` places an unbounded recursive call in
+the unselected arm; its deterministic 431-byte WVB has SHA-256
+`358a533f491d7901c21ca66f653db33c1654b1730b4d2d4bf8e66cc6fd263a74`
+and also returns `42`. `Value-Match-Never.wv` admits a `never`-typed arm without
+inventing a value; its deterministic 422-byte WVB has SHA-256
+`cfc597be4a1dc57ef6d52bb3ff61962680508d5f62b18c8057c0d231ffd1db73`
+and returns `42` through the source-built WVB 1.15 scalar runner.
+`Value-Match-Variant.wv` selects a brace-form two-field
+variant construction, destructures fields by name in a different order, and
+compiles twice to the same 634-byte WVB 1.16 with SHA-256
+`db8b1cab5c672dfccc337fb7874a9b07f9b5e2fb6b4243cd8c1f0a35e70af2f6`;
+the source-built WVB 1.16 scalar runner returns `42`. Separate cases reject a
+missing case, a trailing semicolon, an exact arm-type mismatch, and
+descriptorless Seed use without publishing WVB output.
+
+The compacted 498-function compiler contains 961,629 code bytes and 1,161,873
+module bytes. Native planning reports 33,408,489 machine-code bytes plus 2,440
+relocation bytes. The unchanged segmented stage accepts a 33,438,278-byte
+object package across 42 chunks with a 528-byte manifest; no construction or
+chunk limit was widened. The focused Windows language owner passed all 136 cases
+in 371.69 seconds, including every retained numeric, unit/never, and WVB 1.16
+variant phase. Heavy storage, broad OS, paired-host, and complete Qualification
+gates remain deferred to the final seven-slice integration gate.
 
 ## Slice 2 named variant fields
 
@@ -477,6 +521,8 @@ integer execution, exact rune execution, strict floating point, and complete
 unit/never semantics over the compiler-aligned WVB 1.15 verifier and scalar
 runtime checkpoint. Named variant construction and destructuring now reach the
 compiler-aligned WVB 1.16 verifier and source-built native scalar runner with a
-shared bounded aggregate collector. Slice 2 completion still requires
-value-producing control flow over this same compiler architecture. Seed stays
-on that architecture until its named removal checkpoint.
+shared bounded aggregate collector. Value-producing `if` and exhaustive
+enum/variant `match` now complete Slice 2's planned control-value compiler
+surface over the same architecture. Seed stays on that architecture until its
+named removal checkpoint; final paired-host and broad qualification evidence is
+deferred to the seven-slice integration gate.

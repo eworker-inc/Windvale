@@ -1,0 +1,29 @@
+#!wv/1 en@1
+module ValueˉMatchˉVariant;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+variant Deliveryˉresult {
+    Delivered(Code: i32, Attempts: u32,);
+    Waiting;
+}
+
+fn Read() -> i32 {
+    return match Deliveryˉresult.Delivered {
+        Code: 42,
+        Attempts: 2u32,
+    } {
+        case Deliveryˉresult.Delivered {
+            Attempts: Attempts,
+            Code: Code,
+        } {
+            if Attempts == 2u32 { Code } else { 0 }
+        }
+        case Deliveryˉresult.Waiting { 0 }
+    };
+}
+
+export fn Main() -> i32 {
+    return Read();
+}

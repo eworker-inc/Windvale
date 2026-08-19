@@ -25,7 +25,7 @@ The phase currently lowers:
 - literals including edition-1 `()`, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction, named variant construction, aggregate fields, enum members, Foundation intrinsics, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, named variant-field destructuring, variant construction/case tests/field extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
-- expression statements, exact `try` propagation, `return`, lexical blocks, statement and value-producing `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
+- expression statements, exact `try` propagation, `return`, lexical blocks, statement and value-producing `if`/`else if`/`else` and exhaustive enum/variant `match`, `while`, `for`, `break`, and `continue`;
 - explicit jump, branch, and return terminators.
 
 Shape `0` remains Seed's return-only `void`. Shape `9` is the ordinary edition-1
@@ -140,6 +140,14 @@ shape; a scalar or enum before the final segment is an invalid field target.
 Unknown members are diagnosed against the owning intermediate nominal type.
 
 An edition-1 value-producing `if` requires `else`. Its condition is lowered once and must have Boolean shape. Each braced arm lowers zero or more ordinary statements followed by one final expression without a semicolon; an `else if` is the recursive value form. Reachable arms must produce the same exact shape, and only the selected arm is reached at runtime. Their results join through `Valueˉphi = 64`; arm-local binding evidence is retained with lexical scope ending at that arm's closing brace. A `never` arm contributes no value and the surviving reachable arm flows through the join without an invented conversion or temporary.
+
+An edition-1 value-producing `match` lowers its selector exactly once and
+requires the same exhaustive, duplicate-free, exact-nominal enum or variant case
+set as statement `match`. Named variant fields bind immutably only inside their
+selected arm. Each arm is a value block, reachable arm shapes must agree
+exactly, and pairwise `Valueˉphi = 64` joins carry the selected value. A `never`
+arm contributes no value. Descriptorless Seed rejects the value form, while its
+statement match remains unchanged. No new operation or WVIR version is needed.
 
 `&&` and `||` lower the left operand, branch to either a short-result block or a right-operand block, and join those Boolean values with `Valueˉphi`. The right expression therefore has no operation or runtime behavior on the skipped path. The operation records the short and right predecessor identities so independent validation does not infer phi ownership from layout alone.
 

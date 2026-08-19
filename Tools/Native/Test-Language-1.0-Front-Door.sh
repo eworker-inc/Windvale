@@ -189,6 +189,92 @@ if "$work/Compiler.elf" \
 fi
 [[ ! -e $work/Seed-Value-If.wvb ]] || exit 1
 value_if_wvb_bytes=$(wc -c < "$work/Value-If-A.wvb")
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
+    "$work/Value-Match-A.wvb" >"$work/Value-Match-A.out" \
+    2>"$work/Value-Match-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
+    "$work/Value-Match-B.wvb" >"$work/Value-Match-B.out" \
+    2>"$work/Value-Match-B.err" || exit $?
+[[ ! -s $work/Value-Match-A.err && ! -s $work/Value-Match-B.err ]] || exit 1
+cmp -s -- "$work/Value-Match-A.out" "$work/Value-Match-B.out" || exit 1
+cmp -s -- "$work/Value-Match-A.wvb" "$work/Value-Match-B.wvb" || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Value-Match-A.wvb" \
+    >"$work/Value-Match.out" 2>"$work/Value-Match.err" || exit $?
+[[ ! -s $work/Value-Match.err ]] || exit 1
+cmp -s -- "$work/Expected-Value-If.out" "$work/Value-Match.out" || exit 1
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Lazy.wv" \
+    "$work/Value-Match-Lazy.wvb" >"$work/Value-Match-Lazy.out" \
+    2>"$work/Value-Match-Lazy.err" || exit $?
+[[ ! -s $work/Value-Match-Lazy.err ]] || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Value-Match-Lazy.wvb" \
+    >"$work/Value-Match-Lazy-Run.out" \
+    2>"$work/Value-Match-Lazy-Run.err" || exit $?
+[[ ! -s $work/Value-Match-Lazy-Run.err ]] || exit 1
+cmp -s -- "$work/Expected-Value-If.out" \
+    "$work/Value-Match-Lazy-Run.out" || exit 1
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
+    "$work/Value-Match-Never-A.wvb" \
+    >"$work/Value-Match-Never-A.out" \
+    2>"$work/Value-Match-Never-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
+    "$work/Value-Match-Never-B.wvb" \
+    >"$work/Value-Match-Never-B.out" \
+    2>"$work/Value-Match-Never-B.err" || exit $?
+[[ ! -s $work/Value-Match-Never-A.err && \
+    ! -s $work/Value-Match-Never-B.err ]] || exit 1
+cmp -s -- "$work/Value-Match-Never-A.out" \
+    "$work/Value-Match-Never-B.out" || exit 1
+cmp -s -- "$work/Value-Match-Never-A.wvb" \
+    "$work/Value-Match-Never-B.wvb" || exit 1
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
+    "$work/Value-Match-Variant-A.wvb" \
+    >"$work/Value-Match-Variant-A.out" \
+    2>"$work/Value-Match-Variant-A.err" || exit $?
+"$work/Compiler.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
+    "$work/Value-Match-Variant-B.wvb" \
+    >"$work/Value-Match-Variant-B.out" \
+    2>"$work/Value-Match-Variant-B.err" || exit $?
+[[ ! -s $work/Value-Match-Variant-A.err && \
+    ! -s $work/Value-Match-Variant-B.err ]] || exit 1
+cmp -s -- "$work/Value-Match-Variant-A.out" \
+    "$work/Value-Match-Variant-B.out" || exit 1
+cmp -s -- "$work/Value-Match-Variant-A.wvb" \
+    "$work/Value-Match-Variant-B.wvb" || exit 1
+for name in Missing-Case Trailing-Semicolon Type-Mismatch; do
+    expect_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-$name.wv" \
+        "$work/Value-Match-$name.wvb" || exit 1
+done
+if "$work/Compiler.elf" \
+    "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Value-Match.wv" \
+    "$work/Seed-Value-Match.wvb" \
+    >"$work/Seed-Value-Match.out" 2>"$work/Seed-Value-Match.err"; then
+    exit 1
+fi
+[[ ! -e $work/Seed-Value-Match.wvb ]] || exit 1
+value_match_wvb_bytes=$(wc -c < "$work/Value-Match-A.wvb")
+value_match_never_wvb_bytes=$(wc -c < "$work/Value-Match-Never-A.wvb")
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Return-Value.wv" \
     "$work/Unit-Return-Value.wvb" || exit 1
@@ -578,6 +664,18 @@ node "$script_directory/Verify-Language-1.0-Multi-Field-Variants.mjs" \
 printf 'Result: 42\n' >"$work/Expected-Variant.out"
 cmp -s -- "$work/Expected-Variant.out" \
     "$work/Multi-Field-Variant-Run.out" || exit 1
+"$work/Floating-Runner.elf" "$work/Value-Match-Variant-A.wvb" \
+    >"$work/Value-Match-Variant-Run.out" \
+    2>"$work/Value-Match-Variant-Run.err" || exit $?
+[[ ! -s $work/Value-Match-Variant-Run.err ]] || exit 1
+cmp -s -- "$work/Expected-Variant.out" \
+    "$work/Value-Match-Variant-Run.out" || exit 1
+"$work/Floating-Runner.elf" "$work/Value-Match-Never-A.wvb" \
+    >"$work/Value-Match-Never-Run.out" \
+    2>"$work/Value-Match-Never-Run.err" || exit $?
+[[ ! -s $work/Value-Match-Never-Run.err ]] || exit 1
+cmp -s -- "$work/Expected-Variant.out" \
+    "$work/Value-Match-Never-Run.out" || exit 1
 cmp -s -- "$work/Expected-Variant.out" \
     "$work/Named-Variant-Field-Run.out" || exit 1
 if "$work/Floating-Runner.elf" \
@@ -601,4 +699,4 @@ multi_field_variant_wvb_bytes=$(wc -c < "$work/Multi-Field-Variant-A.wvb")
 printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
     "$multi_field_variant_wvb_bytes"
 echo 'PASS  language 1 front door phase=multi-field-variants item=9/9'
-printf 'native language 1 front door status=Passed cases=128 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=24 compiler-cases=24 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$value_if_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=136 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s\n' "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes"

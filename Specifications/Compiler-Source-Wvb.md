@@ -102,6 +102,19 @@ The deterministic 1,116-byte `Record-Update.wv` artifact executes through the
 ordinary scalar runner and returns `42`; wrong-nominal bases, duplicate or unknown
 replacement fields, and descriptorless Seed use are rejected without output.
 
+Value-producing `match` adds no format change. Its selector, case tests, named
+variant fields, branches, and pairwise value joins arrive as existing validated
+WVIR operations. The three-arm `Value-Match.wv` therefore compiles to a
+deterministic 588-byte WVB, selects its middle arm, performs two pairwise joins,
+and executes with result `42`; the unselected recursive arm in the 431-byte
+`Value-Match-Lazy.wv` has no runtime path. The 422-byte WVB 1.15
+`Value-Match-Never.wv` admits a `never`-typed arm without inventing a value and
+returns `42` through the source-built scalar runner. The 634-byte WVB 1.16
+`Value-Match-Variant.wv` selects a brace-form two-field variant construction,
+destructures both fields by name, and returns `42` through the source-built
+scalar runner. Descriptorless Seed value match is rejected upstream and
+publishes no WVB.
+
 ## Portable in-memory adapter
 
 `Compiler/Windvale/Source-Wvb-Memory-Adapter.wv` is the capability-free execution adapter for hosts that already own immutable source bytes, including the browser playground. Its exported contract is:
@@ -332,7 +345,7 @@ indices, shapes, emitted instructions, and canonical WVB bytes.
 
 The backend makes two deterministic passes over each function. The first computes every block byte offset, exact function code length, and maximum operand-stack depth. The second emits code using those offsets, so branches never require mutable backpatching.
 
-`Valueˉphi = 64` is typed control evidence rather than a new WVB opcode. It has zero operation bytes. Each unconditional predecessor jump to a phi join emits the selected exact-shape temporary load and phi-result local store immediately before the ordinary jump. This serves both value-producing `if` and the retained Boolean short-circuit lowering. Only the selected predecessor has a bytecode execution path, and WVIR validation forbids a conditional or third predecessor from targeting such a join. No WVB opcode or minor-version change is required.
+`Valueˉphi = 64` is typed control evidence rather than a new WVB opcode. It has zero operation bytes. Each unconditional predecessor jump to a phi join emits the selected exact-shape temporary load and phi-result local store immediately before the ordinary jump. This serves value-producing `if`, exhaustive value-producing `match`, and the retained Boolean short-circuit lowering. Only the selected predecessor has a bytecode execution path, and WVIR validation forbids a conditional or third predecessor from targeting such a join. No WVB opcode or minor-version change is required.
 
 The complete source set is fully validated before WVB emission. Declaration reads during emission therefore begin at their already validated byte offsets with relative diagnostic coordinates instead of rescanning from the module header to reconstruct absolute line and column. All source-facing syntax and semantic diagnostics are established by the checked upstream boundary; backend emission consumes only accepted offsets and declaration shapes. This optimization does not change accepted source, emitted bytes, or public diagnostic identities.
 

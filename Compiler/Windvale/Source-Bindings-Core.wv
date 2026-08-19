@@ -1595,25 +1595,13 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
     let Expression: Sourceˉbodies.Compilerˉsourceˉexpression = Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
         Source, Offset, Line, Column, Endˉoffset, 0u32, 0u32
     );
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Integer {
-        return Compilerˉsourceˉbindingsˉbodyˉempty();
-    }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.String {
-        return Compilerˉsourceˉbindingsˉbodyˉempty();
-    }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Boolean {
-        return Compilerˉsourceˉbindingsˉbodyˉempty();
-    }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unit {
-        return Compilerˉsourceˉbindingsˉbodyˉempty();
-    }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Rune {
-        return Compilerˉsourceˉbindingsˉbodyˉempty();
-    }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Floating {
-        return Compilerˉsourceˉbindingsˉbodyˉempty();
-    }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Builder {
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Integer ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.String ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Boolean ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Builder ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unit ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Rune ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Floating {
         return Compilerˉsourceˉbindingsˉbodyˉempty();
     }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
@@ -2540,7 +2528,8 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                         Matchˉline,
                         Matchˉcolumn,
                         Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
-                        0u32
+                        0u32,
+                        false
                     );
                     let Caseˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                         Source,
