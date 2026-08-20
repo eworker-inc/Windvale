@@ -1,5 +1,5 @@
 windvale-project 2
-root "Compiler/Windvale/Source-Analysis-Core.wv"
+root "Tests/Fixtures/Language-1.0/Generic-Analysis-Publication-Self-Test.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"

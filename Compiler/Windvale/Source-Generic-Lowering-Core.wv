@@ -1,0 +1,524 @@
+module Compilerˉsourceˉgenericˉlowering profile portable;
+
+export enum Compilerˉsourceˉgenericˉstatus {
+    Valid = 0;
+    Invalidˉparameter = 1;
+    Parameterˉlimit = 2;
+    Parameterˉindex = 3;
+    Kindˉmismatch = 4;
+    Invalidˉvalue = 5;
+    Conflictingˉsolution = 6;
+    Unsolvedˉparameter = 7;
+    Explicitˉarity = 8;
+    Instantiationˉdepth = 9;
+    Instanceˉlimit = 10;
+    Evidenceˉlimit = 11;
+    Codeˉgrowthˉlimit = 12;
+    Invalidˉevidence = 13;
+}
+
+export record Compilerˉsourceˉgenericˉsolution {
+    Status: Compilerˉsourceˉgenericˉstatus;
+    Evidence: bytes;
+}
+
+export record Compilerˉsourceˉgenericˉcatalog {
+    Status: Compilerˉsourceˉgenericˉstatus;
+    Evidence: bytes;
+}
+
+export record Compilerˉsourceˉgenericˉadmission {
+    Status: Compilerˉsourceˉgenericˉstatus;
+    Catalogˉevidence: bytes;
+    Instance: u32;
+    Reused: bool;
+}
+
+fn Compilerˉsourceˉgenericˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉgenericˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉgenericˉsolutionˉvalue(
+    Status: Compilerˉsourceˉgenericˉstatus,
+    Evidence: bytes
+) -> Compilerˉsourceˉgenericˉsolution {
+    return Compilerˉsourceˉgenericˉsolution(Status, Evidence);
+}
+
+fn Compilerˉsourceˉgenericˉsolutionˉheader(
+    Parameters: u32,
+    Solved: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVGS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Compilerˉsourceˉgenericˉappendˉu32(Result, Parameters);
+    Result = Compilerˉsourceˉgenericˉappendˉu32(Result, Solved);
+    return Compilerˉsourceˉgenericˉappendˉu32(Result, 24u32);
+}
+
+export fn Compilerˉsourceˉgenericˉsolutionˉcreate(
+    Parameters: u32
+) -> Compilerˉsourceˉgenericˉsolution {
+    let Empty: bytes = Textˉtoˉutf8("");
+    let Sentinel: u32 = Compilerˉsourceˉgenericˉsentinel();
+    if Parameters > 32u32 {
+        return Compilerˉsourceˉgenericˉsolutionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Parameterˉlimit,
+            Empty
+        );
+    }
+    var Evidence: bytes = Compilerˉsourceˉgenericˉsolutionˉheader(
+        Parameters, 0u32
+    );
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 1u32);
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 0u32);
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 0u32);
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 0u32);
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, Sentinel);
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, Sentinel);
+        Parameter = Parameter + 1u32;
+    }
+    return Compilerˉsourceˉgenericˉsolutionˉvalue(
+        Compilerˉsourceˉgenericˉstatus.Valid,
+        Evidence
+    );
+}
+
+fn Compilerˉsourceˉgenericˉsolutionˉparameters(
+    Solution: Compilerˉsourceˉgenericˉsolution
+) -> u32 {
+    if Bytesˉlength(Solution.Evidence) < 20u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Solution.Evidence, 8u32);
+}
+
+fn Compilerˉsourceˉgenericˉsolutionˉsolved(
+    Solution: Compilerˉsourceˉgenericˉsolution
+) -> u32 {
+    if Bytesˉlength(Solution.Evidence) < 20u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Solution.Evidence, 12u32);
+}
+
+fn Compilerˉsourceˉgenericˉsolutionˉentry(
+    Solution: Compilerˉsourceˉgenericˉsolution,
+    Parameter: u32
+) -> u32 {
+    let Parameters: u32 = Compilerˉsourceˉgenericˉsolutionˉparameters(
+        Solution
+    );
+    if Parameter >= Parameters ||
+        Bytesˉlength(Solution.Evidence) != 20u32 + Parameters * 24u32 {
+        return Compilerˉsourceˉgenericˉsentinel();
+    }
+    return 20u32 + Parameter * 24u32;
+}
+
+export fn Compilerˉsourceˉgenericˉsolutionˉargumentˉlow(
+    Solution: Compilerˉsourceˉgenericˉsolution,
+    Parameter: u32
+) -> u32 {
+    let Entry: u32 = Compilerˉsourceˉgenericˉsolutionˉentry(
+        Solution, Parameter
+    );
+    if Entry == Compilerˉsourceˉgenericˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 8u32);
+}
+
+export fn Compilerˉsourceˉgenericˉsolutionˉcontribute(
+    Solution: Compilerˉsourceˉgenericˉsolution,
+    Parameter: u32,
+    Valueˉlow: u32,
+    Argument: u32,
+    Offset: u32
+) -> Compilerˉsourceˉgenericˉsolution {
+    if Solution.Status != Compilerˉsourceˉgenericˉstatus.Valid {
+        return Solution;
+    }
+    let Parameters: u32 = Compilerˉsourceˉgenericˉsolutionˉparameters(
+        Solution
+    );
+    let Solved: u32 = Compilerˉsourceˉgenericˉsolutionˉsolved(Solution);
+    let Sentinel: u32 = Compilerˉsourceˉgenericˉsentinel();
+    let Entry: u32 = Compilerˉsourceˉgenericˉsolutionˉentry(
+        Solution, Parameter
+    );
+    if Entry == Sentinel {
+        return Compilerˉsourceˉgenericˉsolutionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Parameterˉindex,
+            Solution.Evidence
+        );
+    }
+    let Declaredˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, Entry
+    );
+    if Declaredˉkind != 1u32 {
+        return Compilerˉsourceˉgenericˉsolutionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Kindˉmismatch,
+            Solution.Evidence
+        );
+    }
+    if Argument == Sentinel || Offset == Sentinel || Valueˉlow == 0u32 {
+        return Compilerˉsourceˉgenericˉsolutionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Invalidˉvalue,
+            Solution.Evidence
+        );
+    }
+    let Priorˉargument: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, Entry + 16u32
+    );
+    if Priorˉargument != Sentinel {
+        if Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 8u32) ==
+                Valueˉlow {
+            return Solution;
+        }
+        return Compilerˉsourceˉgenericˉsolutionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Conflictingˉsolution,
+            Solution.Evidence
+        );
+    }
+    var Replacement: bytes = Bytesˉfromˉu32ˉlittle(Declaredˉkind);
+    Replacement = Compilerˉsourceˉgenericˉappendˉu32(
+        Replacement,
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 4u32)
+    );
+    Replacement = Compilerˉsourceˉgenericˉappendˉu32(
+        Replacement, Valueˉlow
+    );
+    Replacement = Compilerˉsourceˉgenericˉappendˉu32(
+        Replacement, 0u32
+    );
+    Replacement = Compilerˉsourceˉgenericˉappendˉu32(
+        Replacement, Argument
+    );
+    Replacement = Compilerˉsourceˉgenericˉappendˉu32(
+        Replacement, Offset
+    );
+    let Before: bytes = Bytesˉslice(
+        Solution.Evidence, 20u32, Entry - 20u32
+    );
+    let Afterˉoffset: u32 = Entry + 24u32;
+    let After: bytes = Bytesˉslice(
+        Solution.Evidence, Afterˉoffset,
+        Bytesˉlength(Solution.Evidence) - Afterˉoffset
+    );
+    let Payload: bytes = Bytesˉconcat(
+        Bytesˉconcat(Before, Replacement), After
+    );
+    let Evidence: bytes = Bytesˉconcat(
+        Compilerˉsourceˉgenericˉsolutionˉheader(Parameters, Solved + 1u32),
+        Payload
+    );
+    return Compilerˉsourceˉgenericˉsolutionˉvalue(
+        Compilerˉsourceˉgenericˉstatus.Valid,
+        Evidence
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉsolutionˉfinish(
+    Solution: Compilerˉsourceˉgenericˉsolution
+) -> Compilerˉsourceˉgenericˉsolution {
+    if Solution.Status != Compilerˉsourceˉgenericˉstatus.Valid {
+        return Solution;
+    }
+    let Parameters: u32 = Compilerˉsourceˉgenericˉsolutionˉparameters(
+        Solution
+    );
+    let Solved: u32 = Compilerˉsourceˉgenericˉsolutionˉsolved(Solution);
+    if Solved == Parameters { return Solution; }
+    return Compilerˉsourceˉgenericˉsolutionˉvalue(
+        Compilerˉsourceˉgenericˉstatus.Unsolvedˉparameter,
+        Solution.Evidence
+    );
+}
+
+fn Compilerˉsourceˉgenericˉcatalogˉvalue(
+    Status: Compilerˉsourceˉgenericˉstatus,
+    Evidence: bytes
+) -> Compilerˉsourceˉgenericˉcatalog {
+    return Compilerˉsourceˉgenericˉcatalog(Status, Evidence);
+}
+
+fn Compilerˉsourceˉgenericˉcatalogˉheader(
+    Instances: u32,
+    Maximumˉdepth: u32,
+    Retainedˉbytes: u32,
+    Estimatedˉcodeˉbytes: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVGC");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Compilerˉsourceˉgenericˉappendˉu32(Result, Instances);
+    Result = Compilerˉsourceˉgenericˉappendˉu32(Result, Maximumˉdepth);
+    Result = Compilerˉsourceˉgenericˉappendˉu32(Result, Retainedˉbytes);
+    return Compilerˉsourceˉgenericˉappendˉu32(
+        Result, Estimatedˉcodeˉbytes
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉempty(
+) -> Compilerˉsourceˉgenericˉcatalog {
+    return Compilerˉsourceˉgenericˉcatalogˉvalue(
+        Compilerˉsourceˉgenericˉstatus.Valid,
+        Compilerˉsourceˉgenericˉcatalogˉheader(0u32, 0u32, 24u32, 0u32)
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉinstances(
+    Catalog: Compilerˉsourceˉgenericˉcatalog
+) -> u32 {
+    if Catalog.Status != Compilerˉsourceˉgenericˉstatus.Valid ||
+        Bytesˉlength(Catalog.Evidence) < 24u32 {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, 8u32);
+}
+
+fn Compilerˉsourceˉgenericˉcatalogˉfindˉcursor(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Instance: u32
+) -> u32 {
+    if Instance >= Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog) {
+        return Compilerˉsourceˉgenericˉsentinel();
+    }
+    var Cursor: u32 = 24u32;
+    var Current: u32 = 0u32;
+    while Current < Instance {
+        if Cursor > Bytesˉlength(Catalog.Evidence) - 24u32 {
+            return Compilerˉsourceˉgenericˉsentinel();
+        }
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 20u32
+        );
+        if Parameters > 32u32 ||
+            24u32 + Parameters * 16u32 >
+                Bytesˉlength(Catalog.Evidence) - Cursor {
+            return Compilerˉsourceˉgenericˉsentinel();
+        }
+        Cursor = Cursor + 24u32 + Parameters * 16u32;
+        Current = Current + 1u32;
+    }
+    if Cursor > Bytesˉlength(Catalog.Evidence) - 24u32 {
+        return Compilerˉsourceˉgenericˉsentinel();
+    }
+    return Cursor;
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉdeclarationˉinstance(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Declaration: u32
+) -> u32 {
+    var Instance: u32 = 0u32;
+    while Instance < Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog) {
+        let Cursor: u32 =
+            Compilerˉsourceˉgenericˉcatalogˉfindˉcursor(Catalog, Instance);
+        if Cursor == Compilerˉsourceˉgenericˉsentinel() {
+            return Compilerˉsourceˉgenericˉsentinel();
+        }
+        if Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor) ==
+            Declaration { return Instance; }
+        Instance = Instance + 1u32;
+    }
+    return Compilerˉsourceˉgenericˉsentinel();
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉinstanceˉdepth(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 =
+        Compilerˉsourceˉgenericˉcatalogˉfindˉcursor(Catalog, Instance);
+    if Cursor == Compilerˉsourceˉgenericˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 4u32);
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉargumentˉlow(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Instance: u32,
+    Parameter: u32
+) -> u32 {
+    let Cursor: u32 =
+        Compilerˉsourceˉgenericˉcatalogˉfindˉcursor(Catalog, Instance);
+    if Cursor == Compilerˉsourceˉgenericˉsentinel() ||
+        Parameter >= Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 20u32
+    ) { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 32u32 + Parameter * 16u32
+    );
+}
+
+fn Compilerˉsourceˉgenericˉcatalogˉmatches(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Cursor: u32,
+    Declaration: u32,
+    Solution: Compilerˉsourceˉgenericˉsolution
+) -> bool {
+    let Parameters: u32 = Compilerˉsourceˉgenericˉsolutionˉparameters(
+        Solution
+    );
+    if Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor) != Declaration ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 20u32) !=
+            Parameters {
+        return false;
+    }
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        var Field: u32 = 0u32;
+        while Field < 4u32 {
+            if Bytesˉreadˉu32ˉlittle(
+                    Catalog.Evidence,
+                    Cursor + 24u32 + Parameter * 16u32 + Field * 4u32
+                ) != Bytesˉreadˉu32ˉlittle(
+                    Solution.Evidence,
+                    20u32 + Parameter * 24u32 + Field * 4u32
+                ) {
+                return false;
+            }
+            Field = Field + 1u32;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉgenericˉadmissionˉvalue(
+    Status: Compilerˉsourceˉgenericˉstatus,
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Instance: u32,
+    Reused: bool
+) -> Compilerˉsourceˉgenericˉadmission {
+    return Compilerˉsourceˉgenericˉadmission(
+        Status, Catalog.Evidence, Instance, Reused
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉadmit(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Declaration: u32,
+    Depth: u32,
+    Module: u32,
+    Offset: u32,
+    Estimatedˉcodeˉbytes: u32,
+    Candidate: Compilerˉsourceˉgenericˉsolution
+) -> Compilerˉsourceˉgenericˉadmission {
+    let Sentinel: u32 = Compilerˉsourceˉgenericˉsentinel();
+    if Catalog.Status != Compilerˉsourceˉgenericˉstatus.Valid ||
+        Bytesˉlength(Catalog.Evidence) < 24u32 ||
+        Declaration == Sentinel || Module == Sentinel || Offset == Sentinel {
+        return Compilerˉsourceˉgenericˉadmissionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Invalidˉparameter,
+            Catalog, Sentinel, false
+        );
+    }
+    let Solution: Compilerˉsourceˉgenericˉsolution =
+        Compilerˉsourceˉgenericˉsolutionˉfinish(Candidate);
+    if Solution.Status != Compilerˉsourceˉgenericˉstatus.Valid {
+        return Compilerˉsourceˉgenericˉadmissionˉvalue(
+            Solution.Status, Catalog, Sentinel, false
+        );
+    }
+    let Instances: u32 = Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        let Cursor: u32 =
+            Compilerˉsourceˉgenericˉcatalogˉfindˉcursor(Catalog, Instance);
+        if Cursor == Sentinel {
+            return Compilerˉsourceˉgenericˉadmissionˉvalue(
+                Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+                Catalog, Sentinel, false
+            );
+        }
+        if Compilerˉsourceˉgenericˉcatalogˉmatches(
+            Catalog, Cursor, Declaration, Solution
+        ) {
+            return Compilerˉsourceˉgenericˉadmissionˉvalue(
+                Compilerˉsourceˉgenericˉstatus.Valid,
+                Catalog, Instance, true
+            );
+        }
+        Instance = Instance + 1u32;
+    }
+    if Depth == 0u32 || Depth > 32u32 {
+        return Compilerˉsourceˉgenericˉadmissionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Instantiationˉdepth,
+            Catalog, Sentinel, false
+        );
+    }
+    if Instances >= 256u32 {
+        return Compilerˉsourceˉgenericˉadmissionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Instanceˉlimit,
+            Catalog, Sentinel, false
+        );
+    }
+    let Priorˉcode: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 20u32
+    );
+    if Estimatedˉcodeˉbytes > 16777216u32 ||
+        Estimatedˉcodeˉbytes > 16777216u32 - Priorˉcode {
+        return Compilerˉsourceˉgenericˉadmissionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Codeˉgrowthˉlimit,
+            Catalog, Sentinel, false
+        );
+    }
+    let Parameters: u32 = Compilerˉsourceˉgenericˉsolutionˉparameters(
+        Solution
+    );
+    let Entryˉlength: u32 = 24u32 + Parameters * 16u32;
+    let Retained: u32 = Bytesˉlength(Catalog.Evidence);
+    if Entryˉlength > 1048576u32 - Retained {
+        return Compilerˉsourceˉgenericˉadmissionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
+            Catalog, Sentinel, false
+        );
+    }
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Declaration);
+    Entry = Compilerˉsourceˉgenericˉappendˉu32(Entry, Depth);
+    Entry = Compilerˉsourceˉgenericˉappendˉu32(Entry, Module);
+    Entry = Compilerˉsourceˉgenericˉappendˉu32(Entry, Offset);
+    Entry = Compilerˉsourceˉgenericˉappendˉu32(
+        Entry, Estimatedˉcodeˉbytes
+    );
+    Entry = Compilerˉsourceˉgenericˉappendˉu32(Entry, Parameters);
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        var Field: u32 = 0u32;
+        while Field < 4u32 {
+            Entry = Compilerˉsourceˉgenericˉappendˉu32(
+                Entry,
+                Bytesˉreadˉu32ˉlittle(
+                    Solution.Evidence,
+                    20u32 + Parameter * 24u32 + Field * 4u32
+                )
+            );
+            Field = Field + 1u32;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    var Maximumˉdepth: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 12u32
+    );
+    if Depth > Maximumˉdepth { Maximumˉdepth = Depth; }
+    let Header: bytes = Compilerˉsourceˉgenericˉcatalogˉheader(
+        Instances + 1u32, Maximumˉdepth,
+        Retained + Entryˉlength,
+        Priorˉcode + Estimatedˉcodeˉbytes
+    );
+    let Payload: bytes = Bytesˉslice(
+        Catalog.Evidence, 24u32, Retained - 24u32
+    );
+    let Updated: Compilerˉsourceˉgenericˉcatalog =
+        Compilerˉsourceˉgenericˉcatalogˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Valid,
+            Bytesˉconcat(Bytesˉconcat(Header, Payload), Entry)
+        );
+    return Compilerˉsourceˉgenericˉadmissionˉvalue(
+        Compilerˉsourceˉgenericˉstatus.Valid,
+        Updated, Instances, false
+    );
+}

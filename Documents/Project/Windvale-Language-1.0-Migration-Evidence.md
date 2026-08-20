@@ -36,9 +36,13 @@ One fixture migrates a manual `Valid`/`Value`/`Error` record through an explicit
 domain-error adapter. Generic declaration and explicit-call syntax now has a
 bounded parser checkpoint. Canonical WVGS solution evidence and WVGC
 specialization catalogs establish deterministic inference conflicts, reuse,
-diagnostics, and growth limits before code generation. These artifacts are not
-yet connected to source symbols, WIR, or WVB emission, so general generic
-functions, records, and variants do not yet compile. Collections and the
+diagnostics, and growth limits before code generation. The first direct-type
+function checkpoint now connects that identity to source symbols, concrete
+bindings, monomorphic WIR, and ordinary WVB execution. It supports inferred and
+full-arity explicit calls to one concrete instance per declaration, including a
+type appearing only as the complete result type. General generic records,
+variants, nested or constant arguments, phantom or template-only declarations,
+and multiple concrete instances remain Slice 4 work. Collections and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
 deferred to the seven-slice integration gate. Localized token execution,
@@ -425,6 +429,53 @@ The cache admits only unoptimized `portable-wvb-v1` Project 2 input and is not
 qualification evidence. Project 3 profile-aware caching, general Slice 4
 generic resolution and collections, repository-wide source migration,
 paired-host equality, and final broad integration remain open.
+
+## Slice 4 direct generic function lowering checkpoint
+
+Decision 0786 adds a compact production WVGS/WVGC producer to the source-symbol,
+binding, WIR, analysis, and emission closures. It accepts direct type parameters
+as complete value-parameter or result types. Ordinary arguments infer a
+declaration-ordered solution; `::` supplies the same full ordered solution
+explicitly. Equal inferred and explicit uses reuse one catalog identity.
+Conflicting contributions reject as `Genericˉresolution`, while a second
+distinct specialization of the same declaration rejects as
+`Genericˉspecialization` before evidence publication.
+
+WIR generation performs one planning pass over ordinary functions, compiles
+admitted generic bodies with concrete bindings, and repeats only when that body
+discovers another generic instance. The fixed point is bounded at 32 passes.
+Non-generic source retains one pass. The independent WVIR validator reconstructs
+each selected solution from concrete parameter and result shapes and rechecks
+the monomorphic function directory against source. WVGS and WVGC do not enter
+WVIR or WVB.
+
+The focused publisher accepts inferred-plus-explicit identity reuse and an
+explicit result-only specialization. It rejects conflicting inference and a
+second distinct identity. The published identity program contains two concrete
+functions and executes through the unchanged emitter, verifier, and scalar
+runtime with result `42` in 26 instructions. A same-length monomorphic oracle
+produces byte-identical WVCA, WVLB, and WVIR, proving that source generic syntax
+has disappeared before WVB emission.
+
+The final publisher contains 452 functions, 864,885 code bytes, and 1,048,153
+module bytes, SHA-256
+`a2befed440f070ed934dd3ca783129cad30016ec2b46007548507f415cb3974a`.
+The generic/oracle products share 104-byte WVCA SHA-256
+`7c30318a94a9c16965347d17da358b309aefaa01519bafed80e48eb52b4a294a`,
+148-byte WVLB SHA-256
+`bda5d2ec661429a8649b3a23c905d1986fa5ad081b8c891c0283f5c534582a37`,
+and 560-byte WVIR SHA-256
+`dc3810d6b498fc2ff6d5676a584331df47292105daa13f5926dff309b1322be5`.
+The unchanged emitter produces a 297-byte WVB with SHA-256
+`cb7f970929bcdafa15c5f13b817f013ba30c033933d2988283b2e5c41ea316b3`.
+
+The compiler-heavy focused publisher packages only through the existing
+segmented native route; the monolithic route reaches its unchanged output limit.
+No limit was widened. General generic records and variants, nested and constant
+arguments, phantom or template-only declarations, multiple concrete
+specializations, and collections remain open Slice 4 work. Heavy storage, OS,
+paired-host, and complete Qualification gates remain deferred to the final
+seven-slice integration gate.
 
 ## Slice 2 named variant fields
 

@@ -1,0 +1,33 @@
+module Languageˉoneˉgenericˉwirˉselfˉtest profile portable;
+
+import Compilerˉsourceˉwir as Sourceˉwir;
+
+fn Sourceˉset(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(24u32));
+    Header = Bytesˉconcat(
+        Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Header, Sourceˉbytes);
+}
+
+export fn Main() -> i32 {
+    let Input: bytes = Sourceˉset(
+        "module Genericˉidentity profile portable; fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Initial: i32 = 42; let Inferred: i32 = Identity(Initial); return Identity::<i32>(Inferred); }"
+    );
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+    if Summary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return 1;
+    }
+    if Summary.Functions != 2u32 { return 2; }
+    if Summary.Blocks == 0u32 || Summary.Operations == 0u32 {
+        return 3;
+    }
+    return 42;
+}

@@ -2,6 +2,7 @@ module Compilerˉsourceˉsymbols profile portable;
 
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
 import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -94,6 +95,33 @@ export record Compilerˉsourceˉtypeˉbinding {
     Failureˉcolumn: u32;
 }
 
+export record Compilerˉsourceˉconcreteˉtype {
+    Status: Compilerˉsourceˉsymbolˉstatus;
+    Shape: u32;
+    Nextˉoffset: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+export record Compilerˉsourceˉfunctionˉgeneric {
+    Parameters: u32;
+    Firstˉoffset: u32;
+    Firstˉline: u32;
+    Firstˉcolumn: u32;
+    Signatureˉoffset: u32;
+    Signatureˉline: u32;
+    Signatureˉcolumn: u32;
+}
+
+export record Compilerˉsourceˉgenericˉparameterˉmatch {
+    Found: bool;
+    Index: u32;
+    Isˉtype: bool;
+}
+
 export record Compilerˉsourceˉsymbolˉsummary {
     Status: Compilerˉsourceˉsymbolˉstatus;
     Graphˉstatus: Sourceˉgraph.Compilerˉsourceˉgraphˉstatus;
@@ -152,6 +180,112 @@ record Compilerˉsourceˉconstantˉwideˉdivision {
 
 export fn Compilerˉsourceˉsymbolsˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+    Source: bytes,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
+    Declarationˉline: u32,
+    Declarationˉcolumn: u32
+) -> Compilerˉsourceˉfunctionˉgeneric {
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Declarationˉoffset,
+            Declarationˉline, Declarationˉcolumn
+        );
+    var Functionˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = First;
+    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
+        Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
+        );
+    }
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Functionˉtoken.Nextˉoffset,
+            Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
+        );
+    let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+        );
+    if Afterˉname.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        return Compilerˉsourceˉfunctionˉgeneric(
+            0u32,
+            Afterˉname.Offset, Afterˉname.Line, Afterˉname.Column,
+            Afterˉname.Offset, Afterˉname.Line, Afterˉname.Column
+        );
+    }
+    let Parsed: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉgenericˉparameters(
+            Source, Afterˉname.Offset, Afterˉname.Line, Afterˉname.Column
+        );
+    let Signature: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Parsed.Nextˉoffset, Parsed.Nextˉline, Parsed.Nextˉcolumn
+        );
+    return Compilerˉsourceˉfunctionˉgeneric(
+        Parsed.Items,
+        Afterˉname.Nextˉoffset,
+        Afterˉname.Nextˉline,
+        Afterˉname.Nextˉcolumn,
+        Signature.Offset,
+        Signature.Line,
+        Signature.Column
+    );
+}
+
+export fn Compilerˉsourceˉsymbolsˉgenericˉparameter(
+    Source: bytes,
+    Generic: Compilerˉsourceˉfunctionˉgeneric,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Compilerˉsourceˉgenericˉparameterˉmatch {
+    var Cursor: u32 = Generic.Firstˉoffset;
+    var Currentˉline: u32 = Generic.Firstˉline;
+    var Currentˉcolumn: u32 = Generic.Firstˉcolumn;
+    var Index: u32 = 0u32;
+    while Index < Generic.Parameters {
+        let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        var Isˉtype: bool = true;
+        var Parameter: Sourceˉlexer.Compilerˉsourceˉtoken = First;
+        var After: Sourceˉlexer.Compilerˉsourceˉtoken = First;
+        if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Const {
+            Isˉtype = false;
+            Parameter = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
+            );
+            let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Parameter.Nextˉoffset,
+                    Parameter.Nextˉline, Parameter.Nextˉcolumn
+                );
+            After = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
+            );
+        }
+        if Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Source, Parameter.Offset, Parameter.Length,
+            Source, Nameˉoffset, Nameˉlength
+        ) {
+            return Compilerˉsourceˉgenericˉparameterˉmatch(
+                true, Index, Isˉtype
+            );
+        }
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, After.Nextˉoffset, After.Nextˉline, After.Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Currentˉline = Separator.Nextˉline;
+        Currentˉcolumn = Separator.Nextˉcolumn;
+        Index = Index + 1u32;
+    }
+    return Compilerˉsourceˉgenericˉparameterˉmatch(
+        false, 4294967295u32, false
+    );
 }
 
 export fn Compilerˉsourceˉsymbolsˉmatchˉnone(Modules: u32) -> Compilerˉsourceˉsymbolˉmatch {
@@ -1747,6 +1881,82 @@ export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
         return 196608u32 + Binding.Nominalˉindex;
     }
     return 0u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Directory: bytes,
+    Lookup: bytes,
+    Visibility: bytes,
+    Owner: u32,
+    Source: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Records: u32,
+    Enums: u32,
+    Generic: Compilerˉsourceˉfunctionˉgeneric,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Instance: u32,
+    Allowˉunresolved: bool
+) -> Compilerˉsourceˉconcreteˉtype {
+    let Token: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Offset, Line, Column
+        );
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+        let Parameter: Compilerˉsourceˉgenericˉparameterˉmatch =
+            Compilerˉsourceˉsymbolsˉgenericˉparameter(
+                Source, Generic, Token.Offset, Token.Length
+            );
+        if Parameter.Found {
+            if !Parameter.Isˉtype {
+                return Compilerˉsourceˉconcreteˉtype(
+                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                    0u32,
+                    Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
+                    Token.Offset, Token.Line, Token.Column
+                );
+            }
+            if Allowˉunresolved {
+                return Compilerˉsourceˉconcreteˉtype(
+                    Compilerˉsourceˉsymbolˉstatus.Valid,
+                    0u32,
+                    Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
+                    Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn
+                );
+            }
+            let Shape: u32 = Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉargumentˉlow(
+                Catalog, Instance, Parameter.Index
+            );
+            if Shape == 0u32 {
+                return Compilerˉsourceˉconcreteˉtype(
+                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                    0u32,
+                    Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
+                    Token.Offset, Token.Line, Token.Column
+                );
+            }
+            return Compilerˉsourceˉconcreteˉtype(
+                Compilerˉsourceˉsymbolˉstatus.Valid,
+                Shape,
+                Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
+                Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn
+            );
+        }
+    }
+    let Binding: Compilerˉsourceˉtypeˉbinding =
+        Compilerˉsourceˉsymbolsˉbindˉtype(
+            Input, Scan, Directory, Lookup, Visibility, Owner, Source,
+            Offset, Line, Column, Records, Enums, false
+        );
+    return Compilerˉsourceˉconcreteˉtype(
+        Binding.Status,
+        Compilerˉsourceˉsymbolsˉtypeˉshape(Binding),
+        Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn,
+        Binding.Failureˉoffset, Binding.Failureˉline, Binding.Failureˉcolumn
+    );
 }
 
 export fn Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
@@ -4682,21 +4892,62 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
     Declarationˉline: u32,
     Declarationˉcolumn: u32
 ) -> Compilerˉsourceˉsymbolˉsummary {
-    let First: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-        Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn
-    );
-    var Functionˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = First;
-    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
-        Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
+    let Generic: Compilerˉsourceˉfunctionˉgeneric =
+        Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            Source, Declaration, Declarationˉline, Declarationˉcolumn
         );
+    var Genericˉcursor: u32 = Generic.Firstˉoffset;
+    var Genericˉline: u32 = Generic.Firstˉline;
+    var Genericˉcolumn: u32 = Generic.Firstˉcolumn;
+    var Genericˉindex: u32 = 0u32;
+    while Genericˉindex < Generic.Parameters {
+        let Genericˉfirst: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉcursor, Genericˉline, Genericˉcolumn
+            );
+        var Genericˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Genericˉfirst;
+        var Genericˉafter: Sourceˉlexer.Compilerˉsourceˉtoken = Genericˉfirst;
+        if Genericˉfirst.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Const {
+            Genericˉname = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉfirst.Nextˉoffset,
+                Genericˉfirst.Nextˉline, Genericˉfirst.Nextˉcolumn
+            );
+            let Genericˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Genericˉname.Nextˉoffset,
+                    Genericˉname.Nextˉline, Genericˉname.Nextˉcolumn
+                );
+            Genericˉafter = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉcolon.Nextˉoffset,
+                Genericˉcolon.Nextˉline, Genericˉcolon.Nextˉcolumn
+            );
+        }
+        let Genericˉmatch: Compilerˉsourceˉgenericˉparameterˉmatch =
+            Compilerˉsourceˉsymbolsˉgenericˉparameter(
+                Source, Generic, Genericˉname.Offset, Genericˉname.Length
+            );
+        if Genericˉmatch.Found && Genericˉmatch.Index < Genericˉindex {
+            return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                Input, Counts, Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter,
+                Module, Module, Declaration.Kind,
+                Genericˉname.Offset, Genericˉname.Line, Genericˉname.Column
+            );
+        }
+        let Genericˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉafter.Nextˉoffset,
+                Genericˉafter.Nextˉline, Genericˉafter.Nextˉcolumn
+            );
+        Genericˉcursor = Genericˉseparator.Nextˉoffset;
+        Genericˉline = Genericˉseparator.Nextˉline;
+        Genericˉcolumn = Genericˉseparator.Nextˉcolumn;
+        Genericˉindex = Genericˉindex + 1u32;
     }
-    let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-        Source, Functionˉtoken.Nextˉoffset, Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
-    );
-    let Left: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-        Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
-    );
+    let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Generic.Signatureˉoffset,
+            Generic.Signatureˉline, Generic.Signatureˉcolumn
+        );
     let Firstˉoffset: u32 = Left.Nextˉoffset;
     let Firstˉline: u32 = Left.Nextˉline;
     let Firstˉcolumn: u32 = Left.Nextˉcolumn;
@@ -4720,14 +4971,19 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
         let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
-        let Binding: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
-            Input, Scan, Directory, Counts.Lookup, Visibility, Module, Source,
-            Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
-            Counts.Records, Counts.Enums, false
-        );
+        let Binding: Compilerˉsourceˉconcreteˉtype =
+            Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
+                Input, Scan, Directory, Counts.Lookup, Visibility, Module, Source,
+                Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                Counts.Records, Counts.Enums, Generic,
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
+                4294967295u32, true
+            );
         if Binding.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-            return Compilerˉsourceˉsymbolsˉfailureˉfromˉtype(
-                Input, Counts, Scan, Module, Declaration.Kind, Binding
+            return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                Input, Counts, Binding.Status,
+                Module, Module, Declaration.Kind,
+                Binding.Failureˉoffset, Binding.Failureˉline, Binding.Failureˉcolumn
             );
         }
         let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
@@ -4750,14 +5006,21 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
     let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
     );
-    let Returnˉtype: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
-        Input, Scan, Directory, Counts.Lookup, Visibility, Module, Source,
-        Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
-        Counts.Records, Counts.Enums, false
-    );
+    let Returnˉtype: Compilerˉsourceˉconcreteˉtype =
+        Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
+            Input, Scan, Directory, Counts.Lookup, Visibility, Module, Source,
+            Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            Counts.Records, Counts.Enums, Generic,
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
+            4294967295u32, true
+        );
     if Returnˉtype.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-        return Compilerˉsourceˉsymbolsˉfailureˉfromˉtype(
-            Input, Counts, Scan, Module, Declaration.Kind, Returnˉtype
+        return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+            Input, Counts, Returnˉtype.Status,
+            Module, Module, Declaration.Kind,
+            Returnˉtype.Failureˉoffset,
+            Returnˉtype.Failureˉline,
+            Returnˉtype.Failureˉcolumn
         );
     }
     return Counts;

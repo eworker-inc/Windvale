@@ -2,6 +2,7 @@ module Compilerˉsourceˉbindings profile portable;
 
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
 import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -1762,7 +1763,8 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
             Fields.Reads, Fields.Assignments, Fields.Calls + 1u32
         );
     }
-    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Call {
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Call ||
+        Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall {
         var Arguments: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbodyˉempty();
         var Cursor: u32 = Expression.Itemsˉoffset;
         var Currentˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
@@ -2641,7 +2643,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
     return Result;
 }
 
-export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
+export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -2651,6 +2653,8 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
     Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
     Declarationˉline: u32,
     Declarationˉcolumn: u32,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Genericˉinstance: u32,
     Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉphase {
     var Result: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉbuild(
@@ -2659,21 +2663,15 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
             Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase)
         )
     );
-    let First: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-        Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn
-    );
-    var Functionˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = First;
-    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
-        Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
+    let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            Source, Declaration, Declarationˉline, Declarationˉcolumn
         );
-    }
-    let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-        Source, Functionˉtoken.Nextˉoffset, Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
-    );
-    let Left: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-        Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
-    );
+    let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Generic.Signatureˉoffset,
+            Generic.Signatureˉline, Generic.Signatureˉcolumn
+        );
     var Cursor: u32 = Left.Nextˉoffset;
     var Currentˉline: u32 = Left.Nextˉline;
     var Currentˉcolumn: u32 = Left.Nextˉcolumn;
@@ -2685,23 +2683,27 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
         let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
-        let Type: Sourceˉdeclarations.Compilerˉparseˉstep = Sourceˉdeclarations.Compilerˉparseˉtype(
-            Source,
-            Colon.Nextˉoffset,
-            Colon.Nextˉline,
-            Colon.Nextˉcolumn,
-            false,
-            false
-        );
-        var Parameterˉshape: u32 = Compilerˉsourceˉbindingsˉsourceˉshape(Type.Typeˉkind);
-        if Type.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named || Type.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence || Type.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
-            let Parameterˉbinding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility, Module, Source,
+        let Type: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
+                Input, Scan, Symbols.Directory, Symbols.Lookup,
+                Symbols.Visibility, Module, Source,
                 Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
-                Symbols.Records, Symbols.Enums, false
+                Symbols.Records, Symbols.Enums, Generic,
+                Catalog, Genericˉinstance, false
             );
-            Parameterˉshape = Compilerˉsourceˉbindingsˉshape(Parameterˉbinding);
+        if Type.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            let Invalidˉparameter: Compilerˉsourceˉbindingˉbuild =
+                Compilerˉsourceˉbindingsˉbuildˉfailure(
+                    Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result),
+                    Compilerˉsourceˉbindingsˉtypeˉstatus(Type.Status),
+                    Module, Module, Function,
+                    Type.Failureˉoffset, Type.Failureˉline, Type.Failureˉcolumn
+                );
+            return Compilerˉsourceˉbindingsˉphaseˉbuild(
+                Result, Invalidˉparameter
+            );
         }
+        let Parameterˉshape: u32 = Type.Shape;
         if Result.Nextˉslot >= 4096u32 {
             let Bindingˉlimited: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉbuildˉfailure(
                 Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result),
@@ -2748,6 +2750,26 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
         Index = Index + 1u32;
     }
     return Result;
+}
+
+export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
+    Declarationˉline: u32,
+    Declarationˉcolumn: u32,
+    Phase: Compilerˉsourceˉbindingˉphase
+) -> Compilerˉsourceˉbindingˉphase {
+    return Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
+        Input, Scan, Symbols, Module, Function, Source,
+        Declaration, Declarationˉline, Declarationˉcolumn,
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
+        4294967295u32, Phase
+    );
 }
 
 export fn Compilerˉsourceˉbindingsˉphaseˉfunction(
@@ -2811,21 +2833,27 @@ export fn Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
                         View.Source, Cursor, Currentˉline, Currentˉcolumn,
                         Declaration.Declarationˉoffset
                     );
-                    let Function: u32 = Compilerˉsourceˉbindingsˉfunctionˉentry(
-                        Symbols.Directory, Module, Declaration.Declarationˉoffset
-                    );
-                    let Localˉphase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉfunction(
-                        Input, Scan, Symbols, Module, Function, View.Source,
-                        Declaration, Position.Line, Position.Column, Bindˉbody,
-                        Compilerˉsourceˉbindingsˉphaseˉempty(Input)
-                    );
-                    if Localˉphase.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
-                        return Localˉphase;
+                    let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
+                        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+                            View.Source, Declaration, Position.Line, Position.Column
+                        );
+                    if Generic.Parameters == 0u32 {
+                        let Function: u32 = Compilerˉsourceˉbindingsˉfunctionˉentry(
+                            Symbols.Directory, Module, Declaration.Declarationˉoffset
+                        );
+                        let Localˉphase: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉfunction(
+                            Input, Scan, Symbols, Module, Function, View.Source,
+                            Declaration, Position.Line, Position.Column, Bindˉbody,
+                            Compilerˉsourceˉbindingsˉphaseˉempty(Input)
+                        );
+                        if Localˉphase.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+                            return Localˉphase;
+                        }
+                        if Localˉphase.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+                            return Localˉphase;
+                        }
+                        Phase = Compilerˉsourceˉbindingsˉphaseˉmerge(Phase, Localˉphase);
                     }
-                    if Localˉphase.Bodyˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
-                        return Localˉphase;
-                    }
-                    Phase = Compilerˉsourceˉbindingsˉphaseˉmerge(Phase, Localˉphase);
                 }
                 if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Declaration) {
                     Sawˉnonˉimport = true;

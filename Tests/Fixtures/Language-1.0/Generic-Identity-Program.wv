@@ -1,0 +1,11 @@
+module Languageˉoneˉgenericˉidentityˉprogram profile portable;
+
+fn Identity<Type>(Value: Type) -> Type {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Initial: i32 = 42;
+    let Inferred: i32 = Identity(Initial);
+    return Identity::<i32>(Inferred);
+}

@@ -8,12 +8,19 @@ canonical representation for a solved generic argument list and one catalog for
 deduplicating concrete specializations before ordinary monomorphic WIR and WVB
 emission.
 
-This checkpoint does not yet connect generic source syntax to source symbols,
-WIR, or WVB emission. It therefore does not claim that general generic
-functions, records, or variants compile. The declaration and call parsers admit
-the frozen syntax; the next compiler phase must produce the evidence specified
-here and then lower each admitted catalog entry through the existing
-monomorphic backend.
+The first lowering checkpoint connects direct generic function type parameters
+to source symbols, bindings, WIR, and WVB emission. A type parameter may appear
+as a complete value-parameter type, the complete result type, or both. Calls may
+infer it from value arguments or supply the full ordered list with `::`. Every
+admitted solution is cataloged before the function body is lowered through the
+ordinary monomorphic backend.
+
+This checkpoint does not claim general generic records, variants, nested
+generic type expressions, constant generic parameters, phantom parameters, or
+multiple concrete specializations of one declaration. A supported generic
+declaration must be instantiated by the current compilation and currently has
+exactly one concrete specialization. Those are explicit implementation
+boundaries, not changes to the frozen Language 1.0 design.
 
 The artifacts are internal compiler-phase evidence. They are not source syntax,
 package identity, distributable bytecode, or a runtime generic representation.
@@ -116,17 +123,37 @@ whether it reused an existing entry.
 
 ## Compiler integration contract
 
-The later source-symbol and WIR integration must:
+Source-symbol and WIR integration:
 
 1. create one solution in declaration-parameter order;
 2. contribute explicit arguments and structurally inferred arguments with
    exact source origins;
 3. finish the solution before catalog admission;
-4. admit or reuse the canonical specialization before emitting code; and
-5. substitute the concrete arguments into the ordinary monomorphic WIR path.
+4. admit or reuse the canonical specialization before emitting code;
+5. discover calls from ordinary functions in a planning pass, then compile
+   admitted generic bodies to a bounded fixed point of at most 32 passes; and
+6. substitute the concrete arguments into the ordinary binding and monomorphic
+   WIR path.
 
 WIR and WVB remain monomorphic. Language 1.0 does not gain runtime-erased
 generic values, a runtime specialization service, or a second generic backend.
+WVGS and WVGC are transient compiler evidence and are not embedded into the
+published WVIR or WVB.
+
+The independent WIR validator reconstructs a specialization solution from the
+concrete parameter and result shapes recorded by monomorphic binding and WIR
+evidence. It then revalidates every parameter and the result against the source
+declaration. A parameter that appears nowhere in those direct signature
+positions remains unsupported because its specialization identity cannot be
+proven from the published monomorphic product.
+
+The production compiler uses the compact
+`Compilerˉsourceˉgenericˉlowering` producer for the direct-type subset. The
+larger `Compilerˉsourceˉgenericˉresolution` module remains the canonical
+correctness oracle for complete WVGS/WVGC validation, diagnostics, constant
+argument identities, and limit behavior. Both implement the same evidence
+identity. Keeping the oracle out of the production closure avoids duplicating
+an ownership-heavy implementation in every compiler executable.
 
 ## Verification
 
@@ -143,3 +170,25 @@ the ownership-heavy record and byte-service closure used by this compiler
 phase, so the focused owner executes the fixture through the hosted native
 path. That runner-profile limitation is not treated as a semantic failure or
 as evidence for general generic-source integration.
+
+`Generic-Analysis-Publication-Self-Test.wv` exercises the connected compiler
+path. It accepts inferred and explicit calls that reuse one identity, accepts an
+explicit result-only specialization, rejects conflicting inference, and rejects
+a second distinct specialization without publishing partial evidence. Its
+successful identity program publishes ordinary WVSS, WVCA, WVLB, and WVIR only.
+The emitted WVB is byte-identical to a same-length hand-written monomorphic
+oracle and executes with result `42`; no runtime generic mechanism is involved.
+The focused publisher is a 1,048,153-byte WVB with SHA-256
+`a2befed440f070ed934dd3ca783129cad30016ec2b46007548507f415cb3974a`
+and its segmented hosted package returns `42`.
+
+The equal generic/oracle evidence identities are
+`7c30318a94a9c16965347d17da358b309aefaa01519bafed80e48eb52b4a294a`
+for 104-byte WVCA,
+`bda5d2ec661429a8649b3a23c905d1986fa5ad081b8c891c0283f5c534582a37`
+for 148-byte WVLB, and
+`dc3810d6b498fc2ff6d5676a584331df47292105daa13f5926dff309b1322be5`
+for 560-byte WVIR. The unchanged emitter produces a 297-byte WVB with
+SHA-256
+`cb7f970929bcdafa15c5f13b817f013ba30c033933d2988283b2e5c41ea316b3`;
+the pinned scalar runner returns `42` in 26 instructions.

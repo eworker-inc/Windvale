@@ -1,0 +1,1 @@
+module Genericˉidentity profile portable; fn Identity      (Value: i32 ) -> i32  { return Value; } export fn Main() -> i32 { let Initial: i32 = 42; let Inferred: i32 = Identity(Initial); return Identity       (Inferred); }
