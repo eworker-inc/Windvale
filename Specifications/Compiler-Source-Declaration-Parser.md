@@ -30,6 +30,12 @@ or unsigned integer type. A list contains at most 32 parameters and retains its
 source span; type substitution, constant evaluation, duplicate detection,
 protocol requirements, and specialization remain semantic-phase work.
 
+Inside a function signature, the second argument of `sequence<Element,
+Maximum>` or `builder<Element, Maximum>` may be either the retained unsigned
+integer token or one identifier. The syntax pass does not decide whether that
+identifier names an in-scope constant generic parameter. Source symbols own
+that decision, the exact fixed-integer width, and the collection bound.
+
 Function-body tokens are balanced through the matching outer brace, including nested blocks. A constant initializer is retained as the declaration's body span from its first expression token through the token before the required semicolon; the later symbol phase owns expression grammar, typing, evaluation, and diagnostics. Function statement and expression grammar is deliberately outside this declaration pass.
 
 ## Streaming records

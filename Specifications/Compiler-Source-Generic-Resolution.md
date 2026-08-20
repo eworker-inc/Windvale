@@ -8,19 +8,23 @@ canonical representation for a solved generic argument list and one catalog for
 deduplicating concrete specializations before ordinary monomorphic WIR and WVB
 emission.
 
-The first lowering checkpoint connects direct generic function type parameters
-to source symbols, bindings, WIR, and WVB emission. A type parameter may appear
-as a complete value-parameter type, the complete result type, or both. Calls may
-infer it from value arguments or supply the full ordered list with `::`. Every
-admitted solution is cataloged before the function body is lowered through the
-ordinary monomorphic backend.
+The connected lowering checkpoints admit direct generic function type
+parameters plus one structural bounded-collection form. A type parameter may
+appear as a complete value-parameter type, the complete result type, or the
+element of `sequence<Type, Maximum>` or `builder<Type, Maximum>`. A `const`
+parameter with its exact declared fixed-integer shape may occupy the collection
+maximum. Calls may
+infer the structural arguments from a concrete collection or supply the full
+ordered list with `::`. Every admitted solution is cataloged before the
+function body is lowered through the ordinary monomorphic backend.
 
-This checkpoint does not claim general generic records, variants, nested
-generic type expressions, constant generic parameters, phantom parameters, or
-multiple concrete specializations of one declaration. A supported generic
-declaration must be instantiated by the current compilation and currently has
-exactly one concrete specialization. Those are explicit implementation
-boundaries, not changes to the frozen Language 1.0 design.
+This checkpoint does not claim general generic records or variants, nested
+generic type expressions or collections, constant generics outside the one
+collection-maximum position, phantom parameters, or multiple concrete
+specializations of one declaration. A supported generic declaration must be
+instantiated by the current compilation and currently has exactly one concrete
+specialization. Those are explicit implementation boundaries, not changes to
+the frozen Language 1.0 design.
 
 The artifacts are internal compiler-phase evidence. They are not source syntax,
 package identity, distributable bytecode, or a runtime generic representation.
@@ -135,6 +139,15 @@ Source-symbol and WIR integration:
 6. substitute the concrete arguments into the ordinary binding and monomorphic
    WIR path.
 
+A collection contribution first requires the same sequence-or-builder family,
+then contributes the concrete element shape to the formal type parameter and
+the concrete maximum to the formal constant parameter. A literal formal
+element or maximum must equal the concrete descriptor. Repeated structural
+contributions retain the ordinary first-origin and conflict behavior. Explicit
+constant arguments require an integer token whose numeric shape exactly equals
+the declared fixed-integer shape; `8` and `8u32` are therefore intentionally
+different arguments for `const Maximum: u32`.
+
 WIR and WVB remain monomorphic. Language 1.0 does not gain runtime-erased
 generic values, a runtime specialization service, or a second generic backend.
 WVGS and WVGC are transient compiler evidence and are not embedded into the
@@ -142,13 +155,16 @@ published WVIR or WVB.
 
 The independent WIR validator reconstructs a specialization solution from the
 concrete parameter and result shapes recorded by monomorphic binding and WIR
-evidence. It then revalidates every parameter and the result against the source
-declaration. A parameter that appears nowhere in those direct signature
-positions remains unsupported because its specialization identity cannot be
-proven from the published monomorphic product.
+evidence. For collections it decomposes the concrete descriptor into family,
+element, and maximum before contributing the structural solution. It then
+revalidates every parameter and the result against the source declaration. A
+parameter that appears nowhere in those admitted signature positions remains
+unsupported because its specialization identity cannot be proven from the
+published monomorphic product.
 
 The production compiler uses the compact
-`Compilerˉsourceˉgenericˉlowering` producer for the direct-type subset. The
+`Compilerˉsourceˉgenericˉlowering` producer for the connected function subset.
+The
 larger `Compilerˉsourceˉgenericˉresolution` module remains the canonical
 correctness oracle for complete WVGS/WVGC validation, diagnostics, constant
 argument identities, and limit behavior. Both implement the same evidence
@@ -192,3 +208,33 @@ for 560-byte WVIR. The unchanged emitter produces a 297-byte WVB with
 SHA-256
 `cb7f970929bcdafa15c5f13b817f013ba30c033933d2988283b2e5c41ea316b3`;
 the pinned scalar runner returns `42` in 26 instructions.
+
+`Generic-Collection-Analysis-Publication-Self-Test.wv` extends that source
+analysis proof to structural type-plus-constant inference. It rejects a
+repeated maximum conflict, an explicit constant with the wrong width, and a
+builder supplied for a sequence parameter. Its successful program calls
+`First<Type, const Maximum: u32>(sequence<Type, Maximum>)` once by inference
+and once as `First::<i32, 8u32>`. A same-length monomorphic oracle produces
+byte-identical WVCA, WVLB, and WVIR.
+
+The focused publisher is 1,065,397 WVB bytes with SHA-256
+`ca1b50539ab3c53966fde062e8816b829d25b0dc0bd14bcb3374a813443ecc7a`.
+Its ordinary segmented native package stays below the unchanged 33,554,432-byte
+whole-image ceiling at 33,487,778 selected machine bytes and returns `42`.
+The generic/oracle products share 104-byte WVCA SHA-256
+`debdc883ad8ebbde577589bc9248f58f79b70f5e7851409545b21be5282a73cb`,
+184-byte WVLB SHA-256
+`6df7f06016882fca5b38d909ca56136587a94975de60431daca96d13e9e35f4c`,
+and 976-byte WVIR SHA-256
+`c9a9299f223cae34887fd6788180f81b0b9a8d1499e99d5f81c2d053694361ab`.
+
+The retained emission driver can emit the monomorphic oracle as a 466-byte WVB
+with SHA-256
+`2d59187da5f16a3b275a6bbe96502ce1309f0ba8348e8a22da02097808c8b0c6`.
+Direct execution is not claimed at this checkpoint: the current pinned native
+verifier rejects both this product and the unchanged 809-byte non-generic
+collection fixture at its target-specific semantic boundary. The fully current
+general emission-driver WVB builds successfully at 1,268,289 bytes, but its
+37,097,130 selected native bytes exceed the unchanged whole-image ceiling, so
+it was deliberately not packaged. A target-aware validated-analysis emission
+split is the next downstream capacity checkpoint.

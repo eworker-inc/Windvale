@@ -1,0 +1,122 @@
+module Languageˉoneˉgenericˉcollectionˉanalysisˉpublicationˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
+
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Sourceˉsetˉfrom(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(24u32));
+    Header = Bytesˉconcat(
+        Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Header, Sourceˉbytes);
+}
+
+fn Manifest(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVCA");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(104u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Input)));
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Bindings.Directory))
+    );
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Wir.Directory))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Modules));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Capabilities));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Data));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Records));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Enums));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Variants));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Fields));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Members));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Cases));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Parameters));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Bindings.Directory, 8u32))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bindings.Parameters));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bindings.Locals));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Blocks));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Operations));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Temporaries));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Operands));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Wirˉstatus(Source: text) -> Sourceˉwir.Compilerˉsourceˉwirˉstatus {
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Sourceˉsetˉfrom(Source));
+    return Summary.Status;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return 64; }
+    if Wirˉstatus(
+        "module Genericˉcollectionˉconflict profile portable; fn Choose<Type, const Maximum: u32>(Left: sequence<Type, Maximum>, Right: sequence<Type, Maximum>) -> Type { return Left[0u32]; } export fn Main() -> i32 { var Leftˉitems = builder<i32, 8>(); push Leftˉitems, 42; let Left = freeze Leftˉitems; var Rightˉitems = builder<i32, 4>(); push Rightˉitems, 7; let Right = freeze Rightˉitems; return Choose(Left, Right); }"
+    ) != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉresolution {
+        return 3;
+    }
+    if Wirˉstatus(
+        "module Genericˉcollectionˉwidth profile portable; fn First<Type, const Maximum: u32>(Values: sequence<Type, Maximum>) -> Type { return Values[0u32]; } export fn Main() -> i32 { var Items = builder<i32, 8>(); push Items, 42; let Values = freeze Items; return First::<i32, 8>(Values); }"
+    ) != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉresolution {
+        return 4;
+    }
+    if Wirˉstatus(
+        "module Genericˉcollectionˉfamily profile portable; fn First<Type, const Maximum: u32>(Values: sequence<Type, Maximum>) -> Type { return Values[0u32]; } export fn Main() -> i32 { var Items = builder<i32, 8>(); push Items, 42; return First(Items); }"
+    ) != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉresolution {
+        return 5;
+    }
+    let Input: bytes = Sourceˉsetˉfrom(
+        "module Genericˉcollection profile portable; fn First<Type, const Maximum: u32>(Values: sequence<Type, Maximum>) -> Type { return Values[0u32]; } export fn Main() -> i32 { var Items = builder<i32, 8>(); push Items, 42; let Values = freeze Items; let Inferred: i32 = First(Values); return First::<i32, 8u32>(Values); }\n"
+    );
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 1;
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Compilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Compilation);
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbols, Compilation
+        );
+    if Wir.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid ||
+        Bindings.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return 2;
+    }
+    file.write_bytes(process.argument(0u32), Input);
+    file.write_bytes(
+        process.argument(1u32), Manifest(Input, Symbols, Bindings, Wir)
+    );
+    file.write_bytes(process.argument(2u32), Bindings.Directory);
+    file.write_bytes(process.argument(3u32), Wir.Directory);
+    return 42;
+}

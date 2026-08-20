@@ -1,0 +1,1 @@
+module Genericˉcollection profile portable; fn First                          (Values: sequence<i32 , 8      >) -> i32  { return Values[0u32]; } export fn Main() -> i32 { var Items = builder<i32, 8>(); push Items, 42; let Values = freeze Items; let Inferred: i32 = First(Values); return First             (Values); }

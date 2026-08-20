@@ -87,7 +87,7 @@ Records and enums are nonempty. Field names are unique within a record. Enum mem
 
 A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Variant fields may contain implemented ordinary value shapes or their own admitted type parameter. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
 
-Slice 3 recognizes only two generic declaration identities. The edition-1
+Slice 3 recognizes two built-in generic declaration identities. The edition-1
 module `Foundationˉoption` must export exactly `Option<T>` with ordered cases
 `Present(Value: T)` and `Absent`. The edition-1 module
 `Foundationˉresult` must export exactly `Result<T, E>` with ordered cases
@@ -99,6 +99,18 @@ rejected. Compact Option shapes occupy `0x60000000 + T`; Result shapes occupy
 `0x70000000 + T * 16384 + E`, where `T` and `E` are the private compact value
 shape codes. These encodings are compiler-phase evidence, not source or WVB
 identities.
+
+The first Slice 4 function-lowering checkpoints additionally admit a bounded
+function-generic subset. A type parameter may be the complete parameter or
+result type, or the element position of one `sequence` or `builder` signature
+type. A `const` parameter may occupy that collection type's maximum position
+and retains its declared fixed-integer shape. The collection remains non-nested,
+its concrete maximum remains 1 through 4,095, and a builder remains forbidden
+as an escaping parameter or result by the existing collection ownership rules.
+The symbol phase retains parameter kind, fixed-integer shape, and declaration
+order for the generic resolver; the resolved value must still fit the existing
+positive 1-through-4,095 collection bound. It does not create a runtime generic
+type.
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 

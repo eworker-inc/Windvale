@@ -1489,6 +1489,7 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
         'Projects/Tests/Language-1.0-Foundation-Generic-Result.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Collection-Analysis-Publication.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',

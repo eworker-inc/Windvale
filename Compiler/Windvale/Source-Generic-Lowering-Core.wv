@@ -34,6 +34,14 @@ export record Compilerˉsourceˉgenericˉadmission {
     Reused: bool;
 }
 
+export record Compilerˉsourceˉgenericˉargument {
+    Valid: bool;
+    Kind: u32;
+    Shape: u32;
+    Low: u32;
+    High: u32;
+}
+
 fn Compilerˉsourceˉgenericˉsentinel() -> u32 {
     return 4294967295u32;
 }
@@ -61,11 +69,44 @@ fn Compilerˉsourceˉgenericˉsolutionˉheader(
     return Compilerˉsourceˉgenericˉappendˉu32(Result, 24u32);
 }
 
+fn Compilerˉsourceˉgenericˉisˉfixedˉintegerˉshape(Shape: u32) -> bool {
+    return Shape == 1u32 || Shape == 2u32 || Shape == 3u32 ||
+        Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
+        Shape == 12u32 || Shape == 13u32;
+}
+
+fn Compilerˉsourceˉgenericˉconstantˉfits(
+    Shape: u32,
+    Low: u32,
+    High: u32
+) -> bool {
+    if !Compilerˉsourceˉgenericˉisˉfixedˉintegerˉshape(Shape) {
+        return false;
+    }
+    if Shape == 2u32 || Shape == 11u32 {
+        return High == 0u32 && Low <= 255u32;
+    }
+    if Shape == 12u32 || Shape == 13u32 {
+        return High == 0u32 && Low <= 65535u32;
+    }
+    if Shape == 1u32 || Shape == 3u32 { return High == 0u32; }
+    return true;
+}
+
 export fn Compilerˉsourceˉgenericˉsolutionˉcreate(
-    Parameters: u32
+    Parameterˉkinds: bytes,
+    Parameterˉshapes: bytes
 ) -> Compilerˉsourceˉgenericˉsolution {
-    let Empty: bytes = Textˉtoˉutf8("");
+    let Empty: bytes = Bytesˉslice(Parameterˉkinds, 0u32, 0u32);
     let Sentinel: u32 = Compilerˉsourceˉgenericˉsentinel();
+    if Bytesˉlength(Parameterˉkinds) % 4u32 != 0u32 ||
+        Bytesˉlength(Parameterˉshapes) != Bytesˉlength(Parameterˉkinds) {
+        return Compilerˉsourceˉgenericˉsolutionˉvalue(
+            Compilerˉsourceˉgenericˉstatus.Invalidˉparameter,
+            Empty
+        );
+    }
+    let Parameters: u32 = Bytesˉlength(Parameterˉkinds) / 4u32;
     if Parameters > 32u32 {
         return Compilerˉsourceˉgenericˉsolutionˉvalue(
             Compilerˉsourceˉgenericˉstatus.Parameterˉlimit,
@@ -77,8 +118,22 @@ export fn Compilerˉsourceˉgenericˉsolutionˉcreate(
     );
     var Parameter: u32 = 0u32;
     while Parameter < Parameters {
-        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 1u32);
-        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 0u32);
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(
+            Parameterˉkinds, Parameter * 4u32
+        );
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Parameterˉshapes, Parameter * 4u32
+        );
+        if (Kind != 1u32 || Shape != 0u32) &&
+            (Kind != 2u32 ||
+                !Compilerˉsourceˉgenericˉisˉfixedˉintegerˉshape(Shape)) {
+            return Compilerˉsourceˉgenericˉsolutionˉvalue(
+                Compilerˉsourceˉgenericˉstatus.Invalidˉparameter,
+                Empty
+            );
+        }
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, Kind);
+        Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, Shape);
         Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 0u32);
         Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, 0u32);
         Evidence = Compilerˉsourceˉgenericˉappendˉu32(Evidence, Sentinel);
@@ -133,7 +188,9 @@ export fn Compilerˉsourceˉgenericˉsolutionˉargumentˉlow(
 export fn Compilerˉsourceˉgenericˉsolutionˉcontribute(
     Solution: Compilerˉsourceˉgenericˉsolution,
     Parameter: u32,
+    Kind: u32,
     Valueˉlow: u32,
+    Valueˉhigh: u32,
     Argument: u32,
     Offset: u32
 ) -> Compilerˉsourceˉgenericˉsolution {
@@ -157,13 +214,21 @@ export fn Compilerˉsourceˉgenericˉsolutionˉcontribute(
     let Declaredˉkind: u32 = Bytesˉreadˉu32ˉlittle(
         Solution.Evidence, Entry
     );
-    if Declaredˉkind != 1u32 {
+    let Declaredˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, Entry + 4u32
+    );
+    if Declaredˉkind != Kind {
         return Compilerˉsourceˉgenericˉsolutionˉvalue(
             Compilerˉsourceˉgenericˉstatus.Kindˉmismatch,
             Solution.Evidence
         );
     }
-    if Argument == Sentinel || Offset == Sentinel || Valueˉlow == 0u32 {
+    let Valueˉvalid: bool =
+        (Kind == 1u32 && Valueˉlow != 0u32 && Valueˉhigh == 0u32) ||
+        (Kind == 2u32 && Compilerˉsourceˉgenericˉconstantˉfits(
+            Declaredˉshape, Valueˉlow, Valueˉhigh
+        ));
+    if Argument == Sentinel || Offset == Sentinel || !Valueˉvalid {
         return Compilerˉsourceˉgenericˉsolutionˉvalue(
             Compilerˉsourceˉgenericˉstatus.Invalidˉvalue,
             Solution.Evidence
@@ -174,7 +239,9 @@ export fn Compilerˉsourceˉgenericˉsolutionˉcontribute(
     );
     if Priorˉargument != Sentinel {
         if Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 8u32) ==
-                Valueˉlow {
+                Valueˉlow &&
+            Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 12u32) ==
+                Valueˉhigh {
             return Solution;
         }
         return Compilerˉsourceˉgenericˉsolutionˉvalue(
@@ -191,7 +258,7 @@ export fn Compilerˉsourceˉgenericˉsolutionˉcontribute(
         Replacement, Valueˉlow
     );
     Replacement = Compilerˉsourceˉgenericˉappendˉu32(
-        Replacement, 0u32
+        Replacement, Valueˉhigh
     );
     Replacement = Compilerˉsourceˉgenericˉappendˉu32(
         Replacement, Argument
@@ -350,6 +417,31 @@ export fn Compilerˉsourceˉgenericˉcatalogˉargumentˉlow(
     ) { return 0u32; }
     return Bytesˉreadˉu32ˉlittle(
         Catalog.Evidence, Cursor + 32u32 + Parameter * 16u32
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉcatalogˉargument(
+    Catalog: Compilerˉsourceˉgenericˉcatalog,
+    Instance: u32,
+    Parameter: u32
+) -> Compilerˉsourceˉgenericˉargument {
+    let Cursor: u32 =
+        Compilerˉsourceˉgenericˉcatalogˉfindˉcursor(Catalog, Instance);
+    if Cursor == Compilerˉsourceˉgenericˉsentinel() ||
+        Parameter >= Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 20u32
+        ) {
+        return Compilerˉsourceˉgenericˉargument(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Entry: u32 = Cursor + 24u32 + Parameter * 16u32;
+    return Compilerˉsourceˉgenericˉargument(
+        true,
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry),
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry + 4u32),
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry + 8u32),
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry + 12u32)
     );
 }
 

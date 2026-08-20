@@ -477,6 +477,47 @@ specializations, and collections remain open Slice 4 work. Heavy storage, OS,
 paired-host, and complete Qualification gates remain deferred to the final
 seven-slice integration gate.
 
+## Slice 4 bounded generic collection checkpoint
+
+Decision 0787 extends the connected function subset to one structural bounded
+collection signature. A formal `sequence<Type, Maximum>` or
+`builder<Type, Maximum>` is matched as three facts: collection family, concrete
+element shape, and exact maximum. The type and `const Maximum: u32` parameters
+contribute independently to the canonical WVGS solution. Repeated inferred
+evidence must agree; explicit `8u32` retains its exact width and unsuffixed `8`
+does not convert implicitly.
+
+The focused publisher rejects conflicting inferred capacities, an explicit
+constant of the wrong width, and a builder supplied for a sequence formal. Its
+successful source calls the same specialization by inference and explicitly,
+publishes 104-byte WVCA, 184-byte WVLB, and 976-byte WVIR products, and returns
+`42`. A same-length monomorphic oracle produces byte-identical artifacts with
+SHA-256 identities
+`debdc883ad8ebbde577589bc9248f58f79b70f5e7851409545b21be5282a73cb`,
+`6df7f06016882fca5b38d909ca56136587a94975de60431daca96d13e9e35f4c`,
+and
+`c9a9299f223cae34887fd6788180f81b0b9a8d1499e99d5f81c2d053694361ab`.
+
+The 1,065,397-byte publisher WVB has SHA-256
+`ca1b50539ab3c53966fde062e8816b829d25b0dc0bd14bcb3374a813443ecc7a`.
+Sharing immutable WIR state and generic-resolution paths reduces its selected
+native image to 33,487,778 bytes, leaving 66,654 bytes below the unchanged
+33,554,432-byte ceiling. The ordinary segmented hosted package completes and
+returns `42`.
+
+The retained driver emits the monomorphic oracle as a 466-byte WVB / SHA-256
+`2d59187da5f16a3b275a6bbe96502ce1309f0ba8348e8a22da02097808c8b0c6`.
+The pinned native verifier does not admit collection bytecode: it rejects both
+that product and the pre-existing 809-byte monomorphic collection fixture at
+the same semantic boundary. The fully current general emission driver builds
+as a 1,268,289-byte WVB, but selects 37,097,130 native bytes and therefore was
+not packaged by widening the fixed limit. Direct current-driver WVB parity and
+collection-capable native execution remain downstream work; a target-aware
+validated-analysis emission split is the next capacity checkpoint.
+
+Heavy storage, OS, paired-host, and complete Qualification gates remain
+deferred to the final seven-slice integration gate.
+
 ## Slice 2 named variant fields
 
 The edition-1 declaration parser admits zero through 64 uniquely named fields

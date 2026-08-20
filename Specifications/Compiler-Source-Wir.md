@@ -104,6 +104,15 @@ auxiliary fields. Calling a local of that shape resolves the root capability
 directory entry and emits the existing `Callˉcapability = 63` operation. The
 validator accepts the custom shape only when it names an actual required root
 capability and rejects capability shapes in records, variants, and collections.
+
+The bounded generic-collection checkpoint structurally matches one formal
+`sequence<Type, Maximum>` or `builder<Type, Maximum>` against the concrete
+argument descriptor. Family, element shape, and maximum are separate evidence:
+the families must match, repeated type or maximum contributions must be equal,
+and an explicit constant argument must have the declaration's exact fixed-
+integer width. The selected specialization substitutes one concrete collection
+descriptor before ordinary body lowering. WVIR therefore contains only the
+same collection shape and operations as a hand-written monomorphic function.
 No WVIR operation value or directory version changes.
 
 An edition-1 accepted `try` evaluates its expression once and requires the exact

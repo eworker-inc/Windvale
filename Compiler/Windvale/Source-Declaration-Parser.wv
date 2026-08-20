@@ -456,7 +456,11 @@ fn Compilerˉparseˉtypeˉnested(
         let Maximum: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Input, Comma.Nextˉoffset, Comma.Nextˉline, Comma.Nextˉcolumn
         );
-        if Maximum.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Integer || Maximum.Numericˉkind != Sourceˉlexer.Compilerˉnumericˉkind.I32 || Maximum.Numericˉvalue == 0u32 || Maximum.Numericˉvalue > 4095u32 {
+        if Maximum.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier &&
+            (Maximum.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Integer ||
+                Maximum.Numericˉkind != Sourceˉlexer.Compilerˉnumericˉkind.I32 ||
+                Maximum.Numericˉvalue == 0u32 ||
+                Maximum.Numericˉvalue > 4095u32) {
             return Compilerˉparseˉstepˉfromˉtoken(
                 Compilerˉparseˉstatus.Invalidˉliteral,
                 Maximum,
