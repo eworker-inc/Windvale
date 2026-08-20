@@ -41,47 +41,46 @@ Compiler, runtime, native-backend, library, and diagnostic work enters this
 milestone only when one of these named consumers needs it. The release must not
 grow merely because an unrelated experiment exists on `main`.
 
-## Track A: EWorker database rewrite
+## Track A: WVDB specification and native service
 
-### Ownership and reference boundary
+### Product and specification boundary
 
-The database is the database portion of EWorker Data Service rewritten in
-Windvale. The existing C# project remains outside this repository and may be
-used only through an explicit provenance and reference process:
+WVDB is a Windvale-owned database specified by Windvale contracts and
+implemented in Windvale Language 1.0. [Decision 0790](../Decisions/0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md)
+supersedes the earlier external rewrite and parity direction. The active
+[WVDB 1.0 specification plan](WVDB-1.0-Specification-Plan.md) owns the design
+sequence from user-visible models through storage, durability, service, and
+operations.
 
-1. pin one exact repository, commit/tag, license state, and dependency inventory;
-2. inventory its supported behavior, public API/protocol, formats, operational
-   tools, tests, known limitations, and measured workloads;
-3. classify each item as required parity, intentional Windvale replacement,
-   migration-only compatibility, deferred work, or excluded legacy behavior;
-4. derive independent fixtures and differential reports with recorded source
-   identities; and
-5. never make the managed project, SDK, runtime, or network service a normal
-   Windvale build or execution dependency.
+Current formats and implementation are candidate mechanisms. They must be
+reconciled with accepted WVDB specifications rather than becoming public 1.0
+semantics by accident. Comparisons with established systems are research only;
+they create no API, SQL, file, wire, runtime, or behavioral compatibility
+promise.
 
-File-format and wire-protocol compatibility are explicit decisions. If existing
-users require continuity, provide a separately verified importer, migration
-tool, or compatibility adapter. Do not inherit old bytes or protocol behavior
-accidentally.
+The connected-services milestone may implement and exercise accepted WVDB
+vertical slices, but it must not label a package or protocol `WVDB 1.0` until
+the relevant normative specifications and conformance gate are complete.
 
-### Required parity ledger
+### Required WVDB capability ledger
 
-The pinned inventory, rather than this planning document, owns the final row
-count. At minimum it must classify:
+The accepted specification set and release profile, rather than an external
+product inventory, own the final row count. At minimum the ledger must classify:
 
 | Capability family | Current Windvale standing | `0.2.0` requirement |
 | --- | --- | --- |
 | Create, identity-gated open, close, reopen | Focused candidate | Complete hosted service behavior |
 | Durable publication and crash recovery | Substantial bounded implementation | Complete for every admitted mutation path |
-| Collections, schemas, and logical records | Early portable contracts | Required parity set |
-| Record read, insert, replace, and delete | Read/write foundations; delete breadth unresolved | Required where selected baseline supports it |
+| Entities, entity sets/tables, schemas, and logical records | Portable catalog, strict schema, and typed-row contracts; atomic table lifecycle and migration missing | Exact selected WVDB profile |
+| Record read, insert, replace, and delete | Read/write foundations; delete breadth unresolved | Required for the selected WVDB profile |
 | Transactions and rollback | Single-writer publication foundations | Exact selected transaction profile |
-| Indexes and queries | Inventory required | Classify from baseline; no silent omission |
+| Relationships and integrity | No accepted reference/foreign-key or first-class relationship contract | Specify exact selected relationship forms |
+| Indexes and queries | Portable ordered-index planning, typed query IR, and SQL lowering; hosted enforcement, planning, and execution missing | Specify the selected access paths; no silent omission |
 | Client sessions and server protocol | Portable sequential session only | Versioned bounded service contract |
 | Concurrent clients and writer policy | Not ready as a general contract | Exact finite release profile |
 | Authentication and authorization | Capability foundations | Explicit client/service authority |
 | Configuration, health, status, diagnostics, logs | Not productized | Required operational surface |
-| Backup, restore, inspection, repair | Inventory required | Required parity or explicit deferral |
+| Backup, restore, inspection, repair | Inventory required | Full backup/restore is required before a WVDB 1.0 production claim; any earlier preview must state its exact incomplete standing |
 | Format migration and minimum compatible version | Not complete | Required before upgrade claim |
 
 ### Database completion gate
@@ -91,20 +90,20 @@ The database release gate requires:
 - one long-running native service package on Windows and Debian;
 - exact create/open/reopen identity and page-size policy;
 - versioned bounded requests, responses, sessions, limits, and failure results;
-- the selected collection/record/query/transaction parity set;
+- the selected entity/table/relationship/query/transaction profile;
 - one exact writer policy and the selected finite client-concurrency profile;
 - recovery after interruption at every durable transition;
 - rejection of corrupt, incompatible, stale, oversized, unauthorized, and
   resource-exhausting inputs without guessing or replaying uncertain mutation;
 - configuration, health, status, structured diagnostics, and host logs;
-- the selected backup/restore/repair/migration obligations from the parity
+- the selected backup/restore/repair/migration obligations from the WVDB
   ledger; and
 - paired-host behavior plus exact format/protocol compatibility evidence for
   every compatibility claim actually made.
 
-The existing Windvale database proposal and specifications remain the sources
-for implemented engine contracts. This milestone selects their service-product
-consumer; it does not rewrite those specifications inside the roadmap.
+Existing database specifications remain implemented-candidate inputs until the
+WVDB 1.0 program reconciles, supersedes, or incorporates them. The historical
+database proposal remains provenance, not active product direction.
 
 ## Track B: portable host-service lifecycle
 
@@ -354,7 +353,8 @@ number and one new exact source state.
 Milestone 5 and `v0.2.0` complete only when one exact source and artifact set
 proves all of the following:
 
-1. the EWorker database parity baseline and classification ledger are pinned;
+1. the accepted WVDB specification baseline and release capability ledger are
+   pinned;
 2. the required native database service profile passes on Windows and Debian;
 3. `wv service` installs, starts, stops, restarts, reports, upgrades, rolls back,
    unregisters, and data-preservingly removes real database and model services;
@@ -394,8 +394,8 @@ ambiguous the selected gate.
 ## Verification discipline
 
 Each implementation slice owns deterministic fixtures and one focused native
-verification owner. Database parity differentials may run in the separate
-reference environment; normal Windvale verification does not restore .NET.
+verification owner. Comparative database research does not become a build,
+runtime, or conformance dependency for normal Windvale verification.
 Repository and model tests use isolated peers and fake credentials. Service
 tests use disposable exact registrations and verify cleanup/data preservation.
 

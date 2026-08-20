@@ -1,40 +1,45 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Active implementation proposal; the bounded reader, hosted page seams,
+- Status: Historical implementation proposal; the bounded reader, hosted page seams,
   checked storage geometry, mutable storage-resource contract, `WVDS 1`
   superblock, `WVPG 1` page envelope, `WVCR 1` commit record, `WVTN 1` tree
   node, single-writer publication, repeated depth-two updates, deterministic
   internal branch split, and bounded owned-path updates for input depths two
-  through eight with full split propagation, collection-scoped schemas, and
-  typed rows are implemented candidates, but no general transaction engine,
-  server contract, SQL grammar, or product name is accepted by this document
+  through eight with full split propagation, collection-scoped schemas, typed
+  rows, bounded multi-record transactions, and portable secondary-index
+  planning are implemented candidates, but no long-running server, query
+  executor, hosted index-enforcement boundary, or product name was accepted by
+  this document. Its external rewrite and parity framing is superseded by
+  [Decision 0790](../Decisions/0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md);
+  retain this file as implementation and provenance history, not active WVDB
+  1.0 product direction
 - Working name: Windvale Database
-- Informed by: EWDB source, performance evidence, and operational experience
-- Milestone 5 product boundary: [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
-  selects a full Windvale-native rewrite of the database portion of EWorker Data
-  Service as a separately installable service; the exact reference revision,
-  parity inventory, migration contract, and remaining implementation must still
-  be completed before a server claim is made
+- Historical review inputs: EWDB source, performance evidence, and operational
+  experience
+- Active direction: [WVDB 1.0 specification plan](WVDB-1.0-Specification-Plan.md)
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
 
 ## Purpose
 
-This document explores adding a database to Windvale without claiming that the
-current language, runtime, libraries, or operating system can already support a
-complete durable database server. The native backend now executes the durable
+This historical document records the early database exploration without
+claiming that the current language, runtime, libraries, or operating system can
+already support a complete durable database server. The native backend now executes the durable
 superblock, physical-page, compact-log, publication-planning core, one
 rights-limited storage writer/recovery shell, repeated depth-two updates, and a
-bounded owned-path transaction for input depths two through eight. A full
-depth-four cascade now creates a depth-five root. Provider-driven path discovery,
-input depth nine, reclamation, concurrency, and service boundaries remain absent.
-This proposal identifies what should be learned
-from EWDB, where a Windvale database would belong, which prerequisites are
-missing, and the smallest useful implementation sequence.
+bounded persistent multi-record transaction for input depths two through eight.
+A full depth-four cascade now creates a depth-five root. Provider-driven path
+discovery is implemented, and portable secondary-index planning can compose
+primary and index changes. Hosted bundle discovery and unique checks, input
+depth nine, reclamation, concurrent readers, a writer queue, query execution,
+and service boundaries remain absent. This proposal records the candidate
+mechanisms, missing prerequisites, and smallest useful implementation sequence
+identified during that exploration. Decision 0790 and the WVDB 1.0
+specification plan own the current product direction.
 
 The intended result is one reusable database engine with distinct application
-and service shells. It is not a line-by-line translation project and does not
-make a database part of Windvale source-language semantics. Mutable application
+and service shells. WVDB is independently specified and implemented in
+Windvale Language 1.0; it is not a translation project. Mutable application
 storage remains a capability-backed resource with an independent lifecycle,
 authority boundary, failure contract, and format version.
 
@@ -48,39 +53,32 @@ The initial review used these local source states:
   for the retained benchmark and architecture evidence; and
 - the EWDB performance architecture recorded on 2026-07-29.
 
-These hashes record the material reviewed; they do not import it into Windvale
-or select it as a permanent upstream. A later implementation proposal must name
-the exact source, test, fixture, and benchmark revisions it consumes.
+These hashes record historical material reviewed; they do not import it into
+Windvale, select it as an upstream, or make it a WVDB compatibility authority.
 
-The current `WVDB 1` reader is newly authored from the candidate contract and
-does not copy EWDB source, fixtures, persisted bytes, or schemas. EWDB remains
-behavioral and architectural evidence for this slice. Any later derivation or
-copying from EWDB still requires the explicit licensing and provenance decision
-described below.
+The current `WVDB 1` reader was newly authored from the candidate contract and
+does not copy the reviewed source, fixtures, persisted bytes, or schemas. Any
+future use of third-party or separately licensed material still requires an
+explicit licensing and provenance decision.
 
-The reviewed EWDB engine is not only `EWDB.Core`. Its reusable implementation
-also depends on Structured Store, Storage, and Graph foundations. In the
-reviewed extraction those areas total approximately 48,000 lines of C# before
-the server, protocol, client, tools, and product adapters. This size and
-coupling make bulk transliteration especially risky.
+The reviewed historical engine depended on several storage and graph
+foundations in addition to its nominal core. That coupling reinforced the need
+to specify WVDB behavior independently instead of transferring source
+structure or framework boundaries.
 
 ## Product position
 
-The working name is **Windvale Database**. `Windvaleˉdatabase` is the candidate
-module namespace and `wvdb` is a possible tool name. Public naming, command
-names, durable format magic, and file extensions remain review questions. The
-reader experiment uses `WVDB` only as a replaceable candidate magic; it does
-not reserve a production identity.
+Decision 0790 accepts **WVDB 1.0** as the product and specification identity.
+`Windvaleˉdatabase` remains a candidate module namespace and `wvdb` a
+candidate tool name. Command names, durable format magic, and file extensions
+remain specification questions. Existing experimental `WVDB` magic does not
+become the production format identity automatically.
 
-The database should serve typed Windvale applications and services. Its first
-goal is not PostgreSQL SQL compatibility or PostgreSQL's complete join,
-extension, replication, administration, and deployment surface. It should
-begin with the smallest typed storage and transaction contracts required by a
-real Windvale consumer, then grow only through measured needs.
-
-Calling it EWDB 2 would incorrectly suggest API, protocol, query, or on-disk
-compatibility. EWDB should remain the qualified operational engine while
-Windvale Database develops through isolated fixtures and differential evidence.
+The database should serve typed Windvale applications and services. It has no
+required SQL, API, protocol, file, runtime, or behavioral compatibility with
+another database. It should implement accepted WVDB specifications in useful
+vertical slices, then grow through stated product requirements and measured
+workloads.
 
 ## One engine, several roles
 
@@ -123,10 +121,10 @@ uses a fixture under the existing `Tests/` tree. The other candidate areas are
 still absent until they receive real code or a normative contract; empty
 scaffolding would imply implementation that does not exist.
 
-## EWDB knowledge to preserve
+## Historical implementation lessons
 
-The port should preserve proven mechanisms and their evidence rather than C#
-class shapes. The reviewed implemented EWDB performance work includes:
+The historical review identified mechanisms worth evaluating through WVDB
+requirements, measurements, and conformance evidence:
 
 - synchronous writer allocation attribution and removal;
 - adaptive isolated-versus-burst group commit;
@@ -157,31 +155,33 @@ language:
 - performance claims retain the exact workload, host, storage, release, and
   durability conditions that produced them.
 
-The reviewed same-workload QA evidence also prevents an oversimplified
-language comparison. EWDB was materially slower than PostgreSQL for warm
-indexed reads and sequential durable transactions, faster for mixed reads
-during 32 durable writers, and slower for the corresponding writer burst. This
-supports workload-specific engineering rather than a claim that C, .NET, or a
-future Windvale implementation is universally faster.
+The reviewed same-workload evidence also showed that relative performance
+changed with the operation, durability mode, and concurrency profile. WVDB
+should preserve reproducible workload evidence rather than make broad language
+or product performance claims.
 
-## What should not be translated initially
+## Boundaries of the first engine slice
 
 The first engine slice should exclude:
 
-- ASP.NET Core hosting, HTTP routing, and JSON transport composition;
-- E-Worker account, workspace, schema-bundle, and authorization policy;
-- product-specific backup placement and operations;
-- graph declarations and traversal until the ordered-index core exists;
+- service hosting, routing, and transport composition not required by the
+  storage contract;
+- application-specific account, workspace, schema-bundle, and authorization
+  policy;
+- deployment-specific backup placement and operator workflow, while retaining
+  exact engine-level backup, restore, and durability requirements for later
+  specification;
+- graph declarations and traversal from the ordered-index implementation slice,
+  while retaining the graph/relationship profile in WVDB 1.0 design;
 - compatibility with obsolete development formats;
-- an unbounded SQL surface or PostgreSQL wire compatibility in the storage-kernel slice; and
-- a second implementation of behavior still owned only by the qualified EWDB
-  runtime.
+- an unbounded query-language surface or external wire-protocol compatibility
+  in the storage-kernel slice; and
+- behavior that has no accepted WVDB requirement, specification, and
+  conformance owner.
 
-.NET constructs such as exceptions, `Dictionary`, concurrent dictionaries,
-channels, tasks, cancellation tokens, weak tables, locks, LINQ, `FileStream`,
-and ASP.NET types identify required behavior but are not portable design
-contracts. Windvale equivalents must follow Windvale ownership, result,
-capability, concurrency, and resource-accounting rules.
+Host-language and framework constructs are not WVDB design contracts. Windvale
+Language 1.0 implementation must follow Windvale ownership, result, capability,
+concurrency, and resource-accounting rules.
 
 ## Windvale readiness
 
@@ -223,9 +223,9 @@ key/value engine, transactional database process, and server are not ready.
 | Transaction commit publication | Focused segmented Windows native implementation; cross-host qualification pending | The [transaction commit coordinator](../../Specifications/Windvale-Database-Transaction-Commit.md) validates up to 792 consecutive tree pages and unique obsolete ownership, appends one compact commit-log page, constructs the inactive superblock, and returns the exact four-action durable publication state. Logical no-ops publish nothing. The persistent hosted writer now executes this state. |
 | Persistent hosted transaction writer | Focused segmented Windows native implementation; cross-host qualification pending | The [persistent writer](../../Specifications/Windvale-Database-Persistent-Transaction-Writer.md) gathers one provider-backed path per canonical mutation, commits changes across multiple leaves atomically, requires reopen after commit or uncertainty, and records request, recovery, I/O, append, logical memory-bound, and explicit monotonic-tick counters. It is one serialized owner, not yet a concurrent queue or network server. |
 | Bulk transaction leaf partition | Focused portable Windows native implementation; cross-host qualification pending | [`WVLP 1`](../../Specifications/Windvale-Database-Transaction-Leaf-Partition.md) merges one leaf with all of its sorted mutations as a final state and emits one through 33 ordered leaves. It handles later deletes after temporary overflow and rejects an individually oversized entry without partial output. Group integration and durable leaf-page allocation are implemented; shared ancestor replacement and publication remain next. |
-| Persistent comparison benchmark | Planned after persistent server and batch commit | Compare Windvale with EWDB, PostgreSQL, and SQLite using matched durable single-record, batched-write, point-read, range-read, and mixed workloads. Use the quieter `192.168.0.21` host and an existing directory on its newest low-traffic mounted disk as the primary runner after read-only discovery; retain the busy development VM as a separately reported secondary environment. Report throughput, latency percentiles, process/server memory, storage growth, durability settings, warmup, exact versions, host load, and raw results; keep the existing cold-process restart comparison as a separate startup/recovery test. |
+| Persistent comparison benchmark | Planned after persistent server and batch commit | Run matched durable single-record, batched-write, point-read, range-read, and mixed WVDB workloads against selected representative systems only when the comparison answers a named design or performance question. Record exact versions, host/storage profiles, load, durability settings, warmup, throughput, latency percentiles, memory, storage growth, observed I/O, and raw results. Keep cold-process restart as a separate startup/recovery workload. |
 | Bounded typed query IR | Focused portable Windows native implementation; cross-host qualification pending | [`WVQI 1`](../../Specifications/Windvale-Database-Query-Ir.md) binds one collection and schema to unique projections, up to 32 typed `AND` predicates and parameters, up to 8 sort fields, and a required 500-row ceiling. It rejects schema, type, null, ordering, unused-parameter, duplicate-field, framing, and size errors before execution. JSON lowering, plans, indexes, cursors, and execution remain unimplemented. |
-| Parameterized SQL lowering | Focused portable Windows native implementation; cross-host qualification pending | The [first SQL subset](../../Specifications/Windvale-Database-Sql.md) accepts one bounded `SELECT` over an exactly bound collection and schema, parameter-only comparisons, null predicates, ordering, and a mandatory row limit, then lowers into `WVQI 1`. It intentionally excludes literals, joins, expressions, mutations, comments, and PostgreSQL/SQLite compatibility. |
+| Parameterized SQL lowering | Focused portable Windows native implementation; cross-host qualification pending | The [first SQL subset](../../Specifications/Windvale-Database-Sql.md) accepts one bounded `SELECT` over an exactly bound collection and schema, parameter-only comparisons, null predicates, ordering, and a mandatory row limit, then lowers into `WVQI 1`. It intentionally excludes literals, joins, expressions, mutations, and comments. It is a candidate WVDB language surface, not an external SQL compatibility contract. |
 | Deterministic durable bootstrap and create-or-open | Focused native Windows implementation; cross-host qualification pending | The [database bootstrap](../../Specifications/Windvale-Database-Bootstrap.md) constructs the canonical generation-1 empty `WVDS 1`/`WVPG 1` image and resumes only two byte-exact interruption states. The [engine lifecycle](../../Specifications/Windvale-Database-Engine-Lifecycle.md) composes bootstrap with open, validates expected identity/page size before tail recovery, and returns an engine-ready snapshot. Storage-object creation and server policy remain separate. |
 | Capability-bearing mutation and crash recovery | Focused native Windows repeated restart recovery implemented; cross-host qualification pending | [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md) binds the exact storage target/state, and the [provider-call contract](../../Specifications/Windvale-Native-Provider-Call.md) preserves all ABI-23 budgets while returning strict `WVSA 1`. Native processes repair unpublished tails and interrupt either the initial root split or repeated depth-two update after zero through four completed actions; every restart selects and validates only the 4,608-byte bootstrap, 20,992-byte first depth-two, or 33,280-byte repeated-update generation before a stable reopen. General fragment/WVB admission, independent Linux execution, configurable server binding, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Partial: serialized persistent writer implemented | One hosted owner can now retain session state and publish bounded atomic transactions. Structured tasks, a writer queue, channels, cancellation, synchronization, group commit, and cross-task ownership remain future contracts. |
@@ -416,21 +416,20 @@ directory-durability contracts.
 
 ## Proposed implementation sequence
 
-### Stage 0: provenance and performance ledger
+### Stage 0: specification, provenance, and performance ledger
 
-Before source translation:
+Before implementation:
 
-- resolve whether selected EWDB material is copied under its existing license,
-  expressly relicensed by its copyright owner, or used only as a behavioral
-  reference;
-- record exact source and evidence hashes;
-- inventory every retained optimization, invariant, benchmark, crash boundary,
+- identify the accepted WVDB requirement and specification for the slice;
+- record exact source and evidence hashes for every reused or comparative
+  artifact;
+- inventory every selected optimization, invariant, benchmark, crash boundary,
   and malformed-input case; and
-- classify product-specific behavior that is intentionally excluded.
+- classify application-specific or compatibility behavior that is intentionally
+  excluded.
 
-The E-Worker Data Platform and Windvale repositories currently use different
-source-available licenses. Common organizational ownership does not remove the
-need for an explicit provenance and licensing record.
+Any separately licensed material requires an explicit provenance and licensing
+record. Comparative evidence alone does not authorize source transfer.
 
 ### Stage 1: smallest executable read path — implemented experiment
 
@@ -503,7 +502,7 @@ requests, or manage concurrent readers.
 This milestone needs no general query language, network protocol, or graph
 layer.
 
-### Stage 4: retained EWDB performance mechanisms
+### Stage 4: measured performance mechanisms
 
 Add, one independently measured boundary at a time:
 
@@ -633,10 +632,11 @@ path or index cannot transfer ownership between them.
 
 ## Differential and performance evidence
 
-EWDB should remain an oracle, not a hidden runtime dependency. Candidate
-Windvale Database tests should replay the same isolated logical workloads into
-separate stores and compare declared results, failure outcomes, generations,
-and recovery state. Production dual-write is not implied.
+WVDB conformance is defined by its specifications and simple Windvale-owned
+oracles. A selected external system may participate in an isolated comparative
+workload when the comparison answers a named question, but it is never the
+semantic oracle or a hidden runtime dependency. Production dual-write is not
+implied.
 
 The evidence suite should include:
 
@@ -652,79 +652,44 @@ The evidence suite should include:
 - workload-specific latency, throughput, allocation, memory, I/O, and durable-
   flush observations on named storage and host profiles.
 
-The first goal is not to beat PostgreSQL. The first goals are exact semantics,
-crash safety, bounded resource use, reproducibility, and a coherent native path.
-Performance targets should be approved only after the first complete path can be
-measured against EWDB and relevant external comparators.
+The first goals are exact semantics, crash safety, bounded resource use,
+reproducibility, and a coherent native path. Numeric performance targets should
+be approved only after a complete WVDB path can run representative workloads.
 
-After the persistent Windvale server path is complete, its first external
-comparison will run the same bounded workloads against installed PostgreSQL and
-SQLite: sequential and batched durable writes, warm and cold point reads, range
-scans, atomic multi-record transactions, and primary plus secondary indexed
-lookups. Each result must name durability and synchronous-commit settings,
-connection and process shape, warm-up, data size, key/value distribution,
-concurrency, host, storage, and software versions. Reports retain throughput,
-median and tail latency, peak memory, database bytes, and observed I/O. Default
-safe settings are reported separately from any tuned profile; no engine may use
-weaker durability while presenting the result as an equal comparison.
-
-The primary comparison runner is the quieter `192.168.0.21` host, using an
-existing benchmark directory on its newest low-traffic mounted disk after
-read-only device, mount, filesystem, and free-space discovery. The busy local
-development VM is a separate secondary profile. Results from the two hosts are
-never pooled, and benchmark setup does not authorize formatting, repartitioning,
-mount changes, or destructive storage administration.
+External comparisons are optional and question-driven. A comparison may select
+one or more representative relational, embedded, document, graph, or analytical
+systems appropriate to the workload; the selected products do not become a
+fixed parity set. Each result must name durability settings, connection and
+process shape, warm-up, data size, key/value distribution, concurrency, host,
+storage, and software versions. Reports retain throughput, median and tail
+latency, peak memory, database bytes, and observed I/O. Default safe settings
+are reported separately from tuned profiles, and results from different host or
+storage profiles are never pooled.
 
 ## Non-goals of this proposal
 
-This proposal does not:
+Under the active WVDB direction, this historical proposal does not:
 
-- accept the working product name or a repository layout;
-- select a complete on-disk format, SQL grammar, isolation level, or wire protocol;
-- promise EWDB data, API, query, or operational compatibility;
-- retire EWDB or move an existing authority;
-- claim PostgreSQL parity;
-- claim general SQL or PostgreSQL compatibility, replication, clustering,
-  failover, or distributed consensus;
-- make .NET, C, POSIX, Windows, or Linux behavior the database definition; or
-- authorize dead `.wv` source that cannot compile, verify, and execute in a
-  bounded milestone.
+- define the complete WVDB 1.0 specification or repository layout;
+- select a complete on-disk format, query grammar, isolation level, or wire
+  protocol;
+- establish data, API, query, protocol, file, or operational parity with an
+  external database;
+- claim replication, clustering, failover, or distributed consensus;
+- make a host language, framework, operating system, or filesystem behavior
+  the database definition; or
+- authorize `.wv` source that cannot compile, verify, and execute within its
+  stated resource bounds.
 
-## Questions before an implementation decision
+## Current disposition
 
-- Is **Windvale Database** an acceptable working identity, and which public
-  name, module namespace, CLI name, and format identity should be reserved?
-- Is the first consumer a compiler/tool catalog, package index, OS service
-  registry, application data store, or an isolated database demonstration?
-- Which EWDB source may be copied or derived, under which license and
-  attribution, and which parts remain behavioral reference only?
-- Should the first candidate format be deliberately new, or is one named EWDB
-  read-only import case valuable enough to specify separately?
-- Which storage capability is the smallest exact contract that Windows, Linux,
-  and Windvale OS can all implement without reducing durability to a host
-  default?
-- Which transaction isolation and single-writer guarantees are required by the
-  first real consumer?
-- Which bounded SQL subset best serves administrators and interactive users
-  without becoming the typed client protocol?
-- Which first benchmark workload and storage profile justify an initial numeric
-  performance budget?
-- Which implemented slice is useful enough to package before network service
-  support exists?
+Decision 0790 accepts WVDB as a Windvale-owned system implemented in Windvale
+Language 1.0. Decision 0791 accepts one explicit primary identity per entity
+set. The [WVDB 1.0 specification plan](WVDB-1.0-Specification-Plan.md) owns the
+current design sequence, and the
+[upper-layer decision register](WVDB-1.0-Upper-Layer-Decision-Register.md)
+presents the unresolved choices with alternatives and tradeoffs.
 
-## Recommended next decision
-
-Decisions 0534 through 0569 now supply the dual superblock, immutable page and
-tree-node envelopes, compact commit record, portable publication/recovery
-actions, exact ABI-23 storage call, one real provider pair, root-leaf lookup and
-upsert, repeated depth-two replacement, deterministic internal splitting, first
-depth-three root growth, updates within existing depth-three and depth-four
-generations, one owned packed path for input depths two through eight, full split
-propagation through every supplied ancestor, and interruption at the publication
-uncertainty boundaries. The next database decision should begin reclamation
-evidence if append-only growth is the measured urgent limit, or define
-provider-driven path discovery only when a real server or agent consumer needs
-one-operation mutation. Independent Linux execution and ordinary configurable
-ABI-23 binding remain parallel qualification work. Catalog, network listener,
-and SQL execution should continue to consume rather than bypass the storage
-kernel.
+The implementation inventory in this proposal remains evidence about current
+candidate mechanisms and missing lower-layer work. It is not the product
+definition, compatibility baseline, or active implementation roadmap.

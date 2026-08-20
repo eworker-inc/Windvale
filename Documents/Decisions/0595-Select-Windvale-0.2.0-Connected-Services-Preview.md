@@ -1,7 +1,8 @@
 # Decision 0595: Select Windvale 0.2.0 connected-services preview
 
 - Date: 2026-08-15
-- Status: Accepted; release gate open
+- Status: Accepted; release gate open; database rewrite and external parity
+  direction superseded by [Decision 0790](0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md)
 - Selects: Product Milestone 5 and the future `v0.2.0` product release
 - Plan: [Windvale 0.2.0 connected-services release plan](../Project/Windvale-0.2.0-Connected-Services-Release-Plan.md)
 - Builds on: [Decision 0590](0590-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
