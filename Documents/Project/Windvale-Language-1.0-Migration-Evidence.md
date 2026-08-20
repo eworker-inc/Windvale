@@ -7,14 +7,15 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 3 are complete and Slice 4 is next. The existing compiler admits
-an edition-1 source descriptor only through an explicitly supplied, hash-pinned
-source-input lock and composite source profile. It resolves the frozen `en@1`
-component chain, exposes the remaining bytes as an immutable view, parses the
-required standalone module metadata, and compiles one minimal Core program
-deterministically through WIR and WVB. Slice 2 adds exact front-end identities
-for the frozen primitive value types and prevents Seed-only `void` type syntax
-from crossing the edition-1 front door. Named record update, fixed-width
+Migration Slices 1 through 3 are complete and Slice 4 is active. The existing
+compiler admits an edition-1 source descriptor only through an explicitly
+supplied, hash-pinned source-input lock and composite source profile. It
+resolves the frozen `en@1` component chain, exposes the remaining bytes as an
+immutable view, parses the required standalone module metadata, and compiles
+one minimal Core program deterministically through WIR and WVB. Slice 2 adds
+exact front-end identities for the frozen primitive value types and prevents
+Seed-only `void` type syntax from crossing the edition-1 front door. Named
+record update, fixed-width
 `i8`/`i16`/`u16`, exact Unicode-scalar `rune`, `f32`/`f64`, ordinary one-value
 `unit`, and return-only `never` now cross the compiler, verifier, and scalar
 runtime together. Named zero-through-64-field variant construction and
@@ -32,9 +33,14 @@ specialization as an ordinary canonical WVB variant. Value-producing `try`
 extracts `Valid.Value` and permits `Result<T, E>` to propagate into
 `Result<U, E>` by reconstructing only the failure case when `T` and `U` differ.
 One fixture migrates a manual `Valid`/`Value`/`Error` record through an explicit
-domain-error adapter. General generic functions, generic user declarations,
-collections, and the repository-wide Seed-to-edition-1 source migration remain
-Slice 4 or later work. Final paired-host and broad integration evidence remains
+domain-error adapter. Generic declaration and explicit-call syntax now has a
+bounded parser checkpoint. Canonical WVGS solution evidence and WVGC
+specialization catalogs establish deterministic inference conflicts, reuse,
+diagnostics, and growth limits before code generation. These artifacts are not
+yet connected to source symbols, WIR, or WVB emission, so general generic
+functions, records, and variants do not yet compile. Collections and the
+repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
+work. Final paired-host and broad integration evidence remains
 deferred to the seven-slice integration gate. Localized token execution,
 public-library vocabulary lookup, Unicode identifier admission, and paired-host
 Language 1.0 qualification also remain pending.

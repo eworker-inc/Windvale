@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Generic-Resolution-Self-Test.wv"
+source "Compiler/Windvale/Source-Generic-Resolution-Core.wv"
+source "Foundation/Byte-Construction.wv"
+emit wvb

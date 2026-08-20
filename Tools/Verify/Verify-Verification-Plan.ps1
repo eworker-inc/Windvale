@@ -97,6 +97,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
             'Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv',
             'Tests/Fixtures/Language-1.0/Minimum-Program.wv',
@@ -105,6 +106,7 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Call-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Declaration-Front-End-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Resolution-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
             'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv',
@@ -132,7 +134,17 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'Language 1.0 compiler integration routing'
+        Name = 'Language 1.0 generic resolution boundary routing'
+        Paths = @('Compiler/Windvale/Source-Generic-Resolution-Core.wv')
+        Suites = @(
+            'source-containment',
+            'language-1-front-door'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 declaration parser integration routing'
         Paths = @('Compiler/Windvale/Source-Declaration-Parser.wv')
         Suites = @(
             'source-containment',
@@ -3259,7 +3271,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4795 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4800 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

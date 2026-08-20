@@ -1,0 +1,384 @@
+module Languageˉoneˉgenericˉresolutionˉselfˉtest profile portable;
+
+import Compilerˉsourceˉgenericˉresolution as Generics;
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Parameterˉkinds() -> bytes {
+    return Appendˉu32(
+        Bytesˉfromˉu32ˉlittle(1u32),
+        2u32
+    );
+}
+
+fn Parameterˉshapes() -> bytes {
+    return Appendˉu32(Bytesˉfromˉu32ˉlittle(0u32), 3u32);
+}
+
+fn Completeˉsolution(
+    Constantˉvalue: u32,
+    Firstˉoffset: u32,
+    Secondˉoffset: u32
+) -> Generics.Compilerˉsourceˉgenericˉsolution {
+    var Solution: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(
+            Parameterˉkinds(), Parameterˉshapes()
+        );
+    Solution = Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Solution, 0u32,
+        Generics.Compilerˉsourceˉgenericˉparameterˉkind.Type,
+        3u32, 0u32, 0u32, Firstˉoffset
+    );
+    Solution = Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Solution, 1u32,
+        Generics.Compilerˉsourceˉgenericˉparameterˉkind.Constant,
+        Constantˉvalue, 0u32, 1u32, Secondˉoffset
+    );
+    return Generics.Compilerˉsourceˉgenericˉsolutionˉfinish(Solution);
+}
+
+fn Testˉlimits() -> i32 {
+    if Generics.Compilerˉsourceˉgenericˉmaximumˉparameters() != 32u32 {
+        return 101;
+    }
+    if Generics.Compilerˉsourceˉgenericˉmaximumˉinstances() != 256u32 {
+        return 102;
+    }
+    if Generics.Compilerˉsourceˉgenericˉmaximumˉdepth() != 32u32 {
+        return 103;
+    }
+    if Generics.Compilerˉsourceˉgenericˉmaximumˉevidenceˉbytes() !=
+            1048576u32 {
+        return 104;
+    }
+    if Generics.Compilerˉsourceˉgenericˉmaximumˉcodeˉbytes() !=
+            16777216u32 {
+        return 105;
+    }
+    return 0;
+}
+
+fn Testˉsolutionˉmalformed() -> i32 {
+    let Invalidˉshape: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(
+            Bytesˉfromˉu8(1u8), Bytesˉfromˉu8(0u8)
+        );
+    if Invalidˉshape.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉparameter ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉdiagnostic(
+            Invalidˉshape, 0u32
+        ) != 0u32 {
+        return 11;
+    }
+
+    var Kinds: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    var Shapes: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Parameter: u32 = 1u32;
+    while Parameter < 33u32 {
+        Kinds = Appendˉu32(Kinds, 1u32);
+        Shapes = Appendˉu32(Shapes, 0u32);
+        Parameter = Parameter + 1u32;
+    }
+    let Excess: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(Kinds, Shapes);
+    if Excess.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Parameterˉlimit ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉparameters(Excess) != 33u32 {
+        return 12;
+    }
+
+    let Complete: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 100u32, 120u32);
+    let Truncated: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolution(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Bytesˉslice(Complete.Evidence, 0u32, 19u32),
+            Complete.Diagnostics
+        );
+    if Generics.Compilerˉsourceˉgenericˉsolutionˉisˉvalid(Truncated) {
+        return 13;
+    }
+    let Truncatedˉdiagnostics: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolution(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Complete.Evidence,
+            Bytesˉslice(Complete.Diagnostics, 0u32, 27u32)
+        );
+    if Generics.Compilerˉsourceˉgenericˉsolutionˉisˉvalid(
+        Truncatedˉdiagnostics
+    ) {
+        return 16;
+    }
+    return 0;
+}
+
+fn Repeatedˉsolution() -> Generics.Compilerˉsourceˉgenericˉsolution {
+    var Repeated: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(
+            Parameterˉkinds(), Parameterˉshapes()
+        );
+    Repeated = Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Repeated, 0u32,
+        Generics.Compilerˉsourceˉgenericˉparameterˉkind.Type,
+        3u32, 0u32, 0u32, 200u32
+    );
+    return Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Repeated, 0u32,
+        Generics.Compilerˉsourceˉgenericˉparameterˉkind.Type,
+        3u32, 0u32, 1u32, 220u32
+    );
+}
+
+fn Testˉsolutionˉcomplete() -> i32 {
+    let First: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 100u32, 120u32);
+    if First.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉparameters(First) != 2u32 ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉsolved(First) != 2u32 ||
+        !Generics.Compilerˉsourceˉgenericˉsolutionˉisˉvalid(First) {
+        return 2;
+    }
+    return 0;
+}
+
+fn Testˉsolutionˉrepeat() -> i32 {
+    let Repeated: Generics.Compilerˉsourceˉgenericˉsolution =
+        Repeatedˉsolution();
+    if Repeated.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉsolved(Repeated) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Repeated.Evidence, 36u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Repeated.Evidence, 40u32) != 200u32 {
+        return 3;
+    }
+    return 0;
+}
+
+fn Testˉsolutionˉconflict() -> i32 {
+    let Repeated: Generics.Compilerˉsourceˉgenericˉsolution =
+        Repeatedˉsolution();
+    let Conflict: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+            Repeated, 0u32,
+            Generics.Compilerˉsourceˉgenericˉparameterˉkind.Type,
+            2u32, 0u32, 2u32, 240u32
+        );
+    if Conflict.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Conflictingˉsolution ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉdiagnostic(
+            Conflict, 1u32
+        ) != 2u32 ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉdiagnostic(
+            Conflict, 3u32
+        ) != 0u32 ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉdiagnostic(
+            Conflict, 4u32
+        ) != 200u32 {
+        return 4;
+    }
+    return 0;
+}
+
+fn Testˉsolutionˉunsolved() -> i32 {
+    let Repeated: Generics.Compilerˉsourceˉgenericˉsolution =
+        Repeatedˉsolution();
+    let Unsolved: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉfinish(Repeated);
+    if Unsolved.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Unsolvedˉparameter ||
+        Generics.Compilerˉsourceˉgenericˉsolutionˉdiagnostic(
+            Unsolved, 0u32
+        ) != 1u32 {
+        return 5;
+    }
+    return 0;
+}
+
+fn Testˉcatalogˉinitial() -> i32 {
+    let First: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 100u32, 120u32);
+
+    var Catalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    var Admission: Generics.Compilerˉsourceˉgenericˉadmission =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+            Catalog, 17u32, 1u32, 0u32, 300u32, 100u32, First
+        );
+    var Observedˉcatalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉadmissionˉcatalog(Admission);
+    if Admission.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Admission.Instance != 0u32 || Admission.Reused ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+            Observedˉcatalog
+        ) != 1u32 ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉestimatedˉcodeˉbytes(
+            Observedˉcatalog
+        ) != 100u32 ||
+        !Generics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(
+            Observedˉcatalog
+        ) {
+        return 6;
+    }
+    Catalog = Observedˉcatalog;
+
+    return 0;
+}
+
+fn Catalogˉwithˉfirst() -> Generics.Compilerˉsourceˉgenericˉcatalog {
+    let First: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 100u32, 120u32);
+    let Catalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    let Admission: Generics.Compilerˉsourceˉgenericˉadmission =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+            Catalog, 17u32, 1u32, 0u32, 300u32, 100u32, First
+        );
+    return Generics.Compilerˉsourceˉgenericˉadmissionˉcatalog(Admission);
+}
+
+fn Testˉcatalogˉreuse() -> i32 {
+    let Catalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Catalogˉwithˉfirst();
+    let Sameˉidentity: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 400u32, 420u32);
+    let Admission: Generics.Compilerˉsourceˉgenericˉadmission =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+        Catalog, 17u32, 33u32, 1u32, 500u32, 16777217u32, Sameˉidentity
+    );
+    let Observedˉcatalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉadmissionˉcatalog(Admission);
+    if Admission.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Admission.Instance != 0u32 || !Admission.Reused ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+            Observedˉcatalog
+        ) != 1u32 ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉestimatedˉcodeˉbytes(
+            Observedˉcatalog
+        ) != 100u32 {
+        return 7;
+    }
+    return 0;
+}
+
+fn Testˉcatalogˉmalformed() -> i32 {
+    let Catalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Catalogˉwithˉfirst();
+    let Truncated: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Bytesˉslice(Catalog.Evidence, 0u32, 23u32),
+            Catalog.Diagnostics
+        );
+    if Generics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(Truncated) {
+        return 14;
+    }
+    let Truncatedˉdiagnostics: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Catalog.Evidence,
+            Bytesˉslice(Catalog.Diagnostics, 0u32, 11u32)
+        );
+    if Generics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(
+        Truncatedˉdiagnostics
+    ) {
+        return 18;
+    }
+    let Candidate: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 100u32, 120u32);
+    let Admission: Generics.Compilerˉsourceˉgenericˉadmission =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+            Truncated, 17u32, 1u32, 0u32, 300u32, 100u32, Candidate
+        );
+    if Admission.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 15;
+    }
+    return 0;
+}
+
+fn Testˉcatalogˉdistinct() -> i32 {
+    let Catalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Catalogˉwithˉfirst();
+    let Different: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(9u32, 600u32, 620u32);
+    let Admission: Generics.Compilerˉsourceˉgenericˉadmission =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+        Catalog, 17u32, 3u32, 1u32, 700u32, 120u32, Different
+    );
+    let Observedˉcatalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉadmissionˉcatalog(Admission);
+    if Admission.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Admission.Instance != 1u32 || Admission.Reused ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+            Observedˉcatalog
+        ) != 2u32 ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉmaximumˉobservedˉdepth(
+            Observedˉcatalog
+        ) != 3u32 ||
+        Generics.Compilerˉsourceˉgenericˉcatalogˉestimatedˉcodeˉbytes(
+            Observedˉcatalog
+        ) != 220u32 {
+        return 8;
+    }
+    return 0;
+}
+
+fn Testˉcatalogˉlimits() -> i32 {
+    let First: Generics.Compilerˉsourceˉgenericˉsolution =
+        Completeˉsolution(8u32, 100u32, 120u32);
+    let Emptyˉcatalog: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    var Admission: Generics.Compilerˉsourceˉgenericˉadmission =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+            Emptyˉcatalog, 18u32, 33u32, 1u32, 800u32, 1u32, First
+        );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Instantiationˉdepth {
+        return 9;
+    }
+
+    Admission = Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+        Emptyˉcatalog, 19u32, 1u32, 1u32, 900u32,
+        16777217u32, First
+    );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Codeˉgrowthˉlimit {
+        return 10;
+    }
+    Admission = Generics.Compilerˉsourceˉgenericˉcatalogˉadmit(
+        Emptyˉcatalog, 19u32, 1u32, 1u32, 4294967295u32,
+        1u32, First
+    );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉparameter {
+        return 17;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Limits: i32 = Testˉlimits();
+    if Limits != 0 { return Limits; }
+    let Complete: i32 = Testˉsolutionˉcomplete();
+    if Complete != 0 { return Complete; }
+    let Malformedˉsolution: i32 = Testˉsolutionˉmalformed();
+    if Malformedˉsolution != 0 { return Malformedˉsolution; }
+    let Repeated: i32 = Testˉsolutionˉrepeat();
+    if Repeated != 0 { return Repeated; }
+    let Conflict: i32 = Testˉsolutionˉconflict();
+    if Conflict != 0 { return Conflict; }
+    let Unsolved: i32 = Testˉsolutionˉunsolved();
+    if Unsolved != 0 { return Unsolved; }
+    let Initialˉcatalog: i32 = Testˉcatalogˉinitial();
+    if Initialˉcatalog != 0 { return Initialˉcatalog; }
+    let Catalogˉreuse: i32 = Testˉcatalogˉreuse();
+    if Catalogˉreuse != 0 { return Catalogˉreuse; }
+    let Catalogˉdistinct: i32 = Testˉcatalogˉdistinct();
+    if Catalogˉdistinct != 0 { return Catalogˉdistinct; }
+    let Catalogˉlimits: i32 = Testˉcatalogˉlimits();
+    if Catalogˉlimits != 0 { return Catalogˉlimits; }
+    let Malformedˉcatalog: i32 = Testˉcatalogˉmalformed();
+    if Malformedˉcatalog != 0 { return Malformedˉcatalog; }
+    return 42;
+}

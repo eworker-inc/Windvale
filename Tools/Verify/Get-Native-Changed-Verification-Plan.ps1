@@ -1490,6 +1490,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Language-1.0-Foundation-Generic-Result.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
@@ -2438,6 +2439,9 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Path -eq
+        'Compiler/Windvale/Source-Generic-Resolution-Core.wv') {
+        Add-Suite @('source-containment', 'language-1-front-door')
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',
