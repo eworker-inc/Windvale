@@ -48,6 +48,14 @@ call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-T
 call "%Native%\Run-Wvb.cmd" "%Work%\Value-Front-End.wvb" >"%Work%\Value-Front-End.out" 2>"%Work%\Value-Front-End.err" || goto :cleanup
 for %%F in ("%Work%\Value-Front-End.err") do if not "%%~zF"=="0" goto :cleanup
 findstr /c:"Result: 42" "%Work%\Value-Front-End.out" >nul || goto :cleanup
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Generic-Declarations.wvproj" "%Work%\Generic-Declarations.wvb" >nul || goto :cleanup
+call "%Native%\Run-Wvb.cmd" "%Work%\Generic-Declarations.wvb" >"%Work%\Generic-Declarations.out" 2>"%Work%\Generic-Declarations.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Declarations.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"Result: 42" "%Work%\Generic-Declarations.out" >nul || goto :cleanup
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Generic-Calls.wvproj" "%Work%\Generic-Calls.wvb" >nul || goto :cleanup
+call "%Native%\Run-Wvb.cmd" "%Work%\Generic-Calls.wvb" >"%Work%\Generic-Calls.out" 2>"%Work%\Generic-Calls.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Calls.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"Result: 42" "%Work%\Generic-Calls.out" >nul || goto :cleanup
 echo PASS  language 1 front door phase=value-front-end item=3/11
 
 set "FailureStep=compiler-bootstrap-profile"
@@ -836,6 +844,10 @@ if not "%Result%"=="0" (
     if exist "%Work%\Minimum.err" type "%Work%\Minimum.err" >&2
     if exist "%Work%\Value-Front-End.out" type "%Work%\Value-Front-End.out" >&2
     if exist "%Work%\Value-Front-End.err" type "%Work%\Value-Front-End.err" >&2
+    if exist "%Work%\Generic-Declarations.out" type "%Work%\Generic-Declarations.out" >&2
+    if exist "%Work%\Generic-Declarations.err" type "%Work%\Generic-Declarations.err" >&2
+    if exist "%Work%\Generic-Calls.out" type "%Work%\Generic-Calls.out" >&2
+    if exist "%Work%\Generic-Calls.err" type "%Work%\Generic-Calls.err" >&2
     if exist "%Work%\Value-Match-A.err" type "%Work%\Value-Match-A.err" >&2
     if exist "%Work%\Value-Match-Lazy.err" type "%Work%\Value-Match-Lazy.err" >&2
     if exist "%Work%\Value-Match-Lazy-Run.err" type "%Work%\Value-Match-Lazy-Run.err" >&2
@@ -846,7 +858,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=146 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes%
+echo native language 1 front door status=Passed cases=150 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 generic-front-end-cases=4 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes%
 exit /b 0
 
 :expect_result_42

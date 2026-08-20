@@ -15,11 +15,20 @@ The pass recognizes:
 - qualified capability names;
 - `text`, `[i32]`, and `bytes` data declarations and literal shape;
 - optional export, name, explicit type, and bounded initializer span for `const` declarations;
-- record names, fields, and non-void/non-array field types, including `i64` and `u64`;
+- record names, optional bounded generic parameters, fields, and
+  non-void/non-array field types, including `i64` and `u64`;
 - enum names, members, and unsuffixed nonnegative integer token shape;
-- variant names, optional bounded generic-parameter names, and zero-through-64
+- variant names, optional bounded generic parameters, and zero-through-64
   uniquely shaped case-field declarations; and
-- optional function export, name, parameters, return type, and balanced body span over the complete implemented primitive and nominal type surface.
+- optional function export, name, optional bounded generic parameters,
+  parameters, return type, and balanced body span over the complete implemented
+  primitive and nominal type surface.
+
+A generic parameter is either one type-parameter identifier or
+`const Name: Integerˉtype`, where the constant type is exactly one fixed signed
+or unsigned integer type. A list contains at most 32 parameters and retains its
+source span; type substitution, constant evaluation, duplicate detection,
+protocol requirements, and specialization remain semantic-phase work.
 
 Function-body tokens are balanced through the matching outer brace, including nested blocks. A constant initializer is retained as the declaration's body span from its first expression token through the token before the required semicolon; the later symbol phase owns expression grammar, typing, evaluation, and diagnostics. Function statement and expression grammar is deliberately outside this declaration pass.
 
@@ -27,7 +36,7 @@ Function-body tokens are balanced through the matching outer brace, including ne
 
 `Compilerˉsourceˉheader` contains parse/lex status, profile, module-name byte span, next cursor, failure position, and expected/found token kinds.
 
-`Compilerˉsourceˉdeclaration` contains parse/lex status, declaration kind, export flag, name/declaration/body byte spans, item count, next cursor, failure position, and expected/found token kinds. `Constant = 7` is appended to the declaration-kind mapping. `Items` means qualified-name parts for capabilities, literal elements for array data, fields for records, members for enums, cases for variants, and parameters for functions; it is zero for constants. Variant generic parameters remain source spans in this syntax pass. The symbol phase admits only the exact Foundation Option and Result identities in the current Slice 3 subset.
+`Compilerˉsourceˉdeclaration` contains parse/lex status, declaration kind, export flag, name/declaration/body byte spans, item count, next cursor, failure position, and expected/found token kinds. `Constant = 7` is appended to the declaration-kind mapping. `Items` means qualified-name parts for capabilities, literal elements for array data, fields for records, members for enums, cases for variants, and ordinary value parameters for functions; it is zero for constants. Generic parameters remain source spans in this syntax pass and do not change `Items`. The symbol phase still admits only the exact Foundation Option and Result identities until Slice 4's bounded general specialization phase is connected.
 
 `Compilerˉsourceˉmoduleˉsummary` contains the header identity, declaration-category counts, lexer token count, end cursor, and first-failure evidence. Every field is primitive or enum data; no record owns another record or runtime handle.
 
@@ -63,7 +72,7 @@ The declaration pass enforces:
 - the existing 4,194,304-byte source and 262,144-token lexer ceilings;
 - at most 4,096 top-level declarations;
 - at most 64 record fields or function parameters;
-- at most 64 variant fields in one case and 64 generic parameters in syntax;
+- at most 64 variant fields in one case and 32 generic parameters in syntax;
 - at most 256 enum members;
 - at most 16 qualified-name parts;
 - at most 64 nested braces in a function body.

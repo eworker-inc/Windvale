@@ -1010,6 +1010,14 @@ function Add-Compiler-Suites {
     )
 }
 
+function Add-Source-Front-End-Suites {
+    Add-Suite @(
+        'source-containment',
+        'language-1-front-door',
+        'compiler-source-sentinel'
+    )
+}
+
 function Add-Bytecode-Suites {
     Add-Suite @('seed', 'unsafe-wvb', 'wvb-containment')
 }
@@ -1480,6 +1488,8 @@ foreach ($Path in $Paths) {
         'Libraries/Foundation/Values/Result.wv',
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
         'Projects/Tests/Language-1.0-Foundation-Generic-Result.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
@@ -2428,6 +2438,17 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Lexer-Core.wv',
+        'Compiler/Windvale/Source-Declaration-Parser.wv',
+        'Compiler/Windvale/Source-Body-Parser.wv',
+        'Compiler/Windvale/Source-Profile-Core.wv',
+        'Compiler/Windvale/Source-Set-Core.wv',
+        'Compiler/Windvale/Source-Graph-Core.wv',
+        'Compiler/Windvale/Source-Symbols-Core.wv',
+        'Compiler/Windvale/Source-Bindings-Core.wv'
+    )) {
+        Add-Source-Front-End-Suites
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',

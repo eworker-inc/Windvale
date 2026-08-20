@@ -15,12 +15,15 @@ The parser recognizes:
 - statement and value-producing `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, statement and value-producing exhaustive `match`/`case`, narrow `try` propagation, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
 - `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, and `u64` integer literals plus rune, string-shape, and Boolean literals;
 - the Language 1.0 empty-parentheses unit literal `()`;
-- qualified names, field access, one call or index postfix, named record literals, Language 1.0 named record updates, variant constructors, and bounded builder construction;
+- qualified names, field access, one call or index postfix, named record
+  literals, Language 1.0 named record updates, variant constructors, bounded
+  builder construction, and the distinct
+  `Qualifiedˉname::<Typeˉarguments>(...)` explicit-generic call form;
 - unary `-`, `!`, `~`, and consuming `freeze`;
 - `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
 - nonempty parenthesized expressions without a synthetic group node.
 
-This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11`, `Unit = 12`, `Recordˉupdate = 13`, `Rune = 14`, `Floating = 15`, `If = 16`, and `Match = 17`. A value match reuses the bounded statement-match view with value-block arms; its selector is parsed by the ordinary expression parser and may therefore include a brace-form nominal construction before the arm-list brace. A rune expression carries the lexer's already validated scalar in `Numericˉvalue`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. A record update retains the target name, one base-expression span, and the nonempty replacement-field interior/count. A base expression containing its own top-level brace construction is parenthesized at the current parser boundary so the replacement list remains lexically unambiguous. Edition admission, base nominal identity, field checks, and exact evaluation semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11`, `Unit = 12`, `Recordˉupdate = 13`, `Rune = 14`, `Floating = 15`, `If = 16`, `Match = 17`, and `Explicitˉgenericˉcall = 18`. An explicit-generic call retains the complete qualified-name span, the type/constant-argument interior span and count, and the ordinary call-argument interior span and count. `::` is mandatory; a bare `Name<T>(...)` stays in the relational-expression grammar and is not reinterpreted as a generic call. The parser accepts fixed-integer constant tokens in a type-argument list while semantic resolution owns the declaration-ordered type-versus-constant classification and complete constant-expression contract. A value match reuses the bounded statement-match view with value-block arms; its selector is parsed by the ordinary expression parser and may therefore include a brace-form nominal construction before the arm-list brace. A rune expression carries the lexer's already validated scalar in `Numericˉvalue`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. A record update retains the target name, one base-expression span, and the nonempty replacement-field interior/count. A base expression containing its own top-level brace construction is parenthesized at the current parser boundary so the replacement list remains lexically unambiguous. Edition admission, base nominal identity, field checks, and exact evaluation semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
 
 Each value `if` or value `match` arm contains zero or more ordinary statements
 followed by one final expression without a semicolon. A missing final expression
@@ -76,7 +79,8 @@ The pass enforces:
 - the lower-layer 4,194,304-byte source and 262,144-token ceilings;
 - at most 64 statement nestings;
 - at most 64 expression nestings/tree depth;
-- at most 64 call arguments, named-record fields, or record-update replacements and 16 qualified-name parts;
+- at most 64 call arguments, named-record fields, or record-update replacements,
+  at most 32 explicit generic arguments, and 16 qualified-name parts;
 - at most 4,096 statements per function body;
 - at most 4,096 nodes in one expression and 262,144 expression nodes in one body.
 

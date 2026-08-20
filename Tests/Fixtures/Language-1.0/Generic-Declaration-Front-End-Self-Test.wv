@@ -1,0 +1,35 @@
+module Languageˉoneˉgenericˉdeclarationˉfrontˉendˉselfˉtest profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+
+export fn Main() -> i32 {
+    var Source: bytes = Textˉtoˉutf8("<T, U>");
+    var Parameters: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉgenericˉparameters(
+            Source, 0u32, 1u32, 1u32
+        );
+    if Parameters.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Parameters.Items != 2u32 ||
+        Parameters.Nextˉoffset != Bytesˉlength(Source) {
+        return 1;
+    }
+
+    Source = Textˉtoˉutf8("<T, const N: u64>");
+    Parameters = Declarations.Compilerˉparseˉgenericˉparameters(
+        Source, 0u32, 1u32, 1u32
+    );
+    if Parameters.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Parameters.Items != 2u32 ||
+        Parameters.Nextˉoffset != Bytesˉlength(Source) {
+        return 2;
+    }
+
+    Source = Textˉtoˉutf8("<const N: bool>");
+    Parameters = Declarations.Compilerˉparseˉgenericˉparameters(
+        Source, 0u32, 1u32, 1u32
+    );
+    if Parameters.Status == Declarations.Compilerˉparseˉstatus.Valid {
+        return 3;
+    }
+    return 42;
+}

@@ -95,12 +95,16 @@ $NativeCases = @(
             'Compiler/Windvale/Source-Descriptor-Core.wv',
             'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
             'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
             'Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv',
             'Tests/Fixtures/Language-1.0/Minimum-Program.wv',
             'Tests/Fixtures/Language-1.0/Missing-Edition-Profile.wv',
             'Tests/Fixtures/Language-1.0/Seed-Only-Void.wv',
             'Tests/Fixtures/Language-1.0/Source-Descriptor-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Call-Front-End-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Declaration-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
             'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv',
@@ -131,13 +135,20 @@ $NativeCases = @(
         Name = 'Language 1.0 compiler integration routing'
         Paths = @('Compiler/Windvale/Source-Declaration-Parser.wv')
         Suites = @(
-            'seed',
-            'unsafe-wvb',
             'source-containment',
             'language-1-front-door',
-            'compiler-source-sentinel',
-            'lowerer-rejections',
-            'console-packager-source-reconstruction'
+            'compiler-source-sentinel'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 body parser integration routing'
+        Paths = @('Compiler/Windvale/Source-Body-Parser.wv')
+        Suites = @(
+            'source-containment',
+            'language-1-front-door',
+            'compiler-source-sentinel'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -3202,6 +3213,7 @@ $NativeCases = @(
     }
 )
 
+Write-Host 'START verification plan phase=contracts item=1/3'
 & $RetirementInventoryVerifier -Quiet
 & $DevelopmentDependencyVerifier -Quiet
 
@@ -3734,8 +3746,18 @@ foreach ($OwnerText in @($LibraryWindowsOwner, $LibraryLinuxOwner)) {
         throw 'A library owner does not implement the development-target contract.'
     }
 }
+Write-Host 'PASS  verification plan phase=contracts item=1/3'
 
+$GeneralCaseIndex = 0
+Write-Host "START verification plan phase=general-routing item=0/$($Cases.Count)"
 foreach ($Case in $Cases) {
+    $GeneralCaseIndex += 1
+    if ($GeneralCaseIndex -eq 1 -or $GeneralCaseIndex % 10 -eq 0 -or
+        $GeneralCaseIndex -eq $Cases.Count) {
+        Write-Host (
+            "PROGRESS verification plan phase=general-routing " +
+            "item=$GeneralCaseIndex/$($Cases.Count) case=$($Case.Name)")
+    }
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet
     if (
         $Plan.Scope -ne $Case.Scope -or
@@ -3751,8 +3773,18 @@ foreach ($Case in $Cases) {
         )
     }
 }
+Write-Host "PASS  verification plan phase=general-routing item=$($Cases.Count)/$($Cases.Count)"
 
+$NativeCaseIndex = 0
+Write-Host "START verification plan phase=native-routing item=0/$($NativeCases.Count)"
 foreach ($Case in $NativeCases) {
+    $NativeCaseIndex += 1
+    if ($NativeCaseIndex -eq 1 -or $NativeCaseIndex % 10 -eq 0 -or
+        $NativeCaseIndex -eq $NativeCases.Count) {
+        Write-Host (
+            "PROGRESS verification plan phase=native-routing " +
+            "item=$NativeCaseIndex/$($NativeCases.Count) case=$($Case.Name)")
+    }
     $Plan = & $NativePlanner -ChangedPath $Case.Paths -PassThru -Quiet
     $ExpectedWebAssemblyVerification = if ($Case.ContainsKey('VerifyWebAssembly')) {
         $Case.VerifyWebAssembly
@@ -3843,6 +3875,7 @@ foreach ($Case in $NativeCases) {
         )
     }
 }
+Write-Host "PASS  verification plan phase=native-routing item=$($NativeCases.Count)/$($NativeCases.Count)"
 
 $EmptyPlan = & $Planner -ChangedPath @() -PassThru -Quiet
 if (
