@@ -85,7 +85,20 @@ Capabilities must belong to the implemented catalog. A portable-profile module m
 
 Records and enums are nonempty. Field names are unique within a record. Enum member names and explicit values are each unique within an enum. Parameter names are unique within a function. These rules apply after complete syntax validation, so the symbol phase operates only on qualified declaration and body spans.
 
-A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
+A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Variant fields may contain implemented ordinary value shapes or their own admitted type parameter. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
+
+Slice 3 recognizes only two generic declaration identities. The edition-1
+module `Foundationˉoption` must export exactly `Option<T>` with ordered cases
+`Present(Value: T)` and `Absent`. The edition-1 module
+`Foundationˉresult` must export exactly `Result<T, E>` with ordered cases
+`Valid(Value: T)` and `Failure(Error: E)`. A use supplies exactly one or two
+arguments respectively. Each argument is one implemented primitive or one of
+the first 1,024 ordinary record, enum, or variant identities; nested generic,
+collection, capability, `never`, bare, wrong-arity, and lookalike uses are
+rejected. Compact Option shapes occupy `0x60000000 + T`; Result shapes occupy
+`0x70000000 + T * 16384 + E`, where `T` and `E` are the private compact value
+shape codes. These encodings are compiler-phase evidence, not source or WVB
+identities.
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 

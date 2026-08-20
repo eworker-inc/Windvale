@@ -42,7 +42,9 @@ is `rune`. Record shapes start at
 `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at
 `196608`. Exact singleton capability-reference shapes are `268435456 +
 RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder
-element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
+element identity and maximum. The private high families `0x60000000` and
+`0x70000000` retain exact compact Foundation Option and Result arguments from
+the symbol contract. Nominal suffixes are canonical WVSD nominal indices.
 
 Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. Function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries.
 
@@ -104,14 +106,17 @@ validator accepts the custom shape only when it names an actual required root
 capability and rejects capability shapes in records, variants, and collections.
 No WVIR operation value or directory version changes.
 
-An accepted `try` evaluates its expression once, requires its shape to equal the
-current function return shape, and resolves that shape to a nominal variant with
-exactly ordered `Valid` and `Failure` cases. The former has no payload and the
-latter has one non-void payload. Lowering emits the existing
-`Variantˉisˉcase` operation and a branch. The failure block returns the
-expression's original temporary; the success block continues. No payload
-extraction, variant reconstruction, conversion, hidden call, new WVIR operation,
-or directory-version change is introduced.
+An edition-1 accepted `try` evaluates its expression once and requires the exact
+Foundation `Result<T, E>` identity. The current function must return
+`Result<U, E>` with the same expanded error shape. Lowering emits the existing
+case test and branch. The success block extracts `Valid.Value` as `T`; statement
+`try` discards that extracted value. When `T` equals `U`, the failure block
+returns the original result temporary. Otherwise it extracts `Failure.Error`
+and constructs the exact `Result<U, E>.Failure` before returning. Different
+error shapes are rejected and require an explicit source adapter. The retained
+descriptorless Seed statement subset still accepts its prior concrete nominal
+shape. No inferred conversion, hidden call, new WVIR operation, or
+directory-version change is introduced.
 
 A constant read resolves its WVSD 1.1 entry, reevaluates the validated root declaration under the source-symbol contract, and emits the matching scalar, Boolean, or enum constant operation, including `I64ˉconstant`, `U64ˉconstant`, and `Fixedˉintegerˉconstant`. Wide values carry exact low/high `u32` limbs; fixed signed values carry their exact named-width two's-complement bits in the operation target. No data identity, local slot, or runtime lookup is introduced.
 

@@ -63,7 +63,26 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 localization reference-artifact evidence'
         Paths = @(
-            'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock'
+            'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock',
+            'Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Foundation-Result.wvcat'
+        )
+        Suites = @('language-1-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 Foundation generic typed-failure owner'
+        Paths = @(
+            'Libraries/Foundation/Values/Option.wv',
+            'Libraries/Foundation/Values/Result.wv',
+            'Projects/Tests/Language-1.0-Foundation-Generic-Result.wvproj',
+            'Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv',
+            'Tests/Fixtures/Language-1.0/Foundation-Generic-Result-Wrong-Arity.wv',
+            'Tests/Fixtures/Language-1.0/Foundation-Generic-Result-Extra-Argument.wv',
+            'Tests/Fixtures/Language-1.0/Foundation-Generic-Result-Bare.wv',
+            'Tests/Fixtures/Language-1.0/Foundation-Generic-Try-Wrong-Error.wv',
+            'Documents/Project/Windvale-Language-1.0-Migration-Evidence.md',
+            'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
         )
         Suites = @('language-1-front-door')
         Gaps = @()
@@ -3227,7 +3246,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4790 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4795 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

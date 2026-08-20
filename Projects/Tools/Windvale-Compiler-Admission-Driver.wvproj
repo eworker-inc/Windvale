@@ -1,9 +1,10 @@
 windvale-project 2
-root "Compiler/Windvale/Source-Profile-Core.wv"
+root "Tools/Windvale.Build/Compiler-Admission-Driver.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Descriptor-Core.wv"
 source "Compiler/Windvale/Source-Lexer-Core.wv"
+source "Compiler/Windvale/Source-Profile-Core.wv"
 source "Compiler/Windvale/Source-Set-Core.wv"
 source "Foundation/Decimal-Parsing.wv"
 source "Foundation/Sha256.wv"

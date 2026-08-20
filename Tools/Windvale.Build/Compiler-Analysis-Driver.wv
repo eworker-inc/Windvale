@@ -78,23 +78,21 @@ fn Success(
     return Textˉconcat(Report, U32ˉformat(Bytesˉlength(Prepared.Wir)));
 }
 
-export fn Main() -> i32 {
-    let Arguments: u32 = process.argument_count();
-    if Arguments < 5u32 {
-        diagnostic.write_line(
-            Textˉconcat(
-                "Usage: wvanalyze <root.wv> [dependency.wv ...] ",
-                "<output.wvss> <output.wvca> <output.wvlb> <output.wvir>"
-            )
-        );
-        return 64;
+fn Argumentˉequals(Value: text, Expected: text) -> bool {
+    let Left: bytes = Textˉtoˉutf8(Value);
+    let Right: bytes = Textˉtoˉutf8(Expected);
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
     }
-    let Modules: u32 = Arguments - 4u32;
-    if Modules > 64u32 {
-        diagnostic.write_line("source analysis status=Moduleˉlimit");
-        return 64;
-    }
-    let Sourceˉset: bytes = Buildˉsourceˉset(Modules);
+    return true;
+}
+
+fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
     if Bytesˉlength(Sourceˉset) == 0u32 {
         diagnostic.write_line("source analysis status=Invalidˉinput");
         return 1;
@@ -105,10 +103,32 @@ export fn Main() -> i32 {
         diagnostic.write_line(Failure(Prepared));
         return 1;
     }
-    file.write_bytes(process.argument(Modules), Sourceˉset);
-    file.write_bytes(process.argument(Modules + 1u32), Prepared.Manifest);
-    file.write_bytes(process.argument(Modules + 2u32), Prepared.Bindings);
-    file.write_bytes(process.argument(Modules + 3u32), Prepared.Wir);
+    file.write_bytes(process.argument(Outputˉindex), Sourceˉset);
+    file.write_bytes(process.argument(Outputˉindex + 1u32), Prepared.Manifest);
+    file.write_bytes(process.argument(Outputˉindex + 2u32), Prepared.Bindings);
+    file.write_bytes(process.argument(Outputˉindex + 3u32), Prepared.Wir);
     console.write_line(Success(Sourceˉset, Prepared));
     return 0;
+}
+
+export fn Main() -> i32 {
+    let Arguments: u32 = process.argument_count();
+    if Arguments == 6u32 && Argumentˉequals(
+        process.argument(0u32), "--admitted-source-set"
+    ) {
+        return Analyze(file.read_bytes(process.argument(1u32)), 2u32);
+    }
+    if Arguments < 5u32 {
+        diagnostic.write_line(
+            "Usage: wvanalyze <root.wv> [dependency.wv ...] <output.wvss> <output.wvca> <output.wvlb> <output.wvir>; or wvanalyze --admitted-source-set <input.wvss> <output.wvss> <output.wvca> <output.wvlb> <output.wvir>"
+        );
+        return 64;
+    }
+    let Modules: u32 = Arguments - 4u32;
+    if Modules > 64u32 {
+        diagnostic.write_line("source analysis status=Moduleˉlimit");
+        return 64;
+    }
+    let Sourceˉset: bytes = Buildˉsourceˉset(Modules);
+    return Analyze(Sourceˉset, Modules);
 }

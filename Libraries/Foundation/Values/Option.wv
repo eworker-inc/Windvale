@@ -1,0 +1,10 @@
+#!wv/1 en@1
+module Foundationˉoption;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+export variant Option<T> {
+    Present(Value: T);
+    Absent;
+}

@@ -11,7 +11,7 @@ repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 profile_root="$repository_root/Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts"
 source_lock="$profile_root/Source-Inputs.wvlock"
 source_profile="$profile_root/En-Source-Profile.wvsp"
-source_lock_hash=4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3
+source_lock_hash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
 cleanup() {
@@ -36,11 +36,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/10'
+echo 'START language 1 front door phase=frozen-fixtures item=1/11'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/10'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/11'
 
-echo 'START language 1 front door phase=descriptor item=2/10'
+echo 'START language 1 front door phase=descriptor item=2/11'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -53,9 +53,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/10'
+echo 'PASS  language 1 front door phase=descriptor item=2/11'
 
-echo 'START language 1 front door phase=value-front-end item=3/10'
+echo 'START language 1 front door phase=value-front-end item=3/11'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -64,23 +64,39 @@ echo 'START language 1 front door phase=value-front-end item=3/10'
 [[ ! -s $work/Value-Front-End.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-Front-End.out"
 cmp -s -- "$work/Expected-Value-Front-End.out" "$work/Value-Front-End.out" || exit 1
-echo 'PASS  language 1 front door phase=value-front-end item=3/10'
+echo 'PASS  language 1 front door phase=value-front-end item=3/11'
 
-echo 'START language 1 front door phase=compiler-slice item=4/10'
+echo 'START language 1 front door phase=compiler-slice item=4/11'
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" \
     "$work/Bootstrap-Compiler.elf" --development-cache || exit $?
 "$script_directory/Compile-Compiler-Source-Set.sh" \
     "$work/Bootstrap-Compiler.elf" \
     "$repository_root" "$work/Compiler.wvb" || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 1 \
-    "$work/Compiler.wvb" "$work/Compiler.elf" --development-cache || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
+    "$work/Bootstrap-Compiler.elf" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj" \
+    "$work/Admitter.wvb" || exit $?
+node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
+    "$work/Bootstrap-Compiler.elf" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj" \
+    "$work/Analyzer.wvb" || exit $?
+node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
+    "$work/Bootstrap-Compiler.elf" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj" \
+    "$work/Emitter.wvb" || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$work/Analyzer.wvb" "$work/Analyzer.elf" --development-cache || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
     "$work/Minimum-A.wvb" >"$work/Compile-A.out" 2>"$work/Compile-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
@@ -93,12 +109,12 @@ cmp -s -- "$work/Minimum-A.wvb" "$work/Minimum-B.wvb" || exit 1
 [[ ! -s $work/Minimum.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Minimum.out"
 cmp -s -- "$work/Expected-Minimum.out" "$work/Minimum.out" || exit 1
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
     "$work/Unit-A.wvb" >"$work/Unit-A.out" 2>"$work/Unit-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
@@ -108,13 +124,13 @@ cmp -s -- "$work/Unit-A.out" "$work/Unit-B.out" || exit 1
 cmp -s -- "$work/Unit-A.wvb" "$work/Unit-B.wvb" || exit 1
 cat -- "$work/Unit-A.out"
 printf 'INFO  language 1 unit wvb-bytes=%s\n' "$(wc -c < "$work/Unit-A.wvb")"
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
     "$work/Record-Update-A.wvb" \
     >"$work/Record-Update-A.out" 2>"$work/Record-Update-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
@@ -139,7 +155,7 @@ expect_rejection() {
 expect_rejection_with_digest() {
     local source=$1 output=$2 digest=$3 profile=$4
     [[ ! -e $output ]] || return 1
-    if "$work/Compiler.elf" \
+    if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
         --source-input-lock "$source_lock" "$digest" \
         --source-profile "$profile" "$source" "$output" \
         >"$output.out" 2>"$output.err"; then
@@ -147,12 +163,25 @@ expect_rejection_with_digest() {
     fi
     [[ ! -e $output ]]
 }
-"$work/Compiler.elf" \
+expect_foundation_generic_rejection() {
+    local source=$1 output=$2
+    [[ ! -e $output ]] || return 1
+    if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+        --source-input-lock "$source_lock" "$source_lock_hash" \
+        --source-profile "$source_profile" \
+        "$source" \
+        "$repository_root/Libraries/Foundation/Values/Result.wv" \
+        "$output" >"$output.out" 2>"$output.err"; then
+        return 1
+    fi
+    [[ ! -e $output ]]
+}
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
     "$work/Value-If-A.wvb" >"$work/Value-If-A.out" 2>"$work/Value-If-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
@@ -165,7 +194,7 @@ cmp -s -- "$work/Value-If-A.wvb" "$work/Value-If-B.wvb" || exit 1
 [[ ! -s $work/Value-If.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-If.out"
 cmp -s -- "$work/Expected-Value-If.out" "$work/Value-If.out" || exit 1
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-If-Lazy.wv" \
@@ -181,7 +210,7 @@ for name in Missing-Else Trailing-Semicolon Type-Mismatch Invalid-Condition; do
         "$repository_root/Tests/Fixtures/Language-1.0/Value-If-$name.wv" \
         "$work/Value-If-$name.wvb" || exit 1
 done
-if "$work/Compiler.elf" \
+if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Value-If.wv" \
     "$work/Seed-Value-If.wvb" \
     >"$work/Seed-Value-If.out" 2>"$work/Seed-Value-If.err"; then
@@ -189,13 +218,13 @@ if "$work/Compiler.elf" \
 fi
 [[ ! -e $work/Seed-Value-If.wvb ]] || exit 1
 value_if_wvb_bytes=$(wc -c < "$work/Value-If-A.wvb")
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
     "$work/Value-Match-A.wvb" >"$work/Value-Match-A.out" \
     2>"$work/Value-Match-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
@@ -208,7 +237,7 @@ cmp -s -- "$work/Value-Match-A.wvb" "$work/Value-Match-B.wvb" || exit 1
     >"$work/Value-Match.out" 2>"$work/Value-Match.err" || exit $?
 [[ ! -s $work/Value-Match.err ]] || exit 1
 cmp -s -- "$work/Expected-Value-If.out" "$work/Value-Match.out" || exit 1
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Lazy.wv" \
@@ -221,14 +250,14 @@ cmp -s -- "$work/Expected-Value-If.out" "$work/Value-Match.out" || exit 1
 [[ ! -s $work/Value-Match-Lazy-Run.err ]] || exit 1
 cmp -s -- "$work/Expected-Value-If.out" \
     "$work/Value-Match-Lazy-Run.out" || exit 1
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
     "$work/Value-Match-Never-A.wvb" \
     >"$work/Value-Match-Never-A.out" \
     2>"$work/Value-Match-Never-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
@@ -241,14 +270,14 @@ cmp -s -- "$work/Value-Match-Never-A.out" \
     "$work/Value-Match-Never-B.out" || exit 1
 cmp -s -- "$work/Value-Match-Never-A.wvb" \
     "$work/Value-Match-Never-B.wvb" || exit 1
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
     "$work/Value-Match-Variant-A.wvb" \
     >"$work/Value-Match-Variant-A.out" \
     2>"$work/Value-Match-Variant-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
@@ -266,7 +295,7 @@ for name in Missing-Case Trailing-Semicolon Type-Mismatch; do
         "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-$name.wv" \
         "$work/Value-Match-$name.wvb" || exit 1
 done
-if "$work/Compiler.elf" \
+if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Value-Match.wv" \
     "$work/Seed-Value-Match.wvb" \
     >"$work/Seed-Value-Match.out" 2>"$work/Seed-Value-Match.err"; then
@@ -281,7 +310,7 @@ expect_rejection \
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Return-From-I32.wv" \
     "$work/Unit-Return-From-I32.wvb" || exit 1
-if "$work/Compiler.elf" \
+if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Unit-Literal.wv" \
     "$work/Seed-Unit.wvb" >"$work/Seed-Unit.out" 2>"$work/Seed-Unit.err"; then
     exit 1
@@ -296,7 +325,7 @@ expect_rejection \
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Record-Update-Unknown-Field.wv" \
     "$work/Record-Update-Unknown-Field.wvb" || exit 1
-if "$work/Compiler.elf" \
+if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     "$repository_root/Tests/Fixtures/Source-Wvb/Invalid-Record-Update.wv" \
     "$work/Seed-Record-Update.wvb" \
     >"$work/Seed-Record-Update.out" 2>"$work/Seed-Record-Update.err"; then
@@ -315,7 +344,7 @@ expect_rejection \
 expect_rejection \
     "$repository_root/Tests/Fixtures/Language-1.0/Seed-Only-Void.wv" \
     "$work/Seed-Only-Void.wvb" || exit 1
-if "$work/Compiler.elf" \
+if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
     "$work/Ambient.wvb" >"$work/Ambient.out" 2>"$work/Ambient.err"; then
     exit 1
@@ -335,16 +364,16 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/10'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/11'
 
-echo 'START language 1 front door phase=fixed-integers item=5/10'
-"$work/Compiler.elf" \
+echo 'START language 1 front door phase=fixed-integers item=5/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
     "$work/Fixed-Integer-A.wvb" \
     >"$work/Fixed-Integer-A.out" 2>"$work/Fixed-Integer-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
@@ -355,7 +384,7 @@ cmp -s -- "$work/Fixed-Integer-A.out" "$work/Fixed-Integer-B.out" || exit 1
 cmp -s -- "$work/Fixed-Integer-A.wvb" "$work/Fixed-Integer-B.wvb" || exit 1
 
 for name in Overflow Divide-By-Zero Invalid-Shift; do
-    "$work/Compiler.elf" \
+    node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
         "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-$name.wv" \
@@ -435,16 +464,16 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
     "$(wc -c < "$work/Fixed-Integer-A.wvb")"
-echo 'PASS  language 1 front door phase=fixed-integers item=5/10'
+echo 'PASS  language 1 front door phase=fixed-integers item=5/11'
 
-echo 'START language 1 front door phase=runes item=6/10'
-"$work/Compiler.elf" \
+echo 'START language 1 front door phase=runes item=6/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
     "$work/Rune-A.wvb" \
     >"$work/Rune-A.out" 2>"$work/Rune-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
@@ -498,16 +527,16 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 rune_wvb_bytes=$(wc -c < "$work/Rune-A.wvb")
 printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
-echo 'PASS  language 1 front door phase=runes item=6/10'
+echo 'PASS  language 1 front door phase=runes item=6/11'
 
-echo 'START language 1 front door phase=floating item=7/10'
-"$work/Compiler.elf" \
+echo 'START language 1 front door phase=floating item=7/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
     "$work/Floating-A.wvb" \
     >"$work/Floating-A.out" 2>"$work/Floating-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
@@ -567,16 +596,16 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 floating_wvb_bytes=$(wc -c < "$work/Floating-A.wvb")
 printf 'INFO  language 1 floating wvb-bytes=%s\n' "$floating_wvb_bytes"
-echo 'PASS  language 1 front door phase=floating item=7/10'
+echo 'PASS  language 1 front door phase=floating item=7/11'
 
-echo 'START language 1 front door phase=unit-never item=8/10'
-"$work/Compiler.elf" \
+echo 'START language 1 front door phase=unit-never item=8/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
     "$work/Never-A.wvb" \
     >"$work/Never-A.out" 2>"$work/Never-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
@@ -607,17 +636,17 @@ unit_wvb_bytes=$(wc -c < "$work/Unit-A.wvb")
 never_wvb_bytes=$(wc -c < "$work/Never-A.wvb")
 printf 'INFO  language 1 unit-never unit-wvb-bytes=%s never-wvb-bytes=%s\n' \
     "$unit_wvb_bytes" "$never_wvb_bytes"
-echo 'PASS  language 1 front door phase=unit-never item=8/10'
+echo 'PASS  language 1 front door phase=unit-never item=8/11'
 
-echo 'START language 1 front door phase=multi-field-variants item=9/10'
-"$work/Compiler.elf" \
+echo 'START language 1 front door phase=multi-field-variants item=9/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv" \
     "$work/Multi-Field-Variant-A.wvb" \
     >"$work/Multi-Field-Variant-A.out" \
     2>"$work/Multi-Field-Variant-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv" \
@@ -640,7 +669,7 @@ for name in \
         "$work/Multi-Field-Variant-$name.wvb" || exit 1
 done
 
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Named-Variant-Field.wv" \
@@ -698,16 +727,16 @@ cmp -s -- "$work/Expected-Variant.out" \
 multi_field_variant_wvb_bytes=$(wc -c < "$work/Multi-Field-Variant-A.wvb")
 printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
     "$multi_field_variant_wvb_bytes"
-echo 'PASS  language 1 front door phase=multi-field-variants item=9/10'
+echo 'PASS  language 1 front door phase=multi-field-variants item=9/11'
 
-echo 'START language 1 front door phase=typed-failure item=10/10'
-"$work/Compiler.elf" \
+echo 'START language 1 front door phase=typed-failure item=10/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Result-Try.wv" \
     "$work/Result-Try-A.wvb" \
     >"$work/Result-Try-A.out" 2>"$work/Result-Try-A.err" || exit $?
-"$work/Compiler.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Result-Try.wv" \
@@ -736,5 +765,54 @@ cmp -s -- "$work/Expected-Variant.out" "$work/Result-Try-Run.out" || exit 1
 result_try_wvb_bytes=$(wc -c < "$work/Result-Try-A.wvb")
 printf 'INFO  language 1 typed-failure wvb-bytes=%s\n' \
     "$result_try_wvb_bytes"
-echo 'PASS  language 1 front door phase=typed-failure item=10/10'
-printf 'native language 1 front door status=Passed cases=141 frozen-inputs=250 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s\n' "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes"
+echo 'PASS  language 1 front door phase=typed-failure item=10/11'
+
+echo 'START language 1 front door phase=foundation-generics item=11/11'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv" \
+    "$repository_root/Libraries/Foundation/Values/Option.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" \
+    "$work/Foundation-Generic-A.wvb" \
+    >"$work/Foundation-Generic-A.out" \
+    2>"$work/Foundation-Generic-A.err" || exit $?
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv" \
+    "$repository_root/Libraries/Foundation/Values/Option.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" \
+    "$work/Foundation-Generic-B.wvb" \
+    >"$work/Foundation-Generic-B.out" \
+    2>"$work/Foundation-Generic-B.err" || exit $?
+[[ ! -s $work/Foundation-Generic-A.err && \
+    ! -s $work/Foundation-Generic-B.err ]] || exit 1
+cmp -s -- "$work/Foundation-Generic-A.out" \
+    "$work/Foundation-Generic-B.out" || exit 1
+cmp -s -- "$work/Foundation-Generic-A.wvb" \
+    "$work/Foundation-Generic-B.wvb" || exit 1
+
+for name in Result-Wrong-Arity Result-Extra-Argument Result-Bare Try-Wrong-Error; do
+    expect_foundation_generic_rejection \
+        "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Generic-$name.wv" \
+        "$work/Foundation-Generic-$name.wvb" || exit 1
+done
+
+"$work/Verifier.elf" "$work/Foundation-Generic-A.wvb" \
+    >"$work/Verify-Foundation-Generic.out" \
+    2>"$work/Verify-Foundation-Generic.err" || exit $?
+grep -Fq 'wvb status=Valid profile=compiler-aligned' \
+    "$work/Verify-Foundation-Generic.out" || exit 1
+"$work/Floating-Runner.elf" "$work/Foundation-Generic-A.wvb" \
+    >"$work/Foundation-Generic-Run.out" \
+    2>"$work/Foundation-Generic-Run.err" || exit $?
+[[ ! -s $work/Foundation-Generic-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Foundation-Generic.out"
+cmp -s -- "$work/Expected-Foundation-Generic.out" \
+    "$work/Foundation-Generic-Run.out" || exit 1
+foundation_generic_wvb_bytes=$(wc -c < "$work/Foundation-Generic-A.wvb")
+printf 'INFO  language 1 foundation-generics wvb-bytes=%s\n' \
+    "$foundation_generic_wvb_bytes"
+echo 'PASS  language 1 front door phase=foundation-generics item=11/11'
+printf 'native language 1 front door status=Passed cases=146 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s\n' "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes"

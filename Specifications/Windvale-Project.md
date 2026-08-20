@@ -71,7 +71,7 @@ windvale-project 3
 root "Compiler/Windvale/Main.wv"
 source "Libraries/Foundation/Bytes.wv"
 source-input-lock "Inputs/Source-Inputs.wvlock"
-source-input-lock-sha256 4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3
+source-input-lock-sha256 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
 source-profile "Inputs/En-Source-Profile.wvsp"
 emit wvb
 ```

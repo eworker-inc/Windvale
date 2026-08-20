@@ -3,7 +3,7 @@
 ## Status and purpose
 
 `Compilerˉsourceˉanalysis` separates reusable source and type analysis from WVB
-emission. It consumes one canonical WVSS 1 source set and publishes three
+emission. It consumes one canonical admitted WVSS source set and publishes three
 individually bounded values:
 
 - one fixed 104-byte `WVCA 1.0` manifest;
@@ -134,10 +134,29 @@ and option identities; WVCA alone is not a cache key.
 
 ## Command-line products and development reuse
 
-The hosted analyzer front door accepts an ordered Project 2 source closure:
+The hosted Language 1.0 admission front door accepts an ordered source closure,
+the exact source-input lock and expected hash, and the selected composite
+source profile:
+
+```text
+wvadmit --source-input-lock <lock.wvlock> <sha256>
+    --source-profile <profile.wvsp>
+    <root.wv> [dependency.wv ...] <output.wvss>
+```
+
+It constructs bounded WVSS 1 input, applies the same
+`Compilerˉadmitˉsourceˉprofileˉinputs` contract used by one-shot compilation,
+and publishes descriptor-free WVSS 2 only after every module agrees on edition
+and profile. Rejection publishes no admitted source set.
+
+The hosted analyzer front door accepts either an ordered Project 2 source
+closure or one already admitted source set:
 
 ```text
 wvanalyze <root.wv> [dependency.wv ...]
+    <output.wvss> <output.wvca> <output.wvlb> <output.wvir>
+
+wvanalyze --admitted-source-set <input.wvss>
     <output.wvss> <output.wvca> <output.wvlb> <output.wvir>
 ```
 
@@ -148,11 +167,14 @@ portable WVB:
 wvemit <input.wvss> <input.wvca> <input.wvlb> <input.wvir> <output.wvb>
 ```
 
-These are two products over one semantic compiler. The analyzer owns source
-scanning, symbols, binding, and typed WIR construction. The emitter revalidates
-all persisted values and calls the same prepared backend as the retained
-one-shot compiler. Optimization is not an implicit command-line mode; a later
-optimized product must have a distinct target and producer identity.
+These are three bounded front-door products over one semantic compiler. The
+admitter owns Language 1.0 descriptor/profile admission, the analyzer owns
+source scanning, symbols, binding, and typed WIR construction, and the emitter
+revalidates all persisted values and calls the same prepared backend as the
+retained one-shot compiler. Descriptorless Project 2 input starts at the
+analyzer; descriptor-bearing Language 1.0 input starts at the admitter.
+Optimization is not an implicit command-line mode; a later optimized product
+must have a distinct target and producer identity.
 
 `Build-Cached-Split-Project-Wvb` is a development-only Project 2 coordinator.
 Its analysis key binds the complete project source closure and exact analyzer

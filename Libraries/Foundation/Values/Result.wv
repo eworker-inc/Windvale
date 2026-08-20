@@ -1,0 +1,10 @@
+#!wv/1 en@1
+module Foundationˉresult;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+export variant Result<T, E> {
+    Valid(Value: T);
+    Failure(Error: E);
+}

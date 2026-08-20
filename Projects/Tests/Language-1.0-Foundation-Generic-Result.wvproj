@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv"
+source "Libraries/Foundation/Values/Option.wv"
+source "Libraries/Foundation/Values/Result.wv"
+emit wvb

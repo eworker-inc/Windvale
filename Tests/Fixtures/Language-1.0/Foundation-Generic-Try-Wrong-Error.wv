@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module Foundationˉgenericˉtryˉwrongˉerror;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉresult as Result;
+
+fn Read() -> Result.Result<i32, u32> {
+    return Result.Result.Valid { Value: 42 };
+}
+
+fn Broken() -> Result.Result<u8, u8> {
+    let Value: i32 = try Read();
+    return Result.Result.Valid { Value: 42u8 };
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

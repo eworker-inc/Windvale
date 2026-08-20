@@ -1,0 +1,108 @@
+#!wv/1 en@1
+module Foundationˉgenericˉresultˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+
+enum Readˉfailure {
+    Missing = 0;
+}
+
+record Manualˉreadˉstatus {
+    Valid: bool;
+    Value: i32;
+    Error: Readˉfailure;
+}
+
+fn Adaptˉreadˉfailure(Error: Readˉfailure) -> u32 {
+    return match Error {
+        case Readˉfailure.Missing { 7u32 }
+    };
+}
+
+fn Adaptˉmanualˉread(
+    Status: Manualˉreadˉstatus
+) -> Result.Result<i32, u32> {
+    if Status.Valid {
+        return Result.Result.Valid { Value: Status.Value };
+    }
+    return Result.Result.Failure {
+        Error: Adaptˉreadˉfailure(Status.Error)
+    };
+}
+
+fn Read(Fail: bool) -> Result.Result<i32, u32> {
+    return Adaptˉmanualˉread(Manualˉreadˉstatus {
+        Valid: !Fail,
+        Value: 41,
+        Error: Readˉfailure.Missing
+    });
+}
+
+fn Forward(Fail: bool) -> Result.Result<u8, u32> {
+    let Value: i32 = try Read(Fail);
+    if Value != 41 {
+        return Result.Result.Failure { Error: 8u32 };
+    }
+    return Result.Result.Valid { Value: 42u8 };
+}
+
+fn Statementˉforward() -> Result.Result<u8, u32> {
+    try Read(false);
+    return Result.Result.Valid { Value: 42u8 };
+}
+
+fn Observeˉresult(
+    Value: Result.Result<u8, u32>
+) -> i32 {
+    return match Value {
+        case Result.Result.Valid { Value: _ } { 42 }
+        case Result.Result.Failure { Error: _ } { 42 }
+    };
+}
+
+fn Genericˉrankˉpressure(
+    I8ˉvalue: Option.Option<i8>,
+    I16ˉvalue: Option.Option<i16>,
+    I32ˉvalue: Option.Option<i32>,
+    I64ˉvalue: Option.Option<i64>,
+    U8ˉvalue: Option.Option<u8>,
+    U16ˉvalue: Option.Option<u16>,
+    U32ˉvalue: Option.Option<u32>,
+    U64ˉvalue: Option.Option<u64>,
+    F32ˉvalue: Option.Option<f32>,
+    F64ˉvalue: Option.Option<f64>,
+    Runeˉvalue: Option.Option<rune>,
+    Boolˉvalue: Option.Option<bool>,
+    Textˉvalue: Option.Option<text>,
+    Bytesˉvalue: Option.Option<bytes>
+) -> Option.Option<bytes> {
+    return Option.Option.Absent {};
+}
+
+fn Present() -> Option.Option<u32> {
+    return Option.Option.Present { Value: 42u32 };
+}
+
+fn Absent() -> Option.Option<u32> {
+    return Option.Option.Absent {};
+}
+
+fn Observeˉoption(Value: Option.Option<u32>) -> i32 {
+    return match Value {
+        case Option.Option.Present { Value: _ } { 42 }
+        case Option.Option.Absent { 0 }
+    };
+}
+
+export fn Main() -> i32 {
+    if Observeˉresult(Forward(false)) != 42 { return 1; }
+    if Observeˉresult(Forward(true)) != 42 { return 2; }
+    if Observeˉresult(Statementˉforward()) != 42 { return 3; }
+    if Observeˉoption(Present()) != 42 { return 4; }
+    if Observeˉoption(Absent()) != 0 { return 5; }
+    return 42;
+}

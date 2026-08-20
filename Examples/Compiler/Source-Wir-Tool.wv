@@ -94,17 +94,44 @@ fn Compilerˉsourceˉwirˉtoolˉfailure(
     return Textˉconcat(Report, U32ˉformat(Summary.Failureˉcolumn));
 }
 
+fn Compilerˉsourceˉwirˉtoolˉargumentˉequals(
+    Value: text,
+    Expected: text
+) -> bool {
+    let Left: bytes = Textˉtoˉutf8(Value);
+    let Right: bytes = Textˉtoˉutf8(Expected);
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
     let Modules: u32 = process.argument_count();
     if Modules == 0u32 {
-        diagnostic.write_line("Usage: source-wir <root.wv> [sorted-dependency.wv ...]");
+        diagnostic.write_line(
+            "Usage: source-wir <root.wv> [sorted-dependency.wv ...]; or source-wir --admitted-source-set <input.wvss>"
+        );
         return 64;
     }
     if Modules > 64u32 {
         diagnostic.write_line("source wir status=Sourceˉbindings binding-status=Sourceˉsymbols");
         return 64;
     }
-    let Input: bytes = Compilerˉsourceˉwirˉtoolˉbuild(Modules);
+    var Input: bytes = Textˉtoˉutf8("");
+    if Modules == 2u32 &&
+        Compilerˉsourceˉwirˉtoolˉargumentˉequals(
+            process.argument(0u32), "--admitted-source-set"
+        ) {
+        Input = file.read_bytes(process.argument(1u32));
+    } else {
+        Input = Compilerˉsourceˉwirˉtoolˉbuild(Modules);
+    }
     let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary = Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
     if Summary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉwirˉtoolˉfailure(Summary));

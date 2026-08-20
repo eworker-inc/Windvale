@@ -1,0 +1,149 @@
+module Windvaleˉcompilerˉadmissionˉdriver profile hosted;
+
+import Compilerˉsourceˉprofile as Sourceˉprofile;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Empty() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Header(Modules: u32) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Modules));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+}
+
+fn Buildˉsourceˉset(Start: u32, Modules: u32) -> bytes {
+    let Headerˉbytes: u32 = 16u32 + Modules * 8u32;
+    var Directory: bytes = Empty();
+    var Payload: bytes = Empty();
+    var Payloadˉbytes: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = file.read_bytes(process.argument(Start + Index));
+        let Length: u32 = Bytesˉlength(Source);
+        if Length == 0u32 ||
+            Payloadˉbytes > 4194304u32 - Headerˉbytes ||
+            Length > 4194304u32 - Headerˉbytes - Payloadˉbytes {
+            return Empty();
+        }
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Headerˉbytes + Payloadˉbytes)
+        );
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
+        Payload = Bytesˉconcat(Payload, Source);
+        Payloadˉbytes = Payloadˉbytes + Length;
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(Bytesˉconcat(Header(Modules), Directory), Payload);
+}
+
+fn Argumentˉequals(Value: text, Expected: text) -> bool {
+    let Left: bytes = Textˉtoˉutf8(Value);
+    let Right: bytes = Textˉtoˉutf8(Expected);
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Resourceˉasciiˉfold(Value: u8) -> u32 {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 65u32 {
+        if Character <= 90u32 { return Character + 32u32; }
+    }
+    return Character;
+}
+
+fn Resourceˉequals(First: text, Second: text) -> bool {
+    let Left: bytes = Textˉtoˉutf8(First);
+    let Right: bytes = Textˉtoˉutf8(Second);
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Resourceˉasciiˉfold(Bytesˉreadˉu8(Left, Index)) !=
+            Resourceˉasciiˉfold(Bytesˉreadˉu8(Right, Index)) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    let Arguments: u32 = process.argument_count();
+    if Arguments < 7u32 ||
+        !Argumentˉequals(process.argument(0u32), "--source-input-lock") ||
+        !Argumentˉequals(process.argument(3u32), "--source-profile") {
+        diagnostic.write_line(
+            Textˉconcat(
+                "Usage: wvadmit --source-input-lock <lock.wvlock> <sha256> ",
+                "--source-profile <profile.wvsp> <root.wv> [dependency.wv ...] <output.wvss>"
+            )
+        );
+        return 64;
+    }
+    let Modules: u32 = Arguments - 6u32;
+    if Modules > 64u32 {
+        diagnostic.write_line("source admission status=Moduleˉlimit");
+        return 64;
+    }
+    let Outputˉpath: text = process.argument(Arguments - 1u32);
+    if Resourceˉequals(Outputˉpath, process.argument(1u32)) ||
+        Resourceˉequals(Outputˉpath, process.argument(4u32)) {
+        diagnostic.write_line("source admission status=Outputˉisˉinput");
+        return 64;
+    }
+    var Inputˉindex: u32 = 0u32;
+    while Inputˉindex < Modules {
+        if Resourceˉequals(
+            Outputˉpath, process.argument(5u32 + Inputˉindex)
+        ) {
+            diagnostic.write_line("source admission status=Outputˉisˉinput");
+            return 64;
+        }
+        Inputˉindex = Inputˉindex + 1u32;
+    }
+    let Input: bytes = Buildˉsourceˉset(5u32, Modules);
+    if Bytesˉlength(Input) == 0u32 {
+        diagnostic.write_line("source admission status=Invalidˉinput");
+        return 1;
+    }
+    let Admitted: Sourceˉprofile.Compilerˉsourceˉprofileˉinput =
+        Sourceˉprofile.Compilerˉadmitˉsourceˉprofileˉinputs(
+            Input,
+            file.read_bytes(process.argument(1u32)),
+            Textˉtoˉutf8(process.argument(2u32)),
+            file.read_bytes(process.argument(4u32))
+        );
+    if Admitted.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+        var Report: text = "source admission status=Rejected profile-status=";
+        Report = Textˉconcat(Report, Enumˉname(Admitted.Status));
+        Report = Textˉconcat(Report, " offset=");
+        diagnostic.write_line(
+            Textˉconcat(Report, U32ˉformat(Admitted.Failureˉoffset))
+        );
+        return 1;
+    }
+    file.write_bytes(Outputˉpath, Admitted.Input);
+    var Success: text = "source admission status=Published modules=";
+    Success = Textˉconcat(Success, U32ˉformat(Modules));
+    Success = Textˉconcat(Success, " source-bytes=");
+    console.write_line(
+        Textˉconcat(Success, U32ˉformat(Bytesˉlength(Admitted.Input)))
+    );
+    return 0;
+}

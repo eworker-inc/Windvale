@@ -971,10 +971,12 @@ function Test-LanguageFrozenSourceDesignPath {
         'Specifications/Source-Naming.md',
         'Documents/Project/Windvale-Language-1.0-Design.md',
         'Documents/Project/Windvale-Language-1.0-Migration.md',
+        'Documents/Project/Windvale-Language-1.0-Migration-Evidence.md',
         'Documents/Project/Windvale-Language-1.0-Paper-Corpus.md',
         'Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md',
         'Documents/Project/Windvale-Language-1.0-Localization-Workloads.md',
-        'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt'
+        'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
+        'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
     )
 }
 
@@ -1117,6 +1119,13 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Build-Cached-Os-X64-Project-Wvbs') {
         $script:OsX64CodeEmissionDevelopmentRequiresAllTargets = $true
         Add-Suite 'os-x64-code-emission'
+        return
+    }
+    if ($Stem -in @(
+        'Compile-Project-2-With-Compiler',
+        'Run-Split-Compiler'
+    )) {
+        Add-Suite 'language-1-front-door'
         return
     }
     if ($Stem -in @(
@@ -1445,6 +1454,11 @@ foreach ($Path in $Paths) {
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
     } elseif ($Path -in @(
+        'Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj',
+        'Tools/Windvale.Build/Compiler-Admission-Driver.wv'
+    )) {
+        Add-Suite 'language-1-front-door'
+    } elseif ($Path -in @(
         'Compiler/Windvale/Source-Analysis-Core.wv',
         'Compiler/Windvale/Source-Emission-Core.wv',
         'Projects/Compiler/Windvale-Source-Analysis-Core.wvproj',
@@ -1462,7 +1476,10 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
+        'Libraries/Foundation/Values/Option.wv',
+        'Libraries/Foundation/Values/Result.wv',
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
+        'Projects/Tests/Language-1.0-Foundation-Generic-Result.wvproj',
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',

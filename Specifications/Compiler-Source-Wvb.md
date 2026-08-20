@@ -186,7 +186,9 @@ The backend accepts:
 - zero capabilities for a portable module or declarations from the complete current Seed capability catalog for hosted/system modules;
 - private or exported functions, static data, storage-free constants, records, enums, and variants in any valid source declaration order;
 - `[i32]`, `text`, and `bytes` static data;
-- immutable nominal record, enum, and variant declarations plus bounded sequence and local affine-builder shapes;
+- immutable nominal record, enum, and variant declarations, the exact
+  Foundation Option and Result generic variant families, plus bounded sequence
+  and local affine-builder shapes;
 - `void`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, and sequence function returns, parameters, explicitly typed or initializer-inferred locals, and temporaries, with builders restricted to verified locals;
 - literal operations produced directly or by typed-constant substitution, parameter/local load and store, static-data length and integer-array indexing, and function calls;
 - positional and named record construction through the same canonical operation, record field reads, enum constants, exact equality/inequality, and declared names;
@@ -196,8 +198,8 @@ The backend accepts:
 - variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, exact `try` propagation, `while`, `for`, `break`, and `continue`.
 
 `try` is source-only control-flow sugar. WVIR presents only its existing variant
-case test, branch, and return, so canonical WVB 1.11 gains no opcode, type, section,
-flag, or version change.
+case test, field extraction, construction, branch, and return, so canonical WVB
+gains no opcode, section, flag, or version change.
 
 The root owns the emitted module name, profile, capabilities, static data, and exports. Dependencies follow the WVSS contract: imports, records, enums, and exported functions only. Their functions become internal WVB functions. Invalid graph topology, dependency order/profile/shape, unknown or repeated capabilities, and portable-profile capabilities remain upstream semantic failures rather than being silently omitted.
 
@@ -273,6 +275,18 @@ WVSD assigns canonical nominal indices independently of source order or module o
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
 Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
+
+Before type emission, the backend scans function signatures and bindings in
+their canonical directory order for concrete Foundation generic shapes. It
+retains at most 256 unique shapes in deterministic first-use order. Each shape becomes one
+ordinary private WVB variant type whose fields use the expanded source argument
+shapes; all metadata and operation references use that resulting canonical Types
+index. The template Option and Result declarations remain ordinary nominal
+entries. Concrete private names use the fixed-width rank range `__WvZ000`
+through `__WvZ255`, so emitted Types order remains ordinal even past rank 9.
+They are deterministic emitter identities and are
+not public source names. Existing variant construction, test, field, runtime,
+and verifier rules execute every specialization.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 
@@ -454,6 +468,16 @@ and variant spans and releases descriptor fields before one retry. The
 Direct native lowering, browser packaging, and Windvale OS execution remain
 explicit subsets below WVB 1.16. Decision 0773 owns this scalar execution
 checkpoint without silently advancing those consumers.
+
+`Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv` exercises concrete
+Option and Result construction and matching, same-error/different-success
+`try`, statement `try`, explicit migration adapters, and 16 concrete
+specializations spanning private ranks 0 through 15. It emits deterministically
+as a 3,383-byte WVB with SHA-256
+`64da5d52c01301c54f9391c9f8cdc3f7a8000e7c21694b06baa096354ba1d09f`,
+passes the current compiler-aligned verifier, and executes with result `42`.
+Wrong arity, an extra argument, bare Result use, and a mismatched `try` error
+shape are rejected before WVB publication.
 
 ## Verification
 

@@ -541,10 +541,12 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
             let Symbolˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
                 Directory, Symbolˉentry + 12u32
             );
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Symbolˉmodule * 8u32;
-            let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Symbolˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Symbolˉmodule
+                );
             let Symbolˉfirst: u32 = U32ˉfromˉu8(
-                Bytesˉreadˉu8(Input, Sourceˉoffset + Symbolˉnameˉoffset)
+                Bytesˉreadˉu8(Symbolˉview.Source, Symbolˉnameˉoffset)
             );
             if Symbolˉfirst == Firstˉbyte {
                 Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Symbolˉindex));
@@ -1048,13 +1050,15 @@ export fn Compilerˉsourceˉsymbolsˉfindˉpriorˉinˉdirectory(
             }
         }
         if Isˉinˉnamespace {
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
-            let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Entryˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Entryˉmodule
+                );
             let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
             let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
             if Entryˉnameˉlength == Nameˉlength {
                 if Sourceˉset.Compilerˉsourceˉspansˉequal(
-                    Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
+                    Entryˉview.Source, Entryˉnameˉoffset, Entryˉnameˉlength,
                     Nameˉsource, Nameˉoffset, Nameˉlength
                 ) {
                     return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
@@ -1098,13 +1102,15 @@ export fn Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
             );
             let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
             let Entryˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
-            let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Entryˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Entryˉmodule
+                );
             let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
             let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
             if Entryˉnameˉlength == Nameˉlength {
                 if Sourceˉset.Compilerˉsourceˉspansˉequal(
-                    Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
+                    Entryˉview.Source, Entryˉnameˉoffset, Entryˉnameˉlength,
                     Nameˉsource, Nameˉoffset, Nameˉlength
                 ) {
                     return Compilerˉsourceˉsymbolsˉdirectoryˉentry(
@@ -1295,12 +1301,14 @@ export fn Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
         let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
         if Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) == Kindˉvalue {
             let Entryˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Entryˉmodule * 8u32;
-            let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Entryˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Entryˉmodule
+                );
             let Entryˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
             let Entryˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
             if Sourceˉset.Compilerˉsourceˉspansˉcompare(
-                Input, Sourceˉoffset + Entryˉnameˉoffset, Entryˉnameˉlength,
+                Entryˉview.Source, Entryˉnameˉoffset, Entryˉnameˉlength,
                 Nameˉsource, Nameˉoffset, Nameˉlength
             ) < 0 { Result = Result + 1u32; }
         }
@@ -1445,11 +1453,279 @@ export fn Compilerˉsourceˉsymbolsˉprimitiveˉshape(
     return 0u32;
 }
 
+export fn Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Nominal: Compilerˉsourceˉsymbolˉmatch
+) -> u32 {
+    if !Nominal.Found || Nominal.Kind !=
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+        return 0u32;
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Nominal.Module);
+    if View.Edition != 1u32 { return 0u32; }
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            View.Source, Nominal.Declarationˉoffset, 1u32, 1u32, true
+        );
+    var Family: u32 = 0u32;
+    if Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉoption"
+        ) && Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Declaration.Nameˉoffset, Declaration.Nameˉlength,
+            "Option"
+        ) && Declaration.Items == 2u32 {
+        Family = 1u32;
+    }
+    if Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉresult"
+        ) && Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Declaration.Nameˉoffset, Declaration.Nameˉlength,
+            "Result"
+        ) && Declaration.Items == 2u32 {
+        Family = 2u32;
+    }
+    if Family == 0u32 { return 0u32; }
+    let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source,
+            Declaration.Nameˉoffset + Declaration.Nameˉlength,
+            1u32, 1u32
+        );
+    if Left.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        return 0u32;
+    }
+    let Firstˉparameter: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Left.Nextˉoffset, Left.Nextˉline, Left.Nextˉcolumn
+        );
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+        View.Source, Firstˉparameter.Offset, Firstˉparameter.Length, "T"
+    ) { return 0u32; }
+    let Afterˉfirst: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Firstˉparameter.Nextˉoffset,
+            Firstˉparameter.Nextˉline, Firstˉparameter.Nextˉcolumn
+        );
+    if Family == 1u32 {
+        if Afterˉfirst.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            return 0u32;
+        }
+    } else {
+        if Afterˉfirst.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            return 0u32;
+        }
+        let Secondˉparameter: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Afterˉfirst.Nextˉoffset,
+                Afterˉfirst.Nextˉline, Afterˉfirst.Nextˉcolumn
+            );
+        if !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Secondˉparameter.Offset, Secondˉparameter.Length, "E"
+        ) { return 0u32; }
+        let Right: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Secondˉparameter.Nextˉoffset,
+                Secondˉparameter.Nextˉline, Secondˉparameter.Nextˉcolumn
+            );
+        if Right.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            return 0u32;
+        }
+    }
+    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Declaration.Bodyˉoffset, 1u32, 1u32
+        );
+    let Firstˉcase: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Brace.Nextˉoffset, Brace.Nextˉline, Brace.Nextˉcolumn
+        );
+    var Firstˉcaseˉvalid: bool = Compilerˉsourceˉsymbolsˉnameˉequals(
+        View.Source, Firstˉcase.Offset, Firstˉcase.Length, "Present"
+    );
+    if Family == 2u32 {
+        Firstˉcaseˉvalid = Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Firstˉcase.Offset, Firstˉcase.Length, "Valid"
+        );
+    }
+    if !Firstˉcaseˉvalid { return 0u32; }
+    let Firstˉleft: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Firstˉcase.Nextˉoffset,
+            Firstˉcase.Nextˉline, Firstˉcase.Nextˉcolumn
+        );
+    if Firstˉleft.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
+        return 0u32;
+    }
+    let Firstˉfield: Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
+        Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
+            View.Source, Firstˉleft.Nextˉoffset,
+            Firstˉleft.Nextˉline, Firstˉleft.Nextˉcolumn
+        );
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Firstˉfield.Nameˉoffset,
+            Firstˉfield.Nameˉlength, "Value"
+        ) || !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Firstˉfield.Typeˉoffset,
+            Firstˉfield.Typeˉlength, "T"
+        ) {
+        return 0u32;
+    }
+    let Firstˉright: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Firstˉfield.Nextˉoffset,
+            Firstˉfield.Nextˉline, Firstˉfield.Nextˉcolumn
+        );
+    if Firstˉright.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+        return 0u32;
+    }
+    let Firstˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Firstˉright.Nextˉoffset,
+            Firstˉright.Nextˉline, Firstˉright.Nextˉcolumn
+        );
+    let Secondˉcase: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Firstˉend.Nextˉoffset,
+            Firstˉend.Nextˉline, Firstˉend.Nextˉcolumn
+        );
+    if Family == 1u32 {
+        if !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Secondˉcase.Offset, Secondˉcase.Length, "Absent"
+        ) { return 0u32; }
+        let Absentˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Secondˉcase.Nextˉoffset,
+                Secondˉcase.Nextˉline, Secondˉcase.Nextˉcolumn
+            );
+        if Absentˉend.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
+            return 0u32;
+        }
+        return 1u32;
+    }
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+        View.Source, Secondˉcase.Offset, Secondˉcase.Length, "Failure"
+    ) { return 0u32; }
+    let Secondˉleft: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Secondˉcase.Nextˉoffset,
+            Secondˉcase.Nextˉline, Secondˉcase.Nextˉcolumn
+        );
+    if Secondˉleft.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
+        return 0u32;
+    }
+    let Secondˉfield: Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
+        Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
+            View.Source, Secondˉleft.Nextˉoffset,
+            Secondˉleft.Nextˉline, Secondˉleft.Nextˉcolumn
+        );
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Secondˉfield.Nameˉoffset,
+            Secondˉfield.Nameˉlength, "Error"
+        ) || !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Secondˉfield.Typeˉoffset,
+            Secondˉfield.Typeˉlength, "E"
+        ) {
+        return 0u32;
+    }
+    let Secondˉright: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Secondˉfield.Nextˉoffset,
+            Secondˉfield.Nextˉline, Secondˉfield.Nextˉcolumn
+        );
+    if Secondˉright.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+        return 0u32;
+    }
+    return 2u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(
+    Shape: u32
+) -> bool {
+    return Shape >= 1610612736u32 && Shape < 1610629120u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(
+    Shape: u32
+) -> bool {
+    return Shape >= 1879048192u32 && Shape <= 2147483647u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
+    Shape: u32
+) -> bool {
+    return Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Shape) ||
+        Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape);
+}
+
+export fn Compilerˉsourceˉsymbolsˉgenericˉcompactˉshape(
+    Shape: u32
+) -> u32 {
+    if Shape >= 1u32 && Shape <= 16u32 { return Shape; }
+    if Shape >= 65536u32 && Shape < 66560u32 {
+        return 4096u32 + Shape - 65536u32;
+    }
+    if Shape >= 131072u32 && Shape < 132096u32 {
+        return 8192u32 + Shape - 131072u32;
+    }
+    if Shape >= 196608u32 && Shape < 197632u32 {
+        return 12288u32 + Shape - 196608u32;
+    }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
+    Compact: u32
+) -> u32 {
+    if Compact >= 1u32 && Compact <= 16u32 { return Compact; }
+    if Compact >= 4096u32 && Compact < 5120u32 {
+        return 65536u32 + Compact - 4096u32;
+    }
+    if Compact >= 8192u32 && Compact < 9216u32 {
+        return 131072u32 + Compact - 8192u32;
+    }
+    if Compact >= 12288u32 && Compact < 13312u32 {
+        return 196608u32 + Compact - 12288u32;
+    }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉfoundationˉresultˉvalidˉshape(
+    Shape: u32
+) -> u32 {
+    if !Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape) {
+        return 0u32;
+    }
+    return Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
+        (Shape - 1879048192u32) / 16384u32
+    );
+}
+
+export fn Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(
+    Shape: u32
+) -> u32 {
+    if !Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape) {
+        return 0u32;
+    }
+    let Payload: u32 = Shape - 1879048192u32;
+    return Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
+        Payload - (Payload / 16384u32) * 16384u32
+    );
+}
+
 export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
     Binding: Compilerˉsourceˉtypeˉbinding
 ) -> u32 {
     let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
     if Primitive != 0u32 { return Primitive; }
+    if Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
+        Binding.Nominalˉindex
+    ) { return Binding.Nominalˉindex; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence ||
         Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
         return Binding.Nominalˉindex;
@@ -1489,6 +1765,9 @@ export fn Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
         Shape < 131072u32 + Records + Enums { return true; }
     if Shape >= 196608u32 + Records + Enums &&
         Shape < 196608u32 + Records + Enums + Variants { return true; }
+    if Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
+        return true;
+    }
     return false;
 }
 
@@ -1667,6 +1946,102 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
             Nominalˉindex,
             Match.Module,
             Token
+        );
+    }
+    let Genericˉfamily: u32 = Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
+        Input, Scan, Match
+    );
+    let Genericˉargumentsˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Qualified.Nextˉoffset,
+            Qualified.Nextˉline, Qualified.Nextˉcolumn
+        );
+    if Genericˉargumentsˉstart.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        if Genericˉfamily == 0u32 {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉargumentsˉstart
+            );
+        }
+        let Genericˉfirstˉargument: Compilerˉsourceˉtypeˉbinding =
+            Compilerˉsourceˉsymbolsˉbindˉtype(
+                Input, Scan, Directory, Lookup, Visibility, Owner, Source,
+                Genericˉargumentsˉstart.Nextˉoffset, Genericˉargumentsˉstart.Nextˉline,
+                Genericˉargumentsˉstart.Nextˉcolumn, Records, Enums, false
+            );
+        if Genericˉfirstˉargument.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+            return Genericˉfirstˉargument;
+        }
+        let Genericˉfirstˉshape: u32 = Compilerˉsourceˉsymbolsˉgenericˉcompactˉshape(
+            Compilerˉsourceˉsymbolsˉtypeˉshape(Genericˉfirstˉargument)
+        );
+        if Genericˉfirstˉshape == 0u32 {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Invalidˉcollectionˉelement,
+                Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉargumentsˉstart
+            );
+        }
+        let Genericˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉfirstˉargument.Nextˉoffset,
+                Genericˉfirstˉargument.Nextˉline, Genericˉfirstˉargument.Nextˉcolumn
+            );
+        var Genericˉshape: u32 = 1610612736u32 + Genericˉfirstˉshape;
+        var Genericˉright: Sourceˉlexer.Compilerˉsourceˉtoken = Genericˉseparator;
+        if Genericˉfamily == 2u32 {
+            if Genericˉseparator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                    Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉseparator
+                );
+            }
+            let Genericˉsecondˉargument: Compilerˉsourceˉtypeˉbinding =
+                Compilerˉsourceˉsymbolsˉbindˉtype(
+                    Input, Scan, Directory, Lookup, Visibility, Owner, Source,
+                    Genericˉseparator.Nextˉoffset, Genericˉseparator.Nextˉline,
+                    Genericˉseparator.Nextˉcolumn, Records, Enums, false
+                );
+            if Genericˉsecondˉargument.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+                return Genericˉsecondˉargument;
+            }
+            let Genericˉsecondˉshape: u32 = Compilerˉsourceˉsymbolsˉgenericˉcompactˉshape(
+                Compilerˉsourceˉsymbolsˉtypeˉshape(Genericˉsecondˉargument)
+            );
+            if Genericˉsecondˉshape == 0u32 {
+                return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                    Compilerˉsourceˉsymbolˉstatus.Invalidˉcollectionˉelement,
+                    Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉseparator
+                );
+            }
+            Genericˉshape = 1879048192u32 + Genericˉfirstˉshape * 16384u32 + Genericˉsecondˉshape;
+            Genericˉright = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉsecondˉargument.Nextˉoffset,
+                Genericˉsecondˉargument.Nextˉline, Genericˉsecondˉargument.Nextˉcolumn
+            );
+        }
+        if Genericˉright.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            Genericˉright = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn
+            );
+        }
+        if Genericˉright.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉright
+            );
+        }
+        return Compilerˉsourceˉtypeˉbinding(
+            Compilerˉsourceˉsymbolˉstatus.Valid,
+            Kind, Match.Kind, Genericˉshape, Match.Module,
+            Token.Offset, Genericˉright.Nextˉoffset - Token.Offset,
+            Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn,
+            Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn
+        );
+    }
+    if Genericˉfamily != 0u32 {
+        return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+            Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+            Kind, Match.Kind, Nominalˉindex, Match.Module, Token
         );
     }
     if Forˉfield {
@@ -4145,6 +4520,15 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉvariant(
     Declarationˉline: u32,
     Declarationˉcolumn: u32
 ) -> Compilerˉsourceˉsymbolˉsummary {
+    let Template: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolˉmatch(
+        true, Module, Declaration.Kind, Declaration.Declarationˉoffset,
+        Declaration.Nameˉoffset, Declaration.Nameˉlength, 0u32
+    );
+    if Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
+        Input, Scan, Template
+    ) != 0u32 {
+        return Counts;
+    }
     let Nameˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
         Source, Declaration.Declarationˉoffset, Declarationˉline, Declarationˉcolumn,
         Declaration.Nameˉoffset

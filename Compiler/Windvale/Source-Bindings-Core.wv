@@ -700,6 +700,9 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
             if Shape >= 1073741824u32 {
                 if Shape < 1610612736u32 { Shapeˉvalid = true; }
             }
+            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
+                Shape
+            ) { Shapeˉvalid = true; }
         }
         if !Shapeˉvalid { return false; }
         let Symbolˉentry: u32 = 16u32 + Function * 24u32;
@@ -716,16 +719,16 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         } else {
             if Kind == 1u32 { return false; }
         }
-        let Sourceˉentry: u32 = Scan.Directoryˉoffset + Module * 8u32;
-        let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
-        let Sourceˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry + 4u32);
+        let Sourceˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+        let Sourceˉlength: u32 = Bytesˉlength(Sourceˉview.Source);
         if Nameˉoffset >= Sourceˉlength { return false; }
         if Nameˉlength == 0u32 { return false; }
         if Nameˉlength > Sourceˉlength - Nameˉoffset { return false; }
         if Scopeˉstart >= Scopeˉend { return false; }
         if Scopeˉend > Sourceˉlength { return false; }
         if !Compilerˉsourceˉbindingsˉidentifierˉisˉvalid(
-            Input, Sourceˉoffset + Nameˉoffset, Nameˉlength
+            Sourceˉview.Source, Nameˉoffset, Nameˉlength
         ) { return false; }
         if Index == 0u32 {
             if Slot != 0u32 { return false; }
@@ -874,14 +877,16 @@ export fn Compilerˉsourceˉbindingsˉfindˉdeclaration(
         var Candidate: bool = Entryˉkind == Kind;
         if Target != Query.Target { Candidate = false; }
         if Candidate {
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Target * 8u32;
-            let Targetˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Targetˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Target
+                );
             let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
             let Targetˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
             if Targetˉlength == Query.Nameˉlength {
                 if Sourceˉset.Compilerˉsourceˉspansˉequal(
                     Source, Query.Nameˉoffset, Query.Nameˉlength,
-                    Input, Targetˉsourceˉoffset + Targetˉoffset, Targetˉlength
+                    Targetˉview.Source, Targetˉoffset, Targetˉlength
                 ) {
                     var Accessible: bool = Target == Owner;
                     if Query.Qualified {
@@ -1171,15 +1176,17 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
         if Callableˉkind != Compilerˉsourceˉcallableˉkind.None {
             let Target: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry);
             var Candidate: bool = Target == Query.Target;
-            let Sourceˉentry: u32 = Scan.Directoryˉoffset + Target * 8u32;
-            let Targetˉsourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Sourceˉentry);
+            let Targetˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Target
+                );
             let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 12u32);
             let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
             if Candidate {
             if Nameˉlength == Query.Nameˉlength {
                 if Sourceˉset.Compilerˉsourceˉspansˉequal(
                     Source, Query.Nameˉoffset, Query.Nameˉlength,
-                    Input, Targetˉsourceˉoffset + Nameˉoffset, Nameˉlength
+                    Targetˉview.Source, Nameˉoffset, Nameˉlength
                 ) {
                     var Items: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 20u32);
                     if Callableˉkind == Compilerˉsourceˉcallableˉkind.Capability {

@@ -7,7 +7,7 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 and 2 are complete and Slice 3 is active. The existing compiler admits
+Migration Slices 1 through 3 are complete and Slice 4 is next. The existing compiler admits
 an edition-1 source descriptor only through an explicitly supplied, hash-pinned
 source-input lock and composite source profile. It resolves the frozen `en@1`
 component chain, exposes the remaining bytes as an immutable view, parses the
@@ -25,12 +25,16 @@ descriptorless Seed retain their prior behavior.
 
 Value-producing `if` and exhaustive enum/variant `match` now cross the reference
 compiler and scalar runtime, completing Slice 2's planned value-and-control
-compiler surface. The first Slice 3 checkpoint adds value-producing `try` over
-a strict concrete specialization of the frozen Foundation Result identity. It
-extracts `Valid.Value`, propagates the original `Failure` value unchanged, and
-rejects structural lookalikes; generic Foundation publication, distinct success
-result shapes, explicit error adapters, and manual-status migration remain open.
-Final paired-host and broad integration evidence remains
+compiler surface. Slice 3 publishes the exact edition-1
+`Foundationˉoption.Option<T>` and `Foundationˉresult.Result<T, E>` variant
+identities, admits their full-arity type uses, and emits every used concrete
+specialization as an ordinary canonical WVB variant. Value-producing `try`
+extracts `Valid.Value` and permits `Result<T, E>` to propagate into
+`Result<U, E>` by reconstructing only the failure case when `T` and `U` differ.
+One fixture migrates a manual `Valid`/`Value`/`Error` record through an explicit
+domain-error adapter. General generic functions, generic user declarations,
+collections, and the repository-wide Seed-to-edition-1 source migration remain
+Slice 4 or later work. Final paired-host and broad integration evidence remains
 deferred to the seven-slice integration gate. Localized token execution,
 public-library vocabulary lookup, Unicode identifier admission, and paired-host
 Language 1.0 qualification also remain pending.
@@ -47,6 +51,13 @@ The verifier binds the exact replacement source frozen by
 | Frozen inputs | 250 |
 | Frozen input bytes | 1,724,854 |
 | Frozen aggregate SHA-256 | `fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a` |
+
+The immutable Decision 0767 semantic identity above does not change. The
+current migration-verifier closure additionally contains the implementation
+catalog for the already frozen `Foundationˉresult` public identity and the
+updated source-input lock. That closure contains 251 files and 1,726,783 bytes;
+its entry stream is 46,260 bytes with SHA-256
+`de39b8f4042c98d34ff3676ec111a7ffca6e91c529f0e40f2250a824c54ad415`.
 
 `Tests/Native/Language-1.0-Fixture-Inventory.txt` further fixes 16 workload
 bundles containing 72 `.wv` source fixtures and 482,325 source bytes. The
@@ -107,7 +118,7 @@ identity/version/edition and fixed component chain, and publishes one resolved
 binding only after all checks succeed. The implemented English profile digest is
 `e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27`
 under lock digest
-`4c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3`.
+`9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e`.
 
 The compiler then creates a private WVSS 2 view carrying the resolved edition,
 binding, and descriptor-origin length for each module. Downstream graph, symbol,
@@ -290,37 +301,63 @@ in 371.69 seconds, including every retained numeric, unit/never, and WVB 1.16
 variant phase. Heavy storage, broad OS, paired-host, and complete Qualification
 gates remain deferred to the final seven-slice integration gate.
 
-## Slice 3 value-producing `try` checkpoint
+## Slice 3 typed failure completion
 
-The body parser admits `try` at unary precedence and WIR compiles its operand
-exactly once. Edition-1 use requires a nominal `Result` declaration in the
-edition-1 `Foundationˉresult` module with exactly the ordered cases
-`Valid(Value: T)` and `Failure(Error: E)`. A same-shaped variant in another
-module, a changed field name, an additional case, or a scalar operand is
-rejected without output.
+The declaration parser accepts generic parameter lists on variants, but source
+symbols admit specialization only for the two exact Foundation modules and
+declarations. `Option` requires `<T>` and the exact ordered `Present(Value: T)`
+and `Absent` cases. `Result` requires `<T, E>` and the exact ordered
+`Valid(Value: T)` and `Failure(Error: E)` cases. Type uses require exact arity
+and may currently substitute an implemented primitive or one of the first 1,024
+ordinary record, enum, or variant identities. Bare use, extra or missing type
+arguments, unsupported nested shapes, and structural lookalikes are rejected.
 
-The existing result value is tested once. Its failure edge returns that original
-value unchanged; its success edge extracts `Value` and resumes the surrounding
-expression. Statement `try` uses the same path and discards the extracted value.
-The accepted checkpoint requires the operand and containing return value to use
-the same concrete Result shape. This is a strict pre-generics subset: the final
-`Result<T, E>` to `Result<U, E>` rule remains closed until bounded generic
-specialization can prove exact shared `E`.
+The compiler carries each specialization as a compact typed shape through WVLB
+and WVIR. WVB emission collects at most 256 distinct used specializations,
+orders them by exact shape, and emits them as ordinary private variant types.
+The canonical Foundation template declarations remain ordinary nominal types;
+specialized private names are deterministic implementation identities and do
+not replace the public source name. No WVB opcode, execution rule, or minor
+version was added.
 
-`Result-Try.wv` exercises valid extraction, unchanged failure propagation, and
-statement-form reuse. It compiles twice to the same 1,430-byte WVB with SHA-256
-`afa5b9ca60eacb30042a8c6621f12969d06a105510a3379b26b49e883fb9b0cf`,
-passes the current compiler-aligned verifier, and returns `42` through the
-source-built scalar runner. The focused Windows owner passed all 141 cases over
-10 visible phases. The matching Linux gate is encoded but not claimed as local
-execution evidence.
+`try` evaluates its operand once, requires exact Foundation `Result` identities
+on both sides, and compares the expanded error shapes exactly. The success edge
+extracts `Valid.Value`. If the result shapes are identical, the failure edge
+returns the original value. If only the success shapes differ, it extracts the
+same `E` and constructs `Result<U, E>.Failure`. Statement `try` uses the same
+branch and discards the success value. Different error domains require an
+explicit source adapter and never receive inferred conversion or overload
+selection.
 
-The 501-function compiler contains 964,105 code bytes and 1,164,935 module
-bytes. Native planning reports 33,452,623 machine-code bytes and 2,472
-relocation bytes. The unchanged segmented stage accepts a 33,482,742-byte
-object package across 42 chunks with a 528-byte manifest. Unary lowering and
-repeated symbol guards were consolidated to remain below the existing output
-bound; no limit was widened.
+`Foundation-Generic-Result.wv` exercises Option presence/absence, Result
+construction and matching, same-error/different-success `try`, statement `try`,
+a manual status-record adapter, an explicit domain-error adapter, and 16
+concrete specializations that cross the rank-9/rank-10 private-name boundary.
+Analysis publishes 3,169 source bytes, a 104-byte WVCA manifest, 900 binding
+bytes, and 5,792 WIR bytes. Two emissions produce the same 3,383-byte WVB with
+SHA-256
+`64da5d52c01301c54f9391c9f8cdc3f7a8000e7c21694b06baa096354ba1d09f`.
+The current compiler-aligned verifier accepts it and the source-built scalar
+runner returns `42`. Four focused malformed cases reject wrong arity, an extra
+argument, bare Result use, and mismatched `try` error types without publishing
+analysis evidence or WVB. The Windows and Linux front doors encode this as an
+eleventh visible phase. The complete 146-case Windows owner passes; the Linux
+execution and paired-host claim remain final-integration work.
+
+The current source-profile admission product contains 40 functions in an
+82,781-byte WVB and packages as a 797,184-byte Windows x64 executable in one
+fragment. The analyzer contains 403 reachable functions in a 976,748-byte WVB
+and packages as a 31,013,888-byte executable in eight fragments. The emission
+product contains 368 functions in a 775,522-byte WVB and packages as a
+17,712,128-byte executable in five fragments. All remain inside the existing
+segmented limits; no compiler, object, fragment, or runtime limit was raised.
+
+The complete 524-function compiler still rebuilds as a 1,165,567-byte WVB, but
+its native image crosses the unchanged monolithic staging ceiling. The focused
+front door therefore retains that WVB rebuild as self-hosting evidence and
+executes current source through admission, analysis, and emission products.
+All 146 focused cases pass through that path. Broad storage and OS gates remain
+deferred to final integration because none of these products changes them.
 
 ## Slice 3 compiler-capacity checkpoint
 
@@ -379,9 +416,9 @@ of cache hits; five Windows x64 warm samples have a 143.2-millisecond median,
 down from the earlier approximately 285-millisecond hit.
 
 The cache admits only unoptimized `portable-wvb-v1` Project 2 input and is not
-qualification evidence. Generic specialization, distinct-success-shape `try`,
-manual status migration, Project 3 profile-aware caching, paired-host equality,
-and final broad integration remain open.
+qualification evidence. Project 3 profile-aware caching, general Slice 4
+generic resolution and collections, repository-wide source migration,
+paired-host equality, and final broad integration remain open.
 
 ## Slice 2 named variant fields
 

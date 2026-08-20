@@ -15,10 +15,10 @@ const FREEZE_PATH = "Documents/Project/Windvale-Language-1.0-Replacement-Source-
 const INVENTORY_PATH = "Tests/Native/Language-1.0-Fixture-Inventory.txt";
 const FREEZE_BYTES = 3702;
 const FREEZE_SHA256 = "c9517841eae6b6e86778cb1dd88711feb38929dec8fe79e084eec44fa22c512a";
-const COMPLETE_COUNT = 250;
-const COMPLETE_BYTES = 1724854;
-const COMPLETE_STREAM_BYTES = 46043;
-const COMPLETE_SHA256 = "fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a";
+const COMPLETE_COUNT = 251;
+const COMPLETE_BYTES = 1726783;
+const COMPLETE_STREAM_BYTES = 46260;
+const COMPLETE_SHA256 = "de39b8f4042c98d34ff3676ec111a7ffca6e91c529f0e40f2250a824c54ad415";
 
 function Fail(message) {
     throw new Error(message);
@@ -144,7 +144,7 @@ const paper = Recursiveˉfiles("Documents/Project/Language-1.0-Paper-Corpus");
 const localization = Recursiveˉfiles("Documents/Project/Language-1.0-Localization-Workloads");
 Checkˉset("decisions", decisions, 16, 126070, 2603, "39573331530bceee4481f9758f2f98adc1911b5df58275769ee482d0d0567c0b");
 Checkˉset("paper corpus", paper, 158, 980348, 28885, "56a33590b66a51654f0e98e780767ba249e711c742bead7846bb986cb468798e");
-Checkˉset("localization corpus", localization, 63, 187507, 12718, "67619c45ddc2f038e8b509a4bcf068e5d0cce1799ee52a90b7dd12f84f1526ac");
+Checkˉset("localization corpus", localization, 64, 189436, 12935, "4ce7a72ce10c0cab9e1d2a4f8a2c08b2aa90ec1a2cdb7ced1553cfb364399b81");
 const complete = [...core, ...decisions, ...paper, ...localization]
     .sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
 Checkˉset("complete candidate", complete, COMPLETE_COUNT, COMPLETE_BYTES, COMPLETE_STREAM_BYTES, COMPLETE_SHA256);
