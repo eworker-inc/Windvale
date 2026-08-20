@@ -10,7 +10,7 @@ Each kind of information has one primary home. Link to that source instead of co
 | --- | --- | --- |
 | Stable public introduction and working entry points | [Root README](../README.md) | The project's purpose, supported entry points, or top-level navigation changes |
 | Current implemented and qualified state, immediate transfer, and working paths | [Progress](Project/Progress.md) | The measured project state changes |
-| Forward phase gates, sequencing, and next deliverables | [Roadmap](Project/Roadmap.md) | The route, phase gate, or intended order changes |
+| Forward product gates, dependencies, and next deliverables | [Roadmap](Project/Roadmap.md) | A workstream, completion gate, or intended dependency changes |
 | Recovery, baseline, and product tag meanings | [Release names and tags](Project/Release-Names-And-Tags.md) | A release promise or tag convention changes |
 | Current normative behavior and formats | [Specifications](../Specifications/README.md) | A contract changes |
 | Durable component ownership and design boundaries | [Architecture](Architecture/) | An enduring boundary changes |
@@ -23,11 +23,11 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 ## Current project state
 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
-- [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
+- [Roadmap](Project/Roadmap.md) — forward product workstreams, completion gates, dependencies, and next deliverables
 - [Filesystem implementation plan](Project/Windvale-Filesystem-Implementation-Plan.md) — shared semantics, Windows/Linux adapters, isolated guest service, FAT32-first interoperability, and the gate for later NTFS/ext4 or a native format
 - [Networking-foundation implementation plan](Project/Windvale-Networking-Foundation-Implementation-Plan.md) — shared operation/address contracts, host providers, deterministic packet evidence, and isolated guest networking
-- [Release names and tags](Project/Release-Names-And-Tags.md) — separate recovery archives, qualified baselines, and `v0.y.z` product promises
-- [Windvale 0.2.0 connected-services release plan](Project/Windvale-0.2.0-Connected-Services-Release-Plan.md) — selected database-service rewrite, Windows/Debian service lifecycle, connected installer and official repository, external-model gateway, release gates, and nonblocking OS inclusion policy
+- [Release names and tags](Project/Release-Names-And-Tags.md) — separate recovery archives, qualified baselines, the published 0.1 preview, and the direct `v1.0.0` target
+- [Windvale 1.0 product plan](Project/Windvale-1.0-Product-Plan.md) — required Language, Libraries, WVDB, package/service, support, qualification, and distribution gates
 - [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced native-only tree and immutable Stage 0 recovery identity
 - [Native verification owners](Decisions/0589-Separate-Historical-Retirement-From-Live-Native-Verification.md) — frozen `v0.1.0` retirement evidence, a current 92-owner registry, focused development selection, and explicit qualification
 - [Measured native retirement sharding](Decisions/0550-Measured-Native-Retirement-Sharding.md) — historical cold four-way host sharding and exact 52-suite/3,287-case qualification evidence

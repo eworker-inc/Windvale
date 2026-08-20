@@ -1,19 +1,23 @@
 # Windvale development roadmap
 
-> Status: Active dependency-based forward plan after completed Milestones 1
-> through 4, the signed `v0.1.0` preview, and selection of Milestone 5 / the
-> future `v0.2.0` connected-services preview on 15 August 2026.
+> Status: Active dependency-based plan for the direct Windvale 1.0 product
+> target accepted on 20 August 2026. Earlier numbered milestones remain
+> historical evidence rather than the forward planning model.
 
 ## Current planning boundary
 
-Preserve the completed 0.1 product path and Milestone 4 offline lifecycle while
-executing the selected
-[Windvale 0.2.0 connected-services plan](Windvale-0.2.0-Connected-Services-Release-Plan.md).
-Milestone 5 requires the native EWorker database rewrite, Windows/Debian host
-service lifecycle, official connected package repository, and one real
-external-model gateway. OS-1 continues independently; ready qualified OS work
-is represented accurately at release freeze but unfinished OS work does not
-block the host preview.
+Preserve the signed 0.1 preview and every qualified package, installation,
+network, compiler, and OS foundation while executing the
+[Windvale 1.0 product plan](Windvale-1.0-Product-Plan.md). Decision 0800 targets
+`v1.0.0` directly; no `v0.2.0` product release is planned. Active work is grouped
+by product workstream and completion gate, not by numbered release stages.
+
+Language compiler slices remain bounded implementation and evidence units under
+the exact source design frozen by Decision 0767. They do not reopen the freeze
+or define public maturity levels. WVDB is the Windvale-owned database specified
+by Decision 0790, not an EWorker rewrite or external parity exercise. OS-1
+continues independently; a complete general-purpose OS does not block the
+Windows/Linux host product.
 
 Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
@@ -115,9 +119,9 @@ token execution, and paired-host conformance remain later gates.
 
 ## How to read this roadmap
 
-This file contains forward milestones, their dependency order, completion
-gates, and the standing of already-earned evidence. It is not an implementation
-diary or a numbered maturity ladder.
+This file contains forward product workstreams, their dependency order,
+completion gates, and the standing of already-earned evidence. It is not an
+implementation diary or a public numbered maturity ladder.
 
 - [Progress.md](Progress.md) records current measured state.
 - [Seed-Verification-Evidence.md](Seed-Verification-Evidence.md) records exact
@@ -128,11 +132,9 @@ diary or a numbered maturity ladder.
 Completed migration detail remains available through Decisions 0057, 0178,
 0213, 0525, and 0526 and Git history. It is not repeated here.
 
-The 14 August 2026 rebaseline preserves every accepted gate while correcting
-the earlier implied sequence. Former Milestone 4 is now product Milestone 3
-because it depends on Milestone 2 but not on the former Milestone 3. The former
-Milestone 3 is now parallel track OS-1. Historical decisions and commits keep
-their original milestone wording; this mapping prevents renumbering history.
+Historical decisions and commits keep their original milestone wording and
+numbers. Decision 0800 does not renumber or erase that evidence; it ends their
+use as the active forward product structure.
 
 ## Completed foundation
 
@@ -225,17 +227,17 @@ Milestone 2 subsequently closed the package-backed application, and Milestone 3
 closed with the signed `v0.1.0` preview. Full qualification remains a separate
 deliberate selection for later releases and promotions.
 
-## Completed milestones and active track
+## Qualified foundations and active product target
 
 | Work | Standing | Dependency |
 | --- | :---: | --- |
-| Milestone 1: predictable development feedback | ✅ Complete | Closed foundation; preserve its bounded workflow. |
+| Predictable development feedback | ✅ Qualified foundation | Preserve its bounded workflow. |
 | Native-only baseline promotion checkpoint | ✅ Qualified state / optional tag | The `v0.1.0` commit passed explicit post-archive dual-host qualification; a second checkpoint tag is optional. |
-| Milestone 2: package-backed host application | ✅ Complete | Both permanent owners pass on Windows and Linux under Decision 0561. |
-| Milestone 3: Windvale 0.1 preview | ✅ Complete | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
-| Milestone 4: offline package lifecycle | ✅ Complete | Two-package admission, immutable generations, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall pass on Windows and Linux in run `31906316540`. |
-| Milestone 5: Windvale 0.2.0 connected services | 🎯 Selected | Complete the native database service, host service manager, signed online repository/installer, and one external-model gateway under Decision 0595. |
-| Parallel track OS-1: launch and service composition | 🔵 Ongoing | Shares portable contracts where useful and remains independent of the completed host preview. |
+| Package-backed host application | ✅ Qualified foundation | Both permanent owners pass on Windows and Linux under Decision 0561. |
+| Windvale 0.1 preview | ✅ Published history | The signed `v0.1.0` tag and immutable preview release retain the final installers, envelope, and paired qualification. |
+| Offline package lifecycle | ✅ Qualified foundation | Two-package admission, immutable generations, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall pass on Windows and Linux in run `31906316540`. |
+| Windvale 1.0 host product | 🎯 Active target | Complete the required Language, Libraries, WVDB, package/service, operations, support, and integrated qualification gates under Decision 0800. |
+| Windvale OS | 🔵 Independent workstream | Shares portable contracts where useful and retains its own exact qualification boundary. |
 
 The completed 0.1 product path was:
 
@@ -245,19 +247,19 @@ A completed focused gate remains complete while its relevant inputs and contract
 stay unchanged. Later integrated evidence may consume that result; commits and
 pushes do not by themselves require it to be rerun.
 
-## Milestone 4: offline package lifecycle — complete
+## Historical completion record: offline package lifecycle
 
 [Decision 0590](../Decisions/0590-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
 selects installer/tool users as the primary audience and an offline
 install/activate/recover/rollback demonstration as the finish. Networking, new
-language semantics, and broader host authority are excluded. Completion is a
-milestone checkpoint and does not publish `v0.2.0`.
+language semantics, and broader host authority were excluded. Completion closed
+that bounded historical gate without publishing another product release.
 
 ### Selection record
 
 | Choice | Advantages | Costs and risks | Standing |
 | --- | --- | --- | --- |
-| **Offline package lifecycle — selected** | Makes installation maintainable; gives `wv install`, generations, recovery, and rollback a real product boundary; reuses the completed 0.1 trust and installer work; remains testable without public infrastructure. | Requires generalizing the bounded package/store path and designing durable activation carefully; does not by itself advance Windvale OS. | Completed Milestone 4. |
+| **Offline package lifecycle — selected** | Makes installation maintainable; gives `wv install`, generations, recovery, and rollback a real product boundary; reuses the completed 0.1 trust and installer work; remains testable without public infrastructure. | Requires generalizing the bounded package/store path and designing durable activation carefully; does not by itself advance Windvale OS. | Completed historical gate. |
 | Complete OS-1 composition | Advances Windvale's defining vertical-integration goal and closes already-started launch, provider, and supervision contracts. | Larger integration/debugging surface and less immediate value to installer users. | Continue as parallel OS-1 work. |
 | Durable application/database increment | Produces another useful workload and can select the smallest necessary language/library improvements. | Can become an open-ended database project without a sharply bounded user scenario. | Continue independently when a named workload supplies the gate. |
 
@@ -307,43 +309,36 @@ separate 13-case owner covers interrupted-uninstall recovery and five safety
 rejections. Exact implementation commit `df2d15dad0434182b74ad7ae357b4596d4aef82d`
 passed both owners on Windows and Linux in GitHub run `31906316540`; the focused
 jobs took 1 minute 11 seconds and 38 seconds respectively, and the aggregate gate
-passed. Milestone 4 is closed without a `v0.2.0` tag or release. Signed
+passed. The offline lifecycle gate is closed without a new product tag or release. Signed
 revocation/minimum-version policy belongs to the later security/update boundary
 and is not silently approximated by this offline gate.
 
-## Milestone 5: Windvale 0.2.0 connected services — selected
+## Windvale 1.0 host product — active target
 
-[Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
-selects one integrated user outcome: bootstrap Windvale online on Windows or
-Debian, install signed packages from the official repository, register and run
-the native Windvale Database Service, and call one external model through a
-local provider-neutral gateway. The complete requirements and dependency map
-live in the
-[canonical release plan](Windvale-0.2.0-Connected-Services-Release-Plan.md).
+[Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md) supersedes the
+future `v0.2.0` product selection in Decision 0595. The next intended product
+tag is `v1.0.0`, and it waits for the complete
+[Windvale 1.0 product gate](Windvale-1.0-Product-Plan.md).
 
-The database is the database portion of EWorker Data Service rewritten in
-Windvale. Its separate C# implementation supplies a pinned feature inventory,
-provenance input, fixtures, and differential oracle only; managed source and
-runtime do not return to Windvale `main` or ship as the `0.2.0` database.
+The required workstreams are:
 
-The milestone has four required product lanes:
+1. implement and qualify the frozen Language 1.0 contract through the shared
+   compiler, verified representation, runtime, and native paths;
+2. specify and implement the required Windvale Libraries 1.0 Foundation, Data,
+   and Backend modules for ordinary bounded data services;
+3. complete WVDB 1.0 as a Windvale-owned production-usable database with its
+   accepted table and typed-relationship profiles, transactions, queries,
+   indexes, durability, full backup/restore, service, operations, and
+   conformance;
+4. integrate immutable packages, signed release admission, installers,
+   service lifecycle, safe upgrade/rollback/removal, and recovery; and
+5. pass the exact Windows/Linux security, resource, determinism, compatibility,
+   support, and release qualification gates.
 
-1. the selected full native database-service parity profile;
-2. portable `wv service` lifecycle over Windows SCM and Debian `systemd`;
-3. shared secure networking plus an official signed online package repository
-   with offline-equivalent object identity; and
-4. one real external-model adapter behind the local gateway.
-
-These lanes use focused development owners and may complete in parallel. The
-release tag waits for their integrated gate, safe installer/service
-upgrade/rollback/removal, deterministic hostile-input evidence, complete
-Windows/Debian qualification, and signed release envelope. No `v0.2.0` tag
-exists yet.
-
-OS-1 remains a parallel track. Accepted source present at freeze belongs to the
-release source state; an OS image or broader OS claim is published only if its
-own named gate is ready. OS incompleteness neither blocks the host release nor
-becomes an undocumented success claim.
+Workstreams may advance in parallel through focused slices. An external-model
+gateway remains a useful optional consumer of networking and backend libraries,
+not an automatic 1.0 release requirement. Windvale OS retains an independent
+qualification path and does not become an undocumented host-product claim.
 
 ## Milestone 2: package-backed host application — complete
 
@@ -604,14 +599,14 @@ provenance, revocation, and consensus boundaries are named.
 
 ### Database and storage
 
-- Use the pinned EWorker Data Service parity ledger and native service product
-  as the priority selectors.
-- Complete engine, record, query, transaction, recovery, migration, operations,
-  protocol, and concurrency work only for a classified release requirement or
-  an independently accepted reusable contract.
-- Do not silently inherit the C# file format, wire protocol, managed runtime, or
-  every historical feature. Preserve required compatibility through an explicit
-  format, adapter, or migration decision with independent evidence.
+- Use the accepted [WVDB 1.0 specification plan](WVDB-1.0-Specification-Plan.md)
+  and its decision register as the product authority.
+- Complete entity/table, relationship, index, query, transaction, storage,
+  durability, backup/restore, service, operations, and conformance work only
+  through explicit WVDB contracts with finite limits and owners.
+- Treat established databases and earlier implementations as comparative
+  evidence only. Do not silently inherit an external file format, wire protocol,
+  runtime, feature inventory, or compatibility promise.
 
 ### Agent runtime
 
@@ -779,12 +774,13 @@ provenance, revocation, and consensus boundaries are named.
 
 ### Browser, shell, and virtualization
 
-Hosted resolver/secure-stream/HTTP work is now on the Milestone 5 critical path
-for the official repository and external-model gateway. Browser Workbench may
-consume only the local gateway and never owns provider credentials. Shell,
-virtualization, and the Windvale OS packet/device path retain their independent
-architecture gates and do not become release blockers without another direct
-product or recovery need.
+Hosted resolver, secure-stream, and HTTP work supplies reusable Windvale 1.0
+Backend and package-service contracts. An external-model gateway may consume
+those contracts but is not itself a release gate. Browser Workbench may consume
+only a local gateway and never owns provider credentials. Shell, virtualization,
+and the Windvale OS packet/device path retain their independent architecture
+gates and do not become release blockers without a direct product or recovery
+need.
 
 ## Verification policy
 

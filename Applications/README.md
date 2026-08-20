@@ -40,7 +40,7 @@ the exact file directly with arguments, and the running process does not need
 and fixed rights-reduced provider set, but it does not perform installed active-
 generation selection, package/approval/launch identity admission, or rollback.
 
-For `0.2.0`, Echo still needs the installed product launch integration:
+For Windvale 1.0, Echo still needs the installed product launch integration:
 
 1. expose `wv run echo -- <arguments>` through the installed client;
 2. replace caller-supplied development object paths and the Node.js dispatcher

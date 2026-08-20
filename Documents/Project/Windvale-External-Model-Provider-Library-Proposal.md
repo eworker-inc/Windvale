@@ -18,10 +18,10 @@
 > [Decision 0597](../Decisions/0597-First-External-Model-Reference-Oracle.md)
 > for OpenAI, Anthropic, and Google; its deterministic evidence makes no live
 > call and it is not the production Windvale gateway.
-> [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
-> selects one live provider adapter and the local gateway that owns it as required
-> Milestone 5 work. The hosted network, credential, and adapter implementation
-> now exists; native binding and an opt-in live smoke
+> [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md) supersedes
+> its former status as required `v0.2.0` work. The gateway remains an optional
+> consumer of Windvale 1.0 Backend contracts. The hosted network, credential,
+> and adapter implementation now exists; native binding and an opt-in live smoke
 > remain pending. The provider survey is a
 > documentation snapshot from 2026-08-15; live catalog discovery, not this file,
 > must determine what an authorized account can use.
@@ -483,8 +483,8 @@ exist. Bind the gateway to the native capability and timer seam next. Keep the
 oracle's provider mappings as independent differential
 evidence above those shared
 contracts rather than adding model-specific network calls.
-Decision 0595 makes one live adapter and its separately installable gateway a
-Milestone 5 release requirement rather than optional integration evidence.
+Decision 0800 removes the separately installable gateway from the automatic
+Windvale 1.0 release gate. It remains valuable optional integration evidence.
 OpenAI remains a reasonable first candidate, not a portable semantic choice.
 Do not describe Windvale as able to contact external models until secure HTTP,
 credential-custody, deterministic adapter, and opt-in live-smoke gates have

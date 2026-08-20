@@ -9,8 +9,11 @@ Decision 0562's exact development artifacts pass on both hosts in
 [Verify run 31881681424](https://github.com/eworker-inc/Windvale/actions/runs/31881681424).
 The channel-neutral owner, including the stable artifacts, passes on both hosts
 in [Verify run 31885759856](https://github.com/eworker-inc/Windvale/actions/runs/31885759856).
-The default development input now exercises the compressed `0.2.0-dev.1`
-successor under [Decision 0749](../Documents/Decisions/0749-Compress-Successor-Installer-Archives.md).
+The default development input exercises the exact compressed `0.2.0-dev.1`
+candidate under [Decision 0749](../Documents/Decisions/0749-Compress-Successor-Installer-Archives.md).
+[Decision 0800](../Documents/Decisions/0800-Target-Windvale-1.0-Directly.md)
+leaves that already-created identity intact as historical
+development evidence; it does not select a `v0.2.0` product release.
 Its local identities below remain candidates until the same owner reports them
 from both permanent hosts.
 
@@ -18,7 +21,8 @@ from both permanent hosts.
 
 Installer 1 turns the checked-in native Windows and Linux x64 tools into two
 deterministic, inspectable per-user installation archives per selected channel.
-The `development` channel advances to the compressed `0.2.0-dev.1` successor.
+The `development` channel currently selects the exact historical compressed
+`0.2.0-dev.1` candidate.
 The `stable` channel preserves the release-labeled `0.1.0` artifacts consumed
 by Release Envelope 1 byte for byte.
 

@@ -1,8 +1,10 @@
 # Windvale 0.2.0 connected-services release plan
 
-> Status: Selected Product Milestone 5 under
-> [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md).
-> No `v0.2.0` tag or release exists yet.
+> Status: Historical superseded plan. [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md)
+> replaces this future `v0.2.0` target with the direct
+> [Windvale 1.0 product plan](Windvale-1.0-Product-Plan.md). No `v0.2.0` tag or
+> release exists or is planned. The body is retained as provenance and reusable
+> implementation analysis, not current product scope.
 
 ## Release outcome
 

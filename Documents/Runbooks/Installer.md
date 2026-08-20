@@ -1,8 +1,11 @@
 # Windvale installer runbook
 
 This runbook builds and installs deterministic Windvale Installer 1 archives.
-Use the compressed `0.2.0-dev.1` channel for local development. Use stable
-`0.1.0` archives only as exact inputs to the signed preview release ceremony.
+Use the exact compressed `0.2.0-dev.1` candidate for local development where a
+test requires its pinned identity. That historical development name does not
+select a `v0.2.0` release under
+[Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md). Use stable `0.1.0` archives only
+as exact inputs to the signed preview release ceremony.
 
 ## Build both targets
 

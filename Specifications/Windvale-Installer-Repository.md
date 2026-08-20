@@ -9,7 +9,9 @@ twelve-case Windows owner are implemented. Independent Linux execution remains
 required before a paired-host qualification claim.
 
 The checked-in `0.2.0-dev.1` input pins the current repository identity. It is a
-development input, not a signed or published repository. A future release
+historical development input, not a signed or published repository and not a
+selected `v0.2.0` release under
+[Decision 0800](../Documents/Decisions/0800-Target-Windvale-1.0-Directly.md). A future release
 envelope can carry the exact index as one `repository|all` artifact. The release
 signature then binds the index bytes, and the admitted index binds every
 content-addressed blob. Signing each blob separately is unnecessary.

@@ -2,6 +2,7 @@
 
 - Date: 2026-08-20
 - Status: Active specification program; this plan is non-normative
+- Product target: [Windvale 1.0](Windvale-1.0-Product-Plan.md)
 - Direction: [Decision 0790](../Decisions/0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md)
 - Accepted identity: [Decision 0791](../Decisions/0791-Use-One-Explicit-Primary-Identity-Per-WVDB-Entity-Set.md)
 - Accepted upper-layer choices: [decision register](WVDB-1.0-Upper-Layer-Decision-Register.md)

@@ -16,8 +16,10 @@ and signing policy; they must not reuse generated ceremony outputs implicitly.
 
 Decision 0750 adds a narrower, deterministic Installer Repository 1 development
 candidate. Its index is ready to be one future signed `repository|all` subject,
-but the checked-in `0.2.0-dev.1` identity is not signed or published and does
-not implement network release discovery. See
+but the checked-in historical `0.2.0-dev.1` identity is not signed or published,
+does not select a `v0.2.0` release line under
+[Decision 0800](../../Documents/Decisions/0800-Target-Windvale-1.0-Directly.md),
+and does not implement network release discovery. See
 [`Specifications/Windvale-Installer-Repository.md`](../../Specifications/Windvale-Installer-Repository.md).
 
 No private root or release key may enter the repository, CI, a release asset, or

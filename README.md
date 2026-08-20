@@ -17,7 +17,7 @@ At its center is a **new programming language**, together with its compiler, por
 Windvale Seed is experimental and not production-stable. This README is the stable public overview; changing implementation detail belongs in the documents that own it:
 
 - [Progress dashboard](Documents/Project/Progress.md) — authoritative current implementation and qualification snapshot
-- [Development roadmap](Documents/Project/Roadmap.md) — forward product and workflow milestones, sequencing, and completion gates
+- [Development roadmap](Documents/Project/Roadmap.md) — forward product workstreams, dependencies, and completion gates
 - [Filesystem implementation plan](Documents/Project/Windvale-Filesystem-Implementation-Plan.md) — current host-adapter, FAT32-service, and boot-integration sequence
 - [Seed implementation](Documents/Architecture/Seed-Implementation.md) — component ownership and implemented boundaries
 - [Specification index](Specifications/README.md) — current language, format, runtime, native, and OS contracts

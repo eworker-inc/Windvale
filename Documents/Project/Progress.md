@@ -1,23 +1,24 @@
 # Windvale progress
 
-> Status snapshot: 18 August 2026
+> Status snapshot: 20 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
 This is the current-state dashboard. It records measured standing and immediate
 work, not the chronological path used to reach it. The
-[roadmap](Roadmap.md) owns forward milestones,
+[roadmap](Roadmap.md) owns forward product gates,
 [qualification evidence](Seed-Verification-Evidence.md) owns exact historical
 runs and identities, and accepted decisions own rationale.
 
 The image is a dated editorial snapshot. Update the Markdown when current state
 changes; refresh the image only when it becomes materially misleading.
 
-The roadmap is dependency-based: Milestones 1 through 4 are complete, including
-the package-backed host application, published 0.1 preview, and offline package
-lifecycle. Milestone 5 now selects the future `v0.2.0` connected-services
-preview. OS-1 advances as an active parallel product track and contributes only
-ready, accurately labelled work at release freeze.
+The signed `v0.1.0` preview and its package/application/offline-lifecycle
+foundations remain complete evidence. [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md)
+now targets Windvale 1.0 directly; no `v0.2.0` product release is planned.
+Language, Libraries, WVDB, package/service, and integrated qualification work
+advance as product workstreams rather than numbered release stages. OS-1 retains
+its independent qualification path.
 
 ## Indicators
 
@@ -41,14 +42,14 @@ ready, accurately labelled work at release freeze.
 | Development verification | ✅ | Milestone 1 is complete under [Decision 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md): front-door feedback takes 13,900 ms, the pinned WebAssembly engine path takes 29,674 ms, and the all-hit database owner fell from 402,638 ms to 87,800 ms with all eight behaviors. Exact warm [GitHub run 31852544894, attempt 2](https://github.com/eworker-inc/Windvale/actions/runs/31852544894/attempts/2) passes end to end in 1m42s on Windows and 1m15s on Linux; three owner closures and five checkpoint families are machine-checked. | Preserve the bounded path and add another checkpoint or owner only from new measured product pressure. |
 | Native qualification | ✅ | [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md) qualified 52 suites and 3,287 cases per host in four shards; the complete workflow took about 15 minutes. | Run this gate only for a selected release, promotion, bootstrap, security, ABI, or conformance state. |
 | Package-backed application | ✅ | Milestone 2 is complete under [Decision 0561](../Decisions/0561-First-Admitted-Bundle-Store-And-Rights-Reduced-Wvdb-Query.md). Paired [Bundle 1/store run 31872089188](https://github.com/eworker-inc/Windvale/actions/runs/31872089188) and [capability run 31872429140](https://github.com/eworker-inc/Windvale/actions/runs/31872429140) retain the exact WVB, bundle, package, application, capability, success, denial, and offline-rebuild evidence. | Preserve these results while their declared inputs remain unchanged; do not reopen the completed 0.1 release gate. |
-| Development/stable installers | ✅ | [Decision 0749](../Decisions/0749-Compress-Successor-Installer-Archives.md) advances local development to compressed `0.2.0-dev.1` Windows/Linux candidates. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) preserves the separate `0.1.0` archives published in the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0); Decision 0562 records the historical `0.1.0-dev.1` identities. | Obtain paired-host evidence for the compressed candidates, then add signed target/component repository selection without replacing published assets. |
-| Offline package lifecycle | ✅ | Milestone 4 is complete without publishing `v0.2.0`. The two-package stage, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall pass on both hosts in run `31906316540`. | Preserve this as the offline publication/activation foundation for Milestone 5. |
-| Windvale 0.2.0 connected services | 🎯 | [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md) selects the native database service, Windows/Debian service manager, signed online repository/installer, and one external-model gateway. No release tag exists yet. | Pin the EWorker database parity baseline and close the shared network/service/repository contracts in independently testable slices. |
-| Durable database | 🚧 | The bounded database path includes `u64` geometry, dual superblocks, immutable pages/logs, single-writer publication, variable-key trees, provider-backed reads, interruption recovery, a portable sequential local-service session, and hosted first-record publication that survives restart at every write boundary. | Compose the local service with lifecycle, reader, depth-one writer, and existing multi-level writer adapters before networking or multi-client arbitration. |
+| Development/stable installers | ✅ | [Decision 0749](../Decisions/0749-Compress-Successor-Installer-Archives.md) records the exact historical compressed `0.2.0-dev.1` Windows/Linux candidates. [Decision 0565](../Decisions/0565-First-Stable-Preview-Installers.md) preserves the separate `0.1.0` archives published in the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0); Decision 0562 records the historical `0.1.0-dev.1` identities. | Obtain paired-host evidence for the compressed candidates, then select new 1.0 development identities explicitly rather than renaming published or pinned assets. |
+| Offline package lifecycle | ✅ | The historical offline gate is complete. Two-package admission, activation/recovery, verified dispatch, rollback, and recoverable data-preserving uninstall pass on both hosts in run `31906316540`. | Preserve this as the offline publication and activation foundation for Windvale 1.0. |
+| Windvale 1.0 host product | 🎯 | [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md) selects one integrated `v1.0.0` gate across the frozen Language 1.0 implementation, required Libraries 1.0 profiles, WVDB 1.0, packages/services, support, and cross-host qualification. | Reconcile each workstream with the [product plan](Windvale-1.0-Product-Plan.md) and close exact contract, implementation, usefulness, safety, compatibility, qualification, and distribution gaps. |
+| WVDB 1.0 | 🚧 | [Decision 0790](../Decisions/0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md) replaces external rewrite/parity framing. Decisions 0791–0798 accept the upper-layer identity, table, relationship, index/query/transaction, profile/storage, type/size, document/graph, and backup/restore directions. Existing storage and service candidates remain implementation evidence, not silent 1.0 semantics. | Continue normative specifications through storage, durability, service, operations, and conformance, then reconcile implementation slices against them. |
 | Windvale OS | 🔵 | OS-1 owns the qualified three-environment WVB portability gate plus bounded endpoint, peer-loss, teardown, and contained-failure foundations. Probe 40 qualifies protected processes, capability IPC, bounded preemption, and generation-safe non-tail memory objects; operation 8 now snapshots, admits, and publishes the already constructed generation-1 child as reference `65538`. Filesystem slices execute portable no-link operations and exact mutation completion, validate service traffic and provider ownership, use real Windows/Linux read-only host leaves, and compose strict FAT32 volume, chain, directory, block-exchange, immutable block-image, partial-sector, and validated shared-read response boundaries. Endpoint transfer profiles admit exact 4,096-byte control, 4,144-byte block, and 65,600-byte filesystem windows with checked identities, mappings, non-overlap, peer loss, and at most 17 pages. Provider launch transaction 1 requires released/closed reusable machine slots: filesystem selects process generation 3 (`196610`) and endpoint generation 2 (`131072`), followed by network process generation 4 (`262146`) and endpoint generation 2 (`131073`). The generation-three filesystem record, W^X paging, image-copy, and native-context bytes are source-owned and covered by a dedicated three-case cross-host packaging owner. Probe 40 now releases the terminal generation-two client, first-fits its root as generation 3, allocates all 85 pages, binds the exact admitted launch-request digest, exactly reuses the terminal directory-endpoint slot for a durable `1/81/1` filesystem domain ledger, advances endpoint slot 0 to provider-only generation 2, and publishes a fresh ready thread and process. Normal plus invalid-opcode and general-protection QEMU paths pass in deterministic 1,698,816-byte images. The endpoint has client reference 0, the new thread is not dispatched, FAT32 media is not bound, and no provider request runs. Network slices 1–2 retain shared bounded-operation and binary address/authority candidates covering reserved capacity, exact progress, deadlines, cancellation, provider loss, scoped addresses, port/direction bounds, resource ceilings, and rights reduction. | Bind one surviving consumer, bind FAT32 media identity, enter the ready filesystem thread, and run one bounded guest read with complete failure rollback and teardown before adding the sequential network generation. Do not claim arbitrary application launch or a live provider until those transitions execute. |
 | WebAssembly playground | 🔵 | The static Monaco playground and complete source/WVB-to-Wasm verification route run without .NET. A separate pinned-package engine checkpoint proves compile/verify/execute, capability denial/grant, and bounded output without rebuilding WVB/Wasm. | Keep complete construction cold for qualification; improve package size or browser coverage only when product measurements justify it. |
 | Windvale Shell | 🚧 | [Decision 0602](../Decisions/0602-Shell-1-Parser-Contract-And-First-Portable-Core.md) accepts Shell 1; its parser has paired native and bounded browser evidence. `echo` has an active-generation resolution/launch proof, while [Decision 0713](../Decisions/0713-Hosted-Standard-Byte-Output-And-File-Read.md) adds the exact-byte provider and paired hosted `file-read` target for the fixed `cat` alias. This is not yet an interactive or in-OS shell. | Package and resolve `file-read`, then replace the Workbench JavaScript `cat` branch with the verified WVB worker path while retaining the complete 47-case browser corpus as a promotion gate. |
-| Public project and release foundation | ✅ | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier are published with the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve the published evidence and define the next preview from new product pressure rather than reopening 0.1.0. |
+| Public project and release foundation | ✅ | Licensing, contribution, security, governance, authorship, public repository policies, the product threat model, exact WVDB approval/launch records, and Release Envelope 1 creator/verifier are published with the signed [`v0.1.0` preview](https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0). | Preserve the published evidence and define the 1.0 stability, support, migration, and release policies without reopening 0.1.0. |
 
 The latest OS machine slice extends the table's checkpoint through byte 29,474
 and 334 relocation fields by validating/publishing the directory endpoint,
@@ -134,7 +135,7 @@ Current work uses a separate 79-owner, 3,756-case native verification registry.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 
-## Completed milestones and active work
+## Qualified foundations and active work
 
 ### Milestone 2 complete: package-backed host application
 
@@ -196,21 +197,19 @@ unrelated root entries. Exact implementation commit
 Milestone 4 is closed without a new product release. Networking, signed
 revocation/minimum-version policy, OS-1, and database breadth stay independent.
 
-### Milestone 5 selected: Windvale 0.2.0 connected services
+### Active target: Windvale 1.0
 
-The future `v0.2.0` release is selected under
-[Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md),
-but no tag or release exists. Its canonical
-[release plan](Windvale-0.2.0-Connected-Services-Release-Plan.md) requires the
-native rewrite of the EWorker Data Service database, a general Windows/Debian
-service lifecycle, official signed Internet repository with offline-equivalent
-installation, and one real external-model gateway. Compiler and networking
-work enter only where those products require them.
+[Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md) supersedes
+the future `v0.2.0` product target in Decision 0595. The active
+[product plan](Windvale-1.0-Product-Plan.md) requires the frozen Language 1.0
+implementation, selected Libraries 1.0 profiles, WVDB 1.0, installed package and
+service operation, support policy, and exact Windows/Linux qualification before
+`v1.0.0` can be published.
 
-The separate C# database is a pinned reference and differential oracle, not a
-managed Windvale dependency or release payload. Windvale OS continues in
-parallel; ready qualified artifacts may be included at freeze, while unfinished
-OS work remains accurately reported and non-blocking.
+WVDB is a Windvale-owned database under Decision 0790; an external implementation
+may inform comparative research but is not a parity oracle. The external-model
+gateway and a complete Windvale OS are independent consumers or workstreams, not
+automatic host-product 1.0 blockers.
 
 ### Independent promotion checkpoint: native-only repository baseline
 

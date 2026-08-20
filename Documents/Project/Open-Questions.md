@@ -1,7 +1,7 @@
 # Windvale open questions
 
-> Status: Active unresolved choices after completed Milestones 1 through 4, the
-> signed `v0.1.0` preview, and selection of Milestone 5 / `v0.2.0`.
+> Status: Active unresolved choices for the direct Windvale 1.0 product target
+> accepted by Decision 0800 after the signed `v0.1.0` preview.
 > Detailed recommendations live in architecture documents; this file lists only
 > questions that can change the active roadmap or its next bounded slices.
 
@@ -35,11 +35,13 @@ The following are no longer open project questions:
   `v0.2.0` release. Decisions 0578 and 0580 close its paired activation,
   rollback, and safe-uninstall evidence in GitHub run `31906316540`; OS-1 and
   database work remain independent.
-- [Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
-  selects the native database service, Windows/Debian service lifecycle,
-  official connected installer/repository, and one real external-model gateway
-  as the required `v0.2.0` product gate. OS work continues independently and is
-  included only to its ready, accurately qualified boundary at freeze.
+- [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md) supersedes
+  the future `v0.2.0` product selection in Decision 0595. Active work targets
+  `v1.0.0` through product workstreams and one integrated gate; compiler and
+  implementation slices are not public release stages.
+- [Decision 0790](../Decisions/0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md)
+  supersedes the external database rewrite and parity direction. Established
+  databases remain comparative research sources, never WVDB authorities.
 
 Historical documents that predate those decisions must not present them as
 unfinished work.
@@ -58,14 +60,17 @@ unfinished work.
 - Which artifact families can move to deliberate promotion commits so ordinary
   semantic work does not repin unrelated native applications and documentation?
 
-### Durable application and database
+### Windvale 1.0 product and WVDB
 
-- Which exact EWorker Data Service repository/tag and licensing record define
-  the database parity baseline?
-- Which legacy file/protocol behaviors require direct compatibility, which need
-  migration only, and which are intentionally replaced?
-- Which finite client concurrency, query/index, transaction, backup/restore,
-  repair, and migration rows belong to the required `0.2.0` parity profile?
+- Which exact Libraries 1.0 modules are required by the host-product gate, and
+  which remain optional profiles with independent qualification?
+- Which exact stability, support, deprecation, file-format, package, and
+  migration promises begin at `v1.0.0`?
+- Which finite WVDB concurrency, query/index, transaction, backup/restore,
+  repair, migration, operations, performance, memory, and soak rows define
+  production-oriented 1.0 conformance?
+- Which official connected-source behaviors are required for 1.0 distribution,
+  and which can remain optional above signed offline-equivalent admission?
 
 ### Windvale OS launch and service slice
 
@@ -89,16 +94,12 @@ accepts the complete Language 1.0 direction, and
 completes its set, package-data, static-import, default-argument, and identifier
 boundaries. [Decision 0753](../Decisions/0753-Require-Language-1.0-AI-Accelerator-Evidence.md)
 adds local AI accelerator evidence without accepting accelerator syntax or an
-implementation. The active questions now belong to the candidate specification
-and paper-corpus freeze rather than feature-by-feature direction selection:
+implementation. The exact 250-input Language 1.0 design is frozen by
+[Decision 0767](../Decisions/0767-Freeze-Windvale-Language-1.0-Source.md).
+No source-feature selection remains open. Current questions concern
+implementation and qualification; changing the frozen design requires a
+concrete contradiction, unsound rule, or unimplementable required contract:
 
-- Which candidate grammar or Foundation signatures must change after each of the
-  eleven complete paper programs is reviewed?
-- Does the one candidate task-scope spelling express sequential and
-  parallel-capable hosted services, GUI work, cancellation, and provider restart
-  without hidden capture or teardown?
-- Which finite generic-instantiation, borrow-diagnostic, collection-budget, and
-  compile-time limits become the required portable minimums?
 - Which Language 1.0 features lower through current WIR/WVB and which require a
   separately versioned verified representation?
 - Which WVB and package-table representation binds `package data` without

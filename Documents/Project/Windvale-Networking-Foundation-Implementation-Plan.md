@@ -21,8 +21,9 @@
 - Accepted architecture: [network stack](../Architecture/Network-Stack.md)
 - Required trust services: [identity, time, entropy, and trust](../Architecture/Identity-Time-Entropy-And-Trust.md)
 - First package consumer: [package-system implementation plan](Windvale-Package-System-Implementation-Plan.md)
-- Selected release consumers: the official package source and external-model
-  gateway in the [Windvale 0.2.0 connected-services release plan](Windvale-0.2.0-Connected-Services-Release-Plan.md)
+- Windvale 1.0 consumers: required package, WVDB service, and Backend library
+  contracts in the [Windvale 1.0 product plan](Windvale-1.0-Product-Plan.md);
+  the external-model gateway is an optional consumer
 
 This plan makes networking a permanent Windvale platform facility rather than a
 private downloader hidden inside `wv`. The offline package system does not wait

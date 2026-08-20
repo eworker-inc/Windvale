@@ -36,8 +36,8 @@ changed custody boundary, and the unchanged Stage 0 recovery release.
 
 ## Product versions
 
-Public product releases use annotated `v0.y.z` tags while contracts remain
-experimental:
+Public product releases use annotated semantic-version tags. The published 0.x
+line remains experimental history:
 
 - increment `z` for a compatible fix or packaging correction within one preview
   line;
@@ -48,20 +48,21 @@ experimental:
 The first product tag is the signed `v0.1.0` preview published on 15 August 2026
 from exact commit `c1d350949207c7ee6f82ed2c399b748e188bf949` after the
 package-backed application, release envelope, offline verification, and explicit
-dual-host release gate completed. In the dependency-based roadmap these are
-Milestone 2 followed by Milestone 3. Parallel OS-1 launch/service composition is
-valuable but was not a prerequisite for this host-product preview. Later previews
-would normally be `v0.2.0`, `v0.3.0`, and so on—not “release 2” without a
-compatibility meaning.
+dual-host release gate completed. Parallel OS-1 launch/service composition was
+valuable but was not a prerequisite for this host-product preview.
 
-[Decision 0595](../Decisions/0595-Select-Windvale-0.2.0-Connected-Services-Preview.md)
-now selects `v0.2.0` as the connected-services preview: native database service,
-Windows/Debian service management, official signed online repository/installer,
-and one real external-model gateway. Selection reserves the version but does not
-create a tag or release. Internal artifacts may use `0.2.0-dev.<n>`; published
-integration previews may use immutable `v0.2.0-alpha.<n>`,
-`v0.2.0-beta.<n>`, and `v0.2.0-rc.<n>` annotated tags. Only the frozen candidate
-that passes the complete release gate receives `v0.2.0`.
+[Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md) supersedes
+the future `v0.2.0` selection in Decision 0595. The next intended product tag is
+`v1.0.0`; no `v0.2.0` product release is planned. `v1.0.0` is created only after
+the complete [Windvale 1.0 product gate](Windvale-1.0-Product-Plan.md) passes and
+the stability, support, deprecation, format, package, and migration promises are
+accepted. If prerelease publication becomes necessary, use immutable
+`v1.0.0-alpha.<n>`, `v1.0.0-beta.<n>`, or `v1.0.0-rc.<n>` annotated tags through
+a named release decision; do not infer them from implementation slice numbers.
+
+The checked-in `0.2.0-dev.1` candidates retain their exact historical
+development names and hashes. They are neither Git product tags nor evidence of
+an active 0.2 release line, and they must not be renamed in place.
 
 `v0.1.0` must publish installable per-user Windows and Linux artifacts for
 Windvale and its core tools. The base installation includes the launcher/client,

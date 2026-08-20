@@ -3,6 +3,7 @@
 ## Status
 
 - Status: Draft for owner review
+- Product target: [Windvale 1.0](Windvale-1.0-Product-Plan.md)
 - Umbrella specification: [Windvale Libraries 1.0](../../Specifications/Windvale-Libraries-1.0.md)
 - Backend API catalog:
   [Windvale Backend Libraries 1.0](../../Specifications/Windvale-Backend-Libraries-1.0.md)
