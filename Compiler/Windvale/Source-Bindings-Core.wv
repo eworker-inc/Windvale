@@ -247,6 +247,22 @@ export fn Compilerˉsourceˉbindingsˉheader(Entries: u32, Ranges: u32) -> bytes
     return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(8u32));
 }
 
+fn Compilerˉsourceˉbindingsˉspecializedˉheader(
+    Entries: u32,
+    Ranges: u32,
+    Catalogˉbytes: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVLB");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entries));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(36u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Ranges));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(16u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Catalogˉbytes));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+}
+
 export fn Compilerˉsourceˉbindingsˉentry(
     Module: u32,
     Function: u32,
@@ -577,6 +593,54 @@ export fn Compilerˉsourceˉbindingsˉranges(
     return Result;
 }
 
+fn Compilerˉsourceˉbindingsˉspecializedˉranges(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Build: Compilerˉsourceˉbindingˉbuild,
+    Functions: u32,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog
+) -> bytes {
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    let Sentinel: u32 = 4294967295u32;
+    var Result: bytes = Compilerˉsourceˉbindingsˉempty(Symbols.Directory);
+    var Binding: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Functions {
+        let First: u32 = Binding;
+        var Count: u32 = 0u32;
+        var Reading: bool = true;
+        while Reading {
+            if Binding >= Build.Entries {
+                Reading = false;
+            } else {
+                let Entry: u32 = Binding * 36u32;
+                if Bytesˉreadˉu32ˉlittle(Build.Payload, Entry + 4u32) != Function {
+                    Reading = false;
+                } else {
+                    Binding = Binding + 1u32;
+                    Count = Count + 1u32;
+                }
+            }
+        }
+        var Declaration: u32 = Function;
+        var Instance: u32 = Sentinel;
+        if Function >= Symbolˉentries {
+            Instance = Function - Symbolˉentries;
+            Declaration =
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstanceˉdeclaration(
+                    Catalog, Instance
+                );
+        }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(First));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Count));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Declaration));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Instance));
+        Function = Function + 1u32;
+    }
+    return Result;
+}
+
 export fn Compilerˉsourceˉbindingsˉdirectory(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Build: Compilerˉsourceˉbindingˉbuild
@@ -585,6 +649,27 @@ export fn Compilerˉsourceˉbindingsˉdirectory(
     let Header: bytes = Compilerˉsourceˉbindingsˉheader(Build.Entries, Symbolˉentries);
     let Ranges: bytes = Compilerˉsourceˉbindingsˉranges(Symbols, Build);
     return Bytesˉconcat(Bytesˉconcat(Header, Ranges), Build.Payload);
+}
+
+export fn Compilerˉsourceˉbindingsˉspecializedˉdirectory(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Build: Compilerˉsourceˉbindingˉbuild,
+    Functions: u32,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog
+) -> bytes {
+    let Instances: u32 =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
+    if Instances == 0u32 { return Compilerˉsourceˉbindingsˉdirectory(Symbols, Build); }
+    let Header: bytes = Compilerˉsourceˉbindingsˉspecializedˉheader(
+        Build.Entries, Functions, Bytesˉlength(Catalog.Evidence)
+    );
+    let Ranges: bytes = Compilerˉsourceˉbindingsˉspecializedˉranges(
+        Symbols, Build, Functions, Catalog
+    );
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉconcat(Header, Ranges), Catalog.Evidence),
+        Build.Payload
+    );
 }
 
 export fn Compilerˉsourceˉbindingsˉidentifierˉisˉvalid(
@@ -615,6 +700,289 @@ export fn Compilerˉsourceˉbindingsˉidentifierˉisˉvalid(
     return true;
 }
 
+export fn Compilerˉsourceˉbindingsˉheaderˉbytes(Directory: bytes) -> u32 {
+    if Bytesˉlength(Directory) < 8u32 { return 0u32; }
+    if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 1u32 { return 24u32; }
+    if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 2u32 { return 32u32; }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉbindingsˉrangeˉbytes(Directory: bytes) -> u32 {
+    if Bytesˉlength(Directory) < 24u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Directory, 20u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory: bytes) -> u32 {
+    if Compilerˉsourceˉbindingsˉheaderˉbytes(Directory) != 32u32 {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉrangesˉcount(Directory: bytes) -> u32 {
+    if Bytesˉlength(Directory) < 24u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉrangeˉoffset(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    return Compilerˉsourceˉbindingsˉheaderˉbytes(Directory) +
+        Function * Compilerˉsourceˉbindingsˉrangeˉbytes(Directory);
+}
+
+export fn Compilerˉsourceˉbindingsˉentriesˉoffset(Directory: bytes) -> u32 {
+    return Compilerˉsourceˉbindingsˉheaderˉbytes(Directory) +
+        Compilerˉsourceˉbindingsˉrangesˉcount(Directory) *
+            Compilerˉsourceˉbindingsˉrangeˉbytes(Directory) +
+        Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory);
+}
+
+export fn Compilerˉsourceˉbindingsˉrangeˉdeclaration(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    if Compilerˉsourceˉbindingsˉrangeˉbytes(Directory) == 8u32 {
+        return Function;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Directory,
+        Compilerˉsourceˉbindingsˉrangeˉoffset(Directory, Function) + 8u32
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉcatalog(
+    Directory: bytes
+) -> Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog {
+    let Catalogˉbytes: u32 = Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory);
+    if Catalogˉbytes == 0u32 {
+        return Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    }
+    let Catalogˉoffset: u32 = Compilerˉsourceˉbindingsˉheaderˉbytes(Directory) +
+        Compilerˉsourceˉbindingsˉrangesˉcount(Directory) *
+            Compilerˉsourceˉbindingsˉrangeˉbytes(Directory);
+    return Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog(
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Bytesˉslice(Directory, Catalogˉoffset, Catalogˉbytes)
+    );
+}
+
+fn Compilerˉsourceˉbindingsˉshapeˉisˉvalid(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Kind: u32,
+    Shape: u32
+) -> bool {
+    if Shape == 0u32 { return Kind != 1u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
+        Shape, Symbols.Records, Symbols.Enums, Symbols.Variants, false
+    ) { return true; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+        Symbols.Directory, Shape
+    ) { return true; }
+    return Shape >= 1073741824u32 && Shape < 1610612736u32;
+}
+
+fn Compilerˉsourceˉbindingsˉentriesˉareˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Directory: bytes,
+    Entries: u32,
+    Ranges: u32,
+    Entriesˉoffset: u32,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Specialized: bool
+) -> bool {
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    var Expectedˉfirst: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Ranges {
+        let Range: u32 = Compilerˉsourceˉbindingsˉrangeˉoffset(
+            Directory, Function
+        );
+        let First: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range + 4u32);
+        let Declaration: u32 =
+            Compilerˉsourceˉbindingsˉrangeˉdeclaration(
+                Directory, Function
+            );
+        if First != Expectedˉfirst || Count > Entries - First ||
+            Declaration >= Symbolˉentries {
+            return false;
+        }
+        if Specialized {
+            let Instance: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Range + 12u32
+            );
+            if Function < Symbolˉentries {
+                if Declaration != Function || Instance != 4294967295u32 {
+                    return false;
+                }
+            } else {
+                let Expectedˉinstance: u32 = Function - Symbolˉentries;
+                if Instance != Expectedˉinstance || Declaration !=
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstanceˉdeclaration(
+                        Catalog, Expectedˉinstance
+                    ) {
+                    return false;
+                }
+            }
+        } else if Declaration != Function {
+            return false;
+        }
+        let Symbolˉentry: u32 = 16u32 + Declaration * 24u32;
+        if Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Symbolˉentry + 4u32
+            ) != 6u32 && Count != 0u32 {
+            return false;
+        }
+        Expectedˉfirst = First + Count;
+        Function = Function + 1u32;
+    }
+    if Expectedˉfirst != Entries { return false; }
+
+    var Index: u32 = 0u32;
+    var Priorˉmodule: u32 = 0u32;
+    var Priorˉfunction: u32 = 0u32;
+    var Priorˉslot: u32 = 0u32;
+    while Index < Entries {
+        let Entry: u32 = Entriesˉoffset + Index * 36u32;
+        let Module: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+        let Entryˉfunction: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 4u32
+        );
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 8u32);
+        let Slot: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+        let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32);
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 24u32);
+        let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 28u32);
+        let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 32u32);
+        if Module >= Scan.Modules || Entryˉfunction >= Ranges ||
+            Kind == 0u32 || Kind > 3u32 || Slot >= 4096u32 {
+            return false;
+        }
+        if !Compilerˉsourceˉbindingsˉshapeˉisˉvalid(Symbols, Kind, Shape) {
+            return false;
+        }
+        let Entryˉdeclaration: u32 =
+            Compilerˉsourceˉbindingsˉrangeˉdeclaration(
+                Directory, Entryˉfunction
+            );
+        let Entryˉsymbol: u32 = 16u32 + Entryˉdeclaration * 24u32;
+        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉsymbol) != Module ||
+            Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Entryˉsymbol + 4u32
+            ) != 6u32 {
+            return false;
+        }
+        let Entryˉfunctionˉrange: u32 =
+            Compilerˉsourceˉbindingsˉrangeˉoffset(
+                Directory, Entryˉfunction
+            );
+        let Entryˉfunctionˉfirst: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entryˉfunctionˉrange
+        );
+        let Entryˉfunctionˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entryˉfunctionˉrange + 4u32
+        );
+        if Index < Entryˉfunctionˉfirst ||
+            Index >= Entryˉfunctionˉfirst + Entryˉfunctionˉcount {
+            return false;
+        }
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Entryˉsymbol + 20u32
+        );
+        if (Slot < Parameters && Kind != 1u32) ||
+            (Slot >= Parameters && Kind == 1u32) {
+            return false;
+        }
+        let Sourceˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+        let Sourceˉlength: u32 = Bytesˉlength(Sourceˉview.Source);
+        if Nameˉoffset >= Sourceˉlength || Nameˉlength == 0u32 ||
+            Nameˉlength > Sourceˉlength - Nameˉoffset ||
+            Scopeˉstart >= Scopeˉend || Scopeˉend > Sourceˉlength ||
+            !Compilerˉsourceˉbindingsˉidentifierˉisˉvalid(
+                Sourceˉview.Source, Nameˉoffset, Nameˉlength
+            ) {
+            return false;
+        }
+        if Index == 0u32 {
+            if Slot != 0u32 { return false; }
+        } else {
+            if !Specialized && Module < Priorˉmodule { return false; }
+            if Entryˉfunction < Priorˉfunction { return false; }
+            if Entryˉfunction == Priorˉfunction {
+                if Slot != Priorˉslot + 1u32 { return false; }
+            } else if Slot != 0u32 {
+                return false;
+            }
+        }
+        Priorˉmodule = Module;
+        Priorˉfunction = Entryˉfunction;
+        Priorˉslot = Slot;
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉbindingsˉspecializedˉdirectoryˉisˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Directory: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(Directory);
+    if Length < 32u32 || Length > 4194304u32 { return false; }
+    let Magic: bytes = Textˉtoˉutf8("WVLB");
+    if !Sourceˉset.Compilerˉsourceˉspansˉequal(
+        Directory, 0u32, 4u32, Magic, 0u32, 4u32
+    ) { return false; }
+    if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 36u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 20u32) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 28u32) != 1u32 {
+        return false;
+    }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    let Ranges: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+    let Catalogˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if Entries > 116508u32 || Ranges < Symbolˉentries ||
+        Ranges > Symbolˉentries + 256u32 || Catalogˉbytes < 24u32 ||
+        Catalogˉbytes > 1048576u32 || Ranges > (Length - 32u32) / 16u32 {
+        return false;
+    }
+    let Catalogˉoffset: u32 = 32u32 + Ranges * 16u32;
+    if Catalogˉbytes > Length - Catalogˉoffset { return false; }
+    let Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
+        Compilerˉsourceˉbindingsˉcatalog(Directory);
+    if !Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(Catalog) {
+        return false;
+    }
+    let Instances: u32 =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
+    if Instances == 0u32 || Ranges != Symbolˉentries + Instances {
+        return false;
+    }
+    let Entriesˉoffset: u32 = Catalogˉoffset + Catalogˉbytes;
+    if Entries > (Length - Entriesˉoffset) / 36u32 ||
+        Length != Entriesˉoffset + Entries * 36u32 {
+        return false;
+    }
+    return Compilerˉsourceˉbindingsˉentriesˉareˉvalid(
+        Input, Scan, Symbols, Directory,
+        Entries, Ranges, Entriesˉoffset, Catalog, true
+    );
+}
+
 export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -623,6 +991,11 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
 ) -> bool {
     let Length: u32 = Bytesˉlength(Directory);
     if Length < 24u32 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 2u32 {
+        return Compilerˉsourceˉbindingsˉspecializedˉdirectoryˉisˉvalid(
+            Input, Scan, Symbols, Directory
+        );
+    }
     let Magic: bytes = Textˉtoˉutf8("WVLB");
     if !Sourceˉset.Compilerˉsourceˉspansˉequal(Directory, 0u32, 4u32, Magic, 0u32, 4u32) {
         return false;
@@ -637,117 +1010,12 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
     if Ranges != Symbolˉentries { return false; }
     if Bytesˉreadˉu32ˉlittle(Directory, 20u32) != 8u32 { return false; }
     if Length != 24u32 + Ranges * 8u32 + Entries * 36u32 { return false; }
-    var Rangeˉindex: u32 = 0u32;
-    var Expectedˉfirst: u32 = 0u32;
-    while Rangeˉindex < Ranges {
-        let Range: u32 = 24u32 + Rangeˉindex * 8u32;
-        let First: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range);
-        let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range + 4u32);
-        if First != Expectedˉfirst { return false; }
-        if Count > Entries - First { return false; }
-        let Rangeˉsymbolˉentry: u32 = 16u32 + Rangeˉindex * 24u32;
-        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Rangeˉsymbolˉentry + 4u32) != 6u32 {
-            if Count != 0u32 { return false; }
-        }
-        Expectedˉfirst = First + Count;
-        Rangeˉindex = Rangeˉindex + 1u32;
-    }
-    if Expectedˉfirst != Entries { return false; }
     let Entriesˉoffset: u32 = 24u32 + Ranges * 8u32;
-    var Index: u32 = 0u32;
-    var Priorˉmodule: u32 = 0u32;
-    var Priorˉfunction: u32 = 0u32;
-    var Priorˉslot: u32 = 0u32;
-    while Index < Entries {
-        let Entry: u32 = Entriesˉoffset + Index * 36u32;
-        let Module: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
-        let Function: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32);
-        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 8u32);
-        let Slot: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
-        let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32);
-        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32);
-        let Shape: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 24u32);
-        let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 28u32);
-        let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 32u32);
-        if Module >= Scan.Modules { return false; }
-        if Function >= Symbolˉentries { return false; }
-        if Kind == 0u32 { return false; }
-        if Kind > 3u32 { return false; }
-        if Slot >= 4096u32 { return false; }
-        var Shapeˉvalid: bool = Shape <= 8u32;
-        if Shape == 9u32 { Shapeˉvalid = true; }
-        if Shape >= 11u32 {
-            if Shape <= 15u32 { Shapeˉvalid = true; }
-        }
-        if Shape == 16u32 { Shapeˉvalid = true; }
-        if Shape == 0u32 { Shapeˉvalid = Kind != 1u32; }
-        if Shape > 8u32 {
-            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
-                Symbols.Directory, Shape
-            ) { Shapeˉvalid = true; }
-            if Shape >= 65536u32 {
-                if Shape < 65536u32 + Symbols.Records { Shapeˉvalid = true; }
-            }
-            if Shape >= 131072u32 + Symbols.Records {
-                if Shape < 131072u32 + Symbols.Records + Symbols.Enums {
-                    Shapeˉvalid = true;
-                }
-            }
-            if Shape >= 196608u32 + Symbols.Records + Symbols.Enums {
-                if Shape < 196608u32 + Symbols.Records + Symbols.Enums + Symbols.Variants {
-                    Shapeˉvalid = true;
-                }
-            }
-            if Shape >= 1073741824u32 {
-                if Shape < 1610612736u32 { Shapeˉvalid = true; }
-            }
-            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-                Shape
-            ) { Shapeˉvalid = true; }
-        }
-        if !Shapeˉvalid { return false; }
-        let Symbolˉentry: u32 = 16u32 + Function * 24u32;
-        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry) != Module { return false; }
-        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry + 4u32) != 6u32 { return false; }
-        let Functionˉrange: u32 = 24u32 + Function * 8u32;
-        let Functionˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Directory, Functionˉrange);
-        let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Directory, Functionˉrange + 4u32);
-        if Index < Functionˉfirst { return false; }
-        if Index >= Functionˉfirst + Functionˉcount { return false; }
-        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry + 20u32);
-        if Slot < Parameters {
-            if Kind != 1u32 { return false; }
-        } else {
-            if Kind == 1u32 { return false; }
-        }
-        let Sourceˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
-            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
-        let Sourceˉlength: u32 = Bytesˉlength(Sourceˉview.Source);
-        if Nameˉoffset >= Sourceˉlength { return false; }
-        if Nameˉlength == 0u32 { return false; }
-        if Nameˉlength > Sourceˉlength - Nameˉoffset { return false; }
-        if Scopeˉstart >= Scopeˉend { return false; }
-        if Scopeˉend > Sourceˉlength { return false; }
-        if !Compilerˉsourceˉbindingsˉidentifierˉisˉvalid(
-            Sourceˉview.Source, Nameˉoffset, Nameˉlength
-        ) { return false; }
-        if Index == 0u32 {
-            if Slot != 0u32 { return false; }
-        } else {
-            if Module < Priorˉmodule { return false; }
-            if Function < Priorˉfunction { return false; }
-            if Function == Priorˉfunction {
-                if Slot != Priorˉslot + 1u32 { return false; }
-            } else {
-                if Slot != 0u32 { return false; }
-            }
-        }
-        Priorˉmodule = Module;
-        Priorˉfunction = Function;
-        Priorˉslot = Slot;
-        Index = Index + 1u32;
-    }
-    return true;
+    return Compilerˉsourceˉbindingsˉentriesˉareˉvalid(
+        Input, Scan, Symbols, Directory,
+        Entries, Ranges, Entriesˉoffset,
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(), false
+    );
 }
 
 export fn Compilerˉsourceˉbindingsˉfindˉlocal(
@@ -2964,13 +3232,14 @@ export fn Compilerˉsourceˉbindingsˉsummaryˉsuccess(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Build: Compilerˉsourceˉbindingˉbuild,
     Body: Compilerˉsourceˉbindingˉbody,
+    Functions: u32,
     Directory: bytes
 ) -> Compilerˉsourceˉbindingˉsummary {
     return Compilerˉsourceˉbindingˉsummary(
         Compilerˉsourceˉbindingˉstatus.Valid,
         Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
         Symbols.Modules,
-        Symbols.Functions,
+        Functions,
         Build.Parameters,
         Build.Locals,
         Body.Reads,
@@ -2986,11 +3255,12 @@ export fn Compilerˉsourceˉbindingsˉsummaryˉsuccess(
     );
 }
 
-export fn Compilerˉsourceˉbindingsˉfinishˉphase(
+fn Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Phase: Compilerˉsourceˉbindingˉphase
+    Phase: Compilerˉsourceˉbindingˉphase,
+    Validate: bool
 ) -> Compilerˉsourceˉbindingˉsummary {
     let Build: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
     let Body: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Phase);
@@ -3016,7 +3286,9 @@ export fn Compilerˉsourceˉbindingsˉfinishˉphase(
         return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(Input, Symbols, Tooˉlarge);
     }
     let Directory: bytes = Compilerˉsourceˉbindingsˉdirectory(Symbols, Build);
-    if !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(Input, Scan, Symbols, Directory) {
+    if Validate && !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Directory
+    ) {
         let Invalid: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉbuildˉfailure(
             Build,
             Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
@@ -3030,7 +3302,113 @@ export fn Compilerˉsourceˉbindingsˉfinishˉphase(
         return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(Input, Symbols, Invalid);
     }
     return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
-        Input, Symbols, Build, Body, Directory
+        Input, Symbols, Build, Body, Symbols.Functions, Directory
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉfinishˉphase(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Compilerˉsourceˉbindingˉphase
+) -> Compilerˉsourceˉbindingˉsummary {
+    return Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
+        Input, Scan, Symbols, Phase, true
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Compilerˉsourceˉbindingˉphase,
+    Functions: u32,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Validate: bool
+) -> Compilerˉsourceˉbindingˉsummary {
+    let Instances: u32 =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
+    if Instances == 0u32 {
+        return Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
+            Input, Scan, Symbols, Phase, Validate
+        );
+    }
+    let Build: Compilerˉsourceˉbindingˉbuild =
+        Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
+    let Body: Compilerˉsourceˉbindingˉbody =
+        Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Phase);
+    if Build.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(
+            Input, Symbols, Build
+        );
+    }
+    if Body.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉbindingsˉsummaryˉfromˉbody(
+            Input, Symbols, Build, Body
+        );
+    }
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if !Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(Catalog) ||
+        Functions != Symbolˉentries + Instances {
+        let Invalidˉcatalog: Compilerˉsourceˉbindingˉbuild =
+            Compilerˉsourceˉbindingsˉbuildˉfailure(
+                Build,
+                Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
+                Symbols.Modules,
+                Symbols.Modules,
+                Functions,
+                Bytesˉlength(Input),
+                0u32,
+                0u32
+            );
+        return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(
+            Input, Symbols, Invalidˉcatalog
+        );
+    }
+    let Directoryˉoverhead: u32 = 32u32 + Functions * 16u32 +
+        Bytesˉlength(Catalog.Evidence);
+    if Directoryˉoverhead > 4194304u32 ||
+        Bytesˉlength(Build.Payload) > 4194304u32 - Directoryˉoverhead {
+        let Tooˉlarge: Compilerˉsourceˉbindingˉbuild =
+            Compilerˉsourceˉbindingsˉbuildˉfailure(
+                Build,
+                Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit,
+                Symbols.Modules,
+                Symbols.Modules,
+                Functions,
+                Bytesˉlength(Input),
+                0u32,
+                0u32
+            );
+        return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(
+            Input, Symbols, Tooˉlarge
+        );
+    }
+    let Directory: bytes = Compilerˉsourceˉbindingsˉspecializedˉdirectory(
+        Symbols, Build, Functions, Catalog
+    );
+    if Validate && !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Directory
+    ) {
+        let Invalid: Compilerˉsourceˉbindingˉbuild =
+            Compilerˉsourceˉbindingsˉbuildˉfailure(
+                Build,
+                Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
+                Symbols.Modules,
+                Symbols.Modules,
+                Functions,
+                Bytesˉlength(Input),
+                0u32,
+                0u32
+            );
+        return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(
+            Input, Symbols, Invalid
+        );
+    }
+    return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
+        Input, Symbols, Build, Body, Functions, Directory
     );
 }
 

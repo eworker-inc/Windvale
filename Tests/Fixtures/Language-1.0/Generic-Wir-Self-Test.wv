@@ -25,7 +25,11 @@ export fn Main() -> i32 {
     if Summary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         return 1;
     }
-    if Summary.Functions != 2u32 { return 2; }
+    if Summary.Functions != 3u32 ||
+        Bytesˉreadˉu16ˉlittle(Summary.Directory, 6u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Summary.Directory, 48u32) != 1u32 {
+        return 2;
+    }
     if Summary.Blocks == 0u32 || Summary.Operations == 0u32 {
         return 3;
     }

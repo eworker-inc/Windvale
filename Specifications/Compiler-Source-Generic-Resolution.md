@@ -20,10 +20,10 @@ function body is lowered through the ordinary monomorphic backend.
 
 This checkpoint does not claim general generic records or variants, nested
 generic type expressions or collections, constant generics outside the one
-collection-maximum position, phantom parameters, or multiple concrete
-specializations of one declaration. A supported generic declaration must be
-instantiated by the current compilation and currently has exactly one concrete
-specialization. Those are explicit implementation boundaries, not changes to
+collection-maximum position, phantom parameters, or an uninstantiated
+template-only declaration. A supported generic function may have multiple
+concrete specializations in one compilation, bounded by the shared 256-instance
+catalog limit. Those are explicit implementation boundaries, not changes to
 the frozen Language 1.0 design.
 
 The artifacts are internal compiler-phase evidence. They are not source syntax,
@@ -150,17 +150,28 @@ different arguments for `const Maximum: u32`.
 
 WIR and WVB remain monomorphic. Language 1.0 does not gain runtime-erased
 generic values, a runtime specialization service, or a second generic backend.
-WVGS and WVGC are transient compiler evidence and are not embedded into the
-published WVIR or WVB.
+WVGS is transient construction evidence. WVGC is retained inside specialized
+WVLB 1.2 so an emitter can validate each appended concrete WVIR body against
+its exact declaration and ordered substitution; neither evidence format enters
+the emitted WVB.
 
-The independent WIR validator reconstructs a specialization solution from the
-concrete parameter and result shapes recorded by monomorphic binding and WIR
-evidence. For collections it decomposes the concrete descriptor into family,
-element, and maximum before contributing the structural solution. It then
-revalidates every parameter and the result against the source declaration. A
-parameter that appears nowhere in those admitted signature positions remains
-unsupported because its specialization identity cannot be proven from the
-published monomorphic product.
+WVLB 1.2 and WVIR 1.2 reserve one zero placeholder at the source declaration's
+ordinary symbol-directory position and append one concrete function range/body
+per WVGC instance in catalog order. An appended function identity is the full
+WVSD entry count plus its zero-based catalog instance, not the number of source
+function declarations. This remains correct when records, enums, variants,
+data, capabilities, or fields precede a generic function in the symbol
+directory.
+
+The independent WIR validator treats the embedded catalog entry as the
+canonical solved substitution. It validates every argument against the source
+generic declaration, then checks that concrete parameter bindings and the WVIR
+result shape exactly match the substituted signature. For collections this
+includes the exact family, element, and maximum. Call targets are validated
+against the complete specialized function range and mapped back to their source
+declaration before arity and dynamic operand/result checks. A parameter that
+appears nowhere in the admitted signature positions remains unsupported because
+the current source path cannot derive a specialization for it.
 
 The production compiler uses the compact
 `Compilerˉsourceˉgenericˉlowering` producer for the connected function subset.
@@ -189,16 +200,21 @@ as evidence for general generic-source integration.
 
 `Generic-Analysis-Publication-Self-Test.wv` exercises the connected compiler
 path. It accepts inferred and explicit calls that reuse one identity, accepts an
-explicit result-only specialization, rejects conflicting inference, and rejects
-a second distinct specialization without publishing partial evidence. Its
-successful identity program publishes ordinary WVSS, WVCA, WVLB, and WVIR only.
-The emitted WVB is byte-identical to a same-length hand-written monomorphic
-oracle and executes with result `42`; no runtime generic mechanism is involved.
-The focused publisher is a 1,048,153-byte WVB with SHA-256
-`a2befed440f070ed934dd3ca783129cad30016ec2b46007548507f415cb3974a`
-and its segmented hosted package returns `42`.
+explicit result-only specialization, rejects conflicting inference, and now
+publishes two distinct specializations from one declaration as WVLB 1.2 and
+WVIR 1.2. It checks the exact two-instance count before publishing its artifact
+set, rejects a corrupted embedded catalog, and rejects a mismatched WVIR
+specialization count. The current 1,068,726-byte publisher WVB has SHA-256
+`d9179596701a415c4fd2105ca3f2a56c043ce46e2e4ff6878514cf271bd26f09`
+and its segmented Windows package returns `42`. It writes a 360-byte WVLB 1.2
+with SHA-256
+`1189e27c21bf2281b59ecf9fdd8f8efa1d9671b049e17e9bbdb9e4baf390c74d`
+and a 1,100-byte WVIR 1.2 with SHA-256
+`3a07f3f96dda4d7be6b07636e312575b533664cea4c70a37c4b3991f89f71928`.
+No runtime generic mechanism is involved.
 
-The equal generic/oracle evidence identities are
+The following single-specialization identities are retained as the historical
+Decision 0786 checkpoint, rather than current multiple-specialization output:
 `7c30318a94a9c16965347d17da358b309aefaa01519bafed80e48eb52b4a294a`
 for 104-byte WVCA,
 `bda5d2ec661429a8649b3a23c905d1986fa5ad081b8c891c0283f5c534582a37`
@@ -209,15 +225,26 @@ SHA-256
 `cb7f970929bcdafa15c5f13b817f013ba30c033933d2988283b2e5c41ea316b3`;
 the pinned scalar runner returns `42` in 26 instructions.
 
+`Generic-Multiple-Specializations.wv` places a record before the generic
+declaration, infers `Identity<i32>` and `Identity<u32>`, and explicitly reuses
+the first instance. The current split compiler deterministically emits a
+498-byte WVB with SHA-256
+`d2054fc0a60dca7d48aa2427efb608b10d2198425960bc54381babc5824b7d01`.
+Strict compiler-aligned verification accepts it and the native scalar runner
+returns `42`. The WVB contains three reachable functions: `Main` and the two
+concrete specializations; the generic source placeholder is absent.
+
 `Generic-Collection-Analysis-Publication-Self-Test.wv` extends that source
 analysis proof to structural type-plus-constant inference. It rejects a
 repeated maximum conflict, an explicit constant with the wrong width, and a
 builder supplied for a sequence parameter. Its successful program calls
 `First<Type, const Maximum: u32>(sequence<Type, Maximum>)` once by inference
-and once as `First::<i32, 8u32>`. A same-length monomorphic oracle produces
-byte-identical WVCA, WVLB, and WVIR.
+and once as `First::<i32, 8u32>`. Under the current contract the generic source
+publishes specialized WVLB/WVIR 1.2, so its retained catalog and appended body
+are intentionally not byte-identical to a monomorphic WVLB/WVIR 1.1 oracle.
 
-The focused publisher is 1,065,397 WVB bytes with SHA-256
+The following publisher and oracle identities are retained as historical
+Decision 0787 evidence. The focused publisher is 1,065,397 WVB bytes with SHA-256
 `ca1b50539ab3c53966fde062e8816b829d25b0dc0bd14bcb3374a813443ecc7a`.
 Its ordinary segmented native package stays below the unchanged 33,554,432-byte
 whole-image ceiling at 33,487,778 selected machine bytes and returns `42`.
@@ -228,7 +255,7 @@ The generic/oracle products share 104-byte WVCA SHA-256
 and 976-byte WVIR SHA-256
 `c9a9299f223cae34887fd6788180f81b0b9a8d1499e99d5f81c2d053694361ab`.
 
-The retained emission driver can emit the monomorphic oracle as a 466-byte WVB
+That checkpoint's retained emission driver emitted the monomorphic oracle as a 466-byte WVB
 with SHA-256
 `2d59187da5f16a3b275a6bbe96502ce1309f0ba8348e8a22da02097808c8b0c6`.
 Direct execution is not claimed at this checkpoint: the current pinned native

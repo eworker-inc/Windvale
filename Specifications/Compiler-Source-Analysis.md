@@ -7,8 +7,8 @@ emission. It consumes one canonical admitted WVSS source set and publishes three
 individually bounded values:
 
 - one fixed 104-byte `WVCA 1.0` manifest;
-- one canonical `WVLB 1.1` binding directory; and
-- one canonical `WVIR 1.1` typed source directory.
+- one canonical `WVLB 1.1` or specialized `WVLB 1.2` binding directory; and
+- one canonical `WVIR 1.1` or specialized `WVIR 1.2` typed source directory.
 
 The artifact set is an internal compiler-phase contract. It is not executable,
 is not a package or distribution format, and does not create another source
@@ -43,6 +43,15 @@ reconstructs and validates the source-symbol model, compares every persisted
 source count, validates the complete WVLB directory against that source model,
 compares the WVIR header counts, and independently validates the complete WVIR
 directory against WVSS, symbols, and WVLB.
+
+The 1.2 pair is selected only when at least one generic function instance is
+admitted. WVLB retains the bounded WVGC catalog and declaration mapping; WVIR
+retains matching appended concrete function entries. The validator requires
+both artifacts to select the same versioned specialization count and rejects a
+missing, reordered, malformed, or mismatched catalog/body pair before emission.
+WVCA remains version 1.0 because its existing byte lengths and WVIR function
+count already bind either valid minor-version product without changing a field
+meaning.
 
 The statuses distinguish an invalid manifest, rejected source symbols, source
 WIR construction failure, invalid supplied WVLB, and invalid supplied WVIR.

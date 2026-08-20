@@ -98,6 +98,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Collection-Analysis-Publication.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Multiple-Specializations.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
             'Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv',
@@ -109,6 +110,7 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Generic-Collection-Analysis-Publication-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Collection-Monomorphic-Oracle.wv',
             'Tests/Fixtures/Language-1.0/Generic-Declaration-Front-End-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Multiple-Specializations.wv',
             'Tests/Fixtures/Language-1.0/Generic-Resolution-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
             'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
@@ -3287,7 +3289,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4800 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4804 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

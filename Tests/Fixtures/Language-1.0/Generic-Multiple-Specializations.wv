@@ -1,0 +1,18 @@
+module Genericˉmultipleˉspecializations profile portable;
+
+record Marker {
+    Value: i32;
+}
+
+fn Identity<Type>(Value: Type) -> Type {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Signed: i32 = Identity(42);
+    let Unsigned: u32 = Identity(7u32);
+    if Unsigned == 7u32 {
+        return Identity::<i32>(Signed);
+    }
+    return 0;
+}

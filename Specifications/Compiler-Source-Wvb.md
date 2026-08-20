@@ -207,6 +207,15 @@ The root owns the emitted module name, profile, capabilities, static data, and e
 
 WVSD entries are source-declaration identities. WVIR preserves those identities for function calls and data references. WVB instead numbers its function and data sections in strict ordinal name order.
 
+For specialized WVIR 1.2, ordinary reachable source functions retain that
+ordinal-name rule. An all-zero generic declaration placeholder is not emitted.
+Concrete specializations are appended to the function order in WVGC instance
+order, use bounded private names `__Generic_000000` onward, and are never
+exported merely because their source template is visible. Direct calls are
+translated through the same immutable WVIR-entry-to-WVB-rank table used by
+ordinary functions. The emitted function bodies and signatures are fully
+concrete; WVGS, WVGC, and source generic parameters are absent from WVB.
+
 The backend derives canonical function and data ranks from the independently validated global WVSD directory. Each directory entry names its owner module, so comparisons and declaration reads resolve the corresponding WVSS source first. It builds one immutable entry-to-rank and rank-to-entry table for each capability, data, record, enum, and function kind, then reuses those tables throughout emission. This removes repeated whole-directory ranking without changing any public packed format. It emits functions, code, exports, and data in canonical order and translates each WVIR target during emission. Source declaration order and owner module are therefore irrelevant to final indices.
 
 Only root function exports are emitted, in canonical function order, and they target translated global WVB function indices. Dependency exports are internalized. Explicit and synthetic data share one canonical ordinal namespace.

@@ -96,7 +96,7 @@ export fn Compilerˉprepareˉsourceˉanalysis(
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
         Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     let Compilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(
             Input, Scan, Symbols
         );
     let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =

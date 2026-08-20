@@ -4,6 +4,7 @@ import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 capability file.write_bytes;
 capability process.argument;
@@ -21,6 +22,22 @@ fn Sourceˉsetˉfrom(Source: text) -> bytes {
         Header, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
     );
     return Bytesˉconcat(Header, Sourceˉbytes);
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+        );
+    return Replaced.Value;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+        );
+    return Replaced.Value;
 }
 
 fn Manifest(
@@ -77,8 +94,8 @@ export fn Main() -> i32 {
         return 3;
     }
     if Wirˉstatus(
-        "module Genericˉdistinct profile portable; fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Signed: i32 = Identity(42); let Unsigned: u32 = Identity(42u32); return Signed; }"
-    ) != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉspecialization {
+        "module Genericˉdistinct profile portable; record Marker { Value: i32; } fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Signed: i32 = Identity(42); let Unsigned: u32 = Identity(7u32); if Unsigned == 7u32 { return Identity::<i32>(Signed); } return 0; }"
+    ) != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         return 4;
     }
     if Wirˉstatus(
@@ -87,7 +104,7 @@ export fn Main() -> i32 {
         return 5;
     }
     let Input: bytes = Sourceˉsetˉfrom(
-        "module Genericˉidentity profile portable; fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Initial: i32 = 42; let Inferred: i32 = Identity(Initial); return Identity::<i32>(Inferred); }\n"
+        "module Genericˉdistinct profile portable; record Marker { Value: i32; } fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Signed: i32 = Identity(42); let Unsigned: u32 = Identity(7u32); if Unsigned == 7u32 { return Identity::<i32>(Signed); } return 0; }\n"
     );
     let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
         Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
@@ -109,6 +126,25 @@ export fn Main() -> i32 {
     if Wir.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid ||
         Bindings.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
         return 2;
+    }
+    if Bytesˉreadˉu16ˉlittle(Bindings.Directory, 6u32) != 2u32 ||
+        Bytesˉreadˉu16ˉlittle(Wir.Directory, 6u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Wir.Directory, 48u32) != 2u32 {
+        return 6;
+    }
+    let Catalogˉoffset: u32 = 32u32 +
+        Bytesˉreadˉu32ˉlittle(Bindings.Directory, 16u32) * 16u32;
+    if Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols,
+        Replaceˉu8(Bindings.Directory, Catalogˉoffset, 0u8)
+    ) {
+        return 7;
+    }
+    if Sourceˉwir.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Bindings,
+        Replaceˉu32(Wir.Directory, 48u32, 1u32)
+    ) {
+        return 8;
     }
     file.write_bytes(process.argument(0u32), Input);
     file.write_bytes(

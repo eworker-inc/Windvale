@@ -77,20 +77,23 @@ rename clears the temporary path and is preserved.
 
 ## Development bootstrap bridge
 
-The Language 1.0 front door retains a portable 949,355-byte analyzer and
-746,557-byte target-aware emitter under
+The Language 1.0 front door retains a portable 949,355-byte historical analyzer
+and 746,557-byte target-aware emitter under
 `Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/`. Their manifest binds
 the exact source base, one `Optimize = true` emitter overlay, both Project 2
-closures, producer, sizes, and digests. The gate validates both WVBs, packages
-them for the active host, and assigns normal role-specific version-2 producer
-identities. It uses the pair only to construct the current target-aware emitter
-from the oversized compiler closure. Ordinary Language 1.0 inputs use the
-separately reconstructed current analyzer and emitter.
+closures, producer, sizes, and digests. The active gate first reconstructs and
+packages the current analyzer, assigns it a normal role-specific version-2
+identity, and uses that analyzer with the validated/packageable bootstrap
+emitter to construct the current target-aware emitter. The historical analyzer
+remains recovery/provenance evidence but is not packaged or executed by the
+front door.
 
 The bridge is not another compiler source tree, native executable, release
-artifacts, or qualification claim. They exist because the prior compiler can
-reconstruct the current analyzer, but that analyzer's hosted execution envelope
-does not admit the 1.57 MiB current compiler closure.
+artifact, or qualification claim. The old analyzer reached its bounded
+instruction budget on the enlarged current emitter closure; using it would both
+fail current reconstruction and redundantly package a roughly 30 MiB product.
+The optimized current analyzer admits that closure within its unchanged limits,
+so only the bootstrap emitter remains on the active construction path.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte

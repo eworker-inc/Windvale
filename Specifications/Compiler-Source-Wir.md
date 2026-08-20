@@ -46,7 +46,7 @@ element identity and maximum. The private high families `0x60000000` and
 `0x70000000` retain exact compact Foundation Option and Result arguments from
 the symbol contract. Nominal suffixes are canonical WVSD nominal indices.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. Function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.1 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.2 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order.
 
 ## WVIR 1 binary directory
 
@@ -70,6 +70,14 @@ All integers are unsigned little-endian and the directory contains no padding.
 
 Sections follow in that exact order.
 
+Source without an admitted generic instance retains that exact 48-byte WVIR
+1.1 header. Specialized source publishes WVIR 1.2. It changes the minor version
+to `2`, appends the specialization count at offset 48 and specialization-layout
+version `1` at offset 52, and begins the function section at offset 56. Its
+function-entry count is exactly `WvsdEntryCount + SpecializationCount`; the
+count must equal the valid WVGC instance count embedded in the paired WVLB 1.2.
+All section entry layouts remain unchanged.
+
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
 Each 28-byte block entry contains seven `u32` fields: block ID, first operation/count, terminator, value temporary, first target, and second target. The owning function and module are derived from the enclosing canonical function range. The sentinel `4294967295` represents an absent value or target.
@@ -88,15 +96,15 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, version, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
-- canonical function ranges aligned with WVSD and WVLB, parameter/local counts, and source return shapes;
+- magic, selected 1.1/1.2 version, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership, kind, source span, result shape, temporary sequencing, and operand sequencing;
 - prior-temporary use, local slots, inferred-local establishment by a non-void first store, consistent later local loads/stores, data and nominal identities, field/member/case indices, variant field counts and exact field shapes, collection descriptors, builder transitions, call targets, arity, dynamic parameter/result shapes, ordinary unit values, and return-only never shapes;
 - value-phi placement as the first operation of its join block, two distinct valid predecessor blocks, two exact same-shape operands owned by those predecessors, a result of that same non-void/non-never shape, an unconditional jump from both predecessors to the join, and no branch or third predecessor targeting that join; and
 - rejection of trailing bytes and corrupted function, block, operation, temporary, or operand entries.
 
-Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
+Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. For WVLB/WVIR 1.2 it additionally validates the embedded catalog substitution and maps every specialized call target back to its source declaration before checking arity and dynamic operand/result shapes. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
 
 A bare required capability name emits the existing `U32ˉconstant = 3` operation
 with its exact internal capability-reference result shape and zero target and
@@ -110,10 +118,11 @@ The bounded generic-collection checkpoint structurally matches one formal
 argument descriptor. Family, element shape, and maximum are separate evidence:
 the families must match, repeated type or maximum contributions must be equal,
 and an explicit constant argument must have the declaration's exact fixed-
-integer width. The selected specialization substitutes one concrete collection
-descriptor before ordinary body lowering. WVIR therefore contains only the
-same collection shape and operations as a hand-written monomorphic function.
-No WVIR operation value or directory version changes.
+integer width. Each selected specialization substitutes one concrete collection
+descriptor before ordinary body lowering. Its WVIR function body therefore
+contains only the same collection shape and operations as a hand-written
+monomorphic function. Multiple bodies use the WVIR 1.2 directory envelope
+above; no WVIR operation value changes.
 
 An edition-1 accepted `try` evaluates its expression once and requires the exact
 Foundation `Result<T, E>` identity. The current function must return

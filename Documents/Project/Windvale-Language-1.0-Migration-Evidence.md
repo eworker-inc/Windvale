@@ -36,13 +36,13 @@ One fixture migrates a manual `Valid`/`Value`/`Error` record through an explicit
 domain-error adapter. Generic declaration and explicit-call syntax now has a
 bounded parser checkpoint. Canonical WVGS solution evidence and WVGC
 specialization catalogs establish deterministic inference conflicts, reuse,
-diagnostics, and growth limits before code generation. The first direct-type
-function checkpoint now connects that identity to source symbols, concrete
-bindings, monomorphic WIR, and ordinary WVB execution. It supports inferred and
-full-arity explicit calls to one concrete instance per declaration, including a
-type appearing only as the complete result type. General generic records,
-variants, nested generic arguments, phantom or template-only declarations, and
-multiple concrete instances remain Slice 4 work. Collections beyond the first
+diagnostics, and growth limits before code generation. The direct-function
+checkpoints now connect that identity to source symbols, concrete bindings,
+monomorphic WIR, and ordinary WVB execution. They support inferred and
+full-arity explicit calls, equal-instance reuse, and multiple bounded concrete
+instances per declaration, including a type appearing only as the complete
+result type. General generic records, variants, nested generic arguments, and
+phantom or template-only declarations remain Slice 4 work. Collections beyond the first
 structural bounded signature and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
@@ -474,9 +474,10 @@ The unchanged emitter produces a 297-byte WVB with SHA-256
 
 The compiler-heavy focused publisher packages only through the existing
 segmented native route; the monolithic route reaches its unchanged output limit.
-No limit was widened. General generic records and variants, nested and constant
-arguments, phantom or template-only declarations, multiple concrete
-specializations, and collections remain open Slice 4 work. Heavy storage, OS,
+No limit was widened. At this checkpoint general generic records and variants,
+nested and constant arguments, phantom or template-only declarations, multiple
+concrete specializations, and collections remained open Slice 4 work. Decision
+0789 below removes the multiple-specialization restriction. Heavy storage, OS,
 paired-host, and complete Qualification gates remain deferred to the final
 seven-slice integration gate.
 
@@ -517,8 +518,8 @@ as a 1,268,289-byte WVB, but selects 37,097,130 native bytes and therefore was
 not packaged by widening the fixed limit. Collection-capable native execution
 remains downstream work.
 
-Decision 0788 completes the target-aware validated-analysis emission capacity
-checkpoint. The split emitter now fixes its target to
+Decision 0788 completed the initial target-aware validated-analysis emission
+capacity checkpoint. The split emitter fixed its target to
 `portable-wvb-optimized-v1`. The current product contains 402 reachable
 functions and 687,924 code bytes in an 833,126-byte WVB / SHA-256
 `be4a063cafe5b905ea2457e1c3c2ead36af2ecd4f9dd76a8a68a905dbf90a111`.
@@ -533,15 +534,14 @@ isolated `project-analysis-wvca-v2` and
 the adapter route, exact optimized and complete pruning oracles, and failed
 cache-publication cleanup in under one second locally instead of rebuilding
 three large compiler products already covered by the Language 1.0 front door.
-The front door retains only a portable bootstrap pair: a 949,355-byte analyzer
-at SHA-256
-`bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb`
-and a 746,557-byte target-aware emitter at SHA-256
+That checkpoint retained a portable bootstrap pair: a 949,355-byte analyzer and
+a 746,557-byte target-aware emitter at SHA-256
 `a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805`.
-It reconstructs the current analyzer normally for ordinary language inputs and
-uses the bootstrap pair only to construct the exact current emitter from the
-oversized compiler closure. No additional native compiler executable is
-checked in.
+Decision 0789 keeps the old analyzer as recovery/provenance evidence but removes
+it from the active front-door path. The gate now uses its already reconstructed
+current analyzer with the bootstrap emitter, avoiding one redundant large
+package and the old analyzer's exhausted instruction budget. No additional
+native compiler executable is checked in.
 The Foundation generic fixture now publishes a 3,236-byte reachable product at
 SHA-256
 `78ca3b22958e87b2717c1b94d83205e2d18bc96b9e546192d323f45c8279bc5f`,
@@ -550,6 +550,40 @@ typed result behavior.
 
 Heavy storage, OS, paired-host, and complete Qualification gates remain
 deferred to the final seven-slice integration gate.
+
+## Slice 4 multiple concrete specialization checkpoint
+
+Decision 0789 removes the temporary one-instance-per-declaration restriction
+without adding runtime generics or raising a compiler limit. Source without a
+generic instance retains WVLB/WVIR 1.1. Specialized analysis publishes an
+inseparable WVLB/WVIR 1.2 pair: WVLB embeds the bounded WVGC catalog and maps
+each concrete range to its source declaration, while WVIR appends one concrete
+body per catalog instance. The ordinary generic declaration position remains a
+zero placeholder.
+
+Specialization indices begin after the complete WVSD entry directory rather
+than after the source function count. `Generic-Multiple-Specializations.wv`
+therefore places a record before `Identity<Type>`, infers distinct `i32` and
+`u32` instances, and explicitly reuses the `i32` instance. Two current split
+builds produce the same 498-byte WVB with SHA-256
+`d2054fc0a60dca7d48aa2427efb608b10d2198425960bc54381babc5824b7d01`.
+The strict compiler-aligned verifier accepts it and the native scalar runner
+returns `42`. Its three reachable WVB functions are `Main` plus the two concrete
+bodies; the source generic placeholder is not emitted or exported.
+
+Independent validation now checks the exact embedded substitution, concrete
+parameter and result signatures, catalog/declaration mapping, and specialized
+call target before the emitter trusts cached analysis. The current local
+analyzer is a 1,070,851-byte WVB with SHA-256
+`7720b36a5c1f336ab26db4bc9a8e7eb1d3f0f686945f4d5f6627a5ad80d6f26c`.
+Its 33,527,296-byte segmented Windows package stays 27,136 bytes below the
+unchanged whole-image limit.
+
+The cross-host Language 1.0 owner adds deterministic double compilation,
+strict verification, and runtime execution for this boundary. The focused
+Windows evidence above ran during implementation; paired-host results and the
+heavy storage, OS, and complete Qualification gates remain deferred to the
+final seven-slice integration gate.
 
 ## Slice 2 named variant fields
 
