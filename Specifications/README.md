@@ -2,6 +2,15 @@
 
 These documents define the current implemented or accepted contracts. Dated rationale and supersession history live under [`Documents/Decisions/`](../Documents/Decisions/); project status lives in the [progress dashboard](../Documents/Project/Progress.md) and [roadmap](../Documents/Project/Roadmap.md).
 
+## Library 1.0 draft proposals
+
+These documents are proposals for owner review, not implementation or
+conformance claims:
+
+- [Windvale Libraries 1.0 suite](Windvale-Libraries-1.0.md)
+- [Windvale Backend Libraries 1.0 API catalog](Windvale-Backend-Libraries-1.0.md)
+- [Windvale binary data profile 1.0](Windvale-Binary-Data-1.0.md)
+
 ## Language, naming, and hosted resources
 
 - [Language 1.0 semantic specification candidate](Windvale-Language-1.0.md)

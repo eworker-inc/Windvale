@@ -1,5 +1,19 @@
 # Windvale libraries
 
+## Library 1.0 design
+
+The proposed public suite is documented by the draft
+[Windvale Libraries 1.0 specification](../Specifications/Windvale-Libraries-1.0.md),
+the detailed
+[Windvale Backend Libraries 1.0 API catalog](../Specifications/Windvale-Backend-Libraries-1.0.md),
+the focused
+[Windvale binary data profile 1.0](../Specifications/Windvale-Binary-Data-1.0.md),
+and the
+[Library 1.0 migration and delivery plan](../Documents/Project/Windvale-Libraries-1.0-Plan.md).
+They distinguish proposed public contracts from the implemented modules
+described below. Existing implementations may be refactored during the 1.0
+migration; no draft API is an implementation or conformance claim.
+
 ## Status
 
 [Decision 0573](../Documents/Decisions/0573-First-Provider-Neutral-Model-Protocol.md)
