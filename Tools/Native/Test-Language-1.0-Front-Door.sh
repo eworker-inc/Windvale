@@ -95,6 +95,25 @@ generic_resolution_result=$?
 [[ $generic_resolution_result -eq 42 ]] || exit 1
 [[ ! -s $work/Generic-Resolution.out && \
     ! -s $work/Generic-Resolution.err ]] || exit 1
+echo 'START language 1 front door step=generic-type-catalog'
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Generic-Type-Catalog.wvproj" \
+    "$work/Generic-Type-Catalog.wvb" >/dev/null || exit $?
+"$script_directory/Package-Hosted-Wvb.sh" 1 \
+    "$work/Generic-Type-Catalog.wvb" "$work/Generic-Type-Catalog.elf" \
+    >"$work/Generic-Type-Catalog-Package.out" \
+    2>"$work/Generic-Type-Catalog-Package.err" || exit $?
+[[ ! -s $work/Generic-Type-Catalog-Package.err ]] || exit 1
+"$work/Generic-Type-Catalog.elf" \
+    >"$work/Generic-Type-Catalog.out" \
+    2>"$work/Generic-Type-Catalog.err"
+generic_type_catalog_result=$?
+[[ $generic_type_catalog_result -eq 42 ]] || exit 1
+[[ ! -s $work/Generic-Type-Catalog.out && \
+    ! -s $work/Generic-Type-Catalog.err ]] || exit 1
+generic_type_catalog_wvb_bytes=$(wc -c < "$work/Generic-Type-Catalog.wvb")
+printf 'PASS  language 1 front door step=generic-type-catalog wvb-bytes=%s\n' \
+    "$generic_type_catalog_wvb_bytes"
 echo 'PASS  language 1 front door phase=value-front-end item=3/11'
 
 echo 'START language 1 front door phase=compiler-slice item=4/11'
@@ -897,4 +916,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=11/11'
-printf 'native language 1 front door status=Passed cases=155 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 generic-front-end-cases=4 generic-resolution-cases=1 generic-specialization-cases=4 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=156 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=25 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-type-catalog-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_type_catalog_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

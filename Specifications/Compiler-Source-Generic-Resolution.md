@@ -26,6 +26,12 @@ concrete specializations in one compilation, bounded by the shared 256-instance
 catalog limit. Those are explicit implementation boundaries, not changes to
 the frozen Language 1.0 design.
 
+`Compiler-Source-Generic-Types.md` separately defines WVGT 1.0, the first
+bounded concrete identity for generic records, variants, nested arguments, and
+phantom arguments. WVGT's executable catalog is implemented, but its source
+binding, substitution, WIR, and WVB connections remain later Slice 4 work; this
+function-resolution document does not imply those connections.
+
 The artifacts are internal compiler-phase evidence. They are not source syntax,
 package identity, distributable bytecode, or a runtime generic representation.
 All integers are unsigned little-endian and all byte lengths are exact.

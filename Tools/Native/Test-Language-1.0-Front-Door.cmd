@@ -64,6 +64,16 @@ for %%F in ("%Work%\Generic-Resolution-Package.err") do if not "%%~zF"=="0" goto
 set "GenericResolutionResult=%ERRORLEVEL%"
 if not "%GenericResolutionResult%"=="42" goto :cleanup
 for %%F in ("%Work%\Generic-Resolution.out" "%Work%\Generic-Resolution.err") do if not "%%~zF"=="0" goto :cleanup
+echo START language 1 front door step=generic-type-catalog
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Generic-Type-Catalog.wvproj" "%Work%\Generic-Type-Catalog.wvb" >nul || goto :cleanup
+call "%Native%\Package-Hosted-Wvb.cmd" 1 "%Work%\Generic-Type-Catalog.wvb" "%Work%\Generic-Type-Catalog.exe" >"%Work%\Generic-Type-Catalog-Package.out" 2>"%Work%\Generic-Type-Catalog-Package.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Type-Catalog-Package.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Generic-Type-Catalog.exe" >"%Work%\Generic-Type-Catalog.out" 2>"%Work%\Generic-Type-Catalog.err"
+set "GenericTypeCatalogResult=%ERRORLEVEL%"
+if not "%GenericTypeCatalogResult%"=="42" goto :cleanup
+for %%F in ("%Work%\Generic-Type-Catalog.out" "%Work%\Generic-Type-Catalog.err") do if not "%%~zF"=="0" goto :cleanup
+for %%F in ("%Work%\Generic-Type-Catalog.wvb") do set "GenericTypeCatalogWvbBytes=%%~zF"
+echo PASS  language 1 front door step=generic-type-catalog wvb-bytes=%GenericTypeCatalogWvbBytes%
 echo PASS  language 1 front door phase=value-front-end item=3/11
 
 set "FailureStep=compiler-bootstrap-profile"
@@ -910,6 +920,10 @@ if not "%Result%"=="0" (
     if exist "%Work%\Generic-Resolution-Package.err" type "%Work%\Generic-Resolution-Package.err" >&2
     if exist "%Work%\Generic-Resolution.out" type "%Work%\Generic-Resolution.out" >&2
     if exist "%Work%\Generic-Resolution.err" type "%Work%\Generic-Resolution.err" >&2
+    if exist "%Work%\Generic-Type-Catalog-Package.out" type "%Work%\Generic-Type-Catalog-Package.out" >&2
+    if exist "%Work%\Generic-Type-Catalog-Package.err" type "%Work%\Generic-Type-Catalog-Package.err" >&2
+    if exist "%Work%\Generic-Type-Catalog.out" type "%Work%\Generic-Type-Catalog.out" >&2
+    if exist "%Work%\Generic-Type-Catalog.err" type "%Work%\Generic-Type-Catalog.err" >&2
     if exist "%Work%\Value-Match-A.err" type "%Work%\Value-Match-A.err" >&2
     if exist "%Work%\Value-Match-Lazy.err" type "%Work%\Value-Match-Lazy.err" >&2
     if exist "%Work%\Value-Match-Lazy-Run.err" type "%Work%\Value-Match-Lazy-Run.err" >&2
@@ -920,7 +934,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=155 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-specialization-cases=4 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=156 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_result_42

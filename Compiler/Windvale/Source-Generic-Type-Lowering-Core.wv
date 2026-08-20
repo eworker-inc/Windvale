@@ -1,0 +1,758 @@
+module Compilerˉsourceˉgenericˉtypeˉlowering profile portable;
+
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
+
+export record Compilerˉsourceˉgenericˉtypeˉcatalog {
+    Status: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
+    Evidence: bytes;
+}
+
+export record Compilerˉsourceˉgenericˉtypeˉadmission {
+    Status: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
+    Catalogˉevidence: bytes;
+    Instance: u32;
+    Reused: bool;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉshapeˉbase() -> u32 {
+    return 2147483648u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉisˉfixedˉintegerˉshape(
+    Shape: u32
+) -> bool {
+    return Shape == 1u32 || Shape == 2u32 || Shape == 3u32 ||
+        Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
+        Shape == 12u32 || Shape == 13u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉconstantˉfits(
+    Shape: u32,
+    Low: u32,
+    High: u32
+) -> bool {
+    if !Compilerˉsourceˉgenericˉtypeˉisˉfixedˉintegerˉshape(Shape) {
+        return false;
+    }
+    if Shape == 2u32 || Shape == 11u32 {
+        return High == 0u32 && Low <= 255u32;
+    }
+    if Shape == 12u32 || Shape == 13u32 {
+        return High == 0u32 && Low <= 65535u32;
+    }
+    if Shape == 1u32 || Shape == 3u32 { return High == 0u32; }
+    return true;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉsolutionˉisˉcomplete(
+    Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution
+) -> bool {
+    if Solution.Status != Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Bytesˉlength(Solution.Evidence) < 20u32 {
+        return false;
+    }
+    if Bytesˉreadˉu8(Solution.Evidence, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Solution.Evidence, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Solution.Evidence, 2u32) != 71u8 ||
+        Bytesˉreadˉu8(Solution.Evidence, 3u32) != 83u8 ||
+        Bytesˉreadˉu16ˉlittle(Solution.Evidence, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Solution.Evidence, 6u32) != 0u32 {
+        return false;
+    }
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, 8u32
+    );
+    if Parameters == 0u32 || Parameters > 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, 12u32) != Parameters ||
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, 16u32) != 24u32 ||
+        Bytesˉlength(Solution.Evidence) != 20u32 + Parameters * 24u32 {
+        return false;
+    }
+    let Sentinel: u32 = Compilerˉsourceˉgenericˉtypeˉsentinel();
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        let Entry: u32 = 20u32 + Parameter * 24u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry);
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Solution.Evidence, Entry + 4u32
+        );
+        let Low: u32 = Bytesˉreadˉu32ˉlittle(
+            Solution.Evidence, Entry + 8u32
+        );
+        let High: u32 = Bytesˉreadˉu32ˉlittle(
+            Solution.Evidence, Entry + 12u32
+        );
+        if Kind == 1u32 {
+            if Shape != 0u32 || Low == 0u32 || High != 0u32 {
+                return false;
+            }
+        } else if Kind == 2u32 {
+            if !Compilerˉsourceˉgenericˉtypeˉconstantˉfits(
+                Shape, Low, High
+            ) { return false; }
+        } else {
+            return false;
+        }
+        if Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 16u32) ==
+                Sentinel ||
+            Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 20u32) ==
+                Sentinel {
+            return false;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉvalue(
+    Status: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus,
+    Evidence: bytes
+) -> Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Compilerˉsourceˉgenericˉtypeˉcatalog(Status, Evidence);
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉheader(
+    Instances: u32,
+    Maximumˉdepth: u32,
+    Retainedˉbytes: u32,
+    Estimatedˉbytes: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVGT");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+        Result, Instances
+    );
+    Result = Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+        Result, Maximumˉdepth
+    );
+    Result = Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+        Result, Retainedˉbytes
+    );
+    return Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+        Result, Estimatedˉbytes
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(
+) -> Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Compilerˉsourceˉgenericˉtypeˉcatalogˉvalue(
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉheader(
+            0u32, 0u32, 24u32, 0u32
+        )
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> u32 {
+    if Catalog.Status != Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Bytesˉlength(Catalog.Evidence) < 24u32 {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, 8u32);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉmaximumˉdepth(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> u32 {
+    if Bytesˉlength(Catalog.Evidence) < 24u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, 12u32);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉestimatedˉbytes(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> u32 {
+    if Bytesˉlength(Catalog.Evidence) < 24u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, 20u32);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉshape(Instance: u32) -> u32 {
+    if Instance >= 256u32 { return 0u32; }
+    return Compilerˉsourceˉgenericˉtypeˉshapeˉbase() + Instance;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+    Shape: u32
+) -> bool {
+    let Base: u32 = Compilerˉsourceˉgenericˉtypeˉshapeˉbase();
+    return Shape >= Base && Shape < Base + 256u32;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+    Shape: u32
+) -> u32 {
+    if !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        return Compilerˉsourceˉgenericˉtypeˉsentinel();
+    }
+    return Shape - Compilerˉsourceˉgenericˉtypeˉshapeˉbase();
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉheaderˉisˉvalid(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bool {
+    if Catalog.Status != Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Bytesˉlength(Catalog.Evidence) < 24u32 {
+        return false;
+    }
+    if Bytesˉreadˉu8(Catalog.Evidence, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Catalog.Evidence, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Catalog.Evidence, 2u32) != 71u8 ||
+        Bytesˉreadˉu8(Catalog.Evidence, 3u32) != 84u8 ||
+        Bytesˉreadˉu16ˉlittle(Catalog.Evidence, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Catalog.Evidence, 6u32) != 0u32 {
+        return false;
+    }
+    let Instances: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 8u32
+    );
+    let Maximumˉdepth: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 12u32
+    );
+    let Retained: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 16u32
+    );
+    let Estimated: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 20u32
+    );
+    if Instances > 256u32 || Maximumˉdepth > 32u32 ||
+        Retained != Bytesˉlength(Catalog.Evidence) ||
+        Retained > 1048576u32 || Estimated > 16777216u32 {
+        return false;
+    }
+    return (Instances == 0u32 && Maximumˉdepth == 0u32) ||
+        (Instances > 0u32 && Maximumˉdepth > 0u32);
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    if Instance >=
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog) {
+        return Compilerˉsourceˉgenericˉtypeˉsentinel();
+    }
+    if Bytesˉlength(Catalog.Evidence) < 28u32 {
+        return Compilerˉsourceˉgenericˉtypeˉsentinel();
+    }
+    var Cursor: u32 = 24u32;
+    var Current: u32 = 0u32;
+    while Current < Instance {
+        if Cursor > Bytesˉlength(Catalog.Evidence) - 28u32 {
+            return Compilerˉsourceˉgenericˉtypeˉsentinel();
+        }
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        );
+        if Parameters == 0u32 || Parameters > 32u32 ||
+            28u32 + Parameters * 16u32 >
+                Bytesˉlength(Catalog.Evidence) - Cursor {
+            return Compilerˉsourceˉgenericˉtypeˉsentinel();
+        }
+        Cursor = Cursor + 28u32 + Parameters * 16u32;
+        Current = Current + 1u32;
+    }
+    if Cursor > Bytesˉlength(Catalog.Evidence) - 28u32 {
+        return Compilerˉsourceˉgenericˉtypeˉsentinel();
+    }
+    let Selectedˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 24u32
+    );
+    if Selectedˉparameters == 0u32 || Selectedˉparameters > 32u32 ||
+        28u32 + Selectedˉparameters * 16u32 >
+            Bytesˉlength(Catalog.Evidence) - Cursor {
+        return Compilerˉsourceˉgenericˉtypeˉsentinel();
+    }
+    return Cursor;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉgenericˉtypeˉsentinel() {
+        return Compilerˉsourceˉgenericˉtypeˉsentinel();
+    }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉgenericˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 4u32);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdepth(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉgenericˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 8u32);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉgenericˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 24u32);
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32,
+    Parameter: u32
+) -> Sourceˉgenerics.Compilerˉsourceˉgenericˉargument {
+    let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉgenericˉtypeˉsentinel() ||
+        Parameter >= Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        ) {
+        return Sourceˉgenerics.Compilerˉsourceˉgenericˉargument(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Entry: u32 = Cursor + 28u32 + Parameter * 16u32;
+    return Sourceˉgenerics.Compilerˉsourceˉgenericˉargument(
+        true,
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry),
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry + 4u32),
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry + 8u32),
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Entry + 12u32)
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉcandidateˉdepth(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution
+) -> u32 {
+    let Base: u32 = Compilerˉsourceˉgenericˉtypeˉshapeˉbase();
+    let Instances: u32 =
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog);
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, 8u32
+    );
+    var Depth: u32 = 1u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        let Entry: u32 = 20u32 + Parameter * 24u32;
+        if Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry) == 1u32 {
+            let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+                Solution.Evidence, Entry + 8u32
+            );
+            if Shape >= Base {
+                if Shape >= Base + 256u32 { return 0u32; }
+                let Nested: u32 = Shape - Base;
+                if Nested >= Instances { return 0u32; }
+                let Nestedˉdepth: u32 =
+                    Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdepth(
+                        Catalog, Nested
+                    );
+                if Nestedˉdepth == 0u32 || Nestedˉdepth >= 32u32 {
+                    return 33u32;
+                }
+                if Nestedˉdepth + 1u32 > Depth {
+                    Depth = Nestedˉdepth + 1u32;
+                }
+            }
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Depth;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉentryˉisˉvalid(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32,
+    Cursor: u32
+) -> bool {
+    let Sentinel: u32 = Compilerˉsourceˉgenericˉtypeˉsentinel();
+    let Kind: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 4u32
+    );
+    let Depth: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 8u32
+    );
+    let Estimate: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 20u32
+    );
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Cursor + 24u32
+    );
+    if Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor) == Sentinel ||
+        (Kind != 4u32 && Kind != 8u32) ||
+        Depth == 0u32 || Depth > 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 12u32) ==
+            Sentinel ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 16u32) ==
+            Sentinel ||
+        Estimate > 16777216u32 || Parameters == 0u32 ||
+        Parameters > 32u32 {
+        return false;
+    }
+    let Base: u32 = Compilerˉsourceˉgenericˉtypeˉshapeˉbase();
+    var Expectedˉdepth: u32 = 1u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        let Entry: u32 = Cursor + 28u32 + Parameter * 16u32;
+        let Argumentˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Entry
+        );
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Entry + 4u32
+        );
+        let Low: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Entry + 8u32
+        );
+        let High: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Entry + 12u32
+        );
+        if Argumentˉkind == 1u32 {
+            if Shape != 0u32 || Low == 0u32 || High != 0u32 {
+                return false;
+            }
+            if Low >= Base {
+                if Low >= Base + 256u32 { return false; }
+                let Nested: u32 = Low - Base;
+                if Nested >= Instance { return false; }
+                let Nestedˉdepth: u32 =
+                    Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdepth(
+                        Catalog, Nested
+                    );
+                if Nestedˉdepth == 0u32 || Nestedˉdepth >= 32u32 {
+                    return false;
+                }
+                if Nestedˉdepth + 1u32 > Expectedˉdepth {
+                    Expectedˉdepth = Nestedˉdepth + 1u32;
+                }
+            }
+        } else if Argumentˉkind == 2u32 {
+            if !Compilerˉsourceˉgenericˉtypeˉconstantˉfits(
+                Shape, Low, High
+            ) { return false; }
+        } else {
+            return false;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Depth == Expectedˉdepth;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉentriesˉequal(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Left: u32,
+    Right: u32
+) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Left) !=
+            Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Right) ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Left + 4u32) !=
+            Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Right + 4u32) ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Left + 24u32) !=
+            Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Right + 24u32) {
+        return false;
+    }
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, Left + 24u32
+    );
+    var Byte: u32 = 0u32;
+    while Byte < Parameters * 16u32 {
+        if Bytesˉreadˉu8(Catalog.Evidence, Left + 28u32 + Byte) !=
+            Bytesˉreadˉu8(Catalog.Evidence, Right + 28u32 + Byte) {
+            return false;
+        }
+        Byte = Byte + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bool {
+    if !Compilerˉsourceˉgenericˉtypeˉcatalogˉheaderˉisˉvalid(Catalog) {
+        return false;
+    }
+    let Instances: u32 =
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog);
+    var Maximumˉdepth: u32 = 0u32;
+    var Estimated: u32 = 0u32;
+    var End: u32 = 24u32;
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+            Catalog, Instance
+        );
+        if Cursor == Compilerˉsourceˉgenericˉtypeˉsentinel() ||
+            !Compilerˉsourceˉgenericˉtypeˉcatalogˉentryˉisˉvalid(
+                Catalog, Instance, Cursor
+            ) {
+            return false;
+        }
+        let Depth: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 8u32
+        );
+        if Depth > Maximumˉdepth { Maximumˉdepth = Depth; }
+        let Estimate: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 20u32
+        );
+        if Estimate > 16777216u32 - Estimated { return false; }
+        Estimated = Estimated + Estimate;
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        );
+        End = Cursor + 28u32 + Parameters * 16u32;
+        var Prior: u32 = 0u32;
+        while Prior < Instance {
+            let Priorˉcursor: u32 =
+                Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+                    Catalog, Prior
+                );
+            if Priorˉcursor == Compilerˉsourceˉgenericˉtypeˉsentinel() ||
+                Compilerˉsourceˉgenericˉtypeˉcatalogˉentriesˉequal(
+                    Catalog, Priorˉcursor, Cursor
+                ) {
+                return false;
+            }
+            Prior = Prior + 1u32;
+        }
+        Instance = Instance + 1u32;
+    }
+    return End == Bytesˉlength(Catalog.Evidence) &&
+        Maximumˉdepth == Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, 12u32
+        ) && Estimated == Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, 20u32
+        );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉcatalogˉmatches(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Cursor: u32,
+    Declaration: u32,
+    Kind: u32,
+    Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution
+) -> bool {
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, 8u32
+    );
+    if Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor) != Declaration ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 4u32) != Kind ||
+        Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 24u32) !=
+            Parameters {
+        return false;
+    }
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        var Field: u32 = 0u32;
+        while Field < 4u32 {
+            if Bytesˉreadˉu32ˉlittle(
+                    Catalog.Evidence,
+                    Cursor + 28u32 + Parameter * 16u32 + Field * 4u32
+                ) != Bytesˉreadˉu32ˉlittle(
+                    Solution.Evidence,
+                    20u32 + Parameter * 24u32 + Field * 4u32
+                ) {
+                return false;
+            }
+            Field = Field + 1u32;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+    Status: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus,
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instance: u32,
+    Reused: bool
+) -> Compilerˉsourceˉgenericˉtypeˉadmission {
+    return Compilerˉsourceˉgenericˉtypeˉadmission(
+        Status, Catalog.Evidence, Instance, Reused
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+    Admission: Compilerˉsourceˉgenericˉtypeˉadmission
+) -> Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Compilerˉsourceˉgenericˉtypeˉcatalog(
+        Admission.Status, Admission.Catalogˉevidence
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Declaration: u32,
+    Kind: u32,
+    Module: u32,
+    Offset: u32,
+    Estimatedˉbytes: u32,
+    Candidate: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution
+) -> Compilerˉsourceˉgenericˉtypeˉadmission {
+    let Sentinel: u32 = Compilerˉsourceˉgenericˉtypeˉsentinel();
+    if Candidate.Status != Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Candidate.Status, Catalog, Sentinel, false
+        );
+    }
+    if !Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(Catalog) {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Catalog, Sentinel, false
+        );
+    }
+    if Declaration == Sentinel || (Kind != 4u32 && Kind != 8u32) ||
+        Module == Sentinel || Offset == Sentinel {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉparameter,
+            Catalog, Sentinel, false
+        );
+    }
+    let Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉfinish(Candidate);
+    if Solution.Status != Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Solution.Status, Catalog, Sentinel, false
+        );
+    }
+    if !Compilerˉsourceˉgenericˉtypeˉsolutionˉisˉcomplete(Solution) {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Catalog, Sentinel, false
+        );
+    }
+    let Instances: u32 =
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog);
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        let Cursor: u32 = Compilerˉsourceˉgenericˉtypeˉcatalogˉfindˉcursor(
+            Catalog, Instance
+        );
+        if Cursor == Sentinel ||
+            !Compilerˉsourceˉgenericˉtypeˉcatalogˉentryˉisˉvalid(
+                Catalog, Instance, Cursor
+            ) {
+            return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+                Catalog, Sentinel, false
+            );
+        }
+        if Compilerˉsourceˉgenericˉtypeˉcatalogˉmatches(
+            Catalog, Cursor, Declaration, Kind, Solution
+        ) {
+            return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+                Catalog, Instance, true
+            );
+        }
+        Instance = Instance + 1u32;
+    }
+    let Depth: u32 =
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉcandidateˉdepth(
+            Catalog, Solution
+        );
+    if Depth == 0u32 || Depth > 32u32 {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Instantiationˉdepth,
+            Catalog, Sentinel, false
+        );
+    }
+    if Instances >= 256u32 {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Instanceˉlimit,
+            Catalog, Sentinel, false
+        );
+    }
+    let Priorˉestimated: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 20u32
+    );
+    if Estimatedˉbytes > 16777216u32 ||
+        Estimatedˉbytes > 16777216u32 - Priorˉestimated {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Codeˉgrowthˉlimit,
+            Catalog, Sentinel, false
+        );
+    }
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Solution.Evidence, 8u32
+    );
+    let Entryˉlength: u32 = 28u32 + Parameters * 16u32;
+    let Retained: u32 = Bytesˉlength(Catalog.Evidence);
+    if Entryˉlength > 1048576u32 - Retained {
+        return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
+            Catalog, Sentinel, false
+        );
+    }
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Declaration);
+    Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(Entry, Kind);
+    Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(Entry, Depth);
+    Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(Entry, Module);
+    Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(Entry, Offset);
+    Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+        Entry, Estimatedˉbytes
+    );
+    Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(Entry, Parameters);
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        var Field: u32 = 0u32;
+        while Field < 4u32 {
+            Entry = Compilerˉsourceˉgenericˉtypeˉappendˉu32(
+                Entry,
+                Bytesˉreadˉu32ˉlittle(
+                    Solution.Evidence,
+                    20u32 + Parameter * 24u32 + Field * 4u32
+                )
+            );
+            Field = Field + 1u32;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    var Maximumˉdepth: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 12u32
+    );
+    if Depth > Maximumˉdepth { Maximumˉdepth = Depth; }
+    let Header: bytes = Compilerˉsourceˉgenericˉtypeˉcatalogˉheader(
+        Instances + 1u32, Maximumˉdepth,
+        Retained + Entryˉlength, Priorˉestimated + Estimatedˉbytes
+    );
+    let Payload: bytes = Bytesˉslice(
+        Catalog.Evidence, 24u32, Retained - 24u32
+    );
+    let Updated: Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Bytesˉconcat(Bytesˉconcat(Header, Payload), Entry)
+        );
+    return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Updated, Instances, false
+    );
+}

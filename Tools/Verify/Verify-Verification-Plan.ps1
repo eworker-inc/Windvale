@@ -100,6 +100,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Multiple-Specializations.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Type-Catalog.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
             'Tests/Fixtures/Language-1.0/Descriptorless-Edition-Header.wv',
             'Tests/Fixtures/Language-1.0/Minimum-Program.wv',
@@ -112,6 +113,7 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Generic-Declaration-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Multiple-Specializations.wv',
             'Tests/Fixtures/Language-1.0/Generic-Resolution-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Type-Catalog-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
             'Tests/Fixtures/Language-1.0/Value-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv',
@@ -140,7 +142,25 @@ $NativeCases = @(
     },
     @{
         Name = 'Language 1.0 generic resolution boundary routing'
-        Paths = @('Compiler/Windvale/Source-Generic-Resolution-Core.wv')
+        Paths = @(
+            'Compiler/Windvale/Source-Generic-Resolution-Core.wv',
+            'Specifications/Compiler-Source-Generic-Resolution.md'
+        )
+        Suites = @(
+            'source-containment',
+            'language-1-front-door'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 generic nominal type catalog routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Type-Catalog.wvproj',
+            'Specifications/Compiler-Source-Generic-Types.md',
+            'Tests/Fixtures/Language-1.0/Generic-Type-Catalog-Self-Test.wv'
+        )
         Suites = @(
             'source-containment',
             'language-1-front-door'

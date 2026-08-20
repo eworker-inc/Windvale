@@ -42,6 +42,7 @@ conformance claims:
 - [Declaration and signature symbols](Compiler-Source-Symbols.md)
 - [Body, local, and call bindings](Compiler-Source-Bindings.md)
 - [Generic resolution and specialization evidence](Compiler-Source-Generic-Resolution.md)
+- [Generic nominal type evidence](Compiler-Source-Generic-Types.md)
 - [Typed source IR](Compiler-Source-Wir.md)
 - [Source-analysis phase artifact](Compiler-Source-Analysis.md)
 - [Split-compiler development cache](Compiler-Split-Development-Cache.md)

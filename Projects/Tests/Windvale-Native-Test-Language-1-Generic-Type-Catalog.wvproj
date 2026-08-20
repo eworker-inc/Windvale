@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Generic-Type-Catalog-Self-Test.wv"
+source "Compiler/Windvale/Source-Generic-Lowering-Core.wv"
+source "Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv"
+emit wvb

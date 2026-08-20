@@ -41,9 +41,11 @@ checkpoints now connect that identity to source symbols, concrete bindings,
 monomorphic WIR, and ordinary WVB execution. They support inferred and
 full-arity explicit calls, equal-instance reuse, and multiple bounded concrete
 instances per declaration, including a type appearing only as the complete
-result type. General generic records, variants, nested generic arguments, and
-phantom or template-only declarations remain Slice 4 work. Collections beyond the first
-structural bounded signature and the
+result type. WVGT 1.0 now supplies the bounded concrete identity, exact nested
+dependency order, and private compiler shapes required by general generic
+records and variants. Source binding, field substitution, WIR carriage, WVB
+materialization, and package-visible template publication remain Slice 4 work.
+Collections beyond the first structural bounded signature and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
 deferred to the seven-slice integration gate. Localized token execution,
@@ -585,6 +587,38 @@ strict verification, and runtime execution for this boundary. The focused
 Windows evidence above ran during implementation; paired-host results and the
 heavy storage, OS, and complete Qualification gates remain deferred to the
 final seven-slice integration gate.
+
+## Slice 4 generic nominal type identity checkpoint
+
+Decision 0804 adds WVGT 1.0 rather than extending the function-only WVGC
+catalog or packing arbitrary arguments into the old Foundation-specialized
+shape ranges. Each of at most 256 concrete record/variant instances receives a
+private compiler shape `0x80000000 + instance`. Its identity retains the exact
+WVSD declaration, nominal kind, and complete ordered type/constant argument
+sequence, including phantom arguments.
+
+Nested generic arguments reference only an earlier WVGT instance. Validation
+recomputes exact depth, rejects forward or self references, and caps depth at
+32. Admission validates the complete catalog, reuses equal identity before
+growth checks, and rejects malformed lengths, aggregates, constants, duplicate
+identities, a 257th instance, evidence beyond 1 MiB, or estimated emitted type
+growth beyond 16 MiB. These private shapes are compiler evidence and do not
+enter WVB.
+
+The focused fixture covers ordinary, nested, constant, phantom-identity,
+malformed, duplicate, limit, and reuse behavior. It builds to 65,457 WVB bytes
+at SHA-256
+`1387baaf0d9da4deed9ac5a7d37530f47c086c178461576e29f66168240e7d8b`.
+Its 681,472-byte hosted Windows executable has SHA-256
+`b6bf5abea06bf9ab2d6fc081742dc4c6812d0a3b80d149cb5bf733443ad7c924`
+and returns `42` without output.
+
+This is the representation foundation for general generic nominal source, not
+the connected compiler claim. Declaration-parameter binding, recursive type-use
+admission, substituted record/variant fields, typed WIR, reachable WVB type
+materialization, and migration of the current Foundation special cases remain
+the next Slice 4 checkpoints. Heavy storage, OS, paired-host, and complete
+Qualification gates remain deferred to the final seven-slice integration gate.
 
 ## Slice 4 packed keyword dispatch checkpoint
 

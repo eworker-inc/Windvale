@@ -1,0 +1,349 @@
+module Languageˉoneˉgenericˉtypeˉcatalogˉselfˉtest profile portable;
+
+import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Oneˉtypeˉsolution(Shape: u32, Offset: u32) ->
+    Generics.Compilerˉsourceˉgenericˉsolution {
+    var Solution: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(
+            Bytesˉfromˉu32ˉlittle(1u32),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+    Solution = Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Solution, 0u32, 1u32, Shape, 0u32, 0u32, Offset
+    );
+    return Generics.Compilerˉsourceˉgenericˉsolutionˉfinish(Solution);
+}
+
+fn Typeˉandˉconstantˉsolution(
+    Shape: u32,
+    Maximum: u32,
+    Offset: u32
+) -> Generics.Compilerˉsourceˉgenericˉsolution {
+    var Kinds: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    Kinds = Bytesˉconcat(Kinds, Bytesˉfromˉu32ˉlittle(2u32));
+    var Shapes: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Shapes = Bytesˉconcat(Shapes, Bytesˉfromˉu32ˉlittle(3u32));
+    var Solution: Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(Kinds, Shapes);
+    Solution = Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Solution, 0u32, 1u32, Shape, 0u32, 0u32, Offset
+    );
+    Solution = Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+        Solution, 1u32, 2u32, Maximum, 0u32, 1u32, Offset + 1u32
+    );
+    return Generics.Compilerˉsourceˉgenericˉsolutionˉfinish(Solution);
+}
+
+fn Testˉordinaryˉandˉnested() -> i32 {
+    var Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    let Pair: Generics.Compilerˉsourceˉgenericˉsolution =
+        Typeˉandˉconstantˉsolution(1u32, 8u32, 100u32);
+    var Admission: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Catalog, 20u32, 4u32, 0u32, 100u32, 40u32, Pair
+        );
+    if Admission.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Admission.Instance != 0u32 || Admission.Reused {
+        return 1;
+    }
+    Catalog = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+        Admission
+    );
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) || Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) !=
+            2147483648u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+            2147483648u32
+        ) != 0u32 {
+        return 2;
+    }
+
+    let Same: Generics.Compilerˉsourceˉgenericˉsolution =
+        Typeˉandˉconstantˉsolution(1u32, 8u32, 200u32);
+    Admission = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+        Catalog, 20u32, 4u32, 1u32, 200u32, 16777217u32, Same
+    );
+    if Admission.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Admission.Instance != 0u32 || !Admission.Reused {
+        return 3;
+    }
+
+    let Nested: Generics.Compilerˉsourceˉgenericˉsolution =
+        Oneˉtypeˉsolution(
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32),
+            300u32
+        );
+    Admission = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+        Catalog, 21u32, 8u32, 0u32, 300u32, 48u32, Nested
+    );
+    if Admission.Status != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Admission.Instance != 1u32 || Admission.Reused {
+        return 4;
+    }
+    Catalog = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+        Admission
+    );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉmaximumˉdepth(
+            Catalog
+        ) != 2u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+            Catalog, 1u32
+        ) != 8u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉestimatedˉbytes(
+            Catalog
+        ) != 88u32 ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) {
+        return 5;
+    }
+    let Argument: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 1u32, 0u32
+        );
+    if !Argument.Valid || Argument.Kind != 1u32 ||
+        Argument.Low != 2147483648u32 {
+        return 6;
+    }
+    return 0;
+}
+
+fn Testˉrejections() -> i32 {
+    let Empty: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    let Plain: Generics.Compilerˉsourceˉgenericˉsolution =
+        Oneˉtypeˉsolution(1u32, 400u32);
+    var Admission: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Empty, 22u32, 2u32, 0u32, 400u32, 1u32, Plain
+        );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉparameter {
+        return 11;
+    }
+    let Forward: Generics.Compilerˉsourceˉgenericˉsolution =
+        Oneˉtypeˉsolution(
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(7u32),
+            500u32
+        );
+    Admission = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+        Empty, 22u32, 4u32, 0u32, 500u32, 1u32, Forward
+    );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Instantiationˉdepth {
+        return 12;
+    }
+    Admission = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+        Empty, 22u32, 4u32, 0u32, 600u32, 16777217u32, Plain
+    );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Codeˉgrowthˉlimit {
+        return 13;
+    }
+    let Truncated: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Bytesˉslice(Empty.Evidence, 0u32, 23u32)
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Truncated
+        ) {
+        return 14;
+    }
+    Admission = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+        Truncated, 22u32, 4u32, 0u32, 700u32, 1u32, Plain
+    );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 15;
+    }
+
+    let Firstˉadmission:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Empty, 23u32, 4u32, 0u32, 710u32, 1u32, Plain
+        );
+    let Firstˉcatalog:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+            Firstˉadmission
+        );
+    let Entry: bytes = Bytesˉslice(Firstˉcatalog.Evidence, 24u32, 44u32);
+    var Duplicateˉevidence: bytes = Textˉtoˉutf8("WVGT");
+    Duplicateˉevidence = Bytesˉconcat(
+        Duplicateˉevidence, Bytesˉfromˉu16ˉlittle(1u32)
+    );
+    Duplicateˉevidence = Bytesˉconcat(
+        Duplicateˉevidence, Bytesˉfromˉu16ˉlittle(0u32)
+    );
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 2u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 1u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 112u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 2u32);
+    Duplicateˉevidence = Bytesˉconcat(Duplicateˉevidence, Entry);
+    Duplicateˉevidence = Bytesˉconcat(Duplicateˉevidence, Entry);
+    let Duplicate:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Duplicateˉevidence
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Duplicate
+        ) {
+        return 16;
+    }
+    Admission = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+        Duplicate, 23u32, 4u32, 0u32, 720u32, 1u32, Plain
+    );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 17;
+    }
+    return 0;
+}
+
+fn Testˉmissingˉentry() -> i32 {
+    var Evidence: bytes = Textˉtoˉutf8("WVGT");
+    Evidence = Bytesˉconcat(Evidence, Bytesˉfromˉu16ˉlittle(1u32));
+    Evidence = Bytesˉconcat(Evidence, Bytesˉfromˉu16ˉlittle(0u32));
+    Evidence = Appendˉu32(Evidence, 1u32);
+    Evidence = Appendˉu32(Evidence, 1u32);
+    Evidence = Appendˉu32(Evidence, 24u32);
+    Evidence = Appendˉu32(Evidence, 0u32);
+    let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid, Evidence
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) {
+        return 18;
+    }
+    let Plain: Generics.Compilerˉsourceˉgenericˉsolution =
+        Oneˉtypeˉsolution(1u32, 705u32);
+    let Admission: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Catalog, 22u32, 4u32, 0u32, 705u32, 1u32, Plain
+        );
+    if Admission.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 19;
+    }
+    return 0;
+}
+
+fn Testˉinstanceˉlimit() -> i32 {
+    var Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    var Instance: u32 = 0u32;
+    while Instance < 256u32 {
+        let Solution: Generics.Compilerˉsourceˉgenericˉsolution =
+            Typeˉandˉconstantˉsolution(
+                1u32, Instance, 1000u32 + Instance * 2u32
+            );
+        let Admission:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+                Catalog, 300u32, 4u32, 0u32,
+                1000u32 + Instance * 2u32, 1u32, Solution
+            );
+        if Admission.Status !=
+                Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+            Admission.Instance != Instance || Admission.Reused {
+            return 31;
+        }
+        Catalog =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+                Admission
+            );
+        Instance = Instance + 1u32;
+    }
+    let Excessˉsolution: Generics.Compilerˉsourceˉgenericˉsolution =
+        Typeˉandˉconstantˉsolution(1u32, 256u32, 2000u32);
+    let Excess: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Catalog, 300u32, 4u32, 0u32, 2000u32, 1u32,
+            Excessˉsolution
+        );
+    if Excess.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Instanceˉlimit ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 256u32 ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) {
+        return 32;
+    }
+    return 0;
+}
+
+fn Testˉdepthˉlimit() -> i32 {
+    var Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    var Shape: u32 = 1u32;
+    var Depth: u32 = 0u32;
+    while Depth < 32u32 {
+        let Solution: Generics.Compilerˉsourceˉgenericˉsolution =
+            Oneˉtypeˉsolution(Shape, 800u32 + Depth);
+        let Admission: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+                Catalog, 100u32 + Depth, 4u32, 0u32,
+                800u32 + Depth, 1u32, Solution
+            );
+        if Admission.Status !=
+                Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+            Admission.Instance != Depth {
+            return 21;
+        }
+        Catalog =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+                Admission
+            );
+        Shape = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(Depth);
+        Depth = Depth + 1u32;
+    }
+    let Excessˉsolution: Generics.Compilerˉsourceˉgenericˉsolution =
+        Oneˉtypeˉsolution(Shape, 900u32);
+    let Excess: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Catalog, 200u32, 8u32, 0u32, 900u32, 1u32,
+            Excessˉsolution
+        );
+    if Excess.Status !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Instantiationˉdepth {
+        return 22;
+    }
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉmaximumˉdepth(
+            Catalog
+        ) != 32u32 ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) {
+        return 23;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Ordinary: i32 = Testˉordinaryˉandˉnested();
+    if Ordinary != 0 { return Ordinary; }
+    let Rejections: i32 = Testˉrejections();
+    if Rejections != 0 { return Rejections; }
+    let Missingˉentry: i32 = Testˉmissingˉentry();
+    if Missingˉentry != 0 { return Missingˉentry; }
+    let Depth: i32 = Testˉdepthˉlimit();
+    if Depth != 0 { return Depth; }
+    let Instances: i32 = Testˉinstanceˉlimit();
+    if Instances != 0 { return Instances; }
+    return 42;
+}
