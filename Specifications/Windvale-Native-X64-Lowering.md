@@ -6,6 +6,14 @@
 
 This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). The Windvale-native compiler is the normal implementation for this accepted subset. Wider recovery and differential evidence remains outside the normal build and execution path.
 
+[Decision 0802](../Documents/Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md)
+keeps this as a direct typed lowering path. It must not serialize or invoke WVA.
+Its current specialized machine-byte and WVO writers remain implemented
+behavior; a later required overlapping instruction family may move to the
+Assembler-owned target encoder and Object-Model-owned WVO construction only
+with byte-identical output, unchanged ABI/metering/failure behavior, and focused
+evidence.
+
 ## Public result
 
 ```text

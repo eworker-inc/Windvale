@@ -340,6 +340,27 @@ gateway remains a useful optional consumer of networking and backend libraries,
 not an automatic 1.0 release requirement. Windvale OS retains an independent
 qualification path and does not become an undocumented host-product claim.
 
+## Strategic 2027 lane: compute leadership and efficiency
+
+[Decision 0803](../Decisions/0803-Make-Compute-Performance-And-Efficiency-A-2027-Program.md)
+accepts performance and efficiency as a cross-cutting 2027 program. Its durable
+boundaries are in the
+[compute and efficiency architecture](../Architecture/Compute-And-Efficiency.md),
+and its workstreams, quarterly checkpoints, scorecard, and public-claim gate are
+in the
+[2027 compute leadership roadmap](Windvale-2027-Compute-Leadership-Roadmap.md).
+
+The program connects compiler optimization, CPU vector and parallel execution,
+runtime memory and scheduling, NVIDIA and AMD accelerators, high-performance
+networking, Windvale OS mechanisms, WVDB/storage, profiling, and full-system
+energy evidence. It aims to earn leadership on exact named workloads rather
+than claim universal performance.
+
+This lane may advance alongside every 1.0 workstream and may supply qualified
+1.0 improvements. It does not silently add complete accelerator or Windvale OS
+support to the 1.0 release gate. Every shipped component still receives
+performance and memory regression coverage appropriate to its contract.
+
 ## Milestone 2: package-backed host application — complete
 
 ### Outcome
@@ -594,6 +615,15 @@ provenance, revocation, and consensus boundaries are named.
   redefine the complete accepted source design.
 - Keep portable semantics, WVB, native lowering, and WebAssembly profiles
   explicit; a narrower target does not redefine the source language.
+- Keep native compilation direct under
+  [Decision 0802](../Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md):
+  never format and reparse WVA as an ordinary compiler intermediate.
+- Extract or extend shared x86-64 encoding and WVO construction for a current
+  consumer or an accepted near-term OS, compute, hardware-research, tooling, or
+  profiling plan with a named owner, bounded surface, hypothesis or expected
+  benefit, work budget, stop condition, and executable evidence. Exploratory
+  work need not guarantee production adoption. Preserve byte identity,
+  diagnostics, bounds, and focused cross-host evidence.
 - Update pinned tool products in deliberate promotion batches instead of
   turning every implementation commit into a repository-wide artifact refresh.
 

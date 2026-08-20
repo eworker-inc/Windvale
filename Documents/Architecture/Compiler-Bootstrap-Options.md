@@ -4,6 +4,12 @@
 
 C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Decision 0002. Decision 0049 implements the first bounded direct x86-64 target for one kernel-entry source shape. [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) accepts the general destination: canonical WVB, a shared Windvale-native JIT/AOT backend and runtime on Windows, Linux, and Windvale OS, and retirement of .NET from the normal workflow after an explicit qualification gate. Decision 0058 qualifies exact Stage 1 to Stage 2 reproduction by the Windvale bytecode compiler on Windows and Debian. [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) freezes forward C# source-language growth at the qualified WVB 1.11 baseline, and [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) completes the accepted normal-path retirement and final recovery archive. Broader native ABI and backend work now advances only for forward consumers.
 
+[Decision 0802](../Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md)
+now fixes the assembler/native-lowering relationship: the compiler never uses
+textual WVA as its normal intermediate, while the WVA frontend and native
+lowerer reuse target encoding and WVO construction only where a real shared
+consumer justifies extraction.
+
 “Bootstrap” names the staged process that starts from an existing host toolchain and reaches a reproducible Windvale-built stack. It is not the durable product name of either compiler implementation. The active **Windvale compiler** lives in `Compiler/Windvale`. The former C# reference/recovery compiler is preserved only in the immutable `stage0-recovery-e5a1a7473c57` release under Decision 0558. Bootstrap provenance and recovery instructions remain explicit through `Bootstrap/Stage0/README.md`; managed source is not a live repository owner.
 
 ## Two different choices
@@ -15,26 +21,29 @@ C# Stage 0, typed WIR, and Windvale bytecode are accepted and implemented by Dec
 
 Keeping these decisions separate prevents the bootstrap implementation from becoming the permanent Windvale architecture accidentally.
 
-## Recommended short path
+## Accepted durable path
 
-The accepted staged path is:
+The durable toolchain shape is:
 
 ```text
-Stage 0 tools: C#
-        |
-Windvale source --> AST --> typed Windvale IR (WIR)
-                              |-- canonical Windvale bytecode (WVB)
-                              |             |-- verified interpreter
-                              |             |-- baseline/optimizing JIT
-                              |             `-- cached or install-time native code
-                              `-- shared native backend --> WVO/AOT
-
-Assembly source --> instruction model --> shared native object model
-Native backend --------------------------^             |
-                                                       `--> Windvale linker
+Windvale source -> AST -> typed WIR -> canonical WVB
+                                         |-- verified interpreter
+                                         `-- semantic/ABI native lowering --\
+                                                                           \
+WVA source -> WVA frontend -----------------------------------------------> x86-64 encoder
+                                                                              |-- bounded JIT patch/publication plan
+                                                                              `-- WVO construction -> Windvale linker/AOT
 ```
 
-This path uses the current Stage 0 to reach useful milestones quickly while preserving a small, owned Windvale stack as the destination. JIT and AOT share verified semantics, a native ABI, machine lowering, structured patches, and platform adapters rather than becoming parallel compilers. The complete execution architecture is in [Native-Execution-And-Dotnet-Retirement.md](Native-Execution-And-Dotnet-Retirement.md).
+The archived Stage 0 path was used to reach this owned native stack; it is not
+the normal current implementation. JIT and AOT share verified semantics, a
+native ABI, machine lowering, structured patches, and platform adapters rather
+than becoming parallel compilers. WVA remains an explicit low-level source
+format for naturally machine-oriented code and is never formatted and reparsed
+merely to compile a typed Windvale program. The complete relationship is in
+[Assembler-And-Native-Lowering.md](Assembler-And-Native-Lowering.md), and the
+execution architecture is in
+[Native-Execution-And-Dotnet-Retirement.md](Native-Execution-And-Dotnet-Retirement.md).
 
 ## Bootstrap implementation languages
 
@@ -155,7 +164,10 @@ Decisions 0115 through 0118 measure the failed monotonic-record lifetime, retain
 
 Cross-host-qualified Decision 0150 advances the same selector to ABI 22 after requiring Decision 0147's ownership-plan agreement. Generation-owned byte buffers make append-heavy construction bounded; verified function-entry checkpoints reset or compact direct descriptor results; scalar-only record returns roll back while descriptor-bearing aggregates await caller-liveness evidence. The integrated deterministic 17,130,441-byte compiler compiles the complete 12-source inventory to the byte-identical 599,868-byte Stage 2 under a measured 64,476,249-byte high-water mark in the 64 MiB host arena. Exact descendant `2591cd5` passes the complete Windows and digest-pinned Debian qualification gates in GitHub Verify run 30797770080; all four pinned-QEMU tests pass on Windows. Standalone compiler packaging, hosted-container metadata, the remaining native tools, and complete native workflow replacement remain later work.
 
-## Proposed bootstrap stages
+## Historical bootstrap sequence
+
+The following list records how the owned stack was reached. It is not the active
+Windvale product roadmap and does not assign public maturity or release stages:
 
 1. Specify a minimal source subset, WIR, bytecode, and observable semantics.
 2. Implement the Stage 0 compiler and a simple reference VM in C#.
@@ -170,7 +182,14 @@ Cross-host-qualified Decision 0150 advances the same selector to ABI 22 after re
 11. Rebuild and run the compiler, verifier, assembler, linker, runtime, tests, and packaging through Windvale-native tools, then retire .NET from the normal workflow under Decision 0057's gate.
 12. Run the same verified WVB modules through equivalent Windvale-native execution paths on Windows, Linux, and Windvale OS.
 
-Stages 1 through 4 and stage 7's bytecode compiler convergence are qualified. The Windvale-written compiler and major binary tools satisfy stage 6 in their current portable scopes. Decisions 0059 through 0087 supply bounded qualified evidence for stages 5, 8, 9, and 10: ABI 15, interpreter/JIT/WVO-AOT agreement, all twelve current native service leaves, live Windvale-produced leaf bytes, and Windvale-owned publication layout and lifetime. Qualified Decision 0093 adds one fixed in-guest interpreter proof; qualified Decision 0094 derives the input's section payloads without yet accepting runtime-supplied modules. These slices do not qualify general backend coverage, native compiler execution, standalone native host tools, .NET retirement, or general in-guest WVB execution. The optional restricted C experiment is not a prerequisite for the accepted bytecode bootstrap proof or Decision 0057's owned native destination.
+The earlier sequence items and bytecode compiler convergence are qualified to
+their recorded boundaries. The Windvale-written compiler and major binary tools
+now own their accepted normal scopes, and Decision 0526 closes .NET retirement.
+The detailed historical decisions retain the exact ABI, interpreter/JIT/AOT,
+native-service, WVO, linker, packaging, and OS evidence. They do not create an
+active staged product ladder. The optional restricted C experiment is not a
+prerequisite for the accepted bytecode bootstrap proof or owned native
+destination.
 
 ## Why this minimizes loops
 

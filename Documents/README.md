@@ -24,6 +24,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward product workstreams, completion gates, dependencies, and next deliverables
+- [2027 compute leadership roadmap](Project/Windvale-2027-Compute-Leadership-Roadmap.md) — compiler, accelerator, networking, kernel, storage, energy, and public performance-evidence workstreams
 - [Filesystem implementation plan](Project/Windvale-Filesystem-Implementation-Plan.md) — shared semantics, Windows/Linux adapters, isolated guest service, FAT32-first interoperability, and the gate for later NTFS/ext4 or a native format
 - [Networking-foundation implementation plan](Project/Windvale-Networking-Foundation-Implementation-Plan.md) — shared operation/address contracts, host providers, deterministic packet evidence, and isolated guest networking
 - [Release names and tags](Project/Release-Names-And-Tags.md) — separate recovery archives, qualified baselines, the published 0.1 preview, and the direct `v1.0.0` target
@@ -241,6 +242,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 
 - [Seed implementation](Architecture/Seed-Implementation.md) — implemented Stage 0, compiler, bytecode, runtime, object, assembler, linker, and native ownership map
 - [Language design](Architecture/Language-Design.md) — accepted future syntax, module, result, collection, resource-lifetime, and operator direction; distinct from implemented Seed
+- [Assembler and native lowering](Architecture/Assembler-And-Native-Lowering.md) — direct compiler path, independent WVA frontend, evidence-directed shared x86-64 encoding, WVO ownership, and explicit work-avoidance rules
+- [Compute and efficiency](Architecture/Compute-And-Efficiency.md) — performance claims, measurement, compiler/CPU, accelerator, networking, kernel, storage, tuning, and promotion boundaries
 - [Platform and portability](Architecture/Platform-And-Portability.md) — per-part platform scope, authority, capability-provider, library, filesystem, and VM-provider boundaries
 - [Agent runtime and digital subconscious](Architecture/Agent-Runtime-And-Digital-Subconscious.md) — proposed one-agent, two-plane functional-mind architecture with persistent self, recurrent workspace, memory, belief, simulation, bounded initiative, and governed action
 - [Agent executive function and qualification](Architecture/Agent-Executive-Function-And-Qualification.md) — proposed deliberation contract, Mandate-to-Milestone scenario, capability realization, human-supervision metrics, and cross-domain qualification ladder

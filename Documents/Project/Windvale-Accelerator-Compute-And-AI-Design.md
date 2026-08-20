@@ -133,6 +133,21 @@ interfaces may inform and implement adapters; none is Windvale semantics. Native
 extension calls are explicitly target-scoped and do not make the calling part
 portable.
 
+The current x86-64 WVA assembler is not an accelerator-kernel compiler. CPU host,
+driver, and provider code continues through ordinary Windvale native lowering or
+explicit WVA where low-level CPU mechanics require it. Target-scoped kernels use
+the shared Windvale frontend and semantic analysis, then a separately verified
+accelerator representation and backend. A provider may consume SPIR-V, NVIDIA
+PTX or binary modules through the
+[CUDA Driver API](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__MODULE.html),
+AMDGPU code objects through
+[HIP module management](https://rocm.docs.amd.com/projects/HIP/en/latest/reference/hip_runtime_api/modules/module_management.html),
+or vendor-library operations without putting those formats into WVA or making
+them source semantics. The first physical-provider proof does not require a
+Windvale-owned native GPU assembler; that work requires a later measured
+consumer. See the
+[assembler and native-lowering architecture](../Architecture/Assembler-And-Native-Lowering.md).
+
 ## Values, formats, and tensors
 
 ### Scalar value versus stored representation

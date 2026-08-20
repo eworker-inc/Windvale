@@ -6,6 +6,8 @@
 - Language contract: [Language 1.0 freeze](../Decisions/0767-Freeze-Windvale-Language-1.0-Source.md)
 - Library program: [Windvale Libraries 1.0](Windvale-Libraries-1.0-Plan.md)
 - Database program: [WVDB 1.0](WVDB-1.0-Specification-Plan.md)
+- Strategic performance program:
+  [2027 compute leadership](Windvale-2027-Compute-Leadership-Roadmap.md)
 
 ## Product outcome
 
@@ -45,6 +47,11 @@ This is a dependency map, not a release sequence. A downstream specification can
 advance while an upstream implementation slice is still being completed, but
 qualification cannot claim behavior that the selected implementation lacks.
 
+The 2027 compute program is a cross-cutting optimization and evidence lane. Its
+qualified compiler, runtime, library, networking, storage, and database work may
+ship in 1.0, but complete accelerator and Windvale OS support does not become an
+automatic 1.0 gate without a later finite scope decision.
+
 ## Required workstreams
 
 ### Language, compiler, runtime, and toolchain
@@ -58,6 +65,14 @@ The release gate requires exact source, diagnostics, package-data, ownership,
 concurrency, resource, WIR/WVB, interpreter/native, and Windows/Linux conformance
 for the selected 1.0 surface. A source-rule change requires a named defect or
 contradiction and a decision that updates the freeze deliberately.
+
+[Decision 0802](../Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md)
+keeps native compilation direct: the compiler does not emit or parse textual
+WVA. The WVA frontend and native lowerer share x86-64 encoding and WVO
+construction only for selected real overlap. Windvale 1.0 does not require a
+speculative target-neutral machine IR or migration of WVA-only operations; each
+selected duplicated production behavior must either use its shared owner or
+retain a documented reason plus exact differential evidence.
 
 ### Windvale Libraries 1.0
 

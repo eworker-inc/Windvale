@@ -8,6 +8,12 @@ symbols, and relocations are known by a focused producer. It complements the
 assembler and compiler object writers; it is not a parser, linker, arbitrary
 object editor, or replacement for either front end.
 
+Decision 0802 makes the Object-Model area the durable owner of shared canonical
+WVO construction. The current module remains the implemented small-object
+profile. Replacing overlapping assembler/compiler record encoding, or adding a
+planned/segmented compiler-scale profile, is pending and must not force a large
+object into one ordinary `bytes` value merely to claim reuse.
+
 The module exports four primitive operations:
 
 | Operation | Result |

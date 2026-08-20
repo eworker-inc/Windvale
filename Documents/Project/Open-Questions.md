@@ -42,6 +42,10 @@ The following are no longer open project questions:
 - [Decision 0790](../Decisions/0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md)
   supersedes the external database rewrite and parity direction. Established
   databases remain comparative research sources, never WVDB authorities.
+- [Decision 0802](../Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md)
+  keeps native compilation direct and reserves textual WVA for explicit
+  machine-oriented source. The assembler and native lowerer share encoding and
+  WVO construction only where a real overlapping consumer justifies migration.
 
 Historical documents that predate those decisions must not present them as
 unfinished work.
@@ -126,6 +130,35 @@ concrete contradiction, unsound rule, or unimplementable required contract:
   schedule rather than retaining the qualified bounded lifetime profile?
 - Which first unsupported package, database, or OS operation should broaden the
   shared native backend, and what interpreter/AOT/JIT agreement proves it?
+- Which current or accepted near-term 1.0, OS, compute, hardware-research,
+  tooling, or profiling consumer should own the first shared encoder family,
+  and what bounded validation plan, hypothesis, budget, and stop condition make
+  either exploratory or production work worthwhile?
+
+## Compute leadership and efficiency questions
+
+[Decision 0803](../Decisions/0803-Make-Compute-Performance-And-Efficiency-A-2027-Program.md)
+accepts the strategic program. The
+[architecture](../Architecture/Compute-And-Efficiency.md) and
+[2027 roadmap](Windvale-2027-Compute-Leadership-Roadmap.md) leave the following
+selections open until inventory and baseline evidence exist:
+
+- Which exact AMD and Intel CPU hosts, NVIDIA and AMD GPUs, multiqueue NIC,
+  storage device, and full-system energy meter form the first repeatable lab?
+- Which comparison implementations, datasets, correctness modes, concurrency
+  levels, and power policies make the first scorecard useful and fair?
+- Which measured library, WVDB, compiler, or OS consumers justify the first SIMD
+  instruction and lowering families?
+- Can the first restricted SPIR-V/Vulkan path meet both vendors' operation and
+  performance needs, and which measured gap would justify CUDA/PTX, HIP/ROCm,
+  or a vendor-library provider?
+- Which ordinary, batched, zero-copy, polling, or kernel-bypass network profile
+  first improves a real secure service without weakening authority, completion,
+  overload, or teardown behavior?
+- Which Windvale OS syscall, IPC, scheduler, memory, shared-ring, virtual-NIC, or
+  physical-device path is the first representative bottleneck after OS-1?
+- What stable measurement noise and minimum practical improvement should govern
+  each regression or leadership threshold?
 
 ## Package and release questions
 
