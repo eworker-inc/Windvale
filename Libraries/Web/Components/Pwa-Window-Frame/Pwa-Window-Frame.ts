@@ -10,6 +10,7 @@ export interface Pwaˉwindowˉframeˉcopy {
   readonly Theme: string;
   readonly Locale: string;
   readonly Install: string;
+  readonly Settings: string;
 }
 
 export interface Pwaˉwindowˉframeˉactions {
@@ -17,6 +18,8 @@ export interface Pwaˉwindowˉframeˉactions {
   Toggleˉassistant(): void;
   Toggleˉtheme(): void;
   Toggleˉlocale(): void;
+  Openˉpalette(): void;
+  Openˉsettings(): void;
   Install(): void;
 }
 
@@ -33,6 +36,7 @@ export class Pwaˉwindowˉframe {
   readonly #Theme: HTMLButtonElement;
   readonly #Locale: HTMLButtonElement;
   readonly #Install: HTMLButtonElement;
+  readonly #Settings: HTMLButtonElement;
 
   constructor(Host: HTMLElement, Actions: Pwaˉwindowˉframeˉactions) {
     this.#Host = Host;
@@ -41,7 +45,7 @@ export class Pwaˉwindowˉframe {
     Bar.className = 'wv-pwa-frame';
     const Brand = document.createElement('div');
     Brand.className = 'wv-pwa-brand';
-    Brand.innerHTML = '<span class="wv-pwa-mark" aria-hidden="true"><i></i><b>WV</b></span>';
+    Brand.innerHTML = '<span class="wv-pwa-mark" aria-hidden="true"><img src="./icons/wvdb-workbench-192.png" alt=""></span>';
     const Titles = document.createElement('div');
     Titles.className = 'wv-pwa-titles';
     this.#Product = document.createElement('strong');
@@ -57,10 +61,11 @@ export class Pwaˉwindowˉframe {
     this.#Theme = Pwaˉwindowˉframe.#Button('wv-icon-button');
     this.#Locale = Pwaˉwindowˉframe.#Button('wv-icon-button wv-locale-button');
     this.#Install = Pwaˉwindowˉframe.#Button('wv-install-button');
+    this.#Settings = Pwaˉwindowˉframe.#Button('wv-icon-button');
     this.#Install.hidden = true;
     const Actionsˉhost = document.createElement('div');
     Actionsˉhost.className = 'wv-pwa-actions';
-    Actionsˉhost.append(this.#Explorer, this.#Assistant, this.#Theme, this.#Locale, this.#Install);
+    Actionsˉhost.append(this.#Explorer, this.#Assistant, this.#Theme, this.#Locale, this.#Settings, this.#Install);
     Bar.append(Brand, this.#Preview, this.#Search, Actionsˉhost);
     Host.replaceChildren(Bar);
 
@@ -68,6 +73,8 @@ export class Pwaˉwindowˉframe {
     this.#Scope.Ownˉevent(this.#Assistant, 'click', () => this.#Actions.Toggleˉassistant());
     this.#Scope.Ownˉevent(this.#Theme, 'click', () => this.#Actions.Toggleˉtheme());
     this.#Scope.Ownˉevent(this.#Locale, 'click', () => this.#Actions.Toggleˉlocale());
+    this.#Scope.Ownˉevent(this.#Search, 'click', () => this.#Actions.Openˉpalette());
+    this.#Scope.Ownˉevent(this.#Settings, 'click', () => this.#Actions.Openˉsettings());
     this.#Scope.Ownˉevent(this.#Install, 'click', () => this.#Actions.Install());
   }
 
@@ -88,6 +95,9 @@ export class Pwaˉwindowˉframe {
     this.#Locale.textContent = Locale.toUpperCase();
     this.#Locale.title = Copy.Locale;
     this.#Locale.setAttribute('aria-label', Copy.Locale);
+    this.#Settings.textContent = '⚙';
+    this.#Settings.title = Copy.Settings;
+    this.#Settings.setAttribute('aria-label', Copy.Settings);
     this.#Install.textContent = Copy.Install;
   }
 

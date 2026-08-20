@@ -1,0 +1,18 @@
+@layer wv.apps {
+  .wv-native-dialog { inline-size: min(480px, calc(100vw - 28px)); padding: 0; border: 1px solid var(--wv-border-strong); border-radius: 10px; background: var(--wv-bg-surface); color: var(--wv-fg-primary); box-shadow: 0 24px 90px rgb(0 0 0 / .5); }
+  .wv-native-dialog::backdrop { background: rgb(3 6 12 / .6); backdrop-filter: blur(2px); }
+  .wv-native-dialog form { display: grid; max-block-size: min(720px, calc(100vh - 40px)); }
+  .wv-native-dialog header { padding: 17px 18px 13px; border-block-end: 1px solid var(--wv-border); }
+  .wv-native-dialog h2 { margin: 0; font: 700 var(--wv-font-size-title)/var(--wv-line-height-title) var(--wv-font-ui); }
+  .wv-native-dialog header p { margin: 5px 0 0; color: var(--wv-fg-muted); font: var(--wv-font-size-control)/var(--wv-line-height-body) var(--wv-font-ui); }
+  .wv-dialog-body { display: grid; gap: 12px; padding: 16px 18px; overflow: auto; }
+  .wv-dialog-body label { display: grid; gap: 5px; color: var(--wv-fg-secondary); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); }
+  .wv-dialog-body input, .wv-dialog-body select { box-sizing: border-box; inline-size: 100%; min-block-size: 32px; padding-inline: 9px; border: 1px solid var(--wv-border); border-radius: 5px; background: var(--wv-bg-muted); color: var(--wv-fg-primary); font: var(--wv-font-size-body)/var(--wv-line-height-body) var(--wv-font-ui); }
+  .wv-dialog-note { margin: 0; padding: 9px 10px; border-inline-start: 3px solid var(--wv-accent); background: var(--wv-accent-soft); color: var(--wv-fg-secondary); font: var(--wv-font-size-control)/var(--wv-line-height-body) var(--wv-font-ui); }
+  .wv-dialog-error { min-block-size: 15px; margin: 0; color: var(--wv-danger, #e65c68); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); }
+  .wv-native-dialog footer { display: flex; justify-content: flex-end; gap: 7px; padding: 11px 18px; border-block-start: 1px solid var(--wv-border); background: var(--wv-bg-muted); }
+  .wv-native-dialog button { min-block-size: 30px; padding-inline: 11px; border: 1px solid var(--wv-border); border-radius: 5px; background: var(--wv-bg-surface); color: var(--wv-fg-secondary); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); }
+  .wv-native-dialog button:hover { background: var(--wv-bg-hover); color: var(--wv-fg-primary); }
+  .wv-native-dialog .wv-dialog-primary { border-color: color-mix(in srgb, var(--wv-accent) 65%, var(--wv-border)); background: var(--wv-accent-soft); color: var(--wv-accent-strong); }
+  .wv-native-dialog .wv-dialog-danger { margin-inline-end: auto; color: var(--wv-danger, #e65c68); }
+}

@@ -1,5 +1,5 @@
 @layer wv.components {
-  .wv-status-surface { display: flex; align-items: center; justify-content: space-between; block-size: 25px; padding-inline: 8px; border-block-start: 1px solid var(--wv-border); background: var(--wv-bg-muted); color: var(--wv-fg-muted); font-size: 9.5px; user-select: none; }
+  .wv-status-surface { display: flex; align-items: center; justify-content: space-between; block-size: 25px; padding-inline: 8px; border-block-start: 1px solid var(--wv-border); background: var(--wv-bg-muted); color: var(--wv-fg-muted); font-size: var(--wv-font-size-caption); user-select: none; }
   .wv-status-surface > div { display: flex; align-items: center; min-inline-size: 0; block-size: 100%; }
   .wv-status-segment, .wv-status-console { display: inline-flex; align-items: center; block-size: 100%; padding-inline: 9px; border-inline-end: 1px solid var(--wv-border); white-space: nowrap; }
   .wv-status-segment[data-tone="accent"] { color: var(--wv-accent-strong); }

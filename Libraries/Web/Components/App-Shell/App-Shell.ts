@@ -4,6 +4,13 @@ export interface Appˉshellˉoptions {
   readonly Leftˉwidth?: number;
   readonly Rightˉwidth?: number;
   readonly Consoleˉheight?: number;
+  readonly Onˉlayoutˉchange?: (Layout: Appˉshellˉlayout) => void;
+}
+
+export interface Appˉshellˉlayout {
+  readonly Leftˉwidth: number;
+  readonly Rightˉwidth: number;
+  readonly Consoleˉheight: number;
 }
 
 export class Appˉshell {
@@ -15,11 +22,13 @@ export class Appˉshell {
   readonly Assistantˉhost: HTMLElement;
   readonly Consoleˉhost: HTMLElement;
   readonly Statusˉhost: HTMLElement;
+  readonly Overlayˉhost: HTMLElement;
 
   readonly #Scope = new Lifecycleˉscope();
   readonly #Leftˉresizer: HTMLElement;
   readonly #Rightˉresizer: HTMLElement;
   readonly #Consoleˉresizer: HTMLElement;
+  readonly #Onˉlayoutˉchange: (Layout: Appˉshellˉlayout) => void;
 
   constructor(Mount: HTMLElement, Options: Appˉshellˉoptions = {}) {
     this.Element = document.createElement('section');
@@ -27,9 +36,12 @@ export class Appˉshell {
     this.Element.dataset['leftOpen'] = 'true';
     this.Element.dataset['rightOpen'] = 'true';
     this.Element.dataset['consoleOpen'] = 'true';
-    this.Element.style.setProperty('--wv-shell-left-width', `${Options.Leftˉwidth ?? 272}px`);
-    this.Element.style.setProperty('--wv-shell-right-width', `${Options.Rightˉwidth ?? 348}px`);
-    this.Element.style.setProperty('--wv-shell-console-height', `${Options.Consoleˉheight ?? 176}px`);
+    this.#Onˉlayoutˉchange = Options.Onˉlayoutˉchange ?? (() => undefined);
+    this.Applyˉlayout({
+      Leftˉwidth: Options.Leftˉwidth ?? 272,
+      Rightˉwidth: Options.Rightˉwidth ?? 348,
+      Consoleˉheight: Options.Consoleˉheight ?? 176
+    });
 
     this.Frameˉhost = Appˉshell.#Create('header', 'wv-shell-frame');
     this.Ribbonˉhost = Appˉshell.#Create('nav', 'wv-shell-ribbon');
@@ -64,6 +76,7 @@ export class Appˉshell {
     this.Consoleˉhost = Appˉshell.#Create('section', 'wv-shell-console');
     this.Consoleˉhost.setAttribute('aria-label', 'Console and logs');
     this.Statusˉhost = Appˉshell.#Create('footer', 'wv-shell-status');
+    this.Overlayˉhost = Appˉshell.#Create('div', 'wv-shell-overlays');
 
     this.Element.append(
       this.Frameˉhost,
@@ -71,7 +84,8 @@ export class Appˉshell {
       Workbench,
       this.#Consoleˉresizer,
       this.Consoleˉhost,
-      this.Statusˉhost
+      this.Statusˉhost,
+      this.Overlayˉhost
     );
     Mount.replaceChildren(this.Element);
 
@@ -90,6 +104,21 @@ export class Appˉshell {
 
   Setˉconsoleˉopen(Open: boolean): void {
     this.Element.dataset['consoleOpen'] = String(Open);
+  }
+
+  Applyˉlayout(Layout: Appˉshellˉlayout): void {
+    this.Element.style.setProperty('--wv-shell-left-width', `${Math.round(Layout.Leftˉwidth)}px`);
+    this.Element.style.setProperty('--wv-shell-right-width', `${Math.round(Layout.Rightˉwidth)}px`);
+    this.Element.style.setProperty('--wv-shell-console-height', `${Math.round(Layout.Consoleˉheight)}px`);
+  }
+
+  Readˉlayout(): Appˉshellˉlayout {
+    const Styles = getComputedStyle(this.Element);
+    return {
+      Leftˉwidth: Number.parseFloat(Styles.getPropertyValue('--wv-shell-left-width')),
+      Rightˉwidth: Number.parseFloat(Styles.getPropertyValue('--wv-shell-right-width')),
+      Consoleˉheight: Number.parseFloat(Styles.getPropertyValue('--wv-shell-console-height'))
+    };
   }
 
   Dispose(): void {
@@ -122,6 +151,7 @@ export class Appˉshell {
         Handle.removeEventListener('pointerup', End);
         Handle.removeEventListener('pointercancel', End);
         delete this.Element.dataset['resizing'];
+        this.#Onˉlayoutˉchange(this.Readˉlayout());
       };
       Handle.addEventListener('pointermove', Move);
       Handle.addEventListener('pointerup', End);
@@ -145,6 +175,7 @@ export class Appˉshell {
         this.#Consoleˉresizer.removeEventListener('pointerup', End);
         this.#Consoleˉresizer.removeEventListener('pointercancel', End);
         delete this.Element.dataset['resizing'];
+        this.#Onˉlayoutˉchange(this.Readˉlayout());
       };
       this.#Consoleˉresizer.addEventListener('pointermove', Move);
       this.#Consoleˉresizer.addEventListener('pointerup', End);

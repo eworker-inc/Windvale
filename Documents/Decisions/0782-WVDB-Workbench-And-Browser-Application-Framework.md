@@ -1,4 +1,4 @@
-# Decision 0721: WVDB Workbench and browser application framework
+# Decision 0782: WVDB Workbench and browser application framework
 
 - Date: 2026-08-16
 - Status: Accepted experimental product slice
@@ -46,6 +46,13 @@ assistant preview, a resizable console, and a bottom-most status surface. Query
 validation and assistant replies are deterministic browser demonstrations. They
 do not call a database or model service and they perform no database mutation.
 
+The preview may persist presentation preferences, panel sizes, and up to eight
+future-server connection profiles in browser storage. Profile records contain
+only an identifier, display name, validated HTTPS endpoint (or HTTP loopback),
+and default database name. They contain no credentials and saving one never
+attempts a connection. Assistant messages remain session-only. Logs retain at
+most 200 entries and assistant history at most 32 entries.
+
 A future live client must call an authenticated, rights-limited Windvale service
 or gateway. That service owns canonical request validation, authorization,
 database access, query bounds, mutation identities, cancellation, audit, and
@@ -62,6 +69,10 @@ Windvale gains a first real browser application and a small reusable component
 foundation without coupling product UI to the public playground. The shell can
 be installed, inspected in both themes and locales, and evolved alongside WVDB
 while remaining honest about the absence of a live service.
+
+Its Noto UI and code font stacks, semantic typography sizes, ribbon behavior,
+editor toolbar, native dialogs, and workbench density follow the same UI roles
+as E-Worker 7 without importing E-Worker runtime code or third-party font files.
 
 The initial framework is intentionally small. It establishes composition, state,
 invalidation, lifecycle, theme, localization, and workbench-shell contracts; it

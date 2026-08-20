@@ -1,15 +1,18 @@
 @layer wv.components {
   .wv-command-surface { background: var(--wv-bg-surface); border-block-end: 1px solid var(--wv-border); }
   .wv-command-tabs { display: flex; align-items: end; gap: 2px; block-size: 28px; padding-inline: 9px; background: var(--wv-bg-muted); border-block-end: 1px solid var(--wv-border); }
-  .wv-command-tab { align-self: stretch; padding: 0 12px; border: 0; border-block-end: 2px solid transparent; background: transparent; color: var(--wv-fg-secondary); font-size: 11px; }
+  .wv-command-tab { align-self: stretch; padding: 0 12px; border: 0; border-block-end: 2px solid transparent; background: transparent; color: var(--wv-fg-secondary); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); }
+  .wv-command-collapse { margin-inline-start: auto; align-self: center; inline-size: 26px; block-size: 23px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--wv-fg-muted); }
+  .wv-command-collapse:hover { background: var(--wv-bg-hover); color: var(--wv-fg-primary); }
+  .wv-command-surface[data-collapsed="true"] .wv-command-groups { display: none; }
   .wv-command-tab:hover { background: var(--wv-bg-hover); color: var(--wv-fg-primary); }
   .wv-command-tab[data-active="true"] { border-block-end-color: var(--wv-accent); color: var(--wv-accent-strong); }
   .wv-command-groups { display: flex; align-items: stretch; block-size: 64px; padding: 5px 8px 4px; overflow-x: auto; overflow-y: hidden; }
   .wv-command-group { display: grid; grid-template-rows: 1fr auto; min-inline-size: max-content; padding-inline: 7px; border-inline-end: 1px solid var(--wv-border); }
   .wv-command-items { display: flex; align-items: center; gap: 2px; }
-  .wv-command-button { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px; min-inline-size: 68px; block-size: 36px; padding: 4px 8px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--wv-fg-secondary); font-size: 10.5px; text-align: start; }
+  .wv-command-button { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px; min-inline-size: 68px; block-size: 36px; padding: 4px 8px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--wv-fg-secondary); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); text-align: start; }
   .wv-command-button:hover:not(:disabled) { border-color: var(--wv-border); background: var(--wv-bg-hover); color: var(--wv-fg-primary); }
   .wv-command-button:disabled { opacity: .36; }
   .wv-command-glyph { display: grid; place-items: center; inline-size: 22px; block-size: 22px; border-radius: 5px; background: var(--wv-bg-raised); color: var(--wv-accent-strong); font-size: 13px; font-weight: 700; }
-  .wv-command-group-label { justify-self: center; color: var(--wv-fg-muted); font-size: 8.5px; line-height: 1; }
+  .wv-command-group-label { justify-self: center; color: var(--wv-fg-muted); font-size: var(--wv-font-size-caption); line-height: var(--wv-line-height-caption); }
 }

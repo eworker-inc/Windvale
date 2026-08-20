@@ -20,20 +20,29 @@ export class Commandˉsurface {
   readonly #Host: HTMLElement;
   readonly #Onˉtab: (Identifier: string) => void;
   readonly #Onˉcommand: (Identifier: string) => void;
+  readonly #Onˉcollapse: () => void;
 
   constructor(
     Host: HTMLElement,
     Onˉtab: (Identifier: string) => void,
-    Onˉcommand: (Identifier: string) => void
+    Onˉcommand: (Identifier: string) => void,
+    Onˉcollapse: () => void
   ) {
     this.#Host = Host;
     this.#Onˉtab = Onˉtab;
     this.#Onˉcommand = Onˉcommand;
+    this.#Onˉcollapse = Onˉcollapse;
   }
 
-  Render(Tabs: readonly Commandˉtab[], Activeˉidentifier: string): void {
+  Render(
+    Tabs: readonly Commandˉtab[],
+    Activeˉidentifier: string,
+    Collapsed: boolean,
+    Collapseˉlabel: string
+  ): void {
     const Surface = document.createElement('div');
     Surface.className = 'wv-command-surface';
+    Surface.dataset['collapsed'] = String(Collapsed);
     const Tablist = document.createElement('div');
     Tablist.className = 'wv-command-tabs';
     Tablist.setAttribute('role', 'tablist');
@@ -48,6 +57,15 @@ export class Commandˉsurface {
       Button.addEventListener('click', () => this.#Onˉtab(Tab.Identifier));
       Tablist.append(Button);
     }
+    const Collapse = document.createElement('button');
+    Collapse.type = 'button';
+    Collapse.className = 'wv-command-collapse';
+    Collapse.textContent = Collapsed ? '⌄' : '⌃';
+    Collapse.title = Collapseˉlabel;
+    Collapse.setAttribute('aria-label', Collapseˉlabel);
+    Collapse.setAttribute('aria-expanded', String(!Collapsed));
+    Collapse.addEventListener('click', this.#Onˉcollapse);
+    Tablist.append(Collapse);
     const Groups = document.createElement('div');
     Groups.className = 'wv-command-groups';
     const Activeˉtab = Tabs.find((Tab) => Tab.Identifier === Activeˉidentifier) ?? Tabs[0];

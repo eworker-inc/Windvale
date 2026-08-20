@@ -1,0 +1,15 @@
+@layer wv.components {
+  .wv-command-palette-backdrop { position: absolute; inset: 0; display: grid; place-items: start center; padding-block-start: min(14vh, 120px); background: color-mix(in srgb, #05070c 52%, transparent); pointer-events: auto; }
+  .wv-command-palette { inline-size: min(620px, calc(100vw - 32px)); max-block-size: min(620px, 72vh); overflow: hidden; border: 1px solid var(--wv-border-strong); border-radius: 10px; background: var(--wv-bg-surface); box-shadow: 0 22px 70px rgb(0 0 0 / .42); }
+  .wv-command-palette > input { box-sizing: border-box; inline-size: 100%; padding: 14px 16px; border: 0; border-block-end: 1px solid var(--wv-border); outline: 0; background: var(--wv-bg-raised); color: var(--wv-fg-primary); font: var(--wv-font-size-navigation)/var(--wv-line-height-navigation) var(--wv-font-ui); }
+  .wv-command-palette-results { max-block-size: min(540px, 62vh); padding: 6px; overflow: auto; }
+  .wv-command-palette-results button { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 9px; inline-size: 100%; padding: 8px 9px; border: 0; border-radius: 6px; background: transparent; color: var(--wv-fg-primary); text-align: start; }
+  .wv-command-palette-results button:hover:not(:disabled), .wv-command-palette-results button:focus-visible { background: var(--wv-bg-hover); outline: 0; }
+  .wv-command-palette-results button:disabled { opacity: .4; }
+  .wv-command-palette-glyph { display: grid; place-items: center; inline-size: 26px; block-size: 26px; border-radius: 5px; background: var(--wv-accent-soft); color: var(--wv-accent-strong); font-weight: 700; }
+  .wv-command-palette-results button > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; }
+  .wv-command-palette-results strong { font: 600 var(--wv-font-size-body)/var(--wv-line-height-body) var(--wv-font-ui); }
+  .wv-command-palette-results small { color: var(--wv-fg-muted); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); }
+  .wv-command-palette-results kbd { color: var(--wv-fg-muted); font: var(--wv-font-size-caption)/var(--wv-line-height-caption) var(--wv-font-mono); }
+  .wv-command-palette-empty { margin: 24px; color: var(--wv-fg-muted); text-align: center; }
+}

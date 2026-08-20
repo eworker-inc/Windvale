@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wvdb-workbench-shell-v1';
+const CACHE_NAME = 'wvdb-workbench-shell-v2';
 const SHELL_URLS = [
   './',
   './index.html',

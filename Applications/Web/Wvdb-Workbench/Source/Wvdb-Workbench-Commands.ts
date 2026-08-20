@@ -26,7 +26,7 @@ export function Buildˉcommandˉtabs(Text: (Identifier: string) => string): read
         },
         {
           Label: Text('group.connection'), Commands: [
-            Command('server.connect', 'command.connect', '↗', false),
+            Command('server.connect', 'command.connect', '↗', true),
             Command('server.disconnect', 'command.disconnect', '×', false)
           ]
         }

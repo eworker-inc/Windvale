@@ -17,18 +17,19 @@
     border-radius: 9px; background: linear-gradient(145deg, var(--wv-accent-soft), var(--wv-bg-raised));
     overflow: hidden; color: var(--wv-accent-strong); font-size: 10px; letter-spacing: -.03em;
   }
+  .wv-pwa-mark img { inline-size: 100%; block-size: 100%; object-fit: cover; }
   .wv-pwa-mark i { position: absolute; inline-size: 25px; block-size: 1px; rotate: -38deg; background: var(--wv-accent); opacity: .55; }
   .wv-pwa-mark b { position: relative; }
   .wv-pwa-titles { display: flex; flex-direction: column; min-inline-size: 0; line-height: 1.15; }
-  .wv-pwa-titles strong { font-size: 13px; letter-spacing: .012em; white-space: nowrap; }
-  .wv-pwa-titles span { color: var(--wv-fg-muted); font-size: 10.5px; white-space: nowrap; }
-  .wv-pwa-preview { padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--wv-warning) 45%, var(--wv-border)); border-radius: 999px; color: var(--wv-warning); font-size: 10px; font-weight: 650; white-space: nowrap; }
+  .wv-pwa-titles strong { font-size: var(--wv-font-size-navigation); letter-spacing: .012em; white-space: nowrap; }
+  .wv-pwa-titles span { color: var(--wv-fg-muted); font-size: var(--wv-font-size-control); white-space: nowrap; }
+  .wv-pwa-preview { padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--wv-warning) 45%, var(--wv-border)); border-radius: 999px; color: var(--wv-warning); font-size: var(--wv-font-size-control); font-weight: 650; white-space: nowrap; }
   .wv-pwa-search, .wv-icon-button, .wv-install-button { -webkit-app-region: no-drag; border: 1px solid var(--wv-border); background: var(--wv-bg-muted); }
-  .wv-pwa-search { min-inline-size: 0; padding: 7px 11px; border-radius: 7px; color: var(--wv-fg-muted); text-align: start; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wv-pwa-search { min-inline-size: 0; padding: 7px 11px; border-radius: 7px; color: var(--wv-fg-muted); text-align: start; font-size: var(--wv-font-size-control); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .wv-pwa-search:hover, .wv-icon-button:hover, .wv-install-button:hover { background: var(--wv-bg-hover); border-color: var(--wv-border-strong); }
   .wv-pwa-actions { justify-content: flex-end; }
   .wv-icon-button { display: grid; place-items: center; inline-size: 30px; block-size: 30px; padding: 0; border-radius: 6px; font-size: 12px; font-weight: 700; }
   .wv-locale-button { font-size: 9px; letter-spacing: .06em; }
-  .wv-install-button { padding: 6px 10px; border-color: color-mix(in srgb, var(--wv-accent) 55%, var(--wv-border)); border-radius: 6px; color: var(--wv-accent-strong); font-size: 11px; font-weight: 650; }
+  .wv-install-button { padding: 6px 10px; border-color: color-mix(in srgb, var(--wv-accent) 55%, var(--wv-border)); border-radius: 6px; color: var(--wv-accent-strong); font-size: var(--wv-font-size-control); font-weight: 650; }
   @media (max-width: 1100px) { .wv-pwa-frame { grid-template-columns: minmax(210px, auto) auto 1fr auto; } .wv-pwa-search { max-inline-size: 240px; } }
 }

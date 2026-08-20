@@ -1,0 +1,10 @@
+@layer wv.components {
+  .wv-editor-toolbar { display: flex; align-items: center; gap: 2px; min-block-size: 34px; padding-inline: 6px; border-block-end: 1px solid var(--wv-border); background: var(--wv-bg-surface); overflow-x: auto; }
+  .wv-editor-toolbar button { display: inline-flex; align-items: center; gap: 5px; min-block-size: 26px; padding-inline: 7px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--wv-fg-secondary); font: var(--wv-font-size-control)/var(--wv-line-height-control) var(--wv-font-ui); white-space: nowrap; }
+  .wv-editor-toolbar button:hover:not(:disabled) { border-color: var(--wv-border); background: var(--wv-bg-hover); color: var(--wv-fg-primary); }
+  .wv-editor-toolbar button[data-primary="true"] { border-color: color-mix(in srgb, var(--wv-accent) 55%, var(--wv-border)); color: var(--wv-accent-strong); }
+  .wv-editor-toolbar button:disabled { opacity: .38; }
+  .wv-editor-toolbar button > span:first-child { min-inline-size: 14px; color: var(--wv-accent-strong); font-weight: 700; text-align: center; }
+  .wv-editor-toolbar-separator { inline-size: 1px; block-size: 20px; margin-inline: 3px; background: var(--wv-border); }
+  .wv-editor-toolbar-context { margin-inline-start: auto; padding-inline: 8px; color: var(--wv-fg-muted); font: var(--wv-font-size-caption)/var(--wv-line-height-caption) var(--wv-font-ui); white-space: nowrap; }
+}

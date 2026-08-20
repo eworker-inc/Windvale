@@ -10,9 +10,29 @@
 
 @layer wv.tokens {
   :root {
-    font-family: Inter, ui-sans-serif, "Segoe UI Variable", "Segoe UI", sans-serif;
+    font-family: var(--wv-font-ui);
+    font-size: var(--wv-font-size-body);
+    line-height: var(--wv-line-height-body);
     color-scheme: dark;
-    --wv-font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    --wv-font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    --wv-font-ui: "Noto Sans Variable", var(--wv-font-ui-script, system-ui), system-ui, sans-serif, var(--wv-font-emoji);
+    --wv-font-content: var(--wv-font-ui);
+    --wv-font-mono: "Noto Sans Mono", ui-monospace, "Cascadia Code", Consolas, monospace, var(--wv-font-emoji);
+    --wv-font-size-caption: 9.5px;
+    --wv-font-size-control: 10.5px;
+    --wv-font-size-small: var(--wv-font-size-control);
+    --wv-font-size-card-title: 11.5px;
+    --wv-font-size-body: 12px;
+    --wv-font-size-subtitle: 12.6px;
+    --wv-font-size-navigation: 13.2px;
+    --wv-font-size-title: 15px;
+    --wv-font-size-display: 18.5px;
+    --wv-font-size-metric-value: var(--wv-font-size-display);
+    --wv-line-height-caption: 1.25;
+    --wv-line-height-control: 1.25;
+    --wv-line-height-body: 1.35;
+    --wv-line-height-title: 1.15;
+    --wv-line-height-display: 1.2;
     --wv-bg-canvas: #0d1119;
     --wv-bg-surface: #141a24;
     --wv-bg-raised: #1a2230;
@@ -61,7 +81,7 @@
 
 @layer wv.framework {
   html, body { overflow: hidden; background: var(--wv-bg-canvas); color: var(--wv-fg-primary); }
-  body { accent-color: var(--wv-accent); }
+  body { accent-color: var(--wv-accent); font-family: var(--wv-font-ui); font-size: var(--wv-font-size-body); line-height: var(--wv-line-height-body); }
   .wv-app-root { inline-size: 100vw; block-size: 100dvh; }
   .wv-visually-hidden {
     position: absolute;
@@ -77,4 +97,7 @@
   :focus-visible { outline: 2px solid var(--wv-accent-strong); outline-offset: 2px; }
   ::selection { background: var(--wv-accent); color: #071016; }
   * { scrollbar-width: thin; scrollbar-color: var(--wv-border-strong) transparent; }
+  [hidden] { display: none !important; }
+  .wv-app-shell { user-select: none; }
+  .wv-app-shell input, .wv-app-shell textarea, .wv-selectable-text { user-select: text; }
 }

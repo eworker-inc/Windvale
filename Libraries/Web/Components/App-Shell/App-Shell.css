@@ -1,5 +1,6 @@
 @layer wv.components {
   .wv-app-shell {
+    position: relative;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr) 4px var(--wv-shell-console-height) 25px;
     inline-size: 100%;
@@ -43,6 +44,9 @@
   .wv-app-shell[data-console-open="false"] { grid-template-rows: auto auto minmax(0, 1fr) 0 0 25px; }
   .wv-app-shell[data-console-open="false"] .wv-shell-console,
   .wv-app-shell[data-console-open="false"] > .wv-shell-resizer--horizontal { visibility: hidden; }
+  .wv-shell-overlays { position: absolute; inset: 0; z-index: 1000; pointer-events: none; }
+  .wv-shell-overlays:empty { display: none; }
+  .wv-shell-overlays > * { pointer-events: auto; }
 
   @media (max-width: 980px) {
     .wv-app-shell { min-inline-size: 600px; }
