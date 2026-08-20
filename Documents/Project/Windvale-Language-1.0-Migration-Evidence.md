@@ -166,9 +166,10 @@ This preflight is an intermediate canonical-token guard; final profile-aware tok
 classification and localized spellings remain Slice 1 follow-through and must not
 be inferred from these English-token tests.
 
-The focused value-front-end self-test contains 24 assertions covering all appended
-keyword and primitive-type identities, both edition directions, exact first
-invalid-token offsets, and the stable value-`if` expression-kind identity. It
+The focused value-front-end self-test contains 39 assertions covering all appended
+keyword and primitive-type identities, exact packed seven/eight-byte keyword and
+near-miss classification, both edition directions, exact first invalid-token
+offsets, and stable value-`if` and value-`match` expression-kind identities. It
 compiles to a verified WVB and returns `42`; real parser behavior is covered by
 the source-built compiler fixtures below rather than recursively interpreting
 the parser inside the bounded scalar runner.
@@ -585,6 +586,43 @@ Windows evidence above ran during implementation; paired-host results and the
 heavy storage, OS, and complete Qualification gates remain deferred to the
 final seven-slice integration gate.
 
+## Slice 4 packed keyword dispatch checkpoint
+
+Decision 0799 replaces repeated text materialization and byte-by-byte comparison
+for the seven- and eight-byte English keyword groups with exact packed word
+classification. Two bounded `u32` reads cover every byte of either token; fixed
+length plus complete head/tail equality is collision-free and does not alter the
+canonical token mapping. The other keyword lengths retain their existing exact
+classification.
+
+The profiling source uses the real lexer over the non-keywords `Compile` and
+`Compiler`, which are common shapes in the compiler closure and force complete
+rejection of the relevant keyword groups. Under the same current Windows
+4,096-instruction scalar-runner bound, the original path completes two loop
+iterations and rejects four at `WVR3011`; the candidate completes eight and
+rejects sixteen at the same exact bound. The original micro WVB contains 10,221
+code bytes in a 15,856-byte module; the candidate contains 10,727 code bytes in
+a 16,096-byte module. These are bounded hot-path instruction observations, not
+a claim that complete compiler wall time improved by the same ratio.
+
+The representative analyzer uses the exact 14-source Project 2 analysis-driver
+order on Windows 11 build 26200 and an AMD Ryzen 9 3900X. The retained baseline
+median is 53,553.067 milliseconds over three runs. One packed-dispatch probe
+took 55,178.412 milliseconds with a sampled 551,317,504-byte peak working set;
+that noisy full-process result does not establish a complete-compiler speedup.
+It does establish no broad timing claim while the exact output proof remains
+strong: old and candidate analyzers publish byte-identical WVSS, WVCA, WVLB, and
+WVIR artifacts for the changed source state. The remaining structural target is
+repeated lexer/parser traversal and token-record pressure, not another increase
+to an execution, evidence, or native-image limit.
+
+The bounded value-front-end fixture exercises all ten packed spellings and four
+near misses through the exported keyword classifier without raising the scalar
+runner's instruction bound. The final Windows `language-1-front-door` owner
+passed all 11 phases and 155 declared cases. Its deterministic target-aware
+emitter is 838,654 bytes with SHA-256
+`707c3aec27b481745ae599206960bc6f9c0be0053aaae73b359cd20cd2cc4876`.
+
 ## Slice 2 named variant fields
 
 The edition-1 declaration parser admits zero through 64 uniquely named fields
@@ -688,9 +726,9 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 141 declared cases. Its
+The cross-host `language-1-front-door` owner reports 155 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
-builds and execute them, build and execute the 25-assertion value-front-end test,
+builds and execute them, build and execute the 39-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
 the minimum, unit, record-update, and 22-case fixed-integer evidence. Its 20 rune
 cases compile the valid program twice, compare diagnostics and bytes, reject eight

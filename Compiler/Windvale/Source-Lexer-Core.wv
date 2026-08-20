@@ -497,19 +497,43 @@ export fn Compilerˉsourceˉkeywordˉkind(
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 7u32 {
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "profile") { return Compilerˉtokenˉkind.Profile; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "variant") { return Compilerˉtokenˉkind.Variant; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "builder") { return Compilerˉtokenˉkind.Builder; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "version") { return Compilerˉtokenˉkind.Version; }
+        let Sevenˉhead: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+        let Sevenˉtail: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 3u32);
+        if Sevenˉhead == 1818850658u32 {
+            if Sevenˉtail == 1919247468u32 { return Compilerˉtokenˉkind.Builder; }
+        }
+        if Sevenˉhead == 1718579824u32 {
+            if Sevenˉtail == 1701603686u32 { return Compilerˉtokenˉkind.Profile; }
+        }
+        if Sevenˉhead == 1769103734u32 {
+            if Sevenˉtail == 1953390953u32 { return Compilerˉtokenˉkind.Variant; }
+        }
+        if Sevenˉhead == 1936876918u32 {
+            if Sevenˉtail == 1852795251u32 { return Compilerˉtokenˉkind.Version; }
+        }
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 8u32 {
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "sequence") { return Compilerˉtokenˉkind.Sequence; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "continue") { return Compilerˉtokenˉkind.Continue; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "optional") { return Compilerˉtokenˉkind.Optional; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "platform") { return Compilerˉtokenˉkind.Platform; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "portable") { return Compilerˉtokenˉkind.Portable; }
-        if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "requires") { return Compilerˉtokenˉkind.Requires; }
+        let Eightˉhead: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+        let Eightˉtail: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32);
+        if Eightˉhead == 1953394531u32 {
+            if Eightˉtail == 1702194793u32 { return Compilerˉtokenˉkind.Continue; }
+        }
+        if Eightˉhead == 1769238639u32 {
+            if Eightˉtail == 1818324591u32 { return Compilerˉtokenˉkind.Optional; }
+        }
+        if Eightˉhead == 1952541808u32 {
+            if Eightˉtail == 1836216166u32 { return Compilerˉtokenˉkind.Platform; }
+        }
+        if Eightˉhead == 1953656688u32 {
+            if Eightˉtail == 1701601889u32 { return Compilerˉtokenˉkind.Portable; }
+        }
+        if Eightˉhead == 1970365810u32 {
+            if Eightˉtail == 1936028265u32 { return Compilerˉtokenˉkind.Requires; }
+        }
+        if Eightˉhead == 1970365811u32 {
+            if Eightˉtail == 1701015141u32 { return Compilerˉtokenˉkind.Sequence; }
+        }
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 9u32 {

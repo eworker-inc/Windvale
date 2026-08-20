@@ -13,6 +13,13 @@ fn Hasˉtoken(Input: text, Expected: Lexer.Compilerˉtokenˉkind) -> bool {
         Token.Kind == Expected && Token.Nextˉoffset == Bytesˉlength(Bytes);
 }
 
+fn Hasˉkeyword(Input: text, Expected: Lexer.Compilerˉtokenˉkind) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Input);
+    return Lexer.Compilerˉsourceˉkeywordˉkind(
+        Bytes, 0u32, Bytesˉlength(Bytes)
+    ) == Expected;
+}
+
 fn Hasˉtype(
     Input: text,
     Expected: Declarations.Compilerˉsourceˉtypeˉkind
@@ -22,6 +29,24 @@ fn Hasˉtype(
         Declarations.Compilerˉparseˉtype(Bytes, 0u32, 1u32, 1u32, true, false);
     return Type.Status == Declarations.Compilerˉparseˉstatus.Valid &&
         Type.Typeˉkind == Expected && Type.Nextˉoffset == Bytesˉlength(Bytes);
+}
+
+fn Checkˉfixedˉlengthˉkeywords() -> i32 {
+    if !Hasˉkeyword("builder", Lexer.Compilerˉtokenˉkind.Builder) { return 26; }
+    if !Hasˉkeyword("profile", Lexer.Compilerˉtokenˉkind.Profile) { return 27; }
+    if !Hasˉkeyword("variant", Lexer.Compilerˉtokenˉkind.Variant) { return 28; }
+    if !Hasˉkeyword("version", Lexer.Compilerˉtokenˉkind.Version) { return 29; }
+    if !Hasˉkeyword("continue", Lexer.Compilerˉtokenˉkind.Continue) { return 30; }
+    if !Hasˉkeyword("optional", Lexer.Compilerˉtokenˉkind.Optional) { return 31; }
+    if !Hasˉkeyword("platform", Lexer.Compilerˉtokenˉkind.Platform) { return 32; }
+    if !Hasˉkeyword("portable", Lexer.Compilerˉtokenˉkind.Portable) { return 33; }
+    if !Hasˉkeyword("requires", Lexer.Compilerˉtokenˉkind.Requires) { return 34; }
+    if !Hasˉkeyword("sequence", Lexer.Compilerˉtokenˉkind.Sequence) { return 35; }
+    if !Hasˉkeyword("Compile", Lexer.Compilerˉtokenˉkind.Identifier) { return 36; }
+    if !Hasˉkeyword("Compiler", Lexer.Compilerˉtokenˉkind.Identifier) { return 37; }
+    if !Hasˉkeyword("profilE", Lexer.Compilerˉtokenˉkind.Identifier) { return 38; }
+    if !Hasˉkeyword("sequencE", Lexer.Compilerˉtokenˉkind.Identifier) { return 39; }
+    return 42;
 }
 
 export fn Main() -> i32 {
@@ -76,5 +101,7 @@ export fn Main() -> i32 {
     let Matchˉkind: Bodies.Compilerˉsourceˉexpressionˉkind =
         Bodies.Compilerˉsourceˉexpressionˉkind.Match;
     if Matchˉkind != Bodies.Compilerˉsourceˉexpressionˉkind.Match { return 25; }
+    let Fixedˉlengthˉresult: i32 = Checkˉfixedˉlengthˉkeywords();
+    if Fixedˉlengthˉresult != 42 { return Fixedˉlengthˉresult; }
     return 42;
 }

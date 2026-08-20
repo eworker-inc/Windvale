@@ -103,6 +103,15 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 `Compilerˉlexˉnext` is the safe standalone entry and validates strict UTF-8. `Compilerˉlexˉnextˉvalidated` is for a caller that already validated the complete byte value; it still validates cursor shape. `Compilerˉlexˉnextˉafterˉscan` is the narrower compiler-internal boundary for a cursor returned by an accepted token or validated parser/symbol record. It does not repeat cursor-shape checks, so callers must hold both complete-scan and cursor-provenance evidence. The checked whitespace and identifier-part helpers similarly retain their original signatures while internal `afterˉscan` variants accept the already known total byte length.
 
+Canonical keyword classification first dispatches by exact UTF-8 byte length.
+The seven- and eight-byte groups then compare the complete token as two bounded
+overlapping or adjacent little-endian `u32` words. This is an exact packed
+comparison, not a hash: the seven-byte words cover bytes 0 through 3 and 3
+through 6, while the eight-byte words cover bytes 0 through 3 and 4 through 7.
+The lexer has already proved the complete span, so neither form reads beyond the
+token. Unequal packed words return `Identifier`; all accepted keyword identities
+and token values remain unchanged.
+
 `Compilerˉsourceˉscan` reports final status, accepted token count, failure coordinates, and end cursor. It never stores a token sequence. `Compilerˉlexˉtokenˉat` exists for tests and inspection and is not the parser iteration contract.
 
 ## Current candidate implementation
