@@ -3,6 +3,10 @@
 - Status: Accepted
 - Date: 2026-08-19
 
+Decision 0788 advances the published emitter and cache from this decision's
+initial complete `portable-wvb-v1` route to the fixed
+`portable-wvb-optimized-v1` target. The phase boundary remains unchanged.
+
 ## Context
 
 Decision 0778 created an independently validated boundary between source/type

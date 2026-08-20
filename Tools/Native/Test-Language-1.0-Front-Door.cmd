@@ -13,6 +13,8 @@ set "ProfileRoot=%RepositoryRoot%\Documents\Project\Language-1.0-Localization-Wo
 set "SourceLock=%ProfileRoot%\Source-Inputs.wvlock"
 set "SourceProfile=%ProfileRoot%\En-Source-Profile.wvsp"
 set "SourceLockHash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+set "BootstrapAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
+set "BootstrapEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
 
 :allocate
 set "Work=%TEMP%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -89,15 +91,32 @@ node "%Native%\Compile-Project-2-With-Compiler.mjs" ^
     "%Work%\Bootstrap-Compiler.exe" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Analysis-Driver.wvproj" ^
     "%Work%\Analyzer.wvb" || goto :cleanup
-node "%Native%\Compile-Project-2-With-Compiler.mjs" ^
-    "%Work%\Bootstrap-Compiler.exe" ^
-    "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Emission-Driver.wvproj" ^
-    "%Work%\Emitter.wvb" || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Analyzer.wvb" "%Work%\Analyzer.exe" --development-cache || goto :cleanup
+set "FailureStep=compiler-bootstrap-emitter-identity"
+for %%F in ("%BootstrapAnalyzerWvb%") do if not "%%~zF"=="949355" goto :cleanup
+certutil -hashfile "%BootstrapAnalyzerWvb%" SHA256 | findstr /I /C:"bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb" >nul || goto :cleanup
+for %%F in ("%BootstrapEmitterWvb%") do if not "%%~zF"=="746557" goto :cleanup
+certutil -hashfile "%BootstrapEmitterWvb%" SHA256 | findstr /I /C:"a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805" >nul || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
+    "%BootstrapAnalyzerWvb%" "%Work%\Bootstrap-Analyzer.exe" --development-cache || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
+    "%BootstrapEmitterWvb%" "%Work%\Bootstrap-Emitter.exe" --development-cache || goto :cleanup
+node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
+    analyzer "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" || goto :cleanup
+node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
+    emitter "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+set "FailureStep=compiler-target-aware-emitter"
+node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
+    "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Emission-Driver.wvproj" ^
+    "%Work%\Emitter.wvb" ^
+    "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
+    "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="833126" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"be4a063cafe5b905ea2457e1c3c2ead36af2ecd4f9dd76a8a68a905dbf90a111" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 set "FailureStep=compiler-minimum-a"

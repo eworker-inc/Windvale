@@ -18,6 +18,7 @@ OUTPUT="$OUTPUT_DIRECTORY/$(basename -- "$3")"
     "$SOURCE_ROOT/Compiler/Windvale/Source-Body-Parser.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Declaration-Parser.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Descriptor-Core.wv" \
+    "$SOURCE_ROOT/Compiler/Windvale/Source-Generic-Lowering-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Graph-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Lexer-Core.wv" \
     "$SOURCE_ROOT/Compiler/Windvale/Source-Profile-Core.wv" \

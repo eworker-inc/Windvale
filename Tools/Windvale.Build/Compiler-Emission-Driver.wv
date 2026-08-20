@@ -20,7 +20,8 @@ fn Failure(Result: Emission.Compilerˉsourceˉemission) -> text {
 }
 
 fn Success(Result: Emission.Compilerˉsourceˉemission) -> text {
-    var Report: text = "source emission status=Published functions=";
+    var Report: text =
+        "source emission status=Published mode=optimized functions=";
     Report = Textˉconcat(
         Report, U32ˉformat(Result.Compilation.Functions)
     );
@@ -52,7 +53,7 @@ export fn Main() -> i32 {
             file.read_bytes(process.argument(1u32)),
             file.read_bytes(process.argument(2u32)),
             file.read_bytes(process.argument(3u32)),
-            false
+            true
         );
     if Result.Status != Emission.Compilerˉsourceˉemissionˉstatus.Valid ||
         Result.Compilation.Status !=

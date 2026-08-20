@@ -31,26 +31,29 @@ const COMPILERS = {
         sha256: 'da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b',
     },
 };
-const CASES = [
-    {
-        name: 'source-analysis',
-        project: 'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
-        bytes: 956_883,
-        sha256: 'ab01da6e1085381b9025f76c2035a61f7f0cbbffcba52e73b9dd24a42c035577',
-    },
-    {
-        name: 'analyzer',
-        project: 'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
-        bytes: 949_355,
-        sha256: 'bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb',
-    },
-    {
-        name: 'emitter',
-        project: 'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
-        bytes: 746_557,
-        sha256: '9a1806db232364882b3fc513692cd7d7ed8568363ae5c85cfa5e9b5521dc0557',
-    },
-];
+const EMITTER_SOURCE = path.join(
+    REPOSITORY_ROOT,
+    'Tools',
+    'Windvale.Build',
+    'Compiler-Emission-Driver.wv',
+);
+const EMITTER_PROJECT =
+    'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj';
+const PRUNING_SOURCE = path.join(
+    REPOSITORY_ROOT,
+    'Tests',
+    'Fixtures',
+    'Source-Wvb',
+    'Pruning.wv',
+);
+const OPTIMIZED_WVB = {
+    bytes: 308,
+    sha256: 'd2f8b67a3a83f393fba16d4f1294000d631e401abd0c4fdde521c9654407b02a',
+};
+const COMPLETE_WVB = {
+    bytes: 395,
+    sha256: '42810451eb302f79d0c167eda3fe62b681277661b277a06badcffd177aba5f35',
+};
 
 if (!(HOST in COMPILERS)) {
     Reject(`The compiler split development test does not support ${HOST}.`);
@@ -69,32 +72,65 @@ if (Compilerˉevidence.bytes !== COMPILERS[HOST].bytes ||
 const Testˉroot = await mkdtemp(path.join(os.tmpdir(), TEMPORARY_PREFIX));
 try {
     console.log(`compiler split development status=Started cases=4 host=${HOST}`);
-    for (let Index = 0; Index < CASES.length; Index += 1) {
-        const Case = CASES[Index];
-        console.log(
-            `compiler split development step=compile item=${Index + 1}/4 ` +
-            `product=${Case.name}`,
-        );
-        const Inputs = await Readˉproject(Case.project);
-        const Output = path.join(Testˉroot, `${Case.name}.wvb`);
-        await Runˉbounded(
-            Compiler,
-            [...Inputs, Output],
-            `compile-${Case.name}`,
-        );
-        const Evidence = await Fileˉevidence(
-            Output,
-            MAXIMUM_OUTPUT_BYTES,
-            `${Case.name} WVB`,
-        );
-        if (Evidence.bytes !== Case.bytes || Evidence.sha256 !== Case.sha256) {
-            Reject(`The ${Case.name} reachable WVB identity differs.`);
-        }
-        console.log(
-            `compiler split development step=compile status=Passed ` +
-            `product=${Case.name} wvb-bytes=${Evidence.bytes}`,
-        );
+    console.log(
+        'compiler split development step=adapter-contract item=1/4',
+    );
+    await Verifyˉadapterˉcontract();
+    console.log(
+        'compiler split development step=adapter-contract status=Passed ' +
+        'target=portable-wvb-optimized-v1',
+    );
+
+    console.log(
+        'compiler split development step=optimized-oracle item=2/4',
+    );
+    const Optimizedˉoutput = path.join(Testˉroot, 'Optimized.wvb');
+    await Runˉbounded(
+        Compiler,
+        [PRUNING_SOURCE, Optimizedˉoutput],
+        'optimized-oracle',
+    );
+    const Optimizedˉevidence = await Fileˉevidence(
+        Optimizedˉoutput,
+        MAXIMUM_OUTPUT_BYTES,
+        'optimized pruning WVB',
+    );
+    Requireˉevidence(
+        Optimizedˉevidence,
+        OPTIMIZED_WVB,
+        'optimized pruning WVB',
+    );
+    console.log(
+        'compiler split development step=optimized-oracle status=Passed ' +
+        `wvb-bytes=${Optimizedˉevidence.bytes}`,
+    );
+
+    console.log(
+        'compiler split development step=complete-oracle item=3/4',
+    );
+    const Completeˉoutput = path.join(Testˉroot, 'Complete.wvb');
+    await Runˉbounded(
+        Compiler,
+        ['--complete', PRUNING_SOURCE, Completeˉoutput],
+        'complete-oracle',
+    );
+    const Completeˉevidence = await Fileˉevidence(
+        Completeˉoutput,
+        MAXIMUM_OUTPUT_BYTES,
+        'complete pruning WVB',
+    );
+    Requireˉevidence(
+        Completeˉevidence,
+        COMPLETE_WVB,
+        'complete pruning WVB',
+    );
+    if (Optimizedˉevidence.bytes >= Completeˉevidence.bytes) {
+        Reject('The optimized pruning oracle did not remove unreachable bytes.');
     }
+    console.log(
+        'compiler split development step=complete-oracle status=Passed ' +
+        `wvb-bytes=${Completeˉevidence.bytes}`,
+    );
 
     console.log('compiler split development step=cache-cleanup item=4/4');
     await Runˉbounded(
@@ -104,8 +140,8 @@ try {
     );
     console.log(
         'compiler split development status=Passed cases=4 ' +
-        'source-analysis-wvb-bytes=956883 analyzer-wvb-bytes=949355 ' +
-        'emitter-wvb-bytes=746557 cleanup=Verified',
+        'target=portable-wvb-optimized-v1 optimized-wvb-bytes=308 ' +
+        'complete-wvb-bytes=395 cleanup=Verified',
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -114,6 +150,24 @@ try {
         Reject('Refusing to remove an unexpected compiler split test directory.');
     }
     await rm(Resolved, { recursive: true, force: true });
+}
+
+async function Verifyˉadapterˉcontract() {
+    const Source = (await readFile(EMITTER_SOURCE, 'utf8')).replace(/\r\n/gu, '\n');
+    const Call = 'Emission.Compilerˉemitˉsourceˉanalysis(';
+    if (Source.split(Call).length !== 2 ||
+        !Source.includes('\n            true\n        );') ||
+        Source.includes('\n            false\n        );') ||
+        !Source.includes('status=Published mode=optimized functions=')) {
+        Reject('The split emitter is not fixed to optimized target emission.');
+    }
+    await Readˉproject(EMITTER_PROJECT);
+}
+
+function Requireˉevidence(Actual, Expected, Label) {
+    if (Actual.bytes !== Expected.bytes || Actual.sha256 !== Expected.sha256) {
+        Reject(`The ${Label} identity differs.`);
+    }
 }
 
 async function Readˉproject(Relative) {
@@ -128,6 +182,7 @@ async function Readˉproject(Relative) {
         Reject(`The focused project contract is invalid: ${Relative}`);
     }
     const Inputs = [];
+    const Sourceˉspellings = [];
     let Roots = 0;
     for (const Line of Lines.slice(1, -1)) {
         const Match = /^(root|source) "([^"\r\n]+)"$/u.exec(Line);
@@ -142,6 +197,8 @@ async function Readˉproject(Relative) {
             if (Inputs.length !== 0) {
                 Reject(`The focused project root is not first: ${Relative}`);
             }
+        } else {
+            Sourceˉspellings.push(Match[2]);
         }
         const Input = path.join(REPOSITORY_ROOT, ...Match[2].split('/'));
         const Canonical = await realpath(Input).catch(() => '');
@@ -152,6 +209,10 @@ async function Readˉproject(Relative) {
     }
     if (Roots !== 1 || Inputs.length < 1 || Inputs.length > 64) {
         Reject(`The focused project source count is invalid: ${Relative}`);
+    }
+    const Sorted = [...Sourceˉspellings].sort();
+    if (Sourceˉspellings.some((Value, Index) => Value !== Sorted[Index])) {
+        Reject(`The focused project sources are not in canonical order: ${Relative}`);
     }
     return Inputs;
 }

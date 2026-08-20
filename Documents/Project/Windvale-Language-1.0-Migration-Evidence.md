@@ -41,8 +41,9 @@ function checkpoint now connects that identity to source symbols, concrete
 bindings, monomorphic WIR, and ordinary WVB execution. It supports inferred and
 full-arity explicit calls to one concrete instance per declaration, including a
 type appearing only as the complete result type. General generic records,
-variants, nested or constant arguments, phantom or template-only declarations,
-and multiple concrete instances remain Slice 4 work. Collections and the
+variants, nested generic arguments, phantom or template-only declarations, and
+multiple concrete instances remain Slice 4 work. Collections beyond the first
+structural bounded signature and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
 deferred to the seven-slice integration gate. Localized token execution,
@@ -425,8 +426,10 @@ Small producer-identity manifests move roughly 47 MiB of executable hashing out
 of cache hits; five Windows x64 warm samples have a 143.2-millisecond median,
 down from the earlier approximately 285-millisecond hit.
 
-The cache admits only unoptimized `portable-wvb-v1` Project 2 input and is not
-qualification evidence. Project 3 profile-aware caching, general Slice 4
+That initial cache admitted only complete `portable-wvb-v1` Project 2 input.
+Decision 0788 advances the fixed emitter target and isolated cache families to
+`portable-wvb-optimized-v1`; neither version is qualification evidence. Project
+3 profile-aware caching, general Slice 4
 generic resolution and collections, repository-wide source migration,
 paired-host equality, and final broad integration remain open.
 
@@ -511,9 +514,39 @@ The pinned native verifier does not admit collection bytecode: it rejects both
 that product and the pre-existing 809-byte monomorphic collection fixture at
 the same semantic boundary. The fully current general emission driver builds
 as a 1,268,289-byte WVB, but selects 37,097,130 native bytes and therefore was
-not packaged by widening the fixed limit. Direct current-driver WVB parity and
-collection-capable native execution remain downstream work; a target-aware
-validated-analysis emission split is the next capacity checkpoint.
+not packaged by widening the fixed limit. Collection-capable native execution
+remains downstream work.
+
+Decision 0788 completes the target-aware validated-analysis emission capacity
+checkpoint. The split emitter now fixes its target to
+`portable-wvb-optimized-v1`. The current product contains 402 reachable
+functions and 687,924 code bytes in an 833,126-byte WVB / SHA-256
+`be4a063cafe5b905ea2457e1c3c2ead36af2ecd4f9dd76a8a68a905dbf90a111`.
+It packages through the unchanged profile-2 route in five fragments as a
+19,005,440-byte Windows x64 application. The packaged current emitter reproduces
+its own WVB byte-for-byte and emits the direct bounded-generic fixture and its
+monomorphic oracle to the same 466-byte WVB above.
+
+The split producer identity is now role-specific version 2 and the cache uses
+isolated `project-analysis-wvca-v2` and
+`project-split-wvb-optimized-v2` families. Its focused four-case owner checks
+the adapter route, exact optimized and complete pruning oracles, and failed
+cache-publication cleanup in under one second locally instead of rebuilding
+three large compiler products already covered by the Language 1.0 front door.
+The front door retains only a portable bootstrap pair: a 949,355-byte analyzer
+at SHA-256
+`bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb`
+and a 746,557-byte target-aware emitter at SHA-256
+`a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805`.
+It reconstructs the current analyzer normally for ordinary language inputs and
+uses the bootstrap pair only to construct the exact current emitter from the
+oversized compiler closure. No additional native compiler executable is
+checked in.
+The Foundation generic fixture now publishes a 3,236-byte reachable product at
+SHA-256
+`78ca3b22958e87b2717c1b94d83205e2d18bc96b9e546192d323f45c8279bc5f`,
+147 bytes smaller than the historical complete product while preserving its
+typed result behavior.
 
 Heavy storage, OS, paired-host, and complete Qualification gates remain
 deferred to the final seven-slice integration gate.

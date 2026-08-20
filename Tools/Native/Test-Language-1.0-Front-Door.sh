@@ -12,6 +12,8 @@ profile_root="$repository_root/Documents/Project/Language-1.0-Localization-Workl
 source_lock="$profile_root/Source-Inputs.wvlock"
 source_profile="$profile_root/En-Source-Profile.wvsp"
 source_lock_hash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
+bootstrap_analyzer_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
+bootstrap_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb"
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
 cleanup() {
@@ -111,14 +113,39 @@ node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
     "$work/Bootstrap-Compiler.elf" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj" \
     "$work/Analyzer.wvb" || exit $?
-node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
-    "$work/Bootstrap-Compiler.elf" \
-    "$repository_root/Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj" \
-    "$work/Emitter.wvb" || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Analyzer.wvb" "$work/Analyzer.elf" --development-cache || exit $?
+[[ $(wc -c < "$bootstrap_analyzer_wvb") -eq 949355 ]] || exit 1
+printf '%s  %s\n' \
+    bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb \
+    "$bootstrap_analyzer_wvb" | sha256sum --check --strict --quiet || exit $?
+[[ $(wc -c < "$bootstrap_emitter_wvb") -eq 746557 ]] || exit 1
+printf '%s  %s\n' \
+    a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805 \
+    "$bootstrap_emitter_wvb" | sha256sum --check --strict --quiet || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$bootstrap_analyzer_wvb" "$work/Bootstrap-Analyzer.elf" \
+    --development-cache || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
+    "$bootstrap_emitter_wvb" "$work/Bootstrap-Emitter.elf" \
+    --development-cache || exit $?
+node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
+    analyzer "$work/Bootstrap-Analyzer.elf" \
+    "$work/Bootstrap-Analyzer.identity" || exit $?
+node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
+    emitter "$work/Bootstrap-Emitter.elf" \
+    "$work/Bootstrap-Emitter.identity" || exit $?
+node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj" \
+    "$work/Emitter.wvb" \
+    "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
+    "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
+[[ $(wc -c < "$work/Emitter.wvb") -eq 833126 ]] || exit 1
+printf '%s  %s\n' \
+    be4a063cafe5b905ea2457e1c3c2ead36af2ecd4f9dd76a8a68a905dbf90a111 \
+    "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \

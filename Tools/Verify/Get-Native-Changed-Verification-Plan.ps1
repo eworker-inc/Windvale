@@ -1130,6 +1130,7 @@ function Add-Native-Tool-Suite {
         return
     }
     if ($Stem -in @(
+        'Compile-Compiler-Source-Set',
         'Compile-Project-2-With-Compiler',
         'Run-Split-Compiler'
     )) {
@@ -1466,17 +1467,24 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Build/Compiler-Admission-Driver.wv'
     )) {
         Add-Suite 'language-1-front-door'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'language-1-front-door'
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Analysis-Core.wv',
         'Compiler/Windvale/Source-Emission-Core.wv',
         'Projects/Compiler/Windvale-Source-Analysis-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Emission-Core.wvproj',
         'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
+        'Specifications/Compiler-Source-Analysis.md',
+        'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv'
+    )) {
+        Add-Suite 'language-1-front-door'
+    } elseif ($Path -in @(
         'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
         'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
-        'Specifications/Compiler-Source-Analysis.md',
         'Specifications/Compiler-Split-Development-Cache.md',
-        'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv',
         'Tools/Windvale.Build/Compiler-Analysis-Driver.wv',
         'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
     )) {

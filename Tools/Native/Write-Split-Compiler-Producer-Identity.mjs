@@ -28,6 +28,9 @@ const Role = process.argv[2];
 if (Role !== 'analyzer' && Role !== 'emitter') {
     Reject('The producer role must be analyzer or emitter.');
 }
+const Target = Role === 'analyzer'
+    ? 'source-analysis-v1'
+    : 'portable-wvb-optimized-v1';
 const Producerˉpath = path.resolve(process.argv[3]);
 const Identityˉpath = path.resolve(process.argv[4]);
 if (Producerˉpath === Identityˉpath) {
@@ -39,15 +42,16 @@ if (path.extname(Identityˉpath).toLowerCase() !== '.identity') {
 await Requireˉordinaryˉdirectory(path.dirname(Identityˉpath), 'identity parent');
 
 const Evidence = await Fileˉevidence(Producerˉpath);
-const Identity = `windvale-split-compiler-producer 1\n` +
+const Identity = `windvale-split-compiler-producer 2\n` +
     `role ${Role}\n` +
-    `target portable-wvb-v1\n` +
+    `target ${Target}\n` +
     `host ${HOST}\n` +
     `bytes ${Evidence.bytes}\n` +
     `sha256 ${Evidence.sha256}\n`;
 await Publishˉidentity(Identityˉpath, Identity);
 console.log(
-    `split compiler identity status=Published role=${Role} host=${HOST} ` +
+    `split compiler identity status=Published role=${Role} target=${Target} ` +
+    `host=${HOST} ` +
     `bytes=${Evidence.bytes} sha256=${Evidence.sha256}`,
 );
 

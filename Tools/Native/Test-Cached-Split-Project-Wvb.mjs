@@ -83,9 +83,12 @@ try {
 }
 
 function Identity(Role, Bytes, Sha256) {
-    return `windvale-split-compiler-producer 1\n` +
+    const Target = Role === 'analyzer'
+        ? 'source-analysis-v1'
+        : 'portable-wvb-optimized-v1';
+    return `windvale-split-compiler-producer 2\n` +
         `role ${Role}\n` +
-        'target portable-wvb-v1\n' +
+        `target ${Target}\n` +
         `host ${HOST}\n` +
         `bytes ${Bytes}\n` +
         `sha256 ${Sha256}\n`;

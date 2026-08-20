@@ -18,6 +18,7 @@ if not exist "%SourceRoot%\." goto :usage
     "%SourceRoot%\Compiler\Windvale\Source-Body-Parser.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Declaration-Parser.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Descriptor-Core.wv" ^
+    "%SourceRoot%\Compiler\Windvale\Source-Generic-Lowering-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Graph-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Lexer-Core.wv" ^
     "%SourceRoot%\Compiler\Windvale\Source-Profile-Core.wv" ^

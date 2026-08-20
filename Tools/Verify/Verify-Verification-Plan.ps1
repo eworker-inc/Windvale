@@ -799,11 +799,24 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'compiler split development owner'
+        Name = 'compiler source-analysis implementation owner'
         Paths = @(
+            'Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Manifest.json',
+            'Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/README.md',
+            'Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb',
             'Compiler/Windvale/Source-Analysis-Core.wv',
             'Compiler/Windvale/Source-Emission-Core.wv',
             'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
+            'Tools/Native/Compile-Compiler-Source-Set.cmd',
+            'Tools/Native/Compile-Compiler-Source-Set.sh'
+        )
+        Suites = @('language-1-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'compiler split development owner'
+        Paths = @(
             'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
             'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
             'Specifications/Compiler-Split-Development-Cache.md',

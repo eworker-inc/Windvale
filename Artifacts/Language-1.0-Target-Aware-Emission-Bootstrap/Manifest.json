@@ -1,0 +1,45 @@
+{
+  "format": "windvale-language-1-target-aware-emission-bootstrap-1",
+  "status": "development-bootstrap",
+  "sourceBaseCommit": "49717f4dda27db2235033827ac164fac080ca623",
+  "emitterSourceOverlay": {
+    "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+    "change": "Compiler_emit_source_analysis Optimize argument false to true",
+    "resultSha256": "21f8ef25b8896cfe9c68360f30a093c7a0fa0259033919e7b16d537fa1efb511"
+  },
+  "emitterProject": {
+    "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+    "sha256": "ecca593413183c06052ff40c6b8d2d71d13b41a3ebc3d42496a8c8e6550cea9d",
+    "ordering": "root then ordinal-sorted source directives"
+  },
+  "analyzerSource": {
+    "path": "Tools/Windvale.Build/Compiler-Analysis-Driver.wv",
+    "sha256": "461a62b677de61426a5cb0747a8fae4cedd164f4e10d9a23b746741e0ea9320d"
+  },
+  "analyzerProject": {
+    "path": "Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj",
+    "sha256": "8cdd2a95de6d2402d0f4bbb3b9c62db1f52809ff26d1c6d33c25d14467067294",
+    "ordering": "root then ordinal-sorted source directives"
+  },
+  "producer": {
+    "path": "Artifacts/Native-Compiler-Reconstruction-Candidate/windows-x64/wvcompiler.exe",
+    "bytes": 28172800,
+    "sha256": "a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d"
+  },
+  "analyzerWvb": {
+    "path": "Wvb/wvanalyze.wvb",
+    "bytes": 949355,
+    "sha256": "bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb",
+    "functions": 390,
+    "codeBytes": 783293,
+    "target": "source-analysis-v1"
+  },
+  "emitterWvb": {
+    "path": "Wvb/wvemit.wvb",
+    "bytes": 746557,
+    "sha256": "a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805",
+    "functions": 353,
+    "codeBytes": 616798,
+    "target": "portable-wvb-optimized-v1"
+  }
+}

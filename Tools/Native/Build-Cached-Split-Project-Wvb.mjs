@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import {
     copyFile,
@@ -76,7 +76,7 @@ const Emitterˉidentity = await Readˉproducerˉidentity(
 
 const Cacheˉroot = await Prepareˉcacheˉroot();
 const Analysisˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
-    'project-analysis-wvca-v1',
+    'project-analysis-wvca-v2',
     [Analyzerˉidentityˉpath],
 );
 const Analysisˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(
@@ -102,7 +102,7 @@ const Orderedˉanalysisˉinputs = Projectˉinputs.map(Candidate => {
 });
 const Analysisˉfamily = await Prepareˉfamily(
     Cacheˉroot,
-    'project-analysis-wvca-v1',
+    'project-analysis-wvca-v2',
 );
 const Analysisˉcheckpoint = await Acquireˉanalysis(
     Analysisˉfamily,
@@ -113,7 +113,7 @@ const Analysisˉcheckpoint = await Acquireˉanalysis(
 );
 
 const Emissionˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
-    'project-split-wvb-v1',
+    'project-split-wvb-optimized-v2',
     [Analyzerˉidentityˉpath, Emitterˉidentityˉpath],
 );
 const Emissionˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(
@@ -130,7 +130,7 @@ await Requireˉproducerˉidentityˉunchanged(
 );
 const Emissionˉfamily = await Prepareˉfamily(
     Cacheˉroot,
-    'project-split-wvb-v1',
+    'project-split-wvb-optimized-v2',
 );
 const Emissionˉcheckpoint = await Acquireˉemission(
     Emissionˉfamily,
@@ -159,7 +159,7 @@ if (Productˉevidence.bytes !== Outputˉevidence.bytes ||
     Reject('The published split WVB does not match its checkpoint.');
 }
 console.log(
-    `split project status=Published target=portable-wvb-v1 ` +
+    `split project status=Published target=portable-wvb-optimized-v1 ` +
     `wvb-bytes=${Outputˉevidence.bytes} wvb-sha256=${Outputˉevidence.sha256}`,
 );
 
@@ -174,13 +174,13 @@ async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
     try {
         Temporary = await Allocateˉtemporary(Family, Request.key);
         await Verifyˉproducer(Analyzer, Identity);
-        Run(Analyzer, [
+        await Run(Analyzer, [
             ...Inputs,
             path.join(Temporary, 'Source.wvss'),
             path.join(Temporary, 'Manifest.wvca'),
             path.join(Temporary, 'Bindings.wvlb'),
             path.join(Temporary, 'Wir.wvir'),
-        ]);
+        ], 'analysis');
         await Verifyˉproducer(Analyzer, Identity);
         const Evidence = await Analysisˉevidence(Temporary);
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request);
@@ -286,13 +286,13 @@ async function Acquireˉemission(
     try {
         Temporary = await Allocateˉtemporary(Family, Request.key);
         await Verifyˉproducer(Emitter, Identity);
-        Run(Emitter, [
+        await Run(Emitter, [
             path.join(Analysisˉcheckpoint, 'Source.wvss'),
             path.join(Analysisˉcheckpoint, 'Manifest.wvca'),
             path.join(Analysisˉcheckpoint, 'Bindings.wvlb'),
             path.join(Analysisˉcheckpoint, 'Wir.wvir'),
             path.join(Temporary, 'Product.wvb'),
-        ]);
+        ], 'emission');
         await Verifyˉproducer(Emitter, Identity);
         const Evidence = await Fileˉevidence(
             path.join(Temporary, 'Product.wvb'),
@@ -481,29 +481,80 @@ async function Syncˉfile(Candidate) {
     }
 }
 
-function Run(Command, Arguments) {
-    const Result = spawnSync(Command, Arguments, {
-        cwd: path.dirname(Projectˉpath),
-        encoding: 'utf8',
-        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
-        timeout: PRODUCER_TIMEOUT_MILLISECONDS,
-        windowsHide: true,
+async function Run(Command, Arguments, Step) {
+    console.log(`split project producer step=${Step} status=Started`);
+    const Result = await new Promise((Resolve, Rejectˉpromise) => {
+        const Child = spawn(Command, Arguments, {
+            cwd: path.dirname(Projectˉpath),
+            windowsHide: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        const Started = Date.now();
+        let Stdout = Buffer.alloc(0);
+        let Stderr = Buffer.alloc(0);
+        let Settled = false;
+        const Finish = Value => {
+            if (Settled) return;
+            Settled = true;
+            clearInterval(Progress);
+            clearTimeout(Timeout);
+            Resolve(Value);
+        };
+        const Fail = Error => {
+            if (Settled) return;
+            Settled = true;
+            clearInterval(Progress);
+            clearTimeout(Timeout);
+            Rejectˉpromise(Error);
+        };
+        const Append = (Current, Chunk) => {
+            if (Current.length + Chunk.length > MAXIMUM_DIAGNOSTIC_BYTES) {
+                Child.kill();
+                Fail(new Error(
+                    `The split compiler ${Step} diagnostics exceed 64 KiB.`,
+                ));
+                return Current;
+            }
+            return Buffer.concat([Current, Chunk]);
+        };
+        Child.stdout.on('data', Chunk => { Stdout = Append(Stdout, Chunk); });
+        Child.stderr.on('data', Chunk => { Stderr = Append(Stderr, Chunk); });
+        const Progress = setInterval(() => {
+            console.log(
+                `split project producer step=${Step} status=Active ` +
+                `elapsed-seconds=${Math.floor((Date.now() - Started) / 1_000)}`,
+            );
+        }, 30_000);
+        const Timeout = setTimeout(() => {
+            Child.kill();
+            Finish({ status: null, stdout: Stdout, stderr: Stderr, timeout: true });
+        }, PRODUCER_TIMEOUT_MILLISECONDS);
+        Child.on('error', Fail);
+        Child.on('close', Status => Finish({
+            status: Status,
+            stdout: Stdout,
+            stderr: Stderr,
+            timeout: false,
+        }));
     });
-    if (Result.error !== undefined) {
-        throw Result.error;
-    }
     if (Result.stdout.length !== 0) {
         process.stdout.write(Result.stdout);
+    }
+    if (Result.timeout) {
+        Reject(`The split compiler ${Step} producer exceeded five minutes.`);
     }
     if (Result.status !== 0) {
         if (Result.stderr.length !== 0) {
             process.stderr.write(Result.stderr);
         }
-        Reject(`The split compiler producer exited with status ${Result.status}.`);
+        Reject(
+            `The split compiler ${Step} producer exited with status ${Result.status}.`,
+        );
     }
     if (Result.stderr.length !== 0) {
-        Reject('The split compiler producer wrote diagnostics after success.');
+        Reject(`The split compiler ${Step} producer wrote diagnostics after success.`);
     }
+    console.log(`split project producer step=${Step} status=Complete`);
 }
 
 async function Fileˉevidence(Candidate, Label, Maximum) {
@@ -533,10 +584,13 @@ async function Readˉproducerˉidentity(Candidate, Role) {
     );
     const Text = Bytes.toString('ascii');
     const Lines = Text.split('\n');
+    const Target = Role === 'analyzer'
+        ? 'source-analysis-v1'
+        : 'portable-wvb-optimized-v1';
     if (Lines.length !== 7 || Lines[0] !==
-            'windvale-split-compiler-producer 1' ||
+            'windvale-split-compiler-producer 2' ||
         Lines[1] !== `role ${Role}` ||
-        Lines[2] !== 'target portable-wvb-v1' ||
+        Lines[2] !== `target ${Target}` ||
         Lines[3] !== `host ${HOST}` ||
         !/^bytes [1-9][0-9]*$/u.test(Lines[4]) ||
         !/^sha256 [0-9a-f]{64}$/u.test(Lines[5]) || Lines[6] !== '') {
