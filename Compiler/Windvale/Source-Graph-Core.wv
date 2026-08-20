@@ -53,6 +53,7 @@ export fn Compilerˉsourceˉgraphˉstate(Count: u32) -> bytes {
     return Result.Value;
 }
 
+// Reachability bytes are 0 unseen, 1 pending expansion, or 2 completely expanded.
 export fn Compilerˉsourceˉgraphˉmark(State: bytes, Index: u32) -> bytes {
     let Result: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
         State,
@@ -215,7 +216,7 @@ export fn Compilerˉsourceˉgraphˉexpand(
     var Changed: bool = false;
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
-        if Bytesˉreadˉu8(Nextˉstate, Index) != 0u8 {
+        if Bytesˉreadˉu8(Nextˉstate, Index) == 1u8 {
             let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
             let Source: bytes = View.Source;
             let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
@@ -413,6 +414,13 @@ export fn Compilerˉsourceˉgraphˉexpand(
                     Currentˉcolumn = Declaration.Nextˉcolumn;
                 }
             }
+            let Complete: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
+                Nextˉstate,
+                Index,
+                1u32,
+                Bytesˉfromˉu8(2u8)
+            );
+            Nextˉstate = Complete.Value;
         }
         Index = Index + 1u32;
     }

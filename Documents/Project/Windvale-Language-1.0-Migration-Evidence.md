@@ -623,6 +623,63 @@ passed all 11 phases and 155 declared cases. Its deterministic target-aware
 emitter is 838,654 bytes with SHA-256
 `707c3aec27b481745ae599206960bc6f9c0be0053aaae73b359cd20cd2cc4876`.
 
+## Slice 4 source-graph frontier checkpoint
+
+Decision 0801 gives reachability state three private meanings: unseen, pending
+expansion, and completely expanded. A successful expansion changes its current
+module from pending to complete. Later fixed-point passes therefore parse only
+newly discovered earlier-ordered modules instead of reparsing the complete
+reachable prefix. The public graph summary, WVSS format, import lookup,
+diagnostic order, module/pass bounds, adjacency construction, and cycle proof
+remain unchanged.
+
+The exact 14-module analysis-driver graph requires two reachability passes. Its
+old implementation performs 27 module-expansion visits: 13 in the first pass
+and all 14 again in the second. The completed-frontier implementation performs
+14 visits: the same 13 followed only by the one newly pending module. This is a
+48.1% reduction in expansion visits without retaining a parsed tree or raising
+any memory bound.
+
+Both focused tools were compiled by the same accepted analyzer and emitter.
+The original has 149 functions, 295,816 code bytes, and 364,759 module bytes;
+the candidate has 149 functions, 295,939 code bytes, and 364,903 module bytes.
+They both report exactly:
+
+```text
+source graph status=Valid modules=14 imports=41 reachable=14
+```
+
+Four interleaved warmed Windows runs on an AMD Ryzen 9 3900X measured a
+3,784.766-millisecond original mean and a 3,281.864-millisecond candidate mean,
+a 13.3% reduction. Their medians are 3,773.672 and 3,286.330 milliseconds. This
+is focused graph-phase evidence rather than a claim that complete compilation
+improves by the same ratio.
+
+The final 1,071,235-byte analyzer WVB has SHA-256
+`52feeed48b2526441d36a2335e50ffe26b6974c82255f367a7f3f0e62e3e9cec`.
+Its 33,531,904-byte Windows package has SHA-256
+`cbe35be00d52d188459be25acdb337dc834e61315e530e32a84f9765150f8035`.
+The analyzer deterministically produces the current 838,798-byte target-aware
+emitter with SHA-256
+`e40da70ba3cf1ef85193bd5b2fe2657faf0068d5951cb36f232d80ec7f7223fe`.
+On the same current source input, the accepted and candidate analyzers publish
+byte-identical WVSS, WVCA, WVLB, and WVIR artifacts. The source-graph demo adds
+a canonical dependency order in which a later importer discovers an earlier
+module and returns zero through the generated native executable. Heavy storage,
+OS, paired-host, and complete Qualification gates remain deferred to the final
+seven-slice integration gate.
+
+The final Windows `language-1-front-door` owner passed all 11 phases and 155
+declared cases with the exact inline analyzer and target-aware emitter above.
+
+The compiler-source sentinel was also attempted for both this candidate and the
+clean upstream tip. Both reach native staging and fail its existing 4 MiB object
+limit. The clean tip reports 600 functions, 1,048,036 code bytes, and a
+1,262,814-byte WVB; the inline candidate reports the same function count,
+1,048,159 code bytes, and a 1,262,958-byte WVB. No limit was raised and this is
+not recorded as a pass. Repairing or replacing that already-overflowing staging
+gate is separate verification-infrastructure work.
+
 ## Slice 2 named variant fields
 
 The edition-1 declaration parser admits zero through 64 uniquely named fields

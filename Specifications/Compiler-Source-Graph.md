@@ -41,7 +41,15 @@ On success, `Modules` equals `Reachable`, `Imports` is the aggregate import coun
 
 Entry zero is the root. Import names resolve by exact unsigned ordinal comparison against declared module-name UTF-8 spans. Every import in the reachable closure must resolve, and a module may name a target only once. Every supplied dependency must be reachable from the root. The reachable graph must be acyclic; self-imports are cycles.
 
-Reachability uses immediate immutable state updates, so a dependency later in WVSS order may be visited in the same pass while an earlier dependency is visited in the next pass. This affects only work performed, never the result. Passes stop when no new module is marked or after the module bound.
+Reachability uses one byte of immutable state per module: `0` is unseen, `1` is
+pending expansion, and `2` is completely expanded. A pass visits only pending
+modules and changes each one to completely expanded after its leading imports
+have been validated. A newly discovered dependency becomes pending, so one
+later in WVSS order may be visited in the same pass while an earlier dependency
+is visited in the next pass. A completely expanded module is not parsed again
+by a later reachability pass. This affects only work performed, never the result
+or diagnostic order. Passes stop when no new module is marked or after the
+module bound.
 
 Acyclicity uses deterministic zero-incoming removal. Candidate modules are considered in WVSS index order. Failure to remove another module proves that a cycle remains; a separate bounded frontier walk returns a real import edge that closes a path to its start module.
 
@@ -55,11 +63,14 @@ Headers and leading import declarations are scanned once after target existence 
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Graph-Core.wvb`: 281,973 bytes, SHA-256 `d281420a926d00e26cce62d67e03901309abb8ebde1769cef330b055aa3b548d`.
-- `Source-Graph-Demo.wvb`: 287,927 bytes, SHA-256 `ac4117af446c62cf222bb4b6630129d7395573d0bf2f44605417c94ac8a1027a`.
-- `Source-Graph-Tool.wvb`: 285,114 bytes, SHA-256 `39c555194f1c95733c27a5e7afcce62795c6ecc67a74318effacbec36ea226e0`.
+- `Source-Graph-Core.wvb`: 364,480 bytes, SHA-256 `3ad1487a96ea7ea63bc72bb07d13436bd29b4f53539a7aabba35bfe7b769b83b`.
+- `Source-Graph-Demo.wvb`: 368,739 bytes, SHA-256 `03b3845762a29207631fb8ee74f77c5ce81d696e981027f65307cf2ea06415a4`.
+- `Source-Graph-Tool.wvb`: 364,903 bytes, SHA-256 `090959e05586e07cba9acee810dadbef76797488ed5024838902b9a5bbbf5f4f`.
 
-These local candidate identities contain the updated frontend while preserving WVSS graph semantics. The current local hosted report is:
+These current local candidate identities were produced through the target-aware
+split compiler and preserve WVSS graph semantics. They are current-host
+development evidence, not a new cross-host qualification claim. The current
+local hosted report is:
 
 Decision 0517 reproduces all three identities through the current-Windows
 native Project front door and natively inspects the core portable type/export

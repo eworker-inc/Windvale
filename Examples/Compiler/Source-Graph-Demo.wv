@@ -77,6 +77,20 @@ export fn Main() -> i32 {
     if Valid.Imports != 4u32 { return 4; }
     if Valid.Reachable != 4u32 { return 5; }
 
+    let Deferredˉroot: text = "module Graphˉdeferredˉroot profile portable; import Graphˉdeferredˉbeta as Beta; import Graphˉdeferredˉzeta as Zeta;";
+    let Deferredˉalpha: text = "module Graphˉdeferredˉalpha profile portable;";
+    let Deferredˉbeta: text = "module Graphˉdeferredˉbeta profile portable; import Graphˉdeferredˉalpha as Alpha;";
+    let Deferredˉzeta: text = "module Graphˉdeferredˉzeta profile portable; import Graphˉdeferredˉalpha as Alpha;";
+    let Deferred: Sourceˉgraph.Compilerˉsourceˉgraphˉsummary = Sourceˉgraph.Compilerˉvalidateˉsourceˉgraph(
+        Sourceˉgraphˉfour(
+            Deferredˉroot, Deferredˉalpha, Deferredˉbeta, Deferredˉzeta
+        )
+    );
+    if Deferred.Status != Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Valid { return 6; }
+    if Deferred.Modules != 4u32 { return 7; }
+    if Deferred.Imports != 4u32 { return 8; }
+    if Deferred.Reachable != 4u32 { return 9; }
+
     let Missing: Sourceˉgraph.Compilerˉsourceˉgraphˉsummary = Sourceˉgraph.Compilerˉvalidateˉsourceˉgraph(
         Sourceˉgraphˉone("module Graphˉmissingˉroot profile portable; import Graphˉmissing as Missing;")
     );
