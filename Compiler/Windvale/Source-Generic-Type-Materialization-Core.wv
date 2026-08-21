@@ -33,27 +33,6 @@ export record Compilerˉsourceˉgenericˉtypeˉmaterialization {
     Failureˉinstance: u32;
 }
 
-export record Compilerˉsourceˉgenericˉmaterializedˉtype {
-    Found: bool;
-    Shape: u32;
-    Outputˉtype: u32;
-    Kind: Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind;
-    Declaration: u32;
-    Module: u32;
-    Firstˉcase: u32;
-    Cases: u32;
-    Firstˉfield: u32;
-    Fields: u32;
-}
-
-export record Compilerˉsourceˉgenericˉmaterializedˉcase {
-    Found: bool;
-    Nameˉoffset: u32;
-    Nameˉlength: u32;
-    Firstˉfield: u32;
-    Fields: u32;
-}
-
 fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉsentinel() -> u32 {
     return 4294967295u32;
 }
@@ -131,20 +110,17 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉcanˉappend(
 
 fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
     Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
-    Firstˉtype: u32,
     Instance: u32,
     Shape: u32
 ) -> u32 {
     if Shape < 2147483648u32 { return Shape; }
     let Reference: u32 = Shape - 2147483648u32;
     if Reference >= Instance { return 0u32; }
-    let Outputˉtype: u32 = Firstˉtype + Reference;
     let Kind: u32 =
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
             Catalog, Reference
         );
-    if Kind == 4u32 { return 65536u32 + Outputˉtype; }
-    if Kind == 8u32 { return 196608u32 + Outputˉtype; }
+    if Kind == 4u32 || Kind == 8u32 { return Shape; }
     return 0u32;
 }
 
@@ -327,7 +303,7 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
             );
             let Outputˉshape: u32 =
                 Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
-                    Catalog, Firstˉtype, Instance, Inputˉshape
+                    Catalog, Instance, Inputˉshape
                 );
             if Inputˉshape >= 2147483648u32 && Outputˉshape == 0u32 {
                 return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
@@ -435,80 +411,41 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
         );
 }
 
-export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
     Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization,
-    Instance: u32
-) -> Compilerˉsourceˉgenericˉmaterializedˉtype {
+    Instance: u32,
+    Word: u32
+) -> u32 {
     if Materialization.Status !=
             Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
         Instance >= Materialization.Instances ||
+        Word >= 9u32 ||
         Bytesˉlength(Materialization.Entryˉevidence) !=
             Materialization.Instances * 36u32 {
-        return Compilerˉsourceˉgenericˉmaterializedˉtype(
-            false, 0u32, 0u32,
-            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-            0u32, 0u32, 0u32, 0u32, 0u32, 0u32
-        );
+        return Compilerˉsourceˉgenericˉtypeˉmaterializationˉsentinel();
     }
-    let Offset: u32 = Instance * 36u32;
-    return Compilerˉsourceˉgenericˉmaterializedˉtype(
-        true,
-        Bytesˉreadˉu32ˉlittle(Materialization.Entryˉevidence, Offset),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 4u32
-        ),
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(
-            Bytesˉreadˉu32ˉlittle(
-                Materialization.Entryˉevidence, Offset + 8u32
-            )
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 12u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 16u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 20u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 24u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 28u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Entryˉevidence, Offset + 32u32
-        )
+    return Bytesˉreadˉu32ˉlittle(
+        Materialization.Entryˉevidence,
+        Instance * 36u32 + Word * 4u32
     );
 }
 
-export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉcase(
+export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉcaseˉword(
     Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization,
-    Case: u32
-) -> Compilerˉsourceˉgenericˉmaterializedˉcase {
+    Case: u32,
+    Word: u32
+) -> u32 {
     if Materialization.Status !=
             Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
         Case >= Materialization.Cases ||
+        Word >= 4u32 ||
         Bytesˉlength(Materialization.Caseˉevidence) !=
             Materialization.Cases * 16u32 {
-        return Compilerˉsourceˉgenericˉmaterializedˉcase(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Compilerˉsourceˉgenericˉtypeˉmaterializationˉsentinel();
     }
-    let Offset: u32 = Case * 16u32;
-    return Compilerˉsourceˉgenericˉmaterializedˉcase(
-        true,
-        Bytesˉreadˉu32ˉlittle(Materialization.Caseˉevidence, Offset),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Caseˉevidence, Offset + 4u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Caseˉevidence, Offset + 8u32
-        ),
-        Bytesˉreadˉu32ˉlittle(
-            Materialization.Caseˉevidence, Offset + 12u32
-        )
+    return Bytesˉreadˉu32ˉlittle(
+        Materialization.Caseˉevidence,
+        Case * 16u32 + Word * 4u32
     );
 }
 

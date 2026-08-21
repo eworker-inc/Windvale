@@ -279,35 +279,41 @@ widening the one-byte native nominal-type encoding.
 
 ## Nominal type translation
 
-WVSD assigns canonical nominal indices independently of source order or module ownership: records sorted by ordinal name first, then enums, then variants. That order is already the WVB Types index space, so the backend serializes it directly rather than introducing another remapping directory.
+WVSD assigns canonical source nominal indices independently of source order or
+module ownership: records sorted by ordinal name first, then enums, then
+variants. For source without generic templates this is already the declared WVB
+prefix. When templates exist, the backend builds bounded record and variant
+target maps, omits every template, compacts concrete declarations, and remaps all
+downstream shapes and operation targets before serialization.
 
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
-Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
+Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus their planned WVB Types index; enum shapes encode byte `8` plus their planned index. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
 
 Before type emission, the backend scans function signatures and bindings in
 their canonical directory order for concrete Foundation generic shapes. It
 retains at most 256 unique shapes in deterministic first-use order. Each shape becomes one
 ordinary private WVB variant type whose fields use the expanded source argument
 shapes; all metadata and operation references use that resulting canonical Types
-index. The template Option and Result declarations remain ordinary nominal
-entries. Concrete private names use the fixed-width rank range `__WvZ000`
+index. Generic Option and Result templates are not runtime entries. Concrete
+private names use the fixed-width rank range `__WvZ000`
 through `__WvZ255`, so emitted Types order remains ordinal even past rank 9.
 They are deterministic emitter identities and are
 not public source names. Existing variant construction, test, field, runtime,
 and verifier rules execute every specialization.
 
-The focused general-generic serializer consumes one independently validated
-generic nominal materialization plan. It emits each retained instance as an
-ordinary concrete record or variant entry immediately after declared nominal
-types and before the Foundation suffix. Catalog order is canonical; private
+The main backend gives the general-generic serializer one independently
+validated materialization plan plus the exact source-to-WVB target maps. It
+emits each retained instance as an ordinary concrete record or variant entry
+immediately after concrete declared nominal types and before the Foundation
+suffix. Catalog order is canonical; private
 fixed-width names are `__WvY0000` through `__WvY1023`. Nested materialized
 record and variant shapes refer to their final ordinary Types indices. A field
 using a concrete Foundation generic shape resolves through the exact unique
 Foundation plan and targets the following `__WvZ` suffix.
 
 The serializer requires its first output index to equal
-`Records + Enums + Variants`, admits at most 1,024 total Types entries and 256
+`Concrete-records + Enums + Concrete-variants`, admits at most 1,024 total Types entries and 256
 Foundation shapes, and bounds its emitted entry payload to 4 MiB. It rejects an
 invalid materialization, a malformed, repeated, incomplete, or non-Foundation
 plan, an unsupported shape, an inconsistent nested nominal kind, or a type or
@@ -315,11 +321,14 @@ evidence limit without returning partial output. It preserves the existing
 record/variant metadata and WVB feature bits, including multi-field marker `2`;
 it adds no WVB version or runtime generic representation.
 
-This focused serializer is not yet called by the main Source WVB entry point.
-Retained WVGT carriage through main Source WIR and insertion of these entries
-and their operation targets into complete WVB remain connected implementation
-work. The implemented contract therefore proves deterministic serialization,
-not general-generic application execution.
+Main Source WVB now extracts WVGT from WVLB, reconstructs this plan, inserts its
+Types entries, and remaps private function, field, temporary, and nominal
+operation identities. Public reachability analysis constructs the same evidence
+instead of using template-bearing source indices. `Box<Point>` produces a
+concrete private `__WvY0000` record whose field targets the compacted `Point`
+entry; the source `Box<T>` template is absent. This proves deterministic main
+WVB metadata and target translation. General generic record construction and
+field access in source bodies remain a later connected execution checkpoint.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 

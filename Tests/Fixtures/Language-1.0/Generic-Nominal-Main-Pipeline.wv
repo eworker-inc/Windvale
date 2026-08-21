@@ -1,10 +1,14 @@
 module Languageˉoneˉgenericˉnominalˉmainˉpipeline profile portable;
 
+record Point {
+    X: i32;
+}
+
 record Box<T> {
     Value: T;
 }
 
-fn Identity(Value: Box<i32>) -> Box<i32> {
+fn Identity(Value: Box<Point>) -> Box<Point> {
     return Value;
 }
 

@@ -17,13 +17,13 @@ binding phase resolves uses such as
 `Choice<Box<i32>, text>`, admits inner WVGT identities before parents, and
 returns the exact replacement catalog. The generic layout and materialization
 phases now substitute fields and cases, assign ordinary output type indices,
-and replace private WVGT references in one bounded dependency-order plan. Main
+and retain private nested-instance identity in one bounded dependency-order plan. Main
 Source WIR now scans ordinary function signatures and explicit locals, retains
 the resulting catalog in WVLB 1.3, and carries catalog-bounded private shapes in
-paired WVIR evidence. Main Source WVB does not yet consume the materialization
-plan or emit its concrete types. The existing private Foundation `Option` and
-`Result` shapes remain unchanged until that integration deliberately migrates
-them.
+paired WVIR evidence. Main Source WVB consumes that catalog, materializes every
+retained instance, omits source templates from the WVB Types table, remaps
+ordinary and private nominal identities, and emits the concrete entries before
+the existing private Foundation `Option` and `Result` specialization suffix.
 
 The current constant-argument connection accepts one exact suffixed
 fixed-integer token of the declared shape. Evaluation of the broader frozen
@@ -136,13 +136,21 @@ offset, source name length, first global field, and field count. Each field
 entry is 16 bytes: source name offset, source name length, output shape, and
 nominal declaration kind.
 
-An earlier private record reference becomes shape `65536 + output-index`; an
-earlier private variant reference becomes shape `196608 + output-index`.
-Validation rejects a forward, missing, or wrong-kind private reference, and no
-private shape survives valid materialized field evidence. Each evidence stream
-is at most 4 MiB; all three streams plus the retained catalog are at most
-16 MiB. Capacity is checked before concatenation, and a failed plan publishes
-empty derived evidence plus the first failing instance rather than a prefix.
+An earlier WVGT reference retains its private shape in materialized field
+evidence. This prevents an ordinary source nominal target from being confused
+with an equal numeric output Types index after templates are removed. Final WVB
+shape planning resolves the private identity to `65536 + output-index` for a
+record or `196608 + output-index` for a variant and validates its exact kind.
+No private shape survives WVB serialization. Each evidence stream is at most
+4 MiB; all three streams plus the retained catalog are at most 16 MiB. Capacity
+is checked before concatenation, and a failed plan publishes empty derived
+evidence plus the first failing instance rather than a prefix.
+
+The packed type entry exposes words zero through eight in the order documented
+above; the packed case entry exposes words zero through three. A bounded word
+accessor returns the existing `u32` sentinel for an invalid plan, index, or word.
+This avoids allocating transient compiler-only materialized-type and case
+records while keeping the byte layout and validation boundary explicit.
 
 ## Integration contract and progress
 
@@ -157,11 +165,11 @@ The connected source integration preserves these boundaries:
    validating record fields and variant cases, including concrete builder,
    capability, and nested-variant restrictions after substitution;
 4. **Implemented:** carry private shapes through main WVLB/WVIR analysis only
-   when the paired artifact binds exact WVGT evidence, then replace them with
-   assigned ordinary shapes in one canonical materialization plan;
-5. **Implemented in the focused serializer:** serialize that plan as ordinary
-   monomorphic WVB Types entries in canonical dependency order; main Source WVB
-   insertion and operation remapping remain open; and
+   when the paired artifact binds exact WVGT evidence, retain unambiguous private
+   references through materialization, and resolve them at WVB planning;
+5. **Implemented:** serialize the plan through the main Source WVB entry point as
+   ordinary monomorphic Types entries, omit templates, and remap function,
+   field, temporary, and nominal-operation targets through one canonical plan;
 6. reject an unused template only when a boundary requires a concrete value,
    while keeping uninstantiated source templates out of runtime artifacts.
 
@@ -226,26 +234,27 @@ returns `42`, and writes no output. The independent
 `generic-nominal-type-layout` owner reproduces the build, package, and execution
 boundary through content-keyed caches.
 
-`Generic-Nominal-Type-Materialization-Self-Test.wv` adds 20 focused assertions
+`Generic-Nominal-Type-Materialization-Self-Test.wv` now carries 30 focused cases
 over four dependency-ordered record and variant instances. It verifies assigned
 ordinary type indices, fixed-width type/case/field ranges, record and variant
 private-shape replacement, missing indices, an empty plan, the type limit,
 invalid or missing catalog declarations, builder and nested-variant
 rejection, and tampered-evidence reconstruction.
 
-Its 707,484-byte WVB has SHA-256
-`0f91eb3d873f9dd9f5a68d53956b7be6f0ac7f62c70056241e99ea49ab47fe64`.
-The five-fragment 17,346,560-byte hosted Windows executable has SHA-256
-`1989251b54de71bb6b7e69141e61529dd882a218bfd3892107ce4c6ff6f1e275`,
-returns `42`, and writes no output. The independent
+Its current 734,722-byte WVB has SHA-256
+`080990672a4f2912877ddae201c9fe0b35c858c40d51dc072567a3191e6e7757`.
+It returns `42` and writes no output. The independent
 `generic-nominal-type-materialization` owner reproduces this boundary through
-content-keyed caches. Main Source WIR carriage is now connected; nested template
-field substitution in generic-function contexts, main WVB insertion and
-operation remapping, and Foundation migration remain later checkpoints.
+content-keyed caches. Main Source WIR carriage, WVB insertion, template elision,
+and nominal target remapping are connected. Nested template field substitution
+in generic-function contexts, runtime generic construction/field use, and
+Foundation migration remain later checkpoints.
 
-`Generic-Nominal-Main-Pipeline.wv` is the first main-analyzer fixture. Its
-12-case inspector requires exact 238-byte WVSS, 104-byte WVCA, 192-byte WVLB
-1.3, and 320-byte WVIR 1.3 products. The binding artifact retains one 68-byte
-WVGT instance for `Box<i32>` and gives the parameter shape `0x80000000`; the
-function return and parameter-load operation carry the same private shape. No
-private shape has entered WVB at this checkpoint.
+`Generic-Nominal-Main-Pipeline.wv` now covers the complete analysis-to-WVB
+metadata path. Its 20-case inspector requires exact 272-byte WVSS, 104-byte
+WVCA, 208-byte WVLB 1.3, 368-byte WVIR 1.3, and 252-byte WVB 1.11 products. It
+materializes `Box<Point>` while the colliding ordinary source and generic output
+targets are both one. WVB retains concrete `Point` at index zero, emits
+`__WvY0000 { Value: Point }` at index one, and contains no `Box` template. The
+compiler-aligned verifier accepts it and the runner returns `42`; no private
+shape enters WVB.

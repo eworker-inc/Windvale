@@ -561,11 +561,10 @@ The pair consumes WVIR 1.3/1.4 and reproduces the emitter byte for byte. The
 Language 1.0 gate also removes its unused monolithic `Compiler.wvb` build, so
 current compiler-scale evidence comes from this one split reconstruction.
 
-The Foundation generic fixture now publishes a 3,236-byte reachable product at
-SHA-256
-`78ca3b22958e87b2717c1b94d83205e2d18bc96b9e546192d323f45c8279bc5f`,
-147 bytes smaller than the historical complete product while preserving its
-typed result behavior.
+The Decision 0813 checkpoint published a 3,236-byte reachable Foundation generic
+product, 147 bytes smaller than the historical complete product. Decision 0814
+now omits the unused generic template entry and publishes 3,127 bytes while
+preserving verifier admission and the exact typed result behavior.
 
 Heavy storage, OS, paired-host, and complete Qualification gates remain
 deferred to the final seven-slice integration gate.
@@ -907,6 +906,57 @@ repeat completes in 0.295 seconds on the current Windows host.
 This is current-host development evidence. Main WVB materialization/remapping,
 generic nominal construction and field operations, generic-function-context
 type uses, Foundation migration, and paired-host qualification remain open.
+
+## Slice 4 main generic nominal WVB materialization checkpoint
+
+Decision 0814 connects the retained WVGT catalog to the real Source WVB backend.
+Generic record and variant declarations remain source templates and receive no
+runtime Types entry. The backend compacts concrete declared records, enums, and
+variants into a bounded prefix, appends retained WVGT instances in catalog order,
+then appends the existing concrete Foundation suffix. Explicit record and
+variant target maps remap every affected shape and nominal operation.
+
+Materialized fields retain an earlier instance's private WVGT identity until the
+final WVB planning boundary. This is necessary because removing templates can
+make an ordinary source nominal target numerically equal a generic output target.
+The final serializer resolves that identity and validates its record/variant
+kind; no private shape enters WVB. The packed materialization evidence now uses
+bounded type-word and case-word accessors, which return the existing sentinel on
+an invalid plan, index, or word.
+
+The complete emission compiler initially reached 133 types against the retained
+128-type native boundary. Five compiler-only wrapper records were removed rather
+than widening the limit. The final 22-module analysis publishes 1,848,314 source
+bytes, 283,268 WVLB bytes, and 3,739,652 WVIR bytes. Its optimized product has
+529 functions, 798,745 code bytes, and exactly 128 Types entries in a
+964,539-byte WVB at SHA-256
+`9c11b7eb3b9e250817a0a763adf1fea8d7406bf6e2869247f4a7f84146307347`.
+The existing profile-7 native path accepts it and publishes a six-fragment
+21,254,144-byte Windows executable at SHA-256
+`57c36ac13745b103fccbd677d4f54c3dbc112c739b520690b424b40bae491278`.
+
+The strengthened `Generic-Nominal-Main-Pipeline.wv` deliberately combines
+template `Box<T>` with concrete `Point` and materializes `Box<Point>`. Ordinary
+source target 1 and generic output target 1 collide, proving that numeric range
+tests are insufficient. The analyzer publishes exact 272-byte WVSS, 104-byte
+WVCA, 208-byte WVLB 1.3, and 368-byte WVIR 1.3 artifacts. The new emitter
+publishes a deterministic 252-byte WVB 1.11 at SHA-256
+`8871f2876c9135e8f4f8740f7643d1ff5a5eb0e771da0dddd3357e1bed9d29aa`.
+Its Types section is exactly `Point { X: i32 }` followed by
+`__WvY0000 { Value: Point }`; it contains no `Box` template. The independent
+compiler-aligned verifier accepts it and the native runner reports `Result: 42`.
+The artifact inspector expands from 12 analysis cases to 20 analysis/WVB cases,
+and the Language 1.0 owner adds independent verification and execution.
+
+The focused generic nominal materialization owner still passes all 30 cases and
+returns `42`. Its updated 734,722-byte WVB has SHA-256
+`080990672a4f2912877ddae201c9fe0b35c858c40d51dc072567a3191e6e7757`.
+
+This is current-Windows development evidence. It proves main WVB metadata,
+template elision, target remapping, verifier admission, and executable
+publication. Runtime construction and field access for general generic nominal
+values, generic-function-context type uses, the remaining Foundation migration,
+and paired-host qualification remain open.
 
 ## Slice 4 packed keyword dispatch checkpoint
 
