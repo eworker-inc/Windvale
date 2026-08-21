@@ -137,6 +137,18 @@ contains only the same collection shape and operations as a hand-written
 monomorphic function. Multiple bodies use the WVIR 1.4 directory envelope
 above; no WVIR operation value changes.
 
+A concrete generic-function specialization may use one applied generic nominal
+whose arguments are direct function type or constant parameters. Signature,
+parameter, explicit-local, construction, return, and field analysis resolve
+that use against the owning WVGC instance and the shared WVGT catalog before
+ordinary lowering. Generic-call inference may decompose an actual WVGT identity
+only when the formal names the exact same generic declaration and full arity;
+each formal argument then contributes through the existing WVGS equality and
+kind rules. A different template or conflicting contribution fails with
+`Genericˉresolution`. The specialized body contains only concrete ordinary or
+private catalog shapes, and validation reconstructs both catalogs before
+accepting its signature and operations.
+
 An edition-1 accepted `try` evaluates its expression once and requires the exact
 Foundation `Result<T, E>` identity. The current function must return
 `Result<U, E>` with the same expanded error shape. Lowering emits the existing

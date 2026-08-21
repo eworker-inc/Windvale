@@ -1632,6 +1632,22 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                 Typeˉnextˉline = General.Nextˉline;
                 Typeˉnextˉcolumn = General.Nextˉcolumn;
             }
+            if Type.Status ==
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype &&
+                Generic.Parameters > 0u32 &&
+                Genericˉinstance != Compilerˉsourceˉwirˉsentinel() {
+                let Specialized:
+                    Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                    Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
+                        Input, Scan, Symbols, Module, Source,
+                        Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                        Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
+                    );
+                Typeˉshape = Specialized.Shape;
+                Typeˉnextˉoffset = Specialized.Nextˉoffset;
+                Typeˉnextˉline = Specialized.Nextˉline;
+                Typeˉnextˉcolumn = Specialized.Nextˉcolumn;
+            }
             if Index == Argument {
                 Parameterˉshape = Typeˉshape;
             }
@@ -1674,6 +1690,19 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                 Typeˉcatalog
             );
         Returnˉshape = Generalˉreturn.Shape;
+    }
+    if Returnˉtype.Status ==
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype &&
+        Generic.Parameters > 0u32 &&
+        Genericˉinstance != Compilerˉsourceˉwirˉsentinel() {
+        let Specializedˉreturn:
+            Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+            Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
+                Input, Scan, Symbols, Module, Source,
+                Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+                Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
+            );
+        Returnˉshape = Specializedˉreturn.Shape;
     }
     return Compilerˉsourceˉwirˉsignature(
         Parameterˉshape, Returnˉshape, 0u32, 0u32
@@ -2325,6 +2354,64 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
         Expression.Offset,
         Expression.Line,
         Expression.Column
+    );
+}
+
+fn Compilerˉsourceˉwirˉbindˉgenericˉtype(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Build.Genericˉevidence);
+    if Build.Genericˉinstance == Compilerˉsourceˉwirˉsentinel() {
+        return Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+            Input, Scan, Symbols, Build.Currentˉmodule, Source,
+            Offset, Line, Column, Typeˉcatalog
+        );
+    }
+    let Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
+        Compilerˉsourceˉwirˉgenericˉcatalog(Build.Genericˉevidence);
+    let Declarationˉentry: u32 =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstanceˉdeclaration(
+            Functionˉcatalog, Build.Genericˉinstance
+        );
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    if Declarationˉentry >= Symbolˉentries {
+        return Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+            Input, Scan, Symbols, Build.Currentˉmodule, Source,
+            Offset, Line, Column, Typeˉcatalog
+        );
+    }
+    let Symbolˉentry: u32 = 16u32 + Declarationˉentry * 24u32;
+    let Formalˉmodule: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Symbolˉentry
+    );
+    let Formalˉdeclarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Symbolˉentry + 8u32
+    );
+    let Formalˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Formalˉmodule);
+    let Formalˉdeclaration:
+        Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Formalˉview.Source, Formalˉdeclarationˉoffset,
+            1u32, 1u32, true
+        );
+    let Formalˉgeneric: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            Formalˉview.Source, Formalˉdeclaration, 1u32, 1u32
+        );
+    return Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
+        Input, Scan, Symbols, Build.Currentˉmodule, Source,
+        Offset, Line, Column, Typeˉcatalog,
+        Formalˉview.Source, Formalˉgeneric,
+        Functionˉcatalog, Build.Genericˉinstance
     );
 }
 
@@ -3112,10 +3199,10 @@ fn Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉrecord(
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     let Bound: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
-        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
-            Input, Scan, Symbols, Build.Currentˉmodule, Source,
+        Compilerˉsourceˉwirˉbindˉgenericˉtype(
+            Input, Scan, Symbols, Source,
             Expression.Valueˉoffset, Expression.Line, Expression.Column,
-            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Build.Genericˉevidence)
+            Build
         );
     if Bound.Status !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
@@ -4928,6 +5015,184 @@ fn Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
     );
 }
 
+fn Compilerˉsourceˉwirˉgenericˉcontributeˉnominalˉformal(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch,
+    Pattern: Compilerˉsourceˉwirˉgenericˉformal,
+    Actualˉshape: u32,
+    Originˉargument: u32,
+    Originˉoffset: u32,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution
+) -> Compilerˉsourceˉwirˉgenericˉcontribution {
+    let Patternˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Pattern.Source, Pattern.Offset, Pattern.Line, Pattern.Column
+        );
+    if Patternˉtoken.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Actualˉshape
+        ) {
+        return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+            true, false, Solution
+        );
+    }
+    let Qualified: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
+            Pattern.Source, Pattern.Offset, Pattern.Line, Pattern.Column, false
+        );
+    let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Pattern.Source, Qualified.Nextˉoffset,
+            Qualified.Nextˉline, Qualified.Nextˉcolumn
+        );
+    if Left.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+            true, false, Solution
+        );
+    }
+    let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
+            Input, Scan, Symbols.Directory, Symbols.Lookup,
+            Callable.Module, Pattern.Source, Patternˉtoken.Offset,
+            Qualified.Nextˉoffset - Patternˉtoken.Offset
+        );
+    let Actualˉinstance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+            Actualˉshape
+        );
+    if !Match.Found ||
+        Actualˉinstance >=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+                Typeˉcatalog
+            ) ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
+            Typeˉcatalog, Actualˉinstance
+        ) != Match.Directoryˉindex {
+        return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+            false, true, Solution
+        );
+    }
+    let Target: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Match.Module);
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Target.Source, Match.Declarationˉoffset, 1u32, 1u32, true
+        );
+    let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            Target.Source, Declaration, 1u32, 1u32
+        );
+    if Generic.Parameters == 0u32 ||
+        Generic.Parameters !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+                Typeˉcatalog, Actualˉinstance
+            ) {
+        return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+            false, true, Solution
+        );
+    }
+    var Working: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution = Solution;
+    var Cursor: u32 = Left.Nextˉoffset;
+    var Currentˉline: u32 = Left.Nextˉline;
+    var Currentˉcolumn: u32 = Left.Nextˉcolumn;
+    var Parameter: u32 = 0u32;
+    while Parameter < Generic.Parameters {
+        let Argumentˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Pattern.Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        let Declared:
+            Sourceˉsymbols.Compilerˉsourceˉgenericˉparameterˉmatch =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉparameterˉat(
+                Target.Source, Generic, Parameter
+            );
+        let Actual: Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+                Typeˉcatalog, Actualˉinstance, Parameter
+            );
+        let Formal:
+            Sourceˉsymbols.Compilerˉsourceˉgenericˉparameterˉmatch =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉparameter(
+                Pattern.Source, Pattern.Generic,
+                Argumentˉtoken.Offset, Argumentˉtoken.Length
+            );
+        var Nextˉoffset: u32 = Argumentˉtoken.Nextˉoffset;
+        var Nextˉline: u32 = Argumentˉtoken.Nextˉline;
+        var Nextˉcolumn: u32 = Argumentˉtoken.Nextˉcolumn;
+        if !Declared.Found || !Actual.Valid {
+            return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+                false, true, Working
+            );
+        }
+        if Formal.Found {
+            var Formalˉkind: u32 = 2u32;
+            if Formal.Isˉtype { Formalˉkind = 1u32; }
+            if Declared.Isˉtype != Formal.Isˉtype ||
+                Actual.Kind != Formalˉkind ||
+                (!Formal.Isˉtype &&
+                    (Formal.Shape != Declared.Shape ||
+                        Actual.Shape != Declared.Shape)) {
+                return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+                    false, true, Working
+                );
+            }
+            Working =
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+                    Working, Formal.Index, Actual.Kind,
+                    Actual.Low, Actual.High,
+                    Originˉargument, Originˉoffset
+                );
+        } else if Declared.Isˉtype {
+            let Concrete:
+                Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+                    Input, Scan, Symbols, Callable.Module, Pattern.Source,
+                    Cursor, Currentˉline, Currentˉcolumn, Typeˉcatalog
+                );
+            if Concrete.Status !=
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+                Concrete.Genericˉstatus !=
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+                Actual.Kind != 1u32 || Concrete.Shape != Actual.Low {
+                return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+                    false, true, Working
+                );
+            }
+            Nextˉoffset = Concrete.Nextˉoffset;
+            Nextˉline = Concrete.Nextˉline;
+            Nextˉcolumn = Concrete.Nextˉcolumn;
+        } else if Argumentˉtoken.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Integer ||
+            Actual.Kind != 2u32 || Actual.Shape != Declared.Shape ||
+            Actual.Low != Argumentˉtoken.Numericˉvalue ||
+            Actual.High != Argumentˉtoken.Numericˉhigh {
+            return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+                false, true, Working
+            );
+        }
+        if Working.Status !=
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+            return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+                false, true, Working
+            );
+        }
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Pattern.Source, Nextˉoffset, Nextˉline, Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Currentˉline = Separator.Nextˉline;
+        Currentˉcolumn = Separator.Nextˉcolumn;
+        Parameter = Parameter + 1u32;
+    }
+    return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+        true, true, Working
+    );
+}
+
 fn Compilerˉsourceˉwirˉgenericˉcontributeˉformal(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -4937,6 +5202,7 @@ fn Compilerˉsourceˉwirˉgenericˉcontributeˉformal(
     Actualˉshape: u32,
     Originˉargument: u32,
     Originˉoffset: u32,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution
 ) -> Compilerˉsourceˉwirˉgenericˉcontribution {
     let Patternˉformal: Compilerˉsourceˉwirˉgenericˉformal =
@@ -4959,28 +5225,32 @@ fn Compilerˉsourceˉwirˉgenericˉcontributeˉformal(
                 Patternˉformal.Source, Patternˉformal.Generic,
                 Patternˉtoken.Offset, Patternˉtoken.Length
             );
-        if !Patternˉdirect.Found {
+        if Patternˉdirect.Found {
+            if !Patternˉdirect.Isˉtype {
+                return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
+                    false, true, Solution
+                );
+            }
+            let Patternˉdirectˉsolution:
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution =
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+                    Solution, Patternˉdirect.Index, 1u32,
+                    Actualˉshape, 0u32, Originˉargument, Originˉoffset
+                );
             return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
-                true, false, Solution
+                Patternˉdirectˉsolution.Status ==
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+                true, Patternˉdirectˉsolution
             );
         }
-        if !Patternˉdirect.Isˉtype {
-            return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
-                false, true, Solution
-            );
-        }
-        let Patternˉdirectˉsolution:
-            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution =
-            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
-                Solution, Patternˉdirect.Index, 1u32,
-                Actualˉshape, 0u32, Originˉargument, Originˉoffset
-            );
-        return Compilerˉsourceˉwirˉgenericˉcontributionˉvalue(
-            Patternˉdirectˉsolution.Status ==
-                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
-            true, Patternˉdirectˉsolution
-        );
     }
+    let Nominal: Compilerˉsourceˉwirˉgenericˉcontribution =
+        Compilerˉsourceˉwirˉgenericˉcontributeˉnominalˉformal(
+            Input, Scan, Symbols, Callable, Patternˉformal,
+            Actualˉshape, Originˉargument, Originˉoffset,
+            Typeˉcatalog, Solution
+        );
+    if Nominal.Matched { return Nominal; }
     let Patternˉisˉsequence: bool = Patternˉtoken.Kind ==
         Sourceˉlexer.Compilerˉtokenˉkind.Sequence;
     let Patternˉisˉbuilder: bool = Patternˉtoken.Kind ==
@@ -5454,7 +5724,11 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                     Compilerˉsourceˉwirˉgenericˉcontribution =
                     Compilerˉsourceˉwirˉgenericˉcontributeˉformal(
                         Input, Scan, Symbols, Callable, Item,
-                        Value.Shape, Item, Callˉargument.Offset, Solution
+                        Value.Shape, Item, Callˉargument.Offset,
+                        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                            Value.Genericˉevidence
+                        ),
+                        Solution
                     );
                 Genericˉargumentˉmatched =
                     Genericˉargumentˉcontribution.Matched;
@@ -6916,18 +7190,18 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                             Statement.Line, Statement.Column,
                             Statement.Typeˉoffset
                         );
-                    let Declared: Compilerˉsourceˉwirˉgenericˉtypeˉscan =
-                        Compilerˉsourceˉwirˉscanˉgenericˉtype(
-                            Input, Scan, Symbols, Result.Currentˉmodule, Source,
+                    let Declared:
+                        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                        Compilerˉsourceˉwirˉbindˉgenericˉtype(
+                            Input, Scan, Symbols, Source,
                             Statement.Typeˉoffset,
                             Typeˉposition.Line, Typeˉposition.Column,
-                            false,
-                            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
-                                Localˉbuild.Genericˉevidence
-                            )
+                            Localˉbuild
                         );
                     if Declared.Status !=
-                            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+                            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+                        Declared.Genericˉstatus !=
+                            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
                         return Compilerˉsourceˉwirˉfusedˉfrom(
                             Compilerˉsourceˉwirˉbuildˉfailure(
                                 Localˉbuild,
@@ -6945,7 +7219,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Declaredˉshape = Declared.Shape;
                     Localˉbuild =
                         Compilerˉsourceˉwirˉwithˉgenericˉtypeˉevidence(
-                            Localˉbuild, Declared.Evidence
+                            Localˉbuild, Declared.Catalogˉevidence
                         );
                 }
                 Bindingˉphase = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuild(
@@ -7599,7 +7873,11 @@ fn Compilerˉsourceˉwirˉbindˉfunctionˉparameters(
                 Input, Scan, Symbols, Module, Function, Source,
                 Declaration, Declarationˉline, Declarationˉcolumn,
                 Compilerˉsourceˉwirˉgenericˉcatalog(Build.Genericˉevidence),
-                Build.Genericˉinstance, Bindings
+                Build.Genericˉinstance,
+                Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                    Build.Genericˉevidence
+                ),
+                Bindings
             );
         if Concrete.Buildˉstatus !=
                 Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {

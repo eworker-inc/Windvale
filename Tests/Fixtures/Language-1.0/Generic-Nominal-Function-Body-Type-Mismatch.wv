@@ -1,0 +1,18 @@
+module Languageˉoneˉgenericˉnominalˉfunctionˉbodyˉtypeˉmismatch profile portable;
+
+record Point {
+    X: i32;
+}
+
+record Box<T> {
+    Value: T;
+}
+
+fn Wrap<T>(Value: T) -> Box<T> {
+    return Box<T> { Value: Point { X: Value } };
+}
+
+export fn Main() -> i32 {
+    let Wrapped: Box<i32> = Wrap(42);
+    return Wrapped.Value;
+}

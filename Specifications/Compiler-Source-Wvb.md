@@ -214,7 +214,11 @@ order, use bounded private names `__Generic_000000` onward, and are never
 exported merely because their source template is visible. Direct calls are
 translated through the same immutable WVIR-entry-to-WVB-rank table used by
 ordinary functions. The emitted function bodies and signatures are fully
-concrete; WVGS, WVGC, and source generic parameters are absent from WVB.
+concrete; WVGS, WVGC, and source generic parameters are absent from WVB. This
+also applies when a specialized body used `Box<T>`: its private WVGT shape is
+mapped through the materialization plan, so the emitted parameter, local,
+return, record construction, and field read all name the one ordinary
+`Box<Point>` Types entry.
 
 The backend derives canonical function and data ranks from the independently validated global WVSD directory. Each directory entry names its owner module, so comparisons and declaration reads resolve the corresponding WVSS source first. It builds one immutable entry-to-rank and rank-to-entry table for each capability, data, record, enum, and function kind, then reuses those tables throughout emission. This removes repeated whole-directory ranking without changing any public packed format. It emits functions, code, exports, and data in canonical order and translates each WVIR target during emission. Source declaration order and owner module are therefore irrelevant to final indices.
 

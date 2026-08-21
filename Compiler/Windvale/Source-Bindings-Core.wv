@@ -3,6 +3,8 @@ module Compilerˉsourceˉbindings profile portable;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
+import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉtypeˉbinding;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -2984,6 +2986,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
     Declarationˉcolumn: u32,
     Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
     Genericˉinstance: u32,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉphase {
     var Result: Compilerˉsourceˉbindingˉphase = Compilerˉsourceˉbindingsˉphaseˉbuild(
@@ -3012,7 +3015,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
         let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
-        let Type: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
+        let Directˉtype: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
             Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
                 Input, Scan, Symbols.Directory, Symbols.Lookup,
                 Symbols.Visibility, Module, Source,
@@ -3020,19 +3023,47 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
                 Symbols.Records, Symbols.Enums, Generic,
                 Catalog, Genericˉinstance, false
             );
-        if Type.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        var Typeˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus =
+            Directˉtype.Status;
+        var Typeˉshape: u32 = Directˉtype.Shape;
+        var Typeˉnextˉoffset: u32 = Directˉtype.Nextˉoffset;
+        var Typeˉnextˉline: u32 = Directˉtype.Nextˉline;
+        var Typeˉnextˉcolumn: u32 = Directˉtype.Nextˉcolumn;
+        var Typeˉfailureˉoffset: u32 = Directˉtype.Failureˉoffset;
+        var Typeˉfailureˉline: u32 = Directˉtype.Failureˉline;
+        var Typeˉfailureˉcolumn: u32 = Directˉtype.Failureˉcolumn;
+        if Directˉtype.Status ==
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
+            let Generalˉtype:
+                Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
+                    Input, Scan, Symbols, Module, Source,
+                    Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                    Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
+                );
+            Typeˉstatus = Generalˉtype.Status;
+            Typeˉshape = Generalˉtype.Shape;
+            Typeˉnextˉoffset = Generalˉtype.Nextˉoffset;
+            Typeˉnextˉline = Generalˉtype.Nextˉline;
+            Typeˉnextˉcolumn = Generalˉtype.Nextˉcolumn;
+            Typeˉfailureˉoffset = Generalˉtype.Failureˉoffset;
+            Typeˉfailureˉline = Generalˉtype.Failureˉline;
+            Typeˉfailureˉcolumn = Generalˉtype.Failureˉcolumn;
+        }
+        if Typeˉstatus != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
             let Invalidˉparameter: Compilerˉsourceˉbindingˉbuild =
                 Compilerˉsourceˉbindingsˉbuildˉfailure(
                     Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result),
-                    Compilerˉsourceˉbindingsˉtypeˉstatus(Type.Status),
+                    Compilerˉsourceˉbindingsˉtypeˉstatus(Typeˉstatus),
                     Module, Module, Function,
-                    Type.Failureˉoffset, Type.Failureˉline, Type.Failureˉcolumn
+                    Typeˉfailureˉoffset,
+                    Typeˉfailureˉline, Typeˉfailureˉcolumn
                 );
             return Compilerˉsourceˉbindingsˉphaseˉbuild(
                 Result, Invalidˉparameter
             );
         }
-        let Parameterˉshape: u32 = Type.Shape;
+        let Parameterˉshape: u32 = Typeˉshape;
         let Parameterˉbuild: Compilerˉsourceˉbindingˉbuild =
             Compilerˉsourceˉbindingsˉappendˉparameter(
                 Module, Function, Parameter,
@@ -3047,7 +3078,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
             return Result;
         }
         let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
+            Source, Typeˉnextˉoffset, Typeˉnextˉline, Typeˉnextˉcolumn
         );
         if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
             Cursor = Separator.Nextˉoffset;
@@ -3079,7 +3110,9 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparameters(
         Input, Scan, Symbols, Module, Function, Source,
         Declaration, Declarationˉline, Declarationˉcolumn,
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
-        4294967295u32, Phase
+        4294967295u32,
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+        Phase
     );
 }
 

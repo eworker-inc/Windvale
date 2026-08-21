@@ -1,0 +1,23 @@
+module Languageˉoneˉgenericˉnominalˉfunctionˉbodyˉinferenceˉmismatch profile portable;
+
+record Point {
+    X: i32;
+}
+
+record Box<T> {
+    Value: T;
+}
+
+record Other<T> {
+    Value: T;
+}
+
+fn Read<T>(Value: Box<T>) -> T {
+    return Value.Value;
+}
+
+export fn Main() -> i32 {
+    let Wrapped: Other<Point> = Other<Point> { Value: Point { X: 42 } };
+    let Value: Point = Read(Wrapped);
+    return Value.X;
+}

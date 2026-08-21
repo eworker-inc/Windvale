@@ -1362,3 +1362,53 @@ overhead. The run includes all eleven named phases and the current-native
 generic-WIR verification. Broad storage, OS, paired-host, and Qualification
 owners remain intentionally deferred because this checkpoint changes none of
 their contracts.
+
+## Slice 4 generic nominal function-body checkpoint
+
+Decision 0816 makes an instantiated generic function's exact WVGC arguments
+available to generic nominal type binding. `Box<T>` in `Wrap<T>` or `Read<T>` is
+therefore admitted as the same `Box<Point>` WVGT identity when those functions
+specialize for `Point`. This applies to signatures, explicit locals, record
+construction, returns, and field reads. Inference also decomposes an exact
+actual `Box<Point>` only when the formal uses the same generic declaration and
+full arity; it does not add result-context inference or overload search.
+
+The active split route produces a 1,046,844-byte analyzer with 508 functions
+and 856,375 code bytes at SHA-256
+`d65b1e159768ea7fa75775de1015f57ceb92af8ac76ae45e5dec301258d79d06`.
+Its eight-fragment Windows application is 33,302,528 bytes at SHA-256
+`7dd3682ac2072a8b0505b23afda5e0baef72fa2854ecaeda08afe27688fd081c`.
+The connected emitter contains 532 functions and 808,976 code bytes in a
+976,573-byte WVB at SHA-256
+`e0bcf72d6f04efbd9e24b139bb7a9db48dba7538571c4dda371292e5b1093230`;
+its six-fragment Windows application is 21,560,320 bytes at SHA-256
+`d4cde64d604b7f59f00cb4b21cc550671d081a6162576cd63f510abe596d3182`.
+
+`Generic-Nominal-Function-Body.wv` publishes exact 467-byte WVSS, 104-byte
+WVCA, 504-byte WVLB 1.3, and 1,040-byte WVIR 1.4 products, followed by a
+600-byte WVB 1.11 at SHA-256
+`a27f28ed39ba407c196f461723d1232563372e7684203ee29e151fdb383dacc6`.
+The 28-case structural inspector proves two function specializations, one
+generic type instance, concrete parameter/local/return shapes, construction,
+field access, two exact calls, removal of both templates, and three emitted
+functions. The compiler-aligned verifier accepts the module and execution
+returns `42`. Three companion fixtures reject mismatched construction,
+substituted unknown-field access, and a different generic template used for
+inference with exact one-line diagnostics, empty standard output, and no WVSS,
+WVCA, WVLB, or WVIR publication.
+
+The generic-WIR compiler fixture remains deterministic at 1,201,537 bytes and
+SHA-256
+`b01236a677548399e0f2cc49410b459291d37fe433fd3f730ae671573a5d87d4`.
+The Language owner registers 33 new function-body cases and grows from 186 to
+219 cases. Its complete current-Windows run passes in 577,760 milliseconds, or
+578,260 milliseconds including coordinator overhead. The 109-owner registry
+contains 4,966 cases at SHA-256
+`b0a66a9bf4a8615755faaa5fec5ad78abc5987a92385f125e11a41a960f836e9`.
+No storage, OS, paired-host, or Qualification owner is required for this
+compiler-only development checkpoint.
+
+This closes direct `Box<T>`-style use in generic-function bodies, not every
+recursive generic pattern. Generic variants, an applied generic field inside a
+generic declaration's own layout, deeper nested formal applications, and the
+remaining Foundation-special plan remain explicit Slice 4 work.

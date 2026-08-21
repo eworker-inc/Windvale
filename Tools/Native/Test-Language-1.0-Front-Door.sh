@@ -12,6 +12,7 @@ profile_root="$repository_root/Documents/Project/Language-1.0-Localization-Workl
 source_lock="$profile_root/Source-Inputs.wvlock"
 source_profile="$profile_root/En-Source-Profile.wvsp"
 source_lock_hash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
+bootstrap_analyzer_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
 bootstrap_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb"
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
@@ -140,17 +141,40 @@ printf 'PASS  language 1 front door step=generic-type-catalog wvb-bytes=%s\n' \
 echo 'PASS  language 1 front door phase=value-front-end item=3/11'
 
 echo 'START language 1 front door phase=compiler-slice item=4/11'
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
-    "$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb" \
-    "$work/Bootstrap-Compiler.elf" --development-cache || exit $?
-node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
-    "$work/Bootstrap-Compiler.elf" \
+[[ $(wc -c < "$bootstrap_analyzer_wvb") -eq 992412 ]] || exit 1
+printf '%s  %s\n' \
+    26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120 \
+    "$bootstrap_analyzer_wvb" | sha256sum --check --strict --quiet || exit $?
+[[ $(wc -c < "$bootstrap_emitter_wvb") -eq 895787 ]] || exit 1
+printf '%s  %s\n' \
+    ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94 \
+    "$bootstrap_emitter_wvb" | sha256sum --check --strict --quiet || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+    "$bootstrap_analyzer_wvb" "$work/Bootstrap-Analyzer.elf" \
+    --development-cache || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+    "$bootstrap_emitter_wvb" "$work/Bootstrap-Emitter.elf" \
+    --development-cache || exit $?
+node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
+    analyzer "$work/Bootstrap-Analyzer.elf" \
+    "$work/Bootstrap-Analyzer.identity" || exit $?
+node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
+    emitter "$work/Bootstrap-Emitter.elf" \
+    "$work/Bootstrap-Emitter.identity" || exit $?
+node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj" \
-    "$work/Admitter.wvb" || exit $?
-node "$script_directory/Compile-Project-2-With-Compiler.mjs" \
-    "$work/Bootstrap-Compiler.elf" \
+    "$work/Admitter.wvb" \
+    "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
+    "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
+node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj" \
-    "$work/Analyzer.wvb" || exit $?
+    "$work/Analyzer.wvb" \
+    "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
+    "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1046844 ]] || exit 1
+printf '%s  %s\n' \
+    d65b1e159768ea7fa75775de1015f57ceb92af8ac76ae45e5dec301258d79d06 \
+    "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
@@ -169,6 +193,18 @@ echo 'START language 1 front door step=generic-nominal-main-pipeline'
 [[ ! -s $work/Generic-Nominal-Main.err ]] || exit 1
 cat -- "$work/Generic-Nominal-Main.out"
 echo 'INFO  language 1 front door step=generic-nominal-main-pipeline analysis=Published'
+echo 'START language 1 front door step=generic-nominal-function-body'
+"$work/Analyzer.elf" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Function-Body.wv" \
+    "$work/Generic-Nominal-Function-Body.wvss" \
+    "$work/Generic-Nominal-Function-Body.wvca" \
+    "$work/Generic-Nominal-Function-Body.wvlb" \
+    "$work/Generic-Nominal-Function-Body.wvir" \
+    >"$work/Generic-Nominal-Function-Body.out" \
+    2>"$work/Generic-Nominal-Function-Body.err" || exit $?
+[[ ! -s $work/Generic-Nominal-Function-Body.err ]] || exit 1
+cat -- "$work/Generic-Nominal-Function-Body.out"
+echo 'INFO  language 1 front door step=generic-nominal-function-body analysis=Published'
 expect_analysis_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Missing-Field.wv" \
     Generic-Nominal-Missing-Field Missingˉrecordˉfield || exit 1
@@ -182,24 +218,24 @@ expect_analysis_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Unknown-Field.wv" \
     Generic-Nominal-Unknown-Field Unknownˉfield || exit 1
 echo 'PASS  language 1 front door step=generic-nominal-record-rejections cases=4'
-[[ $(wc -c < "$bootstrap_emitter_wvb") -eq 895787 ]] || exit 1
-printf '%s  %s\n' \
-    ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94 \
-    "$bootstrap_emitter_wvb" | sha256sum --check --strict --quiet || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
-    "$bootstrap_emitter_wvb" "$work/Bootstrap-Emitter.elf" \
-    --development-cache || exit $?
-node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
-    emitter "$work/Bootstrap-Emitter.elf" \
-    "$work/Bootstrap-Emitter.identity" || exit $?
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Function-Body-Type-Mismatch.wv" \
+    Generic-Nominal-Function-Body-Type-Mismatch Typeˉmismatch || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Function-Body-Unknown-Field.wv" \
+    Generic-Nominal-Function-Body-Unknown-Field Unknownˉfield || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Function-Body-Inference-Mismatch.wv" \
+    Generic-Nominal-Function-Body-Inference-Mismatch Genericˉresolution || exit 1
+echo 'PASS  language 1 front door step=generic-nominal-function-body-rejections cases=3'
 node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj" \
     "$work/Emitter.wvb" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
     "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
-[[ $(wc -c < "$work/Emitter.wvb") -eq 972044 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 976573 ]] || exit 1
 printf '%s  %s\n' \
-    8e1a28be1cd492f42ca77df720f67d4b699407b3ad6482ebba4773a999d78140 \
+    e0bcf72d6f04efbd9e24b139bb7a9db48dba7538571c4dda371292e5b1093230 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
@@ -231,6 +267,31 @@ printf 'Result: 42\n' >"$work/Expected-Generic-Nominal-Main.out"
 cmp -s -- "$work/Expected-Generic-Nominal-Main.out" \
     "$work/Generic-Nominal-Main-Run.out" || exit 1
 echo 'PASS  language 1 front door step=generic-nominal-main-pipeline cases=26 verification=compiler-aligned execution=42'
+"$work/Emitter.elf" \
+    "$work/Generic-Nominal-Function-Body.wvss" \
+    "$work/Generic-Nominal-Function-Body.wvca" \
+    "$work/Generic-Nominal-Function-Body.wvlb" \
+    "$work/Generic-Nominal-Function-Body.wvir" \
+    "$work/Generic-Nominal-Function-Body.wvb" \
+    >"$work/Generic-Nominal-Function-Body-Emission.out" \
+    2>"$work/Generic-Nominal-Function-Body-Emission.err" || exit $?
+[[ ! -s $work/Generic-Nominal-Function-Body-Emission.err ]] || exit 1
+cat -- "$work/Generic-Nominal-Function-Body-Emission.out"
+"$script_directory/Verify-Wvb.sh" \
+    "$work/Generic-Nominal-Function-Body.wvb" || exit $?
+node "$script_directory/Verify-Generic-Nominal-Function-Body.mjs" \
+    "$work/Generic-Nominal-Function-Body.wvss" \
+    "$work/Generic-Nominal-Function-Body.wvca" \
+    "$work/Generic-Nominal-Function-Body.wvlb" \
+    "$work/Generic-Nominal-Function-Body.wvir" \
+    "$work/Generic-Nominal-Function-Body.wvb" || exit $?
+"$script_directory/Run-Wvb.sh" "$work/Generic-Nominal-Function-Body.wvb" \
+    >"$work/Generic-Nominal-Function-Body-Run.out" \
+    2>"$work/Generic-Nominal-Function-Body-Run.err" || exit $?
+[[ ! -s $work/Generic-Nominal-Function-Body-Run.err ]] || exit 1
+cmp -s -- "$work/Expected-Generic-Nominal-Main.out" \
+    "$work/Generic-Nominal-Function-Body-Run.out" || exit 1
+echo 'PASS  language 1 front door step=generic-nominal-function-body cases=33 verification=compiler-aligned execution=42'
 echo 'START language 1 front door step=generic-wir-split'
 node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir.wvproj" \
@@ -243,9 +304,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
     "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
 cmp -s -- "$work/Generic-Wir-A.wvb" "$work/Generic-Wir-B.wvb" || exit 1
-[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1187360 ]] || exit 1
+[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1201537 ]] || exit 1
 printf '%s  %s\n' \
-    f4ac7f82d79072bdc83c450d8ae4f9cab89550cf39efde2f7e96b56686b9eccd \
+    b01236a677548399e0f2cc49410b459291d37fe433fd3f730ae671573a5d87d4 \
     "$work/Generic-Wir-A.wvb" | sha256sum --check --strict --quiet || exit $?
 generic_wir_wvb_bytes=$(wc -c < "$work/Generic-Wir-A.wvb")
 printf 'INFO  language 1 front door step=generic-wir-split wvb-bytes=%s verification=pending-current-native\n' \
@@ -1023,4 +1084,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=11/11'
-printf 'native language 1 front door status=Passed cases=186 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=219 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

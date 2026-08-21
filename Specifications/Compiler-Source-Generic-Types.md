@@ -26,7 +26,11 @@ ordinary and private nominal identities, and emits the concrete entries before
 the existing private Foundation `Option` and `Result` specialization suffix.
 Applied record construction and field access consume those same substituted
 layouts in source bodies and lower through the ordinary monomorphic WIR/WVB
-record operations.
+record operations. A concrete generic-function specialization also supplies a
+bounded substitution context for an applied nominal use in its signature or
+body. Thus `Box<T>` in `Wrap<T>` becomes the same catalog identity as
+`Box<Point>` when `Wrap` is specialized for `Point`; no unresolved `T` enters
+WVLB, WVIR, or WVB.
 
 The current constant-argument connection accepts one exact suffixed
 fixed-integer token of the declared shape. Evaluation of the broader frozen
@@ -166,7 +170,10 @@ The connected source integration preserves these boundaries:
    the outer use fails;
 3. **Implemented for direct parameters:** substitute WVGT arguments while
    validating record fields and variant cases, including concrete builder,
-   capability, and nested-variant restrictions after substitution;
+   capability, and nested-variant restrictions after substitution. In a
+   concrete generic-function specialization, one applied generic nominal whose
+   argument is a direct function type or constant parameter is resolved through
+   that function's exact WVGC identity before WVGT admission;
 4. **Implemented:** carry private shapes through main WVLB/WVIR analysis only
    when the paired artifact binds exact WVGT evidence, retain unambiguous private
    references through materialization, and resolve them at WVB planning;
@@ -177,7 +184,12 @@ The connected source integration preserves these boundaries:
    validate its complete substituted layout, lower construction and chained
    field reads through operations `17` and `18`, and map their private targets
    to the materialized ordinary WVB type;
-7. reject an unused template only when a boundary requires a concrete value,
+7. **Implemented for generic record formals:** infer a generic-function
+   argument by decomposing an exact actual WVGT identity only when its generic
+   declaration and full arity match the formal application. A different
+   template, conflicting repeated contribution, or unsupported deeper pattern
+   is rejected as `Genericˉresolution` rather than guessed;
+8. reject an unused template only when a boundary requires a concrete value,
    while keeping uninstantiated source templates out of runtime artifacts.
 
 The catalog does not define runtime type discovery, erased generics, dynamic
@@ -254,8 +266,9 @@ It returns `42` and writes no output. The independent
 `generic-nominal-type-materialization` owner reproduces this boundary through
 content-keyed caches. Main Source WIR carriage, WVB insertion, template elision,
 nominal target remapping, and runtime generic-record construction/field use are
-connected. Nested template field substitution in generic-function contexts,
-generic variants, and Foundation migration remain later checkpoints.
+connected. Applied generic fields inside a generic declaration's own layout,
+deeper nested generic-function patterns, generic variants, and Foundation
+migration remain later checkpoints.
 
 `Generic-Nominal-Main-Pipeline.wv` now covers the complete executable
 analysis-to-WVB path. Its 20-case inspector requires exact 377-byte WVSS,
@@ -269,3 +282,15 @@ no private shape enters WVB. Four companion fixtures prove deterministic
 missing, duplicate, mismatched, and unknown-field rejection without publishing
 partial analysis artifacts; each writes its one exact diagnostic to standard
 error and no standard output.
+
+`Generic-Nominal-Function-Body.wv` additionally specializes `Wrap<T>` and
+`Read<T>` for `Point`. It uses `Box<T>` in generic signatures, an explicit local,
+record construction, return, field read, inferred direct call, and inferred
+generic-nominal formal decomposition. The retained WVGC contains the two
+function instances, WVGT contains one `Box<Point>`, WVB contains three concrete
+functions and two ordinary record types, and execution returns `42`. Companion
+fixtures reject mismatched construction, an unknown substituted field, and a
+different generic template during inference without publishing partial
+analysis products. Generic variants, a generic declaration whose own fields
+contain an applied generic type, and deeper nested formal patterns remain
+separate checkpoints.
