@@ -87,7 +87,16 @@ Records and enums are nonempty. Field names are unique within a record. Enum mem
 
 Generic record, variant, and function declarations share one bounded declaration-parameter descriptor. Record and variant type/constant parameter names are unique in one namespace. A generic record field or variant payload may be one of its declared type parameters. A constant parameter in type position and a builder stored in a record remain rejected. Parameters nested inside collection or nominal type syntax are deferred to the recursive type-use binder rather than partially admitted here. Phantom parameters are valid because concrete identity retains the complete ordered argument list even when a field does not mention one.
 
-An ordinary nominal declaration binds without arguments. A generic nominal declaration is a template and does not bind as a bare value type; a bare use returns `Unknownˉtype`. General full-arity `Record<T>` and `Variant<T, E>` use is deliberately not admitted by this checkpoint. Recursive argument binding, WVGT admission, substituted-field validation, and concrete WVB materialization own that subsequent boundary. The exact edition-1 Foundation `Option<T>` and `Result<T, E>` declarations now pass the same generic parameter and payload validation instead of bypassing variant validation.
+An ordinary nominal declaration binds without arguments. A generic nominal
+declaration is a template and does not bind as a bare value type; a bare use
+returns `Unknownˉtype`. When declaration validation reaches the `<` of an
+otherwise parsed generic nominal type production, Source Symbols defers that
+application and continues canonical declaration validation. It does not assign
+the template or use a concrete shape. Recursive argument binding, exact arity
+and kind checks, WVGT admission, substituted-field validation, and concrete WVB
+materialization remain the later phase boundary. The exact edition-1 Foundation
+`Option<T>` and `Result<T, E>` declarations pass the same generic parameter and
+payload validation instead of bypassing variant validation.
 
 A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Variant fields may contain implemented ordinary value shapes or their own admitted type parameter. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
 

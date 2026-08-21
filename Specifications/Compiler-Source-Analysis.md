@@ -9,7 +9,7 @@ individually bounded values:
 - one fixed 104-byte `WVCA 1.0` manifest;
 - one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
   specialization-evidence `WVLB 1.3` binding directory; and
-- one canonical `WVIR 1.1` or specialized `WVIR 1.2` typed source directory.
+- one canonical `WVIR 1.3` or specialized `WVIR 1.4` typed source directory.
 
 The artifact set is an internal compiler-phase contract. It is not executable,
 is not a package or distribution format, and does not create another source
@@ -55,10 +55,15 @@ count already bind either valid minor-version product without changing a field
 meaning.
 
 WVLB 1.3 additionally retains the bounded WVGT generic-nominal catalog after
-the function ranges and optional WVGC evidence. Its independent carrier and
-validation contract is implemented in the focused generic-type binding
-extension. The unchanged main fused analysis path still selects only WVLB 1.1
-or 1.2 until generic nominal type binding is connected to WVIR construction.
+the function ranges and optional WVGC evidence. The main fused analysis path
+selects this carrier when an ordinary function signature or explicit local
+admits at least one closed generic nominal type. Its parameter, return, local,
+and operation shapes may then use catalog-bounded private shape identifiers in
+the paired WVIR. Those identifiers are analysis-only evidence: prepared WVB
+emission must materialize each admitted instance and replace every private
+shape before publishing a distributable module. The independent carrier and
+validation contract remains shared with the focused generic-type binding
+extension.
 
 The statuses distinguish an invalid manifest, rejected source symbols, source
 WIR construction failure, invalid supplied WVLB, and invalid supplied WVIR.
@@ -210,10 +215,14 @@ development cache state.
 
 ## Verification boundary
 
-The focused fixture encodes a real WVSS input plus assertions for deterministic
-artifact bytes, valid-set acceptance, a truncated manifest, invalid magic,
-wrong source length, altered source-symbol count, nonzero reserved field,
-corrupted WVLB, corrupted WVIR, and an inconsistent WVIR count.
+The focused source-analysis fixture encodes a real WVSS input plus assertions
+for deterministic artifact bytes, valid-set acceptance, a truncated manifest,
+invalid magic, wrong source length, altered source-symbol count, nonzero
+reserved field, corrupted WVLB, corrupted WVIR, and an inconsistent WVIR
+count. The main-pipeline generic-nominal fixture additionally requires one
+`Box<i32>` WVGT instance, the exact private binding shape, matching typed
+parameter-load and return shapes in WVIR, and unchanged ordinary `Main`
+lowering. This proves retained analysis evidence, not WVB materialization.
 
 The current scalar WVB runner stops compiler-heavy fixtures at its documented
 unsupported-operation boundary, and the general native and WebAssembly

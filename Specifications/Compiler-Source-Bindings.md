@@ -159,8 +159,10 @@ publication path for the combined envelope. It is owned by the focused
 `Compilerˉsourceˉbindingsˉgenericˉtypes` module. An empty WVGT catalog delegates
 to the unchanged function-only binding module, preserving its prior format,
 source closure, and bytes. The carrier and independent validator are
-implemented; main WVIR construction still has to thread the admitted WVGT
-catalog into that entry point before general generic source selects WVLB 1.3.
+implemented. Main WVIR construction now threads its admitted WVGT catalog into
+this entry point, so a generic nominal signature or explicit local selects WVLB
+1.3 while ordinary and function-specialization-only source retain their prior
+bytes.
 
 Each 36-byte binding entry contains nine `u32` fields in this order: module index, WVSD function-entry index, binding-kind value, slot, name byte offset, name byte length, shape, scope-start byte offset, and exclusive scope-end byte offset.
 

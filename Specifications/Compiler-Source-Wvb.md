@@ -207,7 +207,7 @@ The root owns the emitted module name, profile, capabilities, static data, and e
 
 WVSD entries are source-declaration identities. WVIR preserves those identities for function calls and data references. WVB instead numbers its function and data sections in strict ordinal name order.
 
-For specialized WVIR 1.2, ordinary reachable source functions retain that
+For specialized WVIR 1.4, ordinary reachable source functions retain that
 ordinal-name rule. An all-zero generic declaration placeholder is not emitted.
 Concrete specializations are appended to the function order in WVGC instance
 order, use bounded private names `__Generic_000000` onward, and are never

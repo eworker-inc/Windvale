@@ -1,45 +1,50 @@
 {
-  "format": "windvale-language-1-target-aware-emission-bootstrap-1",
+  "format": "windvale-language-1-target-aware-emission-bootstrap-2",
   "status": "development-bootstrap",
-  "sourceBaseCommit": "49717f4dda27db2235033827ac164fac080ca623",
-  "emitterSourceOverlay": {
+  "sourceDecision": "0813",
+  "construction": {
+    "family": "project-split-wvb-optimized-v2",
+    "analyzerCacheKey": "31f5613563989a799e97f61b379f62d85eae0d7fd04a315124a9d6898778e2ef",
+    "emitterCacheKey": "93d2f2838ca147788344388dde1e2145538fbf333943dabffb4a25ed3312efd0",
+    "fixedPoint": "the packaged pair reproduced the emitter WVB byte for byte"
+  },
+  "emitterSource": {
     "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
-    "change": "Compiler_emit_source_analysis Optimize argument false to true",
-    "resultSha256": "21f8ef25b8896cfe9c68360f30a093c7a0fa0259033919e7b16d537fa1efb511"
+    "sha256": "9ddf3e3595c2e38d9b14e73f60aee17c6d0cf4985da17be2c43d4eee74fd984a"
   },
   "emitterProject": {
     "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
-    "sha256": "ecca593413183c06052ff40c6b8d2d71d13b41a3ebc3d42496a8c8e6550cea9d",
+    "sha256": "c1e8d2eed788b8f1551953217fcc20855eb06f85d5a3dc5585bf2b6645d4272c",
     "ordering": "root then ordinal-sorted source directives"
   },
   "analyzerSource": {
     "path": "Tools/Windvale.Build/Compiler-Analysis-Driver.wv",
-    "sha256": "461a62b677de61426a5cb0747a8fae4cedd164f4e10d9a23b746741e0ea9320d"
+    "sha256": "48ccbaeb7d28459ec414c3651266d5b99caa0ed99acce532b5e866124ace7dbf"
   },
   "analyzerProject": {
     "path": "Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj",
-    "sha256": "8cdd2a95de6d2402d0f4bbb3b9c62db1f52809ff26d1c6d33c25d14467067294",
+    "sha256": "b72665646fb263ed5004a6f304e4be466e726093084e068aba579e410af6bfe0",
     "ordering": "root then ordinal-sorted source directives"
   },
-  "producer": {
+  "transitionProducer": {
     "path": "Artifacts/Native-Compiler-Reconstruction-Candidate/windows-x64/wvcompiler.exe",
     "bytes": 28172800,
     "sha256": "a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d"
   },
   "analyzerWvb": {
     "path": "Wvb/wvanalyze.wvb",
-    "bytes": 949355,
-    "sha256": "bd8541fc51d87e12265055786df656048510102ced86c6672cabe6ba45bb27cb",
-    "functions": 390,
-    "codeBytes": 783293,
+    "bytes": 992412,
+    "sha256": "26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120",
+    "functions": 477,
+    "codeBytes": 811632,
     "target": "source-analysis-v1"
   },
   "emitterWvb": {
     "path": "Wvb/wvemit.wvb",
-    "bytes": 746557,
-    "sha256": "a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805",
-    "functions": 353,
-    "codeBytes": 616798,
+    "bytes": 895787,
+    "sha256": "ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94",
+    "functions": 470,
+    "codeBytes": 742026,
     "target": "portable-wvb-optimized-v1"
   }
 }

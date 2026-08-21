@@ -19,6 +19,13 @@ Windows x64 or Linux x64 container. `Package-Segmented-Compiler-Wvb` composes na
 linking, canonical transport, and this image-input mode without asking a host
 script to decode a Windvale format.
 
+Profiles `1` through `6` retain the 64,000,000,000-instruction execution
+ceiling. Profile `7`, used by the split analyzer and emitter reconstruction,
+has an 80,000,000,000-instruction ceiling. The higher bound is profile-scoped:
+the measured 1.73 MiB emitter source closure exhausted 64,000,000,000 during
+analysis, while ordinary hosted tools have no measured reason to inherit that
+capacity or change their established application bytes.
+
 ## Commands
 
 ```text
@@ -69,7 +76,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 6,927 | `3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954` |
+| `SHA256SUMS` | 6,927 | `23f2bf3e62212d37d2eb07ab95620e9c708181e7d6e899e8dc409d89e72bbe8e` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front

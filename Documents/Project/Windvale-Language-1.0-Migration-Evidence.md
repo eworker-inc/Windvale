@@ -45,12 +45,14 @@ result type. WVGT 1.0 now supplies the bounded concrete identity, exact nested
 dependency order, and private compiler shapes required by general generic
 records and variants. A focused recursive source binder now resolves complete
 type lists and exact fixed-width literal constants into transactional WVGT
-replacements. The frozen broader constant-expression contract, field
-WIR carriage, WVB Types and operation emission, and package-visible template
-publication remain Slice 4 work. Field substitution and the deterministic
-materialization plan are implemented. WVLB 1.3 now supplies a validated
-retained-evidence carrier for the non-empty WVGT catalog without changing
-ordinary WVLB 1.1 or function-only WVLB 1.2 bytes.
+replacements. Field substitution and the deterministic materialization plan are
+implemented. Main analysis now scans ordinary function signatures and explicit
+locals, publishes non-empty WVGT evidence through WVLB 1.3, and retains its
+private shapes in paired WVIR evidence without changing ordinary WVLB 1.1 or
+function-only WVLB 1.2 semantics. The frozen broader
+constant-expression contract, generic-function-context type uses, WVB Types and
+operation emission, and package-visible template publication remain Slice 4
+work.
 Collections beyond the first structural bounded signature and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
@@ -543,14 +545,22 @@ isolated `project-analysis-wvca-v2` and
 the adapter route, exact optimized and complete pruning oracles, and failed
 cache-publication cleanup in under one second locally instead of rebuilding
 three large compiler products already covered by the Language 1.0 front door.
-That checkpoint retained a portable bootstrap pair: a 949,355-byte analyzer and
-a 746,557-byte target-aware emitter at SHA-256
+That historical checkpoint retained a portable bootstrap pair: a 949,355-byte
+analyzer and a 746,557-byte target-aware emitter at SHA-256
 `a0fe54283ed51e1940bae837eb11bfb2d72f16dd91d7eb7022e51730eb0c5805`.
 Decision 0789 keeps the old analyzer as recovery/provenance evidence but removes
 it from the active front-door path. The gate now uses its already reconstructed
 current analyzer with the bootstrap emitter, avoiding one redundant large
 package and the old analyzer's exhausted instruction budget. No additional
 native compiler executable is checked in.
+
+Decision 0813 advances the active portable checkpoint to the current
+992,412-byte analyzer and 895,787-byte emitter at SHA-256
+`ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94`.
+The pair consumes WVIR 1.3/1.4 and reproduces the emitter byte for byte. The
+Language 1.0 gate also removes its unused monolithic `Compiler.wvb` build, so
+current compiler-scale evidence comes from this one split reconstruction.
+
 The Foundation generic fixture now publishes a 3,236-byte reachable product at
 SHA-256
 `78ca3b22958e87b2717c1b94d83205e2d18bc96b9e546192d323f45c8279bc5f`,
@@ -564,8 +574,8 @@ deferred to the final seven-slice integration gate.
 
 Decision 0789 removes the temporary one-instance-per-declaration restriction
 without adding runtime generics or raising a compiler limit. Source without a
-generic instance retains WVLB/WVIR 1.1. Specialized analysis publishes an
-inseparable WVLB/WVIR 1.2 pair: WVLB embeds the bounded WVGC catalog and maps
+generic instance retains WVLB 1.1/WVIR 1.3. Specialized analysis publishes an
+inseparable WVLB 1.2/WVIR 1.4 pair: WVLB embeds the bounded WVGC catalog and maps
 each concrete range to its source declaration, while WVIR appends one concrete
 body per catalog instance. The ordinary generic declaration position remains a
 zero placeholder.
@@ -770,11 +780,13 @@ returns `42`, and writes no output. The focused
 `generic-nominal-type-materialization` owner exposes its build, package, and
 execute phases and reuses both content-keyed caches.
 
-Main Source WIR does not yet carry retained WVGT evidence into Source WVB, and
-the complete backend does not yet insert these entries or remap their operation
-targets. This is therefore one exact connected checkpoint, not a claim that
-general generic applications compile. Those main-path changes, Foundation
-migration, collections, paired-host evidence, and the final broad gate remain.
+At the focused serializer checkpoint, main Source WIR did not yet carry retained
+WVGT evidence into Source WVB. Decision 0812 now completes that analysis-side
+carriage, while the complete backend still does not insert these entries or
+remap their operation targets. This remains one exact connected checkpoint, not
+a claim that general generic applications compile to WVB. Backend insertion,
+Foundation migration, collections, paired-host evidence, and the final broad
+gate remain.
 
 ## Slice 4 generic nominal WVLB-carrier checkpoint
 
@@ -813,13 +825,16 @@ project and source inputs exactly to `HEAD`. The immutable recovery Seed exits
 at source binding 499, operation zero. A retained later compiler first
 established that this is a bootstrap-capacity boundary rather than a failure of
 the current source semantics. The independently reconstructed current split
-analyzer/emitter compiles the ordered project to the exact 1,065,737-byte WVB
+analyzer/emitter compiles the ordered project to the exact 1,145,513-byte WVB
 with SHA-256
-`c8aa63e688ee53ed5ee72cc75db4b3852f0b6431a501a4f6230d680b6a4dcefc`.
-The current analyzer publishes 104 WVCA bytes, 196,496 WVLB bytes, and 3,212,716
+`d56de5ae356a5e3dd6a36f3665792dce0e2c7ba968826c92e27ba0f4a046243e`.
+The current analyzer publishes 104 WVCA bytes, 216,512 WVLB bytes, and 2,962,236
 WVIR bytes; its WVSS byte length retains temporary source-path metadata and is
-therefore not pinned. The emitter publishes 470 functions and 880,773 code
-bytes. The packaged profile-1 application returns `42` and writes no output.
+therefore not pinned. The emitter publishes 537 functions and 947,713 code
+bytes. The independent compiler-aligned WVB verifier accepts the product. The
+native staging route reaches its unchanged output limit, while the general
+runner reaches its deliberately smaller call-depth limit; neither unrelated
+bound is widened for this compiler-scale sentinel.
 
 The analyzer source also now avoids moving its complete 22-field source-symbol
 summary through private generic-parameter validation and declaration-type
@@ -837,12 +852,61 @@ the result once. It does not rebuild the immutable Seed, create another compiler
 tree, or add an independent heavy owner.
 
 This checkpoint establishes durable split-compiler carriage and proves that the
-current compiler-scale WIR closure is healthy through the supported split
-front door; it does not yet make main WIR produce WVLB 1.3. Threading WVGT
-through Source WIR type binding and then consuming its materialization plan in
-Source WVB remain the next connected checkpoints. Broad storage, OS,
-paired-host, and complete Qualification gates remain deferred to the final
-seven-slice integration gate.
+current compiler-scale WIR closure is healthy through the supported split front
+door. Decision 0812 now makes main WIR produce WVLB 1.3; consuming its
+materialization plan in Source WVB remains the next connected checkpoint. Broad
+storage, OS, paired-host, and complete Qualification gates remain deferred to
+the final seven-slice integration gate.
+
+## Slice 4 main generic nominal analysis checkpoint
+
+Decision 0812 connects the accepted generic nominal components to the real
+source analyzer. Source Symbols defers an already-parsed `<...>` application
+instead of assigning a template shape. Main Source WIR scans ordinary function
+signatures in canonical module/declaration order and explicit locals in source
+order. The WVGT binder remains the single owner of family, arity, argument kind,
+constant width, nesting, and immutable catalog admission.
+
+WVGC and WVGT travel inside one bounded compiler-private `WVGI 1.0` build value.
+When WVGT is empty, the prior raw WVGC bytes are retained exactly. A non-empty
+WVGT selects WVLB 1.3; WVIR uses 1.3 when there are no function
+specializations, but its function, operation, temporary, parameter, and local
+shapes may carry only private identities bounded by the paired WVLB catalog.
+Independent analysis validation uses the combined WVLB carrier.
+
+`Generic-Nominal-Main-Pipeline.wv` produces exact 238-byte WVSS, 104-byte WVCA,
+192-byte WVLB 1.3, and 320-byte WVIR 1.3 artifacts. The binding artifact retains
+one 68-byte WVGT instance for `Box<i32>` plus parameter shape `0x80000000`; the
+identity function's return and parameter-load operation retain the same shape.
+The ordinary main function remains `i32` and carries constant `42`. A 12-case
+artifact inspector pins those boundaries. The established generic-function
+fixture remains byte-identical across all four analyzer products when WVGT is
+empty.
+
+Decision 0813 advances ordinary/specialized WVIR to 1.3/1.4 and reduces each
+persisted operation from 40 to 32 bytes by dropping only its backend-unused
+source span. On the exact 1,727,318-byte emitter source closure, predecessor
+WVIR is 4,144,676 bytes and current WVIR is 3,526,316 bytes: 618,360 fewer bytes,
+or 14.919 percent. Both paths emit the exact same 895,787-byte WVB at SHA-256
+`ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94`.
+Ordinary source also skips generic-nominal signature scanning when its validated
+declaration directory contains no generic record or variant.
+
+The final Windows analyzer contains 477 functions, 811,632 code bytes, and
+992,412 WVB bytes, SHA-256
+`26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120`.
+Its eight-fragment profile-7 package is 31,740,416 bytes, SHA-256
+`52c6cccdcaed1e99ea87759751d232e0f39bd1ed923d0555e4da5f4b236b442f`.
+The paired 19,718,656-byte emitter package has SHA-256
+`3f5d3d6baf9a41926b1e0c9068e31aea0612df51c5675ff69228f54874ab5347`
+and reproduces the exact emitter WVB above. The closure exhausted the retained
+64,000,000,000-instruction bound and succeeds under profile 7's measured
+80,000,000,000 bound; profiles 1 through 6 remain at 64,000,000,000. A cached
+repeat completes in 0.295 seconds on the current Windows host.
+
+This is current-host development evidence. Main WVB materialization/remapping,
+generic nominal construction and field operations, generic-function-context
+type uses, Foundation migration, and paired-host qualification remain open.
 
 ## Slice 4 packed keyword dispatch checkpoint
 
@@ -1041,11 +1105,12 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 156 declared cases. Its
+The maintained `language-1-front-door` owner reports 172 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 39-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain
-the minimum, unit, record-update, and 22-case fixed-integer evidence. Its 20 rune
+the minimum, unit, record-update, 12-case generic nominal main-analysis, and
+22-case fixed-integer evidence. Its 20 rune
 cases compile the valid program twice, compare diagnostics and bytes, reject eight
 source forms, admit the canonical module, reject six byte-level corruptions, and
 execute both the reconstructed shared runner and focused runtime core. The 27

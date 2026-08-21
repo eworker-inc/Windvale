@@ -1,27 +1,23 @@
 # Language 1.0 target-aware emission bootstrap
 
-This directory retains two portable WVBs, not native executables. They bridge
-the last bounded split analyzer/emitter pair into the current fixed
-`portable-wvb-optimized-v1` route without widening the native package or hosted
-execution limits.
+This directory retains two portable WVBs, not native executables. They are the
+current bounded split analyzer/emitter checkpoint for the fixed
+`portable-wvb-optimized-v1` route.
 
-Both source closures use exact base commit
-`49717f4dda27db2235033827ac164fac080ca623`. The only overlay changes the
-hosted emission adapter's `Optimize` argument from `false` to `true`; the
-analyzer is unmodified. All source and Project 2 identities are recorded in
+Decision 0813 advances the pair atomically with ordinary WVIR 1.3 and
+specialized WVIR 1.4. The cache family, complete cache keys, source adapters,
+Project 2 identities, product sizes, and product digests are recorded in
 `Manifest.json`. Dependencies are supplied as the declared root followed by
 source paths sorted by ordinal manifest spelling.
 
-The digest-pinned native reconstruction compiler produces the exact
-949,355-byte analyzer and 746,557-byte emitter WVBs. The Language 1.0 front-door
-gate verifies both sizes and SHA-256 values before use, packages them
-independently on the active host, and gives them role-specific version-2
-producer identities. It uses the pair only to analyze and emit the oversized
-current compiler closure. Ordinary Language 1.0 fixtures use the separately
-reconstructed current analyzer and current target-aware emitter.
+The exact 992,412-byte analyzer and 895,787-byte emitter are independently
+WVB-verified. The Language 1.0 front-door gate verifies the emitter size and
+SHA-256 value before use, reconstructs the analyzer from current source,
+packages both active products under profile 7, and gives them role-specific
+version-2 producer identities. The packaged pair reproduces the emitter WVB
+byte for byte.
 
 These are development bootstrap dependencies, not release or paired-host
 qualification evidence. It must not grow into a second compiler source tree or
 carry checked-in Windows/Linux applications. Reconsider retaining it after a
-promoted current compiler can reconstruct the split products within the same
-bounded front door without this bridge.
+promoted compiler checkpoint provides an equally bounded recovery path.

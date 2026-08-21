@@ -437,59 +437,15 @@ export fn Compilerˉsourceˉbindingsˉtypeˉstatus(
     return Compilerˉsourceˉbindingˉstatus.Unknownˉtype;
 }
 
-export fn Compilerˉsourceˉbindingsˉcollectˉlocal(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+export fn Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
     Module: u32,
     Function: u32,
     Source: bytes,
     Statement: Sourceˉbodies.Compilerˉsourceˉstatement,
     Scopeˉend: u32,
-    Inferredˉshape: u32,
+    Shape: u32,
     Build: Compilerˉsourceˉbindingˉbuild
 ) -> Compilerˉsourceˉbindingˉbuild {
-    var Shape: u32 = Inferredˉshape;
-    if Statement.Typeˉkind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown {
-        Shape = Compilerˉsourceˉbindingsˉsourceˉshape(Statement.Typeˉkind);
-    }
-    if Statement.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named || Statement.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence || Statement.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
-        let Position: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            Source,
-            Statement.Offset,
-            Statement.Line,
-            Statement.Column,
-            Statement.Typeˉoffset
-        );
-        let Type: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-            Input,
-            Scan,
-            Symbols.Directory,
-            Symbols.Lookup,
-            Symbols.Visibility,
-            Module,
-            Source,
-            Statement.Typeˉoffset,
-            Position.Line,
-            Position.Column,
-            Symbols.Records,
-            Symbols.Enums,
-            false
-        );
-        if Type.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
-            return Compilerˉsourceˉbindingsˉbuildˉfailure(
-                Build,
-                Compilerˉsourceˉbindingsˉtypeˉstatus(Type.Status),
-                Module,
-                Type.Nominalˉmodule,
-                Function,
-                Type.Failureˉoffset,
-                Type.Failureˉline,
-                Type.Failureˉcolumn
-            );
-        }
-        Shape = Compilerˉsourceˉbindingsˉshape(Type);
-    }
     if Compilerˉsourceˉbindingsˉpriorˉlocal(
         Source,
         Build.Payload,
@@ -556,6 +512,64 @@ export fn Compilerˉsourceˉbindingsˉcollectˉlocal(
         Scopeˉend
     );
     return Compilerˉsourceˉbindingsˉappend(Build, Entry, false);
+}
+
+export fn Compilerˉsourceˉbindingsˉcollectˉlocal(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Statement: Sourceˉbodies.Compilerˉsourceˉstatement,
+    Scopeˉend: u32,
+    Inferredˉshape: u32,
+    Build: Compilerˉsourceˉbindingˉbuild
+) -> Compilerˉsourceˉbindingˉbuild {
+    var Shape: u32 = Inferredˉshape;
+    if Statement.Typeˉkind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown {
+        Shape = Compilerˉsourceˉbindingsˉsourceˉshape(Statement.Typeˉkind);
+    }
+    if Statement.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named || Statement.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence || Statement.Typeˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
+        let Position: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source,
+            Statement.Offset,
+            Statement.Line,
+            Statement.Column,
+            Statement.Typeˉoffset
+        );
+        let Type: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+            Input,
+            Scan,
+            Symbols.Directory,
+            Symbols.Lookup,
+            Symbols.Visibility,
+            Module,
+            Source,
+            Statement.Typeˉoffset,
+            Position.Line,
+            Position.Column,
+            Symbols.Records,
+            Symbols.Enums,
+            false
+        );
+        if Type.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            return Compilerˉsourceˉbindingsˉbuildˉfailure(
+                Build,
+                Compilerˉsourceˉbindingsˉtypeˉstatus(Type.Status),
+                Module,
+                Type.Nominalˉmodule,
+                Function,
+                Type.Failureˉoffset,
+                Type.Failureˉline,
+                Type.Failureˉcolumn
+            );
+        }
+        Shape = Compilerˉsourceˉbindingsˉshape(Type);
+    }
+    return Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
+        Module, Function, Source, Statement, Scopeˉend, Shape, Build
+    );
 }
 
 export fn Compilerˉsourceˉbindingsˉranges(
@@ -704,6 +718,10 @@ export fn Compilerˉsourceˉbindingsˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) < 8u32 { return 0u32; }
     if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 1u32 { return 24u32; }
     if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 2u32 { return 32u32; }
+    if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 3u32 &&
+        Bytesˉlength(Directory) >= 40u32 {
+        return 40u32;
+    }
     return 0u32;
 }
 
@@ -713,7 +731,9 @@ export fn Compilerˉsourceˉbindingsˉrangeˉbytes(Directory: bytes) -> u32 {
 }
 
 export fn Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory: bytes) -> u32 {
-    if Compilerˉsourceˉbindingsˉheaderˉbytes(Directory) != 32u32 {
+    let Headerˉbytes: u32 =
+        Compilerˉsourceˉbindingsˉheaderˉbytes(Directory);
+    if Headerˉbytes != 32u32 && Headerˉbytes != 40u32 {
         return 0u32;
     }
     return Bytesˉreadˉu32ˉlittle(Directory, 24u32);
@@ -733,10 +753,17 @@ export fn Compilerˉsourceˉbindingsˉrangeˉoffset(
 }
 
 export fn Compilerˉsourceˉbindingsˉentriesˉoffset(Directory: bytes) -> u32 {
-    return Compilerˉsourceˉbindingsˉheaderˉbytes(Directory) +
+    let Headerˉbytes: u32 =
+        Compilerˉsourceˉbindingsˉheaderˉbytes(Directory);
+    var Typeˉcatalogˉbytes: u32 = 0u32;
+    if Headerˉbytes == 40u32 {
+        Typeˉcatalogˉbytes = Bytesˉreadˉu32ˉlittle(Directory, 28u32);
+    }
+    return Headerˉbytes +
         Compilerˉsourceˉbindingsˉrangesˉcount(Directory) *
             Compilerˉsourceˉbindingsˉrangeˉbytes(Directory) +
-        Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory);
+        Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory) +
+        Typeˉcatalogˉbytes;
 }
 
 export fn Compilerˉsourceˉbindingsˉrangeˉdeclaration(
@@ -2911,6 +2938,40 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
     return Result;
 }
 
+export fn Compilerˉsourceˉbindingsˉappendˉparameter(
+    Module: u32,
+    Function: u32,
+    Parameter: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Bodyˉoffset: u32,
+    Bodyˉlength: u32,
+    Shape: u32,
+    Build: Compilerˉsourceˉbindingˉbuild
+) -> Compilerˉsourceˉbindingˉbuild {
+    if Build.Nextˉslot >= 4096u32 {
+        return Compilerˉsourceˉbindingsˉbuildˉfailure(
+            Build,
+            Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
+            Module, Module, Function,
+            Parameter.Offset, Parameter.Line, Parameter.Column
+        );
+    }
+    if Bytesˉlength(Build.Payload) > 4194252u32 {
+        return Compilerˉsourceˉbindingsˉbuildˉfailure(
+            Build,
+            Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit,
+            Module, Module, Function,
+            Parameter.Offset, Parameter.Line, Parameter.Column
+        );
+    }
+    let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
+        Module, Function, Compilerˉsourceˉbindingˉkind.Parameter,
+        Build.Nextˉslot,
+        Parameter.Offset, Parameter.Length, Shape,
+        Bodyˉoffset, Bodyˉoffset + Bodyˉlength
+    );
+    return Compilerˉsourceˉbindingsˉappend(Build, Entry, true);
+}
+
 export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -2972,37 +3033,19 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
             );
         }
         let Parameterˉshape: u32 = Type.Shape;
-        if Result.Nextˉslot >= 4096u32 {
-            let Bindingˉlimited: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉbuildˉfailure(
-                Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result),
-                Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
-                Module, Module, Function,
-                Parameter.Offset, Parameter.Line, Parameter.Column
+        let Parameterˉbuild: Compilerˉsourceˉbindingˉbuild =
+            Compilerˉsourceˉbindingsˉappendˉparameter(
+                Module, Function, Parameter,
+                Declaration.Bodyˉoffset, Declaration.Bodyˉlength,
+                Parameterˉshape,
+                Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result)
             );
-            return Compilerˉsourceˉbindingsˉphaseˉbuild(Result, Bindingˉlimited);
-        }
-        if Bytesˉlength(Result.Payload) > 4194252u32 {
-            let Evidenceˉlimited: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉbuildˉfailure(
-                Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result),
-                Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit,
-                Module, Module, Function,
-                Parameter.Offset, Parameter.Line, Parameter.Column
-            );
-            return Compilerˉsourceˉbindingsˉphaseˉbuild(Result, Evidenceˉlimited);
-        }
-        let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
-            Module, Function, Compilerˉsourceˉbindingˉkind.Parameter,
-            Result.Nextˉslot,
-            Parameter.Offset, Parameter.Length, Parameterˉshape,
-            Declaration.Bodyˉoffset,
-            Declaration.Bodyˉoffset + Declaration.Bodyˉlength
-        );
         Result = Compilerˉsourceˉbindingsˉphaseˉbuild(
-            Result,
-            Compilerˉsourceˉbindingsˉappend(
-                Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result), Entry, true
-            )
+            Result, Parameterˉbuild
         );
+        if Result.Buildˉstatus != Compilerˉsourceˉbindingˉstatus.Valid {
+            return Result;
+        }
         let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
         );
@@ -3255,12 +3298,11 @@ export fn Compilerˉsourceˉbindingsˉsummaryˉsuccess(
     );
 }
 
-fn Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
+export fn Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Phase: Compilerˉsourceˉbindingˉphase,
-    Validate: bool
+    Phase: Compilerˉsourceˉbindingˉphase
 ) -> Compilerˉsourceˉbindingˉsummary {
     let Build: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
     let Body: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Phase);
@@ -3286,9 +3328,30 @@ fn Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
         return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(Input, Symbols, Tooˉlarge);
     }
     let Directory: bytes = Compilerˉsourceˉbindingsˉdirectory(Symbols, Build);
-    if Validate && !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
-        Input, Scan, Symbols, Directory
+    return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
+        Input, Symbols, Build, Body, Symbols.Functions, Directory
+    );
+}
+
+fn Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Compilerˉsourceˉbindingˉphase,
+    Validate: bool
+) -> Compilerˉsourceˉbindingˉsummary {
+    let Published: Compilerˉsourceˉbindingˉsummary =
+        Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase
+        );
+    if Published.Status != Compilerˉsourceˉbindingˉstatus.Valid || !Validate {
+        return Published;
+    }
+    if !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Published.Directory
     ) {
+        let Build: Compilerˉsourceˉbindingˉbuild =
+            Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
         let Invalid: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉbuildˉfailure(
             Build,
             Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
@@ -3301,9 +3364,7 @@ fn Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
         );
         return Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(Input, Symbols, Invalid);
     }
-    return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
-        Input, Symbols, Build, Body, Symbols.Functions, Directory
-    );
+    return Published;
 }
 
 export fn Compilerˉsourceˉbindingsˉfinishˉphase(
@@ -3317,20 +3378,19 @@ export fn Compilerˉsourceˉbindingsˉfinishˉphase(
     );
 }
 
-export fn Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
+export fn Compilerˉsourceˉbindingsˉfinishˉspecializedˉphaseˉproduct(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Phase: Compilerˉsourceˉbindingˉphase,
     Functions: u32,
-    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
-    Validate: bool
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog
 ) -> Compilerˉsourceˉbindingˉsummary {
     let Instances: u32 =
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
     if Instances == 0u32 {
-        return Compilerˉsourceˉbindingsˉfinishˉphaseˉmode(
-            Input, Scan, Symbols, Phase, Validate
+        return Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase
         );
     }
     let Build: Compilerˉsourceˉbindingˉbuild =
@@ -3389,9 +3449,32 @@ export fn Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
     let Directory: bytes = Compilerˉsourceˉbindingsˉspecializedˉdirectory(
         Symbols, Build, Functions, Catalog
     );
-    if Validate && !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
-        Input, Scan, Symbols, Directory
+    return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
+        Input, Symbols, Build, Body, Functions, Directory
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Compilerˉsourceˉbindingˉphase,
+    Functions: u32,
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Validate: bool
+) -> Compilerˉsourceˉbindingˉsummary {
+    let Published: Compilerˉsourceˉbindingˉsummary =
+        Compilerˉsourceˉbindingsˉfinishˉspecializedˉphaseˉproduct(
+            Input, Scan, Symbols, Phase, Functions, Catalog
+        );
+    if Published.Status != Compilerˉsourceˉbindingˉstatus.Valid || !Validate {
+        return Published;
+    }
+    if !Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Published.Directory
     ) {
+        let Build: Compilerˉsourceˉbindingˉbuild =
+            Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
         let Invalid: Compilerˉsourceˉbindingˉbuild =
             Compilerˉsourceˉbindingsˉbuildˉfailure(
                 Build,
@@ -3407,9 +3490,7 @@ export fn Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
             Input, Symbols, Invalid
         );
     }
-    return Compilerˉsourceˉbindingsˉsummaryˉsuccess(
-        Input, Symbols, Build, Body, Functions, Directory
-    );
+    return Published;
 }
 
 export fn Compilerˉsourceˉbindingsˉfromˉsymbolsˉwithˉbody(

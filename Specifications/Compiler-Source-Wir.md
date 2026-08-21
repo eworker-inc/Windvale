@@ -4,7 +4,7 @@
 
 `Compilerˉsourceˉwir` is the first portable Windvale-written typed lowering phase. It consumes one complete WVSS 1 source graph, reuses validated WVSD symbol evidence and WVLB local evidence, checks expression and control-flow semantics, and publishes canonical `WVIR 1` bytes.
 
-WVIR is a compiler boundary, not executable bytecode. It preserves typed operations, basic blocks, calls, source spans, and stable declaration identities so later passes can lower the same program to WVB or future native and system targets without inheriting C# host behavior.
+WVIR is a compiler boundary, not executable bytecode. It preserves typed operations, basic blocks, calls, and stable declaration identities so later passes can lower the same program to WVB or future native and system targets without inheriting C# host behavior. Construction failures preserve exact source locations; successful persisted operations do not retain redundant source spans.
 
 ## Public result
 
@@ -46,7 +46,15 @@ element identity and maximum. The private high families `0x60000000` and
 `0x70000000` retain exact compact Foundation Option and Result arguments from
 the symbol contract. Nominal suffixes are canonical WVSD nominal indices.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.1 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.2 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order.
+Main analysis may additionally retain private WVGT shapes
+`0x80000000..0x800000ff` in function returns, parameter/local operations, and
+temporary evidence. Such a shape is valid only when its zero-based instance is
+present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
+This does not select a version beyond the current WVIR 1.3/1.4 pair and is not a runtime identity;
+Source WVB must materialize and replace every private shape before publishing
+bytecode.
+
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.3 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.4 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.1/1.2 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -56,13 +64,13 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `1` |
+| 6 | 2 | Minor version `3` |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
 | 20 | 4 | Block-entry size `28` |
 | 24 | 4 | Operation count |
-| 28 | 4 | Operation-entry size `40` |
+| 28 | 4 | Operation-entry size `32` |
 | 32 | 4 | Temporary count |
 | 36 | 4 | Temporary-entry size `4` |
 | 40 | 4 | Operand count |
@@ -70,9 +78,9 @@ All integers are unsigned little-endian and the directory contains no padding.
 
 Sections follow in that exact order.
 
-Source without an admitted generic instance retains that exact 48-byte WVIR
-1.1 header. Specialized source publishes WVIR 1.2. It changes the minor version
-to `2`, appends the specialization count at offset 48 and specialization-layout
+Source without an admitted generic instance uses that exact 48-byte WVIR
+1.3 header. Specialized source publishes WVIR 1.4. It changes the minor version
+to `4`, appends the specialization count at offset 48 and specialization-layout
 version `1` at offset 52, and begins the function section at offset 56. Its
 function-entry count is exactly `WvsdEntryCount + SpecializationCount`; the
 count must equal the valid WVGC instance count embedded in the paired WVLB 1.2.
@@ -82,7 +90,12 @@ Each 48-byte function entry contains twelve `u32` fields: module, first block/co
 
 Each 28-byte block entry contains seven `u32` fields: block ID, first operation/count, terminator, value temporary, first target, and second target. The owning function and module are derived from the enclosing canonical function range. The sentinel `4294967295` represents an absent value or target.
 
-Each 40-byte operation entry contains ten `u32` fields: block, operation kind, result shape, result temporary, first operand/count, target, auxiliary value, source byte offset, and source byte length. The owning function and module are derived from the canonical function and block ranges.
+Each 32-byte operation entry contains eight `u32` fields: owning block,
+operation kind, result shape, result temporary, first operand/count, target,
+and auxiliary value. The owning module and function are derived from the
+canonical function range. Source failures retain their exact location while
+WIR is being constructed. A persisted operation does not repeat a source span
+that emission does not consume.
 
 The temporary section is a sequence of result shapes. The operand section is a sequence of function-local temporary IDs.
 
@@ -96,15 +109,15 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.1/1.2 version, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.3/1.4 version, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
-- operation ownership, kind, source span, result shape, temporary sequencing, and operand sequencing;
+- operation ownership and kind, result shape, temporary sequencing, and operand sequencing;
 - prior-temporary use, local slots, inferred-local establishment by a non-void first store, consistent later local loads/stores, data and nominal identities, field/member/case indices, variant field counts and exact field shapes, collection descriptors, builder transitions, call targets, arity, dynamic parameter/result shapes, ordinary unit values, and return-only never shapes;
 - value-phi placement as the first operation of its join block, two distinct valid predecessor blocks, two exact same-shape operands owned by those predecessors, a result of that same non-void/non-never shape, an unconditional jump from both predecessors to the join, and no branch or third predecessor targeting that join; and
 - rejection of trailing bytes and corrupted function, block, operation, temporary, or operand entries.
 
-Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. For WVLB/WVIR 1.2 it additionally validates the embedded catalog substitution and maps every specialized call target back to its source declaration before checking arity and dynamic operand/result shapes. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
+Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. For specialized WVLB 1.2/WVIR 1.4 it additionally validates the embedded catalog substitution and maps every specialized call target back to its source declaration before checking arity and dynamic operand/result shapes. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
 
 A bare required capability name emits the existing `U32ˉconstant = 3` operation
 with its exact internal capability-reference result shape and zero target and
@@ -121,7 +134,7 @@ and an explicit constant argument must have the declaration's exact fixed-
 integer width. Each selected specialization substitutes one concrete collection
 descriptor before ordinary body lowering. Its WVIR function body therefore
 contains only the same collection shape and operations as a hand-written
-monomorphic function. Multiple bodies use the WVIR 1.2 directory envelope
+monomorphic function. Multiple bodies use the WVIR 1.4 directory envelope
 above; no WVIR operation value changes.
 
 An edition-1 accepted `try` evaluates its expression once and requires the exact

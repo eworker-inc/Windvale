@@ -83,7 +83,7 @@ fn Findˉlifetime(
     while Operation < Operationˉcount {
         if Definition == 4294967295u32 {
             let Definitionˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Operation) * 40u32;
+                (Firstˉoperation + Operation) * 32u32;
             if Bytesˉreadˉu32ˉlittle(
                 Wir, Definitionˉentry + 12u32
             ) == Temporary {
@@ -120,7 +120,7 @@ fn Findˉlifetime(
         while Reverse > Definition {
             let Useˉoperation: u32 = Reverse - 1u32;
             let Useˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Useˉoperation) * 40u32;
+                (Firstˉoperation + Useˉoperation) * 32u32;
             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
                 Wir, Useˉentry + 16u32
             );

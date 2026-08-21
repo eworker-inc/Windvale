@@ -184,6 +184,16 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 generic nominal main-pipeline routing'
+        Paths = @(
+            'Tests/Fixtures/Language-1.0/Generic-Nominal-Main-Pipeline.wv',
+            'Tools/Native/Verify-Generic-Nominal-Main-Pipeline.mjs'
+        )
+        Suites = @('language-1-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 generic nominal type-binding owner routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
@@ -3416,7 +3426,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4907 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4919 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

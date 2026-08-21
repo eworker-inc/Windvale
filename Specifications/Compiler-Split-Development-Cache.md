@@ -77,23 +77,21 @@ rename clears the temporary path and is preserved.
 
 ## Development bootstrap bridge
 
-The Language 1.0 front door retains a portable 949,355-byte historical analyzer
-and 746,557-byte target-aware emitter under
+The Language 1.0 front door retains a portable 992,412-byte analyzer and
+895,787-byte target-aware emitter under
 `Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/`. Their manifest binds
-the exact source base, one `Optimize = true` emitter overlay, both Project 2
-closures, producer, sizes, and digests. The active gate first reconstructs and
+the Decision 0813 cache family and complete cache keys, both current Project 2
+closures, producer, sizes, and digests. The active gate reconstructs and
 packages the current analyzer, assigns it a normal role-specific version-2
-identity, and uses that analyzer with the validated/packageable bootstrap
-emitter to construct the current target-aware emitter. The historical analyzer
-remains recovery/provenance evidence but is not packaged or executed by the
-front door.
+identity, and uses that analyzer with the validated/packageable checkpoint
+emitter to reconstruct the current target-aware emitter byte for byte.
 
-The bridge is not another compiler source tree, native executable, release
-artifact, or qualification claim. The old analyzer reached its bounded
-instruction budget on the enlarged current emitter closure; using it would both
-fail current reconstruction and redundantly package a roughly 30 MiB product.
-The optimized current analyzer admits that closure within its unchanged limits,
-so only the bootstrap emitter remains on the active construction path.
+The checkpoint is not another compiler source tree, native executable, release
+artifact, or qualification claim. The obsolete historical analyzer and emitter
+cannot consume the current WVIR version and are no longer on the active path.
+The gate also omits the former monolithic compiler-source-set build because its
+result was never consumed; compiler-scale evidence comes from the current split
+analyzer/emitter reconstruction and fixed point.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
@@ -117,8 +115,9 @@ compiler implementation.
 
 The Generic-WIR sentinel compiles its canonical Project 2 closure twice through
 the split coordinator, requires byte-identical WVB output with a pinned size and
-digest, packages the first output under profile 1, and requires silent exit
-`42`. It reuses the products already built by the owner so the regression adds
-two analysis/emission passes and one cacheable package rather than another
-compiler reconstruction. Failure of the historical Seed on this closure does
-not waive the sentinel and does not authorize replacing the recovery artifact.
+digest, and admits the first output through the independent compiler-aligned
+WVB verifier. It does not widen the native staging output envelope or the
+general runner's call-depth bound merely to execute this compiler-scale product.
+The Language 1.0 gate separately executes its language fixtures. Failure of the
+historical Seed on this closure does not waive the sentinel and does not
+authorize replacing the recovery artifact.

@@ -161,7 +161,7 @@ WVLB 1.2 so an emitter can validate each appended concrete WVIR body against
 its exact declaration and ordered substitution; neither evidence format enters
 the emitted WVB.
 
-WVLB 1.2 and WVIR 1.2 reserve one zero placeholder at the source declaration's
+WVLB 1.2 and WVIR 1.4 reserve one zero placeholder at the source declaration's
 ordinary symbol-directory position and append one concrete function range/body
 per WVGC instance in catalog order. An appended function identity is the full
 WVSD entry count plus its zero-based catalog instance, not the number of source
@@ -208,14 +208,14 @@ as evidence for general generic-source integration.
 path. It accepts inferred and explicit calls that reuse one identity, accepts an
 explicit result-only specialization, rejects conflicting inference, and now
 publishes two distinct specializations from one declaration as WVLB 1.2 and
-WVIR 1.2. It checks the exact two-instance count before publishing its artifact
+WVIR 1.4. It checks the exact two-instance count before publishing its artifact
 set, rejects a corrupted embedded catalog, and rejects a mismatched WVIR
 specialization count. The current 1,068,726-byte publisher WVB has SHA-256
 `d9179596701a415c4fd2105ca3f2a56c043ce46e2e4ff6878514cf271bd26f09`
 and its segmented Windows package returns `42`. It writes a 360-byte WVLB 1.2
 with SHA-256
 `1189e27c21bf2281b59ecf9fdd8f8efa1d9671b049e17e9bbdb9e4baf390c74d`
-and a 1,100-byte WVIR 1.2 with SHA-256
+and a 1,100-byte historical WVIR 1.2 with SHA-256
 `3a07f3f96dda4d7be6b07636e312575b533664cea4c70a37c4b3991f89f71928`.
 No runtime generic mechanism is involved.
 
@@ -246,8 +246,8 @@ repeated maximum conflict, an explicit constant with the wrong width, and a
 builder supplied for a sequence parameter. Its successful program calls
 `First<Type, const Maximum: u32>(sequence<Type, Maximum>)` once by inference
 and once as `First::<i32, 8u32>`. Under the current contract the generic source
-publishes specialized WVLB/WVIR 1.2, so its retained catalog and appended body
-are intentionally not byte-identical to a monomorphic WVLB/WVIR 1.1 oracle.
+publishes specialized WVLB 1.2/WVIR 1.4, so its retained catalog and appended body
+are intentionally not byte-identical to a monomorphic WVLB 1.1/WVIR 1.3 oracle.
 
 The following publisher and oracle identities are retained as historical
 Decision 0787 evidence. The focused publisher is 1,065,397 WVB bytes with SHA-256

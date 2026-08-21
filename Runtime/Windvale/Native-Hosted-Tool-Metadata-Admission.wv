@@ -34,6 +34,16 @@ fn Textˉarenaˉbytes(Profile: u32) -> u32 {
     return 134217728u32;
 }
 
+fn Instructionˉlimitˉlow(Profile: u32) -> u32 {
+    if Profile == 7u32 { return 2690588672u32; }
+    return 3870457856u32;
+}
+
+fn Instructionˉlimitˉhigh(Profile: u32) -> u32 {
+    if Profile == 7u32 { return 18u32; }
+    return 14u32;
+}
+
 fn Capabilityˉservice(Index: u32) -> u32 {
     if Index == 0u32 { return 1u32; }
     if Index == 1u32 { return 6u32; }
@@ -117,8 +127,10 @@ export fn Nativeˉhostedˉtoolˉmetadataˉisˉvalid(
         Bytesˉreadˉu32ˉlittle(Metadata, 76u32) != 2097152u32 ||
         Bytesˉreadˉu32ˉlittle(Metadata, 80u32) != Textˉarenaˉbytes(Profile) ||
         Bytesˉreadˉu32ˉlittle(Metadata, 84u32) != Profileˉflags(Profile) ||
-        Bytesˉreadˉu32ˉlittle(Metadata, 88u32) != 3870457856u32 ||
-        Bytesˉreadˉu32ˉlittle(Metadata, 92u32) != 14u32 ||
+        Bytesˉreadˉu32ˉlittle(Metadata, 88u32) !=
+            Instructionˉlimitˉlow(Profile) ||
+        Bytesˉreadˉu32ˉlittle(Metadata, 92u32) !=
+            Instructionˉlimitˉhigh(Profile) ||
         Allˉzero(Metadata, 96u32, 32u32) {
         return false;
     }

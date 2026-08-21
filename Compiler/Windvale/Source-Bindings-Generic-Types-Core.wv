@@ -591,15 +591,14 @@ fn Compilerˉsourceˉbindingsˉgenericˉtypesˉsummaryˉwithˉdirectory(
     );
 }
 
-export fn Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase(
+export fn Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphaseˉproduct(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Phase: Bindings.Compilerˉsourceˉbindingˉphase,
     Functions: u32,
     Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
-    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
-    Validate: bool
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
 ) -> Bindings.Compilerˉsourceˉbindingˉsummary {
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
             Typeˉcatalog
@@ -607,15 +606,15 @@ export fn Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
             Typeˉcatalog
         ) == 0u32 {
-        return Bindings.Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
+        return Bindings.Compilerˉsourceˉbindingsˉfinishˉspecializedˉphaseˉproduct(
             Input, Scan, Symbols, Phase,
-            Functions, Functionˉcatalog, Validate
+            Functions, Functionˉcatalog
         );
     }
     let Baseˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
-        Bindings.Compilerˉsourceˉbindingsˉfinishˉspecializedˉphase(
+        Bindings.Compilerˉsourceˉbindingsˉfinishˉspecializedˉphaseˉproduct(
             Input, Scan, Symbols, Phase,
-            Functions, Functionˉcatalog, false
+            Functions, Functionˉcatalog
         );
     if Baseˉsummary.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
         return Baseˉsummary;
@@ -690,10 +689,35 @@ export fn Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase
         Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectory(
             Symbols, Build, Functions, Functionˉcatalog, Typeˉcatalog
         );
-    if Validate &&
-        !Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
-            Input, Scan, Symbols, Directory
-        ) {
+    return Compilerˉsourceˉbindingsˉgenericˉtypesˉsummaryˉwithˉdirectory(
+        Baseˉsummary, Directory
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Bindings.Compilerˉsourceˉbindingˉphase,
+    Functions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Validate: bool
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphaseˉproduct(
+            Input, Scan, Symbols, Phase, Functions,
+            Functionˉcatalog, Typeˉcatalog
+        );
+    if Published.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        !Validate {
+        return Published;
+    }
+    if !Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Published.Directory
+    ) {
+        let Build: Bindings.Compilerˉsourceˉbindingˉbuild =
+            Bindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
         let Invalid: Bindings.Compilerˉsourceˉbindingˉbuild =
             Bindings.Compilerˉsourceˉbindingsˉbuildˉfailure(
                 Build,
@@ -709,7 +733,5 @@ export fn Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase
             Input, Symbols, Invalid
         );
     }
-    return Compilerˉsourceˉbindingsˉgenericˉtypesˉsummaryˉwithˉdirectory(
-        Baseˉsummary, Directory
-    );
+    return Published;
 }

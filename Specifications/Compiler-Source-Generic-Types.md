@@ -11,15 +11,19 @@ monomorphic type identity without packing arbitrary nested arguments into a
 The catalog, declaration ownership, and recursive full-arity type-use binding
 are implemented and executed. Source Symbols recognizes generic record/variant
 declarations, validates their ordered parameter namespaces and structurally
-unresolved field uses, and rejects a bare template where a concrete type is
-required. The focused binding phase resolves uses such as
+unresolved field uses, and defers a parsed `<...>` application to the WVGT-aware
+semantic phase rather than assigning it an ordinary template shape. The focused
+binding phase resolves uses such as
 `Choice<Box<i32>, text>`, admits inner WVGT identities before parents, and
 returns the exact replacement catalog. The generic layout and materialization
 phases now substitute fields and cases, assign ordinary output type indices,
-and replace private WVGT references in one bounded dependency-order plan. The
-main Source WIR and WVB paths do not yet consume that plan or emit its concrete
-types. The existing private Foundation `Option` and `Result` shapes remain
-unchanged until that integration deliberately migrates them.
+and replace private WVGT references in one bounded dependency-order plan. Main
+Source WIR now scans ordinary function signatures and explicit locals, retains
+the resulting catalog in WVLB 1.3, and carries catalog-bounded private shapes in
+paired WVIR evidence. Main Source WVB does not yet consume the materialization
+plan or emit its concrete types. The existing private Foundation `Option` and
+`Result` shapes remain unchanged until that integration deliberately migrates
+them.
 
 The current constant-argument connection accepts one exact suffixed
 fixed-integer token of the declared shape. Evaluation of the broader frozen
@@ -152,11 +156,12 @@ The connected source integration preserves these boundaries:
 3. **Implemented for direct parameters:** substitute WVGT arguments while
    validating record fields and variant cases, including concrete builder,
    capability, and nested-variant restrictions after substitution;
-4. **Implemented:** carry private shapes only through validated compiler
-   artifacts that bind exact WVGT evidence, then replace them with assigned
-   ordinary shapes in one canonical materialization plan;
-5. consume that plan from reachable WIR and emit ordinary monomorphic WVB types
-   in canonical dependency order; and
+4. **Implemented:** carry private shapes through main WVLB/WVIR analysis only
+   when the paired artifact binds exact WVGT evidence, then replace them with
+   assigned ordinary shapes in one canonical materialization plan;
+5. **Implemented in the focused serializer:** serialize that plan as ordinary
+   monomorphic WVB Types entries in canonical dependency order; main Source WVB
+   insertion and operation remapping remain open; and
 6. reject an unused template only when a boundary requires a concrete value,
    while keeping uninstantiated source templates out of runtime artifacts.
 
@@ -234,6 +239,13 @@ The five-fragment 17,346,560-byte hosted Windows executable has SHA-256
 `1989251b54de71bb6b7e69141e61529dd882a218bfd3892107ce4c6ff6f1e275`,
 returns `42`, and writes no output. The independent
 `generic-nominal-type-materialization` owner reproduces this boundary through
-content-keyed caches. Nested template field substitution, main WIR carriage,
-WVB Types emission, and Foundation migration remain later connected
-checkpoints.
+content-keyed caches. Main Source WIR carriage is now connected; nested template
+field substitution in generic-function contexts, main WVB insertion and
+operation remapping, and Foundation migration remain later checkpoints.
+
+`Generic-Nominal-Main-Pipeline.wv` is the first main-analyzer fixture. Its
+12-case inspector requires exact 238-byte WVSS, 104-byte WVCA, 192-byte WVLB
+1.3, and 320-byte WVIR 1.3 products. The binding artifact retains one 68-byte
+WVGT instance for `Box<i32>` and gives the parameter shape `0x80000000`; the
+function return and parameter-load operation carry the same private shape. No
+private shape has entered WVB at this checkpoint.

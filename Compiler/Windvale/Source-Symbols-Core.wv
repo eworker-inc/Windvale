@@ -5573,7 +5573,16 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉdeclarations(
                         Declarationˉposition.Line, Declarationˉposition.Column
                     );
                 }
-                if Result.Status != Compilerˉsourceˉsymbolˉstatus.Valid { return Result; }
+                if Result.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+                    if Result.Status !=
+                            Compilerˉsourceˉsymbolˉstatus.Unknownˉtype ||
+                        Result.Failureˉoffset >= Bytesˉlength(View.Source) ||
+                        Bytesˉreadˉu8(
+                            View.Source, Result.Failureˉoffset
+                        ) != 60u8 {
+                        return Result;
+                    }
+                }
                 if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Declaration) {
                     Sawˉnonˉimport = true;
                 }
