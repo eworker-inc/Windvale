@@ -701,13 +701,44 @@ with adjacent closers now parse as type syntax without changing expression
 carriage, canonical reachable-instance ordering, WVB materialization, and
 Foundation migration remain subsequent checkpoints.
 
-The 18-case fixture builds to a 684,418-byte WVB with SHA-256
-`a7931ec390183afca80e9afce82d5a60f0def72e759d21ce43cb625c468f885b`.
-Its five-fragment 16,856,576-byte hosted Windows executable has SHA-256
-`6eb11c48c39aee20b7356df0cd8c272b2ded21de396c3b3718a26db6e89d9cba`,
+After the sequential-evidence refinement in Decision 0808, the 18-case fixture
+builds to a 688,672-byte WVB with SHA-256
+`55fe9cf4744cfe26f42900c85ad8eed9f6e0940cd7d6b533b7a6a94295c042b1`.
+Its five-fragment 16,976,896-byte hosted Windows executable has SHA-256
+`f28acda8fb1dc64da27e7e08d191ab637600e23c2e69505ee89aed40cc374f5c`,
 returns `42`, and writes no output. The independent
 `generic-nominal-type-layout` owner reports build, package, and execute progress
 and reuses the content-keyed project and hosted-application checkpoints.
+The broad Language 1, storage, OS, paired-host, and complete Qualification gates
+remain deferred to the final seven-slice integration gate.
+
+## Slice 4 generic nominal materialization-plan checkpoint
+
+Decision 0808 converts admitted WVGT layouts into one bounded fixed-width
+compiler plan. It traverses catalog instances in dependency order, assigns the
+caller-selected contiguous ordinary Types range, indexes global case and field
+records, and replaces every earlier private WVGT field shape with its ordinary
+record or variant shape. Generic layout creation now retains each field and case
+record once, so this sequential phase does not invoke a source-rescanning
+random-accessor for every item.
+
+Each evidence sequence is preflighted against the Foundation 4 MiB `bytes`
+limit, the complete plan plus its catalog stays within 16 MiB, and the existing
+1,024-type limit is checked before construction. Failure publishes no partial
+derived evidence and reports the first failing instance. Full reconstruction
+rejects caller-created type or field mutations.
+
+The 20-case fixture builds to a 707,484-byte WVB with SHA-256
+`0f91eb3d873f9dd9f5a68d53956b7be6f0ac7f62c70056241e99ea49ab47fe64`.
+Its five-fragment 17,346,560-byte hosted Windows executable has SHA-256
+`1989251b54de71bb6b7e69141e61529dd882a218bfd3892107ce4c6ff6f1e275`,
+returns `42`, and writes no output. The independent
+`generic-nominal-type-materialization` owner reports build, package, and execute
+progress and reuses the content-keyed project and hosted-application caches.
+
+This is the compiler materialization plan, not yet main WIR or WVB emission.
+Connecting the plan to reachable source analysis, WVB Types and operations, and
+then migrating Foundation special cases remain the next Slice 4 checkpoints.
 The broad Language 1, storage, OS, paired-host, and complete Qualification gates
 remain deferred to the final seven-slice integration gate.
 

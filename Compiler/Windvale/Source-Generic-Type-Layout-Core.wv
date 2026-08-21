@@ -18,6 +18,8 @@ export record Compilerˉsourceˉgenericˉtypeˉlayout {
     Module: u32;
     Items: u32;
     Fields: u32;
+    Itemˉevidence: bytes;
+    Fieldˉevidence: bytes;
     Catalogˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
     Catalogˉevidence: bytes;
     Failureˉoffset: u32;
@@ -66,6 +68,8 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
     Module: u32,
     Items: u32,
     Fields: u32,
+    Itemˉevidence: bytes,
+    Fieldˉevidence: bytes,
     Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Failureˉoffset: u32,
     Failureˉline: u32,
@@ -74,6 +78,7 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
     return Compilerˉsourceˉgenericˉtypeˉlayout(
         Genericˉstatus, Symbolˉstatus, Instance, Shape, Kind,
         Declaration, Module, Items, Fields,
+        Itemˉevidence, Fieldˉevidence,
         Catalog.Status, Catalog.Evidence,
         Failureˉoffset, Failureˉline, Failureˉcolumn
     );
@@ -88,14 +93,40 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
     Failureˉline: u32,
     Failureˉcolumn: u32
 ) -> Compilerˉsourceˉgenericˉtypeˉlayout {
+    let Empty: bytes = Bytesˉslice(Catalog.Evidence, 0u32, 0u32);
     return Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
         Genericˉstatus, Symbolˉstatus, Instance, 0u32,
         Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
         Compilerˉsourceˉgenericˉtypeˉlayoutˉsentinel(),
         Compilerˉsourceˉgenericˉtypeˉlayoutˉsentinel(),
-        0u32, 0u32, Catalog,
+        0u32, 0u32, Empty, Empty, Catalog,
         Failureˉoffset, Failureˉline, Failureˉcolumn
     );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+    Evidence: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Evidence, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉlayoutˉhasˉrecordˉcapacity(
+    Evidence: bytes
+) -> bool {
+    return Bytesˉlength(Evidence) <= 4194304u32 - 16u32;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉitemˉevidence(
+    Layout: Compilerˉsourceˉgenericˉtypeˉlayout
+) -> bytes {
+    return Layout.Itemˉevidence;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉfieldˉevidence(
+    Layout: Compilerˉsourceˉgenericˉtypeˉlayout
+) -> bytes {
+    return Layout.Fieldˉevidence;
 }
 
 export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcatalog(
@@ -380,6 +411,7 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
     var Cursor: u32 = Brace.Nextˉoffset;
     var Line: u32 = Brace.Nextˉline;
     var Column: u32 = Brace.Nextˉcolumn;
+    var Fieldˉevidence: bytes = Bytesˉslice(Source, 0u32, 0u32);
     var Fieldˉindex: u32 = 0u32;
     while Fieldˉindex < Declaration.Items {
         let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
@@ -415,6 +447,35 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
                 Substitution.Failureˉcolumn
             );
         }
+        if !Compilerˉsourceˉgenericˉtypeˉlayoutˉhasˉrecordˉcapacity(
+            Fieldˉevidence
+        ) {
+            return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+                Instance, Catalogˉvalue,
+                Field.Offset, Field.Line, Field.Column
+            );
+        }
+        Fieldˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Fieldˉevidence, Field.Offset
+            );
+        Fieldˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Fieldˉevidence, Field.Length
+            );
+        Fieldˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Fieldˉevidence, Substitution.Shape
+            );
+        Fieldˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Fieldˉevidence,
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
+                    Substitution.Nominalˉkind
+                )
+            );
         let End: Sourceˉlexer.Compilerˉsourceˉtoken =
             Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                 Source, Substitution.Nextˉoffset,
@@ -442,7 +503,8 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
             Catalog, Instance
         ),
-        Module, Declaration.Items, Declaration.Items, Catalogˉvalue,
+        Module, Declaration.Items, Declaration.Items,
+        Bytesˉslice(Source, 0u32, 0u32), Fieldˉevidence, Catalogˉvalue,
         Declaration.Nextˉoffset,
         Declaration.Nextˉline, Declaration.Nextˉcolumn
     );
@@ -475,6 +537,8 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
     var Cursor: u32 = Brace.Nextˉoffset;
     var Line: u32 = Brace.Nextˉline;
     var Column: u32 = Brace.Nextˉcolumn;
+    var Itemˉevidence: bytes = Bytesˉslice(Source, 0u32, 0u32);
+    var Fieldˉevidence: bytes = Bytesˉslice(Source, 0u32, 0u32);
     var Caseˉindex: u32 = 0u32;
     var Fields: u32 = 0u32;
     while Caseˉindex < Declaration.Items {
@@ -488,6 +552,7 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
                 Case.Nextˉcolumn
             );
         var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
+        let Firstˉfield: u32 = Fields;
         if Afterˉname.Kind ==
             Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
             var Fieldˉcursor: u32 = Afterˉname.Nextˉoffset;
@@ -532,6 +597,36 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
                         Substitution.Failureˉcolumn
                     );
                 }
+                if !Compilerˉsourceˉgenericˉtypeˉlayoutˉhasˉrecordˉcapacity(
+                    Fieldˉevidence
+                ) {
+                    return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+                        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
+                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+                        Instance, Catalog,
+                        Parsed.Nameˉoffset,
+                        Typeˉposition.Line, Typeˉposition.Column
+                    );
+                }
+                Fieldˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                        Fieldˉevidence, Parsed.Nameˉoffset
+                    );
+                Fieldˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                        Fieldˉevidence, Parsed.Nameˉlength
+                    );
+                Fieldˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                        Fieldˉevidence, Substitution.Shape
+                    );
+                Fieldˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                        Fieldˉevidence,
+                        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
+                            Substitution.Nominalˉkind
+                        )
+                    );
                 Fields = Fields + 1u32;
                 let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
                     Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
@@ -566,6 +661,32 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
                 }
             }
         }
+        if !Compilerˉsourceˉgenericˉtypeˉlayoutˉhasˉrecordˉcapacity(
+            Itemˉevidence
+        ) {
+            return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+                Instance, Catalog,
+                Case.Offset, Case.Line, Case.Column
+            );
+        }
+        Itemˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Itemˉevidence, Case.Offset
+            );
+        Itemˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Itemˉevidence, Case.Length
+            );
+        Itemˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Itemˉevidence, Firstˉfield
+            );
+        Itemˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
+                Itemˉevidence, Fields - Firstˉfield
+            );
         Cursor = End.Nextˉoffset;
         Line = End.Nextˉline;
         Column = End.Nextˉcolumn;
@@ -580,7 +701,8 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
             Catalog, Instance
         ),
-        Module, Declaration.Items, Fields, Catalog,
+        Module, Declaration.Items, Fields,
+        Itemˉevidence, Fieldˉevidence, Catalog,
         Declaration.Nextˉoffset,
         Declaration.Nextˉline, Declaration.Nextˉcolumn
     );
@@ -707,15 +829,35 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
         Layout.Module != Expected.Module || Layout.Items != Expected.Items ||
         Layout.Fields != Expected.Fields ||
         Layout.Catalogˉstatus != Expected.Catalogˉstatus ||
+        Bytesˉlength(Layout.Itemˉevidence) !=
+            Bytesˉlength(Expected.Itemˉevidence) ||
+        Bytesˉlength(Layout.Fieldˉevidence) !=
+            Bytesˉlength(Expected.Fieldˉevidence) ||
         Bytesˉlength(Layout.Catalogˉevidence) !=
             Bytesˉlength(Expected.Catalogˉevidence) {
         return false;
     }
-    return Sourceˉset.Compilerˉsourceˉspansˉequal(
+    if !Sourceˉset.Compilerˉsourceˉspansˉequal(
         Layout.Catalogˉevidence, 0u32,
         Bytesˉlength(Layout.Catalogˉevidence),
         Expected.Catalogˉevidence, 0u32,
         Bytesˉlength(Expected.Catalogˉevidence)
+    ) {
+        return false;
+    }
+    if !Sourceˉset.Compilerˉsourceˉspansˉequal(
+        Layout.Itemˉevidence, 0u32,
+        Bytesˉlength(Layout.Itemˉevidence),
+        Expected.Itemˉevidence, 0u32,
+        Bytesˉlength(Expected.Itemˉevidence)
+    ) {
+        return false;
+    }
+    return Sourceˉset.Compilerˉsourceˉspansˉequal(
+        Layout.Fieldˉevidence, 0u32,
+        Bytesˉlength(Layout.Fieldˉevidence),
+        Expected.Fieldˉevidence, 0u32,
+        Bytesˉlength(Expected.Fieldˉevidence)
     );
 }
 

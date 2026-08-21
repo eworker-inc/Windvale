@@ -1,0 +1,545 @@
+module Compilerˉsourceˉgenericˉtypeˉmaterialization profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
+import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayouts;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+export enum Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus {
+    Valid = 0;
+    Invalidˉevidence = 1;
+    Invalidˉlayout = 2;
+    Typeˉlimit = 3;
+    Evidenceˉlimit = 4;
+}
+
+export record Compilerˉsourceˉgenericˉtypeˉmaterialization {
+    Status: Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus;
+    Genericˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
+    Symbolˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus;
+    Firstˉtype: u32;
+    Instances: u32;
+    Records: u32;
+    Variants: u32;
+    Cases: u32;
+    Fields: u32;
+    Entryˉevidence: bytes;
+    Caseˉevidence: bytes;
+    Fieldˉevidence: bytes;
+    Catalogˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
+    Catalogˉevidence: bytes;
+    Failureˉinstance: u32;
+}
+
+export record Compilerˉsourceˉgenericˉmaterializedˉtype {
+    Found: bool;
+    Shape: u32;
+    Outputˉtype: u32;
+    Kind: Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind;
+    Declaration: u32;
+    Module: u32;
+    Firstˉcase: u32;
+    Cases: u32;
+    Firstˉfield: u32;
+    Fields: u32;
+}
+
+export record Compilerˉsourceˉgenericˉmaterializedˉcase {
+    Found: bool;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Firstˉfield: u32;
+    Fields: u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+    Evidence: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Evidence, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉcatalog(
+    Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization
+) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+        Materialization.Catalogˉstatus,
+        Materialization.Catalogˉevidence
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus,
+    Genericˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus,
+    Symbolˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus,
+    Firstˉtype: u32,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Failureˉinstance: u32
+) -> Compilerˉsourceˉgenericˉtypeˉmaterialization {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    return Compilerˉsourceˉgenericˉtypeˉmaterialization(
+        Status, Genericˉstatus, Symbolˉstatus, Firstˉtype,
+        0u32, 0u32, 0u32, 0u32, 0u32,
+        Empty, Empty, Empty,
+        Catalog.Status, Catalog.Evidence, Failureˉinstance
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉlengthsˉfit(
+    Entries: u32,
+    Cases: u32,
+    Fields: u32,
+    Catalogˉbytes: u32
+) -> bool {
+    if Entries > 16777216u32 || Cases > 16777216u32 - Entries {
+        return false;
+    }
+    let First: u32 = Entries + Cases;
+    if Fields > 16777216u32 - First { return false; }
+    return Catalogˉbytes <= 16777216u32 - First - Fields;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉcanˉappend(
+    Entryˉevidence: bytes,
+    Caseˉevidence: bytes,
+    Fieldˉevidence: bytes,
+    Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bool {
+    let Entries: u32 = Bytesˉlength(Entryˉevidence);
+    let Cases: u32 = Bytesˉlength(Caseˉevidence);
+    let Fields: u32 = Bytesˉlength(Fieldˉevidence);
+    let Newˉcases: u32 = Bytesˉlength(Layout.Itemˉevidence);
+    let Newˉfields: u32 = Bytesˉlength(Layout.Fieldˉevidence);
+    if Entries > 4194304u32 - 36u32 ||
+        Newˉcases > 4194304u32 - Cases ||
+        Newˉfields > 4194304u32 - Fields {
+        return false;
+    }
+    return Compilerˉsourceˉgenericˉtypeˉmaterializationˉlengthsˉfit(
+        Entries + 36u32, Cases + Newˉcases, Fields + Newˉfields,
+        Bytesˉlength(Catalog.Evidence)
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Firstˉtype: u32,
+    Instance: u32,
+    Shape: u32
+) -> u32 {
+    if Shape < 2147483648u32 { return Shape; }
+    let Reference: u32 = Shape - 2147483648u32;
+    if Reference >= Instance { return 0u32; }
+    let Outputˉtype: u32 = Firstˉtype + Reference;
+    let Kind: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+            Catalog, Reference
+        );
+    if Kind == 4u32 { return 65536u32 + Outputˉtype; }
+    if Kind == 8u32 { return 196608u32 + Outputˉtype; }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Firstˉtype: u32
+) -> Compilerˉsourceˉgenericˉtypeˉmaterialization {
+    let Sentinel: u32 =
+        Compilerˉsourceˉgenericˉtypeˉmaterializationˉsentinel();
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) {
+        return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+            Input,
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉevidence,
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Symbols.Status, Firstˉtype, Catalog, Sentinel
+        );
+    }
+    let Instances: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        );
+    if Firstˉtype > 1024u32 || Instances > 1024u32 - Firstˉtype {
+        return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+            Input,
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Typeˉlimit,
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Firstˉtype, Catalog, Sentinel
+        );
+    }
+    var Entryˉevidence: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Caseˉevidence: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Fieldˉevidence: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Records: u32 = 0u32;
+    var Variants: u32 = 0u32;
+    var Cases: u32 = 0u32;
+    var Fields: u32 = 0u32;
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+                Input, Scan, Symbols, Catalog, Instance
+            );
+        if Layout.Genericˉstatus !=
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+            Layout.Symbolˉstatus !=
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Bytesˉlength(Layout.Fieldˉevidence) != Layout.Fields * 16u32 ||
+            (Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record &&
+                Bytesˉlength(Layout.Itemˉevidence) != 0u32) ||
+            (Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant &&
+                Bytesˉlength(Layout.Itemˉevidence) != Layout.Items * 16u32) {
+            return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+                Input,
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,
+                Layout.Genericˉstatus, Layout.Symbolˉstatus,
+                Firstˉtype, Catalog, Instance
+            );
+        }
+        if !Compilerˉsourceˉgenericˉtypeˉmaterializationˉcanˉappend(
+            Entryˉevidence, Caseˉevidence, Fieldˉevidence,
+            Layout, Catalog
+        ) {
+            return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+                Input,
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Evidenceˉlimit,
+                Layout.Genericˉstatus, Layout.Symbolˉstatus,
+                Firstˉtype, Catalog, Instance
+            );
+        }
+        var Firstˉcase: u32 = 0u32;
+        var Typeˉcases: u32 = 0u32;
+        if Layout.Kind ==
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+            Firstˉcase = Cases;
+            Typeˉcases = Layout.Items;
+        }
+        let Firstˉfield: u32 = Fields;
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Layout.Shape
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Firstˉtype + Instance
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence,
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
+                    Layout.Kind
+                )
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Layout.Declaration
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Layout.Module
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Firstˉcase
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Typeˉcases
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Firstˉfield
+            );
+        Entryˉevidence =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                Entryˉevidence, Layout.Fields
+            );
+        if Layout.Kind ==
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+            Records = Records + 1u32;
+        } else {
+            Variants = Variants + 1u32;
+            var Case: u32 = 0u32;
+            while Case < Layout.Items {
+                let Offset: u32 = Case * 16u32;
+                let Localˉfirst: u32 = Bytesˉreadˉu32ˉlittle(
+                    Layout.Itemˉevidence, Offset + 8u32
+                );
+                let Localˉfields: u32 = Bytesˉreadˉu32ˉlittle(
+                    Layout.Itemˉevidence, Offset + 12u32
+                );
+                if Localˉfirst > Layout.Fields ||
+                    Localˉfields > Layout.Fields - Localˉfirst {
+                    return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+                        Input,
+                        Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,
+                        Layout.Genericˉstatus, Layout.Symbolˉstatus,
+                        Firstˉtype, Catalog, Instance
+                    );
+                }
+                Caseˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                        Caseˉevidence,
+                        Bytesˉreadˉu32ˉlittle(Layout.Itemˉevidence, Offset)
+                    );
+                Caseˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                        Caseˉevidence,
+                        Bytesˉreadˉu32ˉlittle(
+                            Layout.Itemˉevidence, Offset + 4u32
+                        )
+                    );
+                Caseˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                        Caseˉevidence, Firstˉfield + Localˉfirst
+                    );
+                Caseˉevidence =
+                    Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                        Caseˉevidence, Localˉfields
+                    );
+                Case = Case + 1u32;
+            }
+            Cases = Cases + Layout.Items;
+        }
+        var Field: u32 = 0u32;
+        while Field < Layout.Fields {
+            let Fieldˉoffset: u32 = Field * 16u32;
+            let Inputˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                Layout.Fieldˉevidence, Fieldˉoffset + 8u32
+            );
+            let Outputˉshape: u32 =
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
+                    Catalog, Firstˉtype, Instance, Inputˉshape
+                );
+            if Inputˉshape >= 2147483648u32 && Outputˉshape == 0u32 {
+                return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+                    Input,
+                    Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,
+                    Layout.Genericˉstatus, Layout.Symbolˉstatus,
+                    Firstˉtype, Catalog, Instance
+                );
+            }
+            Fieldˉevidence =
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                    Fieldˉevidence,
+                    Bytesˉreadˉu32ˉlittle(
+                        Layout.Fieldˉevidence, Fieldˉoffset
+                    )
+                );
+            Fieldˉevidence =
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                    Fieldˉevidence,
+                    Bytesˉreadˉu32ˉlittle(
+                        Layout.Fieldˉevidence, Fieldˉoffset + 4u32
+                    )
+                );
+            Fieldˉevidence =
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                    Fieldˉevidence, Outputˉshape
+                );
+            Fieldˉevidence =
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
+                    Fieldˉevidence,
+                    Bytesˉreadˉu32ˉlittle(
+                        Layout.Fieldˉevidence, Fieldˉoffset + 12u32
+                    )
+                );
+            Field = Field + 1u32;
+        }
+        Fields = Fields + Layout.Fields;
+        Instance = Instance + 1u32;
+    }
+    return Compilerˉsourceˉgenericˉtypeˉmaterialization(
+        Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid,
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+        Firstˉtype, Instances, Records, Variants, Cases, Fields,
+        Entryˉevidence, Caseˉevidence, Fieldˉevidence,
+        Catalog.Status, Catalog.Evidence, Instances
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉbytesˉequal(
+    Left: bytes,
+    Right: bytes
+) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    return Sourceˉset.Compilerˉsourceˉspansˉequal(
+        Left, 0u32, Bytesˉlength(Left),
+        Right, 0u32, Bytesˉlength(Right)
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization
+) -> bool {
+    if Materialization.Status !=
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Materialization.Genericˉstatus !=
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Materialization.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return false;
+    }
+    let Expected: Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols,
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉcatalog(
+                Materialization
+            ),
+            Materialization.Firstˉtype
+        );
+    if Expected.Status !=
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Materialization.Instances != Expected.Instances ||
+        Materialization.Records != Expected.Records ||
+        Materialization.Variants != Expected.Variants ||
+        Materialization.Cases != Expected.Cases ||
+        Materialization.Fields != Expected.Fields ||
+        Materialization.Catalogˉstatus != Expected.Catalogˉstatus ||
+        Materialization.Failureˉinstance != Expected.Failureˉinstance {
+        return false;
+    }
+    return Compilerˉsourceˉgenericˉtypeˉmaterializationˉbytesˉequal(
+            Materialization.Entryˉevidence, Expected.Entryˉevidence
+        ) &&
+        Compilerˉsourceˉgenericˉtypeˉmaterializationˉbytesˉequal(
+            Materialization.Caseˉevidence, Expected.Caseˉevidence
+        ) &&
+        Compilerˉsourceˉgenericˉtypeˉmaterializationˉbytesˉequal(
+            Materialization.Fieldˉevidence, Expected.Fieldˉevidence
+        ) &&
+        Compilerˉsourceˉgenericˉtypeˉmaterializationˉbytesˉequal(
+            Materialization.Catalogˉevidence, Expected.Catalogˉevidence
+        );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+    Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Instance: u32
+) -> Compilerˉsourceˉgenericˉmaterializedˉtype {
+    if Materialization.Status !=
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Instance >= Materialization.Instances ||
+        Bytesˉlength(Materialization.Entryˉevidence) !=
+            Materialization.Instances * 36u32 {
+        return Compilerˉsourceˉgenericˉmaterializedˉtype(
+            false, 0u32, 0u32,
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+            0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Offset: u32 = Instance * 36u32;
+    return Compilerˉsourceˉgenericˉmaterializedˉtype(
+        true,
+        Bytesˉreadˉu32ˉlittle(Materialization.Entryˉevidence, Offset),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 4u32
+        ),
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(
+            Bytesˉreadˉu32ˉlittle(
+                Materialization.Entryˉevidence, Offset + 8u32
+            )
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 12u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 16u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 20u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 24u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 28u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Entryˉevidence, Offset + 32u32
+        )
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉcase(
+    Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Case: u32
+) -> Compilerˉsourceˉgenericˉmaterializedˉcase {
+    if Materialization.Status !=
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Case >= Materialization.Cases ||
+        Bytesˉlength(Materialization.Caseˉevidence) !=
+            Materialization.Cases * 16u32 {
+        return Compilerˉsourceˉgenericˉmaterializedˉcase(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Offset: u32 = Case * 16u32;
+    return Compilerˉsourceˉgenericˉmaterializedˉcase(
+        true,
+        Bytesˉreadˉu32ˉlittle(Materialization.Caseˉevidence, Offset),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Caseˉevidence, Offset + 4u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Caseˉevidence, Offset + 8u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Caseˉevidence, Offset + 12u32
+        )
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+    Materialization: Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Field: u32
+) -> Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield {
+    if Materialization.Status !=
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Field >= Materialization.Fields ||
+        Bytesˉlength(Materialization.Fieldˉevidence) !=
+            Materialization.Fields * 16u32 {
+        return Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield(
+            false, 0u32, 0u32, 0u32,
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End
+        );
+    }
+    let Offset: u32 = Field * 16u32;
+    return Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield(
+        true,
+        Bytesˉreadˉu32ˉlittle(Materialization.Fieldˉevidence, Offset),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Fieldˉevidence, Offset + 4u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Materialization.Fieldˉevidence, Offset + 8u32
+        ),
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(
+            Bytesˉreadˉu32ˉlittle(
+                Materialization.Fieldˉevidence, Offset + 12u32
+            )
+        )
+    );
+}

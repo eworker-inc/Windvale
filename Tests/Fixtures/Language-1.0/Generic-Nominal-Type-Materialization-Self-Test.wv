@@ -1,0 +1,428 @@
+module Languageˉoneˉgenericˉnominalˉtypeˉmaterializationˉselfˉtest profile portable;
+
+import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
+import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayout;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉgenericˉtypeˉmaterialization as Materialization;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉsymbolsˉone(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Sourceˉsymbolsˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Bytesˉconcat(Header, Directory), Sourceˉbytes);
+}
+
+fn Markerˉoffset(Source: bytes, Marker: text) -> u32 {
+    let Markerˉbytes: bytes = Textˉtoˉutf8(Marker);
+    let Sourceˉlength: u32 = Bytesˉlength(Source);
+    let Markerˉlength: u32 = Bytesˉlength(Markerˉbytes);
+    if Markerˉlength == 0u32 || Markerˉlength > Sourceˉlength {
+        return 4294967295u32;
+    }
+    var Offset: u32 = 0u32;
+    while Offset <= Sourceˉlength - Markerˉlength {
+        var Equal: bool = true;
+        var Index: u32 = 0u32;
+        while Index < Markerˉlength {
+            if Bytesˉreadˉu8(Source, Offset + Index) !=
+                Bytesˉreadˉu8(Markerˉbytes, Index) {
+                Equal = false;
+            }
+            Index = Index + 1u32;
+        }
+        if Equal { return Offset + Markerˉlength; }
+        Offset = Offset + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Bind(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Marker: text,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+        Input, Scan, Symbols, 0u32, Source,
+        Markerˉoffset(Source, Marker), 1u32, 1u32, Catalog
+    );
+}
+
+fn Bindingˉcatalog(
+    Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding
+) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+        Binding
+    );
+}
+
+fn Nameˉis(
+    Source: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    return Length == Bytesˉlength(Expectedˉbytes) &&
+        Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Source, Offset, Length,
+            Expectedˉbytes, 0u32, Bytesˉlength(Expectedˉbytes)
+        );
+}
+
+export fn Main() -> i32 {
+    var Source: text = "module Genericˉtypeˉmaterialization profile portable;\n";
+    Source = Textˉconcat(Source, "record Box<T> { Value: T; }\n");
+    Source = Textˉconcat(
+        Source,
+        "record Packet<T, E> { Value: T; Error: E; Ready: bool; }\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "variant Choice<T, E> { Empty; Left(Value: T); Right(Error: E); Both(Value: T, Error: E,); }\n"
+    );
+    Source = Textˉconcat(Source, "record Envelope<T> { Value: T; }\n");
+    Source = Textˉconcat(Source, "record Slot<T> { Value: T; }\n");
+    Source = Textˉconcat(Source, "fn Root() -> i32 { return 0; }\n");
+    Source = Textˉconcat(Source, "// useˉbox Box<i32>\n");
+    Source = Textˉconcat(
+        Source, "// useˉpacket Packet<Box<i32>, text>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉchoice Choice<Box<i32>, text>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉenvelope Envelope<Choice<Box<i32>, text>>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉbuilder Slot<builder<i32, 8u32>>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvariant Choice<Choice<i32, text>, text>\n"
+    );
+    let Input: bytes = Sourceˉsymbolsˉone(Source);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 1;
+    }
+
+    var Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    var Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Bind(Input, Scan, Symbols, View.Source, "useˉbox ", Catalog);
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉpacket ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉchoice ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉenvelope ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 4u32 {
+        return 2;
+    }
+
+    let Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Catalog, 10u32
+        );
+    if Plan.Status !=
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Plan.Firstˉtype != 10u32 || Plan.Instances != 4u32 ||
+        Plan.Records != 3u32 || Plan.Variants != 1u32 ||
+        Plan.Cases != 4u32 || Plan.Fields != 9u32 ||
+        Bytesˉlength(Plan.Entryˉevidence) != 144u32 ||
+        Bytesˉlength(Plan.Caseˉevidence) != 64u32 ||
+        Bytesˉlength(Plan.Fieldˉevidence) != 144u32 {
+        return 3;
+    }
+    if !Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+        Input, Scan, Symbols, Plan
+    ) {
+        return 4;
+    }
+    let Box: Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+            Plan, 0u32
+        );
+    if !Box.Found || Box.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
+        Box.Outputˉtype != 10u32 || Box.Cases != 0u32 ||
+        Box.Firstˉfield != 0u32 || Box.Fields != 1u32 {
+        return 5;
+    }
+    let Packet: Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+            Plan, 1u32
+        );
+    if !Packet.Found || Packet.Outputˉtype != 11u32 ||
+        Packet.Firstˉfield != 1u32 || Packet.Fields != 3u32 ||
+        Packet.Kind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(4u32) {
+        return 6;
+    }
+    let Choice: Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+            Plan, 2u32
+        );
+    if !Choice.Found || Choice.Outputˉtype != 12u32 ||
+        Choice.Firstˉcase != 0u32 || Choice.Cases != 4u32 ||
+        Choice.Firstˉfield != 4u32 || Choice.Fields != 4u32 ||
+        Choice.Kind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(8u32) {
+        return 7;
+    }
+    let Boxˉfield: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Plan, 0u32
+        );
+    if !Boxˉfield.Found || Boxˉfield.Shape != 1u32 ||
+        !Nameˉis(
+            View.Source, Boxˉfield.Nameˉoffset,
+            Boxˉfield.Nameˉlength, "Value"
+        ) {
+        return 8;
+    }
+    let Packetˉvalue:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Plan, 1u32
+        );
+    if Packetˉvalue.Shape != 65546u32 ||
+        Packetˉvalue.Nominalˉkind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(4u32) {
+        return 9;
+    }
+    let Envelope:
+        Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+            Plan, 3u32
+        );
+    let Envelopeˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Plan, 8u32
+        );
+    if !Envelope.Found || Envelope.Outputˉtype != 13u32 ||
+        Envelope.Firstˉfield != 8u32 || Envelope.Fields != 1u32 ||
+        Envelopeˉfield.Shape != 196620u32 ||
+        Envelopeˉfield.Nominalˉkind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(8u32) {
+        return 9;
+    }
+    let Empty: Materialization.Compilerˉsourceˉgenericˉmaterializedˉcase =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉcase(
+            Plan, 0u32
+        );
+    let Both: Materialization.Compilerˉsourceˉgenericˉmaterializedˉcase =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉcase(
+            Plan, 3u32
+        );
+    if !Empty.Found || Empty.Fields != 0u32 || Empty.Firstˉfield != 4u32 ||
+        !Both.Found || Both.Fields != 2u32 || Both.Firstˉfield != 6u32 ||
+        !Nameˉis(View.Source, Empty.Nameˉoffset, Empty.Nameˉlength, "Empty") ||
+        !Nameˉis(View.Source, Both.Nameˉoffset, Both.Nameˉlength, "Both") {
+        return 10;
+    }
+    let Bothˉerror: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Plan, 7u32
+        );
+    if Bothˉerror.Shape != 5u32 ||
+        !Nameˉis(
+            View.Source, Bothˉerror.Nameˉoffset,
+            Bothˉerror.Nameˉlength, "Error"
+        ) {
+        return 11;
+    }
+    let Missingˉtype:
+        Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+            Plan, 4u32
+        );
+    let Missingˉcase:
+        Materialization.Compilerˉsourceˉgenericˉmaterializedˉcase =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉcase(
+            Plan, 4u32
+        );
+    let Missingˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Plan, 9u32
+        );
+    if Missingˉtype.Found || Missingˉcase.Found || Missingˉfield.Found {
+        return 12;
+    }
+
+    let Tooˉmany: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Catalog, 1022u32
+        );
+    if Tooˉmany.Status !=
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Typeˉlimit {
+        return 13;
+    }
+    let Badˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Catalog.Evidence
+        );
+    let Invalidˉcatalogˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Badˉcatalog, 0u32
+        );
+    if Invalidˉcatalogˉplan.Status !=
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉevidence {
+        return 14;
+    }
+    let Replacedˉdeclaration: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Catalog.Evidence, 24u32, 4u32,
+            Bytesˉfromˉu32ˉlittle(4294967294u32)
+        );
+    let Missingˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Replacedˉdeclaration.Value
+        );
+    let Missingˉcatalogˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Missingˉcatalog, 0u32
+        );
+    if Missingˉcatalogˉplan.Status !=
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout {
+        return 15;
+    }
+
+    let Builderˉbinding:
+        Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding = Bind(
+            Input, Scan, Symbols, View.Source, "useˉbuilder ", Catalog
+        );
+    let Builderˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Bindingˉcatalog(Builderˉbinding), 0u32
+        );
+    if Builderˉplan.Status !=
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout ||
+        Builderˉplan.Failureˉinstance != 4u32 {
+        return 16;
+    }
+    let Variantˉbinding:
+        Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding = Bind(
+            Input, Scan, Symbols, View.Source, "useˉvariant ", Catalog
+        );
+    let Variantˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Bindingˉcatalog(Variantˉbinding), 0u32
+        );
+    if Variantˉplan.Status !=
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout ||
+        Variantˉplan.Failureˉinstance != 5u32 {
+        return 17;
+    }
+
+    let Badˉentry: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Plan.Entryˉevidence, 4u32, 4u32,
+            Bytesˉfromˉu32ˉlittle(99u32)
+        );
+    let Tamperedˉentry:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization(
+            Plan.Status, Plan.Genericˉstatus, Plan.Symbolˉstatus,
+            Plan.Firstˉtype, Plan.Instances, Plan.Records, Plan.Variants,
+            Plan.Cases, Plan.Fields, Badˉentry.Value,
+            Plan.Caseˉevidence, Plan.Fieldˉevidence,
+            Plan.Catalogˉstatus, Plan.Catalogˉevidence,
+            Plan.Failureˉinstance
+        );
+    let Tamperedˉfailure:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization(
+            Plan.Status, Plan.Genericˉstatus, Plan.Symbolˉstatus,
+            Plan.Firstˉtype, Plan.Instances, Plan.Records, Plan.Variants,
+            Plan.Cases, Plan.Fields, Plan.Entryˉevidence,
+            Plan.Caseˉevidence, Plan.Fieldˉevidence,
+            Plan.Catalogˉstatus, Plan.Catalogˉevidence, 0u32
+        );
+    if Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+            Input, Scan, Symbols, Tamperedˉentry
+        ) ||
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+            Input, Scan, Symbols, Tamperedˉfailure
+        ) {
+        return 18;
+    }
+    let Badˉfield: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Plan.Fieldˉevidence, 8u32, 4u32,
+            Bytesˉfromˉu32ˉlittle(2u32)
+        );
+    let Tamperedˉfield:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization(
+            Plan.Status, Plan.Genericˉstatus, Plan.Symbolˉstatus,
+            Plan.Firstˉtype, Plan.Instances, Plan.Records, Plan.Variants,
+            Plan.Cases, Plan.Fields, Plan.Entryˉevidence,
+            Plan.Caseˉevidence, Badˉfield.Value,
+            Plan.Catalogˉstatus, Plan.Catalogˉevidence,
+            Plan.Failureˉinstance
+        );
+    if Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+            Input, Scan, Symbols, Tamperedˉfield
+        ) {
+        return 19;
+    }
+
+    let Emptyˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            7u32
+        );
+    if Emptyˉplan.Status !=
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Emptyˉplan.Instances != 0u32 || Emptyˉplan.Firstˉtype != 7u32 ||
+        !Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+            Input, Scan, Symbols, Emptyˉplan
+        ) {
+        return 20;
+    }
+    return 42;
+}

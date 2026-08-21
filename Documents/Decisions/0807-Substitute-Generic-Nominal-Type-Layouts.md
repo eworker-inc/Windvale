@@ -56,10 +56,11 @@ proves that `Slot<builder<i32, 8u32>>` is rejected only after substitution and
 that `Choice<Choice<i32, text>, text>` parses adjacent closers but rejects its
 nested variant payload.
 
-The fixture builds to a 684,418-byte WVB with SHA-256
-`a7931ec390183afca80e9afce82d5a60f0def72e759d21ce43cb625c468f885b`.
-Its 16,856,576-byte hosted Windows executable has SHA-256
-`6eb11c48c39aee20b7356df0cd8c272b2ded21de396c3b3718a26db6e89d9cba`,
+After Decision 0808 adds compact sequential evidence, the fixture builds to a
+688,672-byte WVB with SHA-256
+`55fe9cf4744cfe26f42900c85ad8eed9f6e0940cd7d6b533b7a6a94295c042b1`.
+Its 16,976,896-byte hosted Windows executable has SHA-256
+`f28acda8fb1dc64da27e7e08d191ab637600e23c2e69505ee89aed40cc374f5c`,
 returns `42`, and writes no output. The maintained owner reports visible build,
 package, and execute phases and passes all 18 declared cases.
 

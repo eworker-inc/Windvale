@@ -14,8 +14,10 @@ declarations, validates their ordered parameter namespaces and structurally
 unresolved field uses, and rejects a bare template where a concrete type is
 required. The focused binding phase resolves uses such as
 `Choice<Box<i32>, text>`, admits inner WVGT identities before parents, and
-returns the exact replacement catalog. The main Source WIR and WVB paths do not
-yet consume that result, substitute fields and cases, or emit reachable concrete
+returns the exact replacement catalog. The generic layout and materialization
+phases now substitute fields and cases, assign ordinary output type indices,
+and replace private WVGT references in one bounded dependency-order plan. The
+main Source WIR and WVB paths do not yet consume that plan or emit its concrete
 types. The existing private Foundation `Option` and `Result` shapes remain
 unchanged until that integration deliberately migrates them.
 
@@ -116,6 +118,28 @@ an equal instance before checking new-instance count or growth. A new entry is
 appended only after its derived depth, retained bytes, and aggregate estimate
 fit every bound.
 
+## Materialization plan
+
+The materialization phase consumes exact Source Set, Source Symbols, and WVGT
+evidence. It creates each concrete layout once in catalog order and assigns
+instance `i` the ordinary Types index `First-type + i`. The complete range must
+fit the existing 1,024-type compiler bound.
+
+Each type entry is 36 bytes: private WVGT shape, ordinary output Types index,
+declaration kind, declaration identity, module identity, first case, case
+count, first field, and field count. Each case entry is 16 bytes: source name
+offset, source name length, first global field, and field count. Each field
+entry is 16 bytes: source name offset, source name length, output shape, and
+nominal declaration kind.
+
+An earlier private record reference becomes shape `65536 + output-index`; an
+earlier private variant reference becomes shape `196608 + output-index`.
+Validation rejects a forward, missing, or wrong-kind private reference, and no
+private shape survives valid materialized field evidence. Each evidence stream
+is at most 4 MiB; all three streams plus the retained catalog are at most
+16 MiB. Capacity is checked before concatenation, and a failed plan publishes
+empty derived evidence plus the first failing instance rather than a prefix.
+
 ## Integration contract and progress
 
 The connected source integration preserves these boundaries:
@@ -128,10 +152,11 @@ The connected source integration preserves these boundaries:
 3. **Implemented for direct parameters:** substitute WVGT arguments while
    validating record fields and variant cases, including concrete builder,
    capability, and nested-variant restrictions after substitution;
-4. carry private shapes only through validated compiler artifacts that bind the
-   exact WVGT evidence;
-5. materialize reachable instances as ordinary monomorphic WVB types in
-   canonical dependency order; and
+4. **Implemented:** carry private shapes only through validated compiler
+   artifacts that bind exact WVGT evidence, then replace them with assigned
+   ordinary shapes in one canonical materialization plan;
+5. consume that plan from reachable WIR and emit ordinary monomorphic WVB types
+   in canonical dependency order; and
 6. reject an unused template only when a boundary requires a concrete value,
    while keeping uninstantiated source templates out of runtime artifacts.
 
@@ -188,11 +213,27 @@ record storage and nested variant payloads. The nested rejection also exercises
 adjacent type closers in `Choice<Choice<i32, text>, text>` while preserving
 expression `>>` as a distinct lexer token.
 
-Its 684,418-byte WVB has SHA-256
-`a7931ec390183afca80e9afce82d5a60f0def72e759d21ce43cb625c468f885b`.
-The five-fragment 16,856,576-byte hosted Windows executable has SHA-256
-`6eb11c48c39aee20b7356df0cd8c272b2ded21de396c3b3718a26db6e89d9cba`,
+Its 688,672-byte WVB has SHA-256
+`55fe9cf4744cfe26f42900c85ad8eed9f6e0940cd7d6b533b7a6a94295c042b1`.
+The five-fragment 16,976,896-byte hosted Windows executable has SHA-256
+`f28acda8fb1dc64da27e7e08d191ab637600e23c2e69505ee89aed40cc374f5c`,
 returns `42`, and writes no output. The independent
 `generic-nominal-type-layout` owner reproduces the build, package, and execution
-boundary through content-keyed caches. Nested template field substitution,
-WIR carriage, and WVB materialization remain later connected checkpoints.
+boundary through content-keyed caches.
+
+`Generic-Nominal-Type-Materialization-Self-Test.wv` adds 20 focused assertions
+over four dependency-ordered record and variant instances. It verifies assigned
+ordinary type indices, fixed-width type/case/field ranges, record and variant
+private-shape replacement, missing indices, an empty plan, the type limit,
+invalid or missing catalog declarations, builder and nested-variant
+rejection, and tampered-evidence reconstruction.
+
+Its 707,484-byte WVB has SHA-256
+`0f91eb3d873f9dd9f5a68d53956b7be6f0ac7f62c70056241e99ea49ab47fe64`.
+The five-fragment 17,346,560-byte hosted Windows executable has SHA-256
+`1989251b54de71bb6b7e69141e61529dd882a218bfd3892107ce4c6ff6f1e275`,
+returns `42`, and writes no output. The independent
+`generic-nominal-type-materialization` owner reproduces this boundary through
+content-keyed caches. Nested template field substitution, main WIR carriage,
+WVB Types emission, and Foundation migration remain later connected
+checkpoints.

@@ -166,6 +166,8 @@ export fn Main() -> i32 {
         Box.Symbolˉstatus !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
         Box.Items != 1u32 || Box.Fields != 1u32 ||
+        Bytesˉlength(Box.Itemˉevidence) != 0u32 ||
+        Bytesˉlength(Box.Fieldˉevidence) != 16u32 ||
         !Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
             Input, Scan, Symbols, Box
         ) {
@@ -189,6 +191,8 @@ export fn Main() -> i32 {
             Input, Scan, Symbols, Catalog, 1u32
         );
     if Packet.Items != 3u32 || Packet.Fields != 3u32 ||
+        Bytesˉlength(Packet.Itemˉevidence) != 0u32 ||
+        Bytesˉlength(Packet.Fieldˉevidence) != 48u32 ||
         Packet.Shape !=
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(1u32) {
         return 5;
@@ -221,6 +225,8 @@ export fn Main() -> i32 {
             Input, Scan, Symbols, Catalog, 2u32
         );
     if Choice.Items != 4u32 || Choice.Fields != 4u32 ||
+        Bytesˉlength(Choice.Itemˉevidence) != 64u32 ||
+        Bytesˉlength(Choice.Fieldˉevidence) != 64u32 ||
         Choice.Symbolˉstatus !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
         return 7;
@@ -346,7 +352,9 @@ export fn Main() -> i32 {
             Packet.Genericˉstatus, Packet.Symbolˉstatus,
             Packet.Instance, Packet.Shape, Packet.Kind,
             Packet.Declaration, Packet.Module, Packet.Items,
-            Packet.Fields + 1u32, Packet.Catalogˉstatus,
+            Packet.Fields + 1u32,
+            Packet.Itemˉevidence, Packet.Fieldˉevidence,
+            Packet.Catalogˉstatus,
             Packet.Catalogˉevidence, Packet.Failureˉoffset,
             Packet.Failureˉline, Packet.Failureˉcolumn
         );
