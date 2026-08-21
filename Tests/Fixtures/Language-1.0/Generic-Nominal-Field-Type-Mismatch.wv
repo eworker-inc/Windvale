@@ -1,0 +1,10 @@
+module Languageˉoneˉgenericˉnominalˉfieldˉtypeˉmismatch profile portable;
+
+record Box<T> {
+    Value: T;
+}
+
+export fn Main() -> i32 {
+    let Invalid: Box<i32> = Box<i32> { Value: true };
+    return 42;
+}

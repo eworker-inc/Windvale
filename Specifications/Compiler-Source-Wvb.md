@@ -327,8 +327,12 @@ operation identities. Public reachability analysis constructs the same evidence
 instead of using template-bearing source indices. `Box<Point>` produces a
 concrete private `__WvY0000` record whose field targets the compacted `Point`
 entry; the source `Box<T>` template is absent. This proves deterministic main
-WVB metadata and target translation. General generic record construction and
-field access in source bodies remain a later connected execution checkpoint.
+WVB metadata and target translation. A `Recordˉcreate = 17` or
+`Recordˉfield = 18` operation whose validated target is a private WVGT shape is
+translated through that same materialization entry to the ordinary WVB Types
+index. Result and operand shapes use the existing shape planner. The WVB
+operation is therefore indistinguishable from an ordinary monomorphic record
+construction or read, and no private shape or runtime generic lookup survives.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 

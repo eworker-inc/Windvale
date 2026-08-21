@@ -1510,6 +1510,15 @@ fn Compilerˉsourceˉwvbˉplannedˉnominalˉtarget(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> u32 {
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Target) {
+        let Entry: u32 = Compilerˉsourceˉwvbˉgenericˉnominalˉentry(
+            Target, Orders
+        );
+        if Entry == 4294967295u32 { return Entry; }
+        return Bytesˉreadˉu32ˉlittle(
+            Orders.Genericˉnominalˉentries, Entry + 4u32
+        );
+    }
     if Target < Symbols.Records {
         return Bytesˉreadˉu32ˉlittle(
             Orders.Recordˉtargets, Target * 4u32

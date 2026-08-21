@@ -712,7 +712,7 @@ Literal ::= Integerˉliteral | Floatˉliteral | Runeˉliteral
 
 Arrayˉliteral ::= "[" [ Expression { "," Expression } [ "," ] ] "]"
 
-Nominalˉconstruction ::= Qualifiedˉsourceˉname
+Nominalˉconstruction ::= Qualifiedˉsourceˉname [ Typeˉarguments ]
                          "{" Fieldˉvalue { "," Fieldˉvalue } [ "," ] "}"
 Fieldˉvalue ::= Identifier ":" Expression
 Recordˉupdate ::= Qualifiedˉsourceˉname "base" Expression
@@ -730,6 +730,11 @@ Name resolution distinguishes record construction from variant-case construction
 and distinguishes an enum member, no-data variant case, function, module alias,
 and value. A qualified name without braces is parsed through identifier plus
 postfix field segments. Grammar shape does not provide overloading.
+
+Type arguments without `::` are admitted here only because the following `{`
+fixes the complete construct as nominal construction. Thus `Box<Point> { ... }`
+is valid, `Box::<Point> { ... }` is invalid, and the generic-function rule still
+requires `Name::<Point>(...)` rather than `Name<Point>(...)`.
 
 ### Closures
 

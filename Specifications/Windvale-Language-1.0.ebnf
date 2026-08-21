@@ -233,7 +233,7 @@ Primaryˉexpression = Literal | "true" | "false" | "()" | Identifier
 Literal = Integerˉliteral | Floatˉliteral | Runeˉliteral | Textˉliteral
         | Byteˉliteral | Multilineˉtext | Multilineˉbytes | Rawˉtext | Rawˉbytes ;
 Arrayˉliteral = "[", [ Expression, { ",", Expression }, [ "," ] ], "]" ;
-Nominalˉconstruction = Qualifiedˉsourceˉname, "{",
+Nominalˉconstruction = Qualifiedˉsourceˉname, [ Typeˉarguments ], "{",
                        Fieldˉvalue, { ",", Fieldˉvalue }, [ "," ], "}" ;
 Fieldˉvalue = Identifier, ":", Expression ;
 Recordˉupdate = Qualifiedˉsourceˉname, "base", Expression, "{",

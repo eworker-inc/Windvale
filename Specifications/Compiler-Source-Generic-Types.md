@@ -24,6 +24,9 @@ paired WVIR evidence. Main Source WVB consumes that catalog, materializes every
 retained instance, omits source templates from the WVB Types table, remaps
 ordinary and private nominal identities, and emits the concrete entries before
 the existing private Foundation `Option` and `Result` specialization suffix.
+Applied record construction and field access consume those same substituted
+layouts in source bodies and lower through the ordinary monomorphic WIR/WVB
+record operations.
 
 The current constant-argument connection accepts one exact suffixed
 fixed-integer token of the declared shape. Evaluation of the broader frozen
@@ -170,7 +173,11 @@ The connected source integration preserves these boundaries:
 5. **Implemented:** serialize the plan through the main Source WVB entry point as
    ordinary monomorphic Types entries, omit templates, and remap function,
    field, temporary, and nominal-operation targets through one canonical plan;
-6. reject an unused template only when a boundary requires a concrete value,
+6. **Implemented for records:** parse an explicit applied construction target,
+   validate its complete substituted layout, lower construction and chained
+   field reads through operations `17` and `18`, and map their private targets
+   to the materialized ordinary WVB type;
+7. reject an unused template only when a boundary requires a concrete value,
    while keeping uninstantiated source templates out of runtime artifacts.
 
 The catalog does not define runtime type discovery, erased generics, dynamic
@@ -246,15 +253,19 @@ Its current 734,722-byte WVB has SHA-256
 It returns `42` and writes no output. The independent
 `generic-nominal-type-materialization` owner reproduces this boundary through
 content-keyed caches. Main Source WIR carriage, WVB insertion, template elision,
-and nominal target remapping are connected. Nested template field substitution
-in generic-function contexts, runtime generic construction/field use, and
-Foundation migration remain later checkpoints.
+nominal target remapping, and runtime generic-record construction/field use are
+connected. Nested template field substitution in generic-function contexts,
+generic variants, and Foundation migration remain later checkpoints.
 
-`Generic-Nominal-Main-Pipeline.wv` now covers the complete analysis-to-WVB
-metadata path. Its 20-case inspector requires exact 272-byte WVSS, 104-byte
-WVCA, 208-byte WVLB 1.3, 368-byte WVIR 1.3, and 252-byte WVB 1.11 products. It
-materializes `Box<Point>` while the colliding ordinary source and generic output
-targets are both one. WVB retains concrete `Point` at index zero, emits
-`__WvY0000 { Value: Point }` at index one, and contains no `Box` template. The
-compiler-aligned verifier accepts it and the runner returns `42`; no private
-shape enters WVB.
+`Generic-Nominal-Main-Pipeline.wv` now covers the complete executable
+analysis-to-WVB path. Its 20-case inspector requires exact 377-byte WVSS,
+104-byte WVCA, 244-byte WVLB 1.3, 640-byte WVIR 1.3, and 441-byte WVB 1.11
+products. It constructs `Box<Point>`, passes it through an exact generic-record
+function boundary, and reads `Wrapped.Value.X`. The colliding ordinary source
+and generic output targets are both one. WVB retains concrete `Point` at index
+zero, emits `__WvY0000 { Value: Point }` at index one, and contains no `Box`
+template. The compiler-aligned verifier accepts it and the runner returns `42`;
+no private shape enters WVB. Four companion fixtures prove deterministic
+missing, duplicate, mismatched, and unknown-field rejection without publishing
+partial analysis artifacts; each writes its one exact diagnostic to standard
+error and no standard output.

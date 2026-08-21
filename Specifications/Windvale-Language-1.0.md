@@ -511,6 +511,15 @@ layout within source semantics. Construction is named-only, supplies every field
 exactly once, evaluates field expressions from left to right as written, and
 places values into declaration order after successful evaluation.
 
+A generic record construction names its complete concrete type before the field
+list, for example `Box<Point> { Value: Point { X: 42 } }`. The braces make the
+type application unambiguous: `<...>` is part of the nominal construction target,
+not a relational expression or generic-function call. Every generic argument is
+explicit and the resulting concrete record obeys the same exact field,
+evaluation-order, ownership, and failure rules as a non-generic record. The
+runtime value is monomorphic; source templates and private compiler identities
+are not observable values.
+
 A record update evaluates its base exactly once and then replacement expressions
 from left to right. It must name each replacement once and preserves every
 unreplaced field. Update cannot silently initialize a field added by a later

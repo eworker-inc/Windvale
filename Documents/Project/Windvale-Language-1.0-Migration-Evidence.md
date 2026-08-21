@@ -1298,3 +1298,67 @@ enum/variant `match` now complete Slice 2's planned control-value compiler
 surface over the same architecture. Seed stays on that architecture until its
 named removal checkpoint; final paired-host and broad qualification evidence is
 deferred to the seven-slice integration gate.
+
+## Slice 4 executable generic record checkpoint
+
+Decision 0815 connects applied generic record values to ordinary body lowering.
+The source spelling is `Box<Point> { Value: ... }`; its following brace makes the
+type application unambiguous without weakening the `Name::<T>(...)` rule for
+explicit generic-function calls. Typed analysis admits the full application
+through WVGT, reconstructs its substituted record layout, and reuses WIR
+operations `17` and `18` for construction and field reads. Main WVB maps those
+private operation targets through the existing materialization plan, so runtime
+and native execution see only ordinary monomorphic record operations.
+
+The frozen grammar had accepted generic record declarations but omitted an
+applied construction production. The named 3,822-byte amendment manifest at
+SHA-256
+`57cd5ccb710ca504b55644194cfa20a576bc0fd8ebd33247ef232c30d0d84162`
+preserves the original freeze manifest and binds the corrected 251-input
+effective source identity at SHA-256
+`16cd7aeddb876d58f63c2ebf14016e74f19c2e3b2ff25e36c09e671837faaec7`.
+
+The active split route builds a 1,032,689-byte analyzer WVB with 505 functions
+and 844,526 code bytes at SHA-256
+`41b3a9c71dde657168929a1ba860e98c0b5fa27408d0f71add741d6fb49b94e5`.
+Its 32,928,256-byte Windows application has SHA-256
+`0e706c345152b10e24d436e82e23a1950a9a0897988e4bd434fa24eecc1e9a2b`.
+The connected emitter contains 531 functions and 805,158 code bytes in a
+972,044-byte WVB at SHA-256
+`8e1a28be1cd492f42ca77df720f67d4b699407b3ad6482ebba4773a999d78140`.
+
+The strengthened `Generic-Nominal-Main-Pipeline.wv` constructs a nested
+`Box<Point>`, passes it through an exact `Box<Point>` identity function, and
+returns `Wrapped.Value.X`. Analysis publishes exact 377-byte WVSS, 104-byte
+WVCA, 244-byte WVLB 1.3, and 640-byte WVIR 1.3 artifacts. Emission publishes a
+441-byte WVB 1.11 at SHA-256
+`71c8e08b2a736ebbc2042f4188c8ed813091dfd72ced93226f5467bd507e73ed`.
+The compiler-aligned verifier accepts it and execution reports `Result: 42`.
+The 20-case inspector proves both nominal Types entries plus the ordinary
+construction, private construction, call, private field read, and nested
+ordinary field read.
+
+Four companion fixtures reject a missing field, duplicate field, mismatched
+field type, and unknown field with their exact one-line standard-error WIR
+status, no standard output, and no partial WVSS/WVCA/WVLB/WVIR publication. The Language 1.0 owner therefore
+expands its generic nominal pipeline from 22 to 26 cases and its complete
+inventory from 182 to 186. The changed generic-WIR fixture builds
+deterministically to 1,187,360 bytes at SHA-256
+`f4ac7f82d79072bdc83c450d8ae4f9cab89550cf39efde2f7e96b56686b9eccd`.
+The older fixed native front-door verifier silently exhausts its execution
+budget on that compiler-scale module. The owner now checks its exact bytes in
+phase 4 and performs the one semantic verification with the current source-built
+native verifier in phase 5; that verifier accepts the module as
+compiler-aligned. This keeps the recovery-era front door immutable and removes
+a redundant known-undersized verification attempt.
+
+This is current-Windows development evidence. It does not claim paired-host
+qualification. Generic variants, template-dependent generic-function bodies,
+and remaining Foundation-special planning are still open Slice 4 work.
+
+The final coordinated Language 1.0 owner passes its complete 186-case inventory
+in 660,130 milliseconds, or 660,650 milliseconds including coordinator
+overhead. The run includes all eleven named phases and the current-native
+generic-WIR verification. Broad storage, OS, paired-host, and Qualification
+owners remain intentionally deferred because this checkpoint changes none of
+their contracts.

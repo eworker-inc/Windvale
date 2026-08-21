@@ -13,5 +13,8 @@ fn Identity(Value: Box<Point>) -> Box<Point> {
 }
 
 export fn Main() -> i32 {
-    return 42;
+    let Wrapped: Box<Point> = Identity(Box<Point> {
+        Value: Point { X: 42 },
+    });
+    return Wrapped.Value.X;
 }

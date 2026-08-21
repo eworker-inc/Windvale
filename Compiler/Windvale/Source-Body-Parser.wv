@@ -52,6 +52,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     If = 16;
     Match = 17;
     Explicitˉgenericˉcall = 18;
+    Genericˉnamedˉrecord = 19;
 }
 
 export record Compilerˉsourceˉposition {
@@ -1451,6 +1452,37 @@ export fn Compilerˉbodyˉparseˉprimary(
             Baseˉvalue.Nodes, Baseˉvalue.Depth,
             Line, Column
         );
+    }
+    if Postfix.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        let Appliedˉtype: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉtype(
+                Input, Name.Offset, Line, Column, false, false
+            );
+        if Appliedˉtype.Status ==
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            let Appliedˉfieldsˉleft: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Compilerˉbodyˉtoken(
+                    Input, Appliedˉtype.Nextˉoffset,
+                    Appliedˉtype.Nextˉline, Appliedˉtype.Nextˉcolumn,
+                    Endˉoffset
+                );
+            if Appliedˉfieldsˉleft.Kind ==
+                    Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
+                if Nesting >= 64u32 {
+                    return Compilerˉbodyˉexpressionˉfailure(
+                        Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
+                        Appliedˉfieldsˉleft,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+                    );
+                }
+                return Compilerˉbodyˉparseˉrecordˉfields(
+                    Input, Endˉoffset, Nesting, Name, Appliedˉfieldsˉleft,
+                    Compilerˉsourceˉexpressionˉkind.Genericˉnamedˉrecord,
+                    Name.Offset, 0u32, 0u32, 0u32,
+                    Line, Column
+                );
+            }
+        }
     }
     if Postfix.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace {
         let Firstˉfield: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(

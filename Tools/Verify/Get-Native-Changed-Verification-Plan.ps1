@@ -975,6 +975,7 @@ function Test-LanguageFrozenSourceDesignPath {
         'Documents/Project/Windvale-Language-1.0-Paper-Corpus.md',
         'Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md',
         'Documents/Project/Windvale-Language-1.0-Localization-Workloads.md',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0815-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
     )
@@ -1570,6 +1571,7 @@ foreach ($Path in $Paths) {
         '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0815-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',
