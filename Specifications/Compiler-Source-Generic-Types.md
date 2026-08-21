@@ -8,13 +8,15 @@ evidence: it lets symbol binding, typed WIR, and WVB emission refer to one
 monomorphic type identity without packing arbitrary nested arguments into a
 `u32` or adding runtime generics.
 
-This checkpoint implements and executes the catalog itself. It does not yet
-claim that general generic record or variant source uses bind, lower, or emit.
-Those connections must consume this evidence, validate each declaration and
-ordered argument against WVSD and source, substitute fields exactly, and emit
-only reachable concrete types. The existing private Foundation `Option` and
-`Result` shapes remain unchanged until that integration deliberately migrates
-them.
+The catalog and the first source connection are implemented and executed.
+Source Symbols now recognizes generic record/variant declarations, validates
+their ordered parameter namespaces and structurally unresolved field uses, and
+rejects a bare template where a concrete type is required. General full-arity
+generic nominal use still does not bind, lower, or emit. That connection must
+consume WVGT, validate every ordered argument against WVSD and source,
+substitute fields exactly, and emit only reachable concrete types. The existing
+private Foundation `Option` and `Result` shapes remain unchanged until that
+integration deliberately migrates them.
 
 Every integer is unsigned little-endian. Lengths are exact. A catalog is
 immutable evidence: admission returns a replacement value and never publishes
@@ -112,8 +114,8 @@ fit every bound.
 
 The remaining source integration must preserve these boundaries:
 
-1. parse every generic nominal parameter in declaration order and retain the
-   template without assigning it an ordinary concrete shape;
+1. retain every already-validated generic nominal parameter in declaration
+   order without assigning the template an ordinary concrete shape;
 2. resolve a full-arity type use recursively, admitting inner concrete types
    before outer types;
 3. substitute WVGT arguments while validating record fields and variant cases;
@@ -141,3 +143,16 @@ Its 681,472-byte hosted Windows executable has SHA-256
 `b6bf5abea06bf9ab2d6fc081742dc4c6812d0a3b80d149cb5bf733443ad7c924`
 and returns `42` without output. Paired-host evidence is owned by the maintained
 Language 1.0 verifier rather than claimed from this Windows implementation run.
+
+`Generic-Nominal-Declaration-Self-Test.wv` adds 12 Source Symbols assertions:
+generic records, variants, and phantom parameters; duplicate and
+kind-mismatched parameters; rejected type-parameter application, builder
+storage, and bare templates; ordinary nominal regression; and edition-1 WVSS 2
+imports of the exact
+Foundation `Option` and `Result` declarations. Its 604,172-byte WVB has SHA-256
+`fa056f720caa741d3b3312e97ccd0b5dfce46559c07871f0e99eca229e06ca85`.
+The four-fragment 15,083,520-byte hosted Windows executable has SHA-256
+`c8e87418ca758bab33f9f16ff93d36f74f1a8f2e5cb962a6bc56c1c29ab4d83a`,
+returns `42`, and writes no output. The independent
+`generic-nominal-declarations` owner reproduces this focused evidence through
+content-keyed compiler and hosted-application caches.

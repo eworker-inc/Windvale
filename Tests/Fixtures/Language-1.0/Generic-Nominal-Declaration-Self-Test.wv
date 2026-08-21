@@ -1,0 +1,109 @@
+module Languageˉoneˉgenericˉnominalˉdeclarationˉselfˉtest profile portable;
+
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉsymbolsˉone(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Sourceˉsymbolsˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Bytesˉconcat(Header, Directory), Sourceˉbytes);
+}
+
+fn Sourceˉsymbolsˉtwoˉeditionˉone(First: text, Second: text) -> bytes {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Firstˉoffset: u32 = 56u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(Firstˉbytes);
+    var Header: bytes = Sourceˉsymbolsˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(2u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(2u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(40u32));
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(Firstˉoffset);
+    Directory = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Firstˉbytes))
+    );
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(12u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Secondˉoffset));
+    Directory = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Secondˉbytes))
+    );
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(12u32));
+    var Result: bytes = Bytesˉconcat(Header, Directory);
+    Result = Bytesˉconcat(Result, Firstˉbytes);
+    return Bytesˉconcat(Result, Secondˉbytes);
+}
+
+fn Status(Source: text) -> Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus {
+    let Summary: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
+            Sourceˉsymbolsˉone(Source)
+        );
+    return Summary.Status;
+}
+
+fn Twoˉeditionˉoneˉstatus(
+    First: text,
+    Second: text
+) -> Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus {
+    let Summary: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
+            Sourceˉsymbolsˉtwoˉeditionˉone(First, Second)
+        );
+    return Summary.Status;
+}
+
+export fn Main() -> i32 {
+    if Status(
+        "module Genericˉrecord profile portable; record Box<T> { Value: T; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 1; }
+    if Status(
+        "module Genericˉvariant profile portable; variant Choice<T, E> { Left(Value: T); Right(Error: E); }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 2; }
+    if Status(
+        "module Genericˉphantom profile portable; record Marker<T> { Value: i32; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 3; }
+    if Status(
+        "module Genericˉduplicateˉrecord profile portable; record Pair<T, T> { Value: T; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter { return 4; }
+    if Status(
+        "module Genericˉduplicateˉvariant profile portable; variant Pair<T, const T: u32> { Value(Item: T); }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter { return 5; }
+    if Status(
+        "module Genericˉconstantˉasˉtype profile portable; record Buffer<const Maximum: u32> { Value: Maximum; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 6; }
+    if Status(
+        "module Genericˉparameterˉapplication profile portable; record Box<T> { Value: T<i32>; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 7; }
+    if Status(
+        "module Genericˉbuilderˉfield profile portable; record Buffer<T, const Maximum: u32> { Values: builder<T, Maximum>; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype { return 8; }
+    if Status(
+        "module Genericˉbare profile portable; record Box<T> { Value: T; } record Holder { Value: Box; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 9; }
+    if Status(
+        "module Genericˉordinary profile portable; record Box { Value: i32; } record Holder { Value: Box; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 10; }
+    if Twoˉeditionˉoneˉstatus(
+        "module Genericˉoptionˉroot;\nprofile core;\nplatform linux, windows, windvale;\nauthority application;\nimport Foundationˉoption as Option;\nexport fn Main() -> i32 { return 0; }",
+        "module Foundationˉoption;\nprofile core;\nplatform linux, windows, windvale;\nauthority library;\nexport variant Option<T> { Present(Value: T); Absent; }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 11; }
+    if Twoˉeditionˉoneˉstatus(
+        "module Genericˉresultˉroot;\nprofile core;\nplatform linux, windows, windvale;\nauthority application;\nimport Foundationˉresult as Result;\nexport fn Main() -> i32 { return 0; }",
+        "module Foundationˉresult;\nprofile core;\nplatform linux, windows, windvale;\nauthority library;\nexport variant Result<T, E> { Valid(Value: T); Failure(Error: E); }"
+    ) != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 12; }
+    return 42;
+}

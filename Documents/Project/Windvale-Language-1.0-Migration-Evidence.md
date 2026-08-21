@@ -620,6 +620,35 @@ materialization, and migration of the current Foundation special cases remain
 the next Slice 4 checkpoints. Heavy storage, OS, paired-host, and complete
 Qualification gates remain deferred to the final seven-slice integration gate.
 
+## Slice 4 generic nominal declaration ownership checkpoint
+
+Decision 0805 connects record and variant declarations to the existing bounded
+generic parameter descriptor. Source Symbols now validates unique ordered type
+and fixed-integer constant parameters for all three generic declaration kinds.
+Generic record fields and variant payloads can retain an unresolved declared
+type parameter. A constant in type position, a builder record field, and a bare
+generic nominal template reject before symbol evidence is published. Parameters
+nested inside collection or nominal type syntax remain owned by the subsequent
+recursive type-use binder. Phantom parameters remain valid and participate in
+the later WVGT identity.
+
+The exact edition-1 Foundation `Option<T>` and `Result<T, E>` declarations now
+pass the same parameter and payload validation rather than returning early from
+variant validation. Their existing specialized use shapes remain unchanged.
+General `Box<i32>` binding, recursive nested argument admission, field
+substitution, WIR carriage, and WVB type materialization remain subsequent
+connected checkpoints.
+
+The 12-assertion focused fixture builds to a 604,172-byte WVB with SHA-256
+`fa056f720caa741d3b3312e97ccd0b5dfce46559c07871f0e99eca229e06ca85`.
+Its four-fragment 15,083,520-byte hosted Windows executable has SHA-256
+`c8e87418ca758bab33f9f16ff93d36f74f1a8f2e5cb962a6bc56c1c29ab4d83a`,
+returns `42`, and writes no output. The new independently runnable
+`generic-nominal-declarations` owner reports visible build, package, and execute
+phases and reuses content-keyed project and hosted-application checkpoints.
+The broad Language 1, storage, OS, paired-host, and complete Qualification gates
+remain deferred to the final seven-slice integration gate.
+
 ## Slice 4 packed keyword dispatch checkpoint
 
 Decision 0799 replaces repeated text materialization and byte-by-byte comparison
@@ -817,7 +846,7 @@ and executes with result `42` through the current source-built runner.
 
 ## Focused verification owner
 
-The cross-host `language-1-front-door` owner reports 155 declared cases. Its
+The cross-host `language-1-front-door` owner reports 156 declared cases. Its
 bounded checkpoints recompute the frozen identities, compare two descriptor-test
 builds and execute them, build and execute the 39-assertion value-front-end test,
 construct the changed compiler through the shared segmented backend, and retain

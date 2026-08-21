@@ -1489,6 +1489,11 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
     )) {
         Add-Suite 'compiler-split-development'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
+        'Tests/Fixtures/Language-1.0/Generic-Nominal-Declaration-Self-Test.wv'
+    )) {
+        Add-Suite 'generic-nominal-declarations'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
