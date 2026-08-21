@@ -1,0 +1,381 @@
+module Languageˉoneˉgenericˉnominalˉtypeˉlayoutˉselfˉtest profile portable;
+
+import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
+import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayout;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉsymbolsˉone(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Sourceˉsymbolsˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Bytesˉconcat(Header, Directory), Sourceˉbytes);
+}
+
+fn Markerˉoffset(Source: bytes, Marker: text) -> u32 {
+    let Markerˉbytes: bytes = Textˉtoˉutf8(Marker);
+    let Sourceˉlength: u32 = Bytesˉlength(Source);
+    let Markerˉlength: u32 = Bytesˉlength(Markerˉbytes);
+    if Markerˉlength == 0u32 || Markerˉlength > Sourceˉlength {
+        return 4294967295u32;
+    }
+    var Offset: u32 = 0u32;
+    while Offset <= Sourceˉlength - Markerˉlength {
+        var Equal: bool = true;
+        var Index: u32 = 0u32;
+        while Index < Markerˉlength {
+            if Bytesˉreadˉu8(Source, Offset + Index) !=
+                Bytesˉreadˉu8(Markerˉbytes, Index) {
+                Equal = false;
+            }
+            Index = Index + 1u32;
+        }
+        if Equal { return Offset + Markerˉlength; }
+        Offset = Offset + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Bind(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Marker: text,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+        Input, Scan, Symbols, 0u32, Source,
+        Markerˉoffset(Source, Marker), 1u32, 1u32, Catalog
+    );
+}
+
+fn Bindingˉcatalog(
+    Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding
+) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+        Binding
+    );
+}
+
+fn Nameˉis(
+    Source: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    return Length == Bytesˉlength(Expectedˉbytes) &&
+        Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Source, Offset, Length,
+            Expectedˉbytes, 0u32, Bytesˉlength(Expectedˉbytes)
+        );
+}
+
+export fn Main() -> i32 {
+    var Source: text = "module Genericˉtypeˉlayout profile portable;\n";
+    Source = Textˉconcat(Source, "record Box<T> { Value: T; }\n");
+    Source = Textˉconcat(
+        Source,
+        "record Packet<T, E> { Value: T; Error: E; Ready: bool; }\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "variant Choice<T, E> { Empty; Left(Value: T); Right(Error: E); Both(Value: T, Error: E,); }\n"
+    );
+    Source = Textˉconcat(Source, "record Slot<T> { Value: T; }\n");
+    Source = Textˉconcat(
+        Source, "record ConstantBox<const Maximum: u32> { Value: i32; }\n"
+    );
+    Source = Textˉconcat(Source, "fn Root() -> i32 { return 0; }\n");
+    Source = Textˉconcat(Source, "// useˉbox Box<i32>\n");
+    Source = Textˉconcat(
+        Source, "// useˉpacket Packet<Box<i32>, text>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉchoice Choice<Box<i32>, text>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉbuilder Slot<builder<i32, 8u32>>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvariant Choice<Choice<i32, text>, text>\n"
+    );
+    let Input: bytes = Sourceˉsymbolsˉone(Source);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 1;
+    }
+
+    var Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    var Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Bind(Input, Scan, Symbols, View.Source, "useˉbox ", Catalog);
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉpacket ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉchoice ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉbuilder ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉvariant ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 6u32 {
+        return 2;
+    }
+
+    let Box: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 0u32
+        );
+    if Box.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Box.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Box.Items != 1u32 || Box.Fields != 1u32 ||
+        !Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Box
+        ) {
+        return 3;
+    }
+    let Boxˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Box, 0u32
+        );
+    if !Boxˉfield.Found || Boxˉfield.Shape != 1u32 ||
+        !Nameˉis(
+            View.Source, Boxˉfield.Nameˉoffset,
+            Boxˉfield.Nameˉlength, "Value"
+        ) {
+        return 4;
+    }
+
+    let Packet: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 1u32
+        );
+    if Packet.Items != 3u32 || Packet.Fields != 3u32 ||
+        Packet.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(1u32) {
+        return 5;
+    }
+    let Packetˉvalue:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Packet, 0u32
+        );
+    let Packetˉerror:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Packet, 1u32
+        );
+    let Packetˉready:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Packet, 2u32
+        );
+    if Packetˉvalue.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
+        Packetˉvalue.Nominalˉkind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(4u32) ||
+        Packetˉerror.Shape != 5u32 || Packetˉready.Shape != 4u32 {
+        return 6;
+    }
+
+    let Choice: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 2u32
+        );
+    if Choice.Items != 4u32 || Choice.Fields != 4u32 ||
+        Choice.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 7;
+    }
+    let Empty: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉcase =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+            Input, Scan, Symbols, Choice, 0u32
+        );
+    let Both: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉcase =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+            Input, Scan, Symbols, Choice, 3u32
+        );
+    if !Empty.Found || Empty.Fields != 0u32 || !Both.Found ||
+        Both.Fields != 2u32 ||
+        !Nameˉis(View.Source, Empty.Nameˉoffset, Empty.Nameˉlength, "Empty") ||
+        !Nameˉis(View.Source, Both.Nameˉoffset, Both.Nameˉlength, "Both") {
+        return 8;
+    }
+    let Leftˉvalue:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Choice, 1u32, 0u32
+        );
+    let Bothˉerror:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Choice, 3u32, 1u32
+        );
+    if Leftˉvalue.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
+        Bothˉerror.Shape != 5u32 ||
+        !Nameˉis(
+            View.Source, Bothˉerror.Nameˉoffset,
+            Bothˉerror.Nameˉlength, "Error"
+        ) {
+        return 9;
+    }
+
+    let Missingˉrecord:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Packet, 3u32
+        );
+    let Missingˉcase:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉcase =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+            Input, Scan, Symbols, Choice, 4u32
+        );
+    if Missingˉrecord.Found || Missingˉcase.Found {
+        return 10;
+    }
+
+    let Builder: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 3u32
+        );
+    if Builder.Symbolˉstatus !=
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype {
+        return 11;
+    }
+    let Innerˉvariant:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 4u32
+        );
+    if Innerˉvariant.Symbolˉstatus !=
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 12;
+    }
+    let Outerˉvariant:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 5u32
+        );
+    if Outerˉvariant.Symbolˉstatus !=
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉvariantˉpayload {
+        return 13;
+    }
+
+    let Mismatchˉresult: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Catalog.Evidence, 24u32, 4u32, Bytesˉfromˉu32ˉlittle(4u32)
+        );
+    let Mismatchˉcatalog:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Mismatchˉresult.Value
+        );
+    let Mismatchˉlayout:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Mismatchˉcatalog, 0u32
+        );
+    if !Mismatchˉresult.Valid ||
+        Mismatchˉlayout.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 14;
+    }
+    let Missingˉresult: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Catalog.Evidence, 24u32, 4u32, Bytesˉfromˉu32ˉlittle(999u32)
+        );
+    let Missingˉcatalog:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Missingˉresult.Value
+        );
+    let Missingˉlayout:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Missingˉcatalog, 0u32
+        );
+    if !Missingˉresult.Valid ||
+        Missingˉlayout.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 15;
+    }
+
+    let Tampered: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout(
+            Packet.Genericˉstatus, Packet.Symbolˉstatus,
+            Packet.Instance, Packet.Shape, Packet.Kind,
+            Packet.Declaration, Packet.Module, Packet.Items,
+            Packet.Fields + 1u32, Packet.Catalogˉstatus,
+            Packet.Catalogˉevidence, Packet.Failureˉoffset,
+            Packet.Failureˉline, Packet.Failureˉcolumn
+        );
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Tampered
+        ) {
+        return 16;
+    }
+    let Invalidˉinstance:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 6u32
+        );
+    if Invalidˉinstance.Genericˉstatus !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 17;
+    }
+    let Badˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Bytesˉslice(Input, 0u32, 0u32)
+        );
+    let Badˉlayout: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Badˉcatalog, 0u32
+        );
+    if Badˉlayout.Catalogˉstatus !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 18;
+    }
+    return 42;
+}

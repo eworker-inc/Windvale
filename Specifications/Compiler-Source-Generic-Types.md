@@ -125,7 +125,9 @@ The connected source integration preserves these boundaries:
 2. **Implemented:** resolve a full-arity type use recursively, admitting inner
    concrete types before outer types and rolling the complete catalog back when
    the outer use fails;
-3. substitute WVGT arguments while validating record fields and variant cases;
+3. **Implemented for direct parameters:** substitute WVGT arguments while
+   validating record fields and variant cases, including concrete builder,
+   capability, and nested-variant restrictions after substitution;
 4. carry private shapes only through validated compiler artifacts that bind the
    exact WVGT evidence;
 5. materialize reachable instances as ordinary monomorphic WVB types in
@@ -176,3 +178,21 @@ The four-fragment 15,842,304-byte hosted Windows executable has SHA-256
 returns `42`, and writes no output. The independent
 `generic-nominal-type-binding` owner reproduces this boundary through the
 content-keyed project and hosted-application caches.
+
+`Generic-Nominal-Type-Layout-Self-Test.wv` adds 18 focused assertions over
+concrete record and variant layouts. It verifies field and case order, total
+payload counts, private and ordinary substituted shapes, missing indices,
+source/catalog identity mismatch, missing declarations, malformed evidence,
+and caller-created layout tampering. Post-substitution checks reject builder
+record storage and nested variant payloads. The nested rejection also exercises
+adjacent type closers in `Choice<Choice<i32, text>, text>` while preserving
+expression `>>` as a distinct lexer token.
+
+Its 684,418-byte WVB has SHA-256
+`a7931ec390183afca80e9afce82d5a60f0def72e759d21ce43cb625c468f885b`.
+The five-fragment 16,856,576-byte hosted Windows executable has SHA-256
+`6eb11c48c39aee20b7356df0cd8c272b2ded21de396c3b3718a26db6e89d9cba`,
+returns `42`, and writes no output. The independent
+`generic-nominal-type-layout` owner reproduces the build, package, and execution
+boundary through content-keyed caches. Nested template field substitution,
+WIR carriage, and WVB materialization remain later connected checkpoints.

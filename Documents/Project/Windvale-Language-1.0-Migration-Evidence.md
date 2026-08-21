@@ -684,6 +684,33 @@ materialization, and Foundation migration remain the next connected Slice 4
 checkpoints. Storage, OS, broad Language 1, paired-host, and complete
 Qualification gates remain deferred to the final seven-slice integration gate.
 
+## Slice 4 generic nominal layout-substitution checkpoint
+
+Decision 0807 binds each admitted WVGT instance back to its exact generic
+record or variant declaration and substitutes its ordered direct type
+parameters. The resulting layout exposes bounded record fields, variant cases,
+and variant payload fields without publishing a second serialized catalog.
+Declaration identity, origin, kind, parameter kinds, and parameter shapes must
+match the WVGT entry before any layout is accepted.
+
+Record-storage and variant-payload restrictions run again after substitution.
+Consequently, a builder or capability cannot enter a record through `T`, and a
+nested variant cannot enter a variant payload through `T`. Nested source uses
+with adjacent closers now parse as type syntax without changing expression
+`>>` tokenization. Nested template syntax inside a declaration field, WIR
+carriage, canonical reachable-instance ordering, WVB materialization, and
+Foundation migration remain subsequent checkpoints.
+
+The 18-case fixture builds to a 684,418-byte WVB with SHA-256
+`a7931ec390183afca80e9afce82d5a60f0def72e759d21ce43cb625c468f885b`.
+Its five-fragment 16,856,576-byte hosted Windows executable has SHA-256
+`6eb11c48c39aee20b7356df0cd8c272b2ded21de396c3b3718a26db6e89d9cba`,
+returns `42`, and writes no output. The independent
+`generic-nominal-type-layout` owner reports build, package, and execute progress
+and reuses the content-keyed project and hosted-application checkpoints.
+The broad Language 1, storage, OS, paired-host, and complete Qualification gates
+remain deferred to the final seven-slice integration gate.
+
 ## Slice 4 packed keyword dispatch checkpoint
 
 Decision 0799 replaces repeated text materialization and byte-by-byte comparison

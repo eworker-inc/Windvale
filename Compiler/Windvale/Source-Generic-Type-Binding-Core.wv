@@ -58,15 +58,27 @@ export fn Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
 
 fn Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
     Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding,
+    Source: bytes,
     Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
 ) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    var Nextˉoffset: u32 = Binding.Nextˉoffset;
+    var Nextˉline: u32 = Binding.Nextˉline;
+    var Nextˉcolumn: u32 = Binding.Nextˉcolumn;
+    if Binding.Status ==
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Nextˉoffset >= 2u32 && Nextˉcolumn > 1u32 &&
+        Bytesˉreadˉu8(Source, Nextˉoffset - 2u32) == 62u8 &&
+        Bytesˉreadˉu8(Source, Nextˉoffset - 1u32) == 62u8 {
+        Nextˉoffset = Nextˉoffset - 1u32;
+        Nextˉcolumn = Nextˉcolumn - 1u32;
+    }
     return Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
         Binding.Status,
         Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(Binding),
         Binding.Nominalˉkind, 4294967295u32, Binding.Nominalˉmodule,
         Catalog,
-        Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn,
+        Nextˉoffset, Nextˉline, Nextˉcolumn,
         Binding.Failureˉoffset, Binding.Failureˉline,
         Binding.Failureˉcolumn
     );
@@ -139,12 +151,12 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
     if Ordinary.Status !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
         return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
-            Ordinary, Catalog
+            Ordinary, Source, Catalog
         );
     }
     if Token.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
         return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
-            Ordinary, Catalog
+            Ordinary, Source, Catalog
         );
     }
     let Qualified: Sourceˉdeclarations.Compilerˉparseˉstep =
@@ -163,7 +175,7 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
             Owner, Source, Token.Offset, Qualifiedˉlength, Match
         ) {
         return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
-            Ordinary, Catalog
+            Ordinary, Source, Catalog
         );
     }
     let Target: Sourceˉset.Compilerˉsourceˉsetˉview =
@@ -184,7 +196,7 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
     if Generic.Parameters == 0u32 ||
         Argumentsˉstart.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
         return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
-            Ordinary, Catalog
+            Ordinary, Source, Catalog
         );
     }
     var Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution =
@@ -203,6 +215,9 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
     var Currentˉline: u32 = Argumentsˉstart.Nextˉline;
     var Currentˉcolumn: u32 = Argumentsˉstart.Nextˉcolumn;
     var End: Sourceˉlexer.Compilerˉsourceˉtoken = Argumentsˉstart;
+    var Closeˉnextˉoffset: u32 = Argumentsˉstart.Nextˉoffset;
+    var Closeˉnextˉline: u32 = Argumentsˉstart.Nextˉline;
+    var Closeˉnextˉcolumn: u32 = Argumentsˉstart.Nextˉcolumn;
     var Parameter: u32 = 0u32;
     while Parameter < Generic.Parameters {
         let Argumentˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
@@ -307,7 +322,15 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
                     Separator.Nextˉline, Separator.Nextˉcolumn
                 );
             }
-            if End.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            Closeˉnextˉoffset = End.Nextˉoffset;
+            Closeˉnextˉline = End.Nextˉline;
+            Closeˉnextˉcolumn = End.Nextˉcolumn;
+            if End.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright {
+                Closeˉnextˉoffset = End.Offset + 1u32;
+                Closeˉnextˉline = End.Line;
+                Closeˉnextˉcolumn = End.Column + 1u32;
+            } else if End.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Greater {
                 return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
                     Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
                     Catalog, End
@@ -342,8 +365,8 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
             Admission.Instance
         ),
         Match.Kind, Match.Directoryˉindex, Match.Module, Updated,
-        End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn,
-        End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn
+        Closeˉnextˉoffset, Closeˉnextˉline, Closeˉnextˉcolumn,
+        Closeˉnextˉoffset, Closeˉnextˉline, Closeˉnextˉcolumn
     );
 }
 

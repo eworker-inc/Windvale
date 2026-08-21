@@ -158,16 +158,20 @@ $NativeCases = @(
         Paths = @(
             'Compiler/Windvale/Source-Generic-Lowering-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Binding-Core.wv',
+            'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Type-Catalog.wvproj',
             'Specifications/Compiler-Source-Generic-Types.md',
             'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Type-Catalog-Self-Test.wv'
         )
         Suites = @(
             'source-containment',
             'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
             'language-1-front-door'
         )
         Gaps = @()
@@ -183,6 +187,19 @@ $NativeCases = @(
             'Tools/Native/Test-Generic-Nominal-Type-Binding.mjs'
         )
         Suites = @('generic-nominal-type-binding')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 generic nominal type-layout owner routing'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj',
+            'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv',
+            'Tools/Native/Test-Generic-Nominal-Type-Layout.cmd',
+            'Tools/Native/Test-Generic-Nominal-Type-Layout.sh',
+            'Tools/Native/Test-Generic-Nominal-Type-Layout.mjs'
+        )
+        Suites = @('generic-nominal-type-layout')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -205,6 +222,7 @@ $NativeCases = @(
         Suites = @(
             'source-containment',
             'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
             'language-1-front-door',
             'compiler-source-sentinel'
         )
@@ -217,6 +235,7 @@ $NativeCases = @(
         Suites = @(
             'source-containment',
             'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
             'language-1-front-door',
             'compiler-source-sentinel'
         )
@@ -229,6 +248,7 @@ $NativeCases = @(
         Suites = @(
             'source-containment',
             'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
             'language-1-front-door',
             'compiler-source-sentinel'
         )
@@ -370,6 +390,7 @@ $NativeCases = @(
             'unsafe-wvb',
             'source-containment',
             'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
             'language-1-front-door',
             'compiler-source-sentinel',
             'lowerer-rejections',
@@ -3315,9 +3336,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 107 -or
+if ($VerificationOwnerLines.Count -ne 108 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 106-owner inventory differs.'
+    throw 'The native verification-owner header or exact 107-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3355,7 +3376,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4835 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4853 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
