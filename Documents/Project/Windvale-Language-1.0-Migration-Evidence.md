@@ -1412,3 +1412,58 @@ This closes direct `Box<T>`-style use in generic-function bodies, not every
 recursive generic pattern. Generic variants, an applied generic field inside a
 generic declaration's own layout, deeper nested formal applications, and the
 remaining Foundation-special plan remain explicit Slice 4 work.
+
+## Slice 4 generic nominal declaration-layout dependency checkpoint
+
+Decision 0817 makes generic nominal binding discover stored layout dependencies
+before admitting the enclosing concrete instance. For
+`Holder<T> { Wrapped: Box<T>; }`, specializing `Holder<Point>` now admits
+`Box<Point>` first and `Holder<Point>` second. Both have WVGT application depth
+one; their catalog order separately proves that the stored field's concrete
+layout is available before its consumer. Layout consumes the same bounded field
+plan read only and cannot append a late instance.
+
+The plan covers records and variants, direct type parameters, and direct
+fixed-width constant parameters. Dependency admission is transactional: a
+failure restores the exact input catalog. Recursive value containment is
+bounded by the existing depth-32 rule, reports `Genericˉresolution`, and
+publishes no partial analysis artifact family. Source declaration lookup remains
+declaration-before-use; this checkpoint does not add forward declarations.
+
+The active split route produces a 1,055,646-byte analyzer with 515 functions
+and 863,823 code bytes at SHA-256
+`b4f04ef8d843f1af0dcd405e3c19a02f8a11532ac9996745e8b3fc7b956c4e7d`.
+Its eight-fragment Windows application is 33,436,160 bytes at SHA-256
+`c5da4daf6aff6be48fd37e79bf5ac81ad8986ff9c796d54bf4905e6ea17ed847`.
+The 985,374-byte emitter contains 539 functions and 816,424 code bytes at
+SHA-256
+`a95c9c248554919bfedae75795077467570924157d0c59a22060f1c1617a50e6`;
+its six-fragment Windows application is 21,693,952 bytes at SHA-256
+`c17e10f3d1d6abde396fdc274627e3b6046af26d8671910481f525c3b7208804`.
+
+`Generic-Nominal-Declaration-Dependency.wv` publishes exact 526-byte WVSS,
+104-byte WVCA, 564-byte WVLB 1.3, 1,168-byte WVIR 1.4, and 668-byte WVB 1.11
+products. The WVB SHA-256 is
+`5ec54be82a84a0bea60fd6cb8146c08ddf8fb934aaf9560734250eadd20ee046`.
+Its 32-case inspector proves the two dependency-ordered WVGT instances, five
+concrete bindings, three concrete WVB types, exact nested field targets, removal
+of both templates, compiler-aligned verification, and execution result `42`.
+The exact cycle fixture adds one negative case.
+
+The independent generic nominal layout owner grows from 18 to 21 cases and
+passes with result `42`. The generic-WIR compiler fixture is deterministic at
+1,210,339 bytes and SHA-256
+`8587efd5dd86073ed0cdfe3c9a134bcb91c2b8316e82f9abfa800622c7530340`.
+The Language owner grows from 219 to 252 cases, and the 109-owner registry grows
+from 4,966 to 5,002 cases at SHA-256
+`75649a099553cb3d11037dcfd83f9e36c464aa59a04307ab67187f8ff77dba9a`.
+The coordinated Language owner passes all 252 cases in 587,790 milliseconds,
+or 588,290 milliseconds including coordinator overhead.
+
+This closes applied generic fields in generic record and variant declarations;
+generic variant value construction, deeper nested generic-function formal
+patterns, broader constant-expression evaluation, collection implementation,
+and the remaining Foundation-special plan remain explicit Slice 4 work. The
+active Windvale-written compiler continues toward Compiler 1.0; the Seed name
+describes the shrinking source subset, while immutable Stage 0 remains recovery
+provenance rather than a maintained parallel compiler.

@@ -185,6 +185,30 @@ export fn Compilerˉsourceˉgenericˉsolutionˉargumentˉlow(
     return Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 8u32);
 }
 
+export fn Compilerˉsourceˉgenericˉsolutionˉargument(
+    Solution: Compilerˉsourceˉgenericˉsolution,
+    Parameter: u32
+) -> Compilerˉsourceˉgenericˉargument {
+    let Entry: u32 = Compilerˉsourceˉgenericˉsolutionˉentry(
+        Solution, Parameter
+    );
+    if Solution.Status != Compilerˉsourceˉgenericˉstatus.Valid ||
+        Entry == Compilerˉsourceˉgenericˉsentinel() ||
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 16u32) ==
+            Compilerˉsourceˉgenericˉsentinel() {
+        return Compilerˉsourceˉgenericˉargument(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    return Compilerˉsourceˉgenericˉargument(
+        true,
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry),
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 4u32),
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 8u32),
+        Bytesˉreadˉu32ˉlittle(Solution.Evidence, Entry + 12u32)
+    );
+}
+
 export fn Compilerˉsourceˉgenericˉsolutionˉcontribute(
     Solution: Compilerˉsourceˉgenericˉsolution,
     Parameter: u32,

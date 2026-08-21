@@ -30,7 +30,11 @@ record operations. A concrete generic-function specialization also supplies a
 bounded substitution context for an applied nominal use in its signature or
 body. Thus `Box<T>` in `Wrap<T>` becomes the same catalog identity as
 `Box<Point>` when `Wrap` is specialized for `Point`; no unresolved `T` enters
-WVLB, WVIR, or WVB.
+WVLB, WVIR, or WVB. A generic record or variant declaration may likewise store
+an applied generic type whose arguments use its own direct type or constant
+parameters. Binding `Holder<Point>` for `record Holder<T> { Value: Box<T>; }`
+admits `Box<Point>` first and `Holder<Point>` second, then layout consumes that
+immutable dependency order without growing the catalog.
 
 The current constant-argument connection accepts one exact suffixed
 fixed-integer token of the declared shape. Evaluation of the broader frozen
@@ -129,6 +133,32 @@ an equal instance before checking new-instance count or growth. A new entry is
 appended only after its derived depth, retained bytes, and aggregate estimate
 fit every bound.
 
+## Declaration-layout dependency plan
+
+Generic nominal binding and layout share one bounded field plan rather than
+parsing record and variant fields independently. The internal byte value begins
+with a field count and variant-item count. It then carries one 16-byte item
+entry per variant case and one 20-byte field entry per record field or variant
+payload field. Item entries retain the case source range plus its first field
+and field count. Field entries retain the name source range and the exact type
+source position. The value is not serialized into WVLB, WVIR, or WVB.
+
+The plan accepts at most 64 record fields or 256 variant cases with at most 64
+fields each. Consumers validate the exact byte length before reading an entry.
+For one complete generic declaration solution, binding substitutes direct type
+and constant parameters into each planned field and recursively admits any
+applied generic dependency before admitting the declaration itself. Any field,
+limit, arity, kind, width, or recursive-depth failure returns the original
+catalog, so a failed outer instance cannot publish an admitted prefix.
+
+Value-containment cycles are not concrete layouts. The existing maximum
+instantiation depth of 32 bounds their discovery and reports
+`Genericˉresolution` without publishing analysis artifacts. Source declaration
+lookup remains declaration-before-use; this dependency rule does not introduce
+forward type declarations. WVGT application depth continues to describe nested
+generic arguments, while catalog ordinal order also carries field-layout
+dependencies. These are separate properties.
+
 ## Materialization plan
 
 The materialization phase consumes exact Source Set, Source Symbols, and WVGT
@@ -173,7 +203,10 @@ The connected source integration preserves these boundaries:
    capability, and nested-variant restrictions after substitution. In a
    concrete generic-function specialization, one applied generic nominal whose
    argument is a direct function type or constant parameter is resolved through
-   that function's exact WVGC identity before WVGT admission;
+   that function's exact WVGC identity before WVGT admission. In a generic
+   record or variant layout, applied fields using direct declaration type or
+   constant parameters are recursively admitted in dependency order before the
+   enclosing instance;
 4. **Implemented:** carry private shapes through main WVLB/WVIR analysis only
    when the paired artifact binds exact WVGT evidence, retain unambiguous private
    references through materialization, and resolve them at WVB planning;
@@ -203,8 +236,8 @@ and duplicate evidence, invalid declaration kind, rejected forward reference,
 estimated-growth rejection, all 256 instance identities, a rejected 257th
 instance, a depth-32 chain, and rejected depth 33.
 
-The current fixture builds to a 65,457-byte compiler-aligned WVB with SHA-256
-`1387baaf0d9da4deed9ac5a7d37530f47c086c178461576e29f66168240e7d8b`.
+The current fixture builds to a 66,384-byte compiler-aligned WVB with SHA-256
+`21007237c68c3c74d165d5237eb6daaf112f81cca4a198ad690f6f1947a53006`.
 Its 681,472-byte hosted Windows executable has SHA-256
 `b6bf5abea06bf9ab2d6fc081742dc4c6812d0a3b80d149cb5bf733443ad7c924`
 and returns `42` without output. Paired-host evidence is owned by the maintained
@@ -236,22 +269,18 @@ returns `42`, and writes no output. The independent
 `generic-nominal-type-binding` owner reproduces this boundary through the
 content-keyed project and hosted-application caches.
 
-`Generic-Nominal-Type-Layout-Self-Test.wv` adds 18 focused assertions over
+`Generic-Nominal-Type-Layout-Self-Test.wv` adds 21 focused assertions over
 concrete record and variant layouts. It verifies field and case order, total
 payload counts, private and ordinary substituted shapes, missing indices,
 source/catalog identity mismatch, missing declarations, malformed evidence,
-and caller-created layout tampering. Post-substitution checks reject builder
-record storage and nested variant payloads. The nested rejection also exercises
-adjacent type closers in `Choice<Choice<i32, text>, text>` while preserving
-expression `>>` as a distinct lexer token.
-
-Its 688,672-byte WVB has SHA-256
-`55fe9cf4744cfe26f42900c85ad8eed9f6e0940cd7d6b533b7a6a94295c042b1`.
-The five-fragment 16,976,896-byte hosted Windows executable has SHA-256
-`f28acda8fb1dc64da27e7e08d191ab637600e23c2e69505ee89aed40cc374f5c`,
-returns `42`, and writes no output. The independent
-`generic-nominal-type-layout` owner reproduces the build, package, and execution
-boundary through content-keyed caches.
+and caller-created layout tampering. It also proves dependency-first record and
+variant layout, propagation of a direct constant parameter, and the resulting
+private field links. Post-substitution checks reject builder record storage and
+nested variant payloads. The nested rejection also exercises adjacent type
+closers in `Choice<Choice<i32, text>, text>` while preserving expression `>>`
+as a distinct lexer token. The independent `generic-nominal-type-layout` owner
+reproduces the build, package, and execution boundary through content-keyed
+caches and returns `42` without output.
 
 `Generic-Nominal-Type-Materialization-Self-Test.wv` now carries 30 focused cases
 over four dependency-ordered record and variant instances. It verifies assigned

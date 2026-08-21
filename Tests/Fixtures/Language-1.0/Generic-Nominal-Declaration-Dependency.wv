@@ -1,0 +1,20 @@
+module Genericˉnominalˉdeclarationˉdependency profile portable;
+
+record Point { X: i32; }
+record Box<T> { Value: T; }
+record Holder<T> { Wrapped: Box<T>; }
+
+fn Wrap<T>(Value: T) -> Holder<T> {
+    let Inner: Box<T> = Box<T> { Value: Value };
+    return Holder<T> { Wrapped: Inner };
+}
+
+fn Read<T>(Value: Holder<T>) -> T {
+    return Value.Wrapped.Value;
+}
+
+export fn Main() -> i32 {
+    let Wrapped: Holder<Point> = Wrap(Point { X: 42 });
+    let Value: Point = Read(Wrapped);
+    return Value.X;
+}

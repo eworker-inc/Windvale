@@ -1,0 +1,13 @@
+module Genericˉnominalˉdeclarationˉcycle profile portable;
+
+record Loop<T> {
+    Next: Loop<T>;
+}
+
+fn Read(Value: Loop<i32>) -> i32 {
+    return 0;
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

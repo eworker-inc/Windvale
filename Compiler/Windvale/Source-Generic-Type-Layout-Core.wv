@@ -3,6 +3,7 @@ module Compilerˉsourceˉgenericˉtypeˉlayout profile portable;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
+import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉtypeˉbinding;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -290,16 +291,33 @@ fn Compilerˉsourceˉgenericˉtypeˉsubstitute(
             );
         }
     }
-    let Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-            Input, Scan, Symbols.Directory, Symbols.Lookup,
-            Symbols.Visibility, Module, Source, Offset, Line, Column,
-            Symbols.Records, Symbols.Enums, false
+    let Binding:
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉtypeˉspecialization(
+            Input, Scan, Symbols, Module, Source,
+            Offset, Line, Column, Catalog,
+            Source, Generic, Instance
+        );
+    let Updated: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+            Binding
         );
     if Binding.Status !=
-        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Genericˉstatus !=
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Updated
+        ) != Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) {
+        var Status: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus =
+            Binding.Status;
+        if Status == Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            Status = Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype;
+        }
         return Compilerˉsourceˉgenericˉtypeˉsubstitution(
-            Binding.Status, 0u32, Binding.Nominalˉkind,
+            Status, 0u32, Binding.Nominalˉkind,
             Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn,
             Binding.Failureˉoffset, Binding.Failureˉline,
             Binding.Failureˉcolumn
@@ -307,7 +325,7 @@ fn Compilerˉsourceˉgenericˉtypeˉsubstitute(
     }
     return Compilerˉsourceˉgenericˉtypeˉsubstitution(
         Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(Binding),
+        Binding.Shape,
         Binding.Nominalˉkind,
         Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn,
         Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
@@ -382,7 +400,7 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉparametersˉmatch(
     return true;
 }
 
-fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
+fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉplanned(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -395,53 +413,84 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
     Declarationˉline: u32,
     Declarationˉcolumn: u32
 ) -> Compilerˉsourceˉgenericˉtypeˉlayout {
-    let Catalogˉvalue: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
-        Catalog;
-    let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            Source, Declaration.Declarationˉoffset,
-            Declarationˉline, Declarationˉcolumn,
-            Declaration.Bodyˉoffset
+    let Plan: bytes =
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉfieldˉplan(
+            Source, Declaration, Declarationˉline, Declarationˉcolumn
         );
-    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken =
-        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Declaration.Bodyˉoffset,
-            Bodyˉposition.Line, Bodyˉposition.Column
+    let Planˉlength: u32 = Bytesˉlength(Plan);
+    if Planˉlength < 8u32 {
+        return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+            Instance, Catalog,
+            Declaration.Nameˉoffset,
+            Declarationˉline, Declarationˉcolumn
         );
-    var Cursor: u32 = Brace.Nextˉoffset;
-    var Line: u32 = Brace.Nextˉline;
-    var Column: u32 = Brace.Nextˉcolumn;
-    var Fieldˉevidence: bytes = Bytesˉslice(Source, 0u32, 0u32);
+    }
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Plan, 0u32);
+    let Items: u32 = Bytesˉreadˉu32ˉlittle(Plan, 4u32);
+    if Items > 256u32 || Fields > 16384u32 ||
+        Items * 16u32 > Planˉlength - 8u32 ||
+        Fields * 20u32 != Planˉlength - 8u32 - Items * 16u32 ||
+        (Declaration.Kind ==
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record &&
+            (Items != 0u32 || Fields != Declaration.Items)) ||
+        (Declaration.Kind ==
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant &&
+            Items != Declaration.Items) {
+        return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+            Instance, Catalog,
+            Declaration.Nameˉoffset,
+            Declarationˉline, Declarationˉcolumn
+        );
+    }
+    let Itemˉevidence: bytes = Bytesˉslice(
+        Plan, 8u32, Items * 16u32
+    );
+    var Fieldˉevidence: bytes = Bytesˉslice(Plan, 0u32, 0u32);
     var Fieldˉindex: u32 = 0u32;
-    while Fieldˉindex < Declaration.Items {
-        let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Cursor, Line, Column
-            );
-        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Field.Nextˉoffset, Field.Nextˉline,
-                Field.Nextˉcolumn
-            );
+    while Fieldˉindex < Fields {
+        let Fieldˉentry: u32 =
+            8u32 + Items * 16u32 + Fieldˉindex * 20u32;
         let Substitution: Compilerˉsourceˉgenericˉtypeˉsubstitution =
             Compilerˉsourceˉgenericˉtypeˉsubstitute(
                 Input, Scan, Symbols, Catalog, Instance, Module, Source,
-                Generic, Colon.Nextˉoffset, Colon.Nextˉline,
-                Colon.Nextˉcolumn
+                Generic,
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 8u32),
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 12u32),
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 16u32)
             );
+        var Storageˉvalid: bool =
+            Compilerˉsourceˉgenericˉtypeˉrecordˉstorageˉisˉvalid(
+                Substitution
+            );
+        var Invalidˉstatus:
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype;
+        if Declaration.Kind ==
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+            Storageˉvalid =
+                Compilerˉsourceˉgenericˉtypeˉvariantˉpayloadˉisˉvalid(
+                    Substitution
+                );
+            Invalidˉstatus =
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉvariantˉpayload;
+        }
         if Substitution.Status !=
                 Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
-            !Compilerˉsourceˉgenericˉtypeˉrecordˉstorageˉisˉvalid(
-                Substitution
-            ) {
-            var Status: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus =
+            !Storageˉvalid {
+            var Failureˉstatus:
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus =
                 Substitution.Status;
-            if Status == Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
-                Status = Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype;
+            if Failureˉstatus ==
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+                Failureˉstatus = Invalidˉstatus;
             }
             return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
                 Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
-                Status, Instance, Catalogˉvalue,
+                Failureˉstatus, Instance, Catalog,
                 Substitution.Failureˉoffset,
                 Substitution.Failureˉline,
                 Substitution.Failureˉcolumn
@@ -453,17 +502,21 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
             return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
                 Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
                 Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
-                Instance, Catalogˉvalue,
-                Field.Offset, Field.Line, Field.Column
+                Instance, Catalog,
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry),
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 12u32),
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 16u32)
             );
         }
         Fieldˉevidence =
             Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                Fieldˉevidence, Field.Offset
+                Fieldˉevidence,
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry)
             );
         Fieldˉevidence =
             Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                Fieldˉevidence, Field.Length
+                Fieldˉevidence,
+                Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 4u32)
             );
         Fieldˉevidence =
             Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
@@ -476,221 +529,7 @@ fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
                     Substitution.Nominalˉkind
                 )
             );
-        let End: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Substitution.Nextˉoffset,
-                Substitution.Nextˉline, Substitution.Nextˉcolumn
-            );
-        if End.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
-            return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
-                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
-                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
-                Instance, Catalogˉvalue,
-                End.Offset, End.Line, End.Column
-            );
-        }
-        Cursor = End.Nextˉoffset;
-        Line = End.Nextˉline;
-        Column = End.Nextˉcolumn;
         Fieldˉindex = Fieldˉindex + 1u32;
-    }
-    return Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
-        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
-        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
-        Instance,
-        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(Instance),
-        Declaration.Kind,
-        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
-            Catalog, Instance
-        ),
-        Module, Declaration.Items, Declaration.Items,
-        Bytesˉslice(Source, 0u32, 0u32), Fieldˉevidence, Catalogˉvalue,
-        Declaration.Nextˉoffset,
-        Declaration.Nextˉline, Declaration.Nextˉcolumn
-    );
-}
-
-fn Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
-    Instance: u32,
-    Module: u32,
-    Source: bytes,
-    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
-    Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric,
-    Declarationˉline: u32,
-    Declarationˉcolumn: u32
-) -> Compilerˉsourceˉgenericˉtypeˉlayout {
-    let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            Source, Declaration.Declarationˉoffset,
-            Declarationˉline, Declarationˉcolumn,
-            Declaration.Bodyˉoffset
-        );
-    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken =
-        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Declaration.Bodyˉoffset,
-            Bodyˉposition.Line, Bodyˉposition.Column
-        );
-    var Cursor: u32 = Brace.Nextˉoffset;
-    var Line: u32 = Brace.Nextˉline;
-    var Column: u32 = Brace.Nextˉcolumn;
-    var Itemˉevidence: bytes = Bytesˉslice(Source, 0u32, 0u32);
-    var Fieldˉevidence: bytes = Bytesˉslice(Source, 0u32, 0u32);
-    var Caseˉindex: u32 = 0u32;
-    var Fields: u32 = 0u32;
-    while Caseˉindex < Declaration.Items {
-        let Case: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Cursor, Line, Column
-            );
-        let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Case.Nextˉoffset, Case.Nextˉline,
-                Case.Nextˉcolumn
-            );
-        var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
-        let Firstˉfield: u32 = Fields;
-        if Afterˉname.Kind ==
-            Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            var Fieldˉcursor: u32 = Afterˉname.Nextˉoffset;
-            var Fieldˉline: u32 = Afterˉname.Nextˉline;
-            var Fieldˉcolumn: u32 = Afterˉname.Nextˉcolumn;
-            var Readingˉfields: bool = true;
-            while Readingˉfields {
-                let Parsed:
-                    Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
-                    Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
-                        Source, Fieldˉcursor, Fieldˉline, Fieldˉcolumn
-                    );
-                let Typeˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-                    Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-                        Source, Fieldˉcursor, Fieldˉline, Fieldˉcolumn,
-                        Parsed.Typeˉoffset
-                    );
-                let Substitution:
-                    Compilerˉsourceˉgenericˉtypeˉsubstitution =
-                    Compilerˉsourceˉgenericˉtypeˉsubstitute(
-                        Input, Scan, Symbols, Catalog, Instance, Module, Source,
-                        Generic, Parsed.Typeˉoffset,
-                        Typeˉposition.Line, Typeˉposition.Column
-                    );
-                if Substitution.Status !=
-                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
-                    !Compilerˉsourceˉgenericˉtypeˉvariantˉpayloadˉisˉvalid(
-                        Substitution
-                    ) {
-                    var Status:
-                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus =
-                        Substitution.Status;
-                    if Status ==
-                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
-                        Status = Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉvariantˉpayload;
-                    }
-                    return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
-                        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
-                        Status, Instance, Catalog,
-                        Substitution.Failureˉoffset,
-                        Substitution.Failureˉline,
-                        Substitution.Failureˉcolumn
-                    );
-                }
-                if !Compilerˉsourceˉgenericˉtypeˉlayoutˉhasˉrecordˉcapacity(
-                    Fieldˉevidence
-                ) {
-                    return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
-                        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
-                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
-                        Instance, Catalog,
-                        Parsed.Nameˉoffset,
-                        Typeˉposition.Line, Typeˉposition.Column
-                    );
-                }
-                Fieldˉevidence =
-                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                        Fieldˉevidence, Parsed.Nameˉoffset
-                    );
-                Fieldˉevidence =
-                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                        Fieldˉevidence, Parsed.Nameˉlength
-                    );
-                Fieldˉevidence =
-                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                        Fieldˉevidence, Substitution.Shape
-                    );
-                Fieldˉevidence =
-                    Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                        Fieldˉevidence,
-                        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
-                            Substitution.Nominalˉkind
-                        )
-                    );
-                Fields = Fields + 1u32;
-                let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
-                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                        Source, Parsed.Nextˉoffset,
-                        Parsed.Nextˉline, Parsed.Nextˉcolumn
-                    );
-                if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-                    let Afterˉcomma: Sourceˉlexer.Compilerˉsourceˉtoken =
-                        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                            Source, Separator.Nextˉoffset,
-                            Separator.Nextˉline, Separator.Nextˉcolumn
-                        );
-                    if Afterˉcomma.Kind ==
-                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
-                        Readingˉfields = false;
-                        End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                            Source, Afterˉcomma.Nextˉoffset,
-                            Afterˉcomma.Nextˉline,
-                            Afterˉcomma.Nextˉcolumn
-                        );
-                    } else {
-                        Fieldˉcursor = Separator.Nextˉoffset;
-                        Fieldˉline = Separator.Nextˉline;
-                        Fieldˉcolumn = Separator.Nextˉcolumn;
-                    }
-                } else {
-                    Readingˉfields = false;
-                    End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                        Source, Separator.Nextˉoffset,
-                        Separator.Nextˉline, Separator.Nextˉcolumn
-                    );
-                }
-            }
-        }
-        if !Compilerˉsourceˉgenericˉtypeˉlayoutˉhasˉrecordˉcapacity(
-            Itemˉevidence
-        ) {
-            return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
-                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Evidenceˉlimit,
-                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
-                Instance, Catalog,
-                Case.Offset, Case.Line, Case.Column
-            );
-        }
-        Itemˉevidence =
-            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                Itemˉevidence, Case.Offset
-            );
-        Itemˉevidence =
-            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                Itemˉevidence, Case.Length
-            );
-        Itemˉevidence =
-            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                Itemˉevidence, Firstˉfield
-            );
-        Itemˉevidence =
-            Compilerˉsourceˉgenericˉtypeˉlayoutˉappendˉu32(
-                Itemˉevidence, Fields - Firstˉfield
-            );
-        Cursor = End.Nextˉoffset;
-        Line = End.Nextˉline;
-        Column = End.Nextˉcolumn;
-        Caseˉindex = Caseˉindex + 1u32;
     }
     return Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
         Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
@@ -787,15 +626,7 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
             Declarationˉposition.Line, Declarationˉposition.Column
         );
     }
-    if Match.Kind ==
-        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
-        return Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉrecord(
-            Input, Scan, Symbols, Catalog, Instance, Match.Module,
-            View.Source, Declaration, Generic,
-            Declarationˉposition.Line, Declarationˉposition.Column
-        );
-    }
-    return Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉvariant(
+    return Compilerˉsourceˉgenericˉtypeˉlayoutˉscanˉplanned(
         Input, Scan, Symbols, Catalog, Instance, Match.Module,
         View.Source, Declaration, Generic,
         Declarationˉposition.Line, Declarationˉposition.Column

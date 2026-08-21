@@ -99,6 +99,22 @@ export fn Main() -> i32 {
     Source = Textˉconcat(
         Source, "record ConstantBox<const Maximum: u32> { Value: i32; }\n"
     );
+    Source = Textˉconcat(Source, "record Inner<T> { Value: T; }\n");
+    Source = Textˉconcat(
+        Source, "record Outer<T> { Value: Inner<T>; }\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "variant Envelope<T> { Packed(Value: Outer<T>); }\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "record Sized<T, const Maximum: u32> { Value: T; }\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "record SizedOuter<T, const Maximum: u32> { Value: Sized<T, Maximum>; }\n"
+    );
     Source = Textˉconcat(Source, "fn Root() -> i32 { return 0; }\n");
     Source = Textˉconcat(Source, "// useˉbox Box<i32>\n");
     Source = Textˉconcat(
@@ -112,6 +128,12 @@ export fn Main() -> i32 {
     );
     Source = Textˉconcat(
         Source, "// useˉvariant Choice<Choice<i32, text>, text>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉdependency Envelope<i32>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉconstantˉdependency SizedOuter<i32, 8u32>\n"
     );
     let Input: bytes = Sourceˉsymbolsˉone(Source);
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
@@ -147,13 +169,22 @@ export fn Main() -> i32 {
         Input, Scan, Symbols, View.Source, "useˉvariant ", Catalog
     );
     Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉdependency ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source,
+        "useˉconstantˉdependency ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
     if Binding.Status !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
         Binding.Genericˉstatus !=
             Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
             Catalog
-        ) != 6u32 {
+        ) != 11u32 {
         return 2;
     }
 
@@ -306,6 +337,80 @@ export fn Main() -> i32 {
         return 13;
     }
 
+    let Innerˉdependency:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 6u32
+        );
+    let Outerˉdependency:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 7u32
+        );
+    let Envelopeˉdependency:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 8u32
+        );
+    if Innerˉdependency.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Outerˉdependency.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Envelopeˉdependency.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 19;
+    }
+    let Outerˉdependencyˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Outerˉdependency, 0u32
+        );
+    let Envelopeˉdependencyˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Envelopeˉdependency, 0u32, 0u32
+        );
+    if !Outerˉdependencyˉfield.Found ||
+        Outerˉdependencyˉfield.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(6u32) ||
+        !Envelopeˉdependencyˉfield.Found ||
+        Envelopeˉdependencyˉfield.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(7u32) {
+        return 20;
+    }
+    let Sizedˉdependency:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 9u32
+        );
+    let Sizedˉouterˉdependency:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 10u32
+        );
+    let Sizedˉouterˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Sizedˉouterˉdependency, 0u32
+        );
+    let Sizedˉouterˉconstant:
+        Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 10u32, 1u32
+        );
+    if Sizedˉdependency.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Sizedˉouterˉdependency.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Sizedˉouterˉfield.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(9u32) ||
+        !Sizedˉouterˉconstant.Valid || Sizedˉouterˉconstant.Kind != 2u32 ||
+        Sizedˉouterˉconstant.Shape != 3u32 ||
+        Sizedˉouterˉconstant.Low != 8u32 ||
+        Sizedˉouterˉconstant.High != 0u32 {
+        return 21;
+    }
+
     let Mismatchˉresult: Byteˉconstruction.Foundationˉbytesˉresult =
         Byteˉconstruction.Foundationˉbytesˉreplace(
             Catalog.Evidence, 24u32, 4u32, Bytesˉfromˉu32ˉlittle(4u32)
@@ -366,7 +471,7 @@ export fn Main() -> i32 {
     let Invalidˉinstance:
         Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
         Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
-            Input, Scan, Symbols, Catalog, 6u32
+            Input, Scan, Symbols, Catalog, 11u32
         );
     if Invalidˉinstance.Genericˉstatus !=
         Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
