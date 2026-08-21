@@ -124,16 +124,19 @@ export record Compilerˉsourceˉgenericˉparameterˉmatch {
 }
 
 export record Compilerˉsourceˉgenericˉparameterˉread {
-    Index: u32;
     Isˉtype: bool;
     Shape: u32;
     Nameˉoffset: u32;
     Nameˉlength: u32;
-    Nameˉline: u32;
-    Nameˉcolumn: u32;
     Nextˉoffset: u32;
     Nextˉline: u32;
     Nextˉcolumn: u32;
+}
+
+record Compilerˉsourceˉgenericˉparameterˉvalidation {
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
 }
 
 export record Compilerˉsourceˉsymbolˉsummary {
@@ -252,8 +255,7 @@ fn Compilerˉsourceˉsymbolsˉgenericˉparameterˉread(
     Source: bytes,
     Cursor: u32,
     Line: u32,
-    Column: u32,
-    Index: u32
+    Column: u32
 ) -> Compilerˉsourceˉgenericˉparameterˉread {
     let First: Sourceˉlexer.Compilerˉsourceˉtoken =
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
@@ -287,8 +289,8 @@ fn Compilerˉsourceˉsymbolsˉgenericˉparameterˉread(
             Source, After.Nextˉoffset, After.Nextˉline, After.Nextˉcolumn
         );
     return Compilerˉsourceˉgenericˉparameterˉread(
-        Index, Isˉtype, Shape,
-        Parameter.Offset, Parameter.Length, Parameter.Line, Parameter.Column,
+        Isˉtype, Shape,
+        Parameter.Offset, Parameter.Length,
         Separator.Nextˉoffset, Separator.Nextˉline, Separator.Nextˉcolumn
     );
 }
@@ -308,7 +310,7 @@ fn Compilerˉsourceˉsymbolsˉgenericˉparameterˉselect(
     while Index < Generic.Parameters {
         let Parameter: Compilerˉsourceˉgenericˉparameterˉread =
             Compilerˉsourceˉsymbolsˉgenericˉparameterˉread(
-                Source, Cursor, Currentˉline, Currentˉcolumn, Index
+                Source, Cursor, Currentˉline, Currentˉcolumn
             );
         var Matches: bool = Index == Selected;
         if !Selectˉbyˉindex {
@@ -371,7 +373,7 @@ export fn Compilerˉsourceˉsymbolsˉgenericˉsolution(
     while Index < Generic.Parameters {
         let Parameter: Compilerˉsourceˉgenericˉparameterˉread =
             Compilerˉsourceˉsymbolsˉgenericˉparameterˉread(
-                Source, Cursor, Currentˉline, Currentˉcolumn, Index
+                Source, Cursor, Currentˉline, Currentˉcolumn
             );
         var Kind: u32 = 1u32;
         if !Parameter.Isˉtype { Kind = 2u32; }
@@ -1668,6 +1670,26 @@ export fn Compilerˉsourceˉsymbolsˉtypeˉfailure(
     );
 }
 
+fn Compilerˉsourceˉsymbolsˉtypeˉvalue(
+    Kind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind,
+    Nominalˉkind: Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind,
+    Nominalˉindex: u32,
+    Nominalˉmodule: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32,
+    Nextˉoffset: u32,
+    Nextˉline: u32,
+    Nextˉcolumn: u32
+) -> Compilerˉsourceˉtypeˉbinding {
+    return Compilerˉsourceˉtypeˉbinding(
+        Compilerˉsourceˉsymbolˉstatus.Valid,
+        Kind, Nominalˉkind, Nominalˉindex, Nominalˉmodule,
+        Nameˉoffset, Nameˉlength,
+        Nextˉoffset, Nextˉline, Nextˉcolumn,
+        Nextˉoffset, Nextˉline, Nextˉcolumn
+    );
+}
+
 export fn Compilerˉsourceˉsymbolsˉprimitiveˉshape(
     Kind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind
 ) -> u32 {
@@ -2418,37 +2440,19 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
         var Base: u32 = 1073741824u32;
         if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder { Base = 1342177280u32; }
         let Shape: u32 = Base + Maximum.Numericˉvalue * 65536u32 + Elementˉshape;
-        return Compilerˉsourceˉtypeˉbinding(
-            Compilerˉsourceˉsymbolˉstatus.Valid,
-            Kind,
-            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-            Shape,
-            Element.Nominalˉmodule,
-            Token.Offset,
-            Right.Nextˉoffset - Token.Offset,
-            Right.Nextˉoffset,
-            Right.Nextˉline,
-            Right.Nextˉcolumn,
-            Right.Nextˉoffset,
-            Right.Nextˉline,
-            Right.Nextˉcolumn
+        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
+            Kind, Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+            Shape, Element.Nominalˉmodule,
+            Token.Offset, Right.Nextˉoffset - Token.Offset,
+            Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
         );
     }
     if Kind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named {
-        return Compilerˉsourceˉtypeˉbinding(
-            Compilerˉsourceˉsymbolˉstatus.Valid,
-            Kind,
-            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-            Nominalˉsentinel,
-            Scan.Modules,
-            Token.Offset,
-            Token.Length,
-            Token.Nextˉoffset,
-            Token.Nextˉline,
-            Token.Nextˉcolumn,
-            Token.Nextˉoffset,
-            Token.Nextˉline,
-            Token.Nextˉcolumn
+        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
+            Kind, Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+            Nominalˉsentinel, Scan.Modules,
+            Token.Offset, Token.Length,
+            Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn
         );
     }
     let Qualified: Sourceˉdeclarations.Compilerˉparseˉstep = Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
@@ -2471,20 +2475,12 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
                 Token
             );
         }
-        return Compilerˉsourceˉtypeˉbinding(
-            Compilerˉsourceˉsymbolˉstatus.Valid,
+        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
             Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability,
-            Capability.Directoryˉindex,
-            0u32,
-            Token.Offset,
-            Qualifiedˉlength,
-            Qualified.Nextˉoffset,
-            Qualified.Nextˉline,
-            Qualified.Nextˉcolumn,
-            Qualified.Nextˉoffset,
-            Qualified.Nextˉline,
-            Qualified.Nextˉcolumn
+            Capability.Directoryˉindex, 0u32,
+            Token.Offset, Qualifiedˉlength,
+            Qualified.Nextˉoffset, Qualified.Nextˉline, Qualified.Nextˉcolumn
         );
     }
     let Match: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
@@ -2608,11 +2604,9 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
                 Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉright
             );
         }
-        return Compilerˉsourceˉtypeˉbinding(
-            Compilerˉsourceˉsymbolˉstatus.Valid,
+        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
             Kind, Match.Kind, Genericˉshape, Match.Module,
             Token.Offset, Genericˉright.Nextˉoffset - Token.Offset,
-            Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn,
             Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn
         );
     }
@@ -2635,20 +2629,10 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
             );
         }
     }
-    return Compilerˉsourceˉtypeˉbinding(
-        Compilerˉsourceˉsymbolˉstatus.Valid,
-        Kind,
-        Match.Kind,
-        Nominalˉindex,
-        Match.Module,
-        Token.Offset,
-        Qualifiedˉlength,
-        Qualified.Nextˉoffset,
-        Qualified.Nextˉline,
-        Qualified.Nextˉcolumn,
-        Qualified.Nextˉoffset,
-        Qualified.Nextˉline,
-        Qualified.Nextˉcolumn
+    return Compilerˉsourceˉsymbolsˉtypeˉvalue(
+        Kind, Match.Kind, Nominalˉindex, Match.Module,
+        Token.Offset, Qualifiedˉlength,
+        Qualified.Nextˉoffset, Qualified.Nextˉline, Qualified.Nextˉcolumn
     );
 }
 
@@ -4829,7 +4813,9 @@ fn Compilerˉsourceˉsymbolsˉbindˉdeclarationˉtype(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Directory: bytes,
     Visibility: bytes,
-    Counts: Compilerˉsourceˉsymbolˉsummary,
+    Lookup: bytes,
+    Records: u32,
+    Enums: u32,
     Module: u32,
     Source: bytes,
     Offset: u32,
@@ -4861,47 +4847,35 @@ fn Compilerˉsourceˉsymbolsˉbindˉdeclarationˉtype(
                 Complete = After.Kind ==
                     Sourceˉlexer.Compilerˉtokenˉkind.Semicolon;
             }
-            if !Complete {
-                return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+            if Complete && Parameter.Isˉtype {
+                return Compilerˉsourceˉsymbolsˉtypeˉvalue(
                     Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
                     Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-                    0u32, Module, After
+                    0u32, Module, Token.Offset, Token.Length,
+                    Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn
                 );
             }
-            if !Parameter.Isˉtype {
-                return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
-                    Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
-                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-                    0u32, Module, Token
-                );
-            }
-            return Compilerˉsourceˉtypeˉbinding(
-                Compilerˉsourceˉsymbolˉstatus.Valid,
+            var Failureˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = After;
+            if Complete { Failureˉtoken = Token; }
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
                 Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
                 Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-                0u32, Module, Token.Offset, Token.Length,
-                Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
-                Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn
+                0u32, Module, Failureˉtoken
             );
         }
     }
     return Compilerˉsourceˉsymbolsˉbindˉtype(
-        Input, Scan, Directory, Counts.Lookup, Visibility,
+        Input, Scan, Directory, Lookup, Visibility,
         Module, Source, Offset, Line, Column,
-        Counts.Records, Counts.Enums, Forˉfield
+        Records, Enums, Forˉfield
     );
 }
 
 fn Compilerˉsourceˉsymbolsˉvalidateˉgenericˉparameters(
-    Input: bytes,
-    Counts: Compilerˉsourceˉsymbolˉsummary,
-    Module: u32,
     Source: bytes,
-    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
     Generic: Compilerˉsourceˉfunctionˉgeneric
-) -> Compilerˉsourceˉsymbolˉsummary {
+) -> Compilerˉsourceˉgenericˉparameterˉvalidation {
     var Cursor: u32 = Generic.Firstˉoffset;
     var Line: u32 = Generic.Firstˉline;
     var Column: u32 = Generic.Firstˉcolumn;
@@ -4909,19 +4883,20 @@ fn Compilerˉsourceˉsymbolsˉvalidateˉgenericˉparameters(
     while Index < Generic.Parameters {
         let Parameter: Compilerˉsourceˉgenericˉparameterˉread =
             Compilerˉsourceˉsymbolsˉgenericˉparameterˉread(
-                Source, Cursor, Line, Column, Index
+                Source, Cursor, Line, Column
             );
         let Match: Compilerˉsourceˉgenericˉparameterˉmatch =
             Compilerˉsourceˉsymbolsˉgenericˉparameter(
                 Source, Generic, Parameter.Nameˉoffset, Parameter.Nameˉlength
             );
         if Match.Found && Match.Index < Index {
-            return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
-                Input, Counts,
-                Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter,
-                Module, Module, Declaration.Kind,
+            let Failureˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+                Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                    Source, Cursor, Line, Column, Parameter.Nameˉoffset
+                );
+            return Compilerˉsourceˉgenericˉparameterˉvalidation(
                 Parameter.Nameˉoffset,
-                Parameter.Nameˉline, Parameter.Nameˉcolumn
+                Failureˉposition.Line, Failureˉposition.Column
             );
         }
         Cursor = Parameter.Nextˉoffset;
@@ -4929,7 +4904,9 @@ fn Compilerˉsourceˉsymbolsˉvalidateˉgenericˉparameters(
         Column = Parameter.Nextˉcolumn;
         Index = Index + 1u32;
     }
-    return Counts;
+    return Compilerˉsourceˉgenericˉparameterˉvalidation(
+        0u32, 0u32, 0u32
+    );
 }
 
 export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
@@ -4955,12 +4932,19 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
         Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
             Source, Declaration, Declarationˉline, Declarationˉcolumn
         );
-    let Genericˉvalidation: Compilerˉsourceˉsymbolˉsummary =
+    let Genericˉvalidation: Compilerˉsourceˉgenericˉparameterˉvalidation =
         Compilerˉsourceˉsymbolsˉvalidateˉgenericˉparameters(
-            Input, Counts, Module, Source, Declaration, Generic
+            Source, Generic
         );
-    if Genericˉvalidation.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-        return Genericˉvalidation;
+    if Genericˉvalidation.Failureˉoffset != 0u32 {
+        return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+            Input, Counts,
+            Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter,
+            Module, Module, Declaration.Kind,
+            Genericˉvalidation.Failureˉoffset,
+            Genericˉvalidation.Failureˉline,
+            Genericˉvalidation.Failureˉcolumn
+        );
     }
     if Declaration.Items == 0u32 {
         return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
@@ -5000,7 +4984,8 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉrecord(
         );
         let Binding: Compilerˉsourceˉtypeˉbinding =
             Compilerˉsourceˉsymbolsˉbindˉdeclarationˉtype(
-                Input, Scan, Directory, Visibility, Counts,
+                Input, Scan, Directory, Visibility,
+                Counts.Lookup, Counts.Records, Counts.Enums,
                 Module, Source,
                 Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
                 Generic, true
@@ -5227,12 +5212,19 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉvariant(
         Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
             Source, Declaration, Declarationˉline, Declarationˉcolumn
         );
-    let Genericˉvalidation: Compilerˉsourceˉsymbolˉsummary =
+    let Genericˉvalidation: Compilerˉsourceˉgenericˉparameterˉvalidation =
         Compilerˉsourceˉsymbolsˉvalidateˉgenericˉparameters(
-            Input, Counts, Module, Source, Declaration, Generic
+            Source, Generic
         );
-    if Genericˉvalidation.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-        return Genericˉvalidation;
+    if Genericˉvalidation.Failureˉoffset != 0u32 {
+        return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+            Input, Counts,
+            Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter,
+            Module, Module, Declaration.Kind,
+            Genericˉvalidation.Failureˉoffset,
+            Genericˉvalidation.Failureˉline,
+            Genericˉvalidation.Failureˉcolumn
+        );
     }
     if Declaration.Items == 0u32 {
         return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
@@ -5306,7 +5298,8 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉvariant(
                     );
                 let Payloadˉtype: Compilerˉsourceˉtypeˉbinding =
                     Compilerˉsourceˉsymbolsˉbindˉdeclarationˉtype(
-                        Input, Scan, Directory, Visibility, Counts,
+                        Input, Scan, Directory, Visibility,
+                        Counts.Lookup, Counts.Records, Counts.Enums,
                         Module, Source, Parsedˉfield.Typeˉoffset,
                         Typeˉposition.Line, Typeˉposition.Column,
                         Generic, false
@@ -5387,12 +5380,19 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
         Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
             Source, Declaration, Declarationˉline, Declarationˉcolumn
         );
-    let Genericˉvalidation: Compilerˉsourceˉsymbolˉsummary =
+    let Genericˉvalidation: Compilerˉsourceˉgenericˉparameterˉvalidation =
         Compilerˉsourceˉsymbolsˉvalidateˉgenericˉparameters(
-            Input, Counts, Module, Source, Declaration, Generic
+            Source, Generic
         );
-    if Genericˉvalidation.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-        return Genericˉvalidation;
+    if Genericˉvalidation.Failureˉoffset != 0u32 {
+        return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+            Input, Counts,
+            Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter,
+            Module, Module, Declaration.Kind,
+            Genericˉvalidation.Failureˉoffset,
+            Genericˉvalidation.Failureˉline,
+            Genericˉvalidation.Failureˉcolumn
+        );
     }
     let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(

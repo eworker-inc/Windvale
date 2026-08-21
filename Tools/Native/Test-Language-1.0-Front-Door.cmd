@@ -120,10 +120,38 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Emitter.wvb" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="838798" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"e40da70ba3cf1ef85193bd5b2fe2657faf0068d5951cb36f232d80ec7f7223fe" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="841145" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"b925e215796f82d67191833be60c6d6421427989e2dcd8e5cdcb3562142f36a0" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
+node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
+    emitter "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
+set "FailureStep=compiler-generic-wir"
+echo START language 1 front door step=generic-wir-split
+node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Generic-Wir.wvproj" ^
+    "%Work%\Generic-Wir-A.wvb" ^
+    "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
+    "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
+node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Generic-Wir.wvproj" ^
+    "%Work%\Generic-Wir-B.wvb" ^
+    "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
+    "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
+fc /b "%Work%\Generic-Wir-A.wvb" "%Work%\Generic-Wir-B.wvb" >nul || goto :cleanup
+for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1065737" goto :cleanup
+certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"c8aa63e688ee53ed5ee72cc75db4b3852f0b6431a501a4f6230d680b6a4dcefc" >nul || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 1 ^
+    "%Work%\Generic-Wir-A.wvb" "%Work%\Generic-Wir.exe" ^
+    --development-cache >"%Work%\Generic-Wir-Package.out" ^
+    2>"%Work%\Generic-Wir-Package.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Wir-Package.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Generic-Wir.exe" >"%Work%\Generic-Wir.out" 2>"%Work%\Generic-Wir.err"
+set "GenericWirResult=%ERRORLEVEL%"
+if not "%GenericWirResult%"=="42" goto :cleanup
+for %%F in ("%Work%\Generic-Wir.out" "%Work%\Generic-Wir.err") do if not "%%~zF"=="0" goto :cleanup
+for %%F in ("%Work%\Generic-Wir-A.wvb") do set "GenericWirWvbBytes=%%~zF"
+echo PASS  language 1 front door step=generic-wir-split wvb-bytes=%GenericWirWvbBytes% result=42
 set "FailureStep=compiler-minimum-a"
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
@@ -924,6 +952,10 @@ if not "%Result%"=="0" (
     if exist "%Work%\Generic-Type-Catalog-Package.err" type "%Work%\Generic-Type-Catalog-Package.err" >&2
     if exist "%Work%\Generic-Type-Catalog.out" type "%Work%\Generic-Type-Catalog.out" >&2
     if exist "%Work%\Generic-Type-Catalog.err" type "%Work%\Generic-Type-Catalog.err" >&2
+    if exist "%Work%\Generic-Wir-Package.out" type "%Work%\Generic-Wir-Package.out" >&2
+    if exist "%Work%\Generic-Wir-Package.err" type "%Work%\Generic-Wir-Package.err" >&2
+    if exist "%Work%\Generic-Wir.out" type "%Work%\Generic-Wir.out" >&2
+    if exist "%Work%\Generic-Wir.err" type "%Work%\Generic-Wir.err" >&2
     if exist "%Work%\Value-Match-A.err" type "%Work%\Value-Match-A.err" >&2
     if exist "%Work%\Value-Match-Lazy.err" type "%Work%\Value-Match-Lazy.err" >&2
     if exist "%Work%\Value-Match-Lazy-Run.err" type "%Work%\Value-Match-Lazy-Run.err" >&2
@@ -934,7 +966,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=156 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 compiler-cases=32 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=160 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_result_42

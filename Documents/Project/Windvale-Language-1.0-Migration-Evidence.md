@@ -778,18 +778,40 @@ returns `42`, and writes no output. The focused
 `generic-nominal-wvlb-carrier` owner reports build, package, and execute phases.
 
 The large pre-existing Generic-WIR project was also probed after restoring its
-project and source inputs exactly to `HEAD`. The native Seed build driver still
-exited `1` after approximately one minute and left an empty diagnostic log.
-That is a disclosed pre-existing Seed/hosted-builder limitation, not passing
-carrier evidence. It is also why this checkpoint does not import the extension
-into the fused WIR closure; the next integration checkpoint must first reduce,
-replace, or diagnose that closure rather than silently increasing it.
+project and source inputs exactly to `HEAD`. The immutable recovery Seed exits
+at source binding 499, operation zero. A retained later compiler first
+established that this is a bootstrap-capacity boundary rather than a failure of
+the current source semantics. The independently reconstructed current split
+analyzer/emitter compiles the ordered project to the exact 1,065,737-byte WVB
+with SHA-256
+`c8aa63e688ee53ed5ee72cc75db4b3852f0b6431a501a4f6230d680b6a4dcefc`.
+The current analyzer publishes 104 WVCA bytes, 196,496 WVLB bytes, and 3,212,716
+WVIR bytes; its WVSS byte length retains temporary source-path metadata and is
+therefore not pinned. The emitter publishes 470 functions and 880,773 code
+bytes. The packaged profile-1 application returns `42` and writes no output.
 
-This checkpoint establishes durable split-compiler carriage; it does not yet
-make the main fused compiler produce WVLB 1.3. Threading WVGT through Source WIR
-type binding and then consuming its materialization plan in Source WVB remain
-the next connected checkpoints. Broad storage, OS, paired-host, and complete
-Qualification gates remain deferred to the final seven-slice integration gate.
+The analyzer source also now avoids moving its complete 22-field source-symbol
+summary through private generic-parameter validation and declaration-type
+binding paths that need only failure coordinates or lookup/count values. Shared
+successful type-binding construction removes another repeated record path. The
+resulting 478-function, 1,073,582-byte analyzer has a 33,545,634-byte complete
+native object, 8,798 bytes below the unchanged 32 MiB limit, and preserves the
+same language behavior under the complete 160-case owner.
+
+Decision 0810 therefore makes this compiler-scale project a four-case sentinel
+inside the existing Language 1.0 owner. It uses the analyzer/emitter already
+constructed by that owner, compiles twice through the target-aware split cache,
+requires byte identity plus the exact size and digest, and packages and executes
+the result once. It does not rebuild the immutable Seed, create another compiler
+tree, or add an independent heavy owner.
+
+This checkpoint establishes durable split-compiler carriage and proves that the
+current compiler-scale WIR closure is healthy through the supported split
+front door; it does not yet make main WIR produce WVLB 1.3. Threading WVGT
+through Source WIR type binding and then consuming its materialization plan in
+Source WVB remain the next connected checkpoints. Broad storage, OS,
+paired-host, and complete Qualification gates remain deferred to the final
+seven-slice integration gate.
 
 ## Slice 4 packed keyword dispatch checkpoint
 

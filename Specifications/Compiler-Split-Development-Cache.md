@@ -104,3 +104,21 @@ Compiler analysis/emission core changes select that broader semantic gate once;
 split adapter, identity, and cache changes select this focused owner. Full
 storage, OS, complete native, and paired-host qualification remain final
 integration gates unless this boundary changes them directly.
+
+## Compiler-scale development sentinel
+
+The immutable native Seed is recovery provenance, not the semantic definition
+or ordinary compiler-scale development front door. It may reconstruct a later
+compiler stage, but a current source closure is not required to remain within
+the historical Seed's capacity. The active Language 1.0 owner reconstructs one
+current analyzer/emitter pair and uses that pair for compiler-scale projects.
+This is one compiler divided at its explicit phase artifact, not a parallel
+compiler implementation.
+
+The Generic-WIR sentinel compiles its canonical Project 2 closure twice through
+the split coordinator, requires byte-identical WVB output with a pinned size and
+digest, packages the first output under profile 1, and requires silent exit
+`42`. It reuses the products already built by the owner so the regression adds
+two analysis/emission passes and one cacheable package rather than another
+compiler reconstruction. Failure of the historical Seed on this closure does
+not waive the sentinel and does not authorize replacing the recovery artifact.
